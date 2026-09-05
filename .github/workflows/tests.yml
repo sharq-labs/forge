@@ -36,6 +36,12 @@ jobs:
       # default WSL invocation itself and are Windows-only; they are deselected
       # here, not skipped in the suite.
       - env:
+          # Name is read by NgspiceInvocation.from_environment in
+          # src/engcore/domains/electrical/ngspice.py; renaming it means
+          # changing that read and tests/test_heterogeneous_ngspice.py::
+          # test_j2_the_invocation_is_configuration_and_reads_the_environment
+          # in the same commit, or CI silently falls back to the WSL default
+          # and every provider test fails on Linux.
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >
           python -m pytest -m "not campaign" -q -n auto
