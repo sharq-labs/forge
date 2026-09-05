@@ -1,0 +1,31 @@
+{
+  "gate_oscillatory_20001_points": {
+    "levels_earned": [],
+    "max_s": 45.00328990002163,
+    "median_s": 41.85213340003975,
+    "min_s": 38.217127500043716,
+    "repeats": 5,
+    "rungs": 4,
+    "tolerance_independent": false
+  },
+  "list_conversion": {
+    "default_2001": {
+      "arrays": 3,
+      "median_s": 0.0002340999781154096,
+      "min_s": 0.00022739998530596495,
+      "ndarray_bytes": 48024,
+      "points_per_array": 2001,
+      "python_float_objects": 6003,
+      "traced_bytes": 190088
+    },
+    "oscillatory_20001": {
+      "arrays": 3,
+      "median_s": 0.0023649000213481486,
+      "min_s": 0.002284899994265288,
+      "ndarray_bytes": 480024,
+      "points_per_array": 20001,
+      "python_float_objects": 60003,
+      "traced_bytes": 1956584
+    }
+  }
+}

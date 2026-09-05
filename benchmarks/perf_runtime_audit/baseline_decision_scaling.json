@@ -1,0 +1,71 @@
+{
+  "basis_duplicate_detection": [
+    {
+      "basis_size": 10,
+      "median_s": 6.999995093792677e-06,
+      "min_s": 6.799993570894003e-06
+    },
+    {
+      "basis_size": 100,
+      "median_s": 9.440002031624317e-05,
+      "min_s": 8.979998528957367e-05
+    },
+    {
+      "basis_size": 400,
+      "median_s": 0.0018494999967515469,
+      "min_s": 0.0011895999778062105
+    },
+    {
+      "basis_size": 1600,
+      "median_s": 0.0219484000117518,
+      "min_s": 0.01860920002218336
+    }
+  ],
+  "evaluate_scaling": [
+    {
+      "candidates": 10,
+      "max_s": 0.0012380999978631735,
+      "median_s": 0.0010077999904751778,
+      "microseconds_per_candidate": 100.77999904751778,
+      "min_s": 0.0009666999685578048,
+      "outcome": "recommend_action",
+      "scores": 10,
+      "snapshot_digest_computations_per_evaluate": 4
+    },
+    {
+      "candidates": 100,
+      "max_s": 0.008241800009272993,
+      "median_s": 0.007959500013384968,
+      "microseconds_per_candidate": 79.59500013384968,
+      "min_s": 0.007734999991953373,
+      "outcome": "recommend_action",
+      "scores": 100,
+      "snapshot_digest_computations_per_evaluate": 4
+    },
+    {
+      "candidates": 1000,
+      "max_s": 0.07508559996495023,
+      "median_s": 0.07042340002954006,
+      "microseconds_per_candidate": 70.42340002954006,
+      "min_s": 0.0702941000345163,
+      "outcome": "recommend_action",
+      "scores": 1000,
+      "snapshot_digest_computations_per_evaluate": 4
+    },
+    {
+      "candidates": 10000,
+      "max_s": 0.891271099972073,
+      "median_s": 0.8735528999823146,
+      "microseconds_per_candidate": 87.35528999823146,
+      "min_s": 0.7730643000104465,
+      "outcome": "recommend_action",
+      "scores": 10000,
+      "snapshot_digest_computations_per_evaluate": 4
+    }
+  ],
+  "single_snapshot_digest": {
+    "median_s": 8.999952115118504e-06,
+    "min_s": 7.999944500625134e-06,
+    "repeats": 2000
+  }
+}

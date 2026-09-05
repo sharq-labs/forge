@@ -1,0 +1,470 @@
+{
+  "acceptance": {
+    "all_passed": true,
+    "checks": {
+      "A1_coarse_coverage_in_band": true,
+      "A2_medium_coverage_in_band": true,
+      "A3_reference_coverage_in_band": true,
+      "A4_control_arm_calibrates": true,
+      "A5_standardized_error_falls_with_fidelity": true,
+      "A6_rmse_falls_with_fidelity": true,
+      "A7_noise_dominates_only_at_high_fidelity": true,
+      "A8_confidently_wrong_rate_falls_with_fidelity": true
+    },
+    "failed": []
+  },
+  "answer": {
+    "coarse_confidently_wrong_rate": 1.0,
+    "coarse_coverage": 0.0,
+    "control_coverage": 0.962,
+    "discretization_causes_systematic_miscalibration": true,
+    "licensed_by_control_arm": true,
+    "noise_becomes_dominant_at": "reference",
+    "nominal_level": 0.95,
+    "reference_confidently_wrong_rate": 0.048,
+    "reference_coverage": 0.952
+  },
+  "arms": [
+    {
+      "arm_id": "coarse",
+      "confidently_wrong_count": 500,
+      "confidently_wrong_rate": 1.0,
+      "coverage_successes": 0,
+      "coverage_wilson_95": [
+        4.336808689942018e-19,
+        0.007624340461552241
+      ],
+      "credible_width_mean": 7.32599999999999e-08,
+      "credible_width_median": 7.499999999999843e-08,
+      "discretization_contribution": 5.595617362531201e-07,
+      "discretization_error_at_truth": 0.01628112251189756,
+      "empirical_coverage": 0.0,
+      "forward_map_build_seconds_telemetry": 2.4243079999578185,
+      "inference_seconds_telemetry": 0.03993550001177937,
+      "is_control": false,
+      "noise_dominates": false,
+      "observation_noise_contribution_rms": 1.6363183327810387e-08,
+      "parameter_rmse": 5.977663991382421e-07,
+      "parameter_sd_across_draws": 1.7812407539967223e-08,
+      "posterior_mean_bias": 5.975014817053218e-07,
+      "posterior_mean_bias_se": 7.965950820459302e-10,
+      "posterior_sd_mean": 1.868868907635841e-08,
+      "posterior_sd_relative_spread": 0.0010669286917345657,
+      "posterior_sd_spread": 1.9939498586473144e-11,
+      "qoi_prediction_error_mean": 6.170180439222683e-06,
+      "qoi_prediction_error_rms": 0.0004760994825546044,
+      "replications": 500,
+      "standardized_error_mean": 31.970310655288216,
+      "standardized_error_rms": 31.983487872738912,
+      "standardized_error_sd": 0.9189243461295543,
+      "work_proxy": 80
+    },
+    {
+      "arm_id": "medium",
+      "confidently_wrong_count": 447,
+      "confidently_wrong_rate": 0.894,
+      "coverage_successes": 53,
+      "coverage_wilson_95": [
+        0.08195705027297034,
+        0.13605093001073285
+      ],
+      "credible_width_mean": 6.78674999999999e-08,
+      "credible_width_median": 6.750000000000062e-08,
+      "discretization_contribution": 5.546148187072792e-08,
+      "discretization_error_at_truth": 0.001613718598907632,
+      "empirical_coverage": 0.106,
+      "forward_map_build_seconds_telemetry": 2.829960699949879,
+      "inference_seconds_telemetry": 0.03133309999248013,
+      "is_control": false,
+      "noise_dominates": false,
+      "observation_noise_contribution_rms": 1.6363183327810387e-08,
+      "parameter_rmse": 5.8072821716918945e-08,
+      "parameter_sd_across_draws": 1.6527856725792146e-08,
+      "posterior_mean_bias": 5.5676107212274066e-08,
+      "posterior_mean_bias_se": 7.391482232249668e-10,
+      "posterior_sd_mean": 1.7341003032900464e-08,
+      "posterior_sd_relative_spread": 0.0009820556205298067,
+      "posterior_sd_spread": 1.7029829494084324e-11,
+      "qoi_prediction_error_mean": 6.2147007894509665e-06,
+      "qoi_prediction_error_rms": 0.0004761000184775612,
+      "replications": 500,
+      "standardized_error_mean": 3.2097314761905116,
+      "standardized_error_rms": 3.3470656978346844,
+      "standardized_error_sd": 0.9498827247376223,
+      "work_proxy": 5120
+    },
+    {
+      "arm_id": "reference",
+      "confidently_wrong_count": 24,
+      "confidently_wrong_rate": 0.048,
+      "coverage_successes": 476,
+      "coverage_wilson_95": [
+        0.92957280316411,
+        0.9675347930586469
+      ],
+      "credible_width_mean": 6.737249999999999e-08,
+      "credible_width_median": 6.750000000000062e-08,
+      "discretization_contribution": 6.696083177758035e-09,
+      "discretization_error_at_truth": 0.00019483060313763012,
+      "empirical_coverage": 0.952,
+      "forward_map_build_seconds_telemetry": 7.3085658000200056,
+      "inference_seconds_telemetry": 0.04801700002280995,
+      "is_control": false,
+      "noise_dominates": true,
+      "observation_noise_contribution_rms": 1.6363183327810387e-08,
+      "parameter_rmse": 1.7624556290815102e-08,
+      "parameter_sd_across_draws": 1.6396648090609836e-08,
+      "posterior_mean_bias": 6.504814830417973e-09,
+      "posterior_mean_bias_se": 7.332803946749145e-10,
+      "posterior_sd_mean": 1.7203346347956214e-08,
+      "posterior_sd_relative_spread": 0.0009714464680404948,
+      "posterior_sd_spread": 1.671213004819941e-11,
+      "qoi_prediction_error_mean": 6.220265883152165e-06,
+      "qoi_prediction_error_rms": 0.0004761000858183553,
+      "replications": 500,
+      "standardized_error_mean": 0.3771897314443609,
+      "standardized_error_rms": 1.0237355263827497,
+      "standardized_error_sd": 0.9526686147081768,
+      "work_proxy": 327680
+    },
+    {
+      "arm_id": "exact",
+      "confidently_wrong_count": 19,
+      "confidently_wrong_rate": 0.038,
+      "coverage_successes": 481,
+      "coverage_wilson_95": [
+        0.9414152274693561,
+        0.9755398819441696
+      ],
+      "credible_width_mean": 6.723749999999986e-08,
+      "credible_width_median": 6.750000000000062e-08,
+      "discretization_contribution": 9.252525793048947e-14,
+      "discretization_error_at_truth": 2.6921337936691714e-09,
+      "empirical_coverage": 0.962,
+      "forward_map_build_seconds_telemetry": 0.0002682000049389899,
+      "inference_seconds_telemetry": 0.029022299975622445,
+      "is_control": true,
+      "noise_dominates": true,
+      "observation_noise_contribution_rms": 1.6363183327810387e-08,
+      "parameter_rmse": 1.636320130205586e-08,
+      "parameter_sd_across_draws": 1.6378400323029525e-08,
+      "posterior_mean_bias": -1.9713879494324583e-10,
+      "posterior_mean_bias_se": 7.324643296999707e-10,
+      "posterior_sd_mean": 1.718420184072604e-08,
+      "posterior_sd_relative_spread": 0.0009699309455894973,
+      "posterior_sd_spread": 1.666748914057619e-11,
+      "qoi_prediction_error_mean": 6.22106083982088e-06,
+      "qoi_prediction_error_rms": 0.0004761000953786788,
+      "replications": 500,
+      "standardized_error_mean": -0.012394633812317285,
+      "standardized_error_rms": 0.9521742340961578,
+      "standardized_error_sd": 0.9530470831047606,
+      "work_proxy": null
+    }
+  ],
+  "base_commit": "3e2ca40cfa69a591896dba45620e449c5a0651cf",
+  "confidently_wrong_width_threshold": 1.0125000000000094e-07,
+  "config": {
+    "acceptance_criteria": [
+      "A1 coarse empirical coverage falls inside its band, confirming that discretization bias destroys coverage rather than merely degrading it",
+      "A2 medium coverage falls inside its band: materially better than coarse and still materially below nominal",
+      "A3 reference coverage falls inside its band, approaching nominal",
+      "A4 the control arm calibrates, which is what makes A1-A3 statements about numerics rather than about the inference",
+      "A5 |mean standardized estimation error| decreases monotonically with fidelity",
+      "A6 parameter RMSE decreases monotonically with fidelity",
+      "A7 at the reference rung the observation-noise contribution exceeds the discretization contribution, and at the coarse rung it does not; the crossover is the answer to the second half of the question",
+      "A8 the confidently-wrong rate decreases monotonically with fidelity"
+    ],
+    "arms": {
+      "control_arm_id": "exact",
+      "control_arm_role": "zero-discretization control. Same grid, prior, sigma, observations and inference; the forward map is the closed-form solution instead of a solve. Not a fidelity rung and never compared on cost",
+      "fidelity_rungs": [
+        {
+          "n_cells": 8,
+          "n_steps": 10,
+          "rank": 0,
+          "role": "cheapest rung on the frozen verification ladder; converges and validates like any other, and is wrong by 3.3% on the QoI",
+          "rung_id": "coarse",
+          "work_proxy": 80
+        },
+        {
+          "n_cells": 64,
+          "n_steps": 80,
+          "rank": 1,
+          "role": "an unremarkable working resolution",
+          "rung_id": "medium",
+          "work_proxy": 5120
+        },
+        {
+          "n_cells": 512,
+          "n_steps": 640,
+          "rank": 2,
+          "role": "the finest rung of the frozen ladder \u2014 the one that earned ANALYTICALLY_VERIFIED at 3.97e-04 relative error",
+          "rung_id": "reference",
+          "work_proxy": 327680
+        }
+      ]
+    },
+    "base_commit": "3e2ca40cfa69a591896dba45620e449c5a0651cf",
+    "confidently_wrong_width_factor": 1.5,
+    "coverage_acceptance_bands": {
+      "coarse": [
+        0.0,
+        0.02
+      ],
+      "exact": [
+        0.92,
+        0.985
+      ],
+      "medium": [
+        0.055,
+        0.155
+      ],
+      "reference": [
+        0.88,
+        0.98
+      ]
+    },
+    "experiment_id": "T2",
+    "experiment_name": "repeated_draw_numerical_calibration",
+    "experiment_version": "1.0.0",
+    "falsification_criteria": [
+      "F1 if the CONTROL ARM misses its band, no conclusion about fidelity may be drawn from this run at all. Investigate in this order: the discrete equal-tailed interval on a 401-point grid, the Gaussian likelihood and whether sigma is the sigma actually used to draw, prior truncation at the grid edges, and the normal approximation behind the prediction. Report the diagnosis; do not adjust the rungs",
+      "F2 if the reference rung misses its band while the control arm passes, the reference rung's discretization is NOT negligible relative to observation noise, and T1's reading of it was wrong. Report that",
+      "F3 if the coarse rung covers materially more often than its band, the discretization-bias mechanism T1 claimed is not what is happening",
+      "F4 if posterior sd varies materially across draws at a fixed rung, the claim that confidence is draw-independent fails and the confidently-wrong rate must be re-read"
+    ],
+    "inherited_from_t1": {
+      "held_fixed": [
+        "alpha_true",
+        "prior and grid",
+        "observation model, count, metric and location",
+        "sigma",
+        "coarse / medium / reference rungs",
+        "inference implementation"
+      ],
+      "t1_config_hash": "2b231b00b950e43818aca18004b29ac55ebca924e4b6c1cfd06f3372917050b7",
+      "varied": [
+        "observation-noise realization only"
+      ]
+    },
+    "metrics": [
+      "empirical_coverage",
+      "posterior_mean_bias",
+      "parameter_rmse",
+      "posterior_sd",
+      "standardized_estimation_error",
+      "confidently_wrong_rate",
+      "qoi_prediction_error",
+      "discretization_contribution",
+      "observation_noise_contribution",
+      "work_proxy"
+    ],
+    "no_tuning_after_results": "the rungs, prior, sigma, grid, observation design, replication count, seed rule, credible level, acceptance bands and predictions above are fixed before execution and are not adjusted afterwards. A missed band is reported as a missed band",
+    "nominal_level": 0.95,
+    "non_goals": [
+      "no adaptive fidelity selection and no fidelity policy \u2014 nothing here chooses a rung",
+      "no new EVSI machinery, no commitment promotion, no ObligationSet change, no certification change",
+      "no production SRIA change of any kind",
+      "no physical validation; the hidden truth is synthetic and known",
+      "no modification to T1's preregistration or results, which are pinned by digest"
+    ],
+    "observation_model": {
+      "count": 4,
+      "distribution": "gaussian_additive",
+      "metric": "u:midpoint",
+      "sigma": 0.001
+    },
+    "parameter": {
+      "maximum": 1.3e-05,
+      "minimum": 1.15e-05,
+      "name": "alpha",
+      "prior": "uniform",
+      "size": 401,
+      "spacing": 3.749999999999752e-09,
+      "unit": "m**2/s"
+    },
+    "prediction_before_execution": {
+      "basis": "coverage = Phi(q - b/s) - Phi(-q - b/s) with b and s taken from T1's measured results, q = 1.95996",
+      "coverage": {
+        "coarse": 0.0,
+        "exact": 0.95,
+        "medium": 0.101,
+        "reference": 0.932
+      },
+      "qualitative": "coarse: severe undercoverage driven by discretization bias. medium: materially improved but still biased and still undercovering. reference: coverage approaches the nominal level because discretization error has become small relative to observation noise",
+      "standardized_error_mean": {
+        "coarse": 32.06,
+        "exact": 0.0,
+        "medium": 3.24,
+        "reference": 0.39
+      },
+      "t1_measured_inputs": {
+        "coarse": {
+          "bias": 6.0044e-07,
+          "posterior_sd": 1.8726e-08
+        },
+        "medium": {
+          "bias": 5.6207e-08,
+          "posterior_sd": 1.7373e-08
+        },
+        "reference": {
+          "bias": 6.7899e-09,
+          "posterior_sd": 1.7235e-08
+        }
+      }
+    },
+    "replications": 500,
+    "scientific_question": "Does numerical discretization error cause systematic posterior miscalibration and confident parameter bias across repeated observations, and at what fidelity does observation noise become the dominant error source?",
+    "seed_entropy": 20260908,
+    "seed_rule": "numpy.random.SeedSequence(SEED_ENTROPY).spawn(REPLICATIONS); replication i uses default_rng(children[i]) and draws OBSERVATION_COUNT normal deviates. Deterministic and reproducible from SEED_ENTROPY alone"
+  },
+  "config_hash": "63d8e07e0e3a5cfdedb0c8481f37916d873a35ec65ef796a99fd8a4b35dc9bd1",
+  "error_budget": {
+    "noise_dominates_from_rung": "reference",
+    "per_arm": [
+      {
+        "arm_id": "coarse",
+        "discretization_contribution": 5.595617362531201e-07,
+        "noise_dominates": false,
+        "observation_noise_contribution_rms": 1.6363183327810387e-08,
+        "ratio_discretization_over_noise": 34.19638618251654
+      },
+      {
+        "arm_id": "medium",
+        "discretization_contribution": 5.546148187072792e-08,
+        "noise_dominates": false,
+        "observation_noise_contribution_rms": 1.6363183327810387e-08,
+        "ratio_discretization_over_noise": 3.389406618482799
+      },
+      {
+        "arm_id": "reference",
+        "discretization_contribution": 6.696083177758035e-09,
+        "noise_dominates": true,
+        "observation_noise_contribution_rms": 1.6363183327810387e-08,
+        "ratio_discretization_over_noise": 0.4092164124554889
+      },
+      {
+        "arm_id": "exact",
+        "discretization_contribution": 9.252525793048947e-14,
+        "noise_dominates": true,
+        "observation_noise_contribution_rms": 1.6363183327810387e-08,
+        "ratio_discretization_over_noise": 5.6544778651496405e-06
+      }
+    ]
+  },
+  "experiment": "T2",
+  "experiment_version": "1.0.0",
+  "falsification": {
+    "conclusions_about_fidelity_are_licensed": true,
+    "fired": [],
+    "triggers": {
+      "F1_control_arm_miscalibrated": false,
+      "F2_reference_miscalibrated_despite_valid_control": false,
+      "F3_coarse_covers_more_than_predicted": false,
+      "F4_posterior_sd_varies_materially_across_draws": false
+    }
+  },
+  "post_hoc_observations": {
+    "confidently_wrong_rate_is_near_one_minus_coverage": {
+      "consequence": "the metric carries independent information only where posterior width varies with fidelity. Here it does not, so it should not be read as a second, corroborating result",
+      "max_posterior_sd_relative_spread": 0.0010669286917345657,
+      "observation": "posterior width barely varies across draws or arms (relative spread ~1e-3), so the width clause in the confidently-wrong definition almost never binds and the metric reduces to 1 - coverage on this benchmark",
+      "per_arm_gap_to_one_minus_coverage": {
+        "coarse": 0.0,
+        "exact": -3.469446951953614e-17,
+        "medium": 0.0,
+        "reference": -4.163336342344337e-17
+      }
+    },
+    "preregistered": false,
+    "qoi_prediction_error_is_blind_to_the_bias": {
+      "consequence": "predictive performance on the assimilated observable is not evidence that the parameter is right. On this benchmark the coarse rung is indistinguishable from an exact solver by that measure alone, while being wrong about alpha by 4.7%",
+      "mechanism": "the posterior centre is fitted so the forward map reproduces the observed mean. A forward map biased by d shifts alpha_hat by -d/(du/dalpha), which is exactly the shift that cancels d in the prediction. So the bias is absorbed, the predictive error falls back to the observation-noise floor sigma/sqrt(n) = 5.0000e-04, and every arm looks equally good at predicting what was already measured",
+      "observation": "QoI prediction error is essentially identical at every arm, including the coarse rung whose parameter estimate is ~32 posterior sd wrong",
+      "observation_noise_floor_sigma_over_sqrt_n": 0.0005,
+      "qoi_rms_at_coarse": 0.0004760994825546044,
+      "qoi_rms_at_control": 0.0004761000953786788,
+      "qoi_rms_is_at_the_noise_floor": true,
+      "qoi_rms_relative_spread_across_arms": 1.2871765183943018e-06,
+      "scope_limit": "shown for the QoI that was assimilated, at one benchmark. Whether an unassimilated or out-of-range prediction would expose the bias is not tested here"
+    }
+  },
+  "prediction_check": {
+    "coarse": {
+      "band": [
+        0.0,
+        0.02
+      ],
+      "in_band": true,
+      "observed_coverage": 0.0,
+      "observed_standardized_error_mean": 31.970310655288216,
+      "predicted_coverage": 0.0,
+      "predicted_standardized_error_mean": 32.06,
+      "wilson_95": [
+        4.336808689942018e-19,
+        0.007624340461552241
+      ]
+    },
+    "exact": {
+      "band": [
+        0.92,
+        0.985
+      ],
+      "in_band": true,
+      "observed_coverage": 0.962,
+      "observed_standardized_error_mean": -0.012394633812317285,
+      "predicted_coverage": 0.95,
+      "predicted_standardized_error_mean": 0.0,
+      "wilson_95": [
+        0.9414152274693561,
+        0.9755398819441696
+      ]
+    },
+    "medium": {
+      "band": [
+        0.055,
+        0.155
+      ],
+      "in_band": true,
+      "observed_coverage": 0.106,
+      "observed_standardized_error_mean": 3.2097314761905116,
+      "predicted_coverage": 0.101,
+      "predicted_standardized_error_mean": 3.24,
+      "wilson_95": [
+        0.08195705027297034,
+        0.13605093001073285
+      ]
+    },
+    "reference": {
+      "band": [
+        0.88,
+        0.98
+      ],
+      "in_band": true,
+      "observed_coverage": 0.952,
+      "observed_standardized_error_mean": 0.3771897314443609,
+      "predicted_coverage": 0.932,
+      "predicted_standardized_error_mean": 0.39,
+      "wilson_95": [
+        0.92957280316411,
+        0.9675347930586469
+      ]
+    }
+  },
+  "preregistration_hash": "0bcdd3e92110db3bb1c6547535019e64a6272d51217cef3fec5d1348214a1d05",
+  "scientific_question": "Does numerical discretization error cause systematic posterior miscalibration and confident parameter bias across repeated observations, and at what fidelity does observation noise become the dominant error source?",
+  "truth": {
+    "alpha_true": 1.2e-05,
+    "declared_sigma": 0.001,
+    "draw_mean": 0.4913503705074504,
+    "draw_sd": 0.0010016344453136607,
+    "note": "the full draw table is not inlined here; draw_mean and draw_sd summarize it and the seed rule reproduces it exactly",
+    "observations_per_replication": 4,
+    "replications": 500,
+    "scope": "synthetic hidden truth with a known alpha; no physical validation and no real measurement is involved",
+    "sensitivity_du_dalpha": -29096.20414883538,
+    "true_qoi": 0.4913436406431834,
+    "truth_source": "exact analytic solution + declared Gaussian noise"
+  }
+}

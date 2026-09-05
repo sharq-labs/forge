@@ -1,0 +1,48 @@
+[project]
+name = "crafty"
+version = "0.4.0"
+description = "Crafty — a scientific simulation runtime: universal problem IR, model validity semantics, model/realization/solver separation, cross-domain coupling, provenance and evidence-backed validation beneath AI agents."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "scikit-learn>=1.4",
+  # Scientific Core units backend. Lower bound only: the platform must not
+  # pin its scientific stack to one machine's resolved versions.
+  "pint>=0.23",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  # Parallel test execution. Development/test only: no production code imports
+  # it, and the suite must remain runnable — and green — without it.
+  "pytest-xdist>=3.5",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# The project uses a src/ layout. Tests must resolve engcore from the checked-out
+# source tree even when the package has not been installed in editable mode.
+pythonpath = ["src", "."]
+
+# Execution tiers. Assigned centrally in tests/conftest.py rather than with
+# decorators, because two test modules are SHA-256 pinned by frozen experiments
+# and must stay byte-identical. See docs/TESTING.md.
+markers = [
+  "expensive: executes scientific work costing seconds — reproduces a frozen experiment, drives a domain solver, or runs a design study. Excluded from FAST; always runs in SCIENTIFIC and FULL.",
+  "campaign: a subset of `expensive` — a large design/discovery campaign or a full stiff-solver ladder run to its budget. Excluded from SCIENTIFIC; always runs in FULL.",
+]
+
+# Fail on an unregistered marker rather than warning, so a typo in a tier name
+# is caught at collection instead of silently selecting nothing.
+filterwarnings = [
+  "error::pytest.PytestUnknownMarkWarning",
+]

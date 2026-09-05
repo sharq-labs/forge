@@ -1,0 +1,32 @@
+{
+  "cprofile_top": "         80541349 function calls (80498928 primitive calls) in 69.977 seconds\n\n   Ordered by: cumulative time\n   List reduced from 400 to 28 due to restriction <28>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.004    0.004   69.971   69.971 D:\\engineering-ai-core-v0.1\\perf-runtime-audit\\src\\engcore\\domains\\kinetics\\cstr\\validation.py:638(run_verification_gate)\n        6    0.038    0.006   69.161   11.527 D:\\engineering-ai-core-v0.1\\perf-runtime-audit\\src\\engcore\\domains\\kinetics\\cstr\\solver.py:369(solve)\n        6    0.607    0.101   67.959   11.326 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\ivp.py:160(solve_ivp)\n   257305    0.478    0.000   64.924    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\base.py:179(step)\n        5    0.058    0.012   60.245   12.049 D:\\engineering-ai-core-v0.1\\perf-runtime-audit\\src\\engcore\\domains\\kinetics\\cstr\\solver.py:669(solve_reactor)\n   111606    2.442    0.000   36.769    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\radau.py:405(_step_impl)\n   145699    4.094    0.000   27.677    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\bdf.py:314(_step_impl)\n   112689    4.424    0.000   25.826    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\radau.py:48(solve_collocation_system)\n   896531    0.734    0.000   21.048    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\linalg\\_decomp_lu.py:134(lu_solve)\n   925241    6.372    0.000   20.948    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\_lib\\_util.py:1100(wrapper)\n   147222    2.744    0.000   19.760    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\bdf.py:36(solve_bdf_system)\n  1120957    0.570    0.000   15.485    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\base.py:156(fun)\n  1120957    0.726    0.000   14.915    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\base.py:23(fun_wrapped)\n  1120957    4.414    0.000   13.956    0.000 D:\\engineering-ai-core-v0.1\\perf-runtime-audit\\src\\engcore\\domains\\kinetics\\cstr\\solver.py:212(rhs)\n   563680    0.215    0.000   12.647    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\radau.py:335(solve_lu)\n        1    0.018    0.018    9.563    9.563 D:\\engineering-ai-core-v0.1\\perf-runtime-audit\\src\\engcore\\domains\\kinetics\\cstr\\validation.py:1010(_resample_finest)\n   332851    0.143    0.000    8.759    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\bdf.py:235(solve_lu)\n   896531    2.361    0.000    6.673    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\linalg\\_decomp_lu.py:193(_lu_solve)\n  2718303    1.781    0.000    5.799    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\_external\\array_api_compat\\numpy\\_aliases.py:70(asarray)\n  1121078    3.058    0.000    5.363    0.000 D:\\engineering-ai-core-v0.1\\perf-runtime-audit\\src\\engcore\\domains\\kinetics\\cstr\\solver.py:203(rate_constant)\n   842445    1.100    0.000    4.481    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\common.py:63(norm)\n  1679326    0.912    0.000    4.095    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\numpy\\_core\\fromnumeric.py:2586(all)\n  3995805    2.639    0.000    3.650    0.000 {built-in method numpy.array}\n   197576    0.151    0.000    3.541    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\base.py:266(__call__)\n   842445    1.535    0.000    3.273    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\numpy\\linalg\\_linalg.py:2598(norm)\n  1679338    1.716    0.000    3.183    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\numpy\\_core\\fromnumeric.py:86(_wrapreduction_any_all)\n   925241    1.318    0.000    2.963    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\numpy\\lib\\_function_base_impl.py:614(asarray_chkfinite)\n   132681    0.980    0.000    2.851    0.000 D:\\engineering-ai-core-v0.1\\engineering-ai-core-v0.1\\.venv\\Lib\\site-packages\\scipy\\integrate\\_ivp\\radau.py:563(_call_impl)\n\n\n",
+  "gate_oscillatory_20001_points": {
+    "levels_earned": [],
+    "max_s": 39.12729279999621,
+    "median_s": 36.81315360002918,
+    "min_s": 36.182218300004024,
+    "repeats": 3,
+    "rungs": 4,
+    "tolerance_independent": false
+  },
+  "list_conversion": {
+    "default_2001": {
+      "arrays": 3,
+      "median_s": 0.00023544998839497566,
+      "min_s": 0.0002294000005349517,
+      "ndarray_bytes": 48024,
+      "points_per_array": 2001,
+      "python_float_objects": 6003,
+      "traced_bytes": 190088
+    },
+    "oscillatory_20001": {
+      "arrays": 3,
+      "median_s": 0.0027500000142026693,
+      "min_s": 0.002343699976336211,
+      "ndarray_bytes": 480024,
+      "points_per_array": 20001,
+      "python_float_objects": 60003,
+      "traced_bytes": 1956584
+    }
+  }
+}

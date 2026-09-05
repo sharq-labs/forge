@@ -1,0 +1,3248 @@
+{
+  "adversarial_injections": [
+    {
+      "attempt": "register a predictive for a condition after its observation exists",
+      "catcher": "CommitmentLedger.commit (ledger sealed)",
+      "caught": true,
+      "detail": "ledger 'e2-scored-C-ledger' is sealed: a predictive for 'challenge_vmid_20V_posthoc' cannot be registered after the commitment phase closed",
+      "injection": "A"
+    },
+    {
+      "attempt": "invalidate an observation because the model predicted it poorly",
+      "catcher": "E2Harness.assess (computational checks only) + the admission chain",
+      "caught": true,
+      "detail": "the most surprising condition (challenge_vmid_28V, tail 2.485e-10) passed all 3 computational checks and was ADMITTED; the critic has no predictive input to fail it with",
+      "injection": "B"
+    },
+    {
+      "attempt": "override MODEL_SPACE_INADEQUATE with a very sharp posterior",
+      "catcher": "certify() signature \u2014 posterior strength is not a parameter",
+      "caught": true,
+      "detail": "certify('posterior_decision', 'adequacy_state', 'execution_validity') and classify_adequacy('surprises', 'joint') accept no confidence quantity; the strongest available claim still returns not_certifiable",
+      "injection": "C"
+    },
+    {
+      "attempt": "override MODEL_SPACE_INADEQUATE with EVSI at the floor",
+      "catcher": "certify() signature \u2014 EVSI is not a parameter",
+      "caught": true,
+      "detail": "best available EVSI is 0.000e+00, i.e. 'no measurement is worth taking' INSIDE the family; certification is still withheld, because EVSI prices information about which constant, not about whether a constant is the right shape",
+      "injection": "D"
+    },
+    {
+      "attempt": "let the hidden law influence the predictive or the adequacy verdict",
+      "catcher": "module boundary (transitive AST import test) + this recomputation",
+      "caught": true,
+      "detail": "with the admitted evidence held fixed, changing kappa from 0.10 to 0.42 left every predictive mixture bit-identical; the decision path has no channel through which the law could act",
+      "injection": "E"
+    },
+    {
+      "attempt": "edit a committed predictive after its observation was executed",
+      "catcher": "PredictiveCommitment.verify_integrity via score_commitments",
+      "caught": true,
+      "detail": "ledger hash chain is broken",
+      "injection": "F"
+    }
+  ],
+  "certificate_assumptions": [
+    {
+      "basis": "declared in the preregistered configuration; E1-derived",
+      "proposition": "circuit topology (two-resistor divider, ideal source)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "declared before the run as the family inference is conditional on. This is a PROPOSITION ABOUT THE WORLD and E2 tested it: it is MODEL_SPACE_INADEQUATE",
+      "proposition": "ASSUMED MODEL FAMILY: R2 is a single condition-independent constant",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "agreement with the closed-form divider relation at 9 preregistered points spanning the full challenge range, worst relative error 1.850e-16. NOT THE SAME PROPOSITION as the row above: this one is about code agreeing with equations, that one is about equations agreeing with the world, and in this run the first holds while the second fails",
+      "proposition": "SOLVER IMPLEMENTATION OF THAT FAMILY (linear resistive DC via MNA) computes what the family specifies",
+      "status": "ANALYTICALLY_CHECKED"
+    },
+    {
+      "basis": "verified against an independently derived KVL/KCL closed form the solver did not produce",
+      "proposition": "Electrical solver equations (Ohm/KCL, MNA assembly)",
+      "status": "ANALYTICALLY_CHECKED"
+    },
+    {
+      "basis": "declared observation model",
+      "proposition": "observation mapping (y measures node_voltage:mid)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "benchmark-injected synthetic noise, honestly labelled; the solver itself is deterministic. Draws depend on (action_id, repeat) only, so controls share them exactly",
+      "proposition": "noise model (Gaussian, declared sigma, additive)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered before any scored observation",
+      "proposition": "prior (uniform over the frozen R2 grid)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered; asymmetric with indifference at P=0.8",
+      "proposition": "terminal utility / loss matrix",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered; no fitted cost model in E2",
+      "proposition": "cost model (declared per-action costs)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "declared, not measured, for a dense LU on a well-conditioned 3x3 MNA system. Control D shows what a genuine computational failure does instead of assuming it cannot happen",
+      "proposition": "computational failure probability p_cf = 0",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered exchange rate with no external referent. E2 does not let it steer: the action schedule is frozen, so lambda affects reported net value and nothing that was executed",
+      "proposition": "cost-to-utility tradeoff lambda = 1.0",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "the solver is verified across the full prior support at every voltage that is measured or predicted, so no numerical extrapolation occurs. Note this is transport of the SOLVER, and is independent of \u2014 and in this run contradicted by \u2014 the adequacy of the model family at those same conditions",
+      "proposition": "support/transport: IN_DOMAIN_FOR_THIS_VERIFICATION",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "two-sided marginal predictive tail per condition (each EXACTLY Uniform(0,1) under the null), plus a JOINT log score over all 6 conditions calibrated by 20000 posterior-predictive draws. Strongest verdict requires n_extreme >= 2 AND p_joint < 0.0001. Controls A and B exercise both non-firing branches",
+      "proposition": "predictive adequacy rule (preregistered, v1.1.0)",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "the conditions share one calibration posterior and are positively dependent (exact off-diagonal correlations 0.088 to 0.625). v1.0.0 combined the tails with Fisher and referred them to chi-square(2N), which assumes independence and is anti-conservative here; v1.1.0 replaces it with the joint score under a simulated null. Superseded config hash dbe7c538e6f8af198be14bd6863d91249b748969c69b27c308c7df38b0275bce",
+      "proposition": "aggregate reference distribution accounts for dependence between challenge conditions",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "the synthetic grader law was CONSTRUCTED to vanish at the calibration condition, so a clean result there is expected under this benchmark's failure mode and separates it from a constant offset. It does NOT exclude other fault mechanisms: a condition-dependent or drive-scaling instrument fault would also leave this condition clean. One alternative is discriminated against, not all of them",
+      "proposition": "internal null (Vs = 10 V) discriminates against a condition-independent harness offset",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "content-hashed predictive artifacts sealed in a hash-chained ledger, sequence-ordered before every challenge execution, and cross-recorded in the campaign event log; a post-hoc commitment raises rather than being accepted",
+      "proposition": "prediction preceded observation",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "tests over the exact grid update, inherited from E1",
+      "proposition": "posterior arithmetic (normalized, order-invariant)",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "the misspecified law lives in e2_truth and is unreachable from e2_config, e2_model and e2_adequacy, checked transitively by AST and by a runtime recomputation under an altered law",
+      "proposition": "grader truth availability",
+      "status": "GRADER_ONLY"
+    },
+    {
+      "basis": "worst |solver-analytic| / smallest sigma = 3.553e-14",
+      "proposition": "numerical error negligible vs observation noise",
+      "status": "VERIFIED"
+    }
+  ],
+  "config": {
+    "assumed_model_family": {
+      "family_id": "constant_r2",
+      "forward_model": "real ElectricalDCSolver via solve_circuit",
+      "grid_max": 2500.0,
+      "grid_min": 500.0,
+      "grid_points": 401,
+      "grid_spacing_ohm": 5.0,
+      "parameter": "R2_ohm",
+      "posterior_reading": "p(R2 | data, constant-R model)",
+      "prior": "uniform",
+      "statement": "R2(condition) = c, a single condition-independent constant on the frozen grid; the decision path admits no other shape"
+    },
+    "base_commit": "a57a1f8062e23b51a295081d9d1c0863ee0ddb83",
+    "budget": {
+      "cost_unit": "hour",
+      "total": 10.0
+    },
+    "calibration_actions": [
+      {
+        "action_id": "calibrate_vmid_10V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "calibration",
+        "repeats": 4,
+        "source_voltage_volt": 10.0
+      }
+    ],
+    "certification_rule": "SCIENTIFIC_CERTIFICATION = CERTIFIABLE only if execution validity is VALID AND the adequacy state is MODEL_ADEQUACY_ACCEPTABLE. Posterior sd, posterior entropy, P(decision), EVPI and EVSI are NOT inputs to this rule and are not parameters of the function that evaluates it.",
+    "challenge_actions": [
+      {
+        "action_id": "challenge_vmid_04V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "challenge",
+        "repeats": 1,
+        "source_voltage_volt": 4.0
+      },
+      {
+        "action_id": "challenge_vmid_10V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "challenge",
+        "repeats": 1,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "action_id": "challenge_vmid_16V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "challenge",
+        "repeats": 1,
+        "source_voltage_volt": 16.0
+      },
+      {
+        "action_id": "challenge_vmid_20V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "challenge",
+        "repeats": 1,
+        "source_voltage_volt": 20.0
+      },
+      {
+        "action_id": "challenge_vmid_24V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "challenge",
+        "repeats": 1,
+        "source_voltage_volt": 24.0
+      },
+      {
+        "action_id": "challenge_vmid_28V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "challenge",
+        "repeats": 1,
+        "source_voltage_volt": 28.0
+      }
+    ],
+    "circuit": {
+      "derived_from": "E1 (identical topology and known resistance)",
+      "nodes": [
+        "vin",
+        "mid",
+        "gnd"
+      ],
+      "observed_metric": "node_voltage:mid",
+      "r1_ohm": 1000.0,
+      "reference": "gnd",
+      "topology": "two_resistor_voltage_divider"
+    },
+    "controls": {
+      "A": "well-specified constant-R truth, same seeds and machinery",
+      "B": "well-specified truth plus ONE preregistered isolated outlier",
+      "C": "systematically misspecified truth (the scored run)",
+      "D": "injected computational failure, routed through validity",
+      "E": "sharp posterior under the misspecified truth must still be refused certification"
+    },
+    "correction_record": {
+      "statement": "v1.1.0 replaces the Fisher/chi-square(2N) aggregate of v1.0.0 with the exact joint posterior-predictive log score for the complete challenge vector, calibrated by posterior-predictive simulation under M_const. The v1.0.0 aggregate assumed independence between tail probabilities that share a common latent R2 and is therefore not a valid reference distribution. Corrected as a validity fix, not a redesign: the per-condition statistic, its threshold, K_MIN_EXTREME, the challenge set, the noise seed, the grid, the prior, the calibration schedule and the hidden law are all unchanged.",
+      "superseded_config_hash": "dbe7c538e6f8af198be14bd6863d91249b748969c69b27c308c7df38b0275bce"
+    },
+    "e1_config_hash": "6dbf8febd6989b42fcfd58f4139ffa34330808018a1b427bb5042f43a38e847e",
+    "experiment_id": "E2",
+    "experiment_name": "model_adequacy_predictive_surprise",
+    "experiment_version": "1.1.0",
+    "noise_derivation": "sha256(action_id|repeat) \u2014 control-independent",
+    "noise_seed": 20260821,
+    "predictive_adequacy": {
+      "aggregate_null_calibration": "posterior_predictive_simulation_under_M_const",
+      "aggregate_null_draws": 20000,
+      "aggregate_null_seed": 20260822,
+      "aggregate_statistic": "joint_posterior_predictive_log_score",
+      "alpha_extreme": 0.0001,
+      "alpha_joint": 0.0001,
+      "alpha_joint_weak": 0.01,
+      "alpha_moderate": 0.05,
+      "dependence_statement": "the challenge conditions are conditionally independent given theta and share ONE calibration posterior, so their marginal tail probabilities are positively dependent; the aggregate is computed jointly and calibrated by simulation rather than assuming independence",
+      "deprecated_v1_0_0": {
+        "alpha": 1e-06,
+        "reference": "chi_square_2N_assuming_independence",
+        "statistic": "fisher_combined_tail_probability",
+        "status": "INVALID \u2014 reported as a diagnostic only"
+      },
+      "escalation_rule": "MODEL_SPACE_INADEQUATE  iff  n_extreme >= K_MIN_EXTREME AND p_joint < ALPHA_JOINT. MODEL_ADEQUACY_NOT_ESTABLISHED  iff  not the above AND (n_extreme >= 1 OR p_joint < ALPHA_JOINT_WEAK). MODEL_ADEQUACY_ACCEPTABLE  otherwise. The conjunction in the first clause is load-bearing and independent of the aggregate: no single condition, however extreme, can satisfy n_extreme >= 2, so a p_joint of exactly zero still cannot escalate one isolated surprise.",
+      "independence_assumed": false,
+      "k_min_extreme": 2,
+      "log_tail_floor": -700.0,
+      "secondary_statistic": "prequential_negative_log_predictive_density",
+      "statistic": "two_sided_posterior_predictive_tail_probability"
+    },
+    "quadrature": {
+      "y_nodes": 241,
+      "y_span_sigmas": 7.0
+    },
+    "scope_statement": "E2 is a computational Electrical DC benchmark. The hidden law is a synthetic grader-only misspecification, not a claim about any physical mechanism, and no hardware is involved.",
+    "terminal_decision": {
+      "decision_id": "r2_class",
+      "indifference_probability": 0.8,
+      "loss": {
+        "A_above": 0.0,
+        "A_below": 4.0,
+        "B_above": 1.0,
+        "B_below": 0.0
+      },
+      "rule": "A iff R2 > threshold",
+      "threshold_ohm": 1200.0
+    },
+    "verification": {
+      "abs_tol_volt": 1e-12,
+      "points": [
+        [
+          4.0,
+          500.0
+        ],
+        [
+          4.0,
+          1378.0
+        ],
+        [
+          10.0,
+          1000.0
+        ],
+        [
+          10.0,
+          1378.0
+        ],
+        [
+          16.0,
+          1500.0
+        ],
+        [
+          20.0,
+          1378.0
+        ],
+        [
+          24.0,
+          2000.0
+        ],
+        [
+          28.0,
+          1450.0
+        ],
+        [
+          28.0,
+          2500.0
+        ]
+      ],
+      "rel_tol": 1e-09
+    }
+  },
+  "config_hash": "d6add0d816563ea65f70473cf5cdc926dd7fa17ebff6769790879f8de057ab13",
+  "control_a_well_specified": {
+    "adequacy": {
+      "certification": {
+        "adequacy_state": "model_adequacy_acceptable",
+        "disposition": "proceed",
+        "execution_validity": "valid",
+        "posterior_decision": "A",
+        "reason": "MODEL_ADEQUACY_ACCEPTABLE",
+        "scientific_certification": "certifiable",
+        "statement": "execution was valid and the family survived its own precommitted predictions at the tested conditions; the conditional decision may be certified FOR THOSE CONDITIONS"
+      },
+      "chain_verified": true,
+      "commitments": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "artifact_hash": "c3d0fb518441b4a1fe1cae7e20f81e6a4c8581d382be0d538394ba46ba8cff19",
+          "commitment_id": "e2-control-A-ledger-commit-challenge_vmid_04V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.010000360027993668,
+          "predictive_mean_volt": 2.3332631126050396,
+          "predictive_sd_volt": 0.050990265744448655,
+          "sequence": 1,
+          "source_voltage_volt": 4.0
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "artifact_hash": "2e0cb2579017dc0449e9d83a903f1fcb33f7b3f7fcef2f0318d3bf0d26c43312",
+          "commitment_id": "e2-control-A-ledger-commit-challenge_vmid_10V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.02500090006998417,
+          "predictive_mean_volt": 5.833157781512599,
+          "predictive_sd_volt": 0.05590210196682532,
+          "sequence": 2,
+          "source_voltage_volt": 10.0
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "artifact_hash": "12d2becc8e56ea2e714d492a2ddb594f42bb81901dc650be6352100752cf00b2",
+          "commitment_id": "e2-control-A-ledger-commit-challenge_vmid_16V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.04000144011197467,
+          "predictive_mean_volt": 9.333052450420158,
+          "predictive_sd_volt": 0.06403214201502161,
+          "sequence": 3,
+          "source_voltage_volt": 16.0
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "artifact_hash": "c2ea99d5f159ce54efdc7304baa0a9cd9e40d68b2e3836004eb96cc2f7bc2522",
+          "commitment_id": "e2-control-A-ledger-commit-challenge_vmid_20V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.05000180013996834,
+          "predictive_mean_volt": 11.666315563025197,
+          "predictive_sd_volt": 0.07071195102129016,
+          "sequence": 4,
+          "source_voltage_volt": 20.0
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "artifact_hash": "d6a3b21abf372ebfeb289572f5ab97b74385c52d3f3d877b8648b90cb42d3e33",
+          "commitment_id": "e2-control-A-ledger-commit-challenge_vmid_24V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.06000216016796187,
+          "predictive_mean_volt": 13.999578675630234,
+          "predictive_sd_volt": 0.07810415625830518,
+          "sequence": 5,
+          "source_voltage_volt": 24.0
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "artifact_hash": "07f028b106031dfee8b9fc68f168e38e6bdc819d2127c274736a7b43e34107a5",
+          "commitment_id": "e2-control-A-ledger-commit-challenge_vmid_28V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.07000252019595563,
+          "predictive_mean_volt": 16.33284178823528,
+          "predictive_sd_volt": 0.08602530345070092,
+          "sequence": 6,
+          "source_voltage_volt": 28.0
+        }
+      ],
+      "ledger_head": "17aded6cdda5889651752503fa754914017a7ec8df14eb3c7cb16384c73248ae",
+      "ledger_sealed_at": 7,
+      "statistic": "two_sided_posterior_predictive_tail_probability",
+      "surprises": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "commitment_artifact_hash": "c3d0fb518441b4a1fe1cae7e20f81e6a4c8581d382be0d538394ba46ba8cff19",
+          "commitment_sequence": 1,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.7714289721508991,
+          "observation_sequence": 8,
+          "predictive_mean_volt": 2.3332631126050396,
+          "predictive_sd_volt": 0.050990265744448655,
+          "source_voltage_volt": 4.0,
+          "standardized_residual": -0.7559801966590638,
+          "tail_probability": 0.4496610693614822,
+          "y_observed_volt": 2.2947154814798534
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "commitment_artifact_hash": "2e0cb2579017dc0449e9d83a903f1fcb33f7b3f7fcef2f0318d3bf0d26c43312",
+          "commitment_sequence": 2,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.8170061294686586,
+          "observation_sequence": 9,
+          "predictive_mean_volt": 5.833157781512599,
+          "predictive_sd_volt": 0.05590210196682532,
+          "source_voltage_volt": 10.0,
+          "standardized_residual": -0.5444421981866965,
+          "tail_probability": 0.5861372203026515,
+          "y_observed_volt": 5.802722318234523
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "commitment_artifact_hash": "12d2becc8e56ea2e714d492a2ddb594f42bb81901dc650be6352100752cf00b2",
+          "commitment_sequence": 3,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.7004156076462733,
+          "observation_sequence": 10,
+          "predictive_mean_volt": 9.333052450420158,
+          "predictive_sd_volt": 0.06403214201502161,
+          "source_voltage_volt": 16.0,
+          "standardized_residual": -0.5079685244435164,
+          "tail_probability": 0.6114754352875669,
+          "y_observed_volt": 9.30052613772383
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "commitment_artifact_hash": "c2ea99d5f159ce54efdc7304baa0a9cd9e40d68b2e3836004eb96cc2f7bc2522",
+          "commitment_sequence": 4,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -0.97531242868687,
+          "observation_sequence": 11,
+          "predictive_mean_volt": 11.666315563025197,
+          "predictive_sd_volt": 0.07071195102129016,
+          "source_voltage_volt": 20.0,
+          "standardized_residual": -1.2287309002509055,
+          "tail_probability": 0.21917270683786907,
+          "y_observed_volt": 11.57942960378831
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "commitment_artifact_hash": "d6a3b21abf372ebfeb289572f5ab97b74385c52d3f3d877b8648b90cb42d3e33",
+          "commitment_sequence": 5,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.158890664036877,
+          "observation_sequence": 12,
+          "predictive_mean_volt": 13.999578675630234,
+          "predictive_sd_volt": 0.07810415625830518,
+          "source_voltage_volt": 24.0,
+          "standardized_residual": -0.971476133742899,
+          "tail_probability": 0.33131123381970196,
+          "y_observed_volt": 13.923702351879164
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "commitment_artifact_hash": "07f028b106031dfee8b9fc68f168e38e6bdc819d2127c274736a7b43e34107a5",
+          "commitment_sequence": 6,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.2212557152734607,
+          "observation_sequence": 13,
+          "predictive_mean_volt": 16.33284178823528,
+          "predictive_sd_volt": 0.08602530345070092,
+          "source_voltage_volt": 28.0,
+          "standardized_residual": -0.7911001163052044,
+          "tail_probability": 0.4288855879558212,
+          "y_observed_volt": 16.26478716067024
+        }
+      ],
+      "verdict": {
+        "aggregate": {
+          "chi2_reference_inflation_factor": 1.7548321585739266,
+          "degrees_of_freedom": 12,
+          "deprecated_reference": "chi_square_2N_assuming_independence",
+          "deprecated_statistic": "fisher_combined_tail_probability",
+          "fisher_p_chi2_independent": 0.5644302234975447,
+          "fisher_p_simulated": 0.5011249437528124,
+          "fisher_x2": 10.589000808306714,
+          "joint_log_score": -10.535775820774532,
+          "n_conditions": 6,
+          "n_extreme": 0,
+          "n_moderate": 0,
+          "n_null_at_least_as_extreme": 18426,
+          "null_calibration": "posterior_predictive_simulation_under_M_const",
+          "null_draws": 20000,
+          "null_mean": -8.533360721762287,
+          "null_q99": -3.167004973804747,
+          "null_rejection_rate_chi2_at_0p05": 0.08225,
+          "null_sd": 1.7224876626095098,
+          "null_seed": 20260822,
+          "p_joint": 0.9213039348032598,
+          "p_joint_is_mc_floor": false,
+          "statistic": "joint_posterior_predictive_log_score"
+        },
+        "rationale": "no condition fell below 0.0001 and the joint score -10.536 sits inside its simulated null (-8.533 +/- 1.722), p_joint = 9.213e-01. The tested conditions gave the family no reason to be rejected \u2014 which is not the same as establishing that it is right.",
+        "rule": "MODEL_SPACE_INADEQUATE  iff  n_extreme >= K_MIN_EXTREME AND p_joint < ALPHA_JOINT. MODEL_ADEQUACY_NOT_ESTABLISHED  iff  not the above AND (n_extreme >= 1 OR p_joint < ALPHA_JOINT_WEAK). MODEL_ADEQUACY_ACCEPTABLE  otherwise. The conjunction in the first clause is load-bearing and independent of the aggregate: no single condition, however extreme, can satisfy n_extreme >= 2, so a p_joint of exactly zero still cannot escalate one isolated surprise.",
+        "state": "model_adequacy_acceptable"
+      }
+    },
+    "calibration": {
+      "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+      "n_admitted": 4,
+      "rows": [
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-001",
+          "execution_id": "e2-control-A-exec-001-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.888821209875206
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-002",
+          "execution_id": "e2-control-A-exec-002-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 2,
+          "y_volt": 5.872291485741004
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-003",
+          "execution_id": "e2-control-A-exec-003-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 3,
+          "y_volt": 5.784633421466084
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-004",
+          "execution_id": "e2-control-A-exec-004-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 4,
+          "y_volt": 5.785685016322573
+        }
+      ]
+    },
+    "challenge": {
+      "n_admitted": 6,
+      "rows": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.3690666211735486e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-005",
+          "execution_id": "e2-control-A-exec-005-challenge_vmid_04V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 2.2947154814798534
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-006",
+          "execution_id": "e2-control-A-exec-006-challenge_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.802722318234523
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 9.476266484694194e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-007",
+          "execution_id": "e2-control-A-exec-007-challenge_vmid_16V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 9.30052613772383
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.03066452612857e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-008",
+          "execution_id": "e2-control-A-exec-008-challenge_vmid_20V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 11.57942960378831
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.826758130930879e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-009",
+          "execution_id": "e2-control-A-exec-009-challenge_vmid_24V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 13.923702351879164
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.200660679947387e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-A-ev-010",
+          "execution_id": "e2-control-A-exec-010-challenge_vmid_28V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 16.26478716067024
+        }
+      ]
+    },
+    "evsi_after_calibration": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 4.1810739896287123e-51,
+        "net": -0.15,
+        "predictive_mean_volt": 5.833157781512599,
+        "predictive_sd_volt": 0.05590210196682532
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 2.0830846015503434e-55,
+        "net": -0.15,
+        "predictive_mean_volt": 2.3332631126050396,
+        "predictive_sd_volt": 0.050990265744448655
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 4.1810739896287123e-51,
+        "net": -0.15,
+        "predictive_mean_volt": 5.833157781512599,
+        "predictive_sd_volt": 0.05590210196682532
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 1.0446600421580942e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 9.333052450420158,
+        "predictive_sd_volt": 0.06403214201502161
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 1.0455135049153153e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 11.666315563025197,
+        "predictive_sd_volt": 0.07071195102129016
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 1.0455135878776665e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 13.999578675630234,
+        "predictive_sd_volt": 0.07810415625830518
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 1.0455135878779114e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 16.33284178823528,
+        "predictive_sd_volt": 0.08602530345070092
+      }
+    },
+    "evsi_after_challenge": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 3.9002770416605556e-275,
+        "net": -0.15,
+        "predictive_mean_volt": 5.807710230604963,
+        "predictive_sd_volt": 0.05097781170508421
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 1.1277439990536703e-279,
+        "net": -0.15,
+        "predictive_mean_volt": 2.3230840922419858,
+        "predictive_sd_volt": 0.050157730867716126
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 3.9002770416605556e-275,
+        "net": -0.15,
+        "predictive_mean_volt": 5.807710230604963,
+        "predictive_sd_volt": 0.05097781170508421
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 8.28626593952395e-275,
+        "net": -0.15,
+        "predictive_mean_volt": 9.292336368967943,
+        "predictive_sd_volt": 0.052466822400178637
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 8.286583460808313e-275,
+        "net": -0.15,
+        "predictive_mean_volt": 11.615420461209926,
+        "predictive_sd_volt": 0.05380473162237761
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 8.286583460988369e-275,
+        "net": -0.15,
+        "predictive_mean_volt": 13.938504553451912,
+        "predictive_sd_volt": 0.05539608983255734
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 8.286583460988369e-275,
+        "net": -0.15,
+        "predictive_mean_volt": 16.261588645693895,
+        "predictive_sd_volt": 0.05721975466667071
+      }
+    },
+    "evsi_prior": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 0.6053272151963338,
+        "net": 0.4553272151963338,
+        "predictive_mean_volt": 2.304878666084667,
+        "predictive_sd_volt": 0.42377711534666207
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 0.6394856130998877,
+        "net": 0.4894856130998877,
+        "predictive_mean_volt": 9.219514664338668,
+        "predictive_sd_volt": 1.6840108954114905
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 0.6412495462393549,
+        "net": 0.4912495462393549,
+        "predictive_mean_volt": 11.524393330423331,
+        "predictive_sd_volt": 2.1046795687915187
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 0.6419872977878612,
+        "net": 0.4919872977878612,
+        "predictive_mean_volt": 13.829271996508,
+        "predictive_sd_volt": 2.5253977044607003
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 0.6423419709948326,
+        "net": 0.49234197099483257,
+        "predictive_mean_volt": 16.134150662592667,
+        "predictive_sd_volt": 2.9461441124095358
+      }
+    },
+    "execution_validity": "valid",
+    "label": "e2-control-A",
+    "posterior_after_calibration": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 41,
+      "entropy_nats": 2.476716567907891,
+      "evpi": 1.0455135878779114e-50,
+      "expected_utility": -1.0455135878779114e-50,
+      "mean_r2_ohm": 1399.9852910449258,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 14.401379103027425
+    },
+    "posterior_after_challenge": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 17,
+      "entropy_nats": 1.5418285180486129,
+      "evpi": 8.286583460988369e-275,
+      "expected_utility": -8.286583460988369e-275,
+      "mean_r2_ohm": 1385.3446995827312,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 5.653895359684419
+    },
+    "posterior_prior": {
+      "bayes_decision": "B",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 401,
+      "entropy_nats": 5.99396142730657,
+      "evpi": 0.6483790523690773,
+      "expected_utility": -0.6483790523690773,
+      "mean_r2_ohm": 1500.0,
+      "p_above_threshold": 0.6483790523690773,
+      "sd_r2_ohm": 578.7918451395112
+    },
+    "prediction_ordering": {
+      "challenge_execution_started_sequences": [
+        25,
+        31,
+        37,
+        43,
+        49,
+        55
+      ],
+      "decision_recommended_sequences": [
+        24
+      ],
+      "event_chain_verified": true,
+      "ledger_chain_verified": true,
+      "prediction_preceded_observation": true
+    },
+    "predictive_dependence": {
+      "all_positive": true,
+      "conditions": [
+        "challenge_vmid_04V",
+        "challenge_vmid_10V",
+        "challenge_vmid_16V",
+        "challenge_vmid_20V",
+        "challenge_vmid_24V",
+        "challenge_vmid_28V"
+      ],
+      "correlation_matrix": [
+        [
+          1.0,
+          0.08771136431421718,
+          0.1225197090646745,
+          0.1386823460737619,
+          0.1506680268945508,
+          0.15959372902633764
+        ],
+        [
+          0.08771136431421718,
+          1.0,
+          0.2793862978465332,
+          0.3162425665389655,
+          0.34357396503194415,
+          0.3639275791020239
+        ],
+        [
+          0.1225197090646745,
+          0.2793862978465332,
+          1.0000000000000002,
+          0.4417437529236982,
+          0.479921644897813,
+          0.5083526115550792
+        ],
+        [
+          0.1386823460737619,
+          0.3162425665389655,
+          0.4417437529236982,
+          1.0000000000000002,
+          0.543232269763833,
+          0.5754138117155302
+        ],
+        [
+          0.15066802689455078,
+          0.34357396503194415,
+          0.4799216448978129,
+          0.543232269763833,
+          1.0000000000000002,
+          0.6251441954474846
+        ],
+        [
+          0.15959372902633764,
+          0.3639275791020239,
+          0.5083526115550792,
+          0.5754138117155302,
+          0.6251441954474847,
+          1.0000000000000002
+        ]
+      ],
+      "latent_variance_share": [
+        0.03846420143104714,
+        0.2000115209372722,
+        0.3902610362573658,
+        0.500018001075633,
+        0.5901813500272932,
+        0.6621782695837645
+      ],
+      "max_off_diagonal": 0.6251441954474846,
+      "mean_off_diagonal": 0.34240759134642984,
+      "min_off_diagonal": 0.08771136431421718,
+      "source_voltages_volt": [
+        4.0,
+        10.0,
+        16.0,
+        20.0,
+        24.0,
+        28.0
+      ],
+      "statement": "the six challenge observations are conditionally independent GIVEN theta and share one calibration posterior; marginalizing it leaves them positively dependent, so their tail probabilities are not independent and no independence-based aggregate reference is valid for them"
+    },
+    "truth_spec_id": "A_well_specified"
+  },
+  "control_b_single_outlier": {
+    "adequacy": {
+      "certification": {
+        "adequacy_state": "model_adequacy_not_established",
+        "disposition": "adequacy_evidence_required",
+        "execution_validity": "valid",
+        "posterior_decision": "A",
+        "reason": "MODEL_ADEQUACY_NOT_ESTABLISHED",
+        "scientific_certification": "not_certifiable",
+        "statement": "the predictive checks were not clean enough to certify and not systematic enough to condemn the family; more preregistered conditions are needed before either claim"
+      },
+      "chain_verified": true,
+      "commitments": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "artifact_hash": "594875884d63f34da7b36a128826566872a0525446a11a56fe45758e9fe0ceeb",
+          "commitment_id": "e2-control-B-ledger-commit-challenge_vmid_04V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.010000360027993668,
+          "predictive_mean_volt": 2.3332631126050396,
+          "predictive_sd_volt": 0.050990265744448655,
+          "sequence": 1,
+          "source_voltage_volt": 4.0
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "artifact_hash": "08987b45722644a442c787316ce6faf9b09e3825fc475a4257829e2c4f77b4f3",
+          "commitment_id": "e2-control-B-ledger-commit-challenge_vmid_10V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.02500090006998417,
+          "predictive_mean_volt": 5.833157781512599,
+          "predictive_sd_volt": 0.05590210196682532,
+          "sequence": 2,
+          "source_voltage_volt": 10.0
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "artifact_hash": "f3f160560511ec9d51b3e4faabf3e9db7edd611ef5fca81a15ae0c9a35316a08",
+          "commitment_id": "e2-control-B-ledger-commit-challenge_vmid_16V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.04000144011197467,
+          "predictive_mean_volt": 9.333052450420158,
+          "predictive_sd_volt": 0.06403214201502161,
+          "sequence": 3,
+          "source_voltage_volt": 16.0
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "artifact_hash": "e8239254aba5c2ddf8133e51a368b065ceb9daba167fe664ec6f648d13757f38",
+          "commitment_id": "e2-control-B-ledger-commit-challenge_vmid_20V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.05000180013996834,
+          "predictive_mean_volt": 11.666315563025197,
+          "predictive_sd_volt": 0.07071195102129016,
+          "sequence": 4,
+          "source_voltage_volt": 20.0
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "artifact_hash": "4aa5720edf0d02468a0c41e4d09956982ae08ce5765a196279d4d39b15c6de83",
+          "commitment_id": "e2-control-B-ledger-commit-challenge_vmid_24V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.06000216016796187,
+          "predictive_mean_volt": 13.999578675630234,
+          "predictive_sd_volt": 0.07810415625830518,
+          "sequence": 5,
+          "source_voltage_volt": 24.0
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "artifact_hash": "5eff1732f40ac975b27a15e9aa67aa65bd4e5154c1a66475e4f224752ee309ba",
+          "commitment_id": "e2-control-B-ledger-commit-challenge_vmid_28V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.07000252019595563,
+          "predictive_mean_volt": 16.33284178823528,
+          "predictive_sd_volt": 0.08602530345070092,
+          "sequence": 6,
+          "source_voltage_volt": 28.0
+        }
+      ],
+      "ledger_head": "cd911d3a17c0265e4e74dedef5528b90f2321cb5a76a87933638ebbcb2923bca",
+      "ledger_sealed_at": 7,
+      "statistic": "two_sided_posterior_predictive_tail_probability",
+      "surprises": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "commitment_artifact_hash": "594875884d63f34da7b36a128826566872a0525446a11a56fe45758e9fe0ceeb",
+          "commitment_sequence": 1,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.7714289721508991,
+          "observation_sequence": 8,
+          "predictive_mean_volt": 2.3332631126050396,
+          "predictive_sd_volt": 0.050990265744448655,
+          "source_voltage_volt": 4.0,
+          "standardized_residual": -0.7559801966590638,
+          "tail_probability": 0.4496610693614822,
+          "y_observed_volt": 2.2947154814798534
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "commitment_artifact_hash": "08987b45722644a442c787316ce6faf9b09e3825fc475a4257829e2c4f77b4f3",
+          "commitment_sequence": 2,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.8170061294686586,
+          "observation_sequence": 9,
+          "predictive_mean_volt": 5.833157781512599,
+          "predictive_sd_volt": 0.05590210196682532,
+          "source_voltage_volt": 10.0,
+          "standardized_residual": -0.5444421981866965,
+          "tail_probability": 0.5861372203026515,
+          "y_observed_volt": 5.802722318234523
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "commitment_artifact_hash": "f3f160560511ec9d51b3e4faabf3e9db7edd611ef5fca81a15ae0c9a35316a08",
+          "commitment_sequence": 3,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.7004156076462733,
+          "observation_sequence": 10,
+          "predictive_mean_volt": 9.333052450420158,
+          "predictive_sd_volt": 0.06403214201502161,
+          "source_voltage_volt": 16.0,
+          "standardized_residual": -0.5079685244435164,
+          "tail_probability": 0.6114754352875669,
+          "y_observed_volt": 9.30052613772383
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "commitment_artifact_hash": "e8239254aba5c2ddf8133e51a368b065ceb9daba167fe664ec6f648d13757f38",
+          "commitment_sequence": 4,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -0.97531242868687,
+          "observation_sequence": 11,
+          "predictive_mean_volt": 11.666315563025197,
+          "predictive_sd_volt": 0.07071195102129016,
+          "source_voltage_volt": 20.0,
+          "standardized_residual": -1.2287309002509055,
+          "tail_probability": 0.21917270683786907,
+          "y_observed_volt": 11.57942960378831
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "commitment_artifact_hash": "4aa5720edf0d02468a0c41e4d09956982ae08ce5765a196279d4d39b15c6de83",
+          "commitment_sequence": 5,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "extreme",
+          "nlpd": 13.112925899674746,
+          "observation_sequence": 12,
+          "predictive_mean_volt": 13.999578675630234,
+          "predictive_sd_volt": 0.07810415625830518,
+          "source_voltage_volt": 24.0,
+          "standardized_residual": 5.430231841264291,
+          "tail_probability": 5.62814854701996e-08,
+          "y_observed_volt": 14.423702351879164
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "commitment_artifact_hash": "5eff1732f40ac975b27a15e9aa67aa65bd4e5154c1a66475e4f224752ee309ba",
+          "commitment_sequence": 6,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.2212557152734607,
+          "observation_sequence": 13,
+          "predictive_mean_volt": 16.33284178823528,
+          "predictive_sd_volt": 0.08602530345070092,
+          "source_voltage_volt": 28.0,
+          "standardized_residual": -0.7911001163052044,
+          "tail_probability": 0.4288855879558212,
+          "y_observed_volt": 16.26478716067024
+        }
+      ],
+      "verdict": {
+        "aggregate": {
+          "chi2_reference_inflation_factor": 1.7548321585739266,
+          "degrees_of_freedom": 12,
+          "deprecated_reference": "chi_square_2N_assuming_independence",
+          "deprecated_statistic": "fisher_combined_tail_probability",
+          "fisher_p_chi2_independent": 3.647161918780466e-05,
+          "fisher_p_simulated": 0.0034998250087495625,
+          "fisher_x2": 41.765407105936646,
+          "joint_log_score": 25.129247506488124,
+          "n_conditions": 6,
+          "n_extreme": 1,
+          "n_moderate": 0,
+          "n_null_at_least_as_extreme": 0,
+          "null_calibration": "posterior_predictive_simulation_under_M_const",
+          "null_draws": 20000,
+          "null_mean": -8.533360721762287,
+          "null_q99": -3.167004973804747,
+          "null_rejection_rate_chi2_at_0p05": 0.08225,
+          "null_sd": 1.7224876626095098,
+          "null_seed": 20260822,
+          "p_joint": 4.999750012499375e-05,
+          "p_joint_is_mc_floor": true,
+          "statistic": "joint_posterior_predictive_log_score"
+        },
+        "rationale": "1 extreme and 0 moderate of 6 conditions, p_joint = 5.000e-05 (Monte Carlo floor: 0 of 20000 null draws were as extreme, so the true value is below 5.0e-05). Enough to withhold the claim that the family is adequate, not enough to conclude it is inadequate: the strongest verdict requires at least 2 individually extreme conditions, so no single observation can produce it however extreme the aggregate.",
+        "rule": "MODEL_SPACE_INADEQUATE  iff  n_extreme >= K_MIN_EXTREME AND p_joint < ALPHA_JOINT. MODEL_ADEQUACY_NOT_ESTABLISHED  iff  not the above AND (n_extreme >= 1 OR p_joint < ALPHA_JOINT_WEAK). MODEL_ADEQUACY_ACCEPTABLE  otherwise. The conjunction in the first clause is load-bearing and independent of the aggregate: no single condition, however extreme, can satisfy n_extreme >= 2, so a p_joint of exactly zero still cannot escalate one isolated surprise.",
+        "state": "model_adequacy_not_established"
+      }
+    },
+    "calibration": {
+      "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+      "n_admitted": 4,
+      "rows": [
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-001",
+          "execution_id": "e2-control-B-exec-001-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.888821209875206
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-002",
+          "execution_id": "e2-control-B-exec-002-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 2,
+          "y_volt": 5.872291485741004
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-003",
+          "execution_id": "e2-control-B-exec-003-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 3,
+          "y_volt": 5.784633421466084
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-004",
+          "execution_id": "e2-control-B-exec-004-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 4,
+          "y_volt": 5.785685016322573
+        }
+      ]
+    },
+    "challenge": {
+      "n_admitted": 6,
+      "rows": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.3690666211735486e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-005",
+          "execution_id": "e2-control-B-exec-005-challenge_vmid_04V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 2.2947154814798534
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-006",
+          "execution_id": "e2-control-B-exec-006-challenge_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.802722318234523
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 9.476266484694194e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-007",
+          "execution_id": "e2-control-B-exec-007-challenge_vmid_16V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 9.30052613772383
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.03066452612857e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-008",
+          "execution_id": "e2-control-B-exec-008-challenge_vmid_20V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 11.57942960378831
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.826758130930879e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-009",
+          "execution_id": "e2-control-B-exec-009-challenge_vmid_24V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 14.423702351879164
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.200660679947387e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-control-B-ev-010",
+          "execution_id": "e2-control-B-exec-010-challenge_vmid_28V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 16.26478716067024
+        }
+      ]
+    },
+    "evsi_after_calibration": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 4.1810739896287123e-51,
+        "net": -0.15,
+        "predictive_mean_volt": 5.833157781512599,
+        "predictive_sd_volt": 0.05590210196682532
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 2.0830846015503434e-55,
+        "net": -0.15,
+        "predictive_mean_volt": 2.3332631126050396,
+        "predictive_sd_volt": 0.050990265744448655
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 4.1810739896287123e-51,
+        "net": -0.15,
+        "predictive_mean_volt": 5.833157781512599,
+        "predictive_sd_volt": 0.05590210196682532
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 1.0446600421580942e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 9.333052450420158,
+        "predictive_sd_volt": 0.06403214201502161
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 1.0455135049153153e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 11.666315563025197,
+        "predictive_sd_volt": 0.07071195102129016
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 1.0455135878776665e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 13.999578675630234,
+        "predictive_sd_volt": 0.07810415625830518
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 1.0455135878779114e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 16.33284178823528,
+        "predictive_sd_volt": 0.08602530345070092
+      }
+    },
+    "evsi_after_challenge": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 5.8551041341390375,
+        "predictive_sd_volt": 0.05097781195667614
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 2.342041653655615,
+        "predictive_sd_volt": 0.05015773090862901
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 5.8551041341390375,
+        "predictive_sd_volt": 0.05097781195667614
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 9.36816661462246,
+        "predictive_sd_volt": 0.0524668230259752
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 11.710208268278075,
+        "predictive_sd_volt": 0.05380473257587041
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 14.052249921933686,
+        "predictive_sd_volt": 0.05539609116614404
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 16.394291575589303,
+        "predictive_sd_volt": 0.05721975642397821
+      }
+    },
+    "evsi_prior": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 0.6053272151963338,
+        "net": 0.4553272151963338,
+        "predictive_mean_volt": 2.304878666084667,
+        "predictive_sd_volt": 0.42377711534666207
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 0.6394856130998877,
+        "net": 0.4894856130998877,
+        "predictive_mean_volt": 9.219514664338668,
+        "predictive_sd_volt": 1.6840108954114905
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 0.6412495462393549,
+        "net": 0.4912495462393549,
+        "predictive_mean_volt": 11.524393330423331,
+        "predictive_sd_volt": 2.1046795687915187
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 0.6419872977878612,
+        "net": 0.4919872977878612,
+        "predictive_mean_volt": 13.829271996508,
+        "predictive_sd_volt": 2.5253977044607003
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 0.6423419709948326,
+        "net": 0.49234197099483257,
+        "predictive_mean_volt": 16.134150662592667,
+        "predictive_sd_volt": 2.9461441124095358
+      }
+    },
+    "execution_validity": "valid",
+    "label": "e2-control-B",
+    "posterior_after_calibration": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 41,
+      "entropy_nats": 2.476716567907891,
+      "evpi": 1.0455135878779114e-50,
+      "expected_utility": -1.0455135878779114e-50,
+      "mean_r2_ohm": 1399.9852910449258,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 14.401379103027425
+    },
+    "posterior_after_challenge": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 17,
+      "entropy_nats": 1.56456758426926,
+      "evpi": 0.0,
+      "expected_utility": 0.0,
+      "mean_r2_ohm": 1412.6197126100237,
+      "p_above_threshold": 0.9999999999999999,
+      "sd_r2_ohm": 5.783934761794222
+    },
+    "posterior_prior": {
+      "bayes_decision": "B",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 401,
+      "entropy_nats": 5.99396142730657,
+      "evpi": 0.6483790523690773,
+      "expected_utility": -0.6483790523690773,
+      "mean_r2_ohm": 1500.0,
+      "p_above_threshold": 0.6483790523690773,
+      "sd_r2_ohm": 578.7918451395112
+    },
+    "prediction_ordering": {
+      "challenge_execution_started_sequences": [
+        25,
+        31,
+        37,
+        43,
+        49,
+        55
+      ],
+      "decision_recommended_sequences": [
+        24
+      ],
+      "event_chain_verified": true,
+      "ledger_chain_verified": true,
+      "prediction_preceded_observation": true
+    },
+    "predictive_dependence": {
+      "all_positive": true,
+      "conditions": [
+        "challenge_vmid_04V",
+        "challenge_vmid_10V",
+        "challenge_vmid_16V",
+        "challenge_vmid_20V",
+        "challenge_vmid_24V",
+        "challenge_vmid_28V"
+      ],
+      "correlation_matrix": [
+        [
+          1.0,
+          0.08771136431421718,
+          0.1225197090646745,
+          0.1386823460737619,
+          0.1506680268945508,
+          0.15959372902633764
+        ],
+        [
+          0.08771136431421718,
+          1.0,
+          0.2793862978465332,
+          0.3162425665389655,
+          0.34357396503194415,
+          0.3639275791020239
+        ],
+        [
+          0.1225197090646745,
+          0.2793862978465332,
+          1.0000000000000002,
+          0.4417437529236982,
+          0.479921644897813,
+          0.5083526115550792
+        ],
+        [
+          0.1386823460737619,
+          0.3162425665389655,
+          0.4417437529236982,
+          1.0000000000000002,
+          0.543232269763833,
+          0.5754138117155302
+        ],
+        [
+          0.15066802689455078,
+          0.34357396503194415,
+          0.4799216448978129,
+          0.543232269763833,
+          1.0000000000000002,
+          0.6251441954474846
+        ],
+        [
+          0.15959372902633764,
+          0.3639275791020239,
+          0.5083526115550792,
+          0.5754138117155302,
+          0.6251441954474847,
+          1.0000000000000002
+        ]
+      ],
+      "latent_variance_share": [
+        0.03846420143104714,
+        0.2000115209372722,
+        0.3902610362573658,
+        0.500018001075633,
+        0.5901813500272932,
+        0.6621782695837645
+      ],
+      "max_off_diagonal": 0.6251441954474846,
+      "mean_off_diagonal": 0.34240759134642984,
+      "min_off_diagonal": 0.08771136431421718,
+      "source_voltages_volt": [
+        4.0,
+        10.0,
+        16.0,
+        20.0,
+        24.0,
+        28.0
+      ],
+      "statement": "the six challenge observations are conditionally independent GIVEN theta and share one calibration posterior; marginalizing it leaves them positively dependent, so their tail probabilities are not independent and no independence-based aggregate reference is valid for them"
+    },
+    "truth_spec_id": "B_single_outlier"
+  },
+  "control_d_computational_failure": {
+    "adequacy_path": {
+      "disposition": "model_revision_required",
+      "reason": "MODEL_SPACE_INADEQUATE"
+    },
+    "admitted": false,
+    "arbiter_verdict": "invalid",
+    "critic_verdict": "fail",
+    "failure_path": {
+      "certification": {
+        "adequacy_state": "model_adequacy_acceptable",
+        "disposition": "execution_repair_required",
+        "execution_validity": "invalid",
+        "posterior_decision": "A",
+        "reason": "EXECUTION_VALIDITY=INVALID",
+        "scientific_certification": "not_certifiable",
+        "statement": "the computation itself did not produce trustworthy output; this is a computational failure, not a model-adequacy finding"
+      },
+      "disposition": "execution_repair_required",
+      "reason": "EXECUTION_VALIDITY=INVALID"
+    },
+    "faulty_execution": {
+      "action_id": "challenge_vmid_20V",
+      "admitted": false,
+      "arbiter_verdict": "invalid",
+      "checks": [
+        {
+          "name": "solver_termination",
+          "observed": null,
+          "outcome": "fail",
+          "threshold": null
+        },
+        {
+          "name": "residual_evidence",
+          "observed": 0.001,
+          "outcome": "fail",
+          "threshold": 1e-09
+        },
+        {
+          "name": "validation_report_status",
+          "observed": null,
+          "outcome": "fail",
+          "threshold": null
+        }
+      ],
+      "critic_verdict": "fail",
+      "evidence_id": "e2-control-d-ev-005",
+      "execution_id": "e2-control-d-exec-005-challenge_vmid_20V",
+      "execution_validity": "invalid",
+      "repeat": 1,
+      "y_volt": 11.934916337781491
+    },
+    "observations_after": 4,
+    "observations_before": 4,
+    "posterior_unchanged": true,
+    "statement": "a broken computation is refused through EXECUTION VALIDITY and yields EXECUTION_REPAIR_REQUIRED; a sound computation whose model mispredicts is refused through MODEL ADEQUACY and yields MODEL_REVISION_REQUIRED. Different evidence, different reason, different remedy \u2014 they never collapse into one status",
+    "states_are_distinct": true
+  },
+  "control_e_confidence_is_not_adequacy": {
+    "certification": "not_certifiable",
+    "certification_when_called_directly": "not_certifiable",
+    "evpi_after_challenge": 0.0,
+    "max_evsi_after_challenge": 0.0,
+    "p_decision_after_challenge": 1.0,
+    "posterior_contracted_while_adequacy_failed": true,
+    "posterior_entropy_after_calibration_nats": 2.476716567907891,
+    "posterior_entropy_after_challenge_nats": 1.6169129751861187,
+    "posterior_sd_after_calibration_ohm": 14.401379103027425,
+    "posterior_sd_after_challenge_ohm": 6.094766933578551,
+    "statement": "P(decision) = 1.000000, posterior sd = 6.095 ohm, EVPI = 0.000e+00, best EVSI = 0.000e+00. Every one of these is computed INSIDE the family under suspicion, so none of them is evidence that the family is right, and none is an argument the gate can hear"
+  },
+  "experiment": "E2",
+  "misspecification_diagnostic": {
+    "note": "under the well-specified truth the best constant fits every condition exactly; under the scored truth no constant can, and the residual is bounded away from zero for every candidate",
+    "scored_truth": {
+      "best_constant_r_ohm": 1486.4690984599292,
+      "sum_squared_residual_volt2": 0.070680217501906,
+      "worst_abs_residual_volt": 0.18344721124161278
+    },
+    "well_specified_truth": {
+      "best_constant_r_ohm": 1378.00000000002,
+      "sum_squared_residual_volt2": 2.591565845832068e-26,
+      "worst_abs_residual_volt": 9.592326932761353e-14
+    }
+  },
+  "preregistration_hash": "6b93e70dac164f286170b3218943062602d47013bbdb83092a102e46a496b216",
+  "prior_stage": {
+    "evsi_table": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 0.6053272151963338,
+        "net": 0.4553272151963338,
+        "predictive_mean_volt": 2.304878666084667,
+        "predictive_sd_volt": 0.42377711534666207
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 0.6394856130998877,
+        "net": 0.4894856130998877,
+        "predictive_mean_volt": 9.219514664338668,
+        "predictive_sd_volt": 1.6840108954114905
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 0.6412495462393549,
+        "net": 0.4912495462393549,
+        "predictive_mean_volt": 11.524393330423331,
+        "predictive_sd_volt": 2.1046795687915187
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 0.6419872977878612,
+        "net": 0.4919872977878612,
+        "predictive_mean_volt": 13.829271996508,
+        "predictive_sd_volt": 2.5253977044607003
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 0.6423419709948326,
+        "net": 0.49234197099483257,
+        "predictive_mean_volt": 16.134150662592667,
+        "predictive_sd_volt": 2.9461441124095358
+      }
+    },
+    "indifference_probability": 0.8,
+    "posterior": {
+      "bayes_decision": "B",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 401,
+      "entropy_nats": 5.99396142730657,
+      "evpi": 0.6483790523690773,
+      "expected_utility": -0.6483790523690773,
+      "mean_r2_ohm": 1500.0,
+      "p_above_threshold": 0.6483790523690773,
+      "sd_r2_ohm": 578.7918451395112
+    }
+  },
+  "scored_run": {
+    "adequacy": {
+      "certification": {
+        "adequacy_state": "model_space_inadequate",
+        "disposition": "model_revision_required",
+        "execution_validity": "valid",
+        "posterior_decision": "A",
+        "reason": "MODEL_SPACE_INADEQUATE",
+        "scientific_certification": "not_certifiable",
+        "statement": "the declared model family is not adequate to support the scientific conclusion under the tested conditions. The data are not wrong, the solver is not wrong, and the replacement model is not known; what is established is that this family predicted these conditions and was wrong about them"
+      },
+      "chain_verified": true,
+      "commitments": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "artifact_hash": "fa3981306006750abb151bdf3eff8e1daf76e72e77674888c2e9e20bc0995c4c",
+          "commitment_id": "e2-scored-C-ledger-commit-challenge_vmid_04V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.010000360027993668,
+          "predictive_mean_volt": 2.3332631126050396,
+          "predictive_sd_volt": 0.050990265744448655,
+          "sequence": 1,
+          "source_voltage_volt": 4.0
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "artifact_hash": "7cab2ab73ecd12a5d151b5208da8d6eb17f94f2d35a99f33cb52fea9bb5817ed",
+          "commitment_id": "e2-scored-C-ledger-commit-challenge_vmid_10V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.02500090006998417,
+          "predictive_mean_volt": 5.833157781512599,
+          "predictive_sd_volt": 0.05590210196682532,
+          "sequence": 2,
+          "source_voltage_volt": 10.0
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "artifact_hash": "9b3d4b143d5f5d8548282091952a15b6ce97fcf4ed83972178000fc0e2b8e93f",
+          "commitment_id": "e2-scored-C-ledger-commit-challenge_vmid_16V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.04000144011197467,
+          "predictive_mean_volt": 9.333052450420158,
+          "predictive_sd_volt": 0.06403214201502161,
+          "sequence": 3,
+          "source_voltage_volt": 16.0
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "artifact_hash": "a2b5a34c405a30566d6c0f8605bb84d852f97b5b9c533bd6ac5b1f3b8aa6d5c9",
+          "commitment_id": "e2-scored-C-ledger-commit-challenge_vmid_20V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.05000180013996834,
+          "predictive_mean_volt": 11.666315563025197,
+          "predictive_sd_volt": 0.07071195102129016,
+          "sequence": 4,
+          "source_voltage_volt": 20.0
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "artifact_hash": "71d91a9b2e8cc2b7577ca009b9d42685739e8cab8df4352f5dd84e92e26577fa",
+          "commitment_id": "e2-scored-C-ledger-commit-challenge_vmid_24V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.06000216016796187,
+          "predictive_mean_volt": 13.999578675630234,
+          "predictive_sd_volt": 0.07810415625830518,
+          "sequence": 5,
+          "source_voltage_volt": 24.0
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "artifact_hash": "065c8956ff8f3bb46c66abe8e2c7d33ee19ff6928da5535ae71b1066b4f1917c",
+          "commitment_id": "e2-scored-C-ledger-commit-challenge_vmid_28V",
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "n_components": 47,
+          "n_observations": 4,
+          "predictive_latent_sd_volt": 0.07000252019595563,
+          "predictive_mean_volt": 16.33284178823528,
+          "predictive_sd_volt": 0.08602530345070092,
+          "sequence": 6,
+          "source_voltage_volt": 28.0
+        }
+      ],
+      "ledger_head": "1da2e06eeeb150e68590bacd82ae4ec8731510044ff39395c6b0a41ff8fb444d",
+      "ledger_sealed_at": 7,
+      "statistic": "two_sided_posterior_predictive_tail_probability",
+      "surprises": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "commitment_artifact_hash": "fa3981306006750abb151bdf3eff8e1daf76e72e77674888c2e9e20bc0995c4c",
+          "commitment_sequence": 1,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -0.40901160770088496,
+          "observation_sequence": 8,
+          "predictive_mean_volt": 2.3332631126050396,
+          "predictive_sd_volt": 0.050990265744448655,
+          "source_voltage_volt": 4.0,
+          "standardized_residual": -1.8155827663510824,
+          "tail_probability": 0.06943439881141011,
+          "y_observed_volt": 2.2406860648677567
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "commitment_artifact_hash": "7cab2ab73ecd12a5d151b5208da8d6eb17f94f2d35a99f33cb52fea9bb5817ed",
+          "commitment_sequence": 2,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "consistent",
+          "nlpd": -1.8170061294686586,
+          "observation_sequence": 9,
+          "predictive_mean_volt": 5.833157781512599,
+          "predictive_sd_volt": 0.05590210196682532,
+          "source_voltage_volt": 10.0,
+          "standardized_residual": -0.5444421981866965,
+          "tail_probability": 0.5861372203026515,
+          "y_observed_volt": 5.802722318234523
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "commitment_artifact_hash": "9b3d4b143d5f5d8548282091952a15b6ce97fcf4ed83972178000fc0e2b8e93f",
+          "commitment_sequence": 3,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "moderate",
+          "nlpd": 1.717525796540201,
+          "observation_sequence": 10,
+          "predictive_mean_volt": 9.333052450420158,
+          "predictive_sd_volt": 0.06403214201502161,
+          "source_voltage_volt": 16.0,
+          "standardized_residual": 2.6634405380939223,
+          "tail_probability": 0.007734612980957846,
+          "y_observed_volt": 9.503598253203954
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "commitment_artifact_hash": "a2b5a34c405a30566d6c0f8605bb84d852f97b5b9c533bd6ac5b1f3b8aa6d5c9",
+          "commitment_sequence": 4,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "moderate",
+          "nlpd": 5.484173497707653,
+          "observation_sequence": 11,
+          "predictive_mean_volt": 11.666315563025197,
+          "predictive_sd_volt": 0.07071195102129016,
+          "source_voltage_volt": 20.0,
+          "standardized_residual": 3.79852020594684,
+          "tail_probability": 0.00014556296981350943,
+          "y_observed_volt": 11.934916337781491
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "commitment_artifact_hash": "71d91a9b2e8cc2b7577ca009b9d42685739e8cab8df4352f5dd84e92e26577fa",
+          "commitment_sequence": 5,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "extreme",
+          "nlpd": 12.597482891662294,
+          "observation_sequence": 12,
+          "predictive_mean_volt": 13.999578675630234,
+          "predictive_sd_volt": 0.07810415625830518,
+          "source_voltage_volt": 24.0,
+          "standardized_residual": 5.334466305069648,
+          "tail_probability": 9.582694215992058e-08,
+          "y_observed_volt": 14.416222665476058
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "commitment_artifact_hash": "065c8956ff8f3bb46c66abe8e2c7d33ee19ff6928da5535ae71b1066b4f1917c",
+          "commitment_sequence": 6,
+          "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+          "level": "extreme",
+          "nlpd": 18.487204475249424,
+          "observation_sequence": 13,
+          "predictive_mean_volt": 16.33284178823528,
+          "predictive_sd_volt": 0.08602530345070092,
+          "source_voltage_volt": 28.0,
+          "standardized_residual": 6.327937766979232,
+          "tail_probability": 2.4846396977806836e-10,
+          "y_observed_volt": 16.87720455485682
+        }
+      ],
+      "verdict": {
+        "aggregate": {
+          "chi2_reference_inflation_factor": 1.7548321585739266,
+          "degrees_of_freedom": 12,
+          "deprecated_reference": "chi_square_2N_assuming_independence",
+          "deprecated_statistic": "fisher_combined_tail_probability",
+          "fisher_p_chi2_independent": 5.102376193757174e-18,
+          "fisher_p_simulated": 4.999750012499375e-05,
+          "fisher_x2": 110.34994214045327,
+          "joint_log_score": 20.296059506079285,
+          "n_conditions": 6,
+          "n_extreme": 2,
+          "n_moderate": 2,
+          "n_null_at_least_as_extreme": 0,
+          "null_calibration": "posterior_predictive_simulation_under_M_const",
+          "null_draws": 20000,
+          "null_mean": -8.533360721762287,
+          "null_q99": -3.167004973804747,
+          "null_rejection_rate_chi2_at_0p05": 0.08225,
+          "null_sd": 1.7224876626095098,
+          "null_seed": 20260822,
+          "p_joint": 4.999750012499375e-05,
+          "p_joint_is_mc_floor": true,
+          "statistic": "joint_posterior_predictive_log_score"
+        },
+        "rationale": "2 of 6 preregistered conditions fell in the far tail of their own pre-observation predictive (threshold 0.0001), AND the complete challenge vector scored 20.296 against a simulated null of -8.533 +/- 1.722, giving p_joint = 5.000e-05 (Monte Carlo floor: 0 of 20000 null draws were as extreme, so the true value is below 5.0e-05). The joint score already allows the family to move theta anywhere its own calibration posterior permits, so this is not something a shared-parameter shift can explain away.",
+        "rule": "MODEL_SPACE_INADEQUATE  iff  n_extreme >= K_MIN_EXTREME AND p_joint < ALPHA_JOINT. MODEL_ADEQUACY_NOT_ESTABLISHED  iff  not the above AND (n_extreme >= 1 OR p_joint < ALPHA_JOINT_WEAK). MODEL_ADEQUACY_ACCEPTABLE  otherwise. The conjunction in the first clause is load-bearing and independent of the aggregate: no single condition, however extreme, can satisfy n_extreme >= 2, so a p_joint of exactly zero still cannot escalate one isolated surprise.",
+        "state": "model_space_inadequate"
+      }
+    },
+    "calibration": {
+      "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+      "n_admitted": 4,
+      "rows": [
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-001",
+          "execution_id": "e2-scored-C-exec-001-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.888821209875206
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-002",
+          "execution_id": "e2-scored-C-exec-002-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 2,
+          "y_volt": 5.872291485741004
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-003",
+          "execution_id": "e2-scored-C-exec-003-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 3,
+          "y_volt": 5.784633421466084
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-004",
+          "execution_id": "e2-scored-C-exec-004-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 4,
+          "y_volt": 5.785685016322573
+        }
+      ]
+    },
+    "challenge": {
+      "n_admitted": 6,
+      "rows": [
+        {
+          "action_id": "challenge_vmid_04V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 5.504229826625667e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-005",
+          "execution_id": "e2-scored-C-exec-005-challenge_vmid_04V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 2.2406860648677567
+        },
+        {
+          "action_id": "challenge_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-006",
+          "execution_id": "e2-scored-C-exec-006-challenge_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.802722318234523
+        },
+        {
+          "action_id": "challenge_vmid_16V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 5.671831713420132e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-007",
+          "execution_id": "e2-scored-C-exec-007-challenge_vmid_16V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 9.503598253203954
+        },
+        {
+          "action_id": "challenge_vmid_20V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 8.074037025352872e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-008",
+          "execution_id": "e2-scored-C-exec-008-challenge_vmid_20V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 11.934916337781491
+        },
+        {
+          "action_id": "challenge_vmid_24V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 6.231898105474409e-19,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-009",
+          "execution_id": "e2-scored-C-exec-009-challenge_vmid_24V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 14.416222665476058
+        },
+        {
+          "action_id": "challenge_vmid_28V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 2.498591941621693e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e2-scored-C-ev-010",
+          "execution_id": "e2-scored-C-exec-010-challenge_vmid_28V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 16.87720455485682
+        }
+      ]
+    },
+    "evsi_after_calibration": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 4.1810739896287123e-51,
+        "net": -0.15,
+        "predictive_mean_volt": 5.833157781512599,
+        "predictive_sd_volt": 0.05590210196682532
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 2.0830846015503434e-55,
+        "net": -0.15,
+        "predictive_mean_volt": 2.3332631126050396,
+        "predictive_sd_volt": 0.050990265744448655
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 4.1810739896287123e-51,
+        "net": -0.15,
+        "predictive_mean_volt": 5.833157781512599,
+        "predictive_sd_volt": 0.05590210196682532
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 1.0446600421580942e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 9.333052450420158,
+        "predictive_sd_volt": 0.06403214201502161
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 1.0455135049153153e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 11.666315563025197,
+        "predictive_sd_volt": 0.07071195102129016
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 1.0455135878776665e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 13.999578675630234,
+        "predictive_sd_volt": 0.07810415625830518
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 1.0455135878779114e-50,
+        "net": -0.15,
+        "predictive_mean_volt": 16.33284178823528,
+        "predictive_sd_volt": 0.08602530345070092
+      }
+    },
+    "evsi_after_challenge": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 5.962178641708102,
+        "predictive_sd_volt": 0.050977812554604686
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 2.3848714566832405,
+        "predictive_sd_volt": 0.050157731005861766
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 5.962178641708102,
+        "predictive_sd_volt": 0.050977812554604686
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 9.539485826732962,
+        "predictive_sd_volt": 0.05246682451323099
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 11.924357283416205,
+        "predictive_sd_volt": 0.05380473484192301
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 14.309228740099444,
+        "predictive_sd_volt": 0.05539609433552064
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 0.0,
+        "net": -0.15,
+        "predictive_mean_volt": 16.69410019678269,
+        "predictive_sd_volt": 0.05721976060036366
+      }
+    },
+    "evsi_prior": {
+      "calibrate_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_04V": {
+        "cost": 0.15,
+        "evsi": 0.6053272151963338,
+        "net": 0.4553272151963338,
+        "predictive_mean_volt": 2.304878666084667,
+        "predictive_sd_volt": 0.42377711534666207
+      },
+      "challenge_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6318606330148493,
+        "net": 0.48186063301484927,
+        "predictive_mean_volt": 5.762196665211666,
+        "predictive_sd_volt": 1.053230279579026
+      },
+      "challenge_vmid_16V": {
+        "cost": 0.15,
+        "evsi": 0.6394856130998877,
+        "net": 0.4894856130998877,
+        "predictive_mean_volt": 9.219514664338668,
+        "predictive_sd_volt": 1.6840108954114905
+      },
+      "challenge_vmid_20V": {
+        "cost": 0.15,
+        "evsi": 0.6412495462393549,
+        "net": 0.4912495462393549,
+        "predictive_mean_volt": 11.524393330423331,
+        "predictive_sd_volt": 2.1046795687915187
+      },
+      "challenge_vmid_24V": {
+        "cost": 0.15,
+        "evsi": 0.6419872977878612,
+        "net": 0.4919872977878612,
+        "predictive_mean_volt": 13.829271996508,
+        "predictive_sd_volt": 2.5253977044607003
+      },
+      "challenge_vmid_28V": {
+        "cost": 0.15,
+        "evsi": 0.6423419709948326,
+        "net": 0.49234197099483257,
+        "predictive_mean_volt": 16.134150662592667,
+        "predictive_sd_volt": 2.9461441124095358
+      }
+    },
+    "execution_validity": "valid",
+    "label": "e2-scored-C",
+    "posterior_after_calibration": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 41,
+      "entropy_nats": 2.476716567907891,
+      "evpi": 1.0455135878779114e-50,
+      "expected_utility": -1.0455135878779114e-50,
+      "mean_r2_ohm": 1399.9852910449258,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 14.401379103027425
+    },
+    "posterior_after_challenge": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 18,
+      "entropy_nats": 1.6169129751861187,
+      "evpi": 0.0,
+      "expected_utility": 0.0,
+      "mean_r2_ohm": 1476.598064640395,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 6.094766933578551
+    },
+    "posterior_prior": {
+      "bayes_decision": "B",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 401,
+      "entropy_nats": 5.99396142730657,
+      "evpi": 0.6483790523690773,
+      "expected_utility": -0.6483790523690773,
+      "mean_r2_ohm": 1500.0,
+      "p_above_threshold": 0.6483790523690773,
+      "sd_r2_ohm": 578.7918451395112
+    },
+    "prediction_ordering": {
+      "challenge_execution_started_sequences": [
+        25,
+        31,
+        37,
+        43,
+        49,
+        55
+      ],
+      "decision_recommended_sequences": [
+        24
+      ],
+      "event_chain_verified": true,
+      "ledger_chain_verified": true,
+      "prediction_preceded_observation": true
+    },
+    "predictive_dependence": {
+      "all_positive": true,
+      "conditions": [
+        "challenge_vmid_04V",
+        "challenge_vmid_10V",
+        "challenge_vmid_16V",
+        "challenge_vmid_20V",
+        "challenge_vmid_24V",
+        "challenge_vmid_28V"
+      ],
+      "correlation_matrix": [
+        [
+          1.0,
+          0.08771136431421718,
+          0.1225197090646745,
+          0.1386823460737619,
+          0.1506680268945508,
+          0.15959372902633764
+        ],
+        [
+          0.08771136431421718,
+          1.0,
+          0.2793862978465332,
+          0.3162425665389655,
+          0.34357396503194415,
+          0.3639275791020239
+        ],
+        [
+          0.1225197090646745,
+          0.2793862978465332,
+          1.0000000000000002,
+          0.4417437529236982,
+          0.479921644897813,
+          0.5083526115550792
+        ],
+        [
+          0.1386823460737619,
+          0.3162425665389655,
+          0.4417437529236982,
+          1.0000000000000002,
+          0.543232269763833,
+          0.5754138117155302
+        ],
+        [
+          0.15066802689455078,
+          0.34357396503194415,
+          0.4799216448978129,
+          0.543232269763833,
+          1.0000000000000002,
+          0.6251441954474846
+        ],
+        [
+          0.15959372902633764,
+          0.3639275791020239,
+          0.5083526115550792,
+          0.5754138117155302,
+          0.6251441954474847,
+          1.0000000000000002
+        ]
+      ],
+      "latent_variance_share": [
+        0.03846420143104714,
+        0.2000115209372722,
+        0.3902610362573658,
+        0.500018001075633,
+        0.5901813500272932,
+        0.6621782695837645
+      ],
+      "max_off_diagonal": 0.6251441954474846,
+      "mean_off_diagonal": 0.34240759134642984,
+      "min_off_diagonal": 0.08771136431421718,
+      "source_voltages_volt": [
+        4.0,
+        10.0,
+        16.0,
+        20.0,
+        24.0,
+        28.0
+      ],
+      "statement": "the six challenge observations are conditionally independent GIVEN theta and share one calibration posterior; marginalizing it leaves them positively dependent, so their tail probabilities are not independent and no independence-based aggregate reference is valid for them"
+    },
+    "truth_spec_id": "C_systematic_misspecification"
+  },
+  "solver_verification": {
+    "abs_tol_volt": 1e-12,
+    "numerical_error_vs_noise": {
+      "ratio": 3.552713678800501e-14,
+      "smallest_declared_sigma_volt": 0.05,
+      "worst_abs_error_volt": 1.7763568394002505e-15
+    },
+    "passed": true,
+    "points": [
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 1.3333333333333333,
+        "r2_ohm": 500.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 1.3333333333333333,
+        "source_voltage_volt": 4.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 2.3179142136248947,
+        "r2_ohm": 1378.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 2.3179142136248947,
+        "source_voltage_volt": 4.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 5.0,
+        "r2_ohm": 1000.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 5.0,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 5.794785534062237,
+        "r2_ohm": 1378.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 5.794785534062237,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 1.7763568394002505e-15,
+        "analytic_vmid_volt": 9.6,
+        "r2_ohm": 1500.0,
+        "rel_error": 1.8503717077085943e-16,
+        "solver_vmid_volt": 9.600000000000001,
+        "source_voltage_volt": 16.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 11.589571068124474,
+        "r2_ohm": 1378.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 11.589571068124474,
+        "source_voltage_volt": 20.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 16.0,
+        "r2_ohm": 2000.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 16.0,
+        "source_voltage_volt": 24.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 16.571428571428573,
+        "r2_ohm": 1450.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 16.571428571428573,
+        "source_voltage_volt": 28.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 20.0,
+        "r2_ohm": 2500.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 20.0,
+        "source_voltage_volt": 28.0
+      }
+    ],
+    "rel_tol": 1e-09,
+    "what_this_does_not_prove": "MODEL ADEQUACY: agreement with the equations of the assumed family says nothing about whether that family describes the hidden world. E2 exists precisely to show these can diverge, and in the scored run they do",
+    "what_this_proves": "IMPLEMENTATION VERIFICATION: the MNA path reproduces the closed-form linear resistive DC relation to machine precision",
+    "worst_abs_error_volt": 1.7763568394002505e-15,
+    "worst_rel_error": 1.8503717077085943e-16
+  },
+  "statistical_validity": {
+    "chi_square_reference_audit": {
+      "assumed_variance_2df": 24.0,
+      "measured_null_variance_inflation": 1.7548321585739266,
+      "null_rejection_rate_at_nominal_0p05": 0.08225,
+      "statement": "under the true null, Fisher's statistic referred to chi-square(2N) rejects at nominal 5% more often than 5% of the time. The v1.0.0 aggregate p-values were therefore too small, in the direction that overstates evidence against the model",
+      "verdict": "ANTI-CONSERVATIVE"
+    },
+    "correction": "v1.1.0 replaces the Fisher/chi-square(2N) aggregate of v1.0.0 with the exact joint posterior-predictive log score for the complete challenge vector, calibrated by posterior-predictive simulation under M_const. The v1.0.0 aggregate assumed independence between tail probabilities that share a common latent R2 and is therefore not a valid reference distribution. Corrected as a validity fix, not a redesign: the per-condition statistic, its threshold, K_MIN_EXTREME, the challenge set, the noise seed, the grid, the prior, the calibration schedule and the hidden law are all unchanged.",
+    "dependence": {
+      "all_positive": true,
+      "conditions": [
+        "challenge_vmid_04V",
+        "challenge_vmid_10V",
+        "challenge_vmid_16V",
+        "challenge_vmid_20V",
+        "challenge_vmid_24V",
+        "challenge_vmid_28V"
+      ],
+      "correlation_matrix": [
+        [
+          1.0,
+          0.08771136431421718,
+          0.1225197090646745,
+          0.1386823460737619,
+          0.1506680268945508,
+          0.15959372902633764
+        ],
+        [
+          0.08771136431421718,
+          1.0,
+          0.2793862978465332,
+          0.3162425665389655,
+          0.34357396503194415,
+          0.3639275791020239
+        ],
+        [
+          0.1225197090646745,
+          0.2793862978465332,
+          1.0000000000000002,
+          0.4417437529236982,
+          0.479921644897813,
+          0.5083526115550792
+        ],
+        [
+          0.1386823460737619,
+          0.3162425665389655,
+          0.4417437529236982,
+          1.0000000000000002,
+          0.543232269763833,
+          0.5754138117155302
+        ],
+        [
+          0.15066802689455078,
+          0.34357396503194415,
+          0.4799216448978129,
+          0.543232269763833,
+          1.0000000000000002,
+          0.6251441954474846
+        ],
+        [
+          0.15959372902633764,
+          0.3639275791020239,
+          0.5083526115550792,
+          0.5754138117155302,
+          0.6251441954474847,
+          1.0000000000000002
+        ]
+      ],
+      "latent_variance_share": [
+        0.03846420143104714,
+        0.2000115209372722,
+        0.3902610362573658,
+        0.500018001075633,
+        0.5901813500272932,
+        0.6621782695837645
+      ],
+      "max_off_diagonal": 0.6251441954474846,
+      "mean_off_diagonal": 0.34240759134642984,
+      "min_off_diagonal": 0.08771136431421718,
+      "source_voltages_volt": [
+        4.0,
+        10.0,
+        16.0,
+        20.0,
+        24.0,
+        28.0
+      ],
+      "statement": "the six challenge observations are conditionally independent GIVEN theta and share one calibration posterior; marginalizing it leaves them positively dependent, so their tail probabilities are not independent and no independence-based aggregate reference is valid for them"
+    },
+    "monte_carlo_floor": 4.999750012499375e-05,
+    "note": "alpha_joint was set by the preregistered Monte Carlo resolution, not by inspecting a result; the sweep shows all three verdicts are unchanged for any threshold from 1e-4 to 1e-2, so the conclusion does not rest on that choice",
+    "superseded_config_hash": "dbe7c538e6f8af198be14bd6863d91249b748969c69b27c308c7df38b0275bce",
+    "threshold_sweep": {
+      "1e-2": {
+        "control_a_well_specified": "model_adequacy_acceptable",
+        "control_b_single_outlier": "model_adequacy_not_established",
+        "scored_run": "model_space_inadequate"
+      },
+      "1e-3": {
+        "control_a_well_specified": "model_adequacy_acceptable",
+        "control_b_single_outlier": "model_adequacy_not_established",
+        "scored_run": "model_space_inadequate"
+      },
+      "1e-4": {
+        "control_a_well_specified": "model_adequacy_acceptable",
+        "control_b_single_outlier": "model_adequacy_not_established",
+        "scored_run": "model_space_inadequate"
+      },
+      "1e-5": {
+        "control_a_well_specified": "model_adequacy_acceptable",
+        "control_b_single_outlier": "model_adequacy_not_established",
+        "scored_run": "model_adequacy_not_established"
+      }
+    },
+    "v1_0_0_vs_v1_1_0": {
+      "control_a_well_specified": {
+        "deprecated_fisher_p_chi2_independent": 0.5644302234975447,
+        "fisher_p_simulated_null": 0.5011249437528124,
+        "joint_p_simulated_null": 0.9213039348032598
+      },
+      "control_b_single_outlier": {
+        "deprecated_fisher_p_chi2_independent": 3.647161918780466e-05,
+        "fisher_p_simulated_null": 0.0034998250087495625,
+        "joint_p_simulated_null": 4.999750012499375e-05
+      },
+      "scored_run": {
+        "deprecated_fisher_p_chi2_independent": 5.102376193757174e-18,
+        "fisher_p_simulated_null": 4.999750012499375e-05,
+        "joint_p_simulated_null": 4.999750012499375e-05
+      }
+    },
+    "verdicts_stable_across_thresholds": true
+  },
+  "success_checks": {
+    "all_challenge_evidence_admitted": true,
+    "all_injections_caught": true,
+    "certification_withheld": true,
+    "control_a_not_falsely_rejected": true,
+    "control_b_not_strongest": true,
+    "control_d_states_distinct": true,
+    "posterior_contracted_while_adequacy_failed": true,
+    "prediction_preceded_observation": true,
+    "scored_is_inadequate": true,
+    "solver_verified": true
+  },
+  "terminal_decision": {
+    "disposition": "model_revision_required",
+    "oracle_decision": "A",
+    "posterior_decision": "A",
+    "posterior_decision_reading": "the decision preferred by p(R2 | data, M_const) \u2014 a statement conditional on the family, not about the world",
+    "reason": "MODEL_SPACE_INADEQUATE",
+    "scientific_certification": "not_certifiable",
+    "threshold_ohm": 1200.0
+  },
+  "truth": {
+    "analytic_relation": "V_mid = Vs * R2 / (R1 + R2)",
+    "control_a_truth": {
+      "description": "a genuine constant inside the assumed family and the prior",
+      "in_assumed_family": true,
+      "kappa": 0.0,
+      "law": "R_eff(Vs) = R0 (constant)",
+      "outlier_action_id": null,
+      "outlier_offset_volt": 0.0,
+      "r0_ohm": 1378.0,
+      "spec_id": "A_well_specified",
+      "vref_volt": 10.0
+    },
+    "control_b_truth": {
+      "description": "the assumed family is correct; exactly one condition carries a declared instrument offset",
+      "in_assumed_family": true,
+      "kappa": 0.0,
+      "law": "R_eff(Vs) = R0 (constant)",
+      "outlier_action_id": "challenge_vmid_24V",
+      "outlier_offset_volt": 0.5,
+      "r0_ohm": 1378.0,
+      "spec_id": "B_single_outlier",
+      "vref_volt": 10.0
+    },
+    "misspecification_magnitude": {
+      "kappa": 0.1,
+      "max_fractional_deviation": 0.1,
+      "statement": "bounded by kappa at every condition; the deviation is exactly zero at the calibration condition by construction"
+    },
+    "oracle_decision": "A",
+    "scope": "synthetic grader-only misspecification; no physical mechanism is claimed and no hardware is involved",
+    "scored_truth": {
+      "description": "condition-dependent effective resistance; no constant R2 reproduces every preregistered condition",
+      "in_assumed_family": false,
+      "kappa": 0.1,
+      "law": "R_eff(Vs) = R0 * (1 + kappa * tanh((Vs - Vref) / Vref))",
+      "outlier_action_id": null,
+      "outlier_offset_volt": 0.0,
+      "r0_ohm": 1378.0,
+      "spec_id": "C_systematic_misspecification",
+      "vref_volt": 10.0
+    }
+  },
+  "verdict": "E2 MODEL-INADEQUACY DETECTED CORRECTLY"
+}

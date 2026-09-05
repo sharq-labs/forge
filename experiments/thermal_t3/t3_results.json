@@ -1,0 +1,927 @@
+{
+  "acceptance": {
+    "all_passed": false,
+    "bands_where_a_cheaper_baseline_matches_reference": {
+      "FAR": [
+        "always_coarse",
+        "always_medium"
+      ],
+      "MODERATE": [
+        "always_medium"
+      ],
+      "NEAR": [],
+      "UNDECIDABLE": []
+    },
+    "checks": {
+      "A1_policy_ccd_beats_every_baseline": false,
+      "A2_policy_accuracy_within_2pp_of_reference": false,
+      "A3_policy_work_below_reference_work": true,
+      "A4_far_band_rarely_reaches_reference": true,
+      "A5_near_band_usually_reaches_reference": false,
+      "A6_benchmark_contains_both_regimes": true,
+      "A7_reference_not_dominant_in_every_band": true
+    },
+    "failed": [
+      "A1_policy_ccd_beats_every_baseline",
+      "A2_policy_accuracy_within_2pp_of_reference",
+      "A5_near_band_usually_reaches_reference"
+    ],
+    "policy_reaches_reference": {
+      "FAR": 0.0,
+      "NEAR": 0.696
+    }
+  },
+  "answer": {
+    "baseline_ccd": {
+      "always_coarse": 2175579.367720466,
+      "always_medium": 936191.0141206675,
+      "always_reference": 684167.032967033
+    },
+    "informative": true,
+    "nominal_wrong_decision_cost": 3276800,
+    "policy_accuracy": 0.874,
+    "policy_ccd": 726545.7208237987,
+    "policy_wins_at_nominal": false,
+    "policy_wins_from_wrong_decision_cost": null,
+    "policy_work_fraction_of_reference": 0.677869140625,
+    "reference_accuracy": 0.91
+  },
+  "base_commit": "4da598d5994fae09b202727228eb5b302cb60c01",
+  "cancellation_check": {
+    "amplification": 333472.26625255623,
+    "at_r_equals_1": {
+      "coarse": 0.4852367013655902,
+      "medium": 0.48523674644676995,
+      "reference": 0.48523675208216743
+    },
+    "at_r_equals_3": {
+      "coarse": 0.13144406848720597,
+      "medium": 0.11648021815908169,
+      "reference": 0.11453149654652361
+    },
+    "cancellation_broken_at_r3": true,
+    "cancellation_holds_at_r1": true,
+    "note": "at the assimilated condition every rung predicts the same value because discretization error is exactly an effective-alpha shift and fitting alpha absorbs it. The terminal condition breaks that, which is the premise the whole experiment rests on",
+    "spread_at_r1": 5.0716577215670355e-08,
+    "spread_at_r3": 0.016912571940682353
+  },
+  "config": {
+    "acceptance_criteria": [
+      "A1 at the nominal WRONG_DECISION_COST the decision-aware policy has a strictly lower cost-to-correct-decision than all three fixed baselines",
+      "A2 policy terminal accuracy is within 2 percentage points of Always Reference, so any cost saving was not bought with reliability",
+      "A3 policy total work is strictly below Always Reference total work",
+      "A4 in the FAR band the policy reaches the reference rung on fewer than 10% of scenarios",
+      "A5 in the NEAR band the policy reaches the reference rung on more than 80% of scenarios",
+      "A6 the benchmark contains both regimes: the coarse rung's terminal numerical error exceeds the decision margin on more than 50% of NEAR scenarios and on fewer than 5% of FAR scenarios",
+      "A7 Always Reference is NOT the accuracy-per-work winner in every band -- there is at least one band where a cheaper fixed baseline matches its accuracy, confirming the benchmark is not rigged toward refinement"
+    ],
+    "base_commit": "4da598d5994fae09b202727228eb5b302cb60c01",
+    "costs": {
+      "cost_model": "a strategy pays the sum of FIDELITY_COST over every rung it ran. The escalating policy therefore pays 80, 5,200 or 332,880; Always Reference pays 327,680 unconditionally",
+      "fidelity_cost": {
+        "coarse": 80,
+        "medium": 5120,
+        "reference": 327680
+      },
+      "units": "work proxy (n_cells * n_steps) from the frozen ladder",
+      "wrong_decision_cost": 3276800,
+      "wrong_decision_cost_sweep": [
+        10000.0,
+        30000.0,
+        100000.0,
+        300000.0,
+        1000000.0,
+        3000000.0,
+        10000000.0,
+        30000000.0,
+        100000000.0
+      ]
+    },
+    "definitions": {
+      "confident_decision": "policy: terminated as robust. baseline: d > SAFETY * QUANTILE * s",
+      "required_escalation_missed": "the strategy's decision is wrong, and a higher rung it did not run would have decided correctly",
+      "unnecessary_escalation": "an escalation after which the final decision is identical to the one the pre-escalation rung would have made, and that decision is correct. The price of not knowing, measurable only in hindsight"
+    },
+    "expected_negative_regime": "below a crossover in WRONG_DECISION_COST the cheap fixed baselines are expected to win outright, because at that point a wrong decision is worth less than the computation that would prevent it. The crossover is predicted before execution to fall in the region of 5-10x the reference rung's cost. This is reported as a measured property of the trade-off, not as a failure of the policy",
+    "experiment_id": "T3",
+    "experiment_name": "decision_aware_fidelity_escalation",
+    "experiment_version": "1.0.0",
+    "falsification_criteria": [
+      "F1 if the policy fails A1, that is recorded as a negative result. The safety factor, the bands, the costs, the nominal wrong-decision cost and the scenario rule are NOT adjusted afterwards",
+      "F2 if A6 fails, the benchmark does not contain both regimes and no comparison between strategies is informative, whoever wins",
+      "F3 if Always Reference dominates every band, the benchmark is rigged toward refinement and must be reported as such rather than as a result",
+      "F4 if the policy's accuracy is materially below Always Reference, a lower cost-to-correct-decision must NOT be reported as success: the saving was bought with reliability",
+      "F5 if the terminal QoI turns out to cancel the bias the way the assimilated one does -- that is, if the rungs' terminal predictions agree closely -- the out-of-sample design failed and T3 answers nothing"
+    ],
+    "inherited": {
+      "t1_config_hash": "2b231b00b950e43818aca18004b29ac55ebca924e4b6c1cfd06f3372917050b7",
+      "t2_config_hash": "63d8e07e0e3a5cfdedb0c8481f37916d873a35ec65ef796a99fd8a4b35dc9bd1",
+      "used_as": "frozen prior calibration evidence only"
+    },
+    "metrics": [
+      "cost_to_correct_decision",
+      "terminal_decision_accuracy",
+      "incorrect_confident_decisions",
+      "total_work",
+      "escalations",
+      "unnecessary_escalations",
+      "required_escalations_missed",
+      "final_fidelity_distribution",
+      "decision_regret",
+      "numerical_error_over_decision_margin"
+    ],
+    "no_tuning_after_results": "the terminal condition, threshold rule, margin bands, scenario count, seed rule, costs, safety factor, escalation rule, stopping rule, baselines and criteria above are fixed before execution and are not adjusted afterwards",
+    "non_goals": [
+      "no generic FidelityPolicy and no new SRIA module \u2014 the escalation logic is experiment-side",
+      "no commitment promotion, no ObligationSet redesign, no certification change, no new EVSI machinery",
+      "no production SRIA change of any kind",
+      "no physical validation; the hidden truth is synthetic and known",
+      "no modification to T1 or T2, which are pinned by digest and used only as frozen prior calibration evidence"
+    ],
+    "observation_model": {
+      "count": 4,
+      "distribution": "gaussian_additive",
+      "metric": "u:midpoint",
+      "sigma": 0.001
+    },
+    "primary_metric": "cost_to_correct_decision",
+    "primary_metric_definition": "(total work + WRONG_DECISION_COST * number of wrong decisions) / number of correct decisions. Lower is better. Both terms are in work-proxy units, which is what makes them addable",
+    "rules": {
+      "baselines": "each fixed baseline runs exactly one rung, forms the same posterior and the same predictive mean, and decides mu < tau. It never escalates and pays that rung's cost on every scenario",
+      "escalation": "start at the cheapest rung. At rung k compute the posterior over alpha from the scenario's observations using rung k's ASSIMILATION map, propagate it through rung k's TERMINAL map to a predictive mean mu_k and sd s_k, and let d_k = |mu_k - tau|. The numerical-error indicator is e_k = |mu_k - mu_{k-1}| for k >= 1 and infinity for k = 0, because a single rung supplies no evidence at all about its own numerical error -- which is precisely what T1 and T2 established. DECIDE if d_k > SAFETY * (QUANTILE * s_k + e_k); otherwise ESCALATE",
+      "indicator_is_conservative": "the successive-difference indicator over-estimates the finer rung's error by roughly 5-10x on the feasibility probe, and no order-of-accuracy correction is applied because the frozen thermal gate refuses to separate spatial from temporal order. Over-escalation in the MODERATE band is therefore expected and is measured, not removed",
+      "quantile": 1.959963984540054,
+      "safety_factor": 1.0,
+      "stopping": "stop escalating, and decide, when any of: (1) the margin is robust to both statistical and numerical uncertainty, d_k > SAFETY * (QUANTILE * s_k + e_k); (2) the margin is inside the statistical uncertainty alone, d_k <= SAFETY * QUANTILE * s_k, because refinement reduces e_k and never s_k, so no amount of fidelity can settle this decision and paying for it is waste; (3) the finest rung has been reached, in which case the decision is taken and recorded as uncertified"
+    },
+    "scenarios": {
+      "alpha_true_range": [
+        1.18e-05,
+        1.22e-05
+      ],
+      "band_intent": {
+        "FAR": "coarse",
+        "MODERATE": "medium",
+        "NEAR": "reference",
+        "UNDECIDABLE": null
+      },
+      "count": 1000,
+      "margin_bands": {
+        "FAR": [
+          0.04,
+          0.08
+        ],
+        "MODERATE": [
+          0.004,
+          0.015
+        ],
+        "NEAR": [
+          0.0008,
+          0.003
+        ],
+        "UNDECIDABLE": [
+          0.0,
+          0.0004
+        ]
+      },
+      "per_band": 250,
+      "rule": "scenario i belongs to band i // SCENARIOS_PER_BAND. Its stream is numpy.random.SeedSequence(SEED_ENTROPY).spawn(SCENARIO_COUNT)[i], and it draws, in this fixed order: alpha_true ~ U(ALPHA_TRUE_MIN, ALPHA_TRUE_MAX); margin ~ U(band_low, band_high); sign ~ {-1,+1} with equal probability; then OBSERVATION_COUNT normal deviates of sd OBSERVATION_SIGMA about the exact QoI at 60 s. The threshold is tau = terminal_truth + sign * margin, so the correct decision is exactly (sign > 0) and the two decisions are balanced by construction",
+      "seed_entropy": 20260909
+    },
+    "scientific_question": "Can a cost-aware decision rule determine when the current numerical fidelity is sufficient for a downstream scientific decision, and when paying for higher fidelity is necessary?",
+    "strategies": [
+      "always_coarse",
+      "always_medium",
+      "always_reference",
+      "decision_aware"
+    ],
+    "terminal_decision": {
+      "assimilation_time_s": 60.0,
+      "asymmetric_loss": false,
+      "decision": "decide TRUE when the terminal QoI is below tau, FALSE otherwise. The decision is made from the posterior-predictive mean of the terminal QoI at whichever rung the strategy stopped on",
+      "decision_id": "terminal_below_threshold",
+      "fourier_ratio_r": 3.0,
+      "loss_model": "0/1 loss on the terminal decision, symmetric",
+      "terminal_metric": "u:midpoint@180s",
+      "terminal_qoi": "normalized dimensionless midpoint temperature of the same slab at 180 s. Never assimilated. u is a normalized field value and is not a temperature in kelvin",
+      "terminal_time_s": 180.0,
+      "why_not_the_assimilated_qoi": "at r = 1 the discretization error is exactly an effective-alpha shift and fitting alpha cancels it, so every rung predicts the assimilated QoI equally well. r = 3 breaks that cancellation"
+    }
+  },
+  "config_hash": "f445c46be4aba5ab0108436bccba5ef1cabb50147cc255fe4ddbcd27124ac7d1",
+  "cost_sweep": [
+    {
+      "ccd": {
+        "always_coarse": 6772.046589018303,
+        "always_medium": 9409.499358151475,
+        "always_reference": 361076.92307692306,
+        "decision_aware": 255588.2837528604
+      },
+      "winner": "always_coarse",
+      "wrong_decision_cost": 10000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 20049.916805324458,
+        "always_medium": 15083.44030808729,
+        "always_reference": 363054.94505494507,
+        "decision_aware": 258471.57894736843
+      },
+      "winner": "always_medium",
+      "wrong_decision_cost": 30000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 66522.462562396,
+        "always_medium": 34942.23363286265,
+        "always_reference": 369978.021978022,
+        "decision_aware": 268563.11212814646
+      },
+      "winner": "always_medium",
+      "wrong_decision_cost": 100000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 199301.16472545758,
+        "always_medium": 91681.6431322208,
+        "always_reference": 389758.2417582418,
+        "decision_aware": 297396.06407322653
+      },
+      "winner": "always_medium",
+      "wrong_decision_cost": 300000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 664026.622296173,
+        "always_medium": 290269.5763799743,
+        "always_reference": 458989.010989011,
+        "decision_aware": 398311.39588100684
+      },
+      "winner": "always_medium",
+      "wrong_decision_cost": 1000000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 1991813.6439267886,
+        "always_medium": 857663.6713735558,
+        "always_reference": 656791.2087912088,
+        "decision_aware": 686640.9153318078
+      },
+      "winner": "always_reference",
+      "wrong_decision_cost": 3000000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 6639068.219633943,
+        "always_medium": 2843543.003851091,
+        "always_reference": 1349098.9010989012,
+        "decision_aware": 1695794.233409611
+      },
+      "winner": "always_reference",
+      "wrong_decision_cost": 10000000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 19916938.435940098,
+        "always_medium": 8517483.953786906,
+        "always_reference": 3327120.8791208793,
+        "decision_aware": 4579089.42791762
+      },
+      "winner": "always_reference",
+      "wrong_decision_cost": 30000000.0
+    },
+    {
+      "ccd": {
+        "always_coarse": 66389484.19301165,
+        "always_medium": 28376277.27856226,
+        "always_reference": 10250197.802197803,
+        "decision_aware": 14670622.608695652
+      },
+      "winner": "always_reference",
+      "wrong_decision_cost": 100000000.0
+    }
+  ],
+  "experiment": "T3",
+  "experiment_version": "1.0.0",
+  "failure_diagnosis": {
+    "cause_1_full_escalation_costs_more_than_going_straight_there": "a strategy pays for every rung it walks past, so reaching the reference rung by escalation costs 332,880 against 327,680 for going there directly. The policy escalated all the way on most scenarios, so its saving in the FAR band was outweighed",
+    "cause_2_the_undecidable_stop_is_corrupted_by_the_bias_it_hunts": {
+      "by_band": {
+        "FAR": 0,
+        "MODERATE": 0,
+        "NEAR": 76,
+        "UNDECIDABLE": 0
+      },
+      "early_stops_below_the_reference_rung": 76,
+      "explanation": "the stopping rule declares a decision statistically undecidable when |mu_k - tau| falls inside the statistical band. But mu_k is the BIASED prediction. A biased rung can therefore push a perfectly decidable scenario to look like a coin flip, and the policy stops paying exactly when it should have carried on",
+      "of_which_decided_wrongly": 36,
+      "this_is_why_A5_failed": true
+    },
+    "cause_3_indicator_conservatism": {
+      "consequence": "the successive-difference indicator over-estimates the finer rung's error, so the robustness test rarely passes at the medium rung and the policy escalates past a fidelity that was already sufficient. The preregistration declared this would happen in the MODERATE band; it did",
+      "declared_in_advance": true,
+      "median_indicator_over_actual_error": 4.516238096537667,
+      "unnecessary_escalations": 722
+    },
+    "of_scenarios": 1000,
+    "policy_paid_more_than_always_reference_on": 662,
+    "preregistered_outcome": "the policy did not meet A1, A2 or A5",
+    "what_the_policy_did_achieve": {
+      "always_coarse_incorrect_confident": 399,
+      "always_reference_incorrect_confident": 5,
+      "incorrect_confident_decisions": 0,
+      "note": "the policy never claimed a decision was robust and got it wrong, on any scenario. Every fixed baseline did. This is a different objective from the preregistered one and does NOT offset the A1/A2/A5 failures; it is recorded because it is measured, not because it rescues the result"
+    }
+  },
+  "falsification": {
+    "comparison_is_informative": true,
+    "fired": [
+      "F1_policy_failed_to_beat_baselines",
+      "F4_saving_bought_with_reliability"
+    ],
+    "triggers": {
+      "F1_policy_failed_to_beat_baselines": true,
+      "F2_benchmark_lacks_both_regimes": false,
+      "F3_reference_dominates_every_band": false,
+      "F4_saving_bought_with_reliability": true,
+      "F5_out_of_sample_design_failed": false
+    }
+  },
+  "numerical_error_vs_margin": {
+    "FAR": {
+      "coarse": {
+        "fraction_error_exceeds_margin": 0.0,
+        "median_numerical_error_over_margin": 0.5125557908067251
+      },
+      "medium": {
+        "fraction_error_exceeds_margin": 0.0,
+        "median_numerical_error_over_margin": 0.05929609575225231
+      },
+      "reference": {
+        "fraction_error_exceeds_margin": 0.0,
+        "median_numerical_error_over_margin": 0.007338351127005481
+      }
+    },
+    "MODERATE": {
+      "coarse": {
+        "fraction_error_exceeds_margin": 1.0,
+        "median_numerical_error_over_margin": 3.282963417760039
+      },
+      "medium": {
+        "fraction_error_exceeds_margin": 0.0,
+        "median_numerical_error_over_margin": 0.3797200821891057
+      },
+      "reference": {
+        "fraction_error_exceeds_margin": 0.0,
+        "median_numerical_error_over_margin": 0.046991447160600275
+      }
+    },
+    "NEAR": {
+      "coarse": {
+        "fraction_error_exceeds_margin": 1.0,
+        "median_numerical_error_over_margin": 15.04241193093462
+      },
+      "medium": {
+        "fraction_error_exceeds_margin": 1.0,
+        "median_numerical_error_over_margin": 1.7399322139121782
+      },
+      "reference": {
+        "fraction_error_exceeds_margin": 0.0,
+        "median_numerical_error_over_margin": 0.2153233050216295
+      }
+    },
+    "UNDECIDABLE": {
+      "coarse": {
+        "fraction_error_exceeds_margin": 1.0,
+        "median_numerical_error_over_margin": 151.236077828543
+      },
+      "medium": {
+        "fraction_error_exceeds_margin": 1.0,
+        "median_numerical_error_over_margin": 17.494104952898592
+      },
+      "reference": {
+        "fraction_error_exceeds_margin": 1.0,
+        "median_numerical_error_over_margin": 2.164984824504915
+      }
+    }
+  },
+  "per_band": {
+    "FAR": {
+      "always_coarse": {
+        "correct": 250,
+        "cost_to_correct_decision": 80.0,
+        "decision_regret": 0,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 250,
+          "medium": 0,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 80.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 20000,
+        "total_work": 20000,
+        "unnecessary_escalations": 0,
+        "wrong": 0
+      },
+      "always_medium": {
+        "correct": 250,
+        "cost_to_correct_decision": 5120.0,
+        "decision_regret": 0,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 250,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 5120.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 1280000,
+        "total_work": 1280000,
+        "unnecessary_escalations": 0,
+        "wrong": 0
+      },
+      "always_reference": {
+        "correct": 250,
+        "cost_to_correct_decision": 327680.0,
+        "decision_regret": 0,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 0,
+          "reference": 250
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 327680.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 81920000,
+        "total_work": 81920000,
+        "unnecessary_escalations": 0,
+        "wrong": 0
+      },
+      "decision_aware": {
+        "correct": 250,
+        "cost_to_correct_decision": 5200.0,
+        "decision_regret": 0,
+        "escalations": 250,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 250,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 5200.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "robust": 250
+        },
+        "total_cost": 1300000,
+        "total_work": 1300000,
+        "unnecessary_escalations": 250,
+        "wrong": 0
+      }
+    },
+    "MODERATE": {
+      "always_coarse": {
+        "correct": 120,
+        "cost_to_correct_decision": 3550033.3333333335,
+        "decision_regret": 425984000,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 250,
+          "medium": 0,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 130,
+        "mean_regret": 1703936.0,
+        "mean_work": 80.0,
+        "required_escalations_missed": 130,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.48,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 426004000,
+        "total_work": 20000,
+        "unnecessary_escalations": 0,
+        "wrong": 130
+      },
+      "always_medium": {
+        "correct": 250,
+        "cost_to_correct_decision": 5120.0,
+        "decision_regret": 0,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 250,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 5120.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 1280000,
+        "total_work": 1280000,
+        "unnecessary_escalations": 0,
+        "wrong": 0
+      },
+      "always_reference": {
+        "correct": 250,
+        "cost_to_correct_decision": 327680.0,
+        "decision_regret": 0,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 0,
+          "reference": 250
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 327680.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 81920000,
+        "total_work": 81920000,
+        "unnecessary_escalations": 0,
+        "wrong": 0
+      },
+      "decision_aware": {
+        "correct": 250,
+        "cost_to_correct_decision": 317151.36,
+        "decision_regret": 0,
+        "escalations": 488,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 12,
+          "reference": 238
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 317151.36,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "robust": 250
+        },
+        "total_cost": 79287840,
+        "total_work": 79287840,
+        "unnecessary_escalations": 250,
+        "wrong": 0
+      }
+    },
+    "NEAR": {
+      "always_coarse": {
+        "correct": 114,
+        "cost_to_correct_decision": 3909340.350877193,
+        "decision_regret": 445644800,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 250,
+          "medium": 0,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 136,
+        "mean_regret": 1782579.2,
+        "mean_work": 80.0,
+        "required_escalations_missed": 136,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.456,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 445664800,
+        "total_work": 20000,
+        "unnecessary_escalations": 0,
+        "wrong": 136
+      },
+      "always_medium": {
+        "correct": 162,
+        "cost_to_correct_decision": 1787891.3580246915,
+        "decision_regret": 288358400,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 250,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 52,
+        "mean_regret": 1153433.6,
+        "mean_work": 5120.0,
+        "required_escalations_missed": 88,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.648,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 289638400,
+        "total_work": 1280000,
+        "unnecessary_escalations": 0,
+        "wrong": 88
+      },
+      "always_reference": {
+        "correct": 250,
+        "cost_to_correct_decision": 327680.0,
+        "decision_regret": 0,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 0,
+          "reference": 250
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 0.0,
+        "mean_work": 327680.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 1.0,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 81920000,
+        "total_work": 81920000,
+        "unnecessary_escalations": 0,
+        "wrong": 0
+      },
+      "decision_aware": {
+        "correct": 214,
+        "cost_to_correct_decision": 823743.5514018692,
+        "decision_regret": 117964800,
+        "escalations": 424,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 76,
+          "reference": 174
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 471859.2,
+        "mean_work": 233265.28,
+        "required_escalations_missed": 36,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.856,
+        "termination_reasons": {
+          "exhausted": 115,
+          "robust": 45,
+          "statistically_undecidable": 90
+        },
+        "total_cost": 176281120,
+        "total_work": 58316320,
+        "unnecessary_escalations": 122,
+        "wrong": 36
+      }
+    },
+    "UNDECIDABLE": {
+      "always_coarse": {
+        "correct": 117,
+        "cost_to_correct_decision": 3725080.341880342,
+        "decision_regret": 435814400,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 250,
+          "medium": 0,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 133,
+        "mean_regret": 1743257.6,
+        "mean_work": 80.0,
+        "required_escalations_missed": 60,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.468,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 435834400,
+        "total_work": 20000,
+        "unnecessary_escalations": 0,
+        "wrong": 133
+      },
+      "always_medium": {
+        "correct": 117,
+        "cost_to_correct_decision": 3735849.5726495725,
+        "decision_regret": 435814400,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 250,
+          "reference": 0
+        },
+        "incorrect_confident_decisions": 133,
+        "mean_regret": 1743257.6,
+        "mean_work": 5120.0,
+        "required_escalations_missed": 60,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.468,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 437094400,
+        "total_work": 1280000,
+        "unnecessary_escalations": 0,
+        "wrong": 133
+      },
+      "always_reference": {
+        "correct": 160,
+        "cost_to_correct_decision": 2355200.0,
+        "decision_regret": 294912000,
+        "escalations": 0,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 0,
+          "reference": 250
+        },
+        "incorrect_confident_decisions": 5,
+        "mean_regret": 1179648.0,
+        "mean_work": 327680.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.64,
+        "termination_reasons": {
+          "fixed": 250
+        },
+        "total_cost": 376832000,
+        "total_work": 81920000,
+        "unnecessary_escalations": 0,
+        "wrong": 90
+      },
+      "decision_aware": {
+        "correct": 160,
+        "cost_to_correct_decision": 2363325.0,
+        "decision_regret": 294912000,
+        "escalations": 500,
+        "final_fidelity_distribution": {
+          "coarse": 0,
+          "medium": 0,
+          "reference": 250
+        },
+        "incorrect_confident_decisions": 0,
+        "mean_regret": 1179648.0,
+        "mean_work": 332880.0,
+        "required_escalations_missed": 0,
+        "scenarios": 250,
+        "terminal_decision_accuracy": 0.64,
+        "termination_reasons": {
+          "exhausted": 45,
+          "statistically_undecidable": 205
+        },
+        "total_cost": 378132000,
+        "total_work": 83220000,
+        "unnecessary_escalations": 100,
+        "wrong": 90
+      }
+    }
+  },
+  "policy_wins_from_wrong_decision_cost": null,
+  "preregistration_hash": "2d756f0abc376b51db248afbc1bcc29f2cc79878dfdeffa82e79d09f6b171688",
+  "scientific_question": "Can a cost-aware decision rule determine when the current numerical fidelity is sufficient for a downstream scientific decision, and when paying for higher fidelity is necessary?",
+  "strategies": {
+    "always_coarse": {
+      "correct": 601,
+      "cost_to_correct_decision": 2175579.367720466,
+      "decision_regret": 1307443200,
+      "escalations": 0,
+      "final_fidelity_distribution": {
+        "coarse": 1000,
+        "medium": 0,
+        "reference": 0
+      },
+      "incorrect_confident_decisions": 399,
+      "mean_regret": 1307443.2,
+      "mean_work": 80.0,
+      "required_escalations_missed": 326,
+      "scenarios": 1000,
+      "terminal_decision_accuracy": 0.601,
+      "termination_reasons": {
+        "fixed": 1000
+      },
+      "total_cost": 1307523200,
+      "total_work": 80000,
+      "unnecessary_escalations": 0,
+      "wrong": 399
+    },
+    "always_medium": {
+      "correct": 779,
+      "cost_to_correct_decision": 936191.0141206675,
+      "decision_regret": 724172800,
+      "escalations": 0,
+      "final_fidelity_distribution": {
+        "coarse": 0,
+        "medium": 1000,
+        "reference": 0
+      },
+      "incorrect_confident_decisions": 185,
+      "mean_regret": 724172.8,
+      "mean_work": 5120.0,
+      "required_escalations_missed": 148,
+      "scenarios": 1000,
+      "terminal_decision_accuracy": 0.779,
+      "termination_reasons": {
+        "fixed": 1000
+      },
+      "total_cost": 729292800,
+      "total_work": 5120000,
+      "unnecessary_escalations": 0,
+      "wrong": 221
+    },
+    "always_reference": {
+      "correct": 910,
+      "cost_to_correct_decision": 684167.032967033,
+      "decision_regret": 294912000,
+      "escalations": 0,
+      "final_fidelity_distribution": {
+        "coarse": 0,
+        "medium": 0,
+        "reference": 1000
+      },
+      "incorrect_confident_decisions": 5,
+      "mean_regret": 294912.0,
+      "mean_work": 327680.0,
+      "required_escalations_missed": 0,
+      "scenarios": 1000,
+      "terminal_decision_accuracy": 0.91,
+      "termination_reasons": {
+        "fixed": 1000
+      },
+      "total_cost": 622592000,
+      "total_work": 327680000,
+      "unnecessary_escalations": 0,
+      "wrong": 90
+    },
+    "decision_aware": {
+      "correct": 874,
+      "cost_to_correct_decision": 726545.7208237987,
+      "decision_regret": 412876800,
+      "escalations": 1662,
+      "final_fidelity_distribution": {
+        "coarse": 0,
+        "medium": 338,
+        "reference": 662
+      },
+      "incorrect_confident_decisions": 0,
+      "mean_regret": 412876.8,
+      "mean_work": 222124.16,
+      "required_escalations_missed": 36,
+      "scenarios": 1000,
+      "terminal_decision_accuracy": 0.874,
+      "termination_reasons": {
+        "exhausted": 160,
+        "robust": 545,
+        "statistically_undecidable": 295
+      },
+      "total_cost": 635000960,
+      "total_work": 222124160,
+      "unnecessary_escalations": 722,
+      "wrong": 126
+    }
+  },
+  "truth": {
+    "alpha_true_max": 1.2198068112341748e-05,
+    "alpha_true_mean": 1.1998279743480733e-05,
+    "alpha_true_min": 1.180066626158565e-05,
+    "decision_balance": {
+      "above_threshold_true": 465,
+      "below_threshold_true": 535
+    },
+    "per_band_margin_mean": {
+      "FAR": 0.05792931964041242,
+      "MODERATE": 0.00913780475734904,
+      "NEAR": 0.0019005262406248512,
+      "UNDECIDABLE": 0.00019517540824975468
+    },
+    "scenario_count": 1000,
+    "scope": "synthetic hidden truth with known alphas; no physical validation and no real measurement is involved",
+    "terminal_time_s": 180.0,
+    "truth_source": "exact analytic solution + declared Gaussian noise"
+  }
+}

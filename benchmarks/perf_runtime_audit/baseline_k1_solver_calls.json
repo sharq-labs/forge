@@ -1,0 +1,428 @@
+{
+  "regimes": [
+    {
+      "category": "easy",
+      "regime_id": "R1",
+      "single_solve": {
+        "convergence": "converged",
+        "is_usable": true,
+        "solve_ivp_calls": 1,
+        "timing_telemetry": {
+          "max_s": 0.05383990000700578,
+          "median_s": 0.05007949995342642,
+          "min_s": 0.04941710003186017,
+          "repeats": 3.0
+        },
+        "work_per_call": {
+          "accepted_steps": 414,
+          "nfev": 1050,
+          "njev": 3,
+          "nlu": 84
+        }
+      },
+      "steady_state_reference": {
+        "timing_telemetry": {
+          "max_s": 0.025546500051859766,
+          "median_s": 0.021043700049631298,
+          "min_s": 0.019703199970535934,
+          "repeats": 3.0
+        }
+      },
+      "stiffness": {
+        "calls": [
+          {
+            "method": "BDF",
+            "nfev": 350,
+            "raised": null,
+            "seconds": 0.014148999995086342,
+            "status": 0
+          },
+          {
+            "method": "RK45",
+            "nfev": 332,
+            "raised": null,
+            "seconds": 0.004415999981574714,
+            "status": 0
+          }
+        ],
+        "explicit_completed": true,
+        "solve_ivp_calls": 2,
+        "timing_telemetry": {
+          "max_s": 0.09499489999143407,
+          "median_s": 0.09499489999143407,
+          "min_s": 0.09499489999143407,
+          "repeats": 1.0
+        },
+        "work_ratio": 0.9485714285714286
+      },
+      "verification_gate": {
+        "calls": [
+          {
+            "method": "BDF",
+            "nfev": 189,
+            "njev": 1,
+            "nlu": 17,
+            "raised": null,
+            "rtol": 1e-06,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 350,
+            "njev": 1,
+            "nlu": 28,
+            "raised": null,
+            "rtol": 1e-08,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 680,
+            "njev": 1,
+            "nlu": 49,
+            "raised": null,
+            "rtol": 1e-10,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 980,
+            "njev": 1,
+            "nlu": 87,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 980,
+            "njev": 1,
+            "nlu": 87,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          },
+          {
+            "method": "Radau",
+            "nfev": 5689,
+            "njev": 2,
+            "nlu": 72,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          }
+        ],
+        "cross_method_agrees": true,
+        "invariant_verified": false,
+        "ladder_rungs": 4,
+        "levels_earned": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "solve_ivp_calls": 6,
+        "steady_state_verified": true,
+        "timing_telemetry": {
+          "max_s": 0.5458595000091009,
+          "median_s": 0.5266115000122227,
+          "min_s": 0.5135306000011042,
+          "repeats": 3.0
+        },
+        "tolerance_independent": true,
+        "total_nfev": 8868
+      }
+    },
+    {
+      "category": "moderately_stiff",
+      "regime_id": "R2",
+      "single_solve": {
+        "convergence": "converged",
+        "is_usable": true,
+        "solve_ivp_calls": 1,
+        "timing_telemetry": {
+          "max_s": 0.10636899998644367,
+          "median_s": 0.09205430001020432,
+          "min_s": 0.08414380002068356,
+          "repeats": 3.0
+        },
+        "work_per_call": {
+          "accepted_steps": 1320,
+          "nfev": 3405,
+          "njev": 6,
+          "nlu": 237
+        }
+      },
+      "steady_state_reference": {
+        "timing_telemetry": {
+          "max_s": 0.02134989999467507,
+          "median_s": 0.02112769999075681,
+          "min_s": 0.019492499995976686,
+          "repeats": 3.0
+        }
+      },
+      "stiffness": {
+        "calls": [
+          {
+            "method": "BDF",
+            "nfev": 1135,
+            "raised": null,
+            "seconds": 0.04971849999856204,
+            "status": 0
+          },
+          {
+            "method": "RK45",
+            "nfev": 181142,
+            "raised": null,
+            "seconds": 1.8392488000099547,
+            "status": 0
+          }
+        ],
+        "explicit_completed": true,
+        "solve_ivp_calls": 2,
+        "timing_telemetry": {
+          "max_s": 1.9834418999962509,
+          "median_s": 1.9834418999962509,
+          "min_s": 1.9834418999962509,
+          "repeats": 1.0
+        },
+        "work_ratio": 159.5964757709251
+      },
+      "verification_gate": {
+        "calls": [
+          {
+            "method": "BDF",
+            "nfev": 658,
+            "njev": 2,
+            "nlu": 34,
+            "raised": null,
+            "rtol": 1e-06,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 1135,
+            "njev": 2,
+            "nlu": 79,
+            "raised": null,
+            "rtol": 1e-08,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 2818,
+            "njev": 2,
+            "nlu": 171,
+            "raised": null,
+            "rtol": 1e-10,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 3936,
+            "njev": 3,
+            "nlu": 329,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 3936,
+            "njev": 3,
+            "nlu": 329,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          },
+          {
+            "method": "Radau",
+            "nfev": 29203,
+            "njev": 2,
+            "nlu": 208,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          }
+        ],
+        "cross_method_agrees": true,
+        "invariant_verified": true,
+        "ladder_rungs": 4,
+        "levels_earned": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "solve_ivp_calls": 6,
+        "steady_state_verified": true,
+        "timing_telemetry": {
+          "max_s": 1.7880888999789022,
+          "median_s": 1.618247499980498,
+          "min_s": 1.6010529000195675,
+          "repeats": 3.0
+        },
+        "tolerance_independent": true,
+        "total_nfev": 41686
+      }
+    },
+    {
+      "category": "strongly_stiff",
+      "regime_id": "R3",
+      "single_solve": {
+        "convergence": "converged",
+        "is_usable": true,
+        "solve_ivp_calls": 1,
+        "timing_telemetry": {
+          "max_s": 0.12379769998369738,
+          "median_s": 0.10609800001839176,
+          "min_s": 0.10469780000858009,
+          "repeats": 3.0
+        },
+        "work_per_call": {
+          "accepted_steps": 1728,
+          "nfev": 4689,
+          "njev": 12,
+          "nlu": 324
+        }
+      },
+      "steady_state_reference": {
+        "timing_telemetry": {
+          "max_s": 0.019901799969375134,
+          "median_s": 0.01967720000538975,
+          "min_s": 0.019632100011222064,
+          "repeats": 3.0
+        }
+      },
+      "stiffness": {
+        "calls": [
+          {
+            "method": "BDF",
+            "nfev": 1563,
+            "raised": null,
+            "seconds": 0.06537080003181472,
+            "status": 0
+          },
+          {
+            "method": "RK45",
+            "nfev": 0,
+            "raised": "IntegrationBudgetExceeded",
+            "seconds": 56.39184070000192,
+            "status": -99
+          }
+        ],
+        "explicit_completed": false,
+        "solve_ivp_calls": 2,
+        "timing_telemetry": {
+          "max_s": 56.6766163999564,
+          "median_s": 56.6766163999564,
+          "min_s": 56.6766163999564,
+          "repeats": 1.0
+        },
+        "work_ratio": 3198.976327575176
+      },
+      "verification_gate": {
+        "calls": [
+          {
+            "method": "BDF",
+            "nfev": 907,
+            "njev": 3,
+            "nlu": 51,
+            "raised": null,
+            "rtol": 1e-06,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 1563,
+            "njev": 4,
+            "nlu": 108,
+            "raised": null,
+            "rtol": 1e-08,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 3818,
+            "njev": 2,
+            "nlu": 225,
+            "raised": null,
+            "rtol": 1e-10,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 5345,
+            "njev": 2,
+            "nlu": 436,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          },
+          {
+            "method": "BDF",
+            "nfev": 5345,
+            "njev": 2,
+            "nlu": 436,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          },
+          {
+            "method": "Radau",
+            "nfev": 38421,
+            "njev": 2,
+            "nlu": 254,
+            "raised": null,
+            "rtol": 1e-12,
+            "status": 0
+          }
+        ],
+        "cross_method_agrees": true,
+        "invariant_verified": true,
+        "ladder_rungs": 4,
+        "levels_earned": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "solve_ivp_calls": 6,
+        "steady_state_verified": true,
+        "timing_telemetry": {
+          "max_s": 2.2604213999584317,
+          "median_s": 2.0555456000147387,
+          "min_s": 1.9301109000225551,
+          "repeats": 3.0
+        },
+        "tolerance_independent": true,
+        "total_nfev": 55399
+      }
+    },
+    {
+      "category": "unusable_result",
+      "regime_id": "R8",
+      "single_solve": {
+        "convergence": "converged",
+        "is_usable": false,
+        "solve_ivp_calls": 1,
+        "timing_telemetry": {
+          "max_s": 0.16951800003880635,
+          "median_s": 0.1390356000047177,
+          "min_s": 0.1313489999738522,
+          "repeats": 3.0
+        },
+        "work_per_call": {
+          "accepted_steps": 1986,
+          "nfev": 5805,
+          "njev": 9,
+          "nlu": 360
+        }
+      },
+      "steady_state_reference": {
+        "timing_telemetry": {
+          "max_s": 0.027610199991613626,
+          "median_s": 0.025079999992158264,
+          "min_s": 0.020485599990934134,
+          "repeats": 3.0
+        }
+      }
+    }
+  ]
+}

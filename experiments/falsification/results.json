@@ -1,0 +1,597 @@
+{
+  "base_commit": "793e8dbcafea0831ae3974c1a63c7593fc5c4a8b",
+  "benchmark": "sria_falsification_transport_v1",
+  "claim": "Under a deliberately misspecified synthetic problem, low model-based EVSI can incorrectly support stopping outside the empirically justified support region. A separate transport/support requirement prevents scientific certification of that stop.",
+  "scenarios": [
+    {
+      "acquisition_costs": {
+        "measure_at_10": 0.5,
+        "measure_at_8": 0.01,
+        "measure_irrelevant": 0.01
+      },
+      "description": "Cheap observations in [0, 8] pin the linear model tightly. The terminal decision is at x=10, outside the observed region, where the hidden truth changes regime.",
+      "evpi": 7.082904266831503e-180,
+      "evsi": {
+        "measure_at_10": {
+          "cost": 0.5,
+          "evsi": 7.082904266831503e-180,
+          "net": -0.5
+        },
+        "measure_at_8": {
+          "cost": 0.01,
+          "evsi": 7.082904266831453e-180,
+          "net": -0.01
+        },
+        "measure_irrelevant": {
+          "cost": 0.01,
+          "evsi": 8.561755269564074e-196,
+          "net": -0.01
+        }
+      },
+      "naive_policy": {
+        "best_action_id": "measure_irrelevant",
+        "best_net_value": -0.01,
+        "detail": "best net value -0.01 <= 0; under the assumed model no experiment pays for itself",
+        "policy": "naive_decision_theoretic",
+        "reason": "no_action_worth_buying",
+        "support": null,
+        "verdict": "stop_allowed"
+      },
+      "observations": [
+        {
+          "sigma": 0.05,
+          "x": 0.0,
+          "y": 0.984668059
+        },
+        {
+          "sigma": 0.05,
+          "x": 1.0,
+          "y": 1.548704774
+        },
+        {
+          "sigma": 0.05,
+          "x": 2.0,
+          "y": 1.959096318
+        },
+        {
+          "sigma": 0.05,
+          "x": 3.0,
+          "y": 2.528250461
+        },
+        {
+          "sigma": 0.05,
+          "x": 4.0,
+          "y": 3.033586798
+        },
+        {
+          "sigma": 0.05,
+          "x": 5.0,
+          "y": 3.530846662
+        },
+        {
+          "sigma": 0.05,
+          "x": 6.0,
+          "y": 4.027616596
+        },
+        {
+          "sigma": 0.05,
+          "x": 7.0,
+          "y": 4.438956141
+        },
+        {
+          "sigma": 0.05,
+          "x": 8.0,
+          "y": 4.995751162
+        }
+      ],
+      "outcome": {
+        "aware_certified_stop": false,
+        "aware_decision_correct_if_stopped": null,
+        "naive_certified_stop": true,
+        "naive_decision_correct_if_stopped": false
+      },
+      "posterior": {
+        "effective_support": 3074,
+        "mean_a": 1.0149603341251088,
+        "mean_b": 0.4975787211960695
+      },
+      "predictive_at_decision": {
+        "mean": 5.990747546085805,
+        "p_above_threshold": 1.0000000000000002,
+        "sd": 0.0421637021355784,
+        "threshold": 5.0,
+        "x_star": 10.0
+      },
+      "prior": {
+        "a_range": [
+          0.5,
+          1.5
+        ],
+        "b_range": [
+          0.4,
+          0.6
+        ],
+        "grid_points": 40401,
+        "grid_shape": [
+          201,
+          201
+        ],
+        "kind": "uniform"
+      },
+      "scenario": "TRAP_out_of_support",
+      "support": {
+        "detail": "x*=10 lies outside the observed interval [-0.5, 8.5] and no transport justification covers it",
+        "justification_id": "",
+        "margin": 0.5,
+        "region": [
+          -0.5,
+          8.5
+        ],
+        "rule_id": "interval_hull_with_margin/1",
+        "status": "unsupported",
+        "x_star": 10.0
+      },
+      "terminal_decision": {
+        "decision": "A",
+        "expected_utility": -7.082904266831503e-180,
+        "indifference_probability": 0.9090909090909091
+      },
+      "transport_aware_policy": {
+        "best_action_id": "measure_irrelevant",
+        "best_net_value": -0.01,
+        "detail": "no experiment pays for itself under the assumed model, but x*=10 lies outside the observed interval [-0.5, 8.5] and no transport justification covers it. A sharp posterior over an unobserved region reflects the model's form, not the evidence's reach, so low EVSI cannot certify this stop.",
+        "policy": "transport_aware",
+        "reason": "unsupported_transport",
+        "support": {
+          "detail": "x*=10 lies outside the observed interval [-0.5, 8.5] and no transport justification covers it",
+          "justification_id": "",
+          "margin": 0.5,
+          "region": [
+            -0.5,
+            8.5
+          ],
+          "rule_id": "interval_hull_with_margin/1",
+          "status": "unsupported",
+          "x_star": 10.0
+        },
+        "verdict": "stop_not_certifiable"
+      },
+      "truth_known_to_grader": {
+        "above_threshold": false,
+        "correct_decision": "B",
+        "qoi_at_x_star": 4.2
+      }
+    },
+    {
+      "acquisition_costs": {
+        "measure_at_4": 0.5,
+        "measure_irrelevant": 0.01
+      },
+      "description": "Same evidence and same model, but the terminal decision is at x=4, inside the observed region. A legitimate stop must not be blocked merely because the support guard exists.",
+      "evpi": 5.647413565802063e-201,
+      "evsi": {
+        "measure_at_4": {
+          "cost": 0.5,
+          "evsi": 5.629486224726146e-201,
+          "net": -0.5
+        },
+        "measure_irrelevant": {
+          "cost": 0.01,
+          "evsi": 0.0,
+          "net": -0.01
+        }
+      },
+      "naive_policy": {
+        "best_action_id": "measure_irrelevant",
+        "best_net_value": -0.01,
+        "detail": "best net value -0.01 <= 0; under the assumed model no experiment pays for itself",
+        "policy": "naive_decision_theoretic",
+        "reason": "no_action_worth_buying",
+        "support": null,
+        "verdict": "stop_allowed"
+      },
+      "observations": [
+        {
+          "sigma": 0.05,
+          "x": 0.0,
+          "y": 0.984668059
+        },
+        {
+          "sigma": 0.05,
+          "x": 1.0,
+          "y": 1.548704774
+        },
+        {
+          "sigma": 0.05,
+          "x": 2.0,
+          "y": 1.959096318
+        },
+        {
+          "sigma": 0.05,
+          "x": 3.0,
+          "y": 2.528250461
+        },
+        {
+          "sigma": 0.05,
+          "x": 4.0,
+          "y": 3.033586798
+        },
+        {
+          "sigma": 0.05,
+          "x": 5.0,
+          "y": 3.530846662
+        },
+        {
+          "sigma": 0.05,
+          "x": 6.0,
+          "y": 4.027616596
+        },
+        {
+          "sigma": 0.05,
+          "x": 7.0,
+          "y": 4.438956141
+        },
+        {
+          "sigma": 0.05,
+          "x": 8.0,
+          "y": 4.995751162
+        }
+      ],
+      "outcome": {
+        "aware_certified_stop": true,
+        "aware_decision_correct_if_stopped": true,
+        "naive_certified_stop": true,
+        "naive_decision_correct_if_stopped": true
+      },
+      "posterior": {
+        "effective_support": 3074,
+        "mean_a": 1.0149603341251088,
+        "mean_b": 0.4975787211960695
+      },
+      "predictive_at_decision": {
+        "mean": 3.0052752189093868,
+        "p_above_threshold": 1.0,
+        "sd": 0.01666666666666667,
+        "threshold": 2.5,
+        "x_star": 4.0
+      },
+      "prior": {
+        "a_range": [
+          0.5,
+          1.5
+        ],
+        "b_range": [
+          0.4,
+          0.6
+        ],
+        "grid_points": 40401,
+        "grid_shape": [
+          201,
+          201
+        ],
+        "kind": "uniform"
+      },
+      "scenario": "CONTROL_in_support",
+      "support": {
+        "detail": "x*=4 lies inside the observed interval [-0.5, 8.5]",
+        "justification_id": "",
+        "margin": 0.5,
+        "region": [
+          -0.5,
+          8.5
+        ],
+        "rule_id": "interval_hull_with_margin/1",
+        "status": "supported",
+        "x_star": 4.0
+      },
+      "terminal_decision": {
+        "decision": "A",
+        "expected_utility": -5.647413565802063e-201,
+        "indifference_probability": 0.9090909090909091
+      },
+      "transport_aware_policy": {
+        "best_action_id": "measure_irrelevant",
+        "best_net_value": -0.01,
+        "detail": "best net value -0.01 <= 0 and x*=4 lies inside the observed interval [-0.5, 8.5]; both conditions for certifying a stop are met",
+        "policy": "transport_aware",
+        "reason": "no_action_worth_buying",
+        "support": {
+          "detail": "x*=4 lies inside the observed interval [-0.5, 8.5]",
+          "justification_id": "",
+          "margin": 0.5,
+          "region": [
+            -0.5,
+            8.5
+          ],
+          "rule_id": "interval_hull_with_margin/1",
+          "status": "supported",
+          "x_star": 4.0
+        },
+        "verdict": "stop_allowed"
+      },
+      "truth_known_to_grader": {
+        "above_threshold": true,
+        "correct_decision": "A",
+        "qoi_at_x_star": 3.0
+      }
+    },
+    {
+      "acquisition_costs": {
+        "measure_at_4": 0.01,
+        "measure_irrelevant": 0.01
+      },
+      "description": "Two noisy observations only. The posterior at x=4 straddles the threshold, so an additional measurement carries real value. This scenario exists to show the EVSI machinery returns non-zero numbers when the decision is actually uncertain.",
+      "evpi": 0.6258038571943433,
+      "evsi": {
+        "measure_at_4": {
+          "cost": 0.01,
+          "evsi": 0.02857491640597698,
+          "net": 0.018574916405976978
+        },
+        "measure_irrelevant": {
+          "cost": 0.01,
+          "evsi": -1.1102230246251565e-16,
+          "net": -0.010000000000000111
+        }
+      },
+      "naive_policy": {
+        "best_action_id": "measure_at_4",
+        "best_net_value": 0.018574916405976978,
+        "detail": "action 'measure_at_4' has net value 0.0185749 > 0",
+        "policy": "naive_decision_theoretic",
+        "reason": "positive_net_value_available",
+        "support": null,
+        "verdict": "continue"
+      },
+      "observations": [
+        {
+          "sigma": 0.5,
+          "x": 0.0,
+          "y": 0.846680588
+        },
+        {
+          "sigma": 0.5,
+          "x": 1.0,
+          "y": 1.987047737
+        }
+      ],
+      "outcome": {
+        "aware_certified_stop": false,
+        "aware_decision_correct_if_stopped": null,
+        "naive_certified_stop": false,
+        "naive_decision_correct_if_stopped": null
+      },
+      "posterior": {
+        "effective_support": 40401,
+        "mean_a": 1.0824110106983298,
+        "mean_b": 0.5053993037556789
+      },
+      "predictive_at_decision": {
+        "mean": 3.1040082257210457,
+        "p_above_threshold": 0.6258038571943434,
+        "sd": 0.3283549265026693,
+        "threshold": 3.0,
+        "x_star": 4.0
+      },
+      "prior": {
+        "a_range": [
+          0.5,
+          1.5
+        ],
+        "b_range": [
+          0.4,
+          0.6
+        ],
+        "grid_points": 40401,
+        "grid_shape": [
+          201,
+          201
+        ],
+        "kind": "uniform"
+      },
+      "scenario": "INFORMATIVE_evsi_positive",
+      "support": {
+        "detail": "x*=4 lies outside the observed interval [-0.5, 1.5] and no transport justification covers it",
+        "justification_id": "",
+        "margin": 0.5,
+        "region": [
+          -0.5,
+          1.5
+        ],
+        "rule_id": "interval_hull_with_margin/1",
+        "status": "unsupported",
+        "x_star": 4.0
+      },
+      "terminal_decision": {
+        "decision": "B",
+        "expected_utility": -0.6258038571943433,
+        "indifference_probability": 0.9090909090909091
+      },
+      "transport_aware_policy": {
+        "best_action_id": "measure_at_4",
+        "best_net_value": 0.018574916405976978,
+        "detail": "action 'measure_at_4' has net value 0.0185749 > 0",
+        "policy": "transport_aware",
+        "reason": "positive_net_value_available",
+        "support": {
+          "detail": "x*=4 lies outside the observed interval [-0.5, 1.5] and no transport justification covers it",
+          "justification_id": "",
+          "margin": 0.5,
+          "region": [
+            -0.5,
+            1.5
+          ],
+          "rule_id": "interval_hull_with_margin/1",
+          "status": "unsupported",
+          "x_star": 4.0
+        },
+        "verdict": "continue"
+      },
+      "truth_known_to_grader": {
+        "above_threshold": false,
+        "correct_decision": "B",
+        "qoi_at_x_star": 3.0
+      }
+    },
+    {
+      "acquisition_costs": {
+        "measure_at_10": 0.5,
+        "measure_at_8": 0.01,
+        "measure_irrelevant": 0.01
+      },
+      "description": "Identical to the trap, except a transport justification covering x in [8, 12] has been declared. Certification becomes possible \u2014 and the claim is now attributable to a named owner.",
+      "evpi": 7.082904266831503e-180,
+      "evsi": {
+        "measure_at_10": {
+          "cost": 0.5,
+          "evsi": 7.082904266831503e-180,
+          "net": -0.5
+        },
+        "measure_at_8": {
+          "cost": 0.01,
+          "evsi": 7.082904266831453e-180,
+          "net": -0.01
+        },
+        "measure_irrelevant": {
+          "cost": 0.01,
+          "evsi": 8.561755269564074e-196,
+          "net": -0.01
+        }
+      },
+      "naive_policy": {
+        "best_action_id": "measure_irrelevant",
+        "best_net_value": -0.01,
+        "detail": "best net value -0.01 <= 0; under the assumed model no experiment pays for itself",
+        "policy": "naive_decision_theoretic",
+        "reason": "no_action_worth_buying",
+        "support": null,
+        "verdict": "stop_allowed"
+      },
+      "observations": [
+        {
+          "sigma": 0.05,
+          "x": 0.0,
+          "y": 0.984668059
+        },
+        {
+          "sigma": 0.05,
+          "x": 1.0,
+          "y": 1.548704774
+        },
+        {
+          "sigma": 0.05,
+          "x": 2.0,
+          "y": 1.959096318
+        },
+        {
+          "sigma": 0.05,
+          "x": 3.0,
+          "y": 2.528250461
+        },
+        {
+          "sigma": 0.05,
+          "x": 4.0,
+          "y": 3.033586798
+        },
+        {
+          "sigma": 0.05,
+          "x": 5.0,
+          "y": 3.530846662
+        },
+        {
+          "sigma": 0.05,
+          "x": 6.0,
+          "y": 4.027616596
+        },
+        {
+          "sigma": 0.05,
+          "x": 7.0,
+          "y": 4.438956141
+        },
+        {
+          "sigma": 0.05,
+          "x": 8.0,
+          "y": 4.995751162
+        }
+      ],
+      "outcome": {
+        "aware_certified_stop": true,
+        "aware_decision_correct_if_stopped": false,
+        "naive_certified_stop": true,
+        "naive_decision_correct_if_stopped": false
+      },
+      "posterior": {
+        "effective_support": 3074,
+        "mean_a": 1.0149603341251088,
+        "mean_b": 0.4975787211960695
+      },
+      "predictive_at_decision": {
+        "mean": 5.990747546085805,
+        "p_above_threshold": 1.0000000000000002,
+        "sd": 0.0421637021355784,
+        "threshold": 5.0,
+        "x_star": 10.0
+      },
+      "prior": {
+        "a_range": [
+          0.5,
+          1.5
+        ],
+        "b_range": [
+          0.4,
+          0.6
+        ],
+        "grid_points": 40401,
+        "grid_shape": [
+          201,
+          201
+        ],
+        "kind": "uniform"
+      },
+      "scenario": "TRAP_with_declared_transport",
+      "support": {
+        "detail": "x*=10 is outside [-0.5, 8.5] but is covered by declared transport justification 'linear_regime_to_12' owned by 'benchmark.declared_owner': the governing mechanism is asserted to remain linear to x=12 on theoretical grounds",
+        "justification_id": "linear_regime_to_12",
+        "margin": 0.5,
+        "region": [
+          -0.5,
+          8.5
+        ],
+        "rule_id": "interval_hull_with_margin/1",
+        "status": "justified_transport",
+        "x_star": 10.0
+      },
+      "terminal_decision": {
+        "decision": "A",
+        "expected_utility": -7.082904266831503e-180,
+        "indifference_probability": 0.9090909090909091
+      },
+      "transport_aware_policy": {
+        "best_action_id": "measure_irrelevant",
+        "best_net_value": -0.01,
+        "detail": "best net value -0.01 <= 0 and x*=10 is outside [-0.5, 8.5] but is covered by declared transport justification 'linear_regime_to_12' owned by 'benchmark.declared_owner': the governing mechanism is asserted to remain linear to x=12 on theoretical grounds; both conditions for certifying a stop are met",
+        "policy": "transport_aware",
+        "reason": "no_action_worth_buying",
+        "support": {
+          "detail": "x*=10 is outside [-0.5, 8.5] but is covered by declared transport justification 'linear_regime_to_12' owned by 'benchmark.declared_owner': the governing mechanism is asserted to remain linear to x=12 on theoretical grounds",
+          "justification_id": "linear_regime_to_12",
+          "margin": 0.5,
+          "region": [
+            -0.5,
+            8.5
+          ],
+          "rule_id": "interval_hull_with_margin/1",
+          "status": "justified_transport",
+          "x_star": 10.0
+        },
+        "verdict": "stop_allowed"
+      },
+      "truth_known_to_grader": {
+        "above_threshold": false,
+        "correct_decision": "B",
+        "qoi_at_x_star": 4.2
+      }
+    }
+  ],
+  "seed": 20260807
+}

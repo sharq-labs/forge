@@ -1,0 +1,83 @@
+{
+  "events_per_checkpoint": 4,
+  "rows": [
+    {
+      "build_and_save_s": {
+        "first_save_s": 6.550003308802843e-05,
+        "last_save_s": 0.0006608999683521688,
+        "median_save_s": 0.00017164999735541642,
+        "total_build_s": 0.0022538999910466373
+      },
+      "checkpoints": 10,
+      "events_in_head_log": 40,
+      "json_dumps_s": 0.0006326999864540994,
+      "load_from_path_s": 0.003124799986835569,
+      "on_disk_bytes": 110126,
+      "save_to_path_s": 0.001185000000987202,
+      "serialized_bytes": 106793,
+      "to_dict_s": 0.0003712000325322151,
+      "total_event_records_stored": 220,
+      "verify_chain_all_checkpoints_s": 0.0008175999973900616,
+      "verify_chain_head_s": 0.00015259999781847
+    },
+    {
+      "build_and_save_s": {
+        "first_save_s": 4.5900000259280205e-05,
+        "last_save_s": 0.0029616000247187912,
+        "median_save_s": 0.0020309500105213374,
+        "total_build_s": 0.2071948000229895
+      },
+      "checkpoints": 100,
+      "events_in_head_log": 400,
+      "json_dumps_s": 0.042529999976977706,
+      "load_from_path_s": 0.26204439997673035,
+      "on_disk_bytes": 9047286,
+      "save_to_path_s": 0.0619105999940075,
+      "serialized_bytes": 8779983,
+      "to_dict_s": 0.012768700020387769,
+      "total_event_records_stored": 20200,
+      "verify_chain_all_checkpoints_s": 0.08548959996551275,
+      "verify_chain_head_s": 0.001548200030811131
+    },
+    {
+      "build_and_save_s": {
+        "first_save_s": 5.670002428814769e-05,
+        "last_save_s": 0.0093889000127092,
+        "median_save_s": 0.005902999982936308,
+        "total_build_s": 1.7465934004285373
+      },
+      "checkpoints": 300,
+      "events_in_head_log": 1200,
+      "json_dumps_s": 0.3214004000183195,
+      "load_from_path_s": 2.3374686000170186,
+      "on_disk_bytes": 80344786,
+      "save_to_path_s": 0.5746812999714166,
+      "serialized_bytes": 77982883,
+      "to_dict_s": 0.10434449999593198,
+      "total_event_records_stored": 180600,
+      "verify_chain_all_checkpoints_s": 0.7591373000177555,
+      "verify_chain_head_s": 0.004680300015024841
+    },
+    {
+      "build_and_save_s": {
+        "first_save_s": 5.8699981309473515e-05,
+        "last_save_s": 0.03363869996974245,
+        "median_save_s": 0.017663100006757304,
+        "total_build_s": 18.241470000939444
+      },
+      "checkpoints": 1000,
+      "events_in_head_log": 4000,
+      "full_serialize_skipped": true,
+      "head_checkpoint_bytes": 1519138,
+      "json_dumps_s": null,
+      "load_from_path_s": null,
+      "on_disk_bytes": null,
+      "save_to_path_s": null,
+      "serialized_bytes": null,
+      "to_dict_s": null,
+      "total_event_records_stored": 2002000,
+      "verify_chain_all_checkpoints_s": null,
+      "verify_chain_head_s": 0.016508799977600574
+    }
+  ]
+}

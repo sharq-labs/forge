@@ -1,0 +1,1298 @@
+{
+  "base_commit": "4ac821b8b3fbbc06fb784d9d66a7e12a5fe391cc",
+  "checks": {
+    "budget_validation_spend_from_reservation": true,
+    "certification_actions_are_net_negative": true,
+    "event_chains_verified": true,
+    "evsi_unchanged_by_requirement": true,
+    "invalid_execution_left_belief_unchanged": true,
+    "predictions_precede_executions": true,
+    "world_a_adequacy_acceptable": true,
+    "world_a_certification_eligible": true,
+    "world_a_parameter_action_bought_first": true,
+    "world_a_requirement_satisfied": true,
+    "world_a_runner_routed_all_required": true,
+    "world_a_stop_approved": true,
+    "world_b_adequacy_inadequate": true,
+    "world_b_certification_denied": true,
+    "world_b_parameter_action_bought_first": true,
+    "world_b_requirement_satisfied": true,
+    "world_b_runner_routed_all_required": true,
+    "world_b_stop_rejected": true
+  },
+  "config": {
+    "actions": [
+      {
+        "action_family": "characterize",
+        "action_id": "measure_vmid_10V_precise",
+        "cost": 0.1,
+        "noise_sigma_volt": 0.01,
+        "phase": "parameter",
+        "required_for_certification": false,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_16V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": true,
+        "source_voltage_volt": 16.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_20V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": false,
+        "source_voltage_volt": 20.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_22V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": true,
+        "source_voltage_volt": 22.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_24V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": false,
+        "source_voltage_volt": 24.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_28V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": true,
+        "source_voltage_volt": 28.0
+      }
+    ],
+    "base_commit": "4ac821b8b3fbbc06fb784d9d66a7e12a5fe391cc",
+    "budget": {
+      "cost_unit": "hour",
+      "ledger": "frozen BudgetLedger; no demo-only budget logic",
+      "reserved_validation": 0.45,
+      "total": 1.2
+    },
+    "campaign": {
+      "campaign_id": "electrical-v01",
+      "charter_version": "1",
+      "decision_id": "r2_class",
+      "max_iterations": 8
+    },
+    "certification_requirement": {
+      "coverage_rule": "one required probe at the low, middle and high of the declared operating range, spanning the claim rather than hunting for a failure the decision path could not know about. Two further probes exist and are never bought, which is what makes the requirement finite",
+      "declared_scope": "constant-R model for Vs in [10, 28] V on this divider",
+      "required_action_ids": [
+        "validate_vmid_16V",
+        "validate_vmid_22V",
+        "validate_vmid_28V"
+      ],
+      "requirement_id": "certification:constant_r:operating_range",
+      "source": "electrical v0.1 demo charter"
+    },
+    "demo_id": "electrical_v01_demo",
+    "demo_version": "0.1.0",
+    "inherited_from_e2": {
+      "adequacy_null_seed": 20260822,
+      "adequacy_rule": "e2.joint_posterior_predictive_log_score/1.1.0",
+      "config_hash": "d6add0d816563ea65f70473cf5cdc926dd7fa17ebff6769790879f8de057ab13",
+      "grader_kappa": 0.1,
+      "grader_law": "R_eff(Vs) = R0 * (1 + kappa * tanh((Vs - Vref) / Vref))",
+      "grader_r0_ohm": 1378.0,
+      "grader_vref_volt": 10.0,
+      "grid": {
+        "max_ohm": 2500.0,
+        "min_ohm": 500.0,
+        "points": 401
+      },
+      "loss": {
+        "A_when_below": 4.0,
+        "B_when_above": 1.0
+      },
+      "prior": "uniform over the frozen grid",
+      "threshold_ohm": 1200.0
+    },
+    "noise_derivation": "e2.benchmark_noise(action_id, repeat) \u2014 seed 20260821",
+    "scope_statement": "a computational Electrical DC benchmark. No physical claim, no hardware, and no validation against any real electrical system",
+    "worlds": {
+      "A": "well specified \u2014 the truth is a constant inside the assumed family",
+      "B": "misspecified \u2014 E2's frozen synthetic condition-dependent law"
+    }
+  },
+  "config_hash": "03d37581be252fd7d34474f90a0fc4b3c2b12a8aa02b2e5300f2bb8c0c2766c1",
+  "critical_distinctions": [
+    {
+      "distinction": "EXECUTION VALIDITY != MODEL ADEQUACY",
+      "shown_by": "in World B every routed probe was computationally VALID and ADMITTED (4 admitted, 0 rejected) while the model was refused"
+    },
+    {
+      "distinction": "PARAMETER POSTERIOR CONFIDENCE != MODEL ADEQUACY",
+      "shown_by": "World B ends at sd = 4.6551 ohm and P(decision) = 1.00000000, and is still not certifiable"
+    },
+    {
+      "distinction": "PARAMETER EVSI ~ 0 != ALL SCIENTIFIC EVIDENCE COMPLETE",
+      "shown_by": "after iteration 1 every action scored net-negative, yet three required probes remained outstanding and were then executed"
+    },
+    {
+      "distinction": "CERTIFICATION REQUIREMENT SATISFIED != MODEL PASSED",
+      "shown_by": "both worlds end with requirement satisfied, and adequacy acceptable_for_declared_scope versus model_space_inadequate"
+    },
+    {
+      "distinction": "ECONOMIC NO-ACTION != SCIENTIFIC STOP APPROVED",
+      "shown_by": "both runs pause with no_action_worth_buying; the stop review returns stop_approved in World A and stop_rejected in World B"
+    }
+  ],
+  "demo": "electrical_v01",
+  "demo_version": "0.1.0",
+  "evsi_invariance": {
+    "certification_action_scores": [
+      {
+        "action_id": "validate_vmid_16V",
+        "cost": 0.15,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "iteration": 2,
+        "net_value": -0.15,
+        "parameter_evsi": 4.0897686369040547e-283
+      },
+      {
+        "action_id": "validate_vmid_22V",
+        "cost": 0.15,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "iteration": 2,
+        "net_value": -0.15,
+        "parameter_evsi": 4.0898248656788597e-283
+      },
+      {
+        "action_id": "validate_vmid_28V",
+        "cost": 0.15,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "iteration": 2,
+        "net_value": -0.15,
+        "parameter_evsi": 4.08982486567886e-283
+      }
+    ],
+    "identical_on_shared_points": true,
+    "shared_score_points": 12,
+    "statement": "the certification requirement changed no parameter-learning score. The routed actions keep the negative net value the engine gave them, and are executed for a stated constraint reason",
+    "with_requirement_executed": [
+      "measure_vmid_10V_precise",
+      "validate_vmid_16V",
+      "validate_vmid_22V",
+      "validate_vmid_28V"
+    ],
+    "without_requirement_executed": [
+      "measure_vmid_10V_precise"
+    ],
+    "without_requirement_stop_review": "stop_not_assessed"
+  },
+  "prediction_ref_limitation": "V0.1 production verifies exactly one thing about a required validation action: that a non-empty prediction_ref was recorded in the tamper-evident event log before the action executed. It does NOT verify in production that the reference names a real predictive distribution, that the prediction is bound to the correct evidence snapshot, that it was sealed against later modification, or that its content hash checks out. E2 demonstrated all four of those properties experiment-side, and this demo uses E2's sealed ledger to create the predictions \u2014 so the stronger properties hold here in fact, but they are NOT what production enforces. A campaign supplying a meaningless reference would satisfy the V0.1 contract and would have tested nothing.",
+  "result_digest": "d349e3f8543353d5b7ff0ba85e16cd6fb66581376455de87fc2d12dbe75e4024",
+  "scenario_hash": "6f0d1ebcd9fabe0424b67e37653d85224cc7f7bf0a7b97157ef272515166732f",
+  "scientific_question": "In a two-resistor divider with a known 1000 ohm upper resistor, is the unknown lower resistance above 1200 ohm \u2014 and may that answer be certified for the declared operating range?",
+  "verdict": "ELECTRICAL V0.1 DEMO VERIFIED",
+  "world_a_model_adequate": {
+    "adequacy": {
+      "aggregate": {
+        "chi2_reference_inflation_factor": 1.0440729911542441,
+        "degrees_of_freedom": 6,
+        "deprecated_reference": "chi_square_2N_assuming_independence",
+        "deprecated_statistic": "fisher_combined_tail_probability",
+        "fisher_p_chi2_independent": 0.6823554360127617,
+        "fisher_p_simulated": 0.6777161141942902,
+        "fisher_x2": 3.9580358562657,
+        "joint_log_score": -5.208047349872207,
+        "n_conditions": 3,
+        "n_extreme": 0,
+        "n_moderate": 0,
+        "n_null_at_least_as_extreme": 13312,
+        "null_calibration": "posterior_predictive_simulation_under_M_const",
+        "null_draws": 20000,
+        "null_mean": -4.4966770954673265,
+        "null_q99": -0.31752229497006385,
+        "null_rejection_rate_chi2_at_0p05": 0.055,
+        "null_sd": 1.2179593797815662,
+        "null_seed": 20260822,
+        "p_joint": 0.6656167191640417,
+        "p_joint_is_mc_floor": false,
+        "statistic": "joint_posterior_predictive_log_score"
+      },
+      "chain_verified": true,
+      "commitments": [
+        {
+          "action_id": "validate_vmid_16V",
+          "artifact_hash": "e98568b48a86ac247de0b976163b19f7d1159dda1f7599e9db340e46c1b8389c",
+          "commitment_id": "v01demo-A-commitments-commit-validate_vmid_16V",
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "n_components": 19,
+          "n_observations": 1,
+          "predictive_latent_sd_volt": 0.016000091367969472,
+          "predictive_mean_volt": 9.304484778316867,
+          "predictive_sd_volt": 0.05249764684043821,
+          "sequence": 1,
+          "source_voltage_volt": 16.0
+        },
+        {
+          "action_id": "validate_vmid_22V",
+          "artifact_hash": "c5a4583acdf078f4f5320a9b6ff49623634071f46423e425028a9e141ce24a1e",
+          "commitment_id": "v01demo-A-commitments-commit-validate_vmid_22V",
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "n_components": 19,
+          "n_observations": 1,
+          "predictive_latent_sd_volt": 0.022000125630957927,
+          "predictive_mean_volt": 12.793666570185694,
+          "predictive_sd_volt": 0.054626051731549594,
+          "sequence": 2,
+          "source_voltage_volt": 22.0
+        },
+        {
+          "action_id": "validate_vmid_28V",
+          "artifact_hash": "57d14eb83dac17c16f334cd5a0070ede3b17b920a28f4e41550fbb587ef48cce",
+          "commitment_id": "v01demo-A-commitments-commit-validate_vmid_28V",
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "n_components": 19,
+          "n_observations": 1,
+          "predictive_latent_sd_volt": 0.028000159893947222,
+          "predictive_mean_volt": 16.28284836205452,
+          "predictive_sd_volt": 0.05730627325246871,
+          "sequence": 3,
+          "source_voltage_volt": 28.0
+        }
+      ],
+      "ledger_head": "a44b8ec86c69e97239e87fe32b60e82badd1e5a4ea8afa7d3328c4a307d1a12e",
+      "ledger_sealed_at": 4,
+      "scored": true,
+      "state": "model_adequacy_acceptable",
+      "surprises": [
+        {
+          "action_id": "validate_vmid_16V",
+          "commitment_artifact_hash": "e98568b48a86ac247de0b976163b19f7d1159dda1f7599e9db340e46c1b8389c",
+          "commitment_sequence": 1,
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "level": "consistent",
+          "nlpd": -1.3445099197031105,
+          "observation_sequence": 5,
+          "predictive_mean_volt": 9.304484778316867,
+          "predictive_sd_volt": 0.05249764684043821,
+          "source_voltage_volt": 16.0,
+          "standardized_residual": -1.16922066348128,
+          "tail_probability": 0.24231473793859015,
+          "y_observed_volt": 9.243103444846884
+        },
+        {
+          "action_id": "validate_vmid_22V",
+          "commitment_artifact_hash": "c5a4583acdf078f4f5320a9b6ff49623634071f46423e425028a9e141ce24a1e",
+          "commitment_sequence": 2,
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "level": "consistent",
+          "nlpd": -1.9847160642129755,
+          "observation_sequence": 6,
+          "predictive_mean_volt": 12.793666570185694,
+          "predictive_sd_volt": 0.054626051731549594,
+          "source_voltage_volt": 22.0,
+          "standardized_residual": 0.08473222653883582,
+          "tail_probability": 0.9324742747362428,
+          "y_observed_volt": 12.798295157175934
+        },
+        {
+          "action_id": "validate_vmid_28V",
+          "commitment_artifact_hash": "57d14eb83dac17c16f334cd5a0070ede3b17b920a28f4e41550fbb587ef48cce",
+          "commitment_sequence": 3,
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "level": "consistent",
+          "nlpd": -1.811520884934199,
+          "observation_sequence": 7,
+          "predictive_mean_volt": 16.28284836205452,
+          "predictive_sd_volt": 0.05730627325246871,
+          "source_voltage_volt": 28.0,
+          "standardized_residual": -0.5077120400504543,
+          "tail_probability": 0.6116553033068735,
+          "y_observed_volt": 16.25375327715382
+        }
+      ]
+    },
+    "belief": {
+      "belief_action_ids": [
+        "measure_vmid_10V_precise",
+        "validate_vmid_16V",
+        "validate_vmid_22V",
+        "validate_vmid_28V"
+      ],
+      "belief_size": 4,
+      "event_chain_verified": true,
+      "evidence_admitted": 4,
+      "evidence_records_created": 4,
+      "evidence_rejected": 0,
+      "executions_completed": 4,
+      "executions_started": 4
+    },
+    "belief_integrity_probe": {
+      "admitted": false,
+      "arbiter_verdict": "invalid",
+      "belief_size_after": 4,
+      "belief_size_before": 4,
+      "belief_unchanged": true,
+      "critic_verdict": "fail",
+      "execution_validity": "invalid",
+      "faulty_action_id": "validate_vmid_20V",
+      "posterior_unchanged": true
+    },
+    "budget": {
+      "general_pool_left": 0.65,
+      "ledger": "frozen BudgetLedger",
+      "remaining": 0.6499999999999999,
+      "reserved_validation": 0.45,
+      "spent_parameter_learning": 0.1,
+      "spent_total": 0.55,
+      "spent_validation": 0.44999999999999996,
+      "total": 1.2,
+      "validation_pool_left": 5.551115123125783e-17
+    },
+    "certification_requirement_status": "satisfied",
+    "executed_actions": [
+      "measure_vmid_10V_precise",
+      "validate_vmid_16V",
+      "validate_vmid_22V",
+      "validate_vmid_28V"
+    ],
+    "label": "v01demo-A",
+    "posterior_final": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 14,
+      "entropy_nats": 1.3118073654397717,
+      "evpi": 0.0,
+      "expected_utility": 0.0,
+      "mean_r2_ohm": 1387.264830591529,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 4.492087907591282
+    },
+    "posterior_prior": {
+      "bayes_decision": "B",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 401,
+      "entropy_nats": 5.99396142730657,
+      "evpi": 0.6483790523690773,
+      "expected_utility": -0.6483790523690773,
+      "mean_r2_ohm": 1500.0,
+      "p_above_threshold": 0.6483790523690773,
+      "sd_r2_ohm": 578.7918451395112
+    },
+    "routed_by_runner_for_certification": [
+      "validate_vmid_16V",
+      "validate_vmid_22V",
+      "validate_vmid_28V"
+    ],
+    "score_trace": [
+      {
+        "chosen_action_id": "measure_vmid_10V_precise",
+        "iteration": 1,
+        "outcome": "recommend_action",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": 0.5435477966530764,
+            "parameter_evsi": 0.6435477966530764,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": 0.4894856130998877,
+            "parameter_evsi": 0.6394856130998877,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": 0.4912495462393549,
+            "parameter_evsi": 0.6412495462393549,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": 0.491695383257871,
+            "parameter_evsi": 0.641695383257871,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": 0.4919872977878612,
+            "parameter_evsi": 0.6419872977878612,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": 0.49234197099483257,
+            "parameter_evsi": 0.6423419709948326,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 2,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 4.08982486567886e-283,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.0897686369040547e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.0898248656673564e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.0898248656788597e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.08982486567886e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.08982486567886e-283,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 3,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 6.579621822528644e-306,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 6.579492245306441e-306,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 6.57962182249296e-306,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 6.579621822528642e-306,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 6.579621822528644e-306,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 6.579621822528644e-306,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 4,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 0.0,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 5,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 0.0,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          }
+        ]
+      }
+    ],
+    "selection_trace": [
+      {
+        "action_family": "characterize",
+        "action_id": "measure_vmid_10V_precise",
+        "action_selected_sequence": 4,
+        "admitted": true,
+        "execution_reason": "POSITIVE_NET_VALUE",
+        "execution_started_sequence": 5,
+        "iteration": 1,
+        "not_admitted": false,
+        "phase": "parameter",
+        "prediction_precedes_execution": false,
+        "prediction_ref": ""
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_16V",
+        "action_selected_sequence": 16,
+        "admitted": true,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "execution_started_sequence": 17,
+        "iteration": 2,
+        "not_admitted": false,
+        "phase": "validation",
+        "prediction_precedes_execution": true,
+        "prediction_ref": "e98568b48a86ac247de0b976163b19f7d1159dda1f7599e9db340e46c1b8389c"
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_22V",
+        "action_selected_sequence": 28,
+        "admitted": true,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "execution_started_sequence": 29,
+        "iteration": 3,
+        "not_admitted": false,
+        "phase": "validation",
+        "prediction_precedes_execution": true,
+        "prediction_ref": "c5a4583acdf078f4f5320a9b6ff49623634071f46423e425028a9e141ce24a1e"
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_28V",
+        "action_selected_sequence": 40,
+        "admitted": true,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "execution_started_sequence": 41,
+        "iteration": 4,
+        "not_admitted": false,
+        "phase": "validation",
+        "prediction_precedes_execution": true,
+        "prediction_ref": "57d14eb83dac17c16f334cd5a0070ede3b17b920a28f4e41550fbb587ef48cce"
+      }
+    ],
+    "stop_review": {
+      "approves": true,
+      "arbiter_decision_id": "v01demo-A-stopreview-5-arbiter",
+      "arbiter_verdict": "valid",
+      "criterion_id": "certification:constant_r:operating_range",
+      "is_certification": false,
+      "outcome": "stop_approved"
+    },
+    "terminal": {
+      "certification_requirement": "satisfied",
+      "declared_scope": "constant-R model for Vs in [10, 28] V on this divider",
+      "disposition": "certification_eligible",
+      "model_adequacy": "acceptable_for_declared_scope",
+      "parameter_evpi": 0.0,
+      "parameter_evsi_max": 0.0,
+      "posterior_decision": "A",
+      "posterior_decision_reading": "the decision preferred by p(R2 | data, constant-R model); a statement conditional on the family, not about the world",
+      "reason": "ADEQUACY_ACCEPTABLE_FOR_DECLARED_SCOPE",
+      "scientific_certification": "eligible",
+      "stop": "stop_approved"
+    },
+    "truth_in_assumed_family": true,
+    "truth_spec_id": "A_well_specified"
+  },
+  "world_b_model_inadequate": {
+    "adequacy": {
+      "aggregate": {
+        "chi2_reference_inflation_factor": 1.0440729911542441,
+        "degrees_of_freedom": 6,
+        "deprecated_reference": "chi_square_2N_assuming_independence",
+        "deprecated_statistic": "fisher_combined_tail_probability",
+        "fisher_p_chi2_independent": 2.2863863242079114e-37,
+        "fisher_p_simulated": 4.999750012499375e-05,
+        "fisher_x2": 185.5141126531884,
+        "joint_log_score": 64.07917768944695,
+        "n_conditions": 3,
+        "n_extreme": 2,
+        "n_moderate": 1,
+        "n_null_at_least_as_extreme": 0,
+        "null_calibration": "posterior_predictive_simulation_under_M_const",
+        "null_draws": 20000,
+        "null_mean": -4.4966770954673265,
+        "null_q99": -0.31752229497006385,
+        "null_rejection_rate_chi2_at_0p05": 0.055,
+        "null_sd": 1.2179593797815662,
+        "null_seed": 20260822,
+        "p_joint": 4.999750012499375e-05,
+        "p_joint_is_mc_floor": true,
+        "statistic": "joint_posterior_predictive_log_score"
+      },
+      "chain_verified": true,
+      "commitments": [
+        {
+          "action_id": "validate_vmid_16V",
+          "artifact_hash": "2d2ac8da34c7f67617bb06dbaca466c80681231a508cdd08e09dd3bdd0d22d6b",
+          "commitment_id": "v01demo-B-commitments-commit-validate_vmid_16V",
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "n_components": 19,
+          "n_observations": 1,
+          "predictive_latent_sd_volt": 0.016000091367969472,
+          "predictive_mean_volt": 9.304484778316867,
+          "predictive_sd_volt": 0.05249764684043821,
+          "sequence": 1,
+          "source_voltage_volt": 16.0
+        },
+        {
+          "action_id": "validate_vmid_22V",
+          "artifact_hash": "66624649c8c521e55b87363a3275eb4de33be83b4b7e8e1a9e6d31c867eb3421",
+          "commitment_id": "v01demo-B-commitments-commit-validate_vmid_22V",
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "n_components": 19,
+          "n_observations": 1,
+          "predictive_latent_sd_volt": 0.022000125630957927,
+          "predictive_mean_volt": 12.793666570185694,
+          "predictive_sd_volt": 0.054626051731549594,
+          "sequence": 2,
+          "source_voltage_volt": 22.0
+        },
+        {
+          "action_id": "validate_vmid_28V",
+          "artifact_hash": "e12e616b638e5554cdd315310e30422af2a7e2b18e59c3d06c04029c754da47d",
+          "commitment_id": "v01demo-B-commitments-commit-validate_vmid_28V",
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "n_components": 19,
+          "n_observations": 1,
+          "predictive_latent_sd_volt": 0.028000159893947222,
+          "predictive_mean_volt": 16.28284836205452,
+          "predictive_sd_volt": 0.05730627325246871,
+          "sequence": 3,
+          "source_voltage_volt": 28.0
+        }
+      ],
+      "ledger_head": "237bfe3456abf4309444159a5788b6f629913e7c8192eced1ea256c569b27dd1",
+      "ledger_sealed_at": 4,
+      "scored": true,
+      "state": "model_space_inadequate",
+      "surprises": [
+        {
+          "action_id": "validate_vmid_16V",
+          "commitment_artifact_hash": "2d2ac8da34c7f67617bb06dbaca466c80681231a508cdd08e09dd3bdd0d22d6b",
+          "commitment_sequence": 1,
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "level": "moderate",
+          "nlpd": 1.614233239290913,
+          "observation_sequence": 5,
+          "predictive_mean_volt": 9.304484778316867,
+          "predictive_sd_volt": 0.05249764684043821,
+          "source_voltage_volt": 16.0,
+          "standardized_residual": 2.6989930127877333,
+          "tail_probability": 0.006954963689989884,
+          "y_observed_volt": 9.446175560327008
+        },
+        {
+          "action_id": "validate_vmid_22V",
+          "commitment_artifact_hash": "66624649c8c521e55b87363a3275eb4de33be83b4b7e8e1a9e6d31c867eb3421",
+          "commitment_sequence": 2,
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "level": "extreme",
+          "nlpd": 29.131736069402113,
+          "observation_sequence": 6,
+          "predictive_mean_volt": 12.793666570185694,
+          "predictive_sd_volt": 0.054626051731549594,
+          "source_voltage_volt": 22.0,
+          "standardized_residual": 7.88923851597065,
+          "tail_probability": 3.040360373719679e-15,
+          "y_observed_volt": 13.22462452148164
+        },
+        {
+          "action_id": "validate_vmid_28V",
+          "commitment_artifact_hash": "e12e616b638e5554cdd315310e30422af2a7e2b18e59c3d06c04029c754da47d",
+          "commitment_sequence": 3,
+          "evidence_snapshot_digest": "edb2e24957c9b4d0fd1130a0e34776d7a9f8fdfcd986ac851a06d35755b21ed5",
+          "level": "extreme",
+          "nlpd": 49.86598290203247,
+          "observation_sequence": 7,
+          "predictive_mean_volt": 16.28284836205452,
+          "predictive_sd_volt": 0.05730627325246871,
+          "source_voltage_volt": 28.0,
+          "standardized_residual": 10.179030604834356,
+          "tail_probability": 2.459814454552091e-24,
+          "y_observed_volt": 16.8661706713404
+        }
+      ]
+    },
+    "belief": {
+      "belief_action_ids": [
+        "measure_vmid_10V_precise",
+        "validate_vmid_16V",
+        "validate_vmid_22V",
+        "validate_vmid_28V"
+      ],
+      "belief_size": 4,
+      "event_chain_verified": true,
+      "evidence_admitted": 4,
+      "evidence_records_created": 4,
+      "evidence_rejected": 0,
+      "executions_completed": 4,
+      "executions_started": 4
+    },
+    "belief_integrity_probe": {
+      "admitted": false,
+      "arbiter_verdict": "invalid",
+      "belief_size_after": 4,
+      "belief_size_before": 4,
+      "belief_unchanged": true,
+      "critic_verdict": "fail",
+      "execution_validity": "invalid",
+      "faulty_action_id": "validate_vmid_20V",
+      "posterior_unchanged": true
+    },
+    "budget": {
+      "general_pool_left": 0.65,
+      "ledger": "frozen BudgetLedger",
+      "remaining": 0.6499999999999999,
+      "reserved_validation": 0.45,
+      "spent_parameter_learning": 0.1,
+      "spent_total": 0.55,
+      "spent_validation": 0.44999999999999996,
+      "total": 1.2,
+      "validation_pool_left": 5.551115123125783e-17
+    },
+    "certification_requirement_status": "satisfied",
+    "executed_actions": [
+      "measure_vmid_10V_precise",
+      "validate_vmid_16V",
+      "validate_vmid_22V",
+      "validate_vmid_28V"
+    ],
+    "label": "v01demo-B",
+    "posterior_final": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 13,
+      "entropy_nats": 1.3474490306099005,
+      "evpi": 0.0,
+      "expected_utility": 0.0,
+      "mean_r2_ohm": 1430.1943465385898,
+      "p_above_threshold": 0.9999999999999998,
+      "sd_r2_ohm": 4.655081140713646
+    },
+    "posterior_prior": {
+      "bayes_decision": "B",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 401,
+      "entropy_nats": 5.99396142730657,
+      "evpi": 0.6483790523690773,
+      "expected_utility": -0.6483790523690773,
+      "mean_r2_ohm": 1500.0,
+      "p_above_threshold": 0.6483790523690773,
+      "sd_r2_ohm": 578.7918451395112
+    },
+    "routed_by_runner_for_certification": [
+      "validate_vmid_16V",
+      "validate_vmid_22V",
+      "validate_vmid_28V"
+    ],
+    "score_trace": [
+      {
+        "chosen_action_id": "measure_vmid_10V_precise",
+        "iteration": 1,
+        "outcome": "recommend_action",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": 0.5435477966530764,
+            "parameter_evsi": 0.6435477966530764,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": 0.4894856130998877,
+            "parameter_evsi": 0.6394856130998877,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": 0.4912495462393549,
+            "parameter_evsi": 0.6412495462393549,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": 0.491695383257871,
+            "parameter_evsi": 0.641695383257871,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": 0.4919872977878612,
+            "parameter_evsi": 0.6419872977878612,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": 0.49234197099483257,
+            "parameter_evsi": 0.6423419709948326,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 2,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 4.08982486567886e-283,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.0897686369040547e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.0898248656673564e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.0898248656788597e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.08982486567886e-283,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 4.08982486567886e-283,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 3,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 0.0,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 4,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 0.0,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          }
+        ]
+      },
+      {
+        "chosen_action_id": "",
+        "iteration": 5,
+        "outcome": "stop_proposal",
+        "scores": [
+          {
+            "action_family": "characterize",
+            "action_id": "measure_vmid_10V_precise",
+            "cost": 0.1,
+            "net_value": -0.1,
+            "parameter_evsi": 0.0,
+            "phase": "parameter"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_16V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_20V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_22V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_24V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          },
+          {
+            "action_family": "validate",
+            "action_id": "validate_vmid_28V",
+            "cost": 0.15,
+            "net_value": -0.15,
+            "parameter_evsi": 0.0,
+            "phase": "validation"
+          }
+        ]
+      }
+    ],
+    "selection_trace": [
+      {
+        "action_family": "characterize",
+        "action_id": "measure_vmid_10V_precise",
+        "action_selected_sequence": 4,
+        "admitted": true,
+        "execution_reason": "POSITIVE_NET_VALUE",
+        "execution_started_sequence": 5,
+        "iteration": 1,
+        "not_admitted": false,
+        "phase": "parameter",
+        "prediction_precedes_execution": false,
+        "prediction_ref": ""
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_16V",
+        "action_selected_sequence": 16,
+        "admitted": true,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "execution_started_sequence": 17,
+        "iteration": 2,
+        "not_admitted": false,
+        "phase": "validation",
+        "prediction_precedes_execution": true,
+        "prediction_ref": "2d2ac8da34c7f67617bb06dbaca466c80681231a508cdd08e09dd3bdd0d22d6b"
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_22V",
+        "action_selected_sequence": 28,
+        "admitted": true,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "execution_started_sequence": 29,
+        "iteration": 3,
+        "not_admitted": false,
+        "phase": "validation",
+        "prediction_precedes_execution": true,
+        "prediction_ref": "66624649c8c521e55b87363a3275eb4de33be83b4b7e8e1a9e6d31c867eb3421"
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_28V",
+        "action_selected_sequence": 40,
+        "admitted": true,
+        "execution_reason": "CERTIFICATION_REQUIREMENT",
+        "execution_started_sequence": 41,
+        "iteration": 4,
+        "not_admitted": false,
+        "phase": "validation",
+        "prediction_precedes_execution": true,
+        "prediction_ref": "e12e616b638e5554cdd315310e30422af2a7e2b18e59c3d06c04029c754da47d"
+      }
+    ],
+    "stop_review": {
+      "approves": false,
+      "arbiter_decision_id": "v01demo-B-stopreview-5-arbiter",
+      "arbiter_verdict": "invalid",
+      "criterion_id": "certification:constant_r:operating_range",
+      "is_certification": false,
+      "outcome": "stop_rejected"
+    },
+    "terminal": {
+      "certification_requirement": "satisfied",
+      "declared_scope": "constant-R model for Vs in [10, 28] V on this divider",
+      "disposition": "model_revision_required",
+      "model_adequacy": "model_space_inadequate",
+      "parameter_evpi": 0.0,
+      "parameter_evsi_max": 0.0,
+      "posterior_decision": "A",
+      "posterior_decision_reading": "the decision preferred by p(R2 | data, constant-R model); a statement conditional on the family, not about the world",
+      "reason": "MODEL_SPACE_INADEQUATE",
+      "scientific_certification": "not_certifiable",
+      "stop": "stop_rejected"
+    },
+    "truth_in_assumed_family": false,
+    "truth_spec_id": "C_systematic_misspecification"
+  }
+}

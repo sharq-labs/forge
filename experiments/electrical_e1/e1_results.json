@@ -1,0 +1,504 @@
+{
+  "campaign": {
+    "admitted_evidence": [
+      {
+        "belief_key": "qoi_value|qoi:node_voltage:mid;action_id=measure_vmid_10V",
+        "evidence_id": "e1-run-ev-1",
+        "payload": {
+          "action_id": "measure_vmid_10V",
+          "result_ref": "e1-run-exec-1",
+          "sigma_volt": 0.05,
+          "source_voltage_volt": 10.0,
+          "y_volt": 5.7197272786378095
+        }
+      }
+    ],
+    "budget": {
+      "remaining": 9.85,
+      "spent_total": 0.15
+    },
+    "decision_log": [
+      {
+        "action_id": "measure_vmid_0V01",
+        "cost": 0.01,
+        "evsi": -7.105427357601002e-15,
+        "n_observations": 0,
+        "observations_digest": "c709ba08909a47b0ae11097b690c093ee5fdf70083e7ca21fef5e6fbc8702f43",
+        "predictive": {
+          "latent_sd_volt": 0.0010620309357302815,
+          "mean_volt": 0.005758248696124132,
+          "sd_volt": 0.050011277825191075
+        },
+        "snapshot_id": "e1-run-snap-1"
+      },
+      {
+        "action_id": "measure_vmid_10V",
+        "cost": 0.15,
+        "evsi": 0.6254942343544498,
+        "n_observations": 0,
+        "observations_digest": "c709ba08909a47b0ae11097b690c093ee5fdf70083e7ca21fef5e6fbc8702f43",
+        "predictive": {
+          "latent_sd_volt": 1.0620309357302813,
+          "mean_volt": 5.758248696124133,
+          "sd_volt": 1.0632072744522287
+        },
+        "snapshot_id": "e1-run-snap-1"
+      },
+      {
+        "action_id": "measure_vmid_10V_premium",
+        "cost": 5.0,
+        "evsi": 0.6435643564356437,
+        "n_observations": 0,
+        "observations_digest": "c709ba08909a47b0ae11097b690c093ee5fdf70083e7ca21fef5e6fbc8702f43",
+        "predictive": {
+          "latent_sd_volt": 1.0620309357302813,
+          "mean_volt": 5.758248696124133,
+          "sd_volt": 1.0620427055670298
+        },
+        "snapshot_id": "e1-run-snap-1"
+      },
+      {
+        "action_id": "measure_vmid_0V01",
+        "cost": 0.01,
+        "evsi": 1.6940658945086007e-21,
+        "n_observations": 1,
+        "observations_digest": "b6709b209a8227d3af6d6512d89e78e7f4329a18afcbbd1b84093e10c5a775ba",
+        "predictive": {
+          "latent_sd_volt": 5.000683079657807e-05,
+          "mean_volt": 0.0057208959071679485,
+          "sd_volt": 0.050000025006825016
+        },
+        "snapshot_id": "e1-run-snap-2"
+      },
+      {
+        "action_id": "measure_vmid_10V",
+        "cost": 0.15,
+        "evsi": 9.608040192282648e-11,
+        "n_observations": 1,
+        "observations_digest": "b6709b209a8227d3af6d6512d89e78e7f4329a18afcbbd1b84093e10c5a775ba",
+        "predictive": {
+          "latent_sd_volt": 0.050006830796578,
+          "mean_volt": 5.720895907167948,
+          "sd_volt": 0.07071550838619194
+        },
+        "snapshot_id": "e1-run-snap-2"
+      },
+      {
+        "action_id": "measure_vmid_10V_premium",
+        "cost": 5.0,
+        "evsi": 9.191388418039119e-07,
+        "n_observations": 1,
+        "observations_digest": "b6709b209a8227d3af6d6512d89e78e7f4329a18afcbbd1b84093e10c5a775ba",
+        "predictive": {
+          "latent_sd_volt": 0.050006830796578,
+          "mean_volt": 5.720895907167948,
+          "sd_volt": 0.050256175006834554
+        },
+        "snapshot_id": "e1-run-snap-2"
+      }
+    ],
+    "event_sequences": {
+      "decision_recommended": [
+        3,
+        16
+      ],
+      "execution_started": [
+        5
+      ],
+      "prediction_preceded_observation": true
+    },
+    "iterations": [
+      {
+        "admitted_evidence_ids": [
+          "e1-run-ev-1"
+        ],
+        "arbiter_decision_id": "e1-run-arb-1",
+        "arbiter_verdict": "valid",
+        "assessment_ids": [
+          "e1-run-assess-1-numerical"
+        ],
+        "calibration_entry_ids": [
+          "e1-run-calib-1"
+        ],
+        "decision_basis_digest": "bcac992b888bd0dce2cbc89157121395901d96332649e38aa0f94d89277c745a",
+        "detail": "",
+        "evidence_ids": [
+          "e1-run-ev-1"
+        ],
+        "execution_id": "e1-run-exec-1",
+        "iteration": 1,
+        "predicted_cost": 0.15,
+        "realized_cost": 0.15,
+        "recommendation_id": "e1-run-rec-1",
+        "recommendation_outcome": "recommend_action",
+        "schema": "sria_campaign_iteration/1",
+        "selected_action_id": "measure_vmid_10V",
+        "snapshot_digest": "b0d62fb8d3b8143d1608aab3e1f19889e51b50c194b2ef8143215093fc107a3b",
+        "stop_proposed": false
+      },
+      {
+        "admitted_evidence_ids": [],
+        "arbiter_decision_id": "",
+        "arbiter_verdict": "",
+        "assessment_ids": [],
+        "calibration_entry_ids": [],
+        "decision_basis_digest": "416514c66c5e3b8eda8c6d9ea9d2b3d5349310d18f054aa2a1b62bc860f2f50b",
+        "detail": "stop_not_assessed",
+        "evidence_ids": [],
+        "execution_id": "",
+        "iteration": 2,
+        "predicted_cost": null,
+        "realized_cost": null,
+        "recommendation_id": "e1-run-rec-2",
+        "recommendation_outcome": "stop_proposal",
+        "schema": "sria_campaign_iteration/1",
+        "selected_action_id": "",
+        "snapshot_digest": "c9955af34cd1228894f4bf726cab459ad3eff5fd7ffe0d9111223767d3096bfb",
+        "stop_proposed": true
+      }
+    ],
+    "pause_reason": "no_action_worth_buying",
+    "run_state": "paused",
+    "stop_review_outcome": "stop_not_assessed"
+  },
+  "certificate_assumptions": [
+    {
+      "basis": "declared in the preregistered configuration",
+      "proposition": "circuit topology (two-resistor divider, ideal source)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "agreement with the closed-form divider relation at 8 preregistered points, worst relative error 1.443e-16",
+      "proposition": "solver/model equations (linear resistive DC via MNA)",
+      "status": "ANALYTICALLY_CHECKED"
+    },
+    {
+      "basis": "declared observation model",
+      "proposition": "observation mapping (y measures node_voltage:mid)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "benchmark-injected synthetic noise, honestly labelled; the solver itself is deterministic",
+      "proposition": "observation noise (Gaussian, declared sigma)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered before any scored observation",
+      "proposition": "prior (uniform over the frozen R2 grid)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered; asymmetric with indifference at P=0.8",
+      "proposition": "terminal utility / loss matrix",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered; no fitted cost model in E1",
+      "proposition": "acquisition cost model (declared per-action costs)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "declared, not measured. A dense LU on a well-conditioned 3x3 MNA system did not fail in this experiment, but no failure corpus exists for this domain and M2 failure learning remains INSUFFICIENT_DATA. Every candidate score carries the factor (1 - p_cf) = 1 on this assertion",
+      "proposition": "computational failure probability p_cf = 0",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "preregistered exchange rate with no external referent. It sets which actions are affordable and therefore drives selection directly: at lambda = 1.0 the premium instrument has EVSI 0.644 against cost 5.0 and loses, while a campaign valuing the decision ~10x higher would buy it. The ordering of actions by information is independent of lambda; the ordering by net value is not",
+      "proposition": "cost-to-utility tradeoff lambda = 1.0 (declared benchmark cost units per unit of terminal loss)",
+      "status": "ASSERTED_FOR_BENCHMARK"
+    },
+    {
+      "basis": "the decision QoI is the inferred parameter itself; the observed operating conditions are exactly the candidate action set; the solver is verified across the full prior support; no extrapolation beyond verified conditions occurs",
+      "proposition": "support/transport: IN_DOMAIN_FOR_THIS_VERIFICATION",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "tests over the exact grid update",
+      "proposition": "posterior arithmetic (normalized, batch==sequential, order-invariant)",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "tests; EVPPI(R2) = EVPI because R2 is the complete latent decision-relevant state",
+      "proposition": "EVSI bounds (0 <= EVSI <= EVPPI = EVPI)",
+      "status": "VERIFIED"
+    },
+    {
+      "basis": "worst |solver-analytic| / smallest sigma = 8.882e-14",
+      "proposition": "numerical error negligible vs observation noise",
+      "status": "VERIFIED"
+    }
+  ],
+  "config": {
+    "actions": [
+      {
+        "action_id": "measure_vmid_10V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "action_id": "measure_vmid_0V01",
+        "cost": 0.01,
+        "noise_sigma_volt": 0.05,
+        "source_voltage_volt": 0.01
+      },
+      {
+        "action_id": "measure_vmid_10V_premium",
+        "cost": 5.0,
+        "noise_sigma_volt": 0.005,
+        "source_voltage_volt": 10.0
+      }
+    ],
+    "base_commit": "bcbd2faa37d2fae6106c5a0c185c83ed443e5217",
+    "budget": {
+      "cost_unit": "hour",
+      "total": 10.0
+    },
+    "campaign": {
+      "campaign_id": "e1-electrical",
+      "charter_version": "1",
+      "max_iterations": 2
+    },
+    "circuit": {
+      "nodes": [
+        "vin",
+        "mid",
+        "gnd"
+      ],
+      "observed_metric": "node_voltage:mid",
+      "r1_ohm": 1000.0,
+      "reference": "gnd",
+      "topology": "two_resistor_voltage_divider"
+    },
+    "evppi_statement": "EVPPI(R2) = EVPI because R2 is the complete latent decision-relevant state of this single-parameter problem",
+    "experiment_id": "E1",
+    "experiment_name": "electrical_quantitative_verification",
+    "experiment_version": "1.0.0",
+    "noise_seed": 20260814,
+    "quadrature": {
+      "y_nodes": 241,
+      "y_span_sigmas": 7.0
+    },
+    "stopping_interpretation": "a STOP_PROPOSAL from the campaign loop is an economic statement; E1 registers no stopping criterion, so the Arbiter stopping review is expected to return STOP_NOT_ASSESSED and the loop to pause. The terminal decision is then graded from the final posterior.",
+    "terminal_decision": {
+      "decision_id": "r2_class",
+      "indifference_probability": 0.8,
+      "loss": {
+        "A_above": 0.0,
+        "A_below": 4.0,
+        "B_above": 1.0,
+        "B_below": 0.0
+      },
+      "rule": "A iff R2 > threshold",
+      "threshold_ohm": 1200.0
+    },
+    "theta": {
+      "grid_max": 2500.0,
+      "grid_min": 500.0,
+      "grid_points": 101,
+      "parameter": "R2_ohm",
+      "prior": "uniform"
+    },
+    "verification": {
+      "abs_tol_volt": 1e-12,
+      "points": [
+        [
+          10.0,
+          500.0
+        ],
+        [
+          10.0,
+          1000.0
+        ],
+        [
+          10.0,
+          1200.0
+        ],
+        [
+          10.0,
+          2000.0
+        ],
+        [
+          10.0,
+          2500.0
+        ],
+        [
+          0.01,
+          1000.0
+        ],
+        [
+          2.0,
+          900.0
+        ],
+        [
+          5.0,
+          1600.0
+        ]
+      ],
+      "rel_tol": 1e-09
+    }
+  },
+  "config_hash": "6dbf8febd6989b42fcfd58f4139ffa34330808018a1b427bb5042f43a38e847e",
+  "evppi_statement": "EVPPI(R2) = EVPI: R2 is the complete latent decision-relevant state",
+  "evsi_table_after": {
+    "measure_vmid_0V01": {
+      "cost": 0.01,
+      "evsi": 1.6940658945086007e-21,
+      "net": -0.01,
+      "predictive_mean_volt": 0.0057208959071679485,
+      "predictive_sd_volt": 0.050000025006825016
+    },
+    "measure_vmid_10V": {
+      "cost": 0.15,
+      "evsi": 9.608040192282648e-11,
+      "net": -0.1499999999039196,
+      "predictive_mean_volt": 5.720895907167948,
+      "predictive_sd_volt": 0.07071550838619194
+    },
+    "measure_vmid_10V_premium": {
+      "cost": 5.0,
+      "evsi": 9.191388418039119e-07,
+      "net": -4.9999990808611585,
+      "predictive_mean_volt": 5.720895907167948,
+      "predictive_sd_volt": 0.050256175006834554
+    }
+  },
+  "experiment": "E1",
+  "posterior_after": {
+    "bayes_decision": "A",
+    "effective_support_points": 20,
+    "evpi": 9.192483609604246e-07,
+    "expected_utility": -9.192483609604246e-07,
+    "mean_r2_ohm": 1337.2570602778273,
+    "p_above_threshold": 0.9999997701879098,
+    "sd_r2_ohm": 27.325055773749842
+  },
+  "preregistration_hash": "3254c045fbc7dc11fdfbfca03bf4937bae2e769bd0d353cafc19e80fb21b356e",
+  "prior_stage": {
+    "evsi_table": {
+      "measure_vmid_0V01": {
+        "cost": 0.01,
+        "evsi": -7.105427357601002e-15,
+        "net": -0.010000000000007106,
+        "predictive_mean_volt": 0.005758248696124132,
+        "predictive_sd_volt": 0.050011277825191075
+      },
+      "measure_vmid_10V": {
+        "cost": 0.15,
+        "evsi": 0.6254942343544498,
+        "net": 0.4754942343544498,
+        "predictive_mean_volt": 5.758248696124133,
+        "predictive_sd_volt": 1.0632072744522287
+      },
+      "measure_vmid_10V_premium": {
+        "cost": 5.0,
+        "evsi": 0.6435643564356437,
+        "net": -4.356435643564357,
+        "predictive_mean_volt": 5.758248696124133,
+        "predictive_sd_volt": 1.0620427055670298
+      }
+    },
+    "indifference_probability": 0.8,
+    "posterior": {
+      "bayes_decision": "B",
+      "effective_support_points": 101,
+      "evpi": 0.6435643564356437,
+      "expected_utility": -0.6435643564356437,
+      "mean_r2_ohm": 1499.9999999999998,
+      "p_above_threshold": 0.6435643564356436,
+      "sd_r2_ohm": 583.09518948453
+    }
+  },
+  "solver_verification": {
+    "abs_tol_volt": 1e-12,
+    "numerical_error_vs_noise": {
+      "ratio": 8.881784197001252e-14,
+      "smallest_declared_sigma_volt": 0.005,
+      "statement": "solver-vs-analytic error is negligible relative to the declared benchmark observation noise",
+      "worst_abs_error_volt": 4.440892098500626e-16
+    },
+    "passed": true,
+    "points": [
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 3.3333333333333335,
+        "r2_ohm": 500.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 3.3333333333333335,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 5.0,
+        "r2_ohm": 1000.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 5.0,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 5.454545454545454,
+        "r2_ohm": 1200.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 5.454545454545454,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 6.666666666666667,
+        "r2_ohm": 2000.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 6.666666666666667,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 7.142857142857143,
+        "r2_ohm": 2500.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 7.142857142857143,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 0.005,
+        "r2_ohm": 1000.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 0.005,
+        "source_voltage_volt": 0.01
+      },
+      {
+        "abs_error_volt": 0.0,
+        "analytic_vmid_volt": 0.9473684210526315,
+        "r2_ohm": 900.0,
+        "rel_error": 0.0,
+        "solver_vmid_volt": 0.9473684210526315,
+        "source_voltage_volt": 2.0
+      },
+      {
+        "abs_error_volt": 4.440892098500626e-16,
+        "analytic_vmid_volt": 3.076923076923077,
+        "r2_ohm": 1600.0,
+        "rel_error": 1.4432899320127033e-16,
+        "solver_vmid_volt": 3.0769230769230766,
+        "source_voltage_volt": 5.0
+      }
+    ],
+    "rel_tol": 1e-09,
+    "worst_abs_error_volt": 4.440892098500626e-16,
+    "worst_rel_error": 1.4432899320127033e-16
+  },
+  "terminal_decision": {
+    "correct": true,
+    "oracle_decision": "A",
+    "sria_decision": "A",
+    "threshold_ohm": 1200.0
+  },
+  "transport_support": "IN_DOMAIN_FOR_THIS_VERIFICATION",
+  "truth": {
+    "analytic_relation": "V_mid = Vs * R2 / (R1 + R2)",
+    "oracle_decision": "A",
+    "true_r2_ohm": 1378.0
+  },
+  "verdict": "E1 VERIFIED END-TO-END"
+}

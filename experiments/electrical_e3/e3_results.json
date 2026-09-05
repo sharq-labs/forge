@@ -1,0 +1,1839 @@
+{
+  "adversarial_injections": [
+    {
+      "attempt": "give the adequacy probes a positive information value",
+      "catcher": "identical UtilityEngine scores under both policies",
+      "caught": true,
+      "detail": "every probe's parameter EVSI is <= 1.046e-50 and every net value is negative; the obligation-aware and EVSI-only runs produced bit-identical scores",
+      "injection": "A"
+    },
+    {
+      "attempt": "hold STOP_APPROVED while a mandatory obligation is outstanding",
+      "catcher": "StopReview.__post_init__ (frozen M5.1 structural guard)",
+      "caught": true,
+      "detail": "stop cannot be approved while obligations or mandatory assessments remain outstanding; and the live pre-probe review returned stop_not_assessed with arbiter 'inconclusive'",
+      "injection": "B"
+    },
+    {
+      "attempt": "mark the obligation satisfied because the action was attempted",
+      "catcher": "ProbeRecord.is_obligation_evidence",
+      "caught": true,
+      "detail": "an attempt with execution_valid=False and admitted=False does not count; the condition stays outstanding and the ledger reports UNRESOLVED_EXECUTION_FAILURE",
+      "injection": "C"
+    },
+    {
+      "attempt": "treat a discharged obligation as a passing model",
+      "catcher": "certify_campaign (obligation and adequacy are separate arguments)",
+      "caught": true,
+      "detail": "obligation COMPLETED with adequacy MODEL_SPACE_INADEQUATE yields NOT_CERTIFIABLE / MODEL_REVISION_REQUIRED while still reporting the obligation as fully discharged",
+      "injection": "D"
+    },
+    {
+      "attempt": "consume the budget on parameter actions and hide the consequence",
+      "catcher": "BudgetLedger.affordable(family=VALIDATE) + explicit reporting",
+      "caught": true,
+      "detail": "under the shared pool the obligation ends unresolved_budget_infeasible and certification is refused for an explicitly budget-shaped reason, never a model-shaped one; under the frozen reservation it ends completed",
+      "injection": "E"
+    },
+    {
+      "attempt": "discharge the obligation with a cheaper, different action",
+      "catcher": "ObligationLedger.record_probe condition binding",
+      "caught": true,
+      "detail": "a non-required catalogue probe is recorded and counts for nothing; a required action id executed at the wrong operating point raises ObligationBindingError. All three required conditions remain outstanding",
+      "injection": "F"
+    },
+    {
+      "attempt": "commit a predictive after its observation exists",
+      "catcher": "E2 CommitmentLedger.commit (sealed ledger)",
+      "caught": true,
+      "detail": "ledger 'e3-world-B-commitments' is sealed: a predictive for 'adequacy_probe_20V' cannot be registered after the commitment phase closed",
+      "injection": "G"
+    },
+    {
+      "attempt": "let posterior confidence, EVPI or EVSI reach the certification gate",
+      "catcher": "certify_campaign signature",
+      "caught": true,
+      "detail": "certify_campaign('posterior_decision', 'obligation_status', 'adequacy_scope', 'execution_validity') accepts no value-of-information input",
+      "injection": "H"
+    }
+  ],
+  "allowed_claim": "On the computational Electrical benchmark, E3 verified that a finite preregistered adequacy obligation can remain scientifically binding after parameter-learning EVSI has collapsed, without assigning fake parameter information value to adequacy probes. The existing frozen campaign stack genuinely refused scientific STOP and protected validation budget, but it did not natively acquire the required adequacy evidence; that acquisition required an experiment-local adapter.",
+  "architecture_gaps": [
+    {
+      "evidence": "ObligationSet is evaluated per evidence record; placing the adequacy obligation there yields arbiter INCONCLUSIVE, admitted=False and belief_size=0 \u2014 it blocks all admission",
+      "gap": "campaign-scoped obligation vocabulary is missing"
+    },
+    {
+      "evidence": "the runner pauses with NO_ACTION_WORTH_BUYING whatever the review returns; no runner pass executed any adequacy probe",
+      "gap": "_propose_stop has no resolution branch routing a non-approved stop review to the evidence that would resolve the obligation"
+    },
+    {
+      "evidence": "without hand-building a CampaignCheckpoint the stop review short-circuits at 'obligations were never assessed' and never reaches the registered criterion",
+      "gap": "no supported campaign initialization path from previously admitted evidence / assurance state"
+    },
+    {
+      "evidence": "a probe cannot honestly satisfy an adequacy obligation if its prediction was not committed before observation, and nothing in src/ can hold that commitment",
+      "gap": "adequacy probes still rely on the experiment-local E2 predictive commitment seam"
+    }
+  ],
+  "campaign_native_checks": {
+    "adequacy_acquisition_is_campaign_native": false,
+    "stop_refusal_is_campaign_native": true,
+    "validation_budget_fence_is_campaign_native": true
+  },
+  "claim_scope": "E3 verified the OBLIGATION POLICY: a finite preregistered adequacy obligation remained scientifically binding after parameter-learning EVSI collapsed, and no fake parameter information value was assigned to the adequacy probes. It did NOT verify campaign-native adequacy acquisition: the frozen stack refused the stop and protected the budget on its own, but the probes were executed by an experiment-local adapter, so the strongest honest verdict is PARTIALLY VERIFIED",
+  "config": {
+    "action_families": {
+      "adequacy_probe": "validate",
+      "calibration": "characterize",
+      "parameter": "characterize"
+    },
+    "adequacy_obligation": {
+      "adequacy_rule": {
+        "id": "e2.joint_posterior_predictive_log_score",
+        "version": "1.1.0"
+      },
+      "coverage_rule": "one required probe at the low, middle and high of the declared extrapolation range above the calibration condition; chosen to cover the range the campaign claims, NOT to maximise detection power, which the decision path could not do without knowing the misspecification",
+      "declared_scope": "constant-R model for Vs in [4, 28] V on the E2 divider",
+      "dispositions": {
+        "budget_infeasible": "CERTIFICATION_NOT_POSSIBLE",
+        "execution_invalid": "EXECUTION_REPAIR_REQUIRED",
+        "model_inadequate": "MODEL_REVISION_REQUIRED",
+        "satisfied": "CERTIFICATION_ELIGIBLE_IF_ADEQUACY_ACCEPTABLE"
+      },
+      "failure_condition": "a required probe cannot be executed validly, or cannot be afforded within max_adequacy_cost. Neither is a model-adequacy finding",
+      "max_adequacy_cost": 0.45,
+      "model_family": {
+        "id": "constant_r",
+        "version": "1.1.0"
+      },
+      "n_required": 3,
+      "obligation_id": "adequacy:constant_r:declared_range",
+      "predictive_commitment_required": true,
+      "required_action_ids": [
+        "adequacy_probe_16V",
+        "adequacy_probe_22V",
+        "adequacy_probe_28V"
+      ],
+      "satisfaction_condition": "every required probe has been executed with a VALID computational result, admitted through the M1 evidence chain, and scored against a predictive commitment that existed before its observation. Satisfying this says the required TEST WAS PERFORMED; it says nothing whatever about whether the model passed it",
+      "scope_volt": [
+        4.0,
+        28.0
+      ],
+      "selection_rule": "execute the cheapest OUTSTANDING REQUIRED probe first, ties broken by the frozen declared order. This is a constraint-satisfaction rule over a fixed required set and is deliberately NOT a ranking by expected information value",
+      "source": "e3 preregistered charter"
+    },
+    "assumed_model_family": {
+      "family_id": "constant_r",
+      "grid_max": 2500.0,
+      "grid_min": 500.0,
+      "grid_points": 401,
+      "parameter": "R2_ohm",
+      "posterior_reading": "p(R2 | data, constant-R model)"
+    },
+    "base_commit": "619d3cc04d5cbed501670718f7ea814ddadf7cc0",
+    "budget": {
+      "adequacy_reserve": 0.45,
+      "control_parameter_spend": 0.9,
+      "cost_unit": "hour",
+      "policies": [
+        "shared_pool",
+        "reserved_adequacy_allocation"
+      ],
+      "statement": "E3 does not claim a reserved validation budget is universally correct. It tests one narrow question: whether mandatory certification evidence can be protected from being consumed by parameter-learning actions. Both policies are run on the same scientific state and reported descriptively",
+      "total": 1.2
+    },
+    "calibration_state": {
+      "action_id": "calibrate_vmid_10V",
+      "noise_sigma_volt": 0.05,
+      "note": "identical to E2 Phase 1; draws are bit-identical",
+      "repeats": 4,
+      "source_voltage_volt": 10.0
+    },
+    "campaign": {
+      "campaign_id": "e3-electrical",
+      "charter_version": "1",
+      "max_iterations": 3
+    },
+    "certification_rule": "SCIENTIFIC_CERTIFICATION = ELIGIBLE only if execution validity is VALID AND the adequacy obligation status is COMPLETED AND the adequacy state is ACCEPTABLE_FOR_DECLARED_SCOPE. Posterior sd, posterior entropy, P(decision), EVPI and EVSI are NOT inputs to this rule and are not parameters of the function that evaluates it. Neither is the fact that a stop was proposed economically",
+    "controls": {
+      "1": "no adequacy obligation registered \u2014 ordinary EVSI policy",
+      "2": "obligation outstanding and affordable \u2014 probe must be routed",
+      "3": "obligation already satisfied \u2014 must not force duplicate probes",
+      "4": "obligation required but budget infeasible \u2014 no fake PASS",
+      "5": "required probe fails computational validity \u2014 no adequacy judgment",
+      "6": "valid evidence acquired, test completed, model fails"
+    },
+    "e2_dependency": {
+      "config_hash": "d6add0d816563ea65f70473cf5cdc926dd7fa17ebff6769790879f8de057ab13",
+      "experiment_version": "1.1.0",
+      "inherited": [
+        "circuit and real ElectricalDCSolver forward map",
+        "constant-R assumed model family, theta grid and prior",
+        "posterior / predictive / EVPI / EVSI machinery",
+        "synthetic observation noise and its derivation",
+        "predictive commitment ledger",
+        "corrected joint posterior-predictive adequacy rule (v1.1.0)",
+        "well-specified and misspecified grader worlds"
+      ],
+      "preregistration_hash": "6b93e70dac164f286170b3218943062602d47013bbdb83092a102e46a496b216"
+    },
+    "experiment_id": "E3",
+    "experiment_name": "adequacy_evidence_vs_parameter_evsi",
+    "experiment_version": "1.0.0",
+    "forbidden_obligation_vocabulary": "validation_level:",
+    "no_fake_utility_statement": "parameter EVSI for every action, including the adequacy probes, is computed by E2's unmodified quadrature and reported as it comes out. No adequacy utility, validation reward, critic-confidence term or obligation priority enters the decision basis",
+    "obligation_placement": "The adequacy obligation is carried by a registered StoppingCriterion with a real evaluator, NOT by the campaign ObligationSet. ObligationSet is evaluated by the Arbiter against the critic assessments of ONE evidence record, so a campaign-scoped scientific requirement placed there is looked for among that record's checks, never found, and makes every piece of evidence INCONCLUSIVE \u2014 blocking all admission. E3 demonstrates that failure mode in a test rather than asserting it. It is also the reason the frozen validation-liveness router cannot see this obligation: the router reads unsatisfied obligations from ObligationSet, which is welded to per-evidence admission",
+    "parameter_actions": [
+      {
+        "action_id": "parameter_repeat_10V",
+        "cost": 0.15,
+        "source_voltage_volt": 10.0
+      }
+    ],
+    "probe_catalogue": [
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_16V",
+        "cost": 0.15,
+        "required": true,
+        "source_voltage_volt": 16.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_20V",
+        "cost": 0.15,
+        "required": false,
+        "source_voltage_volt": 20.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_22V",
+        "cost": 0.15,
+        "required": true,
+        "source_voltage_volt": 22.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_24V",
+        "cost": 0.15,
+        "required": false,
+        "source_voltage_volt": 24.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_28V",
+        "cost": 0.15,
+        "required": true,
+        "source_voltage_volt": 28.0
+      }
+    ],
+    "scope_statement": "E3 is a computational Electrical DC campaign-governance benchmark. It says nothing about optimal validation budgeting, universal value of validation, or real-domain regulatory readiness",
+    "stopping_criterion": {
+      "criterion_id": "adequacy:constant_r:declared_range",
+      "evaluator_id": "e3.adequacy_obligation",
+      "evaluator_version": "1",
+      "statement": "the campaign may stop only when the declared model-adequacy obligation has been discharged by acquiring its required evidence AND that evidence left the model family adequate for the declared scope"
+    },
+    "stopping_semantics": "ECONOMIC STOP PROPOSAL means no evaluated candidate scored above its price. SCIENTIFIC STOP APPROVAL means a registered stopping criterion was evaluated and the Arbiter found it satisfied. NO_ACTION_WORTH_BUYING does NOT imply STOP_APPROVED while a mandatory adequacy obligation is outstanding, and the frozen M5.1 StopReview refuses to represent that combination at all",
+    "terminal_decision": {
+      "decision_id": "r2_class",
+      "threshold_ohm": 1200.0
+    },
+    "worlds": {
+      "A": "well-specified truth, inside the assumed constant-R family",
+      "B": "E2's frozen synthetic misspecification, outside the family"
+    }
+  },
+  "config_hash": "3a812af7cf01cf21b007c814efebbfed8ea24830c1153f7f8b56c57c441ba3e2",
+  "control_1_no_obligation": {
+    "executed_actions": [],
+    "statement": "with no stopping criterion registered the review returns STOP_NOT_ASSESSED naming no criterion, and no adequacy evidence is ever acquired. This is the EVSI-only counterfactual",
+    "stop_review": {
+      "approves": false,
+      "arbiter_decision_id": "",
+      "arbiter_verdict": "",
+      "criterion_id": "",
+      "is_certification": false,
+      "outcome": "stop_not_assessed",
+      "reasons": [
+        "no independently declared stopping criterion is registered for this campaign",
+        "non-positive value of information means no candidate is worth its price, and discharged validation obligations mean the campaign did what it promised to check; neither is evidence that stopping is scientifically justified",
+        "calibrated decision-risk / expected-regret certification is not implemented, and is not being approximated"
+      ],
+      "unmet_obligations": []
+    }
+  },
+  "control_2_obligation_outstanding": {
+    "routed_probe": "adequacy_probe_16V",
+    "stop_review": {
+      "approves": false,
+      "arbiter_decision_id": "e3-world-B-obligation-pre-stopreview-1-arbiter",
+      "arbiter_verdict": "inconclusive",
+      "criterion_id": "adequacy:constant_r:declared_range",
+      "is_certification": false,
+      "outcome": "stop_not_assessed",
+      "reasons": [
+        "the Arbiter returned inconclusive on the stopping criterion 'adequacy:constant_r:declared_range'",
+        "UNKNOWN remains a legal and honest answer"
+      ],
+      "unmet_obligations": []
+    },
+    "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection"
+  },
+  "control_3_already_satisfied": {
+    "n_catalogue": 5,
+    "n_required": 3,
+    "never_required": [
+      "adequacy_probe_20V",
+      "adequacy_probe_24V"
+    ],
+    "next_probe": null,
+    "obligation_status": "completed",
+    "outstanding": [],
+    "probes_executed": 3,
+    "satisfied": [
+      "adequacy_probe_16V",
+      "adequacy_probe_22V",
+      "adequacy_probe_28V"
+    ],
+    "statement": "the obligation is finite: three required conditions out of five feasible ones, and once discharged next_probe() returns nothing. Two catalogue probes were never bought and never will be"
+  },
+  "control_4_budget_infeasible": {
+    "comparison": {
+      "protection_observed": true,
+      "reserved_completed": true,
+      "shared_pool_completed": false,
+      "statement": "descriptive, not a claim that reserving is universally right. On this benchmark, with a preregistered parameter spend of 0.9 against a total of 1.2, the frozen BudgetLedger reservation kept the mandatory evidence purchasable and the shared pool did not"
+    },
+    "reserved_adequacy_allocation": {
+      "adequacy_scope": "acceptable_for_declared_scope",
+      "budget_final": {
+        "general_pool": 0.0,
+        "reserved_validation": 0.45,
+        "spent_general": 0.9,
+        "spent_total": 1.35,
+        "spent_validation": 0.44999999999999996,
+        "total": 1.2,
+        "validation_pool": 5.551115123125783e-17
+      },
+      "certification": {
+        "adequacy_scope": "acceptable_for_declared_scope",
+        "disposition": "certification_eligible",
+        "execution_validity": "valid",
+        "obligation_status": "completed",
+        "posterior_decision": "A",
+        "reason": "ADEQUACY_ACCEPTABLE_FOR_DECLARED_SCOPE",
+        "scientific_certification": "eligible",
+        "statement": "execution was valid, the declared obligation was discharged, and the family survived its own precommitted predictions at the required conditions. ELIGIBLE is scoped to those conditions and is not a general certificate of scientific completeness"
+      },
+      "obligation_status": "completed",
+      "probes_executed": 3,
+      "stop_review_post": {
+        "outcome": null
+      }
+    },
+    "shared_pool": {
+      "adequacy_scope": "not_established",
+      "budget_final": {
+        "general_pool": 0.0,
+        "reserved_validation": 0.0,
+        "spent_general": 1.2,
+        "spent_total": 1.2,
+        "spent_validation": 0.0,
+        "total": 1.2,
+        "validation_pool": 0.0
+      },
+      "certification": {
+        "adequacy_scope": "not_established",
+        "disposition": "certification_not_possible",
+        "execution_validity": "valid",
+        "obligation_status": "unresolved_budget_infeasible",
+        "posterior_decision": "A",
+        "reason": "REQUIRED_ADEQUACY_EVIDENCE_BUDGET_INFEASIBLE",
+        "scientific_certification": "not_certifiable",
+        "statement": "the required evidence is affordable neither now nor within the declared adequacy budget. The model is not thereby inadequate and is not thereby adequate \u2014 it is untested, and an untested model is not certified"
+      },
+      "obligation_status": "unresolved_budget_infeasible",
+      "probes_executed": 2,
+      "stop_review_post": {
+        "outcome": null
+      }
+    }
+  },
+  "control_5_execution_invalid": {
+    "adequacy_scope": "not_assessed",
+    "adequacy_scored": false,
+    "certification": {
+      "adequacy_scope": "not_assessed",
+      "disposition": "execution_repair_required",
+      "execution_validity": "invalid",
+      "obligation_status": "unresolved_execution_failure",
+      "posterior_decision": "A",
+      "reason": "EXECUTION_VALIDITY=INVALID",
+      "scientific_certification": "not_certifiable",
+      "statement": "the computation did not produce trustworthy output; this is a computational failure, not an adequacy finding and not a budget finding"
+    },
+    "executed": [
+      {
+        "action_id": "adequacy_probe_16V",
+        "admitted": false,
+        "arbiter_verdict": "invalid",
+        "commitment_artifact_hash": "cc4f7310c836d45ba02d4a1a04f0565b10a2734d242246474d8244734cf4e648",
+        "critic_verdict": "fail",
+        "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+        "execution_validity": "invalid",
+        "parameter_evsi_at_selection": 1.0446600421580942e-50,
+        "source_voltage_volt": 16.0,
+        "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+        "y_volt": 9.328707731460298
+      }
+    ],
+    "obligation_status": "unresolved_execution_failure",
+    "statement": "an invalid run is not adequacy evidence and is not an adequacy finding. The obligation stays UNRESOLVED_EXECUTION_FAILURE, the adequacy rule is never evaluated, and the disposition is repair \u2014 not MODEL_REVISION_REQUIRED and not a PASS",
+    "stop_review_post": {
+      "approves": false,
+      "arbiter_decision_id": "",
+      "arbiter_verdict": "",
+      "criterion_id": "",
+      "is_certification": false,
+      "outcome": "stop_rejected",
+      "reasons": [
+        "declared validation obligations remain unsatisfied: ['critic:numerical']"
+      ],
+      "unmet_obligations": [
+        "critic:numerical"
+      ]
+    }
+  },
+  "control_6_model_inadequate": {
+    "adequacy_scope": "model_space_inadequate",
+    "certification": {
+      "adequacy_scope": "model_space_inadequate",
+      "disposition": "model_revision_required",
+      "execution_validity": "valid",
+      "obligation_status": "completed",
+      "posterior_decision": "A",
+      "reason": "MODEL_SPACE_INADEQUATE",
+      "scientific_certification": "not_certifiable",
+      "statement": "the obligation was discharged COMPLETELY \u2014 the required test was performed on valid, admitted, predictively-committed evidence \u2014 and the model failed it. Test completed and model passed are separate states, and this is the first without the second"
+    },
+    "obligation_status": "completed",
+    "stop_review": {
+      "approves": false,
+      "arbiter_decision_id": "e3-world-B-obligation-post-stopreview-1-arbiter",
+      "arbiter_verdict": "invalid",
+      "criterion_id": "adequacy:constant_r:declared_range",
+      "is_certification": false,
+      "outcome": "stop_rejected",
+      "reasons": [
+        "the Arbiter found the stopping criterion 'adequacy:constant_r:declared_range' not satisfied"
+      ],
+      "unmet_obligations": []
+    }
+  },
+  "experiment": "E3",
+  "next_step": {
+    "milestone": "CAMPAIGN OBLIGATION ROUTING INTEGRATION",
+    "not": "a generic validation subsystem, and not a claim that a CampaignObligation type alone closes the gap \u2014 three of the four gaps are integration, not vocabulary",
+    "purpose": "connect the four seams above minimally so that a campaign-scoped obligation can be declared, seen by the existing liveness router, resolved by the existing execution path, and discharged only by evidence carrying a pre-observation predictive commitment",
+    "started": false
+  },
+  "obligation_set_placement_probe": {
+    "admitted": false,
+    "arbiter_verdict": "inconclusive",
+    "belief_size": 0,
+    "blocks_all_admission": true,
+    "critic_verdict": "pass",
+    "statement": "The adequacy obligation is carried by a registered StoppingCriterion with a real evaluator, NOT by the campaign ObligationSet. ObligationSet is evaluated by the Arbiter against the critic assessments of ONE evidence record, so a campaign-scoped scientific requirement placed there is looked for among that record's checks, never found, and makes every piece of evidence INCONCLUSIVE \u2014 blocking all admission. E3 demonstrates that failure mode in a test rather than asserting it. It is also the reason the frozen validation-liveness router cannot see this obligation: the router reads unsatisfied obligations from ObligationSet, which is welded to per-evidence admission"
+  },
+  "preregistration_hash": "77ac74aab7fe94151dd0abf34b0b96bd4d24d44dafd45e67025b999d256db1f1",
+  "runner_executed_probes": [],
+  "success_checks": {
+    "all_injections_caught": true,
+    "control_3_no_duplicate_probes": true,
+    "control_4_budget_reason_distinct": true,
+    "control_5_no_adequacy_from_invalid": true,
+    "evsi_only_acquired_nothing": true,
+    "no_candidate_worth_buying_before_adequacy": true,
+    "obligation_routed_a_probe": true,
+    "parameter_evsi_identical_across_policies": true,
+    "stop_not_approved_while_outstanding": true,
+    "world_a_adequacy_acceptable": true,
+    "world_a_certification_eligible": true,
+    "world_a_obligation_completed": true,
+    "world_a_stop_approved": true,
+    "world_b_certification_denied": true,
+    "world_b_obligation_completed": true
+  },
+  "verdict": "E3 PARTIALLY VERIFIED",
+  "world_a_well_specified": {
+    "acquisition": {
+      "adequacy": {
+        "aggregate": {
+          "chi2_reference_inflation_factor": 1.5605968373900299,
+          "degrees_of_freedom": 6,
+          "deprecated_reference": "chi_square_2N_assuming_independence",
+          "deprecated_statistic": "fisher_combined_tail_probability",
+          "fisher_p_chi2_independent": 0.3249850229937005,
+          "fisher_p_simulated": 0.29888505574721264,
+          "fisher_x2": 6.9554693759040696,
+          "joint_log_score": -3.8842262248375676,
+          "n_conditions": 3,
+          "n_extreme": 0,
+          "n_moderate": 0,
+          "n_null_at_least_as_extreme": 7416,
+          "null_calibration": "posterior_predictive_simulation_under_M_const",
+          "null_draws": 20000,
+          "null_mean": -3.9478963237906792,
+          "null_q99": 0.22138228186491482,
+          "null_rejection_rate_chi2_at_0p05": 0.08025,
+          "null_sd": 1.2200373342401216,
+          "null_seed": 20260822,
+          "p_joint": 0.37083145842707865,
+          "p_joint_is_mc_floor": false,
+          "statistic": "joint_posterior_predictive_log_score"
+        },
+        "e2_state": "model_adequacy_acceptable",
+        "rationale": "no condition fell below 0.0001 and the joint score -3.884 sits inside its simulated null (-3.948 +/- 1.220), p_joint = 3.708e-01. The tested conditions gave the family no reason to be rejected \u2014 which is not the same as establishing that it is right.",
+        "scored": true,
+        "surprises": [
+          {
+            "action_id": "adequacy_probe_16V",
+            "commitment_artifact_hash": "b5164564b356408ea26b8cbef63c89427cdb9b353ea654b1c409b7cce6aca8d9",
+            "commitment_sequence": 1,
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "level": "consistent",
+            "nlpd": -1.827129619320731,
+            "observation_sequence": 5,
+            "predictive_mean_volt": 9.333052450420158,
+            "predictive_sd_volt": 0.06403214201502161,
+            "source_voltage_volt": 16.0,
+            "standardized_residual": -0.06785215710636336,
+            "tail_probability": 0.9459033518344924,
+            "y_observed_volt": 9.328707731460298
+          },
+          {
+            "action_id": "adequacy_probe_22V",
+            "commitment_artifact_hash": "491456bb34fc19b9158e9a35d87f49227da8a6711419c4a77a69677580609e66",
+            "commitment_sequence": 2,
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "level": "consistent",
+            "nlpd": -0.5225874453200574,
+            "observation_sequence": 6,
+            "predictive_mean_volt": 12.832947119327716,
+            "predictive_sd_volt": 0.07433180894379718,
+            "source_voltage_volt": 22.0,
+            "standardized_residual": -1.5216375291602937,
+            "tail_probability": 0.12809990928399476,
+            "y_observed_volt": 12.719841049228462
+          },
+          {
+            "action_id": "adequacy_probe_28V",
+            "commitment_artifact_hash": "c39428e5e5036007ec50e8b7d0ac1f15ffeae96dfae2ec05e49c9a72e5a466fe",
+            "commitment_sequence": 3,
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "level": "consistent",
+            "nlpd": -0.8858498198326763,
+            "observation_sequence": 7,
+            "predictive_mean_volt": 16.33284178823528,
+            "predictive_sd_volt": 0.08602530345070092,
+            "source_voltage_volt": 28.0,
+            "standardized_residual": -1.1387059290633967,
+            "tail_probability": 0.2548258191235748,
+            "y_observed_volt": 16.23488426514649
+          }
+        ]
+      },
+      "adequacy_scope": "acceptable_for_declared_scope",
+      "commitment_ledger": {
+        "chain_verified": true,
+        "commitments": [
+          {
+            "action_id": "adequacy_probe_16V",
+            "artifact_hash": "b5164564b356408ea26b8cbef63c89427cdb9b353ea654b1c409b7cce6aca8d9",
+            "commitment_id": "e3-world-A-commitments-commit-adequacy_probe_16V",
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "n_components": 47,
+            "n_observations": 4,
+            "predictive_latent_sd_volt": 0.04000144011197467,
+            "predictive_mean_volt": 9.333052450420158,
+            "predictive_sd_volt": 0.06403214201502161,
+            "sequence": 1,
+            "source_voltage_volt": 16.0
+          },
+          {
+            "action_id": "adequacy_probe_22V",
+            "artifact_hash": "491456bb34fc19b9158e9a35d87f49227da8a6711419c4a77a69677580609e66",
+            "commitment_id": "e3-world-A-commitments-commit-adequacy_probe_22V",
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "n_components": 47,
+            "n_observations": 4,
+            "predictive_latent_sd_volt": 0.055001980153965055,
+            "predictive_mean_volt": 12.832947119327716,
+            "predictive_sd_volt": 0.07433180894379718,
+            "sequence": 2,
+            "source_voltage_volt": 22.0
+          },
+          {
+            "action_id": "adequacy_probe_28V",
+            "artifact_hash": "c39428e5e5036007ec50e8b7d0ac1f15ffeae96dfae2ec05e49c9a72e5a466fe",
+            "commitment_id": "e3-world-A-commitments-commit-adequacy_probe_28V",
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "n_components": 47,
+            "n_observations": 4,
+            "predictive_latent_sd_volt": 0.07000252019595563,
+            "predictive_mean_volt": 16.33284178823528,
+            "predictive_sd_volt": 0.08602530345070092,
+            "sequence": 3,
+            "source_voltage_volt": 28.0
+          }
+        ],
+        "head": "ff1691796521f658222e887453257a1b6649b665231af0e4c98e5c5e139d5ada",
+        "sealed_at": 4
+      },
+      "executed": [
+        {
+          "action_id": "adequacy_probe_16V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "commitment_artifact_hash": "b5164564b356408ea26b8cbef63c89427cdb9b353ea654b1c409b7cce6aca8d9",
+          "critic_verdict": "pass",
+          "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+          "execution_validity": "valid",
+          "parameter_evsi_at_selection": 1.0446600421580942e-50,
+          "source_voltage_volt": 16.0,
+          "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+          "y_volt": 9.328707731460298
+        },
+        {
+          "action_id": "adequacy_probe_22V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "commitment_artifact_hash": "491456bb34fc19b9158e9a35d87f49227da8a6711419c4a77a69677580609e66",
+          "critic_verdict": "pass",
+          "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+          "execution_validity": "valid",
+          "parameter_evsi_at_selection": 1.0455135876618197e-50,
+          "source_voltage_volt": 22.0,
+          "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+          "y_volt": 12.719841049228462
+        },
+        {
+          "action_id": "adequacy_probe_28V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "commitment_artifact_hash": "c39428e5e5036007ec50e8b7d0ac1f15ffeae96dfae2ec05e49c9a72e5a466fe",
+          "critic_verdict": "pass",
+          "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+          "execution_validity": "valid",
+          "parameter_evsi_at_selection": 1.0455135878779114e-50,
+          "source_voltage_volt": 28.0,
+          "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+          "y_volt": 16.23488426514649
+        }
+      ],
+      "obligation": {
+        "budget_infeasible_detail": "",
+        "failed_attempts": [],
+        "max_adequacy_cost": 0.45,
+        "obligation_id": "adequacy:constant_r:declared_range",
+        "outstanding": [],
+        "records": [
+          {
+            "action_id": "adequacy_probe_16V",
+            "admitted": true,
+            "commitment_artifact_hash": "b5164564b356408ea26b8cbef63c89427cdb9b353ea654b1c409b7cce6aca8d9",
+            "execution_id": "e3-world-A-chain-exec-005-adequacy_probe_16V",
+            "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+            "execution_valid": true,
+            "is_obligation_evidence": true,
+            "realized_cost": 0.15,
+            "source_voltage_volt": 16.0
+          },
+          {
+            "action_id": "adequacy_probe_22V",
+            "admitted": true,
+            "commitment_artifact_hash": "491456bb34fc19b9158e9a35d87f49227da8a6711419c4a77a69677580609e66",
+            "execution_id": "e3-world-A-chain-exec-006-adequacy_probe_22V",
+            "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+            "execution_valid": true,
+            "is_obligation_evidence": true,
+            "realized_cost": 0.15,
+            "source_voltage_volt": 22.0
+          },
+          {
+            "action_id": "adequacy_probe_28V",
+            "admitted": true,
+            "commitment_artifact_hash": "c39428e5e5036007ec50e8b7d0ac1f15ffeae96dfae2ec05e49c9a72e5a466fe",
+            "execution_id": "e3-world-A-chain-exec-007-adequacy_probe_28V",
+            "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+            "execution_valid": true,
+            "is_obligation_evidence": true,
+            "realized_cost": 0.15,
+            "source_voltage_volt": 28.0
+          }
+        ],
+        "required": [
+          "adequacy_probe_16V",
+          "adequacy_probe_22V",
+          "adequacy_probe_28V"
+        ],
+        "satisfied": [
+          "adequacy_probe_16V",
+          "adequacy_probe_22V",
+          "adequacy_probe_28V"
+        ],
+        "spent": 0.44999999999999996,
+        "status": "completed"
+      }
+    },
+    "adequacy_scope": "acceptable_for_declared_scope",
+    "before_adequacy": {
+      "adequacy_scope": "not_established",
+      "evsi_table": {
+        "adequacy_probe_16V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0446600421580942e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_20V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135049153153e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_22V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135876618197e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_24V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135878776665e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_28V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135878779114e-50,
+          "phase": "adequacy_probe"
+        },
+        "parameter_repeat_10V": {
+          "action_family": "characterize",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 4.1810739896287123e-51,
+          "phase": "parameter"
+        }
+      },
+      "obligation_status": "outstanding",
+      "posterior": {
+        "bayes_decision": "A",
+        "conditional_on": "M_const (R2 constant)",
+        "effective_support_points": 41,
+        "entropy_nats": 2.476716567907891,
+        "evpi": 1.0455135878779114e-50,
+        "expected_utility": -1.0455135878779114e-50,
+        "mean_r2_ohm": 1399.9852910449258,
+        "p_above_threshold": 1.0,
+        "sd_r2_ohm": 14.401379103027425
+      }
+    },
+    "budget_final": {
+      "general_pool": 0.75,
+      "reserved_validation": 0.45,
+      "spent_general": 0.0,
+      "spent_total": 0.44999999999999996,
+      "spent_validation": 0.44999999999999996,
+      "total": 1.2,
+      "validation_pool": 5.551115123125783e-17
+    },
+    "budget_policy": "reserved_adequacy_allocation",
+    "calibration": {
+      "n_admitted": 4,
+      "rows": [
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-A-chain-ev-001",
+          "execution_id": "e3-world-A-chain-exec-001-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.888821209875206
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-A-chain-ev-002",
+          "execution_id": "e3-world-A-chain-exec-002-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 2,
+          "y_volt": 5.872291485741004
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-A-chain-ev-003",
+          "execution_id": "e3-world-A-chain-exec-003-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 3,
+          "y_volt": 5.784633421466084
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-A-chain-ev-004",
+          "execution_id": "e3-world-A-chain-exec-004-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 4,
+          "y_volt": 5.785685016322573
+        }
+      ]
+    },
+    "certification": {
+      "adequacy_scope": "acceptable_for_declared_scope",
+      "disposition": "certification_eligible",
+      "execution_validity": "valid",
+      "obligation_status": "completed",
+      "posterior_decision": "A",
+      "reason": "ADEQUACY_ACCEPTABLE_FOR_DECLARED_SCOPE",
+      "scientific_certification": "eligible",
+      "statement": "execution was valid, the declared obligation was discharged, and the family survived its own precommitted predictions at the required conditions. ELIGIBLE is scoped to those conditions and is not a general certificate of scientific completeness"
+    },
+    "evsi_after_adequacy": {
+      "adequacy_probe_16V": 1.5902032478202946e-206,
+      "adequacy_probe_20V": 1.5903271534798265e-206,
+      "adequacy_probe_22V": 1.5903271536544e-206,
+      "adequacy_probe_24V": 1.5903271536544212e-206,
+      "adequacy_probe_28V": 1.5903271536544212e-206,
+      "parameter_repeat_10V": 6.951296579519197e-207
+    },
+    "evsi_only_phase": {
+      "budget": {
+        "general_pool": 0.75,
+        "reserved_validation": 0.45,
+        "total": 1.2,
+        "validation_pool": 0.45
+      },
+      "executed_actions": [],
+      "pause_reason": "no_action_worth_buying",
+      "run_id": "e3-world-A-evsi-only",
+      "scores": [
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_16V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0446600421580942e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_20V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135049153153e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_22V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135876618197e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_24V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878776665e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_28V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878779114e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "characterize",
+          "action_id": "parameter_repeat_10V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 4.1810739896287123e-51,
+          "phase": "parameter"
+        }
+      ],
+      "state": "paused",
+      "stop_review": {
+        "approves": false,
+        "arbiter_decision_id": "",
+        "arbiter_verdict": "",
+        "criterion_id": "",
+        "is_certification": false,
+        "outcome": "stop_not_assessed",
+        "reasons": [
+          "no independently declared stopping criterion is registered for this campaign",
+          "non-positive value of information means no candidate is worth its price, and discharged validation obligations mean the campaign did what it promised to check; neither is evidence that stopping is scientifically justified",
+          "calibrated decision-risk / expected-regret certification is not implemented, and is not being approximated"
+        ],
+        "unmet_obligations": []
+      },
+      "stop_review_outcome": "stop_not_assessed",
+      "with_adequacy_criterion": false
+    },
+    "label": "e3-world-A",
+    "obligation_aware_post": {
+      "budget": {
+        "general_pool": 0.75,
+        "reserved_validation": 0.45,
+        "total": 1.2,
+        "validation_pool": 5.551115123125783e-17
+      },
+      "executed_actions": [],
+      "pause_reason": "no_action_worth_buying",
+      "run_id": "e3-world-A-obligation-post",
+      "scores": [
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_16V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.5902032478202946e-206,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_20V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.5903271534798265e-206,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_22V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.5903271536544e-206,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_24V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.5903271536544212e-206,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_28V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.5903271536544212e-206,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "characterize",
+          "action_id": "parameter_repeat_10V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 6.951296579519197e-207,
+          "phase": "parameter"
+        }
+      ],
+      "state": "paused",
+      "stop_review": {
+        "approves": true,
+        "arbiter_decision_id": "e3-world-A-obligation-post-stopreview-1-arbiter",
+        "arbiter_verdict": "valid",
+        "criterion_id": "adequacy:constant_r:declared_range",
+        "is_certification": false,
+        "outcome": "stop_approved",
+        "reasons": [
+          "the Arbiter found the registered stopping criterion 'adequacy:constant_r:declared_range' satisfied",
+          "this approves stopping against that declared criterion; it is not a general certification of scientific completeness"
+        ],
+        "unmet_obligations": []
+      },
+      "stop_review_outcome": "stop_approved",
+      "with_adequacy_criterion": true
+    },
+    "obligation_aware_pre": {
+      "budget": {
+        "general_pool": 0.75,
+        "reserved_validation": 0.45,
+        "total": 1.2,
+        "validation_pool": 0.45
+      },
+      "executed_actions": [],
+      "pause_reason": "no_action_worth_buying",
+      "run_id": "e3-world-A-obligation-pre",
+      "scores": [
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_16V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0446600421580942e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_20V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135049153153e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_22V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135876618197e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_24V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878776665e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_28V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878779114e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "characterize",
+          "action_id": "parameter_repeat_10V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 4.1810739896287123e-51,
+          "phase": "parameter"
+        }
+      ],
+      "state": "paused",
+      "stop_review": {
+        "approves": false,
+        "arbiter_decision_id": "e3-world-A-obligation-pre-stopreview-1-arbiter",
+        "arbiter_verdict": "inconclusive",
+        "criterion_id": "adequacy:constant_r:declared_range",
+        "is_certification": false,
+        "outcome": "stop_not_assessed",
+        "reasons": [
+          "the Arbiter returned inconclusive on the stopping criterion 'adequacy:constant_r:declared_range'",
+          "UNKNOWN remains a legal and honest answer"
+        ],
+        "unmet_obligations": []
+      },
+      "stop_review_outcome": "stop_not_assessed",
+      "with_adequacy_criterion": true
+    },
+    "obligation_status": "completed",
+    "posterior_after_adequacy": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 19,
+      "entropy_nats": 1.678130579879229,
+      "evpi": 1.5903271536544212e-206,
+      "expected_utility": -1.5903271536544212e-206,
+      "mean_r2_ohm": 1384.1529038979852,
+      "p_above_threshold": 1.0000000000000002,
+      "sd_r2_ohm": 6.47955683224878
+    },
+    "truth_spec_id": "A_well_specified"
+  },
+  "world_b_misspecified": {
+    "acquisition": {
+      "adequacy": {
+        "aggregate": {
+          "chi2_reference_inflation_factor": 1.5605968373900299,
+          "degrees_of_freedom": 6,
+          "deprecated_reference": "chi_square_2N_assuming_independence",
+          "deprecated_statistic": "fisher_combined_tail_probability",
+          "fisher_p_chi2_independent": 7.6321011980475e-14,
+          "fisher_p_simulated": 4.999750012499375e-05,
+          "fisher_x2": 73.5493168424795,
+          "joint_log_score": 12.73717011788751,
+          "n_conditions": 3,
+          "n_extreme": 2,
+          "n_moderate": 1,
+          "n_null_at_least_as_extreme": 0,
+          "null_calibration": "posterior_predictive_simulation_under_M_const",
+          "null_draws": 20000,
+          "null_mean": -3.9478963237906792,
+          "null_q99": 0.22138228186491482,
+          "null_rejection_rate_chi2_at_0p05": 0.08025,
+          "null_sd": 1.2200373342401216,
+          "null_seed": 20260822,
+          "p_joint": 4.999750012499375e-05,
+          "p_joint_is_mc_floor": true,
+          "statistic": "joint_posterior_predictive_log_score"
+        },
+        "e2_state": "model_space_inadequate",
+        "rationale": "2 of 3 preregistered conditions fell in the far tail of their own pre-observation predictive (threshold 0.0001), AND the complete challenge vector scored 12.737 against a simulated null of -3.948 +/- 1.220, giving p_joint = 5.000e-05 (Monte Carlo floor: 0 of 20000 null draws were as extreme, so the true value is below 5.0e-05). The joint score already allows the family to move theta anywhere its own calibration posterior permits, so this is not something a shared-parameter shift can explain away.",
+        "scored": true,
+        "surprises": [
+          {
+            "action_id": "adequacy_probe_16V",
+            "commitment_artifact_hash": "13e5c16a30b6e3a363eef1264ebc89729417de513b693f6073a70b6b53016acb",
+            "commitment_sequence": 1,
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "level": "moderate",
+            "nlpd": 2.9866004366084544,
+            "observation_sequence": 5,
+            "predictive_mean_volt": 9.333052450420158,
+            "predictive_sd_volt": 0.06403214201502161,
+            "source_voltage_volt": 16.0,
+            "standardized_residual": 3.103556905431075,
+            "tail_probability": 0.0019120965686672822,
+            "y_observed_volt": 9.531779846940422
+          },
+          {
+            "action_id": "adequacy_probe_22V",
+            "commitment_artifact_hash": "9b74e4656a3fe815c29cd39333e8fdadc7e0bdb760a357983e07418c84fda2f6",
+            "commitment_sequence": 2,
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "level": "extreme",
+            "nlpd": 7.1979958701645135,
+            "observation_sequence": 6,
+            "predictive_mean_volt": 12.832947119327716,
+            "predictive_sd_volt": 0.07433180894379718,
+            "source_voltage_volt": 22.0,
+            "standardized_residual": 4.213852705283714,
+            "tail_probability": 2.5105214463160082e-05,
+            "y_observed_volt": 13.146170413534168
+          },
+          {
+            "action_id": "adequacy_probe_28V",
+            "commitment_artifact_hash": "2b37f4c9e8ab6af595960ef476943953e57a9c37e8823b517f675d8698047296",
+            "commitment_sequence": 3,
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "level": "extreme",
+            "nlpd": 16.347994367201963,
+            "observation_sequence": 7,
+            "predictive_mean_volt": 16.33284178823528,
+            "predictive_sd_volt": 0.08602530345070092,
+            "source_voltage_volt": 28.0,
+            "standardized_residual": 5.980331954221039,
+            "tail_probability": 2.2268707760646154e-09,
+            "y_observed_volt": 16.84730165933307
+          }
+        ]
+      },
+      "adequacy_scope": "model_space_inadequate",
+      "commitment_ledger": {
+        "chain_verified": true,
+        "commitments": [
+          {
+            "action_id": "adequacy_probe_16V",
+            "artifact_hash": "13e5c16a30b6e3a363eef1264ebc89729417de513b693f6073a70b6b53016acb",
+            "commitment_id": "e3-world-B-commitments-commit-adequacy_probe_16V",
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "n_components": 47,
+            "n_observations": 4,
+            "predictive_latent_sd_volt": 0.04000144011197467,
+            "predictive_mean_volt": 9.333052450420158,
+            "predictive_sd_volt": 0.06403214201502161,
+            "sequence": 1,
+            "source_voltage_volt": 16.0
+          },
+          {
+            "action_id": "adequacy_probe_22V",
+            "artifact_hash": "9b74e4656a3fe815c29cd39333e8fdadc7e0bdb760a357983e07418c84fda2f6",
+            "commitment_id": "e3-world-B-commitments-commit-adequacy_probe_22V",
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "n_components": 47,
+            "n_observations": 4,
+            "predictive_latent_sd_volt": 0.055001980153965055,
+            "predictive_mean_volt": 12.832947119327716,
+            "predictive_sd_volt": 0.07433180894379718,
+            "sequence": 2,
+            "source_voltage_volt": 22.0
+          },
+          {
+            "action_id": "adequacy_probe_28V",
+            "artifact_hash": "2b37f4c9e8ab6af595960ef476943953e57a9c37e8823b517f675d8698047296",
+            "commitment_id": "e3-world-B-commitments-commit-adequacy_probe_28V",
+            "evidence_snapshot_digest": "6da1dfd0b6b2f597c3f026444efb2fc36eb0c8ca0989a419c48068125bb5a416",
+            "n_components": 47,
+            "n_observations": 4,
+            "predictive_latent_sd_volt": 0.07000252019595563,
+            "predictive_mean_volt": 16.33284178823528,
+            "predictive_sd_volt": 0.08602530345070092,
+            "sequence": 3,
+            "source_voltage_volt": 28.0
+          }
+        ],
+        "head": "582d10859d77b2bbc06e047140bcb3cf829d2970088c04131ede2f82ab2f2312",
+        "sealed_at": 4
+      },
+      "executed": [
+        {
+          "action_id": "adequacy_probe_16V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "commitment_artifact_hash": "13e5c16a30b6e3a363eef1264ebc89729417de513b693f6073a70b6b53016acb",
+          "critic_verdict": "pass",
+          "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+          "execution_validity": "valid",
+          "parameter_evsi_at_selection": 1.0446600421580942e-50,
+          "source_voltage_volt": 16.0,
+          "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+          "y_volt": 9.531779846940422
+        },
+        {
+          "action_id": "adequacy_probe_22V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "commitment_artifact_hash": "9b74e4656a3fe815c29cd39333e8fdadc7e0bdb760a357983e07418c84fda2f6",
+          "critic_verdict": "pass",
+          "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+          "execution_validity": "valid",
+          "parameter_evsi_at_selection": 1.0455135876618197e-50,
+          "source_voltage_volt": 22.0,
+          "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+          "y_volt": 13.146170413534168
+        },
+        {
+          "action_id": "adequacy_probe_28V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "commitment_artifact_hash": "2b37f4c9e8ab6af595960ef476943953e57a9c37e8823b517f675d8698047296",
+          "critic_verdict": "pass",
+          "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+          "execution_validity": "valid",
+          "parameter_evsi_at_selection": 1.0455135878779114e-50,
+          "source_voltage_volt": 28.0,
+          "why_action_executed": "selected by the obligation's constraint rule as the cheapest outstanding REQUIRED probe; its parameter EVSI is at the floor and played no part in the selection",
+          "y_volt": 16.84730165933307
+        }
+      ],
+      "obligation": {
+        "budget_infeasible_detail": "",
+        "failed_attempts": [],
+        "max_adequacy_cost": 0.45,
+        "obligation_id": "adequacy:constant_r:declared_range",
+        "outstanding": [],
+        "records": [
+          {
+            "action_id": "adequacy_probe_16V",
+            "admitted": true,
+            "commitment_artifact_hash": "13e5c16a30b6e3a363eef1264ebc89729417de513b693f6073a70b6b53016acb",
+            "execution_id": "e3-world-B-chain-exec-005-adequacy_probe_16V",
+            "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+            "execution_valid": true,
+            "is_obligation_evidence": true,
+            "realized_cost": 0.15,
+            "source_voltage_volt": 16.0
+          },
+          {
+            "action_id": "adequacy_probe_22V",
+            "admitted": true,
+            "commitment_artifact_hash": "9b74e4656a3fe815c29cd39333e8fdadc7e0bdb760a357983e07418c84fda2f6",
+            "execution_id": "e3-world-B-chain-exec-006-adequacy_probe_22V",
+            "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+            "execution_valid": true,
+            "is_obligation_evidence": true,
+            "realized_cost": 0.15,
+            "source_voltage_volt": 22.0
+          },
+          {
+            "action_id": "adequacy_probe_28V",
+            "admitted": true,
+            "commitment_artifact_hash": "2b37f4c9e8ab6af595960ef476943953e57a9c37e8823b517f675d8698047296",
+            "execution_id": "e3-world-B-chain-exec-007-adequacy_probe_28V",
+            "execution_reason": "SATISFY_ADEQUACY_OBLIGATION",
+            "execution_valid": true,
+            "is_obligation_evidence": true,
+            "realized_cost": 0.15,
+            "source_voltage_volt": 28.0
+          }
+        ],
+        "required": [
+          "adequacy_probe_16V",
+          "adequacy_probe_22V",
+          "adequacy_probe_28V"
+        ],
+        "satisfied": [
+          "adequacy_probe_16V",
+          "adequacy_probe_22V",
+          "adequacy_probe_28V"
+        ],
+        "spent": 0.44999999999999996,
+        "status": "completed"
+      }
+    },
+    "adequacy_scope": "model_space_inadequate",
+    "before_adequacy": {
+      "adequacy_scope": "not_established",
+      "evsi_table": {
+        "adequacy_probe_16V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0446600421580942e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_20V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135049153153e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_22V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135876618197e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_24V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135878776665e-50,
+          "phase": "adequacy_probe"
+        },
+        "adequacy_probe_28V": {
+          "action_family": "validate",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 1.0455135878779114e-50,
+          "phase": "adequacy_probe"
+        },
+        "parameter_repeat_10V": {
+          "action_family": "characterize",
+          "cost": 0.15,
+          "net": -0.15,
+          "parameter_evsi": 4.1810739896287123e-51,
+          "phase": "parameter"
+        }
+      },
+      "obligation_status": "outstanding",
+      "posterior": {
+        "bayes_decision": "A",
+        "conditional_on": "M_const (R2 constant)",
+        "effective_support_points": 41,
+        "entropy_nats": 2.476716567907891,
+        "evpi": 1.0455135878779114e-50,
+        "expected_utility": -1.0455135878779114e-50,
+        "mean_r2_ohm": 1399.9852910449258,
+        "p_above_threshold": 1.0,
+        "sd_r2_ohm": 14.401379103027425
+      }
+    },
+    "budget_final": {
+      "general_pool": 0.75,
+      "reserved_validation": 0.45,
+      "spent_general": 0.0,
+      "spent_total": 0.44999999999999996,
+      "spent_validation": 0.44999999999999996,
+      "total": 1.2,
+      "validation_pool": 5.551115123125783e-17
+    },
+    "budget_policy": "reserved_adequacy_allocation",
+    "calibration": {
+      "n_admitted": 4,
+      "rows": [
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-B-chain-ev-001",
+          "execution_id": "e3-world-B-chain-exec-001-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 1,
+          "y_volt": 5.888821209875206
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-B-chain-ev-002",
+          "execution_id": "e3-world-B-chain-exec-002-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 2,
+          "y_volt": 5.872291485741004
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-B-chain-ev-003",
+          "execution_id": "e3-world-B-chain-exec-003-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 3,
+          "y_volt": 5.784633421466084
+        },
+        {
+          "action_id": "calibrate_vmid_10V",
+          "admitted": true,
+          "arbiter_verdict": "valid",
+          "checks": [
+            {
+              "name": "solver_termination",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            },
+            {
+              "name": "residual_evidence",
+              "observed": 1.015332263064285e-18,
+              "outcome": "pass",
+              "threshold": 1e-09
+            },
+            {
+              "name": "validation_report_status",
+              "observed": null,
+              "outcome": "pass",
+              "threshold": null
+            }
+          ],
+          "critic_verdict": "pass",
+          "evidence_id": "e3-world-B-chain-ev-004",
+          "execution_id": "e3-world-B-chain-exec-004-calibrate_vmid_10V",
+          "execution_validity": "valid",
+          "repeat": 4,
+          "y_volt": 5.785685016322573
+        }
+      ]
+    },
+    "certification": {
+      "adequacy_scope": "model_space_inadequate",
+      "disposition": "model_revision_required",
+      "execution_validity": "valid",
+      "obligation_status": "completed",
+      "posterior_decision": "A",
+      "reason": "MODEL_SPACE_INADEQUATE",
+      "scientific_certification": "not_certifiable",
+      "statement": "the obligation was discharged COMPLETELY \u2014 the required test was performed on valid, admitted, predictively-committed evidence \u2014 and the model failed it. Test completed and model passed are separate states, and this is the first without the second"
+    },
+    "evsi_after_adequacy": {
+      "adequacy_probe_16V": 0.0,
+      "adequacy_probe_20V": 0.0,
+      "adequacy_probe_22V": 0.0,
+      "adequacy_probe_24V": 0.0,
+      "adequacy_probe_28V": 0.0,
+      "parameter_repeat_10V": 0.0
+    },
+    "evsi_only_phase": {
+      "budget": {
+        "general_pool": 0.75,
+        "reserved_validation": 0.45,
+        "total": 1.2,
+        "validation_pool": 0.45
+      },
+      "executed_actions": [],
+      "pause_reason": "no_action_worth_buying",
+      "run_id": "e3-world-B-evsi-only",
+      "scores": [
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_16V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0446600421580942e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_20V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135049153153e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_22V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135876618197e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_24V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878776665e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_28V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878779114e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "characterize",
+          "action_id": "parameter_repeat_10V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 4.1810739896287123e-51,
+          "phase": "parameter"
+        }
+      ],
+      "state": "paused",
+      "stop_review": {
+        "approves": false,
+        "arbiter_decision_id": "",
+        "arbiter_verdict": "",
+        "criterion_id": "",
+        "is_certification": false,
+        "outcome": "stop_not_assessed",
+        "reasons": [
+          "no independently declared stopping criterion is registered for this campaign",
+          "non-positive value of information means no candidate is worth its price, and discharged validation obligations mean the campaign did what it promised to check; neither is evidence that stopping is scientifically justified",
+          "calibrated decision-risk / expected-regret certification is not implemented, and is not being approximated"
+        ],
+        "unmet_obligations": []
+      },
+      "stop_review_outcome": "stop_not_assessed",
+      "with_adequacy_criterion": false
+    },
+    "label": "e3-world-B",
+    "obligation_aware_post": {
+      "budget": {
+        "general_pool": 0.75,
+        "reserved_validation": 0.45,
+        "total": 1.2,
+        "validation_pool": 5.551115123125783e-17
+      },
+      "executed_actions": [],
+      "pause_reason": "no_action_worth_buying",
+      "run_id": "e3-world-B-obligation-post",
+      "scores": [
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_16V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 0.0,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_20V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 0.0,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_22V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 0.0,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_24V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 0.0,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_28V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 0.0,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "characterize",
+          "action_id": "parameter_repeat_10V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 0.0,
+          "phase": "parameter"
+        }
+      ],
+      "state": "paused",
+      "stop_review": {
+        "approves": false,
+        "arbiter_decision_id": "e3-world-B-obligation-post-stopreview-1-arbiter",
+        "arbiter_verdict": "invalid",
+        "criterion_id": "adequacy:constant_r:declared_range",
+        "is_certification": false,
+        "outcome": "stop_rejected",
+        "reasons": [
+          "the Arbiter found the stopping criterion 'adequacy:constant_r:declared_range' not satisfied"
+        ],
+        "unmet_obligations": []
+      },
+      "stop_review_outcome": "stop_rejected",
+      "with_adequacy_criterion": true
+    },
+    "obligation_aware_pre": {
+      "budget": {
+        "general_pool": 0.75,
+        "reserved_validation": 0.45,
+        "total": 1.2,
+        "validation_pool": 0.45
+      },
+      "executed_actions": [],
+      "pause_reason": "no_action_worth_buying",
+      "run_id": "e3-world-B-obligation-pre",
+      "scores": [
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_16V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0446600421580942e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_20V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135049153153e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_22V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135876618197e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_24V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878776665e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "validate",
+          "action_id": "adequacy_probe_28V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 1.0455135878779114e-50,
+          "phase": "adequacy_probe"
+        },
+        {
+          "action_family": "characterize",
+          "action_id": "parameter_repeat_10V",
+          "cost": 0.15,
+          "net_parameter_value": -0.15,
+          "parameter_evsi": 4.1810739896287123e-51,
+          "phase": "parameter"
+        }
+      ],
+      "state": "paused",
+      "stop_review": {
+        "approves": false,
+        "arbiter_decision_id": "e3-world-B-obligation-pre-stopreview-1-arbiter",
+        "arbiter_verdict": "inconclusive",
+        "criterion_id": "adequacy:constant_r:declared_range",
+        "is_certification": false,
+        "outcome": "stop_not_assessed",
+        "reasons": [
+          "the Arbiter returned inconclusive on the stopping criterion 'adequacy:constant_r:declared_range'",
+          "UNKNOWN remains a legal and honest answer"
+        ],
+        "unmet_obligations": []
+      },
+      "stop_review_outcome": "stop_not_assessed",
+      "with_adequacy_criterion": true
+    },
+    "obligation_status": "completed",
+    "posterior_after_adequacy": {
+      "bayes_decision": "A",
+      "conditional_on": "M_const (R2 constant)",
+      "effective_support_points": 20,
+      "entropy_nats": 1.7533231624331433,
+      "evpi": 0.0,
+      "expected_utility": 0.0,
+      "mean_r2_ohm": 1475.4945047719632,
+      "p_above_threshold": 1.0,
+      "sd_r2_ohm": 6.985568869716113
+    },
+    "truth_spec_id": "C_systematic_misspecification"
+  }
+}

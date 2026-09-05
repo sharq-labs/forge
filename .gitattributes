@@ -1,0 +1,28 @@
+# Line endings are load-bearing in this repository.
+#
+# Frozen experiments pin their inputs by SHA-256 over raw file BYTES:
+#
+#     T1/T2/T3   experiments/thermal_t1, thermal_t2, thermal_t3
+#     E1/E2/E3   experiments/electrical_e1, electrical_e2, electrical_e3
+#     shared     experiments/shared
+#     domain     src/engcore/domains/thermal/conduction1d
+#
+# Those digests are what makes "T1 was not edited under T3" a checkable claim
+# rather than an assertion. A byte digest cannot tell an edit apart from a
+# line-ending conversion, so if Git materializes CRLF in the working tree the
+# pins all break and every freeze looks violated.
+#
+# That is not hypothetical. With core.autocrlf=true (the Windows default) and
+# no .gitattributes, a clean clone reproduced exactly that: six T1/shared pins
+# mismatched on a tree with no edits in it.
+#
+# The index already stores every text file as LF, so pinning the working tree
+# to LF changes no committed content — it only stops the checkout from
+# rewriting bytes that a digest is taken over.
+#
+# This must stay repository-wide rather than scoped to the pinned paths: the
+# set of digest-pinned files grows with every frozen experiment, and a pin
+# added under a path this file forgot would fail silently on someone else's
+# machine and nowhere else.
+
+* text=auto eol=lf

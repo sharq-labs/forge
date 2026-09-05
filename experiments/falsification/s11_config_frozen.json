@@ -1,0 +1,184 @@
+{
+  "acquisition": {
+    "cheap_action_x": 8.0,
+    "cheap_cost": 0.01,
+    "expensive_cost": 0.5
+  },
+  "base_commit": "061ee7e75f715db3eec4d592063ba171157af545",
+  "classification_rules": {
+    "DANGEROUS_MISS": "the decision is wrong and the guard allowed certification",
+    "FALSE_REFUSAL": "the decision is correct but the guard blocked certification",
+    "GOOD_ALLOW": "certification allowed and the decision is correct",
+    "GOOD_BLOCK": "naive stopping would have certified a wrong decision and the guard blocked it",
+    "NOT_APPLICABLE_CONTINUE": "the decision-theoretic condition itself said continue, so no certification was sought under either policy; excluded from the confusion matrix and reported separately"
+  },
+  "config_hash": "f2a660b2cfbd54ff698dd8cf6d11391881a553da1ec7dae438f58757da6f3af8",
+  "experiment_id": "S1.1",
+  "experiment_name": "transport_guard_calibration",
+  "experiment_version": "1.0.0",
+  "margin_policies": [
+    {
+      "margin": 0.0,
+      "name": "very_strict"
+    },
+    {
+      "margin": 0.5,
+      "name": "strict"
+    },
+    {
+      "margin": 1.5,
+      "name": "moderate"
+    },
+    {
+      "margin": 3.0,
+      "name": "permissive"
+    },
+    {
+      "margin": null,
+      "name": "no_guard"
+    }
+  ],
+  "model_grid": {
+    "a_points": 121,
+    "a_range": [
+      0.5,
+      1.5
+    ],
+    "b_points": 121,
+    "b_range": [
+      0.4,
+      0.6
+    ],
+    "prior": "uniform"
+  },
+  "observations": {
+    "replications": 50,
+    "seeds": [
+      20260801,
+      20260802,
+      20260803,
+      20260804,
+      20260805,
+      20260806,
+      20260807,
+      20260808,
+      20260809,
+      20260810,
+      20260811,
+      20260812,
+      20260813,
+      20260814,
+      20260815,
+      20260816,
+      20260817,
+      20260818,
+      20260819,
+      20260820,
+      20260821,
+      20260822,
+      20260823,
+      20260824,
+      20260825,
+      20260826,
+      20260827,
+      20260828,
+      20260829,
+      20260830,
+      20260831,
+      20260832,
+      20260833,
+      20260834,
+      20260835,
+      20260836,
+      20260837,
+      20260838,
+      20260839,
+      20260840,
+      20260841,
+      20260842,
+      20260843,
+      20260844,
+      20260845,
+      20260846,
+      20260847,
+      20260848,
+      20260849,
+      20260850
+    ],
+    "sigma": 0.05,
+    "xs": [
+      0.0,
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0
+    ]
+  },
+  "primary_metrics": {
+    "dangerous_miss_rate": "DANGEROUS_MISS / (DANGEROUS_MISS + GOOD_BLOCK); denominator is cases where certification would be scientifically wrong",
+    "false_refusal_rate": "FALSE_REFUSAL / (FALSE_REFUSAL + GOOD_ALLOW); denominator is cases where certification would be correct",
+    "good_allow_rate": "GOOD_ALLOW / (FALSE_REFUSAL + GOOD_ALLOW)",
+    "good_block_rate": "GOOD_BLOCK / (DANGEROUS_MISS + GOOD_BLOCK)",
+    "naive_wrong_stop_rate": "(DANGEROUS_MISS + GOOD_BLOCK) / all classified cases; the danger that existed before any guard"
+  },
+  "quadrature": {
+    "y_nodes": 121,
+    "y_span_sigmas": 7.0
+  },
+  "terminal_decision": {
+    "loss": {
+      "A_above": 0.0,
+      "A_below": 10.0,
+      "B_above": 1.0,
+      "B_below": 0.0
+    },
+    "nominal_intercept": 1.0,
+    "nominal_slope": 0.5,
+    "threshold_offset": 0.3,
+    "threshold_rule": "tau(x*) = 1.0 + 0.5*x* - 0.30 (nominal response minus offset)"
+  },
+  "truth_break_point": 8.0,
+  "truth_families": [
+    {
+      "class": "BENIGN",
+      "family_id": "linear_exact"
+    },
+    {
+      "class": "BENIGN",
+      "family_id": "mild_quadratic"
+    },
+    {
+      "class": "BENIGN",
+      "family_id": "mild_kink"
+    },
+    {
+      "class": "REGIME_CHANGE",
+      "family_id": "regime_moderate"
+    },
+    {
+      "class": "REGIME_CHANGE",
+      "family_id": "regime_strong"
+    },
+    {
+      "class": "REGIME_CHANGE",
+      "family_id": "regime_step"
+    }
+  ],
+  "truth_family_weighting": "uniform over the six declared families",
+  "x_star_grid": [
+    2.0,
+    4.0,
+    6.0,
+    8.0,
+    8.5,
+    9.0,
+    9.5,
+    10.0,
+    11.0,
+    12.0
+  ]
+}

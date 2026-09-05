@@ -1,0 +1,533 @@
+{
+  "config": {
+    "acceptance_criteria": [
+      "A1 R1 completes through the full five-stage contract with CONVERGED, is_usable True, and metrics carrying mol/m**3, kelvin, seconds and dimensionless",
+      "A2 R2 and R3 complete and are shown to be materially stiff by measurement: their RK45/BDF evaluation ratios fall inside their preregistered bands, and R1's ratio falls inside its band showing it is NOT stiff",
+      "A3 R5 ends as MAX_ITERATIONS with no metrics extracted and its partial trajectory preserved, through a genuine computational limit rather than a mocked failure",
+      "A4 every regime's convergence state and its is_usable verdict are independent: R8 is CONVERGED and not usable, and R7 is CONVERGED and usable while its verification gate awards nothing",
+      "A5 every declaration in R4 is refused by the domain before any solve, and the Scientific Core contains no CSTR-specific validity rule",
+      "A6 the verification gate awards ANALYTICALLY_VERIFIED on at least one regime from the exact reaction-free invariant, and CROSS_SOLVER_VALIDATED on at least one regime from the independent algebraic steady state",
+      "A7 the five failure-semantics cases A-E are each represented by a distinct combination of existing Core states, with no two collapsed",
+      "A8 no regime is awarded NUMERICALLY_CONVERGED by a single solve; every such award comes from the tolerance ladder",
+      "A9 R6a and R6b reach the same attractor despite three algebraic steady states existing, and the independent solver reports all three",
+      "A10 every result carries a complete provenance record: model identity and version, solver identity and version, method, tolerances, every input as a Quantity, and the physics fingerprint"
+    ],
+    "base_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+    "base_operation": {
+      "flow_m3_per_s": 0.0016666666666666668,
+      "nominal_feed_concentration_mol_per_m3": 1000.0,
+      "nominal_feed_temperature_k": 350.0,
+      "nominal_ua_w_per_k": 833.3333333333334,
+      "residence_time_s": 60.0,
+      "volume_m3": 0.1
+    },
+    "chemistry": {
+      "activation_energy_j_per_mol": 72751.5479075,
+      "beta_m3_k_per_mol": 0.20920502092050208,
+      "density_kg_per_m3": 1000.0,
+      "e_over_r_k": 8750.0,
+      "exothermic": true,
+      "heat_capacity_j_per_kg_k": 239.0,
+      "heat_of_reaction_j_per_mol": -50000.0,
+      "k0_per_s": 1200000000.0
+    },
+    "cost_measure": "rhs_evaluations",
+    "customary_parameters": {
+      "C_Af_mol_per_L": 1.0,
+      "E_over_R_K": 8750.0,
+      "T_feed_K": 350.0,
+      "UA_J_per_min_K": 50000.0,
+      "V_L": 100.0,
+      "cp_J_per_g_K": 0.239,
+      "delta_H_J_per_mol": -50000.0,
+      "k0_per_min": 72000000000.0,
+      "q_L_per_min": 100.0,
+      "rho_g_per_L": 1000.0
+    },
+    "experiment_id": "K1",
+    "experiment_name": "kinetics_cstr_solver_admission_gate",
+    "experiment_version": "1.0.1",
+    "failure_semantics_matrix": {
+      "A_solver_execution_failure": {
+        "predicted_convergence": "max_iterations",
+        "predicted_is_usable": false,
+        "predicted_metrics_present": false,
+        "regime": "R5",
+        "why_this_enum": "MAX_ITERATIONS means the backend stopped at a work cap. An explicit right-hand-side evaluation budget is exactly that, and FAILED would wrongly imply the method or the problem was at fault when neither was"
+      },
+      "B_numerical_non_convergence": {
+        "predicted_convergence": "not_converged",
+        "predicted_is_usable": false,
+        "predicted_metrics_present": false,
+        "regime": "not produced by any preregistered regime",
+        "why_this_enum": "reserved for SciPy status -1, step-size collapse. NO regime in this study can reach it, and that is a result rather than a gap: the CSTR system is globally bounded, because the Arrhenius factor saturates at k0 and the reactant is consumed, so the model contains no finite-time singularity for any admissible parameters. The adapter's classification is therefore exercised directly, by injecting a genuine finite-time singularity (dT/dt += T**2) into the right-hand side. Claiming a regime produced case B when none did would be the dishonest option"
+      },
+      "C_physically_invalid_input": {
+        "predicted_convergence": "no solve is attempted",
+        "predicted_is_usable": false,
+        "predicted_metrics_present": false,
+        "regime": "R4",
+        "why_this_enum": "refused by the domain at the declaration boundary. This must NOT become a ConvergenceState: nothing converged or failed to converge, because nothing ran"
+      },
+      "D_successful_but_unusable": {
+        "predicted_convergence": "converged",
+        "predicted_is_usable": "False for R8, True for R7",
+        "predicted_metrics_present": true,
+        "regime": "R8 (envelope exit) and R7 (no stable steady state)",
+        "why_this_enum": "the two are deliberately different. R8's trajectory leaves the model's envelope, which a single solve CAN see, so its per-solve check fails and is_usable goes False. R7's trajectory is impeccable point by point and only the verification gate can see that its end state means nothing, so is_usable stays True and the gate awards no level. If these collapsed into one state, one of them would be a lie"
+      },
+      "E_valid_result": {
+        "predicted_convergence": "converged",
+        "predicted_is_usable": true,
+        "predicted_metrics_present": true,
+        "regime": "R1, R2, R3, R6a, R6b",
+        "why_this_enum": "converged, inside the envelope, no failing check"
+      }
+    },
+    "falsification_criteria": [
+      "F1 if the Scientific Core requires any CSTR-specific branching, K1 is at best PASS WITH CORE CORRECTION and the branch must be reported",
+      "F2 if a meaningful scientific failure cannot be represented without discarding evidence \u2014 in particular if R5's partial trajectory or R8's envelope violation has nowhere honest to live \u2014 that is a Core finding",
+      "F3 if a successful solve is automatically promoted to any validation level above DIMENSIONALLY_VALID, the validation contract is unsound",
+      "F4 if an invalid physical state can enter an admitted ScientificResult \u2014 for example if R8 were reported usable, or if a non-finite value reached a Quantity \u2014 that is a Core finding",
+      "F5 if any historical frozen artifact must be changed, K1 fails",
+      "F6 if the domain requires a large generic framework invented before the evidence for it, K1 fails on architecture creep",
+      "F7 if the independent algebraic steady state materially disagrees with a converged, stationary production result, the production path is wrong and must be reported as wrong",
+      "F8 if the experiment cannot be reproduced from a clean clone, K1 fails"
+    ],
+    "gate_thresholds": {
+      "invariant_rel_tol": 1e-09,
+      "provenance": "declared after exploratory feasibility analysis; the invariant and steady-state tolerances were TIGHTENED from 1e-6 to 1e-9 because exploration showed the residuals sit near 1e-15 and a 1e-6 gate could not have failed",
+      "stationarity_rel_tol": 1e-06,
+      "steady_state_rel_tol": 1e-09,
+      "tolerance_ladder": [
+        {
+          "atol_concentration": 1e-06,
+          "atol_temperature": 1e-06,
+          "rtol": 1e-06
+        },
+        {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "rtol": 1e-08
+        },
+        {
+          "atol_concentration": 1e-10,
+          "atol_temperature": 1e-10,
+          "rtol": 1e-10
+        },
+        {
+          "atol_concentration": 1e-12,
+          "atol_temperature": 1e-12,
+          "rtol": 1e-12
+        }
+      ],
+      "tolerance_rel_tol": 1e-06
+    },
+    "integration": {
+      "constrained_rhs_budget": 500,
+      "cross_method": "Radau",
+      "method_justification": "BDF: variable-order backward differentiation with an analytic Jacobian, L-stable, the standard choice for stiff chemical kinetics. Radau: 5th-order Radau IIA, a different (one-step, fully implicit) family, also L-stable, used as the cross-method arm. RK45: explicit, used ONLY as a measuring instrument for stiffness. LSODA is excluded because its internal stiff/non-stiff switching makes its work count unattributable",
+      "production_atol_concentration": 1e-08,
+      "production_atol_temperature": 1e-08,
+      "production_method": "BDF",
+      "production_rtol": 1e-08,
+      "standard_rhs_budget": 5000000,
+      "stiffness_probe_budget": 5000000,
+      "stiffness_probe_method": "RK45"
+    },
+    "invalid_declarations": [
+      {
+        "kind": "operation",
+        "label": "negative_absolute_temperature",
+        "overrides": {
+          "feed_temperature": "Quantity(magnitude=-10.0, units='kelvin')"
+        },
+        "reason": "exp(-E/(R T)) has an essential singularity at T = 0 and no meaning below it"
+      },
+      {
+        "kind": "operation",
+        "label": "temperature_above_envelope",
+        "overrides": {
+          "feed_temperature": "Quantity(magnitude=1500.0, units='kelvin')"
+        },
+        "reason": "outside the model's declared 250-1000 K single-phase constant-property envelope"
+      },
+      {
+        "kind": "operation",
+        "label": "temperature_below_envelope",
+        "overrides": {
+          "coolant_temperature": "Quantity(magnitude=200.0, units='kelvin')"
+        },
+        "reason": "below the declared envelope; the liquid phase is not assured"
+      },
+      {
+        "kind": "operation",
+        "label": "negative_feed_concentration",
+        "overrides": {
+          "feed_concentration": "Quantity(magnitude=-1.0, units='mole / meter ** 3')"
+        },
+        "reason": "a negative concentration is not a state of the system"
+      },
+      {
+        "kind": "operation",
+        "label": "zero_volume",
+        "overrides": {
+          "volume": "Quantity(magnitude=0.0, units='meter ** 3')"
+        },
+        "reason": "a zero-volume tank has no residence time"
+      },
+      {
+        "kind": "operation",
+        "label": "negative_flow_rate",
+        "overrides": {
+          "flow_rate": "Quantity(magnitude=-0.001, units='meter ** 3 / second')"
+        },
+        "reason": "reversed flow is not the modelled configuration"
+      },
+      {
+        "kind": "operation",
+        "label": "negative_ua",
+        "overrides": {
+          "ua": "Quantity(magnitude=-100.0, units='watt / kelvin')"
+        },
+        "reason": "a negative UA would pump heat up its own gradient"
+      },
+      {
+        "kind": "chemistry",
+        "label": "non_positive_k0",
+        "overrides": {
+          "k0": "Quantity(magnitude=0.0, units='1 / second')"
+        },
+        "reason": "a zero pre-exponential factor is not an Arrhenius rate"
+      },
+      {
+        "kind": "chemistry",
+        "label": "negative_activation_energy",
+        "overrides": {
+          "activation_energy": "Quantity(magnitude=-10000.0, units='joule / mole')"
+        },
+        "reason": "a negative barrier makes the rate fall with temperature, which is not the Arrhenius model"
+      },
+      {
+        "kind": "chemistry",
+        "label": "non_positive_density",
+        "overrides": {
+          "density": "Quantity(magnitude=0.0, units='kilogram / meter ** 3')"
+        },
+        "reason": "a zero density gives an infinite temperature response"
+      },
+      {
+        "kind": "run",
+        "label": "negative_initial_concentration",
+        "overrides": {
+          "initial_concentration": "Quantity(magnitude=-5.0, units='mole / meter ** 3')"
+        },
+        "reason": "a negative initial concentration is not a state of the system"
+      },
+      {
+        "kind": "run",
+        "label": "initial_temperature_outside_envelope",
+        "overrides": {
+          "initial_temperature": "Quantity(magnitude=1200.0, units='kelvin')"
+        },
+        "reason": "starting outside the envelope the model does not cover"
+      },
+      {
+        "kind": "operation",
+        "label": "bare_number_instead_of_quantity",
+        "overrides": {
+          "feed_temperature": "350.0"
+        },
+        "reason": "a bare number is not a declaration: it carries no unit and cannot be dimension-checked"
+      },
+      {
+        "kind": "operation",
+        "label": "wrong_dimension_for_temperature",
+        "overrides": {
+          "feed_temperature": "Quantity(magnitude=350.0, units='pascal')"
+        },
+        "reason": "a pressure is not a temperature"
+      },
+      {
+        "kind": "integration",
+        "label": "unknown_integration_method",
+        "overrides": {
+          "method": "'LSODA'"
+        },
+        "reason": "LSODA switches between stiff and non-stiff internally, so a work count from it cannot be attributed to one method and would corrupt the stiffness measurement"
+      },
+      {
+        "kind": "integration",
+        "label": "non_positive_rtol",
+        "overrides": {
+          "rtol": "0.0"
+        },
+        "reason": "a zero relative tolerance is not achievable"
+      }
+    ],
+    "metrics": [
+      "solver_id",
+      "solver_version",
+      "solver_backend",
+      "integration_method",
+      "convergence_state",
+      "is_usable",
+      "validation_status",
+      "attained_levels_per_solve",
+      "attained_levels_gate",
+      "failure_classification",
+      "rhs_evaluations",
+      "scipy_nfev",
+      "scipy_njev",
+      "scipy_nlu",
+      "accepted_steps",
+      "wall_seconds_telemetry",
+      "fraction_of_horizon_completed",
+      "final_concentration_mol_per_m3",
+      "final_temperature_k",
+      "peak_temperature_k",
+      "conversion",
+      "min_concentration_mol_per_m3",
+      "max_temperature_k",
+      "rtol",
+      "atol_concentration",
+      "atol_temperature",
+      "rhs_budget",
+      "tolerance_ladder_final_relative_change",
+      "invariant_max_relative_error",
+      "steady_state_relative_error",
+      "steady_states_found",
+      "cross_method_max_relative_difference",
+      "stiffness_work_ratio",
+      "physics_fingerprint",
+      "provenance_run_id"
+    ],
+    "no_tuning_after_results": "the chemistry, regimes, initial conditions, horizons, method, tolerances, budgets, verification-gate thresholds, predictions and acceptance bands above are fixed before the scored execution and are not adjusted afterwards. A missed band is reported as a missed band. If a setup bug is found, the run is invalidated, the bug and the correction are documented, the experiment version is incremented, and the study is rerun from scratch \u2014 never silently patched",
+    "non_goals": [
+      "no inference of any kind: no Bayesian posterior, no MCMC, no variational inference, no parameter estimation",
+      "no optimization, no acquisition function, no experiment selection",
+      "no generic chemistry ontology, no generic uncertainty engine, no generic domain framework, no surrogate model",
+      "no multiphysics coupling, no digital twin, no visualization",
+      "no modification to T1, T2, T3, E1, E2, E3, S11 or any other frozen experiment, all of which are pinned by digest and are not re-run here",
+      "no physical validation: nothing in K1 is compared against a measurement of a real reactor, and no claim about one is made",
+      "no LLM-supplied numerical result: every number in the results is produced by the code in this repository from the declarations above"
+    ],
+    "parameter_provenance": "the widely used textbook non-isothermal CSTR parameterization, transcribed to SI here. The transcription has NOT been checked against the printed source, and no K1 conclusion depends on it having been: these are simply the declared, frozen inputs",
+    "preregistration_kind": "feasibility-informed: an exploratory pass established which regimes exist and the scale of every residual before these numbers were written down. The bands were then set outside those observations and frozen. The discipline that carries weight here is the no-tuning rule, not blindness",
+    "randomness": "none. K1 contains no stochastic component, so there is no seed to declare. Every number is a deterministic function of the declarations above and the pinned library versions",
+    "regimes": [
+      {
+        "category": "easy",
+        "coolant_temperature_k": 290.0,
+        "end_time_s": 1800.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 300.0,
+        "measure_stiffness": true,
+        "n_output_points": 2001,
+        "name": "benign cooled operation",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "clean convergence in a few hundred evaluations; the explicit probe is no more expensive than BDF because the regime is not stiff",
+        "rationale": "Well-cooled at Tc = 290 K, far below the ignition window. A single stable steady state at low conversion, approached monotonically. The horizon is 30 residence times so the trajectory actually settles and the steady-state comparison can engage.",
+        "regime_id": "R1",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": [
+          null,
+          5.0
+        ],
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "moderately_stiff",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 340.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 340.0,
+        "measure_stiffness": true,
+        "n_output_points": 2001,
+        "name": "moderately stiff adiabatic ignition",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "materially stiff: the explicit probe needs at least twenty times the work of BDF while both complete",
+        "rationale": "Adiabatic (UA = 0) with a 340 K feed. The reaction runs away to about 549 K, making the chemical mode orders of magnitude faster than the flow mode. Adiabatic operation also makes the reaction-free invariant an exact closed form, so this regime carries the only genuinely analytic reference in the study.",
+        "regime_id": "R2",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": [
+          20.0,
+          null
+        ],
+        "ua_w_per_k": 0.0
+      },
+      {
+        "category": "strongly_stiff",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 2600.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 2600.0,
+        "initial_temperature_k": 350.0,
+        "measure_stiffness": true,
+        "n_output_points": 2001,
+        "name": "strongly stiff adiabatic ignition",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "strongly stiff: BDF completes in a few thousand evaluations while the explicit probe exhausts a five-million-evaluation budget without finishing, so the measured ratio is a lower bound",
+        "rationale": "Adiabatic at a 2.6 mol/L feed. The adiabatic rise is about 544 K, taking the reactor to roughly 894 K \u2014 inside the model's declared 1000 K envelope, but with a rate constant many orders above the flow rate. A scientifically valid problem that is numerically punishing.",
+        "regime_id": "R3",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": [
+          200.0,
+          null
+        ],
+        "ua_w_per_k": 0.0
+      },
+      {
+        "category": "failure_prone",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 600.0,
+        "failure_case": "A",
+        "feed_concentration_mol_per_m3": 2600.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 2600.0,
+        "initial_temperature_k": 350.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "computational limit exhausted mid-integration",
+        "predicted_convergence": "max_iterations",
+        "predicted_levels": [],
+        "predicted_usable": false,
+        "prediction_note": "MAX_ITERATIONS, no metrics extracted, the partial trajectory preserved in the raw diagnostics, and the fraction of the horizon completed recorded",
+        "rationale": "R3's physics under a deliberately tight 500-evaluation budget. Nothing is wrong with the problem or the method; the run is stopped by an explicit computational limit while still making progress. This must be distinguishable from a method that failed.",
+        "regime_id": "R5",
+        "rhs_budget": 500,
+        "run_verification_gate": false,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 0.0
+      },
+      {
+        "category": "branch_sensitive",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 3600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 300.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "steady-state multiplicity, cold start",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "three algebraic steady states exist; the trajectory settles on the low-conversion branch",
+        "rationale": "Tc = 300 K sits inside the multiplicity window: the independent algebraic solver finds three steady states. Started cold.",
+        "regime_id": "R6a",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "branch_sensitive",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 3600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 450.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "steady-state multiplicity, hot start",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "the hot start overshoots hard and then falls to the SAME low-conversion branch as R6a: in this parameterization the upper algebraic branch is unstable, so three steady states do not mean two attractors",
+        "rationale": "Identical physics to R6a from a 450 K start. The pair is the test of whether the initial condition selects a different branch.",
+        "regime_id": "R6b",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "branch_sensitive",
+        "coolant_temperature_k": 305.0,
+        "end_time_s": 6000.0,
+        "failure_case": "D",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 300.0,
+        "measure_stiffness": false,
+        "n_output_points": 20001,
+        "name": "sustained oscillation, no stable steady state",
+        "predicted_convergence": "converged",
+        "predicted_levels": [],
+        "predicted_usable": true,
+        "prediction_note": "the per-solve report passes and the verification gate awards NOTHING: the reported end state is a phase of a limit cycle, so it is not tolerance independent and the trajectory is not stationary. Execution success and scientific usability separate here without any numerical fault",
+        "rationale": "At Tc = 305 K the single algebraic steady state has a positive Jacobian trace with a positive determinant \u2014 an unstable focus. The reactor has no stable steady state and cycles indefinitely. The end state of a successful integration is therefore not an answer to 'what does this reactor do', and the study records whether the contracts notice.",
+        "regime_id": "R7",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "unusable_result",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 300.0,
+        "failure_case": "D",
+        "feed_concentration_mol_per_m3": 4000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 4000.0,
+        "initial_temperature_k": 350.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "flawless integration outside the model envelope",
+        "predicted_convergence": "converged",
+        "predicted_levels": [],
+        "predicted_usable": false,
+        "prediction_note": "CONVERGED with a FAILing state_physically_admissible check, so is_usable is False while convergence correctly remains CONVERGED. The two statements are independent and both are true",
+        "rationale": "Adiabatic at a 4 mol/L feed. The adiabatic rise is about 837 K, taking the reactor past 1180 K \u2014 outside the model's declared 250-1000 K validity envelope, where the constant-property, single-phase, no-boiling assumptions do not hold. The integration is impeccable; the answer is not usable.",
+        "regime_id": "R8",
+        "rhs_budget": 5000000,
+        "run_verification_gate": false,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 0.0
+      }
+    ],
+    "scientific_question": "Can the frozen Core V0.2 contracts honestly represent and execute a stiff, nonlinear, failure-prone kinetics/CSTR solver \u2014 including distinguishing execution failure, non-convergence, invalid input, successful-but-unusable results and valid results \u2014 without speculative Core expansion?"
+  },
+  "config_hash": "73d09cc0004663409f27edf86fb2bb571bdb7bb78a39203e35ca9c0069d00cb0"
+}

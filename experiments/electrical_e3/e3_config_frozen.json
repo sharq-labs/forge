@@ -1,0 +1,167 @@
+{
+  "config": {
+    "action_families": {
+      "adequacy_probe": "validate",
+      "calibration": "characterize",
+      "parameter": "characterize"
+    },
+    "adequacy_obligation": {
+      "adequacy_rule": {
+        "id": "e2.joint_posterior_predictive_log_score",
+        "version": "1.1.0"
+      },
+      "coverage_rule": "one required probe at the low, middle and high of the declared extrapolation range above the calibration condition; chosen to cover the range the campaign claims, NOT to maximise detection power, which the decision path could not do without knowing the misspecification",
+      "declared_scope": "constant-R model for Vs in [4, 28] V on the E2 divider",
+      "dispositions": {
+        "budget_infeasible": "CERTIFICATION_NOT_POSSIBLE",
+        "execution_invalid": "EXECUTION_REPAIR_REQUIRED",
+        "model_inadequate": "MODEL_REVISION_REQUIRED",
+        "satisfied": "CERTIFICATION_ELIGIBLE_IF_ADEQUACY_ACCEPTABLE"
+      },
+      "failure_condition": "a required probe cannot be executed validly, or cannot be afforded within max_adequacy_cost. Neither is a model-adequacy finding",
+      "max_adequacy_cost": 0.45,
+      "model_family": {
+        "id": "constant_r",
+        "version": "1.1.0"
+      },
+      "n_required": 3,
+      "obligation_id": "adequacy:constant_r:declared_range",
+      "predictive_commitment_required": true,
+      "required_action_ids": [
+        "adequacy_probe_16V",
+        "adequacy_probe_22V",
+        "adequacy_probe_28V"
+      ],
+      "satisfaction_condition": "every required probe has been executed with a VALID computational result, admitted through the M1 evidence chain, and scored against a predictive commitment that existed before its observation. Satisfying this says the required TEST WAS PERFORMED; it says nothing whatever about whether the model passed it",
+      "scope_volt": [
+        4.0,
+        28.0
+      ],
+      "selection_rule": "execute the cheapest OUTSTANDING REQUIRED probe first, ties broken by the frozen declared order. This is a constraint-satisfaction rule over a fixed required set and is deliberately NOT a ranking by expected information value",
+      "source": "e3 preregistered charter"
+    },
+    "assumed_model_family": {
+      "family_id": "constant_r",
+      "grid_max": 2500.0,
+      "grid_min": 500.0,
+      "grid_points": 401,
+      "parameter": "R2_ohm",
+      "posterior_reading": "p(R2 | data, constant-R model)"
+    },
+    "base_commit": "619d3cc04d5cbed501670718f7ea814ddadf7cc0",
+    "budget": {
+      "adequacy_reserve": 0.45,
+      "control_parameter_spend": 0.9,
+      "cost_unit": "hour",
+      "policies": [
+        "shared_pool",
+        "reserved_adequacy_allocation"
+      ],
+      "statement": "E3 does not claim a reserved validation budget is universally correct. It tests one narrow question: whether mandatory certification evidence can be protected from being consumed by parameter-learning actions. Both policies are run on the same scientific state and reported descriptively",
+      "total": 1.2
+    },
+    "calibration_state": {
+      "action_id": "calibrate_vmid_10V",
+      "noise_sigma_volt": 0.05,
+      "note": "identical to E2 Phase 1; draws are bit-identical",
+      "repeats": 4,
+      "source_voltage_volt": 10.0
+    },
+    "campaign": {
+      "campaign_id": "e3-electrical",
+      "charter_version": "1",
+      "max_iterations": 3
+    },
+    "certification_rule": "SCIENTIFIC_CERTIFICATION = ELIGIBLE only if execution validity is VALID AND the adequacy obligation status is COMPLETED AND the adequacy state is ACCEPTABLE_FOR_DECLARED_SCOPE. Posterior sd, posterior entropy, P(decision), EVPI and EVSI are NOT inputs to this rule and are not parameters of the function that evaluates it. Neither is the fact that a stop was proposed economically",
+    "controls": {
+      "1": "no adequacy obligation registered \u2014 ordinary EVSI policy",
+      "2": "obligation outstanding and affordable \u2014 probe must be routed",
+      "3": "obligation already satisfied \u2014 must not force duplicate probes",
+      "4": "obligation required but budget infeasible \u2014 no fake PASS",
+      "5": "required probe fails computational validity \u2014 no adequacy judgment",
+      "6": "valid evidence acquired, test completed, model fails"
+    },
+    "e2_dependency": {
+      "config_hash": "d6add0d816563ea65f70473cf5cdc926dd7fa17ebff6769790879f8de057ab13",
+      "experiment_version": "1.1.0",
+      "inherited": [
+        "circuit and real ElectricalDCSolver forward map",
+        "constant-R assumed model family, theta grid and prior",
+        "posterior / predictive / EVPI / EVSI machinery",
+        "synthetic observation noise and its derivation",
+        "predictive commitment ledger",
+        "corrected joint posterior-predictive adequacy rule (v1.1.0)",
+        "well-specified and misspecified grader worlds"
+      ],
+      "preregistration_hash": "6b93e70dac164f286170b3218943062602d47013bbdb83092a102e46a496b216"
+    },
+    "experiment_id": "E3",
+    "experiment_name": "adequacy_evidence_vs_parameter_evsi",
+    "experiment_version": "1.0.0",
+    "forbidden_obligation_vocabulary": "validation_level:",
+    "no_fake_utility_statement": "parameter EVSI for every action, including the adequacy probes, is computed by E2's unmodified quadrature and reported as it comes out. No adequacy utility, validation reward, critic-confidence term or obligation priority enters the decision basis",
+    "obligation_placement": "The adequacy obligation is carried by a registered StoppingCriterion with a real evaluator, NOT by the campaign ObligationSet. ObligationSet is evaluated by the Arbiter against the critic assessments of ONE evidence record, so a campaign-scoped scientific requirement placed there is looked for among that record's checks, never found, and makes every piece of evidence INCONCLUSIVE \u2014 blocking all admission. E3 demonstrates that failure mode in a test rather than asserting it. It is also the reason the frozen validation-liveness router cannot see this obligation: the router reads unsatisfied obligations from ObligationSet, which is welded to per-evidence admission",
+    "parameter_actions": [
+      {
+        "action_id": "parameter_repeat_10V",
+        "cost": 0.15,
+        "source_voltage_volt": 10.0
+      }
+    ],
+    "probe_catalogue": [
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_16V",
+        "cost": 0.15,
+        "required": true,
+        "source_voltage_volt": 16.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_20V",
+        "cost": 0.15,
+        "required": false,
+        "source_voltage_volt": 20.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_22V",
+        "cost": 0.15,
+        "required": true,
+        "source_voltage_volt": 22.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_24V",
+        "cost": 0.15,
+        "required": false,
+        "source_voltage_volt": 24.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "adequacy_probe_28V",
+        "cost": 0.15,
+        "required": true,
+        "source_voltage_volt": 28.0
+      }
+    ],
+    "scope_statement": "E3 is a computational Electrical DC campaign-governance benchmark. It says nothing about optimal validation budgeting, universal value of validation, or real-domain regulatory readiness",
+    "stopping_criterion": {
+      "criterion_id": "adequacy:constant_r:declared_range",
+      "evaluator_id": "e3.adequacy_obligation",
+      "evaluator_version": "1",
+      "statement": "the campaign may stop only when the declared model-adequacy obligation has been discharged by acquiring its required evidence AND that evidence left the model family adequate for the declared scope"
+    },
+    "stopping_semantics": "ECONOMIC STOP PROPOSAL means no evaluated candidate scored above its price. SCIENTIFIC STOP APPROVAL means a registered stopping criterion was evaluated and the Arbiter found it satisfied. NO_ACTION_WORTH_BUYING does NOT imply STOP_APPROVED while a mandatory adequacy obligation is outstanding, and the frozen M5.1 StopReview refuses to represent that combination at all",
+    "terminal_decision": {
+      "decision_id": "r2_class",
+      "threshold_ohm": 1200.0
+    },
+    "worlds": {
+      "A": "well-specified truth, inside the assumed constant-R family",
+      "B": "E2's frozen synthetic misspecification, outside the family"
+    }
+  },
+  "config_hash": "3a812af7cf01cf21b007c814efebbfed8ea24830c1153f7f8b56c57c441ba3e2",
+  "preregistration_hash": "77ac74aab7fe94151dd0abf34b0b96bd4d24d44dafd45e67025b999d256db1f1"
+}

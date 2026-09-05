@@ -1,0 +1,115 @@
+{
+  "base_commit": "4ac821b8b3fbbc06fb784d9d66a7e12a5fe391cc",
+  "config": {
+    "actions": [
+      {
+        "action_family": "characterize",
+        "action_id": "measure_vmid_10V_precise",
+        "cost": 0.1,
+        "noise_sigma_volt": 0.01,
+        "phase": "parameter",
+        "required_for_certification": false,
+        "source_voltage_volt": 10.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_16V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": true,
+        "source_voltage_volt": 16.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_20V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": false,
+        "source_voltage_volt": 20.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_22V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": true,
+        "source_voltage_volt": 22.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_24V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": false,
+        "source_voltage_volt": 24.0
+      },
+      {
+        "action_family": "validate",
+        "action_id": "validate_vmid_28V",
+        "cost": 0.15,
+        "noise_sigma_volt": 0.05,
+        "phase": "validation",
+        "required_for_certification": true,
+        "source_voltage_volt": 28.0
+      }
+    ],
+    "base_commit": "4ac821b8b3fbbc06fb784d9d66a7e12a5fe391cc",
+    "budget": {
+      "cost_unit": "hour",
+      "ledger": "frozen BudgetLedger; no demo-only budget logic",
+      "reserved_validation": 0.45,
+      "total": 1.2
+    },
+    "campaign": {
+      "campaign_id": "electrical-v01",
+      "charter_version": "1",
+      "decision_id": "r2_class",
+      "max_iterations": 8
+    },
+    "certification_requirement": {
+      "coverage_rule": "one required probe at the low, middle and high of the declared operating range, spanning the claim rather than hunting for a failure the decision path could not know about. Two further probes exist and are never bought, which is what makes the requirement finite",
+      "declared_scope": "constant-R model for Vs in [10, 28] V on this divider",
+      "required_action_ids": [
+        "validate_vmid_16V",
+        "validate_vmid_22V",
+        "validate_vmid_28V"
+      ],
+      "requirement_id": "certification:constant_r:operating_range",
+      "source": "electrical v0.1 demo charter"
+    },
+    "demo_id": "electrical_v01_demo",
+    "demo_version": "0.1.0",
+    "inherited_from_e2": {
+      "adequacy_null_seed": 20260822,
+      "adequacy_rule": "e2.joint_posterior_predictive_log_score/1.1.0",
+      "config_hash": "d6add0d816563ea65f70473cf5cdc926dd7fa17ebff6769790879f8de057ab13",
+      "grader_kappa": 0.1,
+      "grader_law": "R_eff(Vs) = R0 * (1 + kappa * tanh((Vs - Vref) / Vref))",
+      "grader_r0_ohm": 1378.0,
+      "grader_vref_volt": 10.0,
+      "grid": {
+        "max_ohm": 2500.0,
+        "min_ohm": 500.0,
+        "points": 401
+      },
+      "loss": {
+        "A_when_below": 4.0,
+        "B_when_above": 1.0
+      },
+      "prior": "uniform over the frozen grid",
+      "threshold_ohm": 1200.0
+    },
+    "noise_derivation": "e2.benchmark_noise(action_id, repeat) \u2014 seed 20260821",
+    "scope_statement": "a computational Electrical DC benchmark. No physical claim, no hardware, and no validation against any real electrical system",
+    "worlds": {
+      "A": "well specified \u2014 the truth is a constant inside the assumed family",
+      "B": "misspecified \u2014 E2's frozen synthetic condition-dependent law"
+    }
+  },
+  "config_hash": "03d37581be252fd7d34474f90a0fc4b3c2b12a8aa02b2e5300f2bb8c0c2766c1",
+  "scenario_hash": "6f0d1ebcd9fabe0424b67e37653d85224cc7f7bf0a7b97157ef272515166732f"
+}

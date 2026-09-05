@@ -1,0 +1,7 @@
+"""K2 multi-parameter Arrhenius inference experiment."""
+
+EXPERIMENT_ID = "K2"
+EXPERIMENT_VERSION = "0.1.0"
+PREREGISTRATION_COMMIT = "824a4167a7ebead813dc3b023b9ace31742e3789"
+
+__all__ = ["EXPERIMENT_ID", "EXPERIMENT_VERSION", "PREREGISTRATION_COMMIT"]

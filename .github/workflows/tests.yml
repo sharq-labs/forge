@@ -1,0 +1,44 @@
+name: Tests
+
+# One job, one Python, the same command a developer runs locally.
+# FAST tier on every push and PR; SCIENTIFIC tier on main pushes.
+# The FULL tier (campaign tests, ~10 min) is run manually before a freeze.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: python -m pytest -m "not expensive" -q -n auto
+
+  scientific:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get install -y -qq ngspice
+      - run: pip install -e ".[dev]"
+      # The provider default is `wsl.exe -e ngspice` (the author's Windows
+      # host). On Linux point it at the native binary. Three tests assert the
+      # default WSL invocation itself and are Windows-only; they are deselected
+      # here, not skipped in the suite.
+      - env:
+          CRAFTY_NGSPICE_ARGV: ngspice
+        run: >
+          python -m pytest -m "not campaign" -q -n auto
+          --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
+          --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
+          --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical

@@ -1,0 +1,197 @@
+{
+  "a1_a13": {
+    "A1": "PASS - D3 source has no concrete domain/system-pack imports",
+    "A10": "PASS - scope, Layer A, policy, and record round-tripped deterministically",
+    "A11": "PASS - E6 recorded exact 1000-candidate counts",
+    "A12": "PASS - tests/test_design_d3_memory.py passed; full repository regression passed",
+    "A13": "PASS - E6 reconstructed Layer B byte-identically from Layer A plus policy",
+    "A2": "PASS - D3 added adjacent module/tests/experiment only",
+    "A3": "PASS - E5 attribution mismatch checks failed closed",
+    "A4": "PASS - E1 classified all six preregistered predicates",
+    "A5": "PASS - E2 serialized records matched across deterministic permutations",
+    "A6": "PASS - cap applied after classification; tier-1 overflow covered by targeted tests",
+    "A7": "PASS - E3 changed assessment without changing Layer A digests or scope identity",
+    "A8": "PASS - E4 cross-scope operations failed closed and scopes round-tripped",
+    "A9": "PASS - serialized D3 records carry retention facts without status labels"
+  },
+  "adversarial_review": {
+    "P0/P1": [],
+    "P2": [
+      "Insertion-time attribution verification is explicit; callers that bypass DesignMemoryLayerA.build and verify_layer_a_attribution can manufacture in-process objects, matching inherited Core non-cryptographic identity limits."
+    ],
+    "P3": [
+      "D3 V0.1 uses O(N^2) dominance checks inherited from frozen D1 archive semantics.",
+      "Partition keys are stored as Layer A feature bytes; a successor may need stronger provenance for the caller-owned partition function.",
+      "Storage remains deterministic JSON artifacts; durable external storage is still successor architecture."
+    ]
+  },
+  "architecture_pulled": [
+    "One adjacent in-process D3 module under engcore.design.memory",
+    "Deterministic JSON serialization and digest identity",
+    "Explicit attribution verifier against frozen D1 evaluations",
+    "Layer A records plus derived Layer B classification; no database, service, API, UI, or system-pack dependency"
+  ],
+  "blocking_gates_passed": true,
+  "experiments": {
+    "E1": {
+      "a13_reconstructs_byte_identically": true,
+      "d1_counts": {
+        "pareto_count": 38,
+        "scoped_elite_count": 12
+      },
+      "name": "E1",
+      "overlaps": {
+        "DIVERSITY_REPRESENTATIVE&EXPLICIT": 1,
+        "NEAR_EXTREME&DIVERSITY_REPRESENTATIVE": 1,
+        "NEAR_EXTREME&EXPLICIT": 0,
+        "NEAR_EXTREME&NEAR_THRESHOLD": 16,
+        "NEAR_THRESHOLD&DIVERSITY_REPRESENTATIVE": 30,
+        "NEAR_THRESHOLD&EXPLICIT": 3,
+        "PARETO_MEMBER&DIVERSITY_REPRESENTATIVE": 1,
+        "PARETO_MEMBER&EXPLICIT": 0,
+        "PARETO_MEMBER&NEAR_EXTREME": 13,
+        "PARETO_MEMBER&NEAR_THRESHOLD": 36,
+        "PARETO_MEMBER&SCOPED_ELITE": 12,
+        "SCOPED_ELITE&DIVERSITY_REPRESENTATIVE": 0,
+        "SCOPED_ELITE&EXPLICIT": 0,
+        "SCOPED_ELITE&NEAR_EXTREME": 7,
+        "SCOPED_ELITE&NEAR_THRESHOLD": 10
+      },
+      "passed": true,
+      "summary": {
+        "cap": 250,
+        "classified_discarded_by_cap_count": 654,
+        "d1_pareto_count": 38,
+        "d1_scoped_elite_count": 12,
+        "eligible_population_count": 1000,
+        "per_reason_census": {
+          "DIVERSITY_REPRESENTATIVE": 36,
+          "EXPLICIT": 3,
+          "NEAR_EXTREME": 21,
+          "NEAR_THRESHOLD": 893,
+          "PARETO_MEMBER": 38,
+          "SCOPED_ELITE": 12
+        },
+        "retained_after_cap_count": 250,
+        "retained_not_d1_archived_count": 212,
+        "tier1_count": 38,
+        "unclassified_count": 96,
+        "with_at_least_one_reason_count": 904
+      }
+    },
+    "E2": {
+      "name": "E2",
+      "passed": true,
+      "permutations": {
+        "even_then_odd": true,
+        "original": true,
+        "reverse": true
+      }
+    },
+    "E3": {
+      "name": "E3",
+      "new_assessment_identity": "78ff5bee412db5ab9d4c1b757bfd85ee79ab0c6d714d315bc253804dc1335bd0",
+      "new_near_threshold_count": 342,
+      "original_layer_a_digest_sample": [
+        "576d37c1070b60ab790446c1ad3503b83fd2f5181256ac7235438b66c449af07",
+        "1e0fc408815a0fbb453e93a669fabfe500dd85d63ef76578b09556af341c5e77",
+        "e83e83501f167e1f3c4b0d312eaee7c7f18f2b6630f2563d9b25c8e4f16210cd",
+        "af44c4dbe2146e3d6ae066e5f76bbc6fafd30e6364007e4e6ba89d7fca83f48d",
+        "e8931ecb9df85364ad9e036c3f35b6cccf6e353734a1520e4ea9e63b8ebe3821"
+      ],
+      "passed": true,
+      "scope_identity_unchanged": true
+    },
+    "E4": {
+      "checks": {
+        "cross_scope_co_classification_fails": true,
+        "cross_scope_dominance_fails": true,
+        "cross_scope_merge_fails": true,
+        "scope_b_round_trips": true,
+        "scope_identities_differ": true
+      },
+      "name": "E4",
+      "passed": true,
+      "scope_b_evaluation_count": 1000,
+      "scope_b_summary": {
+        "cap": 250,
+        "classified_discarded_by_cap_count": 589,
+        "d1_pareto_count": 38,
+        "d1_scoped_elite_count": 12,
+        "eligible_population_count": 1000,
+        "per_reason_census": {
+          "DIVERSITY_REPRESENTATIVE": 36,
+          "EXPLICIT": 3,
+          "NEAR_EXTREME": 21,
+          "NEAR_THRESHOLD": 823,
+          "PARETO_MEMBER": 38,
+          "SCOPED_ELITE": 12
+        },
+        "retained_after_cap_count": 250,
+        "retained_not_d1_archived_count": 212,
+        "tier1_count": 38,
+        "unclassified_count": 161,
+        "with_at_least_one_reason_count": 839
+      }
+    },
+    "E5": {
+      "checks": {
+        "candidate_twin_mismatch_fails": true,
+        "explicit_absent_reference_fails": true,
+        "objective_spoof_fails": true,
+        "scope_mismatch_fails": true
+      },
+      "name": "E5",
+      "passed": true
+    },
+    "E6": {
+      "a13_reconstructs_byte_identically": true,
+      "name": "E6",
+      "overlaps": {
+        "DIVERSITY_REPRESENTATIVE&EXPLICIT": 1,
+        "NEAR_EXTREME&DIVERSITY_REPRESENTATIVE": 1,
+        "NEAR_EXTREME&EXPLICIT": 0,
+        "NEAR_EXTREME&NEAR_THRESHOLD": 16,
+        "NEAR_THRESHOLD&DIVERSITY_REPRESENTATIVE": 30,
+        "NEAR_THRESHOLD&EXPLICIT": 3,
+        "PARETO_MEMBER&DIVERSITY_REPRESENTATIVE": 1,
+        "PARETO_MEMBER&EXPLICIT": 0,
+        "PARETO_MEMBER&NEAR_EXTREME": 13,
+        "PARETO_MEMBER&NEAR_THRESHOLD": 36,
+        "PARETO_MEMBER&SCOPED_ELITE": 12,
+        "SCOPED_ELITE&DIVERSITY_REPRESENTATIVE": 0,
+        "SCOPED_ELITE&EXPLICIT": 0,
+        "SCOPED_ELITE&NEAR_EXTREME": 7,
+        "SCOPED_ELITE&NEAR_THRESHOLD": 10
+      },
+      "passed": true,
+      "summary": {
+        "cap": 250,
+        "classified_discarded_by_cap_count": 654,
+        "d1_pareto_count": 38,
+        "d1_scoped_elite_count": 12,
+        "eligible_population_count": 1000,
+        "per_reason_census": {
+          "DIVERSITY_REPRESENTATIVE": 36,
+          "EXPLICIT": 3,
+          "NEAR_EXTREME": 21,
+          "NEAR_THRESHOLD": 893,
+          "PARETO_MEMBER": 38,
+          "SCOPED_ELITE": 12
+        },
+        "retained_after_cap_count": 250,
+        "retained_not_d1_archived_count": 212,
+        "tier1_count": 38,
+        "unclassified_count": 96,
+        "with_at_least_one_reason_count": 904
+      }
+    }
+  },
+  "preregistration": "docs/design-d3-design-memory-partial-success-prereg.md",
+  "targeted_tests": "tests/test_design_d3_memory.py: 10 passed; full pytest: 1420 passed, 4 warnings",
+  "unresolved_successor_evidence": [
+    "O(N^2) dominance scaling remains inherited D1/D3 debt.",
+    "Durable storage substrate remains open because E1-E6 only forced deterministic artifact serialization.",
+    "Cryptographic/source authenticity for mutable caller-owned references remains inherited Core identity debt."
+  ]
+}

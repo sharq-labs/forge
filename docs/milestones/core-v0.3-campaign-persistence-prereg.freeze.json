@@ -1,0 +1,9 @@
+{
+  "milestone": "Core V0.3 Incremental Campaign Persistence",
+  "status": "FROZEN_PREREGISTRATION",
+  "base_commit": "bccd6c19134770f0b74d543313be1c21e0a7007b",
+  "prereg_commit": "4e38277f41ac39db0def713f32476923a7dadbbc",
+  "prereg_blob_sha": "60c7e4201673c5610f453923c68dbaa47f8a5661",
+  "prereg_path": "docs/core-v0.3-campaign-persistence-prereg.md",
+  "rule": "Do not modify the frozen preregistration file during implementation. Any required departure must be documented prospectively as a deviation, not silently rewritten."
+}

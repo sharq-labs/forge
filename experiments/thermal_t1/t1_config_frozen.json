@@ -1,0 +1,119 @@
+{
+  "config": {
+    "base_commit": "2733612b8c092e21c2cba70ce653b95a97aba6b7",
+    "benchmark": {
+      "boundary_conditions": "u(0,t) = u(L,t) = 0",
+      "end_time_s": 60.0,
+      "field_unit": "dimensionless",
+      "initial_condition": "u(x,0) = sin(pi x / L)",
+      "length_m": 0.1,
+      "pde": "du/dt = alpha d2u/dx2",
+      "qoi": "u:midpoint"
+    },
+    "credible_mass": 0.95,
+    "experiment_id": "T1",
+    "experiment_name": "thermal_parameter_inference_at_fixed_fidelity",
+    "experiment_version": "1.0.0",
+    "fidelity_rungs": [
+      {
+        "n_cells": 8,
+        "n_steps": 10,
+        "rank": 0,
+        "role": "cheapest rung on the frozen verification ladder; converges and validates like any other, and is wrong by 3.3% on the QoI",
+        "rung_id": "coarse",
+        "work_proxy": 80
+      },
+      {
+        "n_cells": 64,
+        "n_steps": 80,
+        "rank": 1,
+        "role": "an unremarkable working resolution",
+        "rung_id": "medium",
+        "work_proxy": 5120
+      },
+      {
+        "n_cells": 512,
+        "n_steps": 640,
+        "rank": 2,
+        "role": "the finest rung of the frozen ladder \u2014 the one that earned ANALYTICALLY_VERIFIED at 3.97e-04 relative error",
+        "rung_id": "reference",
+        "work_proxy": 327680
+      }
+    ],
+    "held_constant_across_rungs": [
+      "alpha_true",
+      "observation model and sigma",
+      "the observation values themselves",
+      "prior and grid",
+      "slab length, end time, boundary and initial conditions"
+    ],
+    "non_goals": [
+      "no adaptive fidelity selection \u2014 nothing here chooses a rung",
+      "no campaign, no EVPI, no EVSI, no certification, no model adequacy",
+      "no physical validation; the hidden truth is synthetic and known",
+      "no new inference framework beyond a grid posterior over one parameter"
+    ],
+    "observation_model": {
+      "count": 4,
+      "distribution": "gaussian_additive",
+      "metric": "u:midpoint",
+      "noise_seed": 20260907,
+      "note": "noise is injected by the benchmark; the solver is deterministic and no measurement of anything physical occurs",
+      "sigma": 0.001
+    },
+    "parameter": {
+      "maximum": 1.3e-05,
+      "minimum": 1.15e-05,
+      "name": "alpha",
+      "prior": "uniform",
+      "size": 401,
+      "spacing": 3.749999999999752e-09,
+      "unit": "m**2/s"
+    },
+    "prediction_before_execution": {
+      "basis": "alpha_bias = discretization_error / |du/dalpha|, with the discretization errors taken from the frozen thermal verification gate at alpha = 1.2e-5. This is a prediction to be checked, not a threshold to be met: T1 has no pass/fail gate and therefore nothing to tune",
+      "per_rung": {
+        "coarse": {
+          "alpha_bias": 5.596e-07,
+          "coverage": false,
+          "in_sd": 32.6,
+          "relative": 0.0466
+        },
+        "medium": {
+          "alpha_bias": 5.546e-08,
+          "coverage": false,
+          "in_sd": 3.2,
+          "relative": 0.0046
+        },
+        "reference": {
+          "alpha_bias": 6.696e-09,
+          "coverage": true,
+          "in_sd": 0.4,
+          "relative": 0.0006
+        }
+      },
+      "posterior_sd": 1.718e-08,
+      "sensitivity_du_dalpha": -29096.2
+    },
+    "reference_rung_id": "reference",
+    "scientific_question": "Can a numerically coarse but apparently converged solver produce a posterior over alpha that is confident yet systematically biased?",
+    "varied_across_rungs": [
+      "forward-map resolution only"
+    ]
+  },
+  "config_hash": "2b231b00b950e43818aca18004b29ac55ebca924e4b6c1cfd06f3372917050b7",
+  "preregistration_hash": "35ff4a22a26e5bb5af5e869a92bf52cfb3b20c07a32d46ee888cd66de8ea875f",
+  "truth": {
+    "alpha_true": 1.2e-05,
+    "observations": [
+      0.4919598794270831,
+      0.4905899784403516,
+      0.48886689452285387,
+      0.4904184573498909
+    ],
+    "scope": "synthetic hidden truth with a known alpha; no physical validation and no real measurement is involved",
+    "sensitivity_du_dalpha": -29096.20414883538,
+    "true_qoi": 0.4913436406431834,
+    "truth_source": "exact analytic solution + declared Gaussian noise"
+  }
+}

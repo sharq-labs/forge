@@ -1,0 +1,4274 @@
+{
+  "by_margin": {
+    "moderate": {
+      "classified_cases": 3000,
+      "counts": {
+        "DANGEROUS_MISS": 300,
+        "FALSE_REFUSAL": 450,
+        "GOOD_ALLOW": 1800,
+        "GOOD_BLOCK": 450,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.36553379596118163,
+          0.43548541019565556
+        ],
+        "denominator": 750,
+        "numerator": 300,
+        "rate": 0.4
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.18398934627097696,
+          0.21703333429361998
+        ],
+        "denominator": 2250,
+        "numerator": 450,
+        "rate": 0.2
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.7829666657063801,
+          0.816010653729023
+        ],
+        "denominator": 2250,
+        "numerator": 1800,
+        "rate": 0.8
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.5645145898043444,
+          0.6344662040388183
+        ],
+        "denominator": 750,
+        "numerator": 450,
+        "rate": 0.6
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.2348311745802088,
+          0.26580827325219364
+        ],
+        "denominator": 3000,
+        "numerator": 750,
+        "rate": 0.25
+      }
+    },
+    "no_guard": {
+      "classified_cases": 3000,
+      "counts": {
+        "DANGEROUS_MISS": 750,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 2250,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.9949039692158141,
+          1.0
+        ],
+        "denominator": 750,
+        "numerator": 750,
+        "rate": 1.0
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.0017044676076615143
+        ],
+        "denominator": 2250,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9982955323923384,
+          0.9999999999999998
+        ],
+        "denominator": 2250,
+        "numerator": 2250,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": [
+          4.336808689942018e-19,
+          0.005096030784185961
+        ],
+        "denominator": 750,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.2348311745802088,
+          0.26580827325219364
+        ],
+        "denominator": 3000,
+        "numerator": 750,
+        "rate": 0.25
+      }
+    },
+    "permissive": {
+      "classified_cases": 3000,
+      "counts": {
+        "DANGEROUS_MISS": 600,
+        "FALSE_REFUSAL": 150,
+        "GOOD_ALLOW": 2100,
+        "GOOD_BLOCK": 150,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.769875698407599,
+          0.8270666831218896
+        ],
+        "denominator": 750,
+        "numerator": 600,
+        "rate": 0.8
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0570804789307661,
+          0.07773005966254053
+        ],
+        "denominator": 2250,
+        "numerator": 150,
+        "rate": 0.06666666666666667
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9222699403374595,
+          0.9429195210692338
+        ],
+        "denominator": 2250,
+        "numerator": 2100,
+        "rate": 0.9333333333333333
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.17293331687811045,
+          0.23012430159240113
+        ],
+        "denominator": 750,
+        "numerator": 150,
+        "rate": 0.2
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.2348311745802088,
+          0.26580827325219364
+        ],
+        "denominator": 3000,
+        "numerator": 750,
+        "rate": 0.25
+      }
+    },
+    "strict": {
+      "classified_cases": 3000,
+      "counts": {
+        "DANGEROUS_MISS": 50,
+        "FALSE_REFUSAL": 800,
+        "GOOD_ALLOW": 1450,
+        "GOOD_BLOCK": 700,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.050931623109996355,
+          0.08681827023629815
+        ],
+        "denominator": 750,
+        "numerator": 50,
+        "rate": 0.06666666666666667
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.3360377697914654,
+          0.3755657430729701
+        ],
+        "denominator": 2250,
+        "numerator": 800,
+        "rate": 0.35555555555555557
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.6244342569270298,
+          0.6639622302085346
+        ],
+        "denominator": 2250,
+        "numerator": 1450,
+        "rate": 0.6444444444444445
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.9131817297637019,
+          0.9490683768900037
+        ],
+        "denominator": 750,
+        "numerator": 700,
+        "rate": 0.9333333333333333
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.2348311745802088,
+          0.26580827325219364
+        ],
+        "denominator": 3000,
+        "numerator": 750,
+        "rate": 0.25
+      }
+    },
+    "very_strict": {
+      "classified_cases": 3000,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 1050,
+        "GOOD_ALLOW": 1200,
+        "GOOD_BLOCK": 750,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          4.336808689942018e-19,
+          0.005096030784185961
+        ],
+        "denominator": 750,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.44612672821250504,
+          0.4873202362946723
+        ],
+        "denominator": 2250,
+        "numerator": 1050,
+        "rate": 0.4666666666666667
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.5126797637053276,
+          0.5538732717874949
+        ],
+        "denominator": 2250,
+        "numerator": 1200,
+        "rate": 0.5333333333333333
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.9949039692158141,
+          1.0
+        ],
+        "denominator": 750,
+        "numerator": 750,
+        "rate": 1.0
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.2348311745802088,
+          0.26580827325219364
+        ],
+        "denominator": 3000,
+        "numerator": 750,
+        "rate": 0.25
+      }
+    }
+  },
+  "by_margin_and_distance": {
+    "moderate": {
+      "10": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "11": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "12": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "2": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "4": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "6": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 50,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 250,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9286499658256813,
+            1.0
+          ],
+          "denominator": 50,
+          "numerator": 50,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.015133847249623387
+          ],
+          "denominator": 250,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9848661527503766,
+            1.0
+          ],
+          "denominator": 250,
+          "numerator": 250,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.07135003417431873
+          ],
+          "denominator": 50,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.1287647123620242,
+            0.21299757430313287
+          ],
+          "denominator": 300,
+          "numerator": 50,
+          "rate": 0.16666666666666666
+        }
+      },
+      "9": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 100,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 200,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9630051925239981,
+            0.9999999999999999
+          ],
+          "denominator": 100,
+          "numerator": 100,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.018846005918320894
+          ],
+          "denominator": 200,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9811539940816791,
+            1.0
+          ],
+          "denominator": 200,
+          "numerator": 200,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.03699480747600191
+          ],
+          "denominator": 100,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.2823925597902556,
+            0.3884885835423229
+          ],
+          "denominator": 300,
+          "numerator": 100,
+          "rate": 0.3333333333333333
+        }
+      },
+      "9.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      }
+    },
+    "no_guard": {
+      "10": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "11": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "12": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "2": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "4": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "6": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 50,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 250,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9286499658256813,
+            1.0
+          ],
+          "denominator": 50,
+          "numerator": 50,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.015133847249623387
+          ],
+          "denominator": 250,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9848661527503766,
+            1.0
+          ],
+          "denominator": 250,
+          "numerator": 250,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.07135003417431873
+          ],
+          "denominator": 50,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.1287647123620242,
+            0.21299757430313287
+          ],
+          "denominator": 300,
+          "numerator": 50,
+          "rate": 0.16666666666666666
+        }
+      },
+      "9": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 100,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 200,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9630051925239981,
+            0.9999999999999999
+          ],
+          "denominator": 100,
+          "numerator": 100,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.018846005918320894
+          ],
+          "denominator": 200,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9811539940816791,
+            1.0
+          ],
+          "denominator": 200,
+          "numerator": 200,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.03699480747600191
+          ],
+          "denominator": 100,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.2823925597902556,
+            0.3884885835423229
+          ],
+          "denominator": 300,
+          "numerator": 100,
+          "rate": 0.3333333333333333
+        }
+      },
+      "9.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      }
+    },
+    "permissive": {
+      "10": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "11": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "12": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "2": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "4": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "6": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 50,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 250,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9286499658256813,
+            1.0
+          ],
+          "denominator": 50,
+          "numerator": 50,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.015133847249623387
+          ],
+          "denominator": 250,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9848661527503766,
+            1.0
+          ],
+          "denominator": 250,
+          "numerator": 250,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.07135003417431873
+          ],
+          "denominator": 50,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.1287647123620242,
+            0.21299757430313287
+          ],
+          "denominator": 300,
+          "numerator": 50,
+          "rate": 0.16666666666666666
+        }
+      },
+      "9": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 100,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 200,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9630051925239981,
+            0.9999999999999999
+          ],
+          "denominator": 100,
+          "numerator": 100,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.018846005918320894
+          ],
+          "denominator": 200,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9811539940816791,
+            1.0
+          ],
+          "denominator": 200,
+          "numerator": 200,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.03699480747600191
+          ],
+          "denominator": 100,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.2823925597902556,
+            0.3884885835423229
+          ],
+          "denominator": 300,
+          "numerator": 100,
+          "rate": 0.3333333333333333
+        }
+      },
+      "9.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 150,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 150,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      }
+    },
+    "strict": {
+      "10": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "11": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "12": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "2": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "4": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "6": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 50,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 250,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9286499658256813,
+            1.0
+          ],
+          "denominator": 50,
+          "numerator": 50,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.015133847249623387
+          ],
+          "denominator": 250,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9848661527503766,
+            1.0
+          ],
+          "denominator": 250,
+          "numerator": 250,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.0,
+            0.07135003417431873
+          ],
+          "denominator": 50,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.1287647123620242,
+            0.21299757430313287
+          ],
+          "denominator": 300,
+          "numerator": 50,
+          "rate": 0.16666666666666666
+        }
+      },
+      "9": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 200,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 100,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.03699480747600191
+          ],
+          "denominator": 100,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9811539940816791,
+            1.0
+          ],
+          "denominator": 200,
+          "numerator": 200,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.018846005918320894
+          ],
+          "denominator": 200,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9630051925239981,
+            0.9999999999999999
+          ],
+          "denominator": 100,
+          "numerator": 100,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.2823925597902556,
+            0.3884885835423229
+          ],
+          "denominator": 300,
+          "numerator": 100,
+          "rate": 0.3333333333333333
+        }
+      },
+      "9.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      }
+    },
+    "very_strict": {
+      "10": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "11": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "12": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      },
+      "2": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "4": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "6": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 300,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9873565700022643,
+            0.9999999999999999
+          ],
+          "denominator": 300,
+          "numerator": 300,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.012643429997735661
+          ],
+          "denominator": 300,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "8.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 250,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 50,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.07135003417431873
+          ],
+          "denominator": 50,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9848661527503766,
+            1.0
+          ],
+          "denominator": 250,
+          "numerator": 250,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.015133847249623387
+          ],
+          "denominator": 250,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9286499658256813,
+            1.0
+          ],
+          "denominator": 50,
+          "numerator": 50,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.1287647123620242,
+            0.21299757430313287
+          ],
+          "denominator": 300,
+          "numerator": 50,
+          "rate": 0.16666666666666666
+        }
+      },
+      "9": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 200,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 100,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.03699480747600191
+          ],
+          "denominator": 100,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9811539940816791,
+            1.0
+          ],
+          "denominator": 200,
+          "numerator": 200,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.018846005918320894
+          ],
+          "denominator": 200,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9630051925239981,
+            0.9999999999999999
+          ],
+          "denominator": 100,
+          "numerator": 100,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.2823925597902556,
+            0.3884885835423229
+          ],
+          "denominator": 300,
+          "numerator": 100,
+          "rate": 0.3333333333333333
+        }
+      },
+      "9.5": {
+        "classified_cases": 300,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 0,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.0,
+            0.02497113914571871
+          ],
+          "denominator": 150,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9750288608542812,
+            1.0
+          ],
+          "denominator": 150,
+          "numerator": 150,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4437784961119509,
+            0.556221503888049
+          ],
+          "denominator": 300,
+          "numerator": 150,
+          "rate": 0.5
+        }
+      }
+    }
+  },
+  "by_margin_and_truth_class": {
+    "moderate": {
+      "BENIGN": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 450,
+          "GOOD_ALLOW": 1050,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.2773438778878609,
+            0.32367793185593124
+          ],
+          "denominator": 1500,
+          "numerator": 450,
+          "rate": 0.3
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.6763220681440687,
+            0.722656122112139
+          ],
+          "denominator": 1500,
+          "numerator": 1050,
+          "rate": 0.7
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.002554524359480413
+          ],
+          "denominator": 1500,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "REGIME_CHANGE": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 300,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 750,
+          "GOOD_BLOCK": 450,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.36553379596118163,
+            0.43548541019565556
+          ],
+          "denominator": 750,
+          "numerator": 300,
+          "rate": 0.4
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            4.336808689942018e-19,
+            0.005096030784185961
+          ],
+          "denominator": 750,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9949039692158141,
+            1.0
+          ],
+          "denominator": 750,
+          "numerator": 750,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.5645145898043444,
+            0.6344662040388183
+          ],
+          "denominator": 750,
+          "numerator": 450,
+          "rate": 0.6
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        }
+      }
+    },
+    "no_guard": {
+      "BENIGN": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 1500,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0,
+            0.002554524359480413
+          ],
+          "denominator": 1500,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9974454756405194,
+            0.9999999999999999
+          ],
+          "denominator": 1500,
+          "numerator": 1500,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.002554524359480413
+          ],
+          "denominator": 1500,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "REGIME_CHANGE": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 750,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 750,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.9949039692158141,
+            1.0
+          ],
+          "denominator": 750,
+          "numerator": 750,
+          "rate": 1.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            4.336808689942018e-19,
+            0.005096030784185961
+          ],
+          "denominator": 750,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9949039692158141,
+            1.0
+          ],
+          "denominator": 750,
+          "numerator": 750,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            4.336808689942018e-19,
+            0.005096030784185961
+          ],
+          "denominator": 750,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        }
+      }
+    },
+    "permissive": {
+      "BENIGN": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 1350,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.0858247281981221,
+            0.11621889128946224
+          ],
+          "denominator": 1500,
+          "numerator": 150,
+          "rate": 0.1
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.8837811087105377,
+            0.914175271801878
+          ],
+          "denominator": 1500,
+          "numerator": 1350,
+          "rate": 0.9
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.002554524359480413
+          ],
+          "denominator": 1500,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "REGIME_CHANGE": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 600,
+          "FALSE_REFUSAL": 0,
+          "GOOD_ALLOW": 750,
+          "GOOD_BLOCK": 150,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.769875698407599,
+            0.8270666831218896
+          ],
+          "denominator": 750,
+          "numerator": 600,
+          "rate": 0.8
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            4.336808689942018e-19,
+            0.005096030784185961
+          ],
+          "denominator": 750,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9949039692158141,
+            1.0
+          ],
+          "denominator": 750,
+          "numerator": 750,
+          "rate": 1.0
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.17293331687811045,
+            0.23012430159240113
+          ],
+          "denominator": 750,
+          "numerator": 150,
+          "rate": 0.2
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        }
+      }
+    },
+    "strict": {
+      "BENIGN": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 750,
+          "GOOD_ALLOW": 750,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.002554524359480413
+          ],
+          "denominator": 1500,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "REGIME_CHANGE": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 50,
+          "FALSE_REFUSAL": 50,
+          "GOOD_ALLOW": 700,
+          "GOOD_BLOCK": 700,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            0.050931623109996355,
+            0.08681827023629815
+          ],
+          "denominator": 750,
+          "numerator": 50,
+          "rate": 0.06666666666666667
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.050931623109996355,
+            0.08681827023629815
+          ],
+          "denominator": 750,
+          "numerator": 50,
+          "rate": 0.06666666666666667
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.9131817297637019,
+            0.9490683768900037
+          ],
+          "denominator": 750,
+          "numerator": 700,
+          "rate": 0.9333333333333333
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9131817297637019,
+            0.9490683768900037
+          ],
+          "denominator": 750,
+          "numerator": 700,
+          "rate": 0.9333333333333333
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        }
+      }
+    },
+    "very_strict": {
+      "BENIGN": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 900,
+          "GOOD_ALLOW": 600,
+          "GOOD_BLOCK": 0,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.5749826594651543,
+            0.6245064356629496
+          ],
+          "denominator": 1500,
+          "numerator": 900,
+          "rate": 0.6
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.3754935643370504,
+            0.42501734053484574
+          ],
+          "denominator": 1500,
+          "numerator": 600,
+          "rate": 0.4
+        },
+        "good_block_rate": {
+          "ci95": null,
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.0,
+            0.002554524359480413
+          ],
+          "denominator": 1500,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "REGIME_CHANGE": {
+        "classified_cases": 1500,
+        "counts": {
+          "DANGEROUS_MISS": 0,
+          "FALSE_REFUSAL": 150,
+          "GOOD_ALLOW": 600,
+          "GOOD_BLOCK": 750,
+          "NOT_APPLICABLE_CONTINUE": 0
+        },
+        "dangerous_miss_rate": {
+          "ci95": [
+            4.336808689942018e-19,
+            0.005096030784185961
+          ],
+          "denominator": 750,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "false_refusal_rate": {
+          "ci95": [
+            0.17293331687811045,
+            0.23012430159240113
+          ],
+          "denominator": 750,
+          "numerator": 150,
+          "rate": 0.2
+        },
+        "good_allow_rate": {
+          "ci95": [
+            0.769875698407599,
+            0.8270666831218896
+          ],
+          "denominator": 750,
+          "numerator": 600,
+          "rate": 0.8
+        },
+        "good_block_rate": {
+          "ci95": [
+            0.9949039692158141,
+            1.0
+          ],
+          "denominator": 750,
+          "numerator": 750,
+          "rate": 1.0
+        },
+        "naive_wrong_stop_rate": {
+          "ci95": [
+            0.4747288486635432,
+            0.5252711513364569
+          ],
+          "denominator": 1500,
+          "numerator": 750,
+          "rate": 0.5
+        }
+      }
+    }
+  },
+  "by_margin_effective_cells": {
+    "moderate": {
+      "classified_cells": 60,
+      "counts": {
+        "DANGEROUS_MISS": 6,
+        "FALSE_REFUSAL": 9,
+        "GOOD_ALLOW": 36,
+        "GOOD_BLOCK": 9,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.1982422808259466,
+          0.642535572434923
+        ],
+        "denominator": 15,
+        "numerator": 6,
+        "rate": 0.4
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.10896004402509006,
+          0.3382325131392944
+        ],
+        "denominator": 45,
+        "numerator": 9,
+        "rate": 0.2
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.1577638557841185,
+          0.372323109454848
+        ],
+        "denominator": 60,
+        "numerator": 15,
+        "rate": 0.25
+      }
+    },
+    "no_guard": {
+      "classified_cells": 60,
+      "counts": {
+        "DANGEROUS_MISS": 15,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 45,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.7961107336956521,
+          1.0
+        ],
+        "denominator": 15,
+        "numerator": 15,
+        "rate": 1.0
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.07865426194064076
+        ],
+        "denominator": 45,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.1577638557841185,
+          0.372323109454848
+        ],
+        "denominator": 60,
+        "numerator": 15,
+        "rate": 0.25
+      }
+    },
+    "permissive": {
+      "classified_cells": 60,
+      "counts": {
+        "DANGEROUS_MISS": 12,
+        "FALSE_REFUSAL": 3,
+        "GOOD_ALLOW": 42,
+        "GOOD_BLOCK": 3,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.5481406466534955,
+          0.9295257935638959
+        ],
+        "denominator": 15,
+        "numerator": 12,
+        "rate": 0.8
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.022931616462147086,
+          0.17856874388640825
+        ],
+        "denominator": 45,
+        "numerator": 3,
+        "rate": 0.06666666666666667
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.1577638557841185,
+          0.372323109454848
+        ],
+        "denominator": 60,
+        "numerator": 15,
+        "rate": 0.25
+      }
+    },
+    "strict": {
+      "classified_cells": 60,
+      "counts": {
+        "DANGEROUS_MISS": 1,
+        "FALSE_REFUSAL": 16,
+        "GOOD_ALLOW": 29,
+        "GOOD_BLOCK": 14,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.011866588606194828,
+          0.29817077552423993
+        ],
+        "denominator": 15,
+        "numerator": 1,
+        "rate": 0.06666666666666667
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.23218891356904048,
+          0.5016445398804781
+        ],
+        "denominator": 45,
+        "numerator": 16,
+        "rate": 0.35555555555555557
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.1577638557841185,
+          0.372323109454848
+        ],
+        "denominator": 60,
+        "numerator": 15,
+        "rate": 0.25
+      }
+    },
+    "very_strict": {
+      "classified_cells": 60,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 21,
+        "GOOD_ALLOW": 24,
+        "GOOD_BLOCK": 15,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.0,
+          0.20388926630434784
+        ],
+        "denominator": 15,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.3293490394201473,
+          0.6092279113758954
+        ],
+        "denominator": 45,
+        "numerator": 21,
+        "rate": 0.4666666666666667
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.1577638557841185,
+          0.372323109454848
+        ],
+        "denominator": 60,
+        "numerator": 15,
+        "rate": 0.25
+      }
+    }
+  },
+  "config_hash": "f2a660b2cfbd54ff698dd8cf6d11391881a553da1ec7dae438f58757da6f3af8",
+  "declared_transport_limitation": {
+    "consequence": "Certification outcomes become identical to the no_guard policy.",
+    "dangerous_miss_rate_with_blanket_justification": {
+      "ci95": [
+        0.7961107336956521,
+        1.0
+      ],
+      "denominator": 15,
+      "numerator": 15,
+      "rate": 1.0
+    },
+    "interpretation": "presence of a declared justification != correctness of that justification; this is an attribution mechanism, not a safety mechanism, and it is excluded from the guard-calibration metrics",
+    "no_guard_cells": {
+      "DANGEROUS_MISS": 15,
+      "FALSE_REFUSAL": 0,
+      "GOOD_ALLOW": 45,
+      "GOOD_BLOCK": 0,
+      "NOT_APPLICABLE_CONTINUE": 0
+    },
+    "premise": "A TransportJustification covering [8, 12] would mark every x* in this sweep as JUSTIFIED_TRANSPORT, which the transport-aware policy treats as supported.",
+    "strict_cells_for_contrast": {
+      "DANGEROUS_MISS": 1,
+      "FALSE_REFUSAL": 16,
+      "GOOD_ALLOW": 29,
+      "GOOD_BLOCK": 14,
+      "NOT_APPLICABLE_CONTINUE": 0
+    }
+  },
+  "experiment": "S1.1",
+  "in_domain_negative_control": {
+    "moderate": {
+      "classified_cases": 1200,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 1200,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9968088824974979,
+          0.9999999999999998
+        ],
+        "denominator": 1200,
+        "numerator": 1200,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      }
+    },
+    "no_guard": {
+      "classified_cases": 1200,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 1200,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9968088824974979,
+          0.9999999999999998
+        ],
+        "denominator": 1200,
+        "numerator": 1200,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      }
+    },
+    "permissive": {
+      "classified_cases": 1200,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 1200,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9968088824974979,
+          0.9999999999999998
+        ],
+        "denominator": 1200,
+        "numerator": 1200,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      }
+    },
+    "strict": {
+      "classified_cases": 1200,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 1200,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9968088824974979,
+          0.9999999999999998
+        ],
+        "denominator": 1200,
+        "numerator": 1200,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      }
+    },
+    "very_strict": {
+      "classified_cases": 1200,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 1200,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9968088824974979,
+          0.9999999999999998
+        ],
+        "denominator": 1200,
+        "numerator": 1200,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": null,
+        "denominator": 0,
+        "numerator": 0,
+        "rate": null
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.0,
+          0.00319111750250199
+        ],
+        "denominator": 1200,
+        "numerator": 0,
+        "rate": 0.0
+      }
+    }
+  },
+  "out_of_domain_adversarial": {
+    "moderate": {
+      "classified_cases": 900,
+      "counts": {
+        "DANGEROUS_MISS": 300,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 150,
+        "GOOD_BLOCK": 450,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.36553379596118163,
+          0.43548541019565556
+        ],
+        "denominator": 750,
+        "numerator": 300,
+        "rate": 0.4
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.02497113914571871
+        ],
+        "denominator": 150,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9750288608542812,
+          1.0
+        ],
+        "denominator": 150,
+        "numerator": 150,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.5645145898043444,
+          0.6344662040388183
+        ],
+        "denominator": 750,
+        "numerator": 450,
+        "rate": 0.6
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.8075787971353406,
+          0.8562543346877577
+        ],
+        "denominator": 900,
+        "numerator": 750,
+        "rate": 0.8333333333333334
+      }
+    },
+    "no_guard": {
+      "classified_cases": 900,
+      "counts": {
+        "DANGEROUS_MISS": 750,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 150,
+        "GOOD_BLOCK": 0,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.9949039692158141,
+          1.0
+        ],
+        "denominator": 750,
+        "numerator": 750,
+        "rate": 1.0
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.02497113914571871
+        ],
+        "denominator": 150,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9750288608542812,
+          1.0
+        ],
+        "denominator": 150,
+        "numerator": 150,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": [
+          4.336808689942018e-19,
+          0.005096030784185961
+        ],
+        "denominator": 750,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.8075787971353406,
+          0.8562543346877577
+        ],
+        "denominator": 900,
+        "numerator": 750,
+        "rate": 0.8333333333333334
+      }
+    },
+    "permissive": {
+      "classified_cases": 900,
+      "counts": {
+        "DANGEROUS_MISS": 600,
+        "FALSE_REFUSAL": 0,
+        "GOOD_ALLOW": 150,
+        "GOOD_BLOCK": 150,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.769875698407599,
+          0.8270666831218896
+        ],
+        "denominator": 750,
+        "numerator": 600,
+        "rate": 0.8
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.0,
+          0.02497113914571871
+        ],
+        "denominator": 150,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.9750288608542812,
+          1.0
+        ],
+        "denominator": 150,
+        "numerator": 150,
+        "rate": 1.0
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.17293331687811045,
+          0.23012430159240113
+        ],
+        "denominator": 750,
+        "numerator": 150,
+        "rate": 0.2
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.8075787971353406,
+          0.8562543346877577
+        ],
+        "denominator": 900,
+        "numerator": 750,
+        "rate": 0.8333333333333334
+      }
+    },
+    "strict": {
+      "classified_cases": 900,
+      "counts": {
+        "DANGEROUS_MISS": 50,
+        "FALSE_REFUSAL": 50,
+        "GOOD_ALLOW": 100,
+        "GOOD_BLOCK": 700,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          0.050931623109996355,
+          0.08681827023629815
+        ],
+        "denominator": 750,
+        "numerator": 50,
+        "rate": 0.06666666666666667
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.2628864565745068,
+          0.41210392314073274
+        ],
+        "denominator": 150,
+        "numerator": 50,
+        "rate": 0.3333333333333333
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.5878960768592673,
+          0.7371135434254931
+        ],
+        "denominator": 150,
+        "numerator": 100,
+        "rate": 0.6666666666666666
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.9131817297637019,
+          0.9490683768900037
+        ],
+        "denominator": 750,
+        "numerator": 700,
+        "rate": 0.9333333333333333
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.8075787971353406,
+          0.8562543346877577
+        ],
+        "denominator": 900,
+        "numerator": 750,
+        "rate": 0.8333333333333334
+      }
+    },
+    "very_strict": {
+      "classified_cases": 900,
+      "counts": {
+        "DANGEROUS_MISS": 0,
+        "FALSE_REFUSAL": 150,
+        "GOOD_ALLOW": 0,
+        "GOOD_BLOCK": 750,
+        "NOT_APPLICABLE_CONTINUE": 0
+      },
+      "dangerous_miss_rate": {
+        "ci95": [
+          4.336808689942018e-19,
+          0.005096030784185961
+        ],
+        "denominator": 750,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "false_refusal_rate": {
+        "ci95": [
+          0.9750288608542812,
+          1.0
+        ],
+        "denominator": 150,
+        "numerator": 150,
+        "rate": 1.0
+      },
+      "good_allow_rate": {
+        "ci95": [
+          0.0,
+          0.02497113914571871
+        ],
+        "denominator": 150,
+        "numerator": 0,
+        "rate": 0.0
+      },
+      "good_block_rate": {
+        "ci95": [
+          0.9949039692158141,
+          1.0
+        ],
+        "denominator": 750,
+        "numerator": 750,
+        "rate": 1.0
+      },
+      "naive_wrong_stop_rate": {
+        "ci95": [
+          0.8075787971353406,
+          0.8562543346877577
+        ],
+        "denominator": 900,
+        "numerator": 750,
+        "rate": 0.8333333333333334
+      }
+    }
+  },
+  "replication_degeneracy": {
+    "cells": 300,
+    "cells_with_varying_outcome": 0,
+    "examples": [],
+    "note": "Each cell is one (x*, margin, truth family) combination replicated over the 50 preregistered seeds. If no cell varies, the effective independent sample size is the number of cells, not the number of rows, and the row-based confidence intervals must not be quoted.",
+    "seeds_are_degenerate": true
+  },
+  "total_rows": 15000,
+  "tradeoff": [
+    {
+      "dangerous_miss_counts": [
+        0,
+        750
+      ],
+      "dangerous_miss_rate": 0.0,
+      "false_refusal_counts": [
+        1050,
+        2250
+      ],
+      "false_refusal_rate": 0.4666666666666667,
+      "margin": 0.0,
+      "margin_policy": "very_strict"
+    },
+    {
+      "dangerous_miss_counts": [
+        50,
+        750
+      ],
+      "dangerous_miss_rate": 0.06666666666666667,
+      "false_refusal_counts": [
+        800,
+        2250
+      ],
+      "false_refusal_rate": 0.35555555555555557,
+      "margin": 0.5,
+      "margin_policy": "strict"
+    },
+    {
+      "dangerous_miss_counts": [
+        300,
+        750
+      ],
+      "dangerous_miss_rate": 0.4,
+      "false_refusal_counts": [
+        450,
+        2250
+      ],
+      "false_refusal_rate": 0.2,
+      "margin": 1.5,
+      "margin_policy": "moderate"
+    },
+    {
+      "dangerous_miss_counts": [
+        600,
+        750
+      ],
+      "dangerous_miss_rate": 0.8,
+      "false_refusal_counts": [
+        150,
+        2250
+      ],
+      "false_refusal_rate": 0.06666666666666667,
+      "margin": 3.0,
+      "margin_policy": "permissive"
+    },
+    {
+      "dangerous_miss_counts": [
+        750,
+        750
+      ],
+      "dangerous_miss_rate": 1.0,
+      "false_refusal_counts": [
+        0,
+        2250
+      ],
+      "false_refusal_rate": 0.0,
+      "margin": null,
+      "margin_policy": "no_guard"
+    }
+  ]
+}

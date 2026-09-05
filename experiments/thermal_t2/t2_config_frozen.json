@@ -1,0 +1,172 @@
+{
+  "config": {
+    "acceptance_criteria": [
+      "A1 coarse empirical coverage falls inside its band, confirming that discretization bias destroys coverage rather than merely degrading it",
+      "A2 medium coverage falls inside its band: materially better than coarse and still materially below nominal",
+      "A3 reference coverage falls inside its band, approaching nominal",
+      "A4 the control arm calibrates, which is what makes A1-A3 statements about numerics rather than about the inference",
+      "A5 |mean standardized estimation error| decreases monotonically with fidelity",
+      "A6 parameter RMSE decreases monotonically with fidelity",
+      "A7 at the reference rung the observation-noise contribution exceeds the discretization contribution, and at the coarse rung it does not; the crossover is the answer to the second half of the question",
+      "A8 the confidently-wrong rate decreases monotonically with fidelity"
+    ],
+    "arms": {
+      "control_arm_id": "exact",
+      "control_arm_role": "zero-discretization control. Same grid, prior, sigma, observations and inference; the forward map is the closed-form solution instead of a solve. Not a fidelity rung and never compared on cost",
+      "fidelity_rungs": [
+        {
+          "n_cells": 8,
+          "n_steps": 10,
+          "rank": 0,
+          "role": "cheapest rung on the frozen verification ladder; converges and validates like any other, and is wrong by 3.3% on the QoI",
+          "rung_id": "coarse",
+          "work_proxy": 80
+        },
+        {
+          "n_cells": 64,
+          "n_steps": 80,
+          "rank": 1,
+          "role": "an unremarkable working resolution",
+          "rung_id": "medium",
+          "work_proxy": 5120
+        },
+        {
+          "n_cells": 512,
+          "n_steps": 640,
+          "rank": 2,
+          "role": "the finest rung of the frozen ladder \u2014 the one that earned ANALYTICALLY_VERIFIED at 3.97e-04 relative error",
+          "rung_id": "reference",
+          "work_proxy": 327680
+        }
+      ]
+    },
+    "base_commit": "3e2ca40cfa69a591896dba45620e449c5a0651cf",
+    "confidently_wrong_width_factor": 1.5,
+    "coverage_acceptance_bands": {
+      "coarse": [
+        0.0,
+        0.02
+      ],
+      "exact": [
+        0.92,
+        0.985
+      ],
+      "medium": [
+        0.055,
+        0.155
+      ],
+      "reference": [
+        0.88,
+        0.98
+      ]
+    },
+    "experiment_id": "T2",
+    "experiment_name": "repeated_draw_numerical_calibration",
+    "experiment_version": "1.0.0",
+    "falsification_criteria": [
+      "F1 if the CONTROL ARM misses its band, no conclusion about fidelity may be drawn from this run at all. Investigate in this order: the discrete equal-tailed interval on a 401-point grid, the Gaussian likelihood and whether sigma is the sigma actually used to draw, prior truncation at the grid edges, and the normal approximation behind the prediction. Report the diagnosis; do not adjust the rungs",
+      "F2 if the reference rung misses its band while the control arm passes, the reference rung's discretization is NOT negligible relative to observation noise, and T1's reading of it was wrong. Report that",
+      "F3 if the coarse rung covers materially more often than its band, the discretization-bias mechanism T1 claimed is not what is happening",
+      "F4 if posterior sd varies materially across draws at a fixed rung, the claim that confidence is draw-independent fails and the confidently-wrong rate must be re-read"
+    ],
+    "inherited_from_t1": {
+      "held_fixed": [
+        "alpha_true",
+        "prior and grid",
+        "observation model, count, metric and location",
+        "sigma",
+        "coarse / medium / reference rungs",
+        "inference implementation"
+      ],
+      "t1_config_hash": "2b231b00b950e43818aca18004b29ac55ebca924e4b6c1cfd06f3372917050b7",
+      "varied": [
+        "observation-noise realization only"
+      ]
+    },
+    "metrics": [
+      "empirical_coverage",
+      "posterior_mean_bias",
+      "parameter_rmse",
+      "posterior_sd",
+      "standardized_estimation_error",
+      "confidently_wrong_rate",
+      "qoi_prediction_error",
+      "discretization_contribution",
+      "observation_noise_contribution",
+      "work_proxy"
+    ],
+    "no_tuning_after_results": "the rungs, prior, sigma, grid, observation design, replication count, seed rule, credible level, acceptance bands and predictions above are fixed before execution and are not adjusted afterwards. A missed band is reported as a missed band",
+    "nominal_level": 0.95,
+    "non_goals": [
+      "no adaptive fidelity selection and no fidelity policy \u2014 nothing here chooses a rung",
+      "no new EVSI machinery, no commitment promotion, no ObligationSet change, no certification change",
+      "no production SRIA change of any kind",
+      "no physical validation; the hidden truth is synthetic and known",
+      "no modification to T1's preregistration or results, which are pinned by digest"
+    ],
+    "observation_model": {
+      "count": 4,
+      "distribution": "gaussian_additive",
+      "metric": "u:midpoint",
+      "sigma": 0.001
+    },
+    "parameter": {
+      "maximum": 1.3e-05,
+      "minimum": 1.15e-05,
+      "name": "alpha",
+      "prior": "uniform",
+      "size": 401,
+      "spacing": 3.749999999999752e-09,
+      "unit": "m**2/s"
+    },
+    "prediction_before_execution": {
+      "basis": "coverage = Phi(q - b/s) - Phi(-q - b/s) with b and s taken from T1's measured results, q = 1.95996",
+      "coverage": {
+        "coarse": 0.0,
+        "exact": 0.95,
+        "medium": 0.101,
+        "reference": 0.932
+      },
+      "qualitative": "coarse: severe undercoverage driven by discretization bias. medium: materially improved but still biased and still undercovering. reference: coverage approaches the nominal level because discretization error has become small relative to observation noise",
+      "standardized_error_mean": {
+        "coarse": 32.06,
+        "exact": 0.0,
+        "medium": 3.24,
+        "reference": 0.39
+      },
+      "t1_measured_inputs": {
+        "coarse": {
+          "bias": 6.0044e-07,
+          "posterior_sd": 1.8726e-08
+        },
+        "medium": {
+          "bias": 5.6207e-08,
+          "posterior_sd": 1.7373e-08
+        },
+        "reference": {
+          "bias": 6.7899e-09,
+          "posterior_sd": 1.7235e-08
+        }
+      }
+    },
+    "replications": 500,
+    "scientific_question": "Does numerical discretization error cause systematic posterior miscalibration and confident parameter bias across repeated observations, and at what fidelity does observation noise become the dominant error source?",
+    "seed_entropy": 20260908,
+    "seed_rule": "numpy.random.SeedSequence(SEED_ENTROPY).spawn(REPLICATIONS); replication i uses default_rng(children[i]) and draws OBSERVATION_COUNT normal deviates. Deterministic and reproducible from SEED_ENTROPY alone"
+  },
+  "config_hash": "63d8e07e0e3a5cfdedb0c8481f37916d873a35ec65ef796a99fd8a4b35dc9bd1",
+  "preregistration_hash": "0bcdd3e92110db3bb1c6547535019e64a6272d51217cef3fec5d1348214a1d05",
+  "truth": {
+    "alpha_true": 1.2e-05,
+    "declared_sigma": 0.001,
+    "draw_mean": 0.4913503705074504,
+    "draw_sd": 0.0010016344453136607,
+    "note": "the full draw table is not inlined here; draw_mean and draw_sd summarize it and the seed rule reproduces it exactly",
+    "observations_per_replication": 4,
+    "replications": 500,
+    "scope": "synthetic hidden truth with a known alpha; no physical validation and no real measurement is involved",
+    "sensitivity_du_dalpha": -29096.20414883538,
+    "true_qoi": 0.4913436406431834,
+    "truth_source": "exact analytic solution + declared Gaussian noise"
+  }
+}

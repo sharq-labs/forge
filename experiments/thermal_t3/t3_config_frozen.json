@@ -1,0 +1,166 @@
+{
+  "config": {
+    "acceptance_criteria": [
+      "A1 at the nominal WRONG_DECISION_COST the decision-aware policy has a strictly lower cost-to-correct-decision than all three fixed baselines",
+      "A2 policy terminal accuracy is within 2 percentage points of Always Reference, so any cost saving was not bought with reliability",
+      "A3 policy total work is strictly below Always Reference total work",
+      "A4 in the FAR band the policy reaches the reference rung on fewer than 10% of scenarios",
+      "A5 in the NEAR band the policy reaches the reference rung on more than 80% of scenarios",
+      "A6 the benchmark contains both regimes: the coarse rung's terminal numerical error exceeds the decision margin on more than 50% of NEAR scenarios and on fewer than 5% of FAR scenarios",
+      "A7 Always Reference is NOT the accuracy-per-work winner in every band -- there is at least one band where a cheaper fixed baseline matches its accuracy, confirming the benchmark is not rigged toward refinement"
+    ],
+    "base_commit": "4da598d5994fae09b202727228eb5b302cb60c01",
+    "costs": {
+      "cost_model": "a strategy pays the sum of FIDELITY_COST over every rung it ran. The escalating policy therefore pays 80, 5,200 or 332,880; Always Reference pays 327,680 unconditionally",
+      "fidelity_cost": {
+        "coarse": 80,
+        "medium": 5120,
+        "reference": 327680
+      },
+      "units": "work proxy (n_cells * n_steps) from the frozen ladder",
+      "wrong_decision_cost": 3276800,
+      "wrong_decision_cost_sweep": [
+        10000.0,
+        30000.0,
+        100000.0,
+        300000.0,
+        1000000.0,
+        3000000.0,
+        10000000.0,
+        30000000.0,
+        100000000.0
+      ]
+    },
+    "definitions": {
+      "confident_decision": "policy: terminated as robust. baseline: d > SAFETY * QUANTILE * s",
+      "required_escalation_missed": "the strategy's decision is wrong, and a higher rung it did not run would have decided correctly",
+      "unnecessary_escalation": "an escalation after which the final decision is identical to the one the pre-escalation rung would have made, and that decision is correct. The price of not knowing, measurable only in hindsight"
+    },
+    "expected_negative_regime": "below a crossover in WRONG_DECISION_COST the cheap fixed baselines are expected to win outright, because at that point a wrong decision is worth less than the computation that would prevent it. The crossover is predicted before execution to fall in the region of 5-10x the reference rung's cost. This is reported as a measured property of the trade-off, not as a failure of the policy",
+    "experiment_id": "T3",
+    "experiment_name": "decision_aware_fidelity_escalation",
+    "experiment_version": "1.0.0",
+    "falsification_criteria": [
+      "F1 if the policy fails A1, that is recorded as a negative result. The safety factor, the bands, the costs, the nominal wrong-decision cost and the scenario rule are NOT adjusted afterwards",
+      "F2 if A6 fails, the benchmark does not contain both regimes and no comparison between strategies is informative, whoever wins",
+      "F3 if Always Reference dominates every band, the benchmark is rigged toward refinement and must be reported as such rather than as a result",
+      "F4 if the policy's accuracy is materially below Always Reference, a lower cost-to-correct-decision must NOT be reported as success: the saving was bought with reliability",
+      "F5 if the terminal QoI turns out to cancel the bias the way the assimilated one does -- that is, if the rungs' terminal predictions agree closely -- the out-of-sample design failed and T3 answers nothing"
+    ],
+    "inherited": {
+      "t1_config_hash": "2b231b00b950e43818aca18004b29ac55ebca924e4b6c1cfd06f3372917050b7",
+      "t2_config_hash": "63d8e07e0e3a5cfdedb0c8481f37916d873a35ec65ef796a99fd8a4b35dc9bd1",
+      "used_as": "frozen prior calibration evidence only"
+    },
+    "metrics": [
+      "cost_to_correct_decision",
+      "terminal_decision_accuracy",
+      "incorrect_confident_decisions",
+      "total_work",
+      "escalations",
+      "unnecessary_escalations",
+      "required_escalations_missed",
+      "final_fidelity_distribution",
+      "decision_regret",
+      "numerical_error_over_decision_margin"
+    ],
+    "no_tuning_after_results": "the terminal condition, threshold rule, margin bands, scenario count, seed rule, costs, safety factor, escalation rule, stopping rule, baselines and criteria above are fixed before execution and are not adjusted afterwards",
+    "non_goals": [
+      "no generic FidelityPolicy and no new SRIA module \u2014 the escalation logic is experiment-side",
+      "no commitment promotion, no ObligationSet redesign, no certification change, no new EVSI machinery",
+      "no production SRIA change of any kind",
+      "no physical validation; the hidden truth is synthetic and known",
+      "no modification to T1 or T2, which are pinned by digest and used only as frozen prior calibration evidence"
+    ],
+    "observation_model": {
+      "count": 4,
+      "distribution": "gaussian_additive",
+      "metric": "u:midpoint",
+      "sigma": 0.001
+    },
+    "primary_metric": "cost_to_correct_decision",
+    "primary_metric_definition": "(total work + WRONG_DECISION_COST * number of wrong decisions) / number of correct decisions. Lower is better. Both terms are in work-proxy units, which is what makes them addable",
+    "rules": {
+      "baselines": "each fixed baseline runs exactly one rung, forms the same posterior and the same predictive mean, and decides mu < tau. It never escalates and pays that rung's cost on every scenario",
+      "escalation": "start at the cheapest rung. At rung k compute the posterior over alpha from the scenario's observations using rung k's ASSIMILATION map, propagate it through rung k's TERMINAL map to a predictive mean mu_k and sd s_k, and let d_k = |mu_k - tau|. The numerical-error indicator is e_k = |mu_k - mu_{k-1}| for k >= 1 and infinity for k = 0, because a single rung supplies no evidence at all about its own numerical error -- which is precisely what T1 and T2 established. DECIDE if d_k > SAFETY * (QUANTILE * s_k + e_k); otherwise ESCALATE",
+      "indicator_is_conservative": "the successive-difference indicator over-estimates the finer rung's error by roughly 5-10x on the feasibility probe, and no order-of-accuracy correction is applied because the frozen thermal gate refuses to separate spatial from temporal order. Over-escalation in the MODERATE band is therefore expected and is measured, not removed",
+      "quantile": 1.959963984540054,
+      "safety_factor": 1.0,
+      "stopping": "stop escalating, and decide, when any of: (1) the margin is robust to both statistical and numerical uncertainty, d_k > SAFETY * (QUANTILE * s_k + e_k); (2) the margin is inside the statistical uncertainty alone, d_k <= SAFETY * QUANTILE * s_k, because refinement reduces e_k and never s_k, so no amount of fidelity can settle this decision and paying for it is waste; (3) the finest rung has been reached, in which case the decision is taken and recorded as uncertified"
+    },
+    "scenarios": {
+      "alpha_true_range": [
+        1.18e-05,
+        1.22e-05
+      ],
+      "band_intent": {
+        "FAR": "coarse",
+        "MODERATE": "medium",
+        "NEAR": "reference",
+        "UNDECIDABLE": null
+      },
+      "count": 1000,
+      "margin_bands": {
+        "FAR": [
+          0.04,
+          0.08
+        ],
+        "MODERATE": [
+          0.004,
+          0.015
+        ],
+        "NEAR": [
+          0.0008,
+          0.003
+        ],
+        "UNDECIDABLE": [
+          0.0,
+          0.0004
+        ]
+      },
+      "per_band": 250,
+      "rule": "scenario i belongs to band i // SCENARIOS_PER_BAND. Its stream is numpy.random.SeedSequence(SEED_ENTROPY).spawn(SCENARIO_COUNT)[i], and it draws, in this fixed order: alpha_true ~ U(ALPHA_TRUE_MIN, ALPHA_TRUE_MAX); margin ~ U(band_low, band_high); sign ~ {-1,+1} with equal probability; then OBSERVATION_COUNT normal deviates of sd OBSERVATION_SIGMA about the exact QoI at 60 s. The threshold is tau = terminal_truth + sign * margin, so the correct decision is exactly (sign > 0) and the two decisions are balanced by construction",
+      "seed_entropy": 20260909
+    },
+    "scientific_question": "Can a cost-aware decision rule determine when the current numerical fidelity is sufficient for a downstream scientific decision, and when paying for higher fidelity is necessary?",
+    "strategies": [
+      "always_coarse",
+      "always_medium",
+      "always_reference",
+      "decision_aware"
+    ],
+    "terminal_decision": {
+      "assimilation_time_s": 60.0,
+      "asymmetric_loss": false,
+      "decision": "decide TRUE when the terminal QoI is below tau, FALSE otherwise. The decision is made from the posterior-predictive mean of the terminal QoI at whichever rung the strategy stopped on",
+      "decision_id": "terminal_below_threshold",
+      "fourier_ratio_r": 3.0,
+      "loss_model": "0/1 loss on the terminal decision, symmetric",
+      "terminal_metric": "u:midpoint@180s",
+      "terminal_qoi": "normalized dimensionless midpoint temperature of the same slab at 180 s. Never assimilated. u is a normalized field value and is not a temperature in kelvin",
+      "terminal_time_s": 180.0,
+      "why_not_the_assimilated_qoi": "at r = 1 the discretization error is exactly an effective-alpha shift and fitting alpha cancels it, so every rung predicts the assimilated QoI equally well. r = 3 breaks that cancellation"
+    }
+  },
+  "config_hash": "f445c46be4aba5ab0108436bccba5ef1cabb50147cc255fe4ddbcd27124ac7d1",
+  "preregistration_hash": "2d756f0abc376b51db248afbc1bcc29f2cc79878dfdeffa82e79d09f6b171688",
+  "truth": {
+    "alpha_true_max": 1.2198068112341748e-05,
+    "alpha_true_mean": 1.1998279743480733e-05,
+    "alpha_true_min": 1.180066626158565e-05,
+    "decision_balance": {
+      "above_threshold_true": 465,
+      "below_threshold_true": 535
+    },
+    "per_band_margin_mean": {
+      "FAR": 0.05792931964041242,
+      "MODERATE": 0.00913780475734904,
+      "NEAR": 0.0019005262406248512,
+      "UNDECIDABLE": 0.00019517540824975468
+    },
+    "scenario_count": 1000,
+    "scope": "synthetic hidden truth with known alphas; no physical validation and no real measurement is involved",
+    "terminal_time_s": 180.0,
+    "truth_source": "exact analytic solution + declared Gaussian noise"
+  }
+}

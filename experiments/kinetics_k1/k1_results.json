@@ -1,0 +1,3021 @@
+{
+  "acceptance": {
+    "A1": true,
+    "A10": true,
+    "A2": true,
+    "A3": true,
+    "A4": true,
+    "A5": true,
+    "A6": true,
+    "A7": true,
+    "A8": true,
+    "A9": true
+  },
+  "acceptance_all_met": true,
+  "acceptance_criteria": [
+    "A1 R1 completes through the full five-stage contract with CONVERGED, is_usable True, and metrics carrying mol/m**3, kelvin, seconds and dimensionless",
+    "A2 R2 and R3 complete and are shown to be materially stiff by measurement: their RK45/BDF evaluation ratios fall inside their preregistered bands, and R1's ratio falls inside its band showing it is NOT stiff",
+    "A3 R5 ends as MAX_ITERATIONS with no metrics extracted and its partial trajectory preserved, through a genuine computational limit rather than a mocked failure",
+    "A4 every regime's convergence state and its is_usable verdict are independent: R8 is CONVERGED and not usable, and R7 is CONVERGED and usable while its verification gate awards nothing",
+    "A5 every declaration in R4 is refused by the domain before any solve, and the Scientific Core contains no CSTR-specific validity rule",
+    "A6 the verification gate awards ANALYTICALLY_VERIFIED on at least one regime from the exact reaction-free invariant, and CROSS_SOLVER_VALIDATED on at least one regime from the independent algebraic steady state",
+    "A7 the five failure-semantics cases A-E are each represented by a distinct combination of existing Core states, with no two collapsed",
+    "A8 no regime is awarded NUMERICALLY_CONVERGED by a single solve; every such award comes from the tolerance ladder",
+    "A9 R6a and R6b reach the same attractor despite three algebraic steady states existing, and the independent solver reports all three",
+    "A10 every result carries a complete provenance record: model identity and version, solver identity and version, method, tolerances, every input as a Quantity, and the physics fingerprint"
+  ],
+  "base_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+  "config": {
+    "acceptance_criteria": [
+      "A1 R1 completes through the full five-stage contract with CONVERGED, is_usable True, and metrics carrying mol/m**3, kelvin, seconds and dimensionless",
+      "A2 R2 and R3 complete and are shown to be materially stiff by measurement: their RK45/BDF evaluation ratios fall inside their preregistered bands, and R1's ratio falls inside its band showing it is NOT stiff",
+      "A3 R5 ends as MAX_ITERATIONS with no metrics extracted and its partial trajectory preserved, through a genuine computational limit rather than a mocked failure",
+      "A4 every regime's convergence state and its is_usable verdict are independent: R8 is CONVERGED and not usable, and R7 is CONVERGED and usable while its verification gate awards nothing",
+      "A5 every declaration in R4 is refused by the domain before any solve, and the Scientific Core contains no CSTR-specific validity rule",
+      "A6 the verification gate awards ANALYTICALLY_VERIFIED on at least one regime from the exact reaction-free invariant, and CROSS_SOLVER_VALIDATED on at least one regime from the independent algebraic steady state",
+      "A7 the five failure-semantics cases A-E are each represented by a distinct combination of existing Core states, with no two collapsed",
+      "A8 no regime is awarded NUMERICALLY_CONVERGED by a single solve; every such award comes from the tolerance ladder",
+      "A9 R6a and R6b reach the same attractor despite three algebraic steady states existing, and the independent solver reports all three",
+      "A10 every result carries a complete provenance record: model identity and version, solver identity and version, method, tolerances, every input as a Quantity, and the physics fingerprint"
+    ],
+    "base_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+    "base_operation": {
+      "flow_m3_per_s": 0.0016666666666666668,
+      "nominal_feed_concentration_mol_per_m3": 1000.0,
+      "nominal_feed_temperature_k": 350.0,
+      "nominal_ua_w_per_k": 833.3333333333334,
+      "residence_time_s": 60.0,
+      "volume_m3": 0.1
+    },
+    "chemistry": {
+      "activation_energy_j_per_mol": 72751.5479075,
+      "beta_m3_k_per_mol": 0.20920502092050208,
+      "density_kg_per_m3": 1000.0,
+      "e_over_r_k": 8750.0,
+      "exothermic": true,
+      "heat_capacity_j_per_kg_k": 239.0,
+      "heat_of_reaction_j_per_mol": -50000.0,
+      "k0_per_s": 1200000000.0
+    },
+    "cost_measure": "rhs_evaluations",
+    "customary_parameters": {
+      "C_Af_mol_per_L": 1.0,
+      "E_over_R_K": 8750.0,
+      "T_feed_K": 350.0,
+      "UA_J_per_min_K": 50000.0,
+      "V_L": 100.0,
+      "cp_J_per_g_K": 0.239,
+      "delta_H_J_per_mol": -50000.0,
+      "k0_per_min": 72000000000.0,
+      "q_L_per_min": 100.0,
+      "rho_g_per_L": 1000.0
+    },
+    "experiment_id": "K1",
+    "experiment_name": "kinetics_cstr_solver_admission_gate",
+    "experiment_version": "1.0.1",
+    "failure_semantics_matrix": {
+      "A_solver_execution_failure": {
+        "predicted_convergence": "max_iterations",
+        "predicted_is_usable": false,
+        "predicted_metrics_present": false,
+        "regime": "R5",
+        "why_this_enum": "MAX_ITERATIONS means the backend stopped at a work cap. An explicit right-hand-side evaluation budget is exactly that, and FAILED would wrongly imply the method or the problem was at fault when neither was"
+      },
+      "B_numerical_non_convergence": {
+        "predicted_convergence": "not_converged",
+        "predicted_is_usable": false,
+        "predicted_metrics_present": false,
+        "regime": "not produced by any preregistered regime",
+        "why_this_enum": "reserved for SciPy status -1, step-size collapse. NO regime in this study can reach it, and that is a result rather than a gap: the CSTR system is globally bounded, because the Arrhenius factor saturates at k0 and the reactant is consumed, so the model contains no finite-time singularity for any admissible parameters. The adapter's classification is therefore exercised directly, by injecting a genuine finite-time singularity (dT/dt += T**2) into the right-hand side. Claiming a regime produced case B when none did would be the dishonest option"
+      },
+      "C_physically_invalid_input": {
+        "predicted_convergence": "no solve is attempted",
+        "predicted_is_usable": false,
+        "predicted_metrics_present": false,
+        "regime": "R4",
+        "why_this_enum": "refused by the domain at the declaration boundary. This must NOT become a ConvergenceState: nothing converged or failed to converge, because nothing ran"
+      },
+      "D_successful_but_unusable": {
+        "predicted_convergence": "converged",
+        "predicted_is_usable": "False for R8, True for R7",
+        "predicted_metrics_present": true,
+        "regime": "R8 (envelope exit) and R7 (no stable steady state)",
+        "why_this_enum": "the two are deliberately different. R8's trajectory leaves the model's envelope, which a single solve CAN see, so its per-solve check fails and is_usable goes False. R7's trajectory is impeccable point by point and only the verification gate can see that its end state means nothing, so is_usable stays True and the gate awards no level. If these collapsed into one state, one of them would be a lie"
+      },
+      "E_valid_result": {
+        "predicted_convergence": "converged",
+        "predicted_is_usable": true,
+        "predicted_metrics_present": true,
+        "regime": "R1, R2, R3, R6a, R6b",
+        "why_this_enum": "converged, inside the envelope, no failing check"
+      }
+    },
+    "falsification_criteria": [
+      "F1 if the Scientific Core requires any CSTR-specific branching, K1 is at best PASS WITH CORE CORRECTION and the branch must be reported",
+      "F2 if a meaningful scientific failure cannot be represented without discarding evidence \u2014 in particular if R5's partial trajectory or R8's envelope violation has nowhere honest to live \u2014 that is a Core finding",
+      "F3 if a successful solve is automatically promoted to any validation level above DIMENSIONALLY_VALID, the validation contract is unsound",
+      "F4 if an invalid physical state can enter an admitted ScientificResult \u2014 for example if R8 were reported usable, or if a non-finite value reached a Quantity \u2014 that is a Core finding",
+      "F5 if any historical frozen artifact must be changed, K1 fails",
+      "F6 if the domain requires a large generic framework invented before the evidence for it, K1 fails on architecture creep",
+      "F7 if the independent algebraic steady state materially disagrees with a converged, stationary production result, the production path is wrong and must be reported as wrong",
+      "F8 if the experiment cannot be reproduced from a clean clone, K1 fails"
+    ],
+    "gate_thresholds": {
+      "invariant_rel_tol": 1e-09,
+      "provenance": "declared after exploratory feasibility analysis; the invariant and steady-state tolerances were TIGHTENED from 1e-6 to 1e-9 because exploration showed the residuals sit near 1e-15 and a 1e-6 gate could not have failed",
+      "stationarity_rel_tol": 1e-06,
+      "steady_state_rel_tol": 1e-09,
+      "tolerance_ladder": [
+        {
+          "atol_concentration": 1e-06,
+          "atol_temperature": 1e-06,
+          "rtol": 1e-06
+        },
+        {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "rtol": 1e-08
+        },
+        {
+          "atol_concentration": 1e-10,
+          "atol_temperature": 1e-10,
+          "rtol": 1e-10
+        },
+        {
+          "atol_concentration": 1e-12,
+          "atol_temperature": 1e-12,
+          "rtol": 1e-12
+        }
+      ],
+      "tolerance_rel_tol": 1e-06
+    },
+    "integration": {
+      "constrained_rhs_budget": 500,
+      "cross_method": "Radau",
+      "method_justification": "BDF: variable-order backward differentiation with an analytic Jacobian, L-stable, the standard choice for stiff chemical kinetics. Radau: 5th-order Radau IIA, a different (one-step, fully implicit) family, also L-stable, used as the cross-method arm. RK45: explicit, used ONLY as a measuring instrument for stiffness. LSODA is excluded because its internal stiff/non-stiff switching makes its work count unattributable",
+      "production_atol_concentration": 1e-08,
+      "production_atol_temperature": 1e-08,
+      "production_method": "BDF",
+      "production_rtol": 1e-08,
+      "standard_rhs_budget": 5000000,
+      "stiffness_probe_budget": 5000000,
+      "stiffness_probe_method": "RK45"
+    },
+    "invalid_declarations": [
+      {
+        "kind": "operation",
+        "label": "negative_absolute_temperature",
+        "overrides": {
+          "feed_temperature": "Quantity(magnitude=-10.0, units='kelvin')"
+        },
+        "reason": "exp(-E/(R T)) has an essential singularity at T = 0 and no meaning below it"
+      },
+      {
+        "kind": "operation",
+        "label": "temperature_above_envelope",
+        "overrides": {
+          "feed_temperature": "Quantity(magnitude=1500.0, units='kelvin')"
+        },
+        "reason": "outside the model's declared 250-1000 K single-phase constant-property envelope"
+      },
+      {
+        "kind": "operation",
+        "label": "temperature_below_envelope",
+        "overrides": {
+          "coolant_temperature": "Quantity(magnitude=200.0, units='kelvin')"
+        },
+        "reason": "below the declared envelope; the liquid phase is not assured"
+      },
+      {
+        "kind": "operation",
+        "label": "negative_feed_concentration",
+        "overrides": {
+          "feed_concentration": "Quantity(magnitude=-1.0, units='mole / meter ** 3')"
+        },
+        "reason": "a negative concentration is not a state of the system"
+      },
+      {
+        "kind": "operation",
+        "label": "zero_volume",
+        "overrides": {
+          "volume": "Quantity(magnitude=0.0, units='meter ** 3')"
+        },
+        "reason": "a zero-volume tank has no residence time"
+      },
+      {
+        "kind": "operation",
+        "label": "negative_flow_rate",
+        "overrides": {
+          "flow_rate": "Quantity(magnitude=-0.001, units='meter ** 3 / second')"
+        },
+        "reason": "reversed flow is not the modelled configuration"
+      },
+      {
+        "kind": "operation",
+        "label": "negative_ua",
+        "overrides": {
+          "ua": "Quantity(magnitude=-100.0, units='watt / kelvin')"
+        },
+        "reason": "a negative UA would pump heat up its own gradient"
+      },
+      {
+        "kind": "chemistry",
+        "label": "non_positive_k0",
+        "overrides": {
+          "k0": "Quantity(magnitude=0.0, units='1 / second')"
+        },
+        "reason": "a zero pre-exponential factor is not an Arrhenius rate"
+      },
+      {
+        "kind": "chemistry",
+        "label": "negative_activation_energy",
+        "overrides": {
+          "activation_energy": "Quantity(magnitude=-10000.0, units='joule / mole')"
+        },
+        "reason": "a negative barrier makes the rate fall with temperature, which is not the Arrhenius model"
+      },
+      {
+        "kind": "chemistry",
+        "label": "non_positive_density",
+        "overrides": {
+          "density": "Quantity(magnitude=0.0, units='kilogram / meter ** 3')"
+        },
+        "reason": "a zero density gives an infinite temperature response"
+      },
+      {
+        "kind": "run",
+        "label": "negative_initial_concentration",
+        "overrides": {
+          "initial_concentration": "Quantity(magnitude=-5.0, units='mole / meter ** 3')"
+        },
+        "reason": "a negative initial concentration is not a state of the system"
+      },
+      {
+        "kind": "run",
+        "label": "initial_temperature_outside_envelope",
+        "overrides": {
+          "initial_temperature": "Quantity(magnitude=1200.0, units='kelvin')"
+        },
+        "reason": "starting outside the envelope the model does not cover"
+      },
+      {
+        "kind": "operation",
+        "label": "bare_number_instead_of_quantity",
+        "overrides": {
+          "feed_temperature": "350.0"
+        },
+        "reason": "a bare number is not a declaration: it carries no unit and cannot be dimension-checked"
+      },
+      {
+        "kind": "operation",
+        "label": "wrong_dimension_for_temperature",
+        "overrides": {
+          "feed_temperature": "Quantity(magnitude=350.0, units='pascal')"
+        },
+        "reason": "a pressure is not a temperature"
+      },
+      {
+        "kind": "integration",
+        "label": "unknown_integration_method",
+        "overrides": {
+          "method": "'LSODA'"
+        },
+        "reason": "LSODA switches between stiff and non-stiff internally, so a work count from it cannot be attributed to one method and would corrupt the stiffness measurement"
+      },
+      {
+        "kind": "integration",
+        "label": "non_positive_rtol",
+        "overrides": {
+          "rtol": "0.0"
+        },
+        "reason": "a zero relative tolerance is not achievable"
+      }
+    ],
+    "metrics": [
+      "solver_id",
+      "solver_version",
+      "solver_backend",
+      "integration_method",
+      "convergence_state",
+      "is_usable",
+      "validation_status",
+      "attained_levels_per_solve",
+      "attained_levels_gate",
+      "failure_classification",
+      "rhs_evaluations",
+      "scipy_nfev",
+      "scipy_njev",
+      "scipy_nlu",
+      "accepted_steps",
+      "wall_seconds_telemetry",
+      "fraction_of_horizon_completed",
+      "final_concentration_mol_per_m3",
+      "final_temperature_k",
+      "peak_temperature_k",
+      "conversion",
+      "min_concentration_mol_per_m3",
+      "max_temperature_k",
+      "rtol",
+      "atol_concentration",
+      "atol_temperature",
+      "rhs_budget",
+      "tolerance_ladder_final_relative_change",
+      "invariant_max_relative_error",
+      "steady_state_relative_error",
+      "steady_states_found",
+      "cross_method_max_relative_difference",
+      "stiffness_work_ratio",
+      "physics_fingerprint",
+      "provenance_run_id"
+    ],
+    "no_tuning_after_results": "the chemistry, regimes, initial conditions, horizons, method, tolerances, budgets, verification-gate thresholds, predictions and acceptance bands above are fixed before the scored execution and are not adjusted afterwards. A missed band is reported as a missed band. If a setup bug is found, the run is invalidated, the bug and the correction are documented, the experiment version is incremented, and the study is rerun from scratch \u2014 never silently patched",
+    "non_goals": [
+      "no inference of any kind: no Bayesian posterior, no MCMC, no variational inference, no parameter estimation",
+      "no optimization, no acquisition function, no experiment selection",
+      "no generic chemistry ontology, no generic uncertainty engine, no generic domain framework, no surrogate model",
+      "no multiphysics coupling, no digital twin, no visualization",
+      "no modification to T1, T2, T3, E1, E2, E3, S11 or any other frozen experiment, all of which are pinned by digest and are not re-run here",
+      "no physical validation: nothing in K1 is compared against a measurement of a real reactor, and no claim about one is made",
+      "no LLM-supplied numerical result: every number in the results is produced by the code in this repository from the declarations above"
+    ],
+    "parameter_provenance": "the widely used textbook non-isothermal CSTR parameterization, transcribed to SI here. The transcription has NOT been checked against the printed source, and no K1 conclusion depends on it having been: these are simply the declared, frozen inputs",
+    "preregistration_kind": "feasibility-informed: an exploratory pass established which regimes exist and the scale of every residual before these numbers were written down. The bands were then set outside those observations and frozen. The discipline that carries weight here is the no-tuning rule, not blindness",
+    "randomness": "none. K1 contains no stochastic component, so there is no seed to declare. Every number is a deterministic function of the declarations above and the pinned library versions",
+    "regimes": [
+      {
+        "category": "easy",
+        "coolant_temperature_k": 290.0,
+        "end_time_s": 1800.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 300.0,
+        "measure_stiffness": true,
+        "n_output_points": 2001,
+        "name": "benign cooled operation",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "clean convergence in a few hundred evaluations; the explicit probe is no more expensive than BDF because the regime is not stiff",
+        "rationale": "Well-cooled at Tc = 290 K, far below the ignition window. A single stable steady state at low conversion, approached monotonically. The horizon is 30 residence times so the trajectory actually settles and the steady-state comparison can engage.",
+        "regime_id": "R1",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": [
+          null,
+          5.0
+        ],
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "moderately_stiff",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 340.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 340.0,
+        "measure_stiffness": true,
+        "n_output_points": 2001,
+        "name": "moderately stiff adiabatic ignition",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "materially stiff: the explicit probe needs at least twenty times the work of BDF while both complete",
+        "rationale": "Adiabatic (UA = 0) with a 340 K feed. The reaction runs away to about 549 K, making the chemical mode orders of magnitude faster than the flow mode. Adiabatic operation also makes the reaction-free invariant an exact closed form, so this regime carries the only genuinely analytic reference in the study.",
+        "regime_id": "R2",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": [
+          20.0,
+          null
+        ],
+        "ua_w_per_k": 0.0
+      },
+      {
+        "category": "strongly_stiff",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 2600.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 2600.0,
+        "initial_temperature_k": 350.0,
+        "measure_stiffness": true,
+        "n_output_points": 2001,
+        "name": "strongly stiff adiabatic ignition",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "strongly stiff: BDF completes in a few thousand evaluations while the explicit probe exhausts a five-million-evaluation budget without finishing, so the measured ratio is a lower bound",
+        "rationale": "Adiabatic at a 2.6 mol/L feed. The adiabatic rise is about 544 K, taking the reactor to roughly 894 K \u2014 inside the model's declared 1000 K envelope, but with a rate constant many orders above the flow rate. A scientifically valid problem that is numerically punishing.",
+        "regime_id": "R3",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": [
+          200.0,
+          null
+        ],
+        "ua_w_per_k": 0.0
+      },
+      {
+        "category": "failure_prone",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 600.0,
+        "failure_case": "A",
+        "feed_concentration_mol_per_m3": 2600.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 2600.0,
+        "initial_temperature_k": 350.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "computational limit exhausted mid-integration",
+        "predicted_convergence": "max_iterations",
+        "predicted_levels": [],
+        "predicted_usable": false,
+        "prediction_note": "MAX_ITERATIONS, no metrics extracted, the partial trajectory preserved in the raw diagnostics, and the fraction of the horizon completed recorded",
+        "rationale": "R3's physics under a deliberately tight 500-evaluation budget. Nothing is wrong with the problem or the method; the run is stopped by an explicit computational limit while still making progress. This must be distinguishable from a method that failed.",
+        "regime_id": "R5",
+        "rhs_budget": 500,
+        "run_verification_gate": false,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 0.0
+      },
+      {
+        "category": "branch_sensitive",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 3600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 300.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "steady-state multiplicity, cold start",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "three algebraic steady states exist; the trajectory settles on the low-conversion branch",
+        "rationale": "Tc = 300 K sits inside the multiplicity window: the independent algebraic solver finds three steady states. Started cold.",
+        "regime_id": "R6a",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "branch_sensitive",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 3600.0,
+        "failure_case": "E",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 450.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "steady-state multiplicity, hot start",
+        "predicted_convergence": "converged",
+        "predicted_levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "predicted_usable": true,
+        "prediction_note": "the hot start overshoots hard and then falls to the SAME low-conversion branch as R6a: in this parameterization the upper algebraic branch is unstable, so three steady states do not mean two attractors",
+        "rationale": "Identical physics to R6a from a 450 K start. The pair is the test of whether the initial condition selects a different branch.",
+        "regime_id": "R6b",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "branch_sensitive",
+        "coolant_temperature_k": 305.0,
+        "end_time_s": 6000.0,
+        "failure_case": "D",
+        "feed_concentration_mol_per_m3": 1000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 1000.0,
+        "initial_temperature_k": 300.0,
+        "measure_stiffness": false,
+        "n_output_points": 20001,
+        "name": "sustained oscillation, no stable steady state",
+        "predicted_convergence": "converged",
+        "predicted_levels": [],
+        "predicted_usable": true,
+        "prediction_note": "the per-solve report passes and the verification gate awards NOTHING: the reported end state is a phase of a limit cycle, so it is not tolerance independent and the trajectory is not stationary. Execution success and scientific usability separate here without any numerical fault",
+        "rationale": "At Tc = 305 K the single algebraic steady state has a positive Jacobian trace with a positive determinant \u2014 an unstable focus. The reactor has no stable steady state and cycles indefinitely. The end state of a successful integration is therefore not an answer to 'what does this reactor do', and the study records whether the contracts notice.",
+        "regime_id": "R7",
+        "rhs_budget": 5000000,
+        "run_verification_gate": true,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 833.3333333333334
+      },
+      {
+        "category": "unusable_result",
+        "coolant_temperature_k": 300.0,
+        "end_time_s": 300.0,
+        "failure_case": "D",
+        "feed_concentration_mol_per_m3": 4000.0,
+        "feed_temperature_k": 350.0,
+        "initial_concentration_mol_per_m3": 4000.0,
+        "initial_temperature_k": 350.0,
+        "measure_stiffness": false,
+        "n_output_points": 2001,
+        "name": "flawless integration outside the model envelope",
+        "predicted_convergence": "converged",
+        "predicted_levels": [],
+        "predicted_usable": false,
+        "prediction_note": "CONVERGED with a FAILing state_physically_admissible check, so is_usable is False while convergence correctly remains CONVERGED. The two statements are independent and both are true",
+        "rationale": "Adiabatic at a 4 mol/L feed. The adiabatic rise is about 837 K, taking the reactor past 1180 K \u2014 outside the model's declared 250-1000 K validity envelope, where the constant-property, single-phase, no-boiling assumptions do not hold. The integration is impeccable; the answer is not usable.",
+        "regime_id": "R8",
+        "rhs_budget": 5000000,
+        "run_verification_gate": false,
+        "stiffness_ratio_band": null,
+        "ua_w_per_k": 0.0
+      }
+    ],
+    "scientific_question": "Can the frozen Core V0.2 contracts honestly represent and execute a stiff, nonlinear, failure-prone kinetics/CSTR solver \u2014 including distinguishing execution failure, non-convergence, invalid input, successful-but-unusable results and valid results \u2014 without speculative Core expansion?"
+  },
+  "config_hash": "73d09cc0004663409f27edf86fb2bb571bdb7bb78a39203e35ca9c0069d00cb0",
+  "environment": {
+    "machine": "AMD64",
+    "numpy": "2.5.1",
+    "platform": "Windows",
+    "python": "3.14.2",
+    "scipy": "1.18.0"
+  },
+  "experiment_id": "K1",
+  "experiment_version": "1.0.1",
+  "failure_cases_represented": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true,
+    "E": true
+  },
+  "falsification_criteria": [
+    "F1 if the Scientific Core requires any CSTR-specific branching, K1 is at best PASS WITH CORE CORRECTION and the branch must be reported",
+    "F2 if a meaningful scientific failure cannot be represented without discarding evidence \u2014 in particular if R5's partial trajectory or R8's envelope violation has nowhere honest to live \u2014 that is a Core finding",
+    "F3 if a successful solve is automatically promoted to any validation level above DIMENSIONALLY_VALID, the validation contract is unsound",
+    "F4 if an invalid physical state can enter an admitted ScientificResult \u2014 for example if R8 were reported usable, or if a non-finite value reached a Quantity \u2014 that is a Core finding",
+    "F5 if any historical frozen artifact must be changed, K1 fails",
+    "F6 if the domain requires a large generic framework invented before the evidence for it, K1 fails on architecture creep",
+    "F7 if the independent algebraic steady state materially disagrees with a converged, stationary production result, the production path is wrong and must be reported as wrong",
+    "F8 if the experiment cannot be reproduced from a clean clone, K1 fails"
+  ],
+  "invalid_declarations": [
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "negative_absolute_temperature",
+      "message": "feed_temperature must be a positive absolute temperature, got -10.0 K; exp(-E/(R T)) has no meaning at or below absolute zero",
+      "reason": "exp(-E/(R T)) has an essential singularity at T = 0 and no meaning below it",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "temperature_above_envelope",
+      "message": "feed_temperature = 1500.0 K is outside the model's declared validity envelope [250.0, 1000.0] K; the constant-property single-phase assumptions do not hold there",
+      "reason": "outside the model's declared 250-1000 K single-phase constant-property envelope",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "temperature_below_envelope",
+      "message": "coolant_temperature = 200.0 K is outside the model's declared validity envelope [250.0, 1000.0] K; the constant-property single-phase assumptions do not hold there",
+      "reason": "below the declared envelope; the liquid phase is not assured",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "negative_feed_concentration",
+      "message": "feed_concentration must be finite and non-negative, got -1.0 mol/m**3",
+      "reason": "a negative concentration is not a state of the system",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "zero_volume",
+      "message": "volume must be finite and strictly positive, got 0.0 m**3",
+      "reason": "a zero-volume tank has no residence time",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "negative_flow_rate",
+      "message": "flow_rate must be finite and strictly positive, got -0.001 m**3/s",
+      "reason": "reversed flow is not the modelled configuration",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "negative_ua",
+      "message": "ua must be finite and non-negative, got -100.0 W/K",
+      "reason": "a negative UA would pump heat up its own gradient",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "chemistry",
+      "label": "non_positive_k0",
+      "message": "k0 must be finite and strictly positive, got 0.0 1/s",
+      "reason": "a zero pre-exponential factor is not an Arrhenius rate",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "chemistry",
+      "label": "negative_activation_energy",
+      "message": "activation_energy must be finite and non-negative, got -10000.0 J/mol",
+      "reason": "a negative barrier makes the rate fall with temperature, which is not the Arrhenius model",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "chemistry",
+      "label": "non_positive_density",
+      "message": "density must be finite and strictly positive, got 0.0 kg/m**3",
+      "reason": "a zero density gives an infinite temperature response",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "run",
+      "label": "negative_initial_concentration",
+      "message": "initial_concentration must be finite and non-negative, got -5.0 mol/m**3",
+      "reason": "a negative initial concentration is not a state of the system",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "run",
+      "label": "initial_temperature_outside_envelope",
+      "message": "initial_temperature = 1200.0 K is outside the model's declared validity envelope [250.0, 1000.0] K; the constant-property single-phase assumptions do not hold there",
+      "reason": "starting outside the envelope the model does not cover",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "bare_number_instead_of_quantity",
+      "message": "feed_temperature must be a Quantity carrying 'kelvin', got float \u2014 a bare number is not a declaration",
+      "reason": "a bare number is not a declaration: it carries no unit and cannot be dimension-checked",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "operation",
+      "label": "wrong_dimension_for_temperature",
+      "message": "feed_temperature must be dimensionally compatible with 'kelvin': incompatible units (conversion): 'pascal' [[mass] / [length] / [time] ** 2] vs 'kelvin' [[temperature]]",
+      "reason": "a pressure is not a temperature",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "integration",
+      "label": "unknown_integration_method",
+      "message": "method 'LSODA' is not one of ('BDF', 'Radau', 'RK45')",
+      "reason": "LSODA switches between stiff and non-stiff internally, so a work count from it cannot be attributed to one method and would corrupt the stiffness measurement",
+      "refused": true,
+      "refused_by_domain": true
+    },
+    {
+      "error_type": "ReactorConfigurationError",
+      "kind": "integration",
+      "label": "non_positive_rtol",
+      "message": "rtol must be finite and strictly positive, got 0.0",
+      "reason": "a zero relative tolerance is not achievable",
+      "refused": true,
+      "refused_by_domain": true
+    }
+  ],
+  "predictions_all_met": true,
+  "predictions_met": {
+    "R1": true,
+    "R2": true,
+    "R3": true,
+    "R5": true,
+    "R6a": true,
+    "R6b": true,
+    "R7": true,
+    "R8": true
+  },
+  "regimes": [
+    {
+      "accepted_steps": 138,
+      "adiabatic": false,
+      "adiabatic_rise_k": 209.20502092050208,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [
+        "numerically_converged",
+        "cross_solver_validated"
+      ],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "easy",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": 4.55458654339819e-09,
+      "failure_case_declared": "E",
+      "failure_classification": "E_valid_result",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.03486750348675035,
+      "gate": {
+        "claim": "the quantities of interest are independent of the integration tolerance down the declared ladder; and the stationary end state agrees with an independently computed algebraic steady state. No comparison against any physical measurement was performed",
+        "cross_method_agrees": true,
+        "cross_method_detail": "BDF and Radau at rtol=1e-12 agree on every QoI to 4.555e-09. This establishes NO validation level: both arms share this domain's right-hand side, its analytic Jacobian and SciPy's step control, so a shared error is invisible to the comparison",
+        "cross_method_max_rel_difference": 4.55458654339819e-09,
+        "invariant_detail": "the reactor is cooled (gamma = 0.0348675 1/s), so the reaction-free invariant has no closed form and no analytic comparison is available at any tolerance",
+        "invariant_max_rel_error": null,
+        "invariant_rel_tol": 1e-09,
+        "invariant_verified": false,
+        "levels_earned": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "reference_ids": [
+          "kinetics.cstr.algebraic_steady_state_brentq",
+          "kinetics.cstr.adiabatic_reaction_free_invariant"
+        ],
+        "rungs": [
+          {
+            "atol_concentration": 1e-06,
+            "atol_temperature": 1e-06,
+            "converged": true,
+            "max_relative_change": null,
+            "qois": {
+              "C_A:final": 951.9412235550892,
+              "T:final": 312.6562083695737,
+              "T:max": 312.6705466791605,
+              "conversion:final": 0.04805877644491079
+            },
+            "rhs_evaluations": 189,
+            "rtol": 1e-06,
+            "wall_seconds_telemetry": 0.011561600025743246
+          },
+          {
+            "atol_concentration": 1e-08,
+            "atol_temperature": 1e-08,
+            "converged": true,
+            "max_relative_change": 3.09384552102106e-07,
+            "qois": {
+              "C_A:final": 951.9412328188557,
+              "T:final": 312.65620888894915,
+              "T:max": 312.6706434146275,
+              "conversion:final": 0.048058767181144275
+            },
+            "rhs_evaluations": 350,
+            "rtol": 1e-08,
+            "wall_seconds_telemetry": 0.017067800043150783
+          },
+          {
+            "atol_concentration": 1e-10,
+            "atol_temperature": 1e-10,
+            "converged": true,
+            "max_relative_change": 7.407216505629906e-08,
+            "qois": {
+              "C_A:final": 951.9412326471354,
+              "T:final": 312.6562088872851,
+              "T:max": 312.6706665748207,
+              "conversion:final": 0.04805876735286461
+            },
+            "rhs_evaluations": 680,
+            "rtol": 1e-10,
+            "wall_seconds_telemetry": 0.028600200021173805
+          },
+          {
+            "atol_concentration": 1e-12,
+            "atol_temperature": 1e-12,
+            "converged": true,
+            "max_relative_change": 4.675903451460565e-09,
+            "qois": {
+              "C_A:final": 951.941232646165,
+              "T:final": 312.6562088872766,
+              "T:max": 312.67066511280285,
+              "conversion:final": 0.04805876735383504
+            },
+            "rhs_evaluations": 980,
+            "rtol": 1e-12,
+            "wall_seconds_telemetry": 0.044893499987665564
+          }
+        ],
+        "steady_state_detail": "the stationary end state 312.656208887 K agrees with the independently computed steady state 312.656208887 K (stable) to a relative error of 5.454e-16, within 1.000e-09. The reference solves the algebraic residual by Brent bracketing and shares no arithmetic with the integrator. 1 steady state(s) exist in the envelope",
+        "steady_state_rel_error": 5.454241807297872e-16,
+        "steady_state_rel_tol": 1e-09,
+        "steady_state_verified": true,
+        "steady_states_found": [
+          {
+            "concentration_mol_per_m3": 951.9412326460573,
+            "conversion": 0.0480587673539427,
+            "jacobian_determinant": 0.0006522782817738755,
+            "jacobian_trace": -0.054043077138584,
+            "stability": "stable",
+            "temperature_k": 312.6562088872764
+          }
+        ],
+        "tolerance_detail": "4 rungs from rtol=1e-06 to rtol=1e-12; the largest relative change across the two tightest rungs is 4.676e-09, within 1.000e-06; right-hand-side evaluations rose 189 -> 980",
+        "tolerance_independent": true,
+        "tolerance_rel_tol": 1e-06
+      },
+      "integration_method": "BDF",
+      "invariant_max_relative_error": null,
+      "is_usable": true,
+      "max_temperature_k": 312.6706434146275,
+      "min_concentration_mol_per_m3": 951.9412323718905,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "benign cooled operation",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "c4e79046e8a34d4b998bce407f2ccea6fa9cf3abb013ebfc32d148bba7ece728",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "note": "clean convergence in a few hundred evaluations; the explicit probe is no more expensive than BDF because the regime is not stiff",
+        "stiffness_ratio_band": [
+          null,
+          5.0
+        ],
+        "usable": true
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R1",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R1",
+      "regime_id": "R1",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 350,
+      "rtol": 1e-08,
+      "scipy_nfev": 350,
+      "scipy_njev": 1,
+      "scipy_nlu": 28,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": 5.454241807297872e-16,
+      "steady_states_found": 1,
+      "stiffness": {
+        "explicit_completed": true,
+        "explicit_evaluations": 332,
+        "explicit_method": "RK45",
+        "explicit_outcome": "completed_horizon",
+        "stiff_completed": true,
+        "stiff_evaluations": 350,
+        "stiff_method": "BDF",
+        "work_ratio": 0.9485714285714286,
+        "work_ratio_is_lower_bound": false
+      },
+      "stiffness_work_ratio": 0.9485714285714286,
+      "tolerance_ladder_final_relative_change": 4.675903451460565e-09,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "C_A in [951.941, 1000] mol/m**3 within [0, 1000]; T in [300, 312.671] K within the declared envelope",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "pass"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED; this reactor is cooled, so the invariant has no closed form and the check is unavailable at any tolerance",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "pass",
+      "values": {
+        "C_A:final": {
+          "magnitude": 951.9412328188557,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 312.65620888894915,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 312.6706434146275,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.048058767181144275,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 184.8891382263561,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 0.018210000009275973,
+      "warnings": []
+    },
+    {
+      "accepted_steps": 440,
+      "adiabatic": true,
+      "adiabatic_rise_k": 209.20502092050208,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [
+        "numerically_converged",
+        "analytically_verified",
+        "cross_solver_validated"
+      ],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "moderately_stiff",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": 2.48413974045469e-15,
+      "failure_case_declared": "E",
+      "failure_classification": "E_valid_result",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.0,
+      "gate": {
+        "claim": "the quantities of interest are independent of the integration tolerance down the declared ladder; and reproduce the exact reaction-free invariant of the nonlinear system; and the stationary end state agrees with an independently computed algebraic steady state. No comparison against any physical measurement was performed",
+        "cross_method_agrees": true,
+        "cross_method_detail": "BDF and Radau at rtol=1e-12 agree on every QoI to 2.484e-15. This establishes NO validation level: both arms share this domain's right-hand side, its analytic Jacobian and SciPy's step control, so a shared error is invisible to the comparison",
+        "cross_method_max_rel_difference": 2.48413974045469e-15,
+        "invariant_detail": "the trajectory reproduces Z = T + beta C_A against the exact closed form to a maximum relative error of 2.691e-15 over 2001 sample times, within 1.000e-09. The reaction term cancels exactly in Z, so this checks the coupling of the two states through the stiff region without using the rate constant",
+        "invariant_max_rel_error": 2.6910331007242194e-15,
+        "invariant_rel_tol": 1e-09,
+        "invariant_verified": true,
+        "levels_earned": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "reference_ids": [
+          "kinetics.cstr.algebraic_steady_state_brentq",
+          "kinetics.cstr.adiabatic_reaction_free_invariant"
+        ],
+        "rungs": [
+          {
+            "atol_concentration": 1e-06,
+            "atol_temperature": 1e-06,
+            "converged": true,
+            "max_relative_change": null,
+            "qois": {
+              "C_A:final": 0.1153859926255544,
+              "T:final": 549.1808815915009,
+              "T:max": 549.1808816057898,
+              "conversion:final": 0.9998846140073745
+            },
+            "rhs_evaluations": 658,
+            "rtol": 1e-06,
+            "wall_seconds_telemetry": 0.02876860002288595
+          },
+          {
+            "atol_concentration": 1e-08,
+            "atol_temperature": 1e-08,
+            "converged": true,
+            "max_relative_change": 2.5940629239023232e-11,
+            "qois": {
+              "C_A:final": 0.11538599262555634,
+              "T:final": 549.180881591501,
+              "T:max": 549.1808815915437,
+              "conversion:final": 0.9998846140073745
+            },
+            "rhs_evaluations": 1135,
+            "rtol": 1e-08,
+            "wall_seconds_telemetry": 0.062173500016797334
+          },
+          {
+            "atol_concentration": 1e-10,
+            "atol_temperature": 1e-10,
+            "converged": true,
+            "max_relative_change": 7.762936688920321e-14,
+            "qois": {
+              "C_A:final": 0.11538599262555378,
+              "T:final": 549.180881591501,
+              "T:max": 549.180881591501,
+              "conversion:final": 0.9998846140073745
+            },
+            "rhs_evaluations": 2818,
+            "rtol": 1e-10,
+            "wall_seconds_telemetry": 0.11386849998962134
+          },
+          {
+            "atol_concentration": 1e-12,
+            "atol_temperature": 1e-12,
+            "converged": true,
+            "max_relative_change": 6.133908996175575e-15,
+            "qois": {
+              "C_A:final": 0.11538599262555449,
+              "T:final": 549.1808815915009,
+              "T:max": 549.1808815915023,
+              "conversion:final": 0.9998846140073745
+            },
+            "rhs_evaluations": 3936,
+            "rtol": 1e-12,
+            "wall_seconds_telemetry": 0.1900931000127457
+          }
+        ],
+        "steady_state_detail": "the stationary end state 549.180881592 K agrees with the independently computed steady state 549.180881592 K (stable) to a relative error of 0.000e+00, within 1.000e-09. The reference solves the algebraic residual by Brent bracketing and shares no arithmetic with the integrator. 1 steady state(s) exist in the envelope",
+        "steady_state_rel_error": 0.0,
+        "steady_state_rel_tol": 1e-09,
+        "steady_state_verified": true,
+        "steady_states_found": [
+          {
+            "concentration_mol_per_m3": 0.11538599262555449,
+            "conversion": 0.9998846140073745,
+            "jacobian_determinant": 2.4056929089317602,
+            "jacobian_trace": -144.35824120257243,
+            "stability": "stable",
+            "temperature_k": 549.1808815915009
+          }
+        ],
+        "tolerance_detail": "4 rungs from rtol=1e-06 to rtol=1e-12; the largest relative change across the two tightest rungs is 6.134e-15, within 1.000e-06; right-hand-side evaluations rose 658 -> 3936",
+        "tolerance_independent": true,
+        "tolerance_rel_tol": 1e-06
+      },
+      "integration_method": "BDF",
+      "invariant_max_relative_error": 2.6910331007242194e-15,
+      "is_usable": true,
+      "max_temperature_k": 549.1808815915437,
+      "min_concentration_mol_per_m3": 0.11538599242040729,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "moderately stiff adiabatic ignition",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "24b78967822da58e9671f0dcc4515df6b350fc113aa4b7587b46ec8b140231fa",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "note": "materially stiff: the explicit probe needs at least twenty times the work of BDF while both complete",
+        "stiffness_ratio_band": [
+          20.0,
+          null
+        ],
+        "usable": true
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R2",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R2",
+      "regime_id": "R2",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 1135,
+      "rtol": 1e-08,
+      "scipy_nfev": 1135,
+      "scipy_njev": 2,
+      "scipy_nlu": 79,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": 0.0,
+      "steady_states_found": 1,
+      "stiffness": {
+        "explicit_completed": true,
+        "explicit_evaluations": 181142,
+        "explicit_method": "RK45",
+        "explicit_outcome": "completed_horizon",
+        "stiff_completed": true,
+        "stiff_evaluations": 1135,
+        "stiff_method": "BDF",
+        "work_ratio": 159.5964757709251,
+        "work_ratio_is_lower_bound": false
+      },
+      "stiffness_work_ratio": 159.5964757709251,
+      "tolerance_ladder_final_relative_change": 6.133908996175575e-15,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "C_A in [0.115386, 1000] mol/m**3 within [0, 1000]; T in [340, 549.181] K within the declared envelope",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "pass"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "pass",
+      "values": {
+        "C_A:final": {
+          "magnitude": 0.11538599262555634,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 549.180881591501,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 549.1808815915437,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.9998846140073745,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 9.993913993049897,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 0.04944820003584027,
+      "warnings": []
+    },
+    {
+      "accepted_steps": 576,
+      "adiabatic": true,
+      "adiabatic_rise_k": 543.9330543933054,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [
+        "numerically_converged",
+        "analytically_verified",
+        "cross_solver_validated"
+      ],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "strongly_stiff",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": 2.2891684977389597e-15,
+      "failure_case_declared": "E",
+      "failure_classification": "E_valid_result",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.0,
+      "gate": {
+        "claim": "the quantities of interest are independent of the integration tolerance down the declared ladder; and reproduce the exact reaction-free invariant of the nonlinear system; and the stationary end state agrees with an independently computed algebraic steady state. No comparison against any physical measurement was performed",
+        "cross_method_agrees": true,
+        "cross_method_detail": "BDF and Radau at rtol=1e-12 agree on every QoI to 2.289e-15. This establishes NO validation level: both arms share this domain's right-hand side, its analytic Jacobian and SciPy's step control, so a shared error is invisible to the comparison",
+        "cross_method_max_rel_difference": 2.2891684977389597e-15,
+        "invariant_detail": "the trajectory reproduces Z = T + beta C_A against the exact closed form to a maximum relative error of 1.145e-15 over 2001 sample times, within 1.000e-09. The reaction term cancels exactly in Z, so this checks the coupling of the two states through the stiff region without using the rate constant",
+        "invariant_max_rel_error": 1.1445840764764619e-15,
+        "invariant_rel_tol": 1e-09,
+        "invariant_verified": true,
+        "levels_earned": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "reference_ids": [
+          "kinetics.cstr.algebraic_steady_state_brentq",
+          "kinetics.cstr.adiabatic_reaction_free_invariant"
+        ],
+        "rungs": [
+          {
+            "atol_concentration": 1e-06,
+            "atol_temperature": 1e-06,
+            "converged": true,
+            "max_relative_change": null,
+            "qois": {
+              "C_A:final": 0.0006435833604618078,
+              "T:final": 893.9329197524349,
+              "T:max": 893.9329197645882,
+              "conversion:final": 0.9999997524679382
+            },
+            "rhs_evaluations": 907,
+            "rtol": 1e-06,
+            "wall_seconds_telemetry": 0.03529879997950047
+          },
+          {
+            "atol_concentration": 1e-08,
+            "atol_temperature": 1e-08,
+            "converged": true,
+            "max_relative_change": 1.3518048683075418e-11,
+            "qois": {
+              "C_A:final": 0.0006435833604618078,
+              "T:final": 893.9329197524349,
+              "T:max": 893.932919752504,
+              "conversion:final": 0.9999997524679382
+            },
+            "rhs_evaluations": 1563,
+            "rtol": 1e-08,
+            "wall_seconds_telemetry": 0.059576099971309304
+          },
+          {
+            "atol_concentration": 1e-10,
+            "atol_temperature": 1e-10,
+            "converged": true,
+            "max_relative_change": 7.706867275720588e-14,
+            "qois": {
+              "C_A:final": 0.0006435833604618072,
+              "T:final": 893.932919752435,
+              "T:max": 893.932919752435,
+              "conversion:final": 0.9999997524679382
+            },
+            "rhs_evaluations": 3818,
+            "rtol": 1e-10,
+            "wall_seconds_telemetry": 0.14004600001499057
+          },
+          {
+            "atol_concentration": 1e-12,
+            "atol_temperature": 1e-12,
+            "converged": true,
+            "max_relative_change": 1.6846336296008778e-16,
+            "qois": {
+              "C_A:final": 0.0006435833604618073,
+              "T:final": 893.932919752435,
+              "T:max": 893.932919752435,
+              "conversion:final": 0.9999997524679382
+            },
+            "rhs_evaluations": 5345,
+            "rtol": 1e-12,
+            "wall_seconds_telemetry": 0.23436599998967722
+          }
+        ],
+        "steady_state_detail": "the stationary end state 893.932919752 K agrees with the independently computed steady state 893.932919752 K (stable) to a relative error of 1.272e-16, within 1.000e-09. The reference solves the algebraic residual by Brent bracketing and shares no arithmetic with the integrator. 1 steady state(s) exist in the envelope",
+        "steady_state_rel_error": 1.2717602765216471e-16,
+        "steady_state_rel_tol": 1e-09,
+        "steady_state_verified": true,
+        "steady_states_found": [
+          {
+            "concentration_mol_per_m3": 0.0006435833604618058,
+            "conversion": 0.9999997524679382,
+            "jacobian_determinant": 1122.1874303251407,
+            "jacobian_trace": -67331.26248617512,
+            "stability": "stable",
+            "temperature_k": 893.9329197524352
+          }
+        ],
+        "tolerance_detail": "4 rungs from rtol=1e-06 to rtol=1e-12; the largest relative change across the two tightest rungs is 1.685e-16, within 1.000e-06; right-hand-side evaluations rose 907 -> 5345",
+        "tolerance_independent": true,
+        "tolerance_rel_tol": 1e-06
+      },
+      "integration_method": "BDF",
+      "invariant_max_relative_error": 1.1445840764764619e-15,
+      "is_usable": true,
+      "max_temperature_k": 893.932919752504,
+      "min_concentration_mol_per_m3": 0.0006435830284800057,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "strongly stiff adiabatic ignition",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "0e44d915e7c33a9d00c646ed96007a72c4d75ab32a5f27e4f17a83e62b6ae575",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [
+          "numerically_converged",
+          "analytically_verified",
+          "cross_solver_validated"
+        ],
+        "note": "strongly stiff: BDF completes in a few thousand evaluations while the explicit probe exhausts a five-million-evaluation budget without finishing, so the measured ratio is a lower bound",
+        "stiffness_ratio_band": [
+          200.0,
+          null
+        ],
+        "usable": true
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R3",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R3",
+      "regime_id": "R3",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 1563,
+      "rtol": 1e-08,
+      "scipy_nfev": 1563,
+      "scipy_njev": 4,
+      "scipy_nlu": 108,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": 1.2717602765216471e-16,
+      "steady_states_found": 1,
+      "stiffness": {
+        "explicit_completed": false,
+        "explicit_evaluations": 5000001,
+        "explicit_method": "RK45",
+        "explicit_outcome": "rhs_budget_exhausted",
+        "stiff_completed": true,
+        "stiff_evaluations": 1563,
+        "stiff_method": "BDF",
+        "work_ratio": 3198.9769673704413,
+        "work_ratio_is_lower_bound": true
+      },
+      "stiffness_work_ratio": 3198.9769673704413,
+      "tolerance_ladder_final_relative_change": 1.6846336296008778e-16,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "C_A in [0.000643583, 2600] mol/m**3 within [0, 2600]; T in [350, 893.933] K within the declared envelope",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "pass"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "pass",
+      "values": {
+        "C_A:final": {
+          "magnitude": 0.0006435833604618078,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 893.9329197524349,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 893.932919752504,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.9999997524679382,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 1.755254790177792,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 0.06161370000336319,
+      "warnings": []
+    },
+    {
+      "accepted_steps": null,
+      "adiabatic": true,
+      "adiabatic_rise_k": 543.9330543933054,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [],
+      "attained_levels_per_solve": [],
+      "category": "failure_prone",
+      "convergence_state": "max_iterations",
+      "cross_method_max_relative_difference": null,
+      "failure_case_declared": "A",
+      "failure_classification": "A_solver_execution_failure",
+      "fraction_of_horizon_completed": 0.0029203637549604427,
+      "gamma_per_s": 0.0,
+      "gate": null,
+      "integration_method": "BDF",
+      "invariant_max_relative_error": null,
+      "is_usable": false,
+      "max_temperature_k": null,
+      "min_concentration_mol_per_m3": null,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "computational limit exhausted mid-integration",
+      "outcome_detail": "rhs_budget_exhausted",
+      "physics_fingerprint": "0fb00fe1eae66a2c39d3993211018bdccc8f55bafe1ffc48f70fb1b449ec6684",
+      "prediction": {
+        "convergence": "max_iterations",
+        "levels": [],
+        "note": "MAX_ITERATIONS, no metrics extracted, the partial trajectory preserved in the raw diagnostics, and the fraction of the horizon completed recorded",
+        "stiffness_ratio_band": null,
+        "usable": false
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R5",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 500.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R5",
+      "regime_id": "R5",
+      "residence_time_s": 60.0,
+      "rhs_budget": 500,
+      "rhs_evaluations": 501,
+      "rtol": 1e-08,
+      "scipy_nfev": null,
+      "scipy_njev": null,
+      "scipy_nlu": null,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": null,
+      "steady_states_found": null,
+      "stiffness": null,
+      "stiffness_work_ratio": null,
+      "tolerance_ladder_final_relative_change": null,
+      "uncertainty_kinds": {},
+      "validation_checks": [
+        {
+          "detail": "integration did not complete the horizon (max_iterations, rhs_budget_exhausted): right-hand-side evaluation budget of 500 exhausted at t = 1.75222 s of 600 s",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "fail"
+        },
+        {
+          "detail": "no completed trajectory to assess; the partial trajectory is preserved in the raw diagnostics",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "fail",
+      "values": {},
+      "wall_seconds_telemetry": 0.02595320000546053,
+      "warnings": [
+        "right-hand-side evaluation budget of 500 exhausted at t = 1.75222 s of 600 s"
+      ]
+    },
+    {
+      "accepted_steps": 156,
+      "adiabatic": false,
+      "adiabatic_rise_k": 209.20502092050208,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [
+        "numerically_converged",
+        "cross_solver_validated"
+      ],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "branch_sensitive",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": 3.0442259792941266e-08,
+      "failure_case_declared": "E",
+      "failure_classification": "E_valid_result",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.03486750348675035,
+      "gate": {
+        "claim": "the quantities of interest are independent of the integration tolerance down the declared ladder; and the stationary end state agrees with an independently computed algebraic steady state. No comparison against any physical measurement was performed",
+        "cross_method_agrees": true,
+        "cross_method_detail": "BDF and Radau at rtol=1e-12 agree on every QoI to 3.044e-08. This establishes NO validation level: both arms share this domain's right-hand side, its analytic Jacobian and SciPy's step control, so a shared error is invisible to the comparison",
+        "cross_method_max_rel_difference": 3.0442259792941266e-08,
+        "invariant_detail": "the reactor is cooled (gamma = 0.0348675 1/s), so the reaction-free invariant has no closed form and no analytic comparison is available at any tolerance",
+        "invariant_max_rel_error": null,
+        "invariant_rel_tol": 1e-09,
+        "invariant_verified": false,
+        "levels_earned": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "reference_ids": [
+          "kinetics.cstr.algebraic_steady_state_brentq",
+          "kinetics.cstr.adiabatic_reaction_free_invariant"
+        ],
+        "rungs": [
+          {
+            "atol_concentration": 1e-06,
+            "atol_temperature": 1e-06,
+            "converged": true,
+            "max_relative_change": null,
+            "qois": {
+              "C_A:final": 877.2529462878073,
+              "T:final": 324.4754434458569,
+              "T:max": 324.6773396629918,
+              "conversion:final": 0.12274705371219273
+            },
+            "rhs_evaluations": 209,
+            "rtol": 1e-06,
+            "wall_seconds_telemetry": 0.014655400009360164
+          },
+          {
+            "atol_concentration": 1e-08,
+            "atol_temperature": 1e-08,
+            "converged": true,
+            "max_relative_change": 1.2318651588850053e-06,
+            "qois": {
+              "C_A:final": 877.2529460804469,
+              "T:final": 324.47544343180533,
+              "T:max": 324.6777396221871,
+              "conversion:final": 0.12274705391955308
+            },
+            "rhs_evaluations": 409,
+            "rtol": 1e-08,
+            "wall_seconds_telemetry": 0.01864169997861609
+          },
+          {
+            "atol_concentration": 1e-10,
+            "atol_temperature": 1e-10,
+            "converged": true,
+            "max_relative_change": 1.7072352426605025e-07,
+            "qois": {
+              "C_A:final": 877.2529460805617,
+              "T:final": 324.475443431589,
+              "T:max": 324.67779505232454,
+              "conversion:final": 0.12274705391943826
+            },
+            "rhs_evaluations": 784,
+            "rtol": 1e-10,
+            "wall_seconds_telemetry": 0.044931800046470016
+          },
+          {
+            "atol_concentration": 1e-12,
+            "atol_temperature": 1e-12,
+            "converged": true,
+            "max_relative_change": 3.698245379281066e-08,
+            "qois": {
+              "C_A:final": 877.2529460809661,
+              "T:final": 324.47544343159916,
+              "T:max": 324.67780705970654,
+              "conversion:final": 0.12274705391903387
+            },
+            "rhs_evaluations": 1181,
+            "rtol": 1e-12,
+            "wall_seconds_telemetry": 0.07667579996632412
+          }
+        ],
+        "steady_state_detail": "the stationary end state 324.475443432 K agrees with the independently computed steady state 324.475443432 K (stable) to a relative error of 7.007e-16, within 1.000e-09. The reference solves the algebraic residual by Brent bracketing and shares no arithmetic with the integrator. 3 steady state(s) exist in the envelope",
+        "steady_state_rel_error": 7.007423213250448e-16,
+        "steady_state_rel_tol": 1e-09,
+        "steady_state_verified": true,
+        "steady_states_found": [
+          {
+            "concentration_mol_per_m3": 877.2529460809675,
+            "conversion": 0.12274705391903251,
+            "jacobian_determinant": 0.00038625927845336997,
+            "jacobian_trace": -0.034963489880148364,
+            "stability": "stable",
+            "temperature_k": 324.47544343159893
+          },
+          {
+            "concentration_mol_per_m3": 499.91828595865877,
+            "conversion": 0.5000817140413413,
+            "jacobian_determinant": -0.000357633789282752,
+            "jacobian_trace": 0.03967026269837285,
+            "stability": "unstable",
+            "temperature_k": 350.0055286902126
+          },
+          {
+            "concentration_mol_per_m3": 208.76137961455586,
+            "conversion": 0.7912386203854441,
+            "jacobian_determinant": 0.0011707081537256237,
+            "jacobian_trace": 0.045244192617449774,
+            "stability": "unstable",
+            "temperature_k": 369.7049134225605
+          }
+        ],
+        "tolerance_detail": "4 rungs from rtol=1e-06 to rtol=1e-12; the largest relative change across the two tightest rungs is 3.698e-08, within 1.000e-06; right-hand-side evaluations rose 209 -> 1181",
+        "tolerance_independent": true,
+        "tolerance_rel_tol": 1e-06
+      },
+      "integration_method": "BDF",
+      "invariant_max_relative_error": null,
+      "is_usable": true,
+      "max_temperature_k": 324.6777396221871,
+      "min_concentration_mol_per_m3": 876.9958559083341,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "steady-state multiplicity, cold start",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "ecd1d1a7c710aceb3e8477b586912325861f7b0d68307e21ea958f94337c5c58",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "note": "three algebraic steady states exist; the trajectory settles on the low-conversion branch",
+        "stiffness_ratio_band": null,
+        "usable": true
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R6a",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R6a",
+      "regime_id": "R6a",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 409,
+      "rtol": 1e-08,
+      "scipy_nfev": 409,
+      "scipy_njev": 2,
+      "scipy_nlu": 32,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": 7.007423213250448e-16,
+      "steady_states_found": 3,
+      "stiffness": null,
+      "stiffness_work_ratio": null,
+      "tolerance_ladder_final_relative_change": 3.698245379281066e-08,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "C_A in [876.996, 1000] mol/m**3 within [0, 1000]; T in [300, 324.678] K within the declared envelope",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "pass"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED; this reactor is cooled, so the invariant has no closed form and the check is unavailable at any tolerance",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "pass",
+      "values": {
+        "C_A:final": {
+          "magnitude": 877.2529460804469,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 324.47544343180533,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 324.6777396221871,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.12274705391955308,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 203.61416444224898,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 0.019204000011086464,
+      "warnings": []
+    },
+    {
+      "accepted_steps": 698,
+      "adiabatic": false,
+      "adiabatic_rise_k": 209.20502092050208,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [
+        "numerically_converged",
+        "cross_solver_validated"
+      ],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "branch_sensitive",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": 3.9103869772626054e-10,
+      "failure_case_declared": "E",
+      "failure_classification": "E_valid_result",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.03486750348675035,
+      "gate": {
+        "claim": "the quantities of interest are independent of the integration tolerance down the declared ladder; and the stationary end state agrees with an independently computed algebraic steady state. No comparison against any physical measurement was performed",
+        "cross_method_agrees": true,
+        "cross_method_detail": "BDF and Radau at rtol=1e-12 agree on every QoI to 3.910e-10. This establishes NO validation level: both arms share this domain's right-hand side, its analytic Jacobian and SciPy's step control, so a shared error is invisible to the comparison",
+        "cross_method_max_rel_difference": 3.9103869772626054e-10,
+        "invariant_detail": "the reactor is cooled (gamma = 0.0348675 1/s), so the reaction-free invariant has no closed form and no analytic comparison is available at any tolerance",
+        "invariant_max_rel_error": null,
+        "invariant_rel_tol": 1e-09,
+        "invariant_verified": false,
+        "levels_earned": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "reference_ids": [
+          "kinetics.cstr.algebraic_steady_state_brentq",
+          "kinetics.cstr.adiabatic_reaction_free_invariant"
+        ],
+        "rungs": [
+          {
+            "atol_concentration": 1e-06,
+            "atol_temperature": 1e-06,
+            "converged": true,
+            "max_relative_change": null,
+            "qois": {
+              "C_A:final": 877.2529469217307,
+              "T:final": 324.4754431643259,
+              "T:max": 658.8491819338964,
+              "conversion:final": 0.12274705307826934
+            },
+            "rhs_evaluations": 985,
+            "rtol": 1e-06,
+            "wall_seconds_telemetry": 0.04875360004371032
+          },
+          {
+            "atol_concentration": 1e-08,
+            "atol_temperature": 1e-08,
+            "converged": true,
+            "max_relative_change": 2.642638837824775e-08,
+            "qois": {
+              "C_A:final": 877.2529460823899,
+              "T:final": 324.47544343161434,
+              "T:max": 658.849164522892,
+              "conversion:final": 0.12274705391761007
+            },
+            "rhs_evaluations": 2046,
+            "rtol": 1e-08,
+            "wall_seconds_telemetry": 0.09120139997685328
+          },
+          {
+            "atol_concentration": 1e-10,
+            "atol_temperature": 1e-10,
+            "converged": true,
+            "max_relative_change": 2.0712460099997374e-09,
+            "qois": {
+              "C_A:final": 877.2529460806714,
+              "T:final": 324.4754434316245,
+              "T:max": 658.8491658875307,
+              "conversion:final": 0.12274705391932855
+            },
+            "rhs_evaluations": 4206,
+            "rtol": 1e-10,
+            "wall_seconds_telemetry": 0.17807389999506995
+          },
+          {
+            "atol_concentration": 1e-12,
+            "atol_temperature": 1e-12,
+            "converged": true,
+            "max_relative_change": 3.9419901823754356e-10,
+            "qois": {
+              "C_A:final": 877.2529460809619,
+              "T:final": 324.4754434315977,
+              "T:max": 658.8491661472484,
+              "conversion:final": 0.12274705391903808
+            },
+            "rhs_evaluations": 6953,
+            "rtol": 1e-12,
+            "wall_seconds_telemetry": 0.36187730001984164
+          }
+        ],
+        "steady_state_detail": "the stationary end state 324.475443432 K agrees with the independently computed steady state 324.475443432 K (stable) to a relative error of 3.854e-15, within 1.000e-09. The reference solves the algebraic residual by Brent bracketing and shares no arithmetic with the integrator. 3 steady state(s) exist in the envelope",
+        "steady_state_rel_error": 3.8540827672877495e-15,
+        "steady_state_rel_tol": 1e-09,
+        "steady_state_verified": true,
+        "steady_states_found": [
+          {
+            "concentration_mol_per_m3": 877.2529460809675,
+            "conversion": 0.12274705391903251,
+            "jacobian_determinant": 0.00038625927845336997,
+            "jacobian_trace": -0.034963489880148364,
+            "stability": "stable",
+            "temperature_k": 324.47544343159893
+          },
+          {
+            "concentration_mol_per_m3": 499.91828595865877,
+            "conversion": 0.5000817140413413,
+            "jacobian_determinant": -0.000357633789282752,
+            "jacobian_trace": 0.03967026269837285,
+            "stability": "unstable",
+            "temperature_k": 350.0055286902126
+          },
+          {
+            "concentration_mol_per_m3": 208.76137961455586,
+            "conversion": 0.7912386203854441,
+            "jacobian_determinant": 0.0011707081537256237,
+            "jacobian_trace": 0.045244192617449774,
+            "stability": "unstable",
+            "temperature_k": 369.7049134225605
+          }
+        ],
+        "tolerance_detail": "4 rungs from rtol=1e-06 to rtol=1e-12; the largest relative change across the two tightest rungs is 3.942e-10, within 1.000e-06; right-hand-side evaluations rose 985 -> 6953",
+        "tolerance_independent": true,
+        "tolerance_rel_tol": 1e-06
+      },
+      "integration_method": "BDF",
+      "invariant_max_relative_error": null,
+      "is_usable": true,
+      "max_temperature_k": 658.849164522892,
+      "min_concentration_mol_per_m3": 0.00814658468360227,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "steady-state multiplicity, hot start",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "8373b1fe571484115d4a4e6c5e899e1bc07b9986b31ab6b0ee9df94736b45bda",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [
+          "numerically_converged",
+          "cross_solver_validated"
+        ],
+        "note": "the hot start overshoots hard and then falls to the SAME low-conversion branch as R6a: in this parameterization the upper algebraic branch is unstable, so three steady states do not mean two attractors",
+        "stiffness_ratio_band": null,
+        "usable": true
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R6b",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R6b",
+      "regime_id": "R6b",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 2046,
+      "rtol": 1e-08,
+      "scipy_nfev": 2046,
+      "scipy_njev": 45,
+      "scipy_nlu": 166,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": 3.8540827672877495e-15,
+      "steady_states_found": 3,
+      "stiffness": null,
+      "stiffness_work_ratio": null,
+      "tolerance_ladder_final_relative_change": 3.9419901823754356e-10,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "C_A in [0.00814658, 1000] mol/m**3 within [0, 1000]; T in [322.885, 658.849] K within the declared envelope",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "pass"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED; this reactor is cooled, so the invariant has no closed form and the check is unavailable at any tolerance",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "pass",
+      "values": {
+        "C_A:final": {
+          "magnitude": 877.2529460823899,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 324.47544343161434,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 658.849164522892,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.12274705391761007,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 0.039285583307804656,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 0.09844279999379069,
+      "warnings": []
+    },
+    {
+      "accepted_steps": 11894,
+      "adiabatic": false,
+      "adiabatic_rise_k": 209.20502092050208,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "branch_sensitive",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": 1.444232775787749e-07,
+      "failure_case_declared": "D",
+      "failure_classification": "E_valid_result",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.03486750348675035,
+      "gate": {
+        "claim": "no numerical adequacy claim is supported by this tolerance sequence",
+        "cross_method_agrees": true,
+        "cross_method_detail": "BDF and Radau at rtol=1e-12 agree on every QoI to 1.444e-07. This establishes NO validation level: both arms share this domain's right-hand side, its analytic Jacobian and SciPy's step control, so a shared error is invisible to the comparison",
+        "cross_method_max_rel_difference": 1.444232775787749e-07,
+        "invariant_detail": "the reactor is cooled (gamma = 0.0348675 1/s), so the reaction-free invariant has no closed form and no analytic comparison is available at any tolerance",
+        "invariant_max_rel_error": null,
+        "invariant_rel_tol": 1e-09,
+        "invariant_verified": false,
+        "levels_earned": [],
+        "reference_ids": [
+          "kinetics.cstr.algebraic_steady_state_brentq",
+          "kinetics.cstr.adiabatic_reaction_free_invariant"
+        ],
+        "rungs": [
+          {
+            "atol_concentration": 1e-06,
+            "atol_temperature": 1e-06,
+            "converged": true,
+            "max_relative_change": null,
+            "qois": {
+              "C_A:final": 39.24045639727649,
+              "T:final": 399.2230424026172,
+              "T:max": 480.308118739386,
+              "conversion:final": 0.9607595436027235
+            },
+            "rhs_evaluations": 15798,
+            "rtol": 1e-06,
+            "wall_seconds_telemetry": 0.5895921000046656
+          },
+          {
+            "atol_concentration": 1e-08,
+            "atol_temperature": 1e-08,
+            "converged": true,
+            "max_relative_change": 0.009076814400716516,
+            "qois": {
+              "C_A:final": 38.884278057559,
+              "T:final": 399.45386084757,
+              "T:max": 480.30708704142614,
+              "conversion:final": 0.961115721942441
+            },
+            "rhs_evaluations": 33993,
+            "rtol": 1e-08,
+            "wall_seconds_telemetry": 1.3021100999903865
+          },
+          {
+            "atol_concentration": 1e-10,
+            "atol_temperature": 1e-10,
+            "converged": true,
+            "max_relative_change": 0.0002486301845241277,
+            "qois": {
+              "C_A:final": 38.87461025233046,
+              "T:final": 399.46021410007467,
+              "T:max": 480.3072013416995,
+              "conversion:final": 0.9611253897476695
+            },
+            "rhs_evaluations": 73624,
+            "rtol": 1e-10,
+            "wall_seconds_telemetry": 2.7120977000449784
+          },
+          {
+            "atol_concentration": 1e-12,
+            "atol_temperature": 1e-12,
+            "converged": true,
+            "max_relative_change": 4.6970744032629104e-06,
+            "qois": {
+              "C_A:final": 38.87442765539371,
+              "T:final": 399.4603340216426,
+              "T:max": 480.3072023240154,
+              "conversion:final": 0.9611255723446063
+            },
+            "rhs_evaluations": 104723,
+            "rtol": 1e-12,
+            "wall_seconds_telemetry": 4.98528260004241
+          }
+        ],
+        "steady_state_detail": "the trajectory has not settled by the end of the horizon (over the final 2000 of 20001 samples the temperature moved 8.566e-02 and the concentration 8.189e-01 relatively; the stationarity threshold is 1.000e-06), so its end state is not a steady state and comparing it to one would measure the horizon rather than the accuracy. Nearest steady state is 378.065223 K (unstable); the end state is 399.460334 K",
+        "steady_state_rel_error": null,
+        "steady_state_rel_tol": 1e-09,
+        "steady_state_verified": false,
+        "steady_states_found": [
+          {
+            "concentration_mol_per_m3": 135.19600473206083,
+            "conversion": 0.8648039952679392,
+            "jacobian_determinant": 0.0032764841988834094,
+            "jacobian_trace": 0.00978013501242729,
+            "stability": "unstable",
+            "temperature_k": 378.0652229545292
+          }
+        ],
+        "tolerance_detail": "the two tightest rungs still disagree by 4.697e-06, above the required 1.000e-06: the quantities of interest are still moving with the tolerance",
+        "tolerance_independent": false,
+        "tolerance_rel_tol": 1e-06
+      },
+      "integration_method": "BDF",
+      "invariant_max_relative_error": null,
+      "is_usable": true,
+      "max_temperature_k": 480.30708704142614,
+      "min_concentration_mol_per_m3": 1.1867673524164453,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "sustained oscillation, no stable steady state",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "72a09d953acf8131104c50d5812628c546347a3648bb11f7d4bacad67cfdbe83",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [],
+        "note": "the per-solve report passes and the verification gate awards NOTHING: the reported end state is a phase of a limit cycle, so it is not tolerance independent and the trajectory is not stationary. Execution success and scientific usability separate here without any numerical fault",
+        "stiffness_ratio_band": null,
+        "usable": true
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R7",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R7",
+      "regime_id": "R7",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 33993,
+      "rtol": 1e-08,
+      "scipy_nfev": 33993,
+      "scipy_njev": 15,
+      "scipy_nlu": 1921,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": null,
+      "steady_states_found": 1,
+      "stiffness": null,
+      "stiffness_work_ratio": null,
+      "tolerance_ladder_final_relative_change": 4.6970744032629104e-06,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "C_A in [1.18677, 1000] mol/m**3 within [0, 1000]; T in [300, 480.307] K within the declared envelope",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "pass"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED; this reactor is cooled, so the invariant has no closed form and the check is unavailable at any tolerance",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "pass",
+      "values": {
+        "C_A:final": {
+          "magnitude": 38.884278057559,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 399.45386084757,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 480.30708704142614,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.961115721942441,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 178.61080323079722,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 1.2526185999740846,
+      "warnings": []
+    },
+    {
+      "accepted_steps": 662,
+      "adiabatic": true,
+      "adiabatic_rise_k": 836.8200836820083,
+      "atol_concentration": 1e-08,
+      "atol_temperature": 1e-08,
+      "attained_levels_gate": [],
+      "attained_levels_per_solve": [
+        "dimensionally_valid"
+      ],
+      "category": "unusable_result",
+      "convergence_state": "converged",
+      "cross_method_max_relative_difference": null,
+      "failure_case_declared": "D",
+      "failure_classification": "D_successful_but_unusable",
+      "fraction_of_horizon_completed": 1.0,
+      "gamma_per_s": 0.0,
+      "gate": null,
+      "integration_method": "BDF",
+      "invariant_max_relative_error": null,
+      "is_usable": false,
+      "max_temperature_k": 1186.8200651812128,
+      "min_concentration_mol_per_m3": 8.843380138908098e-05,
+      "models": [
+        [
+          "kinetics.cstr.nonisothermal_first_order",
+          "0.1.0"
+        ]
+      ],
+      "name": "flawless integration outside the model envelope",
+      "outcome_detail": "completed_horizon",
+      "physics_fingerprint": "23a20b61fe8359179cf87e7541bd06335aca32b72fcc622ad4962d28107dd332",
+      "prediction": {
+        "convergence": "converged",
+        "levels": [],
+        "note": "CONVERGED with a FAILing state_physically_admissible check, so is_usable is False while convergence correctly remains CONVERGED. The two statements are independent and both are true",
+        "stiffness_ratio_band": null,
+        "usable": false
+      },
+      "prediction_all_met": true,
+      "prediction_met": {
+        "convergence": true,
+        "levels": true,
+        "stiffness_band": true,
+        "usable": true
+      },
+      "problem_id": "k1-R8",
+      "provenance": {
+        "assumption_count": 9,
+        "environment": {
+          "machine": "AMD64",
+          "numpy": "2.5.1",
+          "platform": "Windows",
+          "python": "3.14.2",
+          "scipy": "1.18.0"
+        },
+        "git_commit": "0d0f1990b92a1ec68b86f315ef8c1a9a40d54085",
+        "input_names": [
+          "activation_energy",
+          "coolant_temperature",
+          "density",
+          "end_time",
+          "feed_concentration",
+          "feed_temperature",
+          "flow_rate",
+          "heat_capacity",
+          "heat_of_reaction",
+          "initial_concentration",
+          "initial_temperature",
+          "k0",
+          "molar_gas_constant",
+          "ua",
+          "volume"
+        ],
+        "input_units": {
+          "activation_energy": "joule / mole",
+          "coolant_temperature": "kelvin",
+          "density": "kilogram / meter ** 3",
+          "end_time": "second",
+          "feed_concentration": "mole / meter ** 3",
+          "feed_temperature": "kelvin",
+          "flow_rate": "meter ** 3 / second",
+          "heat_capacity": "joule / kelvin / kilogram",
+          "heat_of_reaction": "joule / mole",
+          "initial_concentration": "mole / meter ** 3",
+          "initial_temperature": "kelvin",
+          "k0": "1 / second",
+          "molar_gas_constant": "joule / kelvin / mole",
+          "ua": "watt / kelvin",
+          "volume": "meter ** 3"
+        },
+        "models": [
+          [
+            "kinetics.cstr.nonisothermal_first_order",
+            "0.1.0"
+          ]
+        ],
+        "software_version": "engcore.domains.kinetics.cstr/0.1.0",
+        "solvers": [
+          [
+            "kinetics.cstr.scipy_implicit_ivp",
+            "0.1.0"
+          ]
+        ],
+        "tolerances": {
+          "atol_concentration": 1e-08,
+          "atol_temperature": 1e-08,
+          "max_rhs_evaluations": 5000000.0,
+          "rtol": 1e-08
+        }
+      },
+      "provenance_run_id": "k1-R8",
+      "regime_id": "R8",
+      "residence_time_s": 60.0,
+      "rhs_budget": 5000000,
+      "rhs_evaluations": 1935,
+      "rtol": 1e-08,
+      "scipy_nfev": 1935,
+      "scipy_njev": 3,
+      "scipy_nlu": 120,
+      "solver_backend": "scipy.integrate.solve_ivp/scipy-1.18.0",
+      "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+      "solver_version": "0.1.0",
+      "steady_state_relative_error": null,
+      "steady_states_found": null,
+      "stiffness": null,
+      "stiffness_work_ratio": null,
+      "tolerance_ladder_final_relative_change": null,
+      "uncertainty_kinds": {
+        "C_A:final": "unknown",
+        "T:final": "unknown",
+        "T:max": "unknown",
+        "conversion:final": "unknown",
+        "t:T_max": "unknown"
+      },
+      "validation_checks": [
+        {
+          "detail": "solve_ivp completed the horizon with status 0 using BDF at rtol=1e-08. This is the integrator's opinion of its own local error control and establishes nothing about accuracy",
+          "establishes": null,
+          "name": "integration_reported_success",
+          "outcome": "pass"
+        },
+        {
+          "detail": "every sampled state value is finite",
+          "establishes": null,
+          "name": "trajectory_finite",
+          "outcome": "pass"
+        },
+        {
+          "detail": "temperature reached 1186.82 K, above the model's declared validity envelope [250.0, 1000.0] K; the constant-property single-phase assumptions do not hold there",
+          "establishes": null,
+          "name": "state_physically_admissible",
+          "outcome": "fail"
+        },
+        {
+          "detail": "concentrations carry mol/m**3, temperatures carry kelvin as absolute thermodynamic temperatures, time carries seconds, and conversion is a genuine dimensionless concentration ratio",
+          "establishes": "dimensionally_valid",
+          "name": "dimensional_consistency",
+          "outcome": "pass"
+        },
+        {
+          "detail": "a single solve cannot establish numerical adequacy: it has nothing to compare itself against. Run the verification gate (run_verification_gate) over the declared tolerance ladder",
+          "establishes": null,
+          "name": "tolerance_independence",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the exact reaction-free invariant is performed by the verification gate, which requires tolerance independence before it will award ANALYTICALLY_VERIFIED",
+          "establishes": null,
+          "name": "analytic_invariant_agreement",
+          "outcome": "not_run"
+        },
+        {
+          "detail": "comparison against the independently computed algebraic steady state is performed by the verification gate",
+          "establishes": null,
+          "name": "independent_steady_state_agreement",
+          "outcome": "not_run"
+        }
+      ],
+      "validation_status": "fail",
+      "values": {
+        "C_A:final": {
+          "magnitude": 8.843525265491078e-05,
+          "units": "mole / meter ** 3"
+        },
+        "T:final": {
+          "magnitude": 1186.8200651809095,
+          "units": "kelvin"
+        },
+        "T:max": {
+          "magnitude": 1186.8200651812128,
+          "units": "kelvin"
+        },
+        "conversion:final": {
+          "magnitude": 0.9999999778911869,
+          "units": "dimensionless"
+        },
+        "t:T_max": {
+          "magnitude": 1.124095735732387,
+          "units": "second"
+        }
+      },
+      "wall_seconds_telemetry": 0.07317990000592545,
+      "warnings": []
+    }
+  ],
+  "step_size_collapse_probe": {
+    "attained_levels": [],
+    "convergence_state": "not_converged",
+    "injected_term": "dT/dt += T**2 (Riccati blowup, singular in finite time)",
+    "metrics_extracted": false,
+    "outcome": "step_size_collapse",
+    "partial_trajectory_preserved": true,
+    "purpose": "direct exercise of the adapter's non-convergence classification against an injected finite-time singularity; NOT a scientific regime and not a statement about any reactor",
+    "reached_time_s": 0.0029593600271727175,
+    "scipy_message": "Required step size is less than spacing between numbers.",
+    "scipy_status": -1,
+    "validation_status": "fail",
+    "why_not_a_regime": "the CSTR system is globally bounded \u2014 the Arrhenius factor saturates at k0 and the reactant is consumed \u2014 so no admissible parameter choice produces step-size collapse"
+  }
+}
