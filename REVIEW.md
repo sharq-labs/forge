@@ -22,13 +22,16 @@ Read in full: `src/engcore/domains/thermal_models/context.py` (973 L),
    unknown and no violation is `UNKNOWN`, not `IN_DOMAIN`
    (`definition.py:346-350`).
 
-**Proven for 13 of 14.**
+**Proven for 14 of 14.** This section originally read "13 of 14" and flagged
+`conductance_excursion_ratio` as unprovable; that defect has since been fixed
+and the finding is retained below as a record of what was wrong and how it was
+closed. Line numbers are post-fix.
 
 | # | Condition | Derived at | Context built at | Absent input → |
 |---|---|---|---|---|
 | 1 | `biot_number` | `context.py:406` | `context.py:910-923` | `:445` → dropped `:973` |
 | 2 | `internal_fourier_number` | `context.py:518` | `context.py:930` | `:551` (needs Bi) |
-| 3 | `conductance_excursion_ratio` | `context.py:666` | `context.py:948` | **see caveat** |
+| 3 | `conductance_excursion_ratio` | `context.py:674` | `context.py:971` | `:731` → dropped `:993` |
 | 4 | `capacity_excursion_ratio` | `context.py:713` | `context.py:953` | `:746` |
 | 5 | `radiation_to_convection_ratio` | `context.py:801` | `context.py:959` | `:826`, and `:790` if no ε |
 | 6 | `melting_temperature_utilization` | `context.py:834` | `context.py:966` | `:860` |
@@ -41,24 +44,25 @@ Read in full: `src/engcore/domains/thermal_models/context.py` (973 L),
 | 13 | `source_current_utilization` | `dc/models.py:562` | `dc/models.py:626` | `:523` → `{}` `:574` |
 | 14 | `compliance_voltage_utilization` | `dc/models.py:577` | `dc/models.py:641` | `:523` → `{}` `:592` |
 
-**Could not prove: #3, `conductance_excursion_ratio`.** `context.py:694`
-returns `Quantity(0.0)` on `regime == "forced"` *before* looking at either the
-excursion or the bound. So the condition reports satisfied with the operating
-point and the bound both absent.
+**#3 was the exception, and is now closed.** It returned `Quantity(0.0)` on
+`regime == "forced"` *before* reading either argument, so the condition reported
+satisfied with the operating point and the bound both absent. Not satisfied by
+silence — a `None` regime fell through — but satisfied by a *substituted*
+declaration: an unverifiable string no record could check, which never reached
+provenance because a category cannot cross the Quantity-only boundary (§4.2).
 
-- It is **not** satisfied by silence: with `regime=None` the function falls
-  through to `:705` and returns `None` (`test_conductance_budget_is_unknown_without_a_regime_or_a_declared_bound`).
-- It **is** satisfied by a *substituted* declaration. The declaration is
-  load-bearing and unfalsifiable here: nothing checks that the flow exists, and
-  under rule 5 of the original spec the regime is not even in the problem
-  record (see §4.2), so a reader of the result cannot see that it was claimed.
-- `test_omitting_the_operating_point_cannot_produce_a_valid_verdict`
-  (`test_lumped_applicability.py`) documents this rather than hiding it: with
-  `heat_input=None` three conditions go UNKNOWN and this one stays satisfied.
-
-The physics is defensible (h is set by the flow, not by ΔT). The *epistemics*
-are weaker than the other thirteen: one unverifiable string converts a missing
-measurement into a passing check.
+**The fix removed the branch and the parameter.** The function now takes exactly
+`excursion` and `bound`, both required; there is no third argument to assert
+through. The regime stays on `LumpedApplicabilityDeclaration` as recorded intent
+— why the caller thinks their span is credible — validated, serialized, read by
+no derivation. Regression tests in `test_lumped_applicability.py`:
+`test_declared_forced_convection_no_longer_waives_the_declared_bound`,
+`..._no_longer_waives_the_operating_point`,
+`..._is_still_judged_against_its_own_bound`, and
+`test_the_declared_regime_changes_no_verdict_at_all` (three declarations
+differing only in regime → three identical assessments).
+`test_the_conductance_budget_takes_no_regime_and_has_no_bypass` pins the
+signature so the branch cannot return.
 
 ---
 
@@ -170,31 +174,32 @@ names no domain, so this adds no domain vocabulary to `scientific/`. `None`
 must stay distinct from `ValidityStatus.UNKNOWN`: *not assessed* and *assessed,
 insufficient context* are different failures.
 
-### 4.2 The convection regime is a call argument, not a problem parameter
+### 4.2 The convection regime is not in the problem — now harmless
 
-`assess_lumped_validity(..., convection_regime=...)` (`lumped.py:926-933`) and
-`derived_lumped_quantities(..., convection_regime=...)` (`context.py:878`).
-`lumped.py:385-392` records why: `ProvenanceRecord` admits only `Quantity`
-inputs (`provenance.py:233-237`), and `coupled.py:1295` builds a thermal
-result's provenance from `problem.parameter_values()` wholesale — so a
-`CategoricalValue` parameter is refused at that boundary. The model record
-therefore does not declare `convection_regime` as a `ModelInputSpec`.
+`ProvenanceRecord` admits only `Quantity` inputs (`provenance.py:233-237`) and
+`coupled.py:1295` builds a thermal result's provenance from
+`problem.parameter_values()` wholesale, so a `CategoricalValue` parameter is
+refused at that boundary. The regime therefore cannot be a problem parameter
+and is not declared as a `ModelInputSpec` (`lumped.py:385-397`).
 
-**A consumer can see:** every *quantity-valued* declaration — characteristic
+**When this section was written that was the sharp edge:** the one declaration
+that could satisfy a condition without measurement was also the one absent from
+the record. The §1 fix removed the first half. No derivation reads the regime
+now, so nothing deciding a verdict is missing from provenance.
+
+**A consumer can see:** every quantity-valued declaration — characteristic
 length, area, conductivity, emissivity, both excursion bounds, melting point —
-as problem parameters (`lumped.py:747-806`), and again in
-`provenance.inputs`.
+as problem parameters (`lumped.py:752-811`) and again in `provenance.inputs`;
+that is now the complete set of things any verdict rests on.
 
-**Cannot see:** that forced convection was claimed. Combined with §1's caveat,
-this is the sharp edge: the one declaration that can satisfy a condition
-without any measurement is also the one declaration absent from the record. A
-run can report `conductance_excursion_ratio` satisfied, and nothing in the
-serialized problem, result or provenance says why.
+**Cannot see:** that forced convection was claimed — now a loss of *context*
+rather than of evidence. A reader cannot tell why a wide bound was thought
+credible, but the bound and whether the run respected it are both visible.
 
-**Minimal core change:** narrow `ScientificProblem.parameter_values()`'s
-annotation to the truth (it is typed `dict[str, Quantity]` but returns whatever
-the parameter holds) and add a sibling `quantity_parameters()`. The
-electrothermal pack then builds provenance from the sibling, and a categorical
-parameter becomes expressible without weakening the provenance rule at all.
-Preferred over widening `ProvenanceRecord.inputs` to the full `ScientificValue`
-union, which would relax a deliberate constraint for a narrow gain.
+**Minimal core change, still worth doing but no longer load-bearing:** narrow
+`ScientificProblem.parameter_values()`'s annotation to the truth (typed
+`dict[str, Quantity]`, returns whatever the parameter holds) and add a sibling
+`quantity_parameters()`. The electrothermal pack then builds provenance from the
+sibling, and a categorical parameter becomes expressible without weakening the
+provenance rule. Preferred over widening `ProvenanceRecord.inputs` to the full
+`ScientificValue` union, which would relax a deliberate constraint for little.

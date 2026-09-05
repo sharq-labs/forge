@@ -382,14 +382,19 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                 "Makes the declared no-radiation assumption falsifiable."
             ),
         ),
-        # ``convection_regime`` is deliberately NOT declared here. It is a
-        # category, ``ProvenanceRecord`` admits only Quantity-valued inputs,
-        # and the electrothermal pack records a thermal result's provenance
-        # from ``problem.parameter_values()`` wholesale — so a categorical
-        # parameter on this problem is refused at the provenance boundary. It
-        # is therefore supplied to ``assess_lumped_validity`` directly, the
-        # same route the state coordinates take. Declaring an input the
-        # problem builder cannot emit would be a record that lies.
+        # ``convection_regime`` is deliberately NOT declared here, and for a
+        # better reason than it once was. It is not an input to any condition:
+        # no derivation reads it, so it cannot decide a verdict, so it is not
+        # a model input. It lives on ``LumpedApplicabilityDeclaration`` as
+        # recorded intent — why the caller thinks their declared span is
+        # credible — and travels with that record.
+        #
+        # The original reason it was excluded still holds and is why it must
+        # never become an input: it is a category, ``ProvenanceRecord`` admits
+        # only Quantity-valued inputs, and the electrothermal pack builds a
+        # thermal result's provenance from ``problem.parameter_values()``
+        # wholesale. Anything that decides a verdict here must be a Quantity,
+        # or the verdict rests on something provenance cannot record.
         ModelInputSpec(
             name=CONDUCTANCE_EXCURSION_BOUND,
             source_kind=InputSourceKind.PARAMETER,
@@ -511,9 +516,11 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     "driving difference, h ~ dT^(1/4) for a laminar external "
                     "layer (Incropera et al., 6th ed., Sec. 9.2), so a "
                     "constant hA holds only over a stated span. UNKNOWN "
-                    "unless the caller declares a forced convection regime — "
-                    "where the flow, not the buoyancy, sets h — or supplies "
-                    "conductance_excursion_bound."
+                    "unless conductance_excursion_bound is supplied and the "
+                    "operating point is known. Declaring a forced-convection "
+                    "regime does not substitute for either: it explains why a "
+                    "wide span may be credible, and is not itself evidence "
+                    "that the span was respected."
                 ),
             ),
             RangeCondition(
@@ -890,22 +897,21 @@ def lumped_validity_context(
     initial_temperature: Quantity | None = None,
     ambient_temperature: Quantity | None = None,
     heat_input: Quantity | None = None,
-    convection_regime: str | None = None,
 ) -> dict[str, Any]:
     """The full context :meth:`ValidityDomain.assess` consumes for this model.
 
     The problem's own parameters, plus the dimensionless groups
     ``context.derived_lumped_quantities`` could form from them and from the
-    supplied state. The first three keyword arguments are variables — a body
+    supplied state. The three keyword arguments are variables — a body
     temperature, an ambient and a heat input — and
     :meth:`ScientificProblem.validity_context` is built from *parameters*, so
     they cannot arrive any other way. That limitation is the electrical
     domain's too, is recorded there as a finding, and is not worked around
     here either.
 
-    ``convection_regime`` arrives the same way for a different reason: it is a
-    category, and the provenance contract admits only Quantity-valued inputs.
-    See :func:`~engcore.domains.thermal_models.context.derived_lumped_quantities`.
+    Every one of the three is a ``Quantity``, so everything this function feeds
+    into a verdict is something ``ProvenanceRecord`` can record. No categorical
+    declaration reaches a condition.
 
     Omitting an argument omits every group that needed it. It never
     substitutes one.
@@ -917,7 +923,6 @@ def lumped_validity_context(
             initial_temperature=initial_temperature,
             ambient_temperature=ambient_temperature,
             heat_input=heat_input,
-            convection_regime=convection_regime,
         )
     )
     return base
@@ -929,7 +934,6 @@ def assess_lumped_validity(
     initial_temperature: Quantity | None = None,
     ambient_temperature: Quantity | None = None,
     heat_input: Quantity | None = None,
-    convection_regime: str | None = None,
 ) -> ValidityAssessment:
     """Is the lumped model applicable to this problem at this operating point?
 
@@ -940,6 +944,9 @@ def assess_lumped_validity(
     fields so that neither can quietly stand in for the other. A converged
     solve of an inapplicable model is still a converged solve, and this
     function is what makes the second half of that sentence sayable.
+
+    Every argument is a measured or declared ``Quantity``. There is no
+    parameter here through which a caller can assert their way to IN_DOMAIN.
     """
     return LUMPED_CAPACITY_MODEL.assess_validity(
         lumped_validity_context(
@@ -947,7 +954,6 @@ def assess_lumped_validity(
             initial_temperature=initial_temperature,
             ambient_temperature=ambient_temperature,
             heat_input=heat_input,
-            convection_regime=convection_regime,
         )
     )
 

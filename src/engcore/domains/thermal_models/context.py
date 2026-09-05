@@ -224,6 +224,14 @@ class LumpedApplicabilityDeclaration:
     (``C`` and ``hA``) that make a body that body. A body declared with a
     conductivity and one declared without are the same physical body known to
     different depth, and ``ThermalBody.physical_key`` must keep saying so.
+
+    **Eight of the nine fields are Quantities that feed a derivation.**
+    ``convection_regime`` is the exception and is deliberately inert: it is
+    validated against :data:`CONVECTION_REGIME_VOCABULARY`, serialized with the
+    rest of the record, and read by nothing. It records *why* the caller
+    believes their ``conductance_excursion_bound`` is credible; it never
+    substitutes for that bound, and no condition consults it. See
+    :func:`conductance_excursion_ratio` for the history of that separation.
     """
 
     characteristic_length: Quantity | None = None
@@ -667,13 +675,14 @@ def conductance_excursion_ratio(
     *,
     excursion: Quantity | None,
     bound: Quantity | None,
-    regime: str | None = None,
 ) -> Quantity | None:
     """How much of the declared constant-``hA`` budget the run consumes.
 
     **Definition.** ``Delta T / Delta T_bound``, where ``Delta T`` is
     :func:`surface_temperature_excursion` and ``Delta T_bound`` is the span the
-    *caller declares* the coefficient may be treated as constant over.
+    *caller declares* the coefficient may be treated as constant over. Both are
+    required. There is no third argument and no branch: this ratio is formed
+    one way or it is not formed at all.
 
     **Why a caller-supplied bound and not a fixed number.** Under free
     convection the coefficient is itself a function of the driving difference:
@@ -684,15 +693,32 @@ def conductance_excursion_ratio(
     study, not of the physics. No correlation is evaluated here and none is
     added in this round.
 
-    **Forced convection.** When the caller declares ``regime='forced'`` the
-    coefficient is set by the imposed flow field rather than by the buoyancy
-    the temperature difference drives, so the ``Delta T`` dependence this
-    condition exists to bound is absent to first order and the ratio is zero.
-    That is a consequence of the declaration, not a default: with no regime and
-    no bound the function returns ``None`` and the condition stays UNKNOWN.
+    **What a declared forced-convection regime buys the caller: nothing here.**
+
+    An earlier version returned ``0.0`` on ``regime == 'forced'`` before reading
+    either argument, on the reasoning that a flow-set coefficient has no
+    ``Delta T`` dependence for the budget to bound. The reasoning is sound and
+    the mechanism was not: it let a caller satisfy this condition by *asserting
+    a regime* instead of by supplying evidence, and the assertion was a bare
+    string that no part of the record could check and that never reached
+    provenance. A validity domain whose strongest term is an unverifiable claim
+    by the party being assessed is not a validity domain.
+
+    So the regime no longer enters this computation at all.
+
+    * It does **not** waive the bound. A forced regime with no
+      ``conductance_excursion_bound`` yields ``None`` and the condition is
+      UNKNOWN, exactly as a natural regime with no bound is.
+    * It does **not** waive the operating point. No excursion, no ratio.
+    * It does **not** widen the budget. The bound the caller declares is the
+      whole budget under either mechanism.
+    * It **is** still worth declaring, on
+      :class:`LumpedApplicabilityDeclaration`, where it records *why* the
+      caller believes the span they declared is credible — a wide span is
+      defensible under forced flow and usually is not under free convection.
+      That is context for a reader, not an input to a check, and this module
+      draws no conclusion from it.
     """
-    if regime is not None and str(regime).strip() == FORCED_CONVECTION:
-        return Quantity(0.0, DIMENSIONLESS)
     checked_excursion = _as_quantity(
         excursion, TEMPERATURE_UNIT, "temperature excursion"
     )
@@ -875,29 +901,24 @@ def derived_lumped_quantities(
     initial_temperature: Quantity | None = None,
     ambient_temperature: Quantity | None = None,
     heat_input: Quantity | None = None,
-    convection_regime: str | None = None,
 ) -> dict[str, Quantity]:
     """Every dimensionless group derivable from ``base`` and the state.
 
     ``base`` is a problem's parameter-derived context: the required parameters
     (``heat_capacity``, ``ambient_conductance``, ``duration``) plus whichever
-    optional quantity-valued declarations the caller supplied. The first three
+    optional quantity-valued declarations the caller supplied. The three
     keyword arguments are the *state and controls* — a body temperature, an
     ambient and a heat input are variables, not parameters, so the core's
     parameter-built context cannot reach them and they must be handed in. That
     is the same explicit-``extra`` discipline ``assess_resistance_validity``
     already follows.
 
-    ``convection_regime`` is handed in for a **different and less comfortable
-    reason**, recorded here as a finding rather than worked around.
-    ``ProvenanceRecord`` requires every input it records to be a ``Quantity``
-    ("provenance never records unit-stripped values"), and the electrothermal
-    pack builds a thermal result's provenance from
-    ``problem.parameter_values()`` wholesale. A regime is a category, not a
-    quantity, so a ``CategoricalValue`` parameter on the thermal problem is
-    refused at the provenance boundary. The consequence is real and is not
-    hidden: every quantity-valued declaration travels with a serialized
-    problem, and this one categorical declaration does not. See ``NEEDS.md``.
+    **Every input to every group here is a Quantity**, and every one of them
+    either travels as a problem parameter or is a declared state value. No
+    categorical declaration reaches this function, so nothing that decides a
+    verdict is invisible to ``ProvenanceRecord`` — which admits only
+    Quantity-valued inputs. The convection regime used to be threaded in here
+    and is no longer: see :func:`conductance_excursion_ratio`.
 
     **A key that could not be derived is absent from the result.** It is never
     present with a placeholder, a zero or a typical value, so a condition that
@@ -950,7 +971,6 @@ def derived_lumped_quantities(
         CONDUCTANCE_EXCURSION_RATIO: conductance_excursion_ratio(
             excursion=excursion,
             bound=base.get(CONDUCTANCE_EXCURSION_BOUND),
-            regime=convection_regime,
         ),
         CAPACITY_EXCURSION_RATIO: capacity_excursion_ratio(
             initial_temperature=initial_temperature,

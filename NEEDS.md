@@ -47,22 +47,26 @@ rule for `ProvenanceRecord.inputs`), `src/engcore/scientific/ir/problem.py`
 `src/engcore/systems/electrothermal/coupled.py` / `resistor_body.py`, which
 build a thermal result's provenance from `problem.parameter_values()` wholesale.
 
-**What was hit.** The lumped model's constant-`hA` condition needs to know
-whether the caller declares forced or natural convection. A
-`CategoricalValue` parameter on the thermal problem is the natural home for
-that, and it is refused: `ProvenanceRecord` requires every recorded input to be
-a `Quantity` ("provenance never records unit-stripped values"), and
+**What was hit.** A `CategoricalValue` parameter on the thermal problem is
+refused at the provenance boundary: `ProvenanceRecord` requires every recorded
+input to be a `Quantity` ("provenance never records unit-stripped values"), and
 `parameter_values()` is annotated `dict[str, Quantity]` while in fact returning
 whatever the parameter holds. So a categorical parameter type-checks at
 construction and blows up several layers later, inside the coupled runner.
 
-**Consequence, which is not hidden.** Every *quantity-valued* applicability
-declaration travels with a serialized problem and survives a round trip; the
-one categorical declaration does not, and is passed to
-`assess_lumped_validity(convection_regime=...)` explicitly. The model record
-deliberately does not declare `convection_regime` as a `ModelInputSpec`,
-because declaring an input the problem builder cannot emit would be a record
-that lies.
+**Status: downgraded, and no longer urgent.** The constant-`hA` condition used
+to consume the convection regime, which made this a live correctness problem —
+a declaration that could decide a verdict while being invisible to provenance.
+That branch has since been removed: `conductance_excursion_ratio` takes only
+the excursion and the bound, both Quantities, and no condition anywhere reads a
+category. `convection_regime` survives on `LumpedApplicabilityDeclaration` as
+recorded intent that decides nothing, so its absence from the problem record
+now costs a reader context rather than evidence.
+
+The proposal below is still worth doing — a domain that later wants a genuine
+categorical condition (a phase, a material class, a flow regime that actually
+selects a correlation) will hit this wall properly. It is no longer blocking
+anything.
 
 **Proposal, in preference order.**
 

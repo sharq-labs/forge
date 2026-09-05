@@ -261,25 +261,29 @@ def test_the_conductance_budget_is_the_excursion_over_the_declared_bound():
     assert dimensionless(ratio) == pytest.approx(0.4, rel=1e-12)
 
 
-def test_declared_forced_convection_consumes_none_of_the_delta_t_budget():
-    """Under forced convection h is set by the flow, not by the difference.
+def test_the_conductance_budget_takes_no_regime_and_has_no_bypass():
+    """The declaration cannot reach this computation, by signature.
 
-    Reported as zero rather than omitted, and only because the caller declared
-    the regime: the value is a consequence of a declaration, not a default.
+    An earlier version accepted ``regime=`` and returned 0.0 for a declared
+    forced regime before reading either argument. The parameter is gone: there
+    is no third argument through which a caller can assert their way past the
+    two that carry evidence.
     """
-    ratio = ctx.conductance_excursion_ratio(
-        excursion=Quantity(500.0, K), bound=None, regime=ctx.FORCED_CONVECTION
-    )
-    assert dimensionless(ratio) == 0.0
+    import inspect
+
+    assert set(
+        inspect.signature(ctx.conductance_excursion_ratio).parameters
+    ) == {"excursion", "bound"}
 
 
-def test_declared_natural_convection_still_needs_a_bound():
+def test_the_conductance_budget_needs_a_bound_whatever_the_caller_declares():
+    """No bound, no ratio — the regime is not consulted and cannot help."""
     assert (
-        ctx.conductance_excursion_ratio(
-            excursion=Quantity(20.0, K),
-            bound=None,
-            regime=ctx.NATURAL_CONVECTION,
-        )
+        ctx.conductance_excursion_ratio(excursion=Quantity(500.0, K), bound=None)
+        is None
+    )
+    assert (
+        ctx.conductance_excursion_ratio(excursion=None, bound=Quantity(50.0, K))
         is None
     )
 
