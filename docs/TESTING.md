@@ -1,14 +1,20 @@
-# Testing Crafty
-
-> **Counts updated 2026-09-05** after the repository cleanup removed the optimizer research line and its `test_smoke.py`: FAST 1261, SCIENTIFIC 1525, FULL 1529. Timings below are from the earlier measurement and are indicative only.
+# Testing
 
 How to run the suite during development, and which subset to trust for what.
 
 This is engineering telemetry, not scientific evidence. The wall-clock figures
 below are **not reproducible across machines**, and the audit in
 [performance-runtime-audit.md](performance-runtime-audit.md) measured a 9–14%
-spread for *identical* code on this hardware. Treat them as approximately one
-significant figure; the test counts are exact.
+spread for *identical* code on the hardware they were taken on. Treat them as
+approximately one significant figure; the test counts are exact.
+
+**Counts and timings come from different measurements — read them
+differently.** Every test count in this document was re-measured on
+2026-09-06 and is current. Every wall-clock figure was measured earlier, on
+different hardware and at a smaller suite (1526 FULL tests), and has *not* been
+re-measured; each one is marked where it appears. A timing here tells you the
+shape of the problem — which tier is worth running, why more workers stop
+helping — and nothing reliable about how long your own run will take.
 
 Nothing in the tiering changes what a test asserts. No test was deleted,
 skipped, weakened, reordered, or had a tolerance loosened. Tiers only decide
@@ -19,19 +25,24 @@ is the gate for a milestone freeze.
 
 ## The tiers
 
-| Tier | Selection | Tests | Sequential | Parallel | Use it |
+Test counts measured 2026-09-06 (Windows 11 + WSL, Python 3.14.2, pytest 9.1.1;
+see "Where the counts were measured"). Wall-clock columns are the *older*
+measurement on different hardware and a 1526-test suite — kept for shape, not
+for prediction, and not re-measured.
+
+| Tier | Selection | Tests | Sequential † | Parallel † | Use it |
 |---|---|---|---|---|---|
-| **FAST** | `-m "not expensive"` | 1261 | **9.2 s** | 7.3 s | after every ordinary code edit |
+| **FAST** | `-m "not expensive"` | **1406** | 9.2 s | 7.3 s | after every ordinary code edit |
 | **TARGETED** | a path | varies | seconds | — | the milestone you are working on |
-| **SCIENTIFIC** | `-m "not campaign"` | 1525 | 137.7 s | **53.7 s** | after a scientific/core change |
-| **FULL** | *(no selection)* | 1529 | 578.3 s | **273.2 s** | before a milestone freeze or merge |
+| **SCIENTIFIC** | `-m "not campaign"` | **1924** | 137.7 s | 53.7 s | after a scientific/core change |
+| **FULL** | *(no selection)* | **1928** | 578.3 s | 273.2 s | before a milestone freeze or merge |
 
-FAST is **63× faster** than FULL and still runs 68% of the suite. Use it.
+† older hardware, smaller suite, not re-measured — see the note above.
 
-Test counts are current. **The wall-clock figures throughout this document
-were measured at 1526 FULL tests**, before MODEL0-R's final revisions added
-four; nothing was re-timed for three sub-millisecond assertions, and the
-run-to-run spread documented below dwarfs the difference.
+FAST runs **73%** of the suite (1406 of 1928) and skips the four campaign
+tests plus every frozen-experiment reproduction and domain-solver run. On the
+hardware the timings above came from it was ~63× faster than sequential FULL;
+that ratio has not been re-measured. Use it.
 
 The markers are assigned centrally in [`tests/conftest.py`](../tests/conftest.py)
 and registered in `pyproject.toml`. They are applied from `conftest.py` rather
@@ -45,7 +56,7 @@ experiments/electrical_e3/e3_config.py  pins  tests/test_sria_e2_model_adequacy.
 
 — and both need tier labels. Editing either file would break the pin that makes
 "E1 was not edited under E2" a checkable claim. Marking from `conftest.py` leaves
-all 72 existing test files byte-identical.
+every existing test file byte-identical.
 
 ### What the markers mean
 
@@ -65,6 +76,34 @@ execution costs milliseconds and the coverage is worth having every time.
 
 ---
 
+## Where the counts were measured, and what changes them
+
+The counts in this document were measured on **Windows 11 with WSL**, where the
+ngspice provider's default invocation — `("wsl.exe", "-e", "ngspice")`,
+`ngspice.py:191` — resolves without configuration. Nothing was deselected and
+no environment variable was set, so every count here is the whole suite.
+
+**On Linux the numbers are three lower per tier.** The provider is discovered
+through `CRAFTY_NGSPICE_ARGV` (`ngspice.py:206-213` — note the variable still
+carries the old product name; renaming it is deferred because
+`test_j2_the_invocation_is_configuration_and_reads_the_environment` pins it),
+so a native run needs:
+
+```bash
+sudo apt-get install -y ngspice
+CRAFTY_NGSPICE_ARGV=ngspice python -m pytest -m "not campaign" -q -n auto \
+  --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process \
+  --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure \
+  --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
+```
+
+Those three assert the WSL default invocation itself and are Windows-only.
+They are **deselected for the measurement, never skipped in the suite** — the
+markers in `conftest.py` are untouched and a Windows run still executes them.
+`.github/workflows/tests.yml` uses exactly this deselection list.
+
+---
+
 ## Standard commands
 
 Set `PY` to your interpreter (`python`, or an absolute path on Windows).
@@ -75,7 +114,8 @@ Set `PY` to your interpreter (`python`, or an absolute path on Windows).
 python -m pytest tests/ -m "not expensive" -q
 ```
 
-1035 tests, ~10 s. This is the default loop for AI-assisted development.
+**1406 tests** (measured 2026-09-06). This is the default loop for
+AI-assisted development.
 
 ### 2. TARGETED milestone — the package you are changing
 
@@ -83,8 +123,8 @@ python -m pytest tests/ -m "not expensive" -q
 python -m pytest tests/test_model0r_realization_foundation.py -q
 ```
 
-104 tests, 1.3 s for the current milestone. Substitute the milestone's own
-module. See "Choosing targeted tests" below.
+104 tests for that milestone (1.3 s, older hardware). Substitute the
+milestone's own module. See "Choosing targeted tests" below.
 
 ### 3. SCIENTIFIC regression — after a scientific or core change
 
@@ -92,7 +132,8 @@ module. See "Choosing targeted tests" below.
 python -m pytest tests/ -m "not campaign" -q
 ```
 
-1526 tests, 137.7 s sequential — or 53.7 s with `-n 12 --dist loadfile`. Every
+**1924 tests** (measured 2026-09-06; 137.7 s sequential or 53.7 s with
+`-n 12 --dist loadfile` on the older hardware). Every
 frozen-experiment reproduction and domain solver test, without the four largest
 campaigns. Dropping just those four removes 428 s of the 578 s FULL runtime.
 
@@ -102,8 +143,9 @@ campaigns. Dropping just those four removes 428 s of the 578 s FULL runtime.
 python -m pytest tests/ -q -rsxX --durations=30
 ```
 
-1530 tests, 578.3 s. This is the fallback and the reference result. If a parallel
-run and this run ever disagree, **this one is right**.
+**1928 tests** (measured 2026-09-06; 565.8 s on that machine, 578.3 s on the
+older one). This is the fallback and the reference result. If a parallel run
+and this run ever disagree, **this one is right**.
 
 ### 5. FULL parallel regression
 
@@ -111,9 +153,9 @@ run and this run ever disagree, **this one is right**.
 python -m pytest tests/ -n 8 --dist loadfile -q
 ```
 
-1530 tests, 273.2 s. **Use `-n 8`, not `-n auto`** — see "Parallel execution"
-below, where `-n auto` is measured failing intermittently with `MemoryError`.
-`--dist loadfile` is not optional.
+**1928 tests** (273.2 s, older hardware). **Use `-n 8`, not `-n auto`** — see
+"Parallel execution" below, where `-n auto` is measured failing intermittently
+with `MemoryError`. `--dist loadfile` is not optional.
 
 ### 6. Hybrid regression
 
@@ -183,7 +225,7 @@ that.
 
 ## What FAST does not cover
 
-FAST is a real suite — 1035 tests including the entire scientific-core contract
+FAST is a real suite — 1406 tests including the entire scientific-core contract
 layer, the SRIA architecture layer, the design layer, campaign persistence,
 serialization, registries, error taxonomy and the dependency-direction guards.
 It is not a smoke test. But it deliberately omits these risk classes:
@@ -236,10 +278,12 @@ identical either way, but the measured cost is not.
 
 ### Why more workers stops helping
 
-The suite's runtime is extremely concentrated. At baseline, **1470 of 1520 tests
-ran in 18.75 s combined (3.3%)**, while a single test —
+The suite's runtime is extremely concentrated. In the measurement below — older
+hardware, a 1520-test suite, not re-run since — **1470 of 1520 tests ran in
+18.75 s combined (3.3%)**, while a single test —
 `test_full_studies_a_and_b_use_same_universe_and_a_reproduces_mvr0` — took
-**260.71 s (46.3%)**.
+**260.71 s (46.3%)**. The concentration is structural and still holds; the
+numbers are that run's.
 
 That test is an indivisible unit of work. No worker count can make the FULL
 suite finish faster than it does, so parallel FULL is bounded below by ~261 s
@@ -248,6 +292,14 @@ enough workers to overlap the other long tests with it. Adding workers past that
 buys nothing and costs memory.
 
 ### Measured
+
+**A historical record, deliberately not rewritten.** The worker sweep and the
+memory sampling below were run once, on different hardware, against a
+1526-test FULL suite. Their test counts are part of the measurement, so they
+are left as they were rather than restated at today's count — rewriting them
+would claim nine configurations were re-run when none were. What they
+establish — that `--dist loadfile` matters, that the speedup saturates, that
+`-n auto` runs the machine out of memory — is structural and still holds.
 
 Machine: 16 physical cores / 24 logical processors, 31.7 GB RAM (~11.9 GB free),
 Windows 11, Python 3.14.2, pytest 9.0.2, pytest-xdist 3.8.0. FULL suite,

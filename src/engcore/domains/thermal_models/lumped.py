@@ -215,12 +215,29 @@ LUMPED_CAPACITY_TRANSIENT = SolverCapability(
 #: criterion, not a tuned tolerance.
 LUMPED_BIOT_LIMIT = Quantity(0.1, DIMENSIONLESS)
 
-#: Fo >= 0.2. Incropera, DeWitt, Bergman & Lavine, 6th ed. (2007), Sec. 5.5.2:
-#: for Fo > 0.2 the infinite series for a transient body with surface
-#: convection is represented to within about 2 % by its first term — that is,
-#: the body's response has become a single exponential. A single exponential is
-#: exactly and only what a one-capacity model can produce, so below this the
-#: model is not inaccurate, it is the wrong shape.
+#: Fo >= 0.2 — the one-term criterion, used for exactly what it establishes.
+#:
+#: Incropera, DeWitt, Bergman & Lavine, 6th ed. (2007), Sec. 5.5.2: for
+#: Fo > 0.2 the infinite series solution for a transient body with surface
+#: convection is represented to within about 2 % by its first term. A
+#: first-term-only response is a single exponential in time, which is the shape
+#: a one-capacity model computes. So past this point the exact solution and the
+#: lumped solution have the same shape, and the text puts the number on that.
+#:
+#: **What this condition therefore claims, and what it does not.** It claims
+#: the horizon is long enough that the one-term criterion is met. It does *not*
+#: claim that a shorter horizon makes the lumped model wrong. At small Bi the
+#: higher modes are suppressed by amplitude as well as by decay — their
+#: coefficients are O(Bi) — so a body at Bi = 1e-5 is very likely well
+#: described at Fo well below 0.2. This domain does not certify that, and says
+#: OUTSIDE_VALIDATED_DOMAIN rather than guessing: the status means *outside the
+#: domain we have validated*, not *wrong*, and a conservative screen is the
+#: honest use of it.
+#:
+#: An earlier revision of this constant claimed that below 0.2 "the body has
+#: several time scales and no lumped description has the right shape, however
+#: small Bi is". The final clause was an overclaim the source does not make and
+#: the physics does not support; it is removed rather than re-cited.
 LUMPED_MIN_FOURIER_NUMBER = Quantity(0.2, DIMENSIONLESS)
 
 #: h_r / h <= 0.1. The linearized radiation coefficient of Incropera 6th ed.,
@@ -382,14 +399,19 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                 "Makes the declared no-radiation assumption falsifiable."
             ),
         ),
-        # ``convection_regime`` is deliberately NOT declared here. It is a
-        # category, ``ProvenanceRecord`` admits only Quantity-valued inputs,
-        # and the electrothermal pack records a thermal result's provenance
-        # from ``problem.parameter_values()`` wholesale — so a categorical
-        # parameter on this problem is refused at the provenance boundary. It
-        # is therefore supplied to ``assess_lumped_validity`` directly, the
-        # same route the state coordinates take. Declaring an input the
-        # problem builder cannot emit would be a record that lies.
+        # ``convection_regime`` is deliberately NOT declared here, and for a
+        # better reason than it once was. It is not an input to any condition:
+        # no derivation reads it, so it cannot decide a verdict, so it is not
+        # a model input. It lives on ``LumpedApplicabilityDeclaration`` as
+        # recorded intent — why the caller thinks their declared span is
+        # credible — and travels with that record.
+        #
+        # The original reason it was excluded still holds and is why it must
+        # never become an input: it is a category, ``ProvenanceRecord`` admits
+        # only Quantity-valued inputs, and the electrothermal pack builds a
+        # thermal result's provenance from ``problem.parameter_values()``
+        # wholesale. Anything that decides a verdict here must be a Quantity,
+        # or the verdict rests on something provenance cannot record.
         ModelInputSpec(
             name=CONDUCTANCE_EXCURSION_BOUND,
             source_kind=InputSourceKind.PARAMETER,
@@ -490,15 +512,18 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                 name=INTERNAL_FOURIER_NUMBER,
                 minimum=LUMPED_MIN_FOURIER_NUMBER,
                 description=(
-                    "Fo = (t/tau)/Bi >= 0.2. The requested horizon measured "
-                    "against the body's own internal diffusion time. Above "
-                    "0.2 the higher modes of the exact series have died and "
-                    "the body responds as one exponential, which is all a "
-                    "one-capacity model can produce; below it the body has "
-                    "several time scales and no lumped description has the "
-                    "right shape, however small Bi is. Incropera et al., 6th "
-                    "ed. (2007), Sec. 5.5.2 (one-term approximation) with the "
-                    "identity Bi*Fo = t/tau of Sec. 5.2, Eq. 5.12."
+                    "Fo = (t/tau)/Bi >= 0.2: the horizon is long enough that "
+                    "the exact series solution for this body is within about "
+                    "2 % of its first term alone. A first-term-only response "
+                    "is a single exponential in time, which is the shape a "
+                    "one-capacity model computes, so past this point the two "
+                    "agree in form. Incropera et al., 6th ed. (2007), "
+                    "Sec. 5.5.2 (one-term approximation), with the identity "
+                    "Bi*Fo = t/tau of Sec. 5.2, Eq. 5.12. A conservative "
+                    "screen: below 0.2 the lumped model is not shown to be "
+                    "wrong, it is outside what this criterion validates — at "
+                    "small Bi the higher modes are suppressed by amplitude "
+                    "too, and a shorter horizon may well be adequate."
                 ),
             ),
             RangeCondition(
@@ -511,9 +536,11 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     "driving difference, h ~ dT^(1/4) for a laminar external "
                     "layer (Incropera et al., 6th ed., Sec. 9.2), so a "
                     "constant hA holds only over a stated span. UNKNOWN "
-                    "unless the caller declares a forced convection regime — "
-                    "where the flow, not the buoyancy, sets h — or supplies "
-                    "conductance_excursion_bound."
+                    "unless conductance_excursion_bound is supplied and the "
+                    "operating point is known. Declaring a forced-convection "
+                    "regime does not substitute for either: it explains why a "
+                    "wide span may be credible, and is not itself evidence "
+                    "that the span was respected."
                 ),
             ),
             RangeCondition(
@@ -890,22 +917,21 @@ def lumped_validity_context(
     initial_temperature: Quantity | None = None,
     ambient_temperature: Quantity | None = None,
     heat_input: Quantity | None = None,
-    convection_regime: str | None = None,
 ) -> dict[str, Any]:
     """The full context :meth:`ValidityDomain.assess` consumes for this model.
 
     The problem's own parameters, plus the dimensionless groups
     ``context.derived_lumped_quantities`` could form from them and from the
-    supplied state. The first three keyword arguments are variables — a body
+    supplied state. The three keyword arguments are variables — a body
     temperature, an ambient and a heat input — and
     :meth:`ScientificProblem.validity_context` is built from *parameters*, so
     they cannot arrive any other way. That limitation is the electrical
     domain's too, is recorded there as a finding, and is not worked around
     here either.
 
-    ``convection_regime`` arrives the same way for a different reason: it is a
-    category, and the provenance contract admits only Quantity-valued inputs.
-    See :func:`~engcore.domains.thermal_models.context.derived_lumped_quantities`.
+    Every one of the three is a ``Quantity``, so everything this function feeds
+    into a verdict is something ``ProvenanceRecord`` can record. No categorical
+    declaration reaches a condition.
 
     Omitting an argument omits every group that needed it. It never
     substitutes one.
@@ -917,7 +943,6 @@ def lumped_validity_context(
             initial_temperature=initial_temperature,
             ambient_temperature=ambient_temperature,
             heat_input=heat_input,
-            convection_regime=convection_regime,
         )
     )
     return base
@@ -929,7 +954,6 @@ def assess_lumped_validity(
     initial_temperature: Quantity | None = None,
     ambient_temperature: Quantity | None = None,
     heat_input: Quantity | None = None,
-    convection_regime: str | None = None,
 ) -> ValidityAssessment:
     """Is the lumped model applicable to this problem at this operating point?
 
@@ -940,6 +964,9 @@ def assess_lumped_validity(
     fields so that neither can quietly stand in for the other. A converged
     solve of an inapplicable model is still a converged solve, and this
     function is what makes the second half of that sentence sayable.
+
+    Every argument is a measured or declared ``Quantity``. There is no
+    parameter here through which a caller can assert their way to IN_DOMAIN.
     """
     return LUMPED_CAPACITY_MODEL.assess_validity(
         lumped_validity_context(
@@ -947,7 +974,6 @@ def assess_lumped_validity(
             initial_temperature=initial_temperature,
             ambient_temperature=ambient_temperature,
             heat_input=heat_input,
-            convection_regime=convection_regime,
         )
     )
 

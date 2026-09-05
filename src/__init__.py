@@ -1,1 +1,0 @@
-"""Aerospace composite system packs."""

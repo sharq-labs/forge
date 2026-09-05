@@ -37,12 +37,17 @@ K = "kelvin"
 #:   tau = 2.5 / 0.05                     = 50 s
 #:   t/tau = 120 / 50                     = 2.4
 #:   Fo = 2.4 / 2.5e-5                    = 9.6e4       (>= 0.2)
+#:
+#: The forced-convection declaration is recorded because it is *true of this
+#: body*, and it is why a 60 K constant-hA span is credible here. It buys the
+#: declaration nothing: the 60 K bound below is what the condition reads.
 FULLY_DECLARED = ctx.LumpedApplicabilityDeclaration(
     characteristic_length=Quantity(0.002, "meter"),
     surface_area=Quantity(0.01, "meter**2"),
     body_conductivity=Quantity(200.0, "watt/meter/kelvin"),
     surface_emissivity=Quantity(0.05, "dimensionless"),
     convection_regime=ctx.FORCED_CONVECTION,
+    conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
 )
@@ -83,18 +88,13 @@ def declared(**overrides):
     return ctx.LumpedApplicabilityDeclaration(**fields)
 
 
-def assess(thermal_body, *, heat_input=HEAT_INPUT, regime="inherit"):
+def assess(thermal_body, *, heat_input=HEAT_INPUT):
     problem = lump.build_lumped_thermal_problem(thermal_body)
     return lump.assess_lumped_validity(
         problem,
         initial_temperature=thermal_body.initial_temperature,
         ambient_temperature=thermal_body.ambient_temperature,
         heat_input=heat_input,
-        convection_regime=(
-            thermal_body.applicability.convection_regime
-            if regime == "inherit"
-            else regime
-        ),
     )
 
 
@@ -240,6 +240,27 @@ def test_the_fourier_floor_is_a_named_constant_at_the_one_term_value():
     assert "5.5.2" in condition.description
 
 
+def test_the_fourier_condition_claims_only_what_its_source_establishes():
+    """The bound is Sec. 5.5.2's number used for Sec. 5.5.2's claim.
+
+    Incropera's one-term criterion establishes that above Fo = 0.2 the exact
+    series is within ~2 % of its first term. It does *not* establish that below
+    0.2 a lumped model is wrong — at small Bi the higher modes carry O(Bi)
+    amplitude and may be negligible long before they have decayed. An earlier
+    revision asserted the stronger claim ("no lumped description has the right
+    shape, however small Bi is") on this citation; the description must state
+    the criterion it actually rests on and must not restore the overclaim.
+    """
+    description = _condition(ctx.INTERNAL_FOURIER_NUMBER).description
+    # what the source supports
+    assert "one-term approximation" in description
+    assert "first term" in description
+    # and the honest statement of what a failure means
+    assert "not shown to be wrong" in description
+    # the removed overclaim must not come back
+    assert "however small Bi is" not in description
+
+
 def test_no_upper_bound_is_placed_on_the_horizon_because_the_integration_is_exact():
     """A deliberate absence, asserted so it stays deliberate.
 
@@ -264,8 +285,8 @@ def test_no_upper_bound_is_placed_on_the_horizon_because_the_integration_is_exac
 # Condition 3 — the constant ambient-conductance budget
 # =====================================================================
 
-def test_lumped_model_accepts_a_declared_forced_convection_ambient_path():
-    """Forced convection: h is set by the flow, so no delta-T budget is spent."""
+def test_lumped_model_accepts_an_excursion_inside_the_declared_hA_span():
+    """A 20 K rise against the declared 60 K constant-hA span: a third of it."""
     assessment = assess(body())
     assert ctx.CONDUCTANCE_EXCURSION_RATIO in assessment.satisfied
     assert assessment.status is ValidityStatus.IN_DOMAIN
@@ -290,19 +311,86 @@ def test_lumped_model_rejects_a_natural_convection_excursion_beyond_its_bound():
     assert assessment.violated == (ctx.CONDUCTANCE_EXCURSION_RATIO,)
 
 
-def test_conductance_budget_is_unknown_without_a_regime_or_a_declared_bound():
-    """Neither escape taken, so the honest answer is UNKNOWN.
+def test_conductance_budget_is_unknown_without_a_declared_bound():
+    """No stated span, so the honest answer is UNKNOWN.
 
-    Natural convection with no stated span is exactly the case the condition
-    exists for: the caller has not said how far a constant hA carries, and
-    nothing in the declaration lets the model guess.
+    The caller has not said how far a constant hA carries, and nothing in the
+    declaration lets the model guess.
     """
-    assessment = assess(
-        body(declared(convection_regime=None, conductance_excursion_bound=None))
-    )
+    assessment = assess(body(declared(conductance_excursion_bound=None)))
     assert assessment.status is ValidityStatus.UNKNOWN
     assert assessment.unknown == (ctx.CONDUCTANCE_EXCURSION_RATIO,)
     assert assessment.violated == ()
+
+
+# ---- the forced-convection bypass, closed ----------------------------
+#
+# These three are the regression tests for a real defect: the condition used
+# to return 0.0 on a declared forced regime *before reading either argument*,
+# so a caller could satisfy it with a bare string that no record could check
+# and that never reached provenance.
+
+
+def test_declared_forced_convection_no_longer_waives_the_declared_bound():
+    """Forced regime, no bound, everything else supplied → UNKNOWN.
+
+    The declaration is present and correct; it buys nothing. Before the fix
+    this same body reported IN_DOMAIN on this condition with no bound and no
+    operating point behind it.
+    """
+    forced_without_bound = declared(
+        convection_regime=ctx.FORCED_CONVECTION,
+        conductance_excursion_bound=None,
+    )
+    assert forced_without_bound.convection_regime == ctx.FORCED_CONVECTION
+    assessment = assess(body(forced_without_bound))
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert assessment.unknown == (ctx.CONDUCTANCE_EXCURSION_RATIO,)
+    assert ctx.CONDUCTANCE_EXCURSION_RATIO not in assessment.satisfied
+
+
+def test_declared_forced_convection_no_longer_waives_the_operating_point():
+    """Forced regime, a bound, but no heat input → UNKNOWN, not satisfied.
+
+    A bound with nothing to compare it against decides nothing, whatever
+    mechanism the caller says is setting the coefficient.
+    """
+    assessment = assess(body(), heat_input=None)
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert ctx.CONDUCTANCE_EXCURSION_RATIO in assessment.unknown
+
+
+def test_declared_forced_convection_is_still_judged_against_its_own_bound():
+    """Forced regime with a 5 K bound and a 20 K rise → OUTSIDE.
+
+    The regime does not widen the budget. A caller who declares forced flow
+    and then declares a narrow span is held to the span they declared.
+    """
+    assessment = assess(
+        body(
+            declared(
+                convection_regime=ctx.FORCED_CONVECTION,
+                conductance_excursion_bound=Quantity(5.0, K),
+            )
+        )
+    )
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert assessment.violated == (ctx.CONDUCTANCE_EXCURSION_RATIO,)
+
+
+def test_the_declared_regime_changes_no_verdict_at_all():
+    """Same numbers under 'forced', 'natural' and no declaration.
+
+    The strongest form of the fix: the regime is not merely insufficient to
+    satisfy the condition, it is not consulted. Three declarations that differ
+    only in the regime produce three identical assessments.
+    """
+    verdicts = [
+        assess(body(declared(convection_regime=regime)))
+        for regime in (ctx.FORCED_CONVECTION, ctx.NATURAL_CONVECTION, None)
+    ]
+    assert {v.status for v in verdicts} == {ValidityStatus.IN_DOMAIN}
+    assert len({v.satisfied for v in verdicts}) == 1
 
 
 # =====================================================================
@@ -353,7 +441,6 @@ def test_the_two_excursion_budgets_are_separate_conditions_over_separate_spans()
         initial_temperature=hot_start.initial_temperature,
         ambient_temperature=hot_start.ambient_temperature,
         heat_input=HEAT_INPUT,
-        convection_regime=ctx.NATURAL_CONVECTION,
     )
     # surface: max(|400-300|, |320-300|) = 100 K over a 100 K bound
     assert context[ctx.CONDUCTANCE_EXCURSION_RATIO].magnitude_in(
@@ -439,37 +526,29 @@ def test_phase_change_margin_is_unknown_when_no_melting_point_is_declared():
 # =====================================================================
 
 def test_omitting_the_operating_point_cannot_produce_a_valid_verdict():
-    """No heat input, so no steady state, so three conditions go UNKNOWN.
+    """No heat input, so no steady state, so every state-dependent condition
+    goes UNKNOWN — all four of them, with no exception carved out for a
+    declared regime.
 
     The direction of travel is the whole point: removing information moves the
-    verdict towards UNKNOWN and never towards IN_DOMAIN.
-
-    The surface-conductance budget is the one exception, and for a physical
-    reason rather than a lenient one: this body declares *forced* convection,
-    under which h does not follow the temperature difference at all, so that
-    condition never needed the operating point in the first place. The two
-    conditions that are purely geometric stay satisfied for the same kind of
-    reason.
+    verdict towards UNKNOWN and never towards IN_DOMAIN. Only the two purely
+    geometric conditions, which never needed the operating point, stay
+    satisfied.
     """
     assessment = assess(body(), heat_input=None)
     assert assessment.status is ValidityStatus.UNKNOWN
     assert set(assessment.unknown) == {
+        ctx.CONDUCTANCE_EXCURSION_RATIO,
         ctx.CAPACITY_EXCURSION_RATIO,
         ctx.RADIATION_TO_CONVECTION_RATIO,
         ctx.MELTING_TEMPERATURE_UTILIZATION,
     }
-    # Under a *natural* regime the surface budget goes UNKNOWN too, because
-    # there the excursion is exactly what it is measured against.
-    natural = assess(
-        body(
-            declared(
-                convection_regime=ctx.NATURAL_CONVECTION,
-                conductance_excursion_bound=Quantity(50.0, K),
-            )
-        ),
-        heat_input=None,
-    )
-    assert ctx.CONDUCTANCE_EXCURSION_RATIO in natural.unknown
+    assert set(assessment.satisfied) == {
+        lump.HEAT_CAPACITY,
+        lump.AMBIENT_CONDUCTANCE,
+        ctx.BIOT_NUMBER,
+        ctx.INTERNAL_FOURIER_NUMBER,
+    }
 
 
 @pytest.mark.parametrize(
@@ -479,13 +558,22 @@ def test_omitting_the_operating_point_cannot_produce_a_valid_verdict():
         {"surface_area": None},
         {"characteristic_length": None},
         {"surface_emissivity": None},
+        {"conductance_excursion_bound": None},
         {"capacity_excursion_bound": None},
         {"melting_temperature": None},
-        {"convection_regime": None},
     ],
 )
-def test_removing_any_single_declaration_never_yields_in_domain(removed):
-    """The invariant, checked one omission at a time."""
+def test_removing_any_single_evidential_declaration_never_yields_in_domain(removed):
+    """The invariant, checked one omission at a time.
+
+    Seven of the declaration's nine fields carry evidence, and removing any one
+    of them costs a condition. ``volume`` is the eighth and is the alternative
+    route to ``characteristic_length`` rather than an independent fact.
+    ``convection_regime`` is the ninth and is deliberately absent from this
+    list: it is recorded intent, no condition reads it, and the test below
+    asserts that removing it changes nothing — which is the point of the fix,
+    not a hole in it.
+    """
     assert assess(body(declared(**removed))).status is not ValidityStatus.IN_DOMAIN
 
 
@@ -543,7 +631,6 @@ def test_the_declared_problem_survives_serialization_with_its_verdict_intact():
             initial_temperature=INITIAL,
             ambient_temperature=AMBIENT,
             heat_input=HEAT_INPUT,
-            convection_regime=ctx.FORCED_CONVECTION,
         ).status
         is ValidityStatus.IN_DOMAIN
     )
@@ -600,14 +687,16 @@ def conductor(component_id="R1"):
 
 
 #: The declaration that keeps the coupled operating point in domain. The body
-#: settles towards T_ss = 300 + 2.1213/0.05 = 342.43 K, so a 900 K melting
-#: point and a 100 K constant-capacity span both hold.
+#: settles towards T_ss = 300 + 2.1213/0.05 = 342.43 K, a 42.43 K rise over the
+#: ambient, so a 60 K constant-hA span, a 100 K constant-capacity span and a
+#: 900 K melting point all hold.
 COUPLED_DECLARATION = ctx.LumpedApplicabilityDeclaration(
     characteristic_length=Quantity(0.002, "meter"),
     surface_area=Quantity(0.01, "meter**2"),
     body_conductivity=Quantity(200.0, "watt/meter/kelvin"),
     surface_emissivity=Quantity(0.05, "dimensionless"),
     convection_regime=ctx.FORCED_CONVECTION,
+    conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
 )
@@ -704,7 +793,6 @@ def test_lumped_applicability_leaves_the_coupled_run_numerically_identical():
         initial_temperature=Quantity(300.0, K),
         ambient_temperature=Quantity(300.0, K),
         heat_input=power,
-        convection_regime=ctx.FORCED_CONVECTION,
     )
     assert assessment.status is ValidityStatus.IN_DOMAIN
 
@@ -726,6 +814,9 @@ def test_a_coupled_run_can_converge_twice_over_and_still_be_outside_the_domain()
             body_conductivity=COUPLED_DECLARATION.body_conductivity,
             surface_emissivity=COUPLED_DECLARATION.surface_emissivity,
             convection_regime=COUPLED_DECLARATION.convection_regime,
+            conductance_excursion_bound=(
+                COUPLED_DECLARATION.conductance_excursion_bound
+            ),
             capacity_excursion_bound=COUPLED_DECLARATION.capacity_excursion_bound,
             melting_temperature=Quantity(330.0, K),
         ),
@@ -752,7 +843,6 @@ def test_a_coupled_run_can_converge_twice_over_and_still_be_outside_the_domain()
         initial_temperature=Quantity(300.0, K),
         ambient_temperature=Quantity(300.0, K),
         heat_input=power,
-        convection_regime=ctx.FORCED_CONVECTION,
     )
     assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
     assert assessment.violated == (ctx.MELTING_TEMPERATURE_UTILIZATION,)
