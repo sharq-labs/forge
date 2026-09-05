@@ -215,12 +215,29 @@ LUMPED_CAPACITY_TRANSIENT = SolverCapability(
 #: criterion, not a tuned tolerance.
 LUMPED_BIOT_LIMIT = Quantity(0.1, DIMENSIONLESS)
 
-#: Fo >= 0.2. Incropera, DeWitt, Bergman & Lavine, 6th ed. (2007), Sec. 5.5.2:
-#: for Fo > 0.2 the infinite series for a transient body with surface
-#: convection is represented to within about 2 % by its first term — that is,
-#: the body's response has become a single exponential. A single exponential is
-#: exactly and only what a one-capacity model can produce, so below this the
-#: model is not inaccurate, it is the wrong shape.
+#: Fo >= 0.2 — the one-term criterion, used for exactly what it establishes.
+#:
+#: Incropera, DeWitt, Bergman & Lavine, 6th ed. (2007), Sec. 5.5.2: for
+#: Fo > 0.2 the infinite series solution for a transient body with surface
+#: convection is represented to within about 2 % by its first term. A
+#: first-term-only response is a single exponential in time, which is the shape
+#: a one-capacity model computes. So past this point the exact solution and the
+#: lumped solution have the same shape, and the text puts the number on that.
+#:
+#: **What this condition therefore claims, and what it does not.** It claims
+#: the horizon is long enough that the one-term criterion is met. It does *not*
+#: claim that a shorter horizon makes the lumped model wrong. At small Bi the
+#: higher modes are suppressed by amplitude as well as by decay — their
+#: coefficients are O(Bi) — so a body at Bi = 1e-5 is very likely well
+#: described at Fo well below 0.2. This domain does not certify that, and says
+#: OUTSIDE_VALIDATED_DOMAIN rather than guessing: the status means *outside the
+#: domain we have validated*, not *wrong*, and a conservative screen is the
+#: honest use of it.
+#:
+#: An earlier revision of this constant claimed that below 0.2 "the body has
+#: several time scales and no lumped description has the right shape, however
+#: small Bi is". The final clause was an overclaim the source does not make and
+#: the physics does not support; it is removed rather than re-cited.
 LUMPED_MIN_FOURIER_NUMBER = Quantity(0.2, DIMENSIONLESS)
 
 #: h_r / h <= 0.1. The linearized radiation coefficient of Incropera 6th ed.,
@@ -495,15 +512,18 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                 name=INTERNAL_FOURIER_NUMBER,
                 minimum=LUMPED_MIN_FOURIER_NUMBER,
                 description=(
-                    "Fo = (t/tau)/Bi >= 0.2. The requested horizon measured "
-                    "against the body's own internal diffusion time. Above "
-                    "0.2 the higher modes of the exact series have died and "
-                    "the body responds as one exponential, which is all a "
-                    "one-capacity model can produce; below it the body has "
-                    "several time scales and no lumped description has the "
-                    "right shape, however small Bi is. Incropera et al., 6th "
-                    "ed. (2007), Sec. 5.5.2 (one-term approximation) with the "
-                    "identity Bi*Fo = t/tau of Sec. 5.2, Eq. 5.12."
+                    "Fo = (t/tau)/Bi >= 0.2: the horizon is long enough that "
+                    "the exact series solution for this body is within about "
+                    "2 % of its first term alone. A first-term-only response "
+                    "is a single exponential in time, which is the shape a "
+                    "one-capacity model computes, so past this point the two "
+                    "agree in form. Incropera et al., 6th ed. (2007), "
+                    "Sec. 5.5.2 (one-term approximation), with the identity "
+                    "Bi*Fo = t/tau of Sec. 5.2, Eq. 5.12. A conservative "
+                    "screen: below 0.2 the lumped model is not shown to be "
+                    "wrong, it is outside what this criterion validates — at "
+                    "small Bi the higher modes are suppressed by amplitude "
+                    "too, and a shorter horizon may well be adequate."
                 ),
             ),
             RangeCondition(

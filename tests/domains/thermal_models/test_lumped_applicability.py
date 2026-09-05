@@ -240,6 +240,27 @@ def test_the_fourier_floor_is_a_named_constant_at_the_one_term_value():
     assert "5.5.2" in condition.description
 
 
+def test_the_fourier_condition_claims_only_what_its_source_establishes():
+    """The bound is Sec. 5.5.2's number used for Sec. 5.5.2's claim.
+
+    Incropera's one-term criterion establishes that above Fo = 0.2 the exact
+    series is within ~2 % of its first term. It does *not* establish that below
+    0.2 a lumped model is wrong — at small Bi the higher modes carry O(Bi)
+    amplitude and may be negligible long before they have decayed. An earlier
+    revision asserted the stronger claim ("no lumped description has the right
+    shape, however small Bi is") on this citation; the description must state
+    the criterion it actually rests on and must not restore the overclaim.
+    """
+    description = _condition(ctx.INTERNAL_FOURIER_NUMBER).description
+    # what the source supports
+    assert "one-term approximation" in description
+    assert "first term" in description
+    # and the honest statement of what a failure means
+    assert "not shown to be wrong" in description
+    # the removed overclaim must not come back
+    assert "however small Bi is" not in description
+
+
 def test_no_upper_bound_is_placed_on_the_horizon_because_the_integration_is_exact():
     """A deliberate absence, asserted so it stays deliberate.
 

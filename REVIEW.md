@@ -1,7 +1,7 @@
 # Review — applicability conditions
 
-Read in full: `src/engcore/domains/thermal_models/context.py` (973 L),
-`.../lumped.py` (1224 L), and the applicability sections of
+Read in full: `src/engcore/domains/thermal_models/context.py` (997 L),
+`.../lumped.py` (1250 L), and the applicability sections of
 `src/engcore/domains/electrical/material.py` and `.../dc/models.py`.
 
 ---
@@ -11,10 +11,10 @@ Read in full: `src/engcore/domains/thermal_models/context.py` (973 L),
 **The shared mechanism.** Three links, each checkable:
 
 1. Every derivation returns `None` when an input is absent — 17 guards in
-   `context.py` (`:157 182 202 372 402 445 481 514 551 587 618 655 705 746 790
-   826 860`) and 5 in `material.py` (`:943 979 1005 1032 1071`).
+   `context.py` (`:157 182 202 380 410 453 489 522 563 599 630 667 735 776 820
+   856 890`) and 5 in `material.py` (`:943 979 1005 1032 1071`).
 2. Every assembler drops a `None` rather than emitting a placeholder:
-   `context.py:973`, `material.py:1116`, `dc/models.py:559`, and the two
+   `context.py:997`, `material.py:1116`, `dc/models.py:559`, and the two
    source contexts return `{}` (`dc/models.py:574 592`).
 3. An absent key reaches the core as `None` — `definition.py:337`
    (`context.get(condition.name)`) — and `RangeCondition.evaluate` returns
@@ -29,12 +29,12 @@ closed. Line numbers are post-fix.
 
 | # | Condition | Derived at | Context built at | Absent input → |
 |---|---|---|---|---|
-| 1 | `biot_number` | `context.py:406` | `context.py:910-923` | `:445` → dropped `:973` |
-| 2 | `internal_fourier_number` | `context.py:518` | `context.py:930` | `:551` (needs Bi) |
-| 3 | `conductance_excursion_ratio` | `context.py:674` | `context.py:971` | `:731` → dropped `:993` |
-| 4 | `capacity_excursion_ratio` | `context.py:713` | `context.py:953` | `:746` |
-| 5 | `radiation_to_convection_ratio` | `context.py:801` | `context.py:959` | `:826`, and `:790` if no ε |
-| 6 | `melting_temperature_utilization` | `context.py:834` | `context.py:966` | `:860` |
+| 1 | `biot_number` | `context.py:414` | `context.py:935-948` | `:453` → dropped `:997` |
+| 2 | `internal_fourier_number` | `context.py:526` | `context.py:974` | `:563` (needs Bi) |
+| 3 | `conductance_excursion_ratio` | `context.py:678` | `context.py:975` | `:735` → dropped `:997` |
+| 4 | `capacity_excursion_ratio` | `context.py:743` | `context.py:979` | `:776` |
+| 5 | `radiation_to_convection_ratio` | `context.py:831` | `context.py:984` | `:856`, and `:820` if no ε |
+| 6 | `melting_temperature_utilization` | `context.py:864` | `context.py:992` | `:890` |
 | 7 | `linearization_excursion_ratio` | `material.py:953` | `material.py:1097` | `:979` |
 | 8 | `operating_temperature_utilization` | `material.py:987` | `material.py:1102` | `:1005` |
 | 9 | `reduced_debye_temperature` | `material.py:1014` | `material.py:1106` | `:1032` |
@@ -70,12 +70,12 @@ signature so the branch cannot return.
 
 | # | Constant | Value | Source cited in code | Verdict |
 |---|---|---|---|---|
-| 1 | `LUMPED_BIOT_LIMIT` `lumped.py:210` | 0.1 | Incropera 6th ed. §5.1 Eq. 5.10 | text states this criterion |
-| 2 | `LUMPED_MIN_FOURIER_NUMBER` `lumped.py:218` | 0.2 | Incropera §5.5.2, one-term approx. | **flag — see below** |
-| 3 | `RADIATION_NEGLIGIBILITY_LIMIT` `lumped.py:226` | 0.1 | Incropera §1.2.3 Eq. 1.9 | **flag — admitted convention** |
-| 4 | `EXCURSION_BUDGET_LIMIT` `lumped.py:234` (hA) | 1.0 | §9.2 (why the bound is caller-set) | definitional |
+| 1 | `LUMPED_BIOT_LIMIT` `lumped.py:216` | 0.1 | Incropera 6th ed. §5.1 Eq. 5.10 | text states this criterion |
+| 2 | `LUMPED_MIN_FOURIER_NUMBER` `lumped.py:241` | 0.2 | Incropera §5.5.2, one-term approx. | restated — see below |
+| 3 | `RADIATION_NEGLIGIBILITY_LIMIT` `lumped.py:249` | 0.1 | Incropera §1.2.3 Eq. 1.9 | **flag — admitted convention** |
+| 4 | `EXCURSION_BUDGET_LIMIT` `lumped.py:256` (hA) | 1.0 | §9.2 (why the bound is caller-set) | definitional |
 | 5 | `EXCURSION_BUDGET_LIMIT` (capacity) | 1.0 | Table A.1 (why c_p varies) | definitional |
-| 6 | `PHASE_CHANGE_UTILIZATION_LIMIT` `lumped.py:242` | 1.0 | §5.1, single-phase formulation | definitional / hard limit |
+| 6 | `PHASE_CHANGE_UTILIZATION_LIMIT` `lumped.py:264` | 1.0 | §5.1, single-phase formulation | definitional / hard limit |
 | 7 | `LINEARIZATION_BUDGET_LIMIT` `material.py:378` | 1.0 | Ashcroft & Mermin Ch. 26 | definitional |
 | 8 | `OPERATING_TEMPERATURE_LIMIT` `material.py:384` | 1.0 | IEC 60115-1 Cl. 2 | definitional / hard limit |
 | 9 | `BLOCH_GRUENEISEN_LINEAR_FLOOR` `material.py:395` | 1/3 | A&M Ch. 26 Eq. 26.55; Kittel Ch. 6 | **flag — admitted convention** |
@@ -83,67 +83,67 @@ signature so the branch cannot return.
 | 11-14 | `RATING_UTILIZATION_LIMIT` `dc/models.py:87` | 1.0 | IEC 60115-1 Cl. 2 | definitional |
 
 Eleven of fourteen bounds are **1.0 or 0.0** — "you have consumed all of the
-budget you declared", which needs no citation. Only three carry a real number,
-and all three are flagged:
+budget you declared", which needs no citation. Only three carry a real number:
+one has since been restated; two remain flagged as conventions:
 
-- **#2, Fo ≥ 0.2 — the worst of the three, and the code does not say so.**
-  Incropera §5.5.2 establishes 0.2 as the accuracy boundary of the *one-term
-  approximation to the series solution* of a body with internal conduction. The
-  condition uses it for a different claim: "below this the body has several
-  time scales and no lumped description has the right shape"
-  (`lumped.py:492-501`). That inference is reasonable — one-term validity and
-  single-exponential response are the same statement — but the text does not
-  make it, and the constant's comment presents 0.2 as though it did. The other
-  two conventions are labelled as conventions; this one is not.
+- **#2, Fo ≥ 0.2 — was the worst of the three; since restated.** Incropera
+  §5.5.2 establishes 0.2 as the accuracy boundary of the *one-term
+  approximation to the series solution*. The condition used it for a stronger
+  claim — "below this the body has several time scales and no lumped
+  description has the right shape, however small Bi is" — which the text does
+  not make and which is in fact false at small Bi, where the higher modes carry
+  O(Bi) amplitude and are negligible before they have decayed. The condition now
+  claims exactly the one-term criterion and labels itself a conservative screen:
+  below 0.2 the model is *not validated*, not *shown wrong*. The citation and
+  the number now match the claim, so this is no longer a flag.
+  `test_the_fourier_condition_claims_only_what_its_source_establishes` pins it,
+  including that the removed clause does not return.
 - **#3, h_r/h ≤ 0.1.** Eq. 1.9 establishes `h_r`, not the ceiling.
-  `lumped.py:224-226` says so explicitly ("the same neglected-mechanism
+  `lumped.py:243-249` says so explicitly ("the same neglected-mechanism
   convention … it is a convention, and it is recorded as one"). Honest.
 - **#9, T/θ_D ≥ 1/3.** `material.py:391-395` says neither text prints ⅓ and
   calls it "the conventional engineering reading". Honest.
 
-No threshold is *wrong*. One (#2) is cited more confidently than its source
-supports.
+No threshold is *wrong*. #2 was cited more confidently than its source
+supported, and has been restated to claim only what §5.5.2 establishes.
 
 ---
 
 ## 3. Is `context.py` larger than it needs to be?
 
-Measured: 973 lines — 525 code, 300 docstring, 111 blank, 37 comment;
-24 functions. Removal candidates, most to least valuable, **none applied**:
+Measured after the fixes above: 997 lines, 24 functions. Candidates, most to
+least valuable, **none applied**:
 
 1. **`_as_quantity` + `_positive` are always called as a nested pair** — 36 and
-   20 call sites. Every one reads
-   `_positive(_as_quantity(v, U, L), U, L)`, repeating unit and label twice.
-   One `_checked(value, unit, label, *, positive=False)` collapses ~20
-   four-line expressions to one line each. **~60 lines.**
+   20 call sites, every one reading `_positive(_as_quantity(v, U, L), U, L)`
+   and repeating unit and label twice. One
+   `_checked(value, unit, label, *, positive=False)` collapses ~20 four-line
+   expressions to one line each. **~60 lines.**
 2. **The 9 declaration fields are enumerated four times** — `__post_init__`
-   `:241-249`, `is_empty` `:280-290`, `to_dict` `:298-308`, `from_dict`
-   `:317-327` (plus `__all__` and the field list itself). A module-level tuple
-   of `(name, unit, positive)` specs drives all four; `is_empty` can use
-   `dataclasses.fields(self)`. **~35 lines**, and it removes the real risk that
-   a tenth field is added to three of the four places.
+   `:247`, `is_empty` `:286`, `to_dict` `:303`, `from_dict` `:321` (plus
+   `__all__` and the field list). A module-level tuple of
+   `(name, unit, positive)` specs drives all four; `is_empty` can use
+   `dataclasses.fields(self)`. **~35 lines**, and it removes the real risk of a
+   tenth field reaching three of the four places.
 3. **Every public function re-validates what the declaration already
-   validated.** `LumpedApplicabilityDeclaration.__post_init__` (`:239-276`)
-   already enforces type, dimension, positivity, the emissivity range and the
-   span scale; `derived_lumped_quantities` then passes those same values into
-   functions that check them again. Defensible (the functions are public and
-   the unit tests call them directly) but it is a second enforcement point.
+   validated** (`__post_init__` `:247` enforces type, dimension, positivity,
+   the emissivity range and the span scale). Defensible — the functions are
+   public and the unit tests call them directly — but it is a second
+   enforcement point.
 4. **`__all__` has 43 entries** restating every public name.
 5. **Five unit constants are duplicated verbatim in `lumped.py`** —
    `TEMPERATURE_UNIT`, `POWER_UNIT`, `CAPACITY_UNIT`, `CONDUCTANCE_UNIT`,
-   `TIME_UNIT` are defined in both files. `lumped.py` already imports 20 names
-   from `context.py`; these five could join them.
-6. **`peak_body_temperature` `:596` and `surface_temperature_excursion` `:628`**
-   both convert two endpoints to kelvin and take a max; one shared
-   endpoint-extremes helper would serve both. **~10 lines.**
-7. **`transient_horizon_ratio` `:485` is derived and exported but carries no
-   condition** — it exists to build `internal_fourier_number` and as a
+   `TIME_UNIT`. `lumped.py` already imports 20 names from `context.py`.
+6. **`peak_body_temperature` `:608` and `surface_temperature_excursion` `:640`**
+   both convert two endpoints to kelvin and take a max; one shared helper would
+   serve both. **~10 lines.**
+7. **`transient_horizon_ratio` `:493` is derived and exported but carries no
+   condition** — it builds `internal_fourier_number` and is otherwise a
    diagnostic. Deliberate (`test_no_upper_bound_is_placed_on_the_horizon…`),
    worth knowing it is not load-bearing.
 
 Cutting 1, 2, 5 and 6 removes roughly **110 lines without losing a check**. The
-300 docstring lines are not padding: they carry the definitions and the
-citations, which is the point of the module.
+docstrings are not padding: they carry the definitions and the citations.
 
 ---
 
@@ -154,24 +154,21 @@ citations, which is the point of the module.
 `result.py:45-75` lists 14 fields; there is no validity field, and no
 `ValidityAssessment` import anywhere under `results/`.
 
-**A consumer holding a `ScientificResult` can see:** the values, which model
-and version produced them (`models`, `:49`), which realization and solver
-(`provenance.bindings`), what checks ran and what they establish
-(`validation`), whether the solve converged (`convergence`), and the model's
-declared `assumptions` (`:54`).
+**A consumer can see:** the values, which model and version produced them
+(`models`, `:49`), which realization and solver (`provenance.bindings`), what
+checks ran and what they establish (`validation`), whether the solve converged
+(`convergence`), and the declared `assumptions` (`:54`).
 
-**Cannot see:** whether the model was applicable to these inputs. The verdict
-exists only if someone calls `assess_lumped_validity` (`lumped.py:926`) or
+**Cannot see:** whether the model was applicable. The verdict exists only if
+someone calls `assess_lumped_validity` (`lumped.py:951`) or
 `assess_rated_resistance_validity` (`material.py:1130`) and keeps the answer
-alongside; it is not in the result, not in provenance, and not serialized. A
-result that converged outside its validity domain is indistinguishable from one
-that did not.
+alongside; it is not in the result, provenance, or serialization. A result that
+converged outside its validity domain is indistinguishable from one that did not.
 
-**Minimal core change:** one optional field on `ScientificResult` —
-`validity: ValidityAssessment | None = None` — plus its `to_dict`/`from_dict`
-lines. `ValidityAssessment` is already in the core (`definition.py:280`) and
-names no domain, so this adds no domain vocabulary to `scientific/`. `None`
-must stay distinct from `ValidityStatus.UNKNOWN`: *not assessed* and *assessed,
+**Minimal core change:** one optional field — `validity: ValidityAssessment |
+None = None` — plus its `to_dict`/`from_dict` lines. `ValidityAssessment` is
+already in the core (`definition.py:280`) and names no domain. `None` must stay
+distinct from `ValidityStatus.UNKNOWN`: *not assessed* and *assessed,
 insufficient context* are different failures.
 
 ### 4.2 The convection regime is not in the problem — now harmless
@@ -189,7 +186,7 @@ now, so nothing deciding a verdict is missing from provenance.
 
 **A consumer can see:** every quantity-valued declaration — characteristic
 length, area, conductivity, emissivity, both excursion bounds, melting point —
-as problem parameters (`lumped.py:752-811`) and again in `provenance.inputs`;
+as problem parameters (`lumped.py:774-833`) and again in `provenance.inputs`;
 that is now the complete set of things any verdict rests on.
 
 **Cannot see:** that forced convection was claimed — now a loss of *context*

@@ -545,9 +545,13 @@ def internal_fourier_number(
     of the body's own internal diffusion time ``L_c^2 / alpha``. The exact
     series solution for a body cooling by convection has higher modes decaying
     like ``exp(-zeta_n^2 Fo)``; once they have died the body's response *is* a
-    single exponential, which is precisely and only what the lumped model
-    claims. Below that point the body has more than one time scale and no
-    single-capacity description can represent it, however small Bi is.
+    single exponential, which is the shape the lumped model computes. That is
+    what the threshold on this number checks, and all it checks — see
+    :data:`~engcore.domains.thermal_models.lumped.LUMPED_MIN_FOURIER_NUMBER`
+    for what a low value does and does not establish. In particular, a small Fo
+    does not by itself make a lumped description wrong: at small Bi the higher
+    modes carry O(Bi) amplitude as well as decaying, so they may be negligible
+    long before they have decayed.
 
     Returns ``None`` when either input is absent.
     """
