@@ -3121,3 +3121,38 @@ Scoring the development split against the **GUARD 7** `src/` gives figures
 identical to this branch's, field for field, including the ten false-accept ids.
 So the repair costs no number; it costs the `src/` tree object the release page
 pins, which must be re-read and the tag re-cut after a rebase.
+
+---
+
+## RULE — a check whose failure has never been observed is unverified
+
+Not a note. A rule, because there are now three instances in two rounds and the
+fix was the same every time.
+
+| # | The check | What it was credited with | Why it could never fail |
+|---|---|---|---|
+| 1 | the benchmark's catch rate | 1547/1547, **100 %** | `electrical.dc.kcl` declared no validity conditions, so every model assessed UNKNOWN and no payload could reach SUPPORTED. A tool that refuses everything catches everything. |
+| 2 | `pytest.importorskip("mcp")` | "the suite stays green without the SDK" | `tests/mcp/` has no `__init__.py` and pytest puts `tests/` on `sys.path`, so that directory **is** an importable PEP 420 namespace package named `mcp`. The name always resolved. |
+| 3 | GUARD 3's layering sweep | "the CSTR gate is the only one left" | the same commit created `scientific/results/thresholds.py` containing `CSTR`. The test encoding that invariant was already in the repo and already failing. |
+
+Each was written in good faith, each was documented as working, and each was
+believed for at least a round. None of them had ever been seen to fail.
+
+**The rule.** Before a check is allowed to count as evidence, its failure must
+have been *observed at least once*. Make it fail on purpose — delete the
+condition, uninstall the package, plant the violation — watch the failure, then
+put it back. A check that has only ever passed is indistinguishable from a check
+that cannot fail, and the two are told apart by exactly one experiment.
+
+**What this costs:** one deliberate breakage per check, once. What skipping it
+cost: an unearned 100 % catch rate published across two rounds; a guard that
+silently protected nothing while its own comment stated the rule it was
+violating; and seven tests failing for four commits behind a green FAST tier.
+
+**Where it bites hardest.** A check that gates a *level*, a *verdict* or a
+*publication* is worth more than a check that reports a number, because nobody
+audits the ones that keep saying yes. Every validity condition in
+`src/engcore/scientific/` is in that category, and this round did not sweep them
+— it only names the pattern. **A census of conditions that have never been
+observed to fail is the obvious next round, and it has not been done.**
+
