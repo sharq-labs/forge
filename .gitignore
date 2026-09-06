@@ -20,3 +20,6 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Scoring output written to the repo root by score_hard.py
+/results_hard.json
