@@ -1,5 +1,30 @@
 # Results
 
+## Read this before the numbers
+
+**I wrote the cases, I wrote the reference model they are checked against, and I
+assigned every label — so their perfect agreement on all 92 fully-declared cases
+is close to guaranteed and is evidence of almost nothing. The only result here
+that survives that objection is the derating miss, because its ground truth is a
+curve printed on the datasheet.**
+
+That is the honest summary of this round's method, and it belongs at the top
+rather than in a limitations section at the bottom. Everything below should be
+read through it:
+
+* The **catch rate is the weakest number in this file.** It counts cases built
+  by the same hand that wrote the checker they were checked against, placed far
+  from every bound on purpose. It is not a difficulty measurement and it is not
+  comparable to `benchmarks/hard/`.
+* The **six false accepts are the strongest.** They are decided by a derating
+  curve on a manufacturer's datasheet — a source neither I nor the tool wrote —
+  so no amount of shared authorship can make them agree by construction. Section
+  4 is the part of this document that would still stand if everything else in it
+  were discarded.
+* The **0/28 false rejects are not what they look like.** See section 2.
+
+Section 5 carries the rest of the limitations. This preamble does not replace it.
+
 ## 1. What was measured
 
 100 thermal designs, drawn from 35 real resistors and 23 real package thermal
@@ -54,8 +79,20 @@ Per failure class, `fully_declared`:
 | `inconsistent_inputs` | 10 | 10 | 0 | 10 | 0 |
 | `insufficient_input` | 2 | 2 | 0 | **0** | **2** |
 
-Three numbers in those tables carry most of the information, and none of them is
-the catch rate.
+**The 0/28 false rejects do not mean what a reader will take them to mean.** All
+28 sound cases declare a fluid whose conductivity was **solved for**, so that the
+correlation reproduces the coefficient the design states. That is the same
+synthetic construction `benchmarks/hard/` documents for its own fluid, and it is
+legitimate — the tool has no fluid table and claims none, so what the convection
+conditions test is whether declared numbers agree with each other. But it means
+**0/28 is a false-reject rate on self-consistent declarations, not on real
+designs.** A real design states a thermal resistance off a datasheet and says
+nothing about the air around the part; whether the tool then refuses it wrongly
+is not measured here and cannot be, until designs that were not built to be
+consistent arrive.
+
+Three more numbers in those tables carry most of the remaining information, and
+none of them is the catch rate.
 
 * **All six false accepts are one thing** — `S049`–`S054`, the derating family.
   See section 4.
