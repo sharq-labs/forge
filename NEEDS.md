@@ -2342,6 +2342,108 @@ That is a battery-domain change and TASK C forbids it.
 
 ---
 
+## A CHECK WHOSE FAILURE HAS NEVER BEEN OBSERVED IS UNVERIFIED
+
+Relayed from the evidence-package round, which inherited a broken commit from
+this one and bisected it. The rule is theirs; the accounting below is this
+round's own, and it is not flattering.
+
+### What went wrong here: the tier
+
+`c0ec657` (GUARD 3) shipped seven failing tests in `tests/domains/kinetics/`.
+Bisected on this branch, which confirms and slightly corrects the report that
+raised it:
+
+| commit | `tests/domains/kinetics/` |
+|---|---|
+| `dd4f698` merge base | 226 passed |
+| `40e8956` GUARD 2 | 227 passed |
+| **`c0ec657` GUARD 3** | **7 failed**, 220 passed |
+| **`3609864` GUARD 4** | **7 failed**, 220 passed |
+| **`149b68f` GUARD 5** | **7 failed**, 220 passed |
+| `944a48b` GUARD 6 | 227 passed — repaired |
+| `9e41f5a` GUARD 7 | 227 passed |
+
+**Three commits with red tips, repaired at GUARD 6** — not four, and not
+repaired at GUARD 7, which is where the incoming report placed it because it
+did not test the two commits in between. The correction matters only to
+somebody bisecting or rebasing onto this history, which is exactly who found
+it.
+
+Two causes, both introduced by `c0ec657`:
+
+1. A rename of `thresholds["x"]` to a local `_x` rewrote three *property
+   bodies* into `return self._tolerance_rel_tol`, an attribute that exists
+   only as a local variable inside a function. Every access raised
+   `AttributeError`, and the interpreter's own suggestion was the property it
+   had just replaced.
+2. `scientific/results/thresholds.py`, created by the same commit, contained
+   the string `CSTR`, which violates the layering invariant that the
+   scientific core owns no domain-specific rule.
+
+**Both were found and fixed inside this round, at GUARD 6, and both were found
+by the expensive tier.** The round's instruction was "FAST green after each",
+and each of GUARD 3, 4 and 5 reported a true FAST result. FAST could not see
+any of the seven, because they are `expensive`-marked. The letter was met and
+the intent was not.
+
+The second cause is the sharper one, and it is the rule in miniature: GUARD 3's
+commit message **asserted the layering invariant in prose while the same commit
+violated it**, and a test encoding that invariant was already in the repository.
+Nothing needed writing. It needed running.
+
+**The rule adopted: run the tier that can catch it, not the tier that is fast.**
+A green FAST tier is not evidence that a `src/` change is sound. FULL is four
+minutes.
+
+### What went wrong here: the checks
+
+The same round wrote sixteen new mechanical checks and asserted they were
+guards. None of that is evidence. The rule says: break the thing each one
+guards, and watch it go red.
+
+`tests/mutation_guards.py` does that. It copies the tree, removes one guard
+from the copy as if it had never been written, and runs
+`tests/test_core_guards.py` against it. **16 of 16 mutations turn the suite
+red**, across all seven guards and both halves of the ones that have a static
+sweep and a runtime check.
+
+The interesting result was a false one. The first `G2b` mutation inserted a
+comment and left `evidence=` in place; the suite stayed green, which looks
+exactly like an unchecked guard and was not — nothing had been removed. That is
+recorded in the harness as its own lesson: **a green result is a claim about
+your mutation before it is a claim about your check**, and it was one keystroke
+from being reported here as a real gap.
+
+### The three earlier instances, for the pattern file
+
+The rule was not derived from this round. It has been paid for three times:
+
+* The hard benchmark's 100 % catch rate, which no case could have lowered:
+  `electrical.dc.kcl` declared no validity conditions, so nothing could ever
+  reach SUPPORTED.
+* `pytest.importorskip("mcp")`, which never skipped, because `tests/mcp/` is
+  itself an importable PEP 420 namespace package named `mcp`. The guard
+  imported the directory it was written in.
+* GUARD 3's layering assertion, above.
+
+All three look like checks. The only thing that separates a check from a
+sentence about a check is having watched it fail.
+
+### What this changes going forward
+
+1. **FULL before any commit that touches `src/`**, not FAST. Four minutes.
+2. **Every new mechanical check gets a mutation entry** in
+   `tests/mutation_guards.py` in the same commit that adds the check. A check
+   with no entry is a sentence.
+3. **A commit message may not assert an invariant the commit did not run the
+   check for.** GUARD 3's did, and the check existed.
+
+The map in this file lists where else the seven patterns could live. This
+entry is the eighth pattern, and it is about the reviewer rather than the code.
+
+---
+
 # NEEDS — core-guards round
 
 Seven repeated review findings moved from the domains into the core. Owned
@@ -2350,9 +2452,10 @@ paths were `src/engcore/scientific/**`, the five domain packages except
 `src/engcore/domains/thermal/conduction1d/**`, `tests/conftest.py` and three
 byte-pinned test modules were frozen and are untouched.
 
-Three documents follow: a map of where else the seven patterns could live, a
-scoped and costed plan for the thermal re-freeze that four of the guards
-need, and the per-guard entries for what each one could not have.
+Four documents follow: the rule this round broke and what it cost, a map of
+where else the seven patterns could live, a scoped and costed plan for the
+thermal re-freeze that four of the guards need, and the per-guard entries for
+what each one could not have.
 
 ## WHERE ELSE THE SEVEN PATTERNS COULD LIVE — a map for the next reviewer
 
