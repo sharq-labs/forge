@@ -40,7 +40,7 @@ in the core and names no domain.
 and this is exactly the kind of change that should be argued before it is made.
 
 **Status after STEP 7: worked around, deliberately, and the workaround is not a
-substitute.** `engcore.mcp.EvidencePackage` carries validity itself, as a tuple
+substitute.** `engcore.mcp.CredibilityEvidenceReport` carries validity itself, as a tuple
 of `ModelValidityRecord` the assembler supplies. That closes the gap for anyone
 holding a *package* and leaves it wide open for anyone holding a *result*: the
 assessment still has to be made by whoever has both the problem and the
@@ -190,9 +190,9 @@ that list because the file is outside the owned paths. One line to add when
 somebody is next in there:
 
 ```
-- ``mcp``         evidence packaging for consumers: carries validity,
-                  validation and provenance together and derives an advisory
-                  verdict from them
+- ``mcp``         the verification and validation (V&V) layer: assembles a
+                  credibility evidence report carrying validity, validation and
+                  provenance together, and derives an advisory verdict from them
 ```
 
 **`docs/TESTING.md` needs no new tier entry, but its counts are now stale
@@ -221,38 +221,54 @@ counts dropped in favour of the commands that produce them.
 
 **`ScientificResult.validity` — see §1.1**, whose status is updated above.
 
-### 1.8b SUPPORTED does not require any evidentiary level — proposed strengthening
+### 1.8b SUPPORTED now requires at least one attained level — DONE, and the gap it exposes
 
-**Not a core change; a change to the brief's verdict rule, so not made.**
+**Status: done in the consolidation round.** `derive_verdict` returns
+`INSUFFICIENT_EVIDENCE` unless some check both passed and established a level.
+The guard is evidential rather than numeric — it replaced "there are no checks
+at all" with "no check both passed and established a level", reusing
+`ValidationReport.attained_levels` as the definition of what counts. Precedence
+is unchanged: `NOT_SUPPORTED` still wins.
 
-`SUPPORTED` is specified as "everything else: all validity IN_DOMAIN, no
-failures, no NOT_RUN gap". It says nothing about what the passing checks
-*established*. A solver emitting one passing check with `establishes=None`
-therefore yields a `SUPPORTED` package whose `attained_levels` is empty — and
-that is not hypothetical: the lumped thermal solver deliberately claims no
-level for its residual check ("being the one solver to award itself the highest
-level in the taxonomy, from the weakest evidence, is exactly the unearned claim
-the result contract exists to refuse"), so the IN_DOMAIN real-run package in
-`tests/mcp/test_evidence.py` is SUPPORTED with `attained_levels == frozenset()`.
+The argument is the one the platform already makes one level down. `NOT_RUN` is
+a distinct outcome because a check that did not run is not a check that passed;
+absence of a result is not a result. A passing check that establishes nothing
+is the same shape of thing one level up — it has failed to object, which is not
+the same as having produced evidence — and reading a package of such checks as
+`SUPPORTED` reintroduces exactly the substitution `NOT_RUN` exists to prevent.
 
-Defensible as specified — nothing in that package argues *against* the result,
-which is what SUPPORTED claims — and weaker than a reader may assume. Three
-things were done instead of changing the rule:
+**What flipped.** Two solvers in this repository produce a fully successful
+report whose `attained_levels` is empty, so every package built on either is
+now `INSUFFICIENT_EVIDENCE`:
 
-* `EvidencePackage.attained_levels` is exposed beside the verdict.
-* `to_dict` emits a `verdict_qualifiers` block carrying `attained_levels`,
-  `warning_checks` and `unassessed_models`, so a JSON reader who never opens
-  the check list still sees what a SUPPORTED verdict rests on.
-* `required_levels` lets a study declare the bar it needs; a level demanded and
-  not attained is `INSUFFICIENT_EVIDENCE`.
+* `LumpedThermalSolver` (`src/engcore/domains/thermal_models/lumped.py:1219`)
+  — the known case, and the one the IN_DOMAIN electrothermal real-run tests in
+  `tests/mcp/test_evidence.py` are built on. Those tests now assert
+  `INSUFFICIENT_EVIDENCE`.
+* `ResistancePropertySolver`
+  (`src/engcore/domains/electrical/material.py:1358`) — **not previously
+  named anywhere**, and a second casualty found only when the change was made.
 
-**The proposal, if the rule is ever revisited:** make the guard evidential
-rather than numeric — replace "there are no checks at all" with "no check both
-passed and established a level". That reuses the core's own definition of what
-counts and makes `SUPPORTED` mean "at least one level was actually attained".
-The cost is that every current lumped-thermal package becomes
-`INSUFFICIENT_EVIDENCE`, which is arguably the honest answer and is certainly a
-decision for whoever owns the verdict semantics, not for this implementation.
+**The gap, as a finding.** Twenty-one passing checks across eight solvers
+establish nothing. That is now visible in the verdict rather than absorbed by
+it, which is the point. What each would need to earn a level:
+
+| Solver | Passing checks with `establishes=None` | Report attains a level? | What it would need |
+|---|---|---|---|
+| `LumpedThermalSolver` — `lumped.py:1219` | `lumped_balance_residual` | **No** | A `metric_dimensions` check on the pattern `battery/solver.py:492` already uses, comparing the three emitted metrics against the model record's `ModelOutputSpec` unit exemplars → `DIMENSIONALLY_VALID`. The record is a reference outside the arithmetic, so the level is earned rather than asserted. A march of the same ODE by an independent scheme would earn `NUMERICALLY_CONVERGED`; `ANALYTICALLY_VERIFIED` was deliberately removed from this check once and should not come back to it. |
+| `ResistancePropertySolver` — `material.py:1358` | `resistance_strictly_positive` | **No** | The same `metric_dimensions` move, one metric wide: `RESISTANCE_METRIC` against the `ModelOutputSpec`'s declared unit → `DIMENSIONALLY_VALID`. Its own docstring is right that an admissibility bound verifies nothing against anything; a dimensional check would be the first thing it verifies against something. |
+| `BatteryCellSolver` — `battery/solver.py:525`, `:555` | `coulomb_balance_residual`, `rint_terminal_residual` | Yes (`:500`) | Both check a closed form against the relation it was derived from. An independent integration of `dz/dt` sharing no code with the closed form would earn `NUMERICALLY_CONVERGED`; evaluating the same circuit through `electrical/dc`'s MNA path — a genuinely separate implementation — would earn `CROSS_SOLVER_VALIDATED`. |
+| `ElectricalDCSolver` / `NgspiceDCSolver` — `dc/validation.py:211`, `:257`, `:297`, `:338` | `kirchhoff_current_law`, `resistor_metric_consistency`, `voltage_source_relation`, `power_balance` | Yes (`:141`, `:160`) | These are the repository's strongest argument for a **new** `ValidationLevel`: there is no member for "independently reconstructed physical consistency", and the code says so at `dc/validation.py:358-365`. Within today's taxonomy, a native-vs-ngspice agreement check would be a defensible `CROSS_SOLVER_VALIDATED` — the two paths share `assemble` but not the solve. |
+| `NgspiceDCSolver` — `ngspice.py:845`, `:887` | `realization_precondition_non_singular`, `provider_element_metric_consistency` | Yes (via shared) | The first is a precondition and should stay level-free by design. The second already compares an external provider's numbers against Crafty's declared relations; widened to compare the provider's full solution against Crafty's own solve of the same circuit, it would be `CROSS_SOLVER_VALIDATED`. |
+| `CSTRSolver` — `cstr/validation.py:175`, `:200`, `:256`, and `:584` in the gate | `integration_reported_success`, `trajectory_finite`, `state_physically_admissible`, `cross_method_agreement` | Yes (`:284`), but its `NOT_RUN` checks already make single-solve packages `INSUFFICIENT_EVIDENCE` | The first three are a run's honest opinion of itself and no level fits. `cross_method_agreement` is deliberately level-free because BDF and Radau share the RHS, the Jacobian and SciPy's step control; giving the second method an independent RHS and Jacobian would make it `CROSS_SOLVER_VALIDATED`, and that is real work. |
+| `Conduction1DSolver` — `thermal/conduction1d/validation.py:133`, `:152`, `:163`, `:179` | `linear_system_residual`, `field_finite`, `boundary_conditions_held`, `amplitude_decay` | Yes (`:200`), and `NOT_RUN` already dominates | **Frozen path — observation only.** The refinement gate is already the intended home for level-earning here and does it. |
+| `SchemeSolver` / `ReducedSchemeSolver` — `conduction1d_schemes.py:612`, `:623`, `:643` | `field_finite`, `amplitude_decay`, `boundary_conditions_held` | Yes (`:659`), and `NOT_RUN` already dominates | `amplitude_decay` does the most real work — it is a property of the equation, not the scheme. Compared against the analytic Fourier-mode decay already implemented for the sibling gate, it would be `ANALYTICALLY_VERIFIED`. Separately: `boundary_conditions_held` at `:643` is the only check in the repository emitted with **no `detail` string**, so a reader of the serialized report sees an empty explanation. |
+
+**Not proposed here:** adding a `ValidationLevel` member for "internally
+consistent". Four of the checks above want one, and inventing a level so that
+more packages clear the bar is the exact move this change exists to refuse. If
+the level is real it should be argued on its own merits, not on how many
+verdicts it would improve.
 
 ### 1.9 `ValidityAssessment` is the one core record that validates nothing
 
@@ -267,7 +283,7 @@ through `tuple()`. `ValidityAssessment` has none. So
 at all, and a `list` passed for `violated` stays a list and makes the frozen
 record unhashable.
 
-**Why it matters here.** `EvidencePackage`'s verdict is decided by set
+**Why it matters here.** `CredibilityEvidenceReport`'s verdict is decided by set
 membership over the statuses it carries. A *correct* string is harmless —
 `ValidityStatus` is a `str` enum whose members hash equal to their values — but
 an *unrecognised* one matches neither the NOT_SUPPORTED nor the
@@ -381,57 +397,86 @@ argued with.
 
 ## 1. Changes wanted outside the owned paths — not made
 
-### 1.1 `dimensionality()` compares dimensions as strings, and the strings are order-dependent
+### 1.1 `dimensionality()` compared dimensions as strings — FIXED
 
 **Where** `src/engcore/scientific/units/quantity.py` — `dimensionality()`,
-`Quantity.is_compatible_with`, `Quantity.to`.
+`Quantity.is_compatible_with`; `src/engcore/scientific/units/validation.py` —
+`require_same_dimension`.
 
-**What was hit.** `Quantity(2.5, "ampere") * Quantity(0.03, "ohm")` produces a
-quantity in `ampere * ohm`, and `.to("volt")` on it **raises**. The two are the
-same physical dimension. The units backend renders the composite's exponents in
-a different order from the named unit's:
+**Status: done.** Raised here as a proposal by the battery round, and taken in
+the consolidation round as the one authorised change to the core.
+
+**What was hit.** `Quantity(2.5, "ampere") * Quantity(0.03, "ohm")` produced a
+quantity in `ampere * ohm`, and `.to("volt")` on it **raised**. The two are the
+same physical dimension. The units backend renders a composite's exponents in
+the order the composite was built, not in the order the named unit renders
+them:
 
 ```
 ampere * ohm  ->  [mass] * [length] ** 2 / [current] / [time] ** 3
 volt          ->  [mass] * [length] ** 2 / [time] ** 3 / [current]
 ```
 
-`dimensionality()` returns that rendering as a `str`, and every compatibility
-check in the core is `dimensionality(a) == dimensionality(b)`, so two
-dimensionally identical quantities compare unequal and a correct conversion is
-refused as a units error.
+`dimensionality()` returned that rendering as a `str`, and every compatibility
+check in the core was `dimensionality(a) == dimensionality(b)`, so two
+dimensionally identical quantities compared unequal and a correct conversion
+was refused as a units error.
 
-This is not exotic. `I * R` is the single most ordinary product in electrical
-work, and it is the first thing a new domain multiplying two quantities will
-hit. It is silent until it raises, and when it raises it reports a physics
-error for a rendering detail.
+This was not exotic. `I * R` is the single most ordinary product in electrical
+work, and it was the first thing a new domain multiplying two quantities hit.
+It was silent until it raised, and when it raised it reported a physics error
+for a rendering detail. An exhaustive sweep over the named electrical and
+mechanical units finds twenty-one distinct composite→named conversions that
+the string comparison refused.
 
-**Worked around, not papered over.** `context._ohmic_drop` composes `I·R` from
-magnitudes (`magnitude_in("ampere") * magnitude_in("ohm")`, tagged `"volt"`).
-Both inputs still pass through `magnitude_in`, so the conversion is exactly as
-checked as a product would have been; only the *composition* is done in
-magnitudes, and only for this one product. The reason is written at the
-function, so a reader does not have to rediscover it.
+**What was done.** Two functions where there was one:
 
-**Proposal.** Compare dimensionality through the backend's own
-`UnitsContainer` (or any canonical, order-independent form) rather than through
-its `str`. Something of the shape:
+* `dimension_of(unit)` returns the backend's own `UnitsContainer`, which is a
+  mapping from dimension to exponent and compares and hashes by content.
+  `Quantity.is_compatible_with` and `require_same_dimension` decide
+  compatibility on these objects, so no rendering is involved.
+* `dimensionality(unit)` still returns a `str`, for messages, display and
+  anything that serializes one — but the rendering is now **canonical**: the
+  container is rebuilt with its dimensions sorted before it is rendered.
 
-```python
-def dimensionality(unit: str) -> str:
-    dims = registry().Unit(normalize_unit(unit)).dimensionality
-    return ",".join(f"{k}:{v}" for k, v in sorted(dims.items()))
-```
+The string form was kept canonical rather than merely kept, because the
+comparison sites are not all inside this subpackage. `composition/dependency.py`,
+`ir/problem.py`, `models/definition.py` and
+`systems/electrothermal/resistor_body.py` compare `dimensionality()` strings
+directly, and those comparisons were wrong for exactly the same reason. Sorting
+the rendering fixes them without editing them — which mattered, because the
+consolidation round's rules confined the change to
+`src/engcore/scientific/units/`.
 
-That is a one-function change, it is not a domain conditional, and it names no
-physics. It **does change a serialized string**, so it needs checking against
-anything that persists a dimensionality — the binding-issue detail strings in
-`ScientificModelDefinition.check_against` embed it in prose, which is display
-only, but a frozen record that stores one would need a re-freeze.
+The rebuild goes through the container's own type rather than joining
+`f"{k}:{v}"` by hand, as an earlier sketch of this proposal suggested. That
+keeps the rendering the backend's own and changes only its order: `[temperature]`
+and `dimensionless` come out exactly as before, and only a multi-dimension
+ordering — which was arbitrary — moves.
 
-**Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
-and a change to how the core decides two units are compatible is exactly the
-kind that should be argued before it is made.
+**Checked before changing.** No dataclass field stores a dimensionality and no
+`to_dict()` emits one: `QuantityDependency.dimension` is a property recomputed
+from its unit exemplar, not a stored field. The renderings that do reach
+persisted artifacts do so inside exception text, and the one committed artifact
+that carries such a message (`experiments/kinetics_k1/k1_results.json`) quotes
+`pascal` and `kelvin`, whose renderings are order-invariant. No frozen digest
+map pins `src/engcore/scientific/units/`.
+
+**The workaround it forced, now removed.** `context._ohmic_drop` composed `I·R`
+from magnitudes (`magnitude_in("ampere") * magnitude_in("ohm")`, tagged
+`"volt"`) with a docstring explaining why. It is plain quantity arithmetic
+again — `(current * resistance).to(VOLTAGE_UNIT)` — and the explanation is
+gone with the reason for it. An AST sweep for the same signature (two raw
+magnitudes of *different* units multiplied, result re-tagged with a literal
+unit) finds no other instance anywhere in `src/`, `tests/`, `benchmarks/` or
+`experiments/`.
+
+**One asymmetry left.** `src/engcore/scientific/__init__.py` re-exports
+`dimensionality` but not `dimension_of`, because that file is outside the
+units subpackage and the round's rules did not authorise editing it. Anything
+outside `units/` that wants the object form imports it from
+`engcore.scientific.units` directly. One line to add when somebody is next in
+there.
 
 ### 1.2 `ScientificResult` still cannot carry a validity assessment
 
@@ -477,6 +522,37 @@ into `CouplingOutcome` would be the wrong direction: that enum answers *why the
 iteration stopped*, and this one answers *whether there was an iteration*.
 
 ---
+
+### 1.4 The cell cannot declare how its `R_int` was characterised
+
+**Where** `src/engcore/domains/battery/context.py` — `CellSpecification` and
+its declared limits; the condition is
+`polarization_unmodelled_fraction` in `models.py`.
+
+**Raised by the consolidation round**, when that condition was made two-sided.
+
+`polarization_unmodelled_fraction` admits two regimes: the interval is long
+enough that the diffusion branch has settled, or short enough that it has
+barely developed. Both are defensible, but they are defensible about
+*different numbers*. A settled-interval `R_int` measurement contains the
+diffusion contribution; a short-pulse `R_int` measurement does not. Using a
+settled value on a short pulse over-predicts the drop by roughly `I R_diff`;
+using a short-pulse value on a long interval under-predicts it by the same.
+
+The cell declares one `internal_resistance` and says nothing about how it was
+obtained, so the condition can screen the *timescale* and cannot check that
+the resistance belongs to the regime it is being used in. The one-sided floor
+hid this by admitting only the settled regime — it was consistent by
+construction with a settled measurement, and wrong about short pulses.
+
+**Proposal.** A declared `internal_resistance_characterisation` — a
+categorical, `pulse` or `settled` — and a `CategoryCondition` requiring it to
+agree with the regime the interval falls in. That needs the categorical
+declaration to reach a validity condition, which is §1.2 of the applicability
+round above: a categorical parameter still cannot cross the provenance
+boundary, so the condition could be written but the declaration could not be
+recorded. **Not done for that reason**, and stated in the constant's own
+documentation so a reader of the bound sees the gap at the bound.
 
 ## 2. Conditions this round deliberately did not implement
 

@@ -904,6 +904,7 @@ def test_every_derived_name_is_actually_produced_by_the_assembler():
             ctx.SELF_HEATING_RISE,
             ctx.SELF_HEATING_RISE_RATIO,
             ctx.POLARIZATION_SETTLING_RATIO,
+            ctx.POLARIZATION_UNMODELLED_FRACTION,
             ctx.TERMINAL_VOLTAGE_RATIO,
             ctx.SOC_STEP_RESOLUTION_RATIO,
             ctx.CAPACITY_TEMPERATURE_DRIFT_RATIO,

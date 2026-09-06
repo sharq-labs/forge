@@ -48,8 +48,8 @@ bound on a quantity *derived* in ``context.py``, never on a number the caller
 wrote down. Fifteen of the sixteen are 1 or 0 — "you have consumed all of the
 budget you declared", or "you are on the edge of the interval you declared" —
 which is definitional and needs no citation. Exactly one is a real number,
-:data:`POLARIZATION_SETTLING_FLOOR`, and it is labelled a **convention** in the
-constant, in the condition description, in the documentation row and in the
+:data:`POLARIZATION_UNMODELLED_CEILING`, and it is labelled a **convention** in
+the constant, in the condition description, in the documentation row and in the
 test that pins it. It is not dressed as a citation.
 """
 
@@ -116,8 +116,8 @@ from .context import (
     PEUKERT_REFERENCE_TEMPERATURE,
     PEUKERT_TEMPERATURE_DRIFT_RATIO,
     PEUKERT_TEMPERATURE_SPAN,
-    POLARIZATION_SETTLING_RATIO,
     POLARIZATION_TIME_CONSTANT,
+    POLARIZATION_UNMODELLED_FRACTION,
     PULSE_CURRENT,
     PULSE_C_RATE_UTILIZATION,
     PULSE_DISCHARGE_C_RATE,
@@ -246,24 +246,35 @@ CUTOFF_CONSISTENCY_FLOOR = Quantity(0.0, DIMENSIONLESS)
 #: Peukert (1897); Doerffel & Sharkh, J. Power Sources 155 (2006), 395-400.
 PEUKERT_DERATING_LIMIT = Quantity(1.0, DIMENSIONLESS)
 
-#: t / tau_pol >= 3. **A CONVENTION, and recorded as one.**
+#: Ceiling on ``min(f, 1 - f)``, the fraction of the diffusion overpotential
+#: still in motion at the end of the interval, for ``f = 1 - exp(-t/tau_pol)``.
 #:
-#: The physics is real and cited: the Rint model represents the whole
-#: overpotential as an instantaneous ohmic drop, while a cell's diffusion
-#: overpotential grows as ``1 - exp(-t/tau)`` after a current step — which is
-#: why Plett, *Battery Management Systems, Volume I: Battery Modeling* (Artech
-#: House, 2015), Ch. 3, adds a series RC branch to the Rint model. Once that
-#: branch has settled its contribution is a constant ``I R_diff`` that an
-#: effective ``R_int`` measured over a comparable interval already contains.
+#: **The physics is cited; the number is not.** Plett, *Battery Management
+#: Systems, Volume I: Battery Modeling* (Artech House, 2015), Ch. 3, adds a
+#: series RC branch to the Rint model, which is what establishes that the
+#: omitted overpotential relaxes as ``1 - exp(-t/tau)``. Plett prints no
+#: threshold for this quantity, and neither does any other text in this
+#: repository's bibliography.
 #:
-#: The **number 3 is not from Plett or from any other source**. It is the
-#: universal engineering reading of "settled" for a first-order response —
-#: ``exp(-3) = 0.050``, so about 95 % of the omitted overpotential has
-#: developed — and no text in this repository's bibliography prints it as a
-#: threshold for this quantity. It is a convention, it is used as one, and a
-#: study that wants a different reading of "settled" should say so rather than
-#: find this number wearing a citation.
-POLARIZATION_SETTLING_FLOOR = Quantity(3.0, DIMENSIONLESS)
+#: **0.05 is one convention read from both ends.** Five per cent is the
+#: universal engineering reading of "done" for a first-order response — it is
+#: the same reading that makes "three time constants" mean settled, since
+#: ``exp(-3) = 0.050``. Applied to ``min(f, 1 - f)`` it admits two regimes and
+#: excludes the band between them:
+#:
+#: * settled, ``f >= 0.95``, i.e. ``t >= 3.0 tau_pol``;
+#: * undeveloped, ``f <= 0.05``, i.e. ``t <= 0.051 tau_pol``.
+#:
+#: **Both of those bounds are conventions**, not citations, and a study that
+#: wants a different reading of "done" should say so rather than find either
+#: number wearing a citation.
+#:
+#: **What this bound does not check.** Which regime is admissible depends on
+#: how the caller's ``R_int`` was characterised — a settled-interval
+#: measurement contains the diffusion contribution, a short-pulse measurement
+#: does not — and this domain has no declaration for that. The condition
+#: screens the timescale only. Recorded in ``NEEDS.md``.
+POLARIZATION_UNMODELLED_CEILING = Quantity(0.05, DIMENSIONLESS)
 
 
 # =====================================================================
@@ -666,26 +677,36 @@ RINT_OCV_MODEL = ScientificModelDefinition(
                 ),
             ),
             RangeCondition(
-                name=POLARIZATION_SETTLING_RATIO,
-                minimum=POLARIZATION_SETTLING_FLOOR,
+                name=POLARIZATION_UNMODELLED_FRACTION,
+                maximum=POLARIZATION_UNMODELLED_CEILING,
                 description=(
-                    "t / tau_pol >= 3, WHERE THE 3 IS A CONVENTION AND NOT A "
-                    "CITED THRESHOLD. The physics is cited: this circuit "
-                    "represents the whole overpotential as an instantaneous "
-                    "ohmic drop, while a cell's diffusion overpotential grows "
-                    "as 1 - exp(-t/tau) after a current step, which is why "
-                    "Plett (Battery Management Systems Vol. I, Artech House "
-                    "2015, Ch. 3) adds a series RC branch to the Rint model. "
-                    "Once settled, that branch contributes a constant I R_diff "
-                    "that an R_int measured over a comparable interval already "
-                    "contains. The number 3 is the universal engineering "
-                    "reading of 'settled' for a first-order response — "
-                    "exp(-3) = 0.05, so about 95 % developed — and no source "
-                    "in this repository prints it as a threshold for this "
-                    "quantity. A conservative screen: below it the model is "
-                    "not shown to be wrong, it is outside what this reading "
-                    "validates. UNKNOWN unless a polarization time constant "
-                    "is declared."
+                    "min(f, 1 - f) <= 0.05 for f = 1 - exp(-t/tau_pol), THE "
+                    "0.05 BEING A CONVENTION AND NOT A CITED THRESHOLD. TWO "
+                    "REGIMES ARE ADMISSIBLE AND THE BAND BETWEEN THEM IS NOT. "
+                    "Settled (f >= 0.95, t >= 3.0 tau_pol): the diffusion "
+                    "branch has finished moving and contributes a constant "
+                    "I R_diff that an R_int measured over a comparable "
+                    "interval already contains. Undeveloped (f <= 0.05, "
+                    "t <= 0.051 tau_pol): the branch has barely begun and the "
+                    "terminal voltage is essentially the instantaneous ohmic "
+                    "drop a short-pulse R_int represents. Between them, around "
+                    "t ~ tau_pol, the branch is slewing through the interval "
+                    "and no constant resistance reproduces the terminal "
+                    "voltage; that is the band this condition excludes. The "
+                    "physics is cited: Plett (Battery Management Systems Vol. "
+                    "I, Artech House 2015, Ch. 3) adds the series RC branch to "
+                    "the Rint model, which is what establishes the "
+                    "1 - exp(-t/tau) form. Plett prints no threshold for this "
+                    "quantity and no source in this repository does either. "
+                    "The 0.05 is the engineering reading of 'done' for a "
+                    "first-order response, the same reading that makes three "
+                    "time constants mean settled, and BOTH resulting bounds "
+                    "are conventions. A conservative screen: inside the band "
+                    "the model is not shown to be wrong, it is outside what "
+                    "this reading validates. It does not check that R_int was "
+                    "characterised in the regime it is being used in, which "
+                    "this domain cannot declare. UNKNOWN unless a "
+                    "polarization time constant is declared."
                 ),
             ),
             RangeCondition(

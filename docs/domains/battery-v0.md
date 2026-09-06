@@ -55,8 +55,11 @@ the affected models' `assumptions`.
 **No diffusion dynamics.** The Rint circuit represents the whole overpotential
 as one instantaneous ohmic drop. A real cell's diffusion overpotential grows as
 `1 − exp(−t/τ)` after a current step, which is why an RC branch is the standard
-next model. The cost is borne on short intervals, and it is bounded by the
-`polarization_settling_ratio` condition rather than hidden.
+next model. The cost is bounded by the `polarization_unmodelled_fraction`
+condition rather than hidden, and it is borne in the *middle* of the
+relaxation rather than at either end of it: a pulse far shorter than τ omits a
+branch that has barely developed, and one far longer omits a branch that has
+stopped moving and is already inside an R_int measured the same way.
 
 **No reversible heat.** `Q = I²·R_int` is the irreversible term only. The
 entropic term `−I·T·dU/dT` is *not* negligible: near room temperature it is of
@@ -207,13 +210,20 @@ budget you declared", or "you are on the edge of the interval you declared" —
 which is definitional and needs no citation, because the number follows from how
 the ratio was defined.
 
-**Exactly one is a real number**: `POLARIZATION_SETTLING_FLOOR = 3`, and it is
-labelled a **convention** in the constant, in the condition description, in the
-documentation row and in the test that pins it. The physics behind the condition
-*is* cited (Plett, Ch. 3, on the RC branch the Rint model omits); the number 3 is
-the universal engineering reading of "settled" for a first-order response —
-`exp(−3) = 0.05` — and no source in this repository's bibliography prints it as
-a threshold for this quantity. It is not dressed as a citation.
+**Exactly one is a real number**: `POLARIZATION_UNMODELLED_CEILING = 0.05`,
+and it is labelled a **convention** in the constant, in the condition
+description, in the documentation row and in the test that pins it. The physics
+behind the condition *is* cited (Plett, Ch. 3, on the RC branch the Rint model
+omits); the 0.05 is the universal engineering reading of "done" for a
+first-order response, and no source in this repository's bibliography prints it
+as a threshold for this quantity. It is not dressed as a citation.
+
+That single convention is read from **both** ends of the relaxation, which is
+why the condition admits two regimes and excludes the band between them: settled
+at `t ≥ 3.0 τ_pol` (`exp(−3) = 0.05`) and undeveloped at `t ≤ 0.051 τ_pol`.
+**Both of those bounds are conventions.** An earlier version of this condition
+was a floor on `t/τ_pol` alone, which rejected every short pulse — the regime in
+which a constant `R_int` is least in doubt.
 
 `test_every_other_threshold_in_the_domain_is_definitional` enumerates every
 dimensionless bound in all four records and asserts that exactly one is neither

@@ -75,6 +75,7 @@ from src.engcore.scientific import (
     decode_value,
     normalize_unit,
 )
+from src.engcore.scientific.units.quantity import dimensionality
 from src.engcore.scientific.solvers.capability import SolverCapability
 
 
@@ -325,6 +326,100 @@ def test_dimensional_compatibility_of_compound_units():
     force = Quantity(1.0, "kg * m / s**2")
     assert force.is_compatible_with(Quantity(1.0, "newton"))
     assert abs(force.to("newton").magnitude - 1.0) < 1e-15
+
+
+def test_a_product_of_quantities_converts_to_its_own_named_unit():
+    """Ohm's law survives the unit layer.
+
+    ``I * R`` is the most ordinary product in electrical work. The backend
+    renders a composite's dimensions in the order the composite was built, so
+    ``ampere * ohm`` used to render its exponents differently from ``volt``
+    and a correct conversion was refused as a units error. Compatibility is
+    decided on the dimensionality *objects* now, and the string form is
+    canonically ordered, so neither route depends on how the product was
+    composed.
+    """
+    drop = Quantity(2.0, "ampere") * Quantity(3.0, "ohm")
+    assert drop.is_compatible_with("volt")
+    assert abs(drop.magnitude_in("volt") - 6.0) < 1e-12
+    assert drop.dimensionality == Quantity(1.0, "volt").dimensionality
+
+
+def test_a_quotient_of_quantities_converts_to_its_own_named_unit():
+    resistance = Quantity(6.0, "volt") / Quantity(2.0, "ampere")
+    assert abs(resistance.magnitude_in("ohm") - 3.0) < 1e-12
+    power = Quantity(6.0, "volt") * Quantity(2.0, "ampere")
+    assert abs(power.magnitude_in("watt") - 12.0) < 1e-12
+
+
+def test_products_whose_factor_order_differs_from_the_target_rendering():
+    """Four more composites the backend renders in a non-canonical order.
+
+    Each of these was a ``UnitCompatibilityError`` before dimensional
+    comparison stopped going through the rendered string: the dimensions are
+    identical and only the order of the exponents differed.
+    """
+    work = Quantity(4.0, "newton") * Quantity(2.5, "meter")
+    assert abs(work.magnitude_in("joule") - 10.0) < 1e-12
+
+    flux = Quantity(2.0, "henry") * Quantity(3.0, "ampere")
+    assert abs(flux.magnitude_in("weber") - 6.0) < 1e-12
+
+    capacitance = Quantity(6.0, "second") / Quantity(3.0, "ohm")
+    assert abs(capacitance.magnitude_in("farad") - 2.0) < 1e-12
+
+    charge = Quantity(8.0, "joule") / Quantity(4.0, "volt")
+    assert abs(charge.magnitude_in("coulomb") - 2.0) < 1e-12
+
+
+def test_dimensionality_renders_the_same_string_however_it_was_composed():
+    """The string form is canonical, because callers do compare it.
+
+    Not every dimensional comparison in the platform goes through
+    ``is_compatible_with``; several compare ``dimensionality()`` strings
+    directly. Those comparisons are only correct if the rendering does not
+    depend on how the quantity was built.
+    """
+    assert (
+        dimensionality("ampere * ohm")
+        == dimensionality("volt")
+        == dimensionality("watt / ampere")
+    )
+    assert dimensionality("newton * meter") == dimensionality("joule")
+    # Single-dimension and dimensionless renderings are the backend's own and
+    # are deliberately unchanged.
+    assert dimensionality("degC") == dimensionality("kelvin") == "[temperature]"
+    assert dimensionality("dimensionless") == "dimensionless"
+
+
+def test_order_independent_comparison_does_not_weaken_the_check():
+    """The fix must not turn compatibility into "anything converts"."""
+    _raises(UnitCompatibilityError, Quantity(1.0, "meter").to, "second")
+    _raises(UnitCompatibilityError, Quantity(1.0, "ampere").to, "volt")
+    assert not Quantity(1.0, "ampere").is_compatible_with("volt")
+    assert dimensionality("meter") != dimensionality("second")
+    # Same base dimensions, different exponents: still incompatible.
+    assert not (Quantity(1.0, "meter") * Quantity(1.0, "meter")).is_compatible_with(
+        "meter"
+    )
+    # A product that is genuinely the wrong dimension is still refused.
+    torque_like = Quantity(1.0, "newton") * Quantity(1.0, "meter")
+    assert not torque_like.is_compatible_with("newton")
+
+
+def test_a_composed_quantity_survives_serialization_round_trip():
+    """Nothing persists a dimensionality string, and the units still round-trip.
+
+    ``DependencySpec.dimension`` is a property recomputed from its unit
+    exemplar rather than a stored field, so no record carries a rendering that
+    a canonical ordering could invalidate. What is serialized is the unit
+    string, and a composed unit round-trips through it unchanged.
+    """
+    drop = Quantity(2.0, "ampere") * Quantity(3.0, "ohm")
+    restored = Quantity.from_dict(json.loads(json.dumps(drop.to_dict())))
+    assert restored == drop
+    assert restored.dimensionality == drop.dimensionality
+    assert abs(restored.magnitude_in("volt") - 6.0) < 1e-12
 
 
 def test_incompatible_dimensions_rejected():

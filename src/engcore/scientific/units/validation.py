@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Iterable, Mapping
 
 from ..errors import UnitCompatibilityError
-from .quantity import Quantity, dimensionality, normalize_unit
+from .quantity import Quantity, dimension_of, dimensionality, normalize_unit
 
 
 def require_unit(unit: str, *, context: str) -> str:
@@ -30,7 +30,10 @@ def require_same_dimension(
     """Raise unless both operands share a physical dimensionality."""
     left_unit = left.units if isinstance(left, Quantity) else left
     right_unit = right.units if isinstance(right, Quantity) else right
-    if dimensionality(left_unit) != dimensionality(right_unit):
+    # Compared as dimensionality objects, not as their renderings: pint orders
+    # a composite's exponents by how it was built, so ``ampere * ohm`` and
+    # ``volt`` render differently while being the same dimension.
+    if dimension_of(left_unit) != dimension_of(right_unit):
         raise UnitCompatibilityError(
             f"{context}: {left_unit!r} [{dimensionality(left_unit)}] is not "
             f"compatible with {right_unit!r} [{dimensionality(right_unit)}]"
