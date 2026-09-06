@@ -45,7 +45,10 @@ from src.engcore.scientific.models.definition import (
 )
 from src.engcore.scientific.realizations.definition import ModelFormulation
 from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.validation import ValidationOutcome
+from src.engcore.scientific.results.validation import (
+    ValidationLevel,
+    ValidationOutcome,
+)
 from src.engcore.scientific.solvers.capability import CoreCapabilities
 from src.engcore.scientific.twins.definition import TwinDatum, TwinDatumRole
 from src.engcore.scientific.units.quantity import Quantity, dimensionality
@@ -534,11 +537,22 @@ def test_c4_validity_and_validation_are_kept_apart():
     )
     prepared = solver.prepare(problem)
     report = solver.validate(prepared, solver.solve(prepared))
-    # Out of declared validity, yet the admissibility check still passes: the
-    # two questions are different and the record keeps them different.
+    # Out of declared validity, yet every check still passes: the two
+    # questions are different and the record keeps them different.
     assert report.status is ValidationOutcome.PASS
-    assert {c.name for c in report.checks} == {"resistance_strictly_positive"}
-    assert report.attained_levels == frozenset()
+    assert {c.name for c in report.checks} == {
+        "resistance_strictly_positive",
+        "metric_dimensions",
+    }
+    # And neither is the validity assessment wearing a different name: no
+    # check here reads a validity condition, and the level the report attains
+    # is about dimensions, not about applicability.
+    assert report.attained_levels == frozenset(
+        {ValidationLevel.DIMENSIONALLY_VALID}
+    )
+    assert mat.assess_resistance_validity(
+        problem, Quantity(600.0, "kelvin")
+    ).status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
 
 
 # =====================================================================

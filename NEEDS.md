@@ -278,6 +278,45 @@ more packages clear the bar is the exact move this change exists to refuse. If
 the level is real it should be argued on its own merits, not on how many
 verdicts it would improve.
 
+**Audited in the recommendations round.** Every check above in
+`domains/battery/**` and `domains/electrical/**` (excluding `ngspice.py`) is
+now classified in `docs/domains/evidentiary-levels.md`: 1 earnable now and
+built, 3 earnable later with their costs, 7 never earnable by the check that
+raised them. Two of this table's own suggestions were found to be wrong and are
+corrected there — an independent integration of the battery's `dz/dt` earns
+nothing, because the trajectory is affine and the solver has no discretization;
+and the `rint` cross-check is blocked by an architecture decision (it would be
+the first domain-to-domain import in `src/engcore/domains/`) rather than by
+effort.
+
+### 1.8c `linear_system_residual` awards a level the lumped and conduction solvers refuse
+
+**Where** `src/engcore/domains/electrical/dc/validation.py:157-165`.
+
+**What was found.** `check_linear_residual` awards `NUMERICALLY_CONVERGED` when
+`||A x - z||` is at round-off. The frozen conduction validation opens by
+refusing exactly that move, on the grounds that a direct factorization's
+residual sits at round-off in every run and so certifies a coarse solve as
+confidently as a fine one.
+
+**Why the DC case is not identical, and why that does not rescue it.** The MNA
+system is the exact statement of the circuit's Kirchhoff laws, not a
+discretization of a continuum, so there is no discretization error a refined
+solve would reveal. But with nothing to refine there is no sequence whose limit
+could be examined, and the level is *not applicable* rather than *attained* —
+the same conclusion the lumped model reached this round about its own closed
+form, where `NUMERICALLY_CONVERGED` is explicitly declared unearnable for a
+solver that never discretized.
+
+**Proposal.** Move it to `establishes=None`, with a detail string saying the
+system is solved exactly and there is nothing to converge. The report still
+attains `DIMENSIONALLY_VALID` from `check_dimensions`, so no verdict moves and
+no existing package downgrades.
+
+**Not done.** Un-awarding a level from the most widely used solver in the
+repository is a decision to take deliberately. Recorded here for that decision
+rather than made inside an audit.
+
 ### 1.9 `ValidityAssessment` is the one core record that validates nothing
 
 **Where** `src/engcore/scientific/models/definition.py`, the

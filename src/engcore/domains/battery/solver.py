@@ -489,15 +489,23 @@ class BatteryCellSolver:
             if metric not in declared
             or not value.is_compatible_with(declared[metric])
         ]
+        passed = not mismatched
         return ValidationCheck(
             name="metric_dimensions",
             outcome=(
-                ValidationOutcome.PASS if not mismatched else ValidationOutcome.FAIL
+                ValidationOutcome.PASS if passed else ValidationOutcome.FAIL
             ),
             # The one level this solver claims, and it is earned: the check
             # compares what was computed against what the model records
             # declare, which is a reference outside the arithmetic.
-            establishes=ValidationLevel.DIMENSIONALLY_VALID,
+            #
+            # Conditional on the outcome. `attained_levels` filters on
+            # `passed` so this changes no verdict, but a serialized check
+            # reading `outcome: fail` beside `establishes: dimensionally_valid`
+            # contradicts itself for a reader who does not know that.
+            establishes=(
+                ValidationLevel.DIMENSIONALLY_VALID if passed else None
+            ),
             detail=(
                 f"{len(produced)} produced metrics checked against the "
                 f"dimensions their model records declare"
