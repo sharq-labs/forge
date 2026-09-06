@@ -13,6 +13,8 @@ neighbour's failure.
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 
 from src.engcore.domains.electrical import material as mat
@@ -50,6 +52,11 @@ FULLY_DECLARED = ctx.LumpedApplicabilityDeclaration(
     conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
+    fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+    fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+    fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+    fluid_velocity=Quantity(1.0, "meter/second"),
+    convection_length=Quantity(0.6, "meter"),
 )
 
 #: The operating point every test below assesses at: a 1 W input into a body
@@ -72,17 +79,17 @@ def body(declaration=FULLY_DECLARED, *, duration=120.0, conductance=0.05):
 
 
 def declared(**overrides):
-    """The fully declared body with one or more facts replaced or removed."""
+    """The fully declared body with one or more facts replaced or removed.
+
+    Built by copying every field off ``FULLY_DECLARED`` rather than by naming
+    them, so a field added to the record joins this helper automatically. The
+    hand-written list it replaced silently dropped the six convection fields
+    when they were added, and every test using it then measured a body that
+    was not fully declared.
+    """
     fields = {
-        "characteristic_length": FULLY_DECLARED.characteristic_length,
-        "volume": FULLY_DECLARED.volume,
-        "surface_area": FULLY_DECLARED.surface_area,
-        "body_conductivity": FULLY_DECLARED.body_conductivity,
-        "surface_emissivity": FULLY_DECLARED.surface_emissivity,
-        "convection_regime": FULLY_DECLARED.convection_regime,
-        "conductance_excursion_bound": FULLY_DECLARED.conductance_excursion_bound,
-        "capacity_excursion_bound": FULLY_DECLARED.capacity_excursion_bound,
-        "melting_temperature": FULLY_DECLARED.melting_temperature,
+        field.name: getattr(FULLY_DECLARED, field.name)
+        for field in dataclasses.fields(FULLY_DECLARED)
     }
     fields.update(overrides)
     return ctx.LumpedApplicabilityDeclaration(**fields)
@@ -96,6 +103,10 @@ def assess(thermal_body, *, heat_input=HEAT_INPUT):
         ambient_temperature=thermal_body.ambient_temperature,
         heat_input=heat_input,
     )
+
+
+def dimensionless(value):
+    return value.magnitude_in("dimensionless")
 
 
 def _condition(name):
@@ -135,6 +146,16 @@ def test_a_body_that_declares_nothing_beyond_c_and_ha_is_unknown_not_valid():
         ctx.CAPACITY_EXCURSION_RATIO,
         ctx.RADIATION_TO_CONVECTION_RATIO,
         ctx.MELTING_TEMPERATURE_UTILIZATION,
+        # Neither route to a characteristic length was declared, so whether
+        # the two agree is genuinely unanswerable — unlike the single-route
+        # case, where there is nothing to contradict.
+        ctx.GEOMETRY_ROUTE_RATIO,
+        # And where hA came from. A body that declares a conductance and
+        # nothing else has not said whether it is a correlation, a measurement
+        # or a guess, so no route resolves and all three stay unanswerable.
+        ctx.CONVECTION_FLOW_RANGE,
+        ctx.CONVECTION_PROPERTY_RANGE,
+        ctx.CONVECTION_AGREEMENT_RATIO,
     }
     # The two old positivity checks still pass, and still prove nothing about
     # whether the lumped approximation holds.
@@ -548,6 +569,19 @@ def test_omitting_the_operating_point_cannot_produce_a_valid_verdict():
         lump.AMBIENT_CONDUCTANCE,
         ctx.BIOT_NUMBER,
         ctx.INTERNAL_FOURIER_NUMBER,
+        # Geometry alone decides this one: both routes are declared here and
+        # they agree, and no operating point is needed to say so.
+        ctx.GEOMETRY_ROUTE_RATIO,
+        # All three convection conditions survive the loss of the operating
+        # point, and ONLY because this body declares the FORCED route.
+        # Re = u L / nu, the flat-plate Nusselt number and the coefficient it
+        # implies contain no temperature difference at all: a flow-set
+        # coefficient does not depend on how hard the surface is driven. The
+        # same three go UNKNOWN on a free-convection body, where the Rayleigh
+        # number needs the excursion — see the natural-route test below.
+        ctx.CONVECTION_FLOW_RANGE,
+        ctx.CONVECTION_PROPERTY_RANGE,
+        ctx.CONVECTION_AGREEMENT_RATIO,
     }
 
 
@@ -648,6 +682,12 @@ def test_the_optional_inputs_are_declared_on_the_model_and_are_not_required():
         ctx.CONDUCTANCE_EXCURSION_BOUND,
         ctx.CAPACITY_EXCURSION_BOUND,
         ctx.MELTING_TEMPERATURE,
+        ctx.FLUID_CONDUCTIVITY,
+        ctx.FLUID_VISCOSITY,
+        ctx.FLUID_PRANDTL_NUMBER,
+        ctx.FLUID_EXPANSION_COEFFICIENT,
+        ctx.FLUID_VELOCITY,
+        ctx.CONVECTION_LENGTH,
     }
     # and a problem that omits every one of them still binds cleanly
     bare = lump.build_lumped_thermal_problem(
@@ -699,6 +739,11 @@ COUPLED_DECLARATION = ctx.LumpedApplicabilityDeclaration(
     conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
+    fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+    fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+    fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+    fluid_velocity=Quantity(1.0, "meter/second"),
+    convection_length=Quantity(0.6, "meter"),
 )
 
 
@@ -850,3 +895,103 @@ def test_a_coupled_run_can_converge_twice_over_and_still_be_outside_the_domain()
     for iteration in run.iterations:
         for result in iteration.results:
             assert result.validation.status is not ValidationOutcome.FAIL
+
+
+# =====================================================================
+# Two routes to one characteristic length must describe one body
+# =====================================================================
+
+def _geo(lc, vol, area=0.01):
+    return ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(lc, "meter"),
+        ctx.BODY_VOLUME: Quantity(vol, "meter**3"),
+        ctx.SURFACE_AREA: Quantity(area, "meter**2"),
+    }).get(ctx.GEOMETRY_ROUTE_RATIO)
+
+
+def test_two_routes_that_agree_are_satisfied():
+    ratio = _geo(0.002, 0.002 * 0.01)
+    assert dimensionless(ratio) == pytest.approx(1.0, rel=1e-12)
+
+
+def test_a_shape_factor_apart_is_still_one_body():
+    """A sphere declares r_o where V/A_s is r_o/3, and both are correct.
+
+    This is why the bound is a factor of 3 and not a percentage: the
+    disagreement a convention can account for is set by geometry, not by
+    measurement error.
+    """
+    for factor in (1.0, 2.0, 2.9):
+        assert dimensionless(_geo(0.002 * factor, 0.002 * 0.01)) == (
+            pytest.approx(factor, rel=1e-12)
+        )
+    assessment = assess(
+        body(declared(characteristic_length=Quantity(0.004, "meter"),
+                      volume=Quantity(0.002 * 0.01, "meter**3")))
+    )
+    assert ctx.GEOMETRY_ROUTE_RATIO in assessment.satisfied
+
+
+def test_routes_that_disagree_beyond_any_shape_are_a_finding():
+    """10x apart: no standard shape reconciles a length and a volume this far."""
+    assessment = assess(
+        body(declared(characteristic_length=Quantity(0.002, "meter"),
+                      volume=Quantity(0.002 * 0.01 * 10, "meter**3")))
+    )
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert ctx.GEOMETRY_ROUTE_RATIO in assessment.violated
+
+
+def test_the_disagreement_is_caught_in_both_directions():
+    """Declaring the length too small is the dangerous direction and is caught.
+
+    Below V/A_s the Biot number is understated and the model looks applicable
+    when it may not be; above it the criterion is only made harder to pass.
+    Both are refused, because nothing here can tell which convention was used.
+    """
+    for vol_factor in (10.0, 0.1):
+        assessment = assess(
+            body(declared(
+                characteristic_length=Quantity(0.002, "meter"),
+                volume=Quantity(0.002 * 0.01 * vol_factor, "meter**3"),
+            ))
+        )
+        assert ctx.GEOMETRY_ROUTE_RATIO in assessment.violated
+
+
+def test_one_route_alone_is_not_a_contradiction():
+    """The alternative route must keep working, and a lone length must too.
+
+    Reporting UNKNOWN here would demand all three fields from a model that has
+    always accepted either route — a much larger claim than this condition is
+    making.
+    """
+    via_volume = assess(
+        body(declared(characteristic_length=None,
+                      volume=Quantity(2.0e-5, "meter**3")))
+    )
+    assert via_volume.status is ValidityStatus.IN_DOMAIN
+    assert ctx.GEOMETRY_ROUTE_RATIO in via_volume.satisfied
+
+    only_length = ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+    })
+    assert dimensionless(only_length[ctx.GEOMETRY_ROUTE_RATIO]) == 1.0
+
+
+def test_neither_route_is_unknown_rather_than_agreement():
+    derived = ctx.derived_lumped_quantities({
+        ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+    })
+    assert ctx.GEOMETRY_ROUTE_RATIO not in derived
+
+
+def test_the_agreement_bound_is_a_named_factor_with_a_shape_reason():
+    assert ctx.GEOMETRY_AGREEMENT_FACTOR.magnitude_in("dimensionless") == 3.0
+    condition = next(
+        c for c in lump.LUMPED_CAPACITY_MODEL.validity.conditions
+        if c.name == ctx.GEOMETRY_ROUTE_RATIO
+    )
+    assert condition.maximum == ctx.GEOMETRY_AGREEMENT_FACTOR
+    assert dimensionless(condition.minimum) == pytest.approx(1.0 / 3.0)
+    assert "sphere" in condition.description

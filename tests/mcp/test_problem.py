@@ -39,6 +39,7 @@ from src.engcore.mcp import (
     run_electrothermal_case,
 )
 from src.engcore.mcp import evidence
+from src.engcore.scientific.errors import InvalidScientificProblem
 from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.results.validation import ValidationLevel
 from src.engcore.scientific.units.quantity import Quantity, dimensionality
@@ -72,6 +73,11 @@ APPLICABLE_PAYLOAD = {
                     "body_conductivity": "200 watt/meter/kelvin",
                     "surface_emissivity": "0.05 dimensionless",
                     "convection_regime": "forced",
+                    "fluid_conductivity": "0.0261 watt/meter/kelvin",
+                    "fluid_kinematic_viscosity": "1.589e-5 meter**2/second",
+                    "fluid_prandtl_number": "0.707 dimensionless",
+                    "fluid_velocity": "1 meter/second",
+                    "convection_length": "0.6 meter",
                     "conductance_excursion_bound": "60 kelvin",
                     "capacity_excursion_bound": "100 kelvin",
                     "melting_temperature": "900 kelvin",
@@ -106,9 +112,31 @@ MODELS = (
 )
 
 
-def payload_without(section_path, key):
-    """A deep copy of the applicable payload with one key removed."""
-    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+#: The same body on the FREE-CONVECTION route. Air near 300 K over a 67 mm
+#: plate: beta = 2/(T_ss + T_amb) for an ideal gas at the film temperature,
+#: Ra = 1.0e6, Nu = 0.68 + 0.670 Ra^(1/4)/[1 + (0.492/Pr)^(9/16)]^(4/9) = 16.93
+#: and h = Nu k_f / L = 5.00 W/(m^2 K), the same 0.05 W/K over 0.01 m^2.
+#:
+#: Needed because a declaration cannot carry both an expansion coefficient and
+#: a velocity -- that is mixed convection and the record refuses it -- so one
+#: payload cannot witness what both route fields unlock.
+NATURAL_CONVECTION_PAYLOAD = copy.deepcopy(APPLICABLE_PAYLOAD)
+NATURAL_CONVECTION_PAYLOAD["stages"][0]["body"]["applicability"].pop(
+    "fluid_velocity"
+)
+NATURAL_CONVECTION_PAYLOAD["stages"][0]["body"]["applicability"].update(
+    {
+        "convection_regime": "natural",
+        "fluid_expansion_coefficient": "0.00313196 1/kelvin",
+        "convection_length": "0.067048 meter",
+        "fluid_conductivity": "0.0197968 watt/meter/kelvin",
+    }
+)
+
+
+def payload_without(section_path, key, *, payload=None):
+    """A deep copy of a payload with one key removed."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD if payload is None else payload)
     target = payload
     for step in section_path:
         target = target[step]
@@ -228,8 +256,12 @@ def test_a_bare_number_is_refused_everywhere_a_quantity_is_expected():
             path = BODY_PATH
         elif field.section == "stages[].conductor":
             path = CONDUCTOR_PATH
-        elif field.section == "stages[].conductor.limits":
-            continue  # absent from this payload; covered by its own test below
+        elif field.section in (
+            "stages[].conductor.limits",
+            "stages[].conductor.ratings",
+            "source_ratings",
+        ):
+            continue  # absent from this payload; covered by their own tests
         elif field.section == "coupling":
             path = ("coupling",)
         else:
@@ -446,22 +478,50 @@ def test_omitting_one_optional_declaration_yields_unknown_and_never_in_domain(ke
     description = describe_electrothermal_case()
     field = description.field(f"stages[].body.applicability.{key}")
 
-    outcome = run_electrothermal_case(
-        payload_without(APPLICABILITY_PATH, key), run_id=f"omit-{key}"
-    )
-    report = outcome.reports[0]
-    unknown = {name for _, name in report.unknown_conditions}
+    # Run the omission on BOTH convection routes and union what goes UNKNOWN.
+    #
+    # `unlocks` is measured over both routes, because no single declaration can
+    # carry an expansion coefficient and a velocity at once -- that is mixed
+    # convection and the record refuses it. So a forced payload alone cannot
+    # witness what `fluid_expansion_coefficient` unlocks, and a natural one
+    # cannot witness `fluid_velocity`. Checking against the union is the same
+    # statement the description makes, and it is still a statement about real
+    # runs rather than about the description's self-consistency.
+    unknown: set[str] = set()
+    reports = []
+    for name, payload in (("forced", APPLICABLE_PAYLOAD),
+                          ("natural", NATURAL_CONVECTION_PAYLOAD)):
+        outcome = run_electrothermal_case(
+            payload_without(APPLICABILITY_PATH, key, payload=payload),
+            run_id=f"omit-{key}-{name}",
+        )
+        reports.append(outcome.reports[0])
+        unknown |= {
+            condition for _, condition in outcome.reports[0].unknown_conditions
+        }
 
     assert set(field.unlocks) <= unknown, (key, field.unlocks, sorted(unknown))
     # The asymmetry that makes optional safe: a missing declaration never
-    # satisfies anything, and never violates anything either.
-    assessment = report.validity[0].assessment
-    for condition in field.unlocks:
-        assert condition not in assessment.satisfied
-        assert condition not in assessment.violated
-    if field.unlocks:
-        assert assessment.status is ValidityStatus.UNKNOWN
+    # satisfies anything, and never violates anything either. Checked on BOTH
+    # routes, because "never satisfied" has to hold everywhere the field could
+    # have been read, not only where it happened to be witnessed.
+    for report in reports:
+        assessment = report.validity[0].assessment
+        for condition in field.unlocks:
+            assert condition not in assessment.satisfied or (
+                # The one legitimate exception: a field belonging to the OTHER
+                # route was never in this payload, so this run is unaffected by
+                # its omission and its conditions are decided by the route that
+                # is declared. Nothing was satisfied BY the omission.
+                key in ("fluid_expansion_coefficient", "fluid_velocity")
+            )
+            assert condition not in assessment.violated
         assert report.verdict is not CredibilityVerdict.NOT_SUPPORTED
+    if field.unlocks:
+        assert any(
+            r.validity[0].assessment.status is ValidityStatus.UNKNOWN
+            for r in reports
+        )
 
 
 @pytest.mark.parametrize(
@@ -581,7 +641,15 @@ def test_the_description_names_every_condition_the_models_declare():
     rated_conditions = {
         c.name for c in mat.RATED_LINEAR_TCR_MODEL.validity.conditions
     }
-    known = lumped_conditions | rated_conditions
+    electrical_conditions = {
+        c.name
+        for model in (
+            dc_models.RESISTOR_OHM_MODEL,
+            dc_models.IDEAL_VOLTAGE_SOURCE_MODEL,
+        )
+        for c in model.validity.conditions
+    }
+    known = lumped_conditions | rated_conditions | electrical_conditions
 
     mentioned = set()
     for field in describe_electrothermal_case().fields:
@@ -876,14 +944,14 @@ def test_every_model_in_the_closure_is_named_and_assessed():
 
 
 def test_the_undeclared_electrical_ratings_are_reported_as_gaps():
-    """More restrictive, and correctly so: nobody declared these limits.
+    """Nobody declared these limits, so they stay UNKNOWN.
 
-    The payload has no field for a resistor's rated dissipation or a source's
-    current limit, so every rating condition is UNKNOWN — and
-    ``electrical.dc.kcl`` declares no conditions at all. Before this change
-    none of that was in the report, because none of those models was in the
-    report. The nominal case is INSUFFICIENT_EVIDENCE as a result, which is the
-    honest reading of it.
+    The example payload declares no ``ratings`` block, and an absent rating is
+    UNKNOWN rather than unlimited. That behaviour is the point and it did not
+    change when the block was added: what changed is that a caller who *can*
+    state the ratings is no longer forced into this verdict by the boundary
+    having nowhere to put them. ``test_declared_ratings_reach_the_report``
+    below is the other half.
     """
     report = run_electrothermal_case(
         example_electrothermal_payload(), run_id="gaps"
@@ -895,3 +963,272 @@ def test_the_undeclared_electrical_ratings_are_reported_as_gaps():
         report.unknown_conditions
     )
     assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+# =====================================================================
+# Component ratings: the declaration the conditions were always waiting for
+# =====================================================================
+
+RATINGS_PATH = ("stages", 0, "conductor", "ratings")
+
+
+def _rated_payload(**overrides):
+    """The applicable payload with ratings that cannot bind, plus overrides."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    ratings = {"rated_power": "1000 watt", "maximum_working_voltage": "1000 volt"}
+    ratings.update(overrides.pop("ratings", {}))
+    payload["stages"][0]["conductor"]["ratings"] = ratings
+    payload["source_ratings"] = overrides.pop(
+        "source_ratings", {"maximum_current": "1000 ampere"}
+    )
+    return payload
+
+
+def test_declared_ratings_reach_the_report_and_lift_their_conditions():
+    """The gap TASK 1 closed, stated as the one assertion that shows it."""
+    report = run_electrothermal_case(_rated_payload(), run_id="rated").reports[0]
+
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) not in (
+        report.unknown_conditions
+    )
+    assert (RESISTOR, dc_models.WORKING_VOLTAGE_UTILIZATION) not in (
+        report.unknown_conditions
+    )
+    assert (SOURCE, dc_models.SOURCE_CURRENT_UTILIZATION) not in (
+        report.unknown_conditions
+    )
+    for record in report.validity:
+        if record.model_id in (RESISTOR, SOURCE):
+            assert record.assessment.status is ValidityStatus.IN_DOMAIN
+
+
+def test_an_exceeded_rating_is_a_violation_rather_than_a_gap():
+    """A rating that binds is a finding about the design, not a missing field."""
+    report = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": "0.001 watt"}), run_id="over"
+    ).reports[0]
+
+    resistor = next(r for r in report.validity if r.model_id == RESISTOR)
+    assert resistor.assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+def test_omitting_the_ratings_block_is_not_an_error_and_stays_unknown():
+    """Optional means optional. This is the behaviour that must not change.
+
+    Supplying a rating can move a condition off UNKNOWN; omitting one can never
+    move it onto IN_DOMAIN. An unrated part is not an unlimited part.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="bare"
+    ).reports[0]
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
+        report.unknown_conditions
+    )
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+    # An empty block says exactly what an absent one says.
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    payload["stages"][0]["conductor"]["ratings"] = {}
+    empty = run_electrothermal_case(payload, run_id="empty").reports[0]
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
+        empty.unknown_conditions
+    )
+
+
+def test_the_derating_factor_narrows_a_rating_that_would_otherwise_hold():
+    """Declared margin is applied, and is visible as an input rather than a
+    number buried in a threshold."""
+    # This stage dissipates about 2.12 W, so a 5 W part is comfortable at full
+    # rating and over its limit once the caller elects to use a tenth of it.
+    power = "5 watt"
+    holds = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": power}), run_id="full"
+    ).reports[0]
+    full = next(r for r in holds.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in full.assessment.satisfied
+
+    derated = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": power, "derating_factor": 0.1}),
+        run_id="derated",
+    ).reports[0]
+    resistor = next(r for r in derated.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
+
+
+def test_a_derating_factor_outside_the_unit_interval_is_refused():
+    """Refused by ComponentRating's own rule, not by a copy of it here."""
+    for bad in (0.0, -0.5, 1.5):
+        with pytest.raises(InvalidScientificProblem, match="derating_factor"):
+            build_electrothermal_system(
+                _rated_payload(ratings={"derating_factor": bad})
+            )
+
+
+def test_a_rating_written_without_a_unit_is_refused_like_any_quantity():
+    for key in ("rated_power", "maximum_working_voltage"):
+        with pytest.raises(MissingUnitError, match=key):
+            build_electrothermal_system(_rated_payload(ratings={key: 1.0}))
+
+
+def test_the_derating_factor_is_the_one_field_written_without_a_unit():
+    """And deliberately so: it is a policy, not a measurement.
+
+    Pinned because it is the single exception to this boundary's strictest
+    rule, and an exception nobody wrote down is one somebody later removes.
+    """
+    with pytest.raises(MalformedPayloadError, match="derating_factor"):
+        build_electrothermal_system(
+            _rated_payload(ratings={"derating_factor": "0.5 dimensionless"})
+        )
+
+
+def test_a_misspelled_rating_is_refused_with_a_suggestion():
+    with pytest.raises(UnknownFieldError, match="rated_powr"):
+        build_electrothermal_system(_rated_payload(ratings={"rated_powr": "1 watt"}))
+
+
+def test_the_ratings_fields_are_described_from_the_model_records():
+    """The description is derived, not restated. TASK 1 asked for exactly this."""
+    described = {
+        (f.section, f.key): f for f in describe_electrothermal_case().fields
+    }
+
+    power = described[("stages[].conductor.ratings", "rated_power")]
+    assert power.required is False
+    assert power.dimension == dimensionality("watt")
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in power.unlocks
+
+    current = described[("source_ratings", "maximum_current")]
+    assert current.required is False
+    assert current.dimension == dimensionality("ampere")
+    assert dc_models.SOURCE_CURRENT_UTILIZATION in current.unlocks
+
+
+# =====================================================================
+# A run that stops at the transfer boundary is a finding, not an exception
+# =====================================================================
+
+def _runaway_payload():
+    """A conductor whose own declared alpha drives R(T) through zero."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    conductor = payload["stages"][0]["conductor"]
+    conductor["temperature_coefficient"] = "-0.05 1/kelvin"
+    conductor["limits"] = {
+        "linearization_band": "400 kelvin",
+        "maximum_operating_temperature": "1200 kelvin",
+        "debye_temperature": "343 kelvin",
+    }
+    return payload
+
+
+def test_a_design_that_stops_the_loop_is_reported_rather_than_raised():
+    """The whole of TASK 4 in one assertion.
+
+    A declared alpha that takes R(T) through zero used to end the run with
+    TransportRefused, which removed the finding from the report entirely: a
+    caller saw an exception and the report said nothing at all.
+    """
+    outcome = run_electrothermal_case(_runaway_payload(), run_id="runaway")
+    report = outcome.reports[0]
+
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+    assert outcome.run.outcome is cp.CouplingOutcome.TRANSFER_REFUSED
+    assert report.coupling.outcome == "transfer_refused"
+
+
+def test_the_finding_that_stopped_the_loop_is_named_in_the_report():
+    """`linear_resistance_ratio` is the condition, and it is attributed."""
+    report = run_electrothermal_case(
+        _runaway_payload(), run_id="runaway-named"
+    ).reports[0]
+
+    violated = {
+        (record.model_id, name)
+        for record in report.validity
+        for name in record.assessment.violated
+    }
+    assert (mat.RATED_LINEAR_TCR_MODEL.model_id, "linear_resistance_ratio") in (
+        violated
+    )
+    failed = {check.name for check in report.validation if not check.passed}
+    assert "coupling_transfer_refused" in failed
+
+
+def test_a_stopped_run_reports_the_values_it_produced_and_omits_the_rest():
+    """Absent, not zero and not null-with-units.
+
+    The refused property solve produced a resistance -- a negative one, which
+    is the evidence. No temperature was ever computed, and inventing one so the
+    report keeps its usual shape is the substitution this boundary exists to
+    refuse.
+    """
+    report = run_electrothermal_case(
+        _runaway_payload(), run_id="runaway-values"
+    ).reports[0]
+
+    assert "resistance" in report.values
+    assert report.values["resistance"].magnitude_in("ohm") < 0.0
+    for never_produced in (
+        "final_temperature",
+        "steady_state_temperature",
+        "time_constant",
+    ):
+        assert never_produced not in report.values
+
+
+def test_the_transfer_guard_itself_is_unchanged():
+    """F08 stays exactly as it was: the value still does not travel.
+
+    What changed is the exit, not the guard. A provider returning nonsense
+    still raises out of the generic runner, because a caller supplying its own
+    executor table may be running one -- and an execution failure is not a
+    finding about the design.
+    """
+    import inspect
+
+    source = inspect.getsource(cp.run_fixed_point)
+    assert "stop_on_transfer_refusal" in source
+    assert inspect.signature(cp.run_fixed_point).parameters[
+        "stop_on_transfer_refusal"
+    ].default is False
+
+
+def test_a_conflicting_pair_of_declared_limits_is_a_finding_not_a_refusal():
+    """Melting point below the operating ceiling, via the validation hook.
+
+    Reported rather than refused at build time, because cases whose real defect
+    is that the run passes the melting point also declare a low melting point
+    beside a high ceiling -- refusing early pre-empts the better finding.
+    """
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    payload["stages"][0]["body"]["applicability"]["melting_temperature"] = (
+        "400 kelvin"
+    )
+    payload["stages"][0]["conductor"]["limits"] = {
+        "maximum_operating_temperature": "900 kelvin"
+    }
+    report = run_electrothermal_case(payload, run_id="conflict").reports[0]
+
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+    failed = {c.name for c in report.validation if not c.passed}
+    assert "declared_limits_are_mutually_consistent" in failed
+
+
+def test_agreeing_limits_pass_the_same_check_rather_than_omitting_it():
+    """A check that only ever fails is a check nobody can see working."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    payload["stages"][0]["conductor"]["limits"] = {
+        "maximum_operating_temperature": "600 kelvin"
+    }
+    report = run_electrothermal_case(payload, run_id="agree").reports[0]
+    passed = {c.name for c in report.validation if c.passed}
+    assert "declared_limits_are_mutually_consistent" in passed
+
+
+def test_an_undeclared_limit_is_not_read_as_agreement():
+    """Both limits are optional and the check is absent unless both are there."""
+    payload = payload_without(APPLICABILITY_PATH, "melting_temperature")
+    report = run_electrothermal_case(payload, run_id="absent").reports[0]
+    names = {c.name for c in report.validation}
+    assert "declared_limits_are_mutually_consistent" not in names

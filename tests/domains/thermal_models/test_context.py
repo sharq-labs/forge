@@ -530,6 +530,10 @@ def test_the_assembler_derives_only_what_the_supplied_facts_reach():
         ctx.BIOT_NUMBER,
         ctx.TRANSIENT_HORIZON_RATIO,
         ctx.INTERNAL_FOURIER_NUMBER,
+        # One route to a characteristic length was supplied, so whether the
+        # two routes agree is answerable and they trivially do: there is no
+        # second declaration for the length to contradict.
+        ctx.GEOMETRY_ROUTE_RATIO,
     }
     assert dimensionless(derived[ctx.BIOT_NUMBER]) == pytest.approx(
         5.0e-5, rel=1e-12
@@ -559,6 +563,11 @@ def _incomplete_body():
             melting_temperature=Quantity(900.0, K),
             surface_emissivity=Quantity(0.05, "dimensionless"),
             convection_regime=ctx.FORCED_CONVECTION,
+            fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+            fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+            fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+            fluid_velocity=Quantity(1.0, "meter/second"),
+            convection_length=Quantity(0.6, "meter"),
         ),
     )
 
@@ -647,6 +656,11 @@ def test_f03_colliding_with_every_derived_name_changes_no_verdict(declared):
                 melting_temperature=Quantity(900.0, K),
                 surface_emissivity=Quantity(0.05, "dimensionless"),
                 convection_regime=ctx.FORCED_CONVECTION,
+                fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+                fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+                fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+                fluid_velocity=Quantity(1.0, "meter/second"),
+                convection_length=Quantity(0.6, "meter"),
             ),
         )
         if declared

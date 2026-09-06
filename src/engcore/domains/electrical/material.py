@@ -77,6 +77,7 @@ from ...scientific.models.definition import (
     ModelOutputSpec,
     ModelType,
     ModelValidationStatus,
+    CrossLimitCondition,
     RangeCondition,
     ScientificModelDefinition,
     ValidityAssessment,
@@ -113,6 +114,7 @@ from ...scientific.units.quantity import Quantity
 __all__ = [
     "BLOCH_GRUENEISEN_LINEAR_FLOOR",
     "DEBYE_TEMPERATURE",
+    "CEILING_REDUCED_DEBYE_TEMPERATURE",
     "DIMENSIONLESS",
     "LINEARIZATION_BAND",
     "LINEARIZATION_BUDGET_LIMIT",
@@ -128,6 +130,9 @@ __all__ = [
     "RATED_LINEAR_TCR_MODEL",
     "RATED_LINEAR_TCR_REALIZATION",
     "REDUCED_DEBYE_TEMPERATURE",
+    "REFERENCE_LINEAR_FLOOR",
+    "REFERENCE_REDUCED_DEBYE_TEMPERATURE",
+    "REFERENCE_TEMPERATURE_UTILIZATION",
     "REFERENCE_RESISTANCE",
     "REFERENCE_TEMPERATURE",
     "RESISTANCE_METRIC",
@@ -184,6 +189,53 @@ LINEARIZATION_EXCURSION_RATIO = "linearization_excursion_ratio"
 OPERATING_TEMPERATURE_UTILIZATION = "operating_temperature_utilization"
 REDUCED_DEBYE_TEMPERATURE = "reduced_debye_temperature"
 LINEAR_RESISTANCE_RATIO = "linear_resistance_ratio"
+
+#: Derived groups stated over the *declared limits alone*.
+#:
+#: Every group above compares a limit with the computed temperature, and so
+#: cannot be evaluated until a run has produced one. These three compare a
+#: declared limit with another declared limit, which makes them answerable from
+#: the declaration by itself — before any solver runs, and whether or not one
+#: ever does.
+#:
+#: None of them introduces a threshold. Each is an existing condition of this
+#: model evaluated at a declared limit instead of at the state, so it reuses
+#: that condition's bound unchanged; see the three functions for which.
+#: The floor for the *reference* against the Debye temperature: ``theta_D / 5``,
+#: not the ``theta_D / 3`` that bounds the operating point.
+#:
+#: **Relaxed from 1/3 against a real material.** Beryllium has a Debye
+#: temperature of 1440 K (Kittel, *Introduction to Solid State Physics*, 8th
+#: ed. (2005), Ch. 5, Table 1) and a linear temperature coefficient published
+#: at 20 degC like any other engineering metal. At the conventional 293.15 K
+#: reference that is ``T_ref / theta_D = 0.204``, which the 1/3 floor refuses.
+#: Beryllium is not an exotic case — it is a structural conductor — and a
+#: condition that calls its datasheet self-contradictory is wrong about the
+#: world rather than strict about it. Copper (343 K), tungsten (400 K),
+#: chromium (630 K) and every other common metal clear 1/3 comfortably;
+#: beryllium is the one that does not, and it is the reason this constant
+#: exists separately.
+#:
+#: **Why a weaker floor is the right correction rather than deleting the
+#: condition.** The two ask different questions. ``reduced_debye_temperature``
+#: asks whether the *run* sits where rho(T) is linear, and keeps 1/3.  This one
+#: asks whether the coefficient was anchored somewhere a linear fit means
+#: anything at all, which is the weaker question: how far one alpha then
+#: carries is what ``linearization_band`` is for. Below roughly ``theta_D / 5``
+#: the Bloch-Grueneisen form is unambiguously in its ``T^5`` regime (Ashcroft &
+#: Mermin, *Solid State Physics* (1976), Ch. 26, Eq. 26.55) and a straight line
+#: through that point describes nothing.
+#:
+#: **The margin is thin and that is worth knowing.** Beryllium clears this
+#: floor by 2%. A material with a Debye temperature above about 1466 K
+#: referenced at 293.15 K would still be refused, and if such a conductor with
+#: a published room-temperature coefficient turns up, this constant is wrong
+#: again and the same argument applies.
+REFERENCE_LINEAR_FLOOR = Quantity(1.0 / 5.0, DIMENSIONLESS)
+
+REFERENCE_TEMPERATURE_UTILIZATION = "reference_temperature_utilization"
+REFERENCE_REDUCED_DEBYE_TEMPERATURE = "reference_reduced_debye_temperature"
+CEILING_REDUCED_DEBYE_TEMPERATURE = "ceiling_reduced_debye_temperature"
 
 MODEL_VERSION = "0.1.0"
 MATERIAL_LIMITS_SCHEMA = schema_string("conductor_material_limits")
@@ -547,13 +599,122 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                 name=REDUCED_DEBYE_TEMPERATURE,
                 minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
                 description=(
-                    "T / theta_D >= 1/3. Above roughly this fraction of the "
+                    "T_coldest / theta_D >= 1/3, evaluated at the coldest "
+                    "state the run occupies rather than at the temperature it "
+                    "converges to. This model does not claim validity only at "
+                    "convergence: it describes the path from the initial state "
+                    "to the final one, and R(T) is read from the same single "
+                    "coefficient at every point of it. If the material is "
+                    "outside its linear range at the coldest state, the whole "
+                    "trajectory rests on a coefficient that was never valid "
+                    "there, and a body that starts at an ambient below "
+                    "theta_D/3 and warms past it is exactly that case. A "
+                    "floor is bound by the coldest state, not the last one. "
+                    "Above roughly this fraction of the "
                     "Debye temperature a metal's resistivity is linear in T; "
                     "well below it Bloch-Grueneisen gives rho ~ T^5 and no "
                     "single coefficient fits. Ashcroft & Mermin, Solid State "
                     "Physics (1976), Ch. 26, Eq. 26.55; Kittel, Introduction "
                     "to Solid State Physics, 8th ed. (2005), Ch. 6. UNKNOWN "
                     "unless the material declares debye_temperature."
+                ),
+            ),
+            # ---- the declared limits against each other -------------------
+            #
+            # Every condition above compares a declared limit with the
+            # computed temperature. The three below compare declared limits
+            # with each other, which is a different question and answerable
+            # earlier: they need no state, so they are decided by the
+            # declaration alone, before a solver runs.
+            #
+            # None of them introduces a threshold. Each restates a condition
+            # already above at a declared limit rather than at the state, and
+            # so reuses that condition's bound unchanged.
+            #
+            # They are `CrossLimitCondition`s, and were three hand-written
+            # `RangeCondition`s over three ratios this module assembled. The
+            # ratios are gone: the core forms them now, from the two declared
+            # names each condition points at. Nothing about the verdicts
+            # changed -- the same bounds, the same inclusivity, the same
+            # UNKNOWN when either limit is absent -- and three derivation
+            # functions and three reserved names went with them. See NEEDS.md
+            # for the one count that moved and why.
+            CrossLimitCondition(
+                name=REFERENCE_TEMPERATURE_UTILIZATION,
+                numerator=REFERENCE_TEMPERATURE,
+                denominator=MAXIMUM_OPERATING_TEMPERATURE,
+                maximum=OPERATING_TEMPERATURE_LIMIT,
+                description=(
+                    "T_ref / maximum_operating_temperature <= 1. The same "
+                    "bound as operating_temperature_utilization, asked at the "
+                    "reference instead of at the state. A material whose "
+                    "reference resistance is declared at a temperature its "
+                    "own rating says the conductor does not survive has "
+                    "contradicted itself: R_ref and alpha are anchored there, "
+                    "so every resistance computed from them is referred to a "
+                    "state the declaration excludes, at every operating "
+                    "point. UNKNOWN unless the material declares "
+                    "maximum_operating_temperature."
+                ),
+            ),
+            CrossLimitCondition(
+                name=REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+                numerator=REFERENCE_TEMPERATURE,
+                denominator=DEBYE_TEMPERATURE,
+                minimum=REFERENCE_LINEAR_FLOOR,
+                description=(
+                    "T_ref / theta_D >= 1/5. A weaker floor than "
+                    "reduced_debye_temperature's 1/3, deliberately, and the "
+                    "reason is beryllium: theta_D = 1440 K (Kittel 8th ed., "
+                    "Ch. 5, Table 1) with a coefficient published at 20 degC "
+                    "like any engineering metal, which is T_ref/theta_D = "
+                    "0.204. A condition that calls a real datasheet "
+                    "self-contradictory is wrong about the world rather than "
+                    "strict about it. The two conditions ask different "
+                    "questions: that one asks whether the run sits where "
+                    "rho(T) is linear, this one asks whether the coefficient "
+                    "was anchored somewhere a straight line means anything at "
+                    "all -- how far one alpha then carries is what "
+                    "linearization_band is for. Below about theta_D/5 the "
+                    "Bloch-Grueneisen form is unambiguously in its T^5 "
+                    "regime. The margin this leaves is thin and deliberately "
+                    "not widened: beryllium clears theta_D/5 by 2%, so a "
+                    "conductor with a Debye temperature above about 1466 K "
+                    "and a coefficient published at 293.15 K is refused by "
+                    "this condition. That is the intended behaviour rather "
+                    "than an oversight -- such a coefficient is anchored deep "
+                    "in the T^5 regime -- and if a real datasheet for one "
+                    "turns up, this bound is wrong again and the same "
+                    "argument settles it. alpha is the slope of a "
+                    "straight line through T_ref, and theta_D is declared to "
+                    "mark where rho(T) stops being straight; a reference "
+                    "below the material's own linearity floor fits a line at "
+                    "a temperature the same declaration says is curved. "
+                    "Distinct from the condition on the run: a run can stay "
+                    "in the linear regime while the coefficient it uses was "
+                    "anchored outside it. UNKNOWN unless the material "
+                    "declares debye_temperature."
+                ),
+            ),
+            CrossLimitCondition(
+                name=CEILING_REDUCED_DEBYE_TEMPERATURE,
+                numerator=MAXIMUM_OPERATING_TEMPERATURE,
+                denominator=DEBYE_TEMPERATURE,
+                minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
+                description=(
+                    "T_max / theta_D >= 1/3. The Debye condition asked at the "
+                    "ceiling — the most favourable temperature the material "
+                    "permits. reduced_debye_temperature bounds the operating "
+                    "temperature from below and "
+                    "operating_temperature_utilization bounds it from above; "
+                    "the Debye condition is monotone in T, so if it fails at "
+                    "the ceiling it fails at every admissible temperature and "
+                    "the declared usable set is empty. Reported separately "
+                    "because an empty set cannot be repaired by moving the "
+                    "operating point, cooling the part or shortening the "
+                    "run — only by changing the declaration. UNKNOWN unless "
+                    "the material declares both maximum_operating_temperature "
+                    "and debye_temperature."
                 ),
             ),
             RangeCondition(
@@ -1063,6 +1224,40 @@ def reduced_debye_temperature(
     return Quantity(kelvin / debye, DIMENSIONLESS)
 
 
+# =====================================================================
+# Consistency of the declared limits with each other
+# =====================================================================
+#
+# The three functions below take no ``temperature``. That is the whole point
+# of them: they read only what the caller declared, so they are answerable
+# before a solver runs and stay answerable if none ever does.
+#
+# Each one asks an existing condition of this model at a *declared limit*
+# rather than at the computed state, and keeps that condition's bound. A
+# declaration that fails one of them is not merely operating outside a
+# window — it is describing a material that cannot exist as described, and no
+# choice of operating point could rescue it.
+
+
+# The three limit-versus-limit derivations that used to live here are gone.
+#
+# `reference_temperature_utilization`, `reference_reduced_debye_temperature`
+# and `ceiling_reduced_debye_temperature` each read two declared limits,
+# divided one by the other, returned None when either was absent, and handed
+# the ratio to a RangeCondition. That is a shape rather than a physical
+# derivation -- unlike every function that remains in this module, none of
+# them combined a state with a declaration, and none of them meant anything
+# the two names did not already say. `CrossLimitCondition` in the core
+# expresses it directly, so the model record now names the two declarations
+# and the bound, and the ratio is formed where it is compared.
+#
+# What went with them: three reserved names. They are no longer assembled, so
+# they no longer need protecting from a caller parameter of the same name --
+# and a caller parameter called `reference_temperature_utilization` is now
+# simply a value nothing reads, which is the same guarantee by a shorter
+# route.
+
+
 def linear_resistance_ratio(
     *,
     temperature: Quantity | None,
@@ -1120,6 +1315,11 @@ ASSEMBLED_QUANTITIES = frozenset(
         OPERATING_TEMPERATURE_UTILIZATION,
         REDUCED_DEBYE_TEMPERATURE,
         LINEAR_RESISTANCE_RATIO,
+        # The three limit-versus-limit names are deliberately NOT here. They
+        # are no longer assembled: `CrossLimitCondition` reads the two
+        # declared limits directly, so there is no derived value for a caller
+        # parameter to impersonate. Reserving a name nothing computes and
+        # nothing reads would be dead weight pretending to be a guard.
     }
 )
 
@@ -1128,6 +1328,7 @@ def derived_material_quantities(
     base: Mapping[str, Any],
     *,
     temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
 ) -> dict[str, Quantity]:
     """Every rated group derivable from ``base`` and the supplied temperature.
 
@@ -1151,8 +1352,16 @@ def derived_material_quantities(
             temperature=temperature,
             maximum_temperature=base.get(MAXIMUM_OPERATING_TEMPERATURE),
         ),
+        # The one group evaluated somewhere other than the operating point.
+        # It is a *floor*, so the binding state is the coldest one the run
+        # occupies rather than the one it ends at; see the condition for why.
+        # Falls back to the operating point when no colder state was supplied,
+        # which is the honest answer for a caller that did not say.
         REDUCED_DEBYE_TEMPERATURE: reduced_debye_temperature(
-            temperature=temperature,
+            temperature=(
+                temperature if coldest_temperature is None
+                else coldest_temperature
+            ),
             debye_temperature=base.get(DEBYE_TEMPERATURE),
         ),
         LINEAR_RESISTANCE_RATIO: linear_resistance_ratio(
@@ -1160,12 +1369,17 @@ def derived_material_quantities(
             reference_temperature=reference_temperature,
             temperature_coefficient=base.get(TEMPERATURE_COEFFICIENT),
         ),
+        # The three limit-versus-limit comparisons used to be assembled here
+        # and are now `CrossLimitCondition`s, which read the declared limits
+        # straight out of the context. Nothing is derived for them.
     }
     return {name: value for name, value in derived.items() if value is not None}
 
 
 def rated_resistance_validity_context(
-    problem: ScientificProblem, temperature: Quantity | None = None
+    problem: ScientificProblem,
+    temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
 ) -> dict[str, Any]:
     """The full context :data:`RATED_LINEAR_TCR_MODEL` is assessed against.
 
@@ -1184,7 +1398,9 @@ def rated_resistance_validity_context(
         assembled={
             **state,
             **derived_material_quantities(
-                {**declared, **state}, temperature=temperature
+                {**declared, **state},
+                temperature=temperature,
+                coldest_temperature=coldest_temperature,
             ),
         },
         reserved=ASSEMBLED_QUANTITIES,
@@ -1192,7 +1408,9 @@ def rated_resistance_validity_context(
 
 
 def assess_rated_resistance_validity(
-    problem: ScientificProblem, temperature: Quantity | None = None
+    problem: ScientificProblem,
+    temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
 ) -> ValidityAssessment:
     """Is the *rated* claim applicable here? **Validity, not validation.**
 
@@ -1205,7 +1423,9 @@ def assess_rated_resistance_validity(
     mistaken for the other.
     """
     return RATED_LINEAR_TCR_MODEL.assess_validity(
-        rated_resistance_validity_context(problem, temperature)
+        rated_resistance_validity_context(
+            problem, temperature, coldest_temperature
+        )
     )
 
 

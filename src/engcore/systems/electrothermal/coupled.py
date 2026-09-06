@@ -273,6 +273,26 @@ class CouplingOutcome(str, Enum):
     CRITERION_MET = "criterion_met"
     ITERATION_LIMIT_REACHED = "iteration_limit_reached"
 
+    #: The loop stopped because a value an edge needed could not leave its
+    #: producer: that result's own validation FAILED and :func:`_transport`
+    #: refused it.
+    #:
+    #: **Earned, unlike the DIVERGED member above.** That one is absent because
+    #: nothing here implements a divergence test and it would have been minted
+    #: from intuition. This one names the outcome of a test that *is*
+    #: implemented, has a definite answer every time it runs, and already has a
+    #: name and a carrier — the transfer guard and :class:`TransportRefused`.
+    #:
+    #: It does **not** claim the loop diverged. It claims the loop stopped, and
+    #: says where: the refusal carried alongside it names the edge, the
+    #: iteration and the checks that rejected the result. A run refused at
+    #: iteration 1 was never a contraction problem — its producer rejected the
+    #: very first evaluation — while one refused at iteration 38 walked its own
+    #: state out of a model's domain over 38 sweeps. Both stopped for the same
+    #: mechanical reason and the iteration index is what distinguishes them, so
+    #: this member states the mechanism and leaves the reading to the report.
+    TRANSFER_REFUSED = "transfer_refused"
+
 
 @dataclass(frozen=True)
 class TornEndpoint:
@@ -1307,6 +1327,16 @@ class CoupledRun:
     #: :class:`TornEndpoint` exists to carry structurally.
     final_values: Mapping[tuple[str, str], Quantity]
     provenance: ProvenanceRecord
+    #: The refusal that stopped the loop, when ``outcome`` is
+    #: ``TRANSFER_REFUSED``, and ``None`` otherwise.
+    #:
+    #: Carried on the successful return path for the same reason
+    #: :class:`TransportRefused` carries it on the error path: the rejected
+    #: result is the only record of what the producer actually returned, and a
+    #: run that stopped with no way to see why is worse than one that raised.
+    #: The two paths now hold the same evidence and differ only in whether a
+    #: caller has to catch it.
+    refusal: "TransportRefused | None" = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.plan, FixedPointCouplingPlan):
@@ -1563,6 +1593,7 @@ def run_fixed_point(
     run_id: str,
     software_version: str,
     assumptions: tuple[str, ...] = (),
+    stop_on_transfer_refusal: bool = False,
 ) -> CoupledRun:
     """Execute a torn dependency cycle to convergence, or to the budget.
 
@@ -1646,63 +1677,102 @@ def run_fixed_point(
     current = dict(seeds)
     iterations: list[CoupledIteration] = []
     outcome = CouplingOutcome.ITERATION_LIMIT_REACHED
+    refusal: TransportRefused | None = None
 
     for index in range(1, plan.max_iterations + 1):
         produced: dict[str, ScientificResult] = {}
-        for problem_id in order:
-            inputs: dict[str, Quantity] = {}
-            for dependency in incoming[problem_id]:
-                # THE TRANSFER BOUNDARY. Every uncut edge crosses here.
-                inputs[dependency.target_quantity] = _transport(
-                    produced[dependency.source_problem_id], dependency, index
+        try:
+            for problem_id in order:
+                inputs: dict[str, Quantity] = {}
+                for dependency in incoming[problem_id]:
+                    # THE TRANSFER BOUNDARY. Every uncut edge crosses here.
+                    inputs[dependency.target_quantity] = _transport(
+                        produced[dependency.source_problem_id], dependency, index
+                    )
+                # Torn targets take the seed on the first pass and the previous
+                # pass's value afterwards. This cannot shadow a transported value:
+                # the plan refuses two dependencies sharing a target endpoint, so a
+                # torn edge's endpoint is never also an uncut edge's. An earlier
+                # form had no such refusal, and this assignment then silently
+                # discarded the transported value.
+                for endpoint, value in current.items():
+                    if endpoint[0] == problem_id:
+                        inputs[endpoint[1]] = value
+                result = executors[problem_id](
+                    inputs, f"{run_id}-{index}-{problem_id}"
                 )
-            # Torn targets take the seed on the first pass and the previous
-            # pass's value afterwards. This cannot shadow a transported value:
-            # the plan refuses two dependencies sharing a target endpoint, so a
-            # torn edge's endpoint is never also an uncut edge's. An earlier
-            # form had no such refusal, and this assignment then silently
-            # discarded the transported value.
-            for endpoint, value in current.items():
-                if endpoint[0] == problem_id:
-                    inputs[endpoint[1]] = value
-            result = executors[problem_id](
-                inputs, f"{run_id}-{index}-{problem_id}"
-            )
-            if result.problem_id != problem_id:
-                raise InvalidScientificProblem(
-                    f"the executor for {problem_id!r} returned a result "
-                    f"attributed to {result.problem_id!r}; a composition that "
-                    f"accepted that would misattribute every value it "
-                    f"transported out of it"
+                if result.problem_id != problem_id:
+                    raise InvalidScientificProblem(
+                        f"the executor for {problem_id!r} returned a result "
+                        f"attributed to {result.problem_id!r}; a composition that "
+                        f"accepted that would misattribute every value it "
+                        f"transported out of it"
+                    )
+                produced[problem_id] = result
+
+            updated: dict[tuple[str, str], Quantity] = {}
+            largest = 0.0
+            for endpoint in plan.torn:
+                key = endpoint.endpoint
+                # The same boundary, for the edges the plan cut. A torn edge is
+                # still a transfer: its value seeds the next sweep and lands in
+                # ``final_values``, so it may not come out of a rejected result
+                # either.
+                value = _transport(
+                    produced[endpoint.dependency.source_problem_id],
+                    endpoint.dependency,
+                    index,
                 )
-            produced[problem_id] = result
+                updated[key] = value
+                largest = max(
+                    largest,
+                    abs(value.magnitude_in(unit) - current[key].magnitude_in(unit)),
+                )
 
-        updated: dict[tuple[str, str], Quantity] = {}
-        largest = 0.0
-        for endpoint in plan.torn:
-            key = endpoint.endpoint
-            # The same boundary, for the edges the plan cut. A torn edge is
-            # still a transfer: its value seeds the next sweep and lands in
-            # ``final_values``, so it may not come out of a rejected result
-            # either.
-            value = _transport(
-                produced[endpoint.dependency.source_problem_id],
-                endpoint.dependency,
-                index,
-            )
-            updated[key] = value
-            largest = max(
-                largest,
-                abs(value.magnitude_in(unit) - current[key].magnitude_in(unit)),
+            iterations.append(
+                CoupledIteration(
+                    index=index,
+                    results=tuple(produced[p] for p in order),
+                    largest_iterate_change=Quantity(largest, unit),
+                )
             )
 
-        iterations.append(
-            CoupledIteration(
-                index=index,
-                results=tuple(produced[p] for p in order),
-                largest_iterate_change=Quantity(largest, unit),
+        except TransportRefused as refused:
+            if not stop_on_transfer_refusal:
+                # THE DEFAULT, AND F08's CONTRACT. A caller that supplied its
+                # own executor table may be running an external provider, and
+                # a provider returning nonsense is an execution failure rather
+                # than a finding about the design. It propagates, carrying the
+                # rejected result.
+                raise
+            # THE SECOND EXIT. The guard above is unchanged and the value
+            # still did not travel; what changed is that the loop stops with a
+            # statement instead of unwinding the stack. A design refused here
+            # is a finding about the design, and a finding a caller has to
+            # catch in order to see is a finding the report does not carry.
+            outcome = CouplingOutcome.TRANSFER_REFUSED
+            refusal = refused
+            iterations.append(
+                CoupledIteration(
+                    index=index,
+                    # Whatever this sweep completed before the refusal, in
+                    # execution order, plus the rejected result itself. The
+                    # rejected one is included because it is the evidence:
+                    # omitting it would leave a stopped run whose report could
+                    # not say which check rejected what.
+                    results=tuple(produced[p] for p in order if p in produced)
+                    + (
+                        (refused.result,)
+                        if refused.result.problem_id not in produced
+                        else ()
+                    ),
+                    # Not an iterate change: this sweep produced no new
+                    # iterate. Zero is the only honest number and the outcome
+                    # is what a reader must consult, not this field.
+                    largest_iterate_change=Quantity(0.0, unit),
+                )
             )
-        )
+            break
         current = updated
         if largest <= tolerance:
             outcome = CouplingOutcome.CRITERION_MET
@@ -1758,6 +1828,7 @@ def run_fixed_point(
         iterations=tuple(iterations),
         final_values=dict(current),
         provenance=provenance,
+        refusal=refusal,
     )
 
 
@@ -1782,6 +1853,14 @@ def run_fixed_point_coupling(
         problems,
         _executors(system, problems),
         plan,
+        # Every executor in this composition is a closed-form evaluation of
+        # the caller's own declaration -- there is no provider here to return
+        # nonsense. So a refusal in *this* composition cannot be an execution
+        # failure; it is the declared physics driving its own state out of a
+        # model's domain, which is a finding about the design and belongs in
+        # the report. That is the distinction, and it is structural rather
+        # than a judgement about any particular check.
+        stop_on_transfer_refusal=True,
         run_id=run_id,
         software_version="engcore.systems.electrothermal.coupled/0.1.0",
         assumptions=(

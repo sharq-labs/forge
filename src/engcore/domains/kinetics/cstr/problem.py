@@ -99,29 +99,34 @@ from ....scientific.models.definition import (
 )
 from ....scientific.solvers.capability import CoreCapabilities, SolverCapability
 from ....scientific.units.quantity import Quantity
+from .context import (
+    ADIABATIC_CEILING_TEMPERATURE,
+    CONCENTRATION_UNIT,
+    DENSITY_UNIT,
+    DIMENSIONLESS,
+    DAMKOHLER_NUMBER,
+    FLOW_UNIT,
+    GAS_CONSTANT_UNIT,
+    HEAT_CAPACITY_UNIT,
+    MAX_WELL_MIXED_DAMKOHLER,
+    MOLAR_ENERGY_UNIT,
+    MOLAR_GAS_CONSTANT,
+    RATE_CONSTANT_UNIT,
+    TEMPERATURE_UNIT,
+    TIME_UNIT,
+    UA_UNIT,
+    VOLUME_UNIT,
+    cstr_validity_context,
+)
 from .errors import ReactorConfigurationError
 
 # =====================================================================
 # Units — every one of these is a real physical dimension
 # =====================================================================
+# The table itself lives in ``context.py``, the lower layer, and is imported
+# and re-exported here so every existing ``from .problem import ..._UNIT``
+# keeps working against one definition rather than two.
 
-CONCENTRATION_UNIT = "mol/m**3"
-TEMPERATURE_UNIT = "kelvin"
-TIME_UNIT = "second"
-VOLUME_UNIT = "m**3"
-FLOW_UNIT = "m**3/s"
-RATE_CONSTANT_UNIT = "1/s"
-MOLAR_ENERGY_UNIT = "J/mol"
-DENSITY_UNIT = "kg/m**3"
-HEAT_CAPACITY_UNIT = "J/(kg*K)"
-UA_UNIT = "W/K"
-GAS_CONSTANT_UNIT = "J/(mol*K)"
-DIMENSIONLESS = "dimensionless"
-
-#: CODATA / SI-exact molar gas constant. Declared here as a Quantity because it
-#: enters the Arrhenius exponent and must be dimensionally checkable like every
-#: other input. It is a defining constant of the SI and carries no uncertainty.
-MOLAR_GAS_CONSTANT = Quantity(8.314462618, GAS_CONSTANT_UNIT)
 
 # =====================================================================
 # Validity envelope bounds — DOMAIN-OWNED, declared here and nowhere else
@@ -298,6 +303,69 @@ CSTR_MODEL = ScientificModelDefinition(
                 minimum=Quantity(0.0, TIME_UNIT),
                 minimum_inclusive=False,
                 description="Strictly positive residence time V/q.",
+            ),
+            # ---- the two dimensionless statements ------------------------
+            #
+            # Every condition above is a positivity or an envelope on one
+            # declared value. The two below are groups: they combine several
+            # declarations into a number that says something the individual
+            # values cannot, and both are decidable from the declaration alone,
+            # before a solver runs.
+            RangeCondition(
+                name=DAMKOHLER_NUMBER,
+                maximum=MAX_WELL_MIXED_DAMKOHLER,
+                description=(
+                    "Da = k(T_f) tau <= 10. The model's first assumption is a "
+                    "perfectly mixed tank with no spatial gradient in "
+                    "concentration or temperature. A tank homogenizes in a "
+                    "blend time t_m, and the idealization needs it to do so at "
+                    "least as fast as the reaction changes the local state, "
+                    "t_m <= 1/k; with Da = k tau that is Da <= tau/t_m, so the "
+                    "admissible Damkohler number is bounded above by the "
+                    "tank's own mixing quality. Past it the fluid reacts in "
+                    "partially segregated parcels rather than at one state: "
+                    "Levenspiel, Chemical Reaction Engineering, 3rd ed. "
+                    "(Wiley, 1999), Ch. 16. **The 10 IS A CONVENTION**, not a "
+                    "number that source or any other prints as a threshold — "
+                    "it is the conventional well-stirred reading tau/t_m = 10, "
+                    "and it is recorded here as a convention. Bounded above "
+                    "only: at Da -> 0 the tank is a mixing vessel and the "
+                    "equations still describe it exactly, and Da of order "
+                    "unity is where multiplicity and ignition live, which is "
+                    "what this model is for. This bounds the TEMPERATURE "
+                    "field, not the concentration field — a first-order rate "
+                    "is linear in C_A and segregation does not change its "
+                    "conversion, but k(T) is convex in T, so any spread in "
+                    "temperature makes the mean rate exceed the rate at the "
+                    "mean. UNKNOWN unless k0, the activation energy, the feed "
+                    "temperature and the residence time are all declared."
+                ),
+            ),
+            RangeCondition(
+                name=ADIABATIC_CEILING_TEMPERATURE,
+                maximum=Quantity(MAX_VALID_TEMPERATURE_K, TEMPERATURE_UNIT),
+                description=(
+                    "max(T_0, T_f, T_c) + beta max(C_A0, C_Af) <= 1000 K. The "
+                    "same envelope ceiling as the temperature condition, asked "
+                    "at the hottest state the declaration can reach instead of "
+                    "at the one it starts from, and it therefore introduces no "
+                    "new threshold. The bound is an upper bound rather than an "
+                    "estimate: Z = T + beta C_A is this reactor's exact "
+                    "invariant, dZ/dt = a(Z_f - Z) - gamma(T - T_c), and since "
+                    "C_A >= 0 and C_A <= max(C_A0, C_Af) it follows that T <= "
+                    "Z <= max(T_0, T_f, T_c) + beta max(C_A0, C_Af) with or "
+                    "without cooling. A declaration whose ceiling is above the "
+                    "envelope can leave the single-phase constant-property "
+                    "region the model assumes, and no choice of horizon or "
+                    "tolerance repairs that. Conservative by construction: a "
+                    "strongly cooled reactor will not approach the ceiling and "
+                    "is still reported as able to, because this condition does "
+                    "not certify that the cooling holds. Where the trajectory "
+                    "actually went is what the post-solve state-admissibility "
+                    "check reports. UNKNOWN unless the enthalpy, density, heat "
+                    "capacity, both concentrations and all three temperatures "
+                    "are declared."
+                ),
             ),
         ),
         description=(
@@ -771,7 +839,20 @@ class ReactorRun:
 
     @property
     def damkohler_at_feed_temperature(self) -> float:
-        """k(T_f) / (q/V). Order unity is where the interesting behaviour is."""
+        """k(T_f) / (q/V), as a plain float for the solver notes.
+
+        Order unity is where the interesting behaviour is — multiplicity,
+        ignition, extinction — and that is a statement about where to *look*,
+        not a validity bound. What bounds this group is the perfect-mixing
+        assumption, from above only; see
+        :data:`~engcore.domains.kinetics.cstr.context.MAX_WELL_MIXED_DAMKOHLER`
+        and the ``damkohler_number`` condition, which is what actually decides
+        anything. This property and
+        :func:`~engcore.domains.kinetics.cstr.context.damkohler_number` compute
+        the same number by different routes — floats through the chemistry's
+        own Arrhenius kernel here, unit-checked Quantities there — and a test
+        pins them together.
+        """
         return (
             self.chemistry.rate_constant_per_s(self.operation.tf_k)
             / self.operation.dilution_rate_per_s
@@ -819,17 +900,35 @@ class ReactorRun:
         The temperatures offered are the DECLARED ones. A trajectory can still
         leave the envelope during integration, and that is a different question
         answered after the solve by the state-admissibility check — a valid
-        declaration does not promise a valid trajectory.
+        declaration does not promise a valid trajectory. The one thing said
+        here about states the run has not reached is
+        ``adiabatic_ceiling_temperature``, which is an upper bound derived from
+        the reactor's exact invariant rather than a prediction of where the
+        trajectory goes.
+
+        Assembled in two separated namespaces by
+        :func:`~engcore.domains.kinetics.cstr.context.cstr_validity_context`:
+        the declared values below, with every derived name stripped, plus
+        whatever that module could actually derive. A group it could not derive
+        is absent rather than caller-supplied, so its condition reads UNKNOWN.
         """
-        return {
-            "temperature": self.initial_temperature,
-            "concentration": self.initial_concentration,
-            "k0": self.chemistry.k0,
-            "activation_energy": self.chemistry.activation_energy,
-            "residence_time": Quantity(
-                self.operation.residence_time_s, TIME_UNIT
-            ),
-        }
+        return cstr_validity_context(
+            {
+                "temperature": self.initial_temperature,
+                "concentration": self.initial_concentration,
+                "k0": self.chemistry.k0,
+                "activation_energy": self.chemistry.activation_energy,
+                "heat_of_reaction": self.chemistry.heat_of_reaction,
+                "density": self.chemistry.density,
+                "heat_capacity": self.chemistry.heat_capacity,
+                "feed_concentration": self.operation.feed_concentration,
+                "feed_temperature": self.operation.feed_temperature,
+                "coolant_temperature": self.operation.coolant_temperature,
+                "residence_time": Quantity(
+                    self.operation.residence_time_s, TIME_UNIT
+                ),
+            }
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {

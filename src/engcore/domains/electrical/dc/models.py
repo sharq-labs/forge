@@ -74,6 +74,18 @@ CURRENT_UNIT = "ampere"
 RESISTANCE_UNIT = "ohm"
 DIMENSIONLESS = "dimensionless"
 
+# --- names of the ratings a caller may declare -------------------------------
+# Names, not conventions. Each is enumerated by the model record it belongs to
+# as an optional ``ModelInputSpec``, so the payload boundary derives its
+# description of these fields from the records instead of restating them, and
+# a reader holding only the records can see which declaration unlocks which
+# condition. They are the field names of :class:`ComponentRating`.
+RATED_POWER = "rated_power"
+MAXIMUM_WORKING_VOLTAGE = "maximum_working_voltage"
+MAXIMUM_CURRENT = "maximum_current"
+COMPLIANCE_VOLTAGE = "compliance_voltage"
+DERATING_FACTOR = "derating_factor"
+
 # --- names of the derived utilizations the conditions are stated over --------
 DISSIPATED_POWER_UTILIZATION = "dissipated_power_utilization"
 WORKING_VOLTAGE_UTILIZATION = "working_voltage_utilization"
@@ -86,6 +98,20 @@ COMPLIANCE_VOLTAGE_UTILIZATION = "compliance_voltage_utilization"
 #: visible input rather than a number buried in a threshold.
 RATING_UTILIZATION_LIMIT = Quantity(1.0, DIMENSIONLESS)
 
+#: The discriminator for the lumped-circuit assumption, as a fraction of a
+#: wavelength: ``L / lambda``, with ``lambda = c / f``.
+LUMPED_ELECTRICAL_LENGTH = "lumped_electrical_length"
+
+#: ``L <= lambda / 10``. The standard engineering boundary for treating a
+#: circuit as lumped rather than distributed, and the one the KCL model's own
+#: ValidityDomain description has always named in prose ("valid for lumped
+#: circuits; not validated for distributed or high-frequency regimes"). The
+#: value is not load-bearing for a DC model, where the ratio is identically
+#: zero — it is written down so that the condition states a real physical
+#: boundary rather than a tautology, and so that a future non-DC circuit model
+#: inherits a bound rather than inventing one.
+LUMPED_ELECTRICAL_LENGTH_LIMIT = Quantity(0.1, DIMENSIONLESS)
+
 #: The multiplier applied to a rating when the caller states no derating
 #: policy. 1.0 means "the rating as published, no margin applied" — a complete
 #: statement, not a substitute for a missing measurement. Derating is a policy
@@ -93,6 +119,17 @@ RATING_UTILIZATION_LIMIT = Quantity(1.0, DIMENSIONLESS)
 #: publishes ratings against a stated reference ambient precisely because the
 #: usable fraction away from it is the user's call.
 NO_DERATING = 1.0
+
+#: One text for one concept. ``derating_factor`` is declared by both the
+#: resistor and the source, and the payload boundary derives its description
+#: of a field from the model record; two wordings for the same field would
+#: make that description depend on which model was consulted.
+_DERATING_DESCRIPTION = (
+    "Fraction of the published ratings the caller elects to use, in (0, 1]. "
+    "Applies to every rating condition on this model. Defaults to 1.0, which "
+    "is the complete and explicit statement 'the ratings as published, with "
+    "no margin applied'."
+)
 
 _DC_ASSUMPTIONS = (
     "lumped-element circuit (no distributed or field effects)",
@@ -225,6 +262,46 @@ RESISTOR_OHM_MODEL = ScientificModelDefinition(
             unit_exemplar="volt",
             description="V(node_a) - V(node_b).",
         ),
+        # ---- optional, component-supplied ratings ------------------------
+        # The two rating conditions below have always existed and have always
+        # been correct; what they lacked was any declared input to read. They
+        # are enumerated here, `required=False`, for the same reason the
+        # material limits are: a reader holding only this record can see which
+        # declaration unlocks which condition, and a boundary can derive the
+        # payload's description from it instead of restating it.
+        #
+        # Omitting one leaves its condition UNKNOWN, which is the honest
+        # verdict for a part whose datasheet nobody supplied. An unrated part
+        # is not an unlimited part.
+        ModelInputSpec(
+            name=RATED_POWER,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=POWER_UNIT,
+            required=False,
+            description=(
+                "Rated dissipation of the element, against the reference "
+                "ambient its datasheet states. Unlocks "
+                f"{DISSIPATED_POWER_UTILIZATION}."
+            ),
+        ),
+        ModelInputSpec(
+            name=MAXIMUM_WORKING_VOLTAGE,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=VOLTAGE_UNIT,
+            required=False,
+            description=(
+                "Maximum working voltage across the element. Unlocks "
+                f"{WORKING_VOLTAGE_UTILIZATION}, which for a high-value part "
+                f"binds before the dissipation rating does."
+            ),
+        ),
+        ModelInputSpec(
+            name=DERATING_FACTOR,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DIMENSIONLESS,
+            required=False,
+            description=_DERATING_DESCRIPTION,
+        ),
     ),
     outputs=(
         ModelOutputSpec(
@@ -331,10 +408,44 @@ KCL_MODEL = ScientificModelDefinition(
         "no charge accumulation at nodes (lumped assumption)",
     ),
     validity=ValidityDomain(
+        conditions=(
+            RangeCondition(
+                name=LUMPED_ELECTRICAL_LENGTH,
+                maximum=LUMPED_ELECTRICAL_LENGTH_LIMIT,
+                description=(
+                    "L / lambda <= 0.1, the circuit's largest dimension as a "
+                    "fraction of a wavelength. This is the discriminator for "
+                    "the lumped assumption that the description below has "
+                    "always named in prose: charge conservation at a node is "
+                    "exact when the circuit is electrically small, and fails "
+                    "when propagation delay across it is comparable with the "
+                    "period, because then the currents at the two ends of a "
+                    "conductor are not the same current. Below one tenth of a "
+                    "wavelength is the standard boundary. "
+                    "**Satisfied by this model's own scope, not measured from "
+                    "a caller's context.** lambda = c / f, and this is a "
+                    "steady-state DC model: f = 0 is an assumption of the "
+                    "record rather than a value anybody supplies, so lambda "
+                    "is unbounded and the ratio is identically zero for every "
+                    "circuit this model is ever applied to, of any size. "
+                    "The condition is stated rather than assumed because a "
+                    "model that declares no conditions is UNKNOWN, and "
+                    "UNKNOWN here claimed an ignorance this model does not "
+                    "have: it does know where its assumption fails, and it "
+                    "knows its own scope keeps it on the right side. Stating "
+                    "the boundary and showing it is met is the honest form of "
+                    "that; declining to look is not. A circuit model at "
+                    "non-zero frequency would supply a real ratio here and "
+                    "this bound would begin to bite, which is the other "
+                    "reason to write it as a ratio against a limit rather "
+                    "than as a flag."
+                ),
+            ),
+        ),
         description=(
             "Valid for lumped circuits; not validated for distributed or "
             "high-frequency regimes where the lumped assumption fails."
-        )
+        ),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -364,6 +475,27 @@ IDEAL_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
             source_kind=InputSourceKind.VARIABLE,
             unit_exemplar="volt",
             description="V(positive_node) - V(negative_node).",
+        ),
+        # ---- optional, source-supplied rating -----------------------------
+        # `source_current_utilization` below is the condition this unlocks.
+        # A source with no declared current limit is an *ideal* source, which
+        # is what the model record says it models and what no real supply is.
+        ModelInputSpec(
+            name=MAXIMUM_CURRENT,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=CURRENT_UNIT,
+            required=False,
+            description=(
+                "Maximum current the source can deliver. Unlocks "
+                f"{SOURCE_CURRENT_UTILIZATION}."
+            ),
+        ),
+        ModelInputSpec(
+            name=DERATING_FACTOR,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DIMENSIONLESS,
+            required=False,
+            description=_DERATING_DESCRIPTION,
         ),
     ),
     outputs=(
@@ -591,6 +723,34 @@ def current_source_rating_context(
     return (
         {} if utilization is None else {COMPLIANCE_VOLTAGE_UTILIZATION: utilization}
     )
+
+
+def kcl_validity_context() -> dict[str, Quantity]:
+    """The context :data:`KCL_MODEL` is assessed against. Takes no arguments.
+
+    That signature is the statement. Every other validity context in this
+    domain is a function of something a caller declared or a solver produced;
+    this one is a function of nothing, because the quantity it supplies is
+    fixed by the model's own scope rather than by any particular circuit.
+
+    ``lumped_electrical_length`` is ``L / lambda`` with ``lambda = c / f``.
+    ``KCL_MODEL`` is a steady-state DC model — ``f = 0`` is in its
+    ``assumptions``, not in its inputs — so ``lambda`` is unbounded and the
+    ratio is exactly zero for a circuit of any size. Returning a computed zero
+    rather than hard-coding IN_DOMAIN keeps the verdict derived from a
+    condition, which is the rule the platform is built on: the assessment still
+    reads a quantity and compares it with a declared bound, and the reason the
+    comparison always passes is visible in the number.
+
+    A non-DC circuit model would supply a real ratio from a declared frequency
+    and circuit dimension. This function is where that change would land.
+    """
+    return {LUMPED_ELECTRICAL_LENGTH: Quantity(0.0, DIMENSIONLESS)}
+
+
+def assess_kcl_validity() -> ValidityAssessment:
+    """Is nodal charge balance applicable here? Yes, and for a stated reason."""
+    return KCL_MODEL.assess_validity(kcl_validity_context())
 
 
 def assess_resistor_validity(

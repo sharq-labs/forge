@@ -60,6 +60,16 @@ from .errors import (
     ReactorBindingError,
     ReactorConfigurationError,
 )
+from .context import (
+    ADIABATIC_CEILING_TEMPERATURE,
+    ASSEMBLED_QUANTITIES,
+    DAMKOHLER_NUMBER,
+    MAX_WELL_MIXED_DAMKOHLER,
+    adiabatic_ceiling_temperature,
+    cstr_validity_context,
+    damkohler_number,
+    derived_cstr_quantities,
+)
 from .problem import (
     CA_FINAL_METRIC,
     CONCENTRATION_UNIT,
@@ -140,6 +150,15 @@ __all__ = [
     "CSTR_MODEL",
     "CSTR_MODELS",
     "KINETICS_CSTR_NONISOTHERMAL",
+    # applicability groups
+    "ADIABATIC_CEILING_TEMPERATURE",
+    "ASSEMBLED_QUANTITIES",
+    "DAMKOHLER_NUMBER",
+    "MAX_WELL_MIXED_DAMKOHLER",
+    "adiabatic_ceiling_temperature",
+    "cstr_validity_context",
+    "damkohler_number",
+    "derived_cstr_quantities",
     # solving
     "CSTRSolver",
     "solve_reactor",

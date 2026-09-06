@@ -31,6 +31,11 @@ from src.engcore.domains.electrical.dc.models import (
     NO_DERATING,
     RATING_UTILIZATION_LIMIT,
     RESISTOR_OHM_MODEL,
+    KCL_MODEL,
+    LUMPED_ELECTRICAL_LENGTH,
+    LUMPED_ELECTRICAL_LENGTH_LIMIT,
+    assess_kcl_validity,
+    kcl_validity_context,
     SOURCE_CURRENT_UTILIZATION,
     WORKING_VOLTAGE_UTILIZATION,
     ComponentRating,
@@ -387,19 +392,42 @@ def test_a_derating_factor_above_one_would_report_overuse_as_headroom():
 
 
 def test_the_resistor_model_still_binds_to_a_problem_that_declares_no_rating():
-    """No new model *inputs* were added: the ratings are computed context.
+    """The ratings are declared inputs, and a problem still need not carry them.
 
-    A rating is not something a circuit declares; it is something a reader
-    knows about a part. Adding it as a required input would have broken every
-    problem in the domain, and adding it as an optional one would have implied
-    the problem record could carry it.
+    **This reverses an earlier decision, deliberately.** The ratings used to be
+    absent from ``inputs`` on the reasoning that "adding it as an optional one
+    would have implied the problem record could carry it". Two things made that
+    reasoning give way.
+
+    The payload boundary derives what it tells a caller about a field — its
+    dimension, whether it is required, what it is for, which condition it
+    unlocks — from the model records, and refuses at import to describe a field
+    no model declares. A rating that is not an input is therefore a rating the
+    boundary cannot describe without keeping a second copy of the prose, which
+    is the duplication the binding table exists to avoid.
+
+    And the implication it was avoiding is not one this architecture makes.
+    ``electrical.material.linear_tcr_resistance`` has declared ``temperature``
+    as an input since MODEL0-R and no resistance problem carries that either:
+    it is supplied to ``assess_rated_resistance_validity`` as an argument,
+    exactly as a rating is supplied to ``assess_resistor_validity``. A declared
+    input names what the model reads, not what a problem must hold.
+
+    What has not changed is the part that mattered: the ratings are optional,
+    so a problem that declares none still binds and still satisfies the model.
     """
     report = RESISTOR_OHM_MODEL.check_against(resistor_relation_problem(RESISTOR))
     assert report.is_satisfied
     assert set(report.valid_bindings) == {"resistance", "voltage_across"}
-    assert {s.name for s in RESISTOR_OHM_MODEL.inputs} == {
-        "resistance",
-        "voltage_across",
+
+    required = {s.name for s in RESISTOR_OHM_MODEL.inputs if s.required}
+    assert required == {"resistance", "voltage_across"}
+
+    optional = {s.name for s in RESISTOR_OHM_MODEL.inputs if not s.required}
+    assert optional == {
+        "rated_power",
+        "maximum_working_voltage",
+        "derating_factor",
     }
 
 
@@ -661,3 +689,61 @@ def test_a_coupled_run_can_converge_while_its_resistor_is_over_its_rating():
     for iteration in run.iterations:
         for result in iteration.results:
             assert result.validation.status is not ValidationOutcome.FAIL
+
+
+# =====================================================================
+# Kirchhoff's law states its boundary and shows it is met
+# =====================================================================
+
+def test_kcl_declares_a_condition_rather_than_claiming_ignorance():
+    """It used to declare none, which made it permanently UNKNOWN.
+
+    A model with no conditions is UNKNOWN by the platform's rule, and for KCL
+    that claimed an ignorance the model does not have: its ValidityDomain
+    description has always named the physical boundary, and its own scope keeps
+    it on the right side of it.
+    """
+    names = {c.name for c in KCL_MODEL.validity.conditions}
+    assert names == {LUMPED_ELECTRICAL_LENGTH}
+
+    assessment = assess_kcl_validity()
+    assert assessment.status is ValidityStatus.IN_DOMAIN
+    assert assessment.unknown == ()
+    assert assessment.violated == ()
+
+
+def test_the_lumped_length_is_zero_because_the_model_is_a_dc_model():
+    """Not hard-coded IN_DOMAIN: a quantity is computed and compared.
+
+    The verdict stays derived from a condition, and the reason it always passes
+    is visible in the number rather than asserted in a branch.
+    """
+    context = kcl_validity_context()
+    ratio = context[LUMPED_ELECTRICAL_LENGTH]
+    assert ratio.magnitude_in("dimensionless") == 0.0
+
+    # f = 0 is an assumption of the record, which is what makes the ratio zero
+    # for a circuit of any size rather than for a small one.
+    assert any("steady-state DC" in a for a in KCL_MODEL.assumptions)
+
+
+def test_the_lumped_bound_is_the_standard_one_and_is_not_a_tautology():
+    """The limit is a real physical boundary, written down as a ratio.
+
+    It does not bite for a DC model. It is stated as a bound anyway so that the
+    condition says where the assumption fails, and so that a circuit model at
+    non-zero frequency inherits it instead of inventing one.
+    """
+    condition = next(
+        c for c in KCL_MODEL.validity.conditions
+        if c.name == LUMPED_ELECTRICAL_LENGTH
+    )
+    assert condition.maximum == LUMPED_ELECTRICAL_LENGTH_LIMIT
+    assert LUMPED_ELECTRICAL_LENGTH_LIMIT.magnitude_in("dimensionless") == 0.1
+
+    # A distributed circuit would violate it, which is what makes it a bound.
+    verdict = KCL_MODEL.assess_validity(
+        {LUMPED_ELECTRICAL_LENGTH: Quantity(0.5, "dimensionless")}
+    )
+    assert verdict.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert LUMPED_ELECTRICAL_LENGTH in verdict.violated

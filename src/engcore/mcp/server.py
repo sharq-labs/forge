@@ -44,13 +44,17 @@ from .errors import (
     WrongDimensionError,
 )
 from .evidence import CredibilityVerdict
+from .battery import run_battery_case
 from .problem import (
+    CaseDescription,
     build_electrothermal_system,
     describe_electrothermal_case,
     run_electrothermal_case,
 )
+from .systems import SYSTEMS, system
 
 __all__ = [
+    "BATTERY_RESPONSE_SCHEMA",
     "CAPABILITIES_SCHEMA",
     "RESPONSE_SCHEMA",
     "SERVER_NAME",
@@ -59,16 +63,19 @@ __all__ = [
     "build_server",
     "describe_capabilities",
     "main",
+    "run_battery",
     "run_electrothermal",
 ]
 
 SERVER_NAME = "crafty-engcore"
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 CAPABILITIES_SCHEMA = "mcp_capabilities/1"
 RESPONSE_SCHEMA = "mcp_electrothermal_response/1"
+BATTERY_RESPONSE_SCHEMA = "mcp_battery_response/1"
 
-#: The one system this transport exposes. Named so a second system is an
-#: addition rather than a rewrite of everything below.
+#: The electro-thermal system's name. Kept as a module constant because the
+#: response carries it and because this module was written around it; the
+#: authority for what systems exist is :data:`engcore.mcp.systems.SYSTEMS`.
 SYSTEM_NAME = "electrothermal"
 
 
@@ -168,40 +175,54 @@ _audit_tables()
 # describe_capabilities
 # =====================================================================
 
-def describe_capabilities() -> dict[str, Any]:
-    """Everything an agent needs to write a case, read off the registries.
+def _describe_system(boundary) -> dict[str, Any]:
+    """One system, entirely off its own description.
 
-    Required flags, dimensions, unit exemplars, prose and unlocked conditions
-    all come from :func:`~engcore.mcp.problem.describe_electrothermal_case`,
-    which reads the model records. Nothing about a field is restated here.
+    Nothing about a field is restated here. ``required``, ``dimension``,
+    ``unit_exemplar``, the prose and the unlocked conditions all come from
+    the model records through the boundary's own describe function, and the
+    example is the one that boundary publishes.
     """
-    description = describe_electrothermal_case()
+    description = boundary.description()
     payload = description.to_dict()
     return {
-        "schema": CAPABILITIES_SCHEMA,
-        "server": {"name": SERVER_NAME, "version": SERVER_VERSION},
-        "systems": [
-            {
-                "name": SYSTEM_NAME,
-                "tool": "run_electrothermal",
-                "summary": "A DC series circuit of temperature-dependent "
-                           "resistors coupled to first-order lumped thermal "
-                           "bodies, run to a fixed point. One credibility "
-                           "evidence report per stage.",
-                "models": payload["models"],
-                "fields": payload["fields"],
-                "required_fields": [f.path for f in description.required],
-                "optional_fields": [f.path for f in description.optional],
-                "example_case": payload["example"],
-            }
-        ],
-        # Not fields with a rule attached — fields that do not exist. Each is
-        # solved for by the coupling, and a payload asserting one would fix the
-        # fixed point the run is supposed to find.
+        "name": boundary.name,
+        "tool": boundary.tool,
+        "summary": boundary.summary,
+        "models": payload["models"],
+        "fields": payload["fields"],
+        "required_fields": [f.path for f in description.required],
+        "optional_fields": [f.path for f in description.optional],
+        "example_case": payload["example"],
+        # Not fields with a rule attached -- fields that do not exist. Each is
+        # solved for by the run, and a payload asserting one would fix the
+        # answer it is supposed to find. Empty for a system that solves for
+        # nothing the caller might otherwise declare, which is a fact about
+        # that system rather than a gap in this description.
         "fields_you_may_not_supply": [
             {"model_input": name, "why": why}
             for name, why in sorted(payload["coupling_supplied_inputs"].items())
         ],
+    }
+
+
+def describe_capabilities() -> dict[str, Any]:
+    """Everything an agent needs to write a case, read off the registries.
+
+    **Every system, from one loop.** The list used to be one hand-written
+    entry: a summary beside a call to one builder, which is a description of
+    the electro-thermal system wearing the shape of a description of the
+    runtime. Systems are now a registry (:mod:`engcore.mcp.systems`) and each
+    describes itself; adding a third is an entry there, not an edit here.
+
+    Required flags, dimensions, unit exemplars, prose, unlocked conditions and
+    the runnable example all come from the model records at call time, so this
+    description cannot drift from what the run tools will accept.
+    """
+    return {
+        "schema": CAPABILITIES_SCHEMA,
+        "server": {"name": SERVER_NAME, "version": SERVER_VERSION},
+        "systems": [_describe_system(boundary) for boundary in SYSTEMS],
         "verdicts": [
             {"value": verdict.value, **_VERDICT_GUIDANCE[verdict]}
             for verdict in CredibilityVerdict
@@ -425,7 +446,7 @@ def _accepted_in(description: Any, section: str) -> list[str]:
 
 
 def _payload_error(
-    exc: ProblemPayloadError, payload: Any
+    exc: ProblemPayloadError, payload: Any, *, system_name: str = SYSTEM_NAME
 ) -> mcp_types.CallToolResult:
     """A refusal an agent can repair from, without a second call.
 
@@ -437,7 +458,7 @@ def _payload_error(
     """
     message = str(exc)
     field = message.split(" ", 1)[0].rstrip(":,")
-    description = describe_electrothermal_case()
+    description = system(system_name).description()
     try:
         expected: dict[str, Any] = description.field(_generic(field)).to_dict()
     except KeyError:
@@ -466,6 +487,64 @@ def _payload_error(
     )
 
 
+def _battery_response(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """The whole marched run, as JSON. Every value transported, none computed.
+
+    ``march`` is its own field and is **not** a coupling record. The march is
+    one-way: the cell heats itself and the body carries the temperature into
+    the next step, and nothing iterates to convergence. ``CouplingEvidence``
+    describes a fixed point -- iterations against a budget, an iterate change
+    against a tolerance -- and every one of those numbers would have to be
+    invented here. So the report carries no coupling record and the march's
+    own outcome travels beside it, verbatim.
+    """
+    case = run_battery_case(payload)
+    run = case.run
+    return {
+        "schema": BATTERY_RESPONSE_SCHEMA,
+        "system": "battery",
+        "march": {
+            "coupling": run.coupling.value,
+            "outcome": run.outcome.value,
+            "steps_run": len(run.steps),
+            "elapsed": str(run.final.elapsed),
+            # Where a model first left its domain, if one did. UNKNOWN is not
+            # a violation and is deliberately not reported here as one.
+            "first_step_outside": {
+                model_id: (
+                    None
+                    if run.first_step_outside(model_id) is None
+                    else run.first_step_outside(model_id).index
+                )
+                # The MARCH's models, not the report's. The report also
+                # carries the lumped model, which the march does not assess
+                # per step -- asking it for a step verdict is a loud failure
+                # by design, and rightly so.
+                for model_id in sorted(run.steps[0].validity)
+            },
+        },
+        "verdict": _verdict_block(case.report),
+        # Verbatim: values with units, per-model validity with its
+        # satisfied/violated/unknown condition names, every validation check
+        # including NOT_RUN, provenance, and the caller's own declarations
+        # under their `caller_asserted` marking.
+        "report": case.report.to_dict(),
+    }
+
+
+def run_battery(case: dict[str, Any]) -> dict[str, Any]:
+    """Run one battery case and return its credibility evidence report.
+
+    The same contract as :func:`run_electrothermal`: the success payload is
+    what the annotation describes, and a refused payload comes back as a
+    ``CallToolResult`` carrying ``is_error`` and structured content.
+    """
+    try:
+        return _battery_response(case)
+    except ProblemPayloadError as exc:
+        return _payload_error(exc, case, system_name="battery")
+
+
 def run_electrothermal(case: dict[str, Any]) -> dict[str, Any]:
     """Run one case and return its credibility evidence report.
 
@@ -490,7 +569,8 @@ def run_electrothermal(case: dict[str, Any]) -> dict[str, Any]:
 _DESCRIBE_DESCRIPTION = """\
 What this runtime can be asked, and what it will refuse. Call this first.
 
-Returns, for the electro-thermal system: every field a case may contain, \
+Returns one entry per system -- currently electrothermal and battery, each \
+naming the tool that runs it. For each: every field a case may contain, \
 whether it is required, the physical dimension it must carry and an example \
 unit; for each optional field, the validity conditions it unlocks (omitting it \
 is never an error, but the conditions it would have decided then report \
@@ -499,7 +579,8 @@ them; a complete runnable example case; and what each of the three verdicts \
 means and does not mean.
 
 Every field fact is read from the model registries at call time, so this \
-description cannot drift from what run_electrothermal will accept.
+description cannot drift from what the run tools will accept, and a system \
+added to this runtime appears here without this text being edited.
 
 Two rules worth knowing before you write a case. Every physical value is a \
 string carrying a unit -- "10 ohm", never 10 -- because this boundary will not \
@@ -543,6 +624,51 @@ field, what you sent, what was expected and how to repair it -- fix that one \
 field and call again."""
 
 
+_RUN_BATTERY_DESCRIPTION = """\
+Run one battery case and return its credibility evidence report.
+
+Marches one equivalent-circuit cell through a constant-current discharge, \
+letting its own I^2 R dissipation heat a lumped thermal body and carrying the \
+new temperature into the next step. Returns the values with units, each \
+model's validity (status plus the satisfied, violated and UNKNOWN condition \
+names), every validation check with its outcome including checks that did NOT \
+run, full provenance, and your own declarations marked caller_asserted and \
+consumed by no verdict.
+
+Four battery models are assessed independently and are meant to be able to \
+disagree: a cell whose terminal voltage the Rint circuit describes badly may \
+still have its charge counted correctly. Their verdicts are taken OVER each \
+step, not at the instant it began, so a step that starts inside a temperature \
+limit and ends outside it is reported as outside.
+
+THE COUPLING IS ONE-WAY. The march does not iterate to a fixed point, so \
+there is no convergence to report and no coupling record; the march reports \
+its own outcome -- horizon_reached, cutoff_reached, validity_lost -- in its \
+own field, with the step at which each model first left its domain.
+
+`load.duration` is the length of ONE STEP, not the horizon. The discharge \
+lasts duration * steps, so raising the step count lengthens the run.
+
+`cell.limits.cell_thermal_conductance` is required for a coupled run even \
+though the models mark it optional: it is both the conductance the \
+self-heating condition is stated over and the one the body exchanges \
+through, and this runtime will not invent a second source for it.
+
+Expect INSUFFICIENT_EVIDENCE on a well-formed nominal case. The battery \
+domain's coupled runner accepts no applicability declaration for the thermal \
+body, so the lumped model is honestly UNKNOWN. That is the runtime's real \
+answer, it is transmitted unchanged, and it is neither an error nor a reason \
+to retry.
+
+The verdict is advisory input to an engineer of record. It is not a decision, \
+not a certification, and not a claim of conformance with any standard.
+
+Pass the case as the `case` argument, shaped like the battery system's \
+example_case in describe_capabilities. A malformed case comes back as an \
+error naming the field, what you sent, what was expected and how to repair \
+it -- fix that one field and call again."""
+
+
 def build_server() -> MCPServer:
     """The server, with both tools registered. Used by the tests and by main."""
     server = MCPServer(
@@ -568,7 +694,35 @@ def build_server() -> MCPServer:
         title="Run an electro-thermal case",
         description=_RUN_DESCRIPTION,
     )
+    server.add_tool(
+        run_battery,
+        name="run_battery",
+        title="Run a battery discharge case",
+        description=_RUN_BATTERY_DESCRIPTION,
+    )
+    _audit_tools(server)
     return server
+
+
+def _audit_tools(server: MCPServer) -> None:
+    """Every registered system has a tool, and every tool a system.
+
+    The registry says what this runtime exposes and ``build_server`` says what
+    an agent can call. A system described but not callable would have an agent
+    write a case against a tool that does not exist; a tool callable but not
+    described would have them guess its payload. Checked here rather than
+    trusted, because adding the third system is exactly when one of the two
+    gets forgotten.
+    """
+    registered = {tool.name for tool in server._tool_manager.list_tools()}
+    expected = {boundary.tool for boundary in SYSTEMS}
+    missing = sorted(expected - registered)
+    if missing:
+        raise RuntimeError(
+            f"engcore.mcp.systems registers {missing} but this server does "
+            f"not expose a tool for it; a described system an agent cannot "
+            f"call is worse than one that is not described"
+        )
 
 
 def main() -> None:

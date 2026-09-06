@@ -1287,6 +1287,7 @@ class CredibilityEvidenceReport:
         contributing_models: Iterable[tuple[str, str]] = (),
         coupling: "CouplingEvidence | None" = None,
         provenance: ProvenanceRecord | None = None,
+        validation: Iterable[ValidationCheck] = (),
         notes: str = "",
         run_id: str | None = None,
     ) -> "CredibilityEvidenceReport":
@@ -1334,6 +1335,24 @@ class CredibilityEvidenceReport:
         holds the composition supplies them; one that does not says nothing,
         and a report that says nothing about its coupling is not thereby a
         report of a coupling that succeeded.
+
+        ``validation`` **appends** checks the assembler ran itself, after the
+        result's own. There are findings that belong to no single result: a
+        payload whose declared melting point sits below its declared operating
+        ceiling is a contradiction between two sections written by one caller,
+        and a coupled run refused at a transfer boundary is a fact about the
+        loop rather than about the sub-solve that happened to be executing.
+        Before this parameter existed such a finding had nowhere to go: it
+        could be raised as an exception, which removes it from the report
+        entirely, or attributed to a model that did not make it, which
+        ``unattributed_assessments`` correctly refuses.
+
+        Appended rather than merged, and the result's own checks come first,
+        because they are evidence about the execution and these are evidence
+        about the statement. A check supplied here is not privileged: it enters
+        ``derive_verdict`` by the same rules as any other, so a FAIL is
+        NOT_SUPPORTED and a passing check that establishes nothing establishes
+        nothing.
         """
         if not isinstance(result, ScientificResult):
             raise CredibilityEvidenceError(
@@ -1345,7 +1364,7 @@ class CredibilityEvidenceReport:
             values=dict(result.values),
             provenance=provenance or result.provenance,
             validity=_merged_validity(result, tuple(validity)),
-            validation=tuple(result.validation.checks),
+            validation=tuple(result.validation.checks) + tuple(validation),
             declarations=tuple(declarations),
             required_levels=tuple(required_levels),
             contributing_models=tuple(contributing_models),
