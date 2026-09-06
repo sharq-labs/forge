@@ -1227,53 +1227,63 @@ report merged checks across the closure, which A2.3 says it does not.
 **What it needs.** The A2.3 decision. The two are the same question asked from
 opposite ends.
 
-### A2.9 The resistor assessment read the declared resistance, not the converged one — FIXED
+### A2.9 The resistor assessment named a resistance the circuit had not used — FIXED, and narrower than it reads
 
 **Where** `mcp/problem.py`, `_electrical_assessments`.
 
-**What was hit.** The element list is built from `system.circuit_at(...)` at the
-**nominal** reference resistances, so the one-element
-`resistor_relation_problem` carries the conductor's declared reference
-resistance rather than the `R(T)` the converged circuit actually used. The
-operating-point values in the same assessment — dissipated power, voltage
-across — do come from the converged electrical result.
+> **Scope, before anything else — this entry has been read too broadly once and
+> a round of work was planned on the misreading.**
+>
+> **The resistor *rating* conditions never read the reference resistance.**
+> `dissipated_power_utilization` and `working_voltage_utilization` are computed
+> from `dissipated_power` and `voltage_across`, which arrive as *arguments* to
+> `assess_resistor_validity` out of the **converged** electrical result. They
+> have always been at the converged operating point and this entry never said
+> otherwise.
+>
+> **The defect could only ever reach one condition: `resistance > 0`.** It was
+> in the *element list* — the one-element `resistor_relation_problem` built from
+> `system.circuit_at(...)` — and the only resistor condition that reads the
+> element's `resistance` parameter is the positivity check. Both readings are
+> strictly positive in any run that reaches the assessment, so **no verdict
+> could move, and none did.**
+>
+> If a benchmark case disagrees with the tool about a rating, **this entry is
+> not the explanation.** Look at the operating point the ground truth was
+> computed at. See §B.6.
 
-**Why it was left.** It cannot change a verdict. The only condition that reads
-`resistance` is `resistance > 0`, and the property solver's own
-`linear_resistance_ratio` bound already refuses a run in which `R(T)` reaches
-zero, so both numbers are strictly positive in every run that gets this far. The
-report names conditions, not values, so its content is identical either way.
+**What was hit.** The element list was built from `system.circuit_at(...)` at
+the **nominal** reference resistances, so the one-element
+`resistor_relation_problem` carried the conductor's declared reference
+resistance rather than the `R(T)` the converged circuit actually used.
 
-**Why it is still worth changing.** "The element as the run had it" and "the
-element as the caller declared it" are different statements, and this round is
-about not letting those blur. The fix is to read each stage's converged
-resistance out of `run.final.result_for(prop_problem.problem_id)` and build the
-circuit from those.
+**Why it was left, at the time.** It cannot change a verdict, for the reason in
+the scope note above. The report names conditions, not values, so its content
+is identical either way.
+
+**Why it was still worth changing.** "The element as the run had it" and "the
+element as the caller declared it" are different statements, and letting those
+blur is how a report comes to name a number nothing computed.
 
 **DONE.** `_electrical_assessments` now builds its element list from
 `cp.converged_resistances(system, run)`, which reads each stage's `R(T)` back
-out of that stage's own property result rather than recomputing the TCR form a
-second time. It raises rather than falling back if a stage's result is absent:
-a rating assessed at the reference value without saying so would be a wrong
-number read confidently.
+out of that stage's own property result rather than evaluating the TCR form a
+second time — two implementations agree until one of them does not. It raises
+rather than falling back when a stage's result is absent: a rating assessed at
+the reference value without saying so is a wrong value read confidently.
 
-The prediction above held exactly — **no verdict moved**, on any of the 2000
-hard benchmark cases or anywhere in the suite.
+The prediction held exactly. **No verdict moved**, on any of the 2000 hard
+benchmark cases or anywhere in the suite. Every one of the four benchmark
+metrics was byte-identical before and after.
 
-**And it was not the cause of `S00709`.** §B.6 below said the tool "computes
-3.5634 W" for that case, the dissipation at the reference resistance. It does
-not: the rating conditions have always read the converged electrical result,
-which is 3.5240 W, and 3.5240 W is over the 3.49889 W rating too. `S00709` is
-a mislabelled case — `benchmarks/hard/generate_hard.py` sizes ratings at
-`R(T_ss)`, the steady state, while the payload declares a 66.169 s horizon
-against a 27.376 s time constant and stops 2.4 K short of it. Cooler is a
-lower resistance is more dissipation. The arithmetic is pinned in
-`tests/mcp/test_problem.py::test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer`.
-
-**Still open, and it is a benchmark need rather than a domain one:**
-`shape_rating` must size a rating at the marched endpoint rather than at a
-steady state the run never reaches. Until it does, the hard benchmark's one
-false reject is a label, not a miss.
+**What this did NOT fix, and what was wrongly attributed to it.** `S00709`, the
+hard benchmark's one false reject. §B.6 said the tool "computes 3.5634 W" —
+the dissipation at the reference resistance. It does not; it computes 3.5240 W,
+the converged value, and 3.5240 W is over the 3.49889 W rating as well. That
+case is mislabelled by the generator, not misread by the tool, and §B.6 now
+carries the corrected account. The arithmetic is pinned in
+`tests/mcp/test_problem.py::test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer`
+so neither entry can drift back into the wrong story.
 
 ---
 
