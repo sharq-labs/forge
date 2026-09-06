@@ -1008,3 +1008,249 @@ the input→dimension declaration, which §1.1 of the problem-builder round
 already needs for a different reason and which does not touch a single function
 body. The full abstraction should wait for a shared derived quantity, not a
 third repetition of a shape.
+
+
+---
+
+# Adversarial fixes round — F01 to F11
+
+Owned paths for this round were, per task: `src/engcore/mcp/**` and
+`tests/mcp/**`; `src/engcore/domains/**` except `thermal/`, and their tests;
+`src/engcore/scientific/results/validation.py`,
+`src/engcore/scientific/results/**`, `src/engcore/scientific/units/**` and
+`src/engcore/mcp/evidence.py` for the three authorised core changes;
+`src/engcore/domains/electrical/ngspice.py` and
+`src/engcore/systems/electrothermal/**`. TASK 7 was given no owned-path line.
+
+Everything below is either a change made **outside** those paths and why, or
+something wanted and not done.
+
+---
+
+## A1. Files changed outside a task's stated owned paths
+
+Four, each unavoidable to keep FAST green or to put a function where it belongs.
+
+### A1.1 `systems/electrothermal/coupled.py` — `dependency_closure` (TASK 1)
+
+TASK 1 owns `src/engcore/mcp/**`. The closure walk went into `coupled.py`
+instead, beside `execution_order` and `cycle_edges`, which are the same kind of
+graph function over the same `QuantityDependency` records. Putting it in the
+payload boundary would have made a composition concept private to a module that
+poses problems, and unavailable to the next consumer that needs it.
+
+### A1.2 `tests/domains/thermal_models/test_lumped_verification.py` (TASK 1)
+
+`test_a_real_applicable_electrothermal_run_is_supported` asserted the nominal
+electrothermal verdict was SUPPORTED. Assembling the report over the dependency
+closure makes it INSUFFICIENT_EVIDENCE, because nothing in the payload declares
+a resistor's rated dissipation or a source's current limit and
+`electrical.dc.kcl` declares no conditions at all.
+
+The test now makes its actual claim — the level is attained, the thermal model
+is in domain, and `derive_verdict` over the thermal evidence alone returns
+SUPPORTED — and is renamed to `..._earns_its_level`. Its subject, that the
+lumped solver's reference comparison establishes something, is unchanged and
+still pinned. Nothing was weakened to make a verdict nicer.
+
+### A1.3 `tests/test_model0r_differential.py` (TASK 5)
+
+One line, and then reverted. It `json.dumps`-ed a record's internal metadata
+mapping directly. The first `FrozenMapping` implemented `Mapping` rather than
+`dict` and broke it; switching to a `dict` subclass made the edit unnecessary
+and it was put back. Recorded because the intermediate state is in the branch's
+history.
+
+### A1.4 `tests/test_scientific_core.py` (TASK 3)
+
+TASK 3 owns `validation.py`, `mcp/evidence.py` and "tests". The four core-level
+F04 tests went into `test_scientific_core.py`, which is where `ValidationCheck`
+is already tested. Additions only; no existing test was edited.
+
+---
+
+## A2. Wanted and not done
+
+### A2.1 F09's shared classification cannot live in the core
+
+**Where** `src/engcore/scientific/models/definition.py`.
+
+**What was asked.** "Make core and wrapper share one classification." The ideal
+form is a single function in the core, called by `ValidityDomain.assess` and by
+`ModelValidityRecord` — literally one implementation, incapable of drifting.
+
+**Why it was not built.** HARD RULE 3 permits `src/engcore/scientific/` to
+change only in TASKS 3, 5 and 6, and F09 is TASK 7. The core would have to
+import the function, which is a core edit.
+
+**What was built instead.** `classify_assessment` in `mcp/evidence.py`, stating
+the rule once on the wrapper side, plus a test that drives every assessment
+reachable from `ValidityDomain.assess` — over a family of domains and contexts,
+including the empty domain — through the boundary and asserts the statuses
+match. That makes the agreement checkable rather than asserted, which is most
+of the value; what it does not do is make divergence impossible.
+
+**What it needs.** Move `classify_assessment` into
+`scientific/models/definition.py` and have `ValidityDomain.assess` call it.
+About ten lines, and it deletes the cross-check test's reason to exist.
+
+### A2.2 `combine_assessments` is implemented twice
+
+**Where** `mcp/evidence.py` (`combine_assessments`) and
+`domains/battery/coupling.py` (`_over_the_step`).
+
+**What was hit.** Both reduce several `ValidityAssessment`s to one by the same
+rule — violated anywhere wins, then unknown anywhere, then satisfied
+everywhere. TASK 1 needs it across the elements one model was applied to; F10
+needs it across the instants within a step. They are the same six lines.
+
+**Why not shared.** The natural home is the core beside `ValidityAssessment`,
+which HARD RULE 3 puts out of reach for both tasks. `domains/battery` must not
+import `mcp`, and `mcp` importing a battery helper would be worse.
+
+**What it needs.** One `combine_assessments` in
+`scientific/models/definition.py`, with both call sites importing it. The two
+copies are byte-identical in behaviour today and there are tests on both, so
+the risk is drift rather than a present defect.
+
+### A2.3 The credibility report still carries only one sub-result's checks
+
+**Where** `mcp/problem.py`, `run_electrothermal_case`.
+
+**What was hit.** TASK 1 assembles `validity` and `contributing_models` over
+the dependency closure, and the coupling outcome beside them. It does **not**
+merge the `validation` checks of every result in the closure: the report still
+carries the thermal sub-result's checks and its `validation_notes`.
+
+That is what the task asked for — it named the coupling outcome, the
+participating models and their assessments — and it is not a false statement,
+because the checks are labelled as what they are. But a reader of the report
+sees provenance for six models and checks for one.
+
+**Why not done.** Check names would collide across stages and across
+participants (`dimensional_consistency` exists in more than one solver), and
+`ValidationReport` refuses duplicates for a good reason. Namespacing them as
+`"{problem_id}:{name}"` would rename a solver's own check inside a record that
+claims to carry it unaltered, which is a small forgery of exactly the kind this
+layer exists to refuse.
+
+**What it needs.** A decision about whether a report may carry checks from
+several producers at all, and if so a record that keeps each check attributed
+to the result it came from rather than flattening them into one list. That is a
+schema change to `CredibilityEvidenceReport`, not a patch.
+
+### A2.4 The electrical rating declarations have no payload field
+
+**Where** `mcp/problem.py`, `_BINDINGS`.
+
+**What was hit.** Since TASK 1 the report assesses `electrical.dc.resistor_ohm`
+and `electrical.dc.ideal_voltage_source`, whose conditions are stated over a
+declared rated dissipation, working voltage and source current. The payload has
+no field for any of them, so every one is UNKNOWN and the nominal case is
+INSUFFICIENT_EVIDENCE.
+
+**This is the correct verdict and was not compensated for.** An unrated part is
+not an unlimited part, and the gap was there before — it was invisible only
+because the models that ask were not in the report.
+
+**What it needs.** Three optional fields under `stages[].conductor` bound to
+`ComponentRating`, and one under the root for the source. Small, and
+deliberately not done here: adding payload fields in the same commit that made
+the gap visible would have looked like — and partly been — arranging for the
+verdict to come out nicer.
+
+### A2.5 `electrical.dc.kcl` declares no validity conditions
+
+**Where** `domains/electrical/dc/models.py`.
+
+**What was hit.** Its `ValidityDomain` carries a description and no conditions,
+so `assess` correctly returns UNKNOWN and the report says so. Kirchhoff's
+current law is not in doubt; what is undeclared is the lumped-circuit regime it
+holds in — no charge accumulation at nodes, which fails at high frequency or
+across a distributed structure.
+
+**What it needs.** A condition over something the caller declares. There is no
+obvious dimensionless group here that this repository already computes — an
+electrical length over a wavelength would need a frequency and a geometry the
+DC domain does not model. Recorded rather than invented.
+
+### A2.6 `FrozenMapping` is a `dict` subclass, and that is a weaker guarantee
+
+**Where** `scientific/results/immutable.py`.
+
+**What was hit.** `dict.__setitem__(m, k, v)` reaches past the overridden
+mutator. The `Mapping`-based version had no such hole and was tried first; it
+broke fifteen multirotor tests, because records' mappings are handed to
+`json.dumps` and splatted with `{**m}` throughout the repository.
+
+**What was done about it.** The override list is generated from
+`DICT_MUTATORS`, and a test asserts `DICT_MUTATORS | DICT_NON_MUTATORS` is
+exactly `set(dir(dict)) - set(dir(Mapping))` against the running interpreter, so
+a future CPython dict method fails there rather than opening a hole silently.
+
+**What it needs.** Nothing, unless the platform decides it wants the stronger
+guarantee — in which case the work is auditing every consumer that treats a
+record's mapping as a `dict`, which is the audit this round declined to do
+inside a fix for something else.
+
+### A2.7 Serialization got slower and no consumer was profiled
+
+**Where** `scientific/results/`.
+
+**What was hit.** `ScientificResult.to_dict` is 12.6 → 20.6 us and
+`ProvenanceRecord.to_dict` 3.5 → 7.5 us per call (best of 7, this machine). FAST
+is unchanged within noise; SCIENTIFIC is up ~4.6% like-for-like, which is inside
+the 9–14% spread this suite's own performance audit measured for identical code
+and is therefore not resolvable by that instrument.
+
+**What it needs.** The campaign persistence path is where serialization is
+actually hot, and it was not profiled — only the suite was timed and the
+operations microbenchmarked. If the cost matters there, the next lever is
+caching a record's payload, which is only sound *because* the record is now
+immutable. That is a real follow-on and is not free: a cached payload has to be
+invalidated by `dataclasses.replace`, and nothing today would catch a miss.
+
+### A2.8 TASK 4 refuses at the transfer boundary only
+
+**Where** `systems/electrothermal/coupled.py`, `_transport`.
+
+**What was hit.** The guard fires when a value is *transported* out of a
+FAIL-validation result, which is what the task specified. A result that fails
+validation and whose values nothing transports is not refused; it lands in
+`CoupledIteration.results` and the run continues.
+
+**Whether that is right.** Arguably yes — the run did not rely on it — and
+arguably a coupled run containing a rejected sub-result should say so whatever
+was read out of it. Since TASK 1, the credibility report would carry it if the
+report merged checks across the closure, which A2.3 says it does not.
+
+**What it needs.** The A2.3 decision. The two are the same question asked from
+opposite ends.
+
+### A2.9 The resistor assessment reads the declared resistance, not the converged one
+
+**Where** `mcp/problem.py`, `_electrical_assessments`.
+
+**What was hit.** The element list is built from `system.circuit_at(...)` at the
+**nominal** reference resistances, so the one-element
+`resistor_relation_problem` carries the conductor's declared reference
+resistance rather than the `R(T)` the converged circuit actually used. The
+operating-point values in the same assessment — dissipated power, voltage
+across — do come from the converged electrical result.
+
+**Why it was left.** It cannot change a verdict. The only condition that reads
+`resistance` is `resistance > 0`, and the property solver's own
+`linear_resistance_ratio` bound already refuses a run in which `R(T)` reaches
+zero, so both numbers are strictly positive in every run that gets this far. The
+report names conditions, not values, so its content is identical either way.
+
+**Why it is still worth changing.** "The element as the run had it" and "the
+element as the caller declared it" are different statements, and this round is
+about not letting those blur. The fix is to read each stage's converged
+resistance out of `run.final.result_for(prop_problem.problem_id)` and build the
+circuit from those.
+
+**Not done here** because folding a no-op change into an already-written commit
+would have meant rewriting the branch's history, and adding an eighth commit
+would have broken the one-commit-per-task shape this round was asked for. It is
+a two-line change whenever the file is next open.
