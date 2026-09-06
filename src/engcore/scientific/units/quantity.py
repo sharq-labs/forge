@@ -68,16 +68,45 @@ def normalize_unit(unit: str) -> str:
         raise UnitCompatibilityError(f"unparsable unit {unit!r}: {exc}") from exc
 
 
-def dimensionality(unit: str) -> str:
-    """Stable string form of a unit's physical dimensionality."""
+def dimension_of(unit: str) -> Any:
+    """A unit's physical dimensionality as the backend's own comparable object.
+
+    This — not :func:`dimensionality` — is what compatibility is decided by.
+    Pint's ``UnitsContainer`` is a mapping from dimension name to exponent and
+    compares (and hashes) by content, so ``ampere * ohm`` and ``volt`` are
+    equal to it. Its *rendering* is not canonical: the exponents come out in
+    the order the composite was built, so ``I * R`` renders as
+    ``... / [current] / [time] ** 3`` and ``volt`` as
+    ``... / [time] ** 3 / [current]``. Comparing those strings made Ohm's law
+    a units error; comparing these objects does not.
+    """
     try:
-        return str(registry().Unit(normalize_unit(unit)).dimensionality)
+        return registry().Unit(normalize_unit(unit)).dimensionality
     except UnitCompatibilityError:
         raise
     except Exception as exc:
         raise UnitCompatibilityError(
             f"cannot determine dimensionality of {unit!r}: {exc}"
         ) from exc
+
+
+def dimensionality(unit: str) -> str:
+    """Stable string form of a unit's physical dimensionality.
+
+    For messages, display and serialization. The rendering is **canonical**:
+    the dimension names are sorted, so two dimensionally identical units
+    always produce the same string no matter how each was composed. Equality
+    of these strings is therefore a correct compatibility test as well —
+    which matters because callers outside this subpackage do compare them.
+
+    Single-dimension and dimensionless units render exactly as the backend
+    renders them (``"[temperature]"``, ``"dimensionless"``); only the ordering
+    of a multi-dimension rendering is fixed, and only where it was arbitrary.
+    """
+    dimensions = dimension_of(unit)
+    # Rebuilt through the container's own type rather than string-joined by
+    # hand, so the rendering stays the backend's and only its order is ours.
+    return str(type(dimensions)(dict(sorted(dimensions.items()))))
 
 
 @dataclass(frozen=True)
@@ -135,7 +164,8 @@ class Quantity:
 
     def is_compatible_with(self, other: "Quantity | str") -> bool:
         target = other.units if isinstance(other, Quantity) else other
-        return dimensionality(self.units) == dimensionality(target)
+        # Objects, not their renderings. See :func:`dimension_of`.
+        return dimension_of(self.units) == dimension_of(target)
 
     def require_compatible(self, other: "Quantity | str", *, context: str = "") -> None:
         if not self.is_compatible_with(other):

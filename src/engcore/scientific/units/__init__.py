@@ -3,6 +3,7 @@
 from .quantity import (
     Quantity,
     coerce_quantity,
+    dimension_of,
     dimensionality,
     normalize_unit,
     registry,
@@ -17,6 +18,7 @@ from .validation import (
 __all__ = [
     "Quantity",
     "coerce_quantity",
+    "dimension_of",
     "dimensionality",
     "normalize_unit",
     "registry",

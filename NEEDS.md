@@ -381,57 +381,86 @@ argued with.
 
 ## 1. Changes wanted outside the owned paths — not made
 
-### 1.1 `dimensionality()` compares dimensions as strings, and the strings are order-dependent
+### 1.1 `dimensionality()` compared dimensions as strings — FIXED
 
 **Where** `src/engcore/scientific/units/quantity.py` — `dimensionality()`,
-`Quantity.is_compatible_with`, `Quantity.to`.
+`Quantity.is_compatible_with`; `src/engcore/scientific/units/validation.py` —
+`require_same_dimension`.
 
-**What was hit.** `Quantity(2.5, "ampere") * Quantity(0.03, "ohm")` produces a
-quantity in `ampere * ohm`, and `.to("volt")` on it **raises**. The two are the
-same physical dimension. The units backend renders the composite's exponents in
-a different order from the named unit's:
+**Status: done.** Raised here as a proposal by the battery round, and taken in
+the consolidation round as the one authorised change to the core.
+
+**What was hit.** `Quantity(2.5, "ampere") * Quantity(0.03, "ohm")` produced a
+quantity in `ampere * ohm`, and `.to("volt")` on it **raised**. The two are the
+same physical dimension. The units backend renders a composite's exponents in
+the order the composite was built, not in the order the named unit renders
+them:
 
 ```
 ampere * ohm  ->  [mass] * [length] ** 2 / [current] / [time] ** 3
 volt          ->  [mass] * [length] ** 2 / [time] ** 3 / [current]
 ```
 
-`dimensionality()` returns that rendering as a `str`, and every compatibility
-check in the core is `dimensionality(a) == dimensionality(b)`, so two
-dimensionally identical quantities compare unequal and a correct conversion is
-refused as a units error.
+`dimensionality()` returned that rendering as a `str`, and every compatibility
+check in the core was `dimensionality(a) == dimensionality(b)`, so two
+dimensionally identical quantities compared unequal and a correct conversion
+was refused as a units error.
 
-This is not exotic. `I * R` is the single most ordinary product in electrical
-work, and it is the first thing a new domain multiplying two quantities will
-hit. It is silent until it raises, and when it raises it reports a physics
-error for a rendering detail.
+This was not exotic. `I * R` is the single most ordinary product in electrical
+work, and it was the first thing a new domain multiplying two quantities hit.
+It was silent until it raised, and when it raised it reported a physics error
+for a rendering detail. An exhaustive sweep over the named electrical and
+mechanical units finds twenty-one distinct composite→named conversions that
+the string comparison refused.
 
-**Worked around, not papered over.** `context._ohmic_drop` composes `I·R` from
-magnitudes (`magnitude_in("ampere") * magnitude_in("ohm")`, tagged `"volt"`).
-Both inputs still pass through `magnitude_in`, so the conversion is exactly as
-checked as a product would have been; only the *composition* is done in
-magnitudes, and only for this one product. The reason is written at the
-function, so a reader does not have to rediscover it.
+**What was done.** Two functions where there was one:
 
-**Proposal.** Compare dimensionality through the backend's own
-`UnitsContainer` (or any canonical, order-independent form) rather than through
-its `str`. Something of the shape:
+* `dimension_of(unit)` returns the backend's own `UnitsContainer`, which is a
+  mapping from dimension to exponent and compares and hashes by content.
+  `Quantity.is_compatible_with` and `require_same_dimension` decide
+  compatibility on these objects, so no rendering is involved.
+* `dimensionality(unit)` still returns a `str`, for messages, display and
+  anything that serializes one — but the rendering is now **canonical**: the
+  container is rebuilt with its dimensions sorted before it is rendered.
 
-```python
-def dimensionality(unit: str) -> str:
-    dims = registry().Unit(normalize_unit(unit)).dimensionality
-    return ",".join(f"{k}:{v}" for k, v in sorted(dims.items()))
-```
+The string form was kept canonical rather than merely kept, because the
+comparison sites are not all inside this subpackage. `composition/dependency.py`,
+`ir/problem.py`, `models/definition.py` and
+`systems/electrothermal/resistor_body.py` compare `dimensionality()` strings
+directly, and those comparisons were wrong for exactly the same reason. Sorting
+the rendering fixes them without editing them — which mattered, because the
+consolidation round's rules confined the change to
+`src/engcore/scientific/units/`.
 
-That is a one-function change, it is not a domain conditional, and it names no
-physics. It **does change a serialized string**, so it needs checking against
-anything that persists a dimensionality — the binding-issue detail strings in
-`ScientificModelDefinition.check_against` embed it in prose, which is display
-only, but a frozen record that stores one would need a re-freeze.
+The rebuild goes through the container's own type rather than joining
+`f"{k}:{v}"` by hand, as an earlier sketch of this proposal suggested. That
+keeps the rendering the backend's own and changes only its order: `[temperature]`
+and `dimensionless` come out exactly as before, and only a multi-dimension
+ordering — which was arbitrary — moves.
 
-**Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
-and a change to how the core decides two units are compatible is exactly the
-kind that should be argued before it is made.
+**Checked before changing.** No dataclass field stores a dimensionality and no
+`to_dict()` emits one: `QuantityDependency.dimension` is a property recomputed
+from its unit exemplar, not a stored field. The renderings that do reach
+persisted artifacts do so inside exception text, and the one committed artifact
+that carries such a message (`experiments/kinetics_k1/k1_results.json`) quotes
+`pascal` and `kelvin`, whose renderings are order-invariant. No frozen digest
+map pins `src/engcore/scientific/units/`.
+
+**The workaround it forced, now removed.** `context._ohmic_drop` composed `I·R`
+from magnitudes (`magnitude_in("ampere") * magnitude_in("ohm")`, tagged
+`"volt"`) with a docstring explaining why. It is plain quantity arithmetic
+again — `(current * resistance).to(VOLTAGE_UNIT)` — and the explanation is
+gone with the reason for it. An AST sweep for the same signature (two raw
+magnitudes of *different* units multiplied, result re-tagged with a literal
+unit) finds no other instance anywhere in `src/`, `tests/`, `benchmarks/` or
+`experiments/`.
+
+**One asymmetry left.** `src/engcore/scientific/__init__.py` re-exports
+`dimensionality` but not `dimension_of`, because that file is outside the
+units subpackage and the round's rules did not authorise editing it. Anything
+outside `units/` that wants the object form imports it from
+`engcore.scientific.units` directly. One line to add when somebody is next in
+there.
 
 ### 1.2 `ScientificResult` still cannot carry a validity assessment
 

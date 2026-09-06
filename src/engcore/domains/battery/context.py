@@ -236,30 +236,13 @@ def _fraction(numerator: float, denominator: float) -> Quantity:
 
 
 def _ohmic_drop(current: Quantity, resistance: Quantity) -> Quantity:
-    """I R as a voltage, built from magnitudes rather than by multiplication.
+    """I R as a voltage.
 
-    ``Quantity.__mul__`` would produce a quantity in ``ampere * ohm``, and
-    ``.to("volt")`` on it raises. The two are the same dimension, but the
-    core compares dimensionality as a *string* and the units backend renders
-    the product's exponents in a different order for the composite than for
-    the named unit: ``[mass] * [length] ** 2 / [current] / [time] ** 3``
-    against ``[mass] * [length] ** 2 / [time] ** 3 / [current]``.
-
-    Both inputs still pass through ``magnitude_in``, so the conversion is
-    exactly as checked as a product would have been — a resistance handed in
-    as milliohms and one handed in as ohms give the same number, and anything
-    that is not a current or a resistance has already been refused by
-    :func:`_checked`. Only the *composition* is done in magnitudes, and only
-    for this one product. The limitation belongs to the core's string
-    comparison and is recorded in ``NEEDS.md``; it is worked around here
-    rather than papered over, because a domain that let this raise at runtime
-    would be reporting a units-backend detail as a physics error.
+    Both inputs pass through :func:`_checked` before they reach here, so the
+    product is between a current and a resistance and nothing else; the
+    conversion to volts is what states the result is a voltage.
     """
-    return Quantity(
-        current.magnitude_in(CURRENT_UNIT)
-        * resistance.magnitude_in(RESISTANCE_UNIT),
-        VOLTAGE_UNIT,
-    )
+    return (current * resistance).to(VOLTAGE_UNIT)
 
 
 # =====================================================================
