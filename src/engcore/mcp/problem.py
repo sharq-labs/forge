@@ -1064,12 +1064,12 @@ def _electrical_assessments(
     if sources:
         assessments[_VOLTAGE_SOURCE.model_id] = combine_assessments(sources)
 
-    # Kirchhoff's law is always invoked and declares no conditions, so its
-    # honest verdict is UNKNOWN — "nobody stated the limits of the lumped
-    # circuit assumption", which is exactly what the model record says. It is
-    # assessed rather than omitted because a model left out of the report is a
-    # model the report silently claims nothing about.
-    assessments[_KCL.model_id] = _KCL.assess_validity({})
+    # Kirchhoff's law is always invoked, and its condition is satisfied by the
+    # DC model's own scope rather than by anything in this payload — which is
+    # why the domain supplies the context and this boundary passes nothing
+    # into it. It is assessed rather than omitted because a model left out of
+    # the report is a model the report silently claims nothing about.
+    assessments[_KCL.model_id] = dc_models.assess_kcl_validity()
     return assessments
 
 

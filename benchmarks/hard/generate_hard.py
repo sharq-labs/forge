@@ -49,6 +49,27 @@ BIOT_LIMIT = 0.1
 RAD_SHARE_LIMIT = 0.1
 FOURIER_MIN = 0.2
 
+#: The declared range of the repository's linear TCR form itself, from
+#: `electrical.material.linear_tcr_resistance` — TCR_MIN_TEMPERATURE and
+#: TCR_MAX_TEMPERATURE in src/engcore/domains/electrical/material.py.
+#:
+#: This is a limit of the *model*, not of any material a case declares, and it
+#: is narrower than the `maximum_operating_temperature` a case may state. An
+#: earlier draw omitted it from `verify_sound()` and mislabelled 61 sound cases
+#: as a result: they ran far above 450 K, the tool correctly reported
+#: OUTSIDE_VALIDATED_DOMAIN on both material models, and the benchmark counted
+#: that correct refusal as a false reject. The tool was right and the label was
+#: wrong. Checked here rather than fixed in the domain — widening the model's
+#: declared range to make cases pass would be relaxing a threshold to improve a
+#: number.
+TCR_MIN_TEMPERATURE = 200.0
+TCR_MAX_TEMPERATURE = 450.0
+
+#: How far a sound case's component ratings sit above the operating point.
+#: Comfortably clear, so a sound case is never refused for a rating that only
+#: just holds — the threshold shapers are where ratings are placed near a bound.
+RATING_HEADROOM = 3.0
+
 # Distances from a bound, as a fraction. The 0.002 band is where tools that
 # round, clamp, or use a slightly different formula start disagreeing.
 MARGINS = [0.002, 0.01, 0.05, 0.20]
@@ -100,6 +121,12 @@ def build(p):
                     "maximum_operating_temperature": q(p["t_max"], "kelvin"),
                     "debye_temperature": q(p["debye"], "kelvin"),
                 },
+                "ratings": {
+                    "rated_power": q(p["rated_power"], "watt"),
+                    "maximum_working_voltage": q(p["max_working_voltage"], "volt"),
+                    **({"derating_factor": p["derating"]}
+                       if p.get("derating") is not None else {}),
+                },
             },
             "body": {
                 "heat_capacity": q(p["cap"], "joule/kelvin"),
@@ -120,6 +147,11 @@ def build(p):
                 },
             },
         }],
+        "source_ratings": {
+            "maximum_current": q(p["max_current"], "ampere"),
+            **({"derating_factor": p["derating"]}
+               if p.get("derating") is not None else {}),
+        },
         "coupling": {
             "seed_temperature": q(p["t_amb"], "kelvin"),
             "tolerance": "1e-06 kelvin",
@@ -169,6 +201,21 @@ def base_draw(rng, wide=False):
     p["t_max"] = t_ss + max(30.0, rise * 0.5)
     p["t_melt"] = p["t_max"] + 400.0
     p["debye"] = min(t_amb, t_ss) / 2.5
+
+    # The electrical operating point the component ratings are stated against.
+    # One resistor across one source, so the whole circuit is V, R(T_ss) and
+    # the current they set. Computed here rather than in `build` so the shapers
+    # can place a rating at a controlled distance from it.
+    r_hot = r0 * (1.0 + alpha * (t_ss - t_ref))
+    if r_hot <= 0:
+        return None
+    p["_r_hot"] = r_hot
+    p["_i"] = v / r_hot
+    p["_p_diss"] = v * v / r_hot
+    p["rated_power"] = p["_p_diss"] * RATING_HEADROOM
+    p["max_working_voltage"] = v * RATING_HEADROOM
+    p["max_current"] = p["_i"] * RATING_HEADROOM
+    p["derating"] = None
     return p
 
 
@@ -229,6 +276,18 @@ def verify_sound(p, exempt=""):
         "capacity_excursion_ratio": p["_rise"] < p["cap_bound"],
         "linearization_excursion_ratio": exc < p["band"],
         "reduced_debye_temperature": min(p["t_amb"], t) / p["debye"] > 1.0 / 3.0,
+        # The linear TCR form's own declared range — a limit of the model, not
+        # of the material. See TCR_MIN_TEMPERATURE above for why it is here.
+        "temperature": TCR_MIN_TEMPERATURE < t < TCR_MAX_TEMPERATURE,
+        # The component ratings, against the operating point they are stated
+        # against. A rating is a declared limit like any other and a sound case
+        # must clear it.
+        "dissipated_power_utilization":
+            p["_p_diss"] < p["rated_power"] * (p.get("derating") or 1.0),
+        "working_voltage_utilization":
+            p["v"] < p["max_working_voltage"] * (p.get("derating") or 1.0),
+        "source_current_utilization":
+            p["_i"] < p["max_current"] * (p.get("derating") or 1.0),
     }
     margin = {
         "biot_number": bi < BIOT_LIMIT * 0.8,
@@ -240,6 +299,15 @@ def verify_sound(p, exempt=""):
         "capacity_excursion_ratio": p["_rise"] < p["cap_bound"] * 0.9,
         "linearization_excursion_ratio": exc < p["band"] * 0.9,
         "reduced_debye_temperature": min(p["t_amb"], t) / p["debye"] > 0.42,
+        "temperature": (
+            TCR_MIN_TEMPERATURE * 1.05 < t < TCR_MAX_TEMPERATURE * 0.95
+        ),
+        "dissipated_power_utilization":
+            p["_p_diss"] < p["rated_power"] * (p.get("derating") or 1.0) * 0.9,
+        "working_voltage_utilization":
+            p["v"] < p["max_working_voltage"] * (p.get("derating") or 1.0) * 0.9,
+        "source_current_utilization":
+            p["_i"] < p["max_current"] * (p.get("derating") or 1.0) * 0.9,
     }
     for name, ok in exact.items():
         if name == exempt:
@@ -424,9 +492,40 @@ def shape_debye(p, rng, margin, inside):
             "reduced_debye_temperature", "debye_out")
 
 
+def shape_rating(p, rng, margin, inside):
+    """A component rating placed at a controlled distance from its operating point.
+
+    An exceeded rating is a `limit_exceeded` case like any other bound in this
+    file: the part is being asked to do something its datasheet says it cannot,
+    and the utilization is the fraction of the rating in use. Which of the three
+    ratings is placed is drawn, because they are independent limits — a part can
+    be inside its dissipation rating and outside its working voltage, and the
+    conditions must be able to disagree.
+    """
+    which = rng.choice(["power", "voltage", "current"])
+    factor = (1.0 - margin) if inside else (1.0 + margin)
+    if which == "power":
+        p["rated_power"] = p["_p_diss"] / factor
+        cond, tag = "dissipated_power_utilization", "rating_power"
+    elif which == "voltage":
+        p["max_working_voltage"] = p["v"] / factor
+        cond, tag = "working_voltage_utilization", "rating_voltage"
+    else:
+        p["max_current"] = p["_i"] / factor
+        cond, tag = "source_current_utilization", "rating_current"
+    if inside:
+        return ("valid", "SUPPORTED",
+                f"{which} at {factor:.3f} of its rating.", cond,
+                f"{tag}_in")
+    return ("limit_exceeded", "NOT_SUPPORTED",
+            f"{which} at {factor:.3f} of its rating.", cond,
+            f"{tag}_out")
+
+
 THRESHOLD_SHAPERS = [
     shape_biot, shape_t_max, shape_band, shape_cond,
     shape_cap, shape_melt, shape_horizon, shape_rad, shape_debye,
+    shape_rating,
 ]
 
 

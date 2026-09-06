@@ -230,9 +230,14 @@ def test_the_wire_verdict_is_the_verdict_the_runtime_produced(make_payload):
 
 
 def test_the_nominal_case_reports_its_gaps_and_is_not_made_nicer():
-    """INSUFFICIENT_EVIDENCE is the runtime's real answer here — the electrical
-    ratings have no payload field and `electrical.dc.kcl` declares no
-    conditions — and the transport says so, naming what is missing."""
+    """INSUFFICIENT_EVIDENCE is the runtime's real answer here — this payload
+    declares no ratings — and the transport says so, naming what is missing.
+
+    ``electrical.dc.kcl`` used to be the other half of this and no longer is:
+    it declares a condition now, satisfied by the DC model's own scope, so it
+    is assessed rather than unknown. The example payload still declares no
+    ``ratings`` block, which is what keeps the verdict where it is.
+    """
     stage = run_case(example_electrothermal_payload()).structured_content[
         "stages"
     ][0]
@@ -247,10 +252,9 @@ def test_the_nominal_case_reports_its_gaps_and_is_not_made_nicer():
     assert "dissipated_power_utilization" in models[
         "electrical.dc.resistor_ohm"
     ]["unknown_conditions"]
-    # A model with no conditions at all is UNKNOWN and must still be named,
-    # or an agent sees a verdict resting on an empty list.
-    assert models["electrical.dc.kcl"]["unknown_conditions"] == []
-    assert models["electrical.dc.kcl"]["note"]
+    # Kirchhoff's law is no longer among the gaps: its condition is satisfied
+    # by scope. The gap that remains is the one the payload really has.
+    assert "electrical.dc.kcl" not in models
 
 
 def test_a_violated_material_limit_is_not_supported_and_names_the_condition():

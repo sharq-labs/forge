@@ -38,15 +38,36 @@ the limit they targeted and left another condition violated by the base draw.
 **If a case turns out to be labelled wrong and the tool right, say so
 explicitly.** Do not quietly correct the generator.
 
-## Baseline on main
-| Metric | Result |
-|---|---|
-| Catch rate | 1547/1547 — 100% |
-| False accept | 0/1547 — 0.00% |
-| False reject | 453/453 — 100% |
-| Exact verdict match | 1236/2000 — 61.8% |
-| Accuracy 0.2% outside a bound | 92% (does not degrade at the edge) |
+## Composition after the ratings round
 
-Every sound case is refused because the electrical models leave their rating
-conditions UNKNOWN — the payload has no field to declare a rating. That is the
-gap TASK 1 closes.
+353 sound, 1647 unsound, 116 distinct defect tags, seed 20260906.
+
+Two changes to ground truth, both because the tool turned out to be right:
+
+* `verify_sound()` now checks the linear TCR form's **own declared range**,
+  200-450 K, which is narrower than the `maximum_operating_temperature` a case
+  declares. Omitting it mislabelled 61 cases as sound that ran far above 450 K;
+  the tool correctly refused them and the benchmark scored that as a false
+  reject.
+* Cases now declare **component ratings**, and `shape_rating` places one at a
+  controlled distance from the operating point on both sides, like every other
+  threshold. A rating is a declared limit and a sound case must clear it.
+
+## Baselines
+
+| Metric | main `b60e757` | after TASK 1 + KCL |
+|---|---|---|
+| Catch rate | 1547/1547 (100%) | 1404/1647 (85.2%) |
+| False accept | 0/1547 (0.00%) | 243/1647 (14.75%) |
+| False reject | 453/453 (100%) | 19/353 (5.4%) |
+| Exact verdict match | 1236/2000 (61.8%) | 1595/2000 (79.8%) |
+
+**The first column's catch rate was unearned and the second column is what
+exposed it.** `electrical.dc.kcl` declared no validity conditions, so it
+assessed UNKNOWN on every run and no payload could ever be SUPPORTED. Every
+unsound case was "caught" by a verdict the tool gave to sound and unsound cases
+alike. Once KCL states its condition and the ratings have a payload field, the
+tool can say SUPPORTED — and the cases it should still be refusing become
+visible. They are the remaining tasks: geometry conflict (88), the horizon
+condition (103 across three tags), and melting-versus-ceiling (28).
+

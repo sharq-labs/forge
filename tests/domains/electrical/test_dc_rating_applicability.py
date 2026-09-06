@@ -31,6 +31,11 @@ from src.engcore.domains.electrical.dc.models import (
     NO_DERATING,
     RATING_UTILIZATION_LIMIT,
     RESISTOR_OHM_MODEL,
+    KCL_MODEL,
+    LUMPED_ELECTRICAL_LENGTH,
+    LUMPED_ELECTRICAL_LENGTH_LIMIT,
+    assess_kcl_validity,
+    kcl_validity_context,
     SOURCE_CURRENT_UTILIZATION,
     WORKING_VOLTAGE_UTILIZATION,
     ComponentRating,
@@ -684,3 +689,61 @@ def test_a_coupled_run_can_converge_while_its_resistor_is_over_its_rating():
     for iteration in run.iterations:
         for result in iteration.results:
             assert result.validation.status is not ValidationOutcome.FAIL
+
+
+# =====================================================================
+# Kirchhoff's law states its boundary and shows it is met
+# =====================================================================
+
+def test_kcl_declares_a_condition_rather_than_claiming_ignorance():
+    """It used to declare none, which made it permanently UNKNOWN.
+
+    A model with no conditions is UNKNOWN by the platform's rule, and for KCL
+    that claimed an ignorance the model does not have: its ValidityDomain
+    description has always named the physical boundary, and its own scope keeps
+    it on the right side of it.
+    """
+    names = {c.name for c in KCL_MODEL.validity.conditions}
+    assert names == {LUMPED_ELECTRICAL_LENGTH}
+
+    assessment = assess_kcl_validity()
+    assert assessment.status is ValidityStatus.IN_DOMAIN
+    assert assessment.unknown == ()
+    assert assessment.violated == ()
+
+
+def test_the_lumped_length_is_zero_because_the_model_is_a_dc_model():
+    """Not hard-coded IN_DOMAIN: a quantity is computed and compared.
+
+    The verdict stays derived from a condition, and the reason it always passes
+    is visible in the number rather than asserted in a branch.
+    """
+    context = kcl_validity_context()
+    ratio = context[LUMPED_ELECTRICAL_LENGTH]
+    assert ratio.magnitude_in("dimensionless") == 0.0
+
+    # f = 0 is an assumption of the record, which is what makes the ratio zero
+    # for a circuit of any size rather than for a small one.
+    assert any("steady-state DC" in a for a in KCL_MODEL.assumptions)
+
+
+def test_the_lumped_bound_is_the_standard_one_and_is_not_a_tautology():
+    """The limit is a real physical boundary, written down as a ratio.
+
+    It does not bite for a DC model. It is stated as a bound anyway so that the
+    condition says where the assumption fails, and so that a circuit model at
+    non-zero frequency inherits it instead of inventing one.
+    """
+    condition = next(
+        c for c in KCL_MODEL.validity.conditions
+        if c.name == LUMPED_ELECTRICAL_LENGTH
+    )
+    assert condition.maximum == LUMPED_ELECTRICAL_LENGTH_LIMIT
+    assert LUMPED_ELECTRICAL_LENGTH_LIMIT.magnitude_in("dimensionless") == 0.1
+
+    # A distributed circuit would violate it, which is what makes it a bound.
+    verdict = KCL_MODEL.assess_validity(
+        {LUMPED_ELECTRICAL_LENGTH: Quantity(0.5, "dimensionless")}
+    )
+    assert verdict.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert LUMPED_ELECTRICAL_LENGTH in verdict.violated
