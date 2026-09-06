@@ -602,15 +602,15 @@ class CSTRVerificationReport:
     # been judged against another.
     @property
     def tolerance_rel_tol(self) -> float:
-        return self._tolerance_rel_tol
+        return self.thresholds["tolerance_rel_tol"]
 
     @property
     def invariant_rel_tol(self) -> float:
-        return self._invariant_rel_tol
+        return self.thresholds["invariant_rel_tol"]
 
     @property
     def steady_state_rel_tol(self) -> float:
-        return self._steady_state_rel_tol
+        return self.thresholds["steady_state_rel_tol"]
 
     @property
     def levels_earned(self) -> tuple[ValidationLevel, ...]:

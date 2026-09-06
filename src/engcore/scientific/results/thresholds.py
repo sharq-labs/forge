@@ -82,8 +82,8 @@ class VerificationThresholds:
     ``gate_id`` and ``version`` name the set. ``values`` are the numbers.
     ``basis`` says where they came from — preregistered, declared after
     exploratory analysis, taken from a standard — and is not decoration: a
-    reader weighing a level needs it, and the CSTR gate's own module docstring
-    exists because that provenance was worth several paragraphs.
+    reader weighing a level needs it, and one gate in this repository spends
+    four paragraphs of its own module docstring on exactly that.
 
     ``derived_from`` is empty for a domain's declared set and carries the
     declared set's identity for an override. That is the whole mechanism: an

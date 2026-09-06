@@ -26,6 +26,7 @@ problem itself has none.
 
 from __future__ import annotations
 
+from ....scientific.ir.fingerprints import require_matching_fingerprint
 from ....scientific.ir.problem import ModelReference, ScientificProblem
 from ....scientific.ir.values import CategoricalValue
 from ....scientific.ir.variables import (
@@ -230,16 +231,18 @@ def verify_problem_matches_circuit(
             f"built by build_dc_problem()"
         )
 
-    expected = problem_fingerprint(problem)
-    actual = circuit.fingerprint()
-    if expected != actual:
-        raise CircuitBindingError(
-            f"circuit/problem mismatch for problem {problem.problem_id!r}: "
-            f"problem expects circuit fingerprint {_short(expected)}, but the "
-            f"supplied circuit {circuit.circuit_id!r} has {_short(actual)}. "
-            f"They describe different physical systems; rebuild the problem "
-            f"from this circuit or supply the matching circuit."
-        )
+    # This domain already refused an absent fingerprint: `None != actual` is
+    # True and there was no `if expected and ...` guard in front of it. Routed
+    # through the core's rule anyway, so the property is stated once and cannot
+    # be lost to a later edit that "tidies" this comparison into the form the
+    # two sibling domains had.
+    require_matching_fingerprint(
+        problem=problem,
+        key=DOMAIN_ARTIFACT_FINGERPRINT_KEY,
+        actual=circuit.fingerprint(),
+        error=CircuitBindingError,
+        subject=f"circuit {circuit.circuit_id!r}",
+    )
 
 
 def _short(fingerprint: str | None) -> str:

@@ -81,6 +81,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from ....scientific.ir.fingerprints import require_matching_fingerprint
 from ....scientific.ir.problem import ModelReference, ScientificProblem
 from ....scientific.ir.variables import (
     ScientificParameter,
@@ -1100,12 +1101,24 @@ def build_cstr_problem(
 
 
 def verify_problem_matches_run(problem: ScientificProblem, run: ReactorRun) -> None:
-    """Refuse a problem/run pairing that describes different physics."""
-    declared = problem.metadata.get("physics_fingerprint")
-    actual = run.physics_fingerprint()
-    if declared and declared != actual:
-        raise ReactorConfigurationError(
-            f"problem {problem.problem_id!r} declares physics fingerprint "
-            f"{str(declared)[:12]}… but was paired with {actual[:12]}…; the "
-            f"problem and the run describe different reactors"
-        )
+    """Refuse a problem/run pairing that does not state which reactor it is.
+
+    The comparison used to read ``if declared and declared != actual``, and
+    ``declared`` is falsy when the key is absent, so a problem carrying no
+    fingerprint at all passed. An integrity check that fails open refuses the
+    paired records that disagree and waves through the unpaired one, which is
+    the case it exists for.
+
+    It is the core's rule now -- see
+    :func:`~engcore.scientific.ir.fingerprints.require_matching_fingerprint`,
+    which refuses absence and mismatch alike, because a problem that says
+    nothing about which reactor it describes has not answered the question this
+    function asks.
+    """
+    require_matching_fingerprint(
+        problem=problem,
+        key="physics_fingerprint",
+        actual=run.physics_fingerprint(),
+        error=ReactorConfigurationError,
+        subject="reactor run",
+    )

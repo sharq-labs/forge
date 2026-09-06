@@ -2535,6 +2535,53 @@ question -- is a march one result with a trajectory, or N results with a parent
 run id? -- and it is bigger than the plumbing C.6 described. Recorded so C.6 is
 not read as still open in full.
 
+### G6.1 One fingerprint verifier still treats absence as a match
+
+**Where** `src/engcore/domains/thermal/conduction1d/problem.py:443`.
+
+```python
+declared = problem.metadata.get("slab_fingerprint")
+if declared and declared != actual:      # absent => passes
+    raise SlabConfigurationError(...)
+```
+
+**What is needed.** Four lines: call
+`engcore.scientific.ir.fingerprints.require_matching_fingerprint` with
+`key="slab_fingerprint"`, `actual=slab.fingerprint()`,
+`error=SlabConfigurationError`, `subject="slab"`, and delete the comparison.
+
+**Why it was not done.** The file is byte-pinned by
+`THERMAL_FROZEN_FILE_DIGESTS` in `experiments/thermal_t1/t1_config.py`.
+
+**What it costs.** The four lines, a re-pinned digest, and a T1 re-run.
+**No frozen experiment relies on the permissive path** — every conduction
+problem T1, T2 and T3 pair with a slab is built by `build_conduction_problem`,
+which always writes `slab_fingerprint`. That was checked by making the two
+sibling domains strict and running the FULL tier, which passes.
+
+**What is closed meanwhile.** The two callers of that function outside the
+frozen file — `thermal_models/conduction1d_bulk.py` and
+`thermal_models/conduction1d_schemes.py`, three call sites — now call the core
+rule first and then the frozen verifier, so those paths refuse an
+unfingerprinted problem. What remains open is the path through the frozen
+solver's own `prepare` and `solve_slab`.
+
+### G6.2 The same defect was in a third place, and was not on the round's list
+
+`CampaignEventLog.from_dict` compared `if declared and declared !=
+log.head_digest`, so a stored log carrying no head digest reloaded with its
+hash chain unverified. That is the one payload whose chain nothing has checked:
+a truncated file, a hand-edited record and a writer that died between the
+events and the digest all arrive in exactly that shape.
+
+It is now a refusal — for a log that carries events. An **empty** chain has no
+digest and says so (`head_digest` is `""` for a log with no events), and that
+is a true statement rather than a missing one, so the empty case is not what
+the refusal is about. Fixed rather than reported, because
+`src/engcore/sria/` is not frozen; noted here because it means the pattern the
+round found in two domains was in three places, and the third was found by a
+repository-wide sweep rather than by review.
+
 ### G2.2 A produced metric with no declared model output is not checked
 
 **Where** `src/engcore/domains/kinetics/cstr/validation.py`,

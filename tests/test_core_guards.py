@@ -1018,3 +1018,221 @@ def test_every_marched_step_carries_its_own_cell_report():
     for step in march.steps:
         assert step.cell_validation.checks, step.index
         assert step.thermal_validation.checks, step.index
+
+
+# =====================================================================
+# GUARD 6 — a missing fingerprint is a refusal
+# =====================================================================
+#
+# `if declared and declared != actual` waves through a problem carrying no
+# fingerprint at all: an integrity check that refuses the paired records which
+# disagree, and passes the unpaired one it exists for.
+
+#: Sites that still compare "if it is there", with why each is allowed to.
+#:
+#: Only two, and they are allowed for opposite reasons. Everything else that
+#: had this shape was made strict: the CSTR pairing check, and the campaign
+#: event log's head digest -- which was the same defect in a third place and
+#: was not on this round's list.
+_PERMISSIVE_BY_EXCEPTION = {
+    # FROZEN. `verify_problem_matches_slab` still reads
+    # `if declared and declared != actual`, so a slab problem carrying no
+    # fingerprint passes it. The file is byte-pinned by
+    # `experiments/thermal_t1/t1_config.py` and this round may not edit it.
+    # Its two callers outside that file go through the core's strict rule
+    # first, so only the path through the pinned solver is still open.
+    # NEEDS.md G6.1.
+    "src/engcore/domains/thermal/conduction1d/problem.py",
+    # REVIEWED AND CORRECT, which is a different thing from unfixed.
+    # `ValidationReport.from_dict` cross-checks a serialized `attained_levels`
+    # against the levels recomputed from the checks. That field is advisory
+    # and derived: the report's levels come from its checks whether the key is
+    # present or not, so an absent key withholds no guarantee and forges
+    # nothing. Absence here is a payload that omitted a derived view, not an
+    # integrity question left unanswered.
+    "src/engcore/scientific/results/validation.py",
+}
+
+
+def test_no_verifier_still_treats_an_absent_fingerprint_as_a_match():
+    """Swept over ``src``, not over the two sites this round happened to know.
+
+    The pattern is ``if <name> and <name> != ...`` guarding a raise -- the
+    "compare it if it is there" shape. It is the shape, not the variable name,
+    that makes it wrong.
+    """
+    import io
+    import re
+    import tokenize
+
+    def code_only(text: str) -> str:
+        """The source with every string literal and comment removed.
+
+        Necessary rather than fastidious: several modules in this repository
+        quote the wrong pattern in prose in order to explain why it is wrong,
+        and a search over raw text reports every one of them as an offender.
+        """
+        kept: list[str] = []
+        for token in tokenize.generate_tokens(io.StringIO(text).readline):
+            if token.type in (tokenize.STRING, tokenize.COMMENT):
+                continue
+            kept.append(token.string)
+        return " ".join(kept)
+
+    root = pathlib.Path(__file__).resolve().parent.parent / "src"
+    permissive = re.compile(
+        r"if\s+(\w*declared\w*|\w*expected\w*)\s+and\s+\1\s*!="
+    )
+    offenders = sorted(
+        path.relative_to(root.parent).as_posix()
+        for path in root.rglob("*.py")
+        if permissive.search(code_only(path.read_bytes().decode("utf-8")))
+    )
+    assert set(offenders) == _PERMISSIVE_BY_EXCEPTION, sorted(
+        set(offenders) ^ _PERMISSIVE_BY_EXCEPTION
+    )
+
+
+def test_the_core_refuses_a_problem_that_declares_no_fingerprint():
+    """Absence is an unanswered question, not an answer that happens to match."""
+    from src.engcore.scientific.errors import InvalidScientificProblem
+    from src.engcore.scientific.ir.fingerprints import require_matching_fingerprint
+
+    problem = ScientificProblem(problem_id="unpaired", metadata={})
+    with pytest.raises(InvalidScientificProblem, match="declares no"):
+        require_matching_fingerprint(
+            problem=problem,
+            key="artifact_fingerprint",
+            actual="abc123",
+            error=InvalidScientificProblem,
+            subject="artifact",
+        )
+
+    # An empty string is absence too: a builder that wrote the key and had
+    # nothing to write is not a builder that answered.
+    blank = ScientificProblem(
+        problem_id="blank", metadata={"artifact_fingerprint": ""}
+    )
+    with pytest.raises(InvalidScientificProblem, match="declares no"):
+        require_matching_fingerprint(
+            problem=blank,
+            key="artifact_fingerprint",
+            actual="abc123",
+            error=InvalidScientificProblem,
+            subject="artifact",
+        )
+
+    # A mismatch is still a mismatch, and a match still returns.
+    paired = ScientificProblem(
+        problem_id="paired", metadata={"artifact_fingerprint": "abc123"}
+    )
+    require_matching_fingerprint(
+        problem=paired,
+        key="artifact_fingerprint",
+        actual="abc123",
+        error=InvalidScientificProblem,
+        subject="artifact",
+    )
+    with pytest.raises(InvalidScientificProblem, match="different physical"):
+        require_matching_fingerprint(
+            problem=paired,
+            key="artifact_fingerprint",
+            actual="def456",
+            error=InvalidScientificProblem,
+            subject="artifact",
+        )
+
+
+def test_the_cstr_domain_refuses_an_unfingerprinted_problem():
+    """The live case, end to end, in the domain that failed open."""
+    from src.engcore.domains.kinetics.cstr.errors import ReactorConfigurationError
+    from src.engcore.domains.kinetics.cstr.problem import (
+        build_cstr_problem,
+        verify_problem_matches_run,
+    )
+    from tests.domains.kinetics.test_cstr_applicability import reactor
+
+    run = reactor()
+    honest = build_cstr_problem(run, problem_id="g6-honest")
+    verify_problem_matches_run(honest, run)  # returns
+
+    stripped = ScientificProblem.from_dict(
+        {
+            **honest.to_dict(),
+            "metadata": {
+                key: value
+                for key, value in honest.metadata.items()
+                if key != "physics_fingerprint"
+            },
+        }
+    )
+    with pytest.raises(ReactorConfigurationError, match="declares no"):
+        verify_problem_matches_run(stripped, run)
+
+
+def test_the_non_frozen_conduction_paths_refuse_an_unfingerprinted_problem():
+    """The frozen verifier is permissive; the callers outside it are not."""
+    from src.engcore.domains.thermal.conduction1d.errors import (
+        SlabConfigurationError,
+    )
+    from src.engcore.domains.thermal_models.conduction1d_bulk import (
+        _require_slab_fingerprint,
+    )
+    from src.engcore.domains.thermal.conduction1d.problem import (
+        build_conduction_problem,
+        verify_problem_matches_slab,
+    )
+    from tests.domains.thermal.test_conduction1d import make_slab
+
+    slab = make_slab()
+    honest = build_conduction_problem(slab)
+    stripped = ScientificProblem.from_dict(
+        {
+            **honest.to_dict(),
+            "metadata": {
+                key: value
+                for key, value in honest.metadata.items()
+                if key != "slab_fingerprint"
+            },
+        }
+    )
+
+    # The frozen verifier still passes it. Named, not worked around.
+    verify_problem_matches_slab(stripped, slab)
+
+    # The non-frozen path does not.
+    with pytest.raises(SlabConfigurationError, match="declares no"):
+        _require_slab_fingerprint(stripped, slab)
+
+
+def test_the_campaign_event_log_refuses_a_payload_with_no_head_digest():
+    """The same defect in a third place, found by the sweep rather than the round.
+
+    ``CampaignEventLog.from_dict`` compared ``if declared and declared !=
+    log.head_digest``, so a stored log carrying no head digest reloaded with
+    its chain unchecked -- which is the one payload whose chain nothing has
+    verified. A truncation, a hand-edited record and a writer that died between
+    the events and the digest all arrive in exactly that shape.
+    """
+    from src.engcore.sria.campaign.events import (
+        CampaignEventLog,
+        CampaignEventType,
+        ChainBroken,
+    )
+
+    empty = CampaignEventLog(run_id="g6-empty")
+    # An empty chain has no digest and that is a true statement, not a missing
+    # one -- so it is not what the refusal is about.
+    assert empty.head_digest == ""
+    assert CampaignEventLog.from_dict(empty.to_dict()).head_digest == ""
+
+    log = CampaignEventLog(run_id="g6-log")
+    log.append(next(iter(CampaignEventType)), iteration=0, payload={"n": 1})
+    stored = log.to_dict()
+    assert stored["head_digest"]
+    assert CampaignEventLog.from_dict(stored).head_digest == log.head_digest
+
+    with pytest.raises(ChainBroken, match="no head digest"):
+        CampaignEventLog.from_dict(
+            {k: v for k, v in stored.items() if k != "head_digest"}
+        )
