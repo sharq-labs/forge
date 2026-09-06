@@ -1741,3 +1741,69 @@ unchanged at 0.0%. All 50 recovered.
 The 8 geometry cases are built exactly 3x apart, which is the sphere's shape
 factor and the number the bound was derived from; the bound is inclusive on
 purpose and admitting them is correct. The other 12 are unexamined.
+
+---
+
+# NEEDS — domain-gaps round
+
+Written against `benchmark-fixes`, not `main`: at the time this round started
+the benchmark round was ten commits ahead of `main` and unmerged, so
+`domain-gaps` is branched off `benchmark-fixes` rather than reverting it.
+
+## A. TASK A — what the CSTR's other two derived numbers can and cannot say
+
+`ReactorRun` computes three numbers nothing checked. Damkohler became a
+condition; the other two were examined and only one of them supported a claim.
+
+### A.1 `adiabatic_rise_k` — it does support one, and it was built
+
+`beta C_Af` alone is not an applicability statement: a large adiabatic rise is
+not by itself outside anything. What *is* one is the rise read against the
+model's own 250-1000 K envelope, at the hottest state the declaration can
+reach. The reactor has an exact invariant, `Z = T + beta C_A`, which
+`reference.py` already implements, and it gives a genuine upper bound —
+`T <= max(T_0, T_f, T_c) + beta max(C_A0, C_Af)` — with or without cooling.
+That is `adiabatic_ceiling_temperature`, and it introduces no new number: the
+bound is `MAX_VALID_TEMPERATURE_K`, reused.
+
+### A.2 `gamma_per_s` — it does not, and nothing was invented
+
+`gamma = UA/(V rho cp)` is the jacket cooling rate constant. Two candidate
+statements were considered and both fail:
+
+* **A Stanton-like group, `gamma / a = UA/(q rho cp)`.** Real, dimensionless,
+  and bounded by nothing. The energy balance carries `- gamma (T - T_c)`
+  exactly, for every non-negative gamma. `gamma = 0` is the adiabatic reactor,
+  which is the case this domain verifies most tightly. Large gamma drives the
+  tank isothermal at `T_c`, which is also exactly solved. There is no regime in
+  gamma where an assumption fails.
+* **"A very large UA means the jacket's own dynamics matter."** The model does
+  declare that the jacket's dynamics are not modelled, so this is the right
+  *shape* of objection. But whether a jacket holds its temperature depends on
+  the jacket's flow rate and heat capacity, and **the declaration contains
+  neither**. A bound on gamma alone would be a number about a vessel this model
+  has never been told anything about. It would be exactly the Fo = 0.2 failure:
+  a citation attached to a number the source does not establish.
+
+The declaration that would make this answerable is a jacket capacity or jacket
+flow rate on `ReactorOperation`, at which point `gamma tau_jacket` is a real
+group with a real bound. That is a change to the physics being declared, not a
+condition over what is declared today, and it is not made here.
+
+### A.3 `CONSTANT_RATE_CSTR_MODEL` did not get the Damkohler condition
+
+`Da = k_const tau` is derivable for the constant-rate competitor too, and the
+micromixing argument applies to it unchanged. It was left alone deliberately:
+that model exists to be a falsifiable *alternative* in the K4 model-adequacy
+experiment, and narrowing its validity domain changes what that experiment
+measures. Adding it is a decision about the adequacy comparison, not about the
+condition.
+
+### A.4 The unit table moved down a layer
+
+`context.py` is below `problem.py` and both need the unit strings and the molar
+gas constant, so the table now lives in `context.py` and `problem.py` imports
+and re-exports it. Every existing `from .problem import CONCENTRATION_UNIT`
+keeps working against one definition. `reference.py` still restates the gas
+constant, and still should: it restates it *so that it shares no arithmetic
+with the solve path*, which is the opposite reason.
