@@ -1457,7 +1457,8 @@ def _property_result(
                 solver=solver.identity,
             ),
         ),
-        inputs=dict(problem.parameter_values()) | {mat.TEMPERATURE: temperature},
+        inputs=dict(problem.quantity_parameters())
+        | {mat.TEMPERATURE: temperature},
         assumptions=mat.LINEAR_TCR_MODEL.assumptions,
     )
     return ScientificResult(
@@ -1501,7 +1502,7 @@ def _thermal_result(
                 solver=solver.identity,
             ),
         ),
-        inputs=dict(problem.parameter_values()) | {
+        inputs=dict(problem.quantity_parameters()) | {
             lump.HEAT_INPUT: heat_input,
             lump.AMBIENT_TEMPERATURE: stage.body.ambient_temperature,
             # The state at t0. Identical in every iteration: the loop iterates

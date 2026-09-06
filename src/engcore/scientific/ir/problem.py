@@ -18,6 +18,7 @@ from ..units.validation import require_same_dimension
 from .conditions import BoundaryCondition, BoundaryKind, InitialCondition
 from .constraints import ConstraintDefinition
 from .objectives import ObjectiveDefinition
+from .values import ScientificValue
 from .variables import ScientificParameter, ScientificVariable, VariableRole
 
 PROBLEM_SCHEMA = schema_string("scientific_problem")
@@ -292,8 +293,41 @@ class ScientificProblem:
                 return candidate
         raise InvalidScientificProblem(f"unknown parameter {name!r}")
 
-    def parameter_values(self) -> dict[str, Quantity]:
+    def parameter_values(self) -> dict[str, ScientificValue]:
+        """Every parameter, at the type it was declared with.
+
+        The union is the honest return type. A parameter holds any member of
+        :data:`ScientificValue` — a dimensional Quantity, or an integer count,
+        a flag, a category — and this accessor hands them all back unchanged.
+
+        **It is not the right input for provenance.** ``ProvenanceRecord``
+        admits Quantity-valued inputs only, so passing this dict wholesale
+        works exactly until a problem declares a category, and then fails
+        inside whatever runner happens to be building the record rather than
+        where the wrong type was introduced. This method was annotated
+        ``dict[str, Quantity]`` for precisely that reason and the annotation
+        was a lie: no caller was checked against it and none could be, because
+        the type it promised is not the type it returns. Use
+        :meth:`quantity_parameters` when a Quantity is what the consumer
+        requires.
+        """
         return {p.name: p.value for p in self.parameters}
+
+    def quantity_parameters(self) -> dict[str, Quantity]:
+        """The dimensional parameters alone, for consumers that need Quantities.
+
+        Non-quantity parameters are **left out, not converted**. A category has
+        no magnitude and no unit, and there is no defensible Quantity to stand
+        in for it; a record that invented one would be recording something the
+        problem never declared.
+
+        So a caller reading this gets a truthful subset, and reading
+        :meth:`parameter_values` is how to see the rest. That distinction
+        matters for provenance in particular: ``inputs`` is a Quantity-only
+        contract, and a categorical parameter is not an input it silently
+        dropped — it is one that contract was never able to carry.
+        """
+        return {p.name: p.value for p in self.parameters if p.is_quantity}
 
     def metric_units(self) -> dict[str, str]:
         """Declared units per referenced metric, for result validation.

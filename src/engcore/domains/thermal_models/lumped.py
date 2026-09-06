@@ -459,11 +459,13 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
         # credible — and travels with that record.
         #
         # The original reason it was excluded still holds and is why it must
-        # never become an input: it is a category, ``ProvenanceRecord`` admits
-        # only Quantity-valued inputs, and the electrothermal pack builds a
-        # thermal result's provenance from ``problem.parameter_values()``
-        # wholesale. Anything that decides a verdict here must be a Quantity,
-        # or the verdict rests on something provenance cannot record.
+        # never become an input: it is a category, and ``ProvenanceRecord``
+        # admits only Quantity-valued inputs. The electrothermal pack now
+        # builds a thermal result's provenance from
+        # ``problem.quantity_parameters()``, so a category would no longer
+        # crash the record — it would be dropped from it, which is worse to
+        # rely on. Anything that decides a verdict here must be a Quantity, or
+        # the verdict rests on something provenance cannot record.
         ModelInputSpec(
             name=CONDUCTANCE_EXCURSION_BOUND,
             source_kind=InputSourceKind.PARAMETER,
