@@ -1915,7 +1915,7 @@ benchmark cases. Two files outside that were necessarily touched:
 * `benchmarks/hard/generate_hard.py` and `cases_hard/` — the task asks for
   cases; `benchmarks/hard/**` is TASK C's stated ownership.
 
-### B.6 `S00709` — this diagnosis was wrong, and the case is mislabelled
+### B.6 `S00709` — this diagnosis was wrong, and the case was mislabelled — FIXED
 
 **Superseded. The text below was checked and does not hold; the correction
 follows it.** What stood here:
@@ -1952,6 +1952,31 @@ moves every ratings case in the draw and the round that fixed A2.9 did not own
 the generator. The arithmetic above is pinned in
 `tests/mcp/test_problem.py::test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer`,
 so this entry is checked rather than asserted.
+
+**FIXED.** `endpoint_temperature` was added to `generate_hard.py`: the same
+fixed point `steady_temperature` solves, with the first-order reach factor
+applied, so it returns the temperature the march actually reaches rather than
+the one it tends to. `base_draw` sizes `_p_diss` and `_i` from it and
+`shape_rating` refreshes the operating point before placing a rating, so the
+margin a case declares is the margin the tool measures. Verified against the
+tool on 148 sampled cases: it reproduces the converged resistance and
+dissipation to 1e-9 relative, which is the coupling tolerance and not a
+difference.
+
+The endpoint map is the steady map scaled by a factor of at most 1, so it is
+strictly the more contractive of the two and converges wherever the steady map
+does. It rejects no draw the old form accepted, so the RNG stream is unchanged:
+2000 cases, 342 sound, 1658 unsound, 144 defect tags, same seed.
+
+1744 of 2000 case files moved, because every case carries default ratings at
+3x its operating point. **One verdict moved**: `S00709`, now SUPPORTED. All 83
+rating cases score exactly right with zero mismatches. False reject 1/342 to
+**0/342**; catch rate, false accept and the false-accept ID list unchanged. No
+bound moved and nothing in the tool was touched.
+
+`_t_ss` is still drawn and still sets the thermal limits, which are about where
+the body ends up. The ratings are about what the part is doing while it gets
+there, and those are not the same question.
 
 ### B.7 The geometry_conflict labels are wrong and were left wrong — FIXED
 

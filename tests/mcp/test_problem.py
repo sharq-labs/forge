@@ -1354,10 +1354,16 @@ def test_a_rating_exceeded_at_the_converged_point_stays_refused():
     assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
 
 
-#: Benchmark case ``S00709``, field for field. The hard benchmark's one false
-#: reject. ``benchmarks/hard/README.md`` attributed it to A2.9 -- the tool
-#: "computes 3.5634 W", which is the dissipation at the reference resistance.
-#: It does not, and this case is the evidence.
+#: Benchmark case ``S00709`` as it was drawn when it was the hard benchmark's
+#: one false reject, field for field. ``benchmarks/hard/README.md`` attributed
+#: that to A2.9 -- the tool "computes 3.5634 W", the dissipation at the
+#: reference resistance. It does not, and these numbers are the evidence.
+#:
+#: The generator has since been corrected and the live case declares a
+#: 3.5311 W rating, so this payload no longer matches the one on disk. It is
+#: kept frozen here on purpose: it is the counterexample that settled which of
+#: the two was wrong, and a test that read the case file would lose it the next
+#: time the benchmark is regenerated.
 S00709_PAYLOAD = {
     "source_voltage": "14.78541112 volt",
     "stages": [
@@ -1430,11 +1436,22 @@ def test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer():
     at t = 0 towards 3.4919 W and never arrives inside the declared horizon, so
     the rating is exceeded for the whole run and its peak is at t = 0.
 
-    The tool is right and the ground truth is wrong, in the same way the
-    ``geometry_conflict`` labels were wrong -- the expectation is computed at an
-    operating point the case does not declare. The correction belongs in
-    ``benchmarks/hard/generate_hard.py::shape_rating``, which must size a rating
-    at the marched endpoint rather than at a steady state the run never reaches.
+    The tool is right and the ground truth was wrong, in the same way the
+    ``geometry_conflict`` labels were wrong -- the expectation was computed at
+    an operating point the case does not declare.
+
+    **Since fixed, in the generator.** ``base_draw`` now sizes ratings from
+    ``endpoint_temperature``, the temperature the march actually reaches, and
+    ``shape_rating`` refreshes that operating point before placing a rating. The
+    redrawn ``S00709`` declares a 3.5311 W rating against the same 3.5240 W
+    dissipation and is SUPPORTED, and the benchmark's false reject went 1 to 0.
+    Nothing in the tool changed to make that happen and no bound moved.
+
+    This test keeps the ORIGINAL numbers, and it is not redundant: it is the
+    assertion that the tool refuses a part which is over its rating at the
+    operating point it converges to. If a future edit ever relaxed that, a
+    benchmark whose labels are now sized at the same operating point could not
+    tell -- every rating case would move with it.
     """
     _system, _run, reference, converged, power = _converged_probe(
         S00709_PAYLOAD, run_id="s00709"
