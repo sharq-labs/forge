@@ -1236,3 +1236,98 @@ def test_the_campaign_event_log_refuses_a_payload_with_no_head_digest():
         CampaignEventLog.from_dict(
             {k: v for k, v in stored.items() if k != "head_digest"}
         )
+
+
+# =====================================================================
+# GUARD 7 — a non-finite provider number cannot pass admission
+# =====================================================================
+#
+# Every admission gate is a tolerance comparison, and `abs(nan - x) > tol` is
+# False. A provider returning NaN therefore disagreed with nothing and walked
+# through a gate written to catch exactly the provider that disagrees.
+#
+# The finiteness rule is `engcore.scientific.solvers.admission`, in the core,
+# before any comparison -- because a comparison is the one thing that cannot
+# detect this.
+
+
+def test_a_tolerance_comparison_cannot_see_a_non_finite_value():
+    """The arithmetic the whole guard rests on, stated rather than assumed."""
+    import math
+
+    nan, inf = float("nan"), float("inf")
+    tol = 1e-9
+    # The exact shape every admission gate in this repository is written in.
+    assert not (abs(nan - 1.0) > tol)
+    assert not (abs(inf - inf) > tol)
+    assert not (nan < -tol)  # and the sign check underneath is one too
+    assert math.isnan(abs(nan - 1.0))
+
+
+def test_the_core_admission_layer_refuses_before_it_compares():
+    """Finiteness first. Ordering is the property, not an early-out."""
+    from src.engcore.scientific.solvers.admission import (
+        require_agreement,
+        require_finite,
+    )
+
+    class _Refused(Exception):
+        pass
+
+    nan, inf = float("nan"), float("inf")
+
+    require_finite({"a": 1.0, "b": -2.5}, error=_Refused, source="probe")
+    for bad in (nan, inf, -inf):
+        with pytest.raises(_Refused, match="non-finite"):
+            require_finite({"a": 1.0, "b": bad}, error=_Refused, source="probe")
+
+    # Agreement: the honest pair passes, the disagreeing pair is refused with
+    # the caller's own message, and the non-finite pair is refused as
+    # non-finite -- not silently admitted, which is what the bare comparison did.
+    require_agreement(
+        actual=1.0, expected=1.0, atol=1e-9, rtol=1e-9,
+        error=_Refused, detail="they agree",
+    )
+    with pytest.raises(_Refused, match="they disagree"):
+        require_agreement(
+            actual=1.0, expected=2.0, atol=1e-9, rtol=1e-9,
+            error=_Refused, detail="they disagree",
+        )
+    with pytest.raises(_Refused, match="non-finite"):
+        require_agreement(
+            actual=nan, expected=1.0, atol=1e-9, rtol=1e-9,
+            error=_Refused, detail="would have been admitted",
+        )
+    # And an operand behind the comparison, which a gate looking only at its
+    # own two numbers would have missed.
+    with pytest.raises(_Refused, match="non-finite"):
+        require_agreement(
+            actual=1.0, expected=1.0, atol=1e-9, rtol=1e-9,
+            error=_Refused, detail="derived from an infinity",
+            operands={"v_drop": inf},
+        )
+
+
+def test_the_element_gate_refuses_every_non_finite_shape():
+    """The gate itself, over the shapes that used to pass it."""
+    from src.engcore.domains.electrical.ngspice import (
+        NgspiceDCSolver,
+        NgspiceExecutionFailure,
+    )
+
+    nan, inf = float("nan"), float("inf")
+    honest = dict(
+        component_id="R1", v_drop=1.0, current=1e-3, power=1e-3, ohms=1000.0
+    )
+    NgspiceDCSolver._admit_element_power(**honest)  # returns
+
+    for label, override in (
+        ("nan power", {"power": nan}),
+        ("nan current and power", {"current": nan, "power": nan}),
+        ("inf power", {"power": inf}),
+        ("everything infinite", {"v_drop": inf, "current": inf, "power": inf}),
+        ("nan voltage drop", {"v_drop": nan}),
+        ("nan resistance", {"ohms": nan}),
+    ):
+        with pytest.raises(NgspiceExecutionFailure, match="non-finite"):
+            NgspiceDCSolver._admit_element_power(**{**honest, **override})

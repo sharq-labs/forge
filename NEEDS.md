@@ -2582,6 +2582,48 @@ the refusal is about. Fixed rather than reported, because
 round found in two domains was in three places, and the third was found by a
 repository-wide sweep rather than by review.
 
+### G7.1 Nothing forces a future provider adapter through the admission layer
+
+`engcore.scientific.solvers.admission` states the rule -- finiteness before any
+tolerance comparison -- and the one provider adapter in the repository uses it.
+Nothing makes the next one.
+
+A provider adapter is an ordinary class satisfying `ScientificSolver`. Its
+`extract_metrics` can compute whatever it likes from whatever the provider
+returned, and the core sees the result only when a `Quantity` is constructed
+from it. That is a backstop and it is where the non-finite value was in fact
+stopped before this guard -- as a `UnitCompatibilityError`, from the units
+layer, about a provider that had not delivered what was asked. It is not a
+gate, and it disappears the moment an adapter computes anything from an
+admitted number before wrapping it.
+
+**What a lock would need.** The core would have to see the provider's numbers
+before the adapter does -- a `ProviderOutput` type that `RawSolverOutput` is
+built from, constructed only through the admission layer. That is a real change
+to the solver protocol: every adapter's `solve` would return the new type, and
+`RawSolverOutput` would stop being the thing a backend produces and start being
+the thing the core derives. Perhaps two days, and it interacts with the
+`RawSolverOutput` change NEEDS G5.1 also wants; the two should be done together
+or not at all, since both are about making the core rather than the adapter the
+producer of the record.
+
+Until then this is a rule with one user and a test that checks that user.
+
+### G7.2 The finiteness rule is not swept for repository-wide
+
+Guards 2, 3, 4 and 6 each carry a `tests/test_core_guards.py` sweep that fails
+when a new site takes the shape the guard removed. Guard 7 does not, and the
+reason is that its shape -- `abs(a - b) > tol` -- is also the shape of every
+legitimate numerical comparison in the repository, of which there are dozens in
+solvers, validation checks and convergence tests. A sweep would either name all
+of them or would need to know which ones are admission gates, and "which ones
+are admission gates" is exactly the judgement no regex has.
+
+The narrower property that could be swept: no call to `require_agreement`
+passes operands it has not declared. That checks the helper is used correctly,
+not that it is used at all, which is the weaker half. Recorded rather than
+written, because a sweep that checks the wrong thing is worse than none.
+
 ### G2.2 A produced metric with no declared model output is not checked
 
 **Where** `src/engcore/domains/kinetics/cstr/validation.py`,

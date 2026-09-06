@@ -92,6 +92,7 @@ from ...scientific.results.validation import (
     ValidationReport,
 )
 from ...scientific.solvers.capability import SolverCapability
+from ...scientific.solvers.admission import require_agreement, require_finite
 from ...scientific.solvers.protocol import (
     DeclaredSupport,
     ConvergenceState,
@@ -632,6 +633,17 @@ class NgspiceDCSolver(DeclaredSupport):
         for node_id in circuit.node_ids:
             if node_id != circuit.reference_node:
                 voltages[node_id] = provider(f"v({netlist.node_names[node_id]})")
+        # Admitted before anything is derived from them. The element gate below
+        # reconciles three channels against each other and against a declared
+        # resistance; a node potential feeds that gate and was never checked on
+        # its own, so a NaN node voltage reached the gate as an operand rather
+        # than as a value the gate was inspecting. Every provider number this
+        # method turns into a metric passes through a finiteness refusal now.
+        require_finite(
+            voltages,
+            error=NgspiceExecutionFailure,
+            source="the provider's node voltages",
+        )
 
         metrics: dict[str, Quantity] = {}
         for node_id, value in voltages.items():
@@ -666,6 +678,11 @@ class NgspiceDCSolver(DeclaredSupport):
         for source in circuit.voltage_sources:
             cid = source.component_id
             current = provider(f"i({netlist.source_names[cid]})")
+            require_finite(
+                {f"source_current:{cid}": current},
+                error=NgspiceExecutionFailure,
+                source="the provider's source current channel",
+            )
             terminal = (
                 voltages[source.positive_node] - voltages[source.negative_node]
             )
@@ -752,30 +769,61 @@ class NgspiceDCSolver(DeclaredSupport):
         separately, because a sign flip on *both* current and power would
         satisfy relation 2 while inverting the physics.
         """
+        # FINITENESS FIRST, and not for tidiness. Both relations below are
+        # tolerance comparisons, and `abs(nan - x) > tol` is False -- so a
+        # provider returning NaN disagreed with nothing and walked through both
+        # of them, and through the sign check underneath, which is also a
+        # comparison. Infinity did the same whenever both operands were
+        # infinite, because `abs(inf - inf)` is NaN.
+        #
+        # A comparison cannot detect what is being asked of it here, so the
+        # check that can runs first, in the core -- see
+        # `engcore.scientific.solvers.admission`, where the rule is stated once
+        # for every present and future provider rather than in this method.
+        require_finite(
+            {
+                "v_drop": v_drop,
+                "current": current,
+                "power": power,
+                "resistance": ohms,
+            },
+            error=NgspiceExecutionFailure,
+            source=f"the provider, for element {component_id!r}",
+        )
+
         expected_current = v_drop / ohms
         expected_power = v_drop * current
 
-        def disagrees(actual: float, expected: float) -> bool:
-            return abs(actual - expected) > (
-                cls.ADMISSION_ATOL + cls.ADMISSION_RTOL * abs(expected)
-            )
-
-        if disagrees(current, expected_current):
-            raise NgspiceExecutionFailure(
+        require_agreement(
+            actual=current,
+            expected=expected_current,
+            atol=cls.ADMISSION_ATOL,
+            rtol=cls.ADMISSION_RTOL,
+            error=NgspiceExecutionFailure,
+            detail=(
                 f"provider element current for {component_id!r} is "
                 f"{current:.12g} A, but the provider's own node voltages give "
                 f"V_drop/R = {expected_current:.12g} A. The provider's current "
                 f"convention is not the one this adapter emits the netlist in; "
                 f"no result is synthesised rather than transporting it"
-            )
-        if disagrees(power, expected_power):
-            raise NgspiceExecutionFailure(
+            ),
+            operands={"v_drop": v_drop, "resistance": ohms},
+        )
+        require_agreement(
+            actual=power,
+            expected=expected_power,
+            atol=cls.ADMISSION_ATOL,
+            rtol=cls.ADMISSION_RTOL,
+            error=NgspiceExecutionFailure,
+            detail=(
                 f"provider element power for {component_id!r} is "
                 f"{power:.12g} W, but V_drop * I from the provider's own "
                 f"voltage and current channels gives {expected_power:.12g} W. "
                 f"resistor_power is transported into a thermal coupling, so an "
                 f"unreconciled value is refused rather than admitted"
-            )
+            ),
+            operands={"v_drop": v_drop, "current": current},
+        )
         if power < -cls.ADMISSION_ATOL:
             raise NgspiceExecutionFailure(
                 f"provider element power for {component_id!r} is negative "
