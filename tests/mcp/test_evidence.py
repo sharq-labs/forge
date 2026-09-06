@@ -42,6 +42,7 @@ from src.engcore.scientific.models.definition import (
     ValidityDomain,
     ValidityStatus,
 )
+from src.engcore.scientific.errors import ScientificValidationError
 from src.engcore.scientific.results.provenance import ProvenanceRecord
 from src.engcore.scientific.results.result import ScientificResult
 from src.engcore.scientific.results.validation import (
@@ -1551,3 +1552,65 @@ def test_combining_assessments_keeps_a_finding_above_a_gap():
     assert classify_assessment(combined) is combined.status
     # nothing to combine is nothing known, not everything fine
     assert combine_assessments(()).status is ValidityStatus.UNKNOWN
+
+
+# =====================================================================
+# F04 — UNVERIFIED cannot buy a verdict
+# =====================================================================
+
+def test_f04_a_report_whose_only_level_is_unverified_is_insufficient():
+    """The reproduction, and where it is now stopped.
+
+    A passing check declaring ``UNVERIFIED`` satisfied the attained-level guard
+    and produced SUPPORTED: nothing was verified, said so, and was read as
+    evidence. The check can no longer be built at all, so the report can only
+    be assembled with the sentinel absent — and a report whose checks establish
+    nothing is INSUFFICIENT_EVIDENCE, which is the rule that was already there
+    and was being evaded.
+    """
+    with pytest.raises(ScientificValidationError):
+        ValidationCheck(
+            name="nothing_was_verified",
+            outcome=ValidationOutcome.PASS,
+            establishes=ValidationLevel.UNVERIFIED,
+        )
+
+    nothing = ValidationCheck(
+        name="nothing_was_verified", outcome=ValidationOutcome.PASS
+    )
+    report = package(checks=(nothing,))
+    assert report.attained_levels == frozenset()
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+def test_f04_the_sentinel_cannot_be_demanded_either():
+    """``required_levels`` and ``attained_levels`` must not disagree.
+
+    With the sentinel unattainable by construction, a caller who demanded it
+    would have declared a requirement nothing could ever satisfy and would get
+    INSUFFICIENT_EVIDENCE forever with no explanation. Refused at the field
+    instead, in the same voice and for the same reason as the check itself.
+    """
+    with pytest.raises(CredibilityEvidenceError, match="UNVERIFIED"):
+        package(required_levels=(ValidationLevel.UNVERIFIED,))
+
+    # a real level is still demandable, and still has to be met
+    demanded = package(required_levels=(ValidationLevel.BENCHMARK_VALIDATED,))
+    assert demanded.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert demanded.missing_required_levels == (
+        ValidationLevel.BENCHMARK_VALIDATED,
+    )
+
+
+def test_f04_a_serialized_report_cannot_reintroduce_the_sentinel():
+    """Neither through a check nor through a required level."""
+    report = package()
+    payload = report.to_dict()
+    payload["required_levels"] = [ValidationLevel.UNVERIFIED.value]
+    with pytest.raises(CredibilityEvidenceError, match="UNVERIFIED"):
+        CredibilityEvidenceReport.from_dict(payload)
+
+    payload = report.to_dict()
+    payload["validation"][0]["establishes"] = ValidationLevel.UNVERIFIED.value
+    with pytest.raises(ScientificValidationError):
+        CredibilityEvidenceReport.from_dict(payload)

@@ -67,6 +67,7 @@ from src.engcore.scientific import (
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
+    unverified_report,
     ValidityDomain,
     ValidityStatus,
     ValueKind,
@@ -2017,6 +2018,85 @@ def test_open_range_inside_a_validity_domain():
 # =====================================================================
 # standalone runner (pytest optional)
 # =====================================================================
+
+# =====================================================================
+# F04 — UNVERIFIED is the absence of verification, not a level attained
+# =====================================================================
+
+def test_f04_a_check_cannot_establish_the_absence_of_verification():
+    """``establishes`` answers "what did this check establish".
+
+    ``UNVERIFIED`` is the sentinel for *nothing was verified*, so a check that
+    passed and established it is a category error: it claims to have
+    established an absence. Refused where the claim is made, which is the only
+    place the two halves of the contract cannot drift apart — with the value
+    unable to exist, ``attained_levels``, ``claims`` and ``require_level``
+    need no filter of their own and cannot disagree about one.
+    """
+    _raises(
+        ScientificValidationError,
+        ValidationCheck,
+        name="nothing_was_verified",
+        outcome=ValidationOutcome.PASS,
+        establishes=ValidationLevel.UNVERIFIED,
+    )
+    # every outcome, not only PASS: a NOT_RUN check that "established
+    # unverified" is the same category error wearing a humbler outcome
+    for outcome in ValidationOutcome:
+        _raises(
+            ScientificValidationError,
+            ValidationCheck,
+            name="nothing_was_verified",
+            outcome=outcome,
+            establishes="unverified",
+        )
+
+
+def test_f04_the_sentinel_cannot_cross_a_serialization_boundary():
+    """A stored record may not smuggle in what the constructor refuses."""
+    honest = ValidationCheck(
+        name="c", outcome=ValidationOutcome.PASS,
+        establishes=ValidationLevel.DIMENSIONALLY_VALID,
+    )
+    payload = honest.to_dict()
+    payload["establishes"] = ValidationLevel.UNVERIFIED.value
+    _raises(ScientificValidationError, ValidationCheck.from_dict, payload)
+
+
+def test_f04_no_report_can_attain_or_claim_the_sentinel():
+    """The three consultation sites agree because the value cannot exist."""
+    report = ValidationReport(
+        checks=(
+            ValidationCheck(
+                name="c", outcome=ValidationOutcome.PASS,
+                establishes=ValidationLevel.DIMENSIONALLY_VALID,
+            ),
+        )
+    )
+    assert ValidationLevel.UNVERIFIED not in report.attained_levels
+    assert report.claims(ValidationLevel.UNVERIFIED) is False
+    _raises(
+        ScientificValidationError,
+        report.require_level,
+        ValidationLevel.UNVERIFIED,
+    )
+
+
+def test_f04_a_check_establishing_nothing_is_still_the_way_to_say_nothing():
+    """The sentinel is refused; declining to declare a level is not.
+
+    A solver whose check earned no level says so by leaving ``establishes``
+    ``None`` — which is what the lumped residual check and the resistance
+    admissibility bound already do. That path is untouched, and it is the one
+    the platform means: an absent claim, not a claim of absence.
+    """
+    check = ValidationCheck(name="residual", outcome=ValidationOutcome.PASS)
+    assert check.establishes is None
+    assert ValidationReport(checks=(check,)).attained_levels == frozenset()
+    assert unverified_report("no solver was available").attained_levels == (
+        frozenset()
+    )
+
 
 def _all_tests():
     module = sys.modules[__name__]

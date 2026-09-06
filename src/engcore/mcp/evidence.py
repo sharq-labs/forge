@@ -1081,11 +1081,24 @@ class CredibilityEvidenceReport:
                     f"produce these values is not evidence about these values"
                 )
 
-        object.__setattr__(
-            self, "required_levels", tuple(
-                ValidationLevel(level) for level in self.required_levels
-            )
+        required_levels = tuple(
+            ValidationLevel(level) for level in self.required_levels
         )
+        # The other half of F04. ``ValidationCheck`` refuses
+        # ``establishes=UNVERIFIED``, so the sentinel can never be attained;
+        # a caller who demanded it would have declared a requirement nothing
+        # could ever satisfy and would get INSUFFICIENT_EVIDENCE forever with
+        # nothing in the record to say why. The two sides of the comparison
+        # must not disagree, and this is the side a consumer owns.
+        if ValidationLevel.UNVERIFIED in required_levels:
+            raise CredibilityEvidenceError(
+                "required_levels demands UNVERIFIED, which is the sentinel for "
+                "the absence of verification rather than a level. No passing "
+                "check can establish it — ValidationCheck refuses the value — "
+                "so requiring it demands something unattainable. Require a "
+                "level, or require none"
+            )
+        object.__setattr__(self, "required_levels", required_levels)
 
         declarations = tuple(self.declarations)
         for declaration in declarations:
