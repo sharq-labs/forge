@@ -61,6 +61,8 @@ __all__ = [
     "COEFFICIENT_UNIT",
     "DIMENSIONLESS",
     "FORCED_CONVECTION",
+    "GEOMETRY_AGREEMENT_FACTOR",
+    "GEOMETRY_ROUTE_RATIO",
     "INTERNAL_FOURIER_NUMBER",
     "LENGTH_UNIT",
     "MELTING_TEMPERATURE",
@@ -77,6 +79,7 @@ __all__ = [
     "biot_number",
     "capacity_excursion_ratio",
     "characteristic_length",
+    "geometry_route_ratio",
     "conductance_excursion_ratio",
     "ASSEMBLED_QUANTITIES",
     "derived_lumped_quantities",
@@ -130,6 +133,7 @@ CONDUCTANCE_EXCURSION_RATIO = "conductance_excursion_ratio"
 CAPACITY_EXCURSION_RATIO = "capacity_excursion_ratio"
 RADIATION_TO_CONVECTION_RATIO = "radiation_to_convection_ratio"
 MELTING_TEMPERATURE_UTILIZATION = "melting_temperature_utilization"
+GEOMETRY_ROUTE_RATIO = "geometry_route_ratio"
 
 # --- convection regimes -------------------------------------------------------
 #: The caller states which mechanism sets the surface coefficient. This is a
@@ -144,6 +148,15 @@ CONVECTION_REGIME_VOCABULARY = (NATURAL_CONVECTION, FORCED_CONVECTION)
 #: Units (SI)*, 9th ed. (2019), §2.3.1. Also Incropera & DeWitt 6th ed.,
 #: Eq. 1.5, which quotes 5.67e-8 W/(m^2 K^4).
 STEFAN_BOLTZMANN = Quantity(5.670374419e-8, "watt/meter**2/kelvin**4")
+
+#: How far the two routes to a characteristic length may disagree: a **factor
+#: of 3**, either way. It is a factor rather than a percentage because a body
+#: is not a sphere and ``V/A_s`` is not exactly ``L_c`` for every shape, so the
+#: admissible disagreement is set by the caller's choice of convention rather
+#: than by measurement error. Three is the sphere's shape factor and the
+#: largest of the three standard shapes — see :func:`geometry_route_ratio` for
+#: the derivation and for why the bound is two-sided.
+GEOMETRY_AGREEMENT_FACTOR = Quantity(3.0, DIMENSIONLESS)
 
 
 def _as_quantity(value: Any, unit: str, label: str) -> Quantity | None:
@@ -380,6 +393,82 @@ def characteristic_length(
     if checked_volume is None or checked_area is None:
         return None
     return (checked_volume / checked_area).to(LENGTH_UNIT)
+
+
+def geometry_route_ratio(
+    *,
+    declared: Quantity | None = None,
+    volume: Quantity | None = None,
+    surface_area: Quantity | None = None,
+) -> Quantity | None:
+    """L_c(declared) / (V / A_s) — do the two routes describe one body?
+
+    **Definition.** The declared characteristic length over the one implied by
+    the declared volume and surface area. Both are routes to the same quantity,
+    and :func:`characteristic_length` takes the declared one when it is there.
+    Nothing compared them, so a body could be declared with a length and a
+    volume that belong to different objects and the Biot number would be
+    computed from one of them without remark.
+
+    **Why the bound is a factor and not a percentage.** V/A_s is not the only
+    convention. Incropera, DeWitt, Bergman & Lavine, *Fundamentals of Heat and
+    Mass Transfer*, 6th ed. (2007), §5.1 defines ``L_c = V / A_s`` for the
+    lumped criterion, and §5.5 uses the shape's own dimension — ``r_o`` for a
+    sphere or a long cylinder, the half-thickness ``L`` for a plane wall — in
+    the one-term series solutions. For a given body those two differ by exactly
+    the shape factor:
+
+        plane wall      L_c = L,        V / A_s = L        ratio 1
+        long cylinder   L_c = r_o,      V / A_s = r_o / 2  ratio 2
+        sphere          L_c = r_o,      V / A_s = r_o / 3  ratio 3
+
+    So a disagreement of up to **3** is what a caller's choice of convention
+    can account for, and the sphere is the extreme case. That is why the bound
+    is a factor: a body is not a sphere, and V/A_s is not exactly L_c for every
+    shape, so a percentage would be a statement about a body this model does
+    not know the shape of. Beyond a factor of 3 in either direction there is no
+    standard shape that reconciles the two numbers, and the honest reading is
+    that they describe different objects.
+
+    **Two-sided, and not because both directions are equally defensible.** A
+    declared length *above* V/A_s is the conservative convention: it raises the
+    Biot number and makes the lumped criterion harder to pass. A declared
+    length *below* V/A_s lowers Bi and makes the model look applicable when it
+    may not be, which is the more dangerous of the two and has no shape
+    argument at all. Both are bounded here because this module cannot tell
+    which convention a caller used, and refusing only the dangerous direction
+    would leave a 30x disagreement unremarked whenever it fell the other way.
+
+    **With only one route the ratio is 1, and that is a true statement rather
+    than an assumed one.** This condition asks whether the routes a caller
+    supplied contradict each other. A caller who declared only a length, or
+    only a volume and an area, has supplied one route; :func:`characteristic_
+    length` resolves it to a single unambiguous value, that value is the one
+    the Biot number is computed from, and nothing contradicts it. Reporting
+    UNKNOWN there would not be caution — it would make every single-route
+    declaration undecidable and demand all three fields for a model that has
+    always accepted either route, which is a different and much larger claim
+    than this condition is making.
+
+    ``None`` only when neither route is available, which is the case where
+    there is no characteristic length at all and ``biot_number`` is already
+    UNKNOWN for the same reason.
+    """
+    checked_declared = _positive(
+        _as_quantity(declared, LENGTH_UNIT, CHARACTERISTIC_LENGTH),
+        LENGTH_UNIT,
+        CHARACTERISTIC_LENGTH,
+    )
+    implied = characteristic_length(volume=volume, surface_area=surface_area)
+    if checked_declared is None and implied is None:
+        return None
+    if checked_declared is None or implied is None:
+        return Quantity(1.0, DIMENSIONLESS)
+    return Quantity(
+        checked_declared.magnitude_in(LENGTH_UNIT)
+        / implied.magnitude_in(LENGTH_UNIT),
+        DIMENSIONLESS,
+    )
 
 
 def surface_coefficient(
@@ -920,6 +1009,7 @@ ASSEMBLED_QUANTITIES = frozenset(
         CAPACITY_EXCURSION_RATIO,
         RADIATION_TO_CONVECTION_RATIO,
         MELTING_TEMPERATURE_UTILIZATION,
+        GEOMETRY_ROUTE_RATIO,
     }
 )
 
@@ -1013,6 +1103,11 @@ def derived_lumped_quantities(
                 surroundings_temperature=ambient_temperature,
             ),
             coefficient=coefficient,
+        ),
+        GEOMETRY_ROUTE_RATIO: geometry_route_ratio(
+            declared=base.get(CHARACTERISTIC_LENGTH),
+            volume=base.get(BODY_VOLUME),
+            surface_area=base.get(SURFACE_AREA),
         ),
         MELTING_TEMPERATURE_UTILIZATION: melting_temperature_utilization(
             peak_temperature=peak,

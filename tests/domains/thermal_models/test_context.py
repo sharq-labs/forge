@@ -530,6 +530,10 @@ def test_the_assembler_derives_only_what_the_supplied_facts_reach():
         ctx.BIOT_NUMBER,
         ctx.TRANSIENT_HORIZON_RATIO,
         ctx.INTERNAL_FOURIER_NUMBER,
+        # One route to a characteristic length was supplied, so whether the
+        # two routes agree is answerable and they trivially do: there is no
+        # second declaration for the length to contradict.
+        ctx.GEOMETRY_ROUTE_RATIO,
     }
     assert dimensionless(derived[ctx.BIOT_NUMBER]) == pytest.approx(
         5.0e-5, rel=1e-12

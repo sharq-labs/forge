@@ -98,6 +98,10 @@ def assess(thermal_body, *, heat_input=HEAT_INPUT):
     )
 
 
+def dimensionless(value):
+    return value.magnitude_in("dimensionless")
+
+
 def _condition(name):
     return next(
         c for c in lump.LUMPED_CAPACITY_MODEL.validity.conditions if c.name == name
@@ -135,6 +139,10 @@ def test_a_body_that_declares_nothing_beyond_c_and_ha_is_unknown_not_valid():
         ctx.CAPACITY_EXCURSION_RATIO,
         ctx.RADIATION_TO_CONVECTION_RATIO,
         ctx.MELTING_TEMPERATURE_UTILIZATION,
+        # Neither route to a characteristic length was declared, so whether
+        # the two agree is genuinely unanswerable — unlike the single-route
+        # case, where there is nothing to contradict.
+        ctx.GEOMETRY_ROUTE_RATIO,
     }
     # The two old positivity checks still pass, and still prove nothing about
     # whether the lumped approximation holds.
@@ -548,6 +556,9 @@ def test_omitting_the_operating_point_cannot_produce_a_valid_verdict():
         lump.AMBIENT_CONDUCTANCE,
         ctx.BIOT_NUMBER,
         ctx.INTERNAL_FOURIER_NUMBER,
+        # Geometry alone decides this one: both routes are declared here and
+        # they agree, and no operating point is needed to say so.
+        ctx.GEOMETRY_ROUTE_RATIO,
     }
 
 
@@ -850,3 +861,103 @@ def test_a_coupled_run_can_converge_twice_over_and_still_be_outside_the_domain()
     for iteration in run.iterations:
         for result in iteration.results:
             assert result.validation.status is not ValidationOutcome.FAIL
+
+
+# =====================================================================
+# Two routes to one characteristic length must describe one body
+# =====================================================================
+
+def _geo(lc, vol, area=0.01):
+    return ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(lc, "meter"),
+        ctx.BODY_VOLUME: Quantity(vol, "meter**3"),
+        ctx.SURFACE_AREA: Quantity(area, "meter**2"),
+    }).get(ctx.GEOMETRY_ROUTE_RATIO)
+
+
+def test_two_routes_that_agree_are_satisfied():
+    ratio = _geo(0.002, 0.002 * 0.01)
+    assert dimensionless(ratio) == pytest.approx(1.0, rel=1e-12)
+
+
+def test_a_shape_factor_apart_is_still_one_body():
+    """A sphere declares r_o where V/A_s is r_o/3, and both are correct.
+
+    This is why the bound is a factor of 3 and not a percentage: the
+    disagreement a convention can account for is set by geometry, not by
+    measurement error.
+    """
+    for factor in (1.0, 2.0, 2.9):
+        assert dimensionless(_geo(0.002 * factor, 0.002 * 0.01)) == (
+            pytest.approx(factor, rel=1e-12)
+        )
+    assessment = assess(
+        body(declared(characteristic_length=Quantity(0.004, "meter"),
+                      volume=Quantity(0.002 * 0.01, "meter**3")))
+    )
+    assert ctx.GEOMETRY_ROUTE_RATIO in assessment.satisfied
+
+
+def test_routes_that_disagree_beyond_any_shape_are_a_finding():
+    """10x apart: no standard shape reconciles a length and a volume this far."""
+    assessment = assess(
+        body(declared(characteristic_length=Quantity(0.002, "meter"),
+                      volume=Quantity(0.002 * 0.01 * 10, "meter**3")))
+    )
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert ctx.GEOMETRY_ROUTE_RATIO in assessment.violated
+
+
+def test_the_disagreement_is_caught_in_both_directions():
+    """Declaring the length too small is the dangerous direction and is caught.
+
+    Below V/A_s the Biot number is understated and the model looks applicable
+    when it may not be; above it the criterion is only made harder to pass.
+    Both are refused, because nothing here can tell which convention was used.
+    """
+    for vol_factor in (10.0, 0.1):
+        assessment = assess(
+            body(declared(
+                characteristic_length=Quantity(0.002, "meter"),
+                volume=Quantity(0.002 * 0.01 * vol_factor, "meter**3"),
+            ))
+        )
+        assert ctx.GEOMETRY_ROUTE_RATIO in assessment.violated
+
+
+def test_one_route_alone_is_not_a_contradiction():
+    """The alternative route must keep working, and a lone length must too.
+
+    Reporting UNKNOWN here would demand all three fields from a model that has
+    always accepted either route — a much larger claim than this condition is
+    making.
+    """
+    via_volume = assess(
+        body(declared(characteristic_length=None,
+                      volume=Quantity(2.0e-5, "meter**3")))
+    )
+    assert via_volume.status is ValidityStatus.IN_DOMAIN
+    assert ctx.GEOMETRY_ROUTE_RATIO in via_volume.satisfied
+
+    only_length = ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+    })
+    assert dimensionless(only_length[ctx.GEOMETRY_ROUTE_RATIO]) == 1.0
+
+
+def test_neither_route_is_unknown_rather_than_agreement():
+    derived = ctx.derived_lumped_quantities({
+        ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+    })
+    assert ctx.GEOMETRY_ROUTE_RATIO not in derived
+
+
+def test_the_agreement_bound_is_a_named_factor_with_a_shape_reason():
+    assert ctx.GEOMETRY_AGREEMENT_FACTOR.magnitude_in("dimensionless") == 3.0
+    condition = next(
+        c for c in lump.LUMPED_CAPACITY_MODEL.validity.conditions
+        if c.name == ctx.GEOMETRY_ROUTE_RATIO
+    )
+    assert condition.maximum == ctx.GEOMETRY_AGREEMENT_FACTOR
+    assert dimensionless(condition.minimum) == pytest.approx(1.0 / 3.0)
+    assert "sphere" in condition.description

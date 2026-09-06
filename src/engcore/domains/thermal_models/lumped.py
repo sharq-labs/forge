@@ -119,6 +119,8 @@ from .context import (
     LENGTH_UNIT,
     MELTING_TEMPERATURE,
     MELTING_TEMPERATURE_UTILIZATION,
+    GEOMETRY_AGREEMENT_FACTOR,
+    GEOMETRY_ROUTE_RATIO,
     RADIATION_TO_CONVECTION_RATIO,
     SURFACE_AREA,
     SURFACE_AREA_UNIT,
@@ -598,6 +600,39 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     "assumption. Incropera et al., 6th ed. (2007), Sec. 1.2.3, "
                     "Eq. 1.9. UNKNOWN unless surface_emissivity and "
                     "surface_area are supplied."
+                ),
+            ),
+            RangeCondition(
+                name=GEOMETRY_ROUTE_RATIO,
+                minimum=Quantity(
+                    1.0
+                    / GEOMETRY_AGREEMENT_FACTOR.magnitude_in(DIMENSIONLESS),
+                    DIMENSIONLESS,
+                ),
+                maximum=GEOMETRY_AGREEMENT_FACTOR,
+                description=(
+                    "L_c(declared) / (V / A_s) within a factor of 3, either "
+                    "way. characteristic_length and body_volume/surface_area "
+                    "are two routes to one quantity and the declared one wins, "
+                    "so before this condition a body could be declared with a "
+                    "length and a volume belonging to different objects and "
+                    "the Biot number would be computed from one of them "
+                    "without remark. The bound is a factor rather than a "
+                    "percentage because a body is not a sphere: Incropera, "
+                    "DeWitt, Bergman & Lavine, Fundamentals of Heat and Mass "
+                    "Transfer, 6th ed. (2007), defines L_c = V/A_s for the "
+                    "lumped criterion in Sec. 5.1 and uses the shape's own "
+                    "dimension in Sec. 5.5, and for a given body those differ "
+                    "by exactly the shape factor — 1 for a plane wall, 2 for a "
+                    "long cylinder, 3 for a sphere. Three is therefore the "
+                    "largest disagreement a choice of convention can account "
+                    "for. Two-sided though the directions are not equally "
+                    "defensible: a declared length above V/A_s raises Bi and "
+                    "is conservative, one below it lowers Bi and makes the "
+                    "model look applicable when it may not be. UNKNOWN unless "
+                    "characteristic_length, body_volume and surface_area are "
+                    "all supplied — with one route there is nothing to "
+                    "compare, which is not the same as two that agree."
                 ),
             ),
             RangeCondition(
