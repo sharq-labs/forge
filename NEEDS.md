@@ -2372,6 +2372,78 @@ cannot appear unnoticed. This is a checked invariant, not a constructor
 refusal, and the difference is that a new domain gets a red test rather than an
 exception at the moment of the mistake.
 
+### G3.1 The conduction1d refinement gate still takes its thresholds as floats
+
+**Where** `src/engcore/domains/thermal/conduction1d/validation.py:406`.
+
+```python
+def run_verification_gate(
+    slab, *, ladder=VERIFICATION_LADDER, run_id_prefix="thermal-verify",
+    min_contraction: float = CONVERGENCE_MIN_CONTRACTION,
+    analytic_rel_tol: float = ANALYTIC_REL_TOL,
+) -> VerificationReport:
+```
+
+Both parameters gate a level. `min_contraction` decides
+`numerically_converged`, which awards `NUMERICALLY_CONVERGED`;
+`analytic_rel_tol` decides `analytically_verified`, which awards
+`ANALYTICALLY_VERIFIED`. A caller passing `min_contraction=1.0` receives a
+report whose `levels_earned`, whose `claim` prose, and whose two
+`ValidationCheck`s read exactly as they would at the declared 2.0. The only
+trace is the number in `tolerance`, in a field a reader has to know to check.
+
+`tests/domains/thermal/test_conduction1d.py` exercises exactly this, twice, at
+lines 258 and 283 -- which is the right test to have written and is also proof
+that the override path is live rather than theoretical.
+
+**What is needed.** The same migration CSTR and DC received in this round:
+
+1. A module-level `CONDUCTION_GATE_THRESHOLDS = VerificationThresholds(...)`
+   holding `min_contraction` and `analytic_rel_tol` with the basis those two
+   numbers already have in prose.
+2. `run_verification_gate` takes `thresholds: VerificationThresholds =
+   CONDUCTION_GATE_THRESHOLDS` in place of the two floats.
+3. `VerificationReport.levels_earned` and `to_report` route both levels through
+   `thresholds.award(...)` and add `thresholds.evidence()` to each check.
+
+Roughly thirty lines, all inside one file, and no behaviour changes for any
+caller using the defaults.
+
+**Why it was not done.** `src/engcore/domains/thermal/conduction1d/` is frozen
+for this round, and its bytes are pinned by `THERMAL_FROZEN_FILE_DIGESTS` in
+`experiments/thermal_t1/t1_config.py`. Editing it would break six T1/shared
+pins. Reported rather than worked around, as the round required.
+
+**What it costs to do.** The edit above, a re-pinned digest, and a T1 re-run to
+confirm the *results* are unchanged. They will be, for a caller using the
+defaults: `award` returns the same level for the declared set, and the only
+addition to a report is the threshold identity in `evidence`. What does change
+is the two tests at lines 258 and 283, which currently assert that a
+caller-supplied threshold moves the verdict; after the migration they assert
+that it moves the verdict *and awards nothing*, which is the stronger claim
+they were reaching for.
+
+**What was done instead.** `tests/test_core_guards.py` sweeps `src` for any
+function taking a parameter whose name marks it as a verification threshold
+(`*_rel_tol`, `*_atol`, `min_contraction`) and asserts this gate is the only
+one left. That sweep is not decorative: run against the commit before this
+guard it also finds the CSTR gate, which is the defect this round removed.
+
+### G3.2 Four DC tolerances are still the caller's, and that is deliberate
+
+`DCValidationSettings` holds six tolerances. Two -- `residual_atol` and
+`residual_rtol` -- gate `NUMERICALLY_CONVERGED` and are now compared against
+`DC_CONVERGENCE_THRESHOLDS`, so moving either yields a derived set that awards
+nothing. The other four (`kcl_atol_ampere`, `ohm_atol_volt`,
+`source_atol_volt`, `power_atol_watt`) bound checks that establish no level.
+
+A caller moving one of those is configuring what a report *says*, not what it
+*claims*, so they are left alone. That is a judgement, and it rests on the
+core having no level for "internally physically consistent" -- the four checks
+demonstrate exactly that and deliberately award nothing. If a level for it is
+ever added, those four thresholds become the domain's on the same day, and this
+paragraph is the note that says so.
+
 ### G2.2 A produced metric with no declared model output is not checked
 
 **Where** `src/engcore/domains/kinetics/cstr/validation.py`,

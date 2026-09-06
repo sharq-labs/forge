@@ -445,3 +445,201 @@ def test_every_check_a_live_solve_produces_earns_its_level():
             seen += 1
             assert check.earns_its_level, (check.name, check.to_dict())
     assert seen >= 10
+
+
+# =====================================================================
+# GUARD 3 — the threshold a level is judged against is not the caller's
+# =====================================================================
+#
+# `VerificationThresholds.award` returns a level only for a domain's declared
+# set. A caller who wants different numbers derives a set, gets the whole
+# report -- every residual, every detail -- and gets no claim.
+#
+# One gate in the repository still takes bare floats:
+# `src/engcore/domains/thermal/conduction1d/validation.py`, whose bytes are
+# pinned by `experiments/thermal_t1/t1_config.py`. It is named below and the
+# test asserts it is the ONLY one. NEEDS.md G3.1 records what migrating it
+# costs.
+
+#: Gates that judge a level against numbers a caller can still set as floats.
+_FROZEN_CALLER_THRESHOLDS = (
+    "src/engcore/domains/thermal/conduction1d/validation.py",
+    "run_verification_gate",
+)
+
+#: Parameter names that name a threshold a verification is judged against.
+#: A gate taking one of these as a float has the defect this guard removes.
+_THRESHOLD_PARAMETER_MARKERS = ("_rel_tol", "_atol", "min_contraction")
+
+
+def _gates_taking_bare_float_thresholds():
+    """Every function in ``src`` with a float parameter that names a threshold.
+
+    Crude on purpose. A guard that only looked at the two gates this round knew
+    about would be exactly the kind of list the round exists to stop writing.
+    """
+    root = pathlib.Path(__file__).resolve().parent.parent / "src"
+    for path in sorted(root.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_bytes().decode("utf-8"))
+        except SyntaxError:  # pragma: no cover
+            continue
+        relative = path.relative_to(root.parent).as_posix()
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            arguments = list(node.args.args) + list(node.args.kwonlyargs)
+            offending = [
+                argument.arg
+                for argument in arguments
+                if any(
+                    marker in argument.arg
+                    for marker in _THRESHOLD_PARAMETER_MARKERS
+                )
+            ]
+            if offending:
+                yield relative, node.name, offending
+
+
+def test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against():
+    """A caller who can set the tolerance has defeated the verification.
+
+    The CSTR gate took ``invariant_rel_tol`` as a keyword argument, so a caller
+    passing ``1e-3`` received a report awarding ANALYTICALLY_VERIFIED that read,
+    in every field a consumer looks at, exactly like one judged against 1e-9.
+    """
+    offenders = [
+        (path, function)
+        for path, function, _ in _gates_taking_bare_float_thresholds()
+    ]
+    assert offenders == [_FROZEN_CALLER_THRESHOLDS], (
+        "a function takes a verification threshold as a bare float: "
+        + repr(list(_gates_taking_bare_float_thresholds()))
+    )
+
+
+def test_a_derived_threshold_set_awards_nothing():
+    """The mechanism, on both domains that now use it."""
+    from src.engcore.domains.electrical.dc.validation import (
+        DC_CONVERGENCE_THRESHOLDS,
+    )
+    from src.engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
+    from src.engcore.scientific.results.validation import ValidationLevel
+
+    for declared, override in (
+        (CSTR_GATE_THRESHOLDS, {"invariant_rel_tol": 1e-3}),
+        (DC_CONVERGENCE_THRESHOLDS, {"residual_atol": 1.0}),
+    ):
+        assert declared.is_declared
+        assert declared.award(
+            ValidationLevel.NUMERICALLY_CONVERGED, earned=True
+        ) is ValidationLevel.NUMERICALLY_CONVERGED
+
+        derived = declared.derive(**override)
+        assert not derived.is_declared
+        assert derived.derived_from == declared.identity
+        assert derived.identity != declared.identity
+        assert derived.fingerprint != declared.fingerprint
+        # The comparison still runs. Only the claim is withheld.
+        assert derived.award(
+            ValidationLevel.NUMERICALLY_CONVERGED, earned=True
+        ) is None
+        # And a passing comparison against the declared set is unaffected.
+        assert declared.award(
+            ValidationLevel.NUMERICALLY_CONVERGED, earned=False
+        ) is None
+
+
+def test_a_derivation_that_changes_nothing_is_not_an_override():
+    """Withholding a level from a caller who changed no number would be noise."""
+    from src.engcore.domains.kinetics.cstr.validation import (
+        CSTR_GATE_THRESHOLDS,
+        INVARIANT_REL_TOL,
+    )
+
+    same = CSTR_GATE_THRESHOLDS.derive(invariant_rel_tol=INVARIANT_REL_TOL)
+    assert same is CSTR_GATE_THRESHOLDS
+    assert same.is_declared
+
+
+def test_a_threshold_the_gate_does_not_read_cannot_be_derived():
+    """Inventing a criterion nothing evaluates is not configuration."""
+    from src.engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
+    from src.engcore.scientific.errors import ScientificValidationError
+
+    with pytest.raises(ScientificValidationError, match="have no"):
+        CSTR_GATE_THRESHOLDS.derive(a_criterion_nothing_reads=1e-3)
+
+
+def test_a_non_finite_threshold_is_refused():
+    """NaN makes every comparison false; infinity makes every one true."""
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.thresholds import VerificationThresholds
+
+    for bad in (float("nan"), float("inf")):
+        with pytest.raises(ScientificValidationError, match="non-finite"):
+            VerificationThresholds(
+                gate_id="g", version="1", values={"rel_tol": bad}
+            )
+
+
+def test_widening_the_dc_residual_bound_buys_no_level():
+    """End to end, on a real solve: the check passes and awards nothing."""
+    from src.engcore.domains.electrical.dc import (
+        DCCircuit,
+        DCVoltageSource,
+        ElectricalNode,
+        Resistor,
+        solve_circuit,
+    )
+    from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
+    from src.engcore.domains.electrical.dc.validation import DCValidationSettings
+    from src.engcore.scientific.results.validation import (
+        ValidationLevel,
+        ValidationOutcome,
+    )
+
+    circuit = DCCircuit(
+        circuit_id="guard3",
+        nodes=(ElectricalNode("gnd", is_reference=True), ElectricalNode("n1")),
+        resistors=(
+            Resistor(
+                component_id="R1",
+                node_a="n1",
+                node_b="gnd",
+                resistance=Quantity(1000.0, "ohm"),
+            ),
+        ),
+        voltage_sources=(
+            DCVoltageSource(
+                component_id="V1",
+                positive_node="n1",
+                negative_node="gnd",
+                voltage=Quantity(5.0, "volt"),
+            ),
+        ),
+    )
+
+    honest = solve_circuit(circuit, run_id="guard3-declared")
+    assert ValidationLevel.NUMERICALLY_CONVERGED in honest.validation.attained_levels
+
+    widened = solve_circuit(
+        circuit,
+        run_id="guard3-widened",
+        solver=ElectricalDCSolver(
+            settings=DCValidationSettings(residual_atol=1.0)
+        ),
+    )
+    check = next(
+        c for c in widened.validation.checks if c.name == "linear_system_residual"
+    )
+    # The comparison ran and passed, and says so.
+    assert check.outcome is ValidationOutcome.PASS
+    assert check.residual is not None and check.tolerance is not None
+    # The claim is withheld, and the report says which set it was judged against.
+    assert check.establishes is None
+    assert (
+        ValidationLevel.NUMERICALLY_CONVERGED
+        not in widened.validation.attained_levels
+    )
+    assert any(e.startswith("thresholds-override-of:") for e in check.evidence)

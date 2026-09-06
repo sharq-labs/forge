@@ -73,6 +73,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 
+from ....scientific.results.thresholds import VerificationThresholds
 from ....scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
@@ -497,6 +498,41 @@ STEADY_STATE_REL_TOL = 1.0e-9
 #: report disagreement that is about the horizon rather than about accuracy.
 STATIONARITY_REL_TOL = 1.0e-6
 
+#: The three thresholds above, as the one record the gate judges against.
+#:
+#: They were already the domain's numbers; what they were not was the domain's
+#: *authority*. Each was a default on a keyword argument of
+#: ``run_verification_gate``, so a caller passing ``invariant_rel_tol=1e-3``
+#: got a report that awarded ANALYTICALLY_VERIFIED and read, in every field a
+#: consumer looks at, exactly like one judged against 1e-9.
+#:
+#: As a record they have an identity, a fingerprint over the values, and a
+#: statement of where they came from. ``VerificationThresholds.award`` returns
+#: the level only for the declared set, so
+#: ``CSTR_GATE_THRESHOLDS.derive(invariant_rel_tol=1e-3)`` still runs every
+#: comparison and still reports every residual and every detail -- and awards
+#: nothing. Exploring a tolerance stays possible; claiming a level from one
+#: does not.
+#:
+#: ``STATIONARITY_REL_TOL`` is deliberately absent. It gates whether the
+#: steady-state comparison is *attempted* on a trajectory that has settled, not
+#: whether it passed, so it is a precondition rather than a criterion and the
+#: gate takes no argument for it.
+CSTR_GATE_THRESHOLDS = VerificationThresholds(
+    gate_id="kinetics.cstr.verification_gate",
+    version="0.1.0",
+    values={
+        "tolerance_rel_tol": TOLERANCE_REL_TOL,
+        "invariant_rel_tol": INVARIANT_REL_TOL,
+        "steady_state_rel_tol": STEADY_STATE_REL_TOL,
+    },
+    basis=(
+        "declared after exploratory feasibility analysis, not preregistered; "
+        "see this module's docstring for what exploration had already seen "
+        "when each number was written down"
+    ),
+)
+
 #: A ladder shorter than this cannot show a trend worth calling convergence.
 MIN_RUNGS = 3
 
@@ -559,20 +595,48 @@ class CSTRVerificationReport:
     cross_method_agrees: bool | None
     cross_method_detail: str
     cross_method_max_rel_difference: float | None
-    tolerance_rel_tol: float = TOLERANCE_REL_TOL
-    invariant_rel_tol: float = INVARIANT_REL_TOL
-    steady_state_rel_tol: float = STEADY_STATE_REL_TOL
+    thresholds: VerificationThresholds = CSTR_GATE_THRESHOLDS
+
+    # The three numbers are read off the record rather than stored beside it,
+    # so a report cannot describe itself as judged against one set while having
+    # been judged against another.
+    @property
+    def tolerance_rel_tol(self) -> float:
+        return self._tolerance_rel_tol
+
+    @property
+    def invariant_rel_tol(self) -> float:
+        return self._invariant_rel_tol
+
+    @property
+    def steady_state_rel_tol(self) -> float:
+        return self._steady_state_rel_tol
 
     @property
     def levels_earned(self) -> tuple[ValidationLevel, ...]:
-        earned: list[ValidationLevel] = []
-        if self.tolerance_independent:
-            earned.append(ValidationLevel.NUMERICALLY_CONVERGED)
-        if self.invariant_verified:
-            earned.append(ValidationLevel.ANALYTICALLY_VERIFIED)
-        if self.steady_state_verified:
-            earned.append(ValidationLevel.CROSS_SOLVER_VALIDATED)
-        return tuple(earned)
+        """What this gate awards, which is nothing at a threshold the caller set.
+
+        ``award`` returns the level only when the comparison passed **and** the
+        thresholds are this domain's declared set. A caller who tightened or
+        loosened a number still gets the whole report -- every residual, every
+        detail, every rung -- and no claim, because the claim is the part that
+        was never theirs to set.
+        """
+        earned = (
+            self.thresholds.award(
+                ValidationLevel.NUMERICALLY_CONVERGED,
+                earned=self.tolerance_independent,
+            ),
+            self.thresholds.award(
+                ValidationLevel.ANALYTICALLY_VERIFIED,
+                earned=self.invariant_verified,
+            ),
+            self.thresholds.award(
+                ValidationLevel.CROSS_SOLVER_VALIDATED,
+                earned=self.steady_state_verified,
+            ),
+        )
+        return tuple(level for level in earned if level is not None)
 
     @property
     def claim(self) -> str:
@@ -614,12 +678,12 @@ class CSTRVerificationReport:
                 residual=(
                     self.rungs[-1].max_relative_change if self.rungs else None
                 ),
-                establishes=(
-                    ValidationLevel.NUMERICALLY_CONVERGED
-                    if self.tolerance_independent
-                    else None
+                establishes=self.thresholds.award(
+                    ValidationLevel.NUMERICALLY_CONVERGED,
+                    earned=self.tolerance_independent,
                 ),
-                evidence=tuple(
+                evidence=self.thresholds.evidence()
+                + tuple(
                     f"{r.rung.label} nfev={r.rhs_evaluations}" for r in self.rungs
                 ),
             ),
@@ -637,12 +701,12 @@ class CSTRVerificationReport:
                 detail=self.invariant_detail,
                 residual=self.invariant_max_rel_error,
                 tolerance=self.invariant_rel_tol,
-                establishes=(
-                    ValidationLevel.ANALYTICALLY_VERIFIED
-                    if self.invariant_verified
-                    else None
+                establishes=self.thresholds.award(
+                    ValidationLevel.ANALYTICALLY_VERIFIED,
+                    earned=self.invariant_verified,
                 ),
-                evidence=(f"{INVARIANT_REFERENCE_ID}: {INVARIANT_EXPRESSION}",),
+                evidence=self.thresholds.evidence()
+                + (f"{INVARIANT_REFERENCE_ID}: {INVARIANT_EXPRESSION}",),
             ),
             ValidationCheck(
                 name="independent_steady_state_agreement",
@@ -658,10 +722,9 @@ class CSTRVerificationReport:
                 detail=self.steady_state_detail,
                 residual=self.steady_state_rel_error,
                 tolerance=self.steady_state_rel_tol,
-                establishes=(
-                    ValidationLevel.CROSS_SOLVER_VALIDATED
-                    if self.steady_state_verified
-                    else None
+                establishes=self.thresholds.award(
+                    ValidationLevel.CROSS_SOLVER_VALIDATED,
+                    earned=self.steady_state_verified,
                 ),
                 evidence=(
                     f"{STEADY_STATE_REFERENCE_ID}: {STEADY_STATE_EXPRESSION}",
@@ -716,6 +779,7 @@ class CSTRVerificationReport:
                 self.cross_method_max_rel_difference,
             "levels_earned": [level.value for level in self.levels_earned],
             "claim": self.claim,
+            "thresholds": self.thresholds.to_dict(),
             "reference_ids": [STEADY_STATE_REFERENCE_ID, INVARIANT_REFERENCE_ID],
         }
 
@@ -731,9 +795,7 @@ def run_verification_gate(
     *,
     ladder: Sequence[ToleranceRung] = TOLERANCE_LADDER,
     run_id_prefix: str = "cstr-verify",
-    tolerance_rel_tol: float = TOLERANCE_REL_TOL,
-    invariant_rel_tol: float = INVARIANT_REL_TOL,
-    steady_state_rel_tol: float = STEADY_STATE_REL_TOL,
+    thresholds: VerificationThresholds = CSTR_GATE_THRESHOLDS,
     cross_method: str = "Radau",
 ) -> CSTRVerificationReport:
     """Solve the same physics down a tolerance ladder and judge the sequence.
@@ -741,12 +803,34 @@ def run_verification_gate(
     The run's own integration declaration supplies the method and the budget;
     every rung overrides only the tolerances, so any difference between rungs is
     numerical by construction.
+
+    **The thresholds are one record, not three floats.** They used to be three
+    keyword arguments defaulting to this domain's numbers, which meant a caller
+    passing ``invariant_rel_tol=1e-3`` received a report awarding
+    ANALYTICALLY_VERIFIED that was indistinguishable, in every field a consumer
+    reads, from one judged against 1e-9. A caller who can set the tolerance a
+    verification is judged against has defeated the verification.
+
+    A caller who wants different numbers writes
+    ``CSTR_GATE_THRESHOLDS.derive(invariant_rel_tol=1e-3)``. The gate runs
+    exactly as before, reports every residual and every detail, and awards no
+    level, because the set is no longer this domain's. The identity of whichever
+    set was used travels into every check's ``evidence``, so the report says
+    what it was judged against without a reader having to know how it was
+    called.
     """
     from .problem import build_cstr_problem
     from .solver import CSTRSolver, TransientTrajectorySample, solve_reactor_bundle
 
     if len(ladder) < 2:
         raise ValueError("a tolerance gate needs at least two rungs to compare")
+
+    # Read once, off the record. Bound to locals only so the comparisons below
+    # read as arithmetic rather than as lookups; the record is what is carried
+    # into the report and into every check's evidence.
+    _tolerance_rel_tol = thresholds["tolerance_rel_tol"]
+    _invariant_rel_tol = thresholds["invariant_rel_tol"]
+    _steady_state_rel_tol = thresholds["steady_state_rel_tol"]
 
     rows: list[ToleranceRungResult] = []
     finest_result = None
@@ -865,10 +949,10 @@ def run_verification_gate(
         final_change = annotated[-1].max_relative_change
         if final_change is None or not math.isfinite(final_change):
             reasons.append("the finest tolerance comparison is not a finite number")
-        elif final_change > tolerance_rel_tol:
+        elif final_change > _tolerance_rel_tol:
             reasons.append(
                 f"the two tightest rungs still disagree by {final_change:.3e}, "
-                f"above the required {tolerance_rel_tol:.3e}: the quantities of "
+                f"above the required {_tolerance_rel_tol:.3e}: the quantities of "
                 f"interest are still moving with the tolerance"
             )
     rows = tuple(annotated)  # type: ignore[assignment]
@@ -879,7 +963,7 @@ def run_verification_gate(
             f"{len(rows)} rungs from {rows[0].rung.label} to "
             f"{rows[-1].rung.label}; the largest relative change across the "
             f"two tightest rungs is {rows[-1].max_relative_change:.3e}, within "
-            f"{tolerance_rel_tol:.3e}; right-hand-side evaluations rose "
+            f"{_tolerance_rel_tol:.3e}; right-hand-side evaluations rose "
             f"{rows[0].rhs_evaluations} -> {rows[-1].rhs_evaluations}"
         )
     else:
@@ -929,14 +1013,14 @@ def run_verification_gate(
         )
         errors = np.abs(numeric_z - exact_z) / np.maximum(np.abs(exact_z), 1e-300)
         invariant_max_rel_error = float(np.max(errors))
-        within = invariant_max_rel_error <= invariant_rel_tol
+        within = invariant_max_rel_error <= _invariant_rel_tol
         invariant_verified = bool(tolerance_independent and within)
         if invariant_verified:
             invariant_detail = (
                 f"the trajectory reproduces Z = T + beta C_A against the exact "
                 f"closed form to a maximum relative error of "
                 f"{invariant_max_rel_error:.3e} over {times.size} sample times, "
-                f"within {invariant_rel_tol:.3e}. The reaction term cancels "
+                f"within {_invariant_rel_tol:.3e}. The reaction term cancels "
                 f"exactly in Z, so this checks the coupling of the two states "
                 f"through the stiff region without using the rate constant"
             )
@@ -951,7 +1035,7 @@ def run_verification_gate(
         else:
             invariant_detail = (
                 f"maximum relative invariant error {invariant_max_rel_error:.3e} "
-                f"exceeds the declared tolerance {invariant_rel_tol:.3e}"
+                f"exceeds the declared tolerance {_invariant_rel_tol:.3e}"
             )
 
     # --- the independent algebraic steady state ---------------------------
@@ -1003,7 +1087,9 @@ def run_verification_gate(
             )
             steady_state_rel_error = None
         else:
-            within = steady_state_rel_error <= steady_state_rel_tol
+            within = (
+                steady_state_rel_error <= _steady_state_rel_tol
+            )
             steady_state_verified = bool(tolerance_independent and within)
             if steady_state_verified:
                 steady_state_detail = (
@@ -1011,7 +1097,7 @@ def run_verification_gate(
                     f"with the independently computed steady state "
                     f"{nearest.temperature_k:.9f} K ({nearest.stability}) to a "
                     f"relative error of {steady_state_rel_error:.3e}, within "
-                    f"{steady_state_rel_tol:.3e}. The reference solves the "
+                    f"{_steady_state_rel_tol:.3e}. The reference solves the "
                     f"algebraic residual by Brent bracketing and shares no "
                     f"arithmetic with the integrator. "
                     f"{len(found)} transversal steady state(s) were found in "
@@ -1030,7 +1116,7 @@ def run_verification_gate(
                     f"nearest independent steady state "
                     f"{nearest.temperature_k:.9f} K by "
                     f"{steady_state_rel_error:.3e}, above the declared "
-                    f"{steady_state_rel_tol:.3e}"
+                    f"{_steady_state_rel_tol:.3e}"
                 )
 
     # --- the cross-method arm (establishes nothing) -----------------------
@@ -1080,7 +1166,8 @@ def run_verification_gate(
             cross_method_max_rel_difference = max(differences) if differences else None
             cross_method_agrees = bool(
                 cross_method_max_rel_difference is not None
-                and cross_method_max_rel_difference <= tolerance_rel_tol
+                and cross_method_max_rel_difference
+                <= _tolerance_rel_tol
             )
             cross_method_detail = (
                 f"{run.integration.method} and {cross_method} at "
@@ -1105,9 +1192,7 @@ def run_verification_gate(
         cross_method_agrees=cross_method_agrees,
         cross_method_detail=cross_method_detail,
         cross_method_max_rel_difference=cross_method_max_rel_difference,
-        tolerance_rel_tol=tolerance_rel_tol,
-        invariant_rel_tol=invariant_rel_tol,
-        steady_state_rel_tol=steady_state_rel_tol,
+        thresholds=thresholds,
     )
 
 
