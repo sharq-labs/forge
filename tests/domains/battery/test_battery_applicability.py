@@ -100,7 +100,7 @@ def test_a_cell_that_declares_nothing_beyond_its_five_numbers_is_unknown():
         ctx.DISCHARGE_TEMPERATURE_POSITION,
         ctx.INTERNAL_RESISTANCE_DRIFT_RATIO,
         ctx.SELF_HEATING_RISE_RATIO,
-        ctx.POLARIZATION_SETTLING_RATIO,
+        ctx.POLARIZATION_UNMODELLED_FRACTION,
     }
     # The positivity checks still pass, and still prove nothing about whether
     # the Rint representation applies to this cell.
@@ -420,54 +420,94 @@ def test_the_self_heating_rise_is_unknown_when_the_cell_declares_no_conductance(
 # =====================================================================
 
 def test_the_cell_model_accepts_an_interval_that_outlasts_the_omitted_relaxation():
-    """A 120 s interval against a declared 30 s polarization time constant."""
+    """A 120 s interval against a declared 30 s polarization time constant.
+
+    t = 4 tau, so f = 1 - exp(-4) = 0.982 and the unmodelled remainder is
+    0.018 — the settled regime.
+    """
     verdicts = assess_models(make_cell(), make_load())
-    assert ctx.POLARIZATION_SETTLING_RATIO in verdicts[RINT].satisfied
+    assert ctx.POLARIZATION_UNMODELLED_FRACTION in verdicts[RINT].satisfied
 
 
-def test_the_cell_model_rejects_an_interval_shorter_than_the_omitted_relaxation():
-    """A 30 s interval against a 30 s time constant: one tau, not three.
+def test_the_cell_model_accepts_a_pulse_far_shorter_than_the_relaxation():
+    """A 1 s interval against a 30 s time constant, which the floor rejected.
 
-    The Rint circuit has no dynamics, so on an interval comparable to the
-    cell's diffusion time constant the overpotential it represents as a
-    constant ohmic drop has not finished developing, and no constant R_int
-    reproduces the terminal voltage.
+    This is the case the old one-sided condition got wrong. At t = tau/30 the
+    diffusion overpotential has reached 3.3 % of its asymptote: the branch the
+    Rint circuit omits has barely begun, and the terminal voltage is
+    essentially the instantaneous ohmic drop that a short-pulse R_int
+    represents. A constant resistance is defensible here for the opposite
+    reason it is defensible when settled, and the previous ``t/tau >= 3``
+    floor excluded the whole regime.
+    """
+    verdicts = assess_models(make_cell(), make_load(duration=Quantity(1.0, S)))
+    assert ctx.POLARIZATION_UNMODELLED_FRACTION in verdicts[RINT].satisfied
+    assert ctx.POLARIZATION_UNMODELLED_FRACTION not in verdicts[RINT].violated
+    # And it is genuinely the short side, not an accident of the fold: the
+    # ratio the old floor tested is well below 1, not above 3.
+    ratio = ctx.polarization_settling_ratio(
+        duration=Quantity(1.0, S), time_constant=Quantity(30.0, S)
+    )
+    assert ratio.magnitude_in(ONE) < 1.0
+    unmodelled = ctx.polarization_unmodelled_fraction(
+        duration=Quantity(1.0, S), time_constant=Quantity(30.0, S)
+    )
+    assert unmodelled.magnitude_in(ONE) < 0.05
+
+
+def test_the_cell_model_rejects_an_interval_comparable_to_the_relaxation():
+    """A 30 s interval against a 30 s time constant: the excluded middle.
+
+    At t = tau the diffusion overpotential is 63 % developed and still moving
+    fast. It is neither absent nor constant across the interval, so no single
+    resistance reproduces the terminal voltage. This is the band the condition
+    removes — and the only band it removes.
     """
     verdicts = assess_models(make_cell(), make_load(duration=Quantity(30.0, S)))
     assert verdicts[RINT].status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert verdicts[RINT].violated == (ctx.POLARIZATION_SETTLING_RATIO,)
+    assert verdicts[RINT].violated == (ctx.POLARIZATION_UNMODELLED_FRACTION,)
 
 
 def test_the_settling_ratio_is_unknown_when_the_cell_declares_no_time_constant():
     cell = make_cell(limits=make_limits(polarization_time_constant=None))
     verdicts = assess_models(cell, make_load())
     assert verdicts[RINT].status is ValidityStatus.UNKNOWN
-    assert ctx.POLARIZATION_SETTLING_RATIO in verdicts[RINT].unknown
+    assert ctx.POLARIZATION_UNMODELLED_FRACTION in verdicts[RINT].unknown
     assert verdicts[RINT].violated == ()
 
 
-def test_the_settling_floor_is_labelled_a_convention_and_not_a_citation():
+def test_the_polarization_ceiling_is_labelled_a_convention_and_not_a_citation():
     """The one non-definitional number in the domain, and it admits it.
 
-    Three time constants is the engineering reading of "settled" for a
-    first-order response. No source in this repository's bibliography prints
-    it as a threshold for this quantity, and the constant, the condition
-    description, the documentation row and this test all say so. The physics
-    behind the condition *is* cited; the number is not, and the two must not
-    be confused — which is the mistake the applicability review caught once
-    already in a sibling domain.
+    Five per cent is the engineering reading of "done" for a first-order
+    response. No source in this repository's bibliography prints it as a
+    threshold for this quantity, and the constant, the condition description,
+    the documentation row and this test all say so. The physics behind the
+    condition *is* cited; the number is not, and the two must not be confused
+    — which is the mistake the applicability review caught once already in a
+    sibling domain.
     """
-    assert mdl.POLARIZATION_SETTLING_FLOOR.magnitude_in(ONE) == 3.0
-    condition = condition_of(mdl.RINT_OCV_MODEL, ctx.POLARIZATION_SETTLING_RATIO)
-    assert condition.minimum == mdl.POLARIZATION_SETTLING_FLOOR
-    assert condition.maximum is None
+    assert mdl.POLARIZATION_UNMODELLED_CEILING.magnitude_in(ONE) == 0.05
+    condition = condition_of(
+        mdl.RINT_OCV_MODEL, ctx.POLARIZATION_UNMODELLED_FRACTION
+    )
+    assert condition.maximum == mdl.POLARIZATION_UNMODELLED_CEILING
+    assert condition.minimum is None
     # The admission, in the condition a reader will actually look at.
     assert "CONVENTION AND NOT A CITED THRESHOLD" in condition.description
-    assert "no source in this repository prints it" in condition.description.lower()
+    assert "no source in this repository does either" in condition.description
+    # Both regimes are named, and both bounds are called conventions.
+    assert "TWO REGIMES ARE ADMISSIBLE" in condition.description
+    assert "BOTH resulting bounds" in condition.description
+    assert "t >= 3.0 tau_pol" in condition.description
+    assert "t <= 0.051 tau_pol" in condition.description
     # The physics is cited even though the number is not.
     assert "Plett" in condition.description
+    assert "Plett prints no threshold" in condition.description
     # And the honest reading of a failure, which must not become an overclaim.
     assert "not shown to be wrong" in condition.description
+    # The limit the condition does not check, stated rather than implied.
+    assert "characterised in the regime it is being used in" in condition.description
 
 
 def test_every_other_threshold_in_the_domain_is_definitional():
@@ -503,7 +543,7 @@ def test_every_other_threshold_in_the_domain_is_definitional():
     # Exactly one dimensionless bound in the whole domain is neither 0 nor 1,
     # and it is the one labelled a convention.
     exceptional = {b for b in every_bound if b.magnitude_in(ONE) not in (0.0, 1.0)}
-    assert exceptional == {mdl.POLARIZATION_SETTLING_FLOOR}
+    assert exceptional == {mdl.POLARIZATION_UNMODELLED_CEILING}
 
 
 # =====================================================================

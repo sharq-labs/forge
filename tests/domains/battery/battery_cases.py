@@ -34,6 +34,7 @@ A 2.5 Ah cell with 30 mOhm of series resistance, discharged at 2.5 A (1C) from
     self_heating_rise       2.5^2 * 0.03 / 0.15              = 1.25 K
     self_heating_rise_ratio           1.25 / 15              = 0.0833
     polarization_settling_ratio       120 / 30               = 4.0
+    polarization_unmodelled_fraction  1 - (1-exp(-4))        = 0.0183
     terminal_voltage_ratio  (4.0404 - 0.075) / 4.0404        = 0.981
     soc_step_resolution_ratio         0.033 / 0.10           = 0.33
     capacity_temperature_drift_ratio |298.15-293.15| / 20     = 0.25

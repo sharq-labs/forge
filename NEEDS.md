@@ -507,6 +507,37 @@ iteration stopped*, and this one answers *whether there was an iteration*.
 
 ---
 
+### 1.4 The cell cannot declare how its `R_int` was characterised
+
+**Where** `src/engcore/domains/battery/context.py` — `CellSpecification` and
+its declared limits; the condition is
+`polarization_unmodelled_fraction` in `models.py`.
+
+**Raised by the consolidation round**, when that condition was made two-sided.
+
+`polarization_unmodelled_fraction` admits two regimes: the interval is long
+enough that the diffusion branch has settled, or short enough that it has
+barely developed. Both are defensible, but they are defensible about
+*different numbers*. A settled-interval `R_int` measurement contains the
+diffusion contribution; a short-pulse `R_int` measurement does not. Using a
+settled value on a short pulse over-predicts the drop by roughly `I R_diff`;
+using a short-pulse value on a long interval under-predicts it by the same.
+
+The cell declares one `internal_resistance` and says nothing about how it was
+obtained, so the condition can screen the *timescale* and cannot check that
+the resistance belongs to the regime it is being used in. The one-sided floor
+hid this by admitting only the settled regime — it was consistent by
+construction with a settled measurement, and wrong about short pulses.
+
+**Proposal.** A declared `internal_resistance_characterisation` — a
+categorical, `pulse` or `settled` — and a `CategoryCondition` requiring it to
+agree with the regime the interval falls in. That needs the categorical
+declaration to reach a validity condition, which is §1.2 of the applicability
+round above: a categorical parameter still cannot cross the provenance
+boundary, so the condition could be written but the declaration could not be
+recorded. **Not done for that reason**, and stated in the constant's own
+documentation so a reader of the bound sees the gap at the bound.
+
 ## 2. Conditions this round deliberately did not implement
 
 Each is a real condition on a real derived quantity. None is here because it

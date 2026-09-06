@@ -140,6 +140,7 @@ INTERNAL_RESISTANCE_DRIFT_RATIO = "internal_resistance_drift_ratio"
 SELF_HEATING_RISE = "self_heating_rise"
 SELF_HEATING_RISE_RATIO = "self_heating_rise_ratio"
 POLARIZATION_SETTLING_RATIO = "polarization_settling_ratio"
+POLARIZATION_UNMODELLED_FRACTION = "polarization_unmodelled_fraction"
 TERMINAL_VOLTAGE_RATIO = "terminal_voltage_ratio"
 SOC_STEP_RESOLUTION_RATIO = "soc_step_resolution_ratio"
 CAPACITY_TEMPERATURE_DRIFT_RATIO = "capacity_temperature_drift_ratio"
@@ -1285,21 +1286,14 @@ def polarization_settling_ratio(
     divided by the time constant of the diffusion overpotential the caller
     declares for this cell.
 
-    **What the model needs, and why this measures it.** The Rint circuit
-    represents the whole overpotential as one instantaneous ohmic drop with no
-    dynamics. A cell does not do that: an RC branch in series with ``R_int``
-    represents a diffusion voltage that grows as ``1 - exp(-t/tau)`` after a
-    current step, and Plett, *Battery Management Systems, Volume I* (2015),
-    Ch. 3 adds exactly that branch to the Rint model for exactly this reason.
-    Once the branch has settled its contribution is a constant ``I R_diff``
-    that an effective ``R_int`` measured over a comparable interval already
-    contains; while it is still growing, no constant resistance reproduces the
-    terminal voltage. So the interval must outlast the relaxation, and this
-    ratio is by how much.
+    **Reported, not conditioned.** No bound is placed on this ratio, because
+    the admissible set is not an interval in it: the Rint form is defensible
+    both far above and far below 1, and inadmissible in between. The bound
+    lives on :func:`polarization_unmodelled_fraction`, which folds those two
+    regimes into one. This ratio is carried because it is the number a reader
+    who has just been told the fraction is too large will want next.
 
-    See :data:`~engcore.domains.battery.models.POLARIZATION_SETTLING_FLOOR` for
-    the threshold, which is a **convention** and is recorded as one. UNKNOWN
-    unless the caller declares a polarization time constant.
+    UNKNOWN unless the caller declares a polarization time constant.
     """
     checked_duration = _checked(duration, TIME_UNIT, DURATION, positive=True)
     tau = _checked(
@@ -1310,6 +1304,55 @@ def polarization_settling_ratio(
     return _fraction(
         checked_duration.magnitude_in(TIME_UNIT), tau.magnitude_in(TIME_UNIT)
     )
+
+
+def polarization_unmodelled_fraction(
+    *,
+    duration: Quantity | None,
+    time_constant: Quantity | None,
+) -> Quantity | None:
+    """min(f, 1 - f) for f = 1 - exp(-t/tau_pol) — the part still in motion.
+
+    **Definition.** ``f`` is the fraction of the diffusion overpotential that
+    has developed by the end of the interval; a first-order relaxation reaches
+    ``1 - exp(-t/tau)`` after a current step. This quantity is the smaller of
+    ``f`` and ``1 - f``, and it is small at *both* ends of the transition.
+
+    **Why the fold, and what each half means.** The Rint circuit represents
+    the whole overpotential as one instantaneous ohmic drop with no dynamics.
+    Two regimes let a constant resistance stand in for that:
+
+    * **Settled** (``f`` near 1, i.e. ``t`` many tau). The RC branch has
+      finished moving and contributes a constant ``I R_diff``, which an
+      effective ``R_int`` measured over a comparable interval already
+      contains. Here ``1 - f`` — the part still to come — is the leftover.
+    * **Undeveloped** (``f`` near 0, i.e. ``t`` a small fraction of tau). The
+      branch has barely begun, and the terminal voltage is essentially the
+      instantaneous ohmic drop that a short-pulse ``R_int`` represents. Here
+      ``f`` itself — the part that has appeared and is in no constant
+      resistance — is the leftover.
+
+    In both cases the leftover is ``min(f, 1 - f)``, so one ceiling on it
+    states both regimes. **The excluded region is the middle**: around
+    ``t ~ tau`` the branch is slewing through the interval and no constant
+    resistance reproduces the terminal voltage. That is the band this
+    condition removes, and the previous floor on ``t/tau`` removed the whole
+    short-pulse regime with it.
+
+    See :data:`~engcore.domains.battery.models.POLARIZATION_UNMODELLED_CEILING`
+    for the bound, which is a **convention** and is recorded as one. UNKNOWN
+    unless the caller declares a polarization time constant.
+    """
+    checked_duration = _checked(duration, TIME_UNIT, DURATION, positive=True)
+    tau = _checked(
+        time_constant, TIME_UNIT, POLARIZATION_TIME_CONSTANT, positive=True
+    )
+    if checked_duration is None or tau is None:
+        return None
+    developed = 1.0 - math.exp(
+        -checked_duration.magnitude_in(TIME_UNIT) / tau.magnitude_in(TIME_UNIT)
+    )
+    return Quantity(min(developed, 1.0 - developed), DIMENSIONLESS)
 
 
 # =====================================================================
@@ -1612,6 +1655,10 @@ def derived_cell_quantities(
             span=base.get(CAPACITY_TEMPERATURE_SPAN),
         ),
         POLARIZATION_SETTLING_RATIO: polarization_settling_ratio(
+            duration=duration,
+            time_constant=base.get(POLARIZATION_TIME_CONSTANT),
+        ),
+        POLARIZATION_UNMODELLED_FRACTION: polarization_unmodelled_fraction(
             duration=duration,
             time_constant=base.get(POLARIZATION_TIME_CONSTANT),
         ),
