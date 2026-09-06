@@ -118,6 +118,7 @@ from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from ...scientific.results.result import ScientificResult
+from ...scientific.results.validation import ValidationOutcome
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.twins.definition import (
@@ -142,6 +143,7 @@ __all__ = [
     "FixedPointCouplingPlan",
     "TORN_ENDPOINT_SCHEMA",
     "TornEndpoint",
+    "TransportRefused",
     "build_coupled_twin",
     "coupled_dependencies",
     "coupled_problems",
@@ -155,6 +157,7 @@ __all__ = [
     "run_fixed_point_coupling",
     "shares_origin",
     "stage_problems",
+    "transportable",
     "validate_coupling_configuration",
 ]
 
@@ -649,6 +652,104 @@ def execution_order(
                 ready.append(target)
                 ready.sort()
     return tuple(order) if len(order) == len(remaining) else ()
+
+
+class TransportRefused(InvalidScientificProblem):
+    """A value was about to cross a coupling edge out of a rejected result.
+
+    Raised at the **transfer boundary** and nowhere else. It is not a statement
+    about the coupling's convergence and must never be read as one: the run did
+    not fail to find a fixed point, it was refused the inputs a fixed point
+    would have been assembled from.
+
+    **It carries the failed result.** That is the requirement rather than a
+    convenience: the result is the evidence that an execution failed and the
+    only record of what the producer actually returned, so a refusal that
+    discarded it would leave a reader with a coupling that stopped and no way
+    to see why. Nothing is substituted and nothing is dropped — the values are
+    simply not allowed to travel.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        result: ScientificResult,
+        dependency: QuantityDependency,
+        iteration: int,
+    ) -> None:
+        super().__init__(message)
+        self.result = result
+        self.dependency = dependency
+        self.iteration = int(iteration)
+
+    @property
+    def failed_checks(self) -> tuple[str, ...]:
+        """Names of the checks that rejected the result, in the order they ran."""
+        return tuple(check.name for check in self.result.validation.failures)
+
+
+def transportable(result: ScientificResult) -> bool:
+    """Whether a value may be taken out of this result and given to another.
+
+    **FAIL is the bar, and it is the bar the platform already set.**
+    ``ValidationReport.status`` ranks WARNING below FAIL deliberately — a check
+    that ran and flagged something produced its evidence — so refusing on
+    WARNING here would make the transfer boundary stricter than the report it
+    reads and would silently redefine what a warning means everywhere else.
+    ``NOT_RUN`` is likewise not a refusal at this boundary: it is the absence of
+    a check, which the credibility report is the place to weigh.
+
+    Deliberately **not** ``ScientificResult.is_usable``. That property also
+    consults ``convergence``, and every closed-form participant here reports
+    ``NOT_APPLICABLE`` while a diverged iterative solve would report its own
+    state; folding those in would make this guard answer a second question it
+    was not asked, and would make a coupling refusal depend on a solver's
+    termination as well as on its checks.
+    """
+    return result.validation.status is not ValidationOutcome.FAIL
+
+
+def _transport(
+    result: ScientificResult, dependency: QuantityDependency, iteration: int
+) -> Quantity:
+    """One value crossing one edge, or a refusal naming both.
+
+    Every value that leaves a result for another problem's inputs passes
+    through here — the uncut edges and the torn endpoints alike — so there is
+    one place where "may this travel" is asked, and it is the place where the
+    travelling happens.
+
+    **Why the check lives at the boundary and not in the solver.** A provider
+    can produce an answer that is internally consistent, satisfies every
+    reconciliation the adapter can perform against its own other channels, and
+    is still wrong. A controlled provider returning zero on every channel of a
+    non-zero circuit does exactly that: ``I == V/R`` and ``P == V*I`` both hold
+    at zero, so the adapter's admission gate passes it, and Crafty's own
+    ``linear_system_residual`` and ``voltage_source_relation`` are what reject
+    it. The loop read ``result.value(...)`` and never the report beside it, so
+    the zero power was transported, a body given no heat stayed at ambient, and
+    the run reported ``criterion_met`` at 300 K.
+
+    A validation report whose failures nothing consults is a check that does not
+    check anything. This is the consumer that makes it one.
+    """
+    if not transportable(result):
+        failed = ", ".join(c.name for c in result.validation.failures)
+        raise TransportRefused(
+            f"iteration {iteration}: {dependency.source_quantity!r} may not be "
+            f"transported out of {dependency.source_problem_id!r} into "
+            f"{dependency.target_problem_id!r}.{dependency.target_quantity}, "
+            f"because that result's own validation FAILED ({failed}). "
+            f"A value its producer's checks reject is not a value another "
+            f"problem may be solved with: the coupling would converge around "
+            f"it and report success. The result is preserved on this error as "
+            f"evidence of a failed execution; nothing was substituted for it",
+            result=result,
+            dependency=dependency,
+            iteration=iteration,
+        )
+    return result.value(dependency.source_quantity)
 
 
 def dependency_closure(
@@ -1489,6 +1590,16 @@ def run_fixed_point(
     A sub-solve that refuses an inadmissible value is **not caught**. An
     execution failure and a failure to converge are different findings, and a
     loop that swallowed the first to report the second would be collapsing them.
+
+    **A value may not be transported out of a result whose own validation
+    FAILED.** Every transfer goes through :func:`_transport`, which raises
+    :class:`TransportRefused` carrying the rejected result. This is the same
+    distinction one step further on: a result Crafty checked and rejected is an
+    execution failure too, and reporting a coupling outcome over values
+    assembled from it would collapse *that* into a convergence claim. It is not
+    folded into ``CouplingOutcome`` for exactly that reason — the run did not
+    fail to find a fixed point, it was refused the inputs one would have been
+    built from.
     """
     seeds = {e.endpoint: e.initial_value for e in plan.torn}
     problems = tuple(problems)
@@ -1541,9 +1652,10 @@ def run_fixed_point(
         for problem_id in order:
             inputs: dict[str, Quantity] = {}
             for dependency in incoming[problem_id]:
-                inputs[dependency.target_quantity] = produced[
-                    dependency.source_problem_id
-                ].value(dependency.source_quantity)
+                # THE TRANSFER BOUNDARY. Every uncut edge crosses here.
+                inputs[dependency.target_quantity] = _transport(
+                    produced[dependency.source_problem_id], dependency, index
+                )
             # Torn targets take the seed on the first pass and the previous
             # pass's value afterwards. This cannot shadow a transported value:
             # the plan refuses two dependencies sharing a target endpoint, so a
@@ -1569,8 +1681,14 @@ def run_fixed_point(
         largest = 0.0
         for endpoint in plan.torn:
             key = endpoint.endpoint
-            value = produced[endpoint.dependency.source_problem_id].value(
-                endpoint.dependency.source_quantity
+            # The same boundary, for the edges the plan cut. A torn edge is
+            # still a transfer: its value seeds the next sweep and lands in
+            # ``final_values``, so it may not come out of a rejected result
+            # either.
+            value = _transport(
+                produced[endpoint.dependency.source_problem_id],
+                endpoint.dependency,
+                index,
             )
             updated[key] = value
             largest = max(
