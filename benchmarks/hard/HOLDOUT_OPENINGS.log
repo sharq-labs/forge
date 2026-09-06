@@ -1,0 +1,6 @@
+# Append-only record of every time the sealed hold-out partition was scored.
+# One JSON object per line, written by score_hard.py when --open-holdout is
+# passed. Lines beginning with '#' are comments. See split_hard.py for the
+# split rule and benchmarks/hard/README.md for why the seal exists.
+#
+# An empty log below this header means the hold-out has never been opened.

@@ -1,0 +1,18 @@
+# Host state must not enter the image -- the point of the image is that it
+# carries none. A stray .venv or .pytest_cache would make the "clean machine"
+# claim false in a way nobody would notice.
+.git
+.venv
+venv
+env
+.pytest_cache
+__pycache__
+*.py[cod]
+*.egg-info
+build
+dist
+.discovery
+_diag_tmp
+/results_hard.json
+.idea
+.vscode
