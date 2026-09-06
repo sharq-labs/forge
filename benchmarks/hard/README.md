@@ -167,3 +167,55 @@ error is conservative (it over-reports dissipation for a positive-TCR part that
 heats up), which is why it shows as a false reject rather than a false accept.
 Not fixed here: the fix is in the electrothermal coupling, which this round
 does not own.
+
+## The battery benchmark — 400 cases
+
+    python benchmarks/hard/score_hard.py --src src \
+      --cases benchmarks/hard/cases_battery --results results_battery.json
+
+| File | What |
+|---|---|
+| `generate_battery.py` | The generator. Reimplements the self-heating march and re-checks all fourteen conditions. |
+| `cases_battery/*.json` | 400 cases, each naming `"system": "battery"`. |
+| `index_battery.json` | Composition by defect tag. |
+| `results_battery.json` | Baseline. |
+
+`score_hard.py` dispatches on the case's `system` key, which is absent on every
+electro-thermal case ever written — so its absence means that system rather
+than an error, and one scorer serves both.
+
+### Composition
+
+181 sound, 219 unsound, 110 distinct defect tags. Twelve of the fourteen
+applicability conditions are shaped at 0.2 %, 1 %, 5 % and 20 % from their
+bounds on **both** sides; the other two, `terminal_voltage_ratio` (> 0) and
+`peukert_capacity_ratio` (≤ 1), are directional statements with no declared
+bound to place a case against and are checked but not shaped. Plus twelve
+omission cases, one per optional limit, each asserting that a missing
+declaration is UNKNOWN and never IN_DOMAIN.
+
+### Result
+
+| Metric | battery |
+|---|---|
+| Exact verdict match | **400/400 (100.0%)** |
+| Catch rate | **219/219 (100.0%)** |
+| False accept | **0/219 (0.00%)** |
+| False reject | **0/181 (0.0%)** |
+
+### Scored over the battery models, and why that is not softening
+
+**No battery case can reach SUPPORTED as a whole report.**
+`run_self_heating_discharge` accepts no applicability declaration for the
+thermal body it marches, so the lumped model is UNKNOWN in every coupled
+battery run. Scored whole-report the numbers are catch rate 100 %, false accept
+0 %, false reject **100 %** — the unearned catch rate this file already warns
+about, measuring one gap 400 times.
+
+So a battery case is scored over the four **battery models'** verdicts, by the
+same precedence `derive_verdict` uses: a violation outranks a gap. Every one of
+the fourteen conditions still has to be right, at 0.2 % from its bound, on both
+sides. The thermal gap is a real finding and is recorded in `NEEDS.md` C.1
+rather than absorbed into a number; it is roughly a five-line change to
+`battery/coupling.py`, which the round that added this boundary was forbidden
+to make.

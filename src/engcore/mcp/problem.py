@@ -59,7 +59,7 @@ from __future__ import annotations
 
 import dataclasses
 import difflib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 from ..domains.electrical import material as mat
@@ -99,6 +99,7 @@ from .evidence import (
 
 __all__ = [
     "COUPLING_SUPPLIED_INPUTS",
+    "Binding",
     "CaseDescription",
     "ElectroThermalCaseRun",
     "FieldDescription",
@@ -107,7 +108,12 @@ __all__ = [
     "describe_electrothermal_case",
     "example_electrothermal_payload",
     "run_electrothermal_case",
+    "audit_bindings",
 ]
+
+#: The payload machinery below is shared with every other system's boundary.
+#: Named without the underscore where a sibling module reads it, so the
+#: sharing is visible rather than a convention about private names.
 
 
 # =====================================================================
@@ -202,7 +208,7 @@ DEFAULT_COUPLING_BUDGET = 50
 
 
 @dataclass(frozen=True)
-class _Binding:
+class Binding:
     """One payload key, and the model input it supplies.
 
     ``section`` and ``key`` are the shape — a design decision, written down.
@@ -230,6 +236,11 @@ class _Binding:
     dimension_of_input: tuple[ScientificModelDefinition, str] | None = None
     required: bool | None = None
     note: str = ""
+    #: Admissible values for ``kind == "category"``. Declared per binding
+    #: because a second system has its own vocabularies; ``None`` keeps the
+    #: thermal convection regimes, which is what every electro-thermal
+    #: category binding means.
+    vocabulary: tuple[str, ...] | None = None
 
     @property
     def target_name(self) -> str:
@@ -270,9 +281,12 @@ class _Binding:
         return self.note
 
 
-_BINDINGS: tuple[_Binding, ...] = (
+#: The private alias the rest of this module was written against.
+_Binding = Binding
+
+_BINDINGS: tuple[Binding, ...] = (
     # ---- system ------------------------------------------------------
-    _Binding(
+    Binding(
         section=ROOT,
         key="source_voltage",
         kind="quantity",
@@ -280,7 +294,7 @@ _BINDINGS: tuple[_Binding, ...] = (
         input_name="source_voltage",
     ),
     # ---- stage identity ----------------------------------------------
-    _Binding(
+    Binding(
         section=STAGE,
         key="component_id",
         kind="identifier",
@@ -294,21 +308,21 @@ _BINDINGS: tuple[_Binding, ...] = (
         ),
     ),
     # ---- conductor ---------------------------------------------------
-    _Binding(
+    Binding(
         section=CONDUCTOR,
         key="reference_resistance",
         kind="quantity",
         model=_LINEAR_TCR,
         input_name="reference_resistance",
     ),
-    _Binding(
+    Binding(
         section=CONDUCTOR,
         key="temperature_coefficient",
         kind="quantity",
         model=_LINEAR_TCR,
         input_name="temperature_coefficient",
     ),
-    _Binding(
+    Binding(
         section=CONDUCTOR,
         key="reference_temperature",
         kind="quantity",
@@ -316,21 +330,21 @@ _BINDINGS: tuple[_Binding, ...] = (
         input_name="reference_temperature",
     ),
     # ---- material limits ---------------------------------------------
-    _Binding(
+    Binding(
         section=LIMITS,
         key="linearization_band",
         kind="quantity",
         model=_RATED_TCR,
         input_name="linearization_band",
     ),
-    _Binding(
+    Binding(
         section=LIMITS,
         key="maximum_operating_temperature",
         kind="quantity",
         model=_RATED_TCR,
         input_name="maximum_operating_temperature",
     ),
-    _Binding(
+    Binding(
         section=LIMITS,
         key="debye_temperature",
         kind="quantity",
@@ -344,21 +358,21 @@ _BINDINGS: tuple[_Binding, ...] = (
     # rating belongs to the one part. Two resistors wound from the same wire
     # have the same linearization band and may have quite different rated
     # dissipations, and one object holding both would make that unsayable.
-    _Binding(
+    Binding(
         section=RATINGS,
         key=dc_models.RATED_POWER,
         kind="quantity",
         model=_RESISTOR,
         input_name=dc_models.RATED_POWER,
     ),
-    _Binding(
+    Binding(
         section=RATINGS,
         key=dc_models.MAXIMUM_WORKING_VOLTAGE,
         kind="quantity",
         model=_RESISTOR,
         input_name=dc_models.MAXIMUM_WORKING_VOLTAGE,
     ),
-    _Binding(
+    Binding(
         section=RATINGS,
         key=dc_models.DERATING_FACTOR,
         kind="fraction",
@@ -371,14 +385,14 @@ _BINDINGS: tuple[_Binding, ...] = (
     # is. The payload has one source and describes it with a scalar rather
     # than an object, and this block follows that shape instead of inventing
     # a `source` object for one new field.
-    _Binding(
+    Binding(
         section=SOURCE_RATINGS,
         key=dc_models.MAXIMUM_CURRENT,
         kind="quantity",
         model=_VOLTAGE_SOURCE,
         input_name=dc_models.MAXIMUM_CURRENT,
     ),
-    _Binding(
+    Binding(
         section=SOURCE_RATINGS,
         key=dc_models.DERATING_FACTOR,
         kind="fraction",
@@ -386,35 +400,35 @@ _BINDINGS: tuple[_Binding, ...] = (
         input_name=dc_models.DERATING_FACTOR,
     ),
     # ---- body --------------------------------------------------------
-    _Binding(
+    Binding(
         section=BODY,
         key="heat_capacity",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.HEAT_CAPACITY,
     ),
-    _Binding(
+    Binding(
         section=BODY,
         key="ambient_conductance",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.AMBIENT_CONDUCTANCE,
     ),
-    _Binding(
+    Binding(
         section=BODY,
         key="ambient_temperature",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.AMBIENT_TEMPERATURE,
     ),
-    _Binding(
+    Binding(
         section=BODY,
         key="duration",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.DURATION,
     ),
-    _Binding(
+    Binding(
         section=BODY,
         key="initial_temperature",
         kind="quantity",
@@ -427,14 +441,14 @@ _BINDINGS: tuple[_Binding, ...] = (
         ),
     ),
     # ---- applicability declaration ------------------------------------
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="characteristic_length",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.CHARACTERISTIC_LENGTH,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="body_volume",
         kind="quantity",
@@ -442,42 +456,42 @@ _BINDINGS: tuple[_Binding, ...] = (
         input_name=lump.BODY_VOLUME,
         target="volume",
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="surface_area",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.SURFACE_AREA,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="body_conductivity",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.BODY_CONDUCTIVITY,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="surface_emissivity",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.SURFACE_EMISSIVITY,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="conductance_excursion_bound",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.CONDUCTANCE_EXCURSION_BOUND,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="capacity_excursion_bound",
         kind="quantity",
         model=_LUMPED,
         input_name=lump.CAPACITY_EXCURSION_BOUND,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="melting_temperature",
         kind="quantity",
@@ -493,14 +507,14 @@ _BINDINGS: tuple[_Binding, ...] = (
     # the forced one, so no verdict here rests on a category the caller
     # asserted. Every one is optional and omitting them leaves the four
     # correlation conditions UNKNOWN, exactly as before they existed.
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="fluid_conductivity",
         kind="quantity",
         model=_LUMPED,
         input_name=thermal_ctx.FLUID_CONDUCTIVITY,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="fluid_kinematic_viscosity",
         kind="quantity",
@@ -508,35 +522,35 @@ _BINDINGS: tuple[_Binding, ...] = (
         input_name=thermal_ctx.FLUID_VISCOSITY,
         target="fluid_kinematic_viscosity",
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="fluid_prandtl_number",
         kind="quantity",
         model=_LUMPED,
         input_name=thermal_ctx.FLUID_PRANDTL_NUMBER,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="fluid_expansion_coefficient",
         kind="quantity",
         model=_LUMPED,
         input_name=thermal_ctx.FLUID_EXPANSION_COEFFICIENT,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="fluid_velocity",
         kind="quantity",
         model=_LUMPED,
         input_name=thermal_ctx.FLUID_VELOCITY,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="convection_length",
         kind="quantity",
         model=_LUMPED,
         input_name=thermal_ctx.CONVECTION_LENGTH,
     ),
-    _Binding(
+    Binding(
         section=APPLICABILITY,
         key="convection_regime",
         kind="category",
@@ -552,7 +566,7 @@ _BINDINGS: tuple[_Binding, ...] = (
         ),
     ),
     # ---- coupling (execution, not physics) ----------------------------
-    _Binding(
+    Binding(
         section=COUPLING,
         key="seed_temperature",
         kind="quantity",
@@ -565,7 +579,7 @@ _BINDINGS: tuple[_Binding, ...] = (
             "temperature."
         ),
     ),
-    _Binding(
+    Binding(
         section=COUPLING,
         key="tolerance",
         kind="quantity",
@@ -576,7 +590,7 @@ _BINDINGS: tuple[_Binding, ...] = (
             "property. Defaults to 1e-6 kelvin."
         ),
     ),
-    _Binding(
+    Binding(
         section=COUPLING,
         key="max_iterations",
         kind="count",
@@ -589,8 +603,18 @@ _BINDINGS: tuple[_Binding, ...] = (
 )
 
 
-def _section(name: str) -> tuple[_Binding, ...]:
-    return tuple(b for b in _BINDINGS if b.section == name)
+def _section(
+    name: str, bindings: Sequence[Binding] | None = None
+) -> tuple[Binding, ...]:
+    """Every binding in one section of one table.
+
+    ``bindings`` defaults to the electro-thermal table, which is what every
+    call in this module wants. It is a parameter because a second system has
+    its own table and the same machinery reads both: see
+    :mod:`engcore.mcp.battery`, which passes its own.
+    """
+    table = _BINDINGS if bindings is None else bindings
+    return tuple(b for b in table if b.section == name)
 
 
 def _audit_bindings() -> None:
@@ -602,25 +626,45 @@ def _audit_bindings() -> None:
     caller cannot check. Run at import, so the failure is at the earliest
     possible moment rather than inside somebody's run.
     """
-    bound = {b.input_name for b in _BINDINGS if b.input_name is not None}
+    audit_bindings(
+        _BINDINGS, _MODELS, COUPLING_SUPPLIED_INPUTS, where="engcore.mcp.problem"
+    )
+
+
+def audit_bindings(
+    bindings: Sequence[Binding],
+    models: Sequence[ScientificModelDefinition],
+    supplied: Mapping[str, str],
+    *,
+    where: str,
+) -> None:
+    """One table against its own models. Shared by every system's boundary.
+
+    Parameterized rather than closed over the electro-thermal table because a
+    second system needs the identical guard over a different table, and a
+    guard that only ran for one system would let the other's description
+    quietly stop describing its models — which is the exact failure this
+    exists to prevent, one system over.
+    """
+    bound = {b.input_name for b in bindings if b.input_name is not None}
     unaccounted = [
         f"{model.model_id}.{spec.name}"
-        for model in _MODELS
+        for model in models
         for spec in model.inputs
-        if spec.name not in bound and spec.name not in COUPLING_SUPPLIED_INPUTS
+        if spec.name not in bound and spec.name not in supplied
     ]
     if unaccounted:
         raise ScientificCoreError(
-            f"engcore.mcp.problem neither accepts nor accounts for model "
+            f"{where} neither accepts nor accounts for model "
             f"inputs {sorted(unaccounted)}; every declared input must be a "
-            f"payload field or an entry in COUPLING_SUPPLIED_INPUTS, so that "
+            f"payload field or an entry in the supplied-inputs table, so that "
             f"the description cannot silently stop describing the models"
         )
 
     # A binding must also still name an input the model declares. `spec`
     # raises when it does not, which turns a renamed input into an import
     # failure here rather than a wrong dimension in somebody's payload.
-    for binding in _BINDINGS:
+    for binding in bindings:
         binding.spec  # noqa: B018 - the lookup is the assertion
 
 
@@ -646,7 +690,7 @@ def _require_mapping(value: Any, *, where: str) -> Mapping[str, Any]:
 
 
 def _reject_unknown_keys(
-    supplied: Mapping[str, Any], bindings: Sequence[_Binding], *, section: str,
+    supplied: Mapping[str, Any], bindings: Sequence[Binding], *, section: str,
     extra: Sequence[str] = (),
 ) -> None:
     """Refuse anything not named, with the closest accepted names.
@@ -671,7 +715,7 @@ def _reject_unknown_keys(
 
 
 def _read_quantity(
-    supplied: Mapping[str, Any], binding: _Binding, label: str
+    supplied: Mapping[str, Any], binding: Binding, label: str
 ) -> Quantity | None:
     """One declared value, unit-checked against the model's own exemplar."""
     where = _path(label, binding.key)
@@ -713,7 +757,7 @@ def _read_quantity(
 
 
 def _read_identifier(
-    supplied: Mapping[str, Any], binding: _Binding, label: str
+    supplied: Mapping[str, Any], binding: Binding, label: str
 ) -> str:
     where = _path(label, binding.key)
     raw = supplied.get(binding.key)
@@ -727,13 +771,18 @@ def _read_identifier(
 
 
 def _read_category(
-    supplied: Mapping[str, Any], binding: _Binding, label: str
+    supplied: Mapping[str, Any], binding: Binding, label: str
 ) -> str | None:
     where = _path(label, binding.key)
     raw = supplied.get(binding.key)
     if raw is None:
         return None
-    vocabulary = list(thermal_ctx.CONVECTION_REGIME_VOCABULARY)
+    # The binding names its own vocabulary. It used to be the thermal
+    # domain's, closed over from this module, which was correct while one
+    # system had one categorical field and silently wrong the moment a second
+    # system declared a chemistry.
+    vocabulary = list(binding.vocabulary or
+                      thermal_ctx.CONVECTION_REGIME_VOCABULARY)
     if not isinstance(raw, str) or raw.strip() not in vocabulary:
         raise MalformedPayloadError(
             f"{where} must be one of {vocabulary}, got {raw!r}"
@@ -742,7 +791,7 @@ def _read_category(
 
 
 def _read_count(
-    supplied: Mapping[str, Any], binding: _Binding, label: str
+    supplied: Mapping[str, Any], binding: Binding, label: str
 ) -> int | None:
     where = _path(label, binding.key)
     raw = supplied.get(binding.key)
@@ -758,7 +807,7 @@ def _read_count(
 
 
 def _read_fraction(
-    supplied: Mapping[str, Any], binding: _Binding, label: str
+    supplied: Mapping[str, Any], binding: Binding, label: str
 ) -> float | None:
     """A bare dimensionless fraction, such as a derating policy.
 
@@ -792,6 +841,7 @@ def _read_section(
     *,
     extra: Sequence[str] = (),
     label: str | None = None,
+    bindings: Sequence[Binding] | None = None,
 ) -> dict[str, Any]:
     """Every binding in one section, read and checked. Absent optionals omitted.
 
@@ -800,7 +850,7 @@ def _read_section(
     fields. ``label`` carries the *indexed* path — ``stages[0].body`` rather
     than ``stages[].body`` — so a refusal points at the stage that caused it.
     """
-    bindings = _section(section)
+    bindings = _section(section, bindings)
     where = label if label is not None else section
     _reject_unknown_keys(supplied, bindings, section=where, extra=extra)
     values: dict[str, Any] = {}
@@ -1591,6 +1641,11 @@ class CaseDescription:
     #: Model inputs the caller must not supply, and why.
     coupling_supplied: Mapping[str, str]
     models: tuple[str, ...]
+    #: One complete runnable payload for THIS system. A field on the record
+    #: rather than a call to one system's builder, because a description that
+    #: could only ever hand back the electro-thermal example was never a
+    #: description of anything else.
+    example: Mapping[str, Any] = field(default_factory=dict)
 
     def field(self, path: str) -> FieldDescription:
         for candidate in self.fields:
@@ -1611,7 +1666,7 @@ class CaseDescription:
             "fields": [f.to_dict() for f in self.fields],
             "coupling_supplied_inputs": dict(self.coupling_supplied),
             "models": list(self.models),
-            "example": example_electrothermal_payload(),
+            "example": dict(self.example),
         }
 
 
@@ -1757,6 +1812,67 @@ def _unknown_rating_conditions(
     return frozenset(resistor.unknown) | frozenset(source.unknown)
 
 
+def _measure_omissions(bindings, build, baseline_of, full):
+    """Which conditions each field's omission makes UNKNOWN, and in pairs.
+
+    Lifted out of ``_measure_unlocks`` so a second system's boundary can use
+    it. Nothing about it is electro-thermal: ``build`` makes a declaration
+    record with some fields dropped, ``baseline_of`` turns one into the set of
+    conditions still UNKNOWN, and the difference is what the field unlocked.
+
+    **Solo omission is not the whole story**, which is why the second pass
+    exists. A field whose job another field can also do — a characteristic
+    length against a volume and an area — reports nothing when dropped alone,
+    indistinguishable to a reader from a field nothing reads. Dropping each
+    such field together with each other such field finds the pair.
+
+    **Pairs only.** A three-way alternative would need a larger search; no
+    domain here has one, and one that appeared would show up as a set of
+    fields all reporting nothing rather than as a wrong answer.
+    """
+    baseline = baseline_of(full)
+    solo: dict[str, frozenset[str]] = {}
+    for binding in bindings:
+        if binding.spec is None:
+            # Declared but not modelled: no input, so nothing to measure.
+            solo[binding.key] = frozenset()
+            continue
+        solo[binding.key] = baseline_of(
+            build(full, {binding.target_name: None})
+        ) - baseline
+
+    silent = [b for b in bindings if b.spec is not None and not solo[b.key]]
+    alternates: dict[str, set[str]] = {b.key: set() for b in bindings}
+    joint: dict[str, frozenset[str]] = {b.key: frozenset() for b in bindings}
+    for i, left in enumerate(silent):
+        for right in silent[i + 1:]:
+            together = baseline_of(
+                build(full, {left.target_name: None, right.target_name: None})
+            ) - baseline
+            if not together:
+                continue
+            alternates[left.key].add(right.key)
+            alternates[right.key].add(left.key)
+            joint[left.key] = joint[left.key] | together
+            joint[right.key] = joint[right.key] | together
+    return solo, alternates, joint
+
+
+def _measure_section_unlocks(bindings, build, baseline_of, full):
+    """:func:`_measure_omissions`, flattened into the description's shape."""
+    solo, alternates, joint = _measure_omissions(
+        bindings, build, baseline_of, full
+    )
+    return {
+        binding.key: (
+            tuple(sorted(solo[binding.key])),
+            tuple(sorted(alternates[binding.key])),
+            tuple(sorted(solo[binding.key] or joint[binding.key])),
+        )
+        for binding in bindings
+    }
+
+
 def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]]:
     """Per optional field: what it unlocks, what it substitutes for, what the group unlocks.
 
@@ -1780,33 +1896,7 @@ def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tupl
     thermal_optional = [b for b in _section(APPLICABILITY) if not b.is_required]
     limits_optional = list(_section(LIMITS))
 
-    def measure(bindings, build, baseline_of, full):
-        baseline = baseline_of(full)
-        solo: dict[str, frozenset[str]] = {}
-        for binding in bindings:
-            if binding.spec is None:
-                # Declared but not modelled: no input, so nothing to measure.
-                solo[binding.key] = frozenset()
-                continue
-            solo[binding.key] = baseline_of(
-                build(full, {binding.target_name: None})
-            ) - baseline
-
-        silent = [b for b in bindings if b.spec is not None and not solo[b.key]]
-        alternates: dict[str, set[str]] = {b.key: set() for b in bindings}
-        joint: dict[str, frozenset[str]] = {b.key: frozenset() for b in bindings}
-        for i, left in enumerate(silent):
-            for right in silent[i + 1:]:
-                together = baseline_of(
-                    build(full, {left.target_name: None, right.target_name: None})
-                ) - baseline
-                if not together:
-                    continue
-                alternates[left.key].add(right.key)
-                alternates[right.key].add(left.key)
-                joint[left.key] = joint[left.key] | together
-                joint[right.key] = joint[right.key] | together
-        return solo, alternates, joint
+    measure = _measure_omissions
 
     measured: dict[str, tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]] = {}
 
@@ -1924,6 +2014,7 @@ def describe_electrothermal_case() -> CaseDescription:
             )
         )
     return CaseDescription(
+        example=example_electrothermal_payload(),
         fields=tuple(fields),
         coupling_supplied=dict(COUPLING_SUPPLIED_INPUTS),
         models=tuple(sorted({m.model_id for m in _MODELS})),

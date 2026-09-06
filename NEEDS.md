@@ -2125,3 +2125,119 @@ value passes through `_checked`, `_as_quantity`, `_positive`,
 whose source contains both `is None` and `return None`; everything else is
 *computation*. A function is beyond a resolver if it contains a `raise`, more
 than one bare `return None`, or an `if` returning a constructed `Quantity`.
+
+## C. TASK C — the battery over MCP
+
+### C.1 The battery cannot reach SUPPORTED, and the benchmark proved it
+
+**`run_self_heating_discharge` accepts no applicability declaration for the
+thermal body it marches.** It builds one internally with
+`lump.LumpedApplicabilityDeclaration()` — empty — so the lumped model in every
+coupled battery run is UNKNOWN on all twelve of its conditions, and **no
+battery case can ever be SUPPORTED**.
+
+Scored whole-report, the 400-case battery benchmark gives catch rate 100 %,
+false accept 0 % and false reject **100 %**. That is the unearned catch rate
+this repository has now met twice: a tool that refuses everything catches
+everything, and the number measures one gap 400 times rather than measuring the
+battery's fourteen conditions at all.
+
+`thermal_body_for` already takes an `applicability` parameter and defaults it to
+an empty declaration. Threading it through `run_self_heating_discharge` is
+roughly a five-line change to `battery/coupling.py`, and **TASK C forbids
+touching the battery domain**, so it is not made here. Until it is, an agent
+asking this runtime about a battery gets INSUFFICIENT_EVIDENCE on a perfectly
+well-formed case, with the reason named — which is the honest behaviour, and
+also a boundary nobody would design on purpose.
+
+The benchmark therefore scores battery cases over the **battery models'**
+verdicts, by the same precedence `derive_verdict` uses. That is scoping, not
+softening: every one of the fourteen conditions still has to be right, and 400
+of 400 are. `benchmarks/hard/README.md` states it beside the numbers.
+
+### C.2 `CouplingEvidence` cannot describe a one-way march
+
+It carries `iterations_run`, `iteration_limit`, `largest_iterate_change` and
+`tolerance` — a fixed-point iteration's own account of itself. The battery
+march is one-way: the cell heats itself, the body carries the temperature into
+the next step, and nothing iterates to convergence. Every one of those four
+numbers would have to be invented, and inventing them would report a converged
+iteration where there was none — the exact substitution `CouplingEvidence`
+exists to prevent, one system over.
+
+So the battery report carries `coupling=None` and the response carries the
+march's own record — `coupling: one_way`, the outcome token, the steps run and
+the step at which each model first left its domain — as its own field. A
+reader can tell a one-way march from a fixed point by which field is populated.
+
+The fix is a second record type, or a union with a discriminant, in
+`engcore.mcp.evidence` — core-adjacent and outside what TASK C owns.
+
+### C.3 What the second system forced, and what it exposed
+
+Three things in `engcore.mcp.problem` were closed over the electro-thermal
+system and had to be parameterized. Each was a latent bug rather than a
+tidying:
+
+* **`_read_category` read the thermal convection vocabulary for every
+  categorical field of every system.** A battery `chemistry` of `lithium_ion`
+  was refused and one of `forced` would have been **accepted**. The vocabulary
+  is a per-binding field now, and a test asserts it.
+* **`CaseDescription.to_dict` called `example_electrothermal_payload()`.** Any
+  second system's description would have handed an agent the electro-thermal
+  example under its own name. The example is a field on the record now.
+* **`fields_you_may_not_supply` was a top-level key of
+  `describe_capabilities`.** It read as a statement about the runtime and was a
+  statement about one composition. It is per system now, and the battery's is
+  empty — which is a fact about that system rather than a gap.
+
+`describe_capabilities` iterates `engcore.mcp.systems.SYSTEMS`, `build_server`
+audits that every registered system has a tool, and `audit_bindings` runs over
+each system's own table against its own models. Adding a third system is an
+entry in the registry and a module beside the two that exist.
+
+### C.4 The battery boundary requires a limit the models call optional
+
+`cell_thermal_conductance` is `required=False` on every battery model, and a
+coupled run cannot proceed without it: it is both the conductance
+`self_heating_rise_ratio` is stated over and the one the thermal body exchanges
+through, and the domain refuses to invent a second source. The boundary names
+it as a missing field so an agent is told which key to add.
+
+That is a **payload requirement stricter than the model records state**, which
+is the only place in this transport where that is true. It is defensible —
+the composition needs it even though no single model does — but it is exactly
+the kind of fact `ModelInputSpec` cannot express, and it is written down in the
+binding's prose rather than derived. STEP 8 NEEDS §1.1 again, from a third
+direction.
+
+### C.5 Coverage of the battery benchmark, stated
+
+Twelve of the fourteen conditions are shaped on both sides at 0.2 %, 1 %, 5 %
+and 20 %; all fourteen are re-checked by `verify_sound()` before a case may be
+labelled sound. The two not shaped are `terminal_voltage_ratio` (> 0 strictly)
+and `peukert_capacity_ratio` (≤ 1, approached from below as the current
+approaches the reference). Both are directional statements about the computed
+quantity rather than thresholds with a declared bound, so there is nothing to
+place a case "1 % outside" of, and both are checked exactly rather than with a
+margin — a nominal cell sits at `peukert_capacity_ratio` = 0.98 and demanding
+ten per cent of headroom would reject every realistic declaration.
+
+The generator reimplements the march rather than assuming one operating point:
+the temperature rises monotonically toward `T_amb + I²R/hA` and the state of
+charge falls monotonically, so the march's extremes are its endpoints and every
+temperature-facing condition is checked at the hottest instant.
+
+### C.6 One provenance record is assembled at the boundary
+
+The battery domain produces `SelfHeatingStep`s, not a `ScientificResult`, so
+there is no producer-written `ProvenanceRecord` to carry and `run_battery_case`
+assembles one. Everything in it is a declared value read back out of the
+records this boundary built, or a `SolverIdentity` read off a solver — nothing
+is computed and nothing inferred — but it is still the transport assembling
+provenance, which no other boundary here does.
+
+The clean fix is a `solve_cell` in `battery/solver.py` returning a
+`ScientificResult` the way `solve_reactor` and the DC solver do, at which point
+`CredibilityEvidenceReport.from_result` applies and this assembly disappears.
+That is a battery-domain change and TASK C forbids it.

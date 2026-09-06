@@ -30,6 +30,7 @@ from mcp import Client  # noqa: E402
 from src.engcore.domains.electrical import material as mat  # noqa: E402
 from src.engcore.domains.electrical.dc import models as dc_models  # noqa: E402
 from src.engcore.domains.thermal_models import lumped as lump  # noqa: E402
+from src.engcore.mcp.systems import SYSTEMS  # noqa: E402
 from src.engcore.mcp import (  # noqa: E402
     COUPLING_SUPPLIED_INPUTS,
     CredibilityVerdict,
@@ -101,18 +102,28 @@ def violating_payload():
 # The tools, and their schemas
 # =====================================================================
 
-def test_the_server_exposes_exactly_two_tools_with_usable_schemas():
+def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
+    """One describe tool, and one run tool for every registered system.
+
+    Was "exactly two tools" while there was one system. The list is derived
+    from the registry rather than written out, so a third system's tool joins
+    it here without this test being edited -- and a system registered without
+    a tool fails in `build_server` before it can reach an agent.
+    """
     tools = {tool.name: tool for tool in list_tools().tools}
-    assert sorted(tools) == ["describe_capabilities", "run_electrothermal"]
+    assert sorted(tools) == sorted(
+        ["describe_capabilities"] + [s.tool for s in SYSTEMS]
+    )
 
     describe = tools["describe_capabilities"]
     assert describe.input_schema.get("properties") == {}
     assert describe.output_schema is not None
 
-    run = tools["run_electrothermal"]
-    assert list(run.input_schema["properties"]) == ["case"]
-    assert run.input_schema["required"] == ["case"]
-    assert run.output_schema is not None
+    for boundary in SYSTEMS:
+        run = tools[boundary.tool]
+        assert list(run.input_schema["properties"]) == ["case"]
+        assert run.input_schema["required"] == ["case"]
+        assert run.output_schema is not None
 
 
 def test_the_descriptions_say_what_an_agent_must_know_before_calling():
@@ -181,14 +192,29 @@ def test_an_optional_field_says_which_conditions_it_unlocks():
 
 
 def test_capabilities_name_the_fields_a_caller_may_not_supply():
+    """Per system, because which inputs a run solves for is a per-system fact.
+
+    It was a top-level key while there was one system, which read as a
+    statement about the runtime and was a statement about the electro-thermal
+    composition. The battery system solves for nothing a caller might
+    otherwise declare -- the march advances the temperature and the state of
+    charge from declared starting points -- so its list is empty, and that is
+    a fact about that system rather than a gap in this description.
+    """
     caps = capabilities()
+    by_name = {entry["name"]: entry for entry in caps["systems"]}
+    assert set(by_name) == {s.name for s in SYSTEMS}
+
     forbidden = {
         entry["model_input"]: entry["why"]
-        for entry in caps["fields_you_may_not_supply"]
+        for entry in by_name["electrothermal"]["fields_you_may_not_supply"]
     }
     assert forbidden == dict(COUPLING_SUPPLIED_INPUTS)
-    paths = {f["key"] for f in caps["systems"][0]["fields"]}
-    assert paths & set(forbidden) == set()
+
+    for entry in caps["systems"]:
+        # Whatever a system solves for, no field of that system may declare it.
+        names = {e["model_input"] for e in entry["fields_you_may_not_supply"]}
+        assert {f["key"] for f in entry["fields"]} & names == set()
 
 
 def test_capabilities_say_what_each_verdict_means_and_does_not():
