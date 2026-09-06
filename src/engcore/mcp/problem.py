@@ -174,6 +174,13 @@ BODY = "stages[].body"
 APPLICABILITY = "stages[].body.applicability"
 COUPLING = "coupling"
 
+#: Execution defaults for the coupling block, resolved at this boundary rather
+#: than at the call site so that what is validated here is what the runner
+#: receives. A caller who declares neither still gets a configuration that has
+#: been through the runner's own admissibility rule.
+DEFAULT_COUPLING_TOLERANCE = Quantity(1e-6, "kelvin")
+DEFAULT_COUPLING_BUDGET = 50
+
 
 @dataclass(frozen=True)
 class _Binding:
@@ -716,14 +723,40 @@ def _read_coupling(payload: Mapping[str, Any]) -> dict[str, Any]:
     refused as a whole: a misspelled ``max_iteratons`` that the builder waved
     through and the runner refused would make the boundary's answer depend on
     which entry point the caller happened to use.
+
+    **That rule was stated here and then only half applied.** Field names were
+    checked at both entry points; the *values* were not. A zero ``tolerance``
+    passed the builder and was refused three layers down by
+    ``FixedPointCouplingPlan``, which is the same defect in the same block. So
+    the coupling values are now checked here too — and checked by the runner's
+    own rule, :func:`~engcore.systems.electrothermal.coupled.validate_coupling_configuration`,
+    rather than by a copy of it that could drift. The defaults are resolved
+    first, because a default a caller did not write is still a configuration
+    this boundary hands to the runner.
     """
-    return _read_section(
+    coupling = _read_section(
         _require_mapping(
             _require_mapping(payload, where="payload").get("coupling"),
             where="coupling",
         ),
         COUPLING,
     )
+    try:
+        cp.validate_coupling_configuration(
+            tolerance=coupling.get("tolerance", DEFAULT_COUPLING_TOLERANCE),
+            max_iterations=coupling.get(
+                "max_iterations", DEFAULT_COUPLING_BUDGET
+            ),
+            tolerance_label="coupling.tolerance",
+            budget_label="coupling.max_iterations",
+        )
+    except ScientificCoreError as exc:
+        # Re-raised as this boundary's own error type, because that is what a
+        # caller of a payload API catches. The message is the runner's rule
+        # verbatim, already naming the payload field through the labels above:
+        # nothing about what is wrong is restated here.
+        raise MalformedPayloadError(str(exc)) from exc
+    return coupling
 
 
 def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
@@ -827,8 +860,8 @@ def run_electrothermal_case(
         system,
         cp.coupled_dependencies(system, problems),
         seed=coupling.get("seed_temperature", first_body.initial_temperature),
-        tolerance=coupling.get("tolerance", Quantity(1e-6, "kelvin")),
-        max_iterations=coupling.get("max_iterations", 50),
+        tolerance=coupling.get("tolerance", DEFAULT_COUPLING_TOLERANCE),
+        max_iterations=coupling.get("max_iterations", DEFAULT_COUPLING_BUDGET),
     )
     run = cp.run_fixed_point_coupling(system, plan, run_id=run_id)
 

@@ -40,6 +40,7 @@ from .evidence import (
     CredibilityVerdict,
     EvidencePackage,
     ModelValidityRecord,
+    classify_assessment,
     derive_verdict,
 )
 from .problem import (
@@ -72,6 +73,7 @@ __all__ = [
     "MissingFieldError",
     "MissingUnitError",
     "ModelValidityRecord",
+    "classify_assessment",
     "ProblemPayloadError",
     "UnknownFieldError",
     "WrongDimensionError",

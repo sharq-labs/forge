@@ -53,7 +53,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.models.definition import ValidityAssessment, ValidityStatus
@@ -71,6 +71,84 @@ from .solver import cell_heat_generation, evaluate_step
 #: unbounded loop, whose only effect is which :class:`MarchOutcome` is
 #: reported. A caller wanting more steps declares more.
 DEFAULT_STEP_LIMIT = 1000
+
+#: The instant a step begins at — the temperature and state of charge the cell
+#: model is evaluated at.
+STEP_START = "step_start"
+
+#: The instant a step ends at — where the body reached, and where the next step
+#: begins.
+STEP_END = "step_end"
+
+#: The instants a step's validity is assessed at, in temporal order.
+#:
+#: **Why these two and no more.** The lumped response over a step is
+#: ``T(t) = T_ss + (T_0 - T_ss) exp(-t/tau)``, which is monotonic in ``t``; the
+#: heat and the discharge current are constant across the step. The extrema of
+#: every temperature-dependent condition over the interval are therefore its
+#: endpoints, and assessing both is assessing the whole step rather than
+#: sampling it. A model whose state moved non-monotonically within a step would
+#: need more instants, and this tuple is where that would be said.
+ASSESSED_INSTANTS = (STEP_START, STEP_END)
+
+
+def _over_the_step(
+    per_instant: Sequence[Mapping[str, ValidityAssessment]],
+) -> dict[str, ValidityAssessment]:
+    """One verdict per model over the whole interval, from the instants in it.
+
+    A condition is **satisfied over the step** only if it was satisfied at every
+    instant assessed and questioned at none. Anything violated at any instant is
+    violated over the step; anything unknown at any instant, and violated at
+    none, is unknown over it.
+
+    That ordering is the same precedence ``ValidityDomain.assess`` applies
+    within one instant, applied again across instants — a finding outranks a
+    gap, and a gap outranks a claim of satisfaction. The result's condition
+    lists are disjoint, so its status is exactly what the shared classification
+    implies and the record can cross a reporting boundary unaltered.
+    """
+    model_ids: list[str] = []
+    for instant in per_instant:
+        for model_id in instant:
+            if model_id not in model_ids:
+                model_ids.append(model_id)
+
+    combined: dict[str, ValidityAssessment] = {}
+    for model_id in model_ids:
+        assessments = [i[model_id] for i in per_instant if model_id in i]
+        violated: list[str] = []
+        unknown: list[str] = []
+        satisfied: list[str] = []
+        for assessment in assessments:
+            for name in assessment.violated:
+                if name not in violated:
+                    violated.append(name)
+            for name in assessment.unknown:
+                if name not in unknown:
+                    unknown.append(name)
+            for name in assessment.satisfied:
+                if name not in satisfied:
+                    satisfied.append(name)
+        unknown = [n for n in unknown if n not in violated]
+        satisfied = [
+            n for n in satisfied if n not in violated and n not in unknown
+        ]
+        if violated:
+            status = ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+        elif unknown:
+            status = ValidityStatus.UNKNOWN
+        elif satisfied:
+            status = ValidityStatus.IN_DOMAIN
+        else:
+            status = ValidityStatus.UNKNOWN
+        combined[model_id] = ValidityAssessment(
+            status=status,
+            satisfied=tuple(satisfied),
+            violated=tuple(violated),
+            unknown=tuple(unknown),
+        )
+    return combined
 
 
 class CouplingDirection(str, Enum):
@@ -114,11 +192,26 @@ class SelfHeatingStep:
     """One interval of the march: what the cell saw, and what came out.
 
     ``cell_temperature`` is the temperature at the **start** of the interval —
-    the value the cell model was actually evaluated at, and therefore the value
-    every temperature-dependent verdict in ``validity`` rests on.
-    ``final_temperature`` is where the body ended up and is what the next step
-    starts from. Naming them apart is the same discipline the domain applies to
-    ``state_of_charge`` and ``final_state_of_charge``.
+    the value the cell model was evaluated at.  ``final_temperature`` is where
+    the body ended up and is what the next step starts from. Naming them apart
+    is the same discipline the domain applies to ``state_of_charge`` and
+    ``final_state_of_charge``.
+
+    **A step is an interval, and ``validity`` is a verdict about the interval.**
+    It used to be a verdict about the instant the step started at, which is a
+    different claim wearing the same name: a step beginning at 298 K and ending
+    at 351 K recorded ``discharge_temperature_position`` as *satisfied* against
+    a 333 K limit, because the only temperature anybody asked about was the one
+    the cell had before it heated up. The excursion was in the record — as
+    ``final_temperature`` — and the verdict beside it said the model applied.
+
+    So the assessment is made at every instant in :data:`ASSESSED_INSTANTS`, the
+    per-instant verdicts are kept in ``validity_at`` where a reader can see
+    *where* in the step a condition flipped, and ``validity`` is the combination
+    over the interval — satisfied only where satisfied throughout. Which
+    instants were assessed is part of the record rather than part of the prose,
+    because "over the whole step" is only true of the instants actually looked
+    at.
     """
 
     index: int
@@ -140,12 +233,58 @@ class SelfHeatingStep:
     #: because "the answer was checked" and "the model applied" are different
     #: claims still.
     thermal_validation: ValidationReport
-    #: One verdict per battery model, keyed by model id. This is the field
-    #: that changes across a march.
+    #: One verdict per battery model, keyed by model id, **over the whole
+    #: interval this step covers**. Satisfied only where satisfied at every
+    #: instant assessed. This is the field that changes across a march.
     validity: Mapping[str, ValidityAssessment]
+    #: instant -> model id -> the verdict at that instant. The evidence
+    #: ``validity`` is combined from, kept because "outside its domain by the
+    #: end" and "outside it from the start" are different findings.
+    validity_at: Mapping[str, Mapping[str, ValidityAssessment]]
+
+    def __post_init__(self) -> None:
+        missing = [i for i in ASSESSED_INSTANTS if i not in self.validity_at]
+        if missing:
+            raise InvalidScientificProblem(
+                f"step {self.index} carries no verdict at {missing}; a "
+                f"verdict over an interval may not rest on fewer instants "
+                f"than the record says it was assessed at"
+            )
+
+    @property
+    def assessed_instants(self) -> tuple[str, ...]:
+        """The instants ``validity`` was combined from, in temporal order."""
+        return tuple(
+            instant for instant in ASSESSED_INSTANTS if instant in self.validity_at
+        )
+
+    def temperature_at(self, instant: str) -> Quantity:
+        """The temperature the cell was assessed at, for one instant."""
+        if instant == STEP_START:
+            return self.cell_temperature
+        if instant == STEP_END:
+            return self.final_temperature
+        raise InvalidScientificProblem(
+            f"step {self.index} assessed no instant named {instant!r}"
+        )
+
+    def status_at(self, instant: str, model_id: str) -> ValidityStatus:
+        """The verdict for one model at one instant within this step."""
+        try:
+            verdicts = self.validity_at[instant]
+        except KeyError:
+            raise InvalidScientificProblem(
+                f"step {self.index} assessed no instant named {instant!r}"
+            ) from None
+        if model_id not in verdicts:
+            raise InvalidScientificProblem(
+                f"step {self.index} carries no verdict for {model_id!r} at "
+                f"{instant!r}"
+            )
+        return verdicts[model_id].status
 
     def status(self, model_id: str) -> ValidityStatus:
-        """The verdict for one model at this step."""
+        """The verdict for one model over this whole step."""
         if model_id not in self.validity:
             raise InvalidScientificProblem(
                 f"step {self.index} carries no verdict for {model_id!r}"
@@ -285,8 +424,9 @@ def run_self_heating_discharge(
 
     1. evaluates the cell at the current temperature and state of charge,
     2. advances the lumped body over the step with that step's heat input,
-    3. records the thermal step's convergence and validation **separately**
-       from the cell's validity verdicts,
+    3. assesses the cell's validity at the start **and** the end of the step,
+       and records the thermal step's convergence and validation **separately**
+       from both,
     4. carries the new temperature and state of charge into the next step.
 
     The temperature rises because ``I^2 R_int`` is fed to a body with finite
@@ -302,7 +442,12 @@ def run_self_heating_discharge(
     model leaves its validated domain, reporting ``VALIDITY_LOST``. It defaults
     to ``False`` because continuing produces the evidence that a condition
     *did* flip and where — but a caller who wants the numbers to stop when the
-    entitlement to them stops can say so.
+    entitlement to them stops can say so. It reads the verdict **over the
+    step**, so a step that leaves the domain before it ends stops the march at
+    that step rather than one later: the temperature the step ended at is a
+    temperature the run reached, and a rule that only looked at where each step
+    began could report a run ending 18 K above a declared limit with the
+    condition recorded as satisfied.
 
     ``initial_temperature`` defaults to the load's declared cell temperature,
     which is the only consistent starting point: the load says what the cell is
@@ -347,12 +492,24 @@ def run_self_heating_discharge(
         )
 
         problem = bat.build_battery_problem(cell, step_load)
-        verdicts = bat.assess_all(
-            problem,
-            state_of_charge=state_of_charge,
-            discharge_current=load.current,
-            cell_temperature=temperature,
-        )
+        # Assessed at both ends of the interval, not only at the temperature
+        # the step started from. The state of charge and the current are the
+        # step's own, which is what the cell model was evaluated with; only
+        # the temperature moves within the step, and it moves monotonically,
+        # so these two instants are its extrema.
+        by_instant = {
+            instant: bat.assess_all(
+                problem,
+                state_of_charge=state_of_charge,
+                discharge_current=load.current,
+                cell_temperature=instant_temperature,
+            )
+            for instant, instant_temperature in (
+                (STEP_START, temperature),
+                (STEP_END, final_temperature),
+            )
+        }
+        verdicts = _over_the_step([by_instant[i] for i in ASSESSED_INSTANTS])
 
         elapsed_s += step_s
         final_soc = Quantity(computed.final_state_of_charge, ctx.DIMENSIONLESS)
@@ -371,6 +528,7 @@ def run_self_heating_discharge(
                 thermal_convergence=convergence,
                 thermal_validation=thermal_validation,
                 validity=verdicts,
+                validity_at=by_instant,
             )
         )
 

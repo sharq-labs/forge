@@ -154,6 +154,7 @@ __all__ = [
     "EVIDENCE_PACKAGE_SCHEMA",
     "MODEL_VALIDITY_SCHEMA",
     "AssertedContext",
+    "classify_assessment",
     "CredibilityEvidenceReport",
     "CredibilityVerdict",
     "EvidencePackage",  # deprecated alias
@@ -408,6 +409,45 @@ def derive_verdict(
     return CredibilityVerdict.SUPPORTED
 
 
+def classify_assessment(assessment: ValidityAssessment) -> ValidityStatus:
+    """The status a validity domain reports for these condition lists.
+
+    **One classification, used on both sides of this boundary.** The core
+    reaches it through :meth:`ValidityDomain.assess`, which decides the status
+    while it still holds the domain; this boundary reaches it through
+    :class:`ModelValidityRecord`, which sees only the assessment. Stated once
+    here so the two cannot drift, and so the cross-check below is a check of
+    *the same rule* rather than a second opinion about it.
+
+    The rules, in the core's own order:
+
+    * anything violated → ``OUTSIDE_VALIDATED_DOMAIN``;
+    * else anything unknown → ``UNKNOWN``;
+    * else something satisfied → ``IN_DOMAIN``;
+    * else — **nothing was evaluated at all** — ``UNKNOWN``.
+
+    That last clause is the one the boundary used to be missing, and it is not
+    an edge case. ``ValidityDomain.assess`` returns it for a domain with no
+    conditions, on the stated grounds that *absence of declared limits is not
+    evidence of unlimited validity* — and ``electrical.dc.kcl`` is a real model
+    in this repository with exactly that domain. Inferring IN_DOMAIN from empty
+    violated and unknown lists forgot the empty-domain rule and so refused the
+    legitimate assessment the core emitted, which is the opposite of what a
+    guard against overstatement is for.
+
+    Deliberately a function over an *assessment* and not over a domain: this
+    layer never holds a domain and never evaluates a condition. It classifies
+    what it was handed, by the rule the core used to produce it.
+    """
+    if assessment.violated:
+        return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    if assessment.unknown:
+        return ValidityStatus.UNKNOWN
+    if assessment.satisfied:
+        return ValidityStatus.IN_DOMAIN
+    return ValidityStatus.UNKNOWN
+
+
 @dataclass(frozen=True)
 class ModelValidityRecord:
     """One model's validity verdict, transported from its ``ValidityAssessment``.
@@ -475,17 +515,13 @@ class ModelValidityRecord:
         #    condition lists, so `status=IN_DOMAIN, violated=("biot_number",)`
         #    constructs happily — and would report SUPPORTED on the same record
         #    that names the bound it violated. Cross-check against exactly the
-        #    classification `ValidityDomain.assess` performs, so every
-        #    assessment the core actually produced passes untouched and only a
-        #    hand-built or hand-edited one is refused. Recompute-and-verify, the
-        #    same discipline `ValidationReport.from_dict` applies to
-        #    `attained_levels`.
-        if assessment.violated:
-            implied = ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        elif assessment.unknown:
-            implied = ValidityStatus.UNKNOWN
-        else:
-            implied = ValidityStatus.IN_DOMAIN
+        #    classification `ValidityDomain.assess` performs — which is
+        #    :func:`classify_assessment`, the one statement of that rule —
+        #    so every assessment the core actually produced passes untouched
+        #    and only a hand-built or hand-edited one is refused.
+        #    Recompute-and-verify, the same discipline
+        #    `ValidationReport.from_dict` applies to `attained_levels`.
+        implied = classify_assessment(assessment)
         if status is not implied:
             raise CredibilityEvidenceError(
                 f"model validity record for {self.model_id!r} declares status "

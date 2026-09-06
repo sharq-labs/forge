@@ -154,6 +154,7 @@ __all__ = [
     "run_fixed_point_coupling",
     "shares_origin",
     "stage_problems",
+    "validate_coupling_configuration",
 ]
 
 TORN_ENDPOINT_SCHEMA = schema_string("electrothermal_torn_endpoint")
@@ -324,6 +325,60 @@ class TornEndpoint:
         )
 
 
+def validate_coupling_configuration(
+    *,
+    tolerance: Any,
+    max_iterations: Any,
+    tolerance_label: str = "coupling tolerance",
+    budget_label: str = "coupling budget",
+) -> None:
+    """The rules a coupling configuration must satisfy, stated **once**.
+
+    Everything here is decidable from the two numbers alone — no dependency
+    records, no torn edges, no composition — which is exactly why it is a
+    function rather than a paragraph of :meth:`FixedPointCouplingPlan.__post_init__`.
+    The plan's remaining rules (that the tolerance carries the dimension the
+    torn edges transport, and shares a zero with each of their units) genuinely
+    need the plan and stay there.
+
+    **Why it is separate: a configuration boundary and a runner that disagreed.**
+    The MCP payload boundary accepted a zero coupling tolerance and the runner
+    then refused it, so whether a payload was well-formed depended on which
+    entry point a caller reached first — a caller who only built a system was
+    told nothing, and a caller who ran one got a failure from two layers down
+    naming a record they never wrote. The boundary's own stated rule is that a
+    payload "is either accepted or refused as a whole"; this is the function
+    that lets more than one entry point apply that rule *identically* rather
+    than each restating it and drifting.
+
+    The two labels name each field in the *caller's* own vocabulary, so the
+    payload boundary can say ``coupling.tolerance`` where the plan says
+    ``coupling tolerance``. They change the wording of a message and nothing
+    about the rule, which is the point: a caller is told which of their own
+    fields to fix, without either entry point owning a second copy of what
+    makes it wrong.
+    """
+    if not isinstance(tolerance, Quantity):
+        raise InvalidScientificProblem(
+            f"{tolerance_label} must be a Quantity — the criterion belongs "
+            f"to coupling execution and a bare float cannot be checked "
+            f"against the quantity it stops"
+        )
+    magnitude = tolerance.magnitude
+    if not math.isfinite(magnitude) or magnitude <= 0.0:
+        raise InvalidScientificProblem(
+            f"{tolerance_label} must be finite and strictly positive, got "
+            f"{magnitude!r} {tolerance.units}"
+        )
+    _require_ratio_scale(tolerance.units, label=tolerance_label)
+
+    budget = int(max_iterations)
+    if budget < 1:
+        raise InvalidScientificProblem(
+            f"{budget_label} must allow at least one iteration, got {budget}"
+        )
+
+
 @dataclass(frozen=True)
 class FixedPointCouplingPlan:
     """Everything needed to execute a cyclic dependency set, stated before it runs.
@@ -399,20 +454,9 @@ class FixedPointCouplingPlan:
                     f"is refused rather than combined by invention"
                 )
 
-        if not isinstance(self.absolute_tolerance, Quantity):
-            raise InvalidScientificProblem(
-                "coupling tolerance must be a Quantity — the criterion belongs "
-                "to coupling execution and a bare float cannot be checked "
-                "against the quantity it stops"
-            )
-        magnitude = self.absolute_tolerance.magnitude
-        if not math.isfinite(magnitude) or magnitude <= 0.0:
-            raise InvalidScientificProblem(
-                f"coupling tolerance must be finite and strictly positive, got "
-                f"{magnitude!r} {self.absolute_tolerance.units}"
-            )
-        _require_ratio_scale(
-            self.absolute_tolerance.units, label="coupling tolerance"
+        validate_coupling_configuration(
+            tolerance=self.absolute_tolerance,
+            max_iterations=self.max_iterations,
         )
 
         dimensions = {e.dependency.dimension for e in self.torn}
@@ -446,12 +490,7 @@ class FixedPointCouplingPlan:
                         f"is not a difference"
                     )
 
-        budget = int(self.max_iterations)
-        if budget < 1:
-            raise InvalidScientificProblem(
-                f"coupling budget must allow at least one iteration, got {budget}"
-            )
-        object.__setattr__(self, "max_iterations", budget)
+        object.__setattr__(self, "max_iterations", int(self.max_iterations))
 
     @property
     def comparison_unit(self) -> str:

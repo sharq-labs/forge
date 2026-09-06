@@ -32,7 +32,12 @@ from src.engcore.mcp import (
     ModelValidityRecord,
     derive_verdict,
 )
-from src.engcore.scientific.models.definition import ValidityAssessment, ValidityStatus
+from src.engcore.scientific.models.definition import (
+    RangeCondition,
+    ValidityAssessment,
+    ValidityDomain,
+    ValidityStatus,
+)
 from src.engcore.scientific.results.provenance import ProvenanceRecord
 from src.engcore.scientific.results.result import ScientificResult
 from src.engcore.scientific.results.validation import (
@@ -497,6 +502,12 @@ def test_the_verdict_tracks_the_contents_rather_than_being_stored():
         pkg.validity[0].assessment, "status", ValidityStatus.IN_DOMAIN
     )
     object.__setattr__(pkg.validity[0].assessment, "violated", ())
+    # The condition moves from violated to satisfied rather than vanishing: an
+    # assessment naming no condition at all evaluated nothing, and since F09
+    # that is UNKNOWN on both sides of this boundary rather than IN_DOMAIN.
+    object.__setattr__(
+        pkg.validity[0].assessment, "satisfied", ("biot_number",)
+    )
     assert pkg.verdict is CredibilityVerdict.SUPPORTED
     # and the serialized form agrees with the contents, not with history
     assert pkg.to_dict()["verdict"] == CredibilityVerdict.SUPPORTED.value
@@ -534,7 +545,9 @@ def test_an_unrecognised_validity_status_is_refused_rather_than_read_as_clean():
     # a correct status supplied as a bare string is still accepted
     assert ModelValidityRecord(
         model_id="m", version="1",
-        assessment=ValidityAssessment(status="in_domain"),
+        assessment=ValidityAssessment(
+            status="in_domain", satisfied=("biot_number",)
+        ),
     ).status == ValidityStatus.IN_DOMAIN
 
 
@@ -1257,3 +1270,89 @@ def test_the_real_declaration_is_carried_verbatim_and_buys_the_caller_nothing():
 
     stripped = dataclasses.replace(pkg, declarations=())
     assert stripped.verdict is pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+# =====================================================================
+# F09 — one classification, shared between the core and this boundary
+# =====================================================================
+
+def test_f09_the_empty_domain_assessment_the_core_emits_crosses_the_boundary():
+    """``ValidityDomain().assess({})`` is UNKNOWN, and must stay UNKNOWN here.
+
+    A model that declares no conditions has had nothing asked of it, and the
+    core says so: absence of declared limits is not evidence of unlimited
+    validity. The wrapper used to re-derive the status from the condition lists
+    alone — empty violated and empty unknown read as IN_DOMAIN — and so refused
+    the very assessment the core produced. ``electrical.dc.kcl`` is a real
+    model in this repository with exactly that domain.
+    """
+    empty = ValidityDomain().assess({})
+    assert empty.status is ValidityStatus.UNKNOWN
+
+    record = ModelValidityRecord(
+        model_id="electrical.dc.kcl", version="0.1.0", assessment=empty
+    )
+    assert record.status is ValidityStatus.UNKNOWN
+
+
+def test_f09_the_wrapper_agrees_with_the_core_on_every_assessment_it_emits():
+    """The classification is shared, and this is what shared is checked to mean.
+
+    Every assessment reachable from ``ValidityDomain.assess`` over this family
+    of domains and contexts must cross the boundary with its status intact. A
+    wrapper holding a second, subtly different rule would fail here rather than
+    only on the empty domain that happened to be noticed.
+    """
+    bounded = RangeCondition(
+        name="x", minimum=Quantity(0.0, "kelvin"), maximum=Quantity(10.0, "kelvin")
+    )
+    other = RangeCondition(
+        name="y", minimum=Quantity(0.0, "kelvin"), maximum=Quantity(10.0, "kelvin")
+    )
+    domains = [
+        ValidityDomain(),
+        ValidityDomain(conditions=(bounded,)),
+        ValidityDomain(conditions=(bounded, other)),
+    ]
+    contexts = [
+        {},
+        {"x": Quantity(5.0, K)},
+        {"x": Quantity(50.0, K)},
+        {"x": Quantity(5.0, K), "y": Quantity(5.0, K)},
+        {"x": Quantity(50.0, K), "y": Quantity(5.0, K)},
+        {"x": Quantity(5.0, K), "y": Quantity(50.0, K)},
+    ]
+    for domain, context in itertools.product(domains, contexts):
+        assessment = domain.assess(context)
+        record = ModelValidityRecord(
+            model_id="probe", version="0.1.0", assessment=assessment
+        )
+        assert record.status is assessment.status, (domain, context)
+
+
+def test_f09_a_status_that_contradicts_its_own_conditions_is_still_refused():
+    """The fix widens the classification; it does not remove the cross-check."""
+    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+        ModelValidityRecord(
+            model_id="probe",
+            version="0.1.0",
+            assessment=ValidityAssessment(
+                status=ValidityStatus.IN_DOMAIN, violated=("biot_number",)
+            ),
+        )
+    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+        ModelValidityRecord(
+            model_id="probe",
+            version="0.1.0",
+            assessment=ValidityAssessment(
+                status=ValidityStatus.IN_DOMAIN, unknown=("biot_number",)
+            ),
+        )
+    # and an assessment that named nothing may not claim IN_DOMAIN either:
+    # nothing was evaluated, so nothing was found to hold.
+    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+        ModelValidityRecord(
+            model_id="probe",
+            version="0.1.0",
+            assessment=ValidityAssessment(status=ValidityStatus.IN_DOMAIN),
+        )

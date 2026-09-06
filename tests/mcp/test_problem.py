@@ -659,3 +659,59 @@ def test_two_stages_produce_one_report_each():
         "resistance-tcr-R2",
         "thermal-lumped-R2",
     ]
+
+
+# =====================================================================
+# F11 — coupling configuration is checked identically at both entry points
+# =====================================================================
+
+def test_f11_a_zero_coupling_tolerance_is_refused_by_the_builder_too():
+    """The builder must refuse exactly what the runner refuses.
+
+    A payload is accepted or refused as a whole. A zero tolerance that
+    ``build_electrothermal_system`` waved through and ``run_electrothermal_case``
+    then rejected made the boundary's answer depend on which entry point the
+    caller happened to use — which is the same defect the misspelled
+    ``max_iteratons`` guard already exists to prevent, in the one field where
+    the check had been left to the runner.
+    """
+    payload = example_electrothermal_payload()
+    payload["coupling"]["tolerance"] = "0 kelvin"
+
+    with pytest.raises(ProblemPayloadError) as from_builder:
+        build_electrothermal_system(payload)
+    with pytest.raises(ProblemPayloadError) as from_runner:
+        run_electrothermal_case(payload)
+
+    for raised in (from_builder, from_runner):
+        assert "coupling.tolerance" in str(raised.value)
+        assert "strictly positive" in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    "tolerance",
+    ["0 kelvin", "-1 kelvin", "0 degC"],
+)
+def test_f11_every_inadmissible_tolerance_is_refused_at_both_entry_points(
+    tolerance,
+):
+    """Zero, negative, and an interval scale a difference cannot live on.
+
+    ``degC`` is a real refusal and not a stylistic one: a tolerance is a
+    *difference*, and converting a difference between two scales that do not
+    share a zero is not a conversion of a difference.
+    """
+    payload = example_electrothermal_payload()
+    payload["coupling"]["tolerance"] = tolerance
+    with pytest.raises(ProblemPayloadError):
+        build_electrothermal_system(payload)
+    with pytest.raises(ProblemPayloadError):
+        run_electrothermal_case(payload)
+
+
+def test_f11_an_admissible_coupling_block_still_builds_and_runs():
+    """The shared rule refuses no configuration that was legitimate before."""
+    payload = example_electrothermal_payload()
+    payload["coupling"]["tolerance"] = "1e-9 kelvin"
+    assert build_electrothermal_system(payload).stages
+    assert run_electrothermal_case(payload).run.iterations_run >= 1
