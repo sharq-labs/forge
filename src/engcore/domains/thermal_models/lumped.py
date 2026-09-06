@@ -95,6 +95,7 @@ from ...scientific.solvers.capability import (
     SolverCapabilityId,
 )
 from ...scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -1394,7 +1395,7 @@ class PreparedLumpedStep:
     heat_input_w: float
 
 
-class LumpedThermalSolver:
+class LumpedThermalSolver(DeclaredSupport):
     """Advances one lumped body over one interval. Satisfies ScientificSolver.
 
     The body and its imposed heat input are bound to this instance by problem
@@ -1501,8 +1502,15 @@ class LumpedThermalSolver:
                 f"but the bound body declares {body.initial_temperature}"
             )
 
-    def supports(self, problem: ScientificProblem) -> bool:
-        return LUMPED_CAPACITY_TRANSIENT.name in problem.required_capabilities
+    #: What this solver is for, and what it implements. The core compares.
+    #:
+    #: This used to be ``supports()`` returning
+    #: ``LUMPED_CAPACITY_TRANSIENT.name in problem.required_capabilities`` --
+    #: one capability, checked, and the rest of the request ignored. A problem
+    #: asking for the lumped capacity transient **and** ``thermal:conduction_1d
+    #: _transient`` got True from a solver that has one node and no field.
+    serves_capabilities = frozenset({LUMPED_CAPACITY_TRANSIENT.name})
+    served_models = (LUMPED_CAPACITY_MODEL,)
 
     # -- lifecycle --------------------------------------------------------
     def prepare(

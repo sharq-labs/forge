@@ -25,6 +25,7 @@ from src.engcore.domains.electrical.dc import (
     voltage_source_relation_problem,
 )
 from src.engcore.scientific import (
+    DeclaredSupport,
     AmbiguousSolverError,
     BindingIssueKind,
     CategoricalValue,
@@ -238,8 +239,15 @@ def test_validity_context_comes_from_typed_parameters():
 
 # ---- solver registry ---------------------------------------------------
 
-class _UnrelatedSolver:
-    """A solver for a different mathematical shape entirely."""
+class _UnrelatedSolver(DeclaredSupport):
+    """A solver for a different mathematical shape entirely.
+
+    It declares what it is for and lets the core decide. Its old
+    hand-written ``supports`` had the defect this round removed in two real
+    adapters: one capability checked, the rest of the request ignored.
+    """
+
+    serves_capabilities = frozenset({CoreCapabilities.ODE.name})
 
     @property
     def identity(self):
@@ -248,9 +256,6 @@ class _UnrelatedSolver:
     @property
     def capabilities(self):
         return frozenset({CoreCapabilities.ODE})
-
-    def supports(self, problem) -> bool:
-        return CoreCapabilities.ODE.name in problem.required_capabilities
 
     def prepare(self, problem):
         raise NotImplementedError

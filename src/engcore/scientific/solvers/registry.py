@@ -21,7 +21,12 @@ from ..errors import (
     SolverNotFoundError,
 )
 from .capability import SolverCapability
-from .protocol import ScientificSolver, SolverIdentity, capability_gap
+from .protocol import (
+    DeclaredSupport,
+    ScientificSolver,
+    SolverIdentity,
+    capability_gap,
+)
 
 SelectionRule = Callable[[Sequence[ScientificSolver]], ScientificSolver]
 
@@ -39,12 +44,45 @@ class SolverRegistry:
         identity = solver.identity
         if not isinstance(identity, SolverIdentity):
             raise TypeError("solver.identity must be a SolverIdentity")
+        self._require_core_support_decision(solver)
         if identity.key in self._solvers:
             raise DuplicateRegistrationError(
                 f"solver {identity.solver_id!r} version {identity.version!r} "
                 f"is already registered"
             )
         self._solvers[identity.key] = solver
+
+    @staticmethod
+    def _require_core_support_decision(solver: ScientificSolver) -> None:
+        """A registered solver does not decide its own support question.
+
+        ``supports`` answers "can this solver serve this problem", and the
+        registry's ``resolve`` is what acts on the answer. An adapter that
+        implements it by hand is answering a question about capability
+        coverage that only the core sees the whole of -- and two adapters that
+        did got it wrong in the same way, by checking one capability and
+        ignoring the rest of the request.
+
+        So the comparison belongs to :class:`DeclaredSupport` and an adapter
+        declares its way to an answer. Refused here rather than trusted,
+        because the registry is what turns a wrong "yes" into a solve.
+        """
+        if not isinstance(solver, DeclaredSupport):
+            raise TypeError(
+                f"solver {type(solver).__name__} does not use the core support "
+                f"contract; a solver decides which problems it serves by "
+                f"declaring capabilities, serves_capabilities and "
+                f"served_models on DeclaredSupport, not by implementing "
+                f"supports() itself"
+            )
+        if type(solver).supports is not DeclaredSupport.supports:
+            raise TypeError(
+                f"solver {type(solver).__name__} overrides supports(); the "
+                f"support decision is the core's, so that comparison cannot be "
+                f"answered per adapter. Declare serves_capabilities and "
+                f"served_models, and put anything they cannot express in "
+                f"additional_support_gap()"
+            )
 
     def unregister(self, solver_id: str, version: str) -> None:
         key = (str(solver_id), str(version))

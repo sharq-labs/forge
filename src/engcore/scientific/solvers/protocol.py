@@ -283,3 +283,125 @@ def capability_gap(solver: ScientificSolver, problem) -> frozenset[str]:
     """Capabilities the problem requires that the solver does not declare."""
     declared = {c.name for c in solver.capabilities}
     return frozenset(problem.required_capabilities) - declared
+
+
+class DeclaredSupport:
+    """``supports`` implemented once, from what a solver declares.
+
+    The defect
+    ----------
+    Two adapters answered the support question by checking a single
+    capability::
+
+        def supports(self, problem):
+            return LUMPED_CAPACITY_TRANSIENT.name in problem.required_capabilities
+
+    A problem asking for that capability **and one more** got ``True`` from a
+    solver that cannot serve the second. The registry then resolved to it, and
+    the failure arrived later as an exception from ``prepare`` or, worse, as a
+    result computed by a solver the problem never asked for. A third adapter
+    matched on the model reference alone and never looked at capabilities at
+    all.
+
+    The five adapters that *did* get it right had five separate
+    implementations of the same three comparisons, which is the same defect one
+    step from happening: the next domain writes a sixth, and the sixth is where
+    the next review finds this.
+
+    The contract
+    ------------
+    An adapter **declares** and does not compare. Three declarations:
+
+    ``capabilities``
+        Everything this solver can do. The request must be a subset — that is
+        the check the two broken adapters were missing.
+
+    ``serves_capabilities``
+        The capability (or capabilities) that identify this solver's work. The
+        request must *include* them. This is the other direction, and it is
+        what stops a solver claiming a problem that declares nothing at all:
+        the empty set is a subset of everything, so the subset test alone
+        answers ``True`` for a problem that asked for nothing.
+
+    ``served_models``
+        The model records this solver implements. The request must name one.
+        A capability says what kind of computation is wanted;
+        ``core:algebraic`` is true of countless unrelated relations, and only
+        the model says *which*.
+
+    ``additional_support_gap``
+        The hook for a domain fact none of the three can express -- one
+        adapter's "every named model must have a declared realization in this
+        domain", for instance. It returns reasons, not a boolean, so a refusal
+        explains itself. Deliberately a hook and not a fourth declaration: the
+        core cannot know what those facts are, and pretending otherwise is how
+        a universal contract acquires domain knowledge.
+
+    The core does the comparing, in :meth:`support_gap`. An adapter that
+    overrides ``supports`` is refused by ``SolverRegistry.register``: a solver
+    that hand-rolls the comparison is the thing this class exists to stop, and
+    a registry that accepted one would resolve to it.
+    """
+
+    #: The capability names that identify this solver's work. A problem that
+    #: does not ask for all of them is not this solver's problem.
+    serves_capabilities: frozenset[str] = frozenset()
+
+    #: Model records this solver implements. Empty means "any model", which is
+    #: almost never right and is why every adapter here declares some.
+    served_models: tuple = ()
+
+    def support_gap(self, problem) -> tuple[str, ...]:
+        """Every reason this solver cannot serve this problem, in order.
+
+        Empty means it can. A tuple rather than a boolean because a solver that
+        says only "no" makes the caller guess, and the registry's
+        "no solver supports this problem" message is where the guess happens.
+        """
+        from ..ir.problem import ScientificProblem
+
+        if not isinstance(problem, ScientificProblem):
+            return (f"not a ScientificProblem: {type(problem).__name__}",)
+
+        reasons: list[str] = []
+
+        requested = frozenset(problem.required_capabilities)
+        declared = {capability.name for capability in self.capabilities}
+        missing = sorted(requested - declared)
+        if missing:
+            reasons.append(
+                f"the problem requires {missing}, which this solver does not "
+                f"declare; it declares {sorted(declared)}"
+            )
+
+        unasked = sorted(frozenset(self.serves_capabilities) - requested)
+        if unasked:
+            reasons.append(
+                f"the problem does not require {unasked}, which is what this "
+                f"solver is for; it requires {sorted(requested) or 'nothing'}"
+            )
+
+        if self.served_models:
+            served = {model.model_id for model in self.served_models}
+            referenced = {reference.model_id for reference in problem.models}
+            if not referenced & served:
+                reasons.append(
+                    f"the problem names no model this solver implements; it "
+                    f"names {sorted(referenced) or 'none'} and this solver "
+                    f"implements {sorted(served)}"
+                )
+
+        reasons.extend(self.additional_support_gap(problem))
+        return tuple(reasons)
+
+    def additional_support_gap(self, problem) -> tuple[str, ...]:
+        """Domain facts the three declarations cannot express. Usually none."""
+        return ()
+
+    def supports(self, problem) -> bool:
+        """True when this solver can legitimately handle the whole request.
+
+        Not overridable by an adapter: ``SolverRegistry.register`` refuses a
+        solver that redefines it. Declare, do not compare.
+        """
+        return not self.support_gap(problem)

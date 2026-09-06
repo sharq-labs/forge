@@ -427,8 +427,32 @@ class CampaignEventLog:
                 CampaignEvent.from_dict(e) for e in payload.get("events", ())
             ),
         )
+        # Absence is a refusal, not a pass. `if declared and ...` accepted a
+        # stored log carrying no head digest at all, which is the one payload
+        # whose chain nothing has checked: a truncation, a hand-edited record
+        # or a writer that failed between the events and the digest all arrive
+        # in exactly that shape. An integrity check that waves through the
+        # unverifiable case and refuses only the verifiable-and-wrong one is
+        # checking the wrong half.
+        #
+        # `to_dict` has always written the digest, so every log this code
+        # produces reloads unchanged.
         declared = payload.get("head_digest", "")
-        if declared and declared != log.head_digest:
+        # An empty chain has no digest and says so -- `head_digest` is "" for a
+        # log with no events, which is a true statement rather than a missing
+        # one. A payload that CARRIES events and no digest is the unverifiable
+        # case: a truncation, a hand-edited record, or a writer that died
+        # between the events and the digest all arrive in exactly that shape,
+        # and `if declared and ...` waved every one of them through while
+        # refusing only the verifiable-and-wrong ones. Checking the wrong half.
+        if log.events and not declared:
+            raise ChainBroken(
+                f"the stored event log for run {payload['run_id']!r} carries "
+                f"{len(log.events)} event(s) and no head digest, so nothing "
+                f"states what its chain should hash to; a log whose chain "
+                f"cannot be checked is not a log whose chain is intact"
+            )
+        if declared != log.head_digest:
             raise ChainBroken(
                 "the stored head digest does not match the reloaded events"
             )

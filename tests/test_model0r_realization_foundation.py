@@ -19,6 +19,7 @@ import pathlib
 import pytest
 
 from src.engcore.scientific import (
+    DeclaredSupport,
     DuplicateRegistrationError,
     ImplementationReference,
     InvalidModelRealization,
@@ -259,7 +260,11 @@ def test_solver_registry_deduplicates_identically_named_capabilities():
     """A visible consequence of the identity fix, and the intended one."""
     from src.engcore.scientific.solvers import SolverIdentity, SolverRegistry
 
-    class _Solver:
+    class _Solver(DeclaredSupport):
+        # Declares nothing beyond its capabilities, so `DeclaredSupport`
+        # answers True for any problem those capabilities cover -- which is
+        # what a registry-capability test wants, and is why no real adapter
+        # leaves `serves_capabilities` and `served_models` empty.
         def __init__(self, solver_id, capabilities):
             self.identity = SolverIdentity(solver_id, "1.0.0")
             self._capabilities = frozenset(capabilities)
@@ -267,9 +272,6 @@ def test_solver_registry_deduplicates_identically_named_capabilities():
         @property
         def capabilities(self):
             return self._capabilities
-
-        def supports(self, problem):
-            return True
 
         def prepare(self, problem):  # pragma: no cover - unused here
             raise NotImplementedError

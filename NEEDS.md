@@ -2642,6 +2642,186 @@ demonstrate exactly that and deliberately award nothing. If a level for it is
 ever added, those four thresholds become the domain's on the same day, and this
 paragraph is the note that says so.
 
+### G4.1 The conduction1d solver still answers its own support question
+
+**Where** `src/engcore/domains/thermal/conduction1d/solver.py:187`.
+
+It makes the three comparisons by hand -- capability subset, this domain's
+capability requested, one of this domain's models named -- and it makes all
+three *correctly*. It is not the defect; it is the fifth copy of the code the
+defect was a bad rewrite of, and `SolverRegistry.register` now refuses it.
+
+**What is needed.** Three lines, matching the other seven adapters:
+
+```python
+class Conduction1DSolver(DeclaredSupport):
+    serves_capabilities = frozenset({THERMAL_CONDUCTION_1D.name})
+    served_models = CONDUCTION_MODELS
+    # ... and delete supports()
+```
+
+**Why it was not done.** `src/engcore/domains/thermal/conduction1d/` is frozen
+for this round and byte-pinned by `experiments/thermal_t1/t1_config.py`.
+
+**What it costs.** The three lines, a re-pinned digest, and a T1 re-run. No
+behaviour changes: the core makes the same three comparisons this adapter makes
+by hand, so every problem it accepts today it accepts after.
+
+**What breaks meanwhile.** `SolverRegistry.register(Conduction1DSolver())`
+raises `TypeError`. Nothing in `src` or in the test suite does that today --
+the conduction1d solver is used directly by `solve_slab` and by the refinement
+gate, never resolved through a registry -- so the guard costs nothing now and
+will cost exactly one migration the first time someone wants that solver
+resolvable. `tests/test_core_guards.py` names it and asserts it is the only
+adapter left in that position.
+
+### G5.1 A binding still cannot prove the execution it describes
+
+**Where** `src/engcore/scientific/results/provenance.py`.
+
+`ExecutionBinding.from_execution(prepared, raw, model=...)` takes the two
+objects that exist *because* the work happened, reads the solver identity off
+`prepared.solver` rather than accepting it, and refuses a model the prepared
+problem does not name. That removes the accident this round was written for: a
+transport boundary assembling participants from what it *believes* ran.
+
+It does not remove the lie. `RawSolverOutput` is an ordinary dataclass and a
+caller can construct one. `PreparedSolve` likewise. Someone determined to
+record work that did not happen can still do it, in about four lines.
+
+**What a real guarantee needs.** One of three, in increasing cost:
+
+1. **An execution token.** `solve()` returns a `RawSolverOutput` carrying an
+   opaque token minted by the solver and keyed to the `PreparedSolve` it was
+   given; `from_execution` verifies it. Cheap to write and easy to defeat by
+   anyone reading the source, so it catches accidents and honest bugs and
+   nothing else. That is most of the value, and it is roughly a day.
+
+2. **The solver as the only producer.** Make `RawSolverOutput.__init__`
+   private to the protocol module and have solvers obtain instances through a
+   factory that stamps `prepared`'s identity. Defeats casual construction
+   entirely but changes the signature every adapter and every test builds raw
+   output through -- roughly 60 call sites in `src` and `tests`.
+
+3. **A signed run log.** The only version that survives an adversary: the
+   solver appends to a per-run log keyed by `run_id`, and `ProvenanceRecord`
+   refuses a binding with no corresponding entry. This is a persistence
+   feature, not a dataclass change, and it interacts with the campaign
+   persistence layer that already exists.
+
+**The recommendation is (1) plus the rule already shipped.** The threat this
+guard is really for is a boundary that assembles provenance from belief, not a
+forger; that boundary is now structurally unable to name an unbound solver, and
+a token would close the remaining accidental path -- a solver refactored to
+return output it did not produce.
+
+### G5.2 The battery march still returns steps rather than a ScientificResult
+
+NEEDS C.6 asked for a `solve_cell` in `battery/solver.py` returning a
+`ScientificResult`, so `CredibilityEvidenceReport.from_result` would apply and
+`engcore/mcp/battery.py` would stop assembling a provenance record by hand.
+
+Half of that is now unnecessary: the march runs the full solver path, carries
+`ExecutionBinding`s produced by those executions, and the boundary builds its
+record from them rather than from a list of participants it wrote out. The
+`models` and `solvers` fields are derived, and the core refuses a solver the
+bindings do not cover.
+
+What remains is that a marched run is still not a `ScientificResult`: it has
+many steps and one result record describes one solve. That is a real modelling
+question -- is a march one result with a trajectory, or N results with a parent
+run id? -- and it is bigger than the plumbing C.6 described. Recorded so C.6 is
+not read as still open in full.
+
+### G6.1 One fingerprint verifier still treats absence as a match
+
+**Where** `src/engcore/domains/thermal/conduction1d/problem.py:443`.
+
+```python
+declared = problem.metadata.get("slab_fingerprint")
+if declared and declared != actual:      # absent => passes
+    raise SlabConfigurationError(...)
+```
+
+**What is needed.** Four lines: call
+`engcore.scientific.ir.fingerprints.require_matching_fingerprint` with
+`key="slab_fingerprint"`, `actual=slab.fingerprint()`,
+`error=SlabConfigurationError`, `subject="slab"`, and delete the comparison.
+
+**Why it was not done.** The file is byte-pinned by
+`THERMAL_FROZEN_FILE_DIGESTS` in `experiments/thermal_t1/t1_config.py`.
+
+**What it costs.** The four lines, a re-pinned digest, and a T1 re-run.
+**No frozen experiment relies on the permissive path** — every conduction
+problem T1, T2 and T3 pair with a slab is built by `build_conduction_problem`,
+which always writes `slab_fingerprint`. That was checked by making the two
+sibling domains strict and running the FULL tier, which passes.
+
+**What is closed meanwhile.** The two callers of that function outside the
+frozen file — `thermal_models/conduction1d_bulk.py` and
+`thermal_models/conduction1d_schemes.py`, three call sites — now call the core
+rule first and then the frozen verifier, so those paths refuse an
+unfingerprinted problem. What remains open is the path through the frozen
+solver's own `prepare` and `solve_slab`.
+
+### G6.2 The same defect was in a third place, and was not on the round's list
+
+`CampaignEventLog.from_dict` compared `if declared and declared !=
+log.head_digest`, so a stored log carrying no head digest reloaded with its
+hash chain unverified. That is the one payload whose chain nothing has checked:
+a truncated file, a hand-edited record and a writer that died between the
+events and the digest all arrive in exactly that shape.
+
+It is now a refusal — for a log that carries events. An **empty** chain has no
+digest and says so (`head_digest` is `""` for a log with no events), and that
+is a true statement rather than a missing one, so the empty case is not what
+the refusal is about. Fixed rather than reported, because
+`src/engcore/sria/` is not frozen; noted here because it means the pattern the
+round found in two domains was in three places, and the third was found by a
+repository-wide sweep rather than by review.
+
+### G7.1 Nothing forces a future provider adapter through the admission layer
+
+`engcore.scientific.solvers.admission` states the rule -- finiteness before any
+tolerance comparison -- and the one provider adapter in the repository uses it.
+Nothing makes the next one.
+
+A provider adapter is an ordinary class satisfying `ScientificSolver`. Its
+`extract_metrics` can compute whatever it likes from whatever the provider
+returned, and the core sees the result only when a `Quantity` is constructed
+from it. That is a backstop and it is where the non-finite value was in fact
+stopped before this guard -- as a `UnitCompatibilityError`, from the units
+layer, about a provider that had not delivered what was asked. It is not a
+gate, and it disappears the moment an adapter computes anything from an
+admitted number before wrapping it.
+
+**What a lock would need.** The core would have to see the provider's numbers
+before the adapter does -- a `ProviderOutput` type that `RawSolverOutput` is
+built from, constructed only through the admission layer. That is a real change
+to the solver protocol: every adapter's `solve` would return the new type, and
+`RawSolverOutput` would stop being the thing a backend produces and start being
+the thing the core derives. Perhaps two days, and it interacts with the
+`RawSolverOutput` change NEEDS G5.1 also wants; the two should be done together
+or not at all, since both are about making the core rather than the adapter the
+producer of the record.
+
+Until then this is a rule with one user and a test that checks that user.
+
+### G7.2 The finiteness rule is not swept for repository-wide
+
+Guards 2, 3, 4 and 6 each carry a `tests/test_core_guards.py` sweep that fails
+when a new site takes the shape the guard removed. Guard 7 does not, and the
+reason is that its shape -- `abs(a - b) > tol` -- is also the shape of every
+legitimate numerical comparison in the repository, of which there are dozens in
+solvers, validation checks and convergence tests. A sweep would either name all
+of them or would need to know which ones are admission gates, and "which ones
+are admission gates" is exactly the judgement no regex has.
+
+The narrower property that could be swept: no call to `require_agreement`
+passes operands it has not declared. That checks the helper is used correctly,
+not that it is used at all, which is the weaker half. Recorded rather than
+written, because a sweep that checks the wrong thing is worse than none.
+
 ### G2.2 A produced metric with no declared model output is not checked
 
 **Where** `src/engcore/domains/kinetics/cstr/validation.py`,
