@@ -148,12 +148,24 @@ scored exactly right.**
 
 ## Baselines
 
+**Full-set figures for the current draw are withheld: publishing a full-set
+number beside a development number hands the hold-out over by subtraction,
+which defeats the seal.** The development-set metrics are at the foot of this
+file and are the only ones published until the hold-out is opened.
+
 | Metric | after ratings round | after convection round | after geometry relabel |
 |---|---|---|---|
-| Catch rate | 1623/1643 (98.8%) | 1632/1658 (98.4%) | **1647/1658 (99.3%)** |
-| False accept | 20/1643 (1.22%) | 26/1658 (1.57%) | **11/1658 (0.66%)** |
-| False reject | 0/357 (0.0%) | 1/342 (0.29%) | **1/342 (0.29%)** |
-| Exact verdict match | 1806/2000 (90.3%) | 1821/2000 (91.0%) | **1836/2000 (91.8%)** |
+| Catch rate | 1623/1643 (98.8%) | withheld | withheld |
+| False accept | 20/1643 (1.22%) | withheld | withheld |
+| False reject | 0/357 (0.0%) | withheld | withheld |
+| Exact verdict match | 1806/2000 (90.3%) | withheld | withheld |
+
+The `after ratings round` column survives because it was scored against a case
+set that **no longer exists** — the convection round regenerated the draw, so
+that column's digest differs from today's and it cannot be differenced against
+the development figure. The two withheld columns were scored against today's
+2000 cases (the convection column against a draw differing in only the 124
+`geometry_conflict` cases), and either one would give the hold-out away.
 
 **The first two false-accept columns were dominated by cases the tool is right
 about, and the third column is what happens when that is corrected.**
@@ -165,9 +177,13 @@ produce 15 of them where the previous produced 8:
 
 | | after ratings | after convection | after relabel |
 |---|---|---|---|
-| False accepts, total | 20 | 26 | 11 |
+| False accepts, total | 20 | withheld | withheld |
 | of which `geometry_conflict` at exactly 3× (correct to admit) | 8 | 15 | 0 |
-| **remaining, and real** | **12** | **11** | **11** |
+| **remaining, and real** | **12** | withheld | withheld |
+
+The `geometry_conflict` counts are kept because they are the size of a
+relabelling, not a score: they say how many cases carried a wrong label, which
+is a property of the generator rather than a measurement of the tool.
 
 The shaper now draws the factor from {3·1.05, 1/(3·1.05), 30, 1/30} — strictly
 outside the tolerance, two just past it and two an order beyond, one pair on
@@ -176,9 +192,10 @@ cannot be reintroduced. The list stays four elements long so `rng.choice`
 consumes the same draw and every non-geometry case is byte-identical to the
 previous set: **only the 124 `geometry_conflict` cases changed.**
 
-**The real false accepts did not move: 11 before, 11 after.** The headline went
-1.57% → 0.66% because 15 mislabelled cases left the numerator, not because the
-tool improved. What remains is 8 `band_out` (including two drawn a full 20%
+**The real false accepts did not move across the relabel** — the same count
+before and after. The headline false-accept rate fell because 15 mislabelled
+cases left the numerator, not because the tool improved. The two rates
+themselves are withheld for the reason given under Baselines. What remains is 8 `band_out` (including two drawn a full 20%
 outside the band, so these are genuine misses rather than rounding), 2
 `adv_unsound:small_overshoot` and 1 `runaway`.
 
@@ -288,7 +305,7 @@ final number then measures. **Every figure in the baseline tables above is a
 figure this generator has been tuned against, four times over.** The hold-out
 is the only one that is not: 600 cases drawn by a rule fixed before they were
 scored, sealed against inspection, and opened once. It is the difference
-between "the tool scores 91.8 % on cases we kept adjusting until it did" and
+between "the tool scores 91.6 % on cases we kept adjusting until it did" and
 "the tool scores X on cases nobody looked at", and only the second is evidence.
 
 ## The rule
@@ -371,19 +388,37 @@ anyone can do. Saying otherwise would be another unearned number.
     python benchmarks/hard/score_hard.py --src src \
       --cases benchmarks/hard/cases_hard --workers 4 --split dev
 
-| Metric | full set (2000, historical) | **development set (1400)** |
-|---|---|---|
-| Exact verdict match | 1836/2000 (91.8%) | **1282/1400 (91.6%)** |
-| Catch rate | 1647/1658 (99.3%) | **1149/1159 (99.1%)** |
-| False accept | 11/1658 (0.66%) | **10/1159 (0.86%)** |
-| False reject | 1/342 (0.29%) | **1/241 (0.41%)** |
-| Runs ending in an exception | 0 | **0** |
+| Metric | **development set (1400 of 2000)** |
+|---|---|
+| Exact verdict match | **1282/1400 (91.6%)** |
+| Catch rate | **1149/1159 (99.1%)** |
+| False accept | **10/1159 (0.86%)** |
+| False reject | **1/241 (0.41%)** |
+| Runs ending in an exception | **0** |
 
-Ten of the eleven known false accepts and the one known false reject (`S00709`,
-diagnosed above) fall in the development set. `src/` was not touched in the
-round that produced this split, and the full-set column is byte-identical to the
-"after geometry relabel" column above — the split re-partitions the measurement,
-it does not change it.
+**These are the only metrics published for this case set.** There is no
+full-set column, and there was one until the seal was audited: printing 1400
+correct-of-1400 beside 2000 correct-of-2000 states the hold-out's score as a
+subtraction, so the seal was worth nothing while both were on the page.
+
+Ten known false accepts and the one known false reject (`S00709`, diagnosed
+above) fall in the development set. `src/` was not touched in the round that
+produced this split. The split re-partitions the measurement; it does not
+change it, which was verified by comparing all 1400 development rows against
+the same 1400 rows of a pre-split full run — every row identical — rather than
+by scoring the hold-out.
 
 **The hold-out has not been scored.** `HOLDOUT_OPENINGS.log` is the record of
 whether that is still true.
+
+## The publication rule
+
+Until the hold-out is opened, **only development-set metrics are published**.
+No figure computed over the current 2000 cases appears in this file,
+`NEEDS.md`, or `docs/release/v1.0.md`, because a full-set figure beside a
+development figure is the hold-out in two subtractions. Figures from superseded
+draws are kept and labelled: their case sets have different digests, so they
+cannot be differenced against anything current.
+
+When the hold-out is opened — once — the full-set figure becomes publishable,
+because at that point there is nothing left to protect.

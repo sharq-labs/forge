@@ -2469,7 +2469,7 @@ and cannot judge, and it now says which.
 Three tasks, no change to `src/`. What follows is what the round measured and
 could not close, not what it built.
 
-### A.1 The seal is procedural, and the arithmetic leak is real
+### A.1 The seal leaked by subtraction, and the leak is now closed
 
 `score_hard.py` refuses `--split holdout` and `--split all` without
 `--open-holdout`, and logs every opening. That stops the hold-out **cases** from
@@ -2477,18 +2477,26 @@ being scored, listed or diffed between runs, which is the mechanism by which a
 benchmark gets fitted to a tool: you read which cases were missed, and you
 change something.
 
-It does **not** make the hold-out aggregate unknowable. The full-set figure is
-published in `benchmarks/hard/README.md` and this file, so hold-out is
-(full - dev) by arithmetic anyone can do -- and with 1836/2000 and 1282/1400
-both printed, the hold-out's exact match is 554/600 by subtraction. That number
-has not been produced by scoring, and no per-case detail behind it exists
-anywhere, but pretending the aggregate is sealed would be exactly the kind of
-unearned claim this benchmark's README already warns about.
+For one commit it did not stop the hold-out **aggregate** from being read off
+the page. A full-set figure printed beside a development figure states the
+hold-out's score as a subtraction, and both were published, so the seal was
+worth nothing to anyone willing to do one line of arithmetic. **Closed by
+withdrawing the full-set figures**: until the hold-out is opened, only
+development-set metrics are published, here, in
+`benchmarks/hard/README.md`, and in `docs/release/v1.0.md`.
 
-**What would close it:** publishing only the dev figure and retiring the
-full-set tables. That was not done, because the full-set tables are the record
-of four rounds of corrections and deleting them to make a seal look tighter
-would destroy more evidence than it protects.
+Figures from **superseded draws** are kept and labelled as such. Their case sets
+have different digests -- the convection round regenerated the draw -- so they
+cannot be differenced against a current development figure and they leak
+nothing. The two columns scored against today's 2000 cases are withheld; so is
+the convection column, whose draw differs from today's in only the 124
+`geometry_conflict` cases and is therefore close enough to subtract.
+
+**What this costs:** the four baseline tables are the record of what each
+correction did, and two of their columns are now blanks. That is the price of a
+seal that means something, and it is recoverable -- opening the hold-out
+publishes the full-set figure and the columns can be filled back in, because at
+that point there is nothing left to protect.
 
 ### A.2 Five defect tags cannot be represented in both partitions
 
@@ -2536,10 +2544,21 @@ pytest-xdist is held to." Both halves are wrong as of this commit:
    sibling states is already broken and has been for as long as that file has
    existed.
 
-**By inference, not measurement:** the `fast` CI job runs `pip install -e
-".[dev]"` on a bare `ubuntu-latest` runner -- the same declared set, the same
-absent `mcp` -- so it must hit the same collection error. No CI run was
-available to check this, and it is labelled as inference everywhere it appears.
+**Measured.** The inference above was checked against `gh run list` rather
+than left standing, and it was right but understated. CI has been red on `main`
+since 2026-09-06 16:47 -- runs `34046571740`, `34049876434`, `34051999995` --
+and it is **both** jobs, not just `fast`:
+
+    fast        1996 passed, 1 skipped, 1 error in 56.92s
+    scientific  2511 passed, 1 skipped, 1 error in 179.83s
+    E   ModuleNotFoundError: No module named 'mcp.types'
+
+Every CI job that runs pytest has been failing. The history bisects it exactly:
+green through `step9-mcp-server` (11:05), which added
+`tests/mcp/test_server.py` **with** its import guard; red from the
+`domain-gaps` merge (16:47), which added `tests/mcp/test_battery_boundary.py`
+**without** one. The guard is the entire difference between the two commits and
+between green and red, which is also why the fix is small.
 
 **Not fixed here, deliberately.** The round's rule was that a difference between
 the clean machine and the host *is the finding* and must be reported rather than

@@ -158,10 +158,38 @@ SKIPPED [1] tests/mcp/test_server.py:22: could not import 'anyio': No module nam
 2091 passed, 1 skipped in 17.35s
 ```
 
-**By inference, not measurement:** the `fast` CI job installs `pip install -e
-".[dev]"` on a bare `ubuntu-latest` runner — the same declared set, and the same
-absent `mcp` — so it must hit the same collection error. That has not been
-observed here; no CI run was available to check.
+**Measured, not inferred.** `gh run list` was checked rather than reasoned
+about, and CI is red for exactly this reason and has been for hours:
+
+| run | branch | jobs | result |
+|---|---|---|---|
+| `34051999995` (2026-09-06 18:31) | `main` | `fast`, `scientific` | both `ModuleNotFoundError: No module named 'mcp.types'` |
+| `34049876434` (17:51) | `main` | same | same |
+| `34046571740` (16:47) | `main` | same | same |
+| `34029223990` (11:05) and every run before it | `main` | — | **green** |
+
+```
+fast        E   ModuleNotFoundError: No module named 'mcp.types'
+fast        ERROR tests/mcp/test_battery_boundary.py - ImportError while importing test module
+fast        1996 passed, 1 skipped, 1 error in 56.92s
+scientific  2511 passed, 1 skipped, 1 error in 179.83s (0:02:59)
+```
+
+Two things this measurement adds that the inference did not.
+
+**It is `scientific` as well as `fast`.** Both tiers error at collection, so
+*every* CI job that runs pytest has been failing, not just the FAST one.
+
+**It bisects to a commit.** CI was green through `step9-mcp-server` at 11:05 —
+that round added `tests/mcp/test_server.py`, which guards its import and skips
+cleanly — and went red at 16:47 with the `domain-gaps` merge, the round that
+added the unguarded `tests/mcp/test_battery_boundary.py`. The guard is the
+whole difference between the two commits, and between green and red.
+
+The runner's pass count (1996) is lower than this machine's (2091) because
+those runs were on `main` at the `label-corrections` merge, five commits behind
+this branch and carrying fewer tests — not because the runner behaves
+differently. The error is identical.
 
 **Nothing was tuned away.** No dependency was added, no test was edited, no
 guard was inserted. The `Dockerfile` installs exactly what the project declares
