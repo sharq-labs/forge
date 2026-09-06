@@ -2,12 +2,48 @@
 
 A result is never just ``temperature = 84``. It is:
 
-    VALUE + UNIT + SOURCE MODEL + SOLVER + ASSUMPTIONS
-          + UNCERTAINTY + VALIDATION STATUS + PROVENANCE
+    VALUE + UNIT + SOURCE MODEL + SOLVER + ASSUMPTIONS + UNCERTAINTY
+          + VALIDITY + VALIDATION STATUS + PROVENANCE
 
 Every one of those is a typed field here, and the type system refuses the
 degenerate case: values must be Quantities, provenance is mandatory, and the
 validation report can only claim what its checks established.
+
+VALIDITY AND VALIDATION ARE DIFFERENT QUESTIONS
+------------------------------------------------
+``validation`` answers *was this result checked*. ``validity`` answers *was the
+model applicable in the first place*. A converged, fully checked solve of an
+inapplicable model is still a converged, fully checked solve, and the platform
+holds the two on different fields so that neither can quietly stand in for the
+other.
+
+``validity`` is a **mapping**, keyed by model id, because a coupled result
+covers several models and a single field would collapse them: a run whose
+thermal model is in domain and whose material model is not has two answers, and
+reporting one would be reporting the wrong one half the time.
+
+NOT ASSESSED IS NOT UNKNOWN
+----------------------------
+The empty mapping means **nobody asked**. ``ValidityStatus.UNKNOWN`` means
+somebody asked and the context could not settle it. They call for different
+work — go and make the assessment, versus go and gather the input the
+assessment needed — so the record makes them structurally impossible to
+confuse rather than merely documenting the difference:
+
+* there is no representation of "present but unassessed". A ``None`` value in
+  the mapping is refused at construction, so a model is either a key with a
+  real assessment or it is not a key.
+* :meth:`ScientificResult.validity_of` **raises** for a model that was not
+  assessed. It does not return ``None`` and it does not synthesize an
+  ``UNKNOWN``; a caller that wants a total function must ask
+  :meth:`is_assessed` first, which is the point at which the difference
+  becomes visible.
+* :attr:`ScientificResult.unassessed_models` enumerates the declared models
+  that carry no assessment, so the gap is countable rather than implicit.
+
+Nothing in this module ever writes an ``UNKNOWN`` of its own. The only
+statuses a result carries are ones some model's ``ValidityDomain.assess``
+actually produced.
 """
 
 from __future__ import annotations
@@ -16,6 +52,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
+from ..models.definition import ValidityAssessment, ValidityStatus
 from ..serialization import require_schema_any, schema_string
 from ..solvers.protocol import ConvergenceState, SolverIdentity
 from ..units.quantity import Quantity
@@ -25,17 +62,23 @@ from .provenance import ProvenanceRecord
 from .uncertainty import Uncertainty
 from .validation import ValidationLevel, ValidationOutcome, ValidationReport
 
-#: The version this writer emits. Bumped by DATA-BOUNDARY0 because
-#: ``data_references`` is **scientific content**, not decoration: a reader that
-#: silently ignored it would report a result while dropping part of what that
-#: result claims. A version bump makes that reader fail loudly instead.
-RESULT_SCHEMA = schema_string("scientific_result", 2)
+#: The version this writer emits. Bumped again for ``validity``, on exactly the
+#: argument DATA-BOUNDARY0 made for ``data_references``: whether the model
+#: applied is **scientific content**, not decoration. A reader that silently
+#: ignored the field would report a result while dropping the answer to *may I
+#: rely on this*, and would do it most dangerously in the case that matters —
+#: a result whose model is recorded as OUTSIDE_VALIDATED_DOMAIN read as one
+#: about which nothing was said. A version bump makes that reader fail loudly.
+RESULT_SCHEMA = schema_string("scientific_result", 3)
+
+#: The version before ``validity`` existed. Still read, never written.
+RESULT_SCHEMA_V2 = schema_string("scientific_result", 2)
 
 #: The version before ``data_references`` existed. Still read, never written.
 RESULT_SCHEMA_V1 = schema_string("scientific_result", 1)
 
 #: Exactly the versions this reader knows how to interpret. Not a range.
-SUPPORTED_RESULT_SCHEMAS = (RESULT_SCHEMA_V1, RESULT_SCHEMA)
+SUPPORTED_RESULT_SCHEMAS = (RESULT_SCHEMA_V1, RESULT_SCHEMA_V2, RESULT_SCHEMA)
 
 
 @dataclass(frozen=True)
@@ -50,6 +93,15 @@ class ScientificResult:
     solver: SolverIdentity | None = None
     convergence: ConvergenceState = ConvergenceState.NOT_APPLICABLE
     validation: ValidationReport = field(default_factory=ValidationReport)
+    #: One ``ValidityAssessment`` per model that was assessed, keyed by model
+    #: id. Empty means **not assessed**, which is not the same as assessed and
+    #: UNKNOWN -- see the module docstring, which explains how the record makes
+    #: the two impossible to confuse rather than only documenting it.
+    #:
+    #: Optional and defaulting to empty, so a solver that computes numbers
+    #: without holding the operating point an assessment needs constructs
+    #: exactly as it did before, and says nothing rather than something false.
+    validity: Mapping[str, ValidityAssessment] = field(default_factory=dict)
     uncertainty: Mapping[str, Uncertainty] = field(default_factory=dict)
     assumptions: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
@@ -127,6 +179,8 @@ class ScientificResult:
             tuple(sorted(references, key=lambda r: r.name)),
         )
 
+        object.__setattr__(self, "validity", self._checked_validity())
+
         uncertainty = dict(self.uncertainty)
         for name, record in uncertainty.items():
             if not isinstance(record, Uncertainty):
@@ -139,7 +193,115 @@ class ScientificResult:
                 )
         object.__setattr__(self, "uncertainty", uncertainty)
 
+    def _checked_validity(self) -> dict:
+        """Normalise the validity mapping, refusing every way to blur a gap."""
+        declared = {model_id for model_id, _version in self.models}
+        assessments = dict(self.validity)
+        if assessments and not declared:
+            raise ScientificCoreError(
+                f"result {self.result_id!r} carries {len(assessments)} validity "
+                f"assessment(s) but declares no models. An assessment is a "
+                f"verdict about a named model at a named version; a result "
+                f"that names none cannot say which model, and a consumer "
+                f"cannot attribute it"
+            )
+        checked = {}
+        for model_id, assessment in assessments.items():
+            key = str(model_id).strip()
+            if not key:
+                raise ScientificCoreError(
+                    "a validity assessment must name the model it belongs to; "
+                    "an unattributed verdict cannot be acted on"
+                )
+            if assessment is None:
+                raise ScientificCoreError(
+                    f"validity for {key!r} is None. A model that was not "
+                    f"assessed is absent from this mapping; a key present with "
+                    f"no assessment would be a third state between 'not asked' "
+                    f"and 'asked and unknown', and there is no such state"
+                )
+            if not isinstance(assessment, ValidityAssessment):
+                raise ScientificCoreError(
+                    f"validity for {key!r} must be a ValidityAssessment, got "
+                    f"{type(assessment).__name__}"
+                )
+            # Normalised through the enum for the reason NEEDS.md 1.9 records:
+            # ValidityAssessment has no __post_init__, so it may hold a bare
+            # string, and an unrecognised one must not travel inside a result
+            # as though it were a verdict. This guards the field this record
+            # owns; the general fix is still 1.9's.
+            try:
+                status = ValidityStatus(assessment.status)
+            except ValueError as exc:
+                raise ScientificCoreError(
+                    f"validity for {key!r} carries an unrecognised status "
+                    f"({exc}); a status this platform does not understand must "
+                    f"not be read as a verdict about the model"
+                ) from None
+            if key not in declared:
+                raise ScientificCoreError(
+                    f"validity names model {key!r}, which is not among the "
+                    f"models this result declares ({sorted(declared)}); a "
+                    f"verdict about a model that did not take part is not a "
+                    f"verdict about this result"
+                )
+            checked[key] = (
+                assessment
+                if assessment.status is status
+                else ValidityAssessment(
+                    status=status,
+                    satisfied=assessment.satisfied,
+                    violated=assessment.violated,
+                    unknown=assessment.unknown,
+                )
+            )
+        return checked
+
     # ---- accessors ------------------------------------------------------
+    def is_assessed(self, model_id: str) -> bool:
+        """Whether anybody asked the applicability question about this model.
+
+        The total counterpart to :meth:`validity_of`. A caller that wants to
+        branch rather than handle an exception asks this first, and asking it
+        is the point at which "not assessed" becomes visible as its own case.
+        """
+        return str(model_id).strip() in self.validity
+
+    def validity_of(self, model_id: str) -> ValidityAssessment:
+        """The assessment for one model. **Raises when there is none.**
+
+        Deliberately not total, and deliberately not returning ``None``. Either
+        alternative would put the caller one ``or`` away from treating an
+        unasked question as an unanswerable one, and those recommend opposite
+        work: make the assessment, versus gather the input it needed.
+        """
+        key = str(model_id).strip()
+        try:
+            return self.validity[key]
+        except KeyError:
+            raise ScientificCoreError(
+                f"result {self.result_id!r} carries no validity assessment for "
+                f"model {key!r}. This is 'not assessed', which is not "
+                f"ValidityStatus.UNKNOWN: nobody asked whether the model "
+                f"applied, so there is no verdict to report and none is "
+                f"invented here"
+            ) from None
+
+    @property
+    def unassessed_models(self) -> tuple[str, ...]:
+        """Declared models carrying no assessment, so the gap is countable.
+
+        Empty when every declared model was assessed -- including when the
+        result declares no models at all, which is a result that names nothing
+        to assess rather than one that assessed nothing.
+        """
+        return tuple(
+            sorted(
+                {model_id for model_id, _version in self.models}
+                - set(self.validity)
+            )
+        )
+
     def value(self, name: str) -> Quantity:
         try:
             return self.values[name]
@@ -189,6 +351,9 @@ class ScientificResult:
             "solver": self.solver.to_dict() if self.solver else None,
             "convergence": self.convergence.value,
             "validation": self.validation.to_dict(),
+            "validity": {
+                k: self.validity[k].to_dict() for k in sorted(self.validity)
+            },
             "uncertainty": {
                 k: self.uncertainty[k].to_dict() for k in sorted(self.uncertainty)
             },
@@ -217,6 +382,17 @@ class ScientificResult:
             validation=ValidationReport.from_dict(payload["validation"])
             if payload.get("validation")
             else ValidationReport(),
+            # A /1 or /2 payload predates this field and cannot carry one, so
+            # it loads as not-assessed -- which is the truth about it. A /3
+            # payload with the key absent, or explicitly null, loads the same
+            # way for the same reason: there is one representation of "nobody
+            # asked", and it is the empty mapping.
+            validity={}
+            if version in (RESULT_SCHEMA_V1, RESULT_SCHEMA_V2)
+            else {
+                k: ValidityAssessment.from_dict(v)
+                for k, v in (payload.get("validity") or {}).items()
+            },
             uncertainty={
                 k: Uncertainty.from_dict(v)
                 for k, v in (payload.get("uncertainty") or {}).items()

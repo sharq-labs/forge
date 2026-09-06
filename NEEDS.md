@@ -28,26 +28,61 @@ literally. The integration tests assert the verdict next to the result instead,
 which is honest but weaker: nothing stops a consumer from reading the numbers
 and never asking.
 
-**Proposal.** Add an optional `validity: ValidityAssessment | None = None` to
-`ScientificResult`, defaulting to `None` and serialized like the other records.
-`None` must mean *not assessed* and must not be confused with
-`ValidityStatus.UNKNOWN`, which means *assessed, and the context was
-insufficient* — two different failures with two different remedies. This is a
-core change and is not a domain conditional: `ValidityAssessment` already lives
-in the core and names no domain.
+**Status: DONE in the recommendations round**, as that round's one authorised
+core change.
 
-**Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
-and this is exactly the kind of change that should be argued before it is made.
+**What was built, and where it differs from the proposal above.** The field is
+a **mapping** — `validity: Mapping[str, ValidityAssessment]`, keyed by model id
+— and not the single optional assessment proposed here. The proposal was
+written from the single-model case and does not survive a coupled result: a run
+whose thermal model is in domain and whose material model is not has two
+answers, and one field would have had to report one of them, wrongly, half the
+time. Empty is the default, so no existing construction site moved.
 
-**Status after STEP 7: worked around, deliberately, and the workaround is not a
-substitute.** `engcore.mcp.CredibilityEvidenceReport` carries validity itself, as a tuple
-of `ModelValidityRecord` the assembler supplies. That closes the gap for anyone
-holding a *package* and leaves it wide open for anyone holding a *result*: the
-assessment still has to be made by whoever has both the problem and the
-operating point, and a package assembled without it reports
-`INSUFFICIENT_EVIDENCE` rather than pretending. So the consumer-side fix makes
-the omission visible instead of making it impossible, which is the best a
-consumer can do. The core change above is still the right one.
+**Not assessed is not UNKNOWN, structurally rather than by documentation.** The
+proposal named the distinction; keeping it needed four things, and all four are
+in place:
+
+* a `None` value in the mapping is refused, so there is no representation of
+  "listed, but not assessed" — a model is either a key with a real assessment
+  or it is not a key;
+* `validity_of()` raises for an unassessed model rather than returning `None`
+  or synthesizing an `UNKNOWN`, because either would put a caller one `or` away
+  from confusing the two;
+* `is_assessed()` is the total counterpart, and asking it is the point at which
+  the difference becomes visible at a call site;
+* `unassessed_models` enumerates declared models with no assessment, so the gap
+  is countable rather than implicit.
+
+Nothing in `results/result.py` writes a status of its own. An assessment must
+also name a model the result declares, and a result carrying assessments while
+declaring no models is refused: a verdict that cannot be attributed to a model
+at a version is not a verdict about this result.
+
+**Serialization.** `scientific_result/3`, on this repository's own precedent for
+`data_references`: whether the model applied is scientific content, so a reader
+that accepted the payload and dropped the field would report a result while
+losing the answer to *may I rely on this* — most dangerously for a result
+recorded as `OUTSIDE_VALIDATED_DOMAIN`. `/1` and `/2` still load, as not
+assessed, which is the truth about writers that could not carry one. Four tests
+pinned the old string and each was updated with the reason rather than deleted.
+
+**The consumer side.** `CredibilityEvidenceReport.from_result` reads
+`result.validity` and turns each entry into a `ModelValidityRecord`, which
+remains the transport — `derive_verdict` still reads this report's own field and
+none of its rules changed. The caller's `validity=` argument is still accepted,
+because a producer that does not hold the operating point carries nothing. The
+two sources are **merged, not ranked**: a model named by both must carry the
+identical assessment, and two different verdicts for one model raise rather than
+being resolved by precedence, since silently preferring either would let one
+verdict replace another with nothing in the record to say so.
+
+**What is still worked around.** §1.9 is untouched: `ValidityAssessment` still
+has no `__post_init__`, so `results/result.py` re-runs `ValidityStatus(...)`
+over every assessment it is handed and refuses an unrecognised one — the same
+local guard `ModelValidityRecord` already carries, now in a second place. That
+is two consumers protecting themselves where the record should protect all of
+them, and it is the argument for doing §1.9.
 
 ### 1.2 A categorical parameter cannot cross the provenance boundary
 

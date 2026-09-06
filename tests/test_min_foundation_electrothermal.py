@@ -762,7 +762,15 @@ def test_g2_an_unknown_schema_is_refused_rather_than_guessed(executed):
 
 
 def test_g3_no_existing_schema_version_moved():
-    """prereg §8.2. The new record is additive; nothing else changed."""
+    """prereg §8.2. The new record is additive; nothing else changed *here*.
+
+    ``scientific_result`` reads ``/3`` rather than the ``/2`` this milestone
+    recorded. That is not this milestone's record changing: the recommendations
+    round added ``ScientificResult.validity`` and bumped the writer, on the same
+    argument DATA-BOUNDARY0 made for ``data_references``. The assertion is
+    updated rather than deleted because what it is for is unchanged — a schema
+    must never move without somebody having to come here and say why.
+    """
     from src.engcore.scientific.ir.problem import PROBLEM_SCHEMA
     from src.engcore.scientific.models.definition import MODEL_SCHEMA
     from src.engcore.scientific.realizations.definition import REALIZATION_SCHEMA
@@ -773,7 +781,7 @@ def test_g3_no_existing_schema_version_moved():
     assert PROBLEM_SCHEMA == "scientific_problem/1"
     assert MODEL_SCHEMA == "scientific_model_definition/1"
     assert REALIZATION_SCHEMA == "model_realization_definition/1"
-    assert RESULT_SCHEMA == "scientific_result/2"
+    assert RESULT_SCHEMA == "scientific_result/3"
     assert PROVENANCE_SCHEMA == "provenance_record/2"
     assert SCIENTIFIC_TWIN_SCHEMA == "scientific_twin/1"
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"

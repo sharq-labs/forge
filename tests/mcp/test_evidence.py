@@ -845,16 +845,186 @@ def test_from_result_carries_the_checks_that_never_ran():
 
 
 def test_from_result_with_no_validity_is_unknown_rather_than_clean():
-    """The result cannot carry validity, so a package built without it says so."""
+    """A result carrying no assessment produces a package that says so.
+
+    The result *can* carry validity now, and an empty mapping there means
+    nobody asked — which is what this package reports, rather than reading the
+    silence as clean.
+    """
     result = ScientificResult(
         result_id="r1",
         values=VALUES,
         provenance=PROVENANCE,
         validation=ValidationReport(checks=(PASSED,)),
     )
+    assert result.validity == {}
     pkg = CredibilityEvidenceReport.from_result(result)
     assert pkg.validity == ()
     assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+# =====================================================================
+# Validity carried on the result itself
+# =====================================================================
+
+def result_carrying(assessments, *, checks=(PASSED,)):
+    """A result whose own ``validity`` mapping holds the assessments."""
+    return ScientificResult(
+        result_id="carried",
+        values=VALUES,
+        provenance=ONE_MODEL_PROVENANCE,
+        models=tuple(ONE_MODEL_PROVENANCE.models),
+        validation=ValidationReport(checks=tuple(checks)),
+        validity=assessments,
+    )
+
+
+def only_model():
+    model_id, _version = ONE_MODEL_PROVENANCE.models[0]
+    return model_id
+
+
+def test_a_package_reads_the_validity_the_result_carries():
+    """The gap NEEDS.md §1.1 records, closed at the point it was felt.
+
+    No caller argument at all: the producer of the result made the assessment,
+    the result carried it, and the package found it there.
+    """
+    carried = result_carrying({only_model(): IN_DOMAIN.assessment})
+    pkg = CredibilityEvidenceReport.from_result(carried)
+
+    assert [record.model_id for record in pkg.validity] == [only_model()]
+    assert pkg.validity[0].assessment == IN_DOMAIN.assessment
+    assert pkg.validity[0].version == ONE_MODEL_PROVENANCE.models[0][1]
+    assert pkg.unassessed_models == ()
+    assert pkg.verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_the_carried_verdict_reaches_the_verdict_rules_unchanged():
+    """A violated bound carried on the result is NOT_SUPPORTED, as ever.
+
+    ``derive_verdict`` did not move: it reads this report's own field, which is
+    still the transport. What changed is where that field can be filled from.
+    """
+    carried = result_carrying(
+        {
+            only_model(): ValidityAssessment(
+                status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN,
+                violated=("biot_number",),
+            )
+        }
+    )
+    pkg = CredibilityEvidenceReport.from_result(carried)
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
+    assert pkg.violated_conditions == ((only_model(), "biot_number"),)
+
+
+def test_the_callers_records_still_work_when_the_result_carries_none():
+    """The older path is not deprecated: a producer may not hold the context."""
+    result = ScientificResult(
+        result_id="r1",
+        values=VALUES,
+        provenance=ONE_MODEL_PROVENANCE,
+        validation=ValidationReport(checks=(PASSED,)),
+    )
+    assert result.validity == {}
+    pkg = CredibilityEvidenceReport.from_result(result, validity=(IN_DOMAIN,))
+    assert pkg.validity == (IN_DOMAIN,)
+    assert pkg.verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_the_two_sources_merge_when_they_name_different_models():
+    """Neither source is authoritative; together they cover the run."""
+    two_models = ScientificResult(
+        result_id="two",
+        values=VALUES,
+        provenance=PROVENANCE,
+        models=tuple(PROVENANCE.models),
+        validation=ValidationReport(checks=(PASSED,)),
+        validity={PROVENANCE.models[0][0]: IN_DOMAIN.assessment},
+    )
+    other_id, other_version = PROVENANCE.models[1]
+    pkg = CredibilityEvidenceReport.from_result(
+        two_models,
+        validity=(
+            ModelValidityRecord(
+                model_id=other_id,
+                version=other_version,
+                assessment=IN_DOMAIN.assessment,
+            ),
+        ),
+    )
+    assert {record.model_id for record in pkg.validity} == {
+        m for m, _ in PROVENANCE.models
+    }
+    assert pkg.unassessed_models == ()
+
+
+def test_the_same_verdict_from_both_sources_is_not_a_duplicate():
+    """Saying it twice identically is redundant, not contradictory."""
+    carried = result_carrying({only_model(): IN_DOMAIN.assessment})
+    pkg = CredibilityEvidenceReport.from_result(
+        carried,
+        validity=(
+            ModelValidityRecord(
+                model_id=only_model(),
+                version=ONE_MODEL_PROVENANCE.models[0][1],
+                assessment=IN_DOMAIN.assessment,
+            ),
+        ),
+    )
+    assert len(pkg.validity) == 1
+
+
+def test_two_different_verdicts_for_one_model_are_refused_not_ranked():
+    """Precedence would let either replace the other with nothing to say so.
+
+    The failure mode this prevents is specific: a caller passing a clean
+    assessment over a result that carries a violated one, and the package
+    reporting the clean answer because the caller's argument won.
+    """
+    carried = result_carrying({only_model(): IN_DOMAIN.assessment})
+    with pytest.raises(CredibilityEvidenceError) as excinfo:
+        CredibilityEvidenceReport.from_result(
+            carried,
+            validity=(
+                ModelValidityRecord(
+                    model_id=only_model(),
+                    version=ONE_MODEL_PROVENANCE.models[0][1],
+                    assessment=ValidityAssessment(
+                        status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN,
+                        violated=("biot_number",),
+                    ),
+                ),
+            ),
+        )
+    assert "two different validity verdicts" in str(excinfo.value)
+
+
+def test_a_carried_unknown_is_a_gap_and_a_missing_key_is_a_different_gap():
+    """Both are INSUFFICIENT_EVIDENCE and they are not the same finding.
+
+    The carried UNKNOWN names the condition nobody declared. The absent key
+    produces an unassessed model. A reader repairs them differently, and the
+    package keeps them apart because the result did.
+    """
+    unknown = CredibilityEvidenceReport.from_result(
+        result_carrying(
+            {
+                only_model(): ValidityAssessment(
+                    status=ValidityStatus.UNKNOWN, unknown=("emissivity",)
+                )
+            }
+        )
+    )
+    absent = CredibilityEvidenceReport.from_result(result_carrying({}))
+
+    assert unknown.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert absent.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert unknown.unknown_conditions == ((only_model(), "emissivity"),)
+    assert unknown.unassessed_models == ()
+    assert absent.unknown_conditions == ()
+    assert absent.unassessed_models == tuple(ONE_MODEL_PROVENANCE.models)
 
 
 def test_the_carried_checks_go_back_into_the_cores_own_report_type():

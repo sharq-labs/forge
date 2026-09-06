@@ -57,6 +57,7 @@ from src.engcore.scientific.results.provenance import ProvenanceRecord
 from src.engcore.scientific.results.result import (
     RESULT_SCHEMA,
     RESULT_SCHEMA_V1,
+    RESULT_SCHEMA_V2,
     SUPPORTED_RESULT_SCHEMAS,
     ScientificResult,
 )
@@ -176,13 +177,21 @@ def test_a2_the_writer_emits_the_bumped_schema_and_the_reader_accepts_both():
 
     The cost is paid on the reader side, once: this reader accepts both.
     """
-    assert RESULT_SCHEMA == "scientific_result/2"
+    # ``/3`` since the recommendations round, which added
+    # ``ScientificResult.validity`` on this milestone's own argument: whether
+    # the model applied is scientific content, so a reader that dropped it
+    # would understate the result. The accept-set grew rather than moved, which
+    # is the property this milestone established and this test still measures:
+    # every payload that loaded before still loads.
+    assert RESULT_SCHEMA == "scientific_result/3"
+    assert RESULT_SCHEMA_V2 == "scientific_result/2"
     assert RESULT_SCHEMA_V1 == "scientific_result/1"
     assert SUPPORTED_RESULT_SCHEMAS == (
         "scientific_result/1",
         "scientific_result/2",
+        "scientific_result/3",
     )
-    assert scalar_result().to_dict()["schema"] == "scientific_result/2"
+    assert scalar_result().to_dict()["schema"] == "scientific_result/3"
 
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"
     assert RAW_OUTPUT_SCHEMA_V1 == "raw_solver_output/1"
@@ -203,12 +212,18 @@ def test_a2b_an_old_reader_refuses_a_new_payload_rather_than_losing_data():
     """
     result, _ = solve_slab_with_bulk_field(make_slab(64, 80), run_id="v2-only")
     payload = result.to_dict()
-    assert payload["schema"] == "scientific_result/2"
+    assert payload["schema"] == "scientific_result/3"
     assert payload["data_references"], "the payload must actually carry one"
 
     with pytest.raises(ScientificCoreError) as excinfo:
         require_schema(payload, RESULT_SCHEMA_V1)
-    assert "scientific_result/2" in str(excinfo.value)
+    assert "scientific_result/3" in str(excinfo.value)
+    # The /2 reader refuses it too, and for this milestone's own reason: a /3
+    # payload can carry a validity assessment, and a reader that accepted it
+    # and dropped that would report a result while losing the answer to
+    # whether the model applied.
+    with pytest.raises(ScientificCoreError):
+        require_schema(payload, RESULT_SCHEMA_V2)
 
     raw_payload = RawSolverOutput(
         convergence=ConvergenceState.CONVERGED,
@@ -220,7 +235,7 @@ def test_a2b_an_old_reader_refuses_a_new_payload_rather_than_losing_data():
     # And an unknown future version is refused by the new reader too: the
     # accept-set is exact strings, not a range.
     with pytest.raises(ScientificCoreError):
-        ScientificResult.from_dict({**payload, "schema": "scientific_result/3"})
+        ScientificResult.from_dict({**payload, "schema": "scientific_result/4"})
 
 
 def test_a2c_a_v2_payload_round_trips_its_references():
@@ -244,7 +259,7 @@ def test_a3_a_payload_written_before_this_milestone_still_loads():
     assert restored.data_references == ()
     assert restored.value("v:out").magnitude_in("volt") == pytest.approx(1.6612)
     # Re-serializing upgrades it: the writer emits one version only.
-    assert restored.to_dict()["schema"] == "scientific_result/2"
+    assert restored.to_dict()["schema"] == "scientific_result/3"
 
 
 def test_a3b_a_v1_payload_carries_no_references_even_if_a_key_appears():
