@@ -2301,6 +2301,78 @@ That is a battery-domain change and TASK C forbids it.
 
 ---
 
+---
+
+---|
+| T1 | `python -X utf8 -m experiments.thermal_t1.t1_run` | 11 s |
+| T2 | `python -X utf8 -m experiments.thermal_t2.t2_run` | 15 s |
+| T3 | `python -X utf8 -m experiments.thermal_t3.t3_run` | 35 s |
+| MODEL0-R + pin tests | `pytest tests/test_model0r_differential.py tests/test_model0r_realization_foundation.py tests/test_thermal_t{1,2,3}_*.py tests/test_data_boundary0.py tests/test_min_foundation_electrothermal.py` | 51 s, 360 tests |
+| FULL tier | `pytest -q -n 4` | ~4 min, 2700 tests |
+
+Under six minutes of compute in total. The cost is the review, not the running.
+
+**The acceptance condition: every scientific number in T1, T2 and T3 is
+unchanged.** That is not a hope. It was measured on today's tree, after all
+seven guards, by re-running all three in a throwaway copy and diffing the
+results against the committed ones:
+
+* T1 — byte-identical apart from three `forward_map_build_seconds_telemetry`
+  fields.
+* T2 — 938 differing JSON lines, **0** of them outside wall-clock telemetry.
+* T3 — 1852 differing JSON lines, **0** of them outside wall-clock telemetry.
+
+Which is what the four edits predict: G4.1 makes the core perform the same
+three comparisons the solver performs by hand; G6.1 refuses an absent
+fingerprint that these experiments never produce; G3.1 awards the same levels
+for the declared thresholds, which is what T1/T2/T3 use; G2.1 changes an
+unconditional PASS into a comparison that passes. A number that *did* move
+would mean one of those four sentences is false, and the re-freeze should stop
+rather than re-pin.
+
+**Procedural note worth writing down.** Running an experiment rewrites its own
+`*_results.json`, `*_report.md` and `*_config_frozen.json`. A re-freeze
+therefore produces diffs in the frozen tree by construction, and the reviewer's
+job is to confirm they are telemetry-only. On today's tree they are.
+
+### What disappears when it lands
+
+Every one of these exists only because of the freeze, and each is a small
+permanent tax until it goes:
+
+* `_FROZEN_UNEARNED_LEVEL`, `_FROZEN_CALLER_THRESHOLDS`,
+  `_FROZEN_HANDROLLED_SUPPORT` and the frozen entry in
+  `_PERMISSIVE_BY_EXCEPTION` — four named exceptions in
+  `tests/test_core_guards.py`, each of which is a sweep that has to allow the
+  thing it is sweeping for.
+* `_require_slab_fingerprint` in `conduction1d_bulk.py` and
+  `conduction1d_schemes.py` — a strict check placed in front of a permissive
+  one, in two modules, because the permissive one could not be fixed.
+* Guard 2's status. It is currently a checked invariant rather than a
+  constructor refusal, **and the only reason is this one construction.** With
+  it gone, the refusal moves into `ValidationCheck.__post_init__` beside the
+  `establishes=UNVERIFIED` refusal it belongs next to, and a claimed level
+  becomes a value that cannot be constructed rather than one a test looks for.
+
+That last item is the real return. Three of the four blocked guards lose an
+exception; Guard 2 changes category.
+
+### Suggested order
+
+1. Land the four edits together; run FULL. Expect the pin tests to fail — they
+   are what is being re-pinned, and their failure is the evidence that the
+   pins were doing their job.
+2. Re-run T1, T2, T3. Diff the three `*_results.json` against HEAD and confirm
+   the only differences are telemetry. **Stop here if anything else moved.**
+3. Re-pin the three digest maps in order (T1 domain, T2's T1, T3's T2).
+4. Re-run FULL and MODEL0-R. Re-run the hard benchmark; expect all four metrics
+   unchanged.
+5. Move Guard 2's rule into `ValidationCheck.__post_init__` and delete the four
+   exceptions and the two shims listed above.
+6. Record the re-freeze in `t1_config.py`'s own prose: which commit the digests
+   were taken at, and that the design hashes were unchanged across it.
+
+
 ## CORE GUARDS ROUND — what a guard needed and could not have
 
 Added by the round that moved seven repeated review findings from the domains
@@ -2517,6 +2589,24 @@ forger; that boundary is now structurally unable to name an unbound solver, and
 a token would close the remaining accidental path -- a solver refactored to
 return output it did not produce.
 
+**DELIBERATELY LEFT PARTIAL, and this is the standing decision rather than a
+backlog item.** `from_execution` removes the accident, not the lie, and the
+difference is not one more field on `ExecutionBinding`. A real proof requires
+the execution trace to be a first-class record -- something a solve *writes*,
+that a provenance record *reads*, and that neither can be persuaded to agree
+about after the fact. That is option (3) and it is a persistence feature, not
+a dataclass change: it needs a per-run log, a writer that cannot be bypassed,
+and a reader that refuses a binding with no entry, all interacting with the
+campaign persistence layer that already exists.
+
+Doing (1) or (2) in the meantime would buy a token that anyone reading this
+file can forge, in exchange for a signature change across ~60 call sites and a
+record that *looks* like proof. A guard that looks like proof and is not is
+worse than a documented partial, because the next reader stops asking. So this
+stays partial, costed, and unbuilt until the execution trace is worth building
+for its own reasons -- at which point this guard completes as a consequence
+rather than as a project.
+
 ### G5.2 The battery march still returns steps rather than a ScientificResult
 
 NEEDS C.6 asked for a `solve_cell` in `battery/solver.py` returning a
@@ -2582,32 +2672,54 @@ the refusal is about. Fixed rather than reported, because
 round found in two domains was in three places, and the third was found by a
 repository-wide sweep rather than by review.
 
-### G7.1 Nothing forces a future provider adapter through the admission layer
+### G7.1 CLOSED — the admission layer is now the only route in
 
-`engcore.scientific.solvers.admission` states the rule -- finiteness before any
-tolerance comparison -- and the one provider adapter in the repository uses it.
-Nothing makes the next one.
+*Superseded. Kept because the reasoning is the argument for the shape, and
+because a reader comparing this file against the commit that created it should
+see what changed rather than a gap.*
 
-A provider adapter is an ordinary class satisfying `ScientificSolver`. Its
-`extract_metrics` can compute whatever it likes from whatever the provider
-returned, and the core sees the result only when a `Quantity` is constructed
-from it. That is a backstop and it is where the non-finite value was in fact
-stopped before this guard -- as a `UnitCompatibilityError`, from the units
-layer, about a provider that had not delivered what was asked. It is not a
-gate, and it disappears the moment an adapter computes anything from an
-admitted number before wrapping it.
+**What this entry used to say.** `engcore.scientific.solvers.admission` states
+the rule and one adapter uses it; nothing makes the next one. A provider
+adapter is an ordinary class satisfying `ScientificSolver`, its
+`extract_metrics` can compute what it likes, and the core sees the result only
+when a `Quantity` is constructed. A backstop, not a gate — and one that
+disappears the moment an adapter computes anything from an admitted number
+before wrapping it.
 
-**What a lock would need.** The core would have to see the provider's numbers
-before the adapter does -- a `ProviderOutput` type that `RawSolverOutput` is
-built from, constructed only through the admission layer. That is a real change
-to the solver protocol: every adapter's `solve` would return the new type, and
-`RawSolverOutput` would stop being the thing a backend produces and start being
-the thing the core derives. Perhaps two days, and it interacts with the
-`RawSolverOutput` change NEEDS G5.1 also wants; the two should be done together
-or not at all, since both are about making the core rather than the adapter the
-producer of the record.
+**What was done instead of waiting.** The refusal moved onto the object every
+adapter must return. `RawSolverOutput.__post_init__` refuses a non-finite value
+or residual when `convergence` is CONVERGED or NOT_APPLICABLE. There is no
+route from a backend into a `ScientificResult` that avoids that constructor:
+`extract_metrics` reads the record, and a value invented after it is not a
+value the backend produced. An adapter that skips the admission layer produces
+**nothing** rather than something unchecked.
 
-Until then this is a rule with one user and a test that checks that user.
+This costs less than the `ProviderOutput` redesign this entry proposed, and it
+is stronger in the way that matters: it needs no cooperation from the adapter
+at all, so it applies to an adapter written by someone who has never read this
+file.
+
+**Scoped to a succeeded solve, deliberately.** NOT_CONVERGED, MAX_ITERATIONS,
+DIVERGED and FAILED keep the sanctioned home for non-finite values — a diverged
+solve genuinely produces NaN, and a record that could not say so would force
+every adapter to launder its own failure. CONVERGED and NOT_APPLICABLE cannot,
+because a solve claiming to have completed while returning a number that is not
+a number is telling two stories at once.
+
+**Measured cost: none.** The FULL tier passes unchanged with the rule on, so no
+adapter in this repository emits a non-finite value on a succeeded solve today.
+
+**The admission layer is still wanted, and is still the door.** The core's
+refusal is a `ScientificCoreError` about a record. At a provider boundary the
+truth is *the provider ran and did not deliver what was asked*, which is the
+adapter's own failure category and the one its callers catch. The ngspice
+adapter admits the parsed values before constructing the record, so that is
+what a caller sees; the core's refusal is the floor under it, not a replacement
+for it.
+
+**What remains open.** Nothing forces a *future* adapter to use the named door,
+only to fall through the floor. The residual cost of that is a worse error
+message and a later failure, not an unchecked number.
 
 ### G7.2 The finiteness rule is not swept for repository-wide
 

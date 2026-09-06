@@ -1331,3 +1331,174 @@ def test_the_element_gate_refuses_every_non_finite_shape():
     ):
         with pytest.raises(NgspiceExecutionFailure, match="non-finite"):
             NgspiceDCSolver._admit_element_power(**{**honest, **override})
+
+
+# ---------------------------------------------------------------------
+# GUARD 7, enforced: the admission layer is the only route in
+# ---------------------------------------------------------------------
+#
+# The rule above lives in `engcore.scientific.solvers.admission` and one
+# adapter uses it. What follows is the floor underneath, on the object every
+# adapter must return: a solve reporting CONVERGED or NOT_APPLICABLE cannot
+# carry a non-finite value or residual. An adapter that skips the admission
+# layer therefore produces NOTHING rather than something unchecked.
+
+
+def test_a_succeeded_solve_cannot_return_a_number_that_is_not_a_number():
+    """The floor, on the one object no adapter can avoid constructing.
+
+    There is no route from a backend into a ``ScientificResult`` that does not
+    pass through this constructor: ``extract_metrics`` reads this record, and a
+    value invented after it is not a value the backend produced.
+    """
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.solvers.protocol import (
+        ConvergenceState,
+        RawSolverOutput,
+    )
+
+    nan, inf = float("nan"), float("inf")
+
+    for state in (ConvergenceState.CONVERGED, ConvergenceState.NOT_APPLICABLE):
+        for payload in (
+            {"values": {"u": nan}},
+            {"values": {"u": inf}},
+            {"values": {"u": -inf}},
+            {"residuals": {"r": nan}},
+        ):
+            with pytest.raises(ScientificCoreError, match="non-finite"):
+                RawSolverOutput(convergence=state, **payload)
+        # The same record with finite numbers is fine.
+        RawSolverOutput(convergence=state, values={"u": 1.0}, residuals={"r": 0.0})
+
+
+def test_a_failed_solve_keeps_the_sanctioned_home_for_non_finite_values():
+    """The scope is the design, not an oversight.
+
+    A diverged solve genuinely produces NaN, and a record that could not say so
+    would force every adapter to launder its own failure. What is refused is a
+    solve claiming to have completed *and* returning a non-number, which is two
+    stories at once.
+    """
+    from src.engcore.scientific.solvers.protocol import (
+        ConvergenceState,
+        RawSolverOutput,
+    )
+
+    nan = float("nan")
+    for state in (
+        ConvergenceState.NOT_CONVERGED,
+        ConvergenceState.MAX_ITERATIONS,
+        ConvergenceState.DIVERGED,
+        ConvergenceState.FAILED,
+    ):
+        raw = RawSolverOutput(convergence=state, values={"u": nan})
+        assert raw.values["u"] != raw.values["u"]  # still NaN, still recorded
+        assert not raw.succeeded
+
+
+def test_an_adapter_that_skips_the_admission_layer_produces_nothing():
+    """The property the enforcement is for, written as the adapter that skips it.
+
+    This is the next provider adapter, in miniature: it fetches numbers from
+    somewhere outside itself and hands them straight to ``RawSolverOutput``
+    without going near ``engcore.scientific.solvers.admission``. It gets no
+    result -- not a result carrying a NaN, and not a result whose validation
+    checks all passed because every comparison against a NaN is False.
+    """
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.solvers.protocol import (
+        ConvergenceState,
+        DeclaredSupport,
+        PreparedSolve,
+        RawSolverOutput,
+        SolverIdentity,
+    )
+
+    class _ForgetfulProviderAdapter(DeclaredSupport):
+        """Reaches an external provider and admits nothing."""
+
+        identity = SolverIdentity("forgetful.provider", "1.0.0")
+        capabilities = frozenset()
+
+        def prepare(self, problem):
+            return PreparedSolve(problem=problem, solver=self.identity)
+
+        def solve(self, prepared):
+            # What "the provider said". No admission layer anywhere.
+            from_provider = {"v(n1)": float("nan"), "@r1[p]": 1.0}
+            return RawSolverOutput(
+                convergence=ConvergenceState.CONVERGED, values=from_provider
+            )
+
+    problem = ScientificProblem(problem_id="forgetful")
+    adapter = _ForgetfulProviderAdapter()
+    with pytest.raises(ScientificCoreError, match="non-finite"):
+        adapter.solve(adapter.prepare(problem))
+
+
+def test_the_admission_layer_is_still_the_route_that_says_what_went_wrong():
+    """Enforcement is the floor; the layer is the door, and both are wanted.
+
+    The core's refusal is about a *record* and arrives as a
+    ``ScientificCoreError``. The truth at a provider boundary is that the
+    provider ran and did not deliver what was asked, which is the adapter's own
+    failure category and the one its callers already catch. The adapter that
+    exists admits first, so that is what a caller sees.
+    """
+    from src.engcore.domains.electrical import ngspice as ng
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    source = pathlib.Path(ng.__file__).read_bytes().decode("utf-8")
+    # Admission happens where the provider's numbers first exist, not only at
+    # the element gate that sees three channels of one resistor.
+    assert "require_finite(" in source
+    assert source.index("require_finite(") < source.index("_admit_element_power")
+
+    # And the refusal a caller sees is the adapter's, not the core's.
+    import os
+    import sys
+
+    script = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "tests",
+        "nonfinite_provider.py",
+    )
+    solver = ng.NgspiceDCSolver(
+        invocation=ng.NgspiceInvocation(
+            command=(sys.executable, script, "--nan")
+        )
+    )
+    from src.engcore.domains.electrical.dc import (
+        DCCircuit,
+        DCVoltageSource,
+        ElectricalNode,
+        Resistor,
+    )
+
+    circuit = DCCircuit(
+        circuit_id="guard7-enforced",
+        nodes=(ElectricalNode("gnd", is_reference=True), ElectricalNode("n1")),
+        resistors=(
+            Resistor(
+                component_id="R1",
+                node_a="n1",
+                node_b="gnd",
+                resistance=Quantity(1000.0, "ohm"),
+            ),
+        ),
+        voltage_sources=(
+            DCVoltageSource(
+                component_id="V1",
+                positive_node="n1",
+                negative_node="gnd",
+                voltage=Quantity(5.0, "volt"),
+            ),
+        ),
+    )
+    with pytest.raises(ng.NgspiceExecutionFailure) as refusal:
+        ng.solve_circuit_with_ngspice(
+            circuit, run_id="guard7-enforced", solver=solver
+        )
+    assert not isinstance(refusal.value, ScientificCoreError)
+    assert "non-finite" in str(refusal.value)

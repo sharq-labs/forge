@@ -154,11 +154,20 @@ class RawSolverOutput:
     kernels are allowed to speak numbers. They become unit-carrying
     quantities in ``extract_metrics``.
 
-    **This is the sanctioned home for non-finite values.** A diverged solve
-    genuinely produces NaN or ±Inf, and forcing an adapter to hide that would
-    make it lie about what happened. The finiteness invariant begins one
-    layer up, at :class:`~engcore.scientific.units.Quantity`: raw output may
-    be non-finite, interpreted science may not.
+    **This is the sanctioned home for non-finite values, and only for a solve
+    that says it failed.** A diverged solve genuinely produces NaN or ±Inf, and
+    forcing an adapter to hide that would make it lie about what happened. A
+    solve reporting CONVERGED or NOT_APPLICABLE and returning a number that is
+    not a number is telling two stories at once, and this record refuses to
+    carry both -- see :meth:`_require_finite_on_success`.
+
+    That refusal is the floor under
+    :mod:`engcore.scientific.solvers.admission`. An adapter that reaches an
+    external provider should admit its numbers there, where the refusal names
+    the provider, the channel and the reason, and arrives in the adapter's own
+    failure category. An adapter that does not still cannot construct this
+    record -- so a provider value cannot enter a result unchecked, whether or
+    not the adapter that fetched it remembered the rule.
     """
 
     convergence: ConvergenceState
@@ -184,6 +193,7 @@ class RawSolverOutput:
         object.__setattr__(
             self, "residuals", {str(k): float(v) for k, v in self.residuals.items()}
         )
+        self._require_finite_on_success()
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
         object.__setattr__(self, "diagnostics", dict(self.diagnostics))
@@ -199,6 +209,58 @@ class RawSolverOutput:
             "data_references",
             tuple(sorted(references, key=lambda r: r.name)),
         )
+
+    def _require_finite_on_success(self) -> None:
+        """A solve that says it succeeded may not return a non-number.
+
+        **Why this is here and not left to each adapter.** Every admission gate
+        an adapter writes is a tolerance comparison, and ``abs(nan - x) > tol``
+        is False -- so a gate written to catch a provider whose numbers are
+        wrong cannot catch a provider whose numbers are not numbers. That is a
+        property of the shape, which means the next adapter written will have
+        the same hole, and a rule living in the last adapter's private method
+        will not be there when it is.
+
+        So the refusal is on the object every adapter must return. There is no
+        route from a backend into a ``ScientificResult`` that does not pass
+        through this constructor: ``extract_metrics`` reads this record, and a
+        value invented after it is not a value the backend produced. An adapter
+        that skips :mod:`engcore.scientific.solvers.admission` therefore
+        produces **nothing** rather than something unchecked.
+
+        **Scoped to a succeeded solve, and that scope is the whole design.**
+        NOT_CONVERGED, MAX_ITERATIONS, DIVERGED and FAILED keep the sanctioned
+        home: a diverged solve genuinely produces NaN, and a record that could
+        not say so would force every adapter to launder its own failure.
+        CONVERGED and NOT_APPLICABLE cannot, because a solve claiming to have
+        completed and returning a number that is not a number is telling two
+        stories, and the platform has no reading under which both are true.
+
+        Residuals are held to the same rule for the same reason: a residual is
+        what a validation check compares against a tolerance, and a NaN
+        residual passes every tolerance ever written for it.
+        """
+        if not self.succeeded:
+            return
+        offenders = sorted(
+            f"{label}={value!r}"
+            for label, value in (
+                *self.values.items(),
+                *((f"residual:{k}", v) for k, v in self.residuals.items()),
+            )
+            if not math.isfinite(value)
+        )
+        if offenders:
+            raise ScientificCoreError(
+                f"a solve reporting {self.convergence.value} returned "
+                f"non-finite value(s) {offenders}. A NaN or an infinity "
+                f"satisfies every tolerance comparison written against it -- "
+                f"abs(nan - x) > tol is False -- so it cannot be admitted and "
+                f"then checked. Either the solve did not succeed, and this "
+                f"record should say which of NOT_CONVERGED, DIVERGED or FAILED "
+                f"it was, or the number came from outside and belongs in "
+                f"engcore.scientific.solvers.admission before it reaches here"
+            )
 
     @property
     def succeeded(self) -> bool:

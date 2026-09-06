@@ -591,6 +591,24 @@ class NgspiceDCSolver(DeclaredSupport):
                 f"not define — so it is reported, not interpreted"
             )
 
+        # Every number the provider printed, admitted here — at the first point
+        # in this process where they exist — rather than at the element gate
+        # below, which sees only the three channels of one resistor and sees
+        # them after they have been differenced.
+        #
+        # `RawSolverOutput` refuses a non-finite value on a CONVERGED solve
+        # anyway, so skipping this line would not admit anything. What it would
+        # lose is the category and the message: the core's refusal is a
+        # `ScientificCoreError` about a record, and the truth here is that *the
+        # provider ran and did not deliver what was asked*, which is what
+        # `NgspiceExecutionFailure` means and what a caller of this adapter
+        # already catches.
+        require_finite(
+            values,
+            error=NgspiceExecutionFailure,
+            source="the ngspice provider",
+        )
+
         return RawSolverOutput(
             # NOT derived from the exit code and NOT derived from any warning
             # text. The complete requested set was obtained; that, and only
