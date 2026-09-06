@@ -365,6 +365,28 @@ _BINDINGS: tuple[Binding, ...] = (
         model=_RESISTOR,
         input_name=dc_models.RATED_POWER,
     ),
+    # The two ends of the derating line. A rated dissipation is a pair -- 0.4 W
+    # AT 70 C -- and until these existed the payload could only carry the
+    # wattage, so a part in a 120 C ambient was checked against a rating it no
+    # longer had. Both are optional and both are refused unless the other is
+    # present: half a line is not a weaker declaration, it is an incomplete one.
+    # Omitting the pair leaves `dissipated_power_utilization` the comparison
+    # against a constant it has always been, so every payload written before
+    # these fields existed means exactly what it meant.
+    Binding(
+        section=RATINGS,
+        key=dc_models.RATED_POWER_TEMPERATURE,
+        kind="quantity",
+        model=_RESISTOR,
+        input_name=dc_models.RATED_POWER_TEMPERATURE,
+    ),
+    Binding(
+        section=RATINGS,
+        key=dc_models.ZERO_POWER_TEMPERATURE,
+        kind="quantity",
+        model=_RESISTOR,
+        input_name=dc_models.ZERO_POWER_TEMPERATURE,
+    ),
     Binding(
         section=RATINGS,
         key=dc_models.MAXIMUM_WORKING_VOLTAGE,
@@ -1222,6 +1244,19 @@ def _electrical_assessments(
     circuit = system.circuit_at(cp.converged_resistances(system, run))
     assessments: dict[str, ValidityAssessment] = {}
 
+    # The ambient each element sits in, taken from the thermal body that shares
+    # its component_id. It reaches the resistor's assessment because a rated
+    # dissipation is stated against a reference ambient and derates away from
+    # it: without the ambient, a declared derating line cannot be evaluated and
+    # `dissipated_power_utilization` is UNKNOWN rather than answered from the
+    # printed number. This is the one place where a thermal declaration crosses
+    # into an electrical model's assessment, and it crosses because the
+    # datasheet it comes from puts the two on the same line.
+    ambient_of = {
+        stage.component_id: stage.body.ambient_temperature
+        for stage in system.stages
+    }
+
     resistors = []
     for resistor in circuit.resistors:
         cid = resistor.component_id
@@ -1233,6 +1268,7 @@ def _electrical_assessments(
                     RESISTOR_POWER_METRIC.format(component_id=cid)
                 ),
                 voltage_across=electrical.value(f"resistor_voltage:{cid}"),
+                ambient_temperature=ambient_of.get(cid),
             )
         )
     if resistors:
@@ -1798,6 +1834,10 @@ def _unknown_rated_conditions(limits: mat.MaterialLimits) -> frozenset[str]:
 _PROBE_POWER = Quantity(0.1, "watt")
 _PROBE_VOLTAGE = Quantity(10.0, "volt")
 _PROBE_CURRENT = Quantity(0.01, "ampere")
+#: The probe needs an ambient for the same reason a run does: a declared
+#: derating line is not evaluable without one, and a probe that omitted it would
+#: report the rating temperatures as unlocking nothing.
+_PROBE_AMBIENT = Quantity(300.0, "kelvin")
 
 
 def _unknown_rating_conditions(
@@ -1814,6 +1854,7 @@ def _unknown_rating_conditions(
         rating=rating,
         dissipated_power=_PROBE_POWER,
         voltage_across=_PROBE_VOLTAGE,
+        ambient_temperature=_PROBE_AMBIENT,
     )
     source = dc_models.assess_voltage_source_validity(
         dc_problem.voltage_source_relation_problem(_PROBE_SOURCE),
