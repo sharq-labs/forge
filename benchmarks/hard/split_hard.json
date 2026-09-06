@@ -4,7 +4,7 @@
  "holdout_fraction": 0.3,
  "rule": "stratify on ground_truth.defect; order each stratum by sha256(f'{seed}:{case_id}') with case_id as tiebreak; allocate round(0.30*total) hold-out seats across strata by largest remainder, ties broken by stratum name; the hold-out is the first k_s of each stratum's order",
  "cases_dir": "cases_hard",
- "case_set_digest": "476976c15a1a22d89019c9d6f80ec061a123d0579efc9b5fbecfc16312dd4a1f",
+ "case_set_digest": "e14542c1e09f258de48628a69ec61fea1ad0dab6ee4916bcf17df585dc7c35b8",
  "n_total": 2000,
  "n_dev": 1400,
  "n_holdout": 600,
