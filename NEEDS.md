@@ -2339,3 +2339,158 @@ The clean fix is a `solve_cell` in `battery/solver.py` returning a
 `ScientificResult` the way `solve_reactor` and the DC solver do, at which point
 `CredibilityEvidenceReport.from_result` applies and this assembly disappears.
 That is a battery-domain change and TASK C forbids it.
+
+---
+
+# NEEDS — small-corrections round
+
+Owned paths were `benchmarks/hard/generate_hard.py` and its cases,
+`src/engcore/scientific/ir/problem.py`, `src/engcore/systems/electrothermal/**`,
+`src/engcore/domains/electrical/**` (except `ngspice.py`), and tests.
+`src/engcore/mcp/problem.py` was also touched, necessarily: A2.9 is about where
+a value is read, and the site that reads it is there.
+
+Everything below was **measured and not fixed**. Each is recorded rather than
+acted on because each is a decision rather than a mechanical correction.
+
+## 1. The remaining eleven false accepts, diagnosed
+
+After the geometry and rating relabels the hard benchmark stands at catch
+1647/1658 (99.3%), false accept 11/1658 (0.66%), false reject 0/342, exact
+match 1837/2000 (91.8%). All eleven false accepts were run down. **They do not
+split the way the last three rounds would suggest: eight of them are the
+tool's, not the benchmark's.**
+
+| | count | whose defect |
+|---|---|---|
+| `band_out` | 8 | **the tool's** — §1.1 |
+| `adv_unsound:small_overshoot` | 2 | the benchmark's — §1.2 |
+| `runaway` | 1 | the benchmark's — §1.3 |
+
+### 1.1 The linearization band is judged at the endpoint, not over the path
+
+**Where** `src/engcore/domains/electrical/material.py`, the
+`LINEARIZATION_EXCURSION_RATIO` derivation at ~:1346.
+
+**What was hit.** `linearization_excursion_ratio` is derived with
+`temperature=temperature` — the converged endpoint. Its sibling
+`reduced_debye_temperature` two entries below is derived at
+`coldest_temperature` instead, and its condition description states the
+argument for doing so:
+
+> "evaluated at the coldest state the run occupies rather than at the
+> temperature it converges to. This model does not claim validity only at
+> convergence: **it describes the path from the initial state to the final one,
+> and R(T) is read from the same single coefficient at every point of it.**"
+
+That argument is about the single alpha, and the single alpha is exactly what
+the linearization band bounds. `|T - T_ref| / band <= 1` asks how far one
+first-order expansion is being carried; if the path leaves the band anywhere,
+the whole trajectory rests on an extrapolation the material never declared.
+Nothing about that is specific to a floor.
+
+**Measured.** All eight `band_out` false accepts are bodies that start BELOW
+`T_ref` and warm toward it, so the largest excursion is at t = 0 and the tool
+never looks there:
+
+| case | T_init | T_end | T_ref | band | ratio @ T_end | ratio @ T_init |
+|---|---|---|---|---|---|---|
+| U00237 | 252.656 | 267.129 | 293.15 | 40.413 | 0.644 | **1.002** |
+| U00274 | 260.137 | 277.142 | 293.15 | 32.683 | 0.490 | **1.010** |
+| U00351 | 260.054 | 316.627 | 293.15 | 31.441 | 0.747 | **1.053** |
+| U00625 | 248.014 | 263.810 | 293.15 | 36.108 | 0.813 | **1.250** |
+| U00818 | 281.346 | 293.726 | 293.15 | 11.780 | 0.049 | **1.002** |
+| U00978 | 263.256 | 264.817 | 293.15 | 29.834 | 0.950 | **1.002** |
+| U01029 | 271.524 | 276.079 | 293.15 | 17.301 | 0.987 | **1.250** |
+| U01292 | 274.418 | 284.989 | 293.15 | 18.545 | 0.440 | **1.010** |
+
+The tool reports `linearization_excursion_ratio` satisfied on all eight. The
+labels are right and **the tool is wrong**: this is a genuine miss, not a
+mislabel.
+
+**What it needs — and why it is not just "use the coldest state".** The band is
+NOT a floor. It is a two-sided distance from `T_ref`, so the binding state is
+the path endpoint FARTHEST from `T_ref`, which is the coldest one only when the
+body starts below `T_ref`. All eight of these do, which is why the coldest state
+would happen to fix all eight; a body starting above `T_ref` and cooling toward
+it would need the other endpoint. `|T - T_ref|` is convex and the lumped
+trajectory is monotone between its endpoints, so the maximum over the path is
+attained at an endpoint and no interior sampling is needed — the same argument
+`_material_assessments` already makes for the Debye floor.
+
+Concretely: pass the path endpoints to `derive_material_context` and select
+`argmax |T - T_ref|` for this one condition, the way `coldest_temperature` is
+already threaded for the Debye floor. `operating_temperature_utilization`
+should NOT move with it — a ceiling is bound by the hottest state, which is a
+third selection, and `_material_assessments`' comment "Every other condition on
+the model keeps the operating point" is what would need revisiting.
+
+**Not done here** because it changes where a validity condition is evaluated
+and would move eight verdicts. That is a domain-semantics decision, not a
+mechanical fix, and the round that found it did not own the call.
+
+### 1.2 `small_overshoot` sizes the ceiling at the asymptote — the S00709 defect again
+
+**Where** `benchmarks/hard/generate_hard.py`, `shape_adversarial_unsound`,
+`kind="small_overshoot"`.
+
+`p["t_max"] = p["_t_ss"] - rng.uniform(0.1, 0.5)` places the ceiling a fraction
+of a kelvin below the ASYMPTOTE, while `widen_all` fixes the horizon at 6 tau —
+which leaves a residual of `rise * exp(-6) = rise / 403.4`. Whenever the rise
+exceeds roughly 40-200 K that residual is LARGER than the overshoot, and the run
+stops before it reaches the ceiling it is labelled as exceeding:
+
+| case | overshoot | T_ss - T_end | util @ T_ss | util @ T_end |
+|---|---|---|---|---|
+| U01001 | 0.174 K | 0.271 K | 1.00040682 | 0.99977317 |
+| U01477 | 0.154 K | 0.203 K | 1.00038507 | 0.99987615 |
+
+This is `S00709` in mirror image — an asymptote-sized limit the declared horizon
+never reaches — on `maximum_operating_temperature` rather than `rated_power`.
+The tool is right and the label is wrong. A wider sweep found 8 of the 71
+`small_overshoot` cases in this state; the other 6 are scored correctly only
+because some other condition also fails, which quietly makes them multi-defect
+cases their `should_be_caught_by` misdescribes.
+
+**What it needs.** The same correction the ratings got: place the overshoot
+against the endpoint the horizon reaches. `endpoint_temperature` already exists
+in the file. Not done in the rating commit because that commit was scoped to
+ratings and this moves a different population.
+
+### 1.3 The `runaway` case does not run away
+
+**Where** `benchmarks/hard/generate_hard.py`, `shape_runaway`.
+
+`U00204` is labelled `inconsistent_inputs` with the reason "alpha = 0.05 /K: the
+electro-thermal loop does not contract." It contracts. The tool reports
+`CouplingOutcome.CRITERION_MET`, converges to 355.738 K against a declared
+1163.530 K ceiling — utilization 0.306 — and every one of the six model records
+is IN_DOMAIN with nothing violated and nothing unknown.
+
+The shaper accepts a draw whenever the steady state MOVED by at least 100 K
+(`if t is not None and abs(t - p["_t_ss"]) < 100: return None`), which is not
+the same test as "the loop does not contract". It also calls `widen_all` BEFORE
+overwriting alpha, so every limit is sized against the old, hotter steady state
+and the new one sits far inside all of them. Here the steady state moved DOWN.
+
+`should_be_caught_by` is the string `'thermal runaway'`, which is not a
+condition the tool declares — every other unsound case names a real condition
+id. So the ground truth points at nothing checkable.
+
+**What it needs.** Either test contraction directly — `|g'(T*)| >= 1`, where
+`g'(T) = -(V^2/hA) R0 alpha / R(T)^2` — and keep only draws that genuinely
+diverge, or re-verify after the alpha change and drop draws where every limit
+still clears. Naming a real condition would follow from either.
+
+## 2. What this says about the benchmark, and what it does not
+
+Three consecutive rounds found the generator wrong and the tool right —
+`geometry_conflict` at the inclusive bound, `S00709`'s rating at the asymptote,
+and now `small_overshoot` and `runaway`. That is a real pattern and worth
+writing down.
+
+**It does not generalise to the current residue.** Eight of the eleven
+remaining false accepts are the tool's own gap (§1.1), and they are the largest
+single block. A review that recorded "the generator has been the weaker of the
+two" without that sentence beside it would be drawing a flattering conclusion
+from a run of four cases and stopping before the eight that point the other way.

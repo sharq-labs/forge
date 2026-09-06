@@ -90,7 +90,21 @@ previous set: **only the 124 `geometry_conflict` cases changed.**
 **The real false accepts did not move: 11 before, 11 after.** The headline went
 1.57% → 0.66% because 15 mislabelled cases left the numerator, not because the
 tool improved. What remains is 8 `band_out`, 2 `adv_unsound:small_overshoot`
-and 1 `runaway`.
+and 1 `runaway`, and all eleven have since been run down — see `NEEDS.md`,
+small-corrections round, §1.
+
+**Eight of the eleven are the tool's, not this file's.** The `band_out` cases
+are bodies that start below `T_ref` and warm toward it, so the largest
+excursion is at t = 0; the tool judges `linearization_excursion_ratio` only at
+the converged endpoint and never looks there. Its own sibling condition, the
+Debye floor, is deliberately evaluated over the path with a docstring giving
+exactly the argument that applies to the band. Those labels are right and the
+tool misses them. The other three — 2 `small_overshoot` and 1 `runaway` — are
+this file's, and §1.2 and §1.3 say how.
+
+**So the run of rounds in which the generator was the weaker of the two does
+not extend to what is left.** It is worth saying, because the opposite is the
+comfortable reading.
 
 ### The rating relabel — the operating point, not the asymptote
 
