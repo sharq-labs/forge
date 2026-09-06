@@ -1984,3 +1984,144 @@ line of the ratio version's validation is wrong for it.
 `evaluate_in` as exactly the lookup that line used to do inline, so nothing
 about them changed; `evaluate(value)` is untouched and every existing caller
 and test of it still works.
+
+## E. TASK E — the derived-quantity pattern: measured, and still not built
+
+**Recommendation: do not build it.** Section 6 above already said so. This
+section is not a restatement: it is the first time the claim has been
+*measured*, the trigger section 6 named as decisive has now fired, and the
+answer is still no — for a reason section 6 could not have known.
+
+### E.1 The census
+
+Every function in the four context modules whose signature returns
+`Quantity | None` — 55 of them, across `thermal_models/context.py`,
+`battery/context.py`, `kinetics/cstr/context.py` and the derivation half of
+`electrical/material.py`. Each body was split by AST into the *guard* (the
+`_checked` / `_as_quantity` / `_positive` calls and the
+`if ... is None: return None` chain — the part a resolver would absorb), the
+*computation*, and the *docstring*.
+
+| module | fns | guard | computation | docstring | guard % of code | docstring % of all |
+|---|---:|---:|---:|---:|---:|---:|
+| `thermal_models` | 24 | 262 | 160 | 471 | 62% | 53% |
+| `battery` | 25 | 191 | 148 | 444 | 56% | 57% |
+| `kinetics` | 2 | 53 | 16 | 84 | 77% | 55% |
+| `electrical` | 4 | 23 | 29 | 44 | 44% | 46% |
+| **all** | **55** | **529** | **353** | **1043** | **60%** | **54%** |
+
+**Section 6's arithmetic was right.** It claimed the guard is "60–70% of the
+lines and the only part that is mechanical". It is 60%, measured.
+
+**And that is the smaller of the two numbers.** The docstrings are 1043 lines
+against 882 lines of code — **54% of the material**. A record-based form does
+not delete them; it relocates them into a string field on a record, where
+nothing reads them, no test can assert against them, and they drift. Section 6
+said that, and the measurement says the thing it was protecting is *larger than
+the thing the abstraction would remove*.
+
+### E.2 The escape hatch, and the number that decided it
+
+Section 6's third objection: "several return `None` for reasons other than an
+absent input… a resolver whose only `None` is 'an input was missing' cannot
+express those, so they become an escape hatch, and an abstraction with an
+escape hatch used by a third of its callers has not abstracted the hard part."
+
+Counted the same way — a function is beyond a resolver if it raises, returns
+`None` on a second condition, or returns a *value* from an early branch:
+
+| | functions | needing an escape hatch |
+|---|---:|---:|
+| before this round | 45 | 8 (18%) |
+| added this round | 10 | **6 (60%)** |
+| after this round | 55 | 14 (25%) |
+
+**Six of the ten derived quantities added this round need the escape hatch.**
+`rayleigh_number`, `churchill_chu_nusselt` and `flat_plate_nusselt` each refuse
+a negative argument; `convection_flow_range_utilization` and
+`convection_property_range_utilization` each *branch on which correlation was
+resolved* and return a value from the branch; `adiabatic_ceiling_temperature`
+clamps an endothermic rise at zero.
+
+That is the finding. **The shape is getting less uniform as the domains get
+more scientifically detailed, not more.** Section 6 reasoned that a fourth
+repetition of the shape would not justify the abstraction; the measurement says
+something stronger — the fourth repetition made the shape *rarer*. An
+abstraction built against the 45 functions of a round ago would already be
+carrying an escape hatch for a fifth of them, and every new condition this
+project adds now lands on the wrong side of it more often than not.
+
+### E.3 The trigger section 6 named HAS fired, and it is still not enough
+
+Section 6 said the evidence that would change the answer is "**two domains
+needing the same derived group**, at which point there is a definition to share
+rather than a shape to share. Today there is none."
+
+Today there is one. `|T − T_ref| / declared_span` is computed by
+`electrical.material.linearization_excursion_ratio` and by
+`battery.context._temperature_drift_ratio`, which the battery already shares
+across three of its own conditions. Two domains, four call sites, one
+definition, the same bound of 1 and the same UNKNOWN semantics.
+
+**And extracting it is still not worth doing.** The arithmetic:
+
+* the shared function, with the docstring this repository's functions carry:
+  **about +25 lines** in `domains/derived_context.py`;
+* `linearization_excursion_ratio` shrinks from 12 body lines to about 4:
+  **−8**;
+* the battery's private helper could then go: **−31** — but that is the
+  *second* domain, and TASK E says migrate one and stop.
+
+So after the one migration TASK E permits, the repository is **about 17 lines
+larger**, and break-even needs the migration the task told me not to do.
+
+That is the honest number and it is the smaller objection. The larger one:
+**the two implementations refuse in different places.** The battery refuses a
+non-positive or affine-scaled span *inside the derivation*
+(`_checked(positive=True, span=True)`); the electrical model refuses it at
+`MaterialLimits.__post_init__`, before any derivation is reached. Both are
+correct and neither has ever been wrong. A shared function has to pick one,
+which moves a refusal — and changes which exception a caller sees, and when —
+in one of the two domains, in order to protect a definition that is
+`abs(a − b) / c`.
+
+There is nothing in `abs(a − b) / c` to drift on. The guarantee an extraction
+buys is real, and it is worth less than the refusal it disturbs.
+
+### E.4 What would change the answer
+
+Not a fifth domain, and not a fifth repetition of the shape. Two things would:
+
+1. **A shared derived group with real content** — a correlation, a fitted law,
+   a group with a citation and a validity range that two domains both need.
+   `|T − T_ref| / span` is not that; it is arithmetic with a name. A Nusselt
+   correlation shared between `thermal_models` and a future fluids domain
+   would be, and it would bring its own module rather than a record framework.
+2. **A consumer that needs the input→quantity map as data.** Section 6 proposed
+   the narrow half for exactly this, citing the problem-builder round's §1.1 —
+   `ModelInputSpec` cannot name the conditions an input unlocks, so the builder
+   *measures* it by dropping fields and re-asking the validity domain. **That
+   need is now weaker, not stronger.** TASK B extended that measurement to two
+   probes for the two convection routes and it came out correct for all six new
+   fields, including the two that can never appear in one declaration. A
+   measured answer is true of the domain as it *is*; a declared one is true of
+   the domain as a table *claims* it to be. The measurement is the better
+   artifact and it already exists.
+
+### E.5 Nothing was built, and that is the deliverable
+
+`src/engcore/scientific/` is unchanged by this task and no domain was migrated.
+The line count TASK E asked for is above: **529 guard lines, 60% of the code**,
+against **1043 docstring lines, 54% of everything** — and 60% of this round's
+new derived quantities would need an escape hatch out of the resolver on day
+one. The recommendation on migrating the rest is that **there is nothing to
+migrate**, and E.4 states what would have to be true for that to change.
+
+**Reproducing the census.** Parse the four modules, take every module-level
+`FunctionDef` annotated `-> Quantity | None`, drop the docstring, and classify
+each remaining statement: a statement is *guard* if it is an assignment whose
+value passes through `_checked`, `_as_quantity`, `_positive`,
+`_require_span_scale`, `_temperature_in_kelvin` or `_fraction`, or an `if`
+whose source contains both `is None` and `return None`; everything else is
+*computation*. A function is beyond a resolver if it contains a `raise`, more
+than one bare `return None`, or an `if` returning a constructed `Quantity`.
