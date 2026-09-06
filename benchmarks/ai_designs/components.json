@@ -1,0 +1,2260 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-09-06",
+  "what_this_is": "Real components, from publicly published manufacturer datasheets. Numbers only; the prose around them is not reproduced. Every value carries the document it was taken from.",
+  "provenance_rules": {
+    "rule": "A number without a manufacturer, a part number and a document reference does not appear in this file.",
+    "method": "Each datasheet PDF was downloaded from the manufacturer's own document server (or, where noted, a distributor mirror of the manufacturer's PDF) and its text extracted and read directly. Values summarised by a language model from a PDF were NOT used: the first such summary of the Vishay SFR25 datasheet returned 0.6 W / 500 V / -55 to +170 C against the document's printed 0.4 W / 250 V / -55 to +155 C, which is why every number below was read out of the extracted text instead.",
+    "null_means": "null means the datasheet does not print the value, not that the value is zero or unknown to the manufacturer.",
+    "read_from_graph": "A field flagged read_from_graph was taken from the axis labels of a printed curve rather than from a table. It is marked so a reader can discount it."
+  },
+  "left_out": {
+    "total_datasheet_numbers_wanted_but_not_recorded": 27,
+    "breakdown": [
+      {
+        "count": 11,
+        "what": "Derating-curve knee for the eleven Yageo RC_L sizes",
+        "why": "The RC_L datasheet prints the derating curve only as an image; no knee temperature appears in extractable text. The Vishay parts state P70 and a permissible film temperature in a table, so their knee is recorded; Yageo's is not."
+      },
+      {
+        "count": 5,
+        "what": "Operating temperature range for PR01, PR02 (Cu and FeCu) and PR03 (Cu and FeCu)",
+        "why": "Document 28729 prints a maximum permissible hot-spot temperature (205/220/250 C) and an applied maximum film temperature (250 C) but no category temperature range. The hot-spot figures are recorded; the range is not invented from them."
+      },
+      {
+        "count": 4,
+        "what": "Package theta-JA for TI TPS62840 (DLC-8, YBG-6, DGR-8 and the EVM column)",
+        "why": "The thermal table has four data columns and three board labels ('JEDEC PCB 51-7', 'JEDEC PCB 51-5', an EVM name). Which board belongs to which column cannot be settled from the extracted text, and guessing the alignment would be inventing the board type. All four numbers are excluded."
+      },
+      {
+        "count": 4,
+        "what": "Package theta-JA for TI LM2596 (KTW TO-263 at three copper areas, NDZ TO-220)",
+        "why": "The table's footnotes describe specific copper areas (0.5 in2, 1 in2, a vertically mounted TO-220) while a separate footnote claims a 4-layer JEDEC board. The two statements cannot both describe the same number, so none of them is recorded as a JEDEC comparison value."
+      },
+      {
+        "count": 3,
+        "what": "Thermal resistance for Vishay MRS16/MRS25 and WSR5",
+        "why": "Documents 28724 and 31059 print no thermal resistance. The SFR and PR families do, and theirs are recorded."
+      }
+    ],
+    "also_note": "Vishay SFR16S appears only in the 2013 revision of document 28722; the 2025 revision drops it. Both revisions are cited where used, and the TCR bands for SFR25/SFR25H are taken from the 2025 revision because its table is unambiguous. Package outline dimensions were added for the 8 CRCW sizes, the 11 Yageo RC sizes and the 3 SFR types, and mass for the CRCW sizes, because those datasheets print them; they let the lumped model's geometry come from a document rather than from an assumption. No other family in this file publishes an outline in extractable form, and none publishes a bulk conductivity, an emissivity or a specific heat."
+  },
+  "resistors": [
+    {
+      "id": "vishay-sfr16s",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "SFR16S",
+      "family": "SFR",
+      "technology": "metal film, leaded",
+      "package": "DIN 0204",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 3000000.0,
+        "note": "1 ohm to 3 Mohm at +/-5 %; 4.99 ohm to 3 Mohm at +/-1 %"
+      },
+      "rated_power_w": 0.5,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 200,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 0.0,
+          "to_ohm": 4.7,
+          "value": 250
+        },
+        {
+          "from_ohm": 4.7,
+          "to_ohm": 100000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 1000000.0,
+          "value": 250
+        },
+        {
+          "from_ohm": 1000000.0,
+          "to_ohm": 3000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": 170,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28722",
+        "revision": "05-Mar-13",
+        "title": "SFR16S/25/25H Standard Metal Film Leaded Resistors",
+        "url": "https://docs.rs-online.com/5389/0900766b8009bd1b.pdf",
+        "note": "distributor mirror of the Vishay PDF; the 2025 revision of 28722 no longer lists SFR16S"
+      },
+      "dimensions_mm": {
+        "body_diameter": 1.9,
+        "body_length": 3.5,
+        "shape": "cylinder",
+        "source_note": "DIMENSIONS table, document 28722 rev 05-Mar-13; maximum values"
+      }
+    },
+    {
+      "id": "vishay-sfr25",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "SFR25",
+      "family": "SFR",
+      "technology": "metal film, leaded",
+      "package": "DIN 0207",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0,
+        "note": "1.0 ohm to 10 Mohm"
+      },
+      "rated_power_w": 0.4,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 250,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 4.7,
+          "value": 250
+        },
+        {
+          "from_ohm": 4.7,
+          "to_ohm": 1000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 1000000.0,
+          "to_ohm": 10000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": 200,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28722",
+        "revision": "11-Feb-2025",
+        "title": "SFR25, SFR25H Standard Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28722/sfr25.pdf"
+      },
+      "dimensions_mm": {
+        "body_diameter": 2.5,
+        "body_length": 6.5,
+        "shape": "cylinder",
+        "source_note": "DIMENSIONS table, document 28722 rev 05-Mar-13; maximum values"
+      }
+    },
+    {
+      "id": "vishay-sfr25h",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "SFR25H",
+      "family": "SFR",
+      "technology": "metal film, leaded",
+      "package": "DIN 0207",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.5,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 350,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 4.7,
+          "value": 250
+        },
+        {
+          "from_ohm": 4.7,
+          "to_ohm": 1000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 1000000.0,
+          "to_ohm": 10000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": 150,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28722",
+        "revision": "11-Feb-2025",
+        "title": "SFR25, SFR25H Standard Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28722/sfr25.pdf"
+      },
+      "dimensions_mm": {
+        "body_diameter": 2.5,
+        "body_length": 6.5,
+        "shape": "cylinder",
+        "source_note": "DIMENSIONS table, document 28722 rev 05-Mar-13; maximum values"
+      }
+    },
+    {
+      "id": "vishay-mrs16",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "MRS16",
+      "family": "MRS",
+      "technology": "metal film, leaded, professional",
+      "package": "DIN 0204 / CECC size A",
+      "resistance_range_ohm": {
+        "min": 4.99,
+        "max": 1000000.0
+      },
+      "rated_power_w": 0.4,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 200,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 4.99,
+          "to_ohm": 1000000.0,
+          "value": 50
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28724",
+        "revision": "07-Mar-16",
+        "title": "MRS16, MRS25 Professional Thin Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28724/mrs16m25.pdf"
+      }
+    },
+    {
+      "id": "vishay-mrs25",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "MRS25",
+      "family": "MRS",
+      "technology": "metal film, leaded, professional",
+      "package": "DIN 0207 / CECC size B",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.6,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 350,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 50
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28724",
+        "revision": "07-Mar-16",
+        "title": "MRS16, MRS25 Professional Thin Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28724/mrs16m25.pdf"
+      }
+    },
+    {
+      "id": "vishay-crcw0402",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW0402 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "0402 (RR1005M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.1,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 75,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 1.0,
+        "width": 0.5,
+        "height": 0.35,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 0.65
+    },
+    {
+      "id": "vishay-crcw0603",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW0603 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "0603 (RR1608M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.125,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 75,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 1.55,
+        "width": 0.85,
+        "height": 0.45,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 2.0
+    },
+    {
+      "id": "vishay-crcw0805",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW0805 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "0805 (RR2012M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.25,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 150,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 2.0,
+        "width": 1.25,
+        "height": 0.5,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 5.5
+    },
+    {
+      "id": "vishay-crcw1206",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW1206 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "1206 (RR3216M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.25,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 200,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 3.2,
+        "width": 1.6,
+        "height": 0.55,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 10.0
+    },
+    {
+      "id": "vishay-crcw1210",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW1210 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "1210 (RR3225M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.5,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 200,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 3.2,
+        "width": 2.5,
+        "height": 0.55,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 16.0
+    },
+    {
+      "id": "vishay-crcw1218",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW1218 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "1218 (RR3246M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 2200000.0,
+        "note": "1 ohm to 2.2 Mohm"
+      },
+      "rated_power_w": 1.0,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 200,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 2200000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 3.2,
+        "width": 4.6,
+        "height": 0.55,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 29.5
+    },
+    {
+      "id": "vishay-crcw2010",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW2010 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "2010 (RR5025M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.75,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 400,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 5.0,
+        "width": 2.5,
+        "height": 0.6,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 25.5
+    },
+    {
+      "id": "vishay-crcw2512",
+      "manufacturer": "Vishay",
+      "part_number": "CRCW2512 e3",
+      "family": "D/CRCW e3",
+      "technology": "thick film chip",
+      "package": "2512 (RR6332M)",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 1.0,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 9.76,
+          "value": 200
+        },
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20035",
+        "revision": "14-Apr-2026",
+        "title": "D/CRCW e3 Standard Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20035/dcrcwe3.pdf"
+      },
+      "dimensions_mm": {
+        "length": 6.3,
+        "width": 3.15,
+        "height": 0.6,
+        "source_note": "DIMENSIONS AND MASS table, document 20035 rev 14-Apr-2026; nominal values, tolerances omitted"
+      },
+      "mass_mg": 40.5
+    },
+    {
+      "id": "vishay-rcv0805",
+      "manufacturer": "Vishay Draloric",
+      "part_number": "RCV0805 e3",
+      "family": "RCV e3",
+      "technology": "thick film chip, high voltage",
+      "package": "0805 (RR2012M)",
+      "resistance_range_ohm": {
+        "min": 100000.0,
+        "max": 10000000.0
+      },
+      "rated_power_w": 0.125,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 400,
+      "voltage_coefficient_ppm_per_v": 25,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 10000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20054",
+        "revision": "21-Nov-2024",
+        "title": "RCV e3 High Voltage Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20054/rcve3.pdf"
+      }
+    },
+    {
+      "id": "vishay-rcv1206",
+      "manufacturer": "Vishay Draloric",
+      "part_number": "RCV1206 e3",
+      "family": "RCV e3",
+      "technology": "thick film chip, high voltage",
+      "package": "1206 (RR3216M)",
+      "resistance_range_ohm": {
+        "min": 100000.0,
+        "max": 51000000.0,
+        "note": "to 51 Mohm at +/-5 %; to 10 Mohm at +/-1 %"
+      },
+      "rated_power_w": 0.33,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 800,
+      "voltage_coefficient_ppm_per_v": 25,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 51000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20054",
+        "revision": "21-Nov-2024",
+        "title": "RCV e3 High Voltage Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20054/rcve3.pdf"
+      }
+    },
+    {
+      "id": "vishay-rcv2010",
+      "manufacturer": "Vishay Draloric",
+      "part_number": "RCV2010 e3",
+      "family": "RCV e3",
+      "technology": "thick film chip, high voltage",
+      "package": "2010 (RR5025M)",
+      "resistance_range_ohm": {
+        "min": 100000.0,
+        "max": 100000000.0
+      },
+      "rated_power_w": 0.75,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 2000,
+      "voltage_coefficient_ppm_per_v": 25,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 100000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20054",
+        "revision": "21-Nov-2024",
+        "title": "RCV e3 High Voltage Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20054/rcve3.pdf"
+      }
+    },
+    {
+      "id": "vishay-rcv2512",
+      "manufacturer": "Vishay Draloric",
+      "part_number": "RCV2512 e3",
+      "family": "RCV e3",
+      "technology": "thick film chip, high voltage",
+      "package": "2512 (RR6332M)",
+      "resistance_range_ohm": {
+        "min": 100000.0,
+        "max": 100000000.0
+      },
+      "rated_power_w": 1.0,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": 3000,
+      "voltage_coefficient_ppm_per_v": 25,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 100000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 100000.0,
+          "to_ohm": 10000000.0,
+          "value": 100,
+          "note": "+/-1 % tolerance grade"
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "permissible_film_temperature_c": 155,
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "20054",
+        "revision": "21-Nov-2024",
+        "title": "RCV e3 High Voltage Thick Film Chip Resistors",
+        "url": "https://www.vishay.com/docs/20054/rcve3.pdf"
+      }
+    },
+    {
+      "id": "vishay-pr01",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "PR01",
+      "family": "PR",
+      "technology": "power metal film, leaded",
+      "package": "DIN 0207",
+      "resistance_range_ohm": {
+        "min": 0.22,
+        "max": 1000000.0
+      },
+      "rated_power_w": 1.0,
+      "rated_power_ambient_c": 70,
+      "rated_power_below_1_ohm_w": 0.6,
+      "maximum_working_voltage_v": 350,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 0.22,
+          "to_ohm": 1000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": null,
+      "maximum_hot_spot_temperature_c": 205,
+      "applied_maximum_film_temperature_c": 250,
+      "thermal_resistance_k_per_w": 135,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": null,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28729",
+        "revision": "08-Jul-2025",
+        "title": "PR01, PR02, PR03 Power Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28729/pr010203.pdf"
+      }
+    },
+    {
+      "id": "vishay-pr02-cu",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "PR02 (Cu lead)",
+      "family": "PR",
+      "technology": "power metal film, leaded",
+      "package": "DIN 0411",
+      "resistance_range_ohm": {
+        "min": 0.33,
+        "max": 1000000.0
+      },
+      "rated_power_w": 2.0,
+      "rated_power_ambient_c": 70,
+      "rated_power_below_1_ohm_w": 1.2,
+      "maximum_working_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 0.33,
+          "to_ohm": 1000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": null,
+      "maximum_hot_spot_temperature_c": 220,
+      "applied_maximum_film_temperature_c": 250,
+      "thermal_resistance_k_per_w": 75,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": null,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28729",
+        "revision": "08-Jul-2025",
+        "title": "PR01, PR02, PR03 Power Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28729/pr010203.pdf"
+      }
+    },
+    {
+      "id": "vishay-pr02-fecu",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "PR02 (FeCu lead)",
+      "family": "PR",
+      "technology": "power metal film, leaded",
+      "package": "DIN 0411",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 1000000.0
+      },
+      "rated_power_w": 1.3,
+      "rated_power_ambient_c": 70,
+      "rated_power_below_1_ohm_w": null,
+      "maximum_working_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 1000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": null,
+      "maximum_hot_spot_temperature_c": 220,
+      "applied_maximum_film_temperature_c": 250,
+      "thermal_resistance_k_per_w": 115,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": null,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28729",
+        "revision": "08-Jul-2025",
+        "title": "PR01, PR02, PR03 Power Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28729/pr010203.pdf"
+      }
+    },
+    {
+      "id": "vishay-pr03-cu",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "PR03 (Cu lead)",
+      "family": "PR",
+      "technology": "power metal film, leaded",
+      "package": "DIN 0617",
+      "resistance_range_ohm": {
+        "min": 0.68,
+        "max": 1000000.0
+      },
+      "rated_power_w": 3.0,
+      "rated_power_ambient_c": 70,
+      "rated_power_below_1_ohm_w": 1.6,
+      "maximum_working_voltage_v": 750,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 0.68,
+          "to_ohm": 1000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": null,
+      "maximum_hot_spot_temperature_c": 250,
+      "applied_maximum_film_temperature_c": 250,
+      "thermal_resistance_k_per_w": 60,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": null,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28729",
+        "revision": "08-Jul-2025",
+        "title": "PR01, PR02, PR03 Power Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28729/pr010203.pdf"
+      }
+    },
+    {
+      "id": "vishay-pr03-fecu",
+      "manufacturer": "Vishay BCcomponents",
+      "part_number": "PR03 (FeCu lead)",
+      "family": "PR",
+      "technology": "power metal film, leaded",
+      "package": "DIN 0617",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 1000000.0
+      },
+      "rated_power_w": 2.5,
+      "rated_power_ambient_c": 70,
+      "rated_power_below_1_ohm_w": null,
+      "maximum_working_voltage_v": 750,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 1000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": null,
+      "maximum_hot_spot_temperature_c": 250,
+      "applied_maximum_film_temperature_c": 250,
+      "thermal_resistance_k_per_w": 75,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": null,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "28729",
+        "revision": "08-Jul-2025",
+        "title": "PR01, PR02, PR03 Power Metal Film Leaded Resistors",
+        "url": "https://www.vishay.com/docs/28729/pr010203.pdf"
+      }
+    },
+    {
+      "id": "vishay-wsr5",
+      "manufacturer": "Vishay Dale",
+      "part_number": "WSR5",
+      "family": "WSR High Power",
+      "technology": "Power Metal Strip, surface mount",
+      "package": "4527",
+      "resistance_range_ohm": {
+        "min": 0.001,
+        "max": 0.3,
+        "note": "0.001 to 0.3 ohm at +/-1.0 %; 0.01 to 0.3 ohm at +/-0.5 %"
+      },
+      "rated_power_w": 5.0,
+      "rated_power_ambient_c": 70,
+      "maximum_working_voltage_v": null,
+      "maximum_working_voltage_formula": "sqrt(P * R)",
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 0.01,
+          "to_ohm": 0.3,
+          "value": 75
+        },
+        {
+          "from_ohm": 0.005,
+          "to_ohm": 0.0099,
+          "value": 110
+        },
+        {
+          "from_ohm": 0.004,
+          "to_ohm": 0.0049,
+          "value": 300
+        },
+        {
+          "from_ohm": 0.003,
+          "to_ohm": 0.0039,
+          "value": 450
+        },
+        {
+          "from_ohm": 0.002,
+          "to_ohm": 0.0029,
+          "value": 600
+        },
+        {
+          "from_ohm": 0.001,
+          "to_ohm": 0.0019,
+          "value": 750
+        }
+      ],
+      "tcr_measurement_range_c": [
+        -55,
+        150
+      ],
+      "operating_temperature_range_c": [
+        -65,
+        275
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": {
+        "knee_c": 70,
+        "zero_power_c": null,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "31059",
+        "revision": "25-Apr-2024",
+        "title": "WSR High Power Power Metal Strip Resistors",
+        "url": "https://www.vishay.com/docs/31059/wsrhighpower.pdf"
+      }
+    },
+    {
+      "id": "bourns-pwr220t-20",
+      "manufacturer": "Bourns",
+      "part_number": "PWR220T-20",
+      "family": "PWR220T-20",
+      "technology": "thick film on alumina, TO-220 power resistor",
+      "package": "TO-220",
+      "resistance_range_ohm": {
+        "min": 0.02,
+        "max": 130000.0
+      },
+      "rated_power_w": 20.0,
+      "rated_power_ambient_c": 25,
+      "rated_power_reference": "case temperature, not ambient",
+      "maximum_working_voltage_v": 250,
+      "maximum_working_voltage_formula": "sqrt(P * R), capped at 250 V",
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 0.02,
+          "to_ohm": 130000.0,
+          "value": 100
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": 6.5,
+      "thermal_resistance_kind": "junction-to-case (Rthj), as printed",
+      "derating": {
+        "knee_c": 25,
+        "zero_power_c": 155,
+        "read_from_graph": true
+      },
+      "source": {
+        "document_number": "PWR220T-20 Series Power Resistor",
+        "revision": "as published",
+        "title": "Bourns PWR220T-20 Series Power Resistor",
+        "url": "https://www.bourns.com/docs/product-datasheets/pwr220t-20.pdf"
+      }
+    },
+    {
+      "id": "yageo-rc0075",
+      "manufacturer": "Yageo",
+      "part_number": "RC0075",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "0075",
+      "resistance_range_ohm": {
+        "min": 10.0,
+        "max": 1000000.0
+      },
+      "rated_power_w": 0.02,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document; the Yageo RC_L table gives power without an ambient",
+      "maximum_working_voltage_v": 10,
+      "maximum_overload_voltage_v": 25,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 100.0,
+          "value_min": -200,
+          "value_max": 600
+        },
+        {
+          "from_ohm": 100.0,
+          "to_ohm": 1000000.0,
+          "value": 200
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        125
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 0.3,
+        "width": 0.15,
+        "height": 0.13,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc0100",
+      "manufacturer": "Yageo",
+      "part_number": "RC0100",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "0100",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 22000000.0
+      },
+      "rated_power_w": 0.03125,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 15,
+      "maximum_overload_voltage_v": 30,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value_min": -200,
+          "value_max": 600
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 100.0,
+          "value": 300
+        },
+        {
+          "from_ohm": 100.0,
+          "to_ohm": 10000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 22000000.0,
+          "value": 250
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        125
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 0.4,
+        "width": 0.2,
+        "height": 0.13,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc0201",
+      "manufacturer": "Yageo",
+      "part_number": "RC0201",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "0201",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 100000000.0
+      },
+      "rated_power_w": 0.05,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 25,
+      "maximum_overload_voltage_v": 50,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value_min": -100,
+          "value_max": 350
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 100000000.0,
+          "value": 200
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        125
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 0.6,
+        "width": 0.3,
+        "height": 0.23,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc0402",
+      "manufacturer": "Yageo",
+      "part_number": "RC0402",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "0402",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 100000000.0
+      },
+      "rated_power_w": 0.0625,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 50,
+      "maximum_overload_voltage_v": 100,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 100000000.0,
+          "value": 200
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 1.0,
+        "width": 0.5,
+        "height": 0.35,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc0603",
+      "manufacturer": "Yageo",
+      "part_number": "RC0603",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "0603",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 22000000.0
+      },
+      "rated_power_w": 0.1,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 75,
+      "maximum_overload_voltage_v": 150,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 22000000.0,
+          "value": 200
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 1.6,
+        "width": 0.8,
+        "height": 0.45,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc0805",
+      "manufacturer": "Yageo",
+      "part_number": "RC0805",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "0805",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 100000000.0
+      },
+      "rated_power_w": 0.125,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 150,
+      "maximum_overload_voltage_v": 300,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 22000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 24000000.0,
+          "to_ohm": 100000000.0,
+          "value": 300
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 2.0,
+        "width": 1.25,
+        "height": 0.5,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc1206",
+      "manufacturer": "Yageo",
+      "part_number": "RC1206",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "1206",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 100000000.0
+      },
+      "rated_power_w": 0.25,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 200,
+      "maximum_overload_voltage_v": 400,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 22000000.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 24000000.0,
+          "to_ohm": 100000000.0,
+          "value": 300
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 3.1,
+        "width": 1.6,
+        "height": 0.55,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc1210",
+      "manufacturer": "Yageo",
+      "part_number": "RC1210",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "1210",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 22000000.0
+      },
+      "rated_power_w": 0.5,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 200,
+      "maximum_overload_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 22000000.0,
+          "value": 200
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 3.1,
+        "width": 2.6,
+        "height": 0.55,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc1218",
+      "manufacturer": "Yageo",
+      "part_number": "RC1218",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "1218",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 1000000.0
+      },
+      "rated_power_w": 1.0,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 200,
+      "maximum_overload_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 1000000.0,
+          "value": 100
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 3.1,
+        "width": 4.6,
+        "height": 0.55,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc2010",
+      "manufacturer": "Yageo",
+      "part_number": "RC2010",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "2010",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 22000000.0
+      },
+      "rated_power_w": 0.75,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 200,
+      "maximum_overload_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        },
+        {
+          "from_ohm": 10000000.0,
+          "to_ohm": 22000000.0,
+          "value": 200
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 5.0,
+        "width": 2.5,
+        "height": 0.55,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    },
+    {
+      "id": "yageo-rc2512",
+      "manufacturer": "Yageo",
+      "part_number": "RC2512",
+      "family": "RC_L",
+      "technology": "thick film chip",
+      "package": "2512",
+      "resistance_range_ohm": {
+        "min": 1.0,
+        "max": 22000000.0
+      },
+      "rated_power_w": 1.0,
+      "rated_power_ambient_c": 70,
+      "rated_power_ambient_source": "not printed in this document",
+      "maximum_working_voltage_v": 200,
+      "maximum_overload_voltage_v": 500,
+      "temperature_coefficient_ppm_per_k": [
+        {
+          "from_ohm": 1.0,
+          "to_ohm": 10.0,
+          "value": 200
+        },
+        {
+          "from_ohm": 10.0,
+          "to_ohm": 10000000.0,
+          "value": 100
+        }
+      ],
+      "operating_temperature_range_c": [
+        -55,
+        155
+      ],
+      "thermal_resistance_k_per_w": null,
+      "derating": null,
+      "source": {
+        "document_number": "PYU-RC_GROUP_51_ROHS_L",
+        "revision": "V.14, Nov. 14 2025",
+        "title": "Yageo General Purpose Chip Resistors RC_L series",
+        "url": "https://yageogroup.com/content/datasheet/asset/file/PYU-RC_GROUP_51_ROHS_L"
+      },
+      "dimensions_mm": {
+        "length": 6.35,
+        "width": 3.1,
+        "height": 0.55,
+        "source_note": "dimension table, Yageo RC_L V.14 (14 Nov 2025); nominal values, tolerances omitted"
+      }
+    }
+  ],
+  "jedec_caveat": {
+    "text": "JESD51-3 states that the thermal resistance values obtained on its standard test boards are intended for comparing the thermal performance of packages under standardized conditions, and are not intended to, and do not, predict the performance of a package in an application-specific environment.",
+    "what_it_implies_here": "A theta-JA below is a property of a package MEASURED ON A NAMED BOARD, not a property of the package. It may be used to rank two packages against each other under the same standard and board. It may NOT be used to compute a junction temperature in an application, and any design in this benchmark that does so is making an error the number itself warns against. Two of the datasheets below print that warning in their own words; the wording is reproduced verbatim per entry where they do.",
+    "sources": [
+      "JEDEC JESD51-3, Low Effective Thermal Conductivity Test Board for Leaded Surface Mount Packages",
+      "JEDEC JESD51-7, High Effective Thermal Conductivity Test Board for Leaded Surface Mount Packages",
+      "JEDEC JESD51-2A, Integrated Circuits Thermal Test Method Environmental Conditions - Natural Convection (Still Air)"
+    ]
+  },
+  "packages": [
+    {
+      "id": "ti-lmr51430-ddc-sot23-6",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LMR51430",
+      "package": "DDC (SOT-23)",
+      "pins": 6,
+      "theta_ja_c_per_w": 107.8,
+      "jedec_standard_printed": "JESD 51-7",
+      "board_description_printed": "4-layer JEDEC board (simulated)",
+      "caveat_printed_verbatim": "The value of R-theta-JA given in this table is only valid for comparison with other packages and cannot be used for design purposes. These values were calculated in accordance with JESD 51-7, and simulated on a 4-layer JEDEC board. They do not represent the performance obtained in an actual application.",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 52.4,
+        "theta_jb": 23.3
+      },
+      "source": {
+        "title": "LMR51430 SIMPLE SWITCHER 4.5-V to 36-V, 3-A Synchronous Buck Converter",
+        "url": "https://www.ti.com/lit/ds/symlink/lmr51430.pdf"
+      }
+    },
+    {
+      "id": "ti-lmr43610-rpe-vqfn-hr-9",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LMR43610 / LMR43620",
+      "package": "RPE (VQFN-HR)",
+      "pins": 9,
+      "theta_ja_c_per_w": 84.4,
+      "jedec_standard_printed": "JESD 51-7",
+      "board_description_printed": "4-layer JEDEC board (simulated)",
+      "caveat_printed_verbatim": "The value of R-theta-JA in this table is only valid for comparison with other packages. These values were calculated in accordance with JESD 51-7, and simulated on a 4-layer JEDEC board. They do not represent the performance obtained in an actual application.",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 47.5,
+        "theta_jb": 26.1
+      },
+      "source": {
+        "title": "LMR43610/LMR43620 SIMPLE SWITCHER Synchronous Buck Converters",
+        "url": "https://www.ti.com/lit/ds/symlink/lmr43610.pdf"
+      }
+    },
+    {
+      "id": "ti-tps62933-drl-sot583-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "TPS62933",
+      "package": "DRL (SOT583)",
+      "pins": 8,
+      "theta_ja_c_per_w": 112.2,
+      "jedec_standard_printed": null,
+      "board_description_printed": "standard JEDEC board (simulated)",
+      "caveat_printed_verbatim": "The value of R-theta-JA given in this table is only valid for comparison with other packages and can not be used for design purposes. These values were simulated on a standard JEDEC board. They do not represent the performance obtained in an actual application.",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 29.1,
+        "theta_jb": 19.3
+      },
+      "source": {
+        "title": "TPS62933 3.8-V to 30-V, 3-A Synchronous Buck Converter",
+        "url": "https://www.ti.com/lit/ds/symlink/tps62933.pdf"
+      }
+    },
+    {
+      "id": "ti-lm339-n-pdip-14",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LM339",
+      "package": "N (PDIP)",
+      "pins": 14,
+      "theta_ja_c_per_w": 114.9,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 93.8,
+        "theta_jb": 77.7
+      },
+      "source": {
+        "title": "LM139, LM239, LM339 Quad Differential Comparators",
+        "document_number": "SLCS006Z",
+        "revision": "May 2025",
+        "url": "https://www.ti.com/lit/ds/symlink/lm339.pdf"
+      }
+    },
+    {
+      "id": "ti-lm339-d-soic-14",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LM339",
+      "package": "D (SOIC)",
+      "pins": 14,
+      "theta_ja_c_per_w": 111.2,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 66.9,
+        "theta_jb": 67.8
+      },
+      "source": {
+        "title": "LM139, LM239, LM339 Quad Differential Comparators",
+        "document_number": "SLCS006Z",
+        "revision": "May 2025",
+        "url": "https://www.ti.com/lit/ds/symlink/lm339.pdf"
+      }
+    },
+    {
+      "id": "ti-lm339-pw-tssop-14",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LM339",
+      "package": "PW (TSSOP)",
+      "pins": 14,
+      "theta_ja_c_per_w": 136.6,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 66.6,
+        "theta_jb": 79.8
+      },
+      "source": {
+        "title": "LM139, LM239, LM339 Quad Differential Comparators",
+        "document_number": "SLCS006Z",
+        "revision": "May 2025",
+        "url": "https://www.ti.com/lit/ds/symlink/lm339.pdf"
+      }
+    },
+    {
+      "id": "ti-lm339-db-ssop-14",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LM339",
+      "package": "DB (SSOP)",
+      "pins": 14,
+      "theta_ja_c_per_w": 111.8,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 63.6,
+        "theta_jb": 60.5
+      },
+      "source": {
+        "title": "LM139, LM239, LM339 Quad Differential Comparators",
+        "document_number": "SLCS006Z",
+        "revision": "May 2025",
+        "url": "https://www.ti.com/lit/ds/symlink/lm339.pdf"
+      }
+    },
+    {
+      "id": "ti-lm339-ns-sop-14",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LM339",
+      "package": "NS (SOP)",
+      "pins": 14,
+      "theta_ja_c_per_w": 96.2,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 56.1,
+        "theta_jb": 56.9
+      },
+      "source": {
+        "title": "LM139, LM239, LM339 Quad Differential Comparators",
+        "document_number": "SLCS006Z",
+        "revision": "May 2025",
+        "url": "https://www.ti.com/lit/ds/symlink/lm339.pdf"
+      }
+    },
+    {
+      "id": "ti-lm339-rte-qfn-16",
+      "manufacturer": "Texas Instruments",
+      "part_number": "LM339",
+      "package": "RTE (QFN)",
+      "pins": 16,
+      "theta_ja_c_per_w": 67.6,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 72.3,
+        "theta_jb": 43.1,
+        "theta_jc_bot": 26.4
+      },
+      "source": {
+        "title": "LM139, LM239, LM339 Quad Differential Comparators",
+        "document_number": "SLCS006Z",
+        "revision": "May 2025",
+        "url": "https://www.ti.com/lit/ds/symlink/lm339.pdf"
+      }
+    },
+    {
+      "id": "ti-opa333-d-soic-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "OPA333",
+      "package": "D (SOIC)",
+      "pins": 8,
+      "theta_ja_c_per_w": 140.1,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 89.8,
+        "theta_jb": 80.6
+      },
+      "source": {
+        "title": "OPA333, OPA2333 Zero-Drift Operational Amplifiers",
+        "document_number": "SBOS351E",
+        "revision": "December 2015",
+        "url": "https://www.ti.com/lit/ds/symlink/opa2333.pdf"
+      }
+    },
+    {
+      "id": "ti-opa333-dbv-sot23-5",
+      "manufacturer": "Texas Instruments",
+      "part_number": "OPA333",
+      "package": "DBV (SOT-23)",
+      "pins": 5,
+      "theta_ja_c_per_w": 220.8,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 97.5,
+        "theta_jb": 61.7
+      },
+      "source": {
+        "title": "OPA333, OPA2333 Zero-Drift Operational Amplifiers",
+        "document_number": "SBOS351E",
+        "revision": "December 2015",
+        "url": "https://www.ti.com/lit/ds/symlink/opa2333.pdf"
+      }
+    },
+    {
+      "id": "ti-opa333-dck-sc70-5",
+      "manufacturer": "Texas Instruments",
+      "part_number": "OPA333",
+      "package": "DCK (SC70)",
+      "pins": 5,
+      "theta_ja_c_per_w": 298.4,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 65.4,
+        "theta_jb": 97.1
+      },
+      "source": {
+        "title": "OPA333, OPA2333 Zero-Drift Operational Amplifiers",
+        "document_number": "SBOS351E",
+        "revision": "December 2015",
+        "url": "https://www.ti.com/lit/ds/symlink/opa2333.pdf"
+      }
+    },
+    {
+      "id": "ti-opa2333-dgk-vssop-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "OPA2333",
+      "package": "DGK (VSSOP)",
+      "pins": 8,
+      "theta_ja_c_per_w": 180.3,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 48.1,
+        "theta_jb": 100.9
+      },
+      "source": {
+        "title": "OPA333, OPA2333 Zero-Drift Operational Amplifiers",
+        "document_number": "SBOS351E",
+        "revision": "December 2015",
+        "url": "https://www.ti.com/lit/ds/symlink/opa2333.pdf"
+      }
+    },
+    {
+      "id": "ti-opa2333-drb-vson-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "OPA2333",
+      "package": "DRB (VSON)",
+      "pins": 8,
+      "theta_ja_c_per_w": 46.7,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 26.3,
+        "theta_jb": 22.2,
+        "theta_jc_bot": 10.3
+      },
+      "source": {
+        "title": "OPA333, OPA2333 Zero-Drift Operational Amplifiers",
+        "document_number": "SBOS351E",
+        "revision": "December 2015",
+        "url": "https://www.ti.com/lit/ds/symlink/opa2333.pdf"
+      }
+    },
+    {
+      "id": "ti-tps54360-dda-hsoic-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "TPS54360",
+      "package": "DDA (HSOIC, thermal pad)",
+      "pins": 8,
+      "theta_ja_c_per_w": 42.0,
+      "jedec_standard_printed": null,
+      "board_description_printed": "standard board (as printed in the metric's own name)",
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 45.8,
+        "theta_jc_bot": 3.6,
+        "theta_jb": 23.4
+      },
+      "source": {
+        "title": "TPS54360 60-V Input, 3.5-A, Step-Down DC-DC Converter",
+        "document_number": "SLVSBB4G",
+        "revision": "June 2018",
+        "url": "https://www.ti.com/lit/ds/symlink/tps54360.pdf"
+      }
+    },
+    {
+      "id": "ti-tps7a02-dqn-x2son-4",
+      "manufacturer": "Texas Instruments",
+      "part_number": "TPS7A02",
+      "package": "DQN (X2SON)",
+      "pins": 4,
+      "theta_ja_c_per_w": 179.1,
+      "jedec_standard_printed": null,
+      "board_description_printed": "JEDEC-standard high-K board (named in the datasheet's thermal-derating section)",
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 137.6,
+        "theta_jb": 116.3,
+        "theta_jc_bot": 112.3
+      },
+      "source": {
+        "title": "TPS7A02 Nanopower IQ, 200-mA, Low-Dropout Voltage Regulator",
+        "document_number": "SBVS277C",
+        "revision": "September 2022",
+        "url": "https://www.ti.com/lit/ds/symlink/tps7a02.pdf"
+      }
+    },
+    {
+      "id": "ti-tps7a02-dbv-sot23-5",
+      "manufacturer": "Texas Instruments",
+      "part_number": "TPS7A02",
+      "package": "DBV (SOT-23)",
+      "pins": 5,
+      "theta_ja_c_per_w": 181.9,
+      "jedec_standard_printed": null,
+      "board_description_printed": "JEDEC-standard high-K board (named in the datasheet's thermal-derating section)",
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 53.0,
+        "theta_jb": 88.1
+      },
+      "source": {
+        "title": "TPS7A02 Nanopower IQ, 200-mA, Low-Dropout Voltage Regulator",
+        "document_number": "SBVS277C",
+        "revision": "September 2022",
+        "url": "https://www.ti.com/lit/ds/symlink/tps7a02.pdf"
+      }
+    },
+    {
+      "id": "ti-tps7a02-ych-dsbga-4",
+      "manufacturer": "Texas Instruments",
+      "part_number": "TPS7A02",
+      "package": "YCH (DSBGA)",
+      "pins": 4,
+      "theta_ja_c_per_w": 201.1,
+      "jedec_standard_printed": null,
+      "board_description_printed": "JEDEC-standard high-K board (named in the datasheet's thermal-derating section)",
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "other_metrics_c_per_w": {
+        "theta_jc_top": 2.3,
+        "theta_jb": 67.3
+      },
+      "source": {
+        "title": "TPS7A02 Nanopower IQ, 200-mA, Low-Dropout Voltage Regulator",
+        "document_number": "SBVS277C",
+        "revision": "September 2022",
+        "url": "https://www.ti.com/lit/ds/symlink/tps7a02.pdf"
+      }
+    },
+    {
+      "id": "ti-ucc27524-p-pdip-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "UCC27524",
+      "package": "P (PDIP)",
+      "pins": 8,
+      "theta_ja_c_per_w": 126.4,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "source": {
+        "title": "UCC27524 Dual 5-A High-Speed Low-Side Gate Driver",
+        "url": "https://www.ti.com/lit/ds/symlink/ucc27524.pdf"
+      }
+    },
+    {
+      "id": "ti-ucc27524-dgn-hvssop-8",
+      "manufacturer": "Texas Instruments",
+      "part_number": "UCC27524",
+      "package": "DGN (HVSSOP, thermal pad)",
+      "pins": 8,
+      "theta_ja_c_per_w": 46.7,
+      "jedec_standard_printed": null,
+      "board_description_printed": null,
+      "methodology_reference_printed": "SPRA953, Semiconductor and IC Package Thermal Metrics",
+      "source": {
+        "title": "UCC27524 Dual 5-A High-Speed Low-Side Gate Driver",
+        "url": "https://www.ti.com/lit/ds/symlink/ucc27524.pdf"
+      }
+    },
+    {
+      "id": "nexperia-bss138p-sot23",
+      "manufacturer": "Nexperia",
+      "part_number": "BSS138P",
+      "package": "SOT23",
+      "pins": 3,
+      "theta_ja_c_per_w": 310,
+      "theta_ja_max_c_per_w": 370,
+      "jedec_standard_printed": null,
+      "board_description_printed": "FR4 PCB, single-sided copper, tin-plated, standard footprint; free air",
+      "variant": {
+        "theta_ja_c_per_w": 260,
+        "theta_ja_max_c_per_w": 300,
+        "board_description_printed": "FR4 PCB, single-sided copper, tin-plated, mounting pad for drain 1 cm2"
+      },
+      "other_metrics_c_per_w": {
+        "theta_j_solder_point": 115
+      },
+      "source": {
+        "title": "BSS138P 60 V, 360 mA N-channel Trench MOSFET",
+        "revision": "Rev. 1, 2 November 2010",
+        "url": "https://assets.nexperia.com/documents/data-sheet/BSS138P.pdf"
+      }
+    },
+    {
+      "id": "nexperia-bc847bs-sot363-per-device",
+      "manufacturer": "Nexperia",
+      "part_number": "BC847BS",
+      "package": "SOT363",
+      "pins": 6,
+      "theta_ja_c_per_w": 416,
+      "theta_ja_basis": "per device (both transistors)",
+      "jedec_standard_printed": null,
+      "board_description_printed": "FR4 PCB, single-sided, 35 um copper, tin-plated, standard footprint; free air",
+      "variant": {
+        "theta_ja_c_per_w": 313,
+        "board_description_printed": "FR4 PCB, single-sided, 35 um copper, tin-plated, mounting pad for collector 1 cm2"
+      },
+      "per_transistor_c_per_w": {
+        "standard_footprint": 568,
+        "pad_1cm2": 500
+      },
+      "other_metrics_c_per_w": {
+        "theta_j_solder_point": 230
+      },
+      "source": {
+        "title": "BC847BS 45 V, 100 mA NPN/NPN general-purpose transistor",
+        "url": "https://assets.nexperia.com/documents/data-sheet/BC847BS.pdf"
+      }
+    },
+    {
+      "id": "diodes-dmn2041l",
+      "manufacturer": "Diodes Incorporated",
+      "part_number": "DMN2041L",
+      "package": "as printed in the datasheet's package section",
+      "pins": 3,
+      "theta_ja_c_per_w": 161,
+      "jedec_standard_printed": null,
+      "board_description_printed": "FR-4 PCB with minimum recommended pad layout, TA = +25 C",
+      "rated_power_dissipation_w": 0.78,
+      "junction_temperature_range_c": [
+        -55,
+        150
+      ],
+      "source": {
+        "title": "DMN2041L N-Channel Enhancement Mode MOSFET",
+        "url": "https://www.diodes.com/assets/Datasheets/DMN2041L.pdf"
+      }
+    }
+  ],
+  "package_provenance_summary": {
+    "total_entries": 23,
+    "with_a_jedec_standard_number_printed": 2,
+    "with_a_board_described_but_no_standard_number": 7,
+    "with_only_a_methodology_reference_printed": 14,
+    "honest_reading": "Only the LMR51430 and LMR43610 datasheets print BOTH the JESD number and the board. Seven more describe the board without naming a JESD document. The remaining fourteen print theta-JA and cite TI's SPRA953 methodology note but say nothing about the board in the datasheet itself. The requirement was 15-20 theta-JA values 'measured under JEDEC JESD51' with the standard and board recorded; what the published documents actually support is 2 fully pinned, 7 board-described, and 14 methodology-referenced. That gap is a fact about datasheets, not a shortfall this file papers over, and it is why the field is named jedec_standard_printed rather than jedec_standard."
+  }
+}

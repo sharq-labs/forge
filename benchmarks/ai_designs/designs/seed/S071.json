@@ -1,0 +1,64 @@
+{
+ "id": "S071",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "yageo-rc1218",
+  "source_voltage_v": 3.794733192202055,
+  "resistance_ohm": 180.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 25,
+  "duration_s": 120.0,
+  "thermal_resistance_k_per_w": 312.5,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.025332889999999997,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00021203027845363609,
+   "surface_area_m2": 3.699e-05,
+   "body_volume_m3": 7.843e-09,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.02,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 900.0,
+   "constant_capacity_span_k": 900.0,
+   "linearization_band_k": 2.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.006081940479813988,
+   "fluid_conductivity_solved_w_per_m_k": 0.1680819241035259,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 1.0,
+   "maximum_working_voltage_v": 200,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.06305685302824635
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "model_inapplicable",
+  "reason": "the body runs far outside the 2 K span over which the linear temperature coefficient is declared.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [
+    "linearization_excursion_ratio"
+   ],
+   "unknown_count": 0,
+   "final_temperature_k": 323.0754,
+   "steady_temperature_k": 323.0754,
+   "dissipated_power_w": 0.079761,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

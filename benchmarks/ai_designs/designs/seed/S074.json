@@ -1,0 +1,66 @@
+{
+ "id": "S074",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "yageo-rc0603",
+  "source_voltage_v": 12.0,
+  "resistance_ohm": 4.7,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 199.99999999999997,
+  "ambient_c": 25,
+  "duration_s": 60.0,
+  "thermal_resistance_k_per_w": 40.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.00186048,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00012203389830508475,
+   "surface_area_m2": 4.72e-06,
+   "body_volume_m3": 5.76e-10,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.02,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 2000.0,
+   "constant_capacity_span_k": 2000.0,
+   "linearization_band_k": 4000.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.0021725560982400432,
+   "fluid_conductivity_solved_w_per_m_k": 3.248981750731559,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.1,
+   "maximum_working_voltage_v": 75,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 6.35916710170588
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "unit_or_sign_error",
+  "reason": "4.7 kohm was entered as 4.7 ohm, so the same 12 V rail delivers a thousand times the intended power.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [
+    "operating_temperature_utilization",
+    "tcr_form_declared_range",
+    "dissipated_power_utilization"
+   ],
+   "unknown_count": 0,
+   "final_temperature_k": 1315.6167,
+   "steady_temperature_k": 1315.6167,
+   "dissipated_power_w": 25.436668,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

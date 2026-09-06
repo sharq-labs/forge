@@ -1,0 +1,64 @@
+{
+ "id": "S091",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "yageo-rc2512",
+  "source_voltage_v": 5.744562646538029,
+  "resistance_ohm": 330.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 25,
+  "duration_s": 90.0,
+  "thermal_resistance_k_per_w": 250.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.0349704025,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00021755752034562442,
+   "surface_area_m2": 4.9765e-05,
+   "body_volume_m3": 1.082675e-08,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.02,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 900.0,
+   "constant_capacity_span_k": 900.0,
+   "linearization_band_k": 2000.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.00705443123150265,
+   "fluid_conductivity_solved_w_per_m_k": 0.829305225063015,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 1.0,
+   "maximum_working_voltage_v": 200,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.0520674870769368
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "inconsistent_inputs",
+  "reason": "the declared coefficient is five times what the declared geometry and fluid produce, so two of those three numbers cannot both be right.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [
+    "convection_conductance_agreement_ratio"
+   ],
+   "unknown_count": 0,
+   "final_temperature_k": 323.0746,
+   "steady_temperature_k": 323.0754,
+   "dissipated_power_w": 0.099702,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}
