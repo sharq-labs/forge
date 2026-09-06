@@ -39,6 +39,16 @@ in the core and names no domain.
 **Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
 and this is exactly the kind of change that should be argued before it is made.
 
+**Status after STEP 7: worked around, deliberately, and the workaround is not a
+substitute.** `engcore.mcp.EvidencePackage` carries validity itself, as a tuple
+of `ModelValidityRecord` the assembler supplies. That closes the gap for anyone
+holding a *package* and leaves it wide open for anyone holding a *result*: the
+assessment still has to be made by whoever has both the problem and the
+operating point, and a package assembled without it reports
+`INSUFFICIENT_EVIDENCE` rather than pretending. So the consumer-side fix makes
+the omission visible instead of making it impossible, which is the best a
+consumer can do. The core change above is still the right one.
+
 ### 1.2 A categorical parameter cannot cross the provenance boundary
 
 **Where** `src/engcore/scientific/results/provenance.py` (the `Quantity`-only
@@ -170,6 +180,122 @@ taken:
   grows. That requires either extending the frozen tree or a re-freeze.
 * `experiments/` is where such a comparison's numbers would be pinned. A new
   experiment directory would need its own preregistration.
+
+### 1.8 STEP 7 wanted three things outside `src/engcore/mcp/` and took none
+
+**`src/engcore/__init__.py` now under-describes the package.** Its docstring
+enumerates the sub-packages — `scientific`, `domains`, `systems`, `sria`,
+`design`, `inference`, `uq`, `adequacy`, `data` — and `mcp` is missing from
+that list because the file is outside the owned paths. One line to add when
+somebody is next in there:
+
+```
+- ``mcp``         evidence packaging for consumers: carries validity,
+                  validation and provenance together and derives an advisory
+                  verdict from them
+```
+
+**`docs/TESTING.md` needs no new tier entry, but its counts are now stale
+again.** `tests/mcp/` is not in `conftest.py`'s `EXPENSIVE_MODULES`, so it
+defaults to FAST, which is correct: the three real-run tests drive the same
+ten-iteration closed-form fixed point the electrothermal tests already run in
+FAST, and the whole module costs about a second. Left unmarked deliberately —
+the brief said to mark them `expensive` only if the existing rule already
+covered them, and it does not.
+
+The counts in that document are another matter. It was last corrected to
+FAST 1406 / SCIENTIFIC 1924 / FULL 1928; the closeout round then added 5 tests
+and this round adds 50, so the true figures measured on this checkout are:
+
+| Tier | In the doc | Measured now |
+|---|---|---|
+| FAST | 1406 | **1461** |
+| SCIENTIFIC | 1924 | **1979** |
+| FULL | 1928 | **1983** |
+
+Not edited, because `docs/` is outside this round's owned paths. This is the
+second time these counts have gone stale within a few commits, which is the
+real finding: a hand-maintained count in prose drifts every time anyone adds a
+test. Worth considering whether the tier table should be generated, or the
+counts dropped in favour of the commands that produce them.
+
+**`ScientificResult.validity` — see §1.1**, whose status is updated above.
+
+### 1.8b SUPPORTED does not require any evidentiary level — proposed strengthening
+
+**Not a core change; a change to the brief's verdict rule, so not made.**
+
+`SUPPORTED` is specified as "everything else: all validity IN_DOMAIN, no
+failures, no NOT_RUN gap". It says nothing about what the passing checks
+*established*. A solver emitting one passing check with `establishes=None`
+therefore yields a `SUPPORTED` package whose `attained_levels` is empty — and
+that is not hypothetical: the lumped thermal solver deliberately claims no
+level for its residual check ("being the one solver to award itself the highest
+level in the taxonomy, from the weakest evidence, is exactly the unearned claim
+the result contract exists to refuse"), so the IN_DOMAIN real-run package in
+`tests/mcp/test_evidence.py` is SUPPORTED with `attained_levels == frozenset()`.
+
+Defensible as specified — nothing in that package argues *against* the result,
+which is what SUPPORTED claims — and weaker than a reader may assume. Three
+things were done instead of changing the rule:
+
+* `EvidencePackage.attained_levels` is exposed beside the verdict.
+* `to_dict` emits a `verdict_qualifiers` block carrying `attained_levels`,
+  `warning_checks` and `unassessed_models`, so a JSON reader who never opens
+  the check list still sees what a SUPPORTED verdict rests on.
+* `required_levels` lets a study declare the bar it needs; a level demanded and
+  not attained is `INSUFFICIENT_EVIDENCE`.
+
+**The proposal, if the rule is ever revisited:** make the guard evidential
+rather than numeric — replace "there are no checks at all" with "no check both
+passed and established a level". That reuses the core's own definition of what
+counts and makes `SUPPORTED` mean "at least one level was actually attained".
+The cost is that every current lumped-thermal package becomes
+`INSUFFICIENT_EVIDENCE`, which is arguably the honest answer and is certainly a
+decision for whoever owns the verdict semantics, not for this implementation.
+
+### 1.9 `ValidityAssessment` is the one core record that validates nothing
+
+**Where** `src/engcore/scientific/models/definition.py`, the
+`ValidityAssessment` dataclass.
+
+**What was hit.** Every neighbouring record in that file has a
+`__post_init__` that coerces enums through their constructor and sequences
+through `tuple()`. `ValidityAssessment` has none. So
+`ValidityAssessment(status="in_domain")` stores a raw `str`,
+`ValidityAssessment(status="probably_fine")` stores a string that is no status
+at all, and a `list` passed for `violated` stays a list and makes the frozen
+record unhashable.
+
+**Why it matters here.** `EvidencePackage`'s verdict is decided by set
+membership over the statuses it carries. A *correct* string is harmless —
+`ValidityStatus` is a `str` enum whose members hash equal to their values — but
+an *unrecognised* one matches neither the NOT_SUPPORTED nor the
+INSUFFICIENT_EVIDENCE branch and would fall through to SUPPORTED. A malformed
+record would earn the most favourable verdict available.
+
+**Worked around, not fixed.** `ModelValidityRecord.__post_init__` re-runs
+`ValidityStatus(...)` over the carried assessment's status and refuses an
+unrecognised one, with a test
+(`test_an_unrecognised_validity_status_is_refused_rather_than_read_as_clean`).
+That protects this consumer and nothing else — any other consumer of a
+hand-built `ValidityAssessment` has the same hole.
+
+**A second, sharper consequence.** Nothing forces the status to agree with the
+record's own condition lists either, so
+`ValidityAssessment(status=IN_DOMAIN, violated=("biot_number",))` constructs
+happily — a record that would report SUPPORTED on the same line it names the
+bound it violated. `ModelValidityRecord.__post_init__` now cross-checks against
+exactly the classification `ValidityDomain.assess` performs (violated dominates
+unknown dominates satisfied), so every assessment the core actually produced
+passes untouched and only a hand-built one is refused. Again: protects this
+consumer only.
+
+**Proposal.** Give `ValidityAssessment` the `__post_init__` its neighbours
+have: `object.__setattr__(self, "status", ValidityStatus(self.status))` plus
+`tuple(...)` over the three name sequences, and the same violated/unknown
+cross-check. No behaviour change for any correctly-built instance, and it makes
+both workarounds above unnecessary for every consumer rather than one.
 
 ---
 
