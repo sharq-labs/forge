@@ -30,11 +30,28 @@ input is declared as an **externally imposed control**, and any heat source
 satisfies it — combustion, friction, a heater, or Joule dissipation. A thermal
 model that *required* electrical dissipation would be electrical physics
 wearing a thermal name.
+
+What this solver's validation establishes
+-----------------------------------------
+``DIMENSIONALLY_VALID``    nothing here awards it yet. ``NEEDS.md`` §1.8b
+                           records the ``metric_dimensions`` check that would.
+``NUMERICALLY_CONVERGED``  **not earnable, by design.** There is no
+                           discretization: no mesh, no step, no iteration, and
+                           ``ConvergenceState.NOT_APPLICABLE`` on every solve.
+                           See :mod:`lumped_reference` for why refining the
+                           reference does not earn it either.
+``ANALYTICALLY_VERIFIED``  earned per solve, by comparison against
+                           :mod:`lumped_reference` — a reconstruction of the
+                           solution from the equation's own coefficients that
+                           shares no code and no derived quantity with the
+                           closed form. Withheld as ``NOT_RUN`` when that
+                           reference cannot be built inside its budget.
 """
 
 from __future__ import annotations
 
 import math
+import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -68,6 +85,7 @@ from ...scientific.realizations.definition import (
 from ...scientific.realizations.registry import RealizationRegistry
 from ...scientific.results.validation import (
     ValidationCheck,
+    ValidationLevel,
     ValidationOutcome,
     ValidationReport,
 )
@@ -108,10 +126,17 @@ from .context import (
     LumpedApplicabilityDeclaration,
     derived_lumped_quantities,
 )
+from .lumped_reference import (
+    REFERENCE_EXPRESSION,
+    REFERENCE_ID,
+    series_reference_temperature,
+)
 
 __all__ = [
     "AMBIENT_CONDUCTANCE",
     "AMBIENT_TEMPERATURE",
+    "ANALYTIC_REFERENCE_CHECK",
+    "BALANCE_RESIDUAL_CHECK",
     "CAPACITY_UNIT",
     "CONDUCTANCE_UNIT",
     "DURATION",
@@ -128,6 +153,7 @@ __all__ = [
     "PHASE_CHANGE_UTILIZATION_LIMIT",
     "POWER_UNIT",
     "RADIATION_NEGLIGIBILITY_LIMIT",
+    "SOLVER_ROUNDING_ULPS",
     "STEADY_STATE_TEMPERATURE_METRIC",
     "TEMPERATURE",
     "TEMPERATURE_UNIT",
@@ -986,6 +1012,35 @@ SOLVER_ID = "engcore.thermal.lumped_closed_form"
 SOLVER_VERSION = "0.1.0"
 BACKEND = "python.math.exp"
 
+#: The two checks this solver emits, named once so a reader grepping for
+#: either finds the constant rather than a string literal in three places.
+BALANCE_RESIDUAL_CHECK = "lumped_balance_residual"
+ANALYTIC_REFERENCE_CHECK = "analytic_reference_agreement"
+
+#: The comparison tolerance against the independent reference, expressed in
+#: units in the last place of the largest intermediate the closed form forms.
+#:
+#: WHY THIS IS A ROUND-OFF BUDGET AND NOT AN ENGINEERING TOLERANCE. The two
+#: routes compute the same real number — one by the exponential ansatz, one by
+#: the series recurrence — so every digit of disagreement above floating-point
+#: noise is a defect in one of them. There is no discretization error to leave
+#: room for on either side: the solver has no discretization, and the
+#: reference's own error is bounded and added to this budget separately. A
+#: tolerance chosen at an engineering level, say 1e-6 K, would pass a closed
+#: form with a genuinely wrong fifteenth digit and — worse — would keep passing
+#: one with a wrong sixth, so it would not be measuring what it claims to.
+#:
+#: WHY 128 AND NOT 1. The solver's evaluation is five floating-point
+#: operations around one ``math.exp``. ``exp`` is faithfully rounded on
+#: mainstream libms but is not required to be correctly rounded and differs in
+#: the last place between platforms, and ``(T0 - T_ss)`` cancels, so the error
+#: in the result scales with the largest intermediate rather than with the
+#: result. 128 ulps of that intermediate is roughly 1e-11 K on a body near
+#: 340 K: seven orders of magnitude tighter than the smallest physically
+#: meaningful temperature difference, and wide enough that the check does not
+#: become a report of which libm the run used.
+SOLVER_ROUNDING_ULPS = 128
+
 
 @dataclass(frozen=True)
 class PreparedLumpedStep:
@@ -1179,13 +1234,28 @@ class LumpedThermalSolver:
     def validate(
         self, prepared: PreparedSolve, raw: RawSolverOutput
     ) -> ValidationReport:
-        """Check the closed form against the balance it claims to solve.
+        """Two checks, and only one of them establishes anything.
 
-        The residual of ``C dT/dt = Q - hA (T - T_amb)`` is evaluated at the
-        end of the interval using the analytic derivative. This is
-        self-consistency of the solution against its own differential
-        equation — **not** a physical validation and not a coupled-convergence
-        claim, and the check says so.
+        ``lumped_balance_residual`` evaluates the residual of
+        ``C dT/dt = Q - hA (T - T_amb)`` at the end of the interval using the
+        analytic derivative. It is self-consistency of the solution against its
+        own differential equation, it establishes no level, and the check says
+        so where it is built.
+
+        ``analytic_reference_agreement`` compares the emitted temperature
+        against :mod:`lumped_reference`, which rebuilds the solution from the
+        equation's coefficients by a series recurrence that shares no code and
+        no derived quantity with the closed form. That comparison is what earns
+        ``ANALYTICALLY_VERIFIED``; the independence argument, what the
+        comparison can and cannot detect, and why ``NUMERICALLY_CONVERGED`` is
+        not earnable by either side are all set out in that module's docstring.
+
+        **The reference is a third outcome, not a softer pass.** If it cannot
+        be constructed inside its declared budget the check is ``NOT_RUN`` and
+        establishes nothing; if it can be constructed and disagrees, the check
+        ``FAIL``s. Degrading a disagreement into a level-free pass would let a
+        wrong closed form travel as a clean report, which is exactly what a
+        reference comparison exists to prevent.
         """
         step: PreparedLumpedStep = prepared.payload
         body = step.body
@@ -1193,7 +1263,7 @@ class LumpedThermalSolver:
             return ValidationReport(
                 checks=(
                     ValidationCheck(
-                        name="lumped_balance_residual",
+                        name=BALANCE_RESIDUAL_CHECK,
                         outcome=ValidationOutcome.FAIL,
                         detail="the solve did not succeed; no residual exists",
                     ),
@@ -1217,7 +1287,7 @@ class LumpedThermalSolver:
         return ValidationReport(
             checks=(
                 ValidationCheck(
-                    name="lumped_balance_residual",
+                    name=BALANCE_RESIDUAL_CHECK,
                     outcome=(
                         ValidationOutcome.PASS if passed else ValidationOutcome.FAIL
                     ),
@@ -1228,14 +1298,9 @@ class LumpedThermalSolver:
                     # flipped exponent each leave it non-zero, so the check does
                     # real work — but it compares the closed form against the
                     # equation the closed form was derived from, with no
-                    # independent reference. That is weaker than what every
-                    # other solver in this repository has, and those claim only
-                    # DIMENSIONALLY_VALID; the byte-pinned conduction solver
-                    # measures error against a genuinely independent closed form
-                    # and still claims no more. Being the one solver to award
-                    # itself the highest level in the taxonomy, from the weakest
-                    # evidence, is exactly the unearned claim the result
-                    # contract exists to refuse.
+                    # independent reference. The level now comes from the check
+                    # below, which has one; this one keeps its honest silence
+                    # rather than borrowing that reference's credit.
                     establishes=None,
                     residual=residual,
                     tolerance=1e-9 * scale,
@@ -1246,5 +1311,73 @@ class LumpedThermalSolver:
                         f"physical validation and no coupled-convergence claim."
                     ),
                 ),
+                self._reference_check(body, step.heat_input_w, final, steady),
             )
+        )
+
+    @staticmethod
+    def _reference_check(
+        body: ThermalBody,
+        heat_input_w: float,
+        final_k: float,
+        steady_k: float,
+    ) -> ValidationCheck:
+        """The emitted temperature against the independent series reference."""
+        reference = series_reference_temperature(
+            capacity_j_per_k=body.capacity_j_per_k,
+            conductance_w_per_k=body.conductance_w_per_k,
+            heat_input_w=heat_input_w,
+            ambient_k=body.ambient_k,
+            initial_k=body.initial_k,
+            duration_s=body.duration_s,
+        )
+        evidence = (f"{REFERENCE_ID}: {REFERENCE_EXPRESSION}",)
+        if not reference.available:
+            return ValidationCheck(
+                name=ANALYTIC_REFERENCE_CHECK,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(
+                    f"{reference.detail}. No comparison was made, so nothing "
+                    f"was established: an absent reference is a gap in the "
+                    f"evidence, not a result in its favour"
+                ),
+                establishes=None,
+                evidence=evidence,
+            )
+
+        # The round-off budget scales with the largest intermediate the closed
+        # form forms, not with the answer: (T0 - T_ss) cancels, and a body
+        # whose steady state is far outside its own temperature range carries
+        # that cancellation into the result.
+        magnitude = max(
+            abs(final_k), abs(body.initial_k), abs(steady_k), 1.0
+        )
+        tolerance = (
+            reference.error_bound_k
+            + SOLVER_ROUNDING_ULPS * sys.float_info.epsilon * magnitude
+        )
+        difference = abs(final_k - reference.value_k)
+        agrees = difference <= tolerance
+        return ValidationCheck(
+            name=ANALYTIC_REFERENCE_CHECK,
+            outcome=(
+                ValidationOutcome.PASS if agrees else ValidationOutcome.FAIL
+            ),
+            residual=difference,
+            tolerance=tolerance,
+            establishes=(
+                ValidationLevel.ANALYTICALLY_VERIFIED if agrees else None
+            ),
+            detail=(
+                f"closed form gives {final_k:.12g} K; {reference.detail}. "
+                f"They differ by {difference:.3e} K against a tolerance of "
+                f"{tolerance:.3e} K, which is the reference's own error bound "
+                f"plus {SOLVER_ROUNDING_ULPS} ulps of the largest intermediate "
+                f"the closed form forms ({magnitude:.6g} K). The two routes "
+                f"share the governing equation and nothing else — no code, no "
+                f"steady state, no time constant, no exponential — so this is "
+                f"code verification of the closed form and not physical "
+                f"validation of the model."
+            ),
+            evidence=evidence,
         )

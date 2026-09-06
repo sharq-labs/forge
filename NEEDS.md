@@ -28,26 +28,61 @@ literally. The integration tests assert the verdict next to the result instead,
 which is honest but weaker: nothing stops a consumer from reading the numbers
 and never asking.
 
-**Proposal.** Add an optional `validity: ValidityAssessment | None = None` to
-`ScientificResult`, defaulting to `None` and serialized like the other records.
-`None` must mean *not assessed* and must not be confused with
-`ValidityStatus.UNKNOWN`, which means *assessed, and the context was
-insufficient* — two different failures with two different remedies. This is a
-core change and is not a domain conditional: `ValidityAssessment` already lives
-in the core and names no domain.
+**Status: DONE in the recommendations round**, as that round's one authorised
+core change.
 
-**Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
-and this is exactly the kind of change that should be argued before it is made.
+**What was built, and where it differs from the proposal above.** The field is
+a **mapping** — `validity: Mapping[str, ValidityAssessment]`, keyed by model id
+— and not the single optional assessment proposed here. The proposal was
+written from the single-model case and does not survive a coupled result: a run
+whose thermal model is in domain and whose material model is not has two
+answers, and one field would have had to report one of them, wrongly, half the
+time. Empty is the default, so no existing construction site moved.
 
-**Status after STEP 7: worked around, deliberately, and the workaround is not a
-substitute.** `engcore.mcp.CredibilityEvidenceReport` carries validity itself, as a tuple
-of `ModelValidityRecord` the assembler supplies. That closes the gap for anyone
-holding a *package* and leaves it wide open for anyone holding a *result*: the
-assessment still has to be made by whoever has both the problem and the
-operating point, and a package assembled without it reports
-`INSUFFICIENT_EVIDENCE` rather than pretending. So the consumer-side fix makes
-the omission visible instead of making it impossible, which is the best a
-consumer can do. The core change above is still the right one.
+**Not assessed is not UNKNOWN, structurally rather than by documentation.** The
+proposal named the distinction; keeping it needed four things, and all four are
+in place:
+
+* a `None` value in the mapping is refused, so there is no representation of
+  "listed, but not assessed" — a model is either a key with a real assessment
+  or it is not a key;
+* `validity_of()` raises for an unassessed model rather than returning `None`
+  or synthesizing an `UNKNOWN`, because either would put a caller one `or` away
+  from confusing the two;
+* `is_assessed()` is the total counterpart, and asking it is the point at which
+  the difference becomes visible at a call site;
+* `unassessed_models` enumerates declared models with no assessment, so the gap
+  is countable rather than implicit.
+
+Nothing in `results/result.py` writes a status of its own. An assessment must
+also name a model the result declares, and a result carrying assessments while
+declaring no models is refused: a verdict that cannot be attributed to a model
+at a version is not a verdict about this result.
+
+**Serialization.** `scientific_result/3`, on this repository's own precedent for
+`data_references`: whether the model applied is scientific content, so a reader
+that accepted the payload and dropped the field would report a result while
+losing the answer to *may I rely on this* — most dangerously for a result
+recorded as `OUTSIDE_VALIDATED_DOMAIN`. `/1` and `/2` still load, as not
+assessed, which is the truth about writers that could not carry one. Four tests
+pinned the old string and each was updated with the reason rather than deleted.
+
+**The consumer side.** `CredibilityEvidenceReport.from_result` reads
+`result.validity` and turns each entry into a `ModelValidityRecord`, which
+remains the transport — `derive_verdict` still reads this report's own field and
+none of its rules changed. The caller's `validity=` argument is still accepted,
+because a producer that does not hold the operating point carries nothing. The
+two sources are **merged, not ranked**: a model named by both must carry the
+identical assessment, and two different verdicts for one model raise rather than
+being resolved by precedence, since silently preferring either would let one
+verdict replace another with nothing in the record to say so.
+
+**What is still worked around.** §1.9 is untouched: `ValidityAssessment` still
+has no `__post_init__`, so `results/result.py` re-runs `ValidityStatus(...)`
+over every assessment it is handed and refuses an unrecognised one — the same
+local guard `ModelValidityRecord` already carries, now in a second place. That
+is two consumers protecting themselves where the record should protect all of
+them, and it is the argument for doing §1.9.
 
 ### 1.2 A categorical parameter cannot cross the provenance boundary
 
@@ -237,17 +272,25 @@ is the same shape of thing one level up — it has failed to object, which is no
 the same as having produced evidence — and reading a package of such checks as
 `SUPPORTED` reintroduces exactly the substitution `NOT_RUN` exists to prevent.
 
-**What flipped.** Two solvers in this repository produce a fully successful
-report whose `attained_levels` is empty, so every package built on either is
-now `INSUFFICIENT_EVIDENCE`:
+**What flipped.** Two solvers in this repository produced a fully successful
+report whose `attained_levels` was empty, so every package built on either
+became `INSUFFICIENT_EVIDENCE`:
 
-* `LumpedThermalSolver` (`src/engcore/domains/thermal_models/lumped.py:1219`)
+* `LumpedThermalSolver` (`src/engcore/domains/thermal_models/lumped.py`)
   — the known case, and the one the IN_DOMAIN electrothermal real-run tests in
-  `tests/mcp/test_evidence.py` are built on. Those tests now assert
-  `INSUFFICIENT_EVIDENCE`.
+  `tests/mcp/test_evidence.py` are built on. **Resolved in the recommendations
+  round:** the solver now emits a second check, `analytic_reference_agreement`,
+  comparing the closed form against
+  `domains/thermal_models/lumped_reference.py` — a reconstruction of the
+  solution from the governing equation's coefficients by series recurrence,
+  sharing no code and no derived quantity with it. That check earns
+  `ANALYTICALLY_VERIFIED`, and those tests now assert `SUPPORTED`.
+  `lumped_balance_residual` still establishes nothing; the level came from new
+  evidence, not from relabelling the check that had none.
 * `ResistancePropertySolver`
   (`src/engcore/domains/electrical/material.py:1358`) — **not previously
   named anywhere**, and a second casualty found only when the change was made.
+  Still attains nothing.
 
 **The gap, as a finding.** Twenty-one passing checks across eight solvers
 establish nothing. That is now visible in the verdict rather than absorbed by
@@ -255,7 +298,7 @@ it, which is the point. What each would need to earn a level:
 
 | Solver | Passing checks with `establishes=None` | Report attains a level? | What it would need |
 |---|---|---|---|
-| `LumpedThermalSolver` — `lumped.py:1219` | `lumped_balance_residual` | **No** | A `metric_dimensions` check on the pattern `battery/solver.py:492` already uses, comparing the three emitted metrics against the model record's `ModelOutputSpec` unit exemplars → `DIMENSIONALLY_VALID`. The record is a reference outside the arithmetic, so the level is earned rather than asserted. A march of the same ODE by an independent scheme would earn `NUMERICALLY_CONVERGED`; `ANALYTICALLY_VERIFIED` was deliberately removed from this check once and should not come back to it. |
+| `LumpedThermalSolver` — `lumped.py` | `lumped_balance_residual` | **Yes, since the recommendations round** — from `analytic_reference_agreement`, not from this check | This check stays level-free and should. The level came from a *second* check with an independent reference behind it, and the earlier note here was half wrong: a march of the same ODE does **not** earn `NUMERICALLY_CONVERGED`, because the lumped solver has no discretization to converge — refining the reference refines the reference. The reference module's docstring argues that at length. Still outstanding: a `metric_dimensions` check on the pattern `battery/solver.py:492` already uses, comparing the three emitted metrics against the model record's `ModelOutputSpec` unit exemplars → `DIMENSIONALLY_VALID`. |
 | `ResistancePropertySolver` — `material.py:1358` | `resistance_strictly_positive` | **No** | The same `metric_dimensions` move, one metric wide: `RESISTANCE_METRIC` against the `ModelOutputSpec`'s declared unit → `DIMENSIONALLY_VALID`. Its own docstring is right that an admissibility bound verifies nothing against anything; a dimensional check would be the first thing it verifies against something. |
 | `BatteryCellSolver` — `battery/solver.py:525`, `:555` | `coulomb_balance_residual`, `rint_terminal_residual` | Yes (`:500`) | Both check a closed form against the relation it was derived from. An independent integration of `dz/dt` sharing no code with the closed form would earn `NUMERICALLY_CONVERGED`; evaluating the same circuit through `electrical/dc`'s MNA path — a genuinely separate implementation — would earn `CROSS_SOLVER_VALIDATED`. |
 | `ElectricalDCSolver` / `NgspiceDCSolver` — `dc/validation.py:211`, `:257`, `:297`, `:338` | `kirchhoff_current_law`, `resistor_metric_consistency`, `voltage_source_relation`, `power_balance` | Yes (`:141`, `:160`) | These are the repository's strongest argument for a **new** `ValidationLevel`: there is no member for "independently reconstructed physical consistency", and the code says so at `dc/validation.py:358-365`. Within today's taxonomy, a native-vs-ngspice agreement check would be a defensible `CROSS_SOLVER_VALIDATED` — the two paths share `assemble` but not the solve. |
@@ -269,6 +312,45 @@ consistent". Four of the checks above want one, and inventing a level so that
 more packages clear the bar is the exact move this change exists to refuse. If
 the level is real it should be argued on its own merits, not on how many
 verdicts it would improve.
+
+**Audited in the recommendations round.** Every check above in
+`domains/battery/**` and `domains/electrical/**` (excluding `ngspice.py`) is
+now classified in `docs/domains/evidentiary-levels.md`: 1 earnable now and
+built, 3 earnable later with their costs, 7 never earnable by the check that
+raised them. Two of this table's own suggestions were found to be wrong and are
+corrected there — an independent integration of the battery's `dz/dt` earns
+nothing, because the trajectory is affine and the solver has no discretization;
+and the `rint` cross-check is blocked by an architecture decision (it would be
+the first domain-to-domain import in `src/engcore/domains/`) rather than by
+effort.
+
+### 1.8c `linear_system_residual` awards a level the lumped and conduction solvers refuse
+
+**Where** `src/engcore/domains/electrical/dc/validation.py:157-165`.
+
+**What was found.** `check_linear_residual` awards `NUMERICALLY_CONVERGED` when
+`||A x - z||` is at round-off. The frozen conduction validation opens by
+refusing exactly that move, on the grounds that a direct factorization's
+residual sits at round-off in every run and so certifies a coarse solve as
+confidently as a fine one.
+
+**Why the DC case is not identical, and why that does not rescue it.** The MNA
+system is the exact statement of the circuit's Kirchhoff laws, not a
+discretization of a continuum, so there is no discretization error a refined
+solve would reveal. But with nothing to refine there is no sequence whose limit
+could be examined, and the level is *not applicable* rather than *attained* —
+the same conclusion the lumped model reached this round about its own closed
+form, where `NUMERICALLY_CONVERGED` is explicitly declared unearnable for a
+solver that never discretized.
+
+**Proposal.** Move it to `establishes=None`, with a detail string saying the
+system is solved exactly and there is nothing to converge. The report still
+attains `DIMENSIONALLY_VALID` from `check_dimensions`, so no verdict moves and
+no existing package downgrades.
+
+**Not done.** Un-awarding a level from the most widely used solver in the
+repository is a decision to take deliberately. Recorded here for that decision
+rather than made inside an audit.
 
 ### 1.9 `ValidityAssessment` is the one core record that validates nothing
 
@@ -795,3 +877,134 @@ description as unlocking nothing.
 table and the audit are written so that a second pack would add a second table
 and a second description function rather than a flag on this one, but nothing
 here has been generalised on the strength of one case.
+
+
+---
+
+# NEEDS — recommendations round
+
+Owned paths this round: `src/engcore/domains/thermal_models/**`,
+`src/engcore/domains/battery/**`, `src/engcore/domains/electrical/**` (except
+`ngspice.py`), `src/engcore/scientific/results/**` as the one authorised core
+change, `docs/**`, `README.md`, their tests, and this file.
+
+Three items already recorded above were resolved rather than re-proposed here
+and are updated in place: §1.1 (`ScientificResult` cannot carry validity —
+**done**), §1.8b (the lumped solver's empty `attained_levels` — **done**, and
+its predictions about how corrected), and the new §1.8c below it (a level
+awarded from a linear residual — **proposed, not made**).
+
+---
+
+## 5. `scientific/experiments/optimizer_adapter.py` — recommendation: keep, and stop calling it a leftover
+
+**Where** `src/engcore/scientific/experiments/optimizer_adapter.py`, 271 lines,
+exported from `scientific/__init__.py`.
+
+**The question asked.** It is a leftover of the Bayesian-optimizer line removed
+in September 2026. Is it a general facility or a vestige?
+
+**Finding: the module is two things with different standing, and only one of
+them lost a consumer.**
+
+`CandidateCodec` and `ObjectiveEncoder` are **a general facility, and
+load-bearing**. They are the unit ↔ unit-cube boundary itself, not the
+optimizer that was going to sit behind it. DESIGN-D2's *preregistration* names
+this codec as the frozen, continuous-only baseline its mixed-variable sampler
+must not widen or rewrite — "D2 must **not** silently widen or rewrite that
+frozen adapter" — and its freeze document repeats it twice more. A D2 test
+asserts the codec still refuses a mixed design space. A frozen milestone's
+reference point is not a vestige.
+
+`NumericSearchBackend` is **a boundary with nothing behind it, which is its
+declared shape**. The core is *required* never to import a concrete optimizer;
+the protocol exists so it does not have to. Its emptiness is the invariant
+working, not the invariant rotting. What was removed in September was a
+consumer, and a boundary outlives the consumer that motivated it.
+
+**So the defect is documentary, not structural.** Nothing in the module or in
+`docs/scientific-core/README.md` said the backend line had gone, so a reader
+found a protocol with no implementation and reasonably concluded the module was
+dead. **Done this round:** a history paragraph in the module docstring saying
+what was removed, which half is frozen and by whom, and why the empty protocol
+is deliberate. No behaviour changed and no export moved.
+
+**What would break if it were removed** — 33 tests, in two places:
+
+* `tests/test_scientific_core.py` — six tests directly:
+  `test_codec_round_trip_scientific_to_vector_to_scientific`,
+  `test_codec_accepts_compatible_units_and_rejects_bare_numbers`,
+  `test_codec_requires_bounded_continuous_variables`,
+  `test_optimizer_adapter_encodes_objective_direction`,
+  `test_optimizer_adapter_refuses_silent_objective_choice`,
+  `test_adapter_drives_a_synthetic_search_backend_end_to_end`. The module also
+  imports `OptimizerAdapter` at module level, so collection of all 110 tests
+  there would fail until the import was removed.
+* `tests/test_design_d2_mixed_generation.py` — imports `CandidateCodec` at
+  module level, so **all 27 collected tests in a frozen milestone's suite fail
+  at collection**, not just the one that uses it.
+
+`tests/test_heterogeneous_ngspice.py::test_h_universal_core_gained_nothing_and_knows_no_provider`
+would keep passing — its assertion is over other names — but its comment, which
+names `OptimizerAdapter` and `NumericSearchBackend` as pre-existing design-search
+exports so a provider scan does not flag them, would become stale.
+
+**Recommendation: keep, unchanged.** Removing it edits a frozen milestone's
+reference point to delete a boundary whose absence of an implementation is the
+property the boundary exists to have. If a future round disagrees, the argument
+to answer is D2's preregistration, not the line count.
+
+---
+
+## 6. The derived-quantity pattern — a proposal, nothing built
+
+**Where** `domains/thermal_models/context.py` (18 functions) and
+`domains/battery/context.py` (29). Both repeat one shape: take problem inputs as
+optional `Quantity`, return `None` if any is absent so the condition reads
+UNKNOWN, otherwise compute a dimensionless group.
+
+**The abstraction.** A declarative `DerivedQuantity` record — name, required
+input names with their expected dimensions, and a pure function over the
+resolved values — plus one resolver that reads the inputs, returns `None` on
+the first absent one, and checks dimensions on the rest. Each of the 47
+functions becomes a record; `_checked(...)` disappears.
+
+**What it would eliminate.** The `_checked` calls and the `if x is None:
+return None` chain, which is 60–70% of the lines and the *only* part that is
+mechanical. It would also make the input→quantity map data rather than code,
+which is exactly what `NEEDS.md` §1.1 of the problem-builder round wants and
+cannot get: `ModelInputSpec` cannot name the conditions an input unlocks, and
+the builder currently *measures* that mapping by dropping fields and re-asking
+the validity domain. A record that named its inputs would make that derivable.
+
+**What it would cost.** The bodies are not the boilerplate. `soc_window_margin`
+is asymmetric about the chord, `conductance_excursion_ratio` takes a bound and
+an excursion with a sign convention, `peukert_effective_capacity` is a power
+law with a reference current, and several return `None` for reasons other than
+an absent input — a non-positive denominator, a regime the correlation does not
+cover. A resolver whose only `None` is "an input was missing" cannot express
+those, so they become an escape hatch, and an abstraction with an escape hatch
+used by a third of its callers has not abstracted the hard part.
+
+**What it would make harder.** Two things this repository values. First, the
+docstrings: each of these functions carries a definition, a citation, and a
+statement of what the group does *not* mean, and those are what make the
+conditions auditable. A record-based form pushes them into a string field on a
+record, where nothing reads them and they drift. Second, the failure mode: a
+resolver that silently returns `None` on any missing input makes it harder to
+see which input was missing — and "which one" is precisely what the UNKNOWN
+verdict has to report. The explicit chain is verbose and it is legible at the
+point of failure.
+
+**Would a fourth domain justify it?** Not on its own. The evidence that would
+is different: **two domains needing the same derived group**, at which point
+there is a definition to share rather than a shape to share. Today there is
+none — Biot and Fourier are thermal, Peukert and the SOC window are
+electrochemical, and a shared record would give them a common container and no
+common content.
+
+**Recommendation: do not build it now.** Build the *narrow* half if anything:
+the input→dimension declaration, which §1.1 of the problem-builder round
+already needs for a different reason and which does not touch a single function
+body. The full abstraction should wait for a shared derived quantity, not a
+third repetition of a shape.

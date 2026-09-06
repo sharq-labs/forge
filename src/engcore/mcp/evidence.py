@@ -310,15 +310,24 @@ def derive_verdict(
     what counts. An empty check list and a check list that attains nothing are
     the same answer to the same question, and get the same verdict.
 
-    **This is a real narrowing, and it is meant to be.** Two solvers in this
-    repository produce a fully successful report whose ``attained_levels`` is
-    empty — the lumped thermal solver, which declines a level for its residual
-    check on the grounds that self-consistency is not verification, and the
-    resistance property solver, whose only check is an admissibility bound.
-    Reports built on either are now ``INSUFFICIENT_EVIDENCE``. That is the
-    honest reading: those solvers are right that they have earned nothing, and
-    the verdict should say so rather than round it up. What each would need to
-    earn a level is recorded in ``NEEDS.md`` as a visible gap.
+    **This is a real narrowing, and it is meant to be.** When the rule landed,
+    two solvers in this repository produced a fully successful report whose
+    ``attained_levels`` was empty — the lumped thermal solver, which declined a
+    level for its residual check on the grounds that self-consistency is not
+    verification, and the resistance property solver, whose only check is an
+    admissibility bound. Reports built on either became
+    ``INSUFFICIENT_EVIDENCE``. That was the honest reading: those solvers were
+    right that they had earned nothing, and the verdict should say so rather
+    than round it up.
+
+    The lumped solver has since earned one, and how it did is the intended
+    response to this rule rather than an escape from it. It did not relabel the
+    residual check; it acquired a second check with an independent reference
+    behind it (``domains/thermal_models/lumped_reference.py``), and the residual
+    check still establishes nothing. The rule is satisfied by new evidence
+    existing, which is the only way it is meant to be satisfiable. The
+    resistance property solver still attains nothing, and what it would need is
+    recorded in ``NEEDS.md`` as a visible gap.
 
     ``required_levels`` is unchanged and remains the way a caller demands a
     *particular* level rather than merely some level.
@@ -510,6 +519,47 @@ class ModelValidityRecord:
             version=payload["version"],
             assessment=ValidityAssessment.from_dict(payload["assessment"]),
         )
+
+
+def _merged_validity(
+    result: ScientificResult,
+    supplied: tuple["ModelValidityRecord", ...],
+) -> tuple["ModelValidityRecord", ...]:
+    """The result's own assessments and the caller's, merged and never ranked.
+
+    The result carries a mapping keyed by model id; the version comes from the
+    result's own ``models``, which is where the core requires every assessed
+    id to appear. A model both sources name must carry the same assessment —
+    one verdict per model, decided once — and a disagreement raises here rather
+    than being resolved by which argument happened to be looked at first.
+    """
+    versions = {model_id: version for model_id, version in result.models}
+    carried = tuple(
+        ModelValidityRecord(
+            model_id=model_id,
+            version=versions[model_id],
+            assessment=assessment,
+        )
+        for model_id, assessment in sorted(result.validity.items())
+    )
+    by_key: dict[str, ModelValidityRecord] = {}
+    merged: list[ModelValidityRecord] = []
+    for record in (*carried, *supplied):
+        existing = by_key.get(record.model_id)
+        if existing is None:
+            by_key[record.model_id] = record
+            merged.append(record)
+            continue
+        if existing == record:
+            continue
+        raise CredibilityEvidenceError(
+            f"two different validity verdicts for model "
+            f"{record.model_id!r}: the result carries {existing.assessment} "
+            f"and the caller supplied {record.assessment}. One model has one "
+            f"verdict; choosing between them by precedence would let either "
+            f"replace the other with nothing in the record to say so"
+        )
+    return tuple(merged)
 
 
 @dataclass(frozen=True)
@@ -888,11 +938,26 @@ class CredibilityEvidenceReport:
         unaltered — including ``NOT_RUN`` checks, which is the whole point of
         carrying the report's checks rather than its aggregate status.
 
-        ``validity`` must be supplied by the caller, because the result does
-        not carry it and this module will not invent it. A report assembled
-        with no validity records — or with fewer than the models the
-        provenance says ran — reports ``INSUFFICIENT_EVIDENCE``, which is the
-        honest reading of "nobody asked whether the model applied".
+        ``validity`` is read **from the result first**, and from the caller
+        second. ``ScientificResult.validity`` is a mapping of assessments the
+        producer of the result made; each becomes a
+        :class:`ModelValidityRecord` here, which stays the transport — this
+        report's own field is what ``derive_verdict`` reads, and nothing about
+        the verdict rules changed.
+
+        The caller's argument is still accepted, because a result whose
+        producer did not hold the operating point carries nothing and somebody
+        else has to make the assessment. **The two sources are merged, not
+        ranked.** A model named by both must carry the identical assessment;
+        two different verdicts for one model are refused rather than resolved
+        by precedence, because silently preferring either would let one verdict
+        replace another with no reader able to tell.
+
+        A report assembled with no validity records at all — or with fewer than
+        the models the provenance says ran — still reports
+        ``INSUFFICIENT_EVIDENCE``, which is the honest reading of "nobody asked
+        whether the model applied". An empty ``ScientificResult.validity``
+        contributes nothing here, exactly as it means nothing there.
 
         ``run_id`` defaults to the result's own id. It may be overridden for
         the legitimate case of a report covering a coupled run assembled
@@ -909,7 +974,7 @@ class CredibilityEvidenceReport:
             run_id=run_id or result.result_id,
             values=dict(result.values),
             provenance=result.provenance,
-            validity=tuple(validity),
+            validity=_merged_validity(result, tuple(validity)),
             validation=tuple(result.validation.checks),
             declarations=tuple(declarations),
             required_levels=tuple(required_levels),

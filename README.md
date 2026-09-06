@@ -38,7 +38,9 @@ src/engcore/
                  kinetics/ (CSTR)
   systems/       electrothermal/ (closed-loop electro-thermal coupling)
                  aerospace/multirotor/ (reference design study)
-  sria/          evidence records, admission, assurance, decision, campaigns
+  sria/          evidence records, admission, assurance, decision, campaigns —
+                 an independent layer, NOT on the verification path and imported
+                 by nothing else in src/; see docs/SRIA.md
   mcp/           verification and validation (V&V) layer: assembles a
                  credibility evidence report for consumers and derives its
                  advisory verdict
@@ -51,6 +53,8 @@ docs/
   TESTING.md                       how to run the suite
   mcp/README.md                    what the credibility evidence report claims,
                                    and what it does not
+  SRIA.md                          what src/engcore/sria/ is, and why nothing
+                                   else imports it
   milestones/                      one prereg + freeze/evidence pair per milestone
   architecture-study/              MOOSE, PETSc, OpenFOAM, preCICE, FEniCSx, OpenMDAO studies
 ```

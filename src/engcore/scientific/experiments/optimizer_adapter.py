@@ -16,6 +16,41 @@ protocol without either side learning about the other.
 
 The optimizer never sees units. The scientific layer never sees a bare
 number. The codec is where — and only where — those two facts meet.
+
+HISTORY, AND WHAT THIS MODULE IS NOW
+------------------------------------
+This module was written for the Bayesian-optimizer line, which was removed in
+September 2026. Nothing in this repository implements
+:class:`NumericSearchBackend`, and the two backends the paragraph above names
+have never been importable from here. A reader who finds a protocol with no
+implementation and concludes the module is dead scaffolding is reading a real
+signal — and reaching the wrong conclusion, because the two halves of this
+module have different standing and only one of them lost anything.
+
+**The codec is a general facility, and it is load-bearing.**
+:class:`CandidateCodec` and :class:`ObjectiveEncoder` are the unit-aware
+boundary itself, not the optimizer that was going to sit behind it. DESIGN-D2
+names this codec in its preregistration as the *frozen, continuous-only*
+baseline its mixed-variable sampler must not widen or rewrite, and a D2 test
+asserts that the codec still refuses a mixed design space
+(``test_generation_zero_only_and_frozen_continuous_codec_remains_mixed_unsafe``).
+A frozen milestone's reference point is not a vestige; removing it would edit
+the thing D2 was measured against.
+
+**The backend protocol is a boundary with nothing behind it, and that is its
+declared shape.** :class:`NumericSearchBackend` exists so the core can depend
+on an ask/tell contract instead of on an optimizer, and the core is *required*
+never to import a concrete one. So the absence of an implementation is the
+invariant working, not the invariant rotting: what was removed in September was
+a consumer, and a boundary outlives the consumer that motivated it. The
+external-solver milestone's core-purity scan knows these two names and excludes
+them by name, on the grounds that they are pre-existing design-search exports
+rather than anything about solver providers.
+
+What this module is missing is therefore not code. It is this paragraph:
+nothing here or in ``docs/scientific-core/README.md`` said the backend line had
+gone, so the emptiness read as neglect. The recommendation, and what it would
+cost to act on either way, is recorded in ``NEEDS.md`` §5.
 """
 
 from __future__ import annotations

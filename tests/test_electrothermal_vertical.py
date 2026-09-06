@@ -602,15 +602,29 @@ def test_d_a_converged_coupling_does_not_make_the_model_valid():
     assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
     assert mat.TEMPERATURE in assessment.violated
 
-    # the coupling outcome upgraded nothing
+    # The coupling outcome upgraded nothing. ANALYTICALLY_VERIFIED does appear
+    # in this run, and the assertion below is what says it was not the coupling
+    # that put it there: it is attached to one per-solve check, the lumped
+    # solver's comparison against its independent series reference, which runs
+    # identically whether the fixed point converges or not. It is verification
+    # of a closed form against the equation, and it leaves verdict 3 above
+    # exactly where it was — the material model is still outside its domain.
     levels = {
         level
         for iteration in run.iterations
         for result in iteration.results
         for level in result.attained_levels
     }
-    assert ValidationLevel.ANALYTICALLY_VERIFIED not in levels
     assert ValidationLevel.EXPERIMENTALLY_VALIDATED not in levels
+    awarding = {
+        check.name
+        for iteration in run.iterations
+        for result in iteration.results
+        for check in result.validation.checks
+        if check.passed
+        and check.establishes is ValidationLevel.ANALYTICALLY_VERIFIED
+    }
+    assert awarding == {"analytic_reference_agreement"}
 
 
 # =====================================================================
@@ -1662,6 +1676,9 @@ def test_o2_an_unknown_schema_is_rejected(case_a):
 
 
 def test_o3_no_existing_schema_version_moved():
+    """``scientific_result`` reads ``/3``: the recommendations round added
+    ``ScientificResult.validity`` and bumped the writer deliberately. Updated
+    rather than deleted, so a schema still cannot move without an edit here."""
     from src.engcore.scientific.composition.dependency import (
         QUANTITY_DEPENDENCY_SCHEMA,
     )
@@ -1674,7 +1691,7 @@ def test_o3_no_existing_schema_version_moved():
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
     assert PROVENANCE_SCHEMA == "provenance_record/2"
     assert EXECUTION_BINDING_SCHEMA == "execution_binding/1"
-    assert RESULT_SCHEMA == "scientific_result/2"
+    assert RESULT_SCHEMA == "scientific_result/3"
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"
     # and the four new ones are new
     assert cp.TORN_ENDPOINT_SCHEMA == "electrothermal_torn_endpoint/1"

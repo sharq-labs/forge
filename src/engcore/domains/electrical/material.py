@@ -91,6 +91,7 @@ from ...scientific.realizations.registry import RealizationRegistry
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.results.validation import (
     ValidationCheck,
+    ValidationLevel,
     ValidationOutcome,
     ValidationReport,
 )
@@ -1332,14 +1333,29 @@ class ResistancePropertySolver:
     def validate(
         self, prepared: PreparedSolve, raw: RawSolverOutput
     ) -> ValidationReport:
-        """One admissibility check, establishing no evidence level.
+        """Two checks. One establishes a level; the other cannot, and says so.
 
-        A positive resistance is a precondition for the surrounding linear DC
-        formulation, which refuses zero and negative resistances. Checking it
-        earns no ``ValidationLevel``: confirming that a number is in the
+        ``resistance_strictly_positive`` is an admissibility bound. A positive
+        resistance is a precondition for the surrounding linear DC
+        formulation, which refuses zero and negative resistances. It earns no
+        ``ValidationLevel`` and could not: confirming that a number is in the
         physically admissible range is not verification against anything, and
         claiming a level for it would be exactly the unearned claim the result
         contract is built to refuse.
+
+        ``metric_dimensions`` compares the emitted metric against the
+        dimension its model record declares, on the pattern
+        ``battery/solver.py`` already uses. That earns
+        ``DIMENSIONALLY_VALID``, and the reason it is earned rather than
+        asserted is that the ``ModelOutputSpec`` is a reference **outside this
+        solver's arithmetic**: the solver did not write it, the model did, and
+        a metric extracted into the wrong unit disagrees with it.
+
+        Recorded in ``docs/domains/evidentiary-levels.md``. It is the smallest
+        honest level this solver can attain, and until it existed every
+        credibility package built on a resistance evaluation was
+        ``INSUFFICIENT_EVIDENCE`` on the strength of one check that establishes
+        nothing.
         """
         if not raw.succeeded:
             return ValidationReport(
@@ -1360,17 +1376,57 @@ class ResistancePropertySolver:
                     outcome=(
                         ValidationOutcome.PASS if positive else ValidationOutcome.FAIL
                     ),
+                    establishes=None,
                     detail=(
                         f"R = {resistance:.6g} ohm. A linear TCR form crosses "
                         f"zero at a large enough negative excursion; a "
                         f"non-positive resistance is refused rather than "
-                        f"passed downstream."
+                        f"passed downstream. Admissibility, not verification: "
+                        f"this check establishes nothing and no rearrangement "
+                        f"of it could."
                     ),
                 ),
+                self._dimension_check(prepared, raw),
             ),
             notes=(
-                "Admissibility only. Whether the model was applicable at this "
-                "temperature is a validity question and is answered by "
-                "assess_resistance_validity, not here."
+                "Admissibility and dimensions. Whether the model was "
+                "applicable at this temperature is a validity question and is "
+                "answered by assess_resistance_validity, not here."
+            ),
+        )
+
+    def _dimension_check(
+        self, prepared: PreparedSolve, raw: RawSolverOutput
+    ) -> ValidationCheck:
+        """Every produced metric against the unit its model record declares."""
+        declared = {
+            spec.metric: spec.unit_exemplar
+            for model in (LINEAR_TCR_MODEL, RATED_LINEAR_TCR_MODEL)
+            for spec in model.outputs
+        }
+        produced = self.extract_metrics(prepared, raw)
+        mismatched = [
+            metric
+            for metric, value in produced.items()
+            if metric not in declared
+            or not value.is_compatible_with(declared[metric])
+        ]
+        passed = not mismatched
+        return ValidationCheck(
+            name="metric_dimensions",
+            outcome=(
+                ValidationOutcome.PASS if passed else ValidationOutcome.FAIL
+            ),
+            # Conditional on the outcome, not attached unconditionally. A
+            # report carrying `outcome: fail` beside `establishes:
+            # dimensionally_valid` is a record that contradicts itself for any
+            # reader who is not filtering on `passed` first.
+            establishes=(
+                ValidationLevel.DIMENSIONALLY_VALID if passed else None
+            ),
+            detail=(
+                f"{len(produced)} produced metric(s) checked against the "
+                f"dimensions their model records declare"
+                + (f"; mismatched: {sorted(mismatched)}" if mismatched else "")
             ),
         )
