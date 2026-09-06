@@ -22,7 +22,14 @@ import pytest
 anyio = pytest.importorskip("anyio")
 # The MCP SDK is the optional `[mcp]` dependency group. The suite must stay
 # runnable — and green — without it, the same rule pytest-xdist is held to.
-pytest.importorskip("mcp", reason="install the optional [mcp] dependency group")
+# `mcp.types`, not `mcp`. This guard was written as `importorskip("mcp")` and
+# never fired: `tests/mcp/` has no `__init__.py` and pytest puts `tests/` on
+# `sys.path`, so this directory IS an importable PEP 420 namespace package
+# named `mcp`. The guard only appeared to work because the `anyio` check above
+# it skips first on the machines anyone tried. `mcp.types` exists only in the
+# real SDK. See tests/mcp/test_battery_boundary.py for the measurement.
+pytest.importorskip("mcp.types",
+                    reason="install the optional [mcp] dependency group")
 
 import mcp.types as mcp_types  # noqa: E402
 from mcp import Client  # noqa: E402

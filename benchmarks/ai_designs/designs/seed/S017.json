@@ -1,0 +1,62 @@
+{
+ "id": "S017",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "vishay-sfr16s",
+  "source_voltage_v": 5.916079783099616,
+  "resistance_ohm": 200.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 25,
+  "duration_s": 60.0,
+  "thermal_resistance_k_per_w": 142.85714285714286,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.03205292371632143,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00037359550561797756,
+   "surface_area_m2": 2.6562165886101697e-05,
+   "body_volume_m3": 9.923505794526759e-09,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.05,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 400.0,
+   "constant_capacity_span_k": 400.0,
+   "linearization_band_k": 900.0,
+   "debye_temperature_k": 250.0,
+   "fluid": "air",
+   "convection_length_m": 0.005153849618110883,
+   "fluid_conductivity_solved_w_per_m_k": 0.4775443162105122,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.5,
+   "maximum_working_voltage_v": 200,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.08847642785975388
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "physically_sound",
+  "reason": "SFR16S dissipates 0.175 W against a 0.5 W rating in 25 C air, settling 25 K above ambient, with every declared span clear of its bound.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [],
+   "unknown_count": 0,
+   "final_temperature_k": 323.0754,
+   "steady_temperature_k": 323.0754,
+   "dissipated_power_w": 0.174478,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

@@ -1,0 +1,64 @@
+{
+ "id": "S077",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "vishay-crcw1206",
+  "source_voltage_v": 4.183300132670378,
+  "resistance_ohm": 100.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 25,
+  "duration_s": 60.0,
+  "thermal_resistance_k_per_w": 142.85714285714286,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.008499999999999999,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00018144329896907217,
+   "surface_area_m2": 1.552e-05,
+   "body_volume_m3": 2.816e-09,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.02,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 900.0,
+   "constant_capacity_span_k": 900.0,
+   "linearization_band_k": 2000.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.0039395431207184415,
+   "fluid_conductivity_solved_w_per_m_k": 0.7254887721327233,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.00025,
+   "maximum_working_voltage_v": 200,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.12512456359731394
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "unit_or_sign_error",
+  "reason": "the rating was written in milliwatts and read as watts, so the design believes the part is a thousand times stronger than it is.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [
+    "dissipated_power_utilization"
+   ],
+   "unknown_count": 0,
+   "final_temperature_k": 323.0754,
+   "steady_temperature_k": 323.0754,
+   "dissipated_power_w": 0.174478,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

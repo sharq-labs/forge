@@ -186,23 +186,14 @@ cannot be reintroduced. The list stays four elements long so `rng.choice`
 consumes the same draw and every non-geometry case was byte-identical to the
 previous set: **only the 124 `geometry_conflict` cases changed.**
 
-**As stated by the small-corrections round (full-set figures):**
-
-**The real false accepts did not move: 11 before, 11 after.** The headline went
-1.57% → 0.66% because 15 mislabelled cases left the numerator, not because the
-tool improved. What remains is 8 `band_out`, 2 `adv_unsound:small_overshoot`
-and 1 `runaway`, and all eleven have since been run down — see `NEEDS.md`,
-small-corrections round, §1.
-
-**As restated by the evidence round (rates withheld under the seal):**
-
 **The real false accepts did not move across the relabel** — the same count
 before and after. The headline false-accept rate fell because 15 mislabelled
 cases left the numerator, not because the tool improved. The two rates
-themselves are withheld for the reason given under Baselines. What remains is 8 `band_out` (including two drawn a full 20%
-outside the band, so these are genuine misses rather than rounding), 2
-`adv_unsound:small_overshoot` and 1 `runaway`.
-
+themselves are withheld for the reason given under Baselines. What remains is
+8 `band_out` (including two drawn a full 20% outside the band, so these are
+genuine misses rather than rounding), 2 `adv_unsound:small_overshoot` and 1
+`runaway` — and all eleven have since been run down; see `NEEDS.md`,
+small-corrections round, §1.
 
 **Eight of the eleven are the tool's, not this file's.** The `band_out` cases
 are bodies that start below `T_ref` and warm toward it, so the largest

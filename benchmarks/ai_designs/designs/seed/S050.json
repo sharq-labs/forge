@@ -1,0 +1,63 @@
+{
+ "id": "S050",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "vishay-crcw1206",
+  "source_voltage_v": 6.730090463512271,
+  "resistance_ohm": 220.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 120,
+  "duration_s": 90.0,
+  "thermal_resistance_k_per_w": 48.57142857142858,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.008499999999999999,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00018144329896907217,
+   "surface_area_m2": 1.552e-05,
+   "body_volume_m3": 2.816e-09,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.02,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 900.0,
+   "constant_capacity_span_k": 900.0,
+   "linearization_band_k": 2000.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.0039395431207184415,
+   "fluid_conductivity_solved_w_per_m_k": 2.625661433124146,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.25,
+   "maximum_working_voltage_v": 200,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.0907764070986663
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "limit_exceeded",
+  "reason": "0.206 W at a 120 C ambient is under the 0.25 W the datasheet prints but 2 times the 0.103 W that rating derates to at 120 C, and no payload field carries the ambient a rating is stated at.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "the datasheet derating curve: P70 falling linearly to zero at the permissible film temperature, computed by hand",
+  "reference_check": {
+   "violated": [],
+   "unknown_count": 0,
+   "final_temperature_k": 403.0413,
+   "steady_temperature_k": 403.0413,
+   "dissipated_power_w": 0.203644,
+   "stable_under_both_temperature_readings": true
+  },
+  "no_payload_field_carries": "rated power not derated to the ambient"
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

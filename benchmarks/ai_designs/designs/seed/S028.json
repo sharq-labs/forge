@@ -1,0 +1,62 @@
+{
+ "id": "S028",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "yageo-rc0402",
+  "source_voltage_v": 1.3275918047351754,
+  "resistance_ohm": 47.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 55,
+  "duration_s": 120.0,
+  "thermal_resistance_k_per_w": 800.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.00056525,
+  "declared_thermal_context": {
+   "characteristic_length_m": 8.53658536585366e-05,
+   "surface_area_m2": 2.05e-06,
+   "body_volume_m3": 1.75e-10,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.05,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 400.0,
+   "constant_capacity_span_k": 400.0,
+   "linearization_band_k": 900.0,
+   "debye_temperature_k": 250.0,
+   "fluid": "air",
+   "convection_length_m": 0.0014317821063276352,
+   "fluid_conductivity_solved_w_per_m_k": 0.5723022196113278,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.0625,
+   "maximum_working_voltage_v": 50,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.08419426606955101
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "physically_sound",
+  "reason": "RC0402 at 60 % of its rating in a 55 C enclosure: tight, and inside every limit it declares.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [],
+   "unknown_count": 0,
+   "final_temperature_k": 357.9568,
+   "steady_temperature_k": 357.9568,
+   "dissipated_power_w": 0.037259,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

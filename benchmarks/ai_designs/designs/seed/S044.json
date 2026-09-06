@@ -1,0 +1,64 @@
+{
+ "id": "S044",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "vishay-crcw2010",
+  "source_voltage_v": 9.082951062292475,
+  "resistance_ohm": 220.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 150,
+  "duration_s": 90.0,
+  "thermal_resistance_k_per_w": 32.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.021675,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00022058823529411763,
+   "surface_area_m2": 3.4e-05,
+   "body_volume_m3": 7.5e-09,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.05,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 900.0,
+   "constant_capacity_span_k": 900.0,
+   "linearization_band_k": 2000.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.0058309518948453,
+   "fluid_conductivity_solved_w_per_m_k": 2.156286978179666,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.75,
+   "maximum_working_voltage_v": 400,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.12212627990589668
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "limit_exceeded",
+  "reason": "ambient is 150 C and a 12 K rise carries the body past the 155 C category limit the datasheet states.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [
+    "operating_temperature_utilization"
+   ],
+   "unknown_count": 0,
+   "final_temperature_k": 434.9822,
+   "steady_temperature_k": 434.9822,
+   "dissipated_power_w": 0.369756,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

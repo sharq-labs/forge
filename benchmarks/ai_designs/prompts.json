@@ -1,0 +1,220 @@
+{
+  "schema_version": "1.0",
+  "count": 20,
+  "families": [
+    "size_under_load",
+    "choose_a_package",
+    "pick_for_a_temperature",
+    "estimate_a_rise",
+    "judge_a_design"
+  ],
+  "composition": {
+    "size_under_load": 5,
+    "full": 7,
+    "partial": 8,
+    "sparse": 5,
+    "choose_a_package": 4,
+    "pick_for_a_temperature": 4,
+    "estimate_a_rise": 4,
+    "judge_a_design": 3
+  },
+  "rules": [
+    "No vocabulary from the tool under test.",
+    "No planted contradiction; stated numbers come from a real datasheet.",
+    "Under-specification is realistic, not a trap.",
+    "No forced choice between two bad options.",
+    "Ordinary difficulty."
+  ],
+  "prompts": [
+    {
+      "id": "P01",
+      "family": "size_under_load",
+      "information_level": "full",
+      "parts": [
+        "vishay-sfr25"
+      ],
+      "prompt": "I need a 220 ohm series resistor across a 12 V rail. It sits in a sealed enclosure that runs at 55 C inside, no fan. I have Vishay SFR25 metal film parts in stock (0.4 W at 70 C, 250 V max, 200 K/W thermal resistance, -55 to +155 C). Is the SFR25 the right part here, and what will it run at? Show your working."
+    },
+    {
+      "id": "P02",
+      "family": "size_under_load",
+      "information_level": "partial",
+      "parts": [
+        "yageo-rc0603",
+        "yageo-rc0805",
+        "yageo-rc1206"
+      ],
+      "prompt": "Pick a chip resistor for a 10 ohm current-limit in a 5 V circuit. Board is a normal 4-layer FR4 with no airflow. Yageo RC series is fine - 0603 is 0.1 W and 75 V, 0805 is 0.125 W and 150 V, 1206 is 0.25 W and 200 V. Which size, and why that one?"
+    },
+    {
+      "id": "P03",
+      "family": "size_under_load",
+      "information_level": "sparse",
+      "parts": [
+        "vishay-crcw1206"
+      ],
+      "prompt": "What size chip resistor do I need to drop 24 V across 100 ohms?"
+    },
+    {
+      "id": "P04",
+      "family": "size_under_load",
+      "information_level": "full",
+      "parts": [
+        "vishay-pr03-cu"
+      ],
+      "prompt": "Bleeder resistor across a 400 V DC bus. I want it to discharge the bus and I can afford about 4 W steady. The cabinet ambient is 60 C. Vishay PR03 (Cu lead) is rated 3 W at 70 C with 60 K/W thermal resistance and 750 V maximum working voltage, hot spot limit 250 C. Size the resistance and tell me whether one PR03 does it."
+    },
+    {
+      "id": "P05",
+      "family": "size_under_load",
+      "information_level": "partial",
+      "parts": [
+        "vishay-wsr5"
+      ],
+      "prompt": "I'm using a Vishay WSR5 shunt (0.005 ohm, 5 W at 70 C) to measure current in a motor drive. Peak is 60 A for a few seconds, average is 15 A. Is the WSR5 adequate, and what shunt voltage do I get?"
+    },
+    {
+      "id": "P06",
+      "family": "choose_a_package",
+      "information_level": "full",
+      "parts": [
+        "ti-opa2333-drb-vson-8",
+        "ti-opa333-dbv-sot23-5",
+        "ti-lm339-d-soic-14"
+      ],
+      "prompt": "A part dissipates 5 W continuously. Ambient is 40 C, still air, no heatsink. I've got three candidate packages with junction-to-ambient thermal resistances of 46.7, 111.2 and 220.8 C/W from their datasheets. Junction limit is 125 C. Which package can I use?"
+    },
+    {
+      "id": "P07",
+      "family": "choose_a_package",
+      "information_level": "partial",
+      "parts": [
+        "ti-lmr51430-ddc-sot23-6",
+        "ti-lmr43610-rpe-vqfn-hr-9"
+      ],
+      "prompt": "Choosing between a SOT-23-6 buck (TI LMR51430, RtJA 107.8 C/W) and a 9-pin VQFN-HR one (LMR43610, RtJA 84.4 C/W) for a 3 A design losing about 0.9 W. Which one keeps the junction cooler, and by roughly how much?"
+    },
+    {
+      "id": "P08",
+      "family": "choose_a_package",
+      "information_level": "sparse",
+      "parts": [
+        "ti-tps54360-dda-hsoic-8"
+      ],
+      "prompt": "Is an HSOIC-8 with a thermal pad good enough for 2 W?"
+    },
+    {
+      "id": "P09",
+      "family": "choose_a_package",
+      "information_level": "partial",
+      "parts": [
+        "nexperia-bss138p-sot23",
+        "diodes-dmn2041l"
+      ],
+      "prompt": "Low-side switch, about 0.4 W of conduction loss, in a 70 C cabinet. SOT23 MOSFET datasheets quote 310 C/W junction to ambient on a bare footprint and 260 C/W with a 1 cm2 drain pad. Is SOT23 workable, or do I need to go bigger? Assume 150 C max junction."
+    },
+    {
+      "id": "P10",
+      "family": "pick_for_a_temperature",
+      "information_level": "full",
+      "parts": [
+        "yageo-rc0201",
+        "yageo-rc0402",
+        "vishay-crcw0402"
+      ],
+      "prompt": "Downhole tool, ambient reaches 140 C. I need a 1 kohm chip resistor there. Yageo RC0201 is rated -55 to +125 C; RC0402 and Vishay CRCW0402 are rated -55 to +155 C. Dissipation is only about 5 mW. Which part, and is there anything else I should watch at that temperature?"
+    },
+    {
+      "id": "P11",
+      "family": "pick_for_a_temperature",
+      "information_level": "partial",
+      "parts": [
+        "vishay-mrs25",
+        "vishay-sfr25"
+      ],
+      "prompt": "I need a reference divider that holds its value over -40 C to +85 C. Vishay MRS25 is +/-50 ppm/K, SFR25 is +/-100 ppm/K over most of its range. How much drift do I get from each across that span, and which should I use?"
+    },
+    {
+      "id": "P12",
+      "family": "pick_for_a_temperature",
+      "information_level": "sparse",
+      "parts": [
+        "vishay-wsr5"
+      ],
+      "prompt": "Which resistor family survives 250 C ambient?"
+    },
+    {
+      "id": "P13",
+      "family": "pick_for_a_temperature",
+      "information_level": "full",
+      "parts": [
+        "bourns-pwr220t-20"
+      ],
+      "prompt": "Bourns PWR220T-20, TO-220 thick film on alumina, 20 W at 25 C case, 6.5 C/W junction to case, -55 to +155 C. I want to run it at 8 W on a heatsink in a 50 C enclosure. What heatsink thermal resistance do I need, and what is the case running at?"
+    },
+    {
+      "id": "P14",
+      "family": "estimate_a_rise",
+      "information_level": "full",
+      "parts": [
+        "vishay-sfr25h"
+      ],
+      "prompt": "Vishay SFR25H, 150 K/W, dissipating 0.3 W in 25 C still air. What does the body settle at, and how long does it take to get there? The part is about 0.25 g of ceramic and film."
+    },
+    {
+      "id": "P15",
+      "family": "estimate_a_rise",
+      "information_level": "partial",
+      "parts": [
+        "vishay-pr01"
+      ],
+      "prompt": "PR01 power film resistor, 135 K/W, running 0.8 W. Ambient is 45 C. How hot does it get, and is that a problem?"
+    },
+    {
+      "id": "P16",
+      "family": "estimate_a_rise",
+      "information_level": "sparse",
+      "parts": [
+        "vishay-crcw2512"
+      ],
+      "prompt": "How hot does a 2512 chip resistor get at 1 W?"
+    },
+    {
+      "id": "P17",
+      "family": "estimate_a_rise",
+      "information_level": "partial",
+      "parts": [
+        "vishay-sfr25"
+      ],
+      "prompt": "A 47 ohm SFR25 sees a 20 V pulse for 30 seconds, then nothing for ten minutes, repeating. Ambient 25 C. Does it survive? The datasheet gives 0.4 W at 70 C and 200 K/W."
+    },
+    {
+      "id": "P18",
+      "family": "judge_a_design",
+      "information_level": "full",
+      "parts": [
+        "vishay-crcw0805"
+      ],
+      "prompt": "Someone on my team specified a CRCW0805 (0.25 W at 70 C, 150 V max) as a 33 ohm ballast on a 24 V supply, in a 60 C enclosure. They say it is fine because it is under the voltage rating. Is the design sound? Give me a yes or no and the numbers behind it."
+    },
+    {
+      "id": "P19",
+      "family": "judge_a_design",
+      "information_level": "partial",
+      "parts": [
+        "vishay-rcv2512"
+      ],
+      "prompt": "Design review: 1 Mohm RCV2512 high-voltage chip resistor used as the top leg of a divider on a 2500 V bus. Rated 1 W at 70 C and 3000 V. Anything wrong with this?"
+    },
+    {
+      "id": "P20",
+      "family": "judge_a_design",
+      "information_level": "sparse",
+      "parts": [
+        "vishay-crcw1206",
+        "yageo-rc1206"
+      ],
+      "prompt": "Two 1206 resistors in parallel to share 0.4 W. Fine?"
+    }
+  ]
+}

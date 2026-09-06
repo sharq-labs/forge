@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engcore.local/benchmarks/ai_designs/design_schema.json",
+  "title": "A captured design, its reasoning, and one human label",
+  "description": "One file per design. Three things are held apart on purpose: what the designer SAID (stated_design), why they said it (reasoning), and what a human reviewer decided about it (label). The reviewer's decision is made from the physics and the datasheets, never from engcore's output; the harness records what engcore said separately, in the results file, so the two can be compared instead of contaminating each other.",
+  "type": "object",
+  "required": ["id", "source", "prompt_id", "stated_design", "label"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,3}[0-9]{3,5}$",
+      "description": "Unique within this benchmark. Seed cases use S-prefixed ids; captured model output should use a prefix naming the run."
+    },
+    "prompt_id": {
+      "type": "string",
+      "description": "Which prompt from prompts.json produced this. 'hand_built' for a seed case written directly."
+    },
+    "source": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "description": "Where the design came from. A benchmark that does not record this cannot say whose failure rate it measured.",
+      "properties": {
+        "kind": {"enum": ["model", "hand_built"]},
+        "model_family": {"type": ["string", "null"], "description": "e.g. the vendor and family. null for hand_built."},
+        "model_id": {"type": ["string", "null"]},
+        "sampled_at": {"type": ["string", "null"]},
+        "temperature": {"type": ["number", "null"]},
+        "note": {"type": ["string", "null"]}
+      }
+    },
+
+    "stated_design": {
+      "type": "object",
+      "description": "The design exactly as the designer stated it, in the designer's own numbers. Nothing here is corrected, completed, or converted. A field the designer did not state is absent, not null and not defaulted -- the difference between 'said 25 C' and 'did not say' is the thing this benchmark is trying to measure.",
+      "additionalProperties": false,
+      "properties": {
+        "part_id": {"type": "string", "description": "components.json resistor id, when the design names a real part."},
+        "package_id": {"type": "string", "description": "components.json package id, when the design names one."},
+
+        "source_voltage_v": {"type": "number"},
+        "resistance_ohm": {"type": "number"},
+        "reference_temperature_c": {"type": "number", "description": "The temperature the stated resistance is quoted at. Datasheets quote at 20 or 25 C; a design that does not say is recorded as not having said."},
+        "temperature_coefficient_ppm_per_k": {"type": "number"},
+
+        "ambient_c": {"type": "number"},
+        "initial_temperature_c": {"type": "number"},
+        "duration_s": {"type": "number", "description": "How long the run is. A design that says 'continuous' should be recorded with the horizon the reviewer reads it as, and the reading noted in label.reason."},
+        "thermal_resistance_k_per_w": {"type": "number", "description": "As the design states it, whatever it is a resistance between. thermal_resistance_kind says which."},
+        "thermal_resistance_kind": {"enum": ["junction_to_ambient", "junction_to_case", "body_to_ambient", "unstated"]},
+        "heat_capacity_j_per_k": {"type": "number"},
+        "mass_g": {"type": "number"},
+        "specific_heat_j_per_kg_k": {"type": "number"},
+
+        "stated_dissipation_w": {"type": "number", "description": "The power the DESIGNER computed, which may differ from the power the circuit actually delivers. Where it does, that difference is itself a finding."},
+        "stated_final_temperature_c": {"type": "number", "description": "The temperature the designer predicted."},
+        "stated_verdict": {"enum": ["safe", "not_safe", "conditional", "no_verdict"], "description": "Whether the designer said the design was acceptable."},
+
+        "declared_limits": {
+          "type": "object",
+          "description": "Limits the DESIGN itself states. Not the datasheet's -- the harness can look those up. This records which limits the designer chose to reason about.",
+          "additionalProperties": false,
+          "properties": {
+            "rated_power_w": {"type": "number"},
+            "maximum_working_voltage_v": {"type": "number"},
+            "maximum_operating_temperature_c": {"type": "number"},
+            "junction_temperature_limit_c": {"type": "number"},
+            "derating_factor": {"type": "number", "minimum": 0, "maximum": 1},
+            "rated_power_temperature_c": {"type": "number", "description": "The ambient the rated dissipation is stated at -- the 70 in a datasheet's P70. Where a design states it, the conversion uses it; where it does not, the named part's datasheet supplies it if that datasheet prints a knee."},
+            "zero_power_temperature_c": {"type": "number", "description": "The ambient at which the derating line reaches zero power. Declared with rated_power_temperature_c or not at all."},
+            "source_maximum_current_a": {"type": "number", "description": "The supply's own current limit, where the design states one. Never supplied by the conversion: a made-up rail rating would decide a condition on nothing."},
+            "source_derating_factor": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+
+        "declared_thermal_context": {
+          "type": "object",
+          "description": "Facts about the body and the surrounding fluid, IF the design volunteered them. Almost no AI design does, and that emptiness is a result rather than a gap in the schema.",
+          "additionalProperties": false,
+          "properties": {
+            "characteristic_length_m": {"type": "number"},
+            "body_volume_m3": {"type": "number"},
+            "surface_area_m2": {"type": "number"},
+            "body_conductivity_w_per_m_k": {"type": "number"},
+            "surface_emissivity": {"type": "number"},
+            "melting_temperature_c": {"type": "number"},
+            "constant_conductance_span_k": {"type": "number"},
+            "constant_capacity_span_k": {"type": "number"},
+            "linearization_band_k": {"type": "number"},
+            "debye_temperature_k": {"type": "number"},
+            "airflow": {"enum": ["still", "forced"]},
+            "fluid": {"type": "string"},
+            "fluid_velocity_m_per_s": {"type": "number"},
+            "convection_length_m": {"type": "number"},
+            "fluid_conductivity_solved_w_per_m_k": {"type": "number", "description": "The fluid conductivity the design's stated coefficient rests on. Where a design declares a coefficient AND a geometry AND a fluid, the three must agree; this field carries the conductivity that makes them agree, so the agreement is a stated claim the tool can check rather than something the harness quietly arranges."}
+          }
+        }
+      }
+    },
+
+    "reasoning": {
+      "type": "object",
+      "description": "What the designer said, and why. Kept verbatim: a label that disagrees with the design should be checkable against the words that produced it.",
+      "additionalProperties": false,
+      "properties": {
+        "text": {"type": "string", "description": "The answer as written."},
+        "steps": {"type": "array", "items": {"type": "string"}, "description": "The calculation as the designer laid it out, one step per entry."},
+        "assumptions_the_designer_stated": {"type": "array", "items": {"type": "string"}, "description": "Assumptions the designer named out loud. A design that names its assumptions is doing something different from one that silently fills them, and the label reason should say which happened."},
+        "questions_the_designer_asked": {"type": "array", "items": {"type": "string"}, "description": "A designer who asks for the missing ambient rather than inventing one has done the right thing with an under-specified prompt."}
+      }
+    },
+
+    "label": {
+      "type": "object",
+      "required": ["verdict", "reason", "labeller"],
+      "additionalProperties": false,
+      "description": "One human's decision. See label_template.md for what each class means and how the decision is made.",
+      "properties": {
+        "verdict": {
+          "enum": [
+            "physically_sound",
+            "model_inapplicable",
+            "limit_exceeded",
+            "unit_or_sign_error",
+            "inconsistent_inputs",
+            "insufficient_input"
+          ]
+        },
+        "reason": {"type": "string", "description": "One sentence. What is wrong, or why nothing is."},
+        "labeller": {"type": "string"},
+        "labelled_at": {"type": ["string", "null"]},
+        "secondary_findings": {
+          "type": "array",
+          "items": {"enum": ["model_inapplicable", "limit_exceeded", "unit_or_sign_error", "inconsistent_inputs", "insufficient_input"]},
+          "description": "Further failures present but not the leading one. Precedence is stated in label_template.md: an inapplicable model outranks a limit read off it."
+        },
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "ground_truth_basis": {"type": "string", "description": "Where the number that decides this came from -- a datasheet field, a hand calculation, reference.py. Never engcore."},
+        "reference_check": {
+          "type": "object",
+          "description": "What reference.py computed for this design, recorded beside the label so the label can be re-checked without re-deriving it. Present on hand-built cases; a captured design gets one when the reviewer runs reference.py to decide.",
+          "additionalProperties": true,
+          "properties": {
+            "violated": {"type": "array", "items": {"type": "string"}},
+            "unknown_count": {"type": "integer"},
+            "final_temperature_k": {"type": "number"},
+            "steady_temperature_k": {"type": "number"},
+            "dissipated_power_w": {"type": "number"},
+            "stable_under_both_temperature_readings": {"type": "boolean"}
+          }
+        },
+        "no_payload_field_carries": {"type": "string", "description": "Set when the defect is real but no payload field can express it, so no condition can read it. Such a case is a deliberate probe of the declaration's vocabulary rather than of any check's arithmetic, and reference.py cannot reach it either."}
+      }
+    },
+
+    "expected_verdict": {
+      "enum": ["SUPPORTED", "NOT_SUPPORTED", "INSUFFICIENT_EVIDENCE"],
+      "description": "What a correct tool should return for this design once converted. Derived from label.verdict by the mapping in run.py, and stored so the mapping is visible in the data rather than only in code."
+    },
+
+    "declaration_completeness": {
+      "enum": ["full_declaration", "sparse_declaration"],
+      "description": "Whether the design states the body and fluid facts a thorough thermal note would, or only what an ordinary answer states. Reported separately, because a catch rate computed over sparse designs is the unearned kind."
+    },
+
+    "conversion_notes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Filled in by convert.py at run time, not by the labeller. Every value the conversion had to supply that the design did not state."
+    }
+  }
+}

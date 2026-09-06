@@ -1,0 +1,62 @@
+{
+ "id": "S010",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "yageo-rc0603",
+  "source_voltage_v": 5.0,
+  "resistance_ohm": 500.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 40,
+  "duration_s": 60.0,
+  "thermal_resistance_k_per_w": 500.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.00186048,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.00012203389830508475,
+   "surface_area_m2": 4.72e-06,
+   "body_volume_m3": 5.76e-10,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.05,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 400.0,
+   "constant_capacity_span_k": 400.0,
+   "linearization_band_k": 900.0,
+   "debye_temperature_k": 250.0,
+   "fluid": "air",
+   "convection_length_m": 0.0021725560982400432,
+   "fluid_conductivity_solved_w_per_m_k": 0.5120110314636543,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.1,
+   "maximum_working_voltage_v": 75,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.029865936943652503
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "physically_sound",
+  "reason": "RC0603 dissipates 0.05 W against a 0.1 W rating in 40 C air, settling 25 K above ambient, with every declared span clear of its bound.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [],
+   "unknown_count": 0,
+   "final_temperature_k": 338.0383,
+   "steady_temperature_k": 338.0383,
+   "dissipated_power_w": 0.049777,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}

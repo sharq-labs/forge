@@ -1,0 +1,63 @@
+{
+ "id": "S006",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "vishay-crcw1218",
+  "source_voltage_v": 7.0710678118654755,
+  "resistance_ohm": 100.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 40,
+  "duration_s": 60.0,
+  "thermal_resistance_k_per_w": 50.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.025075,
+  "declared_thermal_context": {
+   "characteristic_length_m": 0.0002129405576012625,
+   "surface_area_m2": 3.802e-05,
+   "body_volume_m3": 8.096e-09,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.05,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 400.0,
+   "constant_capacity_span_k": 400.0,
+   "linearization_band_k": 900.0,
+   "debye_temperature_k": 250.0,
+   "fluid": "air",
+   "convection_length_m": 0.006166036003787198,
+   "fluid_conductivity_solved_w_per_m_k": 0.1968309150162813,
+   "airflow": "forced",
+   "fluid_velocity_m_per_s": 2.0
+  },
+  "declared_limits": {
+   "rated_power_w": 1.0,
+   "maximum_working_voltage_v": 200,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.21118406539346518
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "physically_sound",
+  "reason": "CRCW1218 e3 dissipates 0.5 W against a 1.0 W rating in 40 C air, settling 25 K above ambient, with every declared span clear of its bound.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [],
+   "unknown_count": 0,
+   "final_temperature_k": 338.0383,
+   "steady_temperature_k": 338.0383,
+   "dissipated_power_w": 0.497766,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}
