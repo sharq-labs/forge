@@ -1430,11 +1430,19 @@ def test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer():
     itself declares.
 
     Reading the converged resistance is what makes the number 3.5240 W rather
-    than the reference reading's 3.5635 W, so the fix moves the utilization
-    from 1.0185 to 1.0072. Both are over. Nothing between the two readings
-    clears this part either: the dissipation falls monotonically from 3.5635 W
-    at t = 0 towards 3.4919 W and never arrives inside the declared horizon, so
-    the rating is exceeded for the whole run and its peak is at t = 0.
+    than the reference reading's 3.5635 W, so the fix moves the utilization from
+    1.0185 to 1.0072. Both are over.
+
+    **In the tool's model the dissipation is one value, not a curve.** Each
+    coupled iteration does a single electrical solve at a single resistance, and
+    at the fixed point that resistance is R(T_end); the thermal march then runs
+    at constant heat input. So "the dissipation over the horizon" is 3.5240 W
+    and there is no maximum to take. The physical device would dissipate more
+    early on -- a positive-TCR part is least resistive when coldest, so
+    3.5635 W at t = 0 falling towards the asymptote's 3.4919 W -- and the model
+    does not represent that transient. If it did, the peak would be at the cold
+    start and this case would be further over its rating, not less. Every
+    reading available agrees the part is over.
 
     The tool is right and the ground truth was wrong, in the same way the
     ``geometry_conflict`` labels were wrong -- the expectation was computed at
