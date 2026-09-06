@@ -237,17 +237,25 @@ is the same shape of thing one level up — it has failed to object, which is no
 the same as having produced evidence — and reading a package of such checks as
 `SUPPORTED` reintroduces exactly the substitution `NOT_RUN` exists to prevent.
 
-**What flipped.** Two solvers in this repository produce a fully successful
-report whose `attained_levels` is empty, so every package built on either is
-now `INSUFFICIENT_EVIDENCE`:
+**What flipped.** Two solvers in this repository produced a fully successful
+report whose `attained_levels` was empty, so every package built on either
+became `INSUFFICIENT_EVIDENCE`:
 
-* `LumpedThermalSolver` (`src/engcore/domains/thermal_models/lumped.py:1219`)
+* `LumpedThermalSolver` (`src/engcore/domains/thermal_models/lumped.py`)
   — the known case, and the one the IN_DOMAIN electrothermal real-run tests in
-  `tests/mcp/test_evidence.py` are built on. Those tests now assert
-  `INSUFFICIENT_EVIDENCE`.
+  `tests/mcp/test_evidence.py` are built on. **Resolved in the recommendations
+  round:** the solver now emits a second check, `analytic_reference_agreement`,
+  comparing the closed form against
+  `domains/thermal_models/lumped_reference.py` — a reconstruction of the
+  solution from the governing equation's coefficients by series recurrence,
+  sharing no code and no derived quantity with it. That check earns
+  `ANALYTICALLY_VERIFIED`, and those tests now assert `SUPPORTED`.
+  `lumped_balance_residual` still establishes nothing; the level came from new
+  evidence, not from relabelling the check that had none.
 * `ResistancePropertySolver`
   (`src/engcore/domains/electrical/material.py:1358`) — **not previously
   named anywhere**, and a second casualty found only when the change was made.
+  Still attains nothing.
 
 **The gap, as a finding.** Twenty-one passing checks across eight solvers
 establish nothing. That is now visible in the verdict rather than absorbed by
@@ -255,7 +263,7 @@ it, which is the point. What each would need to earn a level:
 
 | Solver | Passing checks with `establishes=None` | Report attains a level? | What it would need |
 |---|---|---|---|
-| `LumpedThermalSolver` — `lumped.py:1219` | `lumped_balance_residual` | **No** | A `metric_dimensions` check on the pattern `battery/solver.py:492` already uses, comparing the three emitted metrics against the model record's `ModelOutputSpec` unit exemplars → `DIMENSIONALLY_VALID`. The record is a reference outside the arithmetic, so the level is earned rather than asserted. A march of the same ODE by an independent scheme would earn `NUMERICALLY_CONVERGED`; `ANALYTICALLY_VERIFIED` was deliberately removed from this check once and should not come back to it. |
+| `LumpedThermalSolver` — `lumped.py` | `lumped_balance_residual` | **Yes, since the recommendations round** — from `analytic_reference_agreement`, not from this check | This check stays level-free and should. The level came from a *second* check with an independent reference behind it, and the earlier note here was half wrong: a march of the same ODE does **not** earn `NUMERICALLY_CONVERGED`, because the lumped solver has no discretization to converge — refining the reference refines the reference. The reference module's docstring argues that at length. Still outstanding: a `metric_dimensions` check on the pattern `battery/solver.py:492` already uses, comparing the three emitted metrics against the model record's `ModelOutputSpec` unit exemplars → `DIMENSIONALLY_VALID`. |
 | `ResistancePropertySolver` — `material.py:1358` | `resistance_strictly_positive` | **No** | The same `metric_dimensions` move, one metric wide: `RESISTANCE_METRIC` against the `ModelOutputSpec`'s declared unit → `DIMENSIONALLY_VALID`. Its own docstring is right that an admissibility bound verifies nothing against anything; a dimensional check would be the first thing it verifies against something. |
 | `BatteryCellSolver` — `battery/solver.py:525`, `:555` | `coulomb_balance_residual`, `rint_terminal_residual` | Yes (`:500`) | Both check a closed form against the relation it was derived from. An independent integration of `dz/dt` sharing no code with the closed form would earn `NUMERICALLY_CONVERGED`; evaluating the same circuit through `electrical/dc`'s MNA path — a genuinely separate implementation — would earn `CROSS_SOLVER_VALIDATED`. |
 | `ElectricalDCSolver` / `NgspiceDCSolver` — `dc/validation.py:211`, `:257`, `:297`, `:338` | `kirchhoff_current_law`, `resistor_metric_consistency`, `voltage_source_relation`, `power_balance` | Yes (`:141`, `:160`) | These are the repository's strongest argument for a **new** `ValidationLevel`: there is no member for "independently reconstructed physical consistency", and the code says so at `dc/validation.py:358-365`. Within today's taxonomy, a native-vs-ngspice agreement check would be a defensible `CROSS_SOLVER_VALIDATED` — the two paths share `assemble` but not the solve. |

@@ -973,13 +973,21 @@ def package_from_run(declaration, run_id):
     )
 
 
-def test_a_real_run_of_an_applicable_body_is_insufficient_evidence():
-    """In domain, converged, nothing failed — and nothing established.
+def test_a_real_run_of_an_applicable_body_is_supported():
+    """In domain, converged, nothing failed — and now something established.
 
-    This package used to be SUPPORTED. It is the case the evidential guard was
-    written for: the lumped thermal solver deliberately claims no level for its
-    residual check, so a run that is clean by every other measure has attained
-    nothing, and the verdict now says so instead of rounding it up.
+    This package has been SUPPORTED, then INSUFFICIENT_EVIDENCE, and is
+    SUPPORTED again, and the three states are not the same claim. It was
+    SUPPORTED originally because nothing objected; the evidential guard took
+    that away, correctly, because a report assembled entirely from checks that
+    establish nothing says nothing. It is SUPPORTED now because the lumped
+    solver acquired a check that establishes something: agreement with an
+    independent reconstruction of the solution from the governing equation's
+    own coefficients, in ``thermal_models/lumped_reference.py``.
+
+    What separates the first state from the third is that a level is attained,
+    and the level is attained by a passing check that names it. The guard is
+    untouched — it is being satisfied rather than circumvented.
     """
     run, thermal, pkg = package_from_run(APPLICABLE, "evidence-applicable")
 
@@ -988,9 +996,14 @@ def test_a_real_run_of_an_applicable_body_is_insufficient_evidence():
     assert pkg.violated_conditions == () and pkg.unknown_conditions == ()
     assert pkg.not_run_checks == ()
     assert pkg.failed_checks == ()
-    # nothing argues against it; nothing argues for it either
-    assert pkg.attained_levels == frozenset()
-    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    # something argues for it, and it is nameable
+    assert pkg.attained_levels == frozenset(
+        {ValidationLevel.ANALYTICALLY_VERIFIED}
+    )
+    assert [c.name for c in pkg.validation if c.establishes is not None] == [
+        "analytic_reference_agreement"
+    ]
+    assert pkg.verdict is CredibilityVerdict.SUPPORTED
     # and it is a real result, not an empty one
     assert pkg.values["final_temperature"].magnitude_in(K) == pytest.approx(
         338.577018, abs=1e-6
@@ -998,6 +1011,20 @@ def test_a_real_run_of_an_applicable_body_is_insufficient_evidence():
     # provenance came from the thermal sub-result unaltered
     assert pkg.provenance == thermal.provenance
     assert pkg.validation == tuple(thermal.validation.checks)
+
+
+def test_the_residual_check_still_establishes_nothing_on_the_real_run():
+    """The new level came from the new check, not from relabelling the old one.
+
+    ``lumped_balance_residual`` compares the closed form against the equation
+    it was derived from. That was not evidence before this round and it is not
+    evidence now; if the level had been attached to it instead, the verdict
+    would have improved without any new evidence existing.
+    """
+    _, _, pkg = package_from_run(APPLICABLE, "evidence-residual")
+    residual = next(c for c in pkg.validation if c.name == "lumped_balance_residual")
+    assert residual.outcome is ValidationOutcome.PASS
+    assert residual.establishes is None
 
 
 def test_a_real_run_of_a_thick_low_conductivity_body_is_not_supported():
@@ -1014,7 +1041,10 @@ def test_a_real_run_of_a_thick_low_conductivity_body_is_not_supported():
     assert run.outcome is cp.CouplingOutcome.CRITERION_MET
     assert pkg.failed_checks == ()
     assert pkg.values == baseline.values
-    assert baseline.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert baseline.verdict is CredibilityVerdict.SUPPORTED
+    # and the violated bound outranks the level the same run attained: the
+    # reference comparison passed here too, and NOT_SUPPORTED still wins.
+    assert ValidationLevel.ANALYTICALLY_VERIFIED in pkg.attained_levels
 
 
 def test_a_real_run_with_an_undeclared_conductivity_is_insufficient_evidence():
@@ -1030,7 +1060,7 @@ def test_a_real_run_with_an_undeclared_conductivity_is_insufficient_evidence():
 
 def test_the_three_real_packages_round_trip_and_keep_their_verdicts():
     for declaration, expected in (
-        (APPLICABLE, CredibilityVerdict.INSUFFICIENT_EVIDENCE),
+        (APPLICABLE, CredibilityVerdict.SUPPORTED),
         (BIOT_VIOLATING, CredibilityVerdict.NOT_SUPPORTED),
         (MISSING_INPUT, CredibilityVerdict.INSUFFICIENT_EVIDENCE),
     ):

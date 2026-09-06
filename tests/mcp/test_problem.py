@@ -38,6 +38,7 @@ from src.engcore.mcp import (
     run_electrothermal_case,
 )
 from src.engcore.scientific.models.definition import ValidityStatus
+from src.engcore.scientific.results.validation import ValidationLevel
 from src.engcore.scientific.units.quantity import Quantity, dimensionality
 
 K = "kelvin"
@@ -154,13 +155,16 @@ def test_a_well_formed_payload_runs_and_matches_the_hand_built_case():
     assert report.values["final_temperature"].magnitude_in(K) == pytest.approx(
         338.577018, abs=1e-6
     )
-    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert report.verdict is CredibilityVerdict.SUPPORTED
     assert report.violated_conditions == ()
     assert report.unknown_conditions == ()
     assert report.failed_checks == () and report.not_run_checks == ()
-    # INSUFFICIENT_EVIDENCE here is the attained-level rule, not a gap in the
-    # payload — exactly as in the hand-built case.
-    assert report.attained_levels == frozenset()
+    # SUPPORTED here rests on the level the lumped solver's reference
+    # comparison establishes — exactly as in the hand-built case, and for the
+    # same reason. The payload boundary neither adds nor removes evidence.
+    assert report.attained_levels == frozenset(
+        {ValidationLevel.ANALYTICALLY_VERIFIED}
+    )
 
 
 def test_a_violated_bound_reaches_the_report_as_a_finding():

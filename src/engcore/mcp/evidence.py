@@ -310,15 +310,24 @@ def derive_verdict(
     what counts. An empty check list and a check list that attains nothing are
     the same answer to the same question, and get the same verdict.
 
-    **This is a real narrowing, and it is meant to be.** Two solvers in this
-    repository produce a fully successful report whose ``attained_levels`` is
-    empty — the lumped thermal solver, which declines a level for its residual
-    check on the grounds that self-consistency is not verification, and the
-    resistance property solver, whose only check is an admissibility bound.
-    Reports built on either are now ``INSUFFICIENT_EVIDENCE``. That is the
-    honest reading: those solvers are right that they have earned nothing, and
-    the verdict should say so rather than round it up. What each would need to
-    earn a level is recorded in ``NEEDS.md`` as a visible gap.
+    **This is a real narrowing, and it is meant to be.** When the rule landed,
+    two solvers in this repository produced a fully successful report whose
+    ``attained_levels`` was empty — the lumped thermal solver, which declined a
+    level for its residual check on the grounds that self-consistency is not
+    verification, and the resistance property solver, whose only check is an
+    admissibility bound. Reports built on either became
+    ``INSUFFICIENT_EVIDENCE``. That was the honest reading: those solvers were
+    right that they had earned nothing, and the verdict should say so rather
+    than round it up.
+
+    The lumped solver has since earned one, and how it did is the intended
+    response to this rule rather than an escape from it. It did not relabel the
+    residual check; it acquired a second check with an independent reference
+    behind it (``domains/thermal_models/lumped_reference.py``), and the residual
+    check still establishes nothing. The rule is satisfied by new evidence
+    existing, which is the only way it is meant to be satisfiable. The
+    resistance property solver still attains nothing, and what it would need is
+    recorded in ``NEEDS.md`` as a visible gap.
 
     ``required_levels`` is unchanged and remains the way a caller demands a
     *particular* level rather than merely some level.
