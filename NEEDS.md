@@ -241,3 +241,200 @@ discharged by the coupling, and the real condition is on the loop gain
 `α·P·(∂T/∂P)` — below 1 the fixed point contracts, above it the system runs
 away. This is a *coupling* condition rather than a model condition, which is
 why it is not on either model, and it needs somewhere in `systems/` to live.
+---
+
+# NEEDS — battery domain round
+
+Owned paths for this round were `src/engcore/domains/battery/**`,
+`tests/domains/battery/**`, `docs/domains/battery-v0.md`, appended rows in
+`docs/domains/applicability-conditions.md`, and this file. Nothing below has
+been done; each item is a proposal or a limitation, stated where it can be
+argued with.
+
+---
+
+## 1. Changes wanted outside the owned paths — not made
+
+### 1.1 `dimensionality()` compares dimensions as strings, and the strings are order-dependent
+
+**Where** `src/engcore/scientific/units/quantity.py` — `dimensionality()`,
+`Quantity.is_compatible_with`, `Quantity.to`.
+
+**What was hit.** `Quantity(2.5, "ampere") * Quantity(0.03, "ohm")` produces a
+quantity in `ampere * ohm`, and `.to("volt")` on it **raises**. The two are the
+same physical dimension. The units backend renders the composite's exponents in
+a different order from the named unit's:
+
+```
+ampere * ohm  ->  [mass] * [length] ** 2 / [current] / [time] ** 3
+volt          ->  [mass] * [length] ** 2 / [time] ** 3 / [current]
+```
+
+`dimensionality()` returns that rendering as a `str`, and every compatibility
+check in the core is `dimensionality(a) == dimensionality(b)`, so two
+dimensionally identical quantities compare unequal and a correct conversion is
+refused as a units error.
+
+This is not exotic. `I * R` is the single most ordinary product in electrical
+work, and it is the first thing a new domain multiplying two quantities will
+hit. It is silent until it raises, and when it raises it reports a physics
+error for a rendering detail.
+
+**Worked around, not papered over.** `context._ohmic_drop` composes `I·R` from
+magnitudes (`magnitude_in("ampere") * magnitude_in("ohm")`, tagged `"volt"`).
+Both inputs still pass through `magnitude_in`, so the conversion is exactly as
+checked as a product would have been; only the *composition* is done in
+magnitudes, and only for this one product. The reason is written at the
+function, so a reader does not have to rediscover it.
+
+**Proposal.** Compare dimensionality through the backend's own
+`UnitsContainer` (or any canonical, order-independent form) rather than through
+its `str`. Something of the shape:
+
+```python
+def dimensionality(unit: str) -> str:
+    dims = registry().Unit(normalize_unit(unit)).dimensionality
+    return ",".join(f"{k}:{v}" for k, v in sorted(dims.items()))
+```
+
+That is a one-function change, it is not a domain conditional, and it names no
+physics. It **does change a serialized string**, so it needs checking against
+anything that persists a dimensionality — the binding-issue detail strings in
+`ScientificModelDefinition.check_against` embed it in prose, which is display
+only, but a frozen record that stores one would need a re-freeze.
+
+**Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
+and a change to how the core decides two units are compatible is exactly the
+kind that should be argued before it is made.
+
+### 1.2 `ScientificResult` still cannot carry a validity assessment
+
+**Where** `src/engcore/scientific/results/result.py`.
+
+Already argued at length in §1.1 of the applicability round above, and this
+round hits it again unchanged: every verdict this domain produces lives
+*beside* the result, computed by whoever holds both the problem and the
+operating point. `SelfHeatingStep` carries `validity` as its own field for
+exactly that reason — there is nowhere in a `ScientificResult` to put it.
+
+Nothing to add to the earlier proposal except a second data point: with four
+models per problem, the field would need to be a *mapping* from model reference
+to assessment, or a result would have to be per-model. A single
+`validity: ValidityAssessment | None` would force a domain with four
+independent claims to pick one, which is the collapse this domain is built to
+avoid. Worth settling before the field is added, not after.
+
+### 1.3 A composition helper for one-way coupling has nowhere to live
+
+**Where** `src/engcore/systems/`.
+
+**What was hit.** `domains/battery/coupling.py` marches a cell against the
+lumped thermal body. It is a *composition* of two domains and by the layering
+argument belongs under `systems/`, beside `electrothermal/`. It is in the
+battery package because hard rule 5 makes this round a pure consumer.
+
+**Why it is not simply "electrothermal with a battery in it".** The
+electrothermal pack solves a **cyclic** dependency set with a fixed-point plan,
+torn endpoints, seeds and a convergence criterion. This coupling is
+**acyclic**: with a constant `R_int` the heat does not depend on the
+temperature, so no fixed point exists. Running the pack's machinery here would
+report `CRITERION_MET` on the first pass and thereby claim a convergence that
+was never at issue.
+
+**Proposal.** If a composition layer is wanted for sequential couplings, it
+should be a *sibling* of the fixed-point runner, not a mode of it: an acyclic
+execution order already has a home in `coupled.execution_order`, and what is
+missing is a run record that says "acyclic, nothing to converge" without
+borrowing a convergence vocabulary. `CouplingDirection` in this package is a
+one-member sketch of what that record's structural field would be. Merging it
+into `CouplingOutcome` would be the wrong direction: that enum answers *why the
+iteration stopped*, and this one answers *whether there was an iteration*.
+
+---
+
+## 2. Conditions this round deliberately did not implement
+
+Each is a real condition on a real derived quantity. None is here because it
+was hard; each needs an input the domain does not currently declare, and
+inventing the input would have been worse than naming the gap.
+
+**`R_int(T)`, and the two-way coupling it would unlock.** The single most
+consequential omission. A cell's internal resistance is strongly and
+non-linearly temperature dependent (Arrhenius-like, dominated by electrolyte
+conductivity and charge-transfer kinetics). Modelling it would make the heat a
+function of temperature, make the electro-thermal dependency **cyclic**, and
+turn this round's sequential march into a genuine fixed-point problem with a
+real convergence question — and a real *loop gain* condition of the same shape
+as the self-heating separability item above. It is deliberately not modelled as
+a linear TCR: a cell's `R_int(T)` is not metallic conduction, and reusing
+`electrical.material.linear_tcr_resistance` for it would be claiming physics
+this domain cannot support. It wants its own constitutive record with its own
+activation energy.
+
+**Reversible (entropic) heat.** `-I·T·dU/dT`. Not small: of the same order as
+the Joule term at low rate, and it changes sign with current direction and with
+state of charge, so a real cell can absorb heat while discharging. The
+condition that follows is on the *ratio* of the reversible to the irreversible
+term — the direct analogue of the thermal domain's
+`radiation_to_convection_ratio`, and the exact statement of what dropping it
+costs. Needs `dU/dT(z)` for the cell, a measured curve nobody has supplied.
+
+**Tabulated OCV, and a condition on the chord's error.** With a measured
+`OCV(z)` curve the affine chord's error is computable rather than merely
+bounded by staying inside a declared window: the condition becomes
+`max|OCV_chord(z) − OCV_table(z)|` over the traversed span, against a declared
+tolerance. That is strictly better than `soc_window_margin` and would likely
+replace it. Needs a table, which is a data-boundary question this round did not
+open.
+
+**Capacity fade and resistance growth.** A cycle count and a declared
+end-of-life criterion would give `cycles_used / rated_cycles ≤ 1` and, more
+usefully, a condition on whether the *declared* `Q_nom` and `R_int` still
+describe a cell this far into its life. Needs a cycle count on the declaration,
+which is a state the problem IR would carry as a parameter — cheap to add, but
+it is a new physical claim (a fade law) and not merely a new bound.
+
+**Charge acceptance at low temperature.** The narrow charge-temperature range,
+and the lithium-plating boundary that sets its cold end. The domain models
+discharge only and says so, in the model records, the docs and a test; adding
+the condition means adding charging, which is a sign convention change through
+every derivation and a second set of ratings.
+
+**Pack-level: cell-to-cell spread.** A series string is treated as one lumped
+cell. The real condition is on the spread of capacity and resistance across the
+string against a declared tolerance — a weakest-cell bound, since the string's
+usable capacity is the weakest cell's. Needs a population, not a cell, and
+therefore a different declaration record.
+
+**Thermal runaway onset.** Deliberately absent and deliberately *not*
+approximated. The lumped balance has no exothermic decomposition term, so
+nothing in this domain can represent runaway; a condition purporting to bound
+it would be the most dangerous kind of unearned claim this repository could
+ship. If it is ever wanted it needs its own model, its own kinetics and its own
+validation evidence — not a threshold bolted onto a linear balance.
+
+---
+
+## 3. One test-tier note
+
+The 178 tests added this round are all in **FAST**, correctly: they execute
+closed-form arithmetic and the whole directory runs in about 4 s. No
+`expensive` marker is needed, and `tests/conftest.py` is untouched.
+
+Two collisions with existing suite invariants were hit and avoided rather than
+worked around, and both are worth knowing about before the next domain is
+added:
+
+- **A second `conftest.py` anywhere under `tests/` shadows the root one.**
+  `tests/test_tier_classification.py` does `from conftest import CAMPAIGN_TESTS,
+  ...`, and pytest prepends each test file's own directory to `sys.path`, so a
+  `tests/domains/<x>/conftest.py` breaks that import for the whole suite. The
+  shared builders here live in `battery_cases.py` instead. A note in
+  `docs/TESTING.md` would save the next person the same hour.
+- **Test module basenames must stay globally unique.** A
+  `tests/domains/battery/test_context.py` collides with
+  `tests/domains/thermal_models/test_context.py` under the default import mode.
+  The modules here are prefixed `test_battery_`. `docs/TESTING.md`'s
+  parallel-safety table records "duplicate module basenames: none" as a
+  *finding*; it is really a *requirement*, and saying so where a new domain
+  author will read it would help.
