@@ -2461,3 +2461,149 @@ alongside `T:max` rather than a quantity the model claims to produce. The real
 question is whether `ModelOutputSpec` should be able to declare it. Until that
 is answered, every domain's dimension check has a set of metrics it looks at
 and cannot judge, and it now says which.
+
+---
+
+## evidence round
+
+Three tasks, no change to `src/`. What follows is what the round measured and
+could not close, not what it built.
+
+### A.1 The seal is procedural, and the arithmetic leak is real
+
+`score_hard.py` refuses `--split holdout` and `--split all` without
+`--open-holdout`, and logs every opening. That stops the hold-out **cases** from
+being scored, listed or diffed between runs, which is the mechanism by which a
+benchmark gets fitted to a tool: you read which cases were missed, and you
+change something.
+
+It does **not** make the hold-out aggregate unknowable. The full-set figure is
+published in `benchmarks/hard/README.md` and this file, so hold-out is
+(full - dev) by arithmetic anyone can do -- and with 1836/2000 and 1282/1400
+both printed, the hold-out's exact match is 554/600 by subtraction. That number
+has not been produced by scoring, and no per-case detail behind it exists
+anywhere, but pretending the aggregate is sealed would be exactly the kind of
+unearned claim this benchmark's README already warns about.
+
+**What would close it:** publishing only the dev figure and retiring the
+full-set tables. That was not done, because the full-set tables are the record
+of four rounds of corrections and deleting them to make a seal look tighter
+would destroy more evidence than it protects.
+
+### A.2 Five defect tags cannot be represented in both partitions
+
+`horizon_in@0.002`, `horizon_in@0.05`, `horizon_in@0.2`,
+`rating_current_in@0.01` and `rating_voltage_in@0.002` hold **one case each**.
+A stratum of one is 100 % on one side of any split and 0 % on the other. All
+five landed in the development set, so the hold-out contains 139 of the 144
+defect tags.
+
+This is a property of the draw, not of the split rule: `generate_hard.py`
+allocates shaper draws by weight and these five shapers happened to fire once
+each. It bounds what the hold-out can prove -- it cannot speak to those five
+tags at all. **What would close it:** a generator that guarantees a floor of
+(say) four cases per shaper so every tag can appear on both sides. That is a
+regeneration, and the round was forbidden to regenerate.
+
+### B.1 `mcp` and `anyio` are imported and declared nowhere, and the FAST tier is red without them
+
+Measured, not inferred. On a clean Ubuntu 24.04.3 environment carrying **only**
+what `pyproject.toml` declares, the documented FAST command gives
+
+    2091 passed, 1 skipped, 1 error in 19.59s
+
+against the host's `2146 passed`. **55 tests do not run.** Transcript in
+`docs/reproduce.md`.
+
+Two undeclared imports:
+
+* `mcp` -- the Model Context Protocol SDK, `src/engcore/mcp/server.py:34`. The
+  host has 2.1.1.
+* `anyio` -- `pytest.importorskip`, `tests/mcp/test_server.py:22`.
+
+The asymmetry between the two test modules that need the SDK is the actual
+defect. `tests/mcp/test_server.py` guards its imports and skips cleanly, and its
+comment states the rule: the SDK is "the optional `[mcp]` dependency group" and
+"the suite must stay runnable -- and green -- without it, the same rule
+pytest-xdist is held to." Both halves are wrong as of this commit:
+
+1. **There is no `[mcp]` optional dependency group in `pyproject.toml`.** The
+   group the comment names does not exist, so there is no supported way to
+   install the SDK -- the host's copy got there by some route the repository
+   does not record.
+2. **`tests/mcp/test_battery_boundary.py:19` imports `src.engcore.mcp.server`
+   at module scope with no guard.** It errors at collection, so the rule its
+   sibling states is already broken and has been for as long as that file has
+   existed.
+
+**By inference, not measurement:** the `fast` CI job runs `pip install -e
+".[dev]"` on a bare `ubuntu-latest` runner -- the same declared set, the same
+absent `mcp` -- so it must hit the same collection error. No CI run was
+available to check this, and it is labelled as inference everywhere it appears.
+
+**Not fixed here, deliberately.** The round's rule was that a difference between
+the clean machine and the host *is the finding* and must be reported rather than
+tuned away. No dependency was added, no test edited, no guard inserted; the
+`Dockerfile` installs exactly what the project declares and fails at the same
+line, and the `reproduce` CI job carries `continue-on-error: true` with a
+comment naming the commit that should remove it.
+
+**What would close it:** an `[mcp]` extra in `pyproject.toml` carrying `mcp` and
+`anyio`, plus either a guard on `tests/mcp/test_battery_boundary.py` or a
+decision that the SDK is a hard dependency. That touches `pyproject.toml` and
+`tests/`, and this round owned neither.
+
+### B.2 The Docker image was never built
+
+Docker is not installed in the environment this round ran in. The `Dockerfile`
+is delivered **unbuilt and unverified as an image**. The clean-environment
+evidence is WSL2 Ubuntu 24.04.3 -- a different OS, kernel and CPython minor
+version, with dependencies freshly resolved from PyPI into a throwaway prefix,
+no `sudo` and nothing written outside `/tmp` -- which rules out the author's
+`.venv` and the author's Python but **not** a stray environment variable or a
+shared system library, because it runs on the same host filesystem and CPU.
+
+The image itself is therefore an untested artifact. Nothing in it is exotic, and
+the `reproduce` CI job will build it on the first push, but until then it is a
+claim.
+
+### B.3 The versions in the release page are a record, not a lockfile
+
+`pyproject.toml` declares lower bounds only, on purpose -- "the platform must
+not pin its scientific stack to one machine's resolved versions." The
+consequence is that `docs/release/v1.0.md`'s environment table describes what
+resolved on 2026-09-06 and cannot constrain what resolves later.
+
+The round produced one piece of evidence that this matters less than it might:
+numpy 2.5.2 (host) and 2.5.3 (clean environment), across CPython 3.14.2 and
+3.12.3 and two operating systems, gave **identical** metrics, an identical
+case-set digest and an identical false-accept id list. That is one data point
+over a narrow version gap, not a demonstration of numerical stability.
+
+### C.1 `results_hard.json` scores 1400 of the 2000 cases on disk
+
+By design, and the file says so in its own `split` and `scored` fields while
+carrying the digest of all 2000. A reader who wants the full-set figure has to
+open the tag's release page or break the seal. This is a deliberate trade --
+"the tracked results file is the honest development number" beat "the tracked
+results file covers every case" -- and it is written down here because the
+opposite choice is defensible and someone will want it.
+
+### C.2 Three sources disagreed about one number, and this is how it happened
+
+Before this round, `benchmarks/hard/results_hard.json` -- the only results file
+a reader could open -- held **1236/2000 (61.8 %)** from a case set that had not
+existed for two rounds, with a composition (453 sound / 1547 unsound) that no
+longer matched `cases_hard/`. The real figures lived in a `results_hard.json` at
+the repository root that `.gitignore` was swallowing, because that is where
+`score_hard.py`'s default `--results` resolved when run from the repository root
+exactly as its own README instructed. The README's baseline tables carried a
+third set of figures -- correct, and attached to no file at all.
+
+The cause was a relative default path in an argument parser, and the effect was
+four rounds of a published number nobody could check. Fixed by resolving
+`--results` against the script's own directory. The general lesson is worth more
+than the fix: **a default output path that depends on the caller's working
+directory will eventually write somewhere nobody reads.** The scorer's other new
+defaults -- `--split-file`, `--openings-log` -- were given the same treatment in
+the same commit for the same reason.

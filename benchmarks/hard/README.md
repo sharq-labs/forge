@@ -1,9 +1,22 @@
 # Adversarial electro-thermal benchmark — 2000 cases
 
 ## Run it
-    python benchmarks/hard/score_hard.py --src src --cases benchmarks/hard/cases_hard
+    python benchmarks/hard/score_hard.py --src src       --cases benchmarks/hard/cases_hard --workers 4 --split dev
 
-Writes `results_hard.json`. Parallel over cores; a few minutes.
+Writes the tracked `benchmarks/hard/results_hard.json`. About 20 s at
+`--workers 4` on a 24-core host.
+
+`--split dev` is not optional decoration. 600 of the 2000 cases are a **sealed
+hold-out** and the scorer exits non-zero if you try to score them without
+`--open-holdout`; see [The hold-out split](#the-hold-out-split) at the foot of
+this file for why. `--workers` is bounded rather than `auto` because each worker
+carries its own engcore import and the pool dies as a `BrokenProcessPool` when a
+many-core machine exhausts RAM.
+
+**Current numbers live in `results_hard.json` and in the release page,
+[docs/release/v1.0.md](../../docs/release/v1.0.md). The tables below are the
+round-by-round history that produced them, and every figure in them is a
+full-set figure the generator was tuned against.**
 
 ## Files
 | File | What |
@@ -12,10 +25,16 @@ Writes `results_hard.json`. Parallel over cores; a few minutes.
 | `score_hard.py` | The scorer. |
 | `cases_hard/*.json` | 2000 cases: payload + ground truth. |
 | `index_hard.json` | Composition by label, verdict and defect tag. |
-| `results_hard.json` | Baseline run against main. |
+| `split_hard.py` | The 70/30 development / hold-out split rule. `--verify` prints the composition proof. |
+| `split_hard.json` | The split itself: seed, rule, digests, and both id lists. |
+| `results_hard.json` | The current **development-split** run. Carries the case-set digest. |
+| `HOLDOUT_OPENINGS.log` | Every time the sealed hold-out was scored. Empty means never. |
 
 ## Composition
-453 sound, 1547 unsound, 95 distinct defect tags.
+**As of the first draw — superseded twice below.** 453 sound, 1547 unsound, 95
+distinct defect tags. The set on disk today is **342 sound, 1658 unsound, 144
+distinct defect tags**, seed 20260906; `index_hard.json` is authoritative and
+this paragraph is kept only because the rounds that follow argue against it.
 
 What makes it hard: every threshold case sits at a controlled distance from its
 bound (0.2%, 1%, 5%, 20%) on **both** sides — a case 1% inside must be accepted,
