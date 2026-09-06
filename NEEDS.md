@@ -2303,7 +2303,111 @@ That is a battery-domain change and TASK C forbids it.
 
 ---
 
----|
+---
+
+## WHERE ELSE THE SEVEN PATTERNS COULD LIVE — a map for the next reviewer
+
+Two of the seven guards found an instance **nobody had reviewed**: the fail-open
+hash-chain check in `CampaignEventLog.from_dict`, and a caller-settable
+threshold gating `NUMERICALLY_CONVERGED` in the DC validation settings. Neither
+was in any of the three reviews. Both were found by a mechanical sweep written
+for a different site.
+
+That is the useful signal, and it points one way: the patterns are in more
+places than reading found, and the parts of this repository that have had the
+least review are `src/engcore/sria/`, `src/engcore/systems/`,
+`src/engcore/design/` and `src/engcore/uq/` — the layers above the domains,
+which no domain review looked at.
+
+What follows is a **map, not a finding list.** Every entry below is a place the
+pattern could live, identified by a scan of the current tree. **None has been
+audited.** A site appearing here is a place to look, and several of them will
+turn out to be correct for reasons the scan cannot see — three did while this
+map was being written, and they are recorded as such so the next reviewer does
+not re-derive them.
+
+### P1 — a derived name a caller can occupy
+
+*Closed in the core for validity contexts.* The shape survives anywhere a
+mapping is assembled from two sources and read by name.
+
+| Where | Why it is a candidate |
+|---|---|
+| `mcp/battery.py:573,589` | `values.update(overrides)` — a caller's overrides merged over measured values, then read by name downstream |
+| `mcp/problem.py:1535` | `shared.update(_material_assessments(...))` — assessments merged into a shared namespace |
+| `sria/evidence.py:367,575` | `payload.update(...)` into an evidence payload that consumers read by key |
+| `sria/campaign/runner.py:1357` | `self._obligation_state.update(bundle.obligation_state)` — an obligation state merged from a bundle |
+| `scientific/results/provenance.py:442` | `base.update(overrides)` in the record's own `with_` helper |
+
+**Reviewed and correct** — `design/generation.py:341`. `existing` is a
+generation binding a materializer may already have set; the code refuses a
+*conflicting* one and then writes its own. Absence means "the twin carried no
+binding", which is a merge decision rather than an integrity question.
+
+### P2 — a status beside a claim, with nothing between them
+
+*Opt-in until the re-freeze.* `ValidationCheck` is not the only record in this
+repository carrying an outcome and a claim as two independent fields.
+
+| Where | Outcome field | Claim field |
+|---|---|---|
+| `sria/evidence.py:276` `Evidence` | `status` | `claim_type`, `claim_binding`, `claim_payload` |
+| `sria/gateway.py:86` `BeliefEntry` | `status` | `claim_type`, `claim_payload` |
+| `sria/calibration/outcome_bridge.py:82` `BridgedOutcome` | `outcome`, `legacy_status` | `mapping_confidence` |
+| `sria/decision/recommendation.py:178` `DecisionRecommendation` | `outcome` | `degraded_assumptions` |
+
+The question to ask each is Guard 2's: *can this record carry a claim it did
+no work to earn, and is there any field a reader could check it against?*
+`mapping_confidence` beside a `legacy_status` is the one that reads most like
+`establishes` beside a `PASS`.
+
+### P3 — a threshold the caller sets and the record does not distinguish
+
+*Closed for the two verification gates and for DC's convergence bound.* Every
+function below takes a bound or a budget as a parameter. Most are legitimate —
+a budget that limits work is not a threshold that awards a level — and the
+discriminator is exactly that: **does anything downstream get stronger because
+this number was met?**
+
+| Where | Parameter |
+|---|---|
+| `sria/assurance/arbiter.py:216` `decide` | `budget` |
+| `sria/assurance/critics.py:92,416,440` | `budget` |
+| `sria/campaign/liveness.py:189` `assess` | `budget` |
+| `sria/decision/recommendation.py:427` `evaluate` | `budget` |
+| `sria/decision/replay.py:433` `executable_replay` | `budget` |
+| `sria/campaign/persistence.py:1416` `_verify_checkpoint_commitment` | `verify_budget` |
+| `systems/electrothermal/coupled.py:353,1136` | `tolerance` |
+| `systems/aerospace/multirotor/study.py` (5 sites) | `attempt_budget` |
+
+`sria/assurance/` is where to start: a critic's budget that decides whether an
+obligation is discharged is a threshold awarding a level in different words.
+`coupled.py`'s `tolerance` decides `criterion_met` on a coupled loop, which is
+transported.
+
+**Not a candidate** — `battery/coupling.py:519`'s `step_limit`. It bounds a
+loop and its only effect is which `MarchOutcome` is reported, which the record
+carries; nothing is stronger for having met it.
+
+### P4 — a membership test standing in for a subset test
+
+*Closed in the core; one site remains, and it is the frozen one.* The sweep in
+`tests/test_core_guards.py` covers every solver. What it does not cover is the
+same shape outside the solver protocol:
+
+* `scientific/realizations/definition.py:356` — `capability in
+  self.required_capabilities`. A realization answering about one capability
+  rather than the requested set is the same question one layer over, and
+  `RealizationRegistry` selection reads it.
+
+### P5 — provenance assembled by something that did not execute
+
+*Partially closed.* A record built by the producer can name what it ran; a
+record assembled elsewhere can only name what its assembler believes. Six
+modules assemble one without being the solver:
+
+| Where | Note |
+|---|---|
 | `systems/electrothermal/coupled.py` (3 sites) | carries `bindings` — the good shape |
 | `systems/electrothermal/resistor_body.py` (3 sites) | carries `bindings` |
 | `systems/aerospace/multirotor/study.py` | carries `bindings` **and** `models`/`solvers` |
