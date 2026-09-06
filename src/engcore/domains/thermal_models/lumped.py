@@ -102,6 +102,7 @@ from ...scientific.solvers.protocol import (
     SolverSettings,
 )
 from ...scientific.units.quantity import Quantity
+from ..derived_context import assembled_validity_context, caller_declared
 from .context import (
     BIOT_NUMBER,
     BODY_CONDUCTIVITY,
@@ -124,6 +125,7 @@ from .context import (
     SURFACE_EMISSIVITY,
     VOLUME_UNIT,
     LumpedApplicabilityDeclaration,
+    ASSEMBLED_QUANTITIES,
     derived_lumped_quantities,
 )
 from .lumped_reference import (
@@ -960,18 +962,24 @@ def lumped_validity_context(
     declaration reaches a condition.
 
     Omitting an argument omits every group that needed it. It never
-    substitutes one.
+    substitutes one — and since F03 that is a structural property rather than
+    an intention. The derived names are a **reserved namespace**: they are
+    stripped from the caller's context before anything is derived, so a caller
+    parameter called ``biot_number`` cannot occupy the key a failed Biot
+    derivation left empty. Assembly used to start from the caller's parameters
+    and overwrite only what it derived, which meant the opposite.
     """
-    base = problem.validity_context()
-    base.update(
-        derived_lumped_quantities(
-            base,
+    declared = caller_declared(problem.validity_context(), ASSEMBLED_QUANTITIES)
+    return assembled_validity_context(
+        declared=declared,
+        assembled=derived_lumped_quantities(
+            declared,
             initial_temperature=initial_temperature,
             ambient_temperature=ambient_temperature,
             heat_input=heat_input,
-        )
+        ),
+        reserved=ASSEMBLED_QUANTITIES,
     )
-    return base
 
 
 def assess_lumped_validity(

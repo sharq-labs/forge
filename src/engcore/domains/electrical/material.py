@@ -62,6 +62,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from ..derived_context import assembled_validity_context, caller_declared
 from ...scientific.capabilities import ScientificCapability
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
@@ -144,11 +145,13 @@ __all__ = [
     "assess_rated_resistance_validity",
     "assess_resistance_validity",
     "build_resistance_problem",
+    "ASSEMBLED_QUANTITIES",
     "derived_material_quantities",
     "linear_resistance_ratio",
     "linearization_excursion_ratio",
     "operating_temperature_utilization",
     "rated_resistance_validity_context",
+    "resistance_validity_context",
     "reduced_debye_temperature",
     "resistance_model_registry",
     "resistance_realizations",
@@ -917,8 +920,9 @@ def assess_resistance_validity(
     ``extra=``. A validity condition on a state coordinate is therefore never
     automatic — recorded as a finding, not worked around.
     """
-    context = problem.validity_context(extra={TEMPERATURE: temperature})
-    return LINEAR_TCR_MODEL.assess_validity(context)
+    return LINEAR_TCR_MODEL.assess_validity(
+        resistance_validity_context(problem, temperature)
+    )
 
 
 # =====================================================================
@@ -930,6 +934,26 @@ def assess_resistance_validity(
 # key rather than inventing a value. Nothing here is known to
 # ``engcore.scientific``; the core supplies ``validity_context(extra=...)`` and
 # this is the electrical domain's use of it.
+
+
+def resistance_validity_context(
+    problem: ScientificProblem, temperature: Quantity
+) -> dict[str, Any]:
+    """The context :data:`LINEAR_TCR_MODEL` is assessed against.
+
+    ``temperature`` is a state coordinate this model states a range condition
+    over, and it reaches the context only from here. It is a **reserved** name
+    for that reason: a caller parameter called ``temperature`` would otherwise
+    sit in the same key and decide the same condition, which is the derived-
+    quantity impersonation in its plainest form.
+    """
+    return assembled_validity_context(
+        declared=caller_declared(
+            problem.validity_context(), ASSEMBLED_QUANTITIES
+        ),
+        assembled={TEMPERATURE: temperature},
+        reserved=ASSEMBLED_QUANTITIES,
+    )
 
 
 def _temperature_in_kelvin(value: Any, label: str) -> float | None:
@@ -1077,6 +1101,29 @@ def linear_resistance_ratio(
     return Quantity(1.0 + alpha * (kelvin - reference), DIMENSIONLESS)
 
 
+#: Every name this module assembles, and which a caller parameter may therefore
+#: never occupy. See ``engcore.domains.derived_context`` for what reserving a
+#: name means and why it is enforced at assembly rather than at problem
+#: construction.
+#:
+#: It is the derived groups **and** the state coordinates the assembler
+#: injects, because the two are in the same position: a condition reads either
+#: one by name, and either one is absent when the assembler could not supply
+#: it. Reserving only the derived groups would leave the state coordinates
+#: forgeable in exactly the same way — ``temperature`` here is a condition of
+#: both material models and is supplied by the coupling, so a caller parameter
+#: of that name would otherwise decide the linear form's own range condition.
+ASSEMBLED_QUANTITIES = frozenset(
+    {
+        TEMPERATURE,
+        LINEARIZATION_EXCURSION_RATIO,
+        OPERATING_TEMPERATURE_UTILIZATION,
+        REDUCED_DEBYE_TEMPERATURE,
+        LINEAR_RESISTANCE_RATIO,
+    }
+)
+
+
 def derived_material_quantities(
     base: Mapping[str, Any],
     *,
@@ -1120,12 +1167,28 @@ def derived_material_quantities(
 def rated_resistance_validity_context(
     problem: ScientificProblem, temperature: Quantity | None = None
 ) -> dict[str, Any]:
-    """The full context :data:`RATED_LINEAR_TCR_MODEL` is assessed against."""
-    context = problem.validity_context()
-    if temperature is not None:
-        context[TEMPERATURE] = temperature
-    context.update(derived_material_quantities(context, temperature=temperature))
-    return context
+    """The full context :data:`RATED_LINEAR_TCR_MODEL` is assessed against.
+
+    Assembled in two separated namespaces since F03. The caller's parameters
+    arrive with every reserved name stripped, so a temperature or a rated group
+    can only be here because this function put it here; the derivations are
+    handed that stripped context too, so a forged value cannot even be read as
+    an *input* to one. A group that could not be derived is absent, which is
+    how a missing declaration reaches ``assess`` as UNKNOWN — the guarantee the
+    old ``context.update(...)`` over the caller's own parameters quietly broke.
+    """
+    declared = caller_declared(problem.validity_context(), ASSEMBLED_QUANTITIES)
+    state = {} if temperature is None else {TEMPERATURE: temperature}
+    return assembled_validity_context(
+        declared=declared,
+        assembled={
+            **state,
+            **derived_material_quantities(
+                {**declared, **state}, temperature=temperature
+            ),
+        },
+        reserved=ASSEMBLED_QUANTITIES,
+    )
 
 
 def assess_rated_resistance_validity(

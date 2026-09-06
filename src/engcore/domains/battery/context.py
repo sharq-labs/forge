@@ -1527,6 +1527,47 @@ def peukert_temperature_drift_ratio(
 # Assembly
 # =====================================================================
 
+#: Every name this module assembles, and which a caller parameter may therefore
+#: never occupy. See ``engcore.domains.derived_context`` for what reserving a
+#: name means and why it is enforced at assembly rather than at problem
+#: construction.
+#:
+#: It is the derived groups **and** the state coordinates the assembler
+#: injects, because the two are in the same position: a condition reads either
+#: one by name, and either one is absent when the assembler could not supply
+#: it. Reserving only the derived groups would leave the state coordinates
+#: forgeable in exactly the same way — the three here are what every
+#: temperature-, current- and charge-dependent group is computed from, so a
+#: caller parameter of one of those names would decide a whole family of
+#: conditions at once.
+ASSEMBLED_QUANTITIES = frozenset(
+    {
+        STATE_OF_CHARGE,
+        DISCHARGE_CURRENT,
+        CELL_TEMPERATURE,
+        C_RATE,
+        CONTINUOUS_C_RATE_UTILIZATION,
+        PULSE_C_RATE_UTILIZATION,
+        PULSE_DURATION_UTILIZATION,
+        FINAL_STATE_OF_CHARGE,
+        SOC_WINDOW_MARGIN,
+        DISCHARGE_TEMPERATURE_POSITION,
+        INTERNAL_RESISTANCE_DRIFT_RATIO,
+        SELF_HEATING_RISE,
+        SELF_HEATING_RISE_RATIO,
+        POLARIZATION_SETTLING_RATIO,
+        POLARIZATION_UNMODELLED_FRACTION,
+        TERMINAL_VOLTAGE_RATIO,
+        SOC_STEP_RESOLUTION_RATIO,
+        CAPACITY_TEMPERATURE_DRIFT_RATIO,
+        CUTOFF_CONSISTENCY_MARGIN,
+        PEUKERT_EXTRAPOLATION_RATIO,
+        PEUKERT_CAPACITY_RATIO,
+        PEUKERT_TEMPERATURE_DRIFT_RATIO,
+    }
+)
+
+
 def derived_cell_quantities(
     base: Mapping[str, Any],
     *,
