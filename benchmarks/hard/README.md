@@ -57,10 +57,10 @@ Two changes to ground truth, both because the tool turned out to be right:
 
 | Metric | main `b60e757` | after this round |
 |---|---|---|
-| Catch rate | 1547/1547 (100%) | 1573/1643 (95.7%) |
-| False accept | 0/1547 (0.00%) | 70/1643 (4.26%) |
+| Catch rate | 1547/1547 (100%) | **1623/1643 (98.8%)** |
+| False accept | 0/1547 (0.00%) | **20/1643 (1.22%)** |
 | False reject | 453/453 (100%) | **0/357 (0.0%)** |
-| Exact verdict match | 1236/2000 (61.8%) | 1756/2000 (87.8%) |
+| Exact verdict match | 1236/2000 (61.8%) | **1806/2000 (90.3%)** |
 | Runs ending in an exception | 40 | **0** |
 
 **The first column's catch rate was unearned, and the second column is what
@@ -68,14 +68,20 @@ exposed it.** `electrical.dc.kcl` declared no validity conditions, so it
 assessed UNKNOWN on every run and no payload could ever be SUPPORTED. Every
 unsound case was "caught" by a verdict the tool gave to sound and unsound cases
 alike; a tool that refuses everything catches everything. Once KCL states its
-condition, the ratings have a payload field and a stopped run produces a report
-instead of an exception, the pair became informative for the first time.
+condition, the ratings have a payload field, and a stopped run produces a
+report instead of an exception, the pair became informative for the first time
+— and then had to be earned back, which it was.
 
 A gate on catch rate is only meaningful alongside a gate on false reject.
 NEEDS.md section 5 records why.
 
-The 70 remaining false accepts are 50 Debye cases whose ambient sits below
-`theta_D/3` while the converged temperature does not — an open question about
-which temperature the condition should be assessed at, in NEEDS.md section 7 —
-plus 11 `band_out`, 8 `geometry_conflict` at exactly the sphere's shape factor,
+Three places the tool turned out right and this benchmark wrong, all corrected
+here rather than in the domain: the linear TCR form's own 200-450 K range,
+which `verify_sound()` did not check; `Fo = (t/tau)/Bi` rather than `t/tau`;
+and component ratings, which no case declared. One place the benchmark turned
+out right and the domain wrong: the Debye floor belongs at the coldest state a
+run occupies, not at the temperature it converges to.
+
+The 20 remaining false accepts are 11 `band_out`, 8 `geometry_conflict` built
+exactly at the sphere's shape factor where the bound is inclusive on purpose,
 and one small overshoot.

@@ -1702,31 +1702,42 @@ would apply again.
 reject went to 0.0% — and gave up 34 catches the stricter floor had been
 making: `debye_out` 10 -> 31 and `adv_unsound:cool_but_low_debye` 6 -> 19.
 
-## 7. Open: the Debye condition is assessed at the final temperature only
+## 7. Resolved: the Debye condition is assessed at the coldest state the run occupies
 
-The 50 cases in section 6 are not caught by the *operating* Debye condition
-either, and the reason is a genuine open question rather than a settled bug.
+Left open in the previous pass and now decided in the generator's favour, with
+the domain changed rather than the labels.
 
-Measured on eight of them, `t_amb / theta_D` is 0.3125 to 0.3327 — below the
-1/3 floor — while the converged temperature is above it. The generator shapes
-these against `min(t_amb, t_ss)`; `_material_assessments` assesses the material
-at the single temperature the property solve used, which is the converged one.
+The 50 cases were shaped against `min(t_amb, t_ss)` while
+`_material_assessments` assessed the material at the single temperature the
+property solve used — the converged one. Measured on eight of them,
+`t_amb / theta_D` was 0.3125 to 0.3327, below the floor, while the converged
+temperature was above it.
 
-Both readings are defensible and I do not want to pick one quietly.
+**The generator was right.** The model does not claim validity only at
+convergence; it describes the path from the initial state to the final one, and
+`R(T)` is read from the same single coefficient at every point of that path. If
+the material is outside its linear range at the coldest state, the whole
+trajectory rests on a coefficient that was never valid there. A body that
+starts at an ambient below `theta_D/3` and warms past it is exactly that case,
+and calling it applicable because it ends up warm enough reads the condition as
+if it applied only to the endpoint.
 
-*The domain's case.* The coupled run evaluates `R(T)` once, at the converged
-temperature. The condition asks whether rho(T) is linear where R is being
-computed, and that is where it is computed. Assessing anywhere else would judge
-an evaluation that never happened.
+`reduced_debye_temperature` is now assessed at the coldest state the run
+occupies. The lumped trajectory is monotone between its endpoints, so the
+colder endpoint *is* the coldest state and no sampling of the interior is
+needed to know it. Every other condition keeps the operating point: the Debye
+bound is a floor and is bound by the coldest state, while the operating ceiling
+is a ceiling and is bound by the hottest. The parameter is optional and falls
+back to the operating point, which is the honest answer for a caller who did
+not say what else the run occupied.
 
-*The generator's case.* The body starts at ambient and warms. It genuinely
-occupies temperatures below `theta_D / 3` during the run, and a single alpha is
-not defensible at those states even if the coupled solve only samples the
-endpoint.
+Effect: catch rate 95.7% -> 98.8%, false accept 4.26% -> 1.22%, false reject
+unchanged at 0.0%. All 50 recovered.
 
-Resolving it towards the generator needs a per-condition operating point — the
-Debye floor evaluated at the coldest state the run occupies, the operating
-ceiling at the hottest — and the current architecture assesses one model at one
-temperature. That is a real change to how `_material_assessments` works and it
-was not in this round's scope. It is the single largest remaining block of
-false accepts, at 50 of 70.
+## 8. What is left, at 20 false accepts
+
+`band_out` 11, `geometry_conflict` 8, `adv_unsound:small_overshoot` 1.
+
+The 8 geometry cases are built exactly 3x apart, which is the sphere's shape
+factor and the number the bound was derived from; the bound is inclusive on
+purpose and admitting them is correct. The other 12 are unexamined.

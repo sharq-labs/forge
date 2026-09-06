@@ -1169,9 +1169,21 @@ def _material_assessments(
     """
     unrated: list[ValidityAssessment] = []
     rated: list[ValidityAssessment] = []
-    for _stage, prop_problem, _thermal in cp.stage_problems(system):
+    for stage, prop_problem, _thermal in cp.stage_problems(system):
         result = run.final.result_for(prop_problem.problem_id)
         temperature = result.provenance.inputs[mat.TEMPERATURE]
+        # The coldest state this body occupies. The lumped trajectory is
+        # monotone between its endpoints, so the two endpoints bound it
+        # exactly and the colder of them is the coldest state — no sampling
+        # of the interior is needed to know it. The Debye floor is assessed
+        # there rather than at the converged temperature, because the single
+        # coefficient is read at every point of the path and a floor is bound
+        # by the coldest point of it. Every other condition on the model keeps
+        # the operating point.
+        coldest = min(
+            (stage.body.initial_temperature, temperature),
+            key=lambda value: value.magnitude_in(mat.TEMPERATURE_UNIT),
+        )
         unrated.append(
             mat.assess_resistance_validity(prop_problem, temperature)
         )
@@ -1180,7 +1192,9 @@ def _material_assessments(
             for model in prop_problem.models
         ):
             rated.append(
-                mat.assess_rated_resistance_validity(prop_problem, temperature)
+                mat.assess_rated_resistance_validity(
+                    prop_problem, temperature, coldest
+                )
             )
 
     assessments = {_LINEAR_TCR.model_id: combine_assessments(unrated)}

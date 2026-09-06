@@ -601,7 +601,18 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                 name=REDUCED_DEBYE_TEMPERATURE,
                 minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
                 description=(
-                    "T / theta_D >= 1/3. Above roughly this fraction of the "
+                    "T_coldest / theta_D >= 1/3, evaluated at the coldest "
+                    "state the run occupies rather than at the temperature it "
+                    "converges to. This model does not claim validity only at "
+                    "convergence: it describes the path from the initial state "
+                    "to the final one, and R(T) is read from the same single "
+                    "coefficient at every point of it. If the material is "
+                    "outside its linear range at the coldest state, the whole "
+                    "trajectory rests on a coefficient that was never valid "
+                    "there, and a body that starts at an ambient below "
+                    "theta_D/3 and warms past it is exactly that case. A "
+                    "floor is bound by the coldest state, not the last one. "
+                    "Above roughly this fraction of the "
                     "Debye temperature a metal's resistivity is linear in T; "
                     "well below it Bloch-Grueneisen gives rho ~ T^5 and no "
                     "single coefficient fits. Ashcroft & Mermin, Solid State "
@@ -655,7 +666,15 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "all -- how far one alpha then carries is what "
                     "linearization_band is for. Below about theta_D/5 the "
                     "Bloch-Grueneisen form is unambiguously in its T^5 "
-                    "regime. alpha is the slope of a "
+                    "regime. The margin this leaves is thin and deliberately "
+                    "not widened: beryllium clears theta_D/5 by 2%, so a "
+                    "conductor with a Debye temperature above about 1466 K "
+                    "and a coefficient published at 293.15 K is refused by "
+                    "this condition. That is the intended behaviour rather "
+                    "than an oversight -- such a coefficient is anchored deep "
+                    "in the T^5 regime -- and if a real datasheet for one "
+                    "turns up, this bound is wrong again and the same "
+                    "argument settles it. alpha is the slope of a "
                     "straight line through T_ref, and theta_D is declared to "
                     "mark where rho(T) stops being straight; a reference "
                     "below the material's own linearity floor fits a line at "
@@ -1397,6 +1416,7 @@ def derived_material_quantities(
     base: Mapping[str, Any],
     *,
     temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
 ) -> dict[str, Quantity]:
     """Every rated group derivable from ``base`` and the supplied temperature.
 
@@ -1420,8 +1440,16 @@ def derived_material_quantities(
             temperature=temperature,
             maximum_temperature=base.get(MAXIMUM_OPERATING_TEMPERATURE),
         ),
+        # The one group evaluated somewhere other than the operating point.
+        # It is a *floor*, so the binding state is the coldest one the run
+        # occupies rather than the one it ends at; see the condition for why.
+        # Falls back to the operating point when no colder state was supplied,
+        # which is the honest answer for a caller that did not say.
         REDUCED_DEBYE_TEMPERATURE: reduced_debye_temperature(
-            temperature=temperature,
+            temperature=(
+                temperature if coldest_temperature is None
+                else coldest_temperature
+            ),
             debye_temperature=base.get(DEBYE_TEMPERATURE),
         ),
         LINEAR_RESISTANCE_RATIO: linear_resistance_ratio(
@@ -1452,7 +1480,9 @@ def derived_material_quantities(
 
 
 def rated_resistance_validity_context(
-    problem: ScientificProblem, temperature: Quantity | None = None
+    problem: ScientificProblem,
+    temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
 ) -> dict[str, Any]:
     """The full context :data:`RATED_LINEAR_TCR_MODEL` is assessed against.
 
@@ -1471,7 +1501,9 @@ def rated_resistance_validity_context(
         assembled={
             **state,
             **derived_material_quantities(
-                {**declared, **state}, temperature=temperature
+                {**declared, **state},
+                temperature=temperature,
+                coldest_temperature=coldest_temperature,
             ),
         },
         reserved=ASSEMBLED_QUANTITIES,
@@ -1479,7 +1511,9 @@ def rated_resistance_validity_context(
 
 
 def assess_rated_resistance_validity(
-    problem: ScientificProblem, temperature: Quantity | None = None
+    problem: ScientificProblem,
+    temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
 ) -> ValidityAssessment:
     """Is the *rated* claim applicable here? **Validity, not validation.**
 
@@ -1492,7 +1526,9 @@ def assess_rated_resistance_validity(
     mistaken for the other.
     """
     return RATED_LINEAR_TCR_MODEL.assess_validity(
-        rated_resistance_validity_context(problem, temperature)
+        rated_resistance_validity_context(
+            problem, temperature, coldest_temperature
+        )
     )
 
 
