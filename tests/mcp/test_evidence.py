@@ -299,7 +299,12 @@ def test_the_verdict_rules_are_total_and_deterministic():
             return EvidenceVerdict.INSUFFICIENT_EVIDENCE
         if ValidationOutcome.NOT_RUN in outcome_set:
             return EvidenceVerdict.INSUFFICIENT_EVIDENCE
-        if not status_set or not outcome_set:
+        if not status_set:
+            return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        # SUPPORTED needs a level, and only a PASS can carry one. An empty
+        # outcome set attains nothing, so it falls out of this branch rather
+        # than needing its own.
+        if ValidationOutcome.PASS not in outcome_set:
             return EvidenceVerdict.INSUFFICIENT_EVIDENCE
         return EvidenceVerdict.SUPPORTED
 
@@ -311,8 +316,18 @@ def test_the_verdict_rules_are_total_and_deterministic():
                     records = tuple(
                         validity(s, model_id=f"m{i}") for i, s in enumerate(s_combo)
                     )
+                    # A PASS carries a level; nothing else can. That is the
+                    # rule under test, so the fixture has to express it.
                     checks = tuple(
-                        ValidationCheck(name=f"c{i}", outcome=o)
+                        ValidationCheck(
+                            name=f"c{i}",
+                            outcome=o,
+                            establishes=(
+                                ValidationLevel.DIMENSIONALLY_VALID
+                                if o is ValidationOutcome.PASS
+                                else None
+                            ),
+                        )
                         for i, o in enumerate(o_combo)
                     )
                     got = derive_verdict(validity=records, validation=checks)
@@ -642,19 +657,60 @@ def test_required_levels_turn_an_unattained_claim_into_a_gap():
     assert demanding.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
 
 
-def test_a_passing_check_that_establishes_nothing_still_reports_supported():
-    """The rule as specified, pinned so the limit is deliberate not accidental.
+def test_a_clean_package_that_attains_no_level_is_insufficient_evidence():
+    """Absence of an objection is not evidence, one level up from NOT_RUN.
 
-    A check with `establishes=None` attains no level, so this package is
-    SUPPORTED with an empty attained_levels — which the lumped thermal solver
-    produces in real runs, deliberately. The qualifier is emitted beside the
-    verdict so a reader of the JSON sees it without opening the check list.
+    Everything here is clean: validity is IN_DOMAIN, nothing failed, nothing
+    was skipped. The single check ran and passed — and established nothing, so
+    the package has produced no evidence for anything. It has only failed to
+    object, which is exactly what NOT_RUN exists to stop being read as a pass.
     """
     bare = ValidationCheck(name="ran", outcome=ValidationOutcome.PASS)
     pkg = package(checks=(bare,))
-    assert pkg.verdict is EvidenceVerdict.SUPPORTED
+
+    # the package really is clean by every other measure
+    assert pkg.validity[0].assessment.status is ValidityStatus.IN_DOMAIN
+    assert pkg.failed_checks == ()
+    assert pkg.not_run_checks == ()
+    assert pkg.violated_conditions == () and pkg.unknown_conditions == ()
+
     assert pkg.attained_levels == frozenset()
+    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert not pkg.is_supported
     assert pkg.to_dict()["verdict_qualifiers"]["attained_levels"] == []
+
+
+def test_one_attained_level_is_what_separates_supported_from_the_gap():
+    """The same package, differing only in whether a level was established."""
+    without = package(
+        checks=(ValidationCheck(name="ran", outcome=ValidationOutcome.PASS),)
+    )
+    with_level = package(
+        checks=(
+            ValidationCheck(
+                name="ran",
+                outcome=ValidationOutcome.PASS,
+                establishes=ValidationLevel.DIMENSIONALLY_VALID,
+            ),
+        )
+    )
+    assert without.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert with_level.verdict is EvidenceVerdict.SUPPORTED
+
+
+def test_a_level_established_by_a_check_that_did_not_pass_does_not_count():
+    """`attained` is the core's definition: passing checks only."""
+    warned = package(
+        checks=(
+            ValidationCheck(
+                name="ran",
+                outcome=ValidationOutcome.WARNING,
+                establishes=ValidationLevel.DIMENSIONALLY_VALID,
+            ),
+        )
+    )
+    assert warned.attained_levels == frozenset()
+    assert warned.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
 
 
 def test_the_assemblers_notes_never_reach_the_cores_validation_report():
@@ -917,14 +973,24 @@ def package_from_run(declaration, run_id):
     )
 
 
-def test_a_real_run_of_an_applicable_body_is_supported():
+def test_a_real_run_of_an_applicable_body_is_insufficient_evidence():
+    """In domain, converged, nothing failed — and nothing established.
+
+    This package used to be SUPPORTED. It is the case the evidential guard was
+    written for: the lumped thermal solver deliberately claims no level for its
+    residual check, so a run that is clean by every other measure has attained
+    nothing, and the verdict now says so instead of rounding it up.
+    """
     run, thermal, pkg = package_from_run(APPLICABLE, "evidence-applicable")
 
     # the run itself converged — a separate fact, asserted separately
     assert run.outcome is cp.CouplingOutcome.CRITERION_MET
-    assert pkg.verdict is EvidenceVerdict.SUPPORTED
     assert pkg.violated_conditions == () and pkg.unknown_conditions == ()
     assert pkg.not_run_checks == ()
+    assert pkg.failed_checks == ()
+    # nothing argues against it; nothing argues for it either
+    assert pkg.attained_levels == frozenset()
+    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
     # and it is a real result, not an empty one
     assert pkg.values["final_temperature"].magnitude_in(K) == pytest.approx(
         338.577018, abs=1e-6
@@ -948,7 +1014,7 @@ def test_a_real_run_of_a_thick_low_conductivity_body_is_not_supported():
     assert run.outcome is cp.CouplingOutcome.CRITERION_MET
     assert pkg.failed_checks == ()
     assert pkg.values == baseline.values
-    assert baseline.verdict is EvidenceVerdict.SUPPORTED
+    assert baseline.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
 
 
 def test_a_real_run_with_an_undeclared_conductivity_is_insufficient_evidence():
@@ -964,7 +1030,7 @@ def test_a_real_run_with_an_undeclared_conductivity_is_insufficient_evidence():
 
 def test_the_three_real_packages_round_trip_and_keep_their_verdicts():
     for declaration, expected in (
-        (APPLICABLE, EvidenceVerdict.SUPPORTED),
+        (APPLICABLE, EvidenceVerdict.INSUFFICIENT_EVIDENCE),
         (BIOT_VIOLATING, EvidenceVerdict.NOT_SUPPORTED),
         (MISSING_INPUT, EvidenceVerdict.INSUFFICIENT_EVIDENCE),
     ):

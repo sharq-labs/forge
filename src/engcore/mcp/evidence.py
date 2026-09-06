@@ -194,9 +194,10 @@ def derive_verdict(
     ``INSUFFICIENT_EVIDENCE``
         any model validity is ``UNKNOWN``; or any check's outcome is
         ``NOT_RUN``; or a model that took part in the run was never assessed
-        (``unassessed_models``); or a level the caller declared it needs
-        (``required_levels``) was not attained; or there are no checks at all;
-        or there are no validity records at all.
+        (``unassessed_models``); or **no check both passed and established an
+        evidentiary level**; or a level the caller declared it needs
+        (``required_levels``) was not attained; or there are no validity
+        records at all.
 
     ``SUPPORTED``
         everything else.
@@ -229,16 +230,35 @@ def derive_verdict(
     Folding it into the verdict would either overstate it (as
     ``NOT_SUPPORTED``) or invent a fourth value.
 
-    **A known limit, stated rather than hidden.** ``SUPPORTED`` does not
-    require that any evidentiary *level* was attained. A solver emitting a
-    single passing check with ``establishes=None`` — which the lumped thermal
-    solver deliberately does, on the grounds that its residual check earns no
-    level — yields a ``SUPPORTED`` package whose ``attained_levels`` is empty.
-    That is the rule as specified, and it is defensible: nothing in such a
-    package argues *against* the result. It is also weaker than a reader might
-    assume, so :attr:`EvidencePackage.attained_levels` is exposed beside the
-    verdict, and a caller who needs more can say so through ``required_levels``
-    rather than re-reading the rule.
+    **SUPPORTED requires at least one attained level, and this mirrors
+    NOT_RUN.** The platform already refuses to read a check that did not run as
+    a check that passed: ``NOT_RUN`` is a distinct outcome precisely because
+    *absence of a result is not a result*. The same thing is true one level up.
+    A passing check that establishes nothing has produced no evidence for
+    anything — it has only failed to object — and a package assembled entirely
+    from such checks says nothing at all about the result. Reporting that as
+    ``SUPPORTED`` would reintroduce, at the level of the package, exactly the
+    substitution ``NOT_RUN`` exists to prevent: absence of an objection read as
+    the presence of support.
+
+    So the guard is evidential rather than numeric. It is not "are there any
+    checks" but "did any check both pass and establish a level", which reuses
+    the core's own definition — :attr:`ValidationReport.attained_levels` — of
+    what counts. An empty check list and a check list that attains nothing are
+    the same answer to the same question, and get the same verdict.
+
+    **This is a real narrowing, and it is meant to be.** Two solvers in this
+    repository produce a fully successful report whose ``attained_levels`` is
+    empty — the lumped thermal solver, which declines a level for its residual
+    check on the grounds that self-consistency is not verification, and the
+    resistance property solver, whose only check is an admissibility bound.
+    Packages built on either are now ``INSUFFICIENT_EVIDENCE``. That is the
+    honest reading: those solvers are right that they have earned nothing, and
+    the verdict should say so rather than round it up. What each would need to
+    earn a level is recorded in ``NEEDS.md`` as a visible gap.
+
+    ``required_levels`` is unchanged and remains the way a caller demands a
+    *particular* level rather than merely some level.
 
     **Fails closed on anything it does not recognise.** The three rules are
     total over today's enum members, but totality here is achieved by a final
@@ -280,16 +300,22 @@ def derive_verdict(
         return EvidenceVerdict.INSUFFICIENT_EVIDENCE
     if unassessed_models:
         return EvidenceVerdict.INSUFFICIENT_EVIDENCE
-    if not validation or not validity:
+    if not validity:
         return EvidenceVerdict.INSUFFICIENT_EVIDENCE
-    if required_levels:
-        attained = {
-            check.establishes
-            for check in validation
-            if check.passed and check.establishes is not None
-        }
-        if not set(required_levels) <= attained:
-            return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+
+    # The evidential guard, and the core's own definition of what counts:
+    # exactly `ValidationReport.attained_levels`. It subsumes "there are no
+    # checks at all" -- an empty check list attains nothing, and so does a
+    # full one that establishes nothing.
+    attained = {
+        check.establishes
+        for check in validation
+        if check.passed and check.establishes is not None
+    }
+    if not attained:
+        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    if required_levels and not set(required_levels) <= attained:
+        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
 
     # Everything below is SUPPORTED, so everything reaching here must be a
     # member this function was written to handle. A future enum addition is a

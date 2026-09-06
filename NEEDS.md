@@ -221,38 +221,54 @@ counts dropped in favour of the commands that produce them.
 
 **`ScientificResult.validity` — see §1.1**, whose status is updated above.
 
-### 1.8b SUPPORTED does not require any evidentiary level — proposed strengthening
+### 1.8b SUPPORTED now requires at least one attained level — DONE, and the gap it exposes
 
-**Not a core change; a change to the brief's verdict rule, so not made.**
+**Status: done in the consolidation round.** `derive_verdict` returns
+`INSUFFICIENT_EVIDENCE` unless some check both passed and established a level.
+The guard is evidential rather than numeric — it replaced "there are no checks
+at all" with "no check both passed and established a level", reusing
+`ValidationReport.attained_levels` as the definition of what counts. Precedence
+is unchanged: `NOT_SUPPORTED` still wins.
 
-`SUPPORTED` is specified as "everything else: all validity IN_DOMAIN, no
-failures, no NOT_RUN gap". It says nothing about what the passing checks
-*established*. A solver emitting one passing check with `establishes=None`
-therefore yields a `SUPPORTED` package whose `attained_levels` is empty — and
-that is not hypothetical: the lumped thermal solver deliberately claims no
-level for its residual check ("being the one solver to award itself the highest
-level in the taxonomy, from the weakest evidence, is exactly the unearned claim
-the result contract exists to refuse"), so the IN_DOMAIN real-run package in
-`tests/mcp/test_evidence.py` is SUPPORTED with `attained_levels == frozenset()`.
+The argument is the one the platform already makes one level down. `NOT_RUN` is
+a distinct outcome because a check that did not run is not a check that passed;
+absence of a result is not a result. A passing check that establishes nothing
+is the same shape of thing one level up — it has failed to object, which is not
+the same as having produced evidence — and reading a package of such checks as
+`SUPPORTED` reintroduces exactly the substitution `NOT_RUN` exists to prevent.
 
-Defensible as specified — nothing in that package argues *against* the result,
-which is what SUPPORTED claims — and weaker than a reader may assume. Three
-things were done instead of changing the rule:
+**What flipped.** Two solvers in this repository produce a fully successful
+report whose `attained_levels` is empty, so every package built on either is
+now `INSUFFICIENT_EVIDENCE`:
 
-* `EvidencePackage.attained_levels` is exposed beside the verdict.
-* `to_dict` emits a `verdict_qualifiers` block carrying `attained_levels`,
-  `warning_checks` and `unassessed_models`, so a JSON reader who never opens
-  the check list still sees what a SUPPORTED verdict rests on.
-* `required_levels` lets a study declare the bar it needs; a level demanded and
-  not attained is `INSUFFICIENT_EVIDENCE`.
+* `LumpedThermalSolver` (`src/engcore/domains/thermal_models/lumped.py:1219`)
+  — the known case, and the one the IN_DOMAIN electrothermal real-run tests in
+  `tests/mcp/test_evidence.py` are built on. Those tests now assert
+  `INSUFFICIENT_EVIDENCE`.
+* `ResistancePropertySolver`
+  (`src/engcore/domains/electrical/material.py:1358`) — **not previously
+  named anywhere**, and a second casualty found only when the change was made.
 
-**The proposal, if the rule is ever revisited:** make the guard evidential
-rather than numeric — replace "there are no checks at all" with "no check both
-passed and established a level". That reuses the core's own definition of what
-counts and makes `SUPPORTED` mean "at least one level was actually attained".
-The cost is that every current lumped-thermal package becomes
-`INSUFFICIENT_EVIDENCE`, which is arguably the honest answer and is certainly a
-decision for whoever owns the verdict semantics, not for this implementation.
+**The gap, as a finding.** Twenty-one passing checks across eight solvers
+establish nothing. That is now visible in the verdict rather than absorbed by
+it, which is the point. What each would need to earn a level:
+
+| Solver | Passing checks with `establishes=None` | Report attains a level? | What it would need |
+|---|---|---|---|
+| `LumpedThermalSolver` — `lumped.py:1219` | `lumped_balance_residual` | **No** | A `metric_dimensions` check on the pattern `battery/solver.py:492` already uses, comparing the three emitted metrics against the model record's `ModelOutputSpec` unit exemplars → `DIMENSIONALLY_VALID`. The record is a reference outside the arithmetic, so the level is earned rather than asserted. A march of the same ODE by an independent scheme would earn `NUMERICALLY_CONVERGED`; `ANALYTICALLY_VERIFIED` was deliberately removed from this check once and should not come back to it. |
+| `ResistancePropertySolver` — `material.py:1358` | `resistance_strictly_positive` | **No** | The same `metric_dimensions` move, one metric wide: `RESISTANCE_METRIC` against the `ModelOutputSpec`'s declared unit → `DIMENSIONALLY_VALID`. Its own docstring is right that an admissibility bound verifies nothing against anything; a dimensional check would be the first thing it verifies against something. |
+| `BatteryCellSolver` — `battery/solver.py:525`, `:555` | `coulomb_balance_residual`, `rint_terminal_residual` | Yes (`:500`) | Both check a closed form against the relation it was derived from. An independent integration of `dz/dt` sharing no code with the closed form would earn `NUMERICALLY_CONVERGED`; evaluating the same circuit through `electrical/dc`'s MNA path — a genuinely separate implementation — would earn `CROSS_SOLVER_VALIDATED`. |
+| `ElectricalDCSolver` / `NgspiceDCSolver` — `dc/validation.py:211`, `:257`, `:297`, `:338` | `kirchhoff_current_law`, `resistor_metric_consistency`, `voltage_source_relation`, `power_balance` | Yes (`:141`, `:160`) | These are the repository's strongest argument for a **new** `ValidationLevel`: there is no member for "independently reconstructed physical consistency", and the code says so at `dc/validation.py:358-365`. Within today's taxonomy, a native-vs-ngspice agreement check would be a defensible `CROSS_SOLVER_VALIDATED` — the two paths share `assemble` but not the solve. |
+| `NgspiceDCSolver` — `ngspice.py:845`, `:887` | `realization_precondition_non_singular`, `provider_element_metric_consistency` | Yes (via shared) | The first is a precondition and should stay level-free by design. The second already compares an external provider's numbers against Crafty's declared relations; widened to compare the provider's full solution against Crafty's own solve of the same circuit, it would be `CROSS_SOLVER_VALIDATED`. |
+| `CSTRSolver` — `cstr/validation.py:175`, `:200`, `:256`, and `:584` in the gate | `integration_reported_success`, `trajectory_finite`, `state_physically_admissible`, `cross_method_agreement` | Yes (`:284`), but its `NOT_RUN` checks already make single-solve packages `INSUFFICIENT_EVIDENCE` | The first three are a run's honest opinion of itself and no level fits. `cross_method_agreement` is deliberately level-free because BDF and Radau share the RHS, the Jacobian and SciPy's step control; giving the second method an independent RHS and Jacobian would make it `CROSS_SOLVER_VALIDATED`, and that is real work. |
+| `Conduction1DSolver` — `thermal/conduction1d/validation.py:133`, `:152`, `:163`, `:179` | `linear_system_residual`, `field_finite`, `boundary_conditions_held`, `amplitude_decay` | Yes (`:200`), and `NOT_RUN` already dominates | **Frozen path — observation only.** The refinement gate is already the intended home for level-earning here and does it. |
+| `SchemeSolver` / `ReducedSchemeSolver` — `conduction1d_schemes.py:612`, `:623`, `:643` | `field_finite`, `amplitude_decay`, `boundary_conditions_held` | Yes (`:659`), and `NOT_RUN` already dominates | `amplitude_decay` does the most real work — it is a property of the equation, not the scheme. Compared against the analytic Fourier-mode decay already implemented for the sibling gate, it would be `ANALYTICALLY_VERIFIED`. Separately: `boundary_conditions_held` at `:643` is the only check in the repository emitted with **no `detail` string**, so a reader of the serialized report sees an empty explanation. |
+
+**Not proposed here:** adding a `ValidationLevel` member for "internally
+consistent". Four of the checks above want one, and inventing a level so that
+more packages clear the bar is the exact move this change exists to refuse. If
+the level is real it should be argued on its own merits, not on how many
+verdicts it would improve.
 
 ### 1.9 `ValidityAssessment` is the one core record that validates nothing
 
