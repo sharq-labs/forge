@@ -1909,3 +1909,78 @@ right to admit every one. The fix is to draw the factor at `3 * (1 +/- margin)`
 like every other threshold shaper. Not done here: it would move the headline
 metrics for a reason that has nothing to do with this round, and the effect is
 reported separately instead.
+
+## D. TASK D — the cross-limit condition type
+
+### D.1 The battery's inverted-interval refusals do NOT fit, and were not forced
+
+`CellLimits._require_ordered_pair` refuses a declared interval whose upper edge
+is not strictly above its lower — the SoC window, the discharge temperature
+range. TASK D asked whether it fits `CrossLimitCondition`. It does not, and the
+reason is the difference between a refusal and a report.
+
+`_require_ordered_pair` **raises at construction**. A `CrossLimitCondition`
+**reports at assessment**. Migrating would mean a `CellLimits` with
+`usable_soc_minimum > usable_soc_maximum` could now be built — and
+`soc_window_margin`, `discharge_temperature_position` and every other derived
+position divide by `upper - lower`. The report would arrive *after* the
+division it exists to prevent, either as a negative span that silently flips
+the sense of a condition or as a division by zero. That is what the refusal's
+own docstring says it is for.
+
+The two mechanisms answer different questions. A refusal says *this record
+cannot exist*; a condition says *this declaration is outside where we have
+validated the model*. The battery's interval pairs are the first, the electrical
+model's three limit comparisons are the second, and collapsing them would make
+the platform's strongest guarantee — that a derived quantity is never formed
+from a nonsensical declaration — into a verdict a caller could read past.
+
+Two mechanisms, kept.
+
+### D.2 Three tests changed, and the brief said to say so
+
+**Every verdict is identical.** All nine tests asserting `satisfied`,
+`violated` and `unknown` for the three migrated conditions pass untouched,
+including the ones asserting ordered tuples, and the benchmark is unmoved on
+all four metrics. What changed is the *derived-context surface*:
+
+* `derived_material_quantities` no longer emits
+  `reference_temperature_utilization`, `reference_reduced_debye_temperature` or
+  `ceiling_reduced_debye_temperature`. The core forms those ratios now, from
+  the two declared names each condition points at.
+* `ASSEMBLED_QUANTITIES` therefore goes from eight names to five.
+
+Three tests assert that surface rather than a verdict:
+
+1. `test_f03_colliding_with_every_assembled_name_changes_no_verdict[True]` —
+   `len(collisions) == 7` becomes `4`.
+2. the same test, `[False]`.
+3. `test_the_limit_versus_limit_conditions_need_no_temperature_at_all` —
+   checked that the three ratios appeared in `derived` with no temperature
+   supplied. Rewritten to assert the same property through the assessment: the
+   three are *decided* without a temperature while every state-facing condition
+   beside them is UNKNOWN. That is the stronger form — the old assertion could
+   have passed with a derived key nothing read.
+
+**The alternative was worse.** Keeping the three derivations so those
+assertions still passed would leave two computations of one number — the
+domain's ratio and the core's — free to drift, which is the failure mode this
+repository treats as the worst available. If the reviewer disagrees, reverting
+is one commit: restore the three functions, put the names back in
+`ASSEMBLED_QUANTITIES`, and change the conditions back to `RangeCondition`s
+over the assembled names. The type itself is independent of that choice.
+
+### D.3 What the type does not do
+
+It compares a **ratio** of two declarations to a bound. It cannot express a
+*difference* (`T_max - T_ref >= 50 K`) or a relation among three declarations.
+Neither was needed by any of the three migrated conditions, both of which would
+have been speculative generality, and a difference-shaped one is a second type
+rather than a flag on this one — its bound carries a dimension, so nearly every
+line of the ratio version's validation is wrong for it.
+
+`ValidityDomain.assess` now reads through `evaluate_in(context)` rather than
+`evaluate(context.get(name))`. The three single-key types implement
+`evaluate_in` as exactly the lookup that line used to do inline, so nothing
+about them changed; `evaluate(value)` is untouched and every existing caller
+and test of it still works.

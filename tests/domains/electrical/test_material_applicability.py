@@ -710,7 +710,15 @@ def test_f03_colliding_with_every_assembled_name_changes_no_verdict(declared):
         name: Quantity(0.5, "dimensionless")
         for name in mat.ASSEMBLED_QUANTITIES - declared_variables
     }
-    assert len(collisions) == 7
+    # Four, not the seven it was before the limit-versus-limit conditions
+    # became `CrossLimitCondition`s. That migration removed three assembled
+    # ratios, and with them three reserved names -- the conditions read the
+    # two declared limits directly now, so there is no derived value left for
+    # a caller parameter to impersonate. **The count is the only thing that
+    # moved**: this test's substantive assertion, that a colliding parameter
+    # changes no verdict, is unchanged and still holds for every name that is
+    # still assembled.
+    assert len(collisions) == 4
     tampered = _with_parameters(problem, collisions)
 
     assert mat.assess_rated_resistance_validity(tampered, temperature) == (
@@ -822,6 +830,16 @@ def test_the_limit_versus_limit_conditions_need_no_temperature_at_all():
     They are answerable from the declaration alone, so a caller can be told
     the declaration contradicts itself before a solver is chosen, let alone
     run.
+
+    **Asserted through the verdict rather than through the derived context**,
+    which is a change of instrument and not of claim. It used to check that
+    the three ratios appeared in ``derived_material_quantities`` with no
+    temperature supplied; they are `CrossLimitCondition`s now and no ratio is
+    assembled for them at all, so the same property is read where it actually
+    matters -- the three are *decided* without a temperature while every
+    state-facing condition beside them is UNKNOWN. That is the stronger form
+    of the original assertion: the old one could have passed with a derived
+    key nothing read.
     """
     conductor = mat.TemperatureDependentConductor(
         component_id="R1",
@@ -830,18 +848,24 @@ def test_the_limit_versus_limit_conditions_need_no_temperature_at_all():
         reference_temperature=Quantity(293.15, K),
         limits=COPPER_LIMITS,
     )
+    assessment = mat.assess_rated_resistance_validity(
+        mat.build_resistance_problem(conductor), None
+    )
+    decided = set(assessment.satisfied) | set(assessment.violated)
+
+    assert mat.REFERENCE_TEMPERATURE_UTILIZATION in decided
+    assert mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE in decided
+    assert mat.CEILING_REDUCED_DEBYE_TEMPERATURE in decided
+    # The state-facing conditions are UNKNOWN for exactly the same reason they
+    # would be with a limit missing: their input was not supplied.
+    assert mat.OPERATING_TEMPERATURE_UTILIZATION in assessment.unknown
+    assert mat.LINEARIZATION_EXCURSION_RATIO in assessment.unknown
+    # And nothing is derived for them any more, which is the migration itself.
     derived = mat.derived_material_quantities(
         mat.build_resistance_problem(conductor).validity_context(),
         temperature=None,
     )
-
-    assert mat.REFERENCE_TEMPERATURE_UTILIZATION in derived
-    assert mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE in derived
-    assert mat.CEILING_REDUCED_DEBYE_TEMPERATURE in derived
-    # The state-facing groups are absent for exactly the same reason they
-    # would be with a limit missing: their input was not supplied.
-    assert mat.OPERATING_TEMPERATURE_UTILIZATION not in derived
-    assert mat.LINEARIZATION_EXCURSION_RATIO not in derived
+    assert derived == {}
 
 
 def test_no_limit_versus_limit_condition_introduces_a_new_threshold():

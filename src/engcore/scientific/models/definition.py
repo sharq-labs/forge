@@ -28,6 +28,7 @@ MODEL_OUTPUT_SCHEMA = schema_string("model_output_spec")
 BINDING_ISSUE_SCHEMA = schema_string("model_binding_issue")
 BINDING_REPORT_SCHEMA = schema_string("model_binding_report")
 RANGE_CONDITION_SCHEMA = schema_string("validity_range_condition")
+CROSS_LIMIT_CONDITION_SCHEMA = schema_string("validity_cross_limit_condition")
 CATEGORY_CONDITION_SCHEMA = schema_string("validity_category_condition")
 FLAG_CONDITION_SCHEMA = schema_string("validity_flag_condition")
 VALIDITY_DOMAIN_SCHEMA = schema_string("validity_domain")
@@ -65,6 +66,49 @@ class ValidityStatus(str, Enum):
 # Structured predicates, deliberately generic: the core knows about ranges,
 # category membership and flags. It does not know about temperature, Reynolds
 # number or phase — domains express those *through* these primitives.
+
+
+def _within(
+    value: Quantity,
+    *,
+    minimum: Quantity | None,
+    maximum: Quantity | None,
+    minimum_inclusive: bool,
+    maximum_inclusive: bool,
+    name: str,
+) -> ValidityStatus:
+    """Is ``value`` inside the declared bounds? Exact; no tolerance applied.
+
+    Shared by :class:`RangeCondition` and :class:`CrossLimitCondition` so the
+    two cannot drift on endpoint handling. A condition type that rounded
+    differently from its sibling would make the same bound mean two things
+    depending on which record happened to express it.
+    """
+    reference = minimum if minimum is not None else maximum
+    if not value.is_compatible_with(reference):
+        raise ModelValidityError(
+            f"validity condition {name!r}: value {value} is not "
+            f"dimensionally compatible with {reference}"
+        )
+    if minimum is not None:
+        magnitude = value.to(minimum.units).magnitude
+        outside = (
+            magnitude < minimum.magnitude
+            if minimum_inclusive
+            else magnitude <= minimum.magnitude
+        )
+        if outside:
+            return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    if maximum is not None:
+        magnitude = value.to(maximum.units).magnitude
+        outside = (
+            magnitude > maximum.magnitude
+            if maximum_inclusive
+            else magnitude >= maximum.magnitude
+        )
+        if outside:
+            return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    return ValidityStatus.IN_DOMAIN
 
 
 @dataclass(frozen=True)
@@ -117,31 +161,18 @@ class RangeCondition:
     def evaluate(self, value: Any) -> ValidityStatus:
         if not isinstance(value, Quantity):
             return ValidityStatus.UNKNOWN
-        reference = self.minimum if self.minimum is not None else self.maximum
-        if not value.is_compatible_with(reference):
-            raise ModelValidityError(
-                f"validity condition {self.name!r}: value {value} is not "
-                f"dimensionally compatible with {reference}"
-            )
-        if self.minimum is not None:
-            magnitude = value.to(self.minimum.units).magnitude
-            outside = (
-                magnitude < self.minimum.magnitude
-                if self.minimum_inclusive
-                else magnitude <= self.minimum.magnitude
-            )
-            if outside:
-                return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        if self.maximum is not None:
-            magnitude = value.to(self.maximum.units).magnitude
-            outside = (
-                magnitude > self.maximum.magnitude
-                if self.maximum_inclusive
-                else magnitude >= self.maximum.magnitude
-            )
-            if outside:
-                return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        return ValidityStatus.IN_DOMAIN
+        return _within(
+            value,
+            minimum=self.minimum,
+            maximum=self.maximum,
+            minimum_inclusive=self.minimum_inclusive,
+            maximum_inclusive=self.maximum_inclusive,
+            name=self.name,
+        )
+
+    def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
+        """This condition reads exactly one key: its own name."""
+        return self.evaluate(context.get(self.name))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -199,6 +230,10 @@ class CategoryCondition:
             else ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
         )
 
+    def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
+        """This condition reads exactly one key: its own name."""
+        return self.evaluate(context.get(self.name))
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": CATEGORY_CONDITION_SCHEMA,
@@ -240,6 +275,10 @@ class FlagCondition:
             else ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
         )
 
+    def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
+        """This condition reads exactly one key: its own name."""
+        return self.evaluate(context.get(self.name))
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": FLAG_CONDITION_SCHEMA,
@@ -258,12 +297,175 @@ class FlagCondition:
         )
 
 
-ValidityCondition = RangeCondition | CategoryCondition | FlagCondition
+@dataclass(frozen=True)
+class CrossLimitCondition:
+    """``context[numerator] / context[denominator]``, against a bound.
+
+    **What this is for.** :class:`RangeCondition` compares a quantity to a
+    bound written into the model record. Nothing here expressed *this declared
+    limit must stand in a relation to that declared limit* — a material whose
+    reference temperature sits above its own maximum operating temperature has
+    contradicted itself, and saying so needs two of the caller's values at
+    once, not one of theirs and one of the record's.
+
+    Three properties follow from the shape and each is deliberate.
+
+    **It is decidable before any solve.** Both operands are *declarations*, so
+    a contradiction between limits is a fact about the declaration and can be
+    reported without an operating point, a solver or a run. That is what makes
+    it a different question from every state-facing condition beside it, and
+    why it is worth having its own type rather than being one more ratio a
+    domain assembles.
+
+    **It is UNKNOWN when either operand is absent**, and never IN_DOMAIN.
+    The same rule as everywhere else: absence of a declaration is not evidence
+    of consistency, and a caller cannot satisfy a cross-limit condition by
+    omitting one of the two limits it compares.
+
+    **It introduces no bound of its own.** The ratio is dimensionless by
+    construction — the two operands must carry the same dimension, and a
+    condition comparing a temperature with a resistance is refused at
+    construction rather than at assessment — so the bound is a pure number
+    that a domain supplies, usually the same constant its state-facing sibling
+    already uses. Every migrated caller reuses one.
+
+    **What it is not.** It is not a way to refuse a declaration. A record that
+    cannot exist at all — an interval whose upper edge is below its lower,
+    where the derived position would divide by a negative span — belongs in
+    the record's own constructor, raising, because a *report* about it would
+    arrive after the arithmetic it was supposed to prevent. Those two
+    mechanisms stay separate; see ``NEEDS.md`` for the one that was examined
+    and deliberately not migrated.
+    """
+
+    name: str
+    numerator: str
+    denominator: str
+    minimum: Quantity | None = None
+    maximum: Quantity | None = None
+    minimum_inclusive: bool = True
+    maximum_inclusive: bool = True
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        for label in ("name", "numerator", "denominator"):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise ModelValidityError(
+                    f"cross-limit condition requires a non-empty {label}"
+                )
+            object.__setattr__(self, label, value)
+        if self.numerator == self.denominator:
+            raise ModelValidityError(
+                f"cross-limit condition {self.name!r} compares "
+                f"{self.numerator!r} with itself, which is always 1 and "
+                f"decides nothing"
+            )
+        if self.minimum is None and self.maximum is None:
+            raise ModelValidityError(
+                f"cross-limit condition {self.name!r} needs a minimum or a "
+                f"maximum"
+            )
+        for bound in (self.minimum, self.maximum):
+            if bound is None:
+                continue
+            if not isinstance(bound, Quantity):
+                raise ModelValidityError(
+                    f"cross-limit condition {self.name!r} bounds must be "
+                    f"Quantities"
+                )
+            # The operands share a dimension, so their ratio is dimensionless
+            # and so is every admissible bound on it. A bound carrying kelvin
+            # would silently make this condition a range condition wearing the
+            # wrong type, so it is refused here rather than at assessment.
+            if not bound.is_compatible_with("dimensionless"):
+                raise ModelValidityError(
+                    f"cross-limit condition {self.name!r} bounds a ratio of "
+                    f"two same-dimension declarations, so they must be "
+                    f"dimensionless; got {bound}"
+                )
+        if self.minimum is not None and self.maximum is not None:
+            if self.maximum.magnitude < self.minimum.magnitude:
+                raise ModelValidityError(
+                    f"cross-limit condition {self.name!r}: maximum below "
+                    f"minimum"
+                )
+
+    def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
+        """The ratio of the two named declarations, against the bound.
+
+        UNKNOWN unless **both** are present as Quantities. A zero denominator
+        is refused rather than reported: the ratio would be an infinity that
+        the bound would then compare, and an infinity nobody computed is worse
+        than a loud failure.
+        """
+        numerator = context.get(self.numerator)
+        denominator = context.get(self.denominator)
+        if not isinstance(numerator, Quantity):
+            return ValidityStatus.UNKNOWN
+        if not isinstance(denominator, Quantity):
+            return ValidityStatus.UNKNOWN
+        if not numerator.is_compatible_with(denominator):
+            raise ModelValidityError(
+                f"validity condition {self.name!r}: {self.numerator} "
+                f"({numerator}) and {self.denominator} ({denominator}) do not "
+                f"share a dimension, so their ratio is not a number this "
+                f"condition can bound"
+            )
+        divisor = denominator.to(numerator.units).magnitude
+        if divisor == 0.0:
+            raise ModelValidityError(
+                f"validity condition {self.name!r}: {self.denominator} is "
+                f"zero, and the ratio this condition bounds does not exist"
+            )
+        ratio = Quantity(numerator.magnitude / divisor, "dimensionless")
+        return _within(
+            ratio,
+            minimum=self.minimum,
+            maximum=self.maximum,
+            minimum_inclusive=self.minimum_inclusive,
+            maximum_inclusive=self.maximum_inclusive,
+            name=self.name,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": CROSS_LIMIT_CONDITION_SCHEMA,
+            "name": self.name,
+            "numerator": self.numerator,
+            "denominator": self.denominator,
+            "minimum": self.minimum.to_dict() if self.minimum else None,
+            "maximum": self.maximum.to_dict() if self.maximum else None,
+            "minimum_inclusive": self.minimum_inclusive,
+            "maximum_inclusive": self.maximum_inclusive,
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CrossLimitCondition":
+        require_schema(payload, CROSS_LIMIT_CONDITION_SCHEMA)
+        minimum, maximum = payload.get("minimum"), payload.get("maximum")
+        return cls(
+            name=payload["name"],
+            numerator=payload["numerator"],
+            denominator=payload["denominator"],
+            minimum=Quantity.from_dict(minimum) if minimum else None,
+            maximum=Quantity.from_dict(maximum) if maximum else None,
+            minimum_inclusive=bool(payload.get("minimum_inclusive", True)),
+            maximum_inclusive=bool(payload.get("maximum_inclusive", True)),
+            description=payload.get("description", ""),
+        )
+
+
+ValidityCondition = (
+    RangeCondition | CategoryCondition | FlagCondition | CrossLimitCondition
+)
 
 _CONDITION_DECODERS = {
     RANGE_CONDITION_SCHEMA: RangeCondition,
     CATEGORY_CONDITION_SCHEMA: CategoryCondition,
     FLAG_CONDITION_SCHEMA: FlagCondition,
+    CROSS_LIMIT_CONDITION_SCHEMA: CrossLimitCondition,
 }
 
 
@@ -334,7 +536,11 @@ class ValidityDomain:
         violated: list[str] = []
         unknown: list[str] = []
         for condition in self.conditions:
-            outcome = condition.evaluate(context.get(condition.name))
+            # ``evaluate_in`` rather than ``evaluate(context.get(name))``: a
+            # cross-limit condition reads two keys and neither is its own
+            # name. Every condition type implements it, and the single-key
+            # ones implement it as exactly the lookup this line used to do.
+            outcome = condition.evaluate_in(context)
             if outcome is ValidityStatus.IN_DOMAIN:
                 satisfied.append(condition.name)
             elif outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:

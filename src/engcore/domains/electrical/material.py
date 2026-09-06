@@ -77,6 +77,7 @@ from ...scientific.models.definition import (
     ModelOutputSpec,
     ModelType,
     ModelValidationStatus,
+    CrossLimitCondition,
     RangeCondition,
     ScientificModelDefinition,
     ValidityAssessment,
@@ -156,10 +157,7 @@ __all__ = [
     "operating_temperature_utilization",
     "rated_resistance_validity_context",
     "resistance_validity_context",
-    "ceiling_reduced_debye_temperature",
     "reduced_debye_temperature",
-    "reference_reduced_debye_temperature",
-    "reference_temperature_utilization",
     "resistance_model_registry",
     "resistance_realizations",
     "resistance_solver_capabilities",
@@ -632,8 +630,19 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
             # None of them introduces a threshold. Each restates a condition
             # already above at a declared limit rather than at the state, and
             # so reuses that condition's bound unchanged.
-            RangeCondition(
+            #
+            # They are `CrossLimitCondition`s, and were three hand-written
+            # `RangeCondition`s over three ratios this module assembled. The
+            # ratios are gone: the core forms them now, from the two declared
+            # names each condition points at. Nothing about the verdicts
+            # changed -- the same bounds, the same inclusivity, the same
+            # UNKNOWN when either limit is absent -- and three derivation
+            # functions and three reserved names went with them. See NEEDS.md
+            # for the one count that moved and why.
+            CrossLimitCondition(
                 name=REFERENCE_TEMPERATURE_UTILIZATION,
+                numerator=REFERENCE_TEMPERATURE,
+                denominator=MAXIMUM_OPERATING_TEMPERATURE,
                 maximum=OPERATING_TEMPERATURE_LIMIT,
                 description=(
                     "T_ref / maximum_operating_temperature <= 1. The same "
@@ -648,8 +657,10 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "maximum_operating_temperature."
                 ),
             ),
-            RangeCondition(
+            CrossLimitCondition(
                 name=REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+                numerator=REFERENCE_TEMPERATURE,
+                denominator=DEBYE_TEMPERATURE,
                 minimum=REFERENCE_LINEAR_FLOOR,
                 description=(
                     "T_ref / theta_D >= 1/5. A weaker floor than "
@@ -685,8 +696,10 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "declares debye_temperature."
                 ),
             ),
-            RangeCondition(
+            CrossLimitCondition(
                 name=CEILING_REDUCED_DEBYE_TEMPERATURE,
+                numerator=MAXIMUM_OPERATING_TEMPERATURE,
+                denominator=DEBYE_TEMPERATURE,
                 minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
                 description=(
                     "T_max / theta_D >= 1/3. The Debye condition asked at the "
@@ -1226,126 +1239,23 @@ def reduced_debye_temperature(
 # choice of operating point could rescue it.
 
 
-def reference_temperature_utilization(
-    *,
-    reference_temperature: Quantity | None,
-    maximum_temperature: Quantity | None,
-) -> Quantity | None:
-    """T_ref / T_max — was the reference measured on an intact conductor?
-
-    **Definition.** :func:`operating_temperature_utilization` evaluated at the
-    declared reference temperature instead of at the state, so it carries the
-    same bound, :data:`OPERATING_TEMPERATURE_LIMIT`.
-
-    **Why this is a contradiction and not a tolerance.**
-    ``maximum_operating_temperature`` is declared as the temperature "above
-    which the conductor itself is not intact", and ``reference_temperature`` is
-    declared as the temperature "at which the reference resistance holds". A
-    material that places the second above the first asserts that its reference
-    resistance was measured on a conductor that its own rating says was not
-    there to measure. The two declarations cannot both be true, and which of
-    them is wrong is the caller's to decide — this condition only reports that
-    one of them is.
-
-    Nothing about the operating point can repair it: ``R_ref`` and ``alpha``
-    are anchored at ``T_ref``, so every resistance this model computes, at
-    every temperature, is referred to a state the material is declared not to
-    survive. UNKNOWN unless the material declares
-    ``maximum_operating_temperature``.
-    """
-    reference = _temperature_in_kelvin(
-        reference_temperature, REFERENCE_TEMPERATURE
-    )
-    maximum = _temperature_in_kelvin(
-        maximum_temperature, MAXIMUM_OPERATING_TEMPERATURE
-    )
-    if reference is None or maximum is None:
-        return None
-    if maximum <= 0.0:
-        raise InvalidScientificProblem(
-            f"{MAXIMUM_OPERATING_TEMPERATURE} must be strictly positive, got "
-            f"{maximum_temperature}"
-        )
-    return Quantity(reference / maximum, DIMENSIONLESS)
-
-
-def reference_reduced_debye_temperature(
-    *,
-    reference_temperature: Quantity | None,
-    debye_temperature: Quantity | None,
-) -> Quantity | None:
-    """T_ref / theta_D — was the coefficient fitted in the linear regime?
-
-    **Definition.** :func:`reduced_debye_temperature` evaluated at the declared
-    reference instead of at the state, so it carries the same bound,
-    :data:`BLOCH_GRUENEISEN_LINEAR_FLOOR`.
-
-    **Why a reference below the floor undermines its own coefficient.** The
-    Debye temperature is declared precisely to mark where ``rho(T)`` stops
-    being linear (Ashcroft & Mermin, *Solid State Physics* (1976), Ch. 26,
-    Eq. 26.55). ``alpha`` is the slope of a straight line taken through
-    ``T_ref``. Declaring a reference below the material's own linearity floor
-    therefore fits a straight line at a temperature the same declaration says
-    the curve is not straight at — a claim that contradicts itself rather than
-    one that happens to be evaluated in the wrong place.
-
-    Distinct from :func:`reduced_debye_temperature`, which asks whether the
-    *run* stayed in the linear regime. A run can satisfy that while the
-    coefficient it uses was anchored outside it, and the two must be able to
-    disagree. UNKNOWN unless the material declares ``debye_temperature``.
-    """
-    reference = _temperature_in_kelvin(
-        reference_temperature, REFERENCE_TEMPERATURE
-    )
-    debye = _temperature_in_kelvin(debye_temperature, DEBYE_TEMPERATURE)
-    if reference is None or debye is None:
-        return None
-    if debye <= 0.0:
-        raise InvalidScientificProblem(
-            f"{DEBYE_TEMPERATURE} must be strictly positive, got "
-            f"{debye_temperature}"
-        )
-    return Quantity(reference / debye, DIMENSIONLESS)
-
-
-def ceiling_reduced_debye_temperature(
-    *,
-    maximum_temperature: Quantity | None,
-    debye_temperature: Quantity | None,
-) -> Quantity | None:
-    """T_max / theta_D — is there any temperature this material admits?
-
-    **Definition.** :func:`reduced_debye_temperature` evaluated at the declared
-    ceiling, the *most favourable* temperature the material permits, so it
-    carries the same bound, :data:`BLOCH_GRUENEISEN_LINEAR_FLOOR`.
-
-    **Why the ceiling is the right place to ask.** Two of this material's own
-    conditions bound the operating temperature from opposite sides:
-    ``reduced_debye_temperature`` requires ``T >= theta_D / 3`` and
-    ``operating_temperature_utilization`` requires ``T <= T_max``. Their
-    intersection is the set of temperatures the material declares itself usable
-    over. Since the Debye condition is monotone in ``T``, the ceiling is where
-    it comes closest to being satisfied — so if it fails there, it fails
-    everywhere, and the declared usable set is **empty**.
-
-    That is a stronger statement than any single-condition violation, and it is
-    worth making separately: an empty admissible set cannot be repaired by
-    moving the operating point, cooling the part or shortening the run. The
-    declaration itself has to change. UNKNOWN unless the material declares both
-    ``maximum_operating_temperature`` and ``debye_temperature``.
-    """
-    maximum = _temperature_in_kelvin(
-        maximum_temperature, MAXIMUM_OPERATING_TEMPERATURE
-    )
-    debye = _temperature_in_kelvin(debye_temperature, DEBYE_TEMPERATURE)
-    if maximum is None or debye is None:
-        return None
-    if debye <= 0.0:
-        raise InvalidScientificProblem(
-            f"{DEBYE_TEMPERATURE} must be strictly positive, got "
-            f"{debye_temperature}"
-        )
-    return Quantity(maximum / debye, DIMENSIONLESS)
+# The three limit-versus-limit derivations that used to live here are gone.
+#
+# `reference_temperature_utilization`, `reference_reduced_debye_temperature`
+# and `ceiling_reduced_debye_temperature` each read two declared limits,
+# divided one by the other, returned None when either was absent, and handed
+# the ratio to a RangeCondition. That is a shape rather than a physical
+# derivation -- unlike every function that remains in this module, none of
+# them combined a state with a declaration, and none of them meant anything
+# the two names did not already say. `CrossLimitCondition` in the core
+# expresses it directly, so the model record now names the two declarations
+# and the bound, and the ratio is formed where it is compared.
+#
+# What went with them: three reserved names. They are no longer assembled, so
+# they no longer need protecting from a caller parameter of the same name --
+# and a caller parameter called `reference_temperature_utilization` is now
+# simply a value nothing reads, which is the same guarantee by a shorter
+# route.
 
 
 def linear_resistance_ratio(
@@ -1405,9 +1315,11 @@ ASSEMBLED_QUANTITIES = frozenset(
         OPERATING_TEMPERATURE_UTILIZATION,
         REDUCED_DEBYE_TEMPERATURE,
         LINEAR_RESISTANCE_RATIO,
-        REFERENCE_TEMPERATURE_UTILIZATION,
-        REFERENCE_REDUCED_DEBYE_TEMPERATURE,
-        CEILING_REDUCED_DEBYE_TEMPERATURE,
+        # The three limit-versus-limit names are deliberately NOT here. They
+        # are no longer assembled: `CrossLimitCondition` reads the two
+        # declared limits directly, so there is no derived value for a caller
+        # parameter to impersonate. Reserving a name nothing computes and
+        # nothing reads would be dead weight pretending to be a guard.
     }
 )
 
@@ -1457,24 +1369,9 @@ def derived_material_quantities(
             reference_temperature=reference_temperature,
             temperature_coefficient=base.get(TEMPERATURE_COEFFICIENT),
         ),
-        # The three below take no ``temperature``: they compare declared
-        # limits with each other, so they are derivable from a declaration
-        # that has never been run and stay absent only when a limit they
-        # need was not declared.
-        REFERENCE_TEMPERATURE_UTILIZATION: reference_temperature_utilization(
-            reference_temperature=reference_temperature,
-            maximum_temperature=base.get(MAXIMUM_OPERATING_TEMPERATURE),
-        ),
-        REFERENCE_REDUCED_DEBYE_TEMPERATURE: (
-            reference_reduced_debye_temperature(
-                reference_temperature=reference_temperature,
-                debye_temperature=base.get(DEBYE_TEMPERATURE),
-            )
-        ),
-        CEILING_REDUCED_DEBYE_TEMPERATURE: ceiling_reduced_debye_temperature(
-            maximum_temperature=base.get(MAXIMUM_OPERATING_TEMPERATURE),
-            debye_temperature=base.get(DEBYE_TEMPERATURE),
-        ),
+        # The three limit-versus-limit comparisons used to be assembled here
+        # and are now `CrossLimitCondition`s, which read the declared limits
+        # straight out of the context. Nothing is derived for them.
     }
     return {name: value for name, value in derived.items() if value is not None}
 
