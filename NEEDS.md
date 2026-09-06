@@ -640,3 +640,158 @@ added:
   parallel-safety table records "duplicate module basenames: none" as a
   *finding*; it is really a *requirement*, and saying so where a new domain
   author will read it would help.
+
+---
+
+# NEEDS — problem-builder round (STEP 8)
+
+Owned paths this round: `src/engcore/mcp/**`, `tests/mcp/**`, and this file.
+Everything below was hit while building `engcore.mcp.problem`, the boundary
+that turns a JSON case description into posed problems. Nothing here has been
+done; each item is a proposal or a limitation, stated where it can be argued
+with. Items already recorded above are referenced rather than repeated.
+
+## 1. Changes wanted outside the owned paths — not made
+
+### 1.1 `ModelInputSpec` cannot say which condition an input unlocks
+
+**Where** `src/engcore/scientific/models/definition.py` — `ModelInputSpec`,
+`ValidityDomain`.
+
+**What was hit.** The brief for this round asked the capability description to
+report, for each optional field, *which validity conditions it feeds*, derived
+from the registries so it cannot drift. It is not derivable by reading them.
+`ModelInputSpec` carries `name`, `source_kind`, `unit_exemplar`, `value_kind`,
+`role`, `required` and a prose `description`. A `RangeCondition` carries a
+`name` and bounds. Nothing connects the two: the condition names a *derived*
+quantity (`biot_number`), the input names a *declaration*
+(`body_conductivity`), and the function that turns one into the other lives in
+the domain's `context.py` as ordinary Python.
+
+`lumped.py` states, at the head of its optional inputs, that declaring them on
+the record is "what makes 'which declaration unlocks which condition'
+recoverable from the model record alone". That is true of *whether* an input is
+optional. It is not true of the mapping: the record says `body_conductivity` is
+optional, and says nothing about `biot_number` going UNKNOWN without it.
+
+**Worked around, not papered over.** `describe_electrothermal_case` measures
+the mapping instead of reading it: it builds a fully-declared probe
+declaration, assesses the model's own `ValidityDomain` at a fixed operating
+point, then drops one field at a time and reports which conditions moved into
+`unknown`. The answer is exact and cannot drift, because it is the domain
+answering about itself. Three costs, all real:
+
+* **It needs an operating point.** Which condition reads which declaration is
+  a static fact about the model, and measuring it requires inventing numbers
+  (`_PROBE_TEMPERATURE`, `_PROBE_AMBIENT`, `_PROBE_HEAT`). They are documented
+  as a measuring instrument and never as defaults, but a static fact should not
+  need a temperature to discover.
+* **It costs an assessment per optional field**, plus one per pair — see §1.2.
+* **A condition that is UNKNOWN for an unrelated reason has to cancel out**,
+  which it does only because the comparison is against the same operating point
+  with and without the field. That is a correctness argument a reader has to
+  reconstruct rather than read.
+
+**Proposal.** An optional `unlocks: tuple[str, ...]` on `ModelInputSpec`,
+naming the conditions that become decidable when the input is supplied, plus a
+`ValidityDomain` check that every named condition exists. It is a declaration
+the domain author already knows and currently writes in prose — the
+descriptions on those eight lumped inputs each say which group they are for.
+The check is what stops it from becoming another comment that drifts.
+
+**Not done because** hard rule 2 forbids touching `src/engcore/scientific/`,
+and adding a field to the record every domain writes is exactly the kind of
+change that should be argued before it is made.
+
+### 1.2 Nothing can express that two declarations are alternatives
+
+**Where** `src/engcore/scientific/models/definition.py` — `ModelInputSpec`.
+
+**What was hit.** The lumped model accepts a characteristic length either
+directly (`characteristic_length`) or as `body_volume / surface_area`. Both are
+`required=False` and nothing relates them, so a caller reading the record sees
+two independent optional fields and no hint that supplying neither loses the
+Biot number while supplying either keeps it.
+
+The omission probe in §1.1 reports this *correctly and uselessly*: dropping
+either one alone changes nothing, so each measures as unlocking nothing — the
+same answer the probe gives for `convection_regime`, which genuinely is read by
+nothing. Two very different facts, one indistinguishable measurement.
+
+**Worked around.** A second pass drops each such field *together with* each
+other such field and reports the pair when the joint omission bites, so the
+description distinguishes "interchangeable with `body_volume`, and between them
+they unlock the Biot and Fourier numbers" from "inert". It is quadratic in the
+number of silent fields and it only finds **pairs**: a three-way alternative
+would show up as a group of fields all reporting nothing. This domain has no
+three-way group, so the limitation is currently theoretical — and it is a
+limitation of the workaround, not of the domain.
+
+**Proposal.** A `requires_one_of: tuple[tuple[str, ...], ...]` on
+`ValidityDomain`, or an `alternatives` group id on `ModelInputSpec`. Either
+makes the relationship a fact of the record instead of something a consumer
+rediscovers by search.
+
+### 1.3 A declared field with no model input is invisible to a registry-derived description
+
+**Where** `src/engcore/domains/thermal_models/context.py` —
+`LumpedApplicabilityDeclaration.convection_regime`; the model record in
+`lumped.py`.
+
+**What was hit.** The declaration record has nine fields. The lumped model
+declares eight of them as inputs. `convection_regime` is the ninth: it is
+validated against `CONVECTION_REGIME_VOCABULARY`, serialized with the record,
+carried into the report as caller-asserted context — and it is not a
+`ModelInputSpec`, because no condition reads it and the model would otherwise
+be claiming an input it does not use.
+
+That is the right call for the model record and it leaves a hole for a
+consumer. A boundary that derived its accepted field set from the registry
+alone would refuse `convection_regime` as an unknown field, and a caller who
+declared it — which the declaration record invites — would be told their
+payload was wrong.
+
+**Worked around.** `engcore.mcp.problem` derives the *facts* about each field
+from the registry but takes the field *list* from a binding table that also
+carries the categorical, marked as declared-but-not-modelled and described as
+unlocking nothing. `_audit_bindings` checks the other direction at import: any
+model input not bound and not listed as coupling-supplied is a loud failure, so
+the table cannot fall behind the models. It can still fall behind a
+*declaration record* that grows a tenth field, which is the residual gap.
+
+**This is not §1.2 of the applicability round.** That entry is about a
+categorical parameter being unable to cross `ProvenanceRecord`, which admits
+only Quantity inputs. This one is about the *model record* not naming the
+categorical at all, so a registry-derived description cannot see it. The two
+have the same root — categoricals are second-class — and different remedies.
+
+**Proposal.** Let `ModelInputSpec` carry a non-quantity input with
+`value_kind=ValueKind.CATEGORY`, `required=False` and no `unit_exemplar`, and
+let a model declare an input it does not read as long as it says so. The record
+then describes what a caller may state, rather than only what the mathematics
+consumes.
+
+## 2. Deliberately not built this round
+
+**No inverse of the builder.** There is no `problem_to_payload`. A round trip in
+that direction would have to invent a payload for a `ScientificProblem` this
+boundary did not build, and the honest answer for such a problem is that it has
+no payload — not a reconstructed one that happens to run.
+
+**No defaults for any optional declaration.** The one design pressure worth
+recording: an agent writing a payload from a natural description will omit
+fields it was not told about, and every omission costs it a condition. That is
+uncomfortable and it is correct. The alternative is a boundary that fills in a
+conductivity and reports IN_DOMAIN for a body nobody characterised.
+
+**`coupling.seed_temperature`, `tolerance` and `max_iterations` are accepted
+but are not physics.** They are execution properties, and `ThermalBody`'s own
+docstring argues that a body carrying one would have made changing an
+integrator into a change of physical identity. They live in a separate
+`coupling` block for that reason, feed no condition, and are reported by the
+description as unlocking nothing.
+
+**No second system pack.** The boundary is electro-thermal only. The binding
+table and the audit are written so that a second pack would add a second table
+and a second description function rather than a flag on this one, but nothing
+here has been generalised on the strength of one case.
