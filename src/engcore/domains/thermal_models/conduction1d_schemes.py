@@ -86,6 +86,7 @@ from ...scientific.solvers.capability import (
     SolverCapabilityId,
 )
 from ...scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -410,7 +411,7 @@ class _BandedBackend(_Backend):
 
 
 @dataclass
-class SchemeSolver:
+class SchemeSolver(DeclaredSupport):
     """A ``ScientificSolver`` that executes whichever scheme it is handed.
 
     The scheme is **not** a property of this solver. It arrives on the
@@ -477,13 +478,15 @@ class SchemeSolver:
         self._bound[key] = (slab, realization)
 
     # ---- lifecycle -------------------------------------------------------
-    def supports(self, problem: ScientificProblem) -> bool:
-        if not isinstance(problem, ScientificProblem):
-            return False
-        declared = {c.name for c in self.capabilities}
-        if not set(problem.required_capabilities).issubset(declared):
-            return False
-        return DIFFUSION_MODEL.model_id in {m.model_id for m in problem.models}
+    #: What this solver is for, and what it implements. The core compares.
+    #:
+    #: ``serves_capabilities`` is this domain's transient conduction capability
+    #: rather than nothing: the subset test alone answers True for a problem
+    #: that requires no capability at all, because the empty set is a subset of
+    #: everything, and this adapter used to inherit that hole from writing the
+    #: comparison by hand.
+    serves_capabilities = frozenset({THERMAL_CONDUCTION_1D.name})
+    served_models = (DIFFUSION_MODEL,)
 
     def prepare(self, problem: ScientificProblem) -> PreparedSolve:
         bound = self._bound.get(problem.problem_id)

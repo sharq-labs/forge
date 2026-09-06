@@ -130,6 +130,7 @@ from .solvers import (
     CoreCapabilities,
     PreparedSolve,
     RawSolverOutput,
+    DeclaredSupport,
     ScientificSolver,
     SolverCapability,
     SolverCapabilityId,
@@ -220,6 +221,7 @@ __all__ = [
     "unresolved_inputs",
     "externally_imposed",
     # solvers
+    "DeclaredSupport",
     "ScientificSolver",
     "SolverIdentity",
     "SolverSettings",

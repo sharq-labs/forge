@@ -2444,6 +2444,39 @@ demonstrate exactly that and deliberately award nothing. If a level for it is
 ever added, those four thresholds become the domain's on the same day, and this
 paragraph is the note that says so.
 
+### G4.1 The conduction1d solver still answers its own support question
+
+**Where** `src/engcore/domains/thermal/conduction1d/solver.py:187`.
+
+It makes the three comparisons by hand -- capability subset, this domain's
+capability requested, one of this domain's models named -- and it makes all
+three *correctly*. It is not the defect; it is the fifth copy of the code the
+defect was a bad rewrite of, and `SolverRegistry.register` now refuses it.
+
+**What is needed.** Three lines, matching the other seven adapters:
+
+```python
+class Conduction1DSolver(DeclaredSupport):
+    serves_capabilities = frozenset({THERMAL_CONDUCTION_1D.name})
+    served_models = CONDUCTION_MODELS
+    # ... and delete supports()
+```
+
+**Why it was not done.** `src/engcore/domains/thermal/conduction1d/` is frozen
+for this round and byte-pinned by `experiments/thermal_t1/t1_config.py`.
+
+**What it costs.** The three lines, a re-pinned digest, and a T1 re-run. No
+behaviour changes: the core makes the same three comparisons this adapter makes
+by hand, so every problem it accepts today it accepts after.
+
+**What breaks meanwhile.** `SolverRegistry.register(Conduction1DSolver())`
+raises `TypeError`. Nothing in `src` or in the test suite does that today --
+the conduction1d solver is used directly by `solve_slab` and by the refinement
+gate, never resolved through a registry -- so the guard costs nothing now and
+will cost exactly one migration the first time someone wants that solver
+resolvable. `tests/test_core_guards.py` names it and asserts it is the only
+adapter left in that position.
+
 ### G2.2 A produced metric with no declared model output is not checked
 
 **Where** `src/engcore/domains/kinetics/cstr/validation.py`,

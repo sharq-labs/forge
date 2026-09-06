@@ -108,6 +108,7 @@ from ...scientific.solvers.capability import (
     SolverCapabilityId,
 )
 from ...scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -1463,7 +1464,7 @@ class PreparedResistanceEvaluation:
     temperature_k: float
 
 
-class ResistancePropertySolver:
+class ResistancePropertySolver(DeclaredSupport):
     """Evaluates R(T) for one conductor. Satisfies ScientificSolver.
 
     It is a solver in the platform's sense — something that takes a prepared
@@ -1558,15 +1559,33 @@ class ResistancePropertySolver:
                     f"declares {parameter.value}"
                 )
 
-    def supports(self, problem: ScientificProblem) -> bool:
-        """Does this evaluator implement the science the problem asks for?
+    #: What this solver is for, and what it implements. The core compares.
+    #:
+    #: The model reference was already the right discriminator and is kept:
+    #: ``core:algebraic`` says a closed-form evaluation is wanted, which is
+    #: true of countless unrelated relations, and only the model says which
+    #: one. What was missing is the other half. ``supports()`` matched on the
+    #: model alone and never looked at ``required_capabilities``, so a problem
+    #: naming this model and requiring ``core:ode`` as well got True from an
+    #: evaluator that solves nothing.
+    serves_capabilities = frozenset({CoreCapabilities.ALGEBRAIC.name})
+    served_models = (LINEAR_TCR_MODEL,)
 
-        Matched on the **model reference the problem carries**, not on a
-        capability alone: ``core:algebraic`` says a closed-form evaluation is
-        needed, which is true of countless unrelated relations.
+    def additional_support_gap(self, problem) -> tuple[str, ...]:
+        """The model must be named at this **version**, not just by id.
+
+        ``served_models`` matches on ``model_id``, which is right for a domain
+        whose models are versioned together. This evaluator implements one
+        record, and a problem asking for a future revision of the same relation
+        is asking for arithmetic this code does not perform.
         """
-        wanted = (LINEAR_TCR_MODEL.model_id, LINEAR_TCR_MODEL.version)
-        return any(model.key == wanted for model in problem.models)
+        wanted = LINEAR_TCR_MODEL.key
+        if any(model.key == wanted for model in problem.models):
+            return ()
+        return (
+            f"the problem names no model at {wanted[0]}@{wanted[1]}, which is "
+            f"the exact record this evaluator implements",
+        )
 
     def prepare(
         self,

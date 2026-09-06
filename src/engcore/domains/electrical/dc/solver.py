@@ -42,6 +42,7 @@ from ....scientific.results.result import ScientificResult
 from ....scientific.results.uncertainty import Uncertainty
 from ....scientific.results.validation import ValidationReport
 from ....scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -72,7 +73,7 @@ SOURCE_CURRENT_METRIC = "source_current"
 
 
 @dataclass
-class ElectricalDCSolver:
+class ElectricalDCSolver(DeclaredSupport):
     """Linear resistive DC solver satisfying the ScientificSolver protocol."""
 
     settings: DCValidationSettings = field(default_factory=DCValidationSettings)
@@ -123,26 +124,19 @@ class ElectricalDCSolver:
         return self._circuits.get(str(problem_id))
 
     # ---- lifecycle -------------------------------------------------------
-    def supports(self, problem: ScientificProblem) -> bool:
-        """Capability question only — never attempts a solve.
-
-        Deliberately independent of whether a circuit happens to be bound:
-        support is a property of the problem and this solver, not of the
-        data currently loaded. A missing binding is an error at prepare
-        time, not a claim of incompatibility.
-        """
-        if not isinstance(problem, ScientificProblem):
-            return False
-        declared = {capability.name for capability in self.capabilities}
-        if not set(problem.required_capabilities).issubset(declared):
-            return False
-        # The problem must actually be a DC circuit analysis: it names at
-        # least one of this domain's models.
-        domain_models = {model.model_id for model in DC_MODELS}
-        referenced = {reference.model_id for reference in problem.models}
-        if not referenced & domain_models:
-            return False
-        return ELECTRICAL_DC_LINEAR.name in problem.required_capabilities
+    #: What this solver is for, and what it implements. The core compares.
+    #:
+    #: The three comparisons this used to make by hand -- capability subset,
+    #: this domain's capability requested, one of this domain's models named --
+    #: were the right three, and were also written out four more times in four
+    #: more adapters. Two of the *other* adapters made only the third of them.
+    #:
+    #: Support stays deliberately independent of whether a circuit happens to
+    #: be bound: it is a property of the problem and this solver, not of the
+    #: data currently loaded. A missing binding is an error at prepare time,
+    #: not a claim of incompatibility.
+    serves_capabilities = frozenset({ELECTRICAL_DC_LINEAR.name})
+    served_models = DC_MODELS
 
     def prepare(self, problem: ScientificProblem) -> PreparedSolve:
         circuit = self.bound_circuit(problem.problem_id)

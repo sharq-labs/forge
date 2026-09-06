@@ -43,6 +43,7 @@ from src.engcore.scientific import (
     ObjectiveDefinition,
     ObjectiveDirection,
     OptimizerAdapter,
+    DeclaredSupport,
     PreparedSolve,
     ProvenanceRecord,
     Quantity,
@@ -851,8 +852,15 @@ def test_model_binding_report_round_trip():
 # K. Solver registry
 # =====================================================================
 
-class _DemoSolver:
-    """Minimal solver satisfying the protocol. No science implemented."""
+class _DemoSolver(DeclaredSupport):
+    """Minimal solver satisfying the protocol. No science implemented.
+
+    It declares and does not compare: ``supports`` comes from
+    :class:`DeclaredSupport`, and ``SolverRegistry.register`` refuses a solver
+    that overrides it. This one declares no ``serves_capabilities`` and no
+    ``served_models``, which makes it maximally permissive -- exactly what a
+    registry-resolution test wants and exactly what no real adapter should be.
+    """
 
     def __init__(self, solver_id: str, capabilities, version: str = "1.0.0"):
         self._identity = SolverIdentity(solver_id, version, backend="synthetic")
@@ -865,10 +873,6 @@ class _DemoSolver:
     @property
     def capabilities(self):
         return self._capabilities
-
-    def supports(self, problem) -> bool:
-        declared = {c.name for c in self._capabilities}
-        return set(problem.required_capabilities).issubset(declared)
 
     def prepare(self, problem) -> PreparedSolve:
         return PreparedSolve(problem=problem, solver=self._identity)

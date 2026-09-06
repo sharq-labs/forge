@@ -44,6 +44,7 @@ from ...scientific.results.validation import (
 )
 from ...scientific.solvers.capability import SolverCapability
 from ...scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -195,7 +196,7 @@ def _binding_cutoff(
     return max(candidates) if candidates else None
 
 
-class BatteryCellSolver:
+class BatteryCellSolver(DeclaredSupport):
     """Advances one cell over one interval. Satisfies the solver protocol.
 
     The cell and its load are bound to this instance by problem id, exactly as
@@ -308,8 +309,16 @@ class BatteryCellSolver:
                 f"but the bound load declares {load.initial_state_of_charge}"
             )
 
-    def supports(self, problem: ScientificProblem) -> bool:
-        return mdl.CELL_DISCHARGE_STEP.name in problem.required_capabilities
+    #: What this solver is for, and what it implements. The core compares.
+    #:
+    #: This used to be ``supports()`` returning
+    #: ``CELL_DISCHARGE_STEP.name in problem.required_capabilities`` -- one
+    #: capability, checked, and every other capability in the request ignored.
+    #: A problem asking for the cell discharge step **and** ``core:ode`` got
+    #: True from a solver that evaluates a closed form and cannot integrate
+    #: anything.
+    serves_capabilities = frozenset({mdl.CELL_DISCHARGE_STEP.name})
+    served_models = mdl.BATTERY_MODELS
 
     # -- lifecycle --------------------------------------------------------
     def prepare(

@@ -643,3 +643,200 @@ def test_widening_the_dc_residual_bound_buys_no_level():
         not in widened.validation.attained_levels
     )
     assert any(e.startswith("thresholds-override-of:") for e in check.evidence)
+
+
+# =====================================================================
+# GUARD 4 — supports() answers about the whole capability set
+# =====================================================================
+#
+# Two adapters checked one capability and returned True; a third matched on a
+# model reference and never looked at capabilities at all. The other five had
+# five separate implementations of the same three comparisons, which is the
+# same defect one step from happening.
+#
+# The comparison is `DeclaredSupport.support_gap` now, and an adapter declares
+# rather than compares. `SolverRegistry.register` refuses a solver that
+# overrides `supports`, so a hand-rolled answer cannot reach `resolve`.
+
+
+def _every_solver():
+    """Every solver class in ``src``, instantiated where it takes no arguments.
+
+    Walking the package rather than listing: the sixth adapter is the one this
+    guard is for, and a list would not contain it.
+    """
+    import inspect
+
+    from src.engcore.scientific.solvers.protocol import ScientificSolver
+
+    seen: dict[str, type] = {}
+    for module_info in pkgutil.walk_packages(engcore.__path__, "src.engcore."):
+        try:
+            module = importlib.import_module(module_info.name)
+        except Exception:  # pragma: no cover
+            continue
+        for _, value in inspect.getmembers(module, inspect.isclass):
+            if not value.__module__.startswith("src.engcore."):
+                continue
+            if not isinstance(value, type):  # pragma: no cover
+                continue
+            # The Protocol itself and the base class that implements the
+            # support decision are the contract, not adapters of it.
+            if value is ScientificSolver or getattr(
+                value, "_is_protocol", False
+            ):
+                continue
+            if value.__name__ == "DeclaredSupport":
+                continue
+            required = ("identity", "capabilities", "supports", "prepare", "solve")
+            if all(hasattr(value, name) for name in required):
+                seen.setdefault(f"{value.__module__}.{value.__qualname__}", value)
+    return seen
+
+
+SOLVER_CLASSES = _every_solver()
+
+#: The one adapter that cannot inherit the core contract: a frozen file.
+_FROZEN_HANDROLLED_SUPPORT = (
+    "src.engcore.domains.thermal.conduction1d.solver.Conduction1DSolver"
+)
+
+
+def test_the_solver_discovery_found_the_adapters():
+    assert len(SOLVER_CLASSES) >= 8, sorted(SOLVER_CLASSES)
+    assert _FROZEN_HANDROLLED_SUPPORT in SOLVER_CLASSES
+
+
+def test_no_adapter_answers_the_support_question_for_itself():
+    """Declare, do not compare — for every solver in the repository.
+
+    A solver that implements ``supports`` is answering a question about
+    capability coverage that only the core sees the whole of, and the two
+    adapters that did answer it got it wrong in the same way.
+    """
+    from src.engcore.scientific.solvers.protocol import DeclaredSupport
+
+    handrolled = sorted(
+        name
+        for name, cls in SOLVER_CLASSES.items()
+        if not issubclass(cls, DeclaredSupport)
+        or cls.supports is not DeclaredSupport.supports
+    )
+    assert handrolled == [_FROZEN_HANDROLLED_SUPPORT], handrolled
+
+
+def test_the_registry_refuses_a_solver_that_decides_its_own_support():
+    """The lock, not just the convention.
+
+    ``supports`` is what ``resolve`` acts on, so the registry is where a wrong
+    "yes" becomes a solve, and it is where the refusal belongs.
+    """
+    from src.engcore.scientific.solvers.protocol import SolverIdentity
+    from src.engcore.scientific.solvers.registry import SolverRegistry
+
+    class _HandRolled:
+        identity = SolverIdentity("hand.rolled", "1.0.0")
+        capabilities = frozenset()
+
+        def supports(self, problem):
+            return True
+
+    with pytest.raises(TypeError, match="does not use the core support"):
+        SolverRegistry([_HandRolled()])
+
+    from src.engcore.scientific.solvers.protocol import DeclaredSupport
+
+    class _Overrider(DeclaredSupport):
+        identity = SolverIdentity("overrider", "1.0.0")
+        capabilities = frozenset()
+
+        def supports(self, problem):
+            return True
+
+    with pytest.raises(TypeError, match="overrides supports"):
+        SolverRegistry([_Overrider()])
+
+
+def _instantiate(cls):
+    try:
+        return cls()
+    except Exception:  # pragma: no cover - a solver needing arguments
+        return None
+
+
+@pytest.mark.parametrize(
+    "name", sorted(n for n in SOLVER_CLASSES if n != _FROZEN_HANDROLLED_SUPPORT)
+)
+def test_a_problem_requesting_a_superset_is_refused(name):
+    """The defect itself, for every adapter, with the expectation from the record.
+
+    The problem is built from what the solver *declares*: its own
+    ``serves_capabilities``, one of its own ``served_models``, and then one
+    capability it does not declare. That capability is chosen to be one no
+    solver in the repository could confuse for its own, and the expectation is
+    derived rather than written down, so an adapter added tomorrow is covered
+    without anybody extending a list.
+    """
+    from src.engcore.scientific.ir.problem import ModelReference, ScientificProblem
+
+    solver = _instantiate(SOLVER_CLASSES[name])
+    if solver is None:
+        pytest.skip(f"{name} needs constructor arguments")
+    if not solver.capabilities:
+        pytest.skip(f"{name} declares no capabilities, so nothing is a superset")
+
+    models = tuple(
+        ModelReference(model.model_id, model.version)
+        for model in getattr(solver, "served_models", ())
+    )
+    required = frozenset(getattr(solver, "serves_capabilities", frozenset()))
+    if not required:
+        required = frozenset({next(iter(solver.capabilities)).name})
+
+    exact = ScientificProblem(
+        problem_id=f"{name}-exact",
+        models=models,
+        required_capabilities=required,
+    )
+    # A capability no solver here declares, so "superset" means superset.
+    alien = "guard4:a_capability_no_solver_declares"
+    assert alien not in {c.name for c in solver.capabilities}
+    superset = ScientificProblem(
+        problem_id=f"{name}-superset",
+        models=models,
+        required_capabilities=required | {alien},
+    )
+
+    # The exact request is served (or refused for a reason that is not the
+    # capability set — an adapter may need a model this construction cannot
+    # supply, and that is a different question from this one).
+    gap_exact = solver.support_gap(exact)
+    assert not any("does not declare" in reason for reason in gap_exact), gap_exact
+
+    # The superset is refused, and says which capability it could not cover.
+    assert not solver.supports(superset)
+    assert any(
+        alien in reason and "does not declare" in reason
+        for reason in solver.support_gap(superset)
+    ), solver.support_gap(superset)
+
+
+def test_a_problem_that_asks_for_nothing_is_nobody_s():
+    """The empty set is a subset of everything, which is why subset is not enough.
+
+    Every adapter that declares what it is *for* refuses a problem that
+    requires no capability at all. An adapter that only asked "is the request a
+    subset of what I declare" answered yes to this, which is how a solver
+    claims a problem nobody asked it to serve.
+    """
+    from src.engcore.scientific.ir.problem import ScientificProblem
+
+    empty = ScientificProblem(problem_id="asks-for-nothing")
+    checked = 0
+    for name, cls in sorted(SOLVER_CLASSES.items()):
+        solver = _instantiate(cls)
+        if solver is None or not getattr(solver, "serves_capabilities", None):
+            continue
+        checked += 1
+        assert not solver.supports(empty), name
+    assert checked >= 6

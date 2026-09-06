@@ -93,6 +93,7 @@ from ...scientific.results.validation import (
 )
 from ...scientific.solvers.capability import SolverCapability
 from ...scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -439,7 +440,7 @@ class PreparedNgspiceSolve:
     invocation: NgspiceInvocation
 
 
-class NgspiceDCSolver:
+class NgspiceDCSolver(DeclaredSupport):
     """Satisfies ``ScientificSolver``, executed by a process Crafty did not write.
 
     Every stage of the protocol keeps its meaning: ``prepare`` compiles provider
@@ -495,35 +496,50 @@ class NgspiceDCSolver:
             raise InvalidScientificProblem("bind_circuit expects a DCCircuit")
         self._circuits[str(problem_id)] = circuit
 
-    def supports(self, problem: ScientificProblem) -> bool:
-        """Capability question only — never attempts a solve, never probes.
+    #: What this solver is for. The core compares.
+    #:
+    #: ``served_models`` is deliberately empty and the real discriminator is in
+    #: :meth:`additional_support_gap`. This adapter does not implement a fixed
+    #: list of models; it implements *any* model that has a declared MNA
+    #: realization in this domain, and asking "does the problem name one of
+    #: mine" would be the wrong question in both directions -- it would accept
+    #: a named model with no realization and reject a realized one this list
+    #: had not been updated for.
+    serves_capabilities = frozenset({ELECTRICAL_DC_LINEAR.name})
+    served_models = ()
 
-        Capability subset alone is **not** the right question, and an earlier
-        form that asked only that was wrong in two ways: it returned ``True``
-        for a problem declaring no capabilities at all (the empty set is a
-        subset of anything), and ``True`` for a circuit containing a current
-        source, which :func:`build_netlist` then refuses. A solver that answers
-        "yes" and then raises has broken the protocol's own contract — *"True
-        when this solver can legitimately handle the problem ... never by
-        attempting a solve"*.
+    def additional_support_gap(self, problem) -> tuple[str, ...]:
+        """Every model named must have a declared realization in this domain.
 
-        So support is additionally conditioned on every model the problem names
-        having a **declared realization** in this domain. That is not a proxy
-        for which elements this adapter can emit; it is the same fact stated
-        scientifically. A model with no MNA realization record is a model whose
-        computation this adapter cannot claim to perform.
+        Capability coverage alone is not the right question, and an earlier
+        form that asked only that was wrong in two ways: it answered yes for a
+        problem declaring no capabilities at all (the empty set is a subset of
+        anything -- now the core's ``serves_capabilities`` check), and yes for
+        a circuit containing a current source, which :func:`build_netlist` then
+        refuses. A solver that answers yes and then raises has broken the
+        protocol's own contract: *"True when this solver can legitimately
+        handle the problem ... never by attempting a solve"*.
+
+        Conditioning on realizations is not a proxy for which elements this
+        adapter can emit; it is the same fact stated scientifically. A model
+        with no MNA realization record is a model whose computation this
+        adapter cannot claim to perform.
         """
-        if not isinstance(problem, ScientificProblem):
-            return False
-        declared = {capability.name for capability in self.capabilities}
-        if not set(problem.required_capabilities).issubset(declared):
-            return False
-        if ELECTRICAL_DC_LINEAR.name not in problem.required_capabilities:
-            return False
         if not problem.models:
-            return False
-        realized = {r.model.model_id for r in realizations_for_models(problem.models)}
-        return all(model.model_id in realized for model in problem.models)
+            return ("the problem names no model, so nothing is realized here",)
+        realized = {
+            r.model.model_id for r in realizations_for_models(problem.models)
+        }
+        unrealized = sorted(
+            {model.model_id for model in problem.models} - realized
+        )
+        if unrealized:
+            return (
+                f"{unrealized} have no declared MNA realization in this "
+                f"domain, so this adapter cannot claim to perform their "
+                f"computation",
+            )
+        return ()
 
     # -- lifecycle --------------------------------------------------------
     def prepare(self, problem: ScientificProblem) -> PreparedSolve:
