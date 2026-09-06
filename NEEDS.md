@@ -2304,6 +2304,139 @@ That is a battery-domain change and TASK C forbids it.
 ---
 
 ---|
+| `systems/electrothermal/coupled.py` (3 sites) | carries `bindings` — the good shape |
+| `systems/electrothermal/resistor_body.py` (3 sites) | carries `bindings` |
+| `systems/aerospace/multirotor/study.py` | carries `bindings` **and** `models`/`solvers` |
+| `systems/aerospace/multirotor/reference.py` | `models` only, no `bindings`, no `solvers` |
+| `domains/thermal_models/conduction1d_bulk.py` | `models` + `solvers`, **no bindings** |
+| `mcp/battery.py` | fixed this round; was the live case |
+
+`conduction1d_bulk.py` is the one to look at: it names solvers with no binding
+and is not frozen, so the core's new refusal does not fire only because it
+passes no `bindings` at all. `multirotor/reference.py` names models for a study
+that may or may not have executed them.
+
+### P6 — an integrity check that passes when there is nothing to check
+
+*Closed in the core; one frozen site remains.* The `if declared and declared !=`
+sweep is in `tests/test_core_guards.py` and covers `src` exhaustively. What it
+cannot cover is the same idea spelled differently — a `.get()` with a default
+that makes a comparison vacuous, or a digest computed but never compared.
+Worth a targeted read of:
+
+* `sria/campaign/persistence.py` — checkpoint commitments and digests, the
+  neighbourhood the `CampaignEventLog` instance was found in.
+* `sria/signatures.py`, `sria/trust.py` — anything comparing a stored signature
+  against a recomputed one.
+* `scientific/serialization.py` — `require_schema` and friends: what happens
+  when a payload declares no schema at all.
+
+**Reviewed and correct** — `mcp/evidence.py:379` and `:1470`, and
+`scientific/results/validation.py:303`. All three cross-check a *derived*
+advisory field (a coupling criterion, a verdict, attained levels) against a
+value recomputed from the record's own contents. Absence withholds no
+guarantee, because the recomputation happens either way and is what the record
+reports. This is the opposite of the fingerprint case and the distinction is
+worth keeping: **a derived field's absence is a payload that omitted a view; an
+integrity binding's absence is a question nobody answered.**
+
+### P7 — a comparison that cannot see a non-finite value
+
+*Now enforced.* `RawSolverOutput` refuses a non-finite value on a solve
+reporting CONVERGED or NOT_APPLICABLE, so a provider value cannot enter a
+result unchecked whatever the adapter does.
+
+That covers everything reaching a result **through a solver**. It does not
+cover comparisons on numbers that never pass through one: a posterior weight, a
+utility, an EVPI, a calibration residual. `uq/admission.py` already refuses
+non-finite in its own audit record, which is the right instinct; the places to
+check that it was applied consistently are `sria/decision/utility.py`,
+`inference/grid.py` and `uq/predictive.py`, where a NaN weight would make every
+mass comparison False in the same way.
+
+### How to use this map
+
+Do not read it as a to-do list. Two of the seven patterns produced an
+unreviewed instance out of a scan written for something else, and the lesson is
+the method rather than the sites: **write the sweep first, run it over the whole
+tree, and read what it names.** Every guard in the core-guards round carries one
+in `tests/test_core_guards.py`, and each is about ten lines. A pattern with no
+sweep — Guard 7's, for the reason recorded in G7.2 — is the one that will come
+back.
+
+
+## THE THERMAL RE-FREEZE — scoped, costed, not started
+
+Four guards in the core-guards round could not be made fail-closed, and all
+four are blocked by the same tree: `src/engcore/domains/thermal/conduction1d/`,
+whose seven files are byte-pinned by `THERMAL_FROZEN_FILE_DIGESTS` in
+`experiments/thermal_t1/t1_config.py`.
+
+**G2.1 is the one that decides it.** `validation.py:193` builds a
+`ValidationCheck` with `outcome=PASS` and
+`establishes=ValidationLevel.DIMENSIONALLY_VALID`, having compared nothing. A
+claimed level with no comparison behind it is the precise defect this project
+exists to refuse, and it is currently inside a freeze — which means the freeze
+is protecting it. A pin whose purpose is to make "T1 was not edited under T3" a
+checkable claim is doing its job; it is also, today, the reason a lie cannot be
+corrected. Those two facts do not conflict, and the resolution is not to weaken
+the pin but to re-freeze deliberately.
+
+This section scopes that. **It has not been started.** Nothing under
+`experiments/` or `src/engcore/domains/thermal/` has been edited.
+
+### What lands, in one pass
+
+Four edits, in three of the seven pinned files. All four are written out in
+G2.1, G3.1, G4.1 and G6.1 above; the summary here is the shape and the size.
+
+| # | File | Change | Lines |
+|---|---|---|---|
+| G2.1 | `validation.py:193` | `dimensional_consistency` compares produced metrics against `DIFFUSION_MODEL`'s `ModelOutputSpec` and records what it compared against, on the pattern `conduction1d_schemes.py` now uses | ~30 |
+| G3.1 | `validation.py:406` | `run_verification_gate` takes a `VerificationThresholds` instead of `min_contraction` and `analytic_rel_tol`; both levels route through `thresholds.award()` | ~30 |
+| G4.1 | `solver.py:187` | `Conduction1DSolver(DeclaredSupport)`; declare `serves_capabilities` and `served_models`; delete `supports()` | 3 |
+| G6.1 | `problem.py:443` | `verify_problem_matches_slab` calls `require_matching_fingerprint` | 4 |
+
+`__init__.py` gains one export if G3.1's threshold record is made public, which
+it should be — a gate's declared numbers are part of what the domain publishes.
+`errors.py` and `reference.py` do not change.
+
+**One pass, not four.** Each re-pin is a cascade (below), so four separate
+re-freezes would run the cascade four times and produce four commits in which
+the experiments' inputs are in flux. One pass is also what makes the diff
+reviewable: three source files change, and the results do not.
+
+### The pin cascade, which is the part that is easy to under-scope
+
+The pins are chained, and editing the domain moves all three links:
+
+```
+t1_config.THERMAL_FROZEN_FILE_DIGESTS  pins  the 7 conduction1d files
+t2_config.T1_FROZEN_FILE_DIGESTS       pins  t1_config.py  (among 6 T1 files)
+t3_config.T2_FROZEN_FILE_DIGESTS       pins  t2_config.py  (among 4 T2 files)
+```
+
+So:
+
+1. edit the domain -> `THERMAL_FROZEN_FILE_DIGESTS` breaks -> re-pin it,
+2. which changes `t1_config.py` -> `T1_FROZEN_FILE_DIGESTS` breaks -> re-pin,
+3. which changes `t2_config.py` -> `T2_FROZEN_FILE_DIGESTS` breaks -> re-pin.
+
+Three digest updates, in that order, and the order is not optional.
+
+**What the cascade does not touch is the point of it.** Each config's
+`config_hash()` deliberately excludes the file digests — `t1_config.py` says so
+in a comment written for exactly this moment: *"the config hash covers the
+experimental design, and the design is unchanged by which revision of the
+solver it happens to be run against."* So every preregistered design hash
+survives a re-freeze untouched. What changes is the recorded statement of which
+solver revision the numbers were produced against, which is what a re-freeze is
+supposed to change.
+
+### What to re-run, and what must be true afterwards
+
+| Run | Command | Measured cost |
+|---|---|---|
 | T1 | `python -X utf8 -m experiments.thermal_t1.t1_run` | 11 s |
 | T2 | `python -X utf8 -m experiments.thermal_t2.t2_run` | 15 s |
 | T3 | `python -X utf8 -m experiments.thermal_t3.t3_run` | 35 s |
