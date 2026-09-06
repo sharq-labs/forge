@@ -103,6 +103,30 @@ def rad_share(eps, area, hA, t_hot, t_amb):
     return eps * SIGMA * area * (t_hot**4 - t_amb**4) / q_conv
 
 
+def fourier(p):
+    """Fo = (t / tau) / Bi — the body's horizon in units of its diffusion time.
+
+    **This is the correction to an earlier error in this file.** `shape_horizon`
+    and `verify_sound` used `t / tau` and called it the Fourier number. They are
+    not the same quantity: Incropera, DeWitt, Bergman & Lavine 6th ed., Sec. 5.2,
+    Eq. 5.12 gives the identity `Bi * Fo = t / tau`, so `Fo = (t / tau) / Bi`.
+
+    Because Bi is typically 1e-3 or smaller for a body the lumped model applies
+    to, the two differ by orders of magnitude. Cases shaped to sit just below
+    `t/tau = 0.2` had a true Fo between 2 and 8e5 — all far above the 0.2 bound
+    — so the tool reported the condition satisfied and was right to. 103 cases
+    across `horizon_out`, `compound:horizon+tmax` and `adv_unsound:brief_but_slow`
+    were mislabelled by this, and the tool was right in every one of them.
+
+    Placing a case below the real bound needs a Bi near its own limit as well as
+    a short horizon, which is why `shape_horizon` now raises Bi first.
+    """
+    bi = biot(p["hA"], p["area"], p["lc"], p["k"])
+    if bi <= 0:
+        return None
+    return (p["dur"] / p["_tau"]) / bi
+
+
 def q(x, u):
     return f"{x:.10g} {u}"
 
@@ -264,7 +288,9 @@ def verify_sound(p, exempt=""):
     t = p["_t_ss"]
     bi = biot(p["hA"], p["area"], p["lc"], p["k"])
     rs = rad_share(p["eps"], p["area"], p["hA"], t, p["t_amb"])
-    fo = p["dur"] / p["_tau"]
+    fo = fourier(p)
+    if fo is None:
+        return False
     exc = max(abs(t - p["t_ref"]), abs(p["t_amb"] - p["t_ref"]))
     exact = {
         "biot_number": bi < BIOT_LIMIT,
@@ -443,15 +469,28 @@ def shape_melt(p, rng, margin, inside):
 
 
 def shape_horizon(p, rng, margin, inside):
+    """Place the *Fourier number* near its bound — not t/tau. See `fourier`.
+
+    Bi is raised towards its own limit first, because Fo = (t/tau)/Bi and at a
+    Bi of 1e-5 reaching Fo = 0.2 would need a horizon of 1e-6 tau: a duration
+    no design would state, and a case that tested arithmetic rather than the
+    condition. Near the Biot limit the two bounds are in the same regime and a
+    horizon below the Fourier bound is a run somebody might really write down.
+    """
     widen_all(p)
+    if not make_biot(p, rng, BIOT_LIMIT * 0.8):
+        return None
+    bi = biot(p["hA"], p["area"], p["lc"], p["k"])
     target = FOURIER_MIN * (1 + margin) if inside else FOURIER_MIN * (1 - margin)
-    p["dur"] = p["_tau"] * target
+    p["dur"] = p["_tau"] * target * bi
+    if p["dur"] <= 0 or not math.isfinite(p["dur"]):
+        return None
     if inside:
         return ("valid", "SUPPORTED",
-                f"Horizon is {target:.5g} tau, above the {FOURIER_MIN} convention.",
+                f"Fo = {target:.5g}, above the {FOURIER_MIN} convention.",
                 "internal_fourier_number", "horizon_in")
     return ("model_inapplicable", "INSUFFICIENT_EVIDENCE",
-            f"Horizon is {target:.5g} tau, below the {FOURIER_MIN} convention.",
+            f"Fo = {target:.5g}, below the {FOURIER_MIN} convention.",
             "internal_fourier_number", "horizon_out")
 
 
@@ -551,7 +590,10 @@ def shape_compound(p, rng):
         lead = "biot_number"
         why = "Inapplicable model plus a linearization band exceeded."
     elif kind == "horizon+tmax":
-        p["dur"] = p["_tau"] * FOURIER_MIN * (1 - m)
+        if not make_biot(p, rng, BIOT_LIMIT * 0.8):
+            return None
+        p["dur"] = (p["_tau"] * FOURIER_MIN * (1 - m)
+                    * biot(p["hA"], p["area"], p["lc"], p["k"]))
         p["t_max"] = p["_t_ss"] * (1 - m)
         lead = "internal_fourier_number"
         why = ("The horizon is too short to have reached the state whose ceiling "
@@ -655,11 +697,14 @@ def shape_adversarial_unsound(p, rng):
                 "Room-temperature operation, but this material's theta_D puts it "
                 "below the linear-resistivity regime.", "reduced_debye_temperature",
                 "adv_unsound:cool_but_low_debye")
-    p["dur"] = p["_tau"] * FOURIER_MIN * 0.9
+    if not make_biot(p, rng, BIOT_LIMIT * 0.8):
+        return None
+    bi = biot(p["hA"], p["area"], p["lc"], p["k"])
+    p["dur"] = p["_tau"] * FOURIER_MIN * 0.9 * bi
     return ("model_inapplicable", "INSUFFICIENT_EVIDENCE",
-            f"A {p['dur']:.4g} s run looks ample until you notice tau is "
-            f"{p['_tau']:.4g} s.", "internal_fourier_number",
-            "adv_unsound:brief_but_slow")
+            f"A {p['dur']:.4g} s run looks ample until you notice the body's "
+            f"own diffusion time: Fo = {FOURIER_MIN * 0.9:.4g}.",
+            "internal_fourier_number", "adv_unsound:brief_but_slow")
 
 
 # --- near-miss units: a factor of 2-3, not 1000 ---------------------------
