@@ -146,6 +146,7 @@ __all__ = [
     "TransportRefused",
     "build_coupled_twin",
     "coupled_dependencies",
+    "converged_resistances",
     "coupled_problems",
     "cycle_edges",
     "dependency_closure",
@@ -1025,6 +1026,32 @@ def stage_problems(
         )
         for stage in system.stages
     )
+
+
+def converged_resistances(
+    system: CoupledElectroThermalSystem, run: "CoupledRun"
+) -> dict[str, Quantity]:
+    """``component_id -> R(T)``, as the converged run actually had it.
+
+    Read back out of each stage's property result rather than recomputed here,
+    for the same reason :func:`stage_problems` associates structurally: a
+    second evaluation of the TCR form is a second implementation of it, and two
+    implementations agree until one of them does not.
+
+    The alternative is the conductor's declared ``reference_resistance``, which
+    is the element as the CALLER stated it and not the element the circuit was
+    solved with. Those are different statements, and a rating assessed against
+    the wrong one answers a question nobody asked. See ``NEEDS.md`` A2.9.
+
+    Raises rather than falling back if a stage's property result is missing:
+    an assessment silently made at the reference value would be a wrong number
+    read confidently, which is worse than no number at all.
+    """
+    resistances: dict[str, Quantity] = {}
+    for stage, prop_problem, _thermal in stage_problems(system):
+        result = run.final.result_for(prop_problem.problem_id)
+        resistances[stage.component_id] = result.value(mat.RESISTANCE_METRIC)
+    return resistances
 
 
 def coupled_dependencies(

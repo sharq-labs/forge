@@ -1184,6 +1184,7 @@ class ElectroThermalCaseRun:
 def _electrical_assessments(
     system: cp.CoupledElectroThermalSystem,
     electrical: "ScientificResult",
+    run: "cp.CoupledRun",
     ratings: Mapping[str, dc_models.ComponentRating] | None = None,
     source_rating: dc_models.ComponentRating | None = None,
 ) -> dict[str, ValidityAssessment]:
@@ -1208,9 +1209,17 @@ def _electrical_assessments(
     caller who *can* state the ratings is no longer forced into that verdict
     by the boundary having nowhere to put them.
     """
-    circuit = system.circuit_at(
-        {s.component_id: s.conductor.reference_resistance for s in system.stages}
-    )
+    # The elements as the RUN had them, not as the caller declared them. Each
+    # stage's R(T) is read back out of its converged property result — the
+    # same move ``_material_assessments`` makes for the temperature, and for
+    # the same reason: an assessment states something about the operating point
+    # that was solved, and the reference resistance is a different point. This
+    # is ``NEEDS.md`` A2.9, and A2.9's own reading of its blast radius holds:
+    # the only resistor condition reading ``resistance`` is ``resistance > 0``
+    # and both values are strictly positive in any run that gets this far, so
+    # no verdict moves. What changes is that the report no longer names a
+    # value the circuit did not use.
+    circuit = system.circuit_at(cp.converged_resistances(system, run))
     assessments: dict[str, ValidityAssessment] = {}
 
     resistors = []
@@ -1520,7 +1529,9 @@ def run_electrothermal_case(
     # Computed once: every one of these is a verdict about the whole coupled
     # composition, which is what the closure of any reported value here is.
     ratings, source_rating = _read_ratings(payload)
-    shared = _electrical_assessments(system, electrical, ratings, source_rating)
+    shared = _electrical_assessments(
+        system, electrical, run, ratings, source_rating
+    )
     shared.update(_material_assessments(system, run))
 
     versions = {

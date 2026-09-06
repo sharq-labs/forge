@@ -163,19 +163,41 @@ tool improved. What remains is 8 `band_out` (including two drawn a full 20%
 outside the band, so these are genuine misses rather than rounding), 2
 `adv_unsound:small_overshoot` and 1 `runaway`.
 
-**The one false reject is a real one, and the tool is wrong about it.**
-`S00709` is `rating_power_in@0.002`: the resistor dissipates 3.4886 W at the
-converged fixed point against a 3.49889 W rating, 0.3% inside. The tool builds
-its circuit at the **declared reference resistance** rather than the converged
-one, so it computes 3.5634 W and reports the rating violated. That is
-`NEEDS.md` §A2.9 — *"the resistor assessment reads the declared resistance, not
-the converged one"* — recorded two rounds ago and witnessed by the benchmark
-here for the first time, because no earlier draw put a power rating 0.2% from
-the operating point of a conductor whose TCR moved the resistance by 2%. The
-error is conservative (it over-reports dissipation for a positive-TCR part that
-heats up), which is why it shows as a false reject rather than a false accept.
-Not fixed here: the fix is in the electrothermal coupling, which this round
-does not own.
+**The one false reject is a mislabelled case, and the diagnosis above it was
+wrong.** `S00709` is `rating_power_in@0.002`. The paragraph that stood here
+said the tool "builds its circuit at the declared reference resistance … so it
+computes 3.5634 W", and blamed `NEEDS.md` §A2.9. Measured, that is not what
+happens: the rating conditions have always read the **converged** electrical
+result, and the number they read is 3.5240 W.
+
+The real cause is in this file's own generator. `base_draw` states each rating
+against `R(T_ss)` — the resistance at the **steady state** — and
+`shape_rating` places this one 0.2 % inside it: T_ss = 298.364 K, R = 62.605 Ω,
+P = 3.4919 W, rated 3.49889 W. But the payload declares a 66.169 s run against
+a 27.376 s time constant, so the body reaches 295.999 K and stops, 2.4 K short
+of the steady state it was rated against. Cooler is stiffer's opposite — a
+lower resistance — so the part dissipates **more**: 3.5240 W, or 1.0072× its
+rating, at the operating point the case itself declares.
+
+Nothing the run can offer clears it. The dissipation falls monotonically from
+3.5635 W at t = 0 (the reference resistance, the cold start) towards 3.4919 W
+and never arrives inside the declared horizon, so the rating is exceeded for
+the whole run and the peak is at t = 0. **The tool is right and the label is
+wrong**, in the same way the `geometry_conflict` labels were wrong: the
+expectation is computed at an operating point the case does not declare.
+
+Not fixed here. `shape_rating` must size a rating at the marched endpoint
+rather than at a steady state the run never reaches, and that is a change to
+the generator that would move the ratings cases across the whole draw — the
+same reason the geometry relabel was kept to one shaper. The arithmetic is
+pinned in `tests/mcp/test_problem.py::
+test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer` so the
+claim in this paragraph is checked rather than asserted.
+
+§A2.9 itself *was* real and is now closed: the assessment's element list came
+from the reference resistances, so the report named a resistance the circuit
+had not used. It could never move a verdict — the only condition reading
+`resistance` is `resistance > 0` — and it did not move this one.
 
 ## The battery benchmark — 400 cases
 
