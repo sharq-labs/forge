@@ -55,19 +55,27 @@ Two changes to ground truth, both because the tool turned out to be right:
 
 ## Baselines
 
-| Metric | main `b60e757` | after TASK 1 + KCL |
+| Metric | main `b60e757` | after this round |
 |---|---|---|
-| Catch rate | 1547/1547 (100%) | 1404/1647 (85.2%) |
-| False accept | 0/1547 (0.00%) | 243/1647 (14.75%) |
-| False reject | 453/453 (100%) | 19/353 (5.4%) |
-| Exact verdict match | 1236/2000 (61.8%) | 1595/2000 (79.8%) |
+| Catch rate | 1547/1547 (100%) | 1573/1643 (95.7%) |
+| False accept | 0/1547 (0.00%) | 70/1643 (4.26%) |
+| False reject | 453/453 (100%) | **0/357 (0.0%)** |
+| Exact verdict match | 1236/2000 (61.8%) | 1756/2000 (87.8%) |
+| Runs ending in an exception | 40 | **0** |
 
-**The first column's catch rate was unearned and the second column is what
+**The first column's catch rate was unearned, and the second column is what
 exposed it.** `electrical.dc.kcl` declared no validity conditions, so it
 assessed UNKNOWN on every run and no payload could ever be SUPPORTED. Every
 unsound case was "caught" by a verdict the tool gave to sound and unsound cases
-alike. Once KCL states its condition and the ratings have a payload field, the
-tool can say SUPPORTED — and the cases it should still be refusing become
-visible. They are the remaining tasks: geometry conflict (88), the horizon
-condition (103 across three tags), and melting-versus-ceiling (28).
+alike; a tool that refuses everything catches everything. Once KCL states its
+condition, the ratings have a payload field and a stopped run produces a report
+instead of an exception, the pair became informative for the first time.
 
+A gate on catch rate is only meaningful alongside a gate on false reject.
+NEEDS.md section 5 records why.
+
+The 70 remaining false accepts are 50 Debye cases whose ambient sits below
+`theta_D/3` while the converged temperature does not — an open question about
+which temperature the condition should be assessed at, in NEEDS.md section 7 —
+plus 11 `band_out`, 8 `geometry_conflict` at exactly the sphere's shape factor,
+and one small overshoot.

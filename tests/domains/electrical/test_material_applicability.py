@@ -246,16 +246,17 @@ def test_linear_tcr_law_is_rejected_below_a_third_of_the_debye_temperature():
         temperature=Quantity(300.0, K),
     )
     assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    # Two distinct findings, not one restated. The first is about the run: at
-    # 300 K this conductor operates below theta_D/3. The second is about the
-    # declaration: alpha is anchored at 293.15 K, which is *also* below
-    # theta_D/3, so the coefficient was fitted where this material's own
-    # theta_D says rho(T) is curved. Moving the operating point fixes the
-    # first and cannot touch the second.
-    assert assessment.violated == (
-        mat.REDUCED_DEBYE_TEMPERATURE,
-        mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE,
-    )
+    # One finding, about the run: at 300 K this conductor operates below
+    # theta_D/3.
+    #
+    # The reference is *not* also flagged, and that is the beryllium
+    # correction. alpha is anchored at 293.15 K, which is theta_D/3.4 here --
+    # below the floor for the run but above the theta_D/5 floor the reference
+    # condition uses, because a real metal with theta_D = 1440 K publishes a
+    # coefficient at 20 degC and a condition that called that self-
+    # contradictory would be wrong about the world.
+    assert assessment.violated == (mat.REDUCED_DEBYE_TEMPERATURE,)
+    assert mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE in assessment.satisfied
 
 
 def test_debye_floor_is_unknown_when_the_material_declares_no_debye_temperature():
@@ -856,11 +857,30 @@ def test_no_limit_versus_limit_condition_introduces_a_new_threshold():
         == mat.OPERATING_TEMPERATURE_LIMIT
     )
     assert (
-        condition(mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE).minimum
-        == condition(mat.CEILING_REDUCED_DEBYE_TEMPERATURE).minimum
+        condition(mat.CEILING_REDUCED_DEBYE_TEMPERATURE).minimum
         == condition(mat.REDUCED_DEBYE_TEMPERATURE).minimum
         == mat.BLOCH_GRUENEISEN_LINEAR_FLOOR
     )
+    # The reference condition is the one exception, and it is a *relaxation*
+    # measured against a real material rather than a number chosen to make a
+    # case pass. Beryllium's theta_D is 1440 K (Kittel 8th ed., Ch. 5,
+    # Table 1) and its coefficient is published at 20 degC like any
+    # engineering metal, which is theta_D/7.1 -- refused by 1/3 and admitted
+    # by 1/5. Every other common metal clears both.
+    assert (
+        condition(mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE).minimum
+        == mat.REFERENCE_LINEAR_FLOOR
+    )
+    assert 293.15 / 1440.0 >= mat.REFERENCE_LINEAR_FLOOR.magnitude_in(
+        "dimensionless"
+    )
+    assert 293.15 / 1440.0 < mat.BLOCH_GRUENEISEN_LINEAR_FLOOR.magnitude_in(
+        "dimensionless"
+    )
+    for theta_d in (343.0, 400.0, 428.0, 450.0, 470.0, 630.0):  # Cu W Al Ni Fe Cr
+        assert 293.15 / theta_d >= mat.BLOCH_GRUENEISEN_LINEAR_FLOOR.magnitude_in(
+            "dimensionless"
+        )
 
 
 def test_a_band_narrower_than_the_ceiling_permits_is_not_a_contradiction():

@@ -129,6 +129,7 @@ __all__ = [
     "RATED_LINEAR_TCR_MODEL",
     "RATED_LINEAR_TCR_REALIZATION",
     "REDUCED_DEBYE_TEMPERATURE",
+    "REFERENCE_LINEAR_FLOOR",
     "REFERENCE_REDUCED_DEBYE_TEMPERATURE",
     "REFERENCE_TEMPERATURE_UTILIZATION",
     "REFERENCE_RESISTANCE",
@@ -202,6 +203,38 @@ LINEAR_RESISTANCE_RATIO = "linear_resistance_ratio"
 #: None of them introduces a threshold. Each is an existing condition of this
 #: model evaluated at a declared limit instead of at the state, so it reuses
 #: that condition's bound unchanged; see the three functions for which.
+#: The floor for the *reference* against the Debye temperature: ``theta_D / 5``,
+#: not the ``theta_D / 3`` that bounds the operating point.
+#:
+#: **Relaxed from 1/3 against a real material.** Beryllium has a Debye
+#: temperature of 1440 K (Kittel, *Introduction to Solid State Physics*, 8th
+#: ed. (2005), Ch. 5, Table 1) and a linear temperature coefficient published
+#: at 20 degC like any other engineering metal. At the conventional 293.15 K
+#: reference that is ``T_ref / theta_D = 0.204``, which the 1/3 floor refuses.
+#: Beryllium is not an exotic case — it is a structural conductor — and a
+#: condition that calls its datasheet self-contradictory is wrong about the
+#: world rather than strict about it. Copper (343 K), tungsten (400 K),
+#: chromium (630 K) and every other common metal clear 1/3 comfortably;
+#: beryllium is the one that does not, and it is the reason this constant
+#: exists separately.
+#:
+#: **Why a weaker floor is the right correction rather than deleting the
+#: condition.** The two ask different questions. ``reduced_debye_temperature``
+#: asks whether the *run* sits where rho(T) is linear, and keeps 1/3.  This one
+#: asks whether the coefficient was anchored somewhere a linear fit means
+#: anything at all, which is the weaker question: how far one alpha then
+#: carries is what ``linearization_band`` is for. Below roughly ``theta_D / 5``
+#: the Bloch-Grueneisen form is unambiguously in its ``T^5`` regime (Ashcroft &
+#: Mermin, *Solid State Physics* (1976), Ch. 26, Eq. 26.55) and a straight line
+#: through that point describes nothing.
+#:
+#: **The margin is thin and that is worth knowing.** Beryllium clears this
+#: floor by 2%. A material with a Debye temperature above about 1466 K
+#: referenced at 293.15 K would still be refused, and if such a conductor with
+#: a published room-temperature coefficient turns up, this constant is wrong
+#: again and the same argument applies.
+REFERENCE_LINEAR_FLOOR = Quantity(1.0 / 5.0, DIMENSIONLESS)
+
 REFERENCE_TEMPERATURE_UTILIZATION = "reference_temperature_utilization"
 REFERENCE_REDUCED_DEBYE_TEMPERATURE = "reference_reduced_debye_temperature"
 CEILING_REDUCED_DEBYE_TEMPERATURE = "ceiling_reduced_debye_temperature"
@@ -606,11 +639,23 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
             ),
             RangeCondition(
                 name=REFERENCE_REDUCED_DEBYE_TEMPERATURE,
-                minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
+                minimum=REFERENCE_LINEAR_FLOOR,
                 description=(
-                    "T_ref / theta_D >= 1/3. The same bound as "
-                    "reduced_debye_temperature, asked at the reference "
-                    "instead of at the state. alpha is the slope of a "
+                    "T_ref / theta_D >= 1/5. A weaker floor than "
+                    "reduced_debye_temperature's 1/3, deliberately, and the "
+                    "reason is beryllium: theta_D = 1440 K (Kittel 8th ed., "
+                    "Ch. 5, Table 1) with a coefficient published at 20 degC "
+                    "like any engineering metal, which is T_ref/theta_D = "
+                    "0.204. A condition that calls a real datasheet "
+                    "self-contradictory is wrong about the world rather than "
+                    "strict about it. The two conditions ask different "
+                    "questions: that one asks whether the run sits where "
+                    "rho(T) is linear, this one asks whether the coefficient "
+                    "was anchored somewhere a straight line means anything at "
+                    "all -- how far one alpha then carries is what "
+                    "linearization_band is for. Below about theta_D/5 the "
+                    "Bloch-Grueneisen form is unambiguously in its T^5 "
+                    "regime. alpha is the slope of a "
                     "straight line through T_ref, and theta_D is declared to "
                     "mark where rho(T) stops being straight; a reference "
                     "below the material's own linearity floor fits a line at "

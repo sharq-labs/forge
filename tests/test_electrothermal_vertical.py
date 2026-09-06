@@ -440,6 +440,11 @@ def test_b_coupling_convergence_has_its_own_type(case_a):
     assert set(cp.CouplingOutcome) == {
         cp.CouplingOutcome.CRITERION_MET,
         cp.CouplingOutcome.ITERATION_LIMIT_REACHED,
+        # Added when the transfer boundary gained a second exit. Earned rather
+        # than minted: it names the outcome of a test that is implemented and
+        # has a definite answer, unlike the DIVERGED member the enum still
+        # correctly refuses.
+        cp.CouplingOutcome.TRANSFER_REFUSED,
     }
     # It is not a ConvergenceState, and no ConvergenceState member was added.
     assert {s.value for s in ConvergenceState} == {
@@ -1775,9 +1780,14 @@ def test_r2_a_boolean_reproduces_every_assertion_this_milestone_makes():
     }
     assert set(as_bool.values()) == {True, False}
     assert converged.criterion_met is not stalled.criterion_met
-    # no third state is produced anywhere in this milestone
-    assert {run.outcome for run in (converged, stalled)} == set(cp.CouplingOutcome)
-    assert len(cp.CouplingOutcome) == 2
+    # These two runs exercise the two outcomes a *converging* composition can
+    # reach. TRANSFER_REFUSED is the third and is reached only when a
+    # participant's own validation rejects its result, which neither of these
+    # does; tests/test_coupled_transport_admission.py covers it.
+    assert {run.outcome for run in (converged, stalled)} == set(
+        cp.CouplingOutcome
+    ) - {cp.CouplingOutcome.TRANSFER_REFUSED}
+    assert len(cp.CouplingOutcome) == 3
 
 
 def test_r4_a_float_tolerance_cannot_detect_either_mistake():

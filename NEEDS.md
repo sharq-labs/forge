@@ -1637,3 +1637,96 @@ coupling.
 Until then the 37 stay `ERROR:TransportRefused` in the scorer, which is counted
 as caught — they are not called SUPPORTED — but they are not the finding they
 should be, and the report says nothing about them at all.
+
+## 5. Rule 5 was measuring nothing while no payload could be SUPPORTED
+
+Recorded so the next reader does not re-derive it.
+
+The round opened with a rule: catch rate must stay 100% and false accept must
+stay 0.00%, and if either moves the fix is wrong. Both moved, and the fix was
+right. The rule was sound in intent and its premise was false.
+
+`electrical.dc.kcl` declared no validity conditions. By the platform's own rule
+a model with no conditions is UNKNOWN, and `derive_verdict` returns
+INSUFFICIENT_EVIDENCE on any UNKNOWN before it reaches ratings, levels or
+coupling. So **no payload could ever be SUPPORTED**, and every unsound case was
+"caught" by a verdict the tool also gave to all 453 sound cases. A tool that
+refuses everything catches everything: the 100%/0.00% pair was a property of
+the verdict being unreachable, not of the tool discriminating.
+
+The measurement that settles it: with KCL still silent, all 453 sound cases run
+with ratings that cannot bind gave 371 INSUFFICIENT_EVIDENCE, 82 NOT_SUPPORTED
+and zero SUPPORTED, with one UNKNOWN across the whole set — `kcl`, 453 of 453.
+
+Once KCL states its boundary the pair became informative for the first time and
+immediately dropped to 85.2% / 14.75%, because the gaps it had been masking
+became visible. Fixing those honestly took it to 95.7% / 4.26% with false
+reject at 0.0%.
+
+**The lesson for a future round:** a gate on catch rate is only meaningful
+alongside a gate on false reject. Either one alone is trivially satisfiable by
+moving the verdict in one direction, and this benchmark had a saturated false
+reject for its whole first life.
+
+## 6. The Debye floor: relaxed against beryllium, and what it cost
+
+`reference_reduced_debye_temperature` used the same `theta_D / 3` floor as the
+condition on the operating point. Checked against real metals at the
+conventional 293.15 K reference:
+
+| Metal | theta_D | T_ref / theta_D | vs 1/3 |
+|---|---|---|---|
+| Copper | 343 K | 0.855 | pass |
+| Tungsten | 400 K | 0.733 | pass |
+| Aluminium | 428 K | 0.685 | pass |
+| Iron | 470 K | 0.624 | pass |
+| Chromium | 630 K | 0.465 | pass |
+| **Beryllium** | **1440 K** | **0.204** | **fail** |
+
+Debye temperatures from Kittel, *Introduction to Solid State Physics*, 8th ed.
+(2005), Ch. 5, Table 1. Beryllium is a structural conductor with a coefficient
+published at 20 degC like any other engineering metal, so **a real datasheet
+failed the condition** and the condition was wrong about the world rather than
+strict about it. The floor for the reference is now `theta_D / 5`; the floor
+for the operating point is unchanged at `theta_D / 3`, because the two ask
+different questions — whether the run sits where rho(T) is linear, versus
+whether the coefficient was anchored somewhere a straight line means anything
+at all. How far one alpha then carries is what `linearization_band` is for.
+
+The margin is thin and worth knowing: beryllium clears `theta_D / 5` by 2%. A
+conductor with a Debye temperature above about 1466 K and a published
+room-temperature coefficient would still be refused, and the same argument
+would apply again.
+
+**What it cost.** The relaxation cleared the last 23 false rejects — false
+reject went to 0.0% — and gave up 34 catches the stricter floor had been
+making: `debye_out` 10 -> 31 and `adv_unsound:cool_but_low_debye` 6 -> 19.
+
+## 7. Open: the Debye condition is assessed at the final temperature only
+
+The 50 cases in section 6 are not caught by the *operating* Debye condition
+either, and the reason is a genuine open question rather than a settled bug.
+
+Measured on eight of them, `t_amb / theta_D` is 0.3125 to 0.3327 — below the
+1/3 floor — while the converged temperature is above it. The generator shapes
+these against `min(t_amb, t_ss)`; `_material_assessments` assesses the material
+at the single temperature the property solve used, which is the converged one.
+
+Both readings are defensible and I do not want to pick one quietly.
+
+*The domain's case.* The coupled run evaluates `R(T)` once, at the converged
+temperature. The condition asks whether rho(T) is linear where R is being
+computed, and that is where it is computed. Assessing anywhere else would judge
+an evaluation that never happened.
+
+*The generator's case.* The body starts at ambient and warms. It genuinely
+occupies temperatures below `theta_D / 3` during the run, and a single alpha is
+not defensible at those states even if the coupled solve only samples the
+endpoint.
+
+Resolving it towards the generator needs a per-condition operating point — the
+Debye floor evaluated at the coldest state the run occupies, the operating
+ceiling at the hottest — and the current architecture assesses one model at one
+temperature. That is a real change to how `_material_assessments` works and it
+was not in this round's scope. It is the single largest remaining block of
+false accepts, at 50 of 70.

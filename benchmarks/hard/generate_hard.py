@@ -33,6 +33,29 @@ those. This set is built the opposite way.
 
 Ground truth is computed here from first principles and never consults engcore.
 
+Two definitions this file got wrong once, recorded so they cannot be
+reintroduced
+-------------------------------------------------------------------------
+**Fo is not t/tau.** Incropera, DeWitt, Bergman & Lavine, *Fundamentals of Heat
+and Mass Transfer*, 6th ed., Sec. 5.2, Eq. 5.12 gives ``Bi * Fo = t / tau``, so
+``Fo = (t / tau) / Bi``. `shape_horizon` and `verify_sound` used ``t / tau`` and
+called it the Fourier number, which mislabelled 103 cases across `horizon_out`,
+`compound:horizon+tmax` and `adv_unsound:brief_but_slow`. Because Bi is small
+for any body the lumped model applies to, the two differ by orders of
+magnitude. Measured on the first five `horizon_out` cases of that draw:
+
+    U00028  t/tau = 0.198   Bi = 4.77e-05   Fo = 4151
+    U00048  t/tau = 0.1996  Bi = 0.006224   Fo = 32.07
+    U00079  t/tau = 0.1996  Bi = 2.579e-07  Fo = 773948
+    U00110  t/tau = 0.198   Bi = 0.0002605  Fo = 760.0
+    U00131  t/tau = 0.16    Bi = 0.07713    Fo = 2.074
+
+Every one is far above the 0.2 bound, so the tool reported the condition
+satisfied and was right in all 103. Use `fourier()`, never `dur / tau`.
+
+**The linear TCR form has its own declared range**, 200-450 K, narrower than
+any `maximum_operating_temperature` a case declares. See TCR_MIN_TEMPERATURE.
+
 Usage:  python generate_10000.py [--n 10000] [--seed 20260906]
 """
 

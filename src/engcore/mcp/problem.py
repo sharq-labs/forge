@@ -75,6 +75,10 @@ from ..scientific.models.definition import (
     ScientificModelDefinition,
     ValidityAssessment,
 )
+from ..scientific.results.validation import (
+    ValidationCheck,
+    ValidationOutcome,
+)
 from ..scientific.units.quantity import Quantity, dimension_of, dimensionality
 from ..systems.electrothermal import coupled as cp
 from ..systems.electrothermal.resistor_body import RESISTOR_POWER_METRIC
@@ -856,6 +860,79 @@ def _read_coupling(payload: Mapping[str, Any]) -> dict[str, Any]:
     return coupling
 
 
+DECLARED_LIMITS_CHECK = "declared_limits_are_mutually_consistent"
+
+
+def _declared_limit_checks(
+    stage: cp.CoupledStage,
+) -> tuple[ValidationCheck, ...]:
+    """A melting point below the operating ceiling, as a finding in the report.
+
+    **Why this lives here and in neither domain.** ``melting_temperature`` is
+    declared in the thermal applicability record and
+    ``maximum_operating_temperature`` in the electrical material limits.
+    Neither domain has any business knowing the other's limit exists, and
+    making one co-declare the other would couple two domains for a check that
+    belongs to whoever assembled the payload. One caller wrote both numbers
+    about one physical part, and this boundary is where that caller's
+    declaration is a single object.
+
+    **Why it is a contradiction and not a tolerance.** The ceiling is declared
+    as the temperature above which "the conductor itself is not intact"; the
+    melting point is where the body stops being the solid the lumped balance
+    describes. A part rated to operate at or above its own melting point is not
+    a part operated aggressively — it is two statements about one body that
+    cannot both hold, and no operating point reconciles them.
+
+    **Why a check and not a refusal.** An earlier form of this raised at build
+    time, and that was wrong in a way worth recording: cases whose real defect
+    is that the run exceeds the melting point, or that a constant-hA budget
+    breaks *and* the melting point is passed, also declare a low melting point
+    beside a high ceiling. Refusing at build time pre-empted the more
+    informative finding with a less informative one and cost 112 correct
+    verdicts. A design that contradicts itself is a finding about the design,
+    and findings belong beside the others rather than in place of them.
+
+    Both limits are optional and the check is simply absent unless the caller
+    declared both — an undeclared limit stays UNKNOWN and is never read as
+    agreement.
+    """
+    ceiling = stage.conductor.limits.maximum_operating_temperature
+    melting = stage.body.applicability.melting_temperature
+    if ceiling is None or melting is None:
+        return ()
+    ceiling_k = ceiling.magnitude_in("kelvin")
+    melting_k = melting.magnitude_in("kelvin")
+    if melting_k > ceiling_k:
+        return (
+            ValidationCheck(
+                name=DECLARED_LIMITS_CHECK,
+                outcome=ValidationOutcome.PASS,
+                detail=(
+                    f"melting_temperature {melting} is above "
+                    f"maximum_operating_temperature {ceiling}"
+                ),
+            ),
+        )
+    return (
+        ValidationCheck(
+            name=DECLARED_LIMITS_CHECK,
+            outcome=ValidationOutcome.FAIL,
+            detail=(
+                f"stages[].body.applicability.melting_temperature is "
+                f"{melting}, which is not above "
+                f"stages[].conductor.limits.maximum_operating_temperature "
+                f"{ceiling}. The ceiling is the temperature above which the "
+                f"conductor is not intact and the melting point is where the "
+                f"body stops being the solid the thermal balance describes, "
+                f"so a ceiling at or above the melting point asserts the part "
+                f"is rated to operate in a state it cannot be in. One of the "
+                f"two declarations is wrong."
+            ),
+        ),
+    )
+
+
 def _read_component_rating(
     conductor_raw: Mapping[str, Any], index: int
 ) -> dc_models.ComponentRating:
@@ -1153,6 +1230,112 @@ def _coupling_evidence(run: "cp.CoupledRun") -> CouplingEvidence:
     )
 
 
+def _refused_case_run(
+    system: cp.CoupledElectroThermalSystem,
+    run: "cp.CoupledRun",
+    problems,
+) -> ElectroThermalCaseRun:
+    """The report for a coupled run that stopped at the transfer boundary.
+
+    **A design that stops the loop is a finding about the design**, and the
+    report says so rather than the caller catching an exception and being told
+    nothing. Three things go in it, and nothing else does.
+
+    *The values the run did produce*, which is whatever the refused result
+    carries — possibly none. They are **absent**, not zero and not null with a
+    unit: a body that was never solved has no temperature, and inventing one so
+    the shape of the report stays familiar is the substitution this whole
+    boundary exists to refuse.
+
+    *The coupling's own statement*, carried verbatim as ``transfer_refused``,
+    naming the edge, the iteration and the checks that rejected the result.
+
+    *The finding that stopped it.* The refused result's validation is a FAIL,
+    which reaches ``derive_verdict`` by the ordinary rules and returns
+    NOT_SUPPORTED — a violated condition is a finding, not a gap, and this is
+    the distinction the whole task turns on. The material verdicts are computed
+    at the temperature the refused solve actually used, so
+    ``linear_resistance_ratio`` appears in the report as violated, named, and
+    attributed to the model that declares it.
+
+    One report, not one per stage: the sweep did not finish, so there is no
+    per-stage result to be about. Reporting one report per stage would claim
+    the loop reached stages it never entered.
+    """
+    refusal = run.refusal
+    assert refusal is not None  # the outcome is what selects this path
+    refused = refusal.result
+
+    assessments: dict[str, ValidityAssessment] = {}
+    for stage, prop_problem, _thermal in cp.stage_problems(system):
+        if prop_problem.problem_id != refused.problem_id:
+            continue
+        temperature = refused.provenance.inputs.get(mat.TEMPERATURE)
+        assessments[_LINEAR_TCR.model_id] = mat.assess_resistance_validity(
+            prop_problem, temperature
+        )
+        if any(
+            model.model_id == _RATED_TCR.model_id
+            for model in prop_problem.models
+        ):
+            assessments[_RATED_TCR.model_id] = (
+                mat.assess_rated_resistance_validity(prop_problem, temperature)
+            )
+        break
+
+    versions = {
+        model.model_id: model.version
+        for problem in problems
+        for model in problem.models
+    }
+    report = CredibilityEvidenceReport.from_result(
+        refused,
+        provenance=run.provenance,
+        coupling=_coupling_evidence(run),
+        # Only the models of the problem that was refused. The closure of a
+        # value this report carries stops there, because the run stopped
+        # there: naming the electrical or thermal models would claim they
+        # contributed to a value they never saw.
+        contributing_models=tuple(
+            (model.model_id, versions.get(model.model_id, ""))
+            for problem in problems
+            if problem.problem_id == refused.problem_id
+            for model in problem.models
+        ),
+        validity=tuple(
+            ModelValidityRecord(
+                model_id=model_id,
+                version=versions.get(model_id, ""),
+                assessment=assessment,
+            )
+            for model_id, assessment in sorted(assessments.items())
+        ),
+        validation=(
+            ValidationCheck(
+                name="coupling_transfer_refused",
+                outcome=ValidationOutcome.FAIL,
+                detail=(
+                    f"iteration {refusal.iteration}: "
+                    f"{refusal.dependency.source_quantity!r} could not leave "
+                    f"{refusal.dependency.source_problem_id!r} for "
+                    f"{refusal.dependency.target_problem_id!r}."
+                    f"{refusal.dependency.target_quantity}, because that "
+                    f"result's own validation failed "
+                    f"({', '.join(refusal.failed_checks)}). The loop stopped "
+                    f"here; the values it had produced are reported and the "
+                    f"ones it never produced are absent."
+                ),
+            ),
+        ),
+        notes=(
+            "This coupled run stopped at the transfer boundary and did not "
+            "complete a sweep. Quantities the run never produced are absent "
+            "from this report rather than defaulted."
+        ),
+    )
+    return ElectroThermalCaseRun(run=run, reports=(report,))
+
+
 def run_electrothermal_case(
     payload: Mapping[str, Any], *, run_id: str = "mcp-electrothermal"
 ) -> ElectroThermalCaseRun:
@@ -1210,6 +1393,8 @@ def run_electrothermal_case(
         max_iterations=coupling.get("max_iterations", DEFAULT_COUPLING_BUDGET),
     )
     run = cp.run_fixed_point_coupling(system, plan, run_id=run_id)
+    if run.outcome is cp.CouplingOutcome.TRANSFER_REFUSED:
+        return _refused_case_run(system, run, problems)
 
     electrical_id = problems[0].problem_id
     electrical = run.final.result_for(electrical_id)
@@ -1262,6 +1447,7 @@ def run_electrothermal_case(
                     )
                     for model_id, assessment in sorted(assessments.items())
                 ),
+                validation=_declared_limit_checks(stage),
                 declarations=(
                     AssertedContext(
                         source="LumpedApplicabilityDeclaration",

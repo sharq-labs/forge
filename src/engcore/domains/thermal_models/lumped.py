@@ -610,6 +610,12 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     DIMENSIONLESS,
                 ),
                 maximum=GEOMETRY_AGREEMENT_FACTOR,
+                # Inclusive on both edges. A body whose V/As is exactly Lc/3
+                # is the sphere the factor was derived from, so it sits on the
+                # bound by construction and admitting it is the correct
+                # reading rather than a rounding accident.
+                minimum_inclusive=True,
+                maximum_inclusive=True,
                 description=(
                     "L_c(declared) / (V / A_s) within a factor of 3, either "
                     "way. characteristic_length and body_volume/surface_area "
@@ -626,7 +632,10 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     "by exactly the shape factor — 1 for a plane wall, 2 for a "
                     "long cylinder, 3 for a sphere. Three is therefore the "
                     "largest disagreement a choice of convention can account "
-                    "for. Two-sided though the directions are not equally "
+                    "for, and the bound is inclusive on both edges: a body "
+                    "whose V/A_s is exactly L_c/3 is that sphere, and "
+                    "refusing it would refuse the shape the number came from. "
+                    "Two-sided though the directions are not equally "
                     "defensible: a declared length above V/A_s raises Bi and "
                     "is conservative, one below it lowers Bi and makes the "
                     "model look applicable when it may not be. UNKNOWN unless "

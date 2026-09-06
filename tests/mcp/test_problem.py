@@ -1048,3 +1048,132 @@ def test_the_ratings_fields_are_described_from_the_model_records():
     assert current.required is False
     assert current.dimension == dimensionality("ampere")
     assert dc_models.SOURCE_CURRENT_UTILIZATION in current.unlocks
+
+
+# =====================================================================
+# A run that stops at the transfer boundary is a finding, not an exception
+# =====================================================================
+
+def _runaway_payload():
+    """A conductor whose own declared alpha drives R(T) through zero."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    conductor = payload["stages"][0]["conductor"]
+    conductor["temperature_coefficient"] = "-0.05 1/kelvin"
+    conductor["limits"] = {
+        "linearization_band": "400 kelvin",
+        "maximum_operating_temperature": "1200 kelvin",
+        "debye_temperature": "343 kelvin",
+    }
+    return payload
+
+
+def test_a_design_that_stops_the_loop_is_reported_rather_than_raised():
+    """The whole of TASK 4 in one assertion.
+
+    A declared alpha that takes R(T) through zero used to end the run with
+    TransportRefused, which removed the finding from the report entirely: a
+    caller saw an exception and the report said nothing at all.
+    """
+    outcome = run_electrothermal_case(_runaway_payload(), run_id="runaway")
+    report = outcome.reports[0]
+
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+    assert outcome.run.outcome is cp.CouplingOutcome.TRANSFER_REFUSED
+    assert report.coupling.outcome == "transfer_refused"
+
+
+def test_the_finding_that_stopped_the_loop_is_named_in_the_report():
+    """`linear_resistance_ratio` is the condition, and it is attributed."""
+    report = run_electrothermal_case(
+        _runaway_payload(), run_id="runaway-named"
+    ).reports[0]
+
+    violated = {
+        (record.model_id, name)
+        for record in report.validity
+        for name in record.assessment.violated
+    }
+    assert (mat.RATED_LINEAR_TCR_MODEL.model_id, "linear_resistance_ratio") in (
+        violated
+    )
+    failed = {check.name for check in report.validation if not check.passed}
+    assert "coupling_transfer_refused" in failed
+
+
+def test_a_stopped_run_reports_the_values_it_produced_and_omits_the_rest():
+    """Absent, not zero and not null-with-units.
+
+    The refused property solve produced a resistance -- a negative one, which
+    is the evidence. No temperature was ever computed, and inventing one so the
+    report keeps its usual shape is the substitution this boundary exists to
+    refuse.
+    """
+    report = run_electrothermal_case(
+        _runaway_payload(), run_id="runaway-values"
+    ).reports[0]
+
+    assert "resistance" in report.values
+    assert report.values["resistance"].magnitude_in("ohm") < 0.0
+    for never_produced in (
+        "final_temperature",
+        "steady_state_temperature",
+        "time_constant",
+    ):
+        assert never_produced not in report.values
+
+
+def test_the_transfer_guard_itself_is_unchanged():
+    """F08 stays exactly as it was: the value still does not travel.
+
+    What changed is the exit, not the guard. A provider returning nonsense
+    still raises out of the generic runner, because a caller supplying its own
+    executor table may be running one -- and an execution failure is not a
+    finding about the design.
+    """
+    import inspect
+
+    source = inspect.getsource(cp.run_fixed_point)
+    assert "stop_on_transfer_refusal" in source
+    assert inspect.signature(cp.run_fixed_point).parameters[
+        "stop_on_transfer_refusal"
+    ].default is False
+
+
+def test_a_conflicting_pair_of_declared_limits_is_a_finding_not_a_refusal():
+    """Melting point below the operating ceiling, via the validation hook.
+
+    Reported rather than refused at build time, because cases whose real defect
+    is that the run passes the melting point also declare a low melting point
+    beside a high ceiling -- refusing early pre-empts the better finding.
+    """
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    payload["stages"][0]["body"]["applicability"]["melting_temperature"] = (
+        "400 kelvin"
+    )
+    payload["stages"][0]["conductor"]["limits"] = {
+        "maximum_operating_temperature": "900 kelvin"
+    }
+    report = run_electrothermal_case(payload, run_id="conflict").reports[0]
+
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+    failed = {c.name for c in report.validation if not c.passed}
+    assert "declared_limits_are_mutually_consistent" in failed
+
+
+def test_agreeing_limits_pass_the_same_check_rather_than_omitting_it():
+    """A check that only ever fails is a check nobody can see working."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    payload["stages"][0]["conductor"]["limits"] = {
+        "maximum_operating_temperature": "600 kelvin"
+    }
+    report = run_electrothermal_case(payload, run_id="agree").reports[0]
+    passed = {c.name for c in report.validation if c.passed}
+    assert "declared_limits_are_mutually_consistent" in passed
+
+
+def test_an_undeclared_limit_is_not_read_as_agreement():
+    """Both limits are optional and the check is absent unless both are there."""
+    payload = payload_without(APPLICABILITY_PATH, "melting_temperature")
+    report = run_electrothermal_case(payload, run_id="absent").reports[0]
+    names = {c.name for c in report.validation}
+    assert "declared_limits_are_mutually_consistent" not in names
