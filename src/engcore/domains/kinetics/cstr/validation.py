@@ -79,8 +79,10 @@ from ....scientific.results.validation import (
     ValidationOutcome,
     ValidationReport,
 )
+from ....scientific.units.quantity import Quantity
 from .problem import (
     MAX_VALID_TEMPERATURE_K,
+    METRIC_UNITS,
     MIN_VALID_TEMPERATURE_K,
     CA_FINAL_METRIC,
     CONVERSION_METRIC,
@@ -133,6 +135,106 @@ class CSTRValidationSettings:
             "min_temperature_k": float(self.min_temperature_k),
             "max_temperature_k": float(self.max_temperature_k),
         }
+
+
+def check_metric_dimensions(raw) -> ValidationCheck:
+    """Every produced metric against the unit its model record declares.
+
+    This used to be an unconditional PASS carrying
+    ``establishes=DIMENSIONALLY_VALID`` and a sentence describing what the
+    units were. Nothing was compared: the sentence was true, and it was still a
+    claimed level, because a claim is what occupies the field a reader consults
+    to find out whether anyone checked. A solver change that started reporting
+    ``T:final`` in celsius would not have moved it.
+
+    It compares now, against the same reference the battery solver uses: the
+    ``unit_exemplar`` on each ``ModelOutputSpec`` of ``CSTR_MODEL``. That is a
+    reference *outside* the arithmetic being checked, which is what makes the
+    level earned rather than asserted.
+
+    **Metric names carry a qualifier.** The solver reports ``C_A:final`` and
+    ``T:max`` where the model declares the quantities ``C_A`` and ``T``, so the
+    prefix before the first colon is what names the declared output -- the same
+    convention the DC domain's dimension check reads.
+
+    **One produced metric has no declared output.** ``t:T_max`` is the time at
+    which the maximum temperature occurred: a coordinate reported alongside
+    ``T:max``, not a quantity ``CSTR_MODEL`` claims to produce. It is named in
+    the detail rather than silently skipped, and it is deliberately *not* a
+    failure here -- whether the record should declare it is a question about
+    the model, and answering it in a validation check would be changing a
+    verdict rule from inside a dimension test. Recorded in ``NEEDS.md``.
+    """
+    from .problem import CSTR_MODEL   # local: problem imports this module
+
+    declared = {
+        spec.metric: spec.unit_exemplar for spec in CSTR_MODEL.outputs
+    }
+    produced = {
+        name: Quantity(value, METRIC_UNITS[name])
+        for name, value in raw.values.items()
+        if name in METRIC_UNITS
+    }
+
+    compared: list[str] = []
+    mismatched: list[str] = []
+    undeclared: list[str] = []
+    for name, quantity in sorted(produced.items()):
+        exemplar = declared.get(name.split(":", 1)[0])
+        if exemplar is None:
+            undeclared.append(name)
+            continue
+        compared.append(name)
+        if not quantity.is_compatible_with(exemplar):
+            mismatched.append(
+                f"{name} is {quantity.units!r}, {exemplar!r} declared"
+            )
+
+    # No comparison performed is not a passing comparison. If the solve
+    # produced nothing this check can match against a declared output, it has
+    # established nothing and says so, rather than passing over an empty set.
+    if not compared:
+        return ValidationCheck(
+            name="dimensional_consistency",
+            outcome=ValidationOutcome.NOT_RUN,
+            detail=(
+                "no produced metric names a declared model output; there was "
+                "nothing to compare"
+                + (f" (produced: {undeclared})" if undeclared else "")
+            ),
+            establishes=None,
+        )
+
+    passed = not mismatched
+    return ValidationCheck(
+        name="dimensional_consistency",
+        outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
+        detail=(
+            f"{len(compared)} produced metric(s) checked against the "
+            f"dimensions CSTR_MODEL declares"
+            + (f"; mismatched: {mismatched}" if mismatched else "")
+            + (
+                f"; not declared as a model output and not checked: "
+                f"{undeclared}"
+                if undeclared
+                else ""
+            )
+        ),
+        # Conditional on the outcome: a record reading `outcome: fail` beside
+        # `establishes: dimensionally_valid` contradicts itself for any reader
+        # not filtering on `passed` first.
+        establishes=(
+            ValidationLevel.DIMENSIONALLY_VALID if passed else None
+        ),
+        # What was compared against. There is no residual here -- a dimension
+        # either matches or does not -- so this is the evidence that a
+        # comparison happened at all, and it names the records a reader can go
+        # and check the claim against.
+        evidence=tuple(
+            f"{CSTR_MODEL.model_id}@{CSTR_MODEL.version}:{metric}={exemplar}"
+            for metric, exemplar in sorted(declared.items())
+        ),
+    )
 
 
 def build_validation_report(
@@ -272,18 +374,7 @@ def build_validation_report(
         )
     )
 
-    checks.append(
-        ValidationCheck(
-            name="dimensional_consistency",
-            outcome=ValidationOutcome.PASS,
-            detail=(
-                "concentrations carry mol/m**3, temperatures carry kelvin as "
-                "absolute thermodynamic temperatures, time carries seconds, "
-                "and conversion is a genuine dimensionless concentration ratio"
-            ),
-            establishes=ValidationLevel.DIMENSIONALLY_VALID,
-        )
-    )
+    checks.append(check_metric_dimensions(raw))
 
     checks.append(
         ValidationCheck(

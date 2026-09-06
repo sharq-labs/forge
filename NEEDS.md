@@ -2297,3 +2297,95 @@ The clean fix is a `solve_cell` in `battery/solver.py` returning a
 `ScientificResult` the way `solve_reactor` and the DC solver do, at which point
 `CredibilityEvidenceReport.from_result` applies and this assembly disappears.
 That is a battery-domain change and TASK C forbids it.
+\n
+
+---
+
+## CORE GUARDS ROUND — what a guard needed and could not have
+
+Added by the round that moved seven repeated review findings from the domains
+into the core. Each entry below is a guard that could not be made fully
+fail-closed, with what the complete version would require and cost.
+
+### G2.1 `ValidationCheck` cannot refuse a claimed level, because one lives in a frozen file
+
+**Where** `src/engcore/scientific/results/validation.py`, and
+`src/engcore/domains/thermal/conduction1d/validation.py:193`.
+
+**The rule.** A check that PASSes and declares `establishes=<level>` must carry
+evidence that it compared something: either a `residual` *and* a `tolerance`, or
+a non-empty `evidence` naming what it was compared against. It is stated once,
+on `ValidationCheck.earns_its_level`, and it is not narrower than the truth --
+`DIMENSIONALLY_VALID` is established by comparing a produced metric's dimension
+against the `unit_exemplar` its `ModelOutputSpec` declares, which yields a yes
+or a no rather than a residual that could be small, so a named reference has to
+count as evidence.
+
+**What was wanted.** The refusal in `ValidationCheck.__post_init__`, on the
+model of the `establishes=UNVERIFIED` refusal three lines above it, and for the
+same reason: a value that cannot exist cannot be read inconsistently, whereas a
+rule enforced at the four sites that read levels will be missed at the fifth.
+
+**Why it was not made.** Exactly one construction in the repository fails the
+rule and cannot be edited:
+
+```
+src/engcore/domains/thermal/conduction1d/validation.py:193
+    ValidationCheck(
+        name="dimensional_consistency",
+        outcome=ValidationOutcome.PASS,
+        detail="all metrics carry the dimensionless field unit; ...",
+        establishes=ValidationLevel.DIMENSIONALLY_VALID,
+    )
+```
+
+That file's bytes are pinned by `THERMAL_FROZEN_FILE_DIGESTS` in
+`experiments/thermal_t1/t1_config.py`, and the round that produced this guard
+was forbidden from editing it. Refusing at construction would raise on every
+conduction1d solve. Exempting that one construction would be a guard with a
+hole in it, and the hole would be the shape of the next domain's mistake --
+which is the failure mode this whole round exists to remove, so it was not
+done.
+
+**What the complete version costs.** Three things, in order:
+
+1. Add `evidence=` to that construction, naming `DIFFUSION_MODEL`'s single
+   `ModelOutputSpec` (`u=dimensionless`) -- or better, replace it with the
+   comparison `conduction1d_schemes.py` now performs against the same record.
+   Four lines.
+2. Re-pin the digest in `experiments/thermal_t1/t1_config.py`, and re-run T1 to
+   confirm the *results* are unchanged. They will be: the check's outcome does
+   not move, only the evidence it records.
+3. Move the rule into `__post_init__` and delete
+   `_FROZEN_UNEARNED_LEVEL` from `tests/test_core_guards.py`.
+
+Step 2 is the real cost. It is a deliberate unfreeze of a pinned experiment
+input, which needs whoever owns the freeze to agree that recording *more*
+evidence on a passing check is not a change to what T1 measured.
+
+**What was done instead.** The rule is a property on the core type, and
+`tests/test_core_guards.py` audits every `ValidationCheck` construction in
+`src` against it statically -- so a construction on a branch no test exercises
+is still caught -- plus every check two live solves produce. The frozen site is
+named in that test and the test asserts it is the **only** one, so a second
+cannot appear unnoticed. This is a checked invariant, not a constructor
+refusal, and the difference is that a new domain gets a red test rather than an
+exception at the moment of the mistake.
+
+### G2.2 A produced metric with no declared model output is not checked
+
+**Where** `src/engcore/domains/kinetics/cstr/validation.py`,
+`src/engcore/domains/thermal_models/conduction1d_schemes.py`,
+`src/engcore/domains/electrical/dc/validation.py`.
+
+The CSTR solver reports `t:T_max` -- the time at which the maximum temperature
+occurred -- and `CSTR_MODEL` declares no output it corresponds to, so the
+dimension check has nothing to compare it against. It is now *named* in the
+check's detail rather than silently skipped, but it is not a failure.
+
+Making it one would be a verdict-rule change, which the round forbade, and it
+is not obviously the right answer: the metric is a coordinate reported
+alongside `T:max` rather than a quantity the model claims to produce. The real
+question is whether `ModelOutputSpec` should be able to declare it. Until that
+is answered, every domain's dimension check has a set of metrics it looks at
+and cannot judge, and it now says which.

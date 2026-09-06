@@ -13,7 +13,9 @@ core enforced. A convention has a fifth domain; a rule does not.
 
 from __future__ import annotations
 
+import ast
 import importlib
+import pathlib
 import pkgutil
 
 import pytest
@@ -188,3 +190,258 @@ def test_a_registry_can_enumerate_every_reserved_name_in_the_repository():
         "peukert_capacity_ratio",
         "reduced_debye_temperature",
     } <= reserved
+
+
+# =====================================================================
+# GUARD 2 — a check cannot PASS with a level it did not check for
+# =====================================================================
+#
+# The rule lives on `ValidationCheck.earns_its_level`. Where it is *enforced*
+# is the part this round could not finish, and the reason is recorded here as
+# a failing-if-violated test rather than in a comment nobody reads.
+#
+# `ValidationCheck.__post_init__` cannot refuse a check that fails the rule,
+# because exactly one such construction lives in
+# `src/engcore/domains/thermal/conduction1d/validation.py`, whose bytes are
+# pinned by `experiments/thermal_t1/t1_config.py`. Refusing at construction
+# would break a frozen experiment; exempting that one construction would be a
+# guard with a hole in it, and the next domain would find the hole. So the rule
+# is checked here over every construction in the repository, with that single
+# site named -- and the test asserts it is the ONLY one, so a second cannot
+# appear without this failing.
+
+_LEVEL_NAMES = frozenset(
+    {
+        "DIMENSIONALLY_VALID",
+        "NUMERICALLY_CONVERGED",
+        "ANALYTICALLY_VERIFIED",
+        "BENCHMARK_VALIDATED",
+        "CROSS_SOLVER_VALIDATED",
+        "EXPERIMENTALLY_VALIDATED",
+    }
+)
+
+#: The one construction that cannot satisfy the rule and cannot be edited: a
+#: frozen file, pinned by SHA-256 over its bytes. See NEEDS.md.
+_FROZEN_UNEARNED_LEVEL = (
+    "src/engcore/domains/thermal/conduction1d/validation.py",
+    "dimensional_consistency",
+)
+
+
+def _static_check_constructions():
+    """Every literal ``ValidationCheck(...)`` in ``src``, with its literal args.
+
+    Static rather than by running solvers: a construction on a branch no test
+    exercises is exactly the one worth auditing, and a coverage-shaped guard
+    would miss it.
+    """
+    root = pathlib.Path(__file__).resolve().parent.parent / "src"
+    for path in sorted(root.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_bytes().decode("utf-8"))
+        except SyntaxError:  # pragma: no cover
+            continue
+        relative = path.relative_to(root.parent).as_posix()
+        for node in ast.walk(tree):
+            if not (
+                isinstance(node, ast.Call)
+                and getattr(node.func, "id", None) == "ValidationCheck"
+            ):
+                continue
+            kwargs = {k.arg: k.value for k in node.keywords}
+
+            def literal(key, _kwargs=kwargs):
+                value = _kwargs.get(key)
+                if isinstance(value, ast.Attribute):
+                    return value.attr
+                if isinstance(value, ast.Constant):
+                    return value.value
+                return None
+
+            yield (
+                relative,
+                node.lineno,
+                literal("name"),
+                literal("outcome"),
+                literal("establishes"),
+                {"residual", "tolerance"} <= set(kwargs) or "evidence" in kwargs,
+            )
+
+
+def test_no_check_in_the_repository_claims_a_level_it_did_not_check_for():
+    """A PASS declaring a level must carry evidence that it compared something.
+
+    The CSTR reproduction was an unconditional PASS carrying
+    ``establishes=DIMENSIONALLY_VALID`` beside a sentence describing what the
+    units were. Nothing was compared. The sentence was true and it was still a
+    claimed level, because a claim is what occupies the field a reader consults
+    to find out whether anybody checked.
+    """
+    offenders = [
+        (path, line, name)
+        for path, line, name, outcome, establishes, has_evidence in (
+            _static_check_constructions()
+        )
+        if outcome in ("PASS", "WARNING")
+        and establishes in _LEVEL_NAMES
+        and not has_evidence
+    ]
+    assert [(p, n) for p, _, n in offenders] == [_FROZEN_UNEARNED_LEVEL], (
+        "a validation check claims a level with no residual, no tolerance and "
+        "no reference: " + repr(offenders)
+    )
+
+
+def test_the_rule_itself_is_what_that_audit_applied():
+    """The property, exercised directly, so the audit above is not the rule."""
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationLevel,
+        ValidationOutcome,
+    )
+
+    def check(**kwargs):
+        return ValidationCheck(name="c", outcome=ValidationOutcome.PASS, **kwargs)
+
+    # Claiming nothing is always honest.
+    assert check().earns_its_level
+    # A level with nothing behind it is not.
+    assert not check(
+        establishes=ValidationLevel.DIMENSIONALLY_VALID
+    ).earns_its_level
+    # A residual with no bound is a number nobody bounded.
+    assert not check(
+        establishes=ValidationLevel.NUMERICALLY_CONVERGED, residual=1e-12
+    ).earns_its_level
+    # A bound with nothing measured against it is not a comparison either.
+    assert not check(
+        establishes=ValidationLevel.NUMERICALLY_CONVERGED, tolerance=1e-9
+    ).earns_its_level
+    # Both is a comparison.
+    assert check(
+        establishes=ValidationLevel.NUMERICALLY_CONVERGED,
+        residual=1e-12,
+        tolerance=1e-9,
+    ).earns_its_level
+    # And so is a named reference, for a level no residual can express.
+    assert check(
+        establishes=ValidationLevel.DIMENSIONALLY_VALID,
+        evidence=("model.outputs:u=dimensionless",),
+    ).earns_its_level
+    # A FAIL or NOT_RUN contributes no level whatever it declares, so it is not
+    # asked to prove one.
+    assert ValidationCheck(
+        name="c",
+        outcome=ValidationOutcome.NOT_RUN,
+        establishes=ValidationLevel.DIMENSIONALLY_VALID,
+    ).earns_its_level
+
+
+def test_the_cstr_dimension_check_compares_against_the_model_record():
+    """The fix, exercised: a real comparison rather than a sentence.
+
+    A solve whose metrics match the record's declared units earns the level and
+    names what it was compared against. A solve with nothing comparable earns
+    nothing and says NOT_RUN, rather than passing over an empty set.
+    """
+    from src.engcore.domains.kinetics.cstr.validation import (
+        check_metric_dimensions,
+    )
+    from src.engcore.scientific.results.validation import (
+        ValidationLevel,
+        ValidationOutcome,
+    )
+
+    class _Raw:
+        def __init__(self, values):
+            self.values = values
+
+    honest = check_metric_dimensions(
+        _Raw({"C_A:final": 950.0, "T:final": 312.0, "conversion:final": 0.05})
+    )
+    assert honest.outcome is ValidationOutcome.PASS
+    assert honest.establishes is ValidationLevel.DIMENSIONALLY_VALID
+    assert honest.earns_its_level
+    assert honest.evidence  # names the ModelOutputSpecs it compared against
+
+    empty = check_metric_dimensions(_Raw({}))
+    assert empty.outcome is ValidationOutcome.NOT_RUN
+    assert empty.establishes is None
+    assert empty.earns_its_level
+
+
+def test_every_check_a_live_solve_produces_earns_its_level():
+    """The runtime half: reports as the domains actually build them.
+
+    The static audit cannot see a check whose ``outcome`` or ``establishes`` is
+    computed, and most of them are. This drives two domains end to end and
+    holds every check in the resulting reports to the same rule.
+    """
+    from src.engcore.domains.kinetics.cstr import solve_reactor
+    from src.engcore.domains.kinetics.cstr.problem import (
+        ReactorChemistry,
+        ReactorOperation,
+        ReactorRun,
+    )
+    from src.engcore.domains.electrical.dc import (
+        DCCircuit,
+        DCVoltageSource,
+        ElectricalNode,
+        Resistor,
+        solve_circuit,
+    )
+
+    circuit = DCCircuit(
+        circuit_id="guard2",
+        nodes=(ElectricalNode("gnd", is_reference=True), ElectricalNode("n1")),
+        resistors=(
+            Resistor(
+                component_id="R1",
+                node_a="n1",
+                node_b="gnd",
+                resistance=Quantity(1000.0, "ohm"),
+            ),
+        ),
+        voltage_sources=(
+            DCVoltageSource(
+                component_id="V1",
+                positive_node="n1",
+                negative_node="gnd",
+                voltage=Quantity(5.0, "volt"),
+            ),
+        ),
+    )
+    run = ReactorRun(
+        run_label="guard2",
+        chemistry=ReactorChemistry(
+            k0=Quantity(7.2e10 / 60.0, "1/s"),
+            activation_energy=Quantity(8750.0 * 8.314462618, "J/mol"),
+            heat_of_reaction=Quantity(-5.0e4, "J/mol"),
+            density=Quantity(1000.0, "kg/m**3"),
+            heat_capacity=Quantity(239.0, "J/(kg*K)"),
+        ),
+        operation=ReactorOperation(
+            volume=Quantity(0.1, "m**3"),
+            flow_rate=Quantity(0.1 / 60.0, "m**3/s"),
+            feed_concentration=Quantity(1000.0, "mol/m**3"),
+            feed_temperature=Quantity(350.0, "kelvin"),
+            coolant_temperature=Quantity(290.0, "kelvin"),
+            ua=Quantity(5.0e4 / 60.0, "W/K"),
+            end_time=Quantity(600.0, "second"),
+        ),
+        initial_concentration=Quantity(1000.0, "mol/m**3"),
+        initial_temperature=Quantity(300.0, "kelvin"),
+    )
+
+    reports = [
+        solve_circuit(circuit, run_id="guard2-dc").validation,
+        solve_reactor(run, run_id="guard2").validation,
+    ]
+
+    seen = 0
+    for report in reports:
+        for check in report.checks:
+            seen += 1
+            assert check.earns_its_level, (check.name, check.to_dict())
+    assert seen >= 10

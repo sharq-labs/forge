@@ -651,12 +651,61 @@ class SchemeSolver:
                 tolerance=1e-14,
             )
         )
+        # An unconditional PASS carrying DIMENSIONALLY_VALID and a sentence
+        # about what the units were. Nothing was compared: the sentence was
+        # true, and it was still a claimed level. It compares now, against the
+        # unit each `ModelOutputSpec` on the model record declares -- a
+        # reference outside the arithmetic, which is what makes the level
+        # earned. The values themselves are checked by the three checks above.
+        declared = {
+            spec.metric: spec.unit_exemplar
+            for spec in DIFFUSION_MODEL.outputs
+        }
+        produced = self.extract_metrics(prepared, raw)
+        mismatched = sorted(
+            f"{name} is {value.units!r}, {declared[name.split(':', 1)[0]]!r} "
+            f"declared"
+            for name, value in produced.items()
+            if name.split(":", 1)[0] in declared
+            and not value.is_compatible_with(declared[name.split(":", 1)[0]])
+        )
+        unchecked = sorted(
+            name
+            for name in produced
+            if name.split(":", 1)[0] not in declared
+        )
+        compared = len(produced) - len(unchecked)
         checks.append(
             ValidationCheck(
                 name="dimensional_consistency",
-                outcome=ValidationOutcome.PASS,
-                detail="field carries 'dimensionless'; no absolute scale claimed",
-                establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                outcome=(
+                    ValidationOutcome.PASS
+                    if compared and not mismatched
+                    else ValidationOutcome.FAIL
+                    if mismatched
+                    else ValidationOutcome.NOT_RUN
+                ),
+                detail=(
+                    f"{compared} produced metric(s) checked against the "
+                    f"dimensions {DIFFUSION_MODEL.model_id} declares"
+                    + (f"; mismatched: {mismatched}" if mismatched else "")
+                    + (
+                        f"; not a declared model output and not checked: "
+                        f"{unchecked}"
+                        if unchecked
+                        else ""
+                    )
+                ),
+                establishes=(
+                    ValidationLevel.DIMENSIONALLY_VALID
+                    if compared and not mismatched
+                    else None
+                ),
+                evidence=tuple(
+                    f"{DIFFUSION_MODEL.model_id}@"
+                    f"{DIFFUSION_MODEL.version}:{metric}={unit}"
+                    for metric, unit in sorted(declared.items())
+                ),
             )
         )
         checks.append(

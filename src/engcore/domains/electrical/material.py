@@ -1723,6 +1723,12 @@ class ResistancePropertySolver:
             establishes=(
                 ValidationLevel.DIMENSIONALLY_VALID if passed else None
             ),
+            # The reference the comparison was made against. A dimension match
+            # yields no residual, so this is the only evidence available that
+            # one happened -- and a level with no evidence reads like a claim.
+            evidence=tuple(
+                f"{metric}={unit}" for metric, unit in sorted(declared.items())
+            ),
             detail=(
                 f"{len(produced)} produced metric(s) checked against the "
                 f"dimensions their model records declare"

@@ -506,6 +506,13 @@ class BatteryCellSolver:
             establishes=(
                 ValidationLevel.DIMENSIONALLY_VALID if passed else None
             ),
+            # What was compared against. A dimension match yields no residual
+            # that could be small, so the reference is the only evidence there
+            # is that a comparison happened -- and a level carrying no evidence
+            # at all reads exactly like a claimed one.
+            evidence=tuple(
+                f"{metric}={unit}" for metric, unit in sorted(declared.items())
+            ),
             detail=(
                 f"{len(produced)} produced metrics checked against the "
                 f"dimensions their model records declare"

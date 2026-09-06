@@ -139,6 +139,16 @@ def check_dimensions(metrics: dict[str, Quantity]) -> ValidationCheck:
         outcome=ValidationOutcome.PASS,
         detail=f"{len(metrics)} metrics carry their expected dimensions",
         establishes=ValidationLevel.DIMENSIONALLY_VALID,
+        # This check did compare -- the loop above walks every produced metric
+        # against `expected` and only reaches here having found no offender --
+        # but until now it recorded nothing a reader could go and check the
+        # claim against. A dimension match yields no residual that could be
+        # small, so naming the reference is the only evidence available, and
+        # a level with no evidence at all is indistinguishable from a claimed
+        # one however honest the arithmetic behind it was.
+        evidence=tuple(
+            f"{prefix}={unit}" for prefix, unit in sorted(expected.items())
+        ),
     )
 
 
