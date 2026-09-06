@@ -53,3 +53,62 @@ jobs:
           --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
           --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
+
+  # Does this run anywhere but the author's laptop? The two jobs above answer
+  # "on a GitHub runner with a hand-written apt line". This one answers it from
+  # a bare image with no host state at all, using the same Dockerfile a buyer
+  # would run. See docs/reproduce.md.
+  #
+  # It is expected to FAIL at the FAST tier today, and that failure is the
+  # point: src/engcore/mcp/server.py imports `mcp`, which pyproject.toml does
+  # not declare. Measured, not asserted -- see NEEDS.md, evidence round, B.1.
+  # `continue-on-error` keeps the finding visible without pretending it is
+  # fixed; remove it in the commit that declares the dependency.
+  reproduce:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t crafty-repro .
+      - run: docker run --rm crafty-repro
+
+  # The benchmark is scored on the DEVELOPMENT split only. The 600-case
+  # hold-out stays sealed; score_hard.py exits non-zero if this job ever tries
+  # to score it without --open-holdout, which is the enforcement working rather
+  # than a CI failure. benchmarks/hard/README.md, "The hold-out split".
+  benchmark:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - name: split is reproducible from the seed and the rule
+        run: |
+          python benchmarks/hard/split_hard.py --cases benchmarks/hard/cases_hard \
+            --out /tmp/split_check.json
+          python - <<'EOF'
+          import json
+          a = json.load(open("benchmarks/hard/split_hard.json"))
+          b = json.load(open("/tmp/split_check.json"))
+          for k in ("rule_id", "seed", "case_set_digest", "dev_digest", "holdout_digest"):
+              assert a[k] == b[k], (k, a[k], b[k])
+          print("split reproduced:", a["n_dev"], "dev +", a["n_holdout"], "hold-out")
+          EOF
+      - name: the seal refuses the full set without --open-holdout
+        run: |
+          if python benchmarks/hard/score_hard.py --src src \
+               --cases benchmarks/hard/cases_hard --workers 4 --split all; then
+            echo "SEAL BROKEN: --split all succeeded without --open-holdout"; exit 1
+          fi
+      - run: >
+          python benchmarks/hard/score_hard.py --src src
+          --cases benchmarks/hard/cases_hard --workers 4 --split dev
+          --results /tmp/results_dev.json
+      - run: >
+          python benchmarks/hard/score_hard.py --src src
+          --cases benchmarks/hard/cases_battery --workers 4
+          --results /tmp/results_battery.json
