@@ -129,30 +129,39 @@ scored exactly right.**
 
 ## Baselines
 
-| Metric | after ratings round | after convection round |
-|---|---|---|
-| Catch rate | 1623/1643 (98.8%) | **1632/1658 (98.4%)** |
-| False accept | 20/1643 (1.22%) | **26/1658 (1.57%)** |
-| False reject | 0/357 (0.0%) | **1/342 (0.29%)** |
-| Exact verdict match | 1806/2000 (90.3%) | **1821/2000 (91.0%)** |
+| Metric | after ratings round | after convection round | after geometry relabel |
+|---|---|---|---|
+| Catch rate | 1623/1643 (98.8%) | 1632/1658 (98.4%) | **1647/1658 (99.3%)** |
+| False accept | 20/1643 (1.22%) | 26/1658 (1.57%) | **11/1658 (0.66%)** |
+| False reject | 0/357 (0.0%) | 1/342 (0.29%) | **1/342 (0.29%)** |
+| Exact verdict match | 1806/2000 (90.3%) | 1821/2000 (91.0%) | **1836/2000 (91.8%)** |
 
-**Both false-accept columns are dominated by cases the tool is right about.**
-`geometry_conflict` draws its factor from {3, 10, 0.1, 30} and 3 is *exactly*
-the sphere's shape factor, which is the number `GEOMETRY_AGREEMENT_FACTOR` was
-derived from and where the bound is inclusive on purpose. Admitting those is
-correct and the labels are wrong. This draw happened to produce 15 of them
-where the previous produced 8:
+**The first two false-accept columns were dominated by cases the tool is right
+about, and the third column is what happens when that is corrected.**
+`geometry_conflict` drew its factor from {3, 10, 0.1, 30}, and 3 is *exactly*
+the sphere's shape factor — the number `GEOMETRY_AGREEMENT_FACTOR` was derived
+from, and where the bound is inclusive on purpose. Admitting a body whose V/A_s
+is exactly L_c/3 is correct; those labels were wrong. This draw happened to
+produce 15 of them where the previous produced 8:
 
-| | after ratings | after convection |
-|---|---|---|
-| False accepts, total | 20 | 26 |
-| of which `geometry_conflict` at exactly 3× (correct to admit) | 8 | 15 |
-| **remaining** | **12** | **11** |
+| | after ratings | after convection | after relabel |
+|---|---|---|---|
+| False accepts, total | 20 | 26 | 11 |
+| of which `geometry_conflict` at exactly 3× (correct to admit) | 8 | 15 | 0 |
+| **remaining, and real** | **12** | **11** | **11** |
 
-So the real false accepts went **down**, 12 to 11, and the corresponding catch
-rates are 99.27% and **99.34%**. Fixing the labels means drawing the geometry
-factor at 3·(1±margin) rather than exactly 3; it is not done here because it
-would move the metrics for a reason unrelated to this round.
+The shaper now draws the factor from {3·1.05, 1/(3·1.05), 30, 1/30} — strictly
+outside the tolerance, two just past it and two an order beyond, one pair on
+each side — and the boundary value is excluded in the shaper's docstring so it
+cannot be reintroduced. The list stays four elements long so `rng.choice`
+consumes the same draw and every non-geometry case is byte-identical to the
+previous set: **only the 124 `geometry_conflict` cases changed.**
+
+**The real false accepts did not move: 11 before, 11 after.** The headline went
+1.57% → 0.66% because 15 mislabelled cases left the numerator, not because the
+tool improved. What remains is 8 `band_out` (including two drawn a full 20%
+outside the band, so these are genuine misses rather than rounding), 2
+`adv_unsound:small_overshoot` and 1 `runaway`.
 
 **The one false reject is a real one, and the tool is wrong about it.**
 `S00709` is `rating_power_in@0.002`: the resistor dissipates 3.4886 W at the
