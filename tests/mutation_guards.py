@@ -35,10 +35,13 @@ modules in this directory for the same reason.
 
 On writing a mutation, and why this file verifies its own mutations
 -------------------------------------------------------------------
-The first attempt at `G2b` inserted a comment and left the `evidence=` argument
-in place. The suite stayed green, which looked exactly like an unchecked guard
-and was not: nothing had been removed. **A green result is a claim about your
-mutation before it is a claim about your check.**
+The first attempt at `G2b` **inserted a comment without removing anything**,
+and left the `evidence=` argument in place. The suite stayed green. A green
+result in this harness means "that guard is decoration", and this one was
+indistinguishable from that: **it was one keystroke from being reported as a
+real gap in the guards, and the gap did not exist.** Nothing had been removed.
+**A green result is a claim about your mutation before it is a claim about your
+check.**
 
 That is the same failure one level up. A check that cannot fail is the thing
 this harness exists to find; a *mutation* that changes nothing is a verifier

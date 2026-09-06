@@ -30,6 +30,40 @@ jobs:
       # each memoizing module on one worker; see the same document.
       - run: python -m pytest -m "not expensive" -q -n 4 --dist loadfile
 
+  # A check that depends on being remembered is a check that will be forgotten.
+  # That is the argument tests/mutation_guards.py itself makes about adapters --
+  # an admission layer nobody is forced through is one somebody routes around --
+  # and it applies hardest to the harness. It ran once, by hand, in the round
+  # that wrote it, and it is the only thing in this repository that can tell a
+  # guard from a sentence about a guard. This job is what makes it run again.
+  #
+  # It copies src/, tests/ and pyproject.toml into a throwaway tree, removes one
+  # guard from the copy as if it had never been written, and runs
+  # tests/test_core_guards.py against it -- sixteen times, once per guard. Every
+  # mutation must turn that suite red. The harness exits non-zero if any does
+  # not, and a GREEN names a guard that is decoration. Nothing in the workspace
+  # is written; the mutant trees go under RUNNER_TEMP.
+  #
+  # No `if: github.event_name != 'pull_request'`, unlike the three jobs below.
+  # A guard stops guarding in a pull request, not in a push to main, so the pull
+  # request is the only place this can still be acted on before it is history.
+  # It costs about ninety seconds.
+  mutations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # `.[dev,mcp]`, not `.[dev]`: the whole of tests/ is copied into each
+      # mutant tree and collected there, so the same reasoning as the FAST job
+      # applies -- a skipped test proves nothing about the guard it covers.
+      - run: pip install -e ".[dev,mcp]"
+      # No ngspice. The one guard test that reaches a provider drives
+      # tests/nonfinite_provider.py through sys.executable, by design: the
+      # thing under test is the admission layer, not the simulator.
+      - run: python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/mutations"
+
   scientific:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
