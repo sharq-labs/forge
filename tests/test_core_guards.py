@@ -840,3 +840,181 @@ def test_a_problem_that_asks_for_nothing_is_nobody_s():
         checked += 1
         assert not solver.supports(empty), name
     assert checked >= 6
+
+
+# =====================================================================
+# GUARD 5 — provenance cannot name what did not run
+# =====================================================================
+#
+# This is the guard the round called the hardest to make fail-closed, and it
+# is: the record is built after the fact and has no direct view of execution.
+# What is enforced:
+#
+#   - a record carrying bindings may not name a SOLVER no binding covers
+#     (a model may be named unbound -- see the test for why);
+#   - `ExecutionBinding.from_execution` reads the solver identity off the
+#     prepared solve, so a binding cannot name a solver that did not prepare
+#     the work, and refuses a model the prepared problem does not name.
+#
+# What is NOT enforced: that a `RawSolverOutput` handed to `from_execution`
+# came from a real solve. NEEDS.md G5.1 has what that would cost.
+
+
+def test_provenance_refuses_a_solver_no_binding_covers():
+    """The battery defect, in the core, as a rule.
+
+    A solver's only job is to execute. Naming one in a record that states what
+    ran is a claim that it ran, and the binding is where a record says what it
+    ran.
+    """
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.ir.problem import ModelReference
+    from src.engcore.scientific.results.provenance import (
+        ExecutionBinding,
+        ProvenanceRecord,
+    )
+    from src.engcore.scientific.solvers.protocol import SolverIdentity
+
+    binding = ExecutionBinding(
+        model=ModelReference("m.alpha", "1.0"),
+        solver=SolverIdentity("s.that.ran", "1.0"),
+    )
+    with pytest.raises(ScientificCoreError, match="no binding covers"):
+        ProvenanceRecord(
+            run_id="g5",
+            solvers=(("s.that.ran", "1.0"), ("s.that.did.not", "1.0")),
+            bindings=(binding,),
+        )
+    # The bound one alone is fine, and so is omitting the set entirely.
+    assert ProvenanceRecord(
+        run_id="g5b", solvers=(("s.that.ran", "1.0"),), bindings=(binding,)
+    ).solvers == (("s.that.ran", "1.0"),)
+    assert ProvenanceRecord(run_id="g5c", bindings=(binding,)).solvers == (
+        ("s.that.ran", "1.0"),
+    )
+
+
+def test_a_model_may_be_named_without_a_binding_and_a_solver_may_not():
+    """The asymmetry is the point, not an oversight.
+
+    A model can be named by a result without any solver having executed it: its
+    assumptions travel with the record and its validity was assessed. That is
+    partial knowledge and it is honest. A solver has nothing to contribute
+    except execution, so naming one says it executed.
+    """
+    from src.engcore.scientific.ir.problem import ModelReference
+    from src.engcore.scientific.results.provenance import (
+        ExecutionBinding,
+        ProvenanceRecord,
+    )
+    from src.engcore.scientific.solvers.protocol import SolverIdentity
+
+    record = ProvenanceRecord(
+        run_id="g5d",
+        models=(("m.alpha", "1.0"), ("m.assessed.only", "1.0")),
+        bindings=(
+            ExecutionBinding(
+                model=ModelReference("m.alpha", "1.0"),
+                solver=SolverIdentity("s", "1.0"),
+            ),
+        ),
+    )
+    assert len(record.models) == 2
+    assert record.executed_models == (("m.alpha", "1.0"),)
+    assert record.bindings_for_model("m.assessed.only") == ()
+
+
+def test_a_binding_from_an_execution_cannot_name_another_solver():
+    """The identity is read off the prepared solve, not accepted as an argument."""
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.ir.problem import ModelReference, ScientificProblem
+    from src.engcore.scientific.results.provenance import ExecutionBinding
+    from src.engcore.scientific.solvers.protocol import (
+        ConvergenceState,
+        PreparedSolve,
+        RawSolverOutput,
+        SolverIdentity,
+    )
+
+    problem = ScientificProblem(
+        problem_id="p", models=(ModelReference("m.alpha", "1.0"),)
+    )
+    prepared = PreparedSolve(
+        problem=problem, solver=SolverIdentity("s.that.ran", "1.0")
+    )
+    raw = RawSolverOutput(convergence=ConvergenceState.NOT_APPLICABLE)
+
+    binding = ExecutionBinding.from_execution(
+        prepared, raw, model=ModelReference("m.alpha", "1.0")
+    )
+    assert binding.solver.key == ("s.that.ran", "1.0")
+
+    # A model the problem was not about cannot be attributed this execution.
+    with pytest.raises(ScientificCoreError, match="does not name model"):
+        ExecutionBinding.from_execution(
+            prepared, raw, model=ModelReference("m.unrelated", "1.0")
+        )
+
+    # And neither object may be something other than what prepare/solve return.
+    with pytest.raises(ScientificCoreError, match="PreparedSolve"):
+        ExecutionBinding.from_execution(
+            object(), raw, model=ModelReference("m.alpha", "1.0")
+        )
+    with pytest.raises(ScientificCoreError, match="RawSolverOutput"):
+        ExecutionBinding.from_execution(
+            prepared, object(), model=ModelReference("m.alpha", "1.0")
+        )
+
+
+def test_the_battery_march_runs_the_solver_it_names():
+    """The live case. Before this, provenance named a solver that did nothing.
+
+    ``run_self_heating_discharge`` called ``evaluate_step`` directly, so
+    ``BatteryCellSolver.validate`` never ran, its three checks reached no report
+    anywhere, and the transport still named that solver among the participants.
+    """
+    from src.engcore.domains.battery import models as bmdl
+    from src.engcore.domains.thermal_models import lumped as lump
+
+    from tests.mcp.test_battery_boundary import example_battery_payload
+    from src.engcore.mcp.battery import run_battery_case
+
+    outcome = run_battery_case(example_battery_payload())
+    march, report = outcome.run, outcome.report
+
+    # Every binding was produced by an execution, and covers both sub-solvers.
+    assert march.bindings
+    bound_solvers = {b.solver.key for b in march.bindings}
+    assert len(bound_solvers) == 2
+    bound_models = {b.model.key for b in march.bindings}
+    assert {m.key for m in bmdl.BATTERY_MODELS} <= bound_models
+    assert lump.LUMPED_CAPACITY_MODEL.key in bound_models
+
+    # The provenance derives from them and names no other solver.
+    assert report.provenance.solvers == tuple(sorted(bound_solvers))
+    assert report.provenance.executed_solvers == report.provenance.solvers
+    # Every named solver is one a recorded execution is attributed to.
+    assert set(report.provenance.solvers) <= {
+        b.solver.key for b in report.provenance.bindings
+    }
+
+    # The cell solver's three checks now exist and reach the report.
+    cell_checks = {c.name for c in march.steps[-1].cell_validation.checks}
+    assert cell_checks == {
+        "metric_dimensions",
+        "coulomb_balance_residual",
+        "rint_terminal_residual",
+    }
+    assert cell_checks <= {c.name for c in report.validation}
+
+
+def test_every_marched_step_carries_its_own_cell_report():
+    """Not just the last one: a check that stopped passing mid-march is a finding."""
+    from tests.mcp.test_battery_boundary import example_battery_payload
+    from src.engcore.mcp.battery import run_battery_case
+
+    march = run_battery_case(example_battery_payload()).run
+    assert len(march.steps) > 1
+    for step in march.steps:
+        assert step.cell_validation.checks, step.index
+        assert step.thermal_validation.checks, step.index

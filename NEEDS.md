@@ -2477,6 +2477,64 @@ will cost exactly one migration the first time someone wants that solver
 resolvable. `tests/test_core_guards.py` names it and asserts it is the only
 adapter left in that position.
 
+### G5.1 A binding still cannot prove the execution it describes
+
+**Where** `src/engcore/scientific/results/provenance.py`.
+
+`ExecutionBinding.from_execution(prepared, raw, model=...)` takes the two
+objects that exist *because* the work happened, reads the solver identity off
+`prepared.solver` rather than accepting it, and refuses a model the prepared
+problem does not name. That removes the accident this round was written for: a
+transport boundary assembling participants from what it *believes* ran.
+
+It does not remove the lie. `RawSolverOutput` is an ordinary dataclass and a
+caller can construct one. `PreparedSolve` likewise. Someone determined to
+record work that did not happen can still do it, in about four lines.
+
+**What a real guarantee needs.** One of three, in increasing cost:
+
+1. **An execution token.** `solve()` returns a `RawSolverOutput` carrying an
+   opaque token minted by the solver and keyed to the `PreparedSolve` it was
+   given; `from_execution` verifies it. Cheap to write and easy to defeat by
+   anyone reading the source, so it catches accidents and honest bugs and
+   nothing else. That is most of the value, and it is roughly a day.
+
+2. **The solver as the only producer.** Make `RawSolverOutput.__init__`
+   private to the protocol module and have solvers obtain instances through a
+   factory that stamps `prepared`'s identity. Defeats casual construction
+   entirely but changes the signature every adapter and every test builds raw
+   output through -- roughly 60 call sites in `src` and `tests`.
+
+3. **A signed run log.** The only version that survives an adversary: the
+   solver appends to a per-run log keyed by `run_id`, and `ProvenanceRecord`
+   refuses a binding with no corresponding entry. This is a persistence
+   feature, not a dataclass change, and it interacts with the campaign
+   persistence layer that already exists.
+
+**The recommendation is (1) plus the rule already shipped.** The threat this
+guard is really for is a boundary that assembles provenance from belief, not a
+forger; that boundary is now structurally unable to name an unbound solver, and
+a token would close the remaining accidental path -- a solver refactored to
+return output it did not produce.
+
+### G5.2 The battery march still returns steps rather than a ScientificResult
+
+NEEDS C.6 asked for a `solve_cell` in `battery/solver.py` returning a
+`ScientificResult`, so `CredibilityEvidenceReport.from_result` would apply and
+`engcore/mcp/battery.py` would stop assembling a provenance record by hand.
+
+Half of that is now unnecessary: the march runs the full solver path, carries
+`ExecutionBinding`s produced by those executions, and the boundary builds its
+record from them rather than from a list of participants it wrote out. The
+`models` and `solvers` fields are derived, and the core refuses a solver the
+bindings do not cover.
+
+What remains is that a marched run is still not a `ScientificResult`: it has
+many steps and one result record describes one solve. That is a real modelling
+question -- is a march one result with a trajectory, or N results with a parent
+run id? -- and it is bigger than the plumbing C.6 described. Recorded so C.6 is
+not read as still open in full.
+
 ### G2.2 A produced metric with no declared model output is not checked
 
 **Where** `src/engcore/domains/kinetics/cstr/validation.py`,
