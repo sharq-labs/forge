@@ -20,6 +20,7 @@ from ..ir.problem import ModelReference
 from ..realizations.definition import RealizationReference
 from ..serialization import require_schema, require_schema_any, schema_string
 from ..solvers.protocol import SolverIdentity
+from .immutable import detach, freeze
 from ..units.quantity import Quantity
 
 #: Bumped for ``bindings``. A record carrying only participant *sets* cannot
@@ -236,14 +237,23 @@ class ProvenanceRecord:
                     f"provenance input {name!r} must be a Quantity — provenance "
                     f"never records unit-stripped values"
                 )
-        object.__setattr__(self, "inputs", inputs)
+        # Frozen rather than merely copied. ``frozen=True`` protects the
+        # attribute and not the object behind it, so `provenance.inputs[...] = 5`
+        # was accepted on every record this platform has ever produced —
+        # including one whose whole purpose is to say what a result was
+        # computed from. See ``results.immutable``.
+        object.__setattr__(self, "inputs", freeze(inputs))
         object.__setattr__(
-            self, "tolerances", {str(k): float(v) for k, v in self.tolerances.items()}
+            self,
+            "tolerances",
+            freeze({str(k): float(v) for k, v in self.tolerances.items()}),
         )
         object.__setattr__(
-            self, "environment", {str(k): str(v) for k, v in self.environment.items()}
+            self,
+            "environment",
+            freeze({str(k): str(v) for k, v in self.environment.items()}),
         )
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "metadata", freeze(self.metadata))
 
     # ---- derived views over the canonical bindings ----------------------
     @property
@@ -350,13 +360,26 @@ class ProvenanceRecord:
             # is derived, and writing it would create the second source of
             # truth this contract exists to remove.
             "bindings": [b.to_dict() for b in self.bindings],
-            "inputs": {k: self.inputs[k].to_dict() for k in sorted(self.inputs)},
+            "inputs": {
+                k: v.to_dict() for k, v in sorted(self.inputs.items())
+            },
             "assumptions": list(self.assumptions),
+            # Not detached, and provably not needing to be: __post_init__
+            # coerces every value here through ``float`` and ``str``, so these
+            # two mappings hold only scalars and a fresh outer dict shares
+            # nothing. ``metadata`` below is the free-form one and is the only
+            # place a nested alias could have been.
             "tolerances": dict(sorted(self.tolerances.items())),
             "environment": dict(sorted(self.environment.items())),
             "timestamp": self.timestamp,
             "parent_run_id": self.parent_run_id,
-            "metadata": dict(sorted(self.metadata.items(), key=lambda kv: kv[0])),
+            # Detached at every depth, in one pass. ``to_dict`` used to build
+            # a fresh outer dict and hand out the record's own nested objects,
+            # so editing a payload edited the record it came from.
+            "metadata": {
+                key: detach(value)
+                for key, value in sorted(self.metadata.items(), key=lambda kv: kv[0])
+            },
         }
 
     @classmethod

@@ -19,6 +19,7 @@ from src.engcore.domains.electrical import material as mat
 from src.engcore.domains.thermal_models import lumped as lump
 from src.engcore.scientific.errors import InvalidScientificProblem
 from src.engcore.scientific.ir.problem import ScientificProblem
+from src.engcore.scientific.ir.variables import ScientificParameter
 from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.results.validation import ValidationOutcome
 from src.engcore.scientific.solvers.protocol import ConvergenceState
@@ -571,3 +572,141 @@ def test_a_coupled_run_can_converge_and_still_leave_the_material_band():
     for iteration in run.iterations:
         for result in iteration.results:
             assert result.validation.status is not ValidationOutcome.FAIL
+
+
+# =====================================================================
+# F03 — a caller parameter cannot be read as a derived quantity
+# =====================================================================
+
+def _with_parameters(problem, values):
+    """The same problem with extra caller parameters, through public APIs only."""
+    payload = problem.to_dict()
+    payload["parameters"].extend(
+        ScientificParameter(name=name, value=value).to_dict()
+        for name, value in values.items()
+    )
+    return ScientificProblem.from_dict(payload)
+
+
+def _conductor(**limits):
+    return mat.TemperatureDependentConductor(
+        component_id="R1",
+        reference_resistance=Quantity(10.0, "ohm"),
+        temperature_coefficient=Quantity(0.00393, "1/kelvin"),
+        reference_temperature=Quantity(293.15, "kelvin"),
+        limits=mat.MaterialLimits(**limits),
+    )
+
+
+def test_f03_a_caller_parameter_cannot_stand_in_for_a_failed_derivation():
+    """A conductor that declared no band cannot be handed the excursion ratio.
+
+    Without ``linearization_band`` the excursion ratio cannot be formed, so
+    ``linearization_excursion_ratio`` is UNKNOWN. Context assembly started from
+    every caller parameter and overwrote only what it derived, so a caller
+    parameter of the same name survived the failure of the derivation it was
+    named after and was read as evidence this domain had computed.
+    """
+    conductor = _conductor(
+        maximum_operating_temperature=Quantity(400.0, "kelvin")
+    )
+    problem = mat.build_resistance_problem(conductor)
+    temperature = Quantity(320.0, "kelvin")
+
+    honest = mat.assess_rated_resistance_validity(problem, temperature)
+    assert mat.LINEARIZATION_EXCURSION_RATIO in honest.unknown
+
+    forged = mat.assess_rated_resistance_validity(
+        _with_parameters(
+            problem,
+            {mat.LINEARIZATION_EXCURSION_RATIO: Quantity(0.1, "dimensionless")},
+        ),
+        temperature,
+    )
+    assert mat.LINEARIZATION_EXCURSION_RATIO in forged.unknown
+    assert mat.LINEARIZATION_EXCURSION_RATIO not in forged.satisfied
+    assert forged == honest
+
+
+def test_f03_a_caller_parameter_cannot_supply_an_absent_temperature():
+    """``temperature`` is reserved too, and is protected twice.
+
+    It is a declared variable of a resistance problem, so the core already
+    refuses a parameter that shadows it. The reservation is the second layer
+    and holds on a problem that declares no such variable — which is exactly
+    what a hand-built or re-serialized record can be.
+    """
+    conductor = _conductor(
+        maximum_operating_temperature=Quantity(400.0, "kelvin")
+    )
+    problem = mat.build_resistance_problem(conductor)
+
+    with pytest.raises(InvalidScientificProblem, match="duplicate name"):
+        _with_parameters(problem, {mat.TEMPERATURE: Quantity(320.0, "kelvin")})
+
+    payload = problem.to_dict()
+    payload["variables"] = [
+        v for v in payload["variables"] if v["name"] != mat.TEMPERATURE
+    ]
+    payload["parameters"].append(
+        ScientificParameter(
+            name=mat.TEMPERATURE, value=Quantity(320.0, "kelvin")
+        ).to_dict()
+    )
+    forged = ScientificProblem.from_dict(payload)
+
+    honest = mat.assess_rated_resistance_validity(problem, None)
+    assert mat.TEMPERATURE in honest.unknown
+    assert mat.assess_rated_resistance_validity(forged, None) == honest
+
+
+@pytest.mark.parametrize("declared", [True, False])
+def test_f03_colliding_with_every_assembled_name_changes_no_verdict(declared):
+    """Not one name and not the ones that were noticed: all of them.
+
+    Run against a conductor declaring every limit and one declaring only the
+    rating. The second is the case that matters — two of the four rated groups
+    cannot be derived there, and the old assembly left the caller's values in
+    the keys they vacated.
+    """
+    conductor = _conductor(
+        linearization_band=Quantity(50.0, "kelvin"),
+        maximum_operating_temperature=Quantity(400.0, "kelvin"),
+        debye_temperature=Quantity(343.0, "kelvin"),
+    ) if declared else _conductor(
+        maximum_operating_temperature=Quantity(400.0, "kelvin")
+    )
+    problem = mat.build_resistance_problem(conductor)
+    temperature = Quantity(320.0, "kelvin")
+
+    declared_variables = {v.name for v in problem.variables}
+    collisions = {
+        name: Quantity(0.5, "dimensionless")
+        for name in mat.ASSEMBLED_QUANTITIES - declared_variables
+    }
+    assert len(collisions) == 4
+    tampered = _with_parameters(problem, collisions)
+
+    assert mat.assess_rated_resistance_validity(tampered, temperature) == (
+        mat.assess_rated_resistance_validity(problem, temperature)
+    )
+    assert mat.assess_resistance_validity(tampered, temperature) == (
+        mat.assess_resistance_validity(problem, temperature)
+    )
+
+
+def test_f03_every_derivable_name_is_reserved():
+    """The registry cannot fall behind the assembler."""
+    conductor = _conductor(
+        linearization_band=Quantity(50.0, "kelvin"),
+        maximum_operating_temperature=Quantity(400.0, "kelvin"),
+        debye_temperature=Quantity(343.0, "kelvin"),
+    )
+    problem = mat.build_resistance_problem(conductor)
+    derivable = set(
+        mat.derived_material_quantities(
+            problem.validity_context(), temperature=Quantity(320.0, "kelvin")
+        )
+    )
+    assert derivable
+    assert derivable <= mat.ASSEMBLED_QUANTITIES

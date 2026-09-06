@@ -36,9 +36,11 @@ from src.engcore.domains.thermal_models import lumped as lump
 from src.engcore.domains.thermal_models import lumped_reference as ref
 from src.engcore.mcp import (
     CredibilityVerdict,
+    derive_verdict,
     example_electrothermal_payload,
     run_electrothermal_case,
 )
+from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
@@ -426,19 +428,43 @@ def test_the_reference_refuses_coefficients_it_cannot_bound(kwargs, reason):
 # End to end
 # =====================================================================
 
-def test_a_real_applicable_electrothermal_run_is_supported():
+def test_a_real_applicable_electrothermal_run_earns_its_level():
     """The consequence the whole task exists for, at the outermost boundary.
 
-    Before this round the same payload produced INSUFFICIENT_EVIDENCE — in
-    domain, converged, nothing failed, nothing established. The verdict rules
-    are unchanged; what changed is that a check now establishes something.
+    Before this round the same payload attained **nothing** — in domain,
+    converged, nothing failed, nothing established — and no verdict rule could
+    rescue that. What changed is that a check now establishes something.
+
+    **The report's own verdict is no longer the way to say so**, and that is a
+    later change rather than a retreat from this one. The credibility report is
+    now assembled over the dependency closure of the values it reports, so it
+    covers the electrical models too, and nothing in this payload declares a
+    resistor's rated dissipation or a source's current limit. Those gaps are
+    real and the report is right to carry them; they are also nothing to do
+    with the lumped model's verification, which is what this module is about.
+
+    So the claim is made where it lives: the level is attained, the thermal
+    model is in domain, no check failed or was skipped — and the same verdict
+    function, over the thermal evidence alone, returns SUPPORTED. The level is
+    genuinely earned, and the report's INSUFFICIENT_EVIDENCE is entirely
+    somebody else's missing declaration.
     """
     outcome = run_electrothermal_case(
         example_electrothermal_payload(), run_id="verification-supported"
     )
     report = outcome.reports[0]
-    assert report.verdict is CredibilityVerdict.SUPPORTED
     assert report.attained_levels == frozenset(
         {ValidationLevel.ANALYTICALLY_VERIFIED}
     )
     assert report.failed_checks == () and report.not_run_checks == ()
+
+    thermal = next(
+        record for record in report.validity
+        if record.model_id == lump.LUMPED_CAPACITY_MODEL.model_id
+    )
+    assert thermal.status is ValidityStatus.IN_DOMAIN
+    assert derive_verdict(
+        validity=(thermal,),
+        validation=report.validation,
+        coupling=report.coupling,
+    ) is CredibilityVerdict.SUPPORTED

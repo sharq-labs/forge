@@ -27,6 +27,7 @@ from ...scientific.ir.variables import (
 from ...scientific.models.definition import ValidityAssessment
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
+from ..derived_context import assembled_validity_context, caller_declared
 from . import context as ctx
 from . import models as mdl
 
@@ -598,24 +599,39 @@ def battery_validity_context(
     declaration reaches a condition through this path or any other.
 
     Omitting an argument omits every quantity that needed it. It never
-    substitutes one.
+    substitutes one — and since F03 that is structural rather than intended.
+    The state coordinates and every derived group are a **reserved namespace**,
+    stripped from the caller's context before anything is assembled, so a
+    caller parameter called ``cell_temperature`` or ``peukert_capacity_ratio``
+    cannot occupy the key an absent argument or a failed derivation left empty.
+    Assembly used to start from the caller's parameters and overwrite only what
+    it managed to compute, which meant precisely the opposite.
     """
-    base = problem.validity_context()
-    if state_of_charge is not None:
-        base[ctx.STATE_OF_CHARGE] = state_of_charge
-    if discharge_current is not None:
-        base[ctx.DISCHARGE_CURRENT] = discharge_current
-    if cell_temperature is not None:
-        base[ctx.CELL_TEMPERATURE] = cell_temperature
-    base.update(
-        ctx.derived_cell_quantities(
-            base,
-            state_of_charge=state_of_charge,
-            discharge_current=discharge_current,
-            cell_temperature=cell_temperature,
-        )
+    declared = caller_declared(
+        problem.validity_context(), ctx.ASSEMBLED_QUANTITIES
     )
-    return base
+    state = {
+        name: value
+        for name, value in (
+            (ctx.STATE_OF_CHARGE, state_of_charge),
+            (ctx.DISCHARGE_CURRENT, discharge_current),
+            (ctx.CELL_TEMPERATURE, cell_temperature),
+        )
+        if value is not None
+    }
+    return assembled_validity_context(
+        declared=declared,
+        assembled={
+            **state,
+            **ctx.derived_cell_quantities(
+                {**declared, **state},
+                state_of_charge=state_of_charge,
+                discharge_current=discharge_current,
+                cell_temperature=cell_temperature,
+            ),
+        },
+        reserved=ctx.ASSEMBLED_QUANTITIES,
+    )
 
 
 def _assess(

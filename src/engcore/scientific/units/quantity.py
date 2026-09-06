@@ -26,6 +26,7 @@ Invariants:
 from __future__ import annotations
 
 import math
+import operator as _operator
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -191,13 +192,56 @@ class Quantity:
     # ---- minimal arithmetic -------------------------------------------
     # Enough for constraint checks and adapters; full quantity algebra stays
     # in the backend and is not part of this contract.
+    def _combine(self, other: "Quantity", operator, *, context: str) -> "Quantity":
+        """Addition and subtraction, performed by the backend.
+
+        **This used to be converted-magnitude arithmetic** — convert the right
+        operand into the left's unit, apply the operator to the two floats, and
+        keep the left's unit. That is correct for every ratio-scale unit and
+        wrong for every interval one, and the wrongness is not small:
+        ``Q(30, 'degC') - Q(20, 'degC')`` returned ``10 degC``, which converts
+        to **283.15 K** rather than to a 10 K difference. On an interval scale
+        the difference of two absolute values is not an absolute value; it
+        lives on a different unit, and the backend has one. The same rule made
+        ``Q(30, 'degC') + Q(20, 'degC')`` return ``50 degC`` — not a wrong
+        number but a meaningless one, since adding two absolute temperatures
+        has no answer to give.
+
+        So the operation is delegated, which is this module's stated design
+        position rather than a new one: *"we do not reimplement dimensional
+        analysis. Pint owns the unit algebra; this module owns the contract."*
+        Offset-unit and delta-unit semantics come back from the backend intact
+        — a Celsius difference lands on ``delta_degree_Celsius``, a delta added
+        to an absolute stays absolute, and absolute-plus-absolute raises.
+
+        What this module keeps is the contract around it. The dimensional check
+        is made **first**, so an incompatible pair still fails with this
+        package's own :class:`UnitCompatibilityError` naming the operation,
+        rather than with whatever the backend would have said; and the result
+        is rebuilt through :class:`Quantity`, so it is normalised and finite
+        like every other value here.
+
+        Ratio-scale behaviour is unchanged, because pint's own rule there is
+        already the left operand's unit: ``1 m + 100 cm`` is still ``2 m``.
+        """
+        self.require_compatible(other, context=context)
+        try:
+            combined = operator(
+                registry().Quantity(self.magnitude, self.units),
+                registry().Quantity(other.magnitude, other.units),
+            )
+        except Exception as exc:  # pint raises several distinct types
+            raise UnitCompatibilityError(
+                f"cannot perform {context} on {self.units!r} and "
+                f"{other.units!r}: {exc}"
+            ) from exc
+        return Quantity(float(combined.magnitude), str(combined.units))
+
     def __add__(self, other: "Quantity") -> "Quantity":
-        self.require_compatible(other, context="addition")
-        return Quantity(self.magnitude + other.to(self.units).magnitude, self.units)
+        return self._combine(other, _operator.add, context="addition")
 
     def __sub__(self, other: "Quantity") -> "Quantity":
-        self.require_compatible(other, context="subtraction")
-        return Quantity(self.magnitude - other.to(self.units).magnitude, self.units)
+        return self._combine(other, _operator.sub, context="subtraction")
 
     def __mul__(self, other: "Quantity | float") -> "Quantity":
         if isinstance(other, Quantity):

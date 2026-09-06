@@ -118,6 +118,7 @@ from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from ...scientific.results.result import ScientificResult
+from ...scientific.results.validation import ValidationOutcome
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.twins.definition import (
@@ -142,10 +143,12 @@ __all__ = [
     "FixedPointCouplingPlan",
     "TORN_ENDPOINT_SCHEMA",
     "TornEndpoint",
+    "TransportRefused",
     "build_coupled_twin",
     "coupled_dependencies",
     "coupled_problems",
     "cycle_edges",
+    "dependency_closure",
     "edge_key",
     "execution_order",
     "is_ratio_scale",
@@ -154,6 +157,8 @@ __all__ = [
     "run_fixed_point_coupling",
     "shares_origin",
     "stage_problems",
+    "transportable",
+    "validate_coupling_configuration",
 ]
 
 TORN_ENDPOINT_SCHEMA = schema_string("electrothermal_torn_endpoint")
@@ -324,6 +329,60 @@ class TornEndpoint:
         )
 
 
+def validate_coupling_configuration(
+    *,
+    tolerance: Any,
+    max_iterations: Any,
+    tolerance_label: str = "coupling tolerance",
+    budget_label: str = "coupling budget",
+) -> None:
+    """The rules a coupling configuration must satisfy, stated **once**.
+
+    Everything here is decidable from the two numbers alone — no dependency
+    records, no torn edges, no composition — which is exactly why it is a
+    function rather than a paragraph of :meth:`FixedPointCouplingPlan.__post_init__`.
+    The plan's remaining rules (that the tolerance carries the dimension the
+    torn edges transport, and shares a zero with each of their units) genuinely
+    need the plan and stay there.
+
+    **Why it is separate: a configuration boundary and a runner that disagreed.**
+    The MCP payload boundary accepted a zero coupling tolerance and the runner
+    then refused it, so whether a payload was well-formed depended on which
+    entry point a caller reached first — a caller who only built a system was
+    told nothing, and a caller who ran one got a failure from two layers down
+    naming a record they never wrote. The boundary's own stated rule is that a
+    payload "is either accepted or refused as a whole"; this is the function
+    that lets more than one entry point apply that rule *identically* rather
+    than each restating it and drifting.
+
+    The two labels name each field in the *caller's* own vocabulary, so the
+    payload boundary can say ``coupling.tolerance`` where the plan says
+    ``coupling tolerance``. They change the wording of a message and nothing
+    about the rule, which is the point: a caller is told which of their own
+    fields to fix, without either entry point owning a second copy of what
+    makes it wrong.
+    """
+    if not isinstance(tolerance, Quantity):
+        raise InvalidScientificProblem(
+            f"{tolerance_label} must be a Quantity — the criterion belongs "
+            f"to coupling execution and a bare float cannot be checked "
+            f"against the quantity it stops"
+        )
+    magnitude = tolerance.magnitude
+    if not math.isfinite(magnitude) or magnitude <= 0.0:
+        raise InvalidScientificProblem(
+            f"{tolerance_label} must be finite and strictly positive, got "
+            f"{magnitude!r} {tolerance.units}"
+        )
+    _require_ratio_scale(tolerance.units, label=tolerance_label)
+
+    budget = int(max_iterations)
+    if budget < 1:
+        raise InvalidScientificProblem(
+            f"{budget_label} must allow at least one iteration, got {budget}"
+        )
+
+
 @dataclass(frozen=True)
 class FixedPointCouplingPlan:
     """Everything needed to execute a cyclic dependency set, stated before it runs.
@@ -399,20 +458,9 @@ class FixedPointCouplingPlan:
                     f"is refused rather than combined by invention"
                 )
 
-        if not isinstance(self.absolute_tolerance, Quantity):
-            raise InvalidScientificProblem(
-                "coupling tolerance must be a Quantity — the criterion belongs "
-                "to coupling execution and a bare float cannot be checked "
-                "against the quantity it stops"
-            )
-        magnitude = self.absolute_tolerance.magnitude
-        if not math.isfinite(magnitude) or magnitude <= 0.0:
-            raise InvalidScientificProblem(
-                f"coupling tolerance must be finite and strictly positive, got "
-                f"{magnitude!r} {self.absolute_tolerance.units}"
-            )
-        _require_ratio_scale(
-            self.absolute_tolerance.units, label="coupling tolerance"
+        validate_coupling_configuration(
+            tolerance=self.absolute_tolerance,
+            max_iterations=self.max_iterations,
         )
 
         dimensions = {e.dependency.dimension for e in self.torn}
@@ -446,12 +494,7 @@ class FixedPointCouplingPlan:
                         f"is not a difference"
                     )
 
-        budget = int(self.max_iterations)
-        if budget < 1:
-            raise InvalidScientificProblem(
-                f"coupling budget must allow at least one iteration, got {budget}"
-            )
-        object.__setattr__(self, "max_iterations", budget)
+        object.__setattr__(self, "max_iterations", int(self.max_iterations))
 
     @property
     def comparison_unit(self) -> str:
@@ -609,6 +652,142 @@ def execution_order(
                 ready.append(target)
                 ready.sort()
     return tuple(order) if len(order) == len(remaining) else ()
+
+
+class TransportRefused(InvalidScientificProblem):
+    """A value was about to cross a coupling edge out of a rejected result.
+
+    Raised at the **transfer boundary** and nowhere else. It is not a statement
+    about the coupling's convergence and must never be read as one: the run did
+    not fail to find a fixed point, it was refused the inputs a fixed point
+    would have been assembled from.
+
+    **It carries the failed result.** That is the requirement rather than a
+    convenience: the result is the evidence that an execution failed and the
+    only record of what the producer actually returned, so a refusal that
+    discarded it would leave a reader with a coupling that stopped and no way
+    to see why. Nothing is substituted and nothing is dropped — the values are
+    simply not allowed to travel.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        result: ScientificResult,
+        dependency: QuantityDependency,
+        iteration: int,
+    ) -> None:
+        super().__init__(message)
+        self.result = result
+        self.dependency = dependency
+        self.iteration = int(iteration)
+
+    @property
+    def failed_checks(self) -> tuple[str, ...]:
+        """Names of the checks that rejected the result, in the order they ran."""
+        return tuple(check.name for check in self.result.validation.failures)
+
+
+def transportable(result: ScientificResult) -> bool:
+    """Whether a value may be taken out of this result and given to another.
+
+    **FAIL is the bar, and it is the bar the platform already set.**
+    ``ValidationReport.status`` ranks WARNING below FAIL deliberately — a check
+    that ran and flagged something produced its evidence — so refusing on
+    WARNING here would make the transfer boundary stricter than the report it
+    reads and would silently redefine what a warning means everywhere else.
+    ``NOT_RUN`` is likewise not a refusal at this boundary: it is the absence of
+    a check, which the credibility report is the place to weigh.
+
+    Deliberately **not** ``ScientificResult.is_usable``. That property also
+    consults ``convergence``, and every closed-form participant here reports
+    ``NOT_APPLICABLE`` while a diverged iterative solve would report its own
+    state; folding those in would make this guard answer a second question it
+    was not asked, and would make a coupling refusal depend on a solver's
+    termination as well as on its checks.
+    """
+    return result.validation.status is not ValidationOutcome.FAIL
+
+
+def _transport(
+    result: ScientificResult, dependency: QuantityDependency, iteration: int
+) -> Quantity:
+    """One value crossing one edge, or a refusal naming both.
+
+    Every value that leaves a result for another problem's inputs passes
+    through here — the uncut edges and the torn endpoints alike — so there is
+    one place where "may this travel" is asked, and it is the place where the
+    travelling happens.
+
+    **Why the check lives at the boundary and not in the solver.** A provider
+    can produce an answer that is internally consistent, satisfies every
+    reconciliation the adapter can perform against its own other channels, and
+    is still wrong. A controlled provider returning zero on every channel of a
+    non-zero circuit does exactly that: ``I == V/R`` and ``P == V*I`` both hold
+    at zero, so the adapter's admission gate passes it, and Crafty's own
+    ``linear_system_residual`` and ``voltage_source_relation`` are what reject
+    it. The loop read ``result.value(...)`` and never the report beside it, so
+    the zero power was transported, a body given no heat stayed at ambient, and
+    the run reported ``criterion_met`` at 300 K.
+
+    A validation report whose failures nothing consults is a check that does not
+    check anything. This is the consumer that makes it one.
+    """
+    if not transportable(result):
+        failed = ", ".join(c.name for c in result.validation.failures)
+        raise TransportRefused(
+            f"iteration {iteration}: {dependency.source_quantity!r} may not be "
+            f"transported out of {dependency.source_problem_id!r} into "
+            f"{dependency.target_problem_id!r}.{dependency.target_quantity}, "
+            f"because that result's own validation FAILED ({failed}). "
+            f"A value its producer's checks reject is not a value another "
+            f"problem may be solved with: the coupling would converge around "
+            f"it and report success. The result is preserved on this error as "
+            f"evidence of a failed execution; nothing was substituted for it",
+            result=result,
+            dependency=dependency,
+            iteration=iteration,
+        )
+    return result.value(dependency.source_quantity)
+
+
+def dependency_closure(
+    problem_id: str, dependencies: Iterable[QuantityDependency]
+) -> frozenset[str]:
+    """Every problem a value of ``problem_id`` depends on, transitively.
+
+    Includes ``problem_id`` itself: a problem's values depend on its own
+    solve. Walks the declared dependency edges *backwards* — target to source —
+    which is the direction the question is asked in: not "what does this feed"
+    but "what fed this".
+
+    **Torn edges are not excluded, and must not be.** A tear is a statement
+    about how the iteration is *executed*, not about what a converged value
+    depends on: at the fixed point the torn edge is satisfied like every other,
+    and the value on the far side of it is one this value rests on. Cutting the
+    closure at a tear would produce a smaller answer whose only justification is
+    an execution convenience — and in a coupled cycle it would exclude exactly
+    the participant the cycle exists to couple to.
+
+    A consequence, stated rather than hidden: for a composition whose
+    dependencies form one cycle, the closure of any member is the whole
+    composition. That is the correct answer and not a degenerate one — a series
+    circuit's second stage really does set the first stage's temperature.
+    """
+    incoming: dict[str, set[str]] = {}
+    for dependency in dependencies:
+        incoming.setdefault(dependency.target_problem_id, set()).add(
+            dependency.source_problem_id
+        )
+    seen = {str(problem_id)}
+    frontier = [str(problem_id)]
+    while frontier:
+        for source in incoming.get(frontier.pop(), ()):
+            if source not in seen:
+                seen.add(source)
+                frontier.append(source)
+    return frozenset(seen)
 
 
 def cycle_edges(
@@ -1411,6 +1590,16 @@ def run_fixed_point(
     A sub-solve that refuses an inadmissible value is **not caught**. An
     execution failure and a failure to converge are different findings, and a
     loop that swallowed the first to report the second would be collapsing them.
+
+    **A value may not be transported out of a result whose own validation
+    FAILED.** Every transfer goes through :func:`_transport`, which raises
+    :class:`TransportRefused` carrying the rejected result. This is the same
+    distinction one step further on: a result Crafty checked and rejected is an
+    execution failure too, and reporting a coupling outcome over values
+    assembled from it would collapse *that* into a convergence claim. It is not
+    folded into ``CouplingOutcome`` for exactly that reason — the run did not
+    fail to find a fixed point, it was refused the inputs one would have been
+    built from.
     """
     seeds = {e.endpoint: e.initial_value for e in plan.torn}
     problems = tuple(problems)
@@ -1463,9 +1652,10 @@ def run_fixed_point(
         for problem_id in order:
             inputs: dict[str, Quantity] = {}
             for dependency in incoming[problem_id]:
-                inputs[dependency.target_quantity] = produced[
-                    dependency.source_problem_id
-                ].value(dependency.source_quantity)
+                # THE TRANSFER BOUNDARY. Every uncut edge crosses here.
+                inputs[dependency.target_quantity] = _transport(
+                    produced[dependency.source_problem_id], dependency, index
+                )
             # Torn targets take the seed on the first pass and the previous
             # pass's value afterwards. This cannot shadow a transported value:
             # the plan refuses two dependencies sharing a target endpoint, so a
@@ -1491,8 +1681,14 @@ def run_fixed_point(
         largest = 0.0
         for endpoint in plan.torn:
             key = endpoint.endpoint
-            value = produced[endpoint.dependency.source_problem_id].value(
-                endpoint.dependency.source_quantity
+            # The same boundary, for the edges the plan cut. A torn edge is
+            # still a transfer: its value seeds the next sweep and lands in
+            # ``final_values``, so it may not come out of a rejected result
+            # either.
+            value = _transport(
+                produced[endpoint.dependency.source_problem_id],
+                endpoint.dependency,
+                index,
             )
             updated[key] = value
             largest = max(

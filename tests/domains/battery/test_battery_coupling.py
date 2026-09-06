@@ -111,20 +111,32 @@ def test_self_heating_carries_the_cell_out_of_its_validated_domain():
     """The claim this module exists to make, and only this claim.
 
     The declared R_int carries 5 K either side of 25 degC. Self-heating takes
-    the cell past 30 degC during the third step, and from there the Rint
+    the cell past 30 degC during the second step, and from there the Rint
     model's verdict is OUTSIDE_VALIDATED_DOMAIN — not because the arithmetic
     got worse, but because the single resistance the arithmetic uses stopped
     being one the caller declared for this temperature.
+
+    **The flip is on step 2, and it used to be reported on step 3.** Step 2 is
+    the step that *crosses* 303.15 K: it begins at 301.7 K and ends at 303.9 K.
+    Assessing only the temperature a step began at put the flip one step late
+    and left step 2 recorded as in domain over an interval it left. F10.
     """
     run = march()
     assert run.steps[0].status(RINT) is ValidityStatus.IN_DOMAIN
     flipped = run.first_step_outside(RINT)
     assert flipped is not None
-    assert flipped.index == 3
+    assert flipped.index == 2
     assert flipped.validity[RINT].violated == (
         ctx.INTERNAL_RESISTANCE_DRIFT_RATIO,
     )
-    assert flipped.cell_temperature.magnitude_in(K) > 303.15
+    # the crossing is inside this step: in at its start, out at its end
+    assert flipped.cell_temperature.magnitude_in(K) < 303.15
+    assert flipped.final_temperature.magnitude_in(K) > 303.15
+    assert flipped.status_at(cp.STEP_START, RINT) is ValidityStatus.IN_DOMAIN
+    assert (
+        flipped.status_at(cp.STEP_END, RINT)
+        is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
     # And it stays flipped: the temperature only rises.
     for step in run.steps[flipped.index - 1 :]:
         assert step.status(RINT) is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
@@ -287,7 +299,10 @@ def test_a_march_can_be_asked_to_stop_when_the_entitlement_stops():
     run = march(stop_on_validity_loss=True)
     assert run.outcome is cp.MarchOutcome.VALIDITY_LOST
     assert run.final.status(RINT) is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert len(run.steps) == 3
+    # Two, not three: the march stops on the step that leaves the domain, and
+    # since F10 that is the step that crosses the bound rather than the first
+    # one to *begin* past it.
+    assert len(run.steps) == 2
     for step in run.steps[:-1]:
         assert step.status(RINT) is not ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
 
@@ -430,3 +445,103 @@ def test_a_coupled_run_and_a_standalone_assessment_agree_at_the_same_point():
         cell_temperature=step.cell_temperature,
     )
     assert standalone == dict(step.validity)
+
+
+# =====================================================================
+# F10 — a step is assessed over the interval it covers, not at its start
+# =====================================================================
+
+#: A cell whose own dissipation carries it 52 K in a single 120 s step. Every
+#: limit except the discharge temperature range is widened so that exactly one
+#: condition is at issue and a neighbour cannot stand in for it.
+def overheating_cell():
+    return build_cell(
+        limits=build_limits(
+            cell_thermal_conductance=Quantity(0.002, "watt/kelvin"),
+            self_heating_rise_bound=Quantity(200.0, K),
+            resistance_temperature_span=Quantity(200.0, K),
+            peukert_temperature_span=Quantity(200.0, K),
+        )
+    )
+
+
+OVERHEATING_CAPACITY = Quantity(0.29, "joule/kelvin")
+
+
+def overheating_march(**kwargs):
+    return cp.run_self_heating_discharge(
+        overheating_cell(),
+        build_load(),
+        heat_capacity=OVERHEATING_CAPACITY,
+        ambient_temperature=AMBIENT,
+        **{"steps": 1, **kwargs},
+    )
+
+
+def test_f10_a_step_that_ends_above_a_limit_is_not_recorded_as_within_it():
+    """The finding: 350.9 K against a 333.15 K limit, recorded as satisfied.
+
+    One step, starting inside the declared discharge range and ending 17.8 K
+    above its top. Assessing only the temperature the step *started* at reports
+    ``discharge_temperature_position`` as satisfied, which is a statement about
+    an instant being read as a statement about an interval.
+    """
+    run = overheating_march()
+    step = run.final
+    limit = overheating_cell().limits.maximum_discharge_temperature
+
+    # the excursion is real and material, not a rounding-level nudge
+    assert step.cell_temperature.magnitude_in(K) == pytest.approx(298.15)
+    assert step.final_temperature.magnitude_in(K) == pytest.approx(350.922, abs=1e-3)
+    assert step.final_temperature.magnitude_in(K) > limit.magnitude_in(K) + 17.0
+
+    assessment = step.validity[RINT]
+    assert ctx.DISCHARGE_TEMPERATURE_POSITION not in assessment.satisfied
+    assert ctx.DISCHARGE_TEMPERATURE_POSITION in assessment.violated
+    assert step.status(RINT) is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+
+
+def test_f10_stopping_on_validity_loss_sees_the_step_that_lost_it():
+    """``stop_on_validity_loss`` cannot stop on a verdict it never computed."""
+    run = overheating_march(steps=4, stop_on_validity_loss=True)
+    assert run.outcome is cp.MarchOutcome.VALIDITY_LOST
+    assert len(run.steps) == 1
+    assert run.first_step_outside(RINT) is run.steps[0]
+
+
+def test_f10_the_record_says_which_instants_were_assessed():
+    """An assessment over an interval must name the instants it rests on."""
+    step = overheating_march().final
+    assert step.assessed_instants == (cp.STEP_START, cp.STEP_END)
+    assert step.temperature_at(cp.STEP_START) == step.cell_temperature
+    assert step.temperature_at(cp.STEP_END) == step.final_temperature
+
+    # and the per-instant verdicts are both readable, so a reader can see
+    # where in the step the condition flipped rather than only that it did
+    assert (
+        step.status_at(cp.STEP_START, RINT) is ValidityStatus.IN_DOMAIN
+    )
+    assert (
+        step.status_at(cp.STEP_END, RINT)
+        is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+
+
+def test_f10_a_step_inside_its_limits_throughout_is_still_in_domain():
+    """The fix narrows verdicts that were wrong; it does not narrow the rest."""
+    run = march(steps=1)
+    step = run.final
+    assert step.status(RINT) is ValidityStatus.IN_DOMAIN
+    assert ctx.DISCHARGE_TEMPERATURE_POSITION in step.validity[RINT].satisfied
+    assert step.status_at(cp.STEP_END, RINT) is ValidityStatus.IN_DOMAIN
+
+
+def test_f10_a_condition_unknown_at_either_instant_is_unknown_over_the_step():
+    """UNKNOWN at one end is not satisfied over the interval that contains it."""
+    silent = coupled_cell(resistance_temperature_span=None)
+    step = march(cell=silent, steps=1).final
+    assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO in step.validity[RINT].unknown
+    assert (
+        ctx.INTERNAL_RESISTANCE_DRIFT_RATIO
+        not in step.validity[RINT].satisfied
+    )

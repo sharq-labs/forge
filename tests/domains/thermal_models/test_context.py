@@ -18,7 +18,11 @@ import math
 import pytest
 
 from src.engcore.domains.thermal_models import context as ctx
+from src.engcore.domains.thermal_models import lumped as lump
 from src.engcore.scientific.errors import InvalidScientificProblem
+from src.engcore.scientific.ir.problem import ScientificProblem
+from src.engcore.scientific.ir.variables import ScientificParameter
+from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.units.quantity import Quantity
 
 K = "kelvin"
@@ -531,3 +535,168 @@ def test_the_assembler_derives_only_what_the_supplied_facts_reach():
         5.0e-5, rel=1e-12
     )
     assert math.isfinite(dimensionless(derived[ctx.INTERNAL_FOURIER_NUMBER]))
+
+
+# =====================================================================
+# F03 — a caller parameter cannot be read as a derived quantity
+# =====================================================================
+
+def _incomplete_body():
+    """Fully declared except ``body_conductivity``, which the Biot number needs."""
+    return lump.ThermalBody(
+        body_id="R1",
+        heat_capacity=Quantity(2.5, "joule/kelvin"),
+        ambient_conductance=Quantity(0.05, "watt/kelvin"),
+        ambient_temperature=Quantity(300.0, K),
+        initial_temperature=Quantity(300.0, K),
+        duration=Quantity(120.0, "second"),
+        applicability=ctx.LumpedApplicabilityDeclaration(
+            characteristic_length=Quantity(0.002, "meter"),
+            surface_area=Quantity(0.01, "meter**2"),
+            # body_conductivity DELIBERATELY ABSENT
+            conductance_excursion_bound=Quantity(60.0, K),
+            capacity_excursion_bound=Quantity(100.0, K),
+            melting_temperature=Quantity(900.0, K),
+            surface_emissivity=Quantity(0.05, "dimensionless"),
+            convection_regime=ctx.FORCED_CONVECTION,
+        ),
+    )
+
+
+def _with_parameters(problem, values):
+    """The same problem with extra caller parameters, through public APIs only.
+
+    Built by round-tripping the record's own ``to_dict``/``from_dict``, which is
+    how the review reproduced this: no private attribute is touched and nothing
+    is monkeypatched. A caller assembling a problem by hand reaches the same
+    place more directly.
+    """
+    payload = problem.to_dict()
+    payload["parameters"].extend(
+        ScientificParameter(name=name, value=value).to_dict()
+        for name, value in values.items()
+    )
+    return ScientificProblem.from_dict(payload)
+
+
+def _assess(problem):
+    return lump.assess_lumped_validity(
+        problem,
+        initial_temperature=Quantity(300.0, K),
+        ambient_temperature=Quantity(300.0, K),
+        heat_input=Quantity(1.0, "watt"),
+    )
+
+
+def test_f03_a_caller_parameter_cannot_stand_in_for_a_failed_derivation():
+    """The reproduction: two UNKNOWN conditions bought with two parameters.
+
+    Without ``body_conductivity`` the Biot number cannot be formed, so
+    ``biot_number`` and ``internal_fourier_number`` are UNKNOWN and the model's
+    verdict is UNKNOWN. Context assembly started from every caller parameter and
+    overwrote only what it managed to derive, so a caller parameter of the same
+    name survived and was read as derived evidence — turning the honest UNKNOWN
+    into a verdict about numbers nobody computed, with ``body_conductivity``
+    still absent.
+    """
+    problem = lump.build_lumped_thermal_problem(_incomplete_body())
+
+    honest = _assess(problem)
+    assert honest.status is ValidityStatus.UNKNOWN
+    assert honest.unknown == (ctx.BIOT_NUMBER, ctx.INTERNAL_FOURIER_NUMBER)
+
+    forged = _assess(
+        _with_parameters(
+            problem,
+            {
+                ctx.BIOT_NUMBER: Quantity(0.05, "dimensionless"),
+                ctx.INTERNAL_FOURIER_NUMBER: Quantity(5.0, "dimensionless"),
+            },
+        )
+    )
+    assert forged.status is ValidityStatus.UNKNOWN
+    assert forged.unknown == honest.unknown
+    assert ctx.BIOT_NUMBER not in forged.satisfied
+    assert ctx.BIOT_NUMBER not in forged.violated
+
+
+@pytest.mark.parametrize("declared", [True, False])
+def test_f03_colliding_with_every_derived_name_changes_no_verdict(declared):
+    """Not one name and not the two that were noticed: all of them.
+
+    Run against a body that declares everything and one that declares no
+    ``body_conductivity``. The second case is the one that matters — where a
+    derivation *fails*, and where the old assembly therefore left the caller's
+    value in place. The first is the regression guard: reserving a name must
+    not stop the domain from filling it.
+    """
+    body = (
+        lump.ThermalBody(
+            body_id="R1",
+            heat_capacity=Quantity(2.5, "joule/kelvin"),
+            ambient_conductance=Quantity(0.05, "watt/kelvin"),
+            ambient_temperature=Quantity(300.0, K),
+            initial_temperature=Quantity(300.0, K),
+            duration=Quantity(120.0, "second"),
+            applicability=ctx.LumpedApplicabilityDeclaration(
+                characteristic_length=Quantity(0.002, "meter"),
+                surface_area=Quantity(0.01, "meter**2"),
+                body_conductivity=Quantity(200.0, "watt/meter/kelvin"),
+                conductance_excursion_bound=Quantity(60.0, K),
+                capacity_excursion_bound=Quantity(100.0, K),
+                melting_temperature=Quantity(900.0, K),
+                surface_emissivity=Quantity(0.05, "dimensionless"),
+                convection_regime=ctx.FORCED_CONVECTION,
+            ),
+        )
+        if declared
+        else _incomplete_body()
+    )
+    problem = lump.build_lumped_thermal_problem(body)
+    honest = _assess(problem)
+
+    collisions = {
+        name: Quantity(0.05, "dimensionless")
+        for name in ctx.ASSEMBLED_QUANTITIES
+    }
+    assert collisions  # the reserved set is not empty
+    assert _assess(_with_parameters(problem, collisions)) == honest
+
+
+def test_f03_every_derivable_name_is_reserved():
+    """The registry cannot fall behind the assembler.
+
+    A derived quantity added without being reserved would be impersonable again
+    on the day it landed, and nothing would say so. The assembler refuses to
+    emit a name the registry does not know, and this is that refusal exercised
+    against everything the assembler can actually produce.
+    """
+    derivable = set(
+        ctx.derived_lumped_quantities(
+            {
+                "ambient_conductance": Quantity(0.05, "watt/kelvin"),
+                "heat_capacity": Quantity(2.5, "joule/kelvin"),
+                "duration": Quantity(120.0, "second"),
+                ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+                ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+                ctx.BODY_CONDUCTIVITY: Quantity(200.0, "watt/meter/kelvin"),
+                ctx.SURFACE_EMISSIVITY: Quantity(0.05, "dimensionless"),
+                ctx.CONDUCTANCE_EXCURSION_BOUND: Quantity(60.0, K),
+                ctx.CAPACITY_EXCURSION_BOUND: Quantity(100.0, K),
+                ctx.MELTING_TEMPERATURE: Quantity(900.0, K),
+            },
+            initial_temperature=Quantity(300.0, K),
+            ambient_temperature=Quantity(300.0, K),
+            heat_input=Quantity(1.0, "watt"),
+        )
+    )
+    assert derivable
+    assert derivable <= ctx.ASSEMBLED_QUANTITIES
+
+
+def test_f03_the_omission_tests_still_describe_the_same_behaviour():
+    """A missing declaration is still UNKNOWN, and still not IN_DOMAIN."""
+    assessment = _assess(lump.build_lumped_thermal_problem(_incomplete_body()))
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert ctx.BIOT_NUMBER in assessment.unknown
+    assert ctx.BIOT_NUMBER not in assessment.satisfied

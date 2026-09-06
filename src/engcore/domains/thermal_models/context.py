@@ -78,6 +78,7 @@ __all__ = [
     "capacity_excursion_ratio",
     "characteristic_length",
     "conductance_excursion_ratio",
+    "ASSEMBLED_QUANTITIES",
     "derived_lumped_quantities",
     "internal_fourier_number",
     "linearized_radiation_coefficient",
@@ -898,6 +899,30 @@ def melting_temperature_utilization(
 # =====================================================================
 # Assembly
 # =====================================================================
+
+#: Every name this module assembles, and which a caller parameter may
+#: therefore never occupy. See ``engcore.domains.derived_context`` for what
+#: reserving a name means and why it is enforced at assembly rather than at
+#: problem construction.
+#:
+#: It is the derived groups **and** the state coordinates the assembler
+#: injects, because the two are in the same position: a condition reads either
+#: one by name, and either one is absent when the assembler could not supply
+#: it. A rule that reserved only the derived groups would leave the state
+#: coordinates forgeable in exactly the same way, which is not a smaller
+#: version of the defect but the same one.
+ASSEMBLED_QUANTITIES = frozenset(
+    {
+        BIOT_NUMBER,
+        TRANSIENT_HORIZON_RATIO,
+        INTERNAL_FOURIER_NUMBER,
+        CONDUCTANCE_EXCURSION_RATIO,
+        CAPACITY_EXCURSION_RATIO,
+        RADIATION_TO_CONVECTION_RATIO,
+        MELTING_TEMPERATURE_UTILIZATION,
+    }
+)
+
 
 def derived_lumped_quantities(
     base: Mapping[str, Any],

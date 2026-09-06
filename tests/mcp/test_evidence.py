@@ -26,13 +26,23 @@ from src.engcore.domains.thermal_models import lumped as lump
 from src.engcore.mcp import (
     EVIDENCE_PACKAGE_SCHEMA,
     AssertedContext,
+    CouplingCriterion,
+    CouplingEvidence,
     CredibilityEvidenceReport,
     CredibilityEvidenceError,
     CredibilityVerdict,
     ModelValidityRecord,
+    classify_assessment,
+    combine_assessments,
     derive_verdict,
 )
-from src.engcore.scientific.models.definition import ValidityAssessment, ValidityStatus
+from src.engcore.scientific.models.definition import (
+    RangeCondition,
+    ValidityAssessment,
+    ValidityDomain,
+    ValidityStatus,
+)
+from src.engcore.scientific.errors import ScientificValidationError
 from src.engcore.scientific.results.provenance import ProvenanceRecord
 from src.engcore.scientific.results.result import ScientificResult
 from src.engcore.scientific.results.validation import (
@@ -497,6 +507,12 @@ def test_the_verdict_tracks_the_contents_rather_than_being_stored():
         pkg.validity[0].assessment, "status", ValidityStatus.IN_DOMAIN
     )
     object.__setattr__(pkg.validity[0].assessment, "violated", ())
+    # The condition moves from violated to satisfied rather than vanishing: an
+    # assessment naming no condition at all evaluated nothing, and since F09
+    # that is UNKNOWN on both sides of this boundary rather than IN_DOMAIN.
+    object.__setattr__(
+        pkg.validity[0].assessment, "satisfied", ("biot_number",)
+    )
     assert pkg.verdict is CredibilityVerdict.SUPPORTED
     # and the serialized form agrees with the contents, not with history
     assert pkg.to_dict()["verdict"] == CredibilityVerdict.SUPPORTED.value
@@ -534,7 +550,9 @@ def test_an_unrecognised_validity_status_is_refused_rather_than_read_as_clean():
     # a correct status supplied as a bare string is still accepted
     assert ModelValidityRecord(
         model_id="m", version="1",
-        assessment=ValidityAssessment(status="in_domain"),
+        assessment=ValidityAssessment(
+            status="in_domain", satisfied=("biot_number",)
+        ),
     ).status == ValidityStatus.IN_DOMAIN
 
 
@@ -1257,3 +1275,342 @@ def test_the_real_declaration_is_carried_verbatim_and_buys_the_caller_nothing():
 
     stripped = dataclasses.replace(pkg, declarations=())
     assert stripped.verdict is pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+# =====================================================================
+# F09 — one classification, shared between the core and this boundary
+# =====================================================================
+
+def test_f09_the_empty_domain_assessment_the_core_emits_crosses_the_boundary():
+    """``ValidityDomain().assess({})`` is UNKNOWN, and must stay UNKNOWN here.
+
+    A model that declares no conditions has had nothing asked of it, and the
+    core says so: absence of declared limits is not evidence of unlimited
+    validity. The wrapper used to re-derive the status from the condition lists
+    alone — empty violated and empty unknown read as IN_DOMAIN — and so refused
+    the very assessment the core produced. ``electrical.dc.kcl`` is a real
+    model in this repository with exactly that domain.
+    """
+    empty = ValidityDomain().assess({})
+    assert empty.status is ValidityStatus.UNKNOWN
+
+    record = ModelValidityRecord(
+        model_id="electrical.dc.kcl", version="0.1.0", assessment=empty
+    )
+    assert record.status is ValidityStatus.UNKNOWN
+
+
+def test_f09_the_wrapper_agrees_with_the_core_on_every_assessment_it_emits():
+    """The classification is shared, and this is what shared is checked to mean.
+
+    Every assessment reachable from ``ValidityDomain.assess`` over this family
+    of domains and contexts must cross the boundary with its status intact. A
+    wrapper holding a second, subtly different rule would fail here rather than
+    only on the empty domain that happened to be noticed.
+    """
+    bounded = RangeCondition(
+        name="x", minimum=Quantity(0.0, "kelvin"), maximum=Quantity(10.0, "kelvin")
+    )
+    other = RangeCondition(
+        name="y", minimum=Quantity(0.0, "kelvin"), maximum=Quantity(10.0, "kelvin")
+    )
+    domains = [
+        ValidityDomain(),
+        ValidityDomain(conditions=(bounded,)),
+        ValidityDomain(conditions=(bounded, other)),
+    ]
+    contexts = [
+        {},
+        {"x": Quantity(5.0, K)},
+        {"x": Quantity(50.0, K)},
+        {"x": Quantity(5.0, K), "y": Quantity(5.0, K)},
+        {"x": Quantity(50.0, K), "y": Quantity(5.0, K)},
+        {"x": Quantity(5.0, K), "y": Quantity(50.0, K)},
+    ]
+    for domain, context in itertools.product(domains, contexts):
+        assessment = domain.assess(context)
+        record = ModelValidityRecord(
+            model_id="probe", version="0.1.0", assessment=assessment
+        )
+        assert record.status is assessment.status, (domain, context)
+
+
+def test_f09_a_status_that_contradicts_its_own_conditions_is_still_refused():
+    """The fix widens the classification; it does not remove the cross-check."""
+    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+        ModelValidityRecord(
+            model_id="probe",
+            version="0.1.0",
+            assessment=ValidityAssessment(
+                status=ValidityStatus.IN_DOMAIN, violated=("biot_number",)
+            ),
+        )
+    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+        ModelValidityRecord(
+            model_id="probe",
+            version="0.1.0",
+            assessment=ValidityAssessment(
+                status=ValidityStatus.IN_DOMAIN, unknown=("biot_number",)
+            ),
+        )
+    # and an assessment that named nothing may not claim IN_DOMAIN either:
+    # nothing was evaluated, so nothing was found to hold.
+    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+        ModelValidityRecord(
+            model_id="probe",
+            version="0.1.0",
+            assessment=ValidityAssessment(status=ValidityStatus.IN_DOMAIN),
+        )
+
+
+# =====================================================================
+# F05 / TASK 1 — attribution, the closure, and the coupling statement
+# =====================================================================
+
+NO_MODEL_PROVENANCE = dataclasses.replace(PROVENANCE, models=())
+
+
+def test_f05_an_empty_model_inventory_cannot_attribute_an_assessment():
+    """The finding: an empty inventory switched the attribution guard off.
+
+    The guard exists so a caller cannot attach an honest IN_DOMAIN assessment
+    of an unrelated model and turn an unassessed report into a SUPPORTED one.
+    It was skipped entirely when the provenance named no models — which is the
+    case where *nothing* backs the assessment, and so the case the guard is
+    most needed in. A complete empty inventory was being read as an inventory
+    that happened to be complete.
+
+    Absent attribution is insufficient evidence, and not a raise: the report is
+    perfectly well-formed, it simply does not say what produced the values its
+    assessment is about.
+    """
+    report = CredibilityEvidenceReport(
+        run_id="f05",
+        values=VALUES,
+        provenance=NO_MODEL_PROVENANCE,
+        validity=(IN_DOMAIN,),
+        validation=(PASSED,),
+    )
+    assert report.unattributed_assessments == (IN_DOMAIN.key,)
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+def test_f05_naming_the_model_as_a_contributor_attributes_it():
+    """The fix is a statement a caller can make, not a wall.
+
+    An assembler that knows the closure says so, and the same report is then
+    attributed. What it may not do is stay silent and be believed.
+    """
+    report = CredibilityEvidenceReport(
+        run_id="f05-named",
+        values=VALUES,
+        provenance=NO_MODEL_PROVENANCE,
+        contributing_models=(IN_DOMAIN.key,),
+        validity=(IN_DOMAIN,),
+        validation=(PASSED,),
+    )
+    assert report.unattributed_assessments == ()
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_f05_a_stray_assessment_is_still_refused_when_the_inventory_is_not_empty():
+    """The widened guard did not weaken the refusal it already made."""
+    with pytest.raises(CredibilityEvidenceError, match="does not"):
+        CredibilityEvidenceReport(
+            run_id="stray",
+            values=VALUES,
+            provenance=ONE_MODEL_PROVENANCE,
+            validity=(validity(ValidityStatus.IN_DOMAIN, model_id="not.in.the.run"),),
+        )
+
+
+def test_a_contributing_model_nobody_assessed_blocks_supported():
+    """``unassessed_models`` must be able to be non-empty on a real report.
+
+    It was derived from ``provenance.models`` alone, so a model that took part
+    in producing a value but was never *bound* — and every model a coupled run
+    knows about through the problems rather than through an execution binding
+    is one of those — could not appear in it. The field could report a gap it
+    structurally could not see.
+    """
+    contributor = ("electrical.dc.kcl", "0.1.0")
+    report = CredibilityEvidenceReport(
+        run_id="unassessed",
+        values=VALUES,
+        provenance=ONE_MODEL_PROVENANCE,
+        contributing_models=(contributor,),
+        validity=(IN_DOMAIN,),
+        validation=(PASSED,),
+    )
+    assert report.unassessed_models == (contributor,)
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+    # and assessing it clears the gap rather than the gap being ignorable
+    assessed = dataclasses.replace(
+        report,
+        validity=(
+            IN_DOMAIN,
+            validity(
+                ValidityStatus.IN_DOMAIN,
+                model_id=contributor[0],
+                version=contributor[1],
+                satisfied=("lumped_regime",),
+            ),
+        ),
+    )
+    assert assessed.unassessed_models == ()
+    assert assessed.verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_a_coupling_that_missed_its_criterion_can_never_be_supported():
+    """Everything else clean, and the fixed point was never reached."""
+    missed = CouplingEvidence(
+        outcome="iteration_limit_reached",
+        iterations_run=50,
+        iteration_limit=50,
+        largest_iterate_change=Quantity(0.7, K),
+        tolerance=Quantity(1e-6, K),
+    )
+    assert missed.criterion is CouplingCriterion.NOT_MET
+    report = package(coupling=missed)
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    # the same report without the coupling statement is SUPPORTED, which is
+    # exactly the substitution the field exists to prevent
+    assert package().verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_the_coupling_criterion_is_derived_and_cannot_be_asserted():
+    """A record may report a criterion; it may not claim one.
+
+    The same discipline as the verdict itself: derived on access from the
+    numbers it carries, so there is no stored copy to disagree with them.
+    """
+    met = CouplingEvidence(
+        outcome="criterion_met",
+        iterations_run=7,
+        iteration_limit=50,
+        largest_iterate_change=Quantity(1e-9, K),
+        tolerance=Quantity(1e-6, K),
+    )
+    assert met.criterion is CouplingCriterion.MET
+    assert package(coupling=met).verdict is CredibilityVerdict.SUPPORTED
+    assert "criterion" not in {f.name for f in dataclasses.fields(CouplingEvidence)}
+
+    # and it compares in the tolerance's own unit rather than by magnitude
+    in_millikelvin = CouplingEvidence(
+        outcome="criterion_met",
+        iterations_run=7,
+        iteration_limit=50,
+        largest_iterate_change=Quantity(0.5, "millikelvin"),
+        tolerance=Quantity(1e-3, K),
+    )
+    assert in_millikelvin.criterion is CouplingCriterion.MET
+
+
+def test_the_coupling_statement_round_trips_and_is_not_a_check():
+    report = package(coupling=CouplingEvidence(
+        outcome="iteration_limit_reached",
+        iterations_run=50,
+        iteration_limit=50,
+        largest_iterate_change=Quantity(0.7, K),
+        tolerance=Quantity(1e-6, K),
+    ))
+    restored = CredibilityEvidenceReport.from_dict(
+        json.loads(json.dumps(report.to_dict(), sort_keys=True))
+    )
+    assert restored.coupling == report.coupling
+    assert restored.verdict is report.verdict
+    # it is not in the validation report, and not a level anybody attained
+    assert restored.validation_report().checks == report.validation
+    assert ValidationLevel.NUMERICALLY_CONVERGED not in restored.attained_levels
+
+
+def test_combining_assessments_keeps_a_finding_above_a_gap():
+    """One model applied to several elements has one verdict, not the best one."""
+    parts = (
+        ValidityAssessment(
+            status=ValidityStatus.IN_DOMAIN,
+            satisfied=("resistance", "dissipated_power_utilization"),
+        ),
+        ValidityAssessment(
+            status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN,
+            satisfied=("resistance",),
+            violated=("dissipated_power_utilization",),
+        ),
+        ValidityAssessment(
+            status=ValidityStatus.UNKNOWN,
+            satisfied=("resistance",),
+            unknown=("working_voltage_utilization",),
+        ),
+    )
+    combined = combine_assessments(parts)
+    assert combined.violated == ("dissipated_power_utilization",)
+    assert combined.unknown == ("working_voltage_utilization",)
+    assert combined.satisfied == ("resistance",)
+    assert combined.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    # and the combination is classified by the one shared rule, so it crosses
+    assert classify_assessment(combined) is combined.status
+    # nothing to combine is nothing known, not everything fine
+    assert combine_assessments(()).status is ValidityStatus.UNKNOWN
+
+
+# =====================================================================
+# F04 — UNVERIFIED cannot buy a verdict
+# =====================================================================
+
+def test_f04_a_report_whose_only_level_is_unverified_is_insufficient():
+    """The reproduction, and where it is now stopped.
+
+    A passing check declaring ``UNVERIFIED`` satisfied the attained-level guard
+    and produced SUPPORTED: nothing was verified, said so, and was read as
+    evidence. The check can no longer be built at all, so the report can only
+    be assembled with the sentinel absent — and a report whose checks establish
+    nothing is INSUFFICIENT_EVIDENCE, which is the rule that was already there
+    and was being evaded.
+    """
+    with pytest.raises(ScientificValidationError):
+        ValidationCheck(
+            name="nothing_was_verified",
+            outcome=ValidationOutcome.PASS,
+            establishes=ValidationLevel.UNVERIFIED,
+        )
+
+    nothing = ValidationCheck(
+        name="nothing_was_verified", outcome=ValidationOutcome.PASS
+    )
+    report = package(checks=(nothing,))
+    assert report.attained_levels == frozenset()
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+def test_f04_the_sentinel_cannot_be_demanded_either():
+    """``required_levels`` and ``attained_levels`` must not disagree.
+
+    With the sentinel unattainable by construction, a caller who demanded it
+    would have declared a requirement nothing could ever satisfy and would get
+    INSUFFICIENT_EVIDENCE forever with no explanation. Refused at the field
+    instead, in the same voice and for the same reason as the check itself.
+    """
+    with pytest.raises(CredibilityEvidenceError, match="UNVERIFIED"):
+        package(required_levels=(ValidationLevel.UNVERIFIED,))
+
+    # a real level is still demandable, and still has to be met
+    demanded = package(required_levels=(ValidationLevel.BENCHMARK_VALIDATED,))
+    assert demanded.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert demanded.missing_required_levels == (
+        ValidationLevel.BENCHMARK_VALIDATED,
+    )
+
+
+def test_f04_a_serialized_report_cannot_reintroduce_the_sentinel():
+    """Neither through a check nor through a required level."""
+    report = package()
+    payload = report.to_dict()
+    payload["required_levels"] = [ValidationLevel.UNVERIFIED.value]
+    with pytest.raises(CredibilityEvidenceError, match="UNVERIFIED"):
+        CredibilityEvidenceReport.from_dict(payload)
+
+    payload = report.to_dict()
+    payload["validation"][0]["establishes"] = ValidationLevel.UNVERIFIED.value
+    with pytest.raises(ScientificValidationError):
+        CredibilityEvidenceReport.from_dict(payload)

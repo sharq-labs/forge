@@ -135,6 +135,7 @@ from ..scientific.models.definition import (
     ValidityAssessment,
     ValidityStatus,
 )
+from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
 from ..scientific.results.result import ScientificResult
 from ..scientific.results.validation import (
@@ -151,13 +152,18 @@ from .errors import CredibilityEvidenceError
 
 __all__ = [
     "ASSERTED_CONTEXT_SCHEMA",
+    "COUPLING_EVIDENCE_SCHEMA",
     "EVIDENCE_PACKAGE_SCHEMA",
     "MODEL_VALIDITY_SCHEMA",
     "AssertedContext",
+    "CouplingCriterion",
+    "CouplingEvidence",
     "CredibilityEvidenceReport",
     "CredibilityVerdict",
     "EvidencePackage",  # deprecated alias
     "ModelValidityRecord",
+    "classify_assessment",
+    "combine_assessments",
     "derive_verdict",
 ]
 
@@ -171,6 +177,7 @@ ASSERTED_CONTEXT_SCHEMA = schema_string("mcp_asserted_context")
 # a reader that accepts both, which is a larger change than this one and has
 # not been argued for.
 EVIDENCE_PACKAGE_SCHEMA = schema_string("mcp_evidence_package")
+COUPLING_EVIDENCE_SCHEMA = schema_string("mcp_coupling_evidence")
 
 #: Schemas a caller's asserted context may not embed. These are the record
 #: types a reader — human or tool — scans for when it wants evidence, so
@@ -233,12 +240,210 @@ class CredibilityVerdict(str, Enum):
     NOT_SUPPORTED = "not_supported"
 
 
+class CouplingCriterion(str, Enum):
+    """Whether a coupled run reached the fixed point it declared it needed.
+
+    **Deliberately not** :class:`~engcore.scientific.solvers.protocol.ConvergenceState`
+    and deliberately not a :class:`ValidationLevel`. A coupled run's own
+    participants report their own convergence, and in this repository every
+    closed-form participant reports ``NOT_APPLICABLE`` while the MNA solve
+    reports ``CONVERGED`` in every one of the fifty iterations of a run that
+    converged not at all. Labelling a coupling check ``NUMERICALLY_CONVERGED``
+    would make "the loop found its fixed point" and "a linear solve was
+    accurate" the same token, permanently, in a serialized record — which is
+    the conflation the producing pack's own ``CouplingOutcome`` was written to
+    prevent, and this layer is not the place to undo it.
+
+    It is also not folded into ``validation``. A check is something a solver
+    ran on a result; the coupling criterion is a property of the *iteration
+    between* results, and no solver ran it.
+    """
+
+    MET = "met"
+    NOT_MET = "not_met"
+
+
+@dataclass(frozen=True)
+class CouplingEvidence:
+    """What the coupled run that produced these values did, and whether it
+    reached its own criterion.
+
+    Carried because a report assembled around one sub-result cannot otherwise
+    know. The finding this closes: capping a coupled run's iteration budget at
+    one left a fully SUPPORTED report with no trace anywhere in it that the
+    fixed point had never been reached — the run knew, and the reporting
+    boundary discarded it.
+
+    ``outcome`` is the producing pack's own token, carried **verbatim** and
+    interpreted by nothing here. It is what puts ``iteration_limit_reached``
+    into the serialized record where a reader scanning the JSON will find it.
+    :attr:`criterion` is this layer's own reading, and it is derived rather
+    than stored, so the two can be compared by a reader instead of one being
+    taken on trust.
+    """
+
+    #: The producing pack's own outcome token. Prose to this layer.
+    outcome: str
+    iterations_run: int
+    iteration_limit: int
+    #: The largest change any torn iterate made on the final sweep.
+    largest_iterate_change: Quantity
+    #: The criterion that change was compared against.
+    tolerance: Quantity
+
+    def __post_init__(self) -> None:
+        outcome = str(self.outcome).strip()
+        if not outcome:
+            raise CredibilityEvidenceError(
+                "coupling evidence requires the producing run's own outcome; "
+                "a coupling that will not say how it stopped is not evidence"
+            )
+        object.__setattr__(self, "outcome", outcome)
+        for label in ("iterations_run", "iteration_limit"):
+            value = int(getattr(self, label))
+            if value < 1:
+                raise CredibilityEvidenceError(
+                    f"coupling evidence {label} must be at least 1, got {value}; "
+                    f"a run that executed no iteration produced no values for "
+                    f"this report to be about"
+                )
+            object.__setattr__(self, label, value)
+        if self.iterations_run > self.iteration_limit:
+            raise CredibilityEvidenceError(
+                f"coupling evidence reports {self.iterations_run} iterations "
+                f"against a budget of {self.iteration_limit}; a run cannot "
+                f"have executed more sweeps than it was allowed"
+            )
+        for label in ("largest_iterate_change", "tolerance"):
+            if not isinstance(getattr(self, label), Quantity):
+                raise CredibilityEvidenceError(
+                    f"coupling evidence {label} must be a Quantity — the "
+                    f"criterion compares two physical quantities and a bare "
+                    f"number cannot be compared against one"
+                )
+        if self.tolerance.magnitude <= 0.0:
+            raise CredibilityEvidenceError(
+                f"coupling tolerance must be strictly positive, got "
+                f"{self.tolerance}"
+            )
+        self.largest_iterate_change.require_compatible(
+            self.tolerance, context="coupling criterion"
+        )
+
+    @property
+    def criterion(self) -> CouplingCriterion:
+        """MET exactly when the final iterate change is within the tolerance.
+
+        A property and not a field, for the reason
+        :attr:`CredibilityEvidenceReport.verdict` is one: derived on access
+        from the numbers it sits beside, so there is no stored copy to drift
+        out of step with them and no constructor parameter through which a
+        caller can assert a criterion the numbers do not support.
+        """
+        change = self.largest_iterate_change.magnitude_in(self.tolerance.units)
+        return (
+            CouplingCriterion.MET
+            if change <= self.tolerance.magnitude
+            else CouplingCriterion.NOT_MET
+        )
+
+    @property
+    def is_met(self) -> bool:
+        return self.criterion is CouplingCriterion.MET
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": COUPLING_EVIDENCE_SCHEMA,
+            "outcome": self.outcome,
+            "iterations_run": self.iterations_run,
+            "iteration_limit": self.iteration_limit,
+            "largest_iterate_change": self.largest_iterate_change.to_dict(),
+            "tolerance": self.tolerance.to_dict(),
+            # Derived, emitted for readers, and re-derived on the way back in.
+            "criterion": self.criterion.value,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CouplingEvidence":
+        require_schema(payload, COUPLING_EVIDENCE_SCHEMA)
+        evidence = cls(
+            outcome=payload["outcome"],
+            iterations_run=payload["iterations_run"],
+            iteration_limit=payload["iteration_limit"],
+            largest_iterate_change=Quantity.from_dict(
+                payload["largest_iterate_change"]
+            ),
+            tolerance=Quantity.from_dict(payload["tolerance"]),
+        )
+        declared = payload.get("criterion")
+        if declared is not None and declared != evidence.criterion.value:
+            raise CredibilityEvidenceError(
+                f"serialized coupling criterion {declared!r} does not match "
+                f"the criterion its own numbers produce "
+                f"({evidence.criterion.value!r})"
+            )
+        return evidence
+
+
+def combine_assessments(
+    assessments: Sequence[ValidityAssessment],
+) -> ValidityAssessment:
+    """One verdict for one model, from every place that model was applied.
+
+    A report names a *model*, and a coupled run applies one model to several
+    things: ``electrical.dc.resistor_ohm`` governs every resistor in the
+    circuit and ``electrical.material.rated_linear_tcr_resistance`` governs
+    every conductor. One record per model is the granularity this layer has —
+    duplicate keys are refused precisely so a reader cannot pick the flattering
+    one — so the several assessments have to become one, and *which* one is the
+    whole question.
+
+    The rule is the precedence :meth:`ValidityDomain.assess` already applies
+    within a single assessment, applied again across several: **a condition
+    violated anywhere is violated; a condition unknown anywhere and violated
+    nowhere is unknown; only a condition satisfied everywhere and questioned
+    nowhere is satisfied.** Taking the best available answer would let one
+    in-domain element vouch for an out-of-domain neighbour, which is the
+    substitution this whole layer exists to refuse.
+
+    An empty sequence is UNKNOWN, not IN_DOMAIN: nothing was assessed.
+    """
+    violated: list[str] = []
+    unknown: list[str] = []
+    satisfied: list[str] = []
+    for assessment in assessments:
+        for source, sink in (
+            (assessment.violated, violated),
+            (assessment.unknown, unknown),
+            (assessment.satisfied, satisfied),
+        ):
+            for name in source:
+                if name not in sink:
+                    sink.append(name)
+    unknown = [n for n in unknown if n not in violated]
+    satisfied = [n for n in satisfied if n not in violated and n not in unknown]
+    combined = ValidityAssessment(
+        status=ValidityStatus.UNKNOWN,
+        satisfied=tuple(satisfied),
+        violated=tuple(violated),
+        unknown=tuple(unknown),
+    )
+    return ValidityAssessment(
+        status=classify_assessment(combined),
+        satisfied=combined.satisfied,
+        violated=combined.violated,
+        unknown=combined.unknown,
+    )
+
+
 def derive_verdict(
     *,
     validity: Sequence["ModelValidityRecord"],
     validation: Sequence[ValidationCheck],
     unassessed_models: Sequence[tuple[str, str]] = (),
     required_levels: Sequence[ValidationLevel] = (),
+    coupling: "CouplingEvidence | None" = None,
+    unattributed_assessments: Sequence[tuple[str, str]] = (),
 ) -> CredibilityVerdict:
     """The one place a verdict is decided. Pure, total, and order-independent.
 
@@ -257,7 +462,10 @@ def derive_verdict(
     ``INSUFFICIENT_EVIDENCE``
         any model validity is ``UNKNOWN``; or any check's outcome is
         ``NOT_RUN``; or a model that took part in the run was never assessed
-        (``unassessed_models``); or **no check both passed and established an
+        (``unassessed_models``); or an assessment names a model nothing
+        records as having produced anything (``unattributed_assessments``); or
+        the coupled run that produced these values did not reach its own
+        criterion (``coupling``); or **no check both passed and established an
         evidentiary level**; or a level the caller declared it needs
         (``required_levels``) was not attained; or there are no validity
         records at all.
@@ -372,7 +580,17 @@ def derive_verdict(
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if unassessed_models:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    if unattributed_assessments:
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if not validity:
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+    # A run that did not reach its own fixed point produced an iterate, not a
+    # solution, and the fix is to go and produce one: raise the budget, or
+    # find out why it will not close. That is INSUFFICIENT_EVIDENCE by this
+    # function's own taxonomy and not NOT_SUPPORTED, which is reserved for a
+    # finding that more evidence cannot rescue.
+    if coupling is not None and coupling.criterion is not CouplingCriterion.MET:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
     # The evidential guard, and the core's own definition of what counts:
@@ -406,6 +624,45 @@ def derive_verdict(
         )
 
     return CredibilityVerdict.SUPPORTED
+
+
+def classify_assessment(assessment: ValidityAssessment) -> ValidityStatus:
+    """The status a validity domain reports for these condition lists.
+
+    **One classification, used on both sides of this boundary.** The core
+    reaches it through :meth:`ValidityDomain.assess`, which decides the status
+    while it still holds the domain; this boundary reaches it through
+    :class:`ModelValidityRecord`, which sees only the assessment. Stated once
+    here so the two cannot drift, and so the cross-check below is a check of
+    *the same rule* rather than a second opinion about it.
+
+    The rules, in the core's own order:
+
+    * anything violated → ``OUTSIDE_VALIDATED_DOMAIN``;
+    * else anything unknown → ``UNKNOWN``;
+    * else something satisfied → ``IN_DOMAIN``;
+    * else — **nothing was evaluated at all** — ``UNKNOWN``.
+
+    That last clause is the one the boundary used to be missing, and it is not
+    an edge case. ``ValidityDomain.assess`` returns it for a domain with no
+    conditions, on the stated grounds that *absence of declared limits is not
+    evidence of unlimited validity* — and ``electrical.dc.kcl`` is a real model
+    in this repository with exactly that domain. Inferring IN_DOMAIN from empty
+    violated and unknown lists forgot the empty-domain rule and so refused the
+    legitimate assessment the core emitted, which is the opposite of what a
+    guard against overstatement is for.
+
+    Deliberately a function over an *assessment* and not over a domain: this
+    layer never holds a domain and never evaluates a condition. It classifies
+    what it was handed, by the rule the core used to produce it.
+    """
+    if assessment.violated:
+        return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    if assessment.unknown:
+        return ValidityStatus.UNKNOWN
+    if assessment.satisfied:
+        return ValidityStatus.IN_DOMAIN
+    return ValidityStatus.UNKNOWN
 
 
 @dataclass(frozen=True)
@@ -475,17 +732,13 @@ class ModelValidityRecord:
         #    condition lists, so `status=IN_DOMAIN, violated=("biot_number",)`
         #    constructs happily — and would report SUPPORTED on the same record
         #    that names the bound it violated. Cross-check against exactly the
-        #    classification `ValidityDomain.assess` performs, so every
-        #    assessment the core actually produced passes untouched and only a
-        #    hand-built or hand-edited one is refused. Recompute-and-verify, the
-        #    same discipline `ValidationReport.from_dict` applies to
-        #    `attained_levels`.
-        if assessment.violated:
-            implied = ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        elif assessment.unknown:
-            implied = ValidityStatus.UNKNOWN
-        else:
-            implied = ValidityStatus.IN_DOMAIN
+        #    classification `ValidityDomain.assess` performs — which is
+        #    :func:`classify_assessment`, the one statement of that rule —
+        #    so every assessment the core actually produced passes untouched
+        #    and only a hand-built or hand-edited one is refused.
+        #    Recompute-and-verify, the same discipline
+        #    `ValidationReport.from_dict` applies to `attained_levels`.
+        implied = classify_assessment(assessment)
         if status is not implied:
             raise CredibilityEvidenceError(
                 f"model validity record for {self.model_id!r} declares status "
@@ -629,8 +882,13 @@ class AssertedContext:
         # Verbatim has to mean *round-trippable*. A payload holding a live
         # object would serialize to something a reader could not compare
         # against the declaration it came from, which defeats the purpose.
+        #
+        # Checked on the **detached** form, because that is the form a reader
+        # receives from `to_dict`. The frozen containers this record stores
+        # internally are not JSON types and checking those would refuse every
+        # nested payload for the wrong reason.
         try:
-            json.dumps(payload, sort_keys=True)
+            json.dumps(detach(payload), sort_keys=True)
         except (TypeError, ValueError) as exc:
             raise CredibilityEvidenceError(
                 f"asserted context {source!r} payload is not JSON-serializable "
@@ -646,7 +904,7 @@ class AssertedContext:
                 f"reader scanning for those shapes would find it underneath "
                 f"the markings that say this is not evidence"
             )
-        object.__setattr__(self, "payload", payload)
+        object.__setattr__(self, "payload", freeze(payload))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -661,7 +919,13 @@ class AssertedContext:
             # "consumed_by_any_check", which would be false for any payload
             # carrying an applicability declaration — see the class docstring.
             "consumed_by_verdict": False,
-            "payload": dict(sorted(self.payload.items())),
+            # Detached at every depth. A declaration's payload is the one
+            # free-form structure in this record, and it is carried verbatim —
+            # which has to mean the reader gets a copy, not a handle on the
+            # claim itself.
+            "payload": {
+                key: detach(value) for key, value in sorted(self.payload.items())
+            },
         }
 
     @classmethod
@@ -692,6 +956,21 @@ class CredibilityEvidenceReport:
     validity: tuple[ModelValidityRecord, ...] = ()
     validation: tuple[ValidationCheck, ...] = ()
     declarations: tuple[AssertedContext, ...] = ()
+    #: Every model that contributed to a value this report carries, as the
+    #: assembler read it off the **dependency closure** of those values.
+    #:
+    #: Unioned with ``provenance.models`` rather than replacing it, because the
+    #: two answer different questions and both are true: provenance says what
+    #: *executed*, and a composition also declares models that govern a
+    #: transported value without producing it — the rated material claim over a
+    #: resistance the unrated model computed is exactly that. Narrowing the
+    #: inventory is impossible by construction; widening it is a statement the
+    #: assembler makes and is answerable for.
+    contributing_models: tuple[tuple[str, str], ...] = ()
+    #: What the coupled run that produced these values did. ``None`` for a
+    #: result that was not produced by one, which is not the same as a coupling
+    #: that met its criterion and is why the default is not a MET record.
+    coupling: "CouplingEvidence | None" = None
     #: Levels the assembling study declares it needs before it will rely on
     #: this result. Empty means "no level is demanded", which is the rule as
     #: specified and is why a report can be SUPPORTED with nothing attained.
@@ -721,7 +1000,10 @@ class CredibilityEvidenceReport:
                     f"report value {name!r} must be a Quantity — a bare "
                     f"number is not a scientific result"
                 )
-        object.__setattr__(self, "values", values)
+        # Frozen for the reason ``ScientificResult.values`` is: the Quantity
+        # check above is worth nothing if a bare number can be written in
+        # afterwards. See ``scientific.results.immutable``.
+        object.__setattr__(self, "values", freeze(values))
 
         validity = tuple(self.validity)
         for record in validity:
@@ -775,24 +1057,63 @@ class CredibilityEvidenceReport:
                 f"attributed to what produced it is not evidence"
             )
 
+        object.__setattr__(
+            self,
+            "contributing_models",
+            tuple(sorted({tuple(m) for m in self.contributing_models})),
+        )
+        if self.coupling is not None and not isinstance(
+            self.coupling, CouplingEvidence
+        ):
+            raise CredibilityEvidenceError(
+                f"coupling must be a CouplingEvidence, got "
+                f"{type(self.coupling).__name__}; the type is what keeps a "
+                f"coupling criterion from being read as a solver's own "
+                f"convergence"
+            )
+
         # Validity records must name models that actually took part. Without
         # this a caller could attach an honest IN_DOMAIN assessment of an
         # unrelated model and turn an unassessed report into a SUPPORTED one.
-        declared_models = set(self.provenance.models)
-        if declared_models:
-            stray = {r.key for r in validity} - declared_models
+        #
+        # **The empty inventory is a gap, not a clean bill.** This guard used
+        # to switch itself off when nothing was recorded as having taken part
+        # — which is the one case where *nothing at all* backs the assessment,
+        # and so the case it was most needed in. A complete empty inventory was
+        # being read as an inventory that happened to be complete.
+        #
+        # It is reported rather than raised, and the asymmetry is the platform's
+        # own: naming a model the run did not involve is a **contradiction** in
+        # the record and is refused; naming no models at all is a **gap** in it
+        # and is reported, through `unattributed_assessments`, as
+        # INSUFFICIENT_EVIDENCE. A finding is refused; a gap is stated.
+        if self.known_models:
+            stray = {r.key for r in validity} - set(self.known_models)
             if stray:
                 raise CredibilityEvidenceError(
-                    f"validity records name models the provenance does not: "
+                    f"validity records name models the run does not: "
                     f"{sorted(stray)}. An assessment of a model that did not "
                     f"produce these values is not evidence about these values"
                 )
 
-        object.__setattr__(
-            self, "required_levels", tuple(
-                ValidationLevel(level) for level in self.required_levels
-            )
+        required_levels = tuple(
+            ValidationLevel(level) for level in self.required_levels
         )
+        # The other half of F04. ``ValidationCheck`` refuses
+        # ``establishes=UNVERIFIED``, so the sentinel can never be attained;
+        # a caller who demanded it would have declared a requirement nothing
+        # could ever satisfy and would get INSUFFICIENT_EVIDENCE forever with
+        # nothing in the record to say why. The two sides of the comparison
+        # must not disagree, and this is the side a consumer owns.
+        if ValidationLevel.UNVERIFIED in required_levels:
+            raise CredibilityEvidenceError(
+                "required_levels demands UNVERIFIED, which is the sentinel for "
+                "the absence of verification rather than a level. No passing "
+                "check can establish it — ValidationCheck refuses the value — "
+                "so requiring it demands something unattainable. Require a "
+                "level, or require none"
+            )
+        object.__setattr__(self, "required_levels", required_levels)
 
         declarations = tuple(self.declarations)
         for declaration in declarations:
@@ -826,6 +1147,8 @@ class CredibilityEvidenceReport:
             validation=self.validation,
             unassessed_models=self.unassessed_models,
             required_levels=self.required_levels,
+            coupling=self.coupling,
+            unattributed_assessments=self.unattributed_assessments,
         )
 
     @property
@@ -833,16 +1156,48 @@ class CredibilityEvidenceReport:
         return self.verdict is CredibilityVerdict.SUPPORTED
 
     @property
+    def known_models(self) -> tuple[tuple[str, str], ...]:
+        """Every model this report has a record of taking part.
+
+        The union of what the provenance says executed and what the assembler
+        declared contributed. A model in either took part; a model in neither
+        is one nothing in this report knows about.
+        """
+        return tuple(
+            sorted(set(self.provenance.models) | set(self.contributing_models))
+        )
+
+    @property
     def unassessed_models(self) -> tuple[tuple[str, str], ...]:
-        """Models the provenance says ran, that nobody assessed for validity.
+        """Models this run involved, that nobody assessed for validity.
 
         The per-model form of "nobody asked whether the model applied", and
         strictly stronger than the report-level "there are no validity records
         at all": a run over two models with one assessment is a gap that a
         count of records cannot see.
+
+        Read over :attr:`known_models` rather than over ``provenance.models``
+        alone. It used to be the latter, which made the field unable to report
+        the gap it exists for: a model that governed a transported value
+        without executing was invisible to it, so a report assembled around one
+        sub-result of a six-model run reported ``()`` — a false statement
+        rather than a missing one.
         """
         assessed = {record.key for record in self.validity}
-        return tuple(sorted(set(self.provenance.models) - assessed))
+        return tuple(sorted(set(self.known_models) - assessed))
+
+    @property
+    def unattributed_assessments(self) -> tuple[tuple[str, str], ...]:
+        """Assessments this report cannot attribute to anything that ran.
+
+        Non-empty only when the report records no participants at all — a
+        stray assessment against a non-empty inventory is refused at
+        construction. It is the difference between "this model was assessed and
+        was in domain" and "this model was assessed, and nothing here says it
+        produced any of these numbers".
+        """
+        known = set(self.known_models)
+        return tuple(sorted(r.key for r in self.validity if r.key not in known))
 
     @property
     def attained_levels(self) -> frozenset[ValidationLevel]:
@@ -929,6 +1284,9 @@ class CredibilityEvidenceReport:
         validity: Iterable[ModelValidityRecord] = (),
         declarations: Iterable[AssertedContext] = (),
         required_levels: Iterable[ValidationLevel] = (),
+        contributing_models: Iterable[tuple[str, str]] = (),
+        coupling: "CouplingEvidence | None" = None,
+        provenance: ProvenanceRecord | None = None,
         notes: str = "",
         run_id: str | None = None,
     ) -> "CredibilityEvidenceReport":
@@ -962,8 +1320,20 @@ class CredibilityEvidenceReport:
         ``run_id`` defaults to the result's own id. It may be overridden for
         the legitimate case of a report covering a coupled run assembled
         around one of its sub-results, where the run's identity is not any one
-        result's. Both identities stay visible: the override lands in
-        ``run_id`` and the result's own is still in ``provenance.run_id``.
+        result's.
+
+        ``provenance`` may likewise be overridden with the **coupled run's**
+        record, for the same case and with the same reasoning: the values here
+        were produced by that run and not by the sub-solve alone, and the
+        sub-result's own provenance names a fraction of what they depend on.
+        Both identities stay visible either way — the sub-result's id in
+        ``run_id`` and the run's in ``provenance.run_id``, or the reverse.
+
+        ``contributing_models`` and ``coupling`` are the two things a coupled
+        run knows about itself that no sub-result carries. An assembler that
+        holds the composition supplies them; one that does not says nothing,
+        and a report that says nothing about its coupling is not thereby a
+        report of a coupling that succeeded.
         """
         if not isinstance(result, ScientificResult):
             raise CredibilityEvidenceError(
@@ -973,11 +1343,13 @@ class CredibilityEvidenceReport:
         return cls(
             run_id=run_id or result.result_id,
             values=dict(result.values),
-            provenance=result.provenance,
+            provenance=provenance or result.provenance,
             validity=_merged_validity(result, tuple(validity)),
             validation=tuple(result.validation.checks),
             declarations=tuple(declarations),
             required_levels=tuple(required_levels),
+            contributing_models=tuple(contributing_models),
+            coupling=coupling,
             validation_notes=result.validation.notes,
             notes=notes,
         )
@@ -1005,14 +1377,16 @@ class CredibilityEvidenceReport:
             "schema": EVIDENCE_PACKAGE_SCHEMA,
             "run_id": self.run_id,
             "values": {
-                name: self.values[name].to_dict()
-                for name in sorted(self.values)
+                name: value.to_dict()
+                for name, value in sorted(self.values.items())
             },
             "provenance": self.provenance.to_dict(),
             "validity": [record.to_dict() for record in self.validity],
             "validation": [check.to_dict() for check in self.validation],
             "declarations": [d.to_dict() for d in self.declarations],
             "required_levels": [level.value for level in self.required_levels],
+            "contributing_models": [list(m) for m in self.contributing_models],
+            "coupling": self.coupling.to_dict() if self.coupling else None,
             "validation_notes": self.validation_notes,
             "notes": self.notes,
             # Derived, emitted for readers, and re-derived on the way back in.
@@ -1026,6 +1400,9 @@ class CredibilityEvidenceReport:
                     level.value for level in self.attained_levels
                 ),
                 "unassessed_models": [list(m) for m in self.unassessed_models],
+                "unattributed_assessments": [
+                    list(m) for m in self.unattributed_assessments
+                ],
             },
         }
 
@@ -1054,6 +1431,14 @@ class CredibilityEvidenceReport:
             required_levels=tuple(
                 ValidationLevel(level)
                 for level in (payload.get("required_levels") or ())
+            ),
+            contributing_models=tuple(
+                tuple(m) for m in (payload.get("contributing_models") or ())
+            ),
+            coupling=(
+                CouplingEvidence.from_dict(payload["coupling"])
+                if payload.get("coupling")
+                else None
             ),
             validation_notes=payload.get("validation_notes", ""),
             notes=payload.get("notes", ""),

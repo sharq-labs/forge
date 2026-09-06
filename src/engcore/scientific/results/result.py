@@ -57,6 +57,7 @@ from ..serialization import require_schema_any, schema_string
 from ..solvers.protocol import ConvergenceState, SolverIdentity
 from ..units.quantity import Quantity
 from ..units.validation import check_unit_map
+from .immutable import detach, freeze
 from .data_reference import ScientificDataReference
 from .provenance import ProvenanceRecord
 from .uncertainty import Uncertainty
@@ -139,7 +140,11 @@ class ScientificResult:
                     f"result value {name!r} must be a Quantity — a bare number "
                     f"is not a scientific result"
                 )
-        object.__setattr__(self, "values", values)
+        # Frozen, so the check above cannot be defeated after it has run: a
+        # bare number the constructor refuses could be written straight into
+        # ``values`` a line later, and `to_dict` then died on it. See
+        # ``results.immutable``.
+        object.__setattr__(self, "values", freeze(values))
 
         if not isinstance(self.provenance, ProvenanceRecord):
             raise ScientificCoreError(
@@ -152,7 +157,7 @@ class ScientificResult:
         object.__setattr__(self, "assumptions", tuple(self.assumptions))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "metadata", freeze(self.metadata))
 
         references = tuple(self.data_references)
         seen: set[str] = set()
@@ -179,7 +184,7 @@ class ScientificResult:
             tuple(sorted(references, key=lambda r: r.name)),
         )
 
-        object.__setattr__(self, "validity", self._checked_validity())
+        object.__setattr__(self, "validity", freeze(self._checked_validity()))
 
         uncertainty = dict(self.uncertainty)
         for name, record in uncertainty.items():
@@ -191,7 +196,7 @@ class ScientificResult:
                 raise ScientificCoreError(
                     f"uncertainty declared for unknown value {name!r}"
                 )
-        object.__setattr__(self, "uncertainty", uncertainty)
+        object.__setattr__(self, "uncertainty", freeze(uncertainty))
 
     def _checked_validity(self) -> dict:
         """Normalise the validity mapping, refusing every way to blur a gap."""
@@ -346,23 +351,32 @@ class ScientificResult:
             "schema": RESULT_SCHEMA,
             "result_id": self.result_id,
             "problem_id": self.problem_id,
-            "values": {k: self.values[k].to_dict() for k in sorted(self.values)},
+            "values": {
+                k: v.to_dict() for k, v in sorted(self.values.items())
+            },
             "models": [list(m) for m in self.models],
             "solver": self.solver.to_dict() if self.solver else None,
             "convergence": self.convergence.value,
             "validation": self.validation.to_dict(),
             "validity": {
-                k: self.validity[k].to_dict() for k in sorted(self.validity)
+                k: v.to_dict() for k, v in sorted(self.validity.items())
             },
             "uncertainty": {
-                k: self.uncertainty[k].to_dict() for k in sorted(self.uncertainty)
+                k: v.to_dict() for k, v in sorted(self.uncertainty.items())
             },
             "assumptions": list(self.assumptions),
             "warnings": list(self.warnings),
             "artifacts": list(self.artifacts),
             "data_references": [r.to_dict() for r in self.data_references],
             "provenance": self.provenance.to_dict(),
-            "metadata": dict(sorted(self.metadata.items(), key=lambda kv: kv[0])),
+            # Detached at every depth, in one pass: a payload is a message
+            # and a caller may edit it, but editing it must not reach back into
+            # the record. Every other branch of this payload is built out of
+            # freshly created dicts already, so this is the only one.
+            "metadata": {
+                key: detach(value)
+                for key, value in sorted(self.metadata.items(), key=lambda kv: kv[0])
+            },
         }
 
     @classmethod

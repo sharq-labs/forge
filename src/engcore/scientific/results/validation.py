@@ -39,6 +39,12 @@ class ValidationLevel(str, Enum):
     These are *claims about evidence*, not a quality score. A result may
     attain several independently (dimensional validity and numerical
     convergence say different things).
+
+    ``UNVERIFIED`` is the odd one out and is **not a level a check may
+    establish** — see :attr:`ValidationCheck.establishes`, which refuses it. It
+    is the sentinel for the *absence* of verification, kept as a member because
+    it names that state for a reader and for :func:`unverified_report`, and
+    kept out of every attained-level computation by being unable to reach one.
     """
 
     UNVERIFIED = "unverified"
@@ -68,7 +74,40 @@ class ValidationCheck:
         object.__setattr__(self, "name", str(self.name).strip())
         object.__setattr__(self, "outcome", ValidationOutcome(self.outcome))
         if self.establishes is not None:
-            object.__setattr__(self, "establishes", ValidationLevel(self.establishes))
+            establishes = ValidationLevel(self.establishes)
+            # The sentinel is the absence of verification, so a check that
+            # established it would be claiming to have established an absence.
+            #
+            # Refused **here**, at the one site where the claim is made, rather
+            # than filtered at each site that reads it. Those sites are
+            # `attained_levels`, `claims`, `require_level` and every consumer's
+            # own `required_levels`, and the review found the last of them
+            # disagreeing with the first: a passing check declaring UNVERIFIED
+            # satisfied a caller's demand for it and produced a SUPPORTED
+            # verdict — nothing verified, saying so, read as evidence. A rule
+            # enforced at four reading sites is a rule that will be missed at
+            # the fifth; a value that cannot exist cannot be read
+            # inconsistently.
+            #
+            # Every outcome, not only PASS. A NOT_RUN check that "established
+            # unverified" is the same category error in a humbler voice, and
+            # allowing it would leave a payload shape whose meaning depends on
+            # a field that is supposed to be inert.
+            #
+            # The way to say a check earned nothing is unchanged and is the one
+            # the platform means: leave `establishes` as None. The lumped
+            # residual check and the resistance admissibility bound already do,
+            # and `unverified_report` builds a NOT_RUN check with no level at
+            # all.
+            if establishes is ValidationLevel.UNVERIFIED:
+                raise ScientificValidationError(
+                    f"validation check {str(self.name).strip()!r} declares "
+                    f"establishes=UNVERIFIED. That is the sentinel for the "
+                    f"absence of verification, not a level: a check cannot "
+                    f"establish that nothing was established. Leave "
+                    f"establishes unset to say a check earned no level"
+                )
+            object.__setattr__(self, "establishes", establishes)
         object.__setattr__(self, "evidence", tuple(self.evidence))
         if self.residual is not None:
             object.__setattr__(self, "residual", float(self.residual))
@@ -137,7 +176,14 @@ class ValidationReport:
 
     @property
     def attained_levels(self) -> frozenset[ValidationLevel]:
-        """Levels backed by a *passing* check. Never asserted directly."""
+        """Levels backed by a *passing* check. Never asserted directly.
+
+        ``UNVERIFIED`` can never appear here, and needs no filter to keep it
+        out: ``ValidationCheck`` refuses the value, so no check carries it.
+        That is why this property, :meth:`claims` and every consumer's
+        ``required_levels`` cannot disagree about the sentinel — there is
+        nothing for them to disagree about.
+        """
         return frozenset(
             c.establishes
             for c in self.checks

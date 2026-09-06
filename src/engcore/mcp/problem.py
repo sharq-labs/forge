@@ -64,10 +64,16 @@ from typing import Any, Mapping, Sequence
 
 from ..domains.electrical import material as mat
 from ..domains.electrical.dc import models as dc_models
+from ..domains.electrical.dc import problem as dc_problem
+from ..domains.electrical.dc import solver as dc_solver
 from ..domains.thermal_models import context as thermal_ctx
 from ..domains.thermal_models import lumped as lump
 from ..scientific.errors import ScientificCoreError
-from ..scientific.models.definition import ModelInputSpec, ScientificModelDefinition
+from ..scientific.models.definition import (
+    ModelInputSpec,
+    ScientificModelDefinition,
+    ValidityAssessment,
+)
 from ..scientific.units.quantity import Quantity, dimension_of, dimensionality
 from ..systems.electrothermal import coupled as cp
 from ..systems.electrothermal.resistor_body import RESISTOR_POWER_METRIC
@@ -78,7 +84,13 @@ from .errors import (
     UnknownFieldError,
     WrongDimensionError,
 )
-from .evidence import AssertedContext, CredibilityEvidenceReport, ModelValidityRecord
+from .evidence import (
+    AssertedContext,
+    CouplingEvidence,
+    CredibilityEvidenceReport,
+    ModelValidityRecord,
+    combine_assessments,
+)
 
 __all__ = [
     "COUPLING_SUPPLIED_INPUTS",
@@ -173,6 +185,13 @@ LIMITS = "stages[].conductor.limits"
 BODY = "stages[].body"
 APPLICABILITY = "stages[].body.applicability"
 COUPLING = "coupling"
+
+#: Execution defaults for the coupling block, resolved at this boundary rather
+#: than at the call site so that what is validated here is what the runner
+#: receives. A caller who declares neither still gets a configuration that has
+#: been through the runner's own admissibility rule.
+DEFAULT_COUPLING_TOLERANCE = Quantity(1e-6, "kelvin")
+DEFAULT_COUPLING_BUDGET = 50
 
 
 @dataclass(frozen=True)
@@ -716,14 +735,40 @@ def _read_coupling(payload: Mapping[str, Any]) -> dict[str, Any]:
     refused as a whole: a misspelled ``max_iteratons`` that the builder waved
     through and the runner refused would make the boundary's answer depend on
     which entry point the caller happened to use.
+
+    **That rule was stated here and then only half applied.** Field names were
+    checked at both entry points; the *values* were not. A zero ``tolerance``
+    passed the builder and was refused three layers down by
+    ``FixedPointCouplingPlan``, which is the same defect in the same block. So
+    the coupling values are now checked here too — and checked by the runner's
+    own rule, :func:`~engcore.systems.electrothermal.coupled.validate_coupling_configuration`,
+    rather than by a copy of it that could drift. The defaults are resolved
+    first, because a default a caller did not write is still a configuration
+    this boundary hands to the runner.
     """
-    return _read_section(
+    coupling = _read_section(
         _require_mapping(
             _require_mapping(payload, where="payload").get("coupling"),
             where="coupling",
         ),
         COUPLING,
     )
+    try:
+        cp.validate_coupling_configuration(
+            tolerance=coupling.get("tolerance", DEFAULT_COUPLING_TOLERANCE),
+            max_iterations=coupling.get(
+                "max_iterations", DEFAULT_COUPLING_BUDGET
+            ),
+            tolerance_label="coupling.tolerance",
+            budget_label="coupling.max_iterations",
+        )
+    except ScientificCoreError as exc:
+        # Re-raised as this boundary's own error type, because that is what a
+        # caller of a payload API catches. The message is the runner's rule
+        # verbatim, already naming the payload field through the labels above:
+        # nothing about what is wrong is restated here.
+        raise MalformedPayloadError(str(exc)) from exc
+    return coupling
 
 
 def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
@@ -803,17 +848,194 @@ class ElectroThermalCaseRun:
     reports: tuple[CredibilityEvidenceReport, ...]
 
 
+
+# ---------------------------------------------------------------------
+# The dependency closure, and what every model in it says about itself
+# ---------------------------------------------------------------------
+
+def _electrical_assessments(
+    system: cp.CoupledElectroThermalSystem,
+    electrical: "ScientificResult",
+) -> dict[str, ValidityAssessment]:
+    """A verdict for every electrical model the circuit invoked.
+
+    One record per **model**, not per element, because that is the granularity
+    a report has: ``electrical.dc.resistor_ohm`` governs every resistor, and
+    :func:`~engcore.mcp.evidence.combine_assessments` reduces the per-element
+    answers to one by the rule that a condition satisfied everywhere and
+    questioned nowhere is the only one that stays satisfied.
+
+    Every operating-point value comes from the electrical result — the power,
+    the voltage across each element, the current out of the source. The
+    *ratings* come from nowhere, because this payload boundary has no field for
+    a rated dissipation or a source current limit, so every rating condition is
+    UNKNOWN. That is the honest answer and it is why the nominal case is
+    INSUFFICIENT_EVIDENCE: an unrated part is not an unlimited part, and the
+    report now says which declarations are missing instead of omitting the
+    models that would have asked for them.
+    """
+    circuit = system.circuit_at(
+        {s.component_id: s.conductor.reference_resistance for s in system.stages}
+    )
+    assessments: dict[str, ValidityAssessment] = {}
+
+    resistors = []
+    for resistor in circuit.resistors:
+        cid = resistor.component_id
+        resistors.append(
+            dc_models.assess_resistor_validity(
+                dc_problem.resistor_relation_problem(resistor),
+                dissipated_power=electrical.value(
+                    RESISTOR_POWER_METRIC.format(component_id=cid)
+                ),
+                voltage_across=electrical.value(f"resistor_voltage:{cid}"),
+            )
+        )
+    if resistors:
+        assessments[_RESISTOR.model_id] = combine_assessments(resistors)
+
+    sources = []
+    for source in circuit.voltage_sources:
+        sources.append(
+            dc_models.assess_voltage_source_validity(
+                dc_problem.voltage_source_relation_problem(source),
+                source_current=electrical.value(
+                    f"{dc_solver.SOURCE_CURRENT_METRIC}:{source.component_id}"
+                ),
+            )
+        )
+    if sources:
+        assessments[_VOLTAGE_SOURCE.model_id] = combine_assessments(sources)
+
+    # Kirchhoff's law is always invoked and declares no conditions, so its
+    # honest verdict is UNKNOWN — "nobody stated the limits of the lumped
+    # circuit assumption", which is exactly what the model record says. It is
+    # assessed rather than omitted because a model left out of the report is a
+    # model the report silently claims nothing about.
+    assessments[_KCL.model_id] = _KCL.assess_validity({})
+    return assessments
+
+
+def _material_assessments(
+    system: cp.CoupledElectroThermalSystem, run: "cp.CoupledRun"
+) -> dict[str, ValidityAssessment]:
+    """The unrated and rated conductor verdicts, over every stage.
+
+    Both are asked, because they are different questions about the same
+    arithmetic: *is a linear TCR form declared over this temperature at all*
+    and *does this material's own band, rating and low-temperature floor cover
+    this operating point*. The second is the one that reads
+    ``maximum_operating_temperature``, and a report that asked only the first
+    could carry a conductor declared good to 301 K and run to 338 K with the
+    declared limit appearing nowhere.
+
+    The temperature each conductor was evaluated at is read back out of the
+    property solve's own provenance, so the assessment is made at the operating
+    point the run actually used rather than at one recomputed here.
+    """
+    unrated: list[ValidityAssessment] = []
+    rated: list[ValidityAssessment] = []
+    for _stage, prop_problem, _thermal in cp.stage_problems(system):
+        result = run.final.result_for(prop_problem.problem_id)
+        temperature = result.provenance.inputs[mat.TEMPERATURE]
+        unrated.append(
+            mat.assess_resistance_validity(prop_problem, temperature)
+        )
+        if any(
+            model.model_id == _RATED_TCR.model_id
+            for model in prop_problem.models
+        ):
+            rated.append(
+                mat.assess_rated_resistance_validity(prop_problem, temperature)
+            )
+
+    assessments = {_LINEAR_TCR.model_id: combine_assessments(unrated)}
+    if rated:
+        assessments[_RATED_TCR.model_id] = combine_assessments(rated)
+    return assessments
+
+
+def _contributing_models(
+    problems: Sequence[Any], closure: frozenset[str]
+) -> tuple[tuple[str, str], ...]:
+    """Every model declared by a problem in the closure.
+
+    Read off the problem records rather than asserted here, and deliberately
+    wider than ``provenance.models``: a problem may declare a model that
+    governs a value without computing it — ``build_resistance_problem`` adds
+    the *rated* material claim beside the unrated one whenever the caller
+    declared limits, and no execution binding names it because the same
+    arithmetic serves both.
+    """
+    return tuple(
+        sorted(
+            {
+                (model.model_id, model.version)
+                for problem in problems
+                if problem.problem_id in closure
+                for model in problem.models
+            }
+        )
+    )
+
+
+def _coupling_evidence(run: "cp.CoupledRun") -> CouplingEvidence:
+    """The coupled run's own statement about itself, transported unaltered.
+
+    ``outcome`` is the pack's token carried verbatim, so a reader scanning the
+    serialized report finds ``iteration_limit_reached`` in it. Nothing here
+    interprets that token: the criterion the report derives is derived from the
+    numbers beside it, and the two are separately readable on purpose.
+    """
+    return CouplingEvidence(
+        outcome=run.outcome.value,
+        iterations_run=run.iterations_run,
+        iteration_limit=run.plan.max_iterations,
+        largest_iterate_change=run.final_iterate_change,
+        tolerance=run.plan.absolute_tolerance,
+    )
+
+
 def run_electrothermal_case(
     payload: Mapping[str, Any], *, run_id: str = "mcp-electrothermal"
 ) -> ElectroThermalCaseRun:
     """Payload in, credibility reports out. The whole boundary, end to end.
 
-    The assembly is the same one a hand-built case performs and is deliberately
-    not shortened: the thermal sub-result supplies values, validation and
-    provenance; the lumped model's validity is assessed *separately*, because
-    a ``ScientificResult`` cannot carry it (``NEEDS.md`` §1.1); and the
-    caller's applicability declaration goes in as asserted context, marked as
-    the caller's claim and consumed by no verdict.
+    **A report is assembled over the dependency closure of the values it
+    reports**, and this is the paragraph that used to be wrong. The report was
+    built from the thermal sub-result alone, so everything the coupled run knew
+    about itself was lost here: whether the coupling reached its criterion,
+    which models had taken part, and what any of them said about applying. The
+    consequences were not gaps but false statements — ``unassessed_models``
+    reported ``()`` on a six-model run, a capped iteration produced a SUPPORTED
+    report with no trace of the cap, and a conductor declared good to 301 K and
+    run to 338 K produced a SUPPORTED report in which its own declared limit
+    appeared nowhere.
+
+    So each report now carries:
+
+    * the **coupling's** own statement, as a typed field, distinct from every
+      participant's numerical convergence and outside ``validation``;
+    * the **closure** of the reported values, read off the declared dependency
+      edges rather than assumed — which for this coupled cycle is the whole
+      composition, because a series circuit's second stage really does set the
+      first stage's temperature;
+    * a **verdict for every model in it** — thermal, unrated and rated
+      material, resistor, voltage source and Kirchhoff — each computed here,
+      at the operating point the run used, from declarations this boundary
+      already holds.
+
+    What has not changed: the thermal sub-result still supplies the values, the
+    checks and their notes, because those are what this report is *about*; and
+    the caller's applicability declaration still goes in as asserted context,
+    marked as the caller's claim and consumed by no verdict.
+
+    This is more restrictive than it was, and the restriction is the finding
+    rather than a side effect. Nothing in the payload declares a resistor's
+    rated dissipation or a source's current limit, and ``electrical.dc.kcl``
+    declares no conditions at all, so the nominal case is now
+    INSUFFICIENT_EVIDENCE with those gaps named — instead of SUPPORTED with the
+    models that would have raised them left out of the report.
     """
     system = build_electrothermal_system(payload)
     coupling = _read_coupling(payload)
@@ -827,13 +1049,27 @@ def run_electrothermal_case(
         system,
         cp.coupled_dependencies(system, problems),
         seed=coupling.get("seed_temperature", first_body.initial_temperature),
-        tolerance=coupling.get("tolerance", Quantity(1e-6, "kelvin")),
-        max_iterations=coupling.get("max_iterations", 50),
+        tolerance=coupling.get("tolerance", DEFAULT_COUPLING_TOLERANCE),
+        max_iterations=coupling.get("max_iterations", DEFAULT_COUPLING_BUDGET),
     )
     run = cp.run_fixed_point_coupling(system, plan, run_id=run_id)
 
     electrical_id = problems[0].problem_id
     electrical = run.final.result_for(electrical_id)
+    dependencies = cp.coupled_dependencies(system, problems)
+    coupling_evidence = _coupling_evidence(run)
+
+    # Computed once: every one of these is a verdict about the whole coupled
+    # composition, which is what the closure of any reported value here is.
+    shared = _electrical_assessments(system, electrical)
+    shared.update(_material_assessments(system, run))
+
+    versions = {
+        model.model_id: model.version
+        for problem in problems
+        for model in problem.models
+    }
+
     reports = []
     for stage, (_, _prop, thermal_problem) in zip(
         system.stages, cp.stage_problems(system)
@@ -841,22 +1077,32 @@ def run_electrothermal_case(
         power = electrical.value(
             RESISTOR_POWER_METRIC.format(component_id=stage.component_id)
         )
-        assessment = lump.assess_lumped_validity(
+        assessments = dict(shared)
+        assessments[_LUMPED.model_id] = lump.assess_lumped_validity(
             thermal_problem,
             initial_temperature=stage.body.initial_temperature,
             ambient_temperature=stage.body.ambient_temperature,
             heat_input=power,
         )
         thermal_result = run.final.result_for(thermal_problem.problem_id)
+        closure = cp.dependency_closure(thermal_problem.problem_id, dependencies)
         reports.append(
             CredibilityEvidenceReport.from_result(
                 thermal_result,
-                validity=(
+                # The **run's** provenance, not the sub-solve's: these values
+                # were produced by the coupled run, and the sub-solve's own
+                # record names one of the six models they rest on. The
+                # sub-result's identity stays visible in ``run_id``.
+                provenance=run.provenance,
+                contributing_models=_contributing_models(problems, closure),
+                coupling=coupling_evidence,
+                validity=tuple(
                     ModelValidityRecord(
-                        model_id=_LUMPED.model_id,
-                        version=_LUMPED.version,
+                        model_id=model_id,
+                        version=versions[model_id],
                         assessment=assessment,
-                    ),
+                    )
+                    for model_id, assessment in sorted(assessments.items())
                 ),
                 declarations=(
                     AssertedContext(

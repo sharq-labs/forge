@@ -27,6 +27,9 @@ from src.engcore.scientific.models.definition import (
     ValidityDomain,
     ValidityStatus,
 )
+from src.engcore.scientific.errors import InvalidScientificProblem
+from src.engcore.scientific.ir.problem import ScientificProblem
+from src.engcore.scientific.ir.variables import ScientificParameter
 from src.engcore.scientific.units.quantity import Quantity
 
 from battery_cases import assess, build_cell, build_limits, build_load
@@ -980,3 +983,144 @@ def test_the_domain_declares_at_least_ten_conditions_on_derived_quantities():
         ctx.COULOMBIC_EFFICIENCY,
     }
     assert conditioned <= on_derived | declared
+
+
+# =====================================================================
+# F03 — a caller parameter cannot be read as a derived quantity
+# =====================================================================
+
+def _with_parameters(problem, values):
+    """The same problem with extra caller parameters, through public APIs only.
+
+    A ``to_dict``/``from_dict`` round trip, which is how the review reproduced
+    this: no private attribute is touched and nothing is monkeypatched.
+    """
+    payload = problem.to_dict()
+    payload["parameters"].extend(
+        ScientificParameter(name=name, value=value).to_dict()
+        for name, value in values.items()
+    )
+    return ScientificProblem.from_dict(payload)
+
+
+def test_f03_a_caller_parameter_cannot_stand_in_for_a_failed_derivation():
+    """A cell that declared no resistance span cannot be handed the ratio.
+
+    Without ``resistance_temperature_span`` the drift ratio cannot be formed,
+    so ``internal_resistance_drift_ratio`` is UNKNOWN. Context assembly started
+    from every caller parameter and overwrote only what it derived, so a caller
+    parameter of the same name survived the failure of the derivation it was
+    named after and was read as though this domain had computed it.
+    """
+    silent = build_cell(limits=build_limits(resistance_temperature_span=None))
+    load = build_load()
+    problem = bat.build_battery_problem(silent, load)
+    point = dict(
+        state_of_charge=load.initial_state_of_charge,
+        discharge_current=load.current,
+        cell_temperature=load.cell_temperature,
+    )
+
+    honest = bat.assess_rint_validity(problem, **point)
+    assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO in honest.unknown
+
+    forged = bat.assess_rint_validity(
+        _with_parameters(
+            problem,
+            {ctx.INTERNAL_RESISTANCE_DRIFT_RATIO: Quantity(0.1, ONE)},
+        ),
+        **point,
+    )
+    assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO in forged.unknown
+    assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO not in forged.satisfied
+    assert forged.status is ValidityStatus.UNKNOWN
+
+
+def test_f03_a_caller_parameter_cannot_supply_an_absent_state_coordinate():
+    """The state coordinates are reserved too, and are protected twice.
+
+    ``cell_temperature`` is what every temperature-dependent group is computed
+    from, so a caller parameter of that name — on a call that supplied no
+    temperature — would decide a whole family of conditions at once.
+
+    On a problem this domain builds, the core refuses that outright: a
+    parameter may not share a name with a declared variable, and the state
+    coordinates are variables. The reservation is the second layer, and it is
+    the one that holds on a problem that declares no such variable — which
+    nothing prevents anybody from building.
+    """
+    cell, load = build_cell(), build_load()
+    problem = bat.build_battery_problem(cell, load)
+
+    with pytest.raises(InvalidScientificProblem, match="duplicate name"):
+        _with_parameters(problem, {ctx.CELL_TEMPERATURE: Quantity(298.15, K)})
+
+    # the same collision on a problem carrying no such variable
+    payload = problem.to_dict()
+    payload["variables"] = [
+        v for v in payload["variables"] if v["name"] != ctx.CELL_TEMPERATURE
+    ]
+    payload["parameters"].append(
+        ScientificParameter(
+            name=ctx.CELL_TEMPERATURE, value=Quantity(298.15, K)
+        ).to_dict()
+    )
+    forged = ScientificProblem.from_dict(payload)
+
+    point = dict(
+        state_of_charge=load.initial_state_of_charge,
+        discharge_current=load.current,
+    )
+    honest = bat.assess_rint_validity(problem, **point)
+    assert ctx.DISCHARGE_TEMPERATURE_POSITION in honest.unknown
+    assert bat.assess_rint_validity(forged, **point) == honest
+
+
+@pytest.mark.parametrize("declared", [True, False])
+def test_f03_colliding_with_every_assembled_name_changes_no_verdict(declared):
+    """Not one name and not the ones that were noticed: all of them.
+
+    Run against a fully declared cell and one that declares no optional limit
+    at all. The second is the case that matters — where the derivations fail
+    and the old assembly left the caller's values in place — and the first is
+    the regression guard that reserving a name does not stop the domain from
+    filling it.
+    """
+    cell = build_cell() if declared else build_cell(limits=ctx.CellLimits())
+    load = build_load()
+    problem = bat.build_battery_problem(cell, load)
+    point = dict(
+        state_of_charge=load.initial_state_of_charge,
+        discharge_current=load.current,
+        cell_temperature=load.cell_temperature,
+    )
+    # The state coordinates are declared variables of this problem and the
+    # core already refuses a parameter that shadows one — see the test above,
+    # which exercises the reservation on a problem where it does not.
+    declared_variables = {v.name for v in problem.variables}
+    collisions = {
+        name: Quantity(0.5, ONE)
+        for name in ctx.ASSEMBLED_QUANTITIES - declared_variables
+    }
+    assert len(collisions) >= 19
+    tampered = _with_parameters(problem, collisions)
+    for model in mdl.BATTERY_MODELS:
+        assert bat.assess_all(tampered, **point)[model.model_id] == (
+            bat.assess_all(problem, **point)[model.model_id]
+        )
+
+
+def test_f03_every_derivable_name_is_reserved():
+    """The registry cannot fall behind the assembler."""
+    cell, load = build_cell(), build_load()
+    problem = bat.build_battery_problem(cell, load)
+    derivable = set(
+        ctx.derived_cell_quantities(
+            problem.validity_context(),
+            state_of_charge=load.initial_state_of_charge,
+            discharge_current=load.current,
+            cell_temperature=load.cell_temperature,
+        )
+    )
+    assert derivable
+    assert derivable <= ctx.ASSEMBLED_QUANTITIES
