@@ -387,19 +387,42 @@ def test_a_derating_factor_above_one_would_report_overuse_as_headroom():
 
 
 def test_the_resistor_model_still_binds_to_a_problem_that_declares_no_rating():
-    """No new model *inputs* were added: the ratings are computed context.
+    """The ratings are declared inputs, and a problem still need not carry them.
 
-    A rating is not something a circuit declares; it is something a reader
-    knows about a part. Adding it as a required input would have broken every
-    problem in the domain, and adding it as an optional one would have implied
-    the problem record could carry it.
+    **This reverses an earlier decision, deliberately.** The ratings used to be
+    absent from ``inputs`` on the reasoning that "adding it as an optional one
+    would have implied the problem record could carry it". Two things made that
+    reasoning give way.
+
+    The payload boundary derives what it tells a caller about a field — its
+    dimension, whether it is required, what it is for, which condition it
+    unlocks — from the model records, and refuses at import to describe a field
+    no model declares. A rating that is not an input is therefore a rating the
+    boundary cannot describe without keeping a second copy of the prose, which
+    is the duplication the binding table exists to avoid.
+
+    And the implication it was avoiding is not one this architecture makes.
+    ``electrical.material.linear_tcr_resistance`` has declared ``temperature``
+    as an input since MODEL0-R and no resistance problem carries that either:
+    it is supplied to ``assess_rated_resistance_validity`` as an argument,
+    exactly as a rating is supplied to ``assess_resistor_validity``. A declared
+    input names what the model reads, not what a problem must hold.
+
+    What has not changed is the part that mattered: the ratings are optional,
+    so a problem that declares none still binds and still satisfies the model.
     """
     report = RESISTOR_OHM_MODEL.check_against(resistor_relation_problem(RESISTOR))
     assert report.is_satisfied
     assert set(report.valid_bindings) == {"resistance", "voltage_across"}
-    assert {s.name for s in RESISTOR_OHM_MODEL.inputs} == {
-        "resistance",
-        "voltage_across",
+
+    required = {s.name for s in RESISTOR_OHM_MODEL.inputs if s.required}
+    assert required == {"resistance", "voltage_across"}
+
+    optional = {s.name for s in RESISTOR_OHM_MODEL.inputs if not s.required}
+    assert optional == {
+        "rated_power",
+        "maximum_working_voltage",
+        "derating_factor",
     }
 
 

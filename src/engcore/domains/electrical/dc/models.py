@@ -74,6 +74,18 @@ CURRENT_UNIT = "ampere"
 RESISTANCE_UNIT = "ohm"
 DIMENSIONLESS = "dimensionless"
 
+# --- names of the ratings a caller may declare -------------------------------
+# Names, not conventions. Each is enumerated by the model record it belongs to
+# as an optional ``ModelInputSpec``, so the payload boundary derives its
+# description of these fields from the records instead of restating them, and
+# a reader holding only the records can see which declaration unlocks which
+# condition. They are the field names of :class:`ComponentRating`.
+RATED_POWER = "rated_power"
+MAXIMUM_WORKING_VOLTAGE = "maximum_working_voltage"
+MAXIMUM_CURRENT = "maximum_current"
+COMPLIANCE_VOLTAGE = "compliance_voltage"
+DERATING_FACTOR = "derating_factor"
+
 # --- names of the derived utilizations the conditions are stated over --------
 DISSIPATED_POWER_UTILIZATION = "dissipated_power_utilization"
 WORKING_VOLTAGE_UTILIZATION = "working_voltage_utilization"
@@ -93,6 +105,17 @@ RATING_UTILIZATION_LIMIT = Quantity(1.0, DIMENSIONLESS)
 #: publishes ratings against a stated reference ambient precisely because the
 #: usable fraction away from it is the user's call.
 NO_DERATING = 1.0
+
+#: One text for one concept. ``derating_factor`` is declared by both the
+#: resistor and the source, and the payload boundary derives its description
+#: of a field from the model record; two wordings for the same field would
+#: make that description depend on which model was consulted.
+_DERATING_DESCRIPTION = (
+    "Fraction of the published ratings the caller elects to use, in (0, 1]. "
+    "Applies to every rating condition on this model. Defaults to 1.0, which "
+    "is the complete and explicit statement 'the ratings as published, with "
+    "no margin applied'."
+)
 
 _DC_ASSUMPTIONS = (
     "lumped-element circuit (no distributed or field effects)",
@@ -224,6 +247,46 @@ RESISTOR_OHM_MODEL = ScientificModelDefinition(
             source_kind=InputSourceKind.VARIABLE,
             unit_exemplar="volt",
             description="V(node_a) - V(node_b).",
+        ),
+        # ---- optional, component-supplied ratings ------------------------
+        # The two rating conditions below have always existed and have always
+        # been correct; what they lacked was any declared input to read. They
+        # are enumerated here, `required=False`, for the same reason the
+        # material limits are: a reader holding only this record can see which
+        # declaration unlocks which condition, and a boundary can derive the
+        # payload's description from it instead of restating it.
+        #
+        # Omitting one leaves its condition UNKNOWN, which is the honest
+        # verdict for a part whose datasheet nobody supplied. An unrated part
+        # is not an unlimited part.
+        ModelInputSpec(
+            name=RATED_POWER,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=POWER_UNIT,
+            required=False,
+            description=(
+                "Rated dissipation of the element, against the reference "
+                "ambient its datasheet states. Unlocks "
+                f"{DISSIPATED_POWER_UTILIZATION}."
+            ),
+        ),
+        ModelInputSpec(
+            name=MAXIMUM_WORKING_VOLTAGE,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=VOLTAGE_UNIT,
+            required=False,
+            description=(
+                "Maximum working voltage across the element. Unlocks "
+                f"{WORKING_VOLTAGE_UTILIZATION}, which for a high-value part "
+                f"binds before the dissipation rating does."
+            ),
+        ),
+        ModelInputSpec(
+            name=DERATING_FACTOR,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DIMENSIONLESS,
+            required=False,
+            description=_DERATING_DESCRIPTION,
         ),
     ),
     outputs=(
@@ -364,6 +427,27 @@ IDEAL_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
             source_kind=InputSourceKind.VARIABLE,
             unit_exemplar="volt",
             description="V(positive_node) - V(negative_node).",
+        ),
+        # ---- optional, source-supplied rating -----------------------------
+        # `source_current_utilization` below is the condition this unlocks.
+        # A source with no declared current limit is an *ideal* source, which
+        # is what the model record says it models and what no real supply is.
+        ModelInputSpec(
+            name=MAXIMUM_CURRENT,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=CURRENT_UNIT,
+            required=False,
+            description=(
+                "Maximum current the source can deliver. Unlocks "
+                f"{SOURCE_CURRENT_UTILIZATION}."
+            ),
+        ),
+        ModelInputSpec(
+            name=DERATING_FACTOR,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DIMENSIONLESS,
+            required=False,
+            description=_DERATING_DESCRIPTION,
         ),
     ),
     outputs=(

@@ -63,6 +63,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
 from ..domains.electrical import material as mat
+from ..domains.electrical.dc import circuit as dc_circuit
 from ..domains.electrical.dc import models as dc_models
 from ..domains.electrical.dc import problem as dc_problem
 from ..domains.electrical.dc import solver as dc_solver
@@ -182,9 +183,11 @@ ROOT = ""
 STAGE = "stages[]"
 CONDUCTOR = "stages[].conductor"
 LIMITS = "stages[].conductor.limits"
+RATINGS = "stages[].conductor.ratings"
 BODY = "stages[].body"
 APPLICABILITY = "stages[].body.applicability"
 COUPLING = "coupling"
+SOURCE_RATINGS = "source_ratings"
 
 #: Execution defaults for the coupling block, resolved at this boundary rather
 #: than at the call site so that what is validated here is what the runner
@@ -213,7 +216,7 @@ class _Binding:
 
     section: str
     key: str
-    kind: str  # "quantity" | "identifier" | "count" | "category"
+    kind: str  # "quantity" | "identifier" | "count" | "category" | "fraction"
     model: ScientificModelDefinition | None = None
     input_name: str | None = None
     target: str | None = None
@@ -329,6 +332,54 @@ _BINDINGS: tuple[_Binding, ...] = (
         kind="quantity",
         model=_RATED_TCR,
         input_name="debye_temperature",
+    ),
+    # ---- component ratings -------------------------------------------
+    #
+    # Separate from `limits` because they are facts about a different thing.
+    # A material limit is shared by every component made of the alloy; a
+    # rating belongs to the one part. Two resistors wound from the same wire
+    # have the same linearization band and may have quite different rated
+    # dissipations, and one object holding both would make that unsayable.
+    _Binding(
+        section=RATINGS,
+        key=dc_models.RATED_POWER,
+        kind="quantity",
+        model=_RESISTOR,
+        input_name=dc_models.RATED_POWER,
+    ),
+    _Binding(
+        section=RATINGS,
+        key=dc_models.MAXIMUM_WORKING_VOLTAGE,
+        kind="quantity",
+        model=_RESISTOR,
+        input_name=dc_models.MAXIMUM_WORKING_VOLTAGE,
+    ),
+    _Binding(
+        section=RATINGS,
+        key=dc_models.DERATING_FACTOR,
+        kind="fraction",
+        model=_RESISTOR,
+        input_name=dc_models.DERATING_FACTOR,
+    ),
+    # ---- source rating -----------------------------------------------
+    #
+    # At the root beside `source_voltage`, because that is where the source
+    # is. The payload has one source and describes it with a scalar rather
+    # than an object, and this block follows that shape instead of inventing
+    # a `source` object for one new field.
+    _Binding(
+        section=SOURCE_RATINGS,
+        key=dc_models.MAXIMUM_CURRENT,
+        kind="quantity",
+        model=_VOLTAGE_SOURCE,
+        input_name=dc_models.MAXIMUM_CURRENT,
+    ),
+    _Binding(
+        section=SOURCE_RATINGS,
+        key=dc_models.DERATING_FACTOR,
+        kind="fraction",
+        model=_VOLTAGE_SOURCE,
+        input_name=dc_models.DERATING_FACTOR,
     ),
     # ---- body --------------------------------------------------------
     _Binding(
@@ -650,6 +701,35 @@ def _read_count(
     return raw
 
 
+def _read_fraction(
+    supplied: Mapping[str, Any], binding: _Binding, label: str
+) -> float | None:
+    """A bare dimensionless fraction, such as a derating policy.
+
+    Written without a unit, unlike every physical value at this boundary, and
+    the exception is deliberate. A derating factor is not a measurement of
+    anything: it is the share of a published rating the caller elects to use,
+    the same kind of number as ``coupling.max_iterations``. Requiring
+    ``"0.5 dimensionless"`` would dress a policy choice as an observation, and
+    the record behind it stores a ``float`` for that reason.
+
+    The admissible interval is *not* checked here. ``ComponentRating`` refuses
+    a factor outside ``(0, 1]`` with the reason attached, and duplicating the
+    rule would give this boundary a second copy to drift from.
+    """
+    where = _path(label, binding.key)
+    raw = supplied.get(binding.key)
+    if raw is None:
+        return None
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        raise MalformedPayloadError(
+            f"{where} must be a bare number in (0, 1] and carries no unit — "
+            f"it is the fraction of the published rating in use, not a "
+            f"physical quantity — got {raw!r}"
+        )
+    return float(raw)
+
+
 def _read_section(
     supplied: Mapping[str, Any],
     section: str,
@@ -677,6 +757,8 @@ def _read_section(
             value = _read_category(supplied, binding, where)
         elif binding.kind == "count":
             value = _read_count(supplied, binding, where)
+        elif binding.kind == "fraction":
+            value = _read_fraction(supplied, binding, where)
         else:  # pragma: no cover - kinds are a closed set
             raise ScientificCoreError(f"unknown binding kind {binding.kind!r}")
         if value is not None:
@@ -699,7 +781,10 @@ def build_electrothermal_system(
     which stage* rather than which constructor argument.
     """
     root = _require_mapping(payload, where="payload")
-    root_values = _read_section(root, ROOT, extra=("stages", "coupling"))
+    root_values = _read_section(
+        root, ROOT, extra=("stages", "coupling", SOURCE_RATINGS)
+    )
+    _read_ratings(root)  # checked here; consumed when the report is assembled
 
     raw_stages = root.get("stages")
     if raw_stages is None:
@@ -771,6 +856,63 @@ def _read_coupling(payload: Mapping[str, Any]) -> dict[str, Any]:
     return coupling
 
 
+def _read_component_rating(
+    conductor_raw: Mapping[str, Any], index: int
+) -> dc_models.ComponentRating:
+    """One stage's declared ratings, or an empty record.
+
+    An absent ``ratings`` object and an empty one mean the same thing and both
+    are legal: every rating condition stays UNKNOWN, which is the honest
+    verdict for a part whose datasheet nobody supplied. Supplying the block
+    can only move a condition off UNKNOWN — never turn a violated one into a
+    satisfied one, since the utilizations are ratios against what is declared.
+    """
+    return dc_models.ComponentRating(
+        **_read_section(
+            _require_mapping(
+                conductor_raw.get("ratings"),
+                where=f"stages[{index}].conductor.ratings",
+            ),
+            RATINGS,
+            label=f"stages[{index}].conductor.ratings",
+        )
+    )
+
+
+def _read_ratings(
+    payload: Mapping[str, Any],
+) -> tuple[dict[str, dc_models.ComponentRating], dc_models.ComponentRating]:
+    """``({component_id: rating}, source_rating)`` for one payload.
+
+    Read from the payload rather than carried on the system, because a rating
+    is not part of the declaration a coupled run needs: the run solves the
+    same circuit whether or not anybody wrote down what the parts survive.
+    It is evidence the *report* needs, which is where it is used.
+    """
+    root = _require_mapping(payload, where="payload")
+    per_component: dict[str, dc_models.ComponentRating] = {}
+    for index, entry in enumerate(root.get("stages") or ()):
+        stage = _require_mapping(entry, where=f"stages[{index}]")
+        conductor_raw = _require_mapping(
+            stage.get("conductor"), where=f"stages[{index}].conductor"
+        )
+        identity = _read_section(
+            stage, STAGE, extra=("conductor", "body"), label=f"stages[{index}]"
+        )
+        per_component[identity["component_id"]] = _read_component_rating(
+            conductor_raw, index
+        )
+    source_rating = dc_models.ComponentRating(
+        **_read_section(
+            _require_mapping(
+                root.get(SOURCE_RATINGS), where=SOURCE_RATINGS
+            ),
+            SOURCE_RATINGS,
+        )
+    )
+    return per_component, source_rating
+
+
 def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
     identity = _read_section(
         entry, STAGE, extra=("conductor", "body"), label=f"stages[{index}]"
@@ -790,11 +932,18 @@ def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
             label=f"stages[{index}].conductor.limits",
         )
     )
+    # `ratings` is read here only to be *checked* here — an unknown key or a
+    # malformed value must be refused by the same pass that refuses every
+    # other field, not later and not by a different entry point. The record it
+    # builds is discarded; :func:`_read_ratings` builds the one that is used,
+    # because a rating belongs to the electrical assessment rather than to the
+    # conductor declaration, and CoupledStage has no field for it.
+    _read_component_rating(conductor_raw, index)
     conductor = mat.TemperatureDependentConductor(
         component_id=component_id,
         limits=limits,
         **_read_section(
-            conductor_raw, CONDUCTOR, extra=("limits",),
+            conductor_raw, CONDUCTOR, extra=("limits", "ratings"),
             label=f"stages[{index}].conductor",
         ),
     )
@@ -856,6 +1005,8 @@ class ElectroThermalCaseRun:
 def _electrical_assessments(
     system: cp.CoupledElectroThermalSystem,
     electrical: "ScientificResult",
+    ratings: Mapping[str, dc_models.ComponentRating] | None = None,
+    source_rating: dc_models.ComponentRating | None = None,
 ) -> dict[str, ValidityAssessment]:
     """A verdict for every electrical model the circuit invoked.
 
@@ -867,12 +1018,16 @@ def _electrical_assessments(
 
     Every operating-point value comes from the electrical result — the power,
     the voltage across each element, the current out of the source. The
-    *ratings* come from nowhere, because this payload boundary has no field for
-    a rated dissipation or a source current limit, so every rating condition is
-    UNKNOWN. That is the honest answer and it is why the nominal case is
-    INSUFFICIENT_EVIDENCE: an unrated part is not an unlimited part, and the
-    report now says which declarations are missing instead of omitting the
-    models that would have asked for them.
+    *ratings* come from the payload's ``ratings`` and ``source_ratings``
+    blocks, matched to each element by ``component_id``.
+
+    Both blocks are optional, and a part with no declared rating leaves its
+    conditions UNKNOWN rather than satisfied. That is still the honest answer
+    for a part whose datasheet nobody supplied — an unrated part is not an
+    unlimited part — and it is why a payload that declares no ratings is
+    INSUFFICIENT_EVIDENCE rather than SUPPORTED. What has changed is that a
+    caller who *can* state the ratings is no longer forced into that verdict
+    by the boundary having nowhere to put them.
     """
     circuit = system.circuit_at(
         {s.component_id: s.conductor.reference_resistance for s in system.stages}
@@ -885,6 +1040,7 @@ def _electrical_assessments(
         resistors.append(
             dc_models.assess_resistor_validity(
                 dc_problem.resistor_relation_problem(resistor),
+                rating=(ratings or {}).get(cid),
                 dissipated_power=electrical.value(
                     RESISTOR_POWER_METRIC.format(component_id=cid)
                 ),
@@ -899,6 +1055,7 @@ def _electrical_assessments(
         sources.append(
             dc_models.assess_voltage_source_validity(
                 dc_problem.voltage_source_relation_problem(source),
+                rating=source_rating,
                 source_current=electrical.value(
                     f"{dc_solver.SOURCE_CURRENT_METRIC}:{source.component_id}"
                 ),
@@ -1061,7 +1218,8 @@ def run_electrothermal_case(
 
     # Computed once: every one of these is a verdict about the whole coupled
     # composition, which is what the closure of any reported value here is.
-    shared = _electrical_assessments(system, electrical)
+    ratings, source_rating = _read_ratings(payload)
+    shared = _electrical_assessments(system, electrical, ratings, source_rating)
     shared.update(_material_assessments(system, run))
 
     versions = {
@@ -1213,6 +1371,12 @@ _PROBE_TEMPERATURE = Quantity(320.0, "kelvin")
 _PROBE_AMBIENT = Quantity(300.0, "kelvin")
 _PROBE_HEAT = Quantity(1.0, "watt")
 
+#: One element and one source for the rating probe, for the same purpose.
+_PROBE_RESISTOR = dc_circuit.Resistor("probe", "n1", "gnd", Quantity(1.0, "kohm"))
+_PROBE_SOURCE = dc_circuit.DCVoltageSource(
+    "probe-v", "n1", "gnd", Quantity(10.0, "volt")
+)
+
 
 def _probe_declaration() -> thermal_ctx.LumpedApplicabilityDeclaration:
     return thermal_ctx.LumpedApplicabilityDeclaration(
@@ -1278,6 +1442,37 @@ def _unknown_rated_conditions(limits: mat.MaterialLimits) -> frozenset[str]:
         _PROBE_TEMPERATURE,
     )
     return frozenset(assessment.unknown)
+
+
+#: An operating point for the rating probe. As with the thermal probe the
+#: numbers are irrelevant — only which conditions become decidable when a
+#: rating is present is read from them.
+_PROBE_POWER = Quantity(0.1, "watt")
+_PROBE_VOLTAGE = Quantity(10.0, "volt")
+_PROBE_CURRENT = Quantity(0.01, "ampere")
+
+
+def _unknown_rating_conditions(
+    rating: dc_models.ComponentRating,
+) -> frozenset[str]:
+    """Rating conditions still UNKNOWN with this rating declared.
+
+    Both electrical models in one probe. They declare disjoint rating
+    conditions, so the union is unambiguous and one measurement serves the
+    ``ratings`` and ``source_ratings`` sections alike.
+    """
+    resistor = dc_models.assess_resistor_validity(
+        dc_problem.resistor_relation_problem(_PROBE_RESISTOR),
+        rating=rating,
+        dissipated_power=_PROBE_POWER,
+        voltage_across=_PROBE_VOLTAGE,
+    )
+    source = dc_models.assess_voltage_source_validity(
+        dc_problem.voltage_source_relation_problem(_PROBE_SOURCE),
+        rating=rating,
+        source_current=_PROBE_CURRENT,
+    )
+    return frozenset(resistor.unknown) | frozenset(source.unknown)
 
 
 def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]]:
@@ -1359,6 +1554,39 @@ def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tupl
         full_limits,
     )
     for binding in limits_optional:
+        key = binding.key
+        measured[key] = (
+            tuple(sorted(solo[key])),
+            tuple(sorted(alternates[key])),
+            tuple(sorted(solo[key] or joint[key])),
+        )
+
+    # The ratings, measured the same way. `derating_factor` is deliberately
+    # among them and correctly measures nothing: it has a default, so omitting
+    # it leaves every rating condition decidable. It narrows a rating rather
+    # than unlocking one.
+    rating_bindings = list(_section(RATINGS)) + list(_section(SOURCE_RATINGS))
+    full_rating = dc_models.ComponentRating(
+        rated_power=Quantity(1.0, "watt"),
+        maximum_working_voltage=Quantity(100.0, "volt"),
+        maximum_current=Quantity(1.0, "ampere"),
+    )
+    def drop_rating(full, drop):
+        # `derating_factor` is a float with a default rather than an optional
+        # Quantity, so "omitted" for it means back to NO_DERATING, not None.
+        # Passing None would fail the record's own constructor and report the
+        # field as unlockable rather than as unlocking nothing.
+        adjusted = {
+            name: (dc_models.NO_DERATING if name == dc_models.DERATING_FACTOR
+                   else value)
+            for name, value in drop.items()
+        }
+        return dataclasses.replace(full, **adjusted)
+
+    solo, alternates, joint = measure(
+        rating_bindings, drop_rating, _unknown_rating_conditions, full_rating
+    )
+    for binding in rating_bindings:
         key = binding.key
         measured[key] = (
             tuple(sorted(solo[key])),

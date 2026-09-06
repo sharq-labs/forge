@@ -39,6 +39,7 @@ from src.engcore.mcp import (
     run_electrothermal_case,
 )
 from src.engcore.mcp import evidence
+from src.engcore.scientific.errors import InvalidScientificProblem
 from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.results.validation import ValidationLevel
 from src.engcore.scientific.units.quantity import Quantity, dimensionality
@@ -228,8 +229,12 @@ def test_a_bare_number_is_refused_everywhere_a_quantity_is_expected():
             path = BODY_PATH
         elif field.section == "stages[].conductor":
             path = CONDUCTOR_PATH
-        elif field.section == "stages[].conductor.limits":
-            continue  # absent from this payload; covered by its own test below
+        elif field.section in (
+            "stages[].conductor.limits",
+            "stages[].conductor.ratings",
+            "source_ratings",
+        ):
+            continue  # absent from this payload; covered by their own tests
         elif field.section == "coupling":
             path = ("coupling",)
         else:
@@ -581,7 +586,15 @@ def test_the_description_names_every_condition_the_models_declare():
     rated_conditions = {
         c.name for c in mat.RATED_LINEAR_TCR_MODEL.validity.conditions
     }
-    known = lumped_conditions | rated_conditions
+    electrical_conditions = {
+        c.name
+        for model in (
+            dc_models.RESISTOR_OHM_MODEL,
+            dc_models.IDEAL_VOLTAGE_SOURCE_MODEL,
+        )
+        for c in model.validity.conditions
+    }
+    known = lumped_conditions | rated_conditions | electrical_conditions
 
     mentioned = set()
     for field in describe_electrothermal_case().fields:
@@ -876,14 +889,14 @@ def test_every_model_in_the_closure_is_named_and_assessed():
 
 
 def test_the_undeclared_electrical_ratings_are_reported_as_gaps():
-    """More restrictive, and correctly so: nobody declared these limits.
+    """Nobody declared these limits, so they stay UNKNOWN.
 
-    The payload has no field for a resistor's rated dissipation or a source's
-    current limit, so every rating condition is UNKNOWN — and
-    ``electrical.dc.kcl`` declares no conditions at all. Before this change
-    none of that was in the report, because none of those models was in the
-    report. The nominal case is INSUFFICIENT_EVIDENCE as a result, which is the
-    honest reading of it.
+    The example payload declares no ``ratings`` block, and an absent rating is
+    UNKNOWN rather than unlimited. That behaviour is the point and it did not
+    change when the block was added: what changed is that a caller who *can*
+    state the ratings is no longer forced into this verdict by the boundary
+    having nowhere to put them. ``test_declared_ratings_reach_the_report``
+    below is the other half.
     """
     report = run_electrothermal_case(
         example_electrothermal_payload(), run_id="gaps"
@@ -895,3 +908,143 @@ def test_the_undeclared_electrical_ratings_are_reported_as_gaps():
         report.unknown_conditions
     )
     assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+# =====================================================================
+# Component ratings: the declaration the conditions were always waiting for
+# =====================================================================
+
+RATINGS_PATH = ("stages", 0, "conductor", "ratings")
+
+
+def _rated_payload(**overrides):
+    """The applicable payload with ratings that cannot bind, plus overrides."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    ratings = {"rated_power": "1000 watt", "maximum_working_voltage": "1000 volt"}
+    ratings.update(overrides.pop("ratings", {}))
+    payload["stages"][0]["conductor"]["ratings"] = ratings
+    payload["source_ratings"] = overrides.pop(
+        "source_ratings", {"maximum_current": "1000 ampere"}
+    )
+    return payload
+
+
+def test_declared_ratings_reach_the_report_and_lift_their_conditions():
+    """The gap TASK 1 closed, stated as the one assertion that shows it."""
+    report = run_electrothermal_case(_rated_payload(), run_id="rated").reports[0]
+
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) not in (
+        report.unknown_conditions
+    )
+    assert (RESISTOR, dc_models.WORKING_VOLTAGE_UTILIZATION) not in (
+        report.unknown_conditions
+    )
+    assert (SOURCE, dc_models.SOURCE_CURRENT_UTILIZATION) not in (
+        report.unknown_conditions
+    )
+    for record in report.validity:
+        if record.model_id in (RESISTOR, SOURCE):
+            assert record.assessment.status is ValidityStatus.IN_DOMAIN
+
+
+def test_an_exceeded_rating_is_a_violation_rather_than_a_gap():
+    """A rating that binds is a finding about the design, not a missing field."""
+    report = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": "0.001 watt"}), run_id="over"
+    ).reports[0]
+
+    resistor = next(r for r in report.validity if r.model_id == RESISTOR)
+    assert resistor.assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+def test_omitting_the_ratings_block_is_not_an_error_and_stays_unknown():
+    """Optional means optional. This is the behaviour that must not change.
+
+    Supplying a rating can move a condition off UNKNOWN; omitting one can never
+    move it onto IN_DOMAIN. An unrated part is not an unlimited part.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="bare"
+    ).reports[0]
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
+        report.unknown_conditions
+    )
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+    # An empty block says exactly what an absent one says.
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+    payload["stages"][0]["conductor"]["ratings"] = {}
+    empty = run_electrothermal_case(payload, run_id="empty").reports[0]
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
+        empty.unknown_conditions
+    )
+
+
+def test_the_derating_factor_narrows_a_rating_that_would_otherwise_hold():
+    """Declared margin is applied, and is visible as an input rather than a
+    number buried in a threshold."""
+    # This stage dissipates about 2.12 W, so a 5 W part is comfortable at full
+    # rating and over its limit once the caller elects to use a tenth of it.
+    power = "5 watt"
+    holds = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": power}), run_id="full"
+    ).reports[0]
+    full = next(r for r in holds.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in full.assessment.satisfied
+
+    derated = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": power, "derating_factor": 0.1}),
+        run_id="derated",
+    ).reports[0]
+    resistor = next(r for r in derated.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
+
+
+def test_a_derating_factor_outside_the_unit_interval_is_refused():
+    """Refused by ComponentRating's own rule, not by a copy of it here."""
+    for bad in (0.0, -0.5, 1.5):
+        with pytest.raises(InvalidScientificProblem, match="derating_factor"):
+            build_electrothermal_system(
+                _rated_payload(ratings={"derating_factor": bad})
+            )
+
+
+def test_a_rating_written_without_a_unit_is_refused_like_any_quantity():
+    for key in ("rated_power", "maximum_working_voltage"):
+        with pytest.raises(MissingUnitError, match=key):
+            build_electrothermal_system(_rated_payload(ratings={key: 1.0}))
+
+
+def test_the_derating_factor_is_the_one_field_written_without_a_unit():
+    """And deliberately so: it is a policy, not a measurement.
+
+    Pinned because it is the single exception to this boundary's strictest
+    rule, and an exception nobody wrote down is one somebody later removes.
+    """
+    with pytest.raises(MalformedPayloadError, match="derating_factor"):
+        build_electrothermal_system(
+            _rated_payload(ratings={"derating_factor": "0.5 dimensionless"})
+        )
+
+
+def test_a_misspelled_rating_is_refused_with_a_suggestion():
+    with pytest.raises(UnknownFieldError, match="rated_powr"):
+        build_electrothermal_system(_rated_payload(ratings={"rated_powr": "1 watt"}))
+
+
+def test_the_ratings_fields_are_described_from_the_model_records():
+    """The description is derived, not restated. TASK 1 asked for exactly this."""
+    described = {
+        (f.section, f.key): f for f in describe_electrothermal_case().fields
+    }
+
+    power = described[("stages[].conductor.ratings", "rated_power")]
+    assert power.required is False
+    assert power.dimension == dimensionality("watt")
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in power.unlocks
+
+    current = described[("source_ratings", "maximum_current")]
+    assert current.required is False
+    assert current.dimension == dimensionality("ampere")
+    assert dc_models.SOURCE_CURRENT_UTILIZATION in current.unlocks

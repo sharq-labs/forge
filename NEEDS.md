@@ -1386,3 +1386,154 @@ written against `mcp` 1.x — including the SDK's own older README — will not 
 here. The in-process client is `mcp.Client(server)`, which speaks the real
 protocol over memory streams: no network and no subprocess, which is what the
 tests use.
+
+---
+
+# NEEDS — benchmark-fixes round (TASK 1)
+
+Measured against `benchmarks/hard/`, 2000 cases. Baseline on `b60e757`:
+catch 1547/1547 (100%), false accept 0/1547 (0.00%), false reject 453/453
+(100%), exact match 1236/2000 (61.8%).
+
+## 1. `electrical.dc.kcl` is UNKNOWN in every run, and that alone caps false reject at 100%
+
+**This is the finding of the round.** TASK 1's premise is that closing the
+ratings gap moves false reject from 100% to roughly 13%. Closing it does not
+move the number at all, and the reason sits upstream of both ratings and
+evidentiary levels.
+
+`KCL_MODEL` declares `validity=ValidityDomain(description=...)` with **no
+conditions**. The platform rule — stated in README.md and honoured everywhere —
+is that a model with no declared validity conditions is UNKNOWN, not valid. So
+`electrical.dc.kcl` assesses UNKNOWN on every run containing a circuit, which
+is every run. `derive_verdict` reaches
+
+    if ValidityStatus.UNKNOWN in statuses:
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+before it reaches anything about levels, ratings or coupling. **No payload can
+produce SUPPORTED while KCL is in the report.**
+
+Measured, not inferred. All 453 sound cases re-run with the new ratings block
+filled in at 1e9 W / 1e9 V / 1e9 A, i.e. ratings that cannot bind:
+
+| Outcome | Cases |
+|---|---|
+| `insufficient_evidence` | 371 |
+| `not_supported` | 82 |
+| `supported` | **0** |
+
+with exactly one UNKNOWN across the whole set: `kcl:<no conditions>`, 453/453.
+The 82 are a separate matter, in section 2. Of the 371, every one attains
+`ANALYTICALLY_VERIFIED` from the lumped model's independent route and has no
+violated condition anywhere. **They are blocked by KCL and by nothing else.**
+Resolve KCL and false reject falls to 82/453 (about 18%) without touching a
+single threshold — the neighbourhood TASK 1 predicted.
+
+### Why this was not fixed here
+
+Giving KCL a validity condition is a scientific claim about when Kirchhoff's
+current law applies, and it changes the verdict of every report the platform
+has produced. Rule 4 puts it outside what this round may decide on its own: it
+improves false reject by making the tool assert something it currently declines
+to assert.
+
+The claim would be defensible. The model's own `ValidityDomain.description`
+already names the boundary — "valid for lumped circuits; not validated for
+distributed or high-frequency regimes where the lumped assumption fails" — and
+the discriminator there is electrical size against wavelength. This model's
+declared scope fixes the frequency at zero (`_DC_ASSUMPTIONS`: "steady-state DC
+operation"), so the wavelength is unbounded and the lumped condition is
+satisfied identically rather than conditionally. The prose states a limit that
+the model's own scope guarantees; what is missing is a machine-checkable
+condition saying so.
+
+Three ways to write it, in descending order of how much they claim:
+
+1. **A condition on a declared operating frequency**, `f L / c << 1`, UNKNOWN
+   until a caller declares a circuit dimension and a frequency. Most honest,
+   most work, and it makes every DC caller declare two fields to escape an
+   UNKNOWN their DC-ness already settles.
+2. **A condition on the model's own scope**, satisfied because this is a DC
+   model. Says exactly what the prose says. Needs a `ValidityDomain` able to
+   express "guaranteed by scope" rather than "measured from context".
+3. **Leave KCL out of the report's validity set.** Rejected: a model left out
+   is a model the report silently claims nothing about, which the assembly
+   comment in `problem.py` already argues against.
+
+Recommendation: (2), with (1) as the shape to grow into if a non-DC circuit
+model is ever added. Not started — it needs a decision, not an implementation.
+
+## 2. The 61 sound cases that violate `temperature`, and the 24 that violate the reference Debye floor
+
+Separate from KCL, visible in the same probe. Of the 82 sound cases that reach
+`not_supported` with unbindable ratings:
+
+- **61 violate `temperature`** on both `linear_tcr_resistance` and
+  `rated_linear_tcr_resistance`. That condition is the declared range of this
+  repository's linear TCR form at all — `TCR_MIN_TEMPERATURE` 200 K to
+  `TCR_MAX_TEMPERATURE` 450 K — and the cases sit far outside it. `S00133`
+  reaches roughly 1192 K.
+
+  **The tool is right and the benchmark is wrong here.** `verify_sound()`
+  re-checks nine conditions and the material's own declared range is not among
+  them: it checks `t < p["t_max"]` against the caller-declared
+  `maximum_operating_temperature` (4672 K in `S00133`) and never against the
+  200-450 K range the model itself declares. A case at 1192 K is outside the
+  model's validated domain by the model's own record, and refusing it is
+  correct. Widening `TCR_MAX_TEMPERATURE` to accept them is the threshold
+  relaxation rule 4 forbids, and it is not proposed.
+
+  These are very likely the 61 cases TASK 2 attributes to seven separate
+  conditions. One cause, not seven — and not a derived quantity disagreeing
+  with the generator, but a condition the generator does not model at all.
+
+- **24 violate `reference_reduced_debye_temperature`**, added in TASK 5
+  (`66bc929`). These are `debye_in` cases where the shaper drew `theta_D` at
+  roughly three times the operating temperature to place the operating Debye
+  ratio near its bound, which drags the fixed 293.15 K reference below
+  `theta_D / 3` as a side effect. `verify_sound()` checks
+  `min(t_amb, t) / debye > 1/3` and never checks `t_ref / debye`.
+
+  Also the tool being right and the label incomplete, though more arguable than
+  the first: a linear coefficient anchored below its own material's linearity
+  floor is self-undermining, but published room-temperature TCR values do exist
+  for high-`theta_D` metals. Reported rather than acted on. The same condition
+  earned 35 correct catches in that commit, including all 8
+  `limit_conflict:ref_above_ceiling` cases it was written for.
+
+## 3. Melting-versus-ceiling needs a mechanism this boundary does not have — built, measured, reverted
+
+TASK 1 Half C asked for the melting/ceiling comparison at payload level. The
+shape it has to take is the problem.
+
+`limit_conflict:melt_below_ceiling` expects **NOT_SUPPORTED**, which is a
+finding in a report, not a refusal. `CredibilityEvidenceReport.from_result`
+takes `validity`, `declarations`, `coupling` and `required_levels`; it has no
+parameter for a check this boundary ran itself, and `validation` comes from the
+result. A payload-level finding therefore has nowhere to go but a
+`ModelValidityRecord`, and attributing it to a model means either making one
+domain read the other's limit — which this round was explicitly told not to
+do — or fabricating an attribution, which `unattributed_assessments` would
+correctly reject.
+
+Implemented as a boundary refusal to measure what it costs. It is worse than
+nothing:
+
+| Defect | Before | After | Exact match | n |
+|---|---|---|---|---|
+| `compound:cond+melt` | NOT_SUPPORTED | REJECTED_AT_BOUNDARY | T to F | 54 |
+| `melt_out` | NOT_SUPPORTED | REJECTED_AT_BOUNDARY | T to F | 44 |
+| `limit_conflict:melt_below_ceiling` | NOT_SUPPORTED | REJECTED_AT_BOUNDARY | T to F | 14 |
+| `limit_conflict:melt_below_ceiling` | INSUFFICIENT_EVIDENCE | REJECTED_AT_BOUNDARY | F to F | 29 |
+
+112 correct verdicts lost, none gained; exact match 1271 to 1159. A low melting
+point beside a high ceiling is how `melt_out` and `compound:cond+melt` express
+their *actual* defect, and refusing at build time pre-empts the more
+informative finding — "this run exceeds the melting point" — with a less
+informative one about two declarations disagreeing. Reverted.
+
+What it needs: a way for the payload boundary to contribute a check to the
+report it assembles. Smallest version is a `validation=` parameter on
+`from_result`, merged with the result's own checks. That is `mcp/evidence.py`,
+outside TASK 1's owned paths, so it is written here rather than done.
