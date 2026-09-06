@@ -25,6 +25,11 @@ read through it:
 
 Section 5 carries the rest of the limitations. This preamble does not replace it.
 
+**Section 4's finding has since been fixed, and the numbers in section 2 are the
+ones from before that fix.** They are kept as they were because a benchmark that
+quietly restates its score after the thing it found was repaired has destroyed
+its own evidence. Section 4 carries the after numbers beside the before.
+
 ## 1. What was measured
 
 100 thermal designs, drawn from 35 real resistors and 23 real package thermal
@@ -57,6 +62,10 @@ The set:
 Scored under three conversion policies. `violation_scoped` and `whole_report`
 agree exactly on this set, so one table serves; the difference is expected to
 appear only when real, sparsely-declared designs arrive.
+
+**These are the numbers as measured before the fix in section 4**, against
+`electrical.dc.resistor_ohm` as it stood when the finding was made. They are the
+record of what was found, not the current score; section 4 has both.
 
 | | `stated_only` | `datasheet_completed` | `fully_declared` |
 |---|---|---|---|
@@ -173,11 +182,52 @@ reviewer with the datasheet open catches all six in seconds; that is what the
 derating curve on page one is for.
 
 The tool is not missing an arithmetic step. `derating_factor` exists and a caller
-who supplies it gets the right answer. What is missing is the ability to
+who supplies it gets the right answer. What was missing is the ability to
 *derive* the derating — the ambient is already declared on the body and the knee
-is a property of the part, and nothing connects them. So the check is only as
-good as a caller who already knows the answer, which is the opposite of what the
-tool is for. `FINDINGS.md` F1 has the full record; nothing was fixed here.
+is a property of the part, and nothing connected them. So the check was only as
+good as a caller who already knew the answer, which is the opposite of what the
+tool is for.
+
+### Since fixed, and here is what moved
+
+`electrical.dc.resistor_ohm` now accepts `rated_power_temperature` and
+`zero_power_temperature` — the two ends of the derating line — and
+`dissipated_power_utilization` reads that line when both are declared. Re-scored
+against that source, with the conversion carrying each part's knee from
+`components.json`:
+
+| | before, false accept | after, false accept | after, catch | after, false reject |
+|---|---|---|---|---|
+| `stated_only` | 6/64 (9.4 %) | **6/64 (9.4 %)** | 58/64 (90.6 %) | 0/28 |
+| `datasheet_completed` | 6/64 (9.4 %) | **0/64 (0.0 %)** | 64/64 (100 %) | 0/28 |
+| `fully_declared` | 6/66 (9.1 %) | **0/66 (0.0 %)** | 66/66 (100 %) | 0/28 |
+
+All six are now refused on `dissipated_power_utilization` alone — no collateral
+condition, and no design that was accepted before is refused now.
+
+**Three things about that table are worth more than the zeroes in it.**
+
+*`stated_only` did not move, and should not have.* Those designs never state a
+rating temperature, so there is nothing for the domain to read. The fix gives
+the tool the ability to ask a question; it does not make a design answer it. A
+real AI design that names a part and a wattage and stops is still checked
+against the flat rating, and the six cases would still pass. **What the fix
+removes is the tool's inability to be told, not the design's tendency not to
+say.** That distinction is the whole difference between this benchmark's two
+columns, and it is why `stated_only` exists.
+
+*The three policies now measure three different things.* Section 2 records that
+`stated_only` and `datasheet_completed` were identical, and that the identity
+was an artefact of hand-built cases stating their own limits. The first real
+difference between them is this fix.
+
+*The eleven Yageo parts are still checked against the flat rating,* because the
+RC_L datasheet draws its derating curve as an image and prints no knee — the
+eleven numbers `components.json` records as left out. The conversion cannot
+supply what the source does not publish, and a reader can check that the two
+families behave differently for a documented reason rather than a coding one.
+
+`FINDINGS.md` F1 carries the full record and now records the fix.
 
 **A second miss, smaller and mine rather than the tool's.** The two sparse
 designs that could be converted (`S095`, `S100`) were labelled

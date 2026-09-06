@@ -59,6 +59,12 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 KELVIN_OFFSET = 273.15
 
+#: The payload field names for the two ends of a derating line. Spelled out
+#: here rather than imported from engcore: this file builds a payload and must
+#: not depend on the package it is a payload for.
+dc_models_rated_power_temperature = "rated_power_temperature"
+dc_models_zero_power_temperature = "zero_power_temperature"
+
 POLICIES = ("stated_only", "datasheet_completed", "fully_declared")
 
 #: Payload fields without which no problem can be posed at all. Absent any of
@@ -419,6 +425,41 @@ def convert(design: dict, components: dict, policy: str) -> Conversion:
             f"ambient it is rated at, because the payload's rating field carries "
             f"no ambient; a part run above that ambient has a lower real rating "
             f"and this conversion cannot say so.")
+
+    # The other half of the rating. A rated dissipation is a pair, and since the
+    # domain grew fields for the pair this is where the datasheet's derating
+    # knee reaches the payload. Only parts whose datasheet prints a knee are
+    # eligible: `components.json` leaves `derating` null for the eleven Yageo
+    # sizes, which draw the curve as an image and print no temperature, so a
+    # Yageo case is still checked against the flat rating. That is not a gap in
+    # the conversion -- it is the honest consequence of a number the source does
+    # not publish, and it makes the two families behave differently in the
+    # results for a reason a reader can check.
+    derating_curve = (part or {}).get("derating") or {}
+    knee = limits.get("rated_power_temperature_c", derating_curve.get("knee_c"))
+    zero = limits.get(
+        "zero_power_temperature_c",
+        derating_curve.get("zero_power_c")
+        or (part or {}).get("permissible_film_temperature_c"),
+    )
+    stated_pair = ("rated_power_temperature_c" in limits
+                   or "zero_power_temperature_c" in limits)
+    if (knee is not None and zero is not None and "rated_power" in ratings
+            and (stated_pair or allow_datasheet)):
+        graph = derating_curve.get("read_from_graph") and not stated_pair
+        why = (
+            "design states the rating temperature" if stated_pair else
+            f"{part['part_number']} rated dissipation is stated at "
+            f"{knee} C and derates to zero at {zero} C "
+            f"({part['source']['document_number']})"
+            + ("; the knee was read from the derating curve's axis labels "
+               "rather than from a table, and is flagged as such in "
+               "components.json" if graph else "")
+        )
+        put(ratings, dc_models_rated_power_temperature, knee + KELVIN_OFFSET,
+            "kelvin", "stated" if stated_pair else "datasheet", why)
+        put(ratings, dc_models_zero_power_temperature, zero + KELVIN_OFFSET,
+            "kelvin", "stated" if stated_pair else "datasheet", why)
 
     if "maximum_working_voltage_v" in limits:
         put(ratings, "maximum_working_voltage", limits["maximum_working_voltage_v"],

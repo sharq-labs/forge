@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-06T23:29:14",
+ "generated": "2026-09-06T23:51:25",
  "designs_read": 100,
  "designs_scored": 100,
  "skipped_unlabelled": [],
@@ -18388,18 +18388,11 @@
     "scored": 92,
     "sound": 28,
     "unsound": 64,
-    "exact_verdict_match": "86/92 (93.5%)",
-    "catch_rate": "58/64 (90.6%)",
-    "false_accept": "6/64 (9.4%)",
+    "exact_verdict_match": "92/92 (100.0%)",
+    "catch_rate": "64/64 (100.0%)",
+    "false_accept": "0/64 (0.0%)",
     "false_reject": "0/28 (0.0%)",
-    "false_accept_ids": [
-     "S049",
-     "S050",
-     "S051",
-     "S052",
-     "S053",
-     "S054"
-    ],
+    "false_accept_ids": [],
     "false_reject_ids": [],
     "caught_but_decided_by_an_invented_value": 0,
     "by_failure_class": {
@@ -18413,10 +18406,10 @@
      },
      "limit_exceeded": {
       "n": 26,
-      "caught": 20,
-      "accepted": 6,
+      "caught": 26,
+      "accepted": 0,
       "insufficient": 0,
-      "exact": 20,
+      "exact": 26,
       "decided_by_an_invented_value": 0
      },
      "model_inapplicable": {
@@ -18447,7 +18440,7 @@
     "top_violated_conditions": [
      [
       "electrical.dc.resistor_ohm:dissipated_power_utilization",
-      18
+      26
      ],
      [
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization",
@@ -18516,18 +18509,11 @@
     "scored": 92,
     "sound": 28,
     "unsound": 64,
-    "exact_verdict_match": "86/92 (93.5%)",
-    "catch_rate": "58/64 (90.6%)",
-    "false_accept": "6/64 (9.4%)",
+    "exact_verdict_match": "92/92 (100.0%)",
+    "catch_rate": "64/64 (100.0%)",
+    "false_accept": "0/64 (0.0%)",
     "false_reject": "0/28 (0.0%)",
-    "false_accept_ids": [
-     "S049",
-     "S050",
-     "S051",
-     "S052",
-     "S053",
-     "S054"
-    ],
+    "false_accept_ids": [],
     "false_reject_ids": [],
     "caught_but_decided_by_an_invented_value": 0,
     "by_failure_class": {
@@ -18541,10 +18527,10 @@
      },
      "limit_exceeded": {
       "n": 26,
-      "caught": 20,
-      "accepted": 6,
+      "caught": 26,
+      "accepted": 0,
       "insufficient": 0,
-      "exact": 20,
+      "exact": 26,
       "decided_by_an_invented_value": 0
      },
      "model_inapplicable": {
@@ -18575,7 +18561,7 @@
     "top_violated_conditions": [
      [
       "electrical.dc.resistor_ohm:dissipated_power_utilization",
-      18
+      26
      ],
      [
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization",
@@ -18703,6 +18689,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 75,
        "class": "stated",
@@ -18807,6 +18805,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -18892,6 +18891,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -18998,6 +19009,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -19083,6 +19095,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -19189,6 +19213,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -19274,6 +19299,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -19380,6 +19417,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -19465,6 +19503,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -19571,6 +19621,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -19656,6 +19707,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -19762,6 +19825,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -19847,6 +19911,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -19953,6 +20029,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -20038,6 +20115,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -20144,6 +20233,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -21759,6 +21849,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -21863,6 +21965,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -21948,6 +22051,18 @@
        "value": 0.4,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -22054,6 +22169,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -22139,6 +22255,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -22245,6 +22373,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -22330,6 +22459,18 @@
        "value": 0.1,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -22436,6 +22577,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -22521,6 +22663,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -22627,6 +22781,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -22712,6 +22867,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -22818,6 +22985,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -22903,6 +23071,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -23009,6 +23189,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -23094,6 +23275,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -23200,6 +23393,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -23285,6 +23479,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -23391,6 +23597,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -23476,6 +23683,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -23582,6 +23801,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -23667,6 +23887,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -23773,6 +24005,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -24051,6 +24284,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 75,
        "class": "stated",
@@ -24155,6 +24400,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -24242,6 +24488,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -24348,6 +24606,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -24435,6 +24694,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -24541,6 +24812,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -24628,6 +24900,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -24734,6 +25018,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -24821,6 +25106,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -24927,6 +25224,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -25014,6 +25312,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -25120,6 +25430,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -25207,6 +25518,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -25313,6 +25636,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -25400,6 +25724,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -25506,6 +25842,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -25593,6 +25930,18 @@
        "value": 0.1,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -25699,6 +26048,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -25786,6 +26136,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -25892,6 +26254,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -26367,6 +26730,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -26471,6 +26846,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -26753,6 +27129,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -26857,6 +27245,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -26865,6 +27254,7 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
      ],
      "unknown_count": 0,
@@ -26944,6 +27334,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -27050,6 +27452,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -27058,6 +27461,7 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
      ],
      "unknown_count": 0,
@@ -27525,6 +27929,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -27629,6 +28045,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -27637,6 +28054,7 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
      ],
      "unknown_count": 0,
@@ -27911,6 +28329,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -28015,14 +28445,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -28100,6 +28533,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -28206,14 +28651,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -28291,6 +28739,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -28397,14 +28857,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -28482,6 +28945,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -28588,14 +29063,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -28673,6 +29151,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -28779,14 +29269,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -28864,6 +29357,18 @@
        "value": 0.4,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -28970,14 +29475,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -29055,6 +29563,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -29161,6 +29681,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -29248,6 +29769,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -29354,6 +29887,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -29441,6 +29975,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -29547,6 +30093,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -29829,6 +30376,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -29933,6 +30492,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -30020,6 +30580,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -30126,6 +30698,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -30213,6 +30786,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -30319,6 +30904,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -30794,6 +31380,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -30868,6 +31466,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "stated"
      ],
      "invented_fields": [],
@@ -31129,6 +31728,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -31203,6 +31814,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "stated"
      ],
      "invented_fields": [],
@@ -31294,6 +31906,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -31400,6 +32024,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -31682,6 +32307,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 350,
        "class": "stated",
@@ -31786,6 +32423,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -31873,6 +32511,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -31979,6 +32629,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -32261,6 +32912,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -32365,6 +33028,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -32452,6 +33116,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -32558,6 +33234,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -32846,6 +33523,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -32950,6 +33639,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -33238,6 +33928,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -33342,6 +34044,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -33624,6 +34327,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -33728,6 +34443,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -33815,6 +34531,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -33921,6 +34649,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -33929,7 +34658,6 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
-      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.linear_tcr_resistance:temperature",
       "electrical.material.rated_linear_tcr_resistance:temperature",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
@@ -34209,6 +34937,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 500,
        "class": "stated",
@@ -34313,6 +35053,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -34402,6 +35143,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -34508,6 +35261,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -34595,6 +35349,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -34701,6 +35467,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -35176,6 +35943,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -35280,6 +36059,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -35367,6 +36147,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -35473,6 +36265,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -35755,6 +36548,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 500,
        "class": "stated",
@@ -35859,6 +36664,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -36141,6 +36947,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 350,
        "class": "stated",
@@ -36245,6 +37063,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -36773,18 +37592,11 @@
     "scored": 94,
     "sound": 28,
     "unsound": 66,
-    "exact_verdict_match": "86/94 (91.5%)",
-    "catch_rate": "60/66 (90.9%)",
-    "false_accept": "6/66 (9.1%)",
+    "exact_verdict_match": "92/94 (97.9%)",
+    "catch_rate": "66/66 (100.0%)",
+    "false_accept": "0/66 (0.0%)",
     "false_reject": "0/28 (0.0%)",
-    "false_accept_ids": [
-     "S049",
-     "S050",
-     "S051",
-     "S052",
-     "S053",
-     "S054"
-    ],
+    "false_accept_ids": [],
     "false_reject_ids": [],
     "caught_but_decided_by_an_invented_value": 2,
     "by_failure_class": {
@@ -36798,10 +37610,10 @@
      },
      "limit_exceeded": {
       "n": 26,
-      "caught": 20,
-      "accepted": 6,
+      "caught": 26,
+      "accepted": 0,
       "insufficient": 0,
-      "exact": 20,
+      "exact": 26,
       "decided_by_an_invented_value": 0
      },
      "model_inapplicable": {
@@ -36840,7 +37652,7 @@
     "top_violated_conditions": [
      [
       "electrical.dc.resistor_ohm:dissipated_power_utilization",
-      20
+      28
      ],
      [
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization",
@@ -36907,18 +37719,11 @@
     "scored": 94,
     "sound": 28,
     "unsound": 66,
-    "exact_verdict_match": "86/94 (91.5%)",
-    "catch_rate": "60/66 (90.9%)",
-    "false_accept": "6/66 (9.1%)",
+    "exact_verdict_match": "92/94 (97.9%)",
+    "catch_rate": "66/66 (100.0%)",
+    "false_accept": "0/66 (0.0%)",
     "false_reject": "0/28 (0.0%)",
-    "false_accept_ids": [
-     "S049",
-     "S050",
-     "S051",
-     "S052",
-     "S053",
-     "S054"
-    ],
+    "false_accept_ids": [],
     "false_reject_ids": [],
     "caught_but_decided_by_an_invented_value": 2,
     "by_failure_class": {
@@ -36932,10 +37737,10 @@
      },
      "limit_exceeded": {
       "n": 26,
-      "caught": 20,
-      "accepted": 6,
+      "caught": 26,
+      "accepted": 0,
       "insufficient": 0,
-      "exact": 20,
+      "exact": 26,
       "decided_by_an_invented_value": 0
      },
      "model_inapplicable": {
@@ -36974,7 +37779,7 @@
     "top_violated_conditions": [
      [
       "electrical.dc.resistor_ohm:dissipated_power_utilization",
-      20
+      28
      ],
      [
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization",
@@ -37102,6 +37907,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 75,
        "class": "stated",
@@ -37206,6 +38023,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -37291,6 +38109,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -37397,6 +38227,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -37482,6 +38313,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -37588,6 +38431,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -37673,6 +38517,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -37779,6 +38635,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -37864,6 +38721,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -37970,6 +38839,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -38055,6 +38925,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -38161,6 +39043,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -38246,6 +39129,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -38352,6 +39247,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -38437,6 +39333,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -38543,6 +39451,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -40158,6 +41067,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -40262,6 +41183,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -40347,6 +41269,18 @@
        "value": 0.4,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -40453,6 +41387,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -40538,6 +41473,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -40644,6 +41591,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -40729,6 +41677,18 @@
        "value": 0.1,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -40835,6 +41795,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -40920,6 +41881,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -41026,6 +41999,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -41111,6 +42085,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -41217,6 +42203,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -41302,6 +42289,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -41408,6 +42407,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -41493,6 +42493,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -41599,6 +42611,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -41684,6 +42697,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -41790,6 +42815,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -41875,6 +42901,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -41981,6 +43019,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -42066,6 +43105,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -42172,6 +43223,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -42450,6 +43502,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 75,
        "class": "stated",
@@ -42554,6 +43618,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -42641,6 +43706,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -42747,6 +43824,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -42834,6 +43912,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -42940,6 +44030,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -43027,6 +44118,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -43133,6 +44236,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -43220,6 +44324,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -43326,6 +44442,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -43413,6 +44530,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -43519,6 +44648,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -43606,6 +44736,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -43712,6 +44854,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -43799,6 +44942,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -43905,6 +45060,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -43992,6 +45148,18 @@
        "value": 0.1,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0402 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -44098,6 +45266,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -44185,6 +45354,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -44291,6 +45472,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -44766,6 +45948,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -44870,6 +46064,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -45152,6 +46347,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -45256,6 +46463,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -45264,6 +46472,7 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
      ],
      "unknown_count": 0,
@@ -45343,6 +46552,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -45449,6 +46670,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -45457,6 +46679,7 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
      ],
      "unknown_count": 0,
@@ -45924,6 +47147,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -46028,6 +47263,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -46036,6 +47272,7 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
      ],
      "unknown_count": 0,
@@ -46310,6 +47547,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -46414,14 +47663,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -46499,6 +47751,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -46605,14 +47869,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -46690,6 +47957,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -46796,14 +48075,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -46881,6 +48163,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -46987,14 +48281,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -47072,6 +48369,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -47178,14 +48487,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -47263,6 +48575,18 @@
        "value": 0.4,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -47369,14 +48693,17 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
      "invented_fields": [],
      "outcome": "ran",
-     "whole_report": "SUPPORTED",
-     "violation_scoped": "SUPPORTED",
-     "violated": [],
+     "whole_report": "NOT_SUPPORTED",
+     "violation_scoped": "NOT_SUPPORTED",
+     "violated": [
+      "electrical.dc.resistor_ohm:dissipated_power_utilization"
+     ],
      "unknown_count": 0,
      "unknown": [],
      "violations_fed_by_an_invented_value": []
@@ -47454,6 +48781,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -47560,6 +48899,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -47647,6 +48987,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -47753,6 +49105,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -47840,6 +49193,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -47946,6 +49311,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -48228,6 +49594,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -48332,6 +49710,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -48419,6 +49798,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -48525,6 +49916,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -48612,6 +50004,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -48718,6 +50122,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -49193,6 +50598,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -49267,6 +50684,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "stated"
      ],
      "invented_fields": [],
@@ -49528,6 +50946,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -49602,6 +51032,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "stated"
      ],
      "invented_fields": [],
@@ -49693,6 +51124,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -49799,6 +51242,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -50081,6 +51525,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 350,
        "class": "stated",
@@ -50185,6 +51641,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -50272,6 +51729,18 @@
        "value": 1.0,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1218 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -50378,6 +51847,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -50660,6 +52130,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR16S rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -50764,6 +52246,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -50851,6 +52334,18 @@
        "value": 0.125,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0603 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -50957,6 +52452,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -51245,6 +52741,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 150,
        "class": "stated",
@@ -51349,6 +52857,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -51637,6 +53146,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 200,
        "class": "stated",
@@ -51741,6 +53262,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -52023,6 +53545,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -52127,6 +53661,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -52214,6 +53749,18 @@
        "value": 0.75,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2010 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -52320,6 +53867,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -52328,7 +53876,6 @@
      "whole_report": "NOT_SUPPORTED",
      "violation_scoped": "NOT_SUPPORTED",
      "violated": [
-      "electrical.dc.resistor_ohm:dissipated_power_utilization",
       "electrical.material.linear_tcr_resistance:temperature",
       "electrical.material.rated_linear_tcr_resistance:temperature",
       "electrical.material.rated_linear_tcr_resistance:operating_temperature_utilization"
@@ -52608,6 +54155,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 500,
        "class": "stated",
@@ -52712,6 +54271,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -52801,6 +54361,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW0805 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -52907,6 +54479,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -52994,6 +54567,18 @@
        "value": 0.25,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1206 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -53100,6 +54685,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -53575,6 +55161,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 250,
        "class": "stated",
@@ -53679,6 +55277,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -53766,6 +55365,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW1210 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -53872,6 +55483,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -54154,6 +55766,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "CRCW2512 e3 rated dissipation is stated at 70 C and derates to zero at 155 C (20035); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 500,
        "class": "stated",
@@ -54258,6 +55882,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -54540,6 +56165,18 @@
        "why": "design states a rated power"
       },
       {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
        "field": "maximum_working_voltage",
        "value": 350,
        "class": "stated",
@@ -54644,6 +56281,7 @@
      ],
      "value_classes_used": [
       "arithmetic",
+      "datasheet",
       "literature",
       "stated"
      ],
@@ -54871,6 +56509,18 @@
        "value": 0.4,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25 rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",
@@ -55330,6 +56980,18 @@
        "value": 0.5,
        "class": "stated",
        "why": "design states a rated power"
+      },
+      {
+       "field": "rated_power_temperature",
+       "value": 343.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
+      },
+      {
+       "field": "zero_power_temperature",
+       "value": 428.15,
+       "class": "datasheet",
+       "why": "SFR25H rated dissipation is stated at 70 C and derates to zero at 155 C (28722); the knee was read from the derating curve's axis labels rather than from a table, and is flagged as such in components.json"
       },
       {
        "field": "maximum_working_voltage",

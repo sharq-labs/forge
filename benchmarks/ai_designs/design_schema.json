@@ -67,6 +67,8 @@
             "maximum_operating_temperature_c": {"type": "number"},
             "junction_temperature_limit_c": {"type": "number"},
             "derating_factor": {"type": "number", "minimum": 0, "maximum": 1},
+            "rated_power_temperature_c": {"type": "number", "description": "The ambient the rated dissipation is stated at -- the 70 in a datasheet's P70. Where a design states it, the conversion uses it; where it does not, the named part's datasheet supplies it if that datasheet prints a knee."},
+            "zero_power_temperature_c": {"type": "number", "description": "The ambient at which the derating line reaches zero power. Declared with rated_power_temperature_c or not at all."},
             "source_maximum_current_a": {"type": "number", "description": "The supply's own current limit, where the design states one. Never supplied by the conversion: a made-up rail rating would decide a condition on nothing."},
             "source_derating_factor": {"type": "number", "minimum": 0, "maximum": 1}
           }

@@ -45,10 +45,25 @@ the tool catches the physics errors an AI makes when it designs. "0.25 W part,
 ambient above about 90 °C. A caller who does not already know about derating
 will not supply `derating_factor`, and the tool will agree with them.
 
-**Not fixed here.** A fix touches `src/engcore/domains/electrical/dc/models.py`
-and the boundary's ratings binding — a rating would have to become a pair, or a
-second optional field would have to carry the ambient and the knee. That is a
-domain change, and this round produces a benchmark.
+**Not fixed in the round that found it.** A fix touches
+`src/engcore/domains/electrical/dc/models.py` and the boundary's ratings binding
+— a rating has to become a pair. That is a domain change and the round that
+found this produced a benchmark.
+
+**FIXED, in the round after.** `rated_power_temperature` and
+`zero_power_temperature` are now optional inputs on the resistor model and
+payload fields in the `ratings` block. Declared together they turn
+`dissipated_power_utilization` from a comparison against a constant into a
+comparison against the derating line; declared apart, or without a
+`rated_power`, or inverted, they are refused; declared without an ambient the
+condition is UNKNOWN rather than answered from the printed number. Omitting
+them changes nothing, which is asserted directly and confirmed by the frozen
+benchmark being byte-identical.
+
+All six cases above are now NOT_SUPPORTED on `dissipated_power_utilization`
+alone. The `stated_only` policy still accepts them, correctly: those designs
+never state a rating temperature, and the fix gave the tool the ability to be
+told rather than the design the habit of saying. See `RESULTS.md` section 4.
 
 ---
 
