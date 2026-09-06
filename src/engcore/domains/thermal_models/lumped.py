@@ -113,10 +113,27 @@ from .context import (
     CONDUCTANCE_EXCURSION_BOUND,
     CONDUCTANCE_EXCURSION_RATIO,
     CONDUCTIVITY_UNIT,
+    CONVECTION_LENGTH,
+    CHURCHILL_CHU_LAMINAR_RAYLEIGH_CEILING,
+    CONVECTION_AGREEMENT_FACTOR,
     DIMENSIONLESS,
+    EXPANSION_UNIT,
+    FLAT_PLATE_LAMINAR_REYNOLDS_CEILING,
+    FLAT_PLATE_MINIMUM_PRANDTL,
+    FLUID_CONDUCTIVITY,
+    FLUID_EXPANSION_COEFFICIENT,
+    FLUID_PRANDTL_NUMBER,
+    FLUID_VELOCITY,
+    FLUID_VISCOSITY,
+    CONVECTION_AGREEMENT_RATIO,
+    CONVECTION_FLOW_RANGE,
+    CONVECTION_PROPERTY_RANGE,
+    CORRELATION_RANGE_LIMIT,
     FORCED_CONVECTION,
     INTERNAL_FOURIER_NUMBER,
     LENGTH_UNIT,
+    VELOCITY_UNIT,
+    VISCOSITY_UNIT,
     MELTING_TEMPERATURE,
     MELTING_TEMPERATURE_UTILIZATION,
     GEOMETRY_AGREEMENT_FACTOR,
@@ -154,6 +171,11 @@ __all__ = [
     "LUMPED_MIN_FOURIER_NUMBER",
     "EXCURSION_BUDGET_LIMIT",
     "FORCED_CONVECTION",
+    "CHURCHILL_CHU_LAMINAR_RAYLEIGH_CEILING",
+    "CONVECTION_AGREEMENT_FACTOR",
+    "CORRELATION_RANGE_LIMIT",
+    "FLAT_PLATE_LAMINAR_REYNOLDS_CEILING",
+    "FLAT_PLATE_MINIMUM_PRANDTL",
     "PHASE_CHANGE_UTILIZATION_LIMIT",
     "POWER_UNIT",
     "RADIATION_NEGLIGIBILITY_LIMIT",
@@ -472,6 +494,88 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                 "absolute temperature."
             ),
         ),
+        # ---- where the ambient conductance came from ---------------------
+        #
+        # hA is declared and, until these six existed, nothing asked what it
+        # was based on. Each of them is a property of the AMBIENT FLUID or of
+        # the surface the boundary layer grows along, and together they let a
+        # correlation be evaluated and compared against the declared hA.
+        #
+        # Which correlation is selected by which of them is present, not by
+        # convection_regime: fluid_expansion_coefficient selects the natural
+        # route and fluid_velocity the forced one. That is what keeps a
+        # category from deciding a verdict.
+        ModelInputSpec(
+            name=FLUID_CONDUCTIVITY,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=CONDUCTIVITY_UNIT,
+            required=False,
+            description=(
+                "Conductivity of the AMBIENT FLUID at the film temperature, "
+                "not of the body. Turns a Nusselt number into a coefficient, "
+                "h = Nu k_f / L. Same dimension as body_conductivity and the "
+                "opposite meaning: for aluminium in air the two differ by "
+                "about 9000, and no dimension check can tell them apart."
+            ),
+        ),
+        ModelInputSpec(
+            name=FLUID_VISCOSITY,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=VISCOSITY_UNIT,
+            required=False,
+            description=(
+                "Kinematic viscosity of the ambient fluid at the film "
+                "temperature. Enters the Rayleigh number as nu^2 and the "
+                "Reynolds number as nu."
+            ),
+        ),
+        ModelInputSpec(
+            name=FLUID_PRANDTL_NUMBER,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DIMENSIONLESS,
+            required=False,
+            description=(
+                "Prandtl number of the ambient fluid at the film "
+                "temperature. Both correlations need it; only the forced one "
+                "is restricted in it (Pr >= 0.6)."
+            ),
+        ),
+        ModelInputSpec(
+            name=FLUID_EXPANSION_COEFFICIENT,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=EXPANSION_UNIT,
+            required=False,
+            description=(
+                "Volumetric thermal expansion coefficient of the ambient "
+                "fluid, 1/T for an ideal gas. SUPPLYING IT SELECTS THE "
+                "NATURAL-CONVECTION ROUTE: it is what the Rayleigh number "
+                "needs and nothing else here uses it."
+            ),
+        ),
+        ModelInputSpec(
+            name=FLUID_VELOCITY,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=VELOCITY_UNIT,
+            required=False,
+            description=(
+                "Free-stream velocity of the ambient fluid over the surface. "
+                "SUPPLYING IT SELECTS THE FORCED-CONVECTION ROUTE: it is what "
+                "the Reynolds number needs and nothing else here uses it."
+            ),
+        ),
+        ModelInputSpec(
+            name=CONVECTION_LENGTH,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=LENGTH_UNIT,
+            required=False,
+            description=(
+                "The length the boundary layer develops along: the height of "
+                "a vertical plate under free convection, the streamwise "
+                "length under forced flow. NOT characteristic_length, which "
+                "is a conduction length for the Biot number -- for a cube of "
+                "side a the two are a and a/6, and Ra goes as L^3."
+            ),
+        ),
     ),
     outputs=(
         ModelOutputSpec(
@@ -600,6 +704,127 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     "assumption. Incropera et al., 6th ed. (2007), Sec. 1.2.3, "
                     "Eq. 1.9. UNKNOWN unless surface_emissivity and "
                     "surface_area are supplied."
+                ),
+            ),
+            # ---- where the ambient conductance came from -----------------
+            #
+            # Every condition above is computed FROM hA. These three are about
+            # hA itself: whether the caller's stated basis for it is being used
+            # inside its own range, and whether that basis reproduces the
+            # number they declared. Until they existed, an hA wrong by a factor
+            # of two moved Bi, both excursion budgets and the radiation ratio
+            # by a factor of two and none of them said anything.
+            #
+            # All three are route-agnostic ON PURPOSE. One UNKNOWN condition
+            # makes a whole verdict UNKNOWN, so a Rayleigh condition beside a
+            # Reynolds condition would leave every body UNKNOWN on the one that
+            # does not apply to it -- a free-convection body has no velocity and
+            # a duct has no buoyancy term. Two of the three are therefore
+            # utilizations of each correlation's own stated range, which both
+            # routes possess, and the cited numbers 1e9, 5e5 and 0.6 stay
+            # inside the derivations with the correlations that state them.
+            #
+            # Which route applies is decided by which declaration is present --
+            # an expansion coefficient or a velocity -- and never by
+            # convection_regime, which still decides nothing. Declaring both is
+            # mixed convection and is refused at the declaration record.
+            RangeCondition(
+                name=CONVECTION_FLOW_RANGE,
+                maximum=CORRELATION_RANGE_LIMIT,
+                description=(
+                    "The fraction of the correlation's own laminar range that "
+                    "the declared operating point consumes: Ra_L/1e9 under "
+                    "free convection, Re_L/5e5 under forced. Above 1 the "
+                    "coefficient was taken from a correlation outside the "
+                    "range its source states, which is a number with nothing "
+                    "behind it -- and no agreement between two unsupported "
+                    "numbers repairs that, which is why this condition matters "
+                    "more than the agreement one. Ra_L = g beta dT L^3/(nu "
+                    "alpha) <= 1e9 is the range Churchill and Chu state for "
+                    "their laminar vertical-plate equation Nu = 0.68 + 0.670 "
+                    "Ra^(1/4)/[1 + (0.492/Pr)^(9/16)]^(4/9): Churchill, S. W. "
+                    "and Chu, H. H. S. (1975), Int. J. Heat Mass Transfer "
+                    "18(11), 1323-1329, printed as Eq. 9.27 in Incropera, "
+                    "DeWitt, Bergman and Lavine, 6th ed. (2007), Sec. 9.6.1. "
+                    "Re_L = u L/nu <= 5e5 is the flat-plate transition "
+                    "Reynolds number stated in Sec. 7.1 and attached to the "
+                    "laminar average-Nusselt result Nu = 0.664 Re^(1/2) "
+                    "Pr^(1/3), Sec. 7.2, Eq. 7.30. NEITHER NUMBER IS A "
+                    "CONVENTION: each is the one its source prints with its "
+                    "equation. The bound of 1 here is definitional, being the "
+                    "fraction of that range in use. GEOMETRY AND ORIENTATION "
+                    "ARE PART OF EACH CORRELATION AND NOTHING DECLARED "
+                    "CARRIES THEM: Churchill-Chu is for a VERTICAL plate and a "
+                    "horizontal one has different constants entirely (0.54 and "
+                    "0.27 Ra^(1/4) facing up and down, Sec. 9.6.3) over a "
+                    "different length; the flat-plate result is for PARALLEL "
+                    "FLOW and a cylinder in cross-flow is Hilpert or Zukauskas "
+                    "(Sec. 7.4) while a duct is Dittus-Boelter over a "
+                    "hydraulic diameter (Sec. 8.5). This domain cannot detect "
+                    "a caller using the wrong one, and says so rather than "
+                    "implying otherwise. No lower bound on either route. "
+                    "UNKNOWN unless the convection_length, kinematic "
+                    "viscosity, Prandtl number, the operating point and one "
+                    "of the two route declarations are all supplied."
+                ),
+            ),
+            RangeCondition(
+                name=CONVECTION_PROPERTY_RANGE,
+                maximum=CORRELATION_RANGE_LIMIT,
+                description=(
+                    "The fraction of the correlation's property range in use: "
+                    "0.6/Pr under forced convection, so <= 1 is exactly "
+                    "Pr >= 0.6, the restriction Incropera et al., 6th ed. "
+                    "(2007), Sec. 7.2 prints with Eq. 7.30. The Pr^(1/3) "
+                    "factor is the constant-property Blasius similarity "
+                    "result, and below 0.6 -- liquid metals -- the thermal "
+                    "boundary layer is far thicker than the velocity one and "
+                    "the exponent is not 1/3. ZERO under free convection, "
+                    "because Churchill-Chu states no Prandtl restriction: its "
+                    "(0.492/Pr)^(9/16) denominator exists so that one equation "
+                    "covers every Pr, which is what the 1975 paper set out to "
+                    "do. That zero is a statement about the equation being "
+                    "evaluated, not a concession -- reaching it still requires "
+                    "the full natural-route declaration, and a caller on that "
+                    "route still has to clear the flow range and the agreement "
+                    "ratio. The bound of 1 is definitional. UNKNOWN unless a "
+                    "Prandtl number and one resolved route are supplied."
+                ),
+            ),
+            RangeCondition(
+                name=CONVECTION_AGREEMENT_RATIO,
+                minimum=Quantity(
+                    1.0
+                    / CONVECTION_AGREEMENT_FACTOR.magnitude_in(DIMENSIONLESS),
+                    DIMENSIONLESS,
+                ),
+                maximum=CONVECTION_AGREEMENT_FACTOR,
+                description=(
+                    "h_declared/h_correlated within a FACTOR OF 2 either way, "
+                    "with h_declared = hA/A_s and h_correlated = Nu k_f/L from "
+                    "whichever correlation the declaration resolves to. Two "
+                    "routes to one coefficient, the same shape as "
+                    "geometry_route_ratio, and it matters because every other "
+                    "condition here is computed FROM hA: an hA wrong by 2x "
+                    "moves Bi, both excursion budgets and the radiation ratio "
+                    "by 2x and none of them notices. **THE FACTOR OF 2 IS A "
+                    "CONVENTION** and is recorded as one -- no source prints it "
+                    "for this comparison. What IS established is that the two "
+                    "legitimately differ: correlation scatter against its own "
+                    "data, the gap between an idealized isothermal plate and a "
+                    "real shape, and the caller's film-temperature property "
+                    "evaluation, which this domain cannot check. 2 is where "
+                    "the disagreement stops being attributable to those and "
+                    "starts being attributable to a mistake. Two-sided: a "
+                    "declared hA far below the correlation is the conservative "
+                    "error and far above is the dangerous one, and both are "
+                    "bounded because nothing here can tell which route the "
+                    "caller got right. A DISAGREEMENT IS A FINDING ABOUT THE "
+                    "DECLARATION, NOT THE RUN -- the solve uses the declared "
+                    "hA either way, and what is reported is that the stated "
+                    "basis for it does not reproduce it. UNKNOWN unless the "
+                    "surface area, the fluid conductivity and a resolved "
+                    "route are all supplied."
                 ),
             ),
             RangeCondition(
@@ -893,6 +1118,36 @@ def _applicability_parameters(
             MELTING_TEMPERATURE,
             declaration.melting_temperature,
             "Phase-change temperature of the body.",
+        ),
+        (
+            FLUID_CONDUCTIVITY,
+            declaration.fluid_conductivity,
+            "Conductivity of the ambient fluid at the film temperature.",
+        ),
+        (
+            FLUID_VISCOSITY,
+            declaration.fluid_kinematic_viscosity,
+            "Kinematic viscosity of the ambient fluid.",
+        ),
+        (
+            FLUID_PRANDTL_NUMBER,
+            declaration.fluid_prandtl_number,
+            "Prandtl number of the ambient fluid.",
+        ),
+        (
+            FLUID_EXPANSION_COEFFICIENT,
+            declaration.fluid_expansion_coefficient,
+            "Volumetric expansion coefficient of the ambient fluid.",
+        ),
+        (
+            FLUID_VELOCITY,
+            declaration.fluid_velocity,
+            "Free-stream velocity of the ambient fluid over the surface.",
+        ),
+        (
+            CONVECTION_LENGTH,
+            declaration.convection_length,
+            "Length the boundary layer develops along.",
         ),
     )
     return tuple(

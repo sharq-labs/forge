@@ -563,6 +563,11 @@ def _incomplete_body():
             melting_temperature=Quantity(900.0, K),
             surface_emissivity=Quantity(0.05, "dimensionless"),
             convection_regime=ctx.FORCED_CONVECTION,
+            fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+            fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+            fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+            fluid_velocity=Quantity(1.0, "meter/second"),
+            convection_length=Quantity(0.6, "meter"),
         ),
     )
 
@@ -651,6 +656,11 @@ def test_f03_colliding_with_every_derived_name_changes_no_verdict(declared):
                 melting_temperature=Quantity(900.0, K),
                 surface_emissivity=Quantity(0.05, "dimensionless"),
                 convection_regime=ctx.FORCED_CONVECTION,
+                fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+                fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+                fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+                fluid_velocity=Quantity(1.0, "meter/second"),
+                convection_length=Quantity(0.6, "meter"),
             ),
         )
         if declared

@@ -150,11 +150,154 @@ def fourier(p):
     return (p["dur"] / p["_tau"]) / bi
 
 
+# =====================================================================
+# The convection correlations, computed here from first principles
+# =====================================================================
+#
+# The tool now asks where `ambient_conductance` came from, so every case has
+# to say. Three conditions follow: the fraction of the correlation's laminar
+# range in use, the fraction of its property range in use, and whether the
+# declared hA reproduces what the correlation predicts.
+#
+# HOW A CASE IS MADE CONSISTENT, AND WHAT IS SYNTHETIC ABOUT IT
+# -------------------------------------------------------------
+# `hA` and `surface_area` are drawn independently, so h = hA/A_s spans about
+# six decades — from 0.06 to 1e5 W/m^2K. No real fluid produces that range at
+# a sane length and velocity: 1e5 W/m^2K in air would need a supersonic free
+# stream over a 0.1 mm plate. So the length, the velocity and the expansion
+# coefficient are kept physical and the FLUID CONDUCTIVITY is solved for:
+#
+#     k_f = h L / Nu
+#
+# which makes the declared hA exactly what the correlation predicts. The
+# resulting k_f is often not a real fluid's — it ranges from 1e-4 to about
+# 2000 W/mK. That is deliberate and it is the same status the rest of this
+# file's draws have: `r0` is 10^U(0, 3.5) ohms and `alpha` comes from a list,
+# neither describing a part anyone stocks. THE TOOL HAS NO FLUID TABLE and
+# makes no claim to check one, so a synthetic k_f tests exactly what these
+# conditions are for — whether the three declared numbers are consistent with
+# each other — and nothing it does not.
+#
+# A shaper that wants a disagreement divides k_f by the ratio it wants, which
+# moves the agreement ratio and leaves Ra and Re untouched: neither contains
+# k_f, so the flow range and the agreement are independent knobs.
+
+#: Air near 300 K. Only the viscosity and the Prandtl number are used as
+#: given; the conductivity is solved for (see above).
+NU_AIR = 1.589e-5          # m^2/s
+PR_AIR = 0.707             # dimensionless
+G_STANDARD = 9.80665       # m/s^2, exact by definition
+
+#: The ranges the correlations state. Churchill, S. W. and Chu, H. H. S.
+#: (1975), Int. J. Heat Mass Transfer 18(11), 1323-1329, laminar vertical
+#: plate, Ra_L <= 1e9 (Incropera, DeWitt, Bergman and Lavine, 6th ed.,
+#: Sec. 9.6.1, Eq. 9.27). Flat plate in parallel laminar flow,
+#: Nu = 0.664 Re^(1/2) Pr^(1/3) for Re_L <= 5e5 and Pr >= 0.6 (Sec. 7.1 and
+#: Sec. 7.2, Eq. 7.30). Restated here rather than imported, because this file
+#: never consults engcore.
+RAYLEIGH_MAX = 1.0e9
+REYNOLDS_MAX = 5.0e5
+PRANDTL_MIN = 0.6
+
+#: How far a declared hA may sit from the correlation: a factor of two either
+#: way. A CONVENTION in the domain and restated as one here.
+AGREEMENT_FACTOR = 2.0
+
+#: Comfortable defaults, far inside both ranges, so a case that is not about
+#: convection is not accidentally about convection.
+RAYLEIGH_DEFAULT = 1.0e6
+REYNOLDS_DEFAULT = 1.0e4
+FORCED_LENGTH_DEFAULT = 0.05      # m
+
+
+def excursion(p):
+    """max |T - T_amb| over the interval — the driving temperature difference."""
+    return max(abs(p["t_init"] - p["t_amb"]), abs(p["_t_ss"] - p["t_amb"]))
+
+
+def churchill_chu(ra, pr):
+    """Nu = 0.68 + 0.670 Ra^(1/4) / [1 + (0.492/Pr)^(9/16)]^(4/9)."""
+    return 0.68 + 0.670 * ra ** 0.25 / (
+        1.0 + (0.492 / pr) ** (9.0 / 16.0)
+    ) ** (4.0 / 9.0)
+
+
+def flat_plate(re, pr):
+    """Nu = 0.664 Re^(1/2) Pr^(1/3)."""
+    return 0.664 * re ** 0.5 * pr ** (1.0 / 3.0)
+
+
+def convection(p):
+    """The declared convection facts, and the numbers they imply.
+
+    Deterministic in `p`, and called from `build` so it runs AFTER every
+    shaper — `make_biot` moves the surface area, which moves h, so the fluid
+    cannot be settled before the shaping is done.
+
+    Reads the optional knobs a shaper may have set: `_ra_target`, `_re_target`,
+    `_pr`, `_agree`, `_conv_length`. Returns a dict of the declared fields plus
+    the derived numbers `verify_sound` re-checks.
+    """
+    dt = excursion(p)
+    if dt <= 0.0:
+        dt = 1e-6
+    h = p["hA"] / p["area"]
+    pr = p.get("_pr", PR_AIR)
+    agree = p.get("_agree", 1.0)
+    natural = p["regime"] == "natural"
+
+    if natural:
+        # beta = 1/T_film for an ideal gas, at the film temperature.
+        beta = 2.0 / (p["_t_ss"] + p["t_amb"])
+        ra = p.get("_ra_target", RAYLEIGH_DEFAULT)
+        length = (ra * NU_AIR ** 2 / (G_STANDARD * beta * dt * pr)) ** (1.0 / 3.0)
+        nu_number = churchill_chu(ra, pr)
+        re = None
+        velocity = None
+    else:
+        beta = None
+        length = p.get("_conv_length", FORCED_LENGTH_DEFAULT)
+        re = p.get("_re_target", REYNOLDS_DEFAULT)
+        velocity = re * NU_AIR / length
+        nu_number = flat_plate(re, pr)
+        ra = None
+
+    if not (0.0 < length < 1e4) or nu_number <= 0.0:
+        return None
+    k_f = h * length / nu_number / agree
+    if not (0.0 < k_f < 1e9):
+        return None
+
+    declared = {
+        "fluid_conductivity": k_f,
+        "fluid_kinematic_viscosity": NU_AIR,
+        "fluid_prandtl_number": pr,
+        "convection_length": length,
+    }
+    if natural:
+        declared["fluid_expansion_coefficient"] = beta
+    else:
+        declared["fluid_velocity"] = velocity
+    return {
+        "declared": declared,
+        "natural": natural,
+        "rayleigh": ra,
+        "reynolds": re,
+        "flow_utilization": (ra / RAYLEIGH_MAX) if natural else (re / REYNOLDS_MAX),
+        "property_utilization": 0.0 if natural else (PRANDTL_MIN / pr),
+        "agreement": agree,
+    }
+
+
 def q(x, u):
     return f"{x:.10g} {u}"
 
 
 def build(p):
+    conv = convection(p)
+    if conv is None:                       # pragma: no cover - draw is rejected
+        return None
+    p["_conv"] = conv
     return {
         "source_voltage": q(p["v"], "volt"),
         "stages": [{
@@ -191,6 +334,28 @@ def build(p):
                     "conductance_excursion_bound": q(p["cond_bound"], "kelvin"),
                     "capacity_excursion_bound": q(p["cap_bound"], "kelvin"),
                     "melting_temperature": q(p["t_melt"], "kelvin"),
+                    # Where the ambient conductance came from. Exactly one of
+                    # fluid_expansion_coefficient and fluid_velocity is
+                    # present: declaring both is mixed convection and the
+                    # domain refuses it.
+                    "fluid_conductivity":
+                        q(conv["declared"]["fluid_conductivity"],
+                          "watt/meter/kelvin"),
+                    "fluid_kinematic_viscosity":
+                        q(conv["declared"]["fluid_kinematic_viscosity"],
+                          "meter**2/second"),
+                    "fluid_prandtl_number":
+                        q(conv["declared"]["fluid_prandtl_number"],
+                          "dimensionless"),
+                    "convection_length":
+                        q(conv["declared"]["convection_length"], "meter"),
+                    **({"fluid_expansion_coefficient":
+                        q(conv["declared"]["fluid_expansion_coefficient"],
+                          "1/kelvin")}
+                       if conv["natural"] else
+                       {"fluid_velocity":
+                        q(conv["declared"]["fluid_velocity"],
+                          "meter/second")}),
                 },
             },
         }],
@@ -296,6 +461,14 @@ def all_clear(p):
         return False
     if min(p["t_amb"], t) / p["debye"] < 1.3:
         return False
+    conv = convection(p)
+    if conv is None:
+        return False
+    if conv["flow_utilization"] > 0.9 or conv["property_utilization"] > 0.9:
+        return False
+    if not (1.0 / AGREEMENT_FACTOR * 1.2 < conv["agreement"]
+            < AGREEMENT_FACTOR * 0.8):
+        return False
     return True
 
 
@@ -313,6 +486,9 @@ def verify_sound(p, exempt=""):
     rs = rad_share(p["eps"], p["area"], p["hA"], t, p["t_amb"])
     fo = fourier(p)
     if fo is None:
+        return False
+    conv = convection(p)
+    if conv is None:
         return False
     exc = max(abs(t - p["t_ref"]), abs(p["t_amb"] - p["t_ref"]))
     exact = {
@@ -337,6 +513,14 @@ def verify_sound(p, exempt=""):
             p["v"] < p["max_working_voltage"] * (p.get("derating") or 1.0),
         "source_current_utilization":
             p["_i"] < p["max_current"] * (p.get("derating") or 1.0),
+        # Where the declared hA came from. The correlation is evaluated here
+        # from first principles, exactly as every other condition in this
+        # dict is, and never by asking engcore.
+        "convection_flow_range_utilization": conv["flow_utilization"] < 1.0,
+        "convection_property_range_utilization":
+            conv["property_utilization"] < 1.0,
+        "convection_conductance_agreement_ratio":
+            1.0 / AGREEMENT_FACTOR < conv["agreement"] < AGREEMENT_FACTOR,
     }
     margin = {
         "biot_number": bi < BIOT_LIMIT * 0.8,
@@ -357,6 +541,12 @@ def verify_sound(p, exempt=""):
             p["v"] < p["max_working_voltage"] * (p.get("derating") or 1.0) * 0.9,
         "source_current_utilization":
             p["_i"] < p["max_current"] * (p.get("derating") or 1.0) * 0.9,
+        "convection_flow_range_utilization": conv["flow_utilization"] < 0.9,
+        "convection_property_range_utilization":
+            conv["property_utilization"] < 0.9,
+        "convection_conductance_agreement_ratio":
+            1.0 / AGREEMENT_FACTOR * 1.2 < conv["agreement"]
+            < AGREEMENT_FACTOR * 0.8,
     }
     for name, ok in exact.items():
         if name == exempt:
@@ -373,6 +563,10 @@ def verify_sound(p, exempt=""):
 
 def widen_all(p, factor=4.0):
     """Push every limit far clear so a shaped defect stands alone."""
+    # Including the convection knobs: a shaper sets its own after this, and a
+    # case that is not about convection must not accidentally be about it.
+    for knob in ("_ra_target", "_re_target", "_pr", "_agree", "_conv_length"):
+        p.pop(knob, None)
     t = p["_t_ss"]
     p["cond_bound"] = max(p["_rise"] * factor, 10.0)
     p["cap_bound"] = max(p["_rise"] * factor, 10.0)
@@ -584,10 +778,117 @@ def shape_rating(p, rng, margin, inside):
             f"{tag}_out")
 
 
+def shape_convection_range(p, rng, margin, inside):
+    """The declared operating point placed at a controlled distance from the
+    edge of the correlation's own laminar range, on both sides.
+
+    Ra_L against 1e9 for a free-convection declaration, Re_L against 5e5 for a
+    forced one. Which route a case takes is drawn, because the two are
+    genuinely different declarations and both have to be exercised: a body
+    under free convection has no velocity and one in a duct has no buoyancy
+    term, and the tool folds both into one utilization precisely so that
+    neither is permanently UNKNOWN.
+
+    A case outside the range is `model_inapplicable` rather than
+    `limit_exceeded`: nothing about the part is over a rating. The coefficient
+    was taken from a correlation being read outside where its source says it
+    holds, so the number has nothing behind it.
+    """
+    widen_all(p)
+    p["regime"] = rng.choice(["natural", "forced"])
+    factor = (1 - margin) if inside else (1 + margin)
+    if p["regime"] == "natural":
+        p["_ra_target"] = RAYLEIGH_MAX * factor
+        what = f"Ra = {p['_ra_target']:.4g} against the 1e9 laminar limit"
+    else:
+        p["_re_target"] = REYNOLDS_MAX * factor
+        what = f"Re = {p['_re_target']:.4g} against the 5e5 transition"
+    if inside:
+        return ("valid", "SUPPORTED",
+                f"{what}, {margin:.1%} inside. The correlation the declared "
+                "coefficient came from is being read where its source says it "
+                "holds, and the case must not be refused.",
+                "convection_flow_range_utilization", "conv_range_in")
+    return ("model_inapplicable", "NOT_SUPPORTED",
+            f"{what}, {margin:.1%} outside. The coefficient came from a "
+            "correlation read past its own stated range.",
+            "convection_flow_range_utilization", "conv_range_out")
+
+
+def shape_convection_property(p, rng, margin, inside):
+    """Prandtl number placed at a controlled distance from the 0.6 floor.
+
+    Forced convection only, and that is not an omission. Churchill-Chu states
+    no Prandtl restriction — its (0.492/Pr)^(9/16) denominator exists so that
+    one equation covers every Pr — so there is no property range for a
+    free-convection case to leave, and a shaper that manufactured one would be
+    testing a bound the source does not print.
+    """
+    widen_all(p)
+    p["regime"] = "forced"
+    # utilization = 0.6/Pr, so inside means utilization below 1, i.e. Pr above
+    # the floor. Solve for Pr directly rather than nudging it.
+    utilization = (1 - margin) if inside else (1 + margin)
+    p["_pr"] = PRANDTL_MIN / utilization
+    if not (0.05 < p["_pr"] < 1000.0):
+        return None
+    if inside:
+        return ("valid", "SUPPORTED",
+                f"Pr = {p['_pr']:.5g}, {margin:.1%} above the 0.6 floor the "
+                "flat-plate correlation states.",
+                "convection_property_range_utilization", "conv_prandtl_in")
+    return ("model_inapplicable", "NOT_SUPPORTED",
+            f"Pr = {p['_pr']:.5g}, below the 0.6 floor: the Pr^(1/3) factor is "
+            "the constant-property Blasius result and does not hold there.",
+            "convection_property_range_utilization", "conv_prandtl_out")
+
+
+def shape_convection_agreement(p, rng, margin, inside):
+    """The declared hA placed at a controlled distance from a factor of two
+    away from what the correlation predicts, on both sides of both edges.
+
+    This is the condition the whole convection group exists for. Everything
+    else in this file is computed FROM hA, so an hA that its own stated basis
+    does not reproduce moves Biot, both excursion budgets and the radiation
+    share by the same factor, and until this condition existed nothing said so.
+
+    Both edges are exercised. A declared hA far ABOVE the correlation predicts
+    a cooler body and is the dangerous direction; far BELOW is conservative and
+    still a broken declaration. The bound is two-sided and both sides get
+    cases.
+    """
+    widen_all(p)
+    p["regime"] = rng.choice(["natural", "forced"])
+    high = rng.random() < 0.5
+    if high:
+        p["_agree"] = (AGREEMENT_FACTOR * (1 - margin) if inside
+                       else AGREEMENT_FACTOR * (1 + margin))
+        side = "above"
+    else:
+        p["_agree"] = ((1.0 / AGREEMENT_FACTOR) / (1 - margin) if inside
+                       else (1.0 / AGREEMENT_FACTOR) * (1 - margin))
+        side = "below"
+    ratio = p["_agree"]
+    if inside:
+        return ("valid", "SUPPORTED",
+                f"The declared hA is {ratio:.4g}x what the correlation "
+                f"predicts, {margin:.1%} inside the factor-of-2 convention "
+                f"({side}). A correlation is not a measurement and this much "
+                "disagreement is what its own scatter allows.",
+                "convection_conductance_agreement_ratio", "conv_agree_in")
+    return ("model_inapplicable", "NOT_SUPPORTED",
+            f"The declared hA is {ratio:.4g}x what the correlation predicts "
+            f"({side} by more than the factor-of-2 convention). Every other "
+            "condition here is computed from that hA.",
+            "convection_conductance_agreement_ratio", "conv_agree_out")
+
+
 THRESHOLD_SHAPERS = [
     shape_biot, shape_t_max, shape_band, shape_cond,
     shape_cap, shape_melt, shape_horizon, shape_rad, shape_debye,
     shape_rating,
+    shape_convection_range, shape_convection_property,
+    shape_convection_agreement,
 ]
 
 
@@ -804,6 +1105,20 @@ _OPT = [
     ("capacity_excursion_bound", "applicability", "capacity_excursion_ratio"),
     ("melting_temperature", "applicability", "melting_temperature_utilization"),
     ("characteristic_length", "applicability", "biot_number (alt route remains)"),
+    # Where the ambient conductance came from. Omitting any one of these
+    # leaves the correlation unevaluable, so all three convection conditions
+    # report UNKNOWN and the case is INSUFFICIENT_EVIDENCE — never IN_DOMAIN.
+    ("fluid_conductivity", "applicability",
+     "convection_conductance_agreement_ratio"),
+    ("fluid_kinematic_viscosity", "applicability",
+     "convection_flow_range_utilization"),
+    ("fluid_prandtl_number", "applicability",
+     "convection_property_range_utilization"),
+    ("convection_length", "applicability",
+     "convection_flow_range_utilization"),
+    ("fluid_expansion_coefficient", "applicability",
+     "convection_flow_range_utilization"),
+    ("fluid_velocity", "applicability", "convection_flow_range_utilization"),
     ("maximum_operating_temperature", "limits", "operating_temperature_utilization"),
     ("linearization_band", "limits", "linearization_excursion_ratio"),
     ("debye_temperature", "limits", "reduced_debye_temperature"),

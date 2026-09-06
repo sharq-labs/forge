@@ -13,6 +13,8 @@ neighbour's failure.
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 
 from src.engcore.domains.electrical import material as mat
@@ -50,6 +52,11 @@ FULLY_DECLARED = ctx.LumpedApplicabilityDeclaration(
     conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
+    fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+    fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+    fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+    fluid_velocity=Quantity(1.0, "meter/second"),
+    convection_length=Quantity(0.6, "meter"),
 )
 
 #: The operating point every test below assesses at: a 1 W input into a body
@@ -72,17 +79,17 @@ def body(declaration=FULLY_DECLARED, *, duration=120.0, conductance=0.05):
 
 
 def declared(**overrides):
-    """The fully declared body with one or more facts replaced or removed."""
+    """The fully declared body with one or more facts replaced or removed.
+
+    Built by copying every field off ``FULLY_DECLARED`` rather than by naming
+    them, so a field added to the record joins this helper automatically. The
+    hand-written list it replaced silently dropped the six convection fields
+    when they were added, and every test using it then measured a body that
+    was not fully declared.
+    """
     fields = {
-        "characteristic_length": FULLY_DECLARED.characteristic_length,
-        "volume": FULLY_DECLARED.volume,
-        "surface_area": FULLY_DECLARED.surface_area,
-        "body_conductivity": FULLY_DECLARED.body_conductivity,
-        "surface_emissivity": FULLY_DECLARED.surface_emissivity,
-        "convection_regime": FULLY_DECLARED.convection_regime,
-        "conductance_excursion_bound": FULLY_DECLARED.conductance_excursion_bound,
-        "capacity_excursion_bound": FULLY_DECLARED.capacity_excursion_bound,
-        "melting_temperature": FULLY_DECLARED.melting_temperature,
+        field.name: getattr(FULLY_DECLARED, field.name)
+        for field in dataclasses.fields(FULLY_DECLARED)
     }
     fields.update(overrides)
     return ctx.LumpedApplicabilityDeclaration(**fields)
@@ -143,6 +150,12 @@ def test_a_body_that_declares_nothing_beyond_c_and_ha_is_unknown_not_valid():
         # the two agree is genuinely unanswerable — unlike the single-route
         # case, where there is nothing to contradict.
         ctx.GEOMETRY_ROUTE_RATIO,
+        # And where hA came from. A body that declares a conductance and
+        # nothing else has not said whether it is a correlation, a measurement
+        # or a guess, so no route resolves and all three stay unanswerable.
+        ctx.CONVECTION_FLOW_RANGE,
+        ctx.CONVECTION_PROPERTY_RANGE,
+        ctx.CONVECTION_AGREEMENT_RATIO,
     }
     # The two old positivity checks still pass, and still prove nothing about
     # whether the lumped approximation holds.
@@ -559,6 +572,16 @@ def test_omitting_the_operating_point_cannot_produce_a_valid_verdict():
         # Geometry alone decides this one: both routes are declared here and
         # they agree, and no operating point is needed to say so.
         ctx.GEOMETRY_ROUTE_RATIO,
+        # All three convection conditions survive the loss of the operating
+        # point, and ONLY because this body declares the FORCED route.
+        # Re = u L / nu, the flat-plate Nusselt number and the coefficient it
+        # implies contain no temperature difference at all: a flow-set
+        # coefficient does not depend on how hard the surface is driven. The
+        # same three go UNKNOWN on a free-convection body, where the Rayleigh
+        # number needs the excursion — see the natural-route test below.
+        ctx.CONVECTION_FLOW_RANGE,
+        ctx.CONVECTION_PROPERTY_RANGE,
+        ctx.CONVECTION_AGREEMENT_RATIO,
     }
 
 
@@ -659,6 +682,12 @@ def test_the_optional_inputs_are_declared_on_the_model_and_are_not_required():
         ctx.CONDUCTANCE_EXCURSION_BOUND,
         ctx.CAPACITY_EXCURSION_BOUND,
         ctx.MELTING_TEMPERATURE,
+        ctx.FLUID_CONDUCTIVITY,
+        ctx.FLUID_VISCOSITY,
+        ctx.FLUID_PRANDTL_NUMBER,
+        ctx.FLUID_EXPANSION_COEFFICIENT,
+        ctx.FLUID_VELOCITY,
+        ctx.CONVECTION_LENGTH,
     }
     # and a problem that omits every one of them still binds cleanly
     bare = lump.build_lumped_thermal_problem(
@@ -710,6 +739,11 @@ COUPLED_DECLARATION = ctx.LumpedApplicabilityDeclaration(
     conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
+    fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+    fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+    fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+    fluid_velocity=Quantity(1.0, "meter/second"),
+    convection_length=Quantity(0.6, "meter"),
 )
 
 

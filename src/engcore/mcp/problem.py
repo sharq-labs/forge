@@ -484,6 +484,58 @@ _BINDINGS: tuple[_Binding, ...] = (
         model=_LUMPED,
         input_name=lump.MELTING_TEMPERATURE,
     ),
+    # ---- how the ambient conductance was obtained ---------------------
+    #
+    # Six optional fields that let a convection correlation be evaluated and
+    # compared against the declared ambient_conductance. Which correlation is
+    # selected by which of them is supplied, not by convection_regime below:
+    # fluid_expansion_coefficient selects the natural route and fluid_velocity
+    # the forced one, so no verdict here rests on a category the caller
+    # asserted. Every one is optional and omitting them leaves the four
+    # correlation conditions UNKNOWN, exactly as before they existed.
+    _Binding(
+        section=APPLICABILITY,
+        key="fluid_conductivity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_CONDUCTIVITY,
+    ),
+    _Binding(
+        section=APPLICABILITY,
+        key="fluid_kinematic_viscosity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_VISCOSITY,
+        target="fluid_kinematic_viscosity",
+    ),
+    _Binding(
+        section=APPLICABILITY,
+        key="fluid_prandtl_number",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_PRANDTL_NUMBER,
+    ),
+    _Binding(
+        section=APPLICABILITY,
+        key="fluid_expansion_coefficient",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_EXPANSION_COEFFICIENT,
+    ),
+    _Binding(
+        section=APPLICABILITY,
+        key="fluid_velocity",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.FLUID_VELOCITY,
+    ),
+    _Binding(
+        section=APPLICABILITY,
+        key="convection_length",
+        kind="quantity",
+        model=_LUMPED,
+        input_name=thermal_ctx.CONVECTION_LENGTH,
+    ),
     _Binding(
         section=APPLICABILITY,
         key="convection_regime",
@@ -1578,7 +1630,28 @@ _PROBE_SOURCE = dc_circuit.DCVoltageSource(
 )
 
 
-def _probe_declaration() -> thermal_ctx.LumpedApplicabilityDeclaration:
+def _probe_declaration(
+    *, forced: bool = False
+) -> thermal_ctx.LumpedApplicabilityDeclaration:
+    """The probe, on one convection route.
+
+    Two are needed rather than one. The declaration record refuses a body
+    carrying both an expansion coefficient and a velocity -- that is mixed
+    convection and neither correlation covers it -- so no single probe can
+    measure what each of those two fields unlocks. Each route is measured on
+    its own probe and the results are unioned, which reports both correctly:
+    either route unlocks the same three correlation conditions.
+
+    What that costs is the ``alternative_to`` grouping. Both fields report a
+    non-empty solo unlock, so neither is silent, so the pair pass that finds
+    alternatives never sees them. A reader gets two fields unlocking the same
+    three conditions instead of one alternative group. NEEDS.md records it.
+    """
+    route = (
+        {"fluid_velocity": Quantity(2.0, "meter/second")}
+        if forced
+        else {"fluid_expansion_coefficient": Quantity(1.0 / 300.0, "1/kelvin")}
+    )
     return thermal_ctx.LumpedApplicabilityDeclaration(
         characteristic_length=Quantity(0.002, "meter"),
         volume=Quantity(2e-5, "meter**3"),
@@ -1589,6 +1662,15 @@ def _probe_declaration() -> thermal_ctx.LumpedApplicabilityDeclaration:
         conductance_excursion_bound=Quantity(60.0, "kelvin"),
         capacity_excursion_bound=Quantity(100.0, "kelvin"),
         melting_temperature=Quantity(900.0, "kelvin"),
+        # Air near 300 K. The route field is supplied by `route` above; every
+        # other field is carried because the probe measures which conditions
+        # become decidable when a field is present, and a field the probe
+        # omits would report that it unlocks nothing.
+        fluid_conductivity=Quantity(0.0263, "watt/meter/kelvin"),
+        fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+        fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+        convection_length=Quantity(0.05, "meter"),
+        **route,
     )
 
 
@@ -1728,18 +1810,32 @@ def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tupl
 
     measured: dict[str, tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]] = {}
 
-    solo, alternates, joint = measure(
-        thermal_optional,
-        lambda full, drop: dataclasses.replace(full, **drop),
-        _unknown_conditions,
-        _probe_declaration(),
-    )
+    # Measured on both convection routes and unioned. One probe cannot carry
+    # both an expansion coefficient and a velocity, so one probe cannot
+    # measure what both unlock; see _probe_declaration.
+    thermal_solo: dict[str, set[str]] = {b.key: set() for b in thermal_optional}
+    thermal_alternates: dict[str, set[str]] = {
+        b.key: set() for b in thermal_optional
+    }
+    thermal_joint: dict[str, set[str]] = {b.key: set() for b in thermal_optional}
+    for forced in (False, True):
+        solo, alternates, joint = measure(
+            thermal_optional,
+            lambda full, drop: dataclasses.replace(full, **drop),
+            _unknown_conditions,
+            _probe_declaration(forced=forced),
+        )
+        for binding in thermal_optional:
+            key = binding.key
+            thermal_solo[key] |= solo[key]
+            thermal_alternates[key] |= alternates[key]
+            thermal_joint[key] |= joint[key]
     for binding in thermal_optional:
         key = binding.key
         measured[key] = (
-            tuple(sorted(solo[key])),
-            tuple(sorted(alternates[key])),
-            tuple(sorted(solo[key] or joint[key])),
+            tuple(sorted(thermal_solo[key])),
+            tuple(sorted(thermal_alternates[key])),
+            tuple(sorted(thermal_solo[key] or thermal_joint[key])),
         )
 
     full_limits = mat.MaterialLimits(
@@ -1872,6 +1968,19 @@ def example_electrothermal_payload() -> dict[str, Any]:
                         "conductance_excursion_bound": "60 kelvin",
                         "capacity_excursion_bound": "100 kelvin",
                         "melting_temperature": "900 kelvin",
+                        # Where the ambient conductance came from. Air near
+                        # 300 K over a 0.6 m plate at 1 m/s: Re = 3.78e4,
+                        # Nu = 0.664 Re^(1/2) Pr^(1/3) = 114.9, and
+                        # h = Nu k_f / L = 5.00 W/(m^2 K), which is exactly
+                        # the 0.05 W/K over 0.01 m^2 declared above. A worked
+                        # example that did not close that loop would be
+                        # teaching a caller to declare an unsupported
+                        # coefficient.
+                        "fluid_conductivity": "0.0261 watt/meter/kelvin",
+                        "fluid_kinematic_viscosity": "1.589e-5 meter**2/second",
+                        "fluid_prandtl_number": "0.707 dimensionless",
+                        "fluid_velocity": "1 meter/second",
+                        "convection_length": "0.6 meter",
                     },
                 },
             }

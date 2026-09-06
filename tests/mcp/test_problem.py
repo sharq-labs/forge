@@ -73,6 +73,11 @@ APPLICABLE_PAYLOAD = {
                     "body_conductivity": "200 watt/meter/kelvin",
                     "surface_emissivity": "0.05 dimensionless",
                     "convection_regime": "forced",
+                    "fluid_conductivity": "0.0261 watt/meter/kelvin",
+                    "fluid_kinematic_viscosity": "1.589e-5 meter**2/second",
+                    "fluid_prandtl_number": "0.707 dimensionless",
+                    "fluid_velocity": "1 meter/second",
+                    "convection_length": "0.6 meter",
                     "conductance_excursion_bound": "60 kelvin",
                     "capacity_excursion_bound": "100 kelvin",
                     "melting_temperature": "900 kelvin",
@@ -107,9 +112,31 @@ MODELS = (
 )
 
 
-def payload_without(section_path, key):
-    """A deep copy of the applicable payload with one key removed."""
-    payload = copy.deepcopy(APPLICABLE_PAYLOAD)
+#: The same body on the FREE-CONVECTION route. Air near 300 K over a 67 mm
+#: plate: beta = 2/(T_ss + T_amb) for an ideal gas at the film temperature,
+#: Ra = 1.0e6, Nu = 0.68 + 0.670 Ra^(1/4)/[1 + (0.492/Pr)^(9/16)]^(4/9) = 16.93
+#: and h = Nu k_f / L = 5.00 W/(m^2 K), the same 0.05 W/K over 0.01 m^2.
+#:
+#: Needed because a declaration cannot carry both an expansion coefficient and
+#: a velocity -- that is mixed convection and the record refuses it -- so one
+#: payload cannot witness what both route fields unlock.
+NATURAL_CONVECTION_PAYLOAD = copy.deepcopy(APPLICABLE_PAYLOAD)
+NATURAL_CONVECTION_PAYLOAD["stages"][0]["body"]["applicability"].pop(
+    "fluid_velocity"
+)
+NATURAL_CONVECTION_PAYLOAD["stages"][0]["body"]["applicability"].update(
+    {
+        "convection_regime": "natural",
+        "fluid_expansion_coefficient": "0.00313196 1/kelvin",
+        "convection_length": "0.067048 meter",
+        "fluid_conductivity": "0.0197968 watt/meter/kelvin",
+    }
+)
+
+
+def payload_without(section_path, key, *, payload=None):
+    """A deep copy of a payload with one key removed."""
+    payload = copy.deepcopy(APPLICABLE_PAYLOAD if payload is None else payload)
     target = payload
     for step in section_path:
         target = target[step]
@@ -451,22 +478,50 @@ def test_omitting_one_optional_declaration_yields_unknown_and_never_in_domain(ke
     description = describe_electrothermal_case()
     field = description.field(f"stages[].body.applicability.{key}")
 
-    outcome = run_electrothermal_case(
-        payload_without(APPLICABILITY_PATH, key), run_id=f"omit-{key}"
-    )
-    report = outcome.reports[0]
-    unknown = {name for _, name in report.unknown_conditions}
+    # Run the omission on BOTH convection routes and union what goes UNKNOWN.
+    #
+    # `unlocks` is measured over both routes, because no single declaration can
+    # carry an expansion coefficient and a velocity at once -- that is mixed
+    # convection and the record refuses it. So a forced payload alone cannot
+    # witness what `fluid_expansion_coefficient` unlocks, and a natural one
+    # cannot witness `fluid_velocity`. Checking against the union is the same
+    # statement the description makes, and it is still a statement about real
+    # runs rather than about the description's self-consistency.
+    unknown: set[str] = set()
+    reports = []
+    for name, payload in (("forced", APPLICABLE_PAYLOAD),
+                          ("natural", NATURAL_CONVECTION_PAYLOAD)):
+        outcome = run_electrothermal_case(
+            payload_without(APPLICABILITY_PATH, key, payload=payload),
+            run_id=f"omit-{key}-{name}",
+        )
+        reports.append(outcome.reports[0])
+        unknown |= {
+            condition for _, condition in outcome.reports[0].unknown_conditions
+        }
 
     assert set(field.unlocks) <= unknown, (key, field.unlocks, sorted(unknown))
     # The asymmetry that makes optional safe: a missing declaration never
-    # satisfies anything, and never violates anything either.
-    assessment = report.validity[0].assessment
-    for condition in field.unlocks:
-        assert condition not in assessment.satisfied
-        assert condition not in assessment.violated
-    if field.unlocks:
-        assert assessment.status is ValidityStatus.UNKNOWN
+    # satisfies anything, and never violates anything either. Checked on BOTH
+    # routes, because "never satisfied" has to hold everywhere the field could
+    # have been read, not only where it happened to be witnessed.
+    for report in reports:
+        assessment = report.validity[0].assessment
+        for condition in field.unlocks:
+            assert condition not in assessment.satisfied or (
+                # The one legitimate exception: a field belonging to the OTHER
+                # route was never in this payload, so this run is unaffected by
+                # its omission and its conditions are decided by the route that
+                # is declared. Nothing was satisfied BY the omission.
+                key in ("fluid_expansion_coefficient", "fluid_velocity")
+            )
+            assert condition not in assessment.violated
         assert report.verdict is not CredibilityVerdict.NOT_SUPPORTED
+    if field.unlocks:
+        assert any(
+            r.validity[0].assessment.status is ValidityStatus.UNKNOWN
+            for r in reports
+        )
 
 
 @pytest.mark.parametrize(

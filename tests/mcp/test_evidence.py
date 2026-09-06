@@ -1091,6 +1091,11 @@ APPLICABLE = ctx.LumpedApplicabilityDeclaration(
     conductance_excursion_bound=Quantity(60.0, K),
     capacity_excursion_bound=Quantity(100.0, K),
     melting_temperature=Quantity(900.0, K),
+    fluid_conductivity=Quantity(0.0261, "watt/meter/kelvin"),
+    fluid_kinematic_viscosity=Quantity(1.589e-5, "meter**2/second"),
+    fluid_prandtl_number=Quantity(0.707, "dimensionless"),
+    fluid_velocity=Quantity(1.0, "meter/second"),
+    convection_length=Quantity(0.6, "meter"),
 )
 
 #: 50 mm of a 0.2 W/(m K) insulator: Bi = 5 * 0.05 / 0.2 = 1.25, twelve times

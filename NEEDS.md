@@ -1807,3 +1807,105 @@ and re-exports it. Every existing `from .problem import CONCENTRATION_UNIT`
 keeps working against one definition. `reference.py` still restates the gas
 constant, and still should: it restates it *so that it shares no arithmetic
 with the solve path*, which is the opposite reason.
+
+## B. TASK B — convection correlations
+
+### B.1 The design changed once, and the first design was wrong
+
+The obvious shape is a Rayleigh condition beside a Reynolds condition beside a
+Prandtl condition. It was built that way first and it is **unusable**: an
+UNKNOWN condition makes a whole verdict UNKNOWN, so a free-convection body —
+which correctly has no velocity — is permanently UNKNOWN on the Reynolds
+condition, and a duct is permanently UNKNOWN on the Rayleigh one. Every body
+would have been UNKNOWN forever.
+
+The three conditions are therefore **route-agnostic**, and two of them are
+*utilizations* of each correlation's own stated range so that both routes
+possess them. The cited numbers — 1e9, 5e5, 0.6 — live inside the derivations
+with the correlation that states each, and the conditions' bound of 1 is
+definitional.
+
+**What that costs, and it is real.** A violated `convection_flow_range_utili-
+zation` does not say whether it was Ra or Re. The description says how each is
+formed and an agent can recompute, but the verdict alone is less diagnostic
+than three separate conditions would have been. The alternative was three
+conditions that are always UNKNOWN, so this is the better of two imperfect
+shapes rather than a good one.
+
+### B.2 Mixed convection is refused, not judged
+
+A declaration carrying both an expansion coefficient and a velocity is refused
+at `LumpedApplicabilityDeclaration`. Neither correlation covers mixed
+convection; Incropera Sec. 9.9 gives a combination rule
+(`Nu^n = Nu_forced^n +/- Nu_natural^n`) which is **not implemented**. Refusing
+rather than silently picking one route is the honest option, but it means a
+genuinely mixed case cannot be posed at all. Implementing Sec. 9.9 is the fix,
+and it needs a Richardson-number condition to say when the combination itself
+stops holding — a whole further correlation, not an afternoon.
+
+### B.3 `alternative_to` no longer groups the two route fields
+
+`_measure_unlocks` finds alternatives by dropping fields in *pairs* from one
+probe and seeing whether the joint omission bites. The two route fields can
+never be in one probe, so the pair pass never sees them. They are measured on
+two probes and unioned instead, which reports each field's unlocks correctly
+but does not report that they are alternatives to each other. A reader sees two
+fields unlocking the same three conditions. Fixing it means teaching the
+measurement about mutually exclusive declarations, which is the same gap as
+STEP 8 NEEDS §1.2 ("nothing can express that two declarations are
+alternatives") seen from the measurement side rather than the record side.
+
+### B.4 Orientation and geometry are undeclarable, and the conditions say so
+
+Churchill-Chu is for a **vertical** plate; a horizontal one has different
+constants (0.54 and 0.27 Ra^(1/4) facing up and down, Sec. 9.6.3) over a
+different characteristic length. The flat-plate result is for **parallel flow**;
+a cylinder in cross-flow is Hilpert or Zukauskas (Sec. 7.4) and a duct is
+Dittus-Boelter over a hydraulic diameter (Sec. 8.5). **Nothing in the
+declaration carries the orientation or the geometry**, so this domain cannot
+tell which correlation a caller should be using, and the agreement bound only
+catches the case where the resulting disagreement exceeds a factor of two.
+
+The fix is a categorical `surface_geometry` declaration selecting among a table
+of correlations. It was not built because a category that selects a correlation
+is a category that decides a verdict, and this domain spent a whole round
+removing the last one of those (`convection_regime`). Doing it safely means a
+correlation registry keyed by geometry with each entry carrying its own ranges
+and its own required declarations, which is a design, not a field.
+
+### B.5 Paths touched outside TASK B's stated ownership
+
+TASK B owns `domains/thermal_models/**`, tests and docs, and instructs adding
+benchmark cases. Two files outside that were necessarily touched:
+
+* `src/engcore/mcp/problem.py` — six payload bindings and the probe. Not
+  optional: `_audit_bindings` refuses to import when a model declares an input
+  the payload cannot carry, which is the guard doing exactly its job. The
+  benchmark cases the task asks for cannot exist without them.
+* `benchmarks/hard/generate_hard.py` and `cases_hard/` — the task asks for
+  cases; `benchmarks/hard/**` is TASK C's stated ownership.
+
+### B.6 `S00709` — the benchmark witnessed A2.9 for the first time
+
+One sound case is refused, and the tool is wrong about it. The resistor
+dissipates 3.4886 W at the converged fixed point against a 3.49889 W rating;
+the tool builds its circuit at the **declared reference resistance**, computes
+3.5634 W, and reports the rating violated. That is A2.9 above, recorded two
+rounds ago, and this is the first draw to place a rating close enough to the
+operating point for the TCR's 2% resistance shift to flip the verdict.
+
+The error is conservative, which is why it appears as a false reject rather
+than a false accept. Fixing it means assessing the ratings at the converged
+resistance, which is a change to `systems/electrothermal/` and to the ordering
+of the coupling — this round does not own it and did not do it.
+
+### B.7 The geometry_conflict labels are wrong and were left wrong
+
+`shape_geometry_conflict` draws its factor from {3, 10, 0.1, 30}, and 3 is
+*exactly* the sphere shape factor `GEOMETRY_AGREEMENT_FACTOR` was derived from,
+where the bound is inclusive on purpose. All 15 of this draw's
+`geometry_conflict` false accepts sit at a ratio of exactly 1/3 and the tool is
+right to admit every one. The fix is to draw the factor at `3 * (1 +/- margin)`
+like every other threshold shaper. Not done here: it would move the headline
+metrics for a reason that has nothing to do with this round, and the effect is
+reported separately instead.
