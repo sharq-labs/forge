@@ -113,6 +113,7 @@ from ...scientific.units.quantity import Quantity
 __all__ = [
     "BLOCH_GRUENEISEN_LINEAR_FLOOR",
     "DEBYE_TEMPERATURE",
+    "CEILING_REDUCED_DEBYE_TEMPERATURE",
     "DIMENSIONLESS",
     "LINEARIZATION_BAND",
     "LINEARIZATION_BUDGET_LIMIT",
@@ -128,6 +129,8 @@ __all__ = [
     "RATED_LINEAR_TCR_MODEL",
     "RATED_LINEAR_TCR_REALIZATION",
     "REDUCED_DEBYE_TEMPERATURE",
+    "REFERENCE_REDUCED_DEBYE_TEMPERATURE",
+    "REFERENCE_TEMPERATURE_UTILIZATION",
     "REFERENCE_RESISTANCE",
     "REFERENCE_TEMPERATURE",
     "RESISTANCE_METRIC",
@@ -152,7 +155,10 @@ __all__ = [
     "operating_temperature_utilization",
     "rated_resistance_validity_context",
     "resistance_validity_context",
+    "ceiling_reduced_debye_temperature",
     "reduced_debye_temperature",
+    "reference_reduced_debye_temperature",
+    "reference_temperature_utilization",
     "resistance_model_registry",
     "resistance_realizations",
     "resistance_solver_capabilities",
@@ -184,6 +190,21 @@ LINEARIZATION_EXCURSION_RATIO = "linearization_excursion_ratio"
 OPERATING_TEMPERATURE_UTILIZATION = "operating_temperature_utilization"
 REDUCED_DEBYE_TEMPERATURE = "reduced_debye_temperature"
 LINEAR_RESISTANCE_RATIO = "linear_resistance_ratio"
+
+#: Derived groups stated over the *declared limits alone*.
+#:
+#: Every group above compares a limit with the computed temperature, and so
+#: cannot be evaluated until a run has produced one. These three compare a
+#: declared limit with another declared limit, which makes them answerable from
+#: the declaration by itself — before any solver runs, and whether or not one
+#: ever does.
+#:
+#: None of them introduces a threshold. Each is an existing condition of this
+#: model evaluated at a declared limit instead of at the state, so it reuses
+#: that condition's bound unchanged; see the three functions for which.
+REFERENCE_TEMPERATURE_UTILIZATION = "reference_temperature_utilization"
+REFERENCE_REDUCED_DEBYE_TEMPERATURE = "reference_reduced_debye_temperature"
+CEILING_REDUCED_DEBYE_TEMPERATURE = "ceiling_reduced_debye_temperature"
 
 MODEL_VERSION = "0.1.0"
 MATERIAL_LIMITS_SCHEMA = schema_string("conductor_material_limits")
@@ -554,6 +575,69 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "Physics (1976), Ch. 26, Eq. 26.55; Kittel, Introduction "
                     "to Solid State Physics, 8th ed. (2005), Ch. 6. UNKNOWN "
                     "unless the material declares debye_temperature."
+                ),
+            ),
+            # ---- the declared limits against each other -------------------
+            #
+            # Every condition above compares a declared limit with the
+            # computed temperature. The three below compare declared limits
+            # with each other, which is a different question and answerable
+            # earlier: they need no state, so they are decided by the
+            # declaration alone, before a solver runs.
+            #
+            # None of them introduces a threshold. Each restates a condition
+            # already above at a declared limit rather than at the state, and
+            # so reuses that condition's bound unchanged.
+            RangeCondition(
+                name=REFERENCE_TEMPERATURE_UTILIZATION,
+                maximum=OPERATING_TEMPERATURE_LIMIT,
+                description=(
+                    "T_ref / maximum_operating_temperature <= 1. The same "
+                    "bound as operating_temperature_utilization, asked at the "
+                    "reference instead of at the state. A material whose "
+                    "reference resistance is declared at a temperature its "
+                    "own rating says the conductor does not survive has "
+                    "contradicted itself: R_ref and alpha are anchored there, "
+                    "so every resistance computed from them is referred to a "
+                    "state the declaration excludes, at every operating "
+                    "point. UNKNOWN unless the material declares "
+                    "maximum_operating_temperature."
+                ),
+            ),
+            RangeCondition(
+                name=REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+                minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
+                description=(
+                    "T_ref / theta_D >= 1/3. The same bound as "
+                    "reduced_debye_temperature, asked at the reference "
+                    "instead of at the state. alpha is the slope of a "
+                    "straight line through T_ref, and theta_D is declared to "
+                    "mark where rho(T) stops being straight; a reference "
+                    "below the material's own linearity floor fits a line at "
+                    "a temperature the same declaration says is curved. "
+                    "Distinct from the condition on the run: a run can stay "
+                    "in the linear regime while the coefficient it uses was "
+                    "anchored outside it. UNKNOWN unless the material "
+                    "declares debye_temperature."
+                ),
+            ),
+            RangeCondition(
+                name=CEILING_REDUCED_DEBYE_TEMPERATURE,
+                minimum=BLOCH_GRUENEISEN_LINEAR_FLOOR,
+                description=(
+                    "T_max / theta_D >= 1/3. The Debye condition asked at the "
+                    "ceiling — the most favourable temperature the material "
+                    "permits. reduced_debye_temperature bounds the operating "
+                    "temperature from below and "
+                    "operating_temperature_utilization bounds it from above; "
+                    "the Debye condition is monotone in T, so if it fails at "
+                    "the ceiling it fails at every admissible temperature and "
+                    "the declared usable set is empty. Reported separately "
+                    "because an empty set cannot be repaired by moving the "
+                    "operating point, cooling the part or shortening the "
+                    "run — only by changing the declaration. UNKNOWN unless "
+                    "the material declares both maximum_operating_temperature "
+                    "and debye_temperature."
                 ),
             ),
             RangeCondition(
@@ -1063,6 +1147,143 @@ def reduced_debye_temperature(
     return Quantity(kelvin / debye, DIMENSIONLESS)
 
 
+# =====================================================================
+# Consistency of the declared limits with each other
+# =====================================================================
+#
+# The three functions below take no ``temperature``. That is the whole point
+# of them: they read only what the caller declared, so they are answerable
+# before a solver runs and stay answerable if none ever does.
+#
+# Each one asks an existing condition of this model at a *declared limit*
+# rather than at the computed state, and keeps that condition's bound. A
+# declaration that fails one of them is not merely operating outside a
+# window — it is describing a material that cannot exist as described, and no
+# choice of operating point could rescue it.
+
+
+def reference_temperature_utilization(
+    *,
+    reference_temperature: Quantity | None,
+    maximum_temperature: Quantity | None,
+) -> Quantity | None:
+    """T_ref / T_max — was the reference measured on an intact conductor?
+
+    **Definition.** :func:`operating_temperature_utilization` evaluated at the
+    declared reference temperature instead of at the state, so it carries the
+    same bound, :data:`OPERATING_TEMPERATURE_LIMIT`.
+
+    **Why this is a contradiction and not a tolerance.**
+    ``maximum_operating_temperature`` is declared as the temperature "above
+    which the conductor itself is not intact", and ``reference_temperature`` is
+    declared as the temperature "at which the reference resistance holds". A
+    material that places the second above the first asserts that its reference
+    resistance was measured on a conductor that its own rating says was not
+    there to measure. The two declarations cannot both be true, and which of
+    them is wrong is the caller's to decide — this condition only reports that
+    one of them is.
+
+    Nothing about the operating point can repair it: ``R_ref`` and ``alpha``
+    are anchored at ``T_ref``, so every resistance this model computes, at
+    every temperature, is referred to a state the material is declared not to
+    survive. UNKNOWN unless the material declares
+    ``maximum_operating_temperature``.
+    """
+    reference = _temperature_in_kelvin(
+        reference_temperature, REFERENCE_TEMPERATURE
+    )
+    maximum = _temperature_in_kelvin(
+        maximum_temperature, MAXIMUM_OPERATING_TEMPERATURE
+    )
+    if reference is None or maximum is None:
+        return None
+    if maximum <= 0.0:
+        raise InvalidScientificProblem(
+            f"{MAXIMUM_OPERATING_TEMPERATURE} must be strictly positive, got "
+            f"{maximum_temperature}"
+        )
+    return Quantity(reference / maximum, DIMENSIONLESS)
+
+
+def reference_reduced_debye_temperature(
+    *,
+    reference_temperature: Quantity | None,
+    debye_temperature: Quantity | None,
+) -> Quantity | None:
+    """T_ref / theta_D — was the coefficient fitted in the linear regime?
+
+    **Definition.** :func:`reduced_debye_temperature` evaluated at the declared
+    reference instead of at the state, so it carries the same bound,
+    :data:`BLOCH_GRUENEISEN_LINEAR_FLOOR`.
+
+    **Why a reference below the floor undermines its own coefficient.** The
+    Debye temperature is declared precisely to mark where ``rho(T)`` stops
+    being linear (Ashcroft & Mermin, *Solid State Physics* (1976), Ch. 26,
+    Eq. 26.55). ``alpha`` is the slope of a straight line taken through
+    ``T_ref``. Declaring a reference below the material's own linearity floor
+    therefore fits a straight line at a temperature the same declaration says
+    the curve is not straight at — a claim that contradicts itself rather than
+    one that happens to be evaluated in the wrong place.
+
+    Distinct from :func:`reduced_debye_temperature`, which asks whether the
+    *run* stayed in the linear regime. A run can satisfy that while the
+    coefficient it uses was anchored outside it, and the two must be able to
+    disagree. UNKNOWN unless the material declares ``debye_temperature``.
+    """
+    reference = _temperature_in_kelvin(
+        reference_temperature, REFERENCE_TEMPERATURE
+    )
+    debye = _temperature_in_kelvin(debye_temperature, DEBYE_TEMPERATURE)
+    if reference is None or debye is None:
+        return None
+    if debye <= 0.0:
+        raise InvalidScientificProblem(
+            f"{DEBYE_TEMPERATURE} must be strictly positive, got "
+            f"{debye_temperature}"
+        )
+    return Quantity(reference / debye, DIMENSIONLESS)
+
+
+def ceiling_reduced_debye_temperature(
+    *,
+    maximum_temperature: Quantity | None,
+    debye_temperature: Quantity | None,
+) -> Quantity | None:
+    """T_max / theta_D — is there any temperature this material admits?
+
+    **Definition.** :func:`reduced_debye_temperature` evaluated at the declared
+    ceiling, the *most favourable* temperature the material permits, so it
+    carries the same bound, :data:`BLOCH_GRUENEISEN_LINEAR_FLOOR`.
+
+    **Why the ceiling is the right place to ask.** Two of this material's own
+    conditions bound the operating temperature from opposite sides:
+    ``reduced_debye_temperature`` requires ``T >= theta_D / 3`` and
+    ``operating_temperature_utilization`` requires ``T <= T_max``. Their
+    intersection is the set of temperatures the material declares itself usable
+    over. Since the Debye condition is monotone in ``T``, the ceiling is where
+    it comes closest to being satisfied — so if it fails there, it fails
+    everywhere, and the declared usable set is **empty**.
+
+    That is a stronger statement than any single-condition violation, and it is
+    worth making separately: an empty admissible set cannot be repaired by
+    moving the operating point, cooling the part or shortening the run. The
+    declaration itself has to change. UNKNOWN unless the material declares both
+    ``maximum_operating_temperature`` and ``debye_temperature``.
+    """
+    maximum = _temperature_in_kelvin(
+        maximum_temperature, MAXIMUM_OPERATING_TEMPERATURE
+    )
+    debye = _temperature_in_kelvin(debye_temperature, DEBYE_TEMPERATURE)
+    if maximum is None or debye is None:
+        return None
+    if debye <= 0.0:
+        raise InvalidScientificProblem(
+            f"{DEBYE_TEMPERATURE} must be strictly positive, got "
+            f"{debye_temperature}"
+        )
+    return Quantity(maximum / debye, DIMENSIONLESS)
+
+
 def linear_resistance_ratio(
     *,
     temperature: Quantity | None,
@@ -1120,6 +1341,9 @@ ASSEMBLED_QUANTITIES = frozenset(
         OPERATING_TEMPERATURE_UTILIZATION,
         REDUCED_DEBYE_TEMPERATURE,
         LINEAR_RESISTANCE_RATIO,
+        REFERENCE_TEMPERATURE_UTILIZATION,
+        REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+        CEILING_REDUCED_DEBYE_TEMPERATURE,
     }
 )
 
@@ -1159,6 +1383,24 @@ def derived_material_quantities(
             temperature=temperature,
             reference_temperature=reference_temperature,
             temperature_coefficient=base.get(TEMPERATURE_COEFFICIENT),
+        ),
+        # The three below take no ``temperature``: they compare declared
+        # limits with each other, so they are derivable from a declaration
+        # that has never been run and stay absent only when a limit they
+        # need was not declared.
+        REFERENCE_TEMPERATURE_UTILIZATION: reference_temperature_utilization(
+            reference_temperature=reference_temperature,
+            maximum_temperature=base.get(MAXIMUM_OPERATING_TEMPERATURE),
+        ),
+        REFERENCE_REDUCED_DEBYE_TEMPERATURE: (
+            reference_reduced_debye_temperature(
+                reference_temperature=reference_temperature,
+                debye_temperature=base.get(DEBYE_TEMPERATURE),
+            )
+        ),
+        CEILING_REDUCED_DEBYE_TEMPERATURE: ceiling_reduced_debye_temperature(
+            maximum_temperature=base.get(MAXIMUM_OPERATING_TEMPERATURE),
+            debye_temperature=base.get(DEBYE_TEMPERATURE),
         ),
     }
     return {name: value for name, value in derived.items() if value is not None}

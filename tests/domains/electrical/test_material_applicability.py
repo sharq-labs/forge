@@ -112,6 +112,12 @@ def test_a_conductor_with_no_declared_limits_is_unknown_under_the_rated_claim():
         mat.LINEARIZATION_EXCURSION_RATIO,
         mat.OPERATING_TEMPERATURE_UTILIZATION,
         mat.REDUCED_DEBYE_TEMPERATURE,
+        # The limit-versus-limit conditions are UNKNOWN here for the same
+        # reason as the rest: they read declared limits, and nothing was
+        # declared. Absence of a declaration is never evidence of consistency.
+        mat.REFERENCE_TEMPERATURE_UTILIZATION,
+        mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+        mat.CEILING_REDUCED_DEBYE_TEMPERATURE,
     }
     assert assessment.violated == ()
 
@@ -193,7 +199,13 @@ def test_linear_tcr_law_is_rejected_above_the_materials_maximum_operating_temper
 def test_maximum_operating_temperature_is_unknown_when_the_material_declares_none():
     assessment = assess(limits(maximum_operating_temperature=None))
     assert assessment.status is ValidityStatus.UNKNOWN
-    assert assessment.unknown == (mat.OPERATING_TEMPERATURE_UTILIZATION,)
+    assert assessment.unknown == (
+        mat.OPERATING_TEMPERATURE_UTILIZATION,
+        # Both of these read the ceiling too, and lose it with the same
+        # omission.
+        mat.REFERENCE_TEMPERATURE_UTILIZATION,
+        mat.CEILING_REDUCED_DEBYE_TEMPERATURE,
+    )
     assert assessment.violated == ()
 
 
@@ -234,13 +246,26 @@ def test_linear_tcr_law_is_rejected_below_a_third_of_the_debye_temperature():
         temperature=Quantity(300.0, K),
     )
     assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert assessment.violated == (mat.REDUCED_DEBYE_TEMPERATURE,)
+    # Two distinct findings, not one restated. The first is about the run: at
+    # 300 K this conductor operates below theta_D/3. The second is about the
+    # declaration: alpha is anchored at 293.15 K, which is *also* below
+    # theta_D/3, so the coefficient was fitted where this material's own
+    # theta_D says rho(T) is curved. Moving the operating point fixes the
+    # first and cannot touch the second.
+    assert assessment.violated == (
+        mat.REDUCED_DEBYE_TEMPERATURE,
+        mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+    )
 
 
 def test_debye_floor_is_unknown_when_the_material_declares_no_debye_temperature():
     assessment = assess(limits(debye_temperature=None))
     assert assessment.status is ValidityStatus.UNKNOWN
-    assert assessment.unknown == (mat.REDUCED_DEBYE_TEMPERATURE,)
+    assert assessment.unknown == (
+        mat.REDUCED_DEBYE_TEMPERATURE,
+        mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+        mat.CEILING_REDUCED_DEBYE_TEMPERATURE,
+    )
     assert assessment.violated == ()
 
 
@@ -684,7 +709,7 @@ def test_f03_colliding_with_every_assembled_name_changes_no_verdict(declared):
         name: Quantity(0.5, "dimensionless")
         for name in mat.ASSEMBLED_QUANTITIES - declared_variables
     }
-    assert len(collisions) == 4
+    assert len(collisions) == 7
     tampered = _with_parameters(problem, collisions)
 
     assert mat.assess_rated_resistance_validity(tampered, temperature) == (
@@ -710,3 +735,151 @@ def test_f03_every_derivable_name_is_reserved():
     )
     assert derivable
     assert derivable <= mat.ASSEMBLED_QUANTITIES
+
+
+# =====================================================================
+# The declared limits against each other
+# =====================================================================
+#
+# Every condition above compares a declared limit with the computed
+# temperature. These compare declared limits with each other, which is a
+# question about the declaration rather than about the run.
+
+
+def test_a_consistent_material_satisfies_every_limit_versus_limit_condition():
+    """The guard against buying catches with false rejects.
+
+    Copper as declared at the top of this file is an ordinary, consistent
+    material: referenced at 293.15 K, rated to 450 K, theta_D of 343 K. If any
+    of the three conditions fired here they would be rejecting sound
+    declarations, so this assertion is the one that keeps them honest.
+    """
+    assessment = assess()
+    assert assessment.status is ValidityStatus.IN_DOMAIN
+    assert assessment.violated == ()
+    assert assessment.unknown == ()
+    for name in (
+        mat.REFERENCE_TEMPERATURE_UTILIZATION,
+        mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE,
+        mat.CEILING_REDUCED_DEBYE_TEMPERATURE,
+    ):
+        assert name in assessment.satisfied
+
+
+def test_a_reference_above_the_ceiling_is_refused_however_cool_the_run_is():
+    """R_ref measured at 500 K on a conductor rated to 450 K.
+
+    The contradiction is in the declaration, so the operating point cannot
+    settle it: this asserts the finding survives at a temperature every
+    state-facing condition calls unremarkable.
+    """
+    conductor = mat.TemperatureDependentConductor(
+        component_id="R1",
+        reference_resistance=Quantity(10.0, "ohm"),
+        temperature_coefficient=Quantity(0.00393, "1/kelvin"),
+        reference_temperature=Quantity(500.0, K),
+        limits=limits(linearization_band=Quantity(400.0, K)),
+    )
+    problem = mat.build_resistance_problem(conductor)
+    assessment = mat.assess_rated_resistance_validity(
+        problem, Quantity(340.0, K)
+    )
+
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert mat.REFERENCE_TEMPERATURE_UTILIZATION in assessment.violated
+    # The run itself is well inside the rating: this is not that finding.
+    assert mat.OPERATING_TEMPERATURE_UTILIZATION in assessment.satisfied
+
+
+def test_a_ceiling_below_the_debye_floor_leaves_no_admissible_temperature():
+    """theta_D = 2000 K against a 450 K ceiling: theta_D/3 = 667 K > 450 K.
+
+    reduced_debye_temperature bounds the operating temperature from below and
+    operating_temperature_utilization bounds it from above. Here the two do not
+    intersect, so no operating point exists that this material declares itself
+    usable at, and saying so does not require running anything.
+    """
+    assessment = assess(limits(debye_temperature=Quantity(2000.0, K)))
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert mat.CEILING_REDUCED_DEBYE_TEMPERATURE in assessment.violated
+
+    # The claim about emptiness, checked directly rather than asserted: every
+    # temperature at or below the ceiling fails the Debye floor.
+    for kelvin in (100.0, 293.15, 340.0, 450.0):
+        ratio = mat.reduced_debye_temperature(
+            temperature=Quantity(kelvin, K),
+            debye_temperature=Quantity(2000.0, K),
+        )
+        assert ratio.magnitude_in("dimensionless") < (
+            mat.BLOCH_GRUENEISEN_LINEAR_FLOOR.magnitude_in("dimensionless")
+        )
+
+
+def test_the_limit_versus_limit_conditions_need_no_temperature_at_all():
+    """The property that separates them from every other condition here.
+
+    They are answerable from the declaration alone, so a caller can be told
+    the declaration contradicts itself before a solver is chosen, let alone
+    run.
+    """
+    conductor = mat.TemperatureDependentConductor(
+        component_id="R1",
+        reference_resistance=Quantity(10.0, "ohm"),
+        temperature_coefficient=Quantity(0.00393, "1/kelvin"),
+        reference_temperature=Quantity(293.15, K),
+        limits=COPPER_LIMITS,
+    )
+    derived = mat.derived_material_quantities(
+        mat.build_resistance_problem(conductor).validity_context(),
+        temperature=None,
+    )
+
+    assert mat.REFERENCE_TEMPERATURE_UTILIZATION in derived
+    assert mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE in derived
+    assert mat.CEILING_REDUCED_DEBYE_TEMPERATURE in derived
+    # The state-facing groups are absent for exactly the same reason they
+    # would be with a limit missing: their input was not supplied.
+    assert mat.OPERATING_TEMPERATURE_UTILIZATION not in derived
+    assert mat.LINEARIZATION_EXCURSION_RATIO not in derived
+
+
+def test_no_limit_versus_limit_condition_introduces_a_new_threshold():
+    """Each reuses the bound of the condition it restates.
+
+    A consistency check that invented its own number would be asserting new
+    physics under cover of a consistency argument. These three assert none:
+    they ask an existing question at a declared limit instead of at the state.
+    """
+    assert (
+        condition(mat.REFERENCE_TEMPERATURE_UTILIZATION).maximum
+        == condition(mat.OPERATING_TEMPERATURE_UTILIZATION).maximum
+        == mat.OPERATING_TEMPERATURE_LIMIT
+    )
+    assert (
+        condition(mat.REFERENCE_REDUCED_DEBYE_TEMPERATURE).minimum
+        == condition(mat.CEILING_REDUCED_DEBYE_TEMPERATURE).minimum
+        == condition(mat.REDUCED_DEBYE_TEMPERATURE).minimum
+        == mat.BLOCH_GRUENEISEN_LINEAR_FLOOR
+    )
+
+
+def test_a_band_narrower_than_the_ceiling_permits_is_not_a_contradiction():
+    """Deliberately *not* a condition, and this pins that decision.
+
+    It is tempting to also require that the linearization band reach the
+    ceiling, on the reasoning that otherwise the declaration permits an
+    operating point at which the band condition must fail. That reasoning is
+    wrong here, because the two limits are different kinds of statement:
+    maximum_operating_temperature is where the conductor stops being intact,
+    while linearization_band is where one alpha stops being supported. A
+    material can perfectly well survive to 450 K while a single coefficient
+    only carries 50 K from its reference, and a design that stays inside the
+    narrower of the two is sound.
+
+    Requiring the band to reach the ceiling would reject that sound design,
+    which is why it is absent. linearization_excursion_ratio already refuses
+    the runs that actually leave the band.
+    """
+    narrow = assess(limits(linearization_band=Quantity(50.0, K)))
+    assert narrow.status is ValidityStatus.IN_DOMAIN
+    assert narrow.violated == ()
