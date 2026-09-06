@@ -3552,10 +3552,18 @@ cost something and the lesson generalises.
 
 | commit | result |
 |---|---|
-| `dd4f698` merge base | 227 passed |
 | `40e8956` GUARD 2 | passed |
 | **`c0ec657` GUARD 3** | **7 failed**, 220 passed |
-| `9e41f5a` GUARD 7, `core-guards` tip | **227 passed — already repaired** |
+
+**`dd4f698` 227 passed was an inference published as a measurement, by the
+`presentation` session in `e1f3880a` (PR #15).** The number was carried across
+from `9e41f5a` and never run at the base, and the same inference placed the
+repair at `9e41f5a` (GUARD 7) without running the two red commits in between.
+Both rows are deleted here. The base is **226** and the repair is at
+**`944a48b` (GUARD 6)** — measured by `core-guards`, and measured again by
+`presentation` when it retracted this. The authoritative table is earlier in
+this file under *a check whose failure has never been observed*; there is one
+bisect of these commits and it lives there.
 
 Two causes. `cstr/validation.py:605` returns `self._tolerance_rel_tol` from a
 property, and that attribute is never assigned to the instance — it exists only
