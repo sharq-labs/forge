@@ -1,0 +1,44 @@
+{
+ "id": "S094",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "yageo-rc0603",
+  "source_voltage_v": 9.0,
+  "resistance_ohm": 220.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 25,
+  "thermal_resistance_kind": "unstated",
+  "declared_limits": {
+   "rated_power_w": 0.1,
+   "maximum_working_voltage_v": 75,
+   "maximum_operating_temperature_c": 155
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "insufficient_input",
+  "reason": "the design names a part, a rail and an ambient and nothing else: no horizon, no thermal mass and no thermal path, so no temperature follows from what it says.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "what the design omits, checked against convert.py REQUIRED",
+  "reference_check": {
+   "violated": [
+    "dissipated_power_utilization"
+   ],
+   "unknown_count": 12,
+   "final_temperature_k": 389.3187,
+   "steady_temperature_k": 389.3187,
+   "dissipated_power_w": 0.364675,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "INSUFFICIENT_EVIDENCE",
+ "declaration_completeness": "sparse_declaration"
+}

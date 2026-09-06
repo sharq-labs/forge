@@ -1,0 +1,64 @@
+{
+ "id": "S037",
+ "prompt_id": "hand_built",
+ "source": {
+  "kind": "hand_built",
+  "model_family": null,
+  "model_id": null,
+  "note": "seed case; proves the harness, says nothing about any model"
+ },
+ "stated_design": {
+  "part_id": "vishay-crcw0402",
+  "source_voltage_v": 120.0,
+  "resistance_ohm": 288000.0,
+  "reference_temperature_c": 20.0,
+  "temperature_coefficient_ppm_per_k": 99.99999999999999,
+  "ambient_c": 25,
+  "duration_s": 60.0,
+  "thermal_resistance_k_per_w": 500.0,
+  "thermal_resistance_kind": "body_to_ambient",
+  "heat_capacity_j_per_k": 0.0005525,
+  "declared_thermal_context": {
+   "characteristic_length_m": 8.53658536585366e-05,
+   "surface_area_m2": 2.05e-06,
+   "body_volume_m3": 1.75e-10,
+   "body_conductivity_w_per_m_k": 30.0,
+   "surface_emissivity": 0.05,
+   "melting_temperature_c": 2072.0,
+   "constant_conductance_span_k": 900.0,
+   "constant_capacity_span_k": 900.0,
+   "linearization_band_k": 2000.0,
+   "debye_temperature_k": 200.0,
+   "fluid": "air",
+   "convection_length_m": 0.0014317821063276352,
+   "fluid_conductivity_solved_w_per_m_k": 0.9262227519611973,
+   "airflow": "still"
+  },
+  "declared_limits": {
+   "rated_power_w": 0.1,
+   "maximum_working_voltage_v": 75,
+   "maximum_operating_temperature_c": 155,
+   "source_maximum_current_a": 0.0012462704845165869
+  }
+ },
+ "reasoning": {},
+ "label": {
+  "verdict": "limit_exceeded",
+  "reason": "120 V across a part the datasheet limits to 75 V, while the dissipation stays at half the rating -- the binding limit here is not the one a power check finds.",
+  "labeller": "benchmark author (single reviewer)",
+  "confidence": "high",
+  "ground_truth_basis": "reference.py plus the part datasheet",
+  "reference_check": {
+   "violated": [
+    "working_voltage_utilization"
+   ],
+   "unknown_count": 0,
+   "final_temperature_k": 323.0754,
+   "steady_temperature_k": 323.0754,
+   "dissipated_power_w": 0.049851,
+   "stable_under_both_temperature_readings": true
+  }
+ },
+ "expected_verdict": "NOT_SUPPORTED",
+ "declaration_completeness": "full_declaration"
+}
