@@ -877,3 +877,134 @@ description as unlocking nothing.
 table and the audit are written so that a second pack would add a second table
 and a second description function rather than a flag on this one, but nothing
 here has been generalised on the strength of one case.
+
+
+---
+
+# NEEDS — recommendations round
+
+Owned paths this round: `src/engcore/domains/thermal_models/**`,
+`src/engcore/domains/battery/**`, `src/engcore/domains/electrical/**` (except
+`ngspice.py`), `src/engcore/scientific/results/**` as the one authorised core
+change, `docs/**`, `README.md`, their tests, and this file.
+
+Three items already recorded above were resolved rather than re-proposed here
+and are updated in place: §1.1 (`ScientificResult` cannot carry validity —
+**done**), §1.8b (the lumped solver's empty `attained_levels` — **done**, and
+its predictions about how corrected), and the new §1.8c below it (a level
+awarded from a linear residual — **proposed, not made**).
+
+---
+
+## 5. `scientific/experiments/optimizer_adapter.py` — recommendation: keep, and stop calling it a leftover
+
+**Where** `src/engcore/scientific/experiments/optimizer_adapter.py`, 271 lines,
+exported from `scientific/__init__.py`.
+
+**The question asked.** It is a leftover of the Bayesian-optimizer line removed
+in September 2026. Is it a general facility or a vestige?
+
+**Finding: the module is two things with different standing, and only one of
+them lost a consumer.**
+
+`CandidateCodec` and `ObjectiveEncoder` are **a general facility, and
+load-bearing**. They are the unit ↔ unit-cube boundary itself, not the
+optimizer that was going to sit behind it. DESIGN-D2's *preregistration* names
+this codec as the frozen, continuous-only baseline its mixed-variable sampler
+must not widen or rewrite — "D2 must **not** silently widen or rewrite that
+frozen adapter" — and its freeze document repeats it twice more. A D2 test
+asserts the codec still refuses a mixed design space. A frozen milestone's
+reference point is not a vestige.
+
+`NumericSearchBackend` is **a boundary with nothing behind it, which is its
+declared shape**. The core is *required* never to import a concrete optimizer;
+the protocol exists so it does not have to. Its emptiness is the invariant
+working, not the invariant rotting. What was removed in September was a
+consumer, and a boundary outlives the consumer that motivated it.
+
+**So the defect is documentary, not structural.** Nothing in the module or in
+`docs/scientific-core/README.md` said the backend line had gone, so a reader
+found a protocol with no implementation and reasonably concluded the module was
+dead. **Done this round:** a history paragraph in the module docstring saying
+what was removed, which half is frozen and by whom, and why the empty protocol
+is deliberate. No behaviour changed and no export moved.
+
+**What would break if it were removed** — 33 tests, in two places:
+
+* `tests/test_scientific_core.py` — six tests directly:
+  `test_codec_round_trip_scientific_to_vector_to_scientific`,
+  `test_codec_accepts_compatible_units_and_rejects_bare_numbers`,
+  `test_codec_requires_bounded_continuous_variables`,
+  `test_optimizer_adapter_encodes_objective_direction`,
+  `test_optimizer_adapter_refuses_silent_objective_choice`,
+  `test_adapter_drives_a_synthetic_search_backend_end_to_end`. The module also
+  imports `OptimizerAdapter` at module level, so collection of all 110 tests
+  there would fail until the import was removed.
+* `tests/test_design_d2_mixed_generation.py` — imports `CandidateCodec` at
+  module level, so **all 27 collected tests in a frozen milestone's suite fail
+  at collection**, not just the one that uses it.
+
+`tests/test_heterogeneous_ngspice.py::test_h_universal_core_gained_nothing_and_knows_no_provider`
+would keep passing — its assertion is over other names — but its comment, which
+names `OptimizerAdapter` and `NumericSearchBackend` as pre-existing design-search
+exports so a provider scan does not flag them, would become stale.
+
+**Recommendation: keep, unchanged.** Removing it edits a frozen milestone's
+reference point to delete a boundary whose absence of an implementation is the
+property the boundary exists to have. If a future round disagrees, the argument
+to answer is D2's preregistration, not the line count.
+
+---
+
+## 6. The derived-quantity pattern — a proposal, nothing built
+
+**Where** `domains/thermal_models/context.py` (18 functions) and
+`domains/battery/context.py` (29). Both repeat one shape: take problem inputs as
+optional `Quantity`, return `None` if any is absent so the condition reads
+UNKNOWN, otherwise compute a dimensionless group.
+
+**The abstraction.** A declarative `DerivedQuantity` record — name, required
+input names with their expected dimensions, and a pure function over the
+resolved values — plus one resolver that reads the inputs, returns `None` on
+the first absent one, and checks dimensions on the rest. Each of the 47
+functions becomes a record; `_checked(...)` disappears.
+
+**What it would eliminate.** The `_checked` calls and the `if x is None:
+return None` chain, which is 60–70% of the lines and the *only* part that is
+mechanical. It would also make the input→quantity map data rather than code,
+which is exactly what `NEEDS.md` §1.1 of the problem-builder round wants and
+cannot get: `ModelInputSpec` cannot name the conditions an input unlocks, and
+the builder currently *measures* that mapping by dropping fields and re-asking
+the validity domain. A record that named its inputs would make that derivable.
+
+**What it would cost.** The bodies are not the boilerplate. `soc_window_margin`
+is asymmetric about the chord, `conductance_excursion_ratio` takes a bound and
+an excursion with a sign convention, `peukert_effective_capacity` is a power
+law with a reference current, and several return `None` for reasons other than
+an absent input — a non-positive denominator, a regime the correlation does not
+cover. A resolver whose only `None` is "an input was missing" cannot express
+those, so they become an escape hatch, and an abstraction with an escape hatch
+used by a third of its callers has not abstracted the hard part.
+
+**What it would make harder.** Two things this repository values. First, the
+docstrings: each of these functions carries a definition, a citation, and a
+statement of what the group does *not* mean, and those are what make the
+conditions auditable. A record-based form pushes them into a string field on a
+record, where nothing reads them and they drift. Second, the failure mode: a
+resolver that silently returns `None` on any missing input makes it harder to
+see which input was missing — and "which one" is precisely what the UNKNOWN
+verdict has to report. The explicit chain is verbose and it is legible at the
+point of failure.
+
+**Would a fourth domain justify it?** Not on its own. The evidence that would
+is different: **two domains needing the same derived group**, at which point
+there is a definition to share rather than a shape to share. Today there is
+none — Biot and Fourier are thermal, Peukert and the SOC window are
+electrochemical, and a shared record would give them a common container and no
+common content.
+
+**Recommendation: do not build it now.** Build the *narrow* half if anything:
+the input→dimension declaration, which §1.1 of the problem-builder round
+already needs for a different reason and which does not touch a single function
+body. The full abstraction should wait for a shared derived quantity, not a
+third repetition of a shape.
