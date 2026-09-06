@@ -289,8 +289,9 @@ Once `mcp` is declared, `docker run --rm crafty-repro` should print:
 The image installs `.[dev,mcp]`, so it should reach `2146 passed`. The benchmark
 numbers are the ones to check against; the case-set digest `476976c1…` must
 match, and a run that prints a different digest is a run against different
-cases, not a different result. **The image itself is still unbuilt** — see
-`NEEDS.md` evidence round B.2.
+cases, not a different result. The image has been built and does print exactly
+that — see **What was actually run** above, and `NEEDS.md` presentation round
+P.2.
 
 Runtimes were measured on a 24-core host at `-n 4` / `--workers 4`. Both worker
 counts are fixed rather than `auto` on purpose: memory grows ~200 MB per worker
