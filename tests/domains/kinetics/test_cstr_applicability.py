@@ -24,6 +24,7 @@ import pytest
 from src.engcore.domains.kinetics.cstr import (
     ADIABATIC_CEILING_TEMPERATURE,
     ASSEMBLED_QUANTITIES,
+    ASSEMBLER_NAMESPACE,
     CSTR_MODEL,
     DAMKOHLER_NUMBER,
     MAX_VALID_TEMPERATURE_K,
@@ -83,7 +84,7 @@ def reactor(*, chemistry=None, op=None, ca0=1000.0, t0=300.0) -> ReactorRun:
 
 
 def assess(run: ReactorRun):
-    return CSTR_MODEL.assess_validity(run.validity_context())
+    return run.validity_context().assess(CSTR_MODEL)
 
 
 def status_of(run: ReactorRun, condition: str) -> ValidityStatus:
@@ -358,13 +359,17 @@ def test_a_missing_declaration_makes_its_group_unknown(
     dropped: str, condition: str
 ) -> None:
     declared = dict(reactor().validity_context())
+    # Only the derived groups. `temperature` and `concentration` are
+    # reserved too, but they are the reactor's own state and are what the
+    # assembler derives *from*; stripping them here would remove an input
+    # rather than a forgery.
     for name in ASSEMBLED_QUANTITIES:
         declared.pop(name, None)
     declared.pop(dropped)
-    assembled = cstr_validity_context(declared)
+    assembled = cstr_validity_context(declared, reserved=ASSEMBLER_NAMESPACE)
     assert condition not in assembled
 
-    verdict = CSTR_MODEL.validity.assess(assembled)
+    verdict = assembled.assess(CSTR_MODEL)
     assert condition in verdict.unknown
     assert condition not in verdict.satisfied
 
@@ -377,13 +382,17 @@ def test_a_caller_cannot_assert_either_group() -> None:
     reads UNKNOWN instead of the caller's IN_DOMAIN.
     """
     declared = dict(reactor().validity_context())
+    # Only the derived groups. `temperature` and `concentration` are
+    # reserved too, but they are the reactor's own state and are what the
+    # assembler derives *from*; stripping them here would remove an input
+    # rather than a forgery.
     for name in ASSEMBLED_QUANTITIES:
         declared.pop(name, None)
 
     forged = dict(declared)
     forged[DAMKOHLER_NUMBER] = Q(1.0, "dimensionless")
     forged[ADIABATIC_CEILING_TEMPERATURE] = Q(300.0, "kelvin")
-    assembled = cstr_validity_context(forged)
+    assembled = cstr_validity_context(forged, reserved=ASSEMBLER_NAMESPACE)
     assert assembled[ADIABATIC_CEILING_TEMPERATURE].magnitude_in(
         "kelvin"
     ) == pytest.approx(559.2050209205021)
@@ -392,9 +401,9 @@ def test_a_caller_cannot_assert_either_group() -> None:
     crippled = dict(declared)
     crippled.pop("density")
     crippled[ADIABATIC_CEILING_TEMPERATURE] = Q(300.0, "kelvin")
-    assembled = cstr_validity_context(crippled)
+    assembled = cstr_validity_context(crippled, reserved=ASSEMBLER_NAMESPACE)
     assert ADIABATIC_CEILING_TEMPERATURE not in assembled
-    verdict = CSTR_MODEL.validity.assess(assembled)
+    verdict = assembled.assess(CSTR_MODEL)
     assert ADIABATIC_CEILING_TEMPERATURE in verdict.unknown
 
 
@@ -402,14 +411,16 @@ def test_the_assembler_refuses_a_group_it_did_not_reserve() -> None:
     assert ASSEMBLED_QUANTITIES == frozenset(
         {DAMKOHLER_NUMBER, ADIABATIC_CEILING_TEMPERATURE}
     )
-    assert set(derived_cstr_quantities(reactor().validity_context())) <= (
-        ASSEMBLED_QUANTITIES
-    )
+    assert set(
+        derived_cstr_quantities(reactor().validity_context())
+    ) <= ASSEMBLED_QUANTITIES
 
 
 def test_nothing_is_derived_from_an_empty_declaration() -> None:
     assert derived_cstr_quantities({}) == {}
-    verdict = CSTR_MODEL.validity.assess(cstr_validity_context({}))
+    verdict = cstr_validity_context(
+        {}, reserved=ASSEMBLER_NAMESPACE
+    ).assess(CSTR_MODEL)
     assert verdict.status is ValidityStatus.UNKNOWN
     assert DAMKOHLER_NUMBER in verdict.unknown
     assert ADIABATIC_CEILING_TEMPERATURE in verdict.unknown
@@ -457,11 +468,15 @@ def test_the_ceiling_condition_names_no_new_number() -> None:
 
 def test_the_derivations_do_not_mutate_what_they_are_given() -> None:
     declared = dict(reactor().validity_context())
+    # Only the derived groups. `temperature` and `concentration` are
+    # reserved too, but they are the reactor's own state and are what the
+    # assembler derives *from*; stripping them here would remove an input
+    # rather than a forgery.
     for name in ASSEMBLED_QUANTITIES:
         declared.pop(name, None)
     snapshot = dict(declared)
     derived_cstr_quantities(declared)
-    cstr_validity_context(declared)
+    cstr_validity_context(declared, reserved=ASSEMBLER_NAMESPACE)
     assert declared == snapshot
 
 

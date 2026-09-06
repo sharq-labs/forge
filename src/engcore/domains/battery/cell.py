@@ -27,7 +27,12 @@ from ...scientific.ir.variables import (
 from ...scientific.models.definition import ValidityAssessment
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
-from ..derived_context import assembled_validity_context, caller_declared
+from ..derived_context import (
+    DomainValidityContext,
+    assembled_validity_context,
+    assembler_namespace,
+    caller_declared,
+)
 from . import context as ctx
 from . import models as mdl
 
@@ -577,13 +582,22 @@ def build_battery_problem(
 # Validity
 # =====================================================================
 
+#: What this domain's assembler owns: the union of what its own models reserve
+#: — read off the records, so a model added tomorrow is covered without editing
+#: this line — plus the state coordinates below, which no condition reads
+#: directly and which therefore cannot be discovered from a model record.
+ASSEMBLER_NAMESPACE = assembler_namespace(
+    mdl.BATTERY_MODELS, state_coordinates=ctx.ASSEMBLED_QUANTITIES
+)
+
+
 def battery_validity_context(
     problem: ScientificProblem,
     *,
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
-) -> dict[str, Any]:
+) -> DomainValidityContext:
     """The full context every ``assess_*`` below consumes.
 
     The problem's own parameters, plus every quantity
@@ -608,7 +622,8 @@ def battery_validity_context(
     it managed to compute, which meant precisely the opposite.
     """
     declared = caller_declared(
-        problem.validity_context(), ctx.ASSEMBLED_QUANTITIES
+        problem.validity_context(reserved=ASSEMBLER_NAMESPACE),
+        ASSEMBLER_NAMESPACE,
     )
     state = {
         name: value
@@ -630,7 +645,7 @@ def battery_validity_context(
                 cell_temperature=cell_temperature,
             ),
         },
-        reserved=ctx.ASSEMBLED_QUANTITIES,
+        reserved=ASSEMBLER_NAMESPACE,
     )
 
 
@@ -641,14 +656,12 @@ def _assess(
     discharge_current: Quantity | None,
     cell_temperature: Quantity | None,
 ) -> ValidityAssessment:
-    return model.assess_validity(
-        battery_validity_context(
-            problem,
-            state_of_charge=state_of_charge,
-            discharge_current=discharge_current,
-            cell_temperature=cell_temperature,
-        )
-    )
+    return battery_validity_context(
+        problem,
+        state_of_charge=state_of_charge,
+        discharge_current=discharge_current,
+        cell_temperature=cell_temperature,
+    ).assess(model)
 
 
 def assess_rint_validity(
@@ -766,6 +779,5 @@ def assess_all(
         cell_temperature=cell_temperature,
     )
     return {
-        model.model_id: model.assess_validity(context)
-        for model in mdl.BATTERY_MODELS
+        model.model_id: context.assess(model) for model in mdl.BATTERY_MODELS
     }

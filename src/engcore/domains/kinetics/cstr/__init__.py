@@ -71,6 +71,7 @@ from .context import (
     derived_cstr_quantities,
 )
 from .problem import (
+    ASSEMBLER_NAMESPACE,
     CA_FINAL_METRIC,
     CONCENTRATION_UNIT,
     CONVERSION_METRIC,
@@ -153,6 +154,7 @@ __all__ = [
     # applicability groups
     "ADIABATIC_CEILING_TEMPERATURE",
     "ASSEMBLED_QUANTITIES",
+    "ASSEMBLER_NAMESPACE",
     "DAMKOHLER_NUMBER",
     "MAX_WELL_MIXED_DAMKOHLER",
     "adiabatic_ceiling_temperature",

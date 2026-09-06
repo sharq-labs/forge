@@ -102,7 +102,12 @@ from ...scientific.solvers.protocol import (
     SolverSettings,
 )
 from ...scientific.units.quantity import Quantity
-from ..derived_context import assembled_validity_context, caller_declared
+from ..derived_context import (
+    DomainValidityContext,
+    assembled_validity_context,
+    assembler_namespace,
+    caller_declared,
+)
 from .context import (
     BIOT_NUMBER,
     BODY_CONDUCTIVITY,
@@ -605,6 +610,20 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
     ),
     assumptions=_ASSUMPTIONS,
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                BIOT_NUMBER,
+                CAPACITY_EXCURSION_RATIO,
+                CONDUCTANCE_EXCURSION_RATIO,
+                'convection_conductance_agreement_ratio',
+                'convection_flow_range_utilization',
+                'convection_property_range_utilization',
+                GEOMETRY_ROUTE_RATIO,
+                INTERNAL_FOURIER_NUMBER,
+                MELTING_TEMPERATURE_UTILIZATION,
+                RADIATION_TO_CONVECTION_RATIO,
+            }
+        ),
         conditions=(
             RangeCondition(
                 name=HEAT_CAPACITY,
@@ -898,6 +917,20 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
     # SELF_CONSISTENT: the closed form is checked against the differential
     # balance it solves. Nothing physical was measured.
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
+)
+
+
+#: What this domain's assembler owns, and which a caller parameter may
+#: therefore never occupy: what the model reserves, read off the record,
+#: widened by the groups this domain derives but no condition reads.
+#:
+#: The two sets are not the same and the difference is not slack.
+#: ``transient_horizon_ratio`` is derived here and is read by no condition on
+#: this record, so the core cannot see it -- but it is still a number this
+#: domain computes, and a caller parameter of that name would be read as one.
+#: A name the core cannot police is exactly the kind this line exists for.
+ASSEMBLER_NAMESPACE = assembler_namespace(
+    (LUMPED_CAPACITY_MODEL,), state_coordinates=ASSEMBLED_QUANTITIES
 )
 
 
@@ -1246,7 +1279,7 @@ def lumped_validity_context(
     initial_temperature: Quantity | None = None,
     ambient_temperature: Quantity | None = None,
     heat_input: Quantity | None = None,
-) -> dict[str, Any]:
+) -> DomainValidityContext:
     """The full context :meth:`ValidityDomain.assess` consumes for this model.
 
     The problem's own parameters, plus the dimensionless groups
@@ -1270,7 +1303,10 @@ def lumped_validity_context(
     derivation left empty. Assembly used to start from the caller's parameters
     and overwrite only what it derived, which meant the opposite.
     """
-    declared = caller_declared(problem.validity_context(), ASSEMBLED_QUANTITIES)
+    declared = caller_declared(
+        problem.validity_context(reserved=ASSEMBLER_NAMESPACE),
+        ASSEMBLER_NAMESPACE,
+    )
     return assembled_validity_context(
         declared=declared,
         assembled=derived_lumped_quantities(
@@ -1279,7 +1315,7 @@ def lumped_validity_context(
             ambient_temperature=ambient_temperature,
             heat_input=heat_input,
         ),
-        reserved=ASSEMBLED_QUANTITIES,
+        reserved=ASSEMBLER_NAMESPACE,
     )
 
 
@@ -1303,14 +1339,12 @@ def assess_lumped_validity(
     Every argument is a measured or declared ``Quantity``. There is no
     parameter here through which a caller can assert their way to IN_DOMAIN.
     """
-    return LUMPED_CAPACITY_MODEL.assess_validity(
-        lumped_validity_context(
-            problem,
-            initial_temperature=initial_temperature,
-            ambient_temperature=ambient_temperature,
-            heat_input=heat_input,
-        )
-    )
+    return lumped_validity_context(
+        problem,
+        initial_temperature=initial_temperature,
+        ambient_temperature=ambient_temperature,
+        heat_input=heat_input,
+    ).assess(LUMPED_CAPACITY_MODEL)
 
 
 # =====================================================================

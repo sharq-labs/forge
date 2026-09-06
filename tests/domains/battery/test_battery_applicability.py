@@ -918,6 +918,9 @@ def test_a_model_with_no_declared_conditions_would_be_unknown():
         validity=ValidityDomain(),
     )
     assert empty.assess_validity({}).status is ValidityStatus.UNKNOWN
+    # This record reserves nothing, so nothing in a bare mapping is forged as
+    # far as it is concerned -- and it still answers UNKNOWN, because it
+    # declares no condition to answer with.
     assert (
         empty.assess_validity(
             {ctx.CONTINUOUS_C_RATE_UTILIZATION: Quantity(0.1, ONE)}
@@ -1024,16 +1027,15 @@ def test_f03_a_caller_parameter_cannot_stand_in_for_a_failed_derivation():
     honest = bat.assess_rint_validity(problem, **point)
     assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO in honest.unknown
 
-    forged = bat.assess_rint_validity(
-        _with_parameters(
-            problem,
-            {ctx.INTERNAL_RESISTANCE_DRIFT_RATIO: Quantity(0.1, ONE)},
-        ),
-        **point,
+    # The forged parameter is now refused outright rather than stripped. The
+    # guarantee is the stronger one: not "the caller's number changed no
+    # verdict" but "there is no verdict over a context the caller tried to
+    # write a derived quantity into".
+    forged_problem = _with_parameters(
+        problem, {ctx.INTERNAL_RESISTANCE_DRIFT_RATIO: Quantity(0.1, ONE)}
     )
-    assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO in forged.unknown
-    assert ctx.INTERNAL_RESISTANCE_DRIFT_RATIO not in forged.satisfied
-    assert forged.status is ValidityStatus.UNKNOWN
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        bat.assess_rint_validity(forged_problem, **point)
 
 
 def test_f03_a_caller_parameter_cannot_supply_an_absent_state_coordinate():
@@ -1073,7 +1075,8 @@ def test_f03_a_caller_parameter_cannot_supply_an_absent_state_coordinate():
     )
     honest = bat.assess_rint_validity(problem, **point)
     assert ctx.DISCHARGE_TEMPERATURE_POSITION in honest.unknown
-    assert bat.assess_rint_validity(forged, **point) == honest
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        bat.assess_rint_validity(forged, **point)
 
 
 @pytest.mark.parametrize("declared", [True, False])
@@ -1103,11 +1106,17 @@ def test_f03_colliding_with_every_assembled_name_changes_no_verdict(declared):
         for name in ctx.ASSEMBLED_QUANTITIES - declared_variables
     }
     assert len(collisions) >= 19
-    tampered = _with_parameters(problem, collisions)
-    for model in mdl.BATTERY_MODELS:
-        assert bat.assess_all(tampered, **point)[model.model_id] == (
-            bat.assess_all(problem, **point)[model.model_id]
-        )
+    honest = bat.assess_all(problem, **point)
+    # One at a time, so the refusal is attributable to each name rather than to
+    # whichever the implementation happens to notice first.
+    for name, value in collisions.items():
+        with pytest.raises(InvalidScientificProblem, match="derives"):
+            bat.assess_all(_with_parameters(problem, {name: value}), **point)
+    # And all at once.
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        bat.assess_all(_with_parameters(problem, collisions), **point)
+    # The honest problem is untouched by any of that.
+    assert bat.assess_all(problem, **point) == honest
 
 
 def test_f03_every_derivable_name_is_reserved():
@@ -1116,7 +1125,7 @@ def test_f03_every_derivable_name_is_reserved():
     problem = bat.build_battery_problem(cell, load)
     derivable = set(
         ctx.derived_cell_quantities(
-            problem.validity_context(),
+            problem.validity_context(reserved=bat.ASSEMBLER_NAMESPACE),
             state_of_charge=load.initial_state_of_charge,
             discharge_current=load.current,
             cell_temperature=load.cell_temperature,
@@ -1124,3 +1133,7 @@ def test_f03_every_derivable_name_is_reserved():
     )
     assert derivable
     assert derivable <= ctx.ASSEMBLED_QUANTITIES
+    # And the assembler's namespace really is the models' own reservations,
+    # not a list beside them that could fall behind.
+    for model in mdl.BATTERY_MODELS:
+        assert model.derived_quantities <= bat.ASSEMBLER_NAMESPACE

@@ -514,10 +514,18 @@ def test_c2_the_property_declares_when_it_is_valid_and_says_unknown_otherwise():
     )
     # A validity condition on a STATE coordinate is never automatic: the
     # context is built from parameters, so the state must be passed explicitly.
-    assert mat.TEMPERATURE not in problem.validity_context()
-    assert mat.TEMPERATURE in problem.validity_context(
-        extra={mat.TEMPERATURE: Quantity(300.0, "kelvin")}
+    # It reaches the assessment through the ASSEMBLED half now, not through an
+    # `extra=` merged into the caller's -- the two namespaces stay apart all the
+    # way to the condition, which is what stops a caller parameter of that name
+    # deciding it. `temperature` is reserved, so the parameter-built half
+    # cannot carry it at all.
+    declared = problem.validity_context(reserved=mat.ASSEMBLER_NAMESPACE)
+    assert mat.TEMPERATURE not in declared
+    assembled = mat.resistance_validity_context(
+        problem, Quantity(300.0, "kelvin")
     )
+    assert mat.TEMPERATURE in assembled.assembled
+    assert mat.TEMPERATURE not in assembled.declared
 
 
 def test_c3_the_final_state_stayed_inside_the_declared_validity(executed):

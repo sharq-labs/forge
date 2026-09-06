@@ -372,6 +372,15 @@ RESISTOR_OHM_MODEL = ScientificModelDefinition(
             "Linear passive resistive operation, within the dissipation and "
             "working-voltage ratings the element was specified for."
         ),
+        # Neither utilization is declarable. Both are ratios this module
+        # computes from a rating and an operating point, and a caller
+        # parameter of either name would decide the condition that reads it —
+        # a resistor with no rating at all reporting IN_DOMAIN over two
+        # numbers nobody computed. Reserving them makes the assessment refuse
+        # such a problem instead of answering it.
+        derived_quantities=frozenset(
+            {DISSIPATED_POWER_UTILIZATION, WORKING_VOLTAGE_UTILIZATION}
+        ),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -446,6 +455,13 @@ KCL_MODEL = ScientificModelDefinition(
             "Valid for lumped circuits; not validated for distributed or "
             "high-frequency regimes where the lumped assumption fails."
         ),
+        # Reserved even though the value is a constant zero fixed by this
+        # model's own scope. The point is not that a caller could get the
+        # number wrong; it is that a caller could supply it at all, and a
+        # condition satisfied by the record's own assumption must not be
+        # satisfiable by a parameter instead. If a distributed-circuit model
+        # ever computes a real ratio here, the name is already protected.
+        derived_quantities=frozenset({LUMPED_ELECTRICAL_LENGTH}),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -535,6 +551,7 @@ IDEAL_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
             "current limit it was declared to have. Not validated against "
             "real source behaviour near that limit."
         ),
+        derived_quantities=frozenset({SOURCE_CURRENT_UTILIZATION}),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -599,6 +616,7 @@ IDEAL_CURRENT_SOURCE_MODEL = ScientificModelDefinition(
             "have. Not validated against real source behaviour near that "
             "range."
         ),
+        derived_quantities=frozenset({COMPLIANCE_VOLTAGE_UTILIZATION}),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -750,7 +768,9 @@ def kcl_validity_context() -> dict[str, Quantity]:
 
 def assess_kcl_validity() -> ValidityAssessment:
     """Is nodal charge balance applicable here? Yes, and for a stated reason."""
-    return KCL_MODEL.assess_validity(kcl_validity_context())
+    return KCL_MODEL.assess_validity(
+        declared={}, assembled=kcl_validity_context()
+    )
 
 
 def assess_resistor_validity(
@@ -769,14 +789,16 @@ def assess_resistor_validity(
     and still be one whose resistor is at three times its rated dissipation,
     and those two facts must be separately reportable.
     """
-    context = problem.validity_context(
-        extra=resistor_rating_context(
+    return RESISTOR_OHM_MODEL.assess_validity(
+        declared=problem.validity_context(
+            reserved=RESISTOR_OHM_MODEL.derived_quantities
+        ),
+        assembled=resistor_rating_context(
             rating=rating,
             dissipated_power=dissipated_power,
             voltage_across=voltage_across,
-        )
+        ),
     )
-    return RESISTOR_OHM_MODEL.assess_validity(context)
 
 
 def assess_voltage_source_validity(
@@ -786,12 +808,14 @@ def assess_voltage_source_validity(
     source_current: Quantity | None = None,
 ) -> ValidityAssessment:
     """Was the ideal voltage source relation applicable at this current?"""
-    context = problem.validity_context(
-        extra=voltage_source_rating_context(
+    return IDEAL_VOLTAGE_SOURCE_MODEL.assess_validity(
+        declared=problem.validity_context(
+            reserved=IDEAL_VOLTAGE_SOURCE_MODEL.derived_quantities
+        ),
+        assembled=voltage_source_rating_context(
             rating=rating, source_current=source_current
-        )
+        ),
     )
-    return IDEAL_VOLTAGE_SOURCE_MODEL.assess_validity(context)
 
 
 def assess_current_source_validity(
@@ -801,12 +825,14 @@ def assess_current_source_validity(
     terminal_voltage: Quantity | None = None,
 ) -> ValidityAssessment:
     """Was the ideal current source relation applicable at this terminal voltage?"""
-    context = problem.validity_context(
-        extra=current_source_rating_context(
+    return IDEAL_CURRENT_SOURCE_MODEL.assess_validity(
+        declared=problem.validity_context(
+            reserved=IDEAL_CURRENT_SOURCE_MODEL.derived_quantities
+        ),
+        assembled=current_source_rating_context(
             rating=rating, terminal_voltage=terminal_voltage
-        )
+        ),
     )
-    return IDEAL_CURRENT_SOURCE_MODEL.assess_validity(context)
 
 
 def models_for_circuit(circuit) -> tuple[ScientificModelDefinition, ...]:

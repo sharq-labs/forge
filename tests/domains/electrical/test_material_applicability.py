@@ -642,16 +642,18 @@ def test_f03_a_caller_parameter_cannot_stand_in_for_a_failed_derivation():
     honest = mat.assess_rated_resistance_validity(problem, temperature)
     assert mat.LINEARIZATION_EXCURSION_RATIO in honest.unknown
 
-    forged = mat.assess_rated_resistance_validity(
-        _with_parameters(
-            problem,
-            {mat.LINEARIZATION_EXCURSION_RATIO: Quantity(0.1, "dimensionless")},
-        ),
-        temperature,
+    # The forged parameter is refused outright now, rather than stripped. The
+    # guarantee is the stronger one: not "the caller's number changed no
+    # verdict" but "no verdict is issued over a context a caller tried to write
+    # a derived quantity into".
+    forged_problem = _with_parameters(
+        problem,
+        {mat.LINEARIZATION_EXCURSION_RATIO: Quantity(0.1, "dimensionless")},
     )
-    assert mat.LINEARIZATION_EXCURSION_RATIO in forged.unknown
-    assert mat.LINEARIZATION_EXCURSION_RATIO not in forged.satisfied
-    assert forged == honest
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        mat.assess_rated_resistance_validity(forged_problem, temperature)
+    # The honest problem still answers exactly as it did.
+    assert mat.assess_rated_resistance_validity(problem, temperature) == honest
 
 
 def test_f03_a_caller_parameter_cannot_supply_an_absent_temperature():
@@ -683,7 +685,8 @@ def test_f03_a_caller_parameter_cannot_supply_an_absent_temperature():
 
     honest = mat.assess_rated_resistance_validity(problem, None)
     assert mat.TEMPERATURE in honest.unknown
-    assert mat.assess_rated_resistance_validity(forged, None) == honest
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        mat.assess_rated_resistance_validity(forged, None)
 
 
 @pytest.mark.parametrize("declared", [True, False])
@@ -719,14 +722,23 @@ def test_f03_colliding_with_every_assembled_name_changes_no_verdict(declared):
     # changes no verdict, is unchanged and still holds for every name that is
     # still assembled.
     assert len(collisions) == 4
-    tampered = _with_parameters(problem, collisions)
+    rated = mat.assess_rated_resistance_validity(problem, temperature)
+    linear = mat.assess_resistance_validity(problem, temperature)
 
-    assert mat.assess_rated_resistance_validity(tampered, temperature) == (
-        mat.assess_rated_resistance_validity(problem, temperature)
-    )
-    assert mat.assess_resistance_validity(tampered, temperature) == (
-        mat.assess_resistance_validity(problem, temperature)
-    )
+    # One at a time, so each refusal is attributable to its own name.
+    for name, value in collisions.items():
+        tampered = _with_parameters(problem, {name: value})
+        with pytest.raises(InvalidScientificProblem, match="derives"):
+            mat.assess_rated_resistance_validity(tampered, temperature)
+
+    # All at once.
+    tampered = _with_parameters(problem, collisions)
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        mat.assess_rated_resistance_validity(tampered, temperature)
+
+    # And the honest problem is unmoved by any of it.
+    assert mat.assess_rated_resistance_validity(problem, temperature) == rated
+    assert mat.assess_resistance_validity(problem, temperature) == linear
 
 
 def test_f03_every_derivable_name_is_reserved():
@@ -739,11 +751,16 @@ def test_f03_every_derivable_name_is_reserved():
     problem = mat.build_resistance_problem(conductor)
     derivable = set(
         mat.derived_material_quantities(
-            problem.validity_context(), temperature=Quantity(320.0, "kelvin")
+            problem.validity_context(reserved=mat.ASSEMBLER_NAMESPACE),
+            temperature=Quantity(320.0, "kelvin"),
         )
     )
     assert derivable
-    assert derivable <= mat.ASSEMBLED_QUANTITIES
+    assert derivable <= mat.ASSEMBLER_NAMESPACE
+    # And the namespace is the models' own reservations, not a list beside them
+    # that could fall behind one.
+    for model in (mat.LINEAR_TCR_MODEL, mat.RATED_LINEAR_TCR_MODEL):
+        assert model.derived_quantities <= mat.ASSEMBLER_NAMESPACE
 
 
 # =====================================================================
@@ -862,7 +879,9 @@ def test_the_limit_versus_limit_conditions_need_no_temperature_at_all():
     assert mat.LINEARIZATION_EXCURSION_RATIO in assessment.unknown
     # And nothing is derived for them any more, which is the migration itself.
     derived = mat.derived_material_quantities(
-        mat.build_resistance_problem(conductor).validity_context(),
+        mat.build_resistance_problem(conductor).validity_context(
+            reserved=mat.ASSEMBLER_NAMESPACE
+        ),
         temperature=None,
     )
     assert derived == {}

@@ -228,7 +228,9 @@ def test_problem_round_trips_through_the_universal_ir():
 
 def test_validity_context_comes_from_typed_parameters():
     problem = build_dc_problem(_divider())
-    context = problem.validity_context()
+    # The reserved set is required and has no default. A circuit problem
+    # declares no rating utilization, so nothing here collides.
+    context = problem.validity_context(reserved=frozenset())
     assert context["reference_node"] == "gnd"
     assert context["analysis_type"] == "dc_steady_state"
     assert isinstance(context["R:R1"], Quantity)

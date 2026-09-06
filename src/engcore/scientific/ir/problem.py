@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
@@ -343,25 +343,56 @@ class ScientificProblem:
             units.setdefault(constraint.metric, constraint.unit)
         return units
 
-    def validity_context(
-        self, extra: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        """Base context for evaluating a model's :class:`ValidityDomain`.
+    def validity_context(self, *, reserved: Iterable[str]) -> dict[str, Any]:
+        """The **caller-declared** half of a model's validity context.
 
         Derived from typed parameters — Quantities stay Quantities for range
-        predicates, categories and flags unwrap to str/bool. ``extra`` lets a
-        domain or solver adapter add computed context (a Reynolds number, a
-        detected regime) **explicitly**.
+        predicates, categories and flags unwrap to str/bool. Deliberately not
+        sourced from ``metadata``: validity context is a scientific input, not
+        a side channel.
 
-        Deliberately not sourced from ``metadata``: validity context is a
-        scientific input, not a side channel.
+        ``reserved`` is the model's :attr:`~engcore.scientific.models.definition.ValidityDomain.derived_quantities`, and it is **required**. There
+        is no default and no way to ask for "just the parameters": a caller of
+        this method is building the mapping a validity condition will be
+        assessed against, and that is precisely the place where the question
+        *which of these names is the caller entitled to fill?* has to be
+        answered. A signature that let it be omitted would let it be forgotten,
+        and every domain that forgot would reopen the same hole independently
+        — which is what happened.
+
+        A parameter carrying a reserved name is **refused**. It is not dropped
+        and not overwritten, because the two quiet options both answer a
+        question the caller was not entitled to ask: a problem asserting its
+        own Damkohler number is not a problem whose Damkohler number should be
+        silently replaced, it is a problem whose author believes they are
+        supplying one. Told, rather than corrected behind their back.
+
+        This does refuse a problem that carries such a parameter for its own
+        unrelated purposes. That is the cost, and it is the smaller one: the
+        name collides with a quantity this model's conditions read, so there is
+        no reading of that problem under which the collision is harmless.
+
+        ``extra`` is gone. What a domain computes is no longer merged in here
+        — it goes to ``assess(declared=..., assembled=...)`` as a separate
+        namespace, so the two are still distinguishable at the point the
+        conditions read them. A single mapping cannot carry that distinction,
+        which is why merging was the defect and not the fix.
         """
+        reserved = frozenset(reserved)
         context: dict[str, Any] = {
             parameter.name: parameter.context_value()
             for parameter in self.parameters
         }
-        if extra:
-            context.update(dict(extra))
+        forged = sorted(reserved & set(context))
+        if forged:
+            raise InvalidScientificProblem(
+                f"problem {self.problem_id!r} declares parameter(s) {forged}, "
+                f"which name quantities the assessing domain derives. A "
+                f"declared value cannot occupy a derived quantity's name: the "
+                f"condition that reads it cannot tell the two apart, so the "
+                f"declaration would be read as evidence the domain computed. "
+                f"Rename the parameter"
+            )
         return context
 
     @property

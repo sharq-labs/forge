@@ -344,7 +344,7 @@ class CSTRSolver:
         # here, before any integration. The constructors already refuse the
         # gross violations; this records the model's verdict as evidence rather
         # than relying on the constructors having been the only gate.
-        assessment = CSTR_MODEL.assess_validity(run.validity_context())
+        assessment = run.validity_context().assess(CSTR_MODEL)
 
         system = assemble(run)
         integration = run.integration

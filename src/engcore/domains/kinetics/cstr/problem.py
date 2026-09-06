@@ -99,6 +99,7 @@ from ....scientific.models.definition import (
 )
 from ....scientific.solvers.capability import CoreCapabilities, SolverCapability
 from ....scientific.units.quantity import Quantity
+from ...derived_context import DomainValidityContext, assembler_namespace
 from .context import (
     ADIABATIC_CEILING_TEMPERATURE,
     CONCENTRATION_UNIT,
@@ -263,6 +264,14 @@ CSTR_MODEL = ScientificModelDefinition(
     ),
     assumptions=_ASSUMPTIONS,
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                ADIABATIC_CEILING_TEMPERATURE,
+                'concentration',
+                DAMKOHLER_NUMBER,
+                'temperature',
+            }
+        ),
         conditions=(
             RangeCondition(
                 name="temperature",
@@ -384,6 +393,23 @@ CSTR_MODEL = ScientificModelDefinition(
 )
 
 CSTR_MODELS = (CSTR_MODEL,)
+
+#: What this domain's assembler owns, and which a caller parameter may
+#: therefore never occupy: the union of what its models reserve, read off the
+#: records rather than restated here.
+#:
+#: It is wider than ``context.ASSEMBLED_QUANTITIES``, which is the two derived
+#: groups alone. ``temperature`` and ``concentration`` are the reactor's own
+#: initial state, injected by :meth:`ReactorRun.validity_context` because the
+#: core's parameter-built context structurally cannot reach a state
+#: coordinate -- the same position ``cell_temperature`` holds in the battery
+#: and ``temperature`` in the electrical material domain, and reserved here
+#: for the same reason: a condition reads them by name and cannot tell an
+#: injected state from a declared parameter of that name.
+#:
+#: The competitor model in ``alternatives`` reserves a subset of this and
+#: checks that it does, at import.
+ASSEMBLER_NAMESPACE = assembler_namespace(CSTR_MODELS)
 
 
 def cstr_solver_capabilities() -> frozenset[SolverCapability]:
@@ -894,7 +920,7 @@ class ReactorRun:
         )
         return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
-    def validity_context(self) -> dict[str, Quantity]:
+    def validity_context(self) -> DomainValidityContext:
         """The declaration expressed for ``ValidityDomain.assess``.
 
         The temperatures offered are the DECLARED ones. A trajectory can still
@@ -927,7 +953,8 @@ class ReactorRun:
                 "residence_time": Quantity(
                     self.operation.residence_time_s, TIME_UNIT
                 ),
-            }
+            },
+            reserved=ASSEMBLER_NAMESPACE,
         )
 
     def to_dict(self) -> dict[str, Any]:

@@ -15,7 +15,7 @@ quantities it managed to derive::
     context.update(derived_quantities(context, ...))   # WRONG
 
 A derivation that could not be performed returns nothing for its key, by
-design — that is how "a missing declaration yields UNKNOWN and never
+design -- that is how "a missing declaration yields UNKNOWN and never
 IN_DOMAIN" is implemented, and it is the discipline every derivation module
 here follows. But ``update`` only *overwrites*. A caller parameter carrying a
 derived quantity's name therefore **survived the failure of the derivation it
@@ -28,59 +28,77 @@ supposed to become UNKNOWN instead becomes the path by which a caller asserts
 their way to a verdict, and the report says the model was in domain over a
 number nobody computed while the declaration it needed is still absent.
 
-The rule
---------
-**The assembled names are the assembler's namespace, and a caller parameter
-cannot enter it.** Every name a domain assembles — each derived group, and
-each state coordinate the assembler injects because the core's
-parameter-built context structurally cannot reach it — is *reserved*. Reserved
-names are removed from the caller's context before anything is derived, and
-the only values that can occupy them afterwards are the ones the assembler
-actually produced.
+Where the rule lives now, and why it moved
+-------------------------------------------
+This module used to *be* the guard, and four domains called it. The fifth --
+``electrical/dc`` -- did not, so a parameter named
+``dissipated_power_utilization`` still bought IN_DOMAIN from a resistor with no
+rating declared at all. That is the shape of the real defect: not one domain
+that got it wrong, but a core that permitted the mistake and five domains each
+obliged to remember not to make it.
 
-So a failed derivation leaves its key **absent**, not stale and not
-caller-supplied, and the condition reaches ``assess`` as UNKNOWN. There is no
-ordering, no precedence and no merge policy to get wrong, because the two
-namespaces never overlap.
+So the rule is now in the core, and cannot be declined:
 
-Which of the two sanctioned fixes this is, and why
----------------------------------------------------
-The review offered a choice: reject a caller parameter carrying a reserved name
-at problem construction, or make it provably unreadable by any condition. This
-is the second.
+* ``ValidityDomain.derived_quantities`` names the reserved set, **on the model
+  record**, so a registry can enumerate every reserved name in the repository
+  and a new domain is covered the day it registers.
+* ``ScientificModelDefinition`` refuses to be constructed if a validity
+  condition reads a name that is neither a declared input nor reserved. A
+  derived quantity cannot be introduced unreserved -- the module will not
+  import.
+* ``ValidityDomain.assess`` takes the two namespaces separately and refuses a
+  merged mapping carrying a reserved name. There is no signature through which
+  the old ``update`` mistake can still be written.
+* ``ScientificProblem.validity_context`` requires the reserved set and refuses
+  a parameter that occupies one of its names.
 
-Rejecting at construction would have to happen in
-``ScientificProblem.__post_init__``, and universal core would then need to know
-the derived-quantity vocabulary of every domain — ``biot_number``,
-``peukert_capacity_ratio``, ``reduced_debye_temperature`` — which is exactly
-the domain knowledge the core is arranged not to have. It would also refuse a
-problem that is perfectly well-formed: a caller may legitimately carry a
-parameter called ``biot_number`` for their own purposes, and the platform's
-objection is not to its existence but to its being read as evidence.
+What is left here
+-----------------
+The **assembler's** namespace, which is wider than any one model's. A domain
+reserves two kinds of name. The derived groups its conditions read, which the
+core now owns; and the state coordinates it injects because the core's
+parameter-built context structurally cannot reach them -- ``cell_temperature``,
+``temperature``, ``discharge_current``. The second kind is often read by no
+condition at all: it is what the *derivations* are computed from. A caller
+parameter occupying one of those would decide a whole family of derived groups
+at once without any condition ever reading it directly, so it must be kept out
+of the declared context too, and only the domain knows which names those are.
 
-Unreadability is the stronger property anyway. Rejection would guard the one
-door problems are usually built through; this guards the one door conditions
-are *read* through, which is where the substitution would have to occur. A
-problem assembled by hand, deserialized from a payload, or produced by a future
-builder nobody has written yet reaches the same context assembler, and reaches
-it with the same result.
-
-What it does not do
--------------------
-It does not decide what is derivable, evaluate a condition, or know any
-domain's vocabulary: each domain declares its own reserved set and passes it
-in. And it refuses to assemble a name the domain did not reserve, so a derived
-quantity added without being registered fails loudly at the first assembly
-rather than being quietly impersonable from the day it lands.
+:class:`DomainValidityContext` carries the pair and hands each model exactly
+the slice that model reserves, so one assembly can serve four models that
+reserve four different subsets of it.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
 
-__all__ = ["caller_declared", "assembled_validity_context"]
+__all__ = [
+    "DomainValidityContext",
+    "assembler_namespace",
+    "caller_declared",
+    "assembled_validity_context",
+]
+
+
+def assembler_namespace(
+    models: Iterable[Any], *, state_coordinates: Iterable[str] = ()
+) -> frozenset[str]:
+    """Every name a domain's assembler owns, derived from its own models.
+
+    The union of what the models reserve -- read off the records rather than
+    restated beside them -- plus the state coordinates the assembler injects,
+    which no condition reads directly and which therefore cannot be discovered
+    from a model. A domain that adds a model gets that model's reserved names
+    here without anyone editing a list.
+    """
+    reserved: set[str] = set(state_coordinates)
+    for model in models:
+        reserved |= set(model.derived_quantities)
+    return frozenset(reserved)
 
 
 def caller_declared(
@@ -88,10 +106,13 @@ def caller_declared(
 ) -> dict[str, Any]:
     """The caller's own context, with every reserved name removed.
 
-    Removed rather than overwritten later: a value that is never in the mapping
-    cannot be read if the assembler then fails to supply its own, which is the
-    whole point. This is also what the derivations themselves are handed, so a
-    forged value cannot be read as an *input* to a derivation either.
+    Still needed for the *state coordinates*.
+    ``ScientificProblem.validity_context`` now refuses a parameter carrying a
+    reserved name outright, so nothing reaches here with a forged derived group
+    in it. What this still does is strip a name a domain injects but no
+    condition reads, which the core cannot see and so cannot refuse; and it is
+    what the derivations themselves are handed, so a forged value cannot be
+    read as an *input* to a derivation either.
     """
     reserved = frozenset(reserved)
     return {
@@ -99,18 +120,88 @@ def caller_declared(
     }
 
 
+@dataclass(frozen=True)
+class DomainValidityContext:
+    """One domain's assembly, in the two namespaces a model is assessed over.
+
+    ``declared`` is the caller's, already free of every reserved name.
+    ``assembled`` is what this domain computed and injected. They stay apart
+    all the way to ``assess``, because merging them is the defect: a type that
+    cannot represent the merge is how this stops being a thing to remember.
+
+    :meth:`assess` hands a model **only the assembled names that model
+    reserves**. A domain assembles once for every model it serves, and the four
+    battery models reserve four different subsets of one assembly; handing the
+    whole of it to each would trip the core's own "assembled but not reserved"
+    refusal over names that are simply another model's business.
+    """
+
+    declared: Mapping[str, Any]
+    assembled: Mapping[str, Any]
+
+    def assess(self, model: Any) -> Any:
+        """This model's verdict, over the slice of the assembly it reserves."""
+        reserved = model.derived_quantities
+        return model.assess_validity(
+            declared=self.declared,
+            assembled={
+                name: value
+                for name, value in self.assembled.items()
+                if name in reserved
+            },
+        )
+
+    def merged(self) -> dict[str, Any]:
+        """Both namespaces in one mapping, for inspection and reporting only.
+
+        Never for assessment. A condition reading this could not tell which
+        half a value came from, which is the whole defect; what reads it is a
+        test asking what was assembled, or a report quoting a derived number
+        back to a human.
+        """
+        return {**self.declared, **self.assembled}
+
+    # A read-only mapping view, so a caller that only wants to look at one
+    # derived number does not have to know about the split. Assessment does
+    # not go through here -- ``assess`` above takes the two halves directly.
+    def __getitem__(self, name: str) -> Any:
+        return self.merged()[name]
+
+    def __contains__(self, name: object) -> bool:
+        return name in self.declared or name in self.assembled
+
+    def __iter__(self):
+        return iter(self.merged())
+
+    def __len__(self) -> int:
+        return len(self.merged())
+
+    def keys(self):
+        return self.merged().keys()
+
+    def values(self):
+        return self.merged().values()
+
+    def items(self):
+        return self.merged().items()
+
+    def get(self, name: str, default: Any = None) -> Any:
+        return self.merged().get(name, default)
+
+
 def assembled_validity_context(
     *,
     declared: Mapping[str, Any],
     assembled: Mapping[str, Any],
     reserved: Iterable[str],
-) -> dict[str, Any]:
-    """The context a validity domain is assessed against.
+) -> DomainValidityContext:
+    """The two namespaces a validity domain is assessed against.
 
-    ``declared`` must already have been through :func:`caller_declared` — it is
-    the caller's parameters minus the reserved namespace. ``assembled`` is what
-    this domain actually produced: the groups it could derive, and the state
-    coordinates it was given. ``reserved`` is the namespace the domain owns.
+    ``declared`` must already have been through :func:`caller_declared` -- it
+    is the caller's parameters minus the assembler's namespace. ``assembled``
+    is what this domain actually produced: the groups it could derive, and the
+    state coordinates it was given. ``reserved`` is the namespace the domain
+    owns, from :func:`assembler_namespace`.
 
     Every assembled name must be reserved. A domain that emits a name it did
     not reserve has a derived quantity a caller could impersonate, and it is
@@ -131,4 +222,6 @@ def assembled_validity_context(
             f"caller-declared context still carries the reserved name(s) "
             f"{leaked}; pass it through caller_declared() first"
         )
-    return {**declared, **assembled}
+    return DomainValidityContext(
+        declared=dict(declared), assembled=dict(assembled)
+    )

@@ -174,6 +174,11 @@ class RangeCondition:
         """This condition reads exactly one key: its own name."""
         return self.evaluate(context.get(self.name))
 
+    @property
+    def context_keys(self) -> frozenset[str]:
+        """The context names this condition reads. See :class:`ValidityDomain`."""
+        return frozenset({self.name})
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": RANGE_CONDITION_SCHEMA,
@@ -234,6 +239,11 @@ class CategoryCondition:
         """This condition reads exactly one key: its own name."""
         return self.evaluate(context.get(self.name))
 
+    @property
+    def context_keys(self) -> frozenset[str]:
+        """The context names this condition reads. See :class:`ValidityDomain`."""
+        return frozenset({self.name})
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": CATEGORY_CONDITION_SCHEMA,
@@ -278,6 +288,11 @@ class FlagCondition:
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
         """This condition reads exactly one key: its own name."""
         return self.evaluate(context.get(self.name))
+
+    @property
+    def context_keys(self) -> frozenset[str]:
+        """The context names this condition reads. See :class:`ValidityDomain`."""
+        return frozenset({self.name})
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -428,6 +443,17 @@ class CrossLimitCondition:
             name=self.name,
         )
 
+    @property
+    def context_keys(self) -> frozenset[str]:
+        """The two operands. Deliberately **not** this condition's own name.
+
+        A cross-limit condition is labelled by the relation it states and reads
+        neither key by that label, so its name is not a context entry and is
+        not something a caller could occupy. Classifying it as one would force
+        a domain to reserve a name nothing computes and nothing reads.
+        """
+        return frozenset({self.numerator, self.denominator})
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": CROSS_LIMIT_CONDITION_SCHEMA,
@@ -509,10 +535,42 @@ class ValidityAssessment:
 
 @dataclass(frozen=True)
 class ValidityDomain:
-    """The conditions under which a model's results are considered validated."""
+    """The conditions under which a model's results are considered validated.
+
+    **The reserved namespace.** ``derived_quantities`` names the context keys
+    that no caller may supply — the dimensionless groups and state coordinates
+    a domain's assembler computes, which the conditions below read *by name*.
+    It lives here, on the model record, rather than being handed in at each
+    call, for three reasons.
+
+    A reserved name exists because a condition reads it and no declaration can
+    produce it. That is a fact about *these conditions*, so it belongs beside
+    them; two assemblers serving the same model then cannot disagree about
+    which names are the assembler's, because there is only one answer and it
+    is written down once.
+
+    It is reachable from a registry. A ``ModelRegistry`` iterating its models
+    can enumerate every reserved name in the repository, which is what lets
+    the forgery test be written once over ``__iter__`` instead of once per
+    domain — a new domain is covered the day it registers, without anyone
+    remembering to extend a list.
+
+    It survives serialization. ``to_dict``/``from_dict`` carry it, so a model
+    that crosses a process or a file boundary keeps its reserved namespace. A
+    module-level constant in a domain package does not.
+
+    **What it buys.** :meth:`assess` can then tell the two namespaces apart and
+    refuse to read a reserved name that the assembler did not produce; see
+    that method. And ``ScientificModelDefinition`` refuses to be constructed at
+    all if a condition reads a name that is neither a declared model input nor
+    reserved here — so a derived quantity cannot be introduced without being
+    declared forgeable-by-nobody, at import, rather than being discovered from
+    a verdict later.
+    """
 
     conditions: tuple[ValidityCondition, ...] = ()
     description: str = ""
+    derived_quantities: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "conditions", tuple(self.conditions))
@@ -522,13 +580,68 @@ class ValidityDomain:
             raise ModelValidityError(
                 f"duplicate validity condition names: {sorted(duplicates)}"
             )
+        object.__setattr__(
+            self, "derived_quantities", frozenset(self.derived_quantities)
+        )
+        # A reserved name nothing reads is not a guard, it is a claim that one
+        # exists. Refused so the set stays an accurate statement of what this
+        # domain's conditions consume.
+        stale = sorted(self.derived_quantities - self.context_keys)
+        if stale:
+            raise ModelValidityError(
+                f"validity domain reserves {stale}, which no condition reads; "
+                f"a reserved name that decides nothing is not protecting "
+                f"anything. Remove it, or add the condition that reads it"
+            )
 
-    def assess(self, context: Mapping[str, Any]) -> ValidityAssessment:
+    @property
+    def context_keys(self) -> frozenset[str]:
+        """Every context name this domain's conditions read."""
+        keys: set[str] = set()
+        for condition in self.conditions:
+            keys |= condition.context_keys
+        return frozenset(keys)
+
+    def assess(
+        self,
+        context: Mapping[str, Any] | None = None,
+        *,
+        declared: Mapping[str, Any] | None = None,
+        assembled: Mapping[str, Any] | None = None,
+    ) -> ValidityAssessment:
         """Classify a context as in-domain, outside-domain, or unknown.
 
         A domain with no conditions is UNKNOWN, not valid: absence of declared
         limits is not evidence of unlimited validity.
+
+        **Two namespaces, not one merged mapping.** A condition reads a value
+        by name and cannot see where it came from. If the caller's parameters
+        and the assembler's derived quantities arrive already merged, a caller
+        parameter that occupies a derived quantity's name *is* that derived
+        quantity as far as every condition here is concerned — which is how a
+        model with no rating declared at all reports IN_DOMAIN over three
+        numbers nobody computed.
+
+        So the two namespaces arrive separately:
+
+        * ``assembled`` is what the domain's assembler actually produced. Every
+          key must be reserved in :attr:`derived_quantities`; a domain emitting
+          an unreserved name has a derived quantity a caller could impersonate,
+          and is told so here rather than by a verdict.
+        * ``declared`` is what the caller stated. A reserved name in it is
+          **refused**, not overwritten: the request is for a verdict over a
+          quantity the caller has asserted, and answering it at all — with
+          their number or with the domain's — would be answering a question the
+          caller was not entitled to ask.
+
+        The single-mapping form is still accepted, because most models have no
+        reserved namespace and a plain context is the honest way to assess one.
+        It is read as entirely caller-declared, so if this domain reserves
+        anything and the mapping carries it, that is the merged-mapping mistake
+        and it raises. There is therefore no path by which a reserved name is
+        read from anywhere but ``assembled``.
         """
+        merged = self._merge(context, declared=declared, assembled=assembled)
         if not self.conditions:
             return ValidityAssessment(status=ValidityStatus.UNKNOWN)
 
@@ -540,7 +653,7 @@ class ValidityDomain:
             # cross-limit condition reads two keys and neither is its own
             # name. Every condition type implements it, and the single-key
             # ones implement it as exactly the lookup this line used to do.
-            outcome = condition.evaluate_in(context)
+            outcome = condition.evaluate_in(merged)
             if outcome is ValidityStatus.IN_DOMAIN:
                 satisfied.append(condition.name)
             elif outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
@@ -562,12 +675,74 @@ class ValidityDomain:
             unknown=tuple(unknown),
         )
 
+    def _merge(
+        self,
+        context: Mapping[str, Any] | None,
+        *,
+        declared: Mapping[str, Any] | None,
+        assembled: Mapping[str, Any] | None,
+    ) -> Mapping[str, Any]:
+        """The one mapping the conditions read, with provenance enforced first."""
+        if context is not None and (declared is not None or assembled is not None):
+            raise ModelValidityError(
+                "assess() takes either a single caller-declared mapping or the "
+                "declared=/assembled= pair, not both"
+            )
+        if context is not None and hasattr(context, "assembled"):
+            # A domain's two-namespace context, handed in as one mapping. It
+            # would be read as entirely caller-declared and refused a line
+            # below with a message about a caller forging a name it did not
+            # forge, so say the true thing instead.
+            raise ModelValidityError(
+                "a domain validity context carries the two namespaces already "
+                "and must not be flattened into the single-mapping form; call "
+                "context.assess(model), which hands this model the slice of the "
+                "assembly it reserves"
+            )
+        if context is not None:
+            declared = context
+        declared = {} if declared is None else declared
+        assembled = {} if assembled is None else assembled
+
+        unregistered = sorted(set(assembled) - self.derived_quantities)
+        if unregistered:
+            raise ModelValidityError(
+                f"this validity domain was handed assembled quantities "
+                f"{unregistered} that it does not reserve; an assembled "
+                f"quantity that is not reserved can be supplied by a caller "
+                f"parameter of the same name and read as though the domain had "
+                f"computed it. Add it to derived_quantities"
+            )
+        forged = sorted(set(declared) & self.derived_quantities)
+        if forged:
+            raise ModelValidityError(
+                f"caller-declared context carries the reserved name(s) "
+                f"{forged}; {sorted(self.derived_quantities)} are derived by "
+                f"this domain and a caller cannot supply one. Strip them from "
+                f"the declaration, and pass what the domain computed as "
+                f"assembled="
+            )
+        if not assembled:
+            return declared
+        return {**declared, **assembled}
+
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "schema": VALIDITY_DOMAIN_SCHEMA,
             "conditions": [c.to_dict() for c in self.conditions],
             "description": self.description,
         }
+        # Emitted only when there is something to say. A record that reserves
+        # nothing serializes exactly as it did before this field existed, which
+        # is what keeps a frozen model record byte-identical through a
+        # round trip; ``from_dict`` reads a missing key as the empty set, so
+        # the absent key and an empty list mean the same thing. A record that
+        # *does* reserve names carries them, because a reserved namespace that
+        # did not survive serialization would be a guard that stopped at a
+        # process boundary.
+        if self.derived_quantities:
+            payload["derived_quantities"] = sorted(self.derived_quantities)
+        return payload
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidityDomain":
@@ -577,6 +752,7 @@ class ValidityDomain:
                 _decode_condition(c) for c in payload.get("conditions", ())
             ),
             description=payload.get("description", ""),
+            derived_quantities=frozenset(payload.get("derived_quantities", ())),
         )
 
 
@@ -849,12 +1025,48 @@ class ScientificModelDefinition:
         )
         object.__setattr__(self, "metadata", dict(self.metadata))
 
+        # Every context name this model's conditions read must be accounted
+        # for: either a declared input, which the caller is *supposed* to
+        # supply, or a reserved derived quantity, which no caller may. A third
+        # category — a name a condition reads that nothing declares — is the
+        # forgery hole, and it is closed here, at import, rather than at the
+        # verdict that would otherwise be the first sign of it. A domain adding
+        # a dimensionless group to a condition cannot ship it unreserved.
+        unclassified = sorted(
+            self.validity.context_keys
+            - set(input_names)
+            - self.validity.derived_quantities
+        )
+        if unclassified:
+            raise InvalidScientificProblem(
+                f"model {self.model_id!r} has validity condition(s) reading "
+                f"{unclassified}, which is neither a declared model input nor "
+                f"a reserved derived quantity. A name in neither category is "
+                f"supplied by whatever happens to occupy it in the assessed "
+                f"context, including a caller parameter. Declare it as a "
+                f"ModelInputSpec if a caller supplies it, or list it in "
+                f"validity.derived_quantities if this domain computes it"
+            )
+
     @property
     def key(self) -> tuple[str, str]:
         return (self.model_id, self.version)
 
-    def assess_validity(self, context: Mapping[str, Any]) -> ValidityAssessment:
-        return self.validity.assess(context)
+    @property
+    def derived_quantities(self) -> frozenset[str]:
+        """The names no caller may supply. See :class:`ValidityDomain`."""
+        return self.validity.derived_quantities
+
+    def assess_validity(
+        self,
+        context: Mapping[str, Any] | None = None,
+        *,
+        declared: Mapping[str, Any] | None = None,
+        assembled: Mapping[str, Any] | None = None,
+    ) -> ValidityAssessment:
+        return self.validity.assess(
+            context, declared=declared, assembled=assembled
+        )
 
     @property
     def provided_metrics(self) -> tuple[str, ...]:

@@ -614,19 +614,21 @@ def test_f03_a_caller_parameter_cannot_stand_in_for_a_failed_derivation():
     assert honest.status is ValidityStatus.UNKNOWN
     assert honest.unknown == (ctx.BIOT_NUMBER, ctx.INTERNAL_FOURIER_NUMBER)
 
-    forged = _assess(
-        _with_parameters(
-            problem,
-            {
-                ctx.BIOT_NUMBER: Quantity(0.05, "dimensionless"),
-                ctx.INTERNAL_FOURIER_NUMBER: Quantity(5.0, "dimensionless"),
-            },
-        )
+    # The two forged parameters are refused outright now, rather than stripped
+    # on the way through. The guarantee is the stronger one: not "the caller's
+    # numbers changed no verdict" but "no verdict is issued at all over a
+    # context a caller tried to write a derived quantity into".
+    forged_problem = _with_parameters(
+        problem,
+        {
+            ctx.BIOT_NUMBER: Quantity(0.05, "dimensionless"),
+            ctx.INTERNAL_FOURIER_NUMBER: Quantity(5.0, "dimensionless"),
+        },
     )
-    assert forged.status is ValidityStatus.UNKNOWN
-    assert forged.unknown == honest.unknown
-    assert ctx.BIOT_NUMBER not in forged.satisfied
-    assert ctx.BIOT_NUMBER not in forged.violated
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        _assess(forged_problem)
+    # The honest problem still answers exactly as it did.
+    assert _assess(problem) == honest
 
 
 @pytest.mark.parametrize("declared", [True, False])
@@ -671,10 +673,21 @@ def test_f03_colliding_with_every_derived_name_changes_no_verdict(declared):
 
     collisions = {
         name: Quantity(0.05, "dimensionless")
-        for name in ctx.ASSEMBLED_QUANTITIES
+        for name in lump.ASSEMBLER_NAMESPACE
     }
     assert collisions  # the reserved set is not empty
-    assert _assess(_with_parameters(problem, collisions)) == honest
+
+    # One at a time, so each refusal is attributable to its own name.
+    for name, value in collisions.items():
+        with pytest.raises(InvalidScientificProblem, match="derives"):
+            _assess(_with_parameters(problem, {name: value}))
+
+    # All at once.
+    with pytest.raises(InvalidScientificProblem, match="derives"):
+        _assess(_with_parameters(problem, collisions))
+
+    # And the honest problem is unmoved by any of it.
+    assert _assess(problem) == honest
 
 
 def test_f03_every_derivable_name_is_reserved():

@@ -537,6 +537,26 @@ def _demo_model() -> ScientificModelDefinition:
                 source_kind=InputSourceKind.PARAMETER,
                 unit_exemplar="kelvin",
             ),
+            # `regime` and `steady_state` are conditions of this model and are
+            # supplied by the caller, so they are declared. A validity
+            # condition reading a name the record does not declare is refused
+            # at construction now: the assessed context would fill it from
+            # whatever happened to occupy that key, which is the forgery this
+            # platform exists to refuse. Optional, because the model is still
+            # bindable to a problem that leaves them out — it just reads
+            # UNKNOWN there.
+            ModelInputSpec(
+                name="regime",
+                source_kind=InputSourceKind.PARAMETER,
+                value_kind=ValueKind.CATEGORICAL,
+                required=False,
+            ),
+            ModelInputSpec(
+                name="steady_state",
+                source_kind=InputSourceKind.PARAMETER,
+                value_kind=ValueKind.BOOLEAN,
+                required=False,
+            ),
         ),
         outputs=(
             ModelOutputSpec(metric="response", unit_exemplar="ampere"),
@@ -1619,19 +1639,32 @@ def test_validity_context_derives_from_typed_parameters():
             ScientificParameter("steady_state", BooleanValue(True)),
         ),
     )
-    context = problem.validity_context()
+    model = _demo_model()
+    # `reserved` is required and there is no default: a caller building the
+    # mapping a validity condition will be read from has to say which names the
+    # caller may fill. This model derives nothing, so the set is empty and every
+    # parameter is the caller's to supply.
+    context = problem.validity_context(reserved=model.derived_quantities)
     assert context["regime"] == "linear"
     assert context["steady_state"] is True
     assert isinstance(context["ambient"], Quantity)
 
-    model = _demo_model()
     assert model.assess_validity(context).status is ValidityStatus.IN_DOMAIN
 
-    # callers extend explicitly; metadata is not a secret channel
-    extended = problem.validity_context({"regime": "turbulent"})
-    assert model.assess_validity(extended).status is (
-        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    # A domain's own computed context is a separate namespace, not an `extra=`
+    # merged into the caller's. Here nothing is reserved, so the domain has
+    # nothing to assemble and the caller's declaration decides on its own.
+    turbulent = ScientificProblem(
+        problem_id="ctx",
+        parameters=(
+            ScientificParameter("ambient", Quantity(300.0, "kelvin")),
+            ScientificParameter("regime", CategoricalValue("turbulent")),
+            ScientificParameter("steady_state", BooleanValue(True)),
+        ),
     )
+    assert model.assess_validity(
+        turbulent.validity_context(reserved=model.derived_quantities)
+    ).status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
 
 
 # ---- I. constraint operator boundaries -------------------------------
@@ -2039,6 +2072,13 @@ def test_open_range_inside_a_validity_domain():
     """The end-to-end path a domain model uses: R > 0 as a validity claim."""
     model = ScientificModelDefinition(
         model_id="m", version="1",
+        inputs=(
+            ModelInputSpec(
+                name="resistance",
+                source_kind=InputSourceKind.PARAMETER,
+                unit_exemplar="ohm",
+            ),
+        ),
         validity=ValidityDomain(
             conditions=(
                 RangeCondition(
