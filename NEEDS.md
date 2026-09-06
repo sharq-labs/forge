@@ -1537,3 +1537,103 @@ What it needs: a way for the payload boundary to contribute a check to the
 report it assembles. Smallest version is a `validation=` parameter on
 `from_result`, merged with the result's own checks. That is `mcp/evidence.py`,
 outside TASK 1's owned paths, so it is written here rather than done.
+
+## 4. TASK 4 — thermal runaway as a finding: diagnosed, proposed, not built
+
+Not built because the missing piece is not in `systems/electrothermal/`. It is
+what a credibility report *is* for a run that stopped early, and that decision
+belongs with you rather than in this branch.
+
+### What the 37 cases actually are
+
+All 2000 cases were run and every `TransportRefused` characterised:
+
+| | |
+|---|---|
+| Failing check | `resistance_strictly_positive` — **37 of 37** |
+| Sign of alpha | 24 negative, 13 positive |
+| Iteration at refusal | 1 (x17), 2 (x11), 3 (x6), 8, 20, 38 |
+
+Two things follow, and the first corrects the brief.
+
+**The mechanism is not "a large positive TCR".** Two thirds carry a negative
+alpha, and the single shared cause is that the linear form
+`R(T) = R_ref (1 + alpha (T - T_ref))` extrapolates through zero. A negative
+alpha does that on the way up, a positive one on the way down; the sign only
+decides which direction the state has to travel. Every one of the 37 fails the
+same check for the same reason.
+
+**Seventeen of them are not runaway at all.** They are refused at iteration 1,
+before the loop has moved anything: the declared alpha and the declared ambient
+already put `R` at or below zero. That is a defect in the declaration, visible
+without running, and calling it non-contraction would be wrong. The genuine
+non-contracting cases are the twenty that survive to iteration 2 or beyond, and
+the three at iterations 8, 20 and 38 are the clearest of them — the loop walks
+the state for many sweeps before the resistance crosses zero.
+
+So the population needs splitting before it can be reported, and the split is
+available: **the iteration at which the refusal happened**.
+
+### The domain already has the condition
+
+`electrical.material.linear_tcr_resistance` declares `linear_resistance_ratio`
+with a strictly-positive bound, described as "the linear form is rejected where
+it extrapolates through zero". That is precisely this finding. It is never
+reported, because the run raises before a report is assembled.
+
+Nothing new needs to be invented to *say* what is wrong. What is missing is a
+path for the run to end in a way the report layer can consume.
+
+### Why it could not be finished inside the owned paths
+
+The refusal happens on the edge `resistance -> R:R1`, so the execution order is
+property solve, then electrical, then thermal. When the property solve's result
+is refused, **the electrical and thermal results for that sweep do not exist** —
+the electrical solve never ran.
+
+`run_electrothermal_case` builds its report from
+`run.final.result_for(electrical_id)` and the thermal sub-result, and both are
+absent. So the report cannot be the usual one, and the open question is what it
+should be instead:
+
+* a report whose `values` are empty and whose `validation` carries the failing
+  check, or
+* a distinct record for a run that stopped, or
+* the last *complete* sweep's report plus the refusal as a finding — available
+  only for the twenty that reached iteration 2.
+
+That is a schema-shaped decision about the V&V layer, not a change to the
+coupling.
+
+### Proposal
+
+1. **`CouplingOutcome.TRANSFER_REFUSED`.** The enum's docstring refuses a
+   `DIVERGED` member because "nothing here implements a divergence test", and
+   that reasoning holds — but the transfer guard *is* an implemented test with a
+   definite answer, so this member is earned rather than minted. It records
+   that the loop stopped because a participant's own validation rejected the
+   result an edge needed, and it does not claim the loop diverged.
+
+2. **`CoupledRun` carries the refusal**: the rejected `ScientificResult`, the
+   dependency, and the iteration index. The result is already preserved on the
+   exception for exactly this reason; this keeps it on the successful return
+   path too.
+
+3. **`run_fixed_point_coupling` catches `TransportRefused` at the transfer
+   boundary** and returns rather than propagating. The guard itself is
+   unchanged and the value still does not travel — only the exit differs, which
+   is what TASK 4 asked for.
+
+4. **The report decision above**, taken by you. Once it exists, the verdict
+   follows without further argument: the refused result's validation is a FAIL,
+   `derive_verdict` returns NOT_SUPPORTED on any FAIL, and NOT_SUPPORTED is
+   what these cases expect.
+
+5. **Keep the exception for the provider case.** A result rejected at iteration
+   1 by a check the design's own trajectory cannot explain is a different
+   finding from a loop that walked itself out of the model's domain, and the
+   iteration index is enough to tell them apart.
+
+Until then the 37 stay `ERROR:TransportRefused` in the scorer, which is counted
+as caught — they are not called SUPPORTED — but they are not the finding they
+should be, and the report says nothing about them at all.
