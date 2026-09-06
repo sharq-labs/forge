@@ -352,6 +352,23 @@ Nothing in the failing tests is shared state, and they pass at every bounded
 worker count. A suite that passes only sometimes is worse than a slower one that
 always passes.
 
+**A second instance, 2026-09-06, confirming the diagnosis.** On a 24-logical-core
+machine, `-m "not expensive" -n auto` failed one test —
+`test_sria_campaign_persistence_v03_scaling.py::test_event_records_are_exactly_linear_at_one_thousand_checkpoints`
+— with `MemoryError` raised inside `json.encoder`. The same test passes alone in
+1.2 s, and the whole FAST tier passes at `-n 4`.
+
+The useful part is the size of that test. Measured with `tracemalloc`, it peaks
+at **11.2 MB** and serializes a **2.1 MB** blob. It is not a heavy test, and
+nothing about it is near a memory limit on its own. It failed because the
+*machine* was out of memory when it happened to be the one allocating.
+
+That is the point: at `-n auto` the victim is arbitrary. The first instance
+blamed NumPy allocations in `test_sria_falsification_transport.py`; this one
+blames the JSON encoder in an 11 MB test in a different tier. Neither test is at
+fault, and chasing either as a test defect is wasted work. The failure is the
+worker count.
+
 **Use `-n 8`.** It was the fastest measured configuration, it uses a third of
 the memory of `-n auto`, and it is already past the point where extra workers
 stop helping. On a machine with more RAM per core, `-n 16` would be equally
@@ -402,11 +419,29 @@ measures it and argues otherwise.
 
 ## CI
 
-`.github/workflows/sria-tests.yml` runs the FULL sequential suite. That stays
-the authoritative gate and is deliberately unchanged in substance.
+`.github/workflows/tests.yml` is the only workflow. It runs the **FAST** tier on
+every push and pull request, and the **SCIENTIFIC** tier on pushes to `main`
+(with the three Windows-only ngspice tests deselected, exactly as listed above).
+The FULL tier is run manually before a freeze.
 
-Worker counts here are **local recommendations, not configuration**. Nothing
-pins `-n 12` in `pyproject.toml`, because a CI runner with 2–4 cores would be
-hurt by it. If CI adopts parallelism, use `-n auto --dist loadfile` and let it
-size itself, or make the count a workflow input. Every command in this document
-is path-independent and runs the same on Linux CI as locally.
+Worker counts in the sections above are **local recommendations**. The workflow
+is different: it pins `-n 4 --dist loadfile` on both jobs, and that pinning is
+deliberate.
+
+**Do not put `-n auto` in the workflow.** It sizes itself from the runner, which
+makes the memory ceiling a property of whatever hardware the job happens to land
+on rather than of the command. Memory grows at roughly 200 MB per worker
+(measured above), so a job that is comfortable on a 4-core runner walks straight
+into the exhaustion documented in "`-n auto` is not safe here" the moment it
+lands on a larger one — and GitHub's larger runners are opt-in per label, so
+that change can be made by someone editing `runs-on` and nothing else. A pinned
+count keeps the memory ceiling in the command where it can be read.
+
+`--dist loadfile` matters more in CI than the worker count does. Without it,
+every worker that receives any test from a memoizing module re-executes that
+module's whole experiment (see "`--dist loadfile` is not optional"). The
+SCIENTIFIC job is where those modules live, so omitting it there multiplies the
+expensive work by the worker count.
+
+Every command in this document is path-independent and runs the same on Linux CI
+as locally.

@@ -19,7 +19,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: python -m pytest -m "not expensive" -q -n auto
+      # -n 4, not -n auto: the worker count must not track whatever hardware
+      # the runner happens to have. Memory grows ~200 MB per worker, so a
+      # larger runner silently scales into the exhaustion documented in
+      # docs/TESTING.md ("`-n auto` is not safe here"). --dist loadfile keeps
+      # each memoizing module on one worker; see the same document.
+      - run: python -m pytest -m "not expensive" -q -n 4 --dist loadfile
 
   scientific:
     if: github.event_name != 'pull_request'
@@ -44,7 +49,7 @@ jobs:
           # and every provider test fails on Linux.
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >
-          python -m pytest -m "not campaign" -q -n auto
+          python -m pytest -m "not campaign" -q -n 4 --dist loadfile
           --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
           --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
