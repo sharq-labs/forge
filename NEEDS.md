@@ -2430,6 +2430,37 @@ The rule was not derived from this round. It has been paid for three times:
 All three look like checks. The only thing that separates a check from a
 sentence about a check is having watched it fail.
 
+### The same failure in a claim about who did what
+
+Two sessions correcting each other's work both published a wrong attribution,
+within an hour, in a repository where either was checkable in ten seconds.
+
+* I reported that a peer session was writing this working tree and had left a
+  conflicted merge in it. Neither was true. `gh pr view 11` gives
+  `mergedBy: sharq-labs`; `git reflog show main` shows the merge commit was
+  made locally by someone else again. I had inferred it from timing.
+* That peer reported that my branch was carelessly handling their commit.
+  Also inferred, also wrong.
+
+Neither of us looked. Both of us then wrote the inference down as a finding,
+which is the same defect as a check believed because it is plausible: **a
+statement about who did what needs a source, not an inference.** `gh pr view`
+and `git reflog` are the sources, and they are seconds away.
+
+This matters more than it sounds, because attribution is what a provenance
+record is. A round whose central guard refuses to let a record name a solver
+that did not run, produced two agents naming each other for work neither did.
+The mechanism generalises past the code.
+
+**And a second one, from the same hour.** The peer proposed a fix for the
+mutation-harness gap -- hash the tree before and after, refuse when they match
+-- reasoned that it would work, and did not falsify it. It could not have
+caught the case it was proposed for: the bad mutation *added a comment*, so a
+file hash differs and the guard waves it through. The counterexample was
+already in the message proposing it. That is the rule reaching one step further
+back than any of the instances above: not a check that could not fail, but a
+*proposal* nobody tried to break before adopting.
+
 ### What this changes going forward
 
 1. **FULL before any commit that touches `src/`**, not FAST. Four minutes.
@@ -2438,6 +2469,10 @@ sentence about a check is having watched it fail.
    with no entry is a sentence.
 3. **A commit message may not assert an invariant the commit did not run the
    check for.** GUARD 3's did, and the check existed.
+4. **An attribution gets a source.** `gh pr view`, `git reflog`, `git log
+   --format=%an` -- not timing, not who was likely to have been working.
+5. **A proposed check gets a counterexample before it gets written.** If you
+   cannot think of the case it would miss, you have not looked for one.
 
 The map in this file lists where else the seven patterns could live. This
 entry is the eighth pattern, and it is about the reviewer rather than the code.
