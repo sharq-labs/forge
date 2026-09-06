@@ -40,7 +40,7 @@ in the core and names no domain.
 and this is exactly the kind of change that should be argued before it is made.
 
 **Status after STEP 7: worked around, deliberately, and the workaround is not a
-substitute.** `engcore.mcp.EvidencePackage` carries validity itself, as a tuple
+substitute.** `engcore.mcp.CredibilityEvidenceReport` carries validity itself, as a tuple
 of `ModelValidityRecord` the assembler supplies. That closes the gap for anyone
 holding a *package* and leaves it wide open for anyone holding a *result*: the
 assessment still has to be made by whoever has both the problem and the
@@ -190,9 +190,9 @@ that list because the file is outside the owned paths. One line to add when
 somebody is next in there:
 
 ```
-- ``mcp``         evidence packaging for consumers: carries validity,
-                  validation and provenance together and derives an advisory
-                  verdict from them
+- ``mcp``         the verification and validation (V&V) layer: assembles a
+                  credibility evidence report carrying validity, validation and
+                  provenance together, and derives an advisory verdict from them
 ```
 
 **`docs/TESTING.md` needs no new tier entry, but its counts are now stale
@@ -283,7 +283,7 @@ through `tuple()`. `ValidityAssessment` has none. So
 at all, and a `list` passed for `violated` stays a list and makes the frozen
 record unhashable.
 
-**Why it matters here.** `EvidencePackage`'s verdict is decided by set
+**Why it matters here.** `CredibilityEvidenceReport`'s verdict is decided by set
 membership over the statuses it carries. A *correct* string is harmless —
 `ValidityStatus` is a `str` enum whose members hash equal to their values — but
 an *unrecognised* one matches neither the NOT_SUPPORTED nor the

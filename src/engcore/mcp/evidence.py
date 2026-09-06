@@ -1,4 +1,4 @@
-"""The evidence package: what a run produced, and what it is evidence for.
+"""The credibility evidence report: what a run produced, and what it evidences.
 
 A ``ScientificResult`` already carries values, provenance and a validation
 report. What it does not carry is the answer to the question an engineer of
@@ -11,27 +11,82 @@ did the checks pass          ``ValidationReport`` — including what did NOT run
 what produced it             ``ProvenanceRecord`` — carried unaltered
 ===========================  ==================================================
 
-An :class:`EvidencePackage` puts those three in one record, adds the caller's
-own asserted context in a field that cannot be mistaken for any of them, and
-derives a single advisory verdict from the lot.
+A :class:`CredibilityEvidenceReport` puts those three in one record, adds the
+caller's own asserted context in a field that cannot be mistaken for any of
+them, and derives a single advisory verdict from the lot.
+
+What "credibility" means here, and what this project does not claim
+-------------------------------------------------------------------
+The word is used in the sense the verification and validation (V&V) literature
+gives it — ASME V&V 10 and V&V 20 (verification and validation in
+computational solid mechanics, and in computational fluid dynamics and heat
+transfer), ASME V&V 40 (assessing credibility of computational modelling
+through verification and validation), and NASA-STD-7009 (models and
+simulations). In all of them credibility is a property of the *evidence
+supporting a result in a stated context of use*, not a property of the model
+and not a measure of accuracy. That is what this record reports.
+
+* **The attained levels are an evidentiary scale, not a quality score.**
+  ``ValidationLevel`` says what a passing check *established*: dimensional
+  validity, numerical convergence, agreement with an analytic solution, with a
+  benchmark, with another solver, with experiment. Loosely, the first few sit
+  on the verification side of the V&V 10/20 distinction — did we solve the
+  equations right — and the last two on the validation side — did we solve the
+  right equations against the world. The correspondence is loose and is stated
+  loosely on purpose: this is not a mapping the standards define, and the
+  levels are attained independently rather than climbed in order, so they do
+  not form a single ordinal grade the way a credibility assessment scale's
+  factors are scored.
+
+* **``INSUFFICIENT_EVIDENCE`` is the same idea as NASA-STD-7009's level 0** —
+  the bottom of its credibility assessment scale, "insufficient evidence".
+  Both mean the same thing: nothing here answers the question, and the fix is
+  to go and produce the evidence. It is not a formal score against that
+  standard's scale, which assesses eight factors separately; it is the same
+  distinction applied to one report.
+
+* **``required_levels`` is where a study states its own bar**, which is the
+  move V&V 40 makes when it sets the required rigour from the model risk in
+  the context of use. This layer does not compute model risk and does not know
+  the context of use. It only records the bar the caller declared and reports
+  whether it was met.
+
+**No conformance is claimed.** This project is not certified, is not assessed
+against any of these standards, and no standards body endorses it. The
+standards are frameworks for structured human judgement; what this module does
+is execute a small, explicit part of that judgement as code, so that the part
+which *can* be mechanical is not left to a reader's memory. Everything the
+standards ask of a person — deciding the context of use, weighing the risk,
+accepting the result — is still asked of a person.
+
+**The report is advisory input to an engineer of record, not a decision.** A
+``SUPPORTED`` verdict says nothing in this record argues against relying on the
+result. It does not say the result is right, and it does not discharge anyone's
+professional judgement or responsibility.
+
+**Asserted context is caller-asserted context, not evidence.** What a caller
+declares about its own situation is carried verbatim, marked as the caller's
+claim, and excluded from the verdict by construction — it is not a parameter
+of :func:`derive_verdict`. It is in the record because a reader needs to know
+what was claimed; it is fenced because a claim is not a finding.
 
 Why validity lives here and not on the result
 ---------------------------------------------
 ``ScientificResult`` has no ``validity`` field, so today a validity assessment
 travels *beside* a result and is easy to drop on the floor. Adding the field to
 the core would be the better long-term fix and is written up in ``NEEDS.md``;
-this package is the consumer-side answer that needs no core change. The
-consequence is stated rather than hidden: **this package carries validity
-because the result cannot**, and a package assembled without the assessments is
+this layer is the consumer-side answer that needs no core change. The
+consequence is stated rather than hidden: **this layer carries validity
+because the result cannot**, and a report assembled without the assessments is
 UNKNOWN rather than silently clean.
 
 Why the verdict cannot be stored
 --------------------------------
-:attr:`EvidencePackage.verdict` is a read-only property over
+:attr:`CredibilityEvidenceReport.verdict` is a read-only property over
 :func:`derive_verdict`. It is not a constructor parameter, so
-``EvidencePackage(verdict=...)`` is a ``TypeError`` from Python itself rather
+``CredibilityEvidenceReport(verdict=...)`` is a ``TypeError`` from Python itself rather
 than a rule this module has to police, and no code path anywhere can put a
-verdict into a package that its contents do not produce. ``to_dict`` emits the
+verdict into a report that its contents do not produce. ``to_dict`` emits the
 derived value for readers; ``from_dict`` recomputes it and refuses a payload
 whose stored verdict disagrees. That is exactly the mechanism
 ``ValidationReport.from_dict`` already uses for ``attained_levels`` — "derived
@@ -39,7 +94,7 @@ fields in the payload are advisory; recompute and verify so a hand-edited
 record cannot smuggle in an unearned validation claim" — applied one level up.
 
 **What that guarantee is, stated exactly.** It is not tamper-proofing, and
-claiming otherwise would be the kind of overstatement this package exists to
+claiming otherwise would be the kind of overstatement this layer exists to
 refuse. Anyone willing to call ``object.__setattr__`` can rewrite a frozen
 record anywhere in this repository — a ``ValidationCheck``'s outcome or a
 ``ProvenanceRecord``'s run id just as easily as anything here — and no
@@ -48,12 +103,12 @@ more useful:
 
 * **The verdict always describes the contents.** Because it is derived on
   access rather than stored, there is no stale copy to drift out of step. Tamper
-  with a carried assessment and the verdict moves *with* it: the package is
+  with a carried assessment and the verdict moves *with* it: the report is
   never internally inconsistent, which is the failure mode a stored field
   would have introduced.
 * **A forged verdict cannot cross a serialization boundary.** A subclass can
   override the property and lie in-process, but the payload it writes is
-  refused by :meth:`EvidencePackage.from_dict` on the way back in — so the lie
+  refused by :meth:`CredibilityEvidenceReport.from_dict` on the way back in — so the lie
   cannot be persisted, sent, or handed to a second reader.
 * **No supported API expresses the lie.** Constructor, ``dataclasses.replace``
   and attribute assignment all raise; ``pickle`` and ``copy.deepcopy``
@@ -62,7 +117,7 @@ more useful:
 What this module does not do
 ----------------------------
 It computes no physics, evaluates no condition and re-runs no check. Every
-scientific judgement in a package was made upstream by a model's validity
+scientific judgement in a report was made upstream by a model's validity
 domain or a solver's validation, and is *transported* here. The only thing this
 module decides is how to combine judgements already made, and it says so in one
 pure function that a reader can check in full.
@@ -92,21 +147,29 @@ from ..scientific.results.validation import (
 )
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.units.quantity import Quantity
-from .errors import EvidencePackageError
+from .errors import CredibilityEvidenceError
 
 __all__ = [
     "ASSERTED_CONTEXT_SCHEMA",
     "EVIDENCE_PACKAGE_SCHEMA",
     "MODEL_VALIDITY_SCHEMA",
     "AssertedContext",
-    "EvidencePackage",
-    "EvidenceVerdict",
+    "CredibilityEvidenceReport",
+    "CredibilityVerdict",
+    "EvidencePackage",  # deprecated alias
     "ModelValidityRecord",
     "derive_verdict",
 ]
 
 MODEL_VALIDITY_SCHEMA = schema_string("mcp_model_validity_record")
 ASSERTED_CONTEXT_SCHEMA = schema_string("mcp_asserted_context")
+# The schema string is a **wire identifier**, not vocabulary, and it is
+# deliberately not renamed with the class. A payload written before this
+# rename carries ``mcp_evidence_package/1``, and ``require_schema`` compares it
+# by exact equality; changing the string would reject every existing record
+# while claiming to be a rename. Renaming the wire form is a version bump plus
+# a reader that accepts both, which is a larger change than this one and has
+# not been argued for.
 EVIDENCE_PACKAGE_SCHEMA = schema_string("mcp_evidence_package")
 
 #: Schemas a caller's asserted context may not embed. These are the record
@@ -140,8 +203,8 @@ def _embedded_core_schemas(value: Any) -> set[str]:
     return found
 
 
-class EvidenceVerdict(str, Enum):
-    """What the package's own contents support. **Advisory, not a decision.**
+class CredibilityVerdict(str, Enum):
+    """What the report's own contents support. **Advisory, not a decision.**
 
     Three values and no more. The temptation is a richer scale — "supported
     with caveats", "probably fine" — and it is refused for the same reason the
@@ -150,7 +213,7 @@ class EvidenceVerdict(str, Enum):
     different *action*, which is the only thing a verdict is good for:
 
     ``SUPPORTED``
-        Nothing in this package argues against relying on the result. It does
+        Nothing in this report argues against relying on the result. It does
         not say the result is right, and it does not discharge the engineer of
         record's judgement — the checks that ran, what they establish and the
         conditions that were satisfied are all carried here to be read.
@@ -176,11 +239,11 @@ def derive_verdict(
     validation: Sequence[ValidationCheck],
     unassessed_models: Sequence[tuple[str, str]] = (),
     required_levels: Sequence[ValidationLevel] = (),
-) -> EvidenceVerdict:
+) -> CredibilityVerdict:
     """The one place a verdict is decided. Pure, total, and order-independent.
 
-    A function of two sequences rather than of a package, so it can be read,
-    tested and argued with on its own, and so no attribute of a package other
+    A function of two sequences rather than of a report, so it can be read,
+    tested and argued with on its own, and so no attribute of a report other
     than these two can ever influence the answer. In particular the caller's
     ``declarations`` are not a parameter: they cannot move a verdict because
     they are not in scope of the function that decides one.
@@ -213,20 +276,20 @@ def derive_verdict(
     would send a reader off to collect inputs for a question that has already
     been answered against them — and would let a caller *bury* a violated bound
     by omitting an unrelated input, which is precisely the substitution this
-    package exists to prevent. A violation is a finding; an omission is a gap;
+    report exists to prevent. A violation is a finding; an omission is a gap;
     a finding outranks a gap.
 
     **Empty is not clean.** No checks means nothing was verified, and no
     validity records means nobody asked whether the model applied. Both are
-    ``INSUFFICIENT_EVIDENCE``, because the alternative is that an empty package
+    ``INSUFFICIENT_EVIDENCE``, because the alternative is that an empty report
     reports ``SUPPORTED`` — the exact failure the ``NOT_RUN`` outcome exists to
     prevent, reintroduced one level up.
 
     **WARNING is not a failure and does not change the verdict.** A check that
     ran and returned ``WARNING`` produced its evidence; the platform's own
     ``ValidationReport.status`` ranks it below ``FAIL`` for that reason. It
-    stays fully visible in :attr:`EvidencePackage.validation`, and in
-    :attr:`EvidencePackage.warning_checks`, for the reader who must weigh it.
+    stays fully visible in :attr:`CredibilityEvidenceReport.validation`, and in
+    :attr:`CredibilityEvidenceReport.warning_checks`, for the reader who must weigh it.
     Folding it into the verdict would either overstate it (as
     ``NOT_SUPPORTED``) or invent a fourth value.
 
@@ -235,9 +298,9 @@ def derive_verdict(
     a check that passed: ``NOT_RUN`` is a distinct outcome precisely because
     *absence of a result is not a result*. The same thing is true one level up.
     A passing check that establishes nothing has produced no evidence for
-    anything — it has only failed to object — and a package assembled entirely
+    anything — it has only failed to object — and a report assembled entirely
     from such checks says nothing at all about the result. Reporting that as
-    ``SUPPORTED`` would reintroduce, at the level of the package, exactly the
+    ``SUPPORTED`` would reintroduce, at the level of the report, exactly the
     substitution ``NOT_RUN`` exists to prevent: absence of an objection read as
     the presence of support.
 
@@ -252,7 +315,7 @@ def derive_verdict(
     empty — the lumped thermal solver, which declines a level for its residual
     check on the grounds that self-consistency is not verification, and the
     resistance property solver, whose only check is an admissibility bound.
-    Packages built on either are now ``INSUFFICIENT_EVIDENCE``. That is the
+    Reports built on either are now ``INSUFFICIENT_EVIDENCE``. That is the
     honest reading: those solvers are right that they have earned nothing, and
     the verdict should say so rather than round it up. What each would need to
     earn a level is recorded in ``NEEDS.md`` as a visible gap.
@@ -282,7 +345,7 @@ def derive_verdict(
         }
         outcomes = {ValidationOutcome(check.outcome) for check in validation}
     except (ValueError, AttributeError) as exc:
-        raise EvidencePackageError(
+        raise CredibilityEvidenceError(
             f"cannot derive a verdict from these contents ({exc}); a status or "
             f"outcome this function does not understand must not be read as "
             f"'nothing argues against this result'"
@@ -290,18 +353,18 @@ def derive_verdict(
 
     # Order of these two branches IS the precedence rule. Do not reorder.
     if ValidityStatus.OUTSIDE_VALIDATED_DOMAIN in statuses:
-        return EvidenceVerdict.NOT_SUPPORTED
+        return CredibilityVerdict.NOT_SUPPORTED
     if ValidationOutcome.FAIL in outcomes:
-        return EvidenceVerdict.NOT_SUPPORTED
+        return CredibilityVerdict.NOT_SUPPORTED
 
     if ValidityStatus.UNKNOWN in statuses:
-        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if ValidationOutcome.NOT_RUN in outcomes:
-        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if unassessed_models:
-        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if not validity:
-        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
     # The evidential guard, and the core's own definition of what counts:
     # exactly `ValidationReport.attained_levels`. It subsumes "there are no
@@ -313,9 +376,9 @@ def derive_verdict(
         if check.passed and check.establishes is not None
     }
     if not attained:
-        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if required_levels and not set(required_levels) <= attained:
-        return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
     # Everything below is SUPPORTED, so everything reaching here must be a
     # member this function was written to handle. A future enum addition is a
@@ -326,14 +389,14 @@ def derive_verdict(
         ValidationOutcome.WARNING,
     }
     if unhandled_statuses or unhandled_outcomes:
-        raise EvidencePackageError(
+        raise CredibilityEvidenceError(
             f"derive_verdict does not handle "
             f"{sorted(s.value for s in unhandled_statuses)} / "
             f"{sorted(o.value for o in unhandled_outcomes)}; a case this "
             f"function was not written for must not fall through to SUPPORTED"
         )
 
-    return EvidenceVerdict.SUPPORTED
+    return CredibilityVerdict.SUPPORTED
 
 
 @dataclass(frozen=True)
@@ -347,7 +410,7 @@ class ModelValidityRecord:
 
     Nothing here recomputes an assessment. The model that owns the validity
     domain produced this; this record only says which model it belonged to, so
-    a package covering several models does not collapse them into one verdict
+    a report covering several models does not collapse them into one verdict
     with no attribution.
     """
 
@@ -359,12 +422,12 @@ class ModelValidityRecord:
         for label in ("model_id", "version"):
             text = str(getattr(self, label)).strip()
             if not text:
-                raise EvidencePackageError(
+                raise CredibilityEvidenceError(
                     f"model validity record requires a non-empty {label}"
                 )
             object.__setattr__(self, label, text)
         if not isinstance(self.assessment, ValidityAssessment):
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"model validity record requires a ValidityAssessment, got "
                 f"{type(self.assessment).__name__} — a bare status string "
                 f"would drop the condition names a reader acts on"
@@ -382,7 +445,7 @@ class ModelValidityRecord:
         try:
             status = ValidityStatus(self.assessment.status)
         except ValueError as exc:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"model validity record for {self.model_id!r} carries "
                 f"{self.assessment.status!r}, which is not a ValidityStatus; "
                 f"an unrecognised status would be read as 'nothing argues "
@@ -415,7 +478,7 @@ class ModelValidityRecord:
         else:
             implied = ValidityStatus.IN_DOMAIN
         if status is not implied:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"model validity record for {self.model_id!r} declares status "
                 f"{status.value!r} while its own conditions imply "
                 f"{implied.value!r} (violated={list(assessment.violated)}, "
@@ -458,7 +521,7 @@ class AssertedContext:
     constant-``hA`` span. No condition reads it, the problem record cannot
     carry it — ``ProvenanceRecord`` admits only ``Quantity`` inputs — and so it
     reaches a reader through no other channel. It is real context and it is
-    worth having; it is not evidence, and a package that filed it beside the
+    worth having; it is not evidence, and a report that filed it beside the
     validation checks would be inviting exactly the confusion this platform
     exists to prevent.
 
@@ -481,12 +544,12 @@ class AssertedContext:
     construction rather than by inspection: ``declarations`` is not a parameter
     of :func:`derive_verdict`, so nothing in this field can move a verdict. A
     reader who wants to know whether a particular declared value was consumed
-    by a *condition* has the answer in the same package — the condition names
+    by a *condition* has the answer in the same report — the condition names
     are in the validity records beside it.
 
     ``payload`` is whatever the declaration's own ``to_dict`` produced. It is
     stored verbatim — not summarised, not filtered — because the point is that
-    the reader sees what was claimed, and a package that edited the claim on
+    the reader sees what was claimed, and a report that edited the claim on
     the way through would be a worse record than one that omitted it. The one
     thing refused is a payload that embeds a *core record*: a caller's asserted
     context has no business carrying something shaped like a validation check,
@@ -501,14 +564,14 @@ class AssertedContext:
     def __post_init__(self) -> None:
         source = str(self.source).strip()
         if not source:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 "asserted context requires a source naming what declared it; "
                 "an unattributed claim is not context, it is noise"
             )
         object.__setattr__(self, "source", source)
 
         if not isinstance(self.payload, Mapping):
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"asserted context payload must be a mapping, got "
                 f"{type(self.payload).__name__}"
             )
@@ -519,14 +582,14 @@ class AssertedContext:
         try:
             json.dumps(payload, sort_keys=True)
         except (TypeError, ValueError) as exc:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"asserted context {source!r} payload is not JSON-serializable "
                 f"({exc}); pass the declaration's own to_dict() output so the "
                 f"claim survives the record it is stored in"
             ) from exc
         embedded = _embedded_core_schemas(payload)
         if embedded:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"asserted context {source!r} embeds core evidence records "
                 f"({sorted(embedded)}); a caller's claim may not carry "
                 f"something shaped like a check or an assessment, because a "
@@ -562,7 +625,7 @@ class AssertedContext:
 
 
 @dataclass(frozen=True)
-class EvidencePackage:
+class CredibilityEvidenceReport:
     """One run's values, validity, validation, provenance and asserted context.
 
     Assembled by a consumer, never by the core. Every scientific judgement in
@@ -581,7 +644,7 @@ class EvidencePackage:
     declarations: tuple[AssertedContext, ...] = ()
     #: Levels the assembling study declares it needs before it will rely on
     #: this result. Empty means "no level is demanded", which is the rule as
-    #: specified and is why a package can be SUPPORTED with nothing attained.
+    #: specified and is why a report can be SUPPORTED with nothing attained.
     #: A caller who needs more says so here rather than re-reading the verdict.
     required_levels: tuple[ValidationLevel, ...] = ()
     #: The solver's own commentary on its validation, carried unaltered.
@@ -595,8 +658,8 @@ class EvidencePackage:
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
         if not run_id:
-            raise EvidencePackageError(
-                "evidence package requires a non-empty run_id; evidence that "
+            raise CredibilityEvidenceError(
+                "credibility evidence report requires a non-empty run_id; evidence that "
                 "cannot be attributed to a run is not evidence"
             )
         object.__setattr__(self, "run_id", run_id)
@@ -604,8 +667,8 @@ class EvidencePackage:
         values = dict(self.values)
         for name, value in values.items():
             if not isinstance(value, Quantity):
-                raise EvidencePackageError(
-                    f"package value {name!r} must be a Quantity — a bare "
+                raise CredibilityEvidenceError(
+                    f"report value {name!r} must be a Quantity — a bare "
                     f"number is not a scientific result"
                 )
         object.__setattr__(self, "values", values)
@@ -613,21 +676,21 @@ class EvidencePackage:
         validity = tuple(self.validity)
         for record in validity:
             if not isinstance(record, ModelValidityRecord):
-                raise EvidencePackageError(
+                raise CredibilityEvidenceError(
                     f"validity entries must be ModelValidityRecord, got "
                     f"{type(record).__name__}"
                 )
         keys = [record.key for record in validity]
         duplicates = {k for k in keys if keys.count(k) > 1}
         if duplicates:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"duplicate model validity records for {sorted(duplicates)}; "
                 f"one model at one version has one verdict, and two entries "
                 f"would let a reader pick the flattering one"
             )
         # Sorted, because the order a caller happened to assess models in is
-        # not information about the models. Two packages stating the same
-        # per-model verdicts are the same package and must serialize
+        # not information about the models. Two reports stating the same
+        # per-model verdicts are the same report and must serialize
         # byte-identically — the same reason ProvenanceRecord sorts its
         # bindings. The validation checks below are deliberately NOT sorted:
         # there, order is the order the checks ran in, which *is* information.
@@ -636,40 +699,40 @@ class EvidencePackage:
         validation = tuple(self.validation)
         for check in validation:
             if not isinstance(check, ValidationCheck):
-                raise EvidencePackageError(
+                raise CredibilityEvidenceError(
                     f"validation entries must be ValidationCheck, got "
                     f"{type(check).__name__}"
                 )
         names = [check.name for check in validation]
         duplicates = {n for n in names if names.count(n) > 1}
         if duplicates:
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"duplicate validation check names: {sorted(duplicates)}; the "
                 f"core's own ValidationReport refuses these for the same "
-                f"reason, so a package may not launder them"
+                f"reason, so a report may not launder them"
             )
         object.__setattr__(self, "validation", validation)
 
         # Required, matching ScientificResult's own rule that "an
-        # unattributable number is not a scientific result". A package is a
+        # unattributable number is not a scientific result". A report is a
         # stronger claim than a result, so it cannot have a weaker rule: an
-        # optional-and-inert provenance would let an unattributed package
+        # optional-and-inert provenance would let an unattributed report
         # report SUPPORTED.
         if not isinstance(self.provenance, ProvenanceRecord):
-            raise EvidencePackageError(
-                f"evidence package requires a ProvenanceRecord, got "
+            raise CredibilityEvidenceError(
+                f"credibility evidence report requires a ProvenanceRecord, got "
                 f"{type(self.provenance).__name__}; evidence that cannot be "
                 f"attributed to what produced it is not evidence"
             )
 
         # Validity records must name models that actually took part. Without
         # this a caller could attach an honest IN_DOMAIN assessment of an
-        # unrelated model and turn an unassessed package into a SUPPORTED one.
+        # unrelated model and turn an unassessed report into a SUPPORTED one.
         declared_models = set(self.provenance.models)
         if declared_models:
             stray = {r.key for r in validity} - declared_models
             if stray:
-                raise EvidencePackageError(
+                raise CredibilityEvidenceError(
                     f"validity records name models the provenance does not: "
                     f"{sorted(stray)}. An assessment of a model that did not "
                     f"produce these values is not evidence about these values"
@@ -684,7 +747,7 @@ class EvidencePackage:
         declarations = tuple(self.declarations)
         for declaration in declarations:
             if not isinstance(declaration, AssertedContext):
-                raise EvidencePackageError(
+                raise CredibilityEvidenceError(
                     f"declarations must be AssertedContext, got "
                     f"{type(declaration).__name__} — the type is what marks "
                     f"a caller's claim as something no check consumed"
@@ -693,11 +756,11 @@ class EvidencePackage:
 
     # ---- derived state --------------------------------------------------
     @property
-    def verdict(self) -> EvidenceVerdict:
-        """What this package's own contents support. **Advisory.**
+    def verdict(self) -> CredibilityVerdict:
+        """What this report's own contents support. **Advisory.**
 
         Read this as the beginning of a conversation with the evidence, not as
-        a decision taken on the reader's behalf. The package is assembled for
+        a decision taken on the reader's behalf. The report is assembled for
         an engineer of record; it is that engineer, not this property, who
         decides whether a design proceeds. ``SUPPORTED`` means *nothing here
         argues against it* — the checks that ran are listed, what each
@@ -717,14 +780,14 @@ class EvidencePackage:
 
     @property
     def is_supported(self) -> bool:
-        return self.verdict is EvidenceVerdict.SUPPORTED
+        return self.verdict is CredibilityVerdict.SUPPORTED
 
     @property
     def unassessed_models(self) -> tuple[tuple[str, str], ...]:
         """Models the provenance says ran, that nobody assessed for validity.
 
         The per-model form of "nobody asked whether the model applied", and
-        strictly stronger than the package-level "there are no validity records
+        strictly stronger than the report-level "there are no validity records
         at all": a run over two models with one assessment is a gap that a
         count of records cannot see.
         """
@@ -818,27 +881,27 @@ class EvidencePackage:
         required_levels: Iterable[ValidationLevel] = (),
         notes: str = "",
         run_id: str | None = None,
-    ) -> "EvidencePackage":
-        """Assemble a package around one executed :class:`ScientificResult`.
+    ) -> "CredibilityEvidenceReport":
+        """Assemble a report around one executed :class:`ScientificResult`.
 
         Values, validation checks and provenance are taken from the result
         unaltered — including ``NOT_RUN`` checks, which is the whole point of
         carrying the report's checks rather than its aggregate status.
 
         ``validity`` must be supplied by the caller, because the result does
-        not carry it and this module will not invent it. A package assembled
+        not carry it and this module will not invent it. A report assembled
         with no validity records — or with fewer than the models the
         provenance says ran — reports ``INSUFFICIENT_EVIDENCE``, which is the
         honest reading of "nobody asked whether the model applied".
 
         ``run_id`` defaults to the result's own id. It may be overridden for
-        the legitimate case of a package covering a coupled run assembled
+        the legitimate case of a report covering a coupled run assembled
         around one of its sub-results, where the run's identity is not any one
         result's. Both identities stay visible: the override lands in
         ``run_id`` and the result's own is still in ``provenance.run_id``.
         """
         if not isinstance(result, ScientificResult):
-            raise EvidencePackageError(
+            raise CredibilityEvidenceError(
                 f"from_result expects a ScientificResult, got "
                 f"{type(result).__name__}"
             )
@@ -862,7 +925,7 @@ class EvidencePackage:
         answer, computed by the core, not a second opinion from here.
 
         Carries ``validation_notes`` — the solver's own commentary — and not
-        this package's ``notes``, which belong to whoever assembled it. Putting
+        this report's ``notes``, which belong to whoever assembled it. Putting
         an assembler's sentence into a ``validation_report/1`` record would
         make it indistinguishable, in the serialized form, from something the
         validation machinery said.
@@ -902,9 +965,9 @@ class EvidencePackage:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "EvidencePackage":
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CredibilityEvidenceReport":
         require_schema(payload, EVIDENCE_PACKAGE_SCHEMA)
-        package = cls(
+        report = cls(
             run_id=payload["run_id"],
             values={
                 name: Quantity.from_dict(value)
@@ -935,10 +998,21 @@ class EvidencePackage:
         # support. Exactly what ValidationReport.from_dict does for
         # attained_levels, one level up.
         declared = payload.get("verdict")
-        if declared is not None and declared != package.verdict.value:
-            raise EvidencePackageError(
+        if declared is not None and declared != report.verdict.value:
+            raise CredibilityEvidenceError(
                 f"serialized verdict {declared!r} does not match the verdict "
-                f"its contents produce ({package.verdict.value!r}); a package "
+                f"its contents produce ({report.verdict.value!r}); a report "
                 f"may report a verdict but may not assert one"
             )
-        return package
+        return report
+
+
+#: Deprecated alias, kept for one release.
+#:
+#: The record was called ``EvidencePackage`` before the layer adopted the
+#: vocabulary of ASME V&V 10/20/40 and NASA-STD-7009, in which the thing being
+#: reported is *credibility*. The name is retained so existing importers keep
+#: working across one release and no more; new code should use
+#: :class:`CredibilityEvidenceReport`. It is the same class, not a subclass, so
+#: ``isinstance`` and ``from_dict`` behave identically either way.
+EvidencePackage = CredibilityEvidenceReport

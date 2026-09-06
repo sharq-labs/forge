@@ -1,4 +1,4 @@
-"""What an evidence package may and may not claim.
+"""What a credibility evidence report may and may not claim.
 
 The package's whole job is to let three separate judgements — was the model
 applicable, did the checks pass, what produced this — be read together without
@@ -26,9 +26,9 @@ from src.engcore.domains.thermal_models import lumped as lump
 from src.engcore.mcp import (
     EVIDENCE_PACKAGE_SCHEMA,
     AssertedContext,
-    EvidencePackage,
-    EvidencePackageError,
-    EvidenceVerdict,
+    CredibilityEvidenceReport,
+    CredibilityEvidenceError,
+    CredibilityVerdict,
     ModelValidityRecord,
     derive_verdict,
 )
@@ -142,7 +142,7 @@ def package(
         provenance = dataclasses.replace(
             PROVENANCE, models=tuple(r.key for r in records)
         )
-    return EvidencePackage(
+    return CredibilityEvidenceReport(
         run_id="evidence-test",
         values=VALUES,
         provenance=provenance,
@@ -158,14 +158,14 @@ def package(
 # =====================================================================
 
 def test_everything_in_domain_and_checked_is_supported():
-    assert package().verdict is EvidenceVerdict.SUPPORTED
+    assert package().verdict is CredibilityVerdict.SUPPORTED
     assert package().is_supported
 
 
 def test_unknown_validity_is_insufficient_evidence():
     """A condition nobody supplied the input for is a gap, not a pass."""
     pkg = package(validity_records=(UNKNOWN,))
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert pkg.unknown_conditions == (("thermal.lumped", "biot_number"),)
 
 
@@ -186,12 +186,12 @@ def test_unknown_validity_can_never_produce_supported():
                 for i, c in enumerate(combo)
             )
             verdict = package(validity_records=(UNKNOWN,), checks=checks).verdict
-            assert verdict is not EvidenceVerdict.SUPPORTED, combo
+            assert verdict is not CredibilityVerdict.SUPPORTED, combo
 
 
 def test_outside_validated_domain_is_not_supported_and_names_the_condition():
     pkg = package(validity_records=(OUTSIDE,))
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
     assert pkg.violated_conditions == (("thermal.lumped", "biot_number"),)
     # the condition name survives serialization, which is where a reader meets it
     assert "biot_number" in json.dumps(pkg.to_dict())
@@ -201,7 +201,7 @@ def test_a_failed_check_is_not_supported_even_when_all_validity_is_in_domain():
     """An applicable model whose check failed is still a failure."""
     pkg = package(checks=(FAILED,))
     assert all(r.status is ValidityStatus.IN_DOMAIN for r in pkg.validity)
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
     assert pkg.failed_checks == ("lumped_balance_residual",)
 
 
@@ -214,7 +214,7 @@ def test_a_not_run_check_is_insufficient_evidence_even_when_nothing_failed():
     """
     pkg = package(checks=(PASSED, NOT_RUN))
     assert pkg.failed_checks == ()
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert pkg.not_run_checks == ("cross_solver_agreement",)
 
 
@@ -233,14 +233,14 @@ def test_not_supported_takes_precedence_over_insufficient_evidence():
         ValidityStatus.UNKNOWN,
         ValidityStatus.OUTSIDE_VALIDATED_DOMAIN,
     }
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
 
 
 def test_a_failed_check_outranks_an_unknown_validity_too():
     """The other half of the precedence rule."""
     assert (
         package(validity_records=(UNKNOWN,), checks=(FAILED,)).verdict
-        is EvidenceVerdict.NOT_SUPPORTED
+        is CredibilityVerdict.NOT_SUPPORTED
     )
 
 
@@ -252,7 +252,7 @@ def test_a_warning_does_not_change_the_verdict_and_stays_visible():
     the reader who has to weigh it.
     """
     pkg = package(checks=(PASSED, WARNED))
-    assert pkg.verdict is EvidenceVerdict.SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.SUPPORTED
     assert "tolerance_margin" in {c.name for c in pkg.validation}
     assert pkg.validation_report().warnings != ()
 
@@ -263,12 +263,12 @@ def test_an_empty_package_is_insufficient_evidence_not_supported():
     The alternative — vacuous SUPPORTED — is the NOT_RUN failure mode
     reintroduced at the package level.
     """
-    assert package(checks=()).verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert package(checks=()).verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert package(validity_records=()).verdict is (
-        EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        CredibilityVerdict.INSUFFICIENT_EVIDENCE
     )
     assert package(validity_records=(), checks=()).verdict is (
-        EvidenceVerdict.INSUFFICIENT_EVIDENCE
+        CredibilityVerdict.INSUFFICIENT_EVIDENCE
     )
 
 
@@ -292,21 +292,21 @@ def test_the_verdict_rules_are_total_and_deterministic():
 
     def oracle(status_set, outcome_set):
         if ValidityStatus.OUTSIDE_VALIDATED_DOMAIN in status_set:
-            return EvidenceVerdict.NOT_SUPPORTED
+            return CredibilityVerdict.NOT_SUPPORTED
         if ValidationOutcome.FAIL in outcome_set:
-            return EvidenceVerdict.NOT_SUPPORTED
+            return CredibilityVerdict.NOT_SUPPORTED
         if ValidityStatus.UNKNOWN in status_set:
-            return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+            return CredibilityVerdict.INSUFFICIENT_EVIDENCE
         if ValidationOutcome.NOT_RUN in outcome_set:
-            return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+            return CredibilityVerdict.INSUFFICIENT_EVIDENCE
         if not status_set:
-            return EvidenceVerdict.INSUFFICIENT_EVIDENCE
+            return CredibilityVerdict.INSUFFICIENT_EVIDENCE
         # SUPPORTED needs a level, and only a PASS can carry one. An empty
         # outcome set attains nothing, so it falls out of this branch rather
         # than needing its own.
         if ValidationOutcome.PASS not in outcome_set:
-            return EvidenceVerdict.INSUFFICIENT_EVIDENCE
-        return EvidenceVerdict.SUPPORTED
+            return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+        return CredibilityVerdict.SUPPORTED
 
     seen = set()
     for s_size in range(len(statuses) + 1):
@@ -337,7 +337,7 @@ def test_the_verdict_rules_are_total_and_deterministic():
                     )
                     seen.add(got)
     # all three verdicts are reachable; none is dead code
-    assert seen == set(EvidenceVerdict)
+    assert seen == set(CredibilityVerdict)
 
 
 def test_the_verdict_does_not_depend_on_the_order_of_its_inputs():
@@ -390,9 +390,9 @@ def test_the_declaration_is_marked_as_caller_asserted_in_the_serialized_form():
 
 
 def test_a_declaration_payload_must_survive_the_record_it_is_stored_in():
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         AssertedContext(source="x", payload={"q": Quantity(1.0, K)})
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         AssertedContext(source="  ", payload={})
 
 
@@ -402,25 +402,25 @@ def test_a_declaration_payload_must_survive_the_record_it_is_stored_in():
 
 def test_the_verdict_is_not_a_field_and_cannot_be_constructed():
     """Not policed by a check — absent from the constructor entirely."""
-    assert "verdict" not in EvidencePackage.__dataclass_fields__
+    assert "verdict" not in CredibilityEvidenceReport.__dataclass_fields__
     assert isinstance(
         type(package()).__dict__["verdict"], property
     )
     with pytest.raises(TypeError):
-        EvidencePackage(
+        CredibilityEvidenceReport(
             run_id="r",
             values={},
-            verdict=EvidenceVerdict.SUPPORTED,
+            verdict=CredibilityVerdict.SUPPORTED,
         )
 
 
 def test_the_verdict_cannot_be_replaced_or_written_onto_an_instance():
     pkg = package(validity_records=(OUTSIDE,))
     with pytest.raises(TypeError):
-        dataclasses.replace(pkg, verdict=EvidenceVerdict.SUPPORTED)
+        dataclasses.replace(pkg, verdict=CredibilityVerdict.SUPPORTED)
     with pytest.raises(AttributeError):
-        object.__setattr__(pkg, "verdict", EvidenceVerdict.SUPPORTED)
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+        object.__setattr__(pkg, "verdict", CredibilityVerdict.SUPPORTED)
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
 
 
 def test_a_serialized_verdict_inconsistent_with_the_contents_is_rejected():
@@ -430,31 +430,31 @@ def test_a_serialized_verdict_inconsistent_with_the_contents_is_rejected():
     derived field in a payload is advisory, recomputed and verified.
     """
     payload = package(validity_records=(OUTSIDE,)).to_dict()
-    assert payload["verdict"] == EvidenceVerdict.NOT_SUPPORTED.value
-    payload["verdict"] = EvidenceVerdict.SUPPORTED.value
-    with pytest.raises(EvidencePackageError) as caught:
-        EvidencePackage.from_dict(payload)
+    assert payload["verdict"] == CredibilityVerdict.NOT_SUPPORTED.value
+    payload["verdict"] = CredibilityVerdict.SUPPORTED.value
+    with pytest.raises(CredibilityEvidenceError) as caught:
+        CredibilityEvidenceReport.from_dict(payload)
     assert "does not match" in str(caught.value)
 
 
 def test_a_payload_with_no_verdict_key_is_accepted_and_derives_its_own():
     payload = package().to_dict()
     del payload["verdict"]
-    assert EvidencePackage.from_dict(payload).verdict is EvidenceVerdict.SUPPORTED
+    assert CredibilityEvidenceReport.from_dict(payload).verdict is CredibilityVerdict.SUPPORTED
 
 
 def test_poisoning_the_instance_dict_does_not_shadow_the_property():
     """A property is a data descriptor; the instance dict loses to it."""
     pkg = package(validity_records=(OUTSIDE,))
-    pkg.__dict__["verdict"] = EvidenceVerdict.SUPPORTED
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
-    assert pkg.to_dict()["verdict"] == EvidenceVerdict.NOT_SUPPORTED.value
+    pkg.__dict__["verdict"] = CredibilityVerdict.SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
+    assert pkg.to_dict()["verdict"] == CredibilityVerdict.NOT_SUPPORTED.value
 
 
 def test_pickling_and_copying_carry_the_honest_verdict():
     pkg = package(validity_records=(OUTSIDE,))
-    assert pickle.loads(pickle.dumps(pkg)).verdict is EvidenceVerdict.NOT_SUPPORTED
-    assert copy.deepcopy(pkg).verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert pickle.loads(pickle.dumps(pkg)).verdict is CredibilityVerdict.NOT_SUPPORTED
+    assert copy.deepcopy(pkg).verdict is CredibilityVerdict.NOT_SUPPORTED
 
 
 def test_a_subclass_can_lie_in_process_but_not_across_a_serialization_boundary():
@@ -465,10 +465,10 @@ def test_a_subclass_can_lie_in_process_but_not_across_a_serialization_boundary()
     the lie cannot be persisted, sent, or handed to a second reader: the real
     ``from_dict`` recomputes the verdict from the contents and refuses.
     """
-    class Liar(EvidencePackage):
+    class Liar(CredibilityEvidenceReport):
         @property
         def verdict(self):
-            return EvidenceVerdict.SUPPORTED
+            return CredibilityVerdict.SUPPORTED
 
     liar = Liar(
         run_id="r",
@@ -477,9 +477,9 @@ def test_a_subclass_can_lie_in_process_but_not_across_a_serialization_boundary()
         validation=(PASSED,),
         provenance=PROVENANCE,
     )
-    assert liar.verdict is EvidenceVerdict.SUPPORTED          # in-process, yes
-    with pytest.raises(EvidencePackageError):                  # across a boundary, no
-        EvidencePackage.from_dict(liar.to_dict())
+    assert liar.verdict is CredibilityVerdict.SUPPORTED          # in-process, yes
+    with pytest.raises(CredibilityEvidenceError):                  # across a boundary, no
+        CredibilityEvidenceReport.from_dict(liar.to_dict())
 
 
 def test_the_verdict_tracks_the_contents_rather_than_being_stored():
@@ -492,23 +492,23 @@ def test_the_verdict_tracks_the_contents_rather_than_being_stored():
     kept reporting NOT_SUPPORTED over contents that no longer said so.
     """
     pkg = package(validity_records=(OUTSIDE,))
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
     object.__setattr__(
         pkg.validity[0].assessment, "status", ValidityStatus.IN_DOMAIN
     )
     object.__setattr__(pkg.validity[0].assessment, "violated", ())
-    assert pkg.verdict is EvidenceVerdict.SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.SUPPORTED
     # and the serialized form agrees with the contents, not with history
-    assert pkg.to_dict()["verdict"] == EvidenceVerdict.SUPPORTED.value
-    assert EvidencePackage.from_dict(pkg.to_dict()).verdict is (
-        EvidenceVerdict.SUPPORTED
+    assert pkg.to_dict()["verdict"] == CredibilityVerdict.SUPPORTED.value
+    assert CredibilityEvidenceReport.from_dict(pkg.to_dict()).verdict is (
+        CredibilityVerdict.SUPPORTED
     )
 
 
 def test_the_package_copies_the_mappings_it_is_given():
     """A caller's later mutation must not reach inside a constructed package."""
     values = {"T": Quantity(300.0, K)}
-    pkg = EvidencePackage(run_id="r", values=values, provenance=PROVENANCE)
+    pkg = CredibilityEvidenceReport(run_id="r", values=values, provenance=PROVENANCE)
     values["INJECTED"] = Quantity(1.0, K)
     assert "INJECTED" not in pkg.values
 
@@ -525,7 +525,7 @@ def test_an_unrecognised_validity_status_is_refused_rather_than_read_as_clean():
     the INSUFFICIENT_EVIDENCE branch, so it would fall through to SUPPORTED —
     the most favourable verdict available, earned by malformation.
     """
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         ModelValidityRecord(
             model_id="m",
             version="1",
@@ -551,7 +551,7 @@ def test_an_unassessed_model_that_took_part_is_insufficient_evidence():
     """
     pkg = package(validity_records=(IN_DOMAIN,), provenance=PROVENANCE)
     assert pkg.unassessed_models == (("electrical.material", "0.1.0"),)
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     # assess the second model and the gap closes
     both = package(
         validity_records=(
@@ -561,7 +561,7 @@ def test_an_unassessed_model_that_took_part_is_insufficient_evidence():
         provenance=PROVENANCE,
     )
     assert both.unassessed_models == ()
-    assert both.verdict is EvidenceVerdict.SUPPORTED
+    assert both.verdict is CredibilityVerdict.SUPPORTED
 
 
 def test_a_validity_record_for_a_model_that_did_not_run_is_refused():
@@ -571,7 +571,7 @@ def test_a_validity_record_for_a_model_that_did_not_run_is_refused():
     real IN_DOMAIN assessment of some unrelated model and turn
     INSUFFICIENT_EVIDENCE into SUPPORTED.
     """
-    with pytest.raises(EvidencePackageError) as caught:
+    with pytest.raises(CredibilityEvidenceError) as caught:
         package(
             validity_records=(
                 dataclasses.replace(IN_DOMAIN, model_id="kinetics.cstr"),
@@ -595,7 +595,7 @@ def test_a_record_whose_status_contradicts_its_own_conditions_is_refused():
         (ValidityStatus.UNKNOWN, {"violated": ("biot_number",)}),
         (ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, {"satisfied": ("biot_number",)}),
     ):
-        with pytest.raises(EvidencePackageError) as caught:
+        with pytest.raises(CredibilityEvidenceError) as caught:
             ModelValidityRecord(
                 model_id="m",
                 version="1",
@@ -632,7 +632,7 @@ def test_derive_verdict_fails_closed_when_called_on_its_own():
     junk = types.SimpleNamespace(
         assessment=types.SimpleNamespace(status="probably_fine")
     )
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         derive_verdict(validity=[junk], validation=[])
 
 
@@ -645,7 +645,7 @@ def test_required_levels_turn_an_unattained_claim_into_a_gap():
     pkg = package(checks=(PASSED,), required_levels=(ValidationLevel.DIMENSIONALLY_VALID,))
     assert pkg.attained_levels == frozenset({ValidationLevel.DIMENSIONALLY_VALID})
     assert pkg.missing_required_levels == ()
-    assert pkg.verdict is EvidenceVerdict.SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.SUPPORTED
 
     demanding = package(
         checks=(PASSED,),
@@ -654,7 +654,7 @@ def test_required_levels_turn_an_unattained_claim_into_a_gap():
     assert demanding.missing_required_levels == (
         ValidationLevel.EXPERIMENTALLY_VALIDATED,
     )
-    assert demanding.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert demanding.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
 
 def test_a_clean_package_that_attains_no_level_is_insufficient_evidence():
@@ -675,7 +675,7 @@ def test_a_clean_package_that_attains_no_level_is_insufficient_evidence():
     assert pkg.violated_conditions == () and pkg.unknown_conditions == ()
 
     assert pkg.attained_levels == frozenset()
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert not pkg.is_supported
     assert pkg.to_dict()["verdict_qualifiers"]["attained_levels"] == []
 
@@ -694,8 +694,8 @@ def test_one_attained_level_is_what_separates_supported_from_the_gap():
             ),
         )
     )
-    assert without.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
-    assert with_level.verdict is EvidenceVerdict.SUPPORTED
+    assert without.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert with_level.verdict is CredibilityVerdict.SUPPORTED
 
 
 def test_a_level_established_by_a_check_that_did_not_pass_does_not_count():
@@ -710,7 +710,7 @@ def test_a_level_established_by_a_check_that_did_not_pass_does_not_count():
         )
     )
     assert warned.attained_levels == frozenset()
-    assert warned.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert warned.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
 
 def test_the_assemblers_notes_never_reach_the_cores_validation_report():
@@ -723,7 +723,7 @@ def test_the_assemblers_notes_never_reach_the_cores_validation_report():
             checks=(PASSED,), notes="residual measured against the balance"
         ),
     )
-    pkg = EvidencePackage.from_result(
+    pkg = CredibilityEvidenceReport.from_result(
         result, validity=(IN_DOMAIN,), notes="reviewed and accepted by J. Smith"
     )
     assert pkg.notes == "reviewed and accepted by J. Smith"
@@ -733,14 +733,14 @@ def test_the_assemblers_notes_never_reach_the_cores_validation_report():
 
 def test_a_declaration_may_not_embed_a_core_evidence_record():
     """A check-shaped object under the not-evidence markings misleads a scanner."""
-    with pytest.raises(EvidencePackageError) as caught:
+    with pytest.raises(CredibilityEvidenceError) as caught:
         AssertedContext(
             source="s",
             payload={"cross_solver_agreement": PASSED.to_dict()},
         )
     assert "validation_check" in str(caught.value)
     # nested, not just at the top level
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         AssertedContext(source="s", payload={"a": {"b": [PASSED.to_dict()]}})
     # an ordinary declaration payload is untouched
     AssertedContext(source="s", payload={"q": Quantity(1.0, K).to_dict()})
@@ -755,23 +755,23 @@ def test_a_warning_is_reachable_without_filtering_the_check_list_by_hand():
 
 
 def test_a_package_refuses_two_verdicts_for_one_model():
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         package(validity_records=(IN_DOMAIN, OUTSIDE))
 
 
 def test_a_package_refuses_duplicate_check_names():
-    with pytest.raises(EvidencePackageError):
+    with pytest.raises(CredibilityEvidenceError):
         package(checks=(PASSED, dataclasses.replace(FAILED, name=PASSED.name)))
 
 
 def test_a_package_refuses_a_bare_number_as_a_value():
-    with pytest.raises(EvidencePackageError):
-        EvidencePackage(run_id="r", values={"T": 300.0}, provenance=PROVENANCE)
+    with pytest.raises(CredibilityEvidenceError):
+        CredibilityEvidenceReport(run_id="r", values={"T": 300.0}, provenance=PROVENANCE)
 
 
 def test_a_package_refuses_an_unattributable_run():
-    with pytest.raises(EvidencePackageError):
-        EvidencePackage(run_id="   ", values={}, provenance=PROVENANCE)
+    with pytest.raises(CredibilityEvidenceError):
+        CredibilityEvidenceReport(run_id="   ", values={}, provenance=PROVENANCE)
 
 
 # =====================================================================
@@ -789,7 +789,7 @@ def test_the_package_round_trips_through_its_serialized_form():
         declarations=(DECLARATION,),
     )
     payload = json.loads(json.dumps(pkg.to_dict(), sort_keys=True))
-    restored = EvidencePackage.from_dict(payload)
+    restored = CredibilityEvidenceReport.from_dict(payload)
 
     assert restored.to_dict() == pkg.to_dict()
     assert restored.run_id == pkg.run_id
@@ -808,7 +808,7 @@ def test_provenance_in_the_package_equals_the_source_record_exactly():
     pkg = package(provenance=ONE_MODEL_PROVENANCE)
     assert pkg.provenance == ONE_MODEL_PROVENANCE
     assert pkg.provenance.to_dict() == ONE_MODEL_PROVENANCE.to_dict()
-    restored = EvidencePackage.from_dict(pkg.to_dict())
+    restored = CredibilityEvidenceReport.from_dict(pkg.to_dict())
     assert restored.provenance == ONE_MODEL_PROVENANCE
 
 
@@ -820,9 +820,9 @@ def test_a_package_cannot_exist_without_provenance():
     unattributed package report SUPPORTED.
     """
     with pytest.raises(TypeError):
-        EvidencePackage(run_id="r", values={})
-    with pytest.raises(EvidencePackageError):
-        EvidencePackage(run_id="r", values={}, provenance={"run_id": "r"})
+        CredibilityEvidenceReport(run_id="r", values={})
+    with pytest.raises(CredibilityEvidenceError):
+        CredibilityEvidenceReport(run_id="r", values={}, provenance={"run_id": "r"})
 
 
 # =====================================================================
@@ -837,9 +837,9 @@ def test_from_result_carries_the_checks_that_never_ran():
         provenance=PROVENANCE,
         validation=unverified_report("no solver was available"),
     )
-    pkg = EvidencePackage.from_result(result, validity=(IN_DOMAIN,))
+    pkg = CredibilityEvidenceReport.from_result(result, validity=(IN_DOMAIN,))
     assert pkg.not_run_checks == ("validation_performed",)
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert pkg.provenance == result.provenance
     assert pkg.values == result.values
 
@@ -852,9 +852,9 @@ def test_from_result_with_no_validity_is_unknown_rather_than_clean():
         provenance=PROVENANCE,
         validation=ValidationReport(checks=(PASSED,)),
     )
-    pkg = EvidencePackage.from_result(result)
+    pkg = CredibilityEvidenceReport.from_result(result)
     assert pkg.validity == ()
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
 
 def test_the_carried_checks_go_back_into_the_cores_own_report_type():
@@ -938,7 +938,7 @@ def run_coupled(declaration, run_id):
 
 
 def package_from_run(declaration, run_id):
-    """Assemble an evidence package from a real coupled run.
+    """Assemble a credibility evidence report from a real coupled run.
 
     The thermal sub-result supplies values, validation and provenance; the
     lumped model's validity assessment is made separately, because the result
@@ -954,7 +954,7 @@ def package_from_run(declaration, run_id):
         heat_input=power,
     )
     thermal_result = run.final.result_for(thermal_id)
-    return run, thermal_result, EvidencePackage.from_result(
+    return run, thermal_result, CredibilityEvidenceReport.from_result(
         thermal_result,
         validity=(
             ModelValidityRecord(
@@ -990,7 +990,7 @@ def test_a_real_run_of_an_applicable_body_is_insufficient_evidence():
     assert pkg.failed_checks == ()
     # nothing argues against it; nothing argues for it either
     assert pkg.attained_levels == frozenset()
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     # and it is a real result, not an empty one
     assert pkg.values["final_temperature"].magnitude_in(K) == pytest.approx(
         338.577018, abs=1e-6
@@ -1005,7 +1005,7 @@ def test_a_real_run_of_a_thick_low_conductivity_body_is_not_supported():
     _, _, baseline = package_from_run(APPLICABLE, "evidence-baseline")
     run, _thermal, pkg = package_from_run(BIOT_VIOLATING, "evidence-biot")
 
-    assert pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert pkg.verdict is CredibilityVerdict.NOT_SUPPORTED
     assert pkg.violated_conditions == (
         (lump.LUMPED_CAPACITY_MODEL.model_id, ctx.BIOT_NUMBER),
     )
@@ -1014,14 +1014,14 @@ def test_a_real_run_of_a_thick_low_conductivity_body_is_not_supported():
     assert run.outcome is cp.CouplingOutcome.CRITERION_MET
     assert pkg.failed_checks == ()
     assert pkg.values == baseline.values
-    assert baseline.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert baseline.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
 
 def test_a_real_run_with_an_undeclared_conductivity_is_insufficient_evidence():
     """No k, so no Biot number, so nothing is known about applicability."""
     run, _thermal, pkg = package_from_run(MISSING_INPUT, "evidence-missing")
 
-    assert pkg.verdict is EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert pkg.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert ctx.BIOT_NUMBER in [name for _, name in pkg.unknown_conditions]
     assert pkg.violated_conditions == ()
     assert pkg.failed_checks == ()
@@ -1030,12 +1030,12 @@ def test_a_real_run_with_an_undeclared_conductivity_is_insufficient_evidence():
 
 def test_the_three_real_packages_round_trip_and_keep_their_verdicts():
     for declaration, expected in (
-        (APPLICABLE, EvidenceVerdict.INSUFFICIENT_EVIDENCE),
-        (BIOT_VIOLATING, EvidenceVerdict.NOT_SUPPORTED),
-        (MISSING_INPUT, EvidenceVerdict.INSUFFICIENT_EVIDENCE),
+        (APPLICABLE, CredibilityVerdict.INSUFFICIENT_EVIDENCE),
+        (BIOT_VIOLATING, CredibilityVerdict.NOT_SUPPORTED),
+        (MISSING_INPUT, CredibilityVerdict.INSUFFICIENT_EVIDENCE),
     ):
         _, _, pkg = package_from_run(declaration, "evidence-roundtrip")
-        restored = EvidencePackage.from_dict(
+        restored = CredibilityEvidenceReport.from_dict(
             json.loads(json.dumps(pkg.to_dict(), sort_keys=True))
         )
         assert restored.verdict is expected
@@ -1056,4 +1056,4 @@ def test_the_real_declaration_is_carried_verbatim_and_buys_the_caller_nothing():
     assert declaration.payload == BIOT_VIOLATING.to_dict()
 
     stripped = dataclasses.replace(pkg, declarations=())
-    assert stripped.verdict is pkg.verdict is EvidenceVerdict.NOT_SUPPORTED
+    assert stripped.verdict is pkg.verdict is CredibilityVerdict.NOT_SUPPORTED

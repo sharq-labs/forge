@@ -24,6 +24,8 @@ Every result a domain produces is a `ScientificResult` that carries:
 
 Two rules make this honest: a validation level is *derived* from a passing check that declares it, never asserted; and a model with no declared validity conditions is `unknown`, not valid.
 
+The verification and validation (V&V) layer in `src/engcore/mcp/` collects those judgements into a **credibility evidence report** — credibility in the sense ASME V&V 10/20/40 and NASA-STD-7009 use the word — and derives one advisory verdict from them. It is input to an engineer of record, not a decision, and the project claims no certification or standards conformance. See [docs/mcp/README.md](docs/mcp/README.md).
+
 ## Layout
 
 ```
@@ -37,6 +39,9 @@ src/engcore/
   systems/       electrothermal/ (closed-loop electro-thermal coupling)
                  aerospace/multirotor/ (reference design study)
   sria/          evidence records, admission, assurance, decision, campaigns
+  mcp/           verification and validation (V&V) layer: assembles a
+                 credibility evidence report for consumers and derives its
+                 advisory verdict
   design/        design generation and design memory
   inference/ uq/ adequacy/ data/
 tests/           the suite, tiered (see docs/TESTING.md)
@@ -44,6 +49,8 @@ experiments/     frozen, SHA-pinned experiments — inputs to the evidence docs
 docs/
   CRAFTY_ARCHITECTURE_CONTEXT.md   architecture, science and product context
   TESTING.md                       how to run the suite
+  mcp/README.md                    what the credibility evidence report claims,
+                                   and what it does not
   milestones/                      one prereg + freeze/evidence pair per milestone
   architecture-study/              MOOSE, PETSc, OpenFOAM, preCICE, FEniCSx, OpenMDAO studies
 ```
