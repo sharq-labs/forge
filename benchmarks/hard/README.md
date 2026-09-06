@@ -250,3 +250,121 @@ sides. The thermal gap is a real finding and is recorded in `NEEDS.md` C.1
 rather than absorbed into a number; it is roughly a five-line change to
 `battery/coupling.py`, which the round that added this boundary was forbidden
 to make.
+
+---
+
+# The hold-out split
+
+## Why it exists
+
+The generator behind these 2000 cases has been corrected **four times** in
+response to what scoring them revealed: `verify_sound()` gained the linear TCR
+form's own 200-450 K range, then component ratings, then the whole set was
+regenerated for convection, then `geometry_conflict` stopped drawing the sphere's
+exact shape factor. Every one of those corrections is defended above, and every
+one of them is right. That is precisely the problem. A benchmark that gets
+corrected whenever it disagrees with the tool converges on agreeing with the
+tool, and no amount of care in the individual corrections changes what the
+final number then measures. **Every figure in the baseline tables above is a
+figure this generator has been tuned against, four times over.** The hold-out
+is the only one that is not: 600 cases drawn by a rule fixed before they were
+scored, sealed against inspection, and opened once. It is the difference
+between "the tool scores 91.8 % on cases we kept adjusting until it did" and
+"the tool scores X on cases nobody looked at", and only the second is evidence.
+
+## The rule
+
+Fixed in `split_hard.py`; seed **20260906**, rule id **`stratified-hash-hamilton/1`**.
+
+1. A case's **stratum** is its `ground_truth.defect` tag — 144 of them.
+2. Within a stratum, cases are ordered by `sha256(f"{seed}:{case_id}")`, case id
+   as tiebreak. Not a draw: no generator state, nothing to re-sample. Re-running
+   gives the same answer; a different answer requires editing the tracked seed.
+3. The hold-out gets `round(0.30 * 2000) = 600` seats, allocated across strata by
+   **largest remainder** — `floor(0.30 * n_s)` each, leftovers to the largest
+   fractional remainders, ties broken by stratum name.
+4. The hold-out is the first `k_s` of each stratum's order; the development set
+   is the remaining 1400.
+
+Reproduce and check:
+
+    python benchmarks/hard/split_hard.py --cases benchmarks/hard/cases_hard --verify
+
+## The composition is preserved, and here is the check
+
+The test is on **proportions**, not counts — the partitions are different sizes,
+so equal counts would be the wrong test. For each of the 144 defect tags, its
+share of the hold-out is compared with its share of the development set.
+
+| | |
+|---|---|
+| Development / hold-out | 1400 / 600 (exactly 30.0 %) |
+| Distinct defect tags | 144 total; **144** present in dev, **139** in hold-out |
+| Largest \|share gap\| over all 144 tags | **0.00119** — one case's worth of a 600-case set |
+| Largest \|share gap\| by `label` | 0.0043 (`model_inapplicable`: 40.07 % dev vs 40.50 % hold-out) |
+| Largest \|share gap\| by `expected_verdict` | 0.0052 (`NOT_SUPPORTED`: 69.64 % vs 70.17 %) |
+| `SUPPORTED` share | 17.21 % dev vs 16.83 % hold-out |
+
+The five tags absent from the hold-out are the five strata that hold **one case
+each** — `horizon_in@0.002`, `horizon_in@0.05`, `horizon_in@0.2`,
+`rating_current_in@0.01`, `rating_voltage_in@0.002`. A stratum of one is 100 %
+on one side of any split and 0 % on the other; no stratified rule can do
+otherwise, and this is stated rather than rounded away.
+
+**It is the rule that preserves the composition, not the seed.** Re-running the
+split at each of the nine seeds 20260902-20260910 gives a largest share gap of
+**0.00119 at every one of them**, the published seed included. The seed was
+fixed to the round's date before the split was computed; the sweep is there so
+that a reader does not have to take that on trust. The sweep reports composition
+only — no alternative split was ever scored, because scoring alternative splits
+is exactly the search this file exists to prevent.
+
+## How the seal is enforced
+
+In the harness, not by convention. `score_hard.py --split` takes `dev`,
+`holdout` or `all`; the last two contain sealed cases and **exit non-zero**
+without `--open-holdout`:
+
+    $ python benchmarks/hard/score_hard.py --src src --cases benchmarks/hard/cases_hard
+    REFUSED: --split all scores the sealed hold-out.
+      600 of 2000 cases are sealed under rule stratified-hash-hamilton/1, seed 20260906.
+      ...
+      Development runs:   --split dev
+      Final evaluation:   --split all --open-holdout --note "why"
+
+Opening appends a dated line to `HOLDOUT_OPENINGS.log` — UTC timestamp, split,
+case-set digest, hold-out digest, the four metrics and a stated reason. The log
+is tracked, so an opening is a line in the repository's history rather than a
+claim in a document, and a second opening cannot be mistaken for the first.
+
+The seal binds to the bytes: it applies only when `split_hard.json`'s
+`case_set_digest` matches the case files actually on disk. `cases_battery` has
+no split, so scoring it is unrestricted and its summary says so.
+
+**What the seal does not do.** It stops the hold-out *cases* from being scored,
+listed, or diffed run-to-run — which is the mechanism by which a benchmark gets
+fitted to a tool. It does not make the hold-out aggregate unknowable: the
+full-set figure is published above, so hold-out ≈ (full − dev) is arithmetic
+anyone can do. Saying otherwise would be another unearned number.
+
+## Development-set result
+
+    python benchmarks/hard/score_hard.py --src src \
+      --cases benchmarks/hard/cases_hard --workers 4 --split dev
+
+| Metric | full set (2000, historical) | **development set (1400)** |
+|---|---|---|
+| Exact verdict match | 1836/2000 (91.8%) | **1282/1400 (91.6%)** |
+| Catch rate | 1647/1658 (99.3%) | **1149/1159 (99.1%)** |
+| False accept | 11/1658 (0.66%) | **10/1159 (0.86%)** |
+| False reject | 1/342 (0.29%) | **1/241 (0.41%)** |
+| Runs ending in an exception | 0 | **0** |
+
+Ten of the eleven known false accepts and the one known false reject (`S00709`,
+diagnosed above) fall in the development set. `src/` was not touched in the
+round that produced this split, and the full-set column is byte-identical to the
+"after geometry relabel" column above — the split re-partitions the measurement,
+it does not change it.
+
+**The hold-out has not been scored.** `HOLDOUT_OPENINGS.log` is the record of
+whether that is still true.
