@@ -146,6 +146,7 @@ __all__ = [
     "coupled_dependencies",
     "coupled_problems",
     "cycle_edges",
+    "dependency_closure",
     "edge_key",
     "execution_order",
     "is_ratio_scale",
@@ -648,6 +649,44 @@ def execution_order(
                 ready.append(target)
                 ready.sort()
     return tuple(order) if len(order) == len(remaining) else ()
+
+
+def dependency_closure(
+    problem_id: str, dependencies: Iterable[QuantityDependency]
+) -> frozenset[str]:
+    """Every problem a value of ``problem_id`` depends on, transitively.
+
+    Includes ``problem_id`` itself: a problem's values depend on its own
+    solve. Walks the declared dependency edges *backwards* — target to source —
+    which is the direction the question is asked in: not "what does this feed"
+    but "what fed this".
+
+    **Torn edges are not excluded, and must not be.** A tear is a statement
+    about how the iteration is *executed*, not about what a converged value
+    depends on: at the fixed point the torn edge is satisfied like every other,
+    and the value on the far side of it is one this value rests on. Cutting the
+    closure at a tear would produce a smaller answer whose only justification is
+    an execution convenience — and in a coupled cycle it would exclude exactly
+    the participant the cycle exists to couple to.
+
+    A consequence, stated rather than hidden: for a composition whose
+    dependencies form one cycle, the closure of any member is the whole
+    composition. That is the correct answer and not a degenerate one — a series
+    circuit's second stage really does set the first stage's temperature.
+    """
+    incoming: dict[str, set[str]] = {}
+    for dependency in dependencies:
+        incoming.setdefault(dependency.target_problem_id, set()).add(
+            dependency.source_problem_id
+        )
+    seen = {str(problem_id)}
+    frontier = [str(problem_id)]
+    while frontier:
+        for source in incoming.get(frontier.pop(), ()):
+            if source not in seen:
+                seen.add(source)
+                frontier.append(source)
+    return frozenset(seen)
 
 
 def cycle_edges(

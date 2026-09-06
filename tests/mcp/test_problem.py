@@ -15,6 +15,7 @@ produced.
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 
@@ -37,9 +38,11 @@ from src.engcore.mcp import (
     example_electrothermal_payload,
     run_electrothermal_case,
 )
+from src.engcore.mcp import evidence
 from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.results.validation import ValidationLevel
 from src.engcore.scientific.units.quantity import Quantity, dimensionality
+from src.engcore.systems.electrothermal import coupled as cp
 
 K = "kelvin"
 
@@ -155,16 +158,29 @@ def test_a_well_formed_payload_runs_and_matches_the_hand_built_case():
     assert report.values["final_temperature"].magnitude_in(K) == pytest.approx(
         338.577018, abs=1e-6
     )
-    assert report.verdict is CredibilityVerdict.SUPPORTED
     assert report.violated_conditions == ()
-    assert report.unknown_conditions == ()
     assert report.failed_checks == () and report.not_run_checks == ()
-    # SUPPORTED here rests on the level the lumped solver's reference
-    # comparison establishes — exactly as in the hand-built case, and for the
-    # same reason. The payload boundary neither adds nor removes evidence.
+    # The lumped solver's reference comparison establishes a level, exactly as
+    # in the hand-built case and for the same reason. The payload boundary
+    # neither adds nor removes evidence.
     assert report.attained_levels == frozenset(
         {ValidationLevel.ANALYTICALLY_VERIFIED}
     )
+
+    # INSUFFICIENT_EVIDENCE and not SUPPORTED, and the reason is in the report
+    # rather than in this comment: since the report is assembled over the
+    # dependency closure it covers the electrical models too, and nothing in
+    # this payload declares a resistor's rated dissipation, a source's current
+    # limit, or any condition at all for Kirchhoff's law. The thermal model is
+    # still in domain, and the gaps are named.
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    assert report.unknown_conditions
+    thermal = next(
+        r for r in report.validity
+        if r.model_id == lump.LUMPED_CAPACITY_MODEL.model_id
+    )
+    assert thermal.status is ValidityStatus.IN_DOMAIN
+    assert thermal.assessment.unknown == ()
 
 
 def test_a_violated_bound_reaches_the_report_as_a_finding():
@@ -634,7 +650,10 @@ def test_description_to_payload_to_problem_to_report():
     report = outcome.reports[0]
     assert report.verdict in set(CredibilityVerdict)
     assert report.violated_conditions == ()
-    assert report.unknown_conditions == ()
+    # The unknown conditions here are the electrical ratings this payload has
+    # no field for — see the applicable-payload test above. What matters to
+    # *this* test is that the described payload poses and runs, and that
+    # nothing in it is violated.
     assert report.values["final_temperature"].magnitude_in(K) == pytest.approx(
         338.577018, abs=1e-6
     )
@@ -715,3 +734,164 @@ def test_f11_an_admissible_coupling_block_still_builds_and_runs():
     payload["coupling"]["tolerance"] = "1e-9 kelvin"
     assert build_electrothermal_system(payload).stages
     assert run_electrothermal_case(payload).run.iterations_run >= 1
+
+
+# =====================================================================
+# F01 / F02 / F05 — the report is built over the dependency closure
+# =====================================================================
+
+MATERIAL = mat.RATED_LINEAR_TCR_MODEL.model_id
+LINEAR_TCR = mat.LINEAR_TCR_MODEL.model_id
+KCL = dc_models.KCL_MODEL.model_id
+RESISTOR = dc_models.RESISTOR_OHM_MODEL.model_id
+SOURCE = dc_models.IDEAL_VOLTAGE_SOURCE_MODEL.model_id
+
+
+def assessed(report):
+    return {record.model_id for record in report.validity}
+
+
+def test_f01_a_capped_run_is_not_supported_and_the_report_names_the_cap():
+    """A coupling that stopped on its budget cannot be read as one that met it.
+
+    The finding: capping the iteration to 1 left the report SUPPORTED with no
+    trace anywhere in it that the fixed point was never reached. The coupled
+    run knew — ``CoupledRun.outcome`` is ``ITERATION_LIMIT_REACHED`` — and the
+    reporting boundary threw that away, because the report was assembled from
+    one sub-result and a sub-result carries no coupling.
+    """
+    payload = example_electrothermal_payload()
+    payload["coupling"]["max_iterations"] = 1
+    outcome = run_electrothermal_case(payload, run_id="f01-capped")
+    report = outcome.reports[0]
+
+    assert outcome.run.outcome is cp.CouplingOutcome.ITERATION_LIMIT_REACHED
+    assert report.verdict is not CredibilityVerdict.SUPPORTED
+
+    # the cap is *in the report*, not merely inferable from a sibling object
+    assert report.coupling is not None
+    assert report.coupling.outcome == "iteration_limit_reached"
+    assert report.coupling.criterion is not evidence.CouplingCriterion.MET
+    assert report.coupling.iterations_run == 1
+    assert report.coupling.iteration_limit == 1
+    assert "iteration_limit_reached" in json.dumps(report.to_dict())
+
+    # and it survives the trip out to JSON and back
+    restored = type(report).from_dict(
+        json.loads(json.dumps(report.to_dict(), sort_keys=True))
+    )
+    assert restored.coupling == report.coupling
+    assert restored.verdict is report.verdict
+
+
+def test_f01_a_converged_run_carries_the_same_field_saying_so():
+    """The field is not a failure flag; it is the coupling's own statement."""
+    outcome = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="f01-converged"
+    )
+    report = outcome.reports[0]
+    assert outcome.run.outcome is cp.CouplingOutcome.CRITERION_MET
+    assert report.coupling.criterion is evidence.CouplingCriterion.MET
+    assert report.coupling.outcome == "criterion_met"
+    assert report.coupling.largest_iterate_change.magnitude_in(K) <= (
+        report.coupling.tolerance.magnitude_in(K)
+    )
+
+
+def test_f01_the_coupling_statement_is_not_a_numerical_convergence_claim():
+    """Distinct from every solver's own convergence, and not a check.
+
+    Both closed-form participants report NOT_APPLICABLE and the MNA solve
+    reports CONVERGED in every iteration of a run that converged not at all.
+    Folding the coupling into either would make those the same token.
+    """
+    payload = example_electrothermal_payload()
+    payload["coupling"]["max_iterations"] = 1
+    report = run_electrothermal_case(payload, run_id="f01-distinct").reports[0]
+
+    assert "iteration_limit_reached" not in json.dumps(
+        [c.to_dict() for c in report.validation]
+    )
+    for check in report.validation:
+        assert check.establishes is not ValidationLevel.NUMERICALLY_CONVERGED
+    assert ValidationLevel.NUMERICALLY_CONVERGED not in report.attained_levels
+
+
+def test_f02_a_violated_material_limit_reaches_the_report():
+    """The finding: a declared limit the run walks straight past, unreported.
+
+    ``maximum_operating_temperature`` is a condition of the *rated* material
+    model. The report assessed only the thermal model, so a conductor declared
+    good to 301 K and run to 338 K produced a SUPPORTED report in which the
+    limit appeared nowhere.
+    """
+    payload = example_electrothermal_payload()
+    limits = payload["stages"][0]["conductor"]["limits"]
+    limits["maximum_operating_temperature"] = "301 kelvin"
+    report = run_electrothermal_case(payload, run_id="f02-limit").reports[0]
+
+    assert MATERIAL in assessed(report)
+    assert (MATERIAL, mat.OPERATING_TEMPERATURE_UTILIZATION) in (
+        report.violated_conditions
+    )
+    # a violation is a finding, and a finding outranks every gap beside it
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+def test_f02_an_undeclared_material_limit_is_a_gap_and_not_a_pass():
+    """Omitting the limit does not buy the verdict the limit refused."""
+    payload = example_electrothermal_payload()
+    limits = payload["stages"][0]["conductor"]["limits"]
+    del limits["maximum_operating_temperature"]
+    report = run_electrothermal_case(payload, run_id="f02-omitted").reports[0]
+    assert (MATERIAL, mat.OPERATING_TEMPERATURE_UTILIZATION) in (
+        report.unknown_conditions
+    )
+    assert report.verdict is not CredibilityVerdict.SUPPORTED
+
+
+def test_every_model_in_the_closure_is_named_and_assessed():
+    """The report covers what the values it reports actually depend on.
+
+    A body temperature depends on the heat, which depends on the circuit,
+    which depends on every element's R(T), which depends back on the
+    temperature. That closure is the whole composition, and every model in it
+    now appears with a verdict rather than the thermal one appearing alone.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="closure"
+    ).reports[0]
+
+    expected = {
+        lump.LUMPED_CAPACITY_MODEL.model_id,
+        LINEAR_TCR,
+        MATERIAL,
+        KCL,
+        RESISTOR,
+        SOURCE,
+    }
+    assert assessed(report) == expected
+    assert {m for m, _v in report.contributing_models} >= expected
+    assert report.unassessed_models == ()
+
+
+def test_the_undeclared_electrical_ratings_are_reported_as_gaps():
+    """More restrictive, and correctly so: nobody declared these limits.
+
+    The payload has no field for a resistor's rated dissipation or a source's
+    current limit, so every rating condition is UNKNOWN — and
+    ``electrical.dc.kcl`` declares no conditions at all. Before this change
+    none of that was in the report, because none of those models was in the
+    report. The nominal case is INSUFFICIENT_EVIDENCE as a result, which is the
+    honest reading of it.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="gaps"
+    ).reports[0]
+    assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
+        report.unknown_conditions
+    )
+    assert (SOURCE, dc_models.SOURCE_CURRENT_UTILIZATION) in (
+        report.unknown_conditions
+    )
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
