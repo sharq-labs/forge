@@ -21,16 +21,39 @@ package versions, then the two measurements.
 
 ---
 
-## What was actually run, and what was not
+## What was actually run
 
-**Docker is not installed in the environment this page was written in.** The
-image has not been built. Claiming a run that did not happen is the exact
-failure this whole round exists to close, so it is stated here rather than
-buried: the `Dockerfile` above is delivered **unbuilt and unverified as an
-image**.
+**The image has been built and run** — in GitHub Actions, run
+[`34057714167`](https://github.com/sharq-labs/forge/actions/runs/34057714167),
+job `reproduce`, on the `presentation` branch. For one round it had not been,
+and this section said so plainly rather than claiming a run that did not happen;
+that is why the `reproduce` CI job exists.
 
-What *was* run is the next-best thing available, and it answers most of the
-same question:
+```
+== environment ==
+Linux-6.17.0-1022-azure-x86_64-with-glibc2.36
+** ngspice-39 : Circuit level simulation program
+numpy==2.5.3  scipy==1.18.1  scikit-learn==1.9.0  Pint==0.25.3  pytest==9.1.1
+
+== FAST tier ==
+2146 passed in 71.86s
+
+== benchmark, development split (hold-out sealed) ==
+"case_set_digest":     "476976c15a1a22d89019c9d6f80ec061a123d0579efc9b5fbecfc16312dd4a1f"
+"split_digest":        "7353123acaf903e48e3e6aa90f11de46e888edec7b055aef8ce8b35c7a48aae0"
+"exact_verdict_match": "1282/1400 (91.6%)"
+"catch_rate":          "1149/1159 (99.1%)"
+"false_accept":        "10/1159 (0.86%)"
+"false_reject":        "1/241 (0.4%)"
+```
+
+**A third independent environment, and nothing moved.** A Debian bookworm
+container on an Azure kernel, carrying **ngspice-39** where both machines below
+have 42, with dependencies resolved on a different day — same case-set digest,
+same four metrics, same ten false-accept ids.
+
+The second data point below was taken before the container existed, and is kept
+because two environments that agree are better evidence than one:
 
 | | host | clean environment |
 |---|---|---|

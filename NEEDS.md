@@ -2687,3 +2687,59 @@ sibling file's pattern.
 `tests/mcp/__init__.py`) would stop the directory shadowing the SDK's name
 entirely. That changes how pytest imports every test module in the repository
 and is not a thing to do in the same commit as a dependency declaration.
+
+### P.2 The image is built, and it is the third environment to agree
+
+Closes `evidence round` B.2, which said the `Dockerfile` was delivered unbuilt
+and unverified because Docker was not installed where that round ran.
+
+Built and run in GitHub Actions run `34057714167`, job `reproduce`, on this
+branch. `2146 passed` at the FAST tier, and the development split scored
+`1282/1400 (91.6 %)`, catch `1149/1159 (99.1 %)`, false accept `10/1159
+(0.86 %)`, false reject `1/241 (0.4 %)`, with case-set digest `476976c1…` — the
+same figures the host and the WSL environment produced.
+
+The container is a genuinely different third environment rather than a
+confirmation of the second: Debian bookworm on an Azure kernel, and **ngspice
+39** where both other machines carry 42. Nothing moved.
+
+The `reproduce` job has lost its `continue-on-error` and is now load-bearing: it
+is the thing that catches the next undeclared dependency on the day it lands,
+which is exactly the class of defect P.1 records.
+
+### P.3 GUARD 3 broke seven kinetics tests, and neither tier that anyone runs sees them
+
+**Not this round's defect and not fixed here** — recorded because measuring it
+cost something and the lesson generalises.
+
+`evidence-package` is based on `c0ec657` (GUARD 3) on `core-guards`. Running
+`tests/domains/kinetics/` at each commit:
+
+| commit | result |
+|---|---|
+| `dd4f698` merge base | 227 passed |
+| `40e8956` GUARD 2 | passed |
+| **`c0ec657` GUARD 3** | **7 failed**, 220 passed |
+| `9e41f5a` GUARD 7, `core-guards` tip | **227 passed — already repaired** |
+
+Two causes. `cstr/validation.py:605` returns `self._tolerance_rel_tol` from a
+property, and that attribute is never assigned to the instance — it exists only
+as a **local variable inside a function** at line 831, so every access raises
+`AttributeError: ... Did you mean: 'tolerance_rel_tol'?`. And
+`scientific/results/thresholds.py`, created by the same commit, contains the
+string `CSTR`, failing `test_the_scientific_core_owns_no_cstr_specific_rule` —
+the layering invariant that commit's own message reports having swept for.
+
+**The lesson is the tier, not the bug.** These live in `expensive` and appear in
+neither FAST nor any developer's default loop. GUARD 3's commit message reports
+"FAST 2140 passed"; the evidence round's baseline reports "FAST 2146 passed".
+Both are true, both were checked honestly, and both missed seven failures
+because the tier that runs them is the one nobody runs locally. A green FAST
+tier is not evidence that a `src/` change is sound, and the SCIENTIFIC job in CI
+is the only thing that says otherwise — which is a reason to keep it red-sensitive
+rather than tolerated.
+
+Scoring the development split against the **GUARD 7** `src/` gives figures
+identical to this branch's, field for field, including the ten false-accept ids.
+So the repair costs no number; it costs the `src/` tree object the release page
+pins, which must be re-read and the tag re-cut after a rebase.
