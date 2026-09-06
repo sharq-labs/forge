@@ -13,26 +13,47 @@ import copy
 
 import pytest
 
-from src.engcore.domains.battery import context as bctx
-from src.engcore.domains.battery import models as bmdl
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.mcp import server as srv
-from src.engcore.mcp.battery import (
+# The MCP SDK is the optional `[mcp]` dependency group. The suite must stay
+# runnable — and green — without it, the same rule pytest-xdist is held to.
+#
+# This module carried no guard at all, and that was not cosmetic:
+# `src.engcore.mcp.server` imports the SDK at module scope, so on any machine
+# without it this file raised at COLLECTION and took the whole run with it. CI
+# was red on every job from the commit that added this file (2026-09-06 16:47)
+# until this one, and a clean-machine install lost 55 tests. NEEDS.md, evidence
+# round B.1.
+#
+# The guard is on `mcp.types`, NOT on `mcp`, and the difference is the whole
+# point. `tests/mcp/` has no `__init__.py`, and pytest's prepend import mode
+# puts `tests/` on `sys.path` — which makes this very directory a PEP 420
+# namespace package called `mcp`. `importorskip("mcp")` therefore FINDS
+# something on a machine with no SDK at all and does not skip; measured with
+# `importlib.util.find_spec`, it resolves to `tests/mcp` with `loader = None`.
+# `mcp.types` exists only in the real SDK, so it is the thing worth asking
+# about. `test_server.py` carries the same corrected guard.
+pytest.importorskip("mcp.types",
+                    reason="install the optional [mcp] dependency group")
+
+from src.engcore.domains.battery import context as bctx  # noqa: E402
+from src.engcore.domains.battery import models as bmdl  # noqa: E402
+from src.engcore.domains.thermal_models import lumped as lump  # noqa: E402
+from src.engcore.mcp import server as srv  # noqa: E402
+from src.engcore.mcp.battery import (  # noqa: E402
     build_battery_case,
     describe_battery_case,
     example_battery_payload,
     run_battery_case,
 )
-from src.engcore.mcp.errors import (
+from src.engcore.mcp.errors import (  # noqa: E402
     MalformedPayloadError,
     MissingFieldError,
     MissingUnitError,
     UnknownFieldError,
     WrongDimensionError,
 )
-from src.engcore.mcp.problem import describe_electrothermal_case
-from src.engcore.mcp.systems import SYSTEMS, system
-from src.engcore.scientific.models.definition import ValidityStatus
+from src.engcore.mcp.problem import describe_electrothermal_case  # noqa: E402
+from src.engcore.mcp.systems import SYSTEMS, system  # noqa: E402
+from src.engcore.scientific.models.definition import ValidityStatus  # noqa: E402
 
 
 def payload(**edits):

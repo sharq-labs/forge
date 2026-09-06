@@ -21,6 +21,26 @@ dev = [
   "pytest-xdist>=3.5",
 ]
 
+# The MCP boundary. `tests/mcp/test_server.py` has named this group in a comment
+# since it was written — "the optional `[mcp]` dependency group" — but the group
+# itself did not exist, so there was no supported way to install the SDK and the
+# host that had it got it by some route this file did not record.
+#
+# It is optional rather than a hard dependency because the rule that comment
+# states is the right one: the suite must stay runnable, and green, without it.
+# `src/engcore/mcp/server.py` is the ONLY module that imports the SDK —
+# `battery.py`, `problem.py`, `errors.py` and `evidence.py` do not — so
+# everything except the transport itself works on a bare install.
+#
+# `anyio` is here because `test_server.py` drives the in-process client through
+# it. It arrives as an MCP SDK dependency in practice; it is named explicitly
+# because the test imports it directly and a transitive dependency is not a
+# promise.
+mcp = [
+  "mcp>=2.1",
+  "anyio>=4.0",
+]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

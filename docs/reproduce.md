@@ -21,16 +21,39 @@ package versions, then the two measurements.
 
 ---
 
-## What was actually run, and what was not
+## What was actually run
 
-**Docker is not installed in the environment this page was written in.** The
-image has not been built. Claiming a run that did not happen is the exact
-failure this whole round exists to close, so it is stated here rather than
-buried: the `Dockerfile` above is delivered **unbuilt and unverified as an
-image**.
+**The image has been built and run** — in GitHub Actions, run
+[`34057714167`](https://github.com/sharq-labs/forge/actions/runs/34057714167),
+job `reproduce`, on the `presentation` branch. For one round it had not been,
+and this section said so plainly rather than claiming a run that did not happen;
+that is why the `reproduce` CI job exists.
 
-What *was* run is the next-best thing available, and it answers most of the
-same question:
+```
+== environment ==
+Linux-6.17.0-1022-azure-x86_64-with-glibc2.36
+** ngspice-39 : Circuit level simulation program
+numpy==2.5.3  scipy==1.18.1  scikit-learn==1.9.0  Pint==0.25.3  pytest==9.1.1
+
+== FAST tier ==
+2146 passed in 71.86s
+
+== benchmark, development split (hold-out sealed) ==
+"case_set_digest":     "476976c15a1a22d89019c9d6f80ec061a123d0579efc9b5fbecfc16312dd4a1f"
+"split_digest":        "7353123acaf903e48e3e6aa90f11de46e888edec7b055aef8ce8b35c7a48aae0"
+"exact_verdict_match": "1282/1400 (91.6%)"
+"catch_rate":          "1149/1159 (99.1%)"
+"false_accept":        "10/1159 (0.86%)"
+"false_reject":        "1/241 (0.4%)"
+```
+
+**A third independent environment, and nothing moved.** A Debian bookworm
+container on an Azure kernel, carrying **ngspice-39** where both machines below
+have 42, with dependencies resolved on a different day — same case-set digest,
+same four metrics, same ten false-accept ids.
+
+The second data point below was taken before the container existed, and is kept
+because two environments that agree are better evidence than one:
 
 | | host | clean environment |
 |---|---|---|
@@ -101,7 +124,42 @@ exit=1
 
 ---
 
-## Result 2 — the FAST tier does **not** reproduce, and that is the finding
+## Result 2 — the FAST tier did **not** reproduce. Fixed, and re-measured.
+
+**Status: closed on this branch.** The transcript below is what a clean machine
+did before the `[mcp]` group existed. It is kept because it is the measurement
+that found the defect, and because the fix turned out to need a second one.
+
+Re-run on the same clean machine after the fix:
+
+```
+########## FAST tier WITHOUT the [mcp] group -- must be GREEN ##########
+SKIPPED [1] tests/mcp/test_battery_boundary.py:34: install the optional [mcp] dependency group
+SKIPPED [1] tests/mcp/test_server.py:22: could not import 'anyio': No module named 'anyio'
+2091 passed, 2 skipped in 18.19s
+pytest exit=0
+
+########## now install the [mcp] group and run again ##########
+2146 passed in 18.60s
+pytest exit=0
+```
+
+| | before | bare install, after | `.[dev,mcp]`, after |
+|---|---|---|---|
+| Passed | 2091 | 2091 | **2146** |
+| Skipped | 1 | 2 *(two whole modules)* | 0 |
+| Errors | **1** | 0 | 0 |
+| Exit code | **1** | **0** | **0** |
+
+Two honest qualifications. On a bare install **the same 55 tests still do not
+run** — they are now a clean skip instead of a collection error, which is the
+difference between a suite that reports what it did not cover and a suite that
+falls over. And the fix takes `2146 passed` on a machine that had never seen the
+SDK, which is full parity with the host.
+
+---
+
+## Appendix — the original finding
 
 ```
 ########## RUN 1: FAST tier, exactly as documented ##########
@@ -191,13 +249,30 @@ those runs were on `main` at the `label-corrections` merge, five commits behind
 this branch and carrying fewer tests — not because the runner behaves
 differently. The error is identical.
 
-**Nothing was tuned away.** No dependency was added, no test was edited, no
-guard was inserted. The `Dockerfile` installs exactly what the project declares
-and will fail at the same line, which is why the `reproduce` CI job carries
-`continue-on-error: true` with a comment naming the commit that should remove
-it. The finding is recorded in `NEEDS.md`, evidence round, **B.1**. Closing it
-is a change to `pyproject.toml` and `tests/mcp/test_battery_boundary.py`, and
-this round owned neither.
+**Nothing was tuned away in the round that found this.** The fix landed in the
+next one: `pyproject.toml` gained the `[mcp]` group, both MCP test modules
+gained a working guard, and CI and the `Dockerfile` now install `.[dev,mcp]`.
+`NEEDS.md` **evidence round B.1** is the finding; **presentation round P.1** is
+the fix.
+
+**The obvious guard was a no-op, and that is the part worth reading.**
+`pytest.importorskip("mcp")` — copied from `test_server.py` — did not skip.
+`tests/mcp/` has no `__init__.py`, and pytest's prepend import mode puts
+`tests/` on `sys.path`, so that directory *is* a PEP 420 namespace package
+named `mcp`. Measured with site-packages stripped from `sys.path`:
+
+```
+find_spec(mcp)      -> FOUND
+  loader             None
+  search locations   ['.../tests/mcp']
+  mcp.types?         False
+```
+
+Which is why the error above reads `No module named 'mcp.types'` and never
+`No module named 'mcp'`: the top-level name always resolved. The guard is now on
+`mcp.types`, which only the real SDK provides. **`test_server.py` carried the
+same dead guard** and nobody could have noticed, because its `anyio` check skips
+first on every machine anyone tried.
 
 ---
 
@@ -211,10 +286,12 @@ Once `mcp` is declared, `docker run --rm crafty-repro` should print:
 | FAST tier | `2146 passed` (0 skipped, 0 errors) | ~20–35 s at `-n 4` |
 | Benchmark, dev split | `1282/1400 (91.6%)`, catch `99.1%`, FA `0.86%`, FR `0.4%` | ~20–90 s at `--workers 4` |
 
-**Today it prints `2091 passed, 1 skipped, 1 error` and exits non-zero at the
-FAST stage.** The benchmark numbers are the ones to check against; the case-set
-digest `476976c1…` must match, and a run that prints a different digest is a run
-against different cases, not a different result.
+The image installs `.[dev,mcp]`, so it should reach `2146 passed`. The benchmark
+numbers are the ones to check against; the case-set digest `476976c1…` must
+match, and a run that prints a different digest is a run against different
+cases, not a different result. The image has been built and does print exactly
+that — see **What was actually run** above, and `NEEDS.md` presentation round
+P.2.
 
 Runtimes were measured on a 24-core host at `-n 4` / `--workers 4`. Both worker
 counts are fixed rather than `auto` on purpose: memory grows ~200 MB per worker
