@@ -53,11 +53,15 @@ from the reactor's own exact invariant ``Z = T + beta C_A``, which
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from ....scientific.errors import InvalidScientificProblem
 from ....scientific.units.quantity import Quantity
-from ...derived_context import assembled_validity_context, caller_declared
+from ...derived_context import (
+    DomainValidityContext,
+    assembled_validity_context,
+    caller_declared,
+)
 
 __all__ = [
     "ACTIVATION_ENERGY",
@@ -426,6 +430,11 @@ def adiabatic_ceiling_temperature(
 #: never occupy. See ``engcore.domains.derived_context`` for what reserving a
 #: name means and why it is enforced at assembly rather than at problem
 #: construction.
+#: The derived groups. The reactor's own state coordinates -- ``temperature``
+#: and ``concentration`` -- are reserved too, and are added by
+#: :data:`~engcore.domains.kinetics.cstr.problem.ASSEMBLER_NAMESPACE`, which
+#: can see the model record that reserves them; this module is imported by
+#: that one and cannot.
 ASSEMBLED_QUANTITIES = frozenset(
     {DAMKOHLER_NUMBER, ADIABATIC_CEILING_TEMPERATURE}
 )
@@ -466,17 +475,43 @@ def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
     return {name: value for name, value in derived.items() if value is not None}
 
 
-def cstr_validity_context(declared: Mapping[str, Any]) -> dict[str, Any]:
+def cstr_validity_context(
+    declared: Mapping[str, Any],
+    *,
+    reserved: Iterable[str],
+) -> DomainValidityContext:
     """The context ``CSTR_MODEL`` is assessed against, in two namespaces.
 
-    ``declared`` is what the caller stated. Every reserved name is stripped
-    from it before anything is derived, so a group that could not be derived is
-    **absent** rather than caller-supplied, and the condition that reads it
-    reaches ``assess`` as UNKNOWN. A caller cannot assert a Damkohler number.
+    ``declared`` is the reactor's own statement of itself, as
+    :meth:`ReactorRun.validity_context` writes it. Every reserved name is taken
+    out of the caller's half before anything is derived, so a group that could
+    not be derived is **absent** rather than caller-supplied, and the condition
+    that reads it reaches ``assess`` as UNKNOWN. A caller cannot assert a
+    Damkohler number.
+
+    Two of the reserved names -- ``temperature`` and ``concentration`` -- are
+    the reactor's initial state rather than a derived group. They are reserved
+    for the same reason the battery reserves ``cell_temperature``: a condition
+    reads them by name and cannot tell an injected state from a parameter that
+    happens to be called that. Being reserved, they move to the **assembled**
+    half; and being what both derivations are computed *from*, they are put
+    back before deriving. That order matters. Deriving from the stripped
+    context alone would silently lose the adiabatic ceiling, which needs the
+    initial state -- a guard that turns a verdict into UNKNOWN by dropping an
+    input is not a guard, it is a bug wearing one.
     """
-    stripped = caller_declared(declared, ASSEMBLED_QUANTITIES)
+    reserved = frozenset(reserved)
+    stripped = caller_declared(declared, reserved)
+    state = {
+        name: value
+        for name, value in declared.items()
+        if name in reserved and name not in ASSEMBLED_QUANTITIES
+    }
     return assembled_validity_context(
         declared=stripped,
-        assembled=derived_cstr_quantities(stripped),
-        reserved=ASSEMBLED_QUANTITIES,
+        assembled={
+            **state,
+            **derived_cstr_quantities({**stripped, **state}),
+        },
+        reserved=reserved,
     )

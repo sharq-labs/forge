@@ -96,6 +96,60 @@ class ExecutionBinding:
                 f"{type(self.realization).__name__}"
             )
 
+    @classmethod
+    def from_execution(
+        cls,
+        prepared,
+        raw,
+        *,
+        model,
+        realization=None,
+    ) -> "ExecutionBinding":
+        """A binding stated by an execution rather than typed by hand.
+
+        The defect this exists for: three names in a constructor are three
+        names. Nothing about ``ExecutionBinding(model=..., solver=...,
+        realization=...)`` requires that the solver ever ran, and a record
+        assembled after the fact -- which is how a transport boundary assembles
+        one -- can name a solver that did nothing while looking exactly like a
+        record of work.
+
+        This constructor takes the two objects that exist **because** the work
+        happened: a :class:`PreparedSolve`, which only ``prepare()`` returns,
+        and a :class:`RawSolverOutput`, which only ``solve()`` returns. The
+        solver identity is read off ``prepared.solver`` rather than accepted as
+        an argument, so the binding cannot name a solver other than the one
+        that prepared this solve. The model must be one the prepared problem
+        actually names, so it cannot name a model the run was not about.
+
+        It is not a proof of execution and this docstring will not pretend
+        otherwise: a caller determined to lie can construct a ``RawSolverOutput``
+        by hand. What it removes is the accident -- the record assembled from
+        what a boundary *believes* ran, which is the live case this guard was
+        written for. ``NEEDS.md`` G5.1 records what a real proof would cost.
+        """
+        solver = getattr(prepared, "solver", None)
+        if not isinstance(solver, SolverIdentity):
+            raise ScientificCoreError(
+                "a binding from an execution needs a PreparedSolve carrying a "
+                f"SolverIdentity; got {type(prepared).__name__}"
+            )
+        if not hasattr(raw, "convergence"):
+            raise ScientificCoreError(
+                "a binding from an execution needs the RawSolverOutput that "
+                f"solve() returned; got {type(raw).__name__}"
+            )
+        problem = getattr(prepared, "problem", None)
+        named = {reference.key for reference in getattr(problem, "models", ())}
+        if named and model.key not in named:
+            raise ScientificCoreError(
+                f"the prepared problem does not name model "
+                f"{model.model_id}@{model.version}; it names "
+                f"{sorted(f'{a}@{b}' for a, b in named)}. A binding cannot "
+                f"attribute this execution to a model the problem was not about"
+            )
+        return cls(model=model, solver=solver, realization=realization)
+
     @property
     def key(self) -> tuple[tuple[str, str], tuple[str, str] | None, tuple[str, str]]:
         """Order-independent identity of the association this binding states."""
@@ -221,6 +275,30 @@ class ProvenanceRecord:
                         f"{sorted(bound - declared)}; bindings are canonical, "
                         f"so pass {label} consistent with them or omit it"
                     )
+                # And, for solvers only, the other direction -- which is
+                # where a participant that did nothing hides.
+                #
+                # A model may legitimately appear with no binding: its
+                # assumptions travel with the result, its validity was
+                # assessed, and no solver executed it. That is partial
+                # knowledge and it is honest.
+                #
+                # A solver may not. Executing is the only thing a solver does,
+                # so naming one in a record that *states what ran* is a claim
+                # that it ran, and the binding is where a record says what it
+                # ran. Before this check the battery transport named a solver
+                # whose `validate` never executed, in a record that otherwise
+                # looked exactly like a record of work.
+                if label == "solvers":
+                    unbound = sorted(declared - bound)
+                    if unbound:
+                        raise ScientificCoreError(
+                            f"provenance {run_id!r} names solver(s) {unbound} "
+                            f"that no binding covers. This record states what "
+                            f"ran; a solver beside the bindings is a name with "
+                            f"no execution behind it. Bind it with "
+                            f"ExecutionBinding.from_execution(), or leave it out"
+                        )
             if not models:
                 models = tuple(sorted(bound_models))
             if not solvers:
@@ -277,6 +355,25 @@ class ProvenanceRecord:
                 }
             )
         )
+
+    @property
+    def executed_solvers(self) -> tuple[tuple[str, str], ...]:
+        """The solvers a binding actually names, which is not ``solvers``.
+
+        ``solvers`` is the participant set: every producer written before
+        bindings existed fills it, and it says who was present, not who worked.
+        This says who a recorded execution is attributed to. When bindings are
+        present the two agree by construction -- ``__post_init__`` refuses a
+        participant no binding covers -- and when they are absent this is
+        empty, which is the honest answer to "which solver executed this" for a
+        record that never said.
+        """
+        return tuple(sorted({b.solver.key for b in self.bindings}))
+
+    @property
+    def executed_models(self) -> tuple[tuple[str, str], ...]:
+        """The models a binding attributes an execution to. See above."""
+        return tuple(sorted({b.model.key for b in self.bindings}))
 
     def bindings_for_model(
         self, model_id: str, version: str | None = None

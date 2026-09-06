@@ -523,6 +523,19 @@ RINT_OCV_MODEL = ScientificModelDefinition(
         "current direction and state of charge",
     ),
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                CONTINUOUS_C_RATE_UTILIZATION,
+                DISCHARGE_TEMPERATURE_POSITION,
+                INTERNAL_RESISTANCE_DRIFT_RATIO,
+                POLARIZATION_UNMODELLED_FRACTION,
+                PULSE_C_RATE_UTILIZATION,
+                PULSE_DURATION_UTILIZATION,
+                SELF_HEATING_RISE_RATIO,
+                SOC_WINDOW_MARGIN,
+                TERMINAL_VOLTAGE_RATIO,
+            }
+        ),
         conditions=(
             # ---- the declaration is well formed --------------------------
             # These two say nothing about whether the model applies; they say
@@ -830,6 +843,13 @@ COULOMB_COUNTING_MODEL = ScientificModelDefinition(
         "and no voltage-based correction is applied",
     ),
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                CAPACITY_TEMPERATURE_DRIFT_RATIO,
+                SOC_STEP_RESOLUTION_RATIO,
+                SOC_WINDOW_MARGIN,
+            }
+        ),
         conditions=(
             RangeCondition(
                 name=NOMINAL_CAPACITY,
@@ -995,6 +1015,13 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
         "that a caller may reject independently",
     ),
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                CONTINUOUS_C_RATE_UTILIZATION,
+                CUTOFF_CONSISTENCY_MARGIN,
+                SOC_WINDOW_MARGIN,
+            }
+        ),
         conditions=(
             RangeCondition(
                 name=CUTOFF_CONSISTENCY_MARGIN,
@@ -1126,6 +1153,13 @@ PEUKERT_DERATING_MODEL = ScientificModelDefinition(
         "to it automatically; a caller may run the counter and refuse this",
     ),
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                PEUKERT_CAPACITY_RATIO,
+                PEUKERT_EXTRAPOLATION_RATIO,
+                PEUKERT_TEMPERATURE_DRIFT_RATIO,
+            }
+        ),
         conditions=(
             RangeCondition(
                 name=PEUKERT_EXTRAPOLATION_RATIO,

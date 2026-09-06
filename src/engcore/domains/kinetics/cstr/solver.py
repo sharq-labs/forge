@@ -84,6 +84,7 @@ from ....scientific.results.result import ScientificResult
 from ....scientific.results.uncertainty import Uncertainty
 from ....scientific.results.validation import ValidationReport
 from ....scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -251,7 +252,7 @@ def assemble(run: ReactorRun) -> PreparedCSTRSystem:
 
 
 @dataclass
-class CSTRSolver:
+class CSTRSolver(DeclaredSupport):
     """Transient non-isothermal CSTR solver satisfying the ScientificSolver protocol."""
 
     settings: CSTRValidationSettings = field(default_factory=CSTRValidationSettings)
@@ -313,18 +314,9 @@ class CSTRSolver:
         return self._runs.get(str(problem_id))
 
     # ---- lifecycle --------------------------------------------------------
-    def supports(self, problem: ScientificProblem) -> bool:
-        """Capability question only — never attempts a solve."""
-        if not isinstance(problem, ScientificProblem):
-            return False
-        declared = {capability.name for capability in self.capabilities}
-        if not set(problem.required_capabilities).issubset(declared):
-            return False
-        domain_models = {model.model_id for model in CSTR_MODELS}
-        referenced = {reference.model_id for reference in problem.models}
-        if not referenced & domain_models:
-            return False
-        return KINETICS_CSTR_NONISOTHERMAL.name in problem.required_capabilities
+    #: What this solver is for, and what it implements. The core compares.
+    serves_capabilities = frozenset({KINETICS_CSTR_NONISOTHERMAL.name})
+    served_models = CSTR_MODELS
 
     def prepare(self, problem: ScientificProblem) -> PreparedSolve:
         run = self.bound_run(problem.problem_id)
@@ -344,7 +336,7 @@ class CSTRSolver:
         # here, before any integration. The constructors already refuse the
         # gross violations; this records the model's verdict as evidence rather
         # than relying on the constructors having been the only gate.
-        assessment = CSTR_MODEL.assess_validity(run.validity_context())
+        assessment = run.validity_context().assess(CSTR_MODEL)
 
         system = assemble(run)
         integration = run.integration

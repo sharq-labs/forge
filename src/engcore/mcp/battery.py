@@ -358,14 +358,28 @@ def _provenance(
     thermal: Mapping[str, Quantity],
     run_id: str,
     steps: int,
+    march: bcp.SelfHeatingRun,
 ) -> ProvenanceRecord:
-    """What ran, and on what. Assembled here because the march returns none.
+    """What ran, and on what.
 
     ``run_self_heating_discharge`` returns steps, not a
     :class:`~engcore.scientific.results.result.ScientificResult`, so there is
-    no producer-written provenance to carry. Everything below is a *declared*
-    value read back out of the records this boundary built, or an identity
-    read off a solver -- nothing is computed and nothing is inferred.
+    still no producer-written provenance record to carry, and the inputs below
+    are declared values read back out of the records this boundary built.
+
+    **What is no longer assembled here is who ran.** This function used to name
+    ``BatteryCellSolver`` and ``LumpedThermalSolver`` as participants because
+    those are the solvers a marched run *ought* to involve -- and one of them
+    did not: the march called ``evaluate_step`` directly, so
+    ``BatteryCellSolver.validate`` never executed, and the record named a
+    solver that had done nothing. A boundary assembling participants after the
+    fact can only name what it believes ran, and belief is what was wrong.
+
+    ``march.bindings`` are produced by the executions themselves, through
+    ``ExecutionBinding.from_execution``, which reads the solver identity off
+    each prepared solve. ``ProvenanceRecord`` derives ``models`` and ``solvers``
+    from them and refuses any solver they do not cover, so this record cannot
+    name a participant the march did not run.
     """
     inputs: dict[str, Quantity] = {
         bctx.NOMINAL_CAPACITY: cell.nominal_capacity,
@@ -390,18 +404,12 @@ def _provenance(
         if value is not None:
             inputs[label] = value
 
-    identity = bsol.BatteryCellSolver().identity
-    thermal_solver = lump.LumpedThermalSolver().identity
     return ProvenanceRecord(
         run_id=run_id,
-        models=tuple(
-            sorted((m.model_id, m.version) for m in (*_MODELS, _LUMPED))
-        ),
-        solvers=tuple(
-            sorted(
-                (s.solver_id, s.version) for s in (identity, thermal_solver)
-            )
-        ),
+        # `models` and `solvers` are left to be derived from the bindings.
+        # Naming them here would be a second place to write the same fact, and
+        # the place the wrong one was written.
+        bindings=march.bindings,
         inputs=inputs,
         assumptions=tuple(
             sorted({a for model in _MODELS for a in model.assumptions})
@@ -483,11 +491,28 @@ def run_battery_case(
             "heat_generation": final.heat_generation,
             "final_temperature": final.final_temperature,
         },
-        provenance=_provenance(cell, load, thermal, identifier, steps),
+        provenance=_provenance(cell, load, thermal, identifier, steps, run),
         validity=validity,
-        # The thermal sub-solve's own checks, carried verbatim from the final
-        # step. Not re-run and not re-interpreted.
-        validation=tuple(final.thermal_validation.checks),
+        # BOTH sub-solves' own checks, carried verbatim from the final step.
+        # Not re-run and not re-interpreted.
+        #
+        # The cell's were missing, and not because anyone chose to leave them
+        # out: the march called `evaluate_step` directly, so
+        # `BatteryCellSolver.validate` never ran and there were no cell checks
+        # to carry. A report that named that solver in its provenance and
+        # carried none of its checks was describing a solve that had not
+        # happened. The march runs the solver now, so they exist and they
+        # arrive here.
+        #
+        # The two sets share no check name -- the cell reports
+        # `metric_dimensions`, `coulomb_balance_residual` and
+        # `rint_terminal_residual`, the body reports `lumped_balance_residual`
+        # and `analytic_reference_agreement` -- so they concatenate without
+        # renaming. `CredibilityEvidenceReport` refuses a duplicate name, so a
+        # future collision is an error here rather than a silently dropped
+        # check.
+        validation=tuple(final.cell_validation.checks)
+        + tuple(final.thermal_validation.checks),
         # No CouplingEvidence: the march is one-way and never iterates to a
         # fixed point, so every number that record carries -- iterations run,
         # iterate change, tolerance -- would have to be invented. The march's

@@ -25,6 +25,7 @@ from src.engcore.domains.electrical.dc import (
     voltage_source_relation_problem,
 )
 from src.engcore.scientific import (
+    DeclaredSupport,
     AmbiguousSolverError,
     BindingIssueKind,
     CategoricalValue,
@@ -228,7 +229,9 @@ def test_problem_round_trips_through_the_universal_ir():
 
 def test_validity_context_comes_from_typed_parameters():
     problem = build_dc_problem(_divider())
-    context = problem.validity_context()
+    # The reserved set is required and has no default. A circuit problem
+    # declares no rating utilization, so nothing here collides.
+    context = problem.validity_context(reserved=frozenset())
     assert context["reference_node"] == "gnd"
     assert context["analysis_type"] == "dc_steady_state"
     assert isinstance(context["R:R1"], Quantity)
@@ -236,8 +239,15 @@ def test_validity_context_comes_from_typed_parameters():
 
 # ---- solver registry ---------------------------------------------------
 
-class _UnrelatedSolver:
-    """A solver for a different mathematical shape entirely."""
+class _UnrelatedSolver(DeclaredSupport):
+    """A solver for a different mathematical shape entirely.
+
+    It declares what it is for and lets the core decide. Its old
+    hand-written ``supports`` had the defect this round removed in two real
+    adapters: one capability checked, the rest of the request ignored.
+    """
+
+    serves_capabilities = frozenset({CoreCapabilities.ODE.name})
 
     @property
     def identity(self):
@@ -246,9 +256,6 @@ class _UnrelatedSolver:
     @property
     def capabilities(self):
         return frozenset({CoreCapabilities.ODE})
-
-    def supports(self, problem) -> bool:
-        return CoreCapabilities.ODE.name in problem.required_capabilities
 
     def prepare(self, problem):
         raise NotImplementedError

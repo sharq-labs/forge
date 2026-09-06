@@ -2297,3 +2297,347 @@ The clean fix is a `solve_cell` in `battery/solver.py` returning a
 `ScientificResult` the way `solve_reactor` and the DC solver do, at which point
 `CredibilityEvidenceReport.from_result` applies and this assembly disappears.
 That is a battery-domain change and TASK C forbids it.
+\n
+
+---
+
+## CORE GUARDS ROUND — what a guard needed and could not have
+
+Added by the round that moved seven repeated review findings from the domains
+into the core. Each entry below is a guard that could not be made fully
+fail-closed, with what the complete version would require and cost.
+
+### G2.1 `ValidationCheck` cannot refuse a claimed level, because one lives in a frozen file
+
+**Where** `src/engcore/scientific/results/validation.py`, and
+`src/engcore/domains/thermal/conduction1d/validation.py:193`.
+
+**The rule.** A check that PASSes and declares `establishes=<level>` must carry
+evidence that it compared something: either a `residual` *and* a `tolerance`, or
+a non-empty `evidence` naming what it was compared against. It is stated once,
+on `ValidationCheck.earns_its_level`, and it is not narrower than the truth --
+`DIMENSIONALLY_VALID` is established by comparing a produced metric's dimension
+against the `unit_exemplar` its `ModelOutputSpec` declares, which yields a yes
+or a no rather than a residual that could be small, so a named reference has to
+count as evidence.
+
+**What was wanted.** The refusal in `ValidationCheck.__post_init__`, on the
+model of the `establishes=UNVERIFIED` refusal three lines above it, and for the
+same reason: a value that cannot exist cannot be read inconsistently, whereas a
+rule enforced at the four sites that read levels will be missed at the fifth.
+
+**Why it was not made.** Exactly one construction in the repository fails the
+rule and cannot be edited:
+
+```
+src/engcore/domains/thermal/conduction1d/validation.py:193
+    ValidationCheck(
+        name="dimensional_consistency",
+        outcome=ValidationOutcome.PASS,
+        detail="all metrics carry the dimensionless field unit; ...",
+        establishes=ValidationLevel.DIMENSIONALLY_VALID,
+    )
+```
+
+That file's bytes are pinned by `THERMAL_FROZEN_FILE_DIGESTS` in
+`experiments/thermal_t1/t1_config.py`, and the round that produced this guard
+was forbidden from editing it. Refusing at construction would raise on every
+conduction1d solve. Exempting that one construction would be a guard with a
+hole in it, and the hole would be the shape of the next domain's mistake --
+which is the failure mode this whole round exists to remove, so it was not
+done.
+
+**What the complete version costs.** Three things, in order:
+
+1. Add `evidence=` to that construction, naming `DIFFUSION_MODEL`'s single
+   `ModelOutputSpec` (`u=dimensionless`) -- or better, replace it with the
+   comparison `conduction1d_schemes.py` now performs against the same record.
+   Four lines.
+2. Re-pin the digest in `experiments/thermal_t1/t1_config.py`, and re-run T1 to
+   confirm the *results* are unchanged. They will be: the check's outcome does
+   not move, only the evidence it records.
+3. Move the rule into `__post_init__` and delete
+   `_FROZEN_UNEARNED_LEVEL` from `tests/test_core_guards.py`.
+
+Step 2 is the real cost. It is a deliberate unfreeze of a pinned experiment
+input, which needs whoever owns the freeze to agree that recording *more*
+evidence on a passing check is not a change to what T1 measured.
+
+**What was done instead.** The rule is a property on the core type, and
+`tests/test_core_guards.py` audits every `ValidationCheck` construction in
+`src` against it statically -- so a construction on a branch no test exercises
+is still caught -- plus every check two live solves produce. The frozen site is
+named in that test and the test asserts it is the **only** one, so a second
+cannot appear unnoticed. This is a checked invariant, not a constructor
+refusal, and the difference is that a new domain gets a red test rather than an
+exception at the moment of the mistake.
+
+### G3.1 The conduction1d refinement gate still takes its thresholds as floats
+
+**Where** `src/engcore/domains/thermal/conduction1d/validation.py:406`.
+
+```python
+def run_verification_gate(
+    slab, *, ladder=VERIFICATION_LADDER, run_id_prefix="thermal-verify",
+    min_contraction: float = CONVERGENCE_MIN_CONTRACTION,
+    analytic_rel_tol: float = ANALYTIC_REL_TOL,
+) -> VerificationReport:
+```
+
+Both parameters gate a level. `min_contraction` decides
+`numerically_converged`, which awards `NUMERICALLY_CONVERGED`;
+`analytic_rel_tol` decides `analytically_verified`, which awards
+`ANALYTICALLY_VERIFIED`. A caller passing `min_contraction=1.0` receives a
+report whose `levels_earned`, whose `claim` prose, and whose two
+`ValidationCheck`s read exactly as they would at the declared 2.0. The only
+trace is the number in `tolerance`, in a field a reader has to know to check.
+
+`tests/domains/thermal/test_conduction1d.py` exercises exactly this, twice, at
+lines 258 and 283 -- which is the right test to have written and is also proof
+that the override path is live rather than theoretical.
+
+**What is needed.** The same migration CSTR and DC received in this round:
+
+1. A module-level `CONDUCTION_GATE_THRESHOLDS = VerificationThresholds(...)`
+   holding `min_contraction` and `analytic_rel_tol` with the basis those two
+   numbers already have in prose.
+2. `run_verification_gate` takes `thresholds: VerificationThresholds =
+   CONDUCTION_GATE_THRESHOLDS` in place of the two floats.
+3. `VerificationReport.levels_earned` and `to_report` route both levels through
+   `thresholds.award(...)` and add `thresholds.evidence()` to each check.
+
+Roughly thirty lines, all inside one file, and no behaviour changes for any
+caller using the defaults.
+
+**Why it was not done.** `src/engcore/domains/thermal/conduction1d/` is frozen
+for this round, and its bytes are pinned by `THERMAL_FROZEN_FILE_DIGESTS` in
+`experiments/thermal_t1/t1_config.py`. Editing it would break six T1/shared
+pins. Reported rather than worked around, as the round required.
+
+**What it costs to do.** The edit above, a re-pinned digest, and a T1 re-run to
+confirm the *results* are unchanged. They will be, for a caller using the
+defaults: `award` returns the same level for the declared set, and the only
+addition to a report is the threshold identity in `evidence`. What does change
+is the two tests at lines 258 and 283, which currently assert that a
+caller-supplied threshold moves the verdict; after the migration they assert
+that it moves the verdict *and awards nothing*, which is the stronger claim
+they were reaching for.
+
+**What was done instead.** `tests/test_core_guards.py` sweeps `src` for any
+function taking a parameter whose name marks it as a verification threshold
+(`*_rel_tol`, `*_atol`, `min_contraction`) and asserts this gate is the only
+one left. That sweep is not decorative: run against the commit before this
+guard it also finds the CSTR gate, which is the defect this round removed.
+
+### G3.2 Four DC tolerances are still the caller's, and that is deliberate
+
+`DCValidationSettings` holds six tolerances. Two -- `residual_atol` and
+`residual_rtol` -- gate `NUMERICALLY_CONVERGED` and are now compared against
+`DC_CONVERGENCE_THRESHOLDS`, so moving either yields a derived set that awards
+nothing. The other four (`kcl_atol_ampere`, `ohm_atol_volt`,
+`source_atol_volt`, `power_atol_watt`) bound checks that establish no level.
+
+A caller moving one of those is configuring what a report *says*, not what it
+*claims*, so they are left alone. That is a judgement, and it rests on the
+core having no level for "internally physically consistent" -- the four checks
+demonstrate exactly that and deliberately award nothing. If a level for it is
+ever added, those four thresholds become the domain's on the same day, and this
+paragraph is the note that says so.
+
+### G4.1 The conduction1d solver still answers its own support question
+
+**Where** `src/engcore/domains/thermal/conduction1d/solver.py:187`.
+
+It makes the three comparisons by hand -- capability subset, this domain's
+capability requested, one of this domain's models named -- and it makes all
+three *correctly*. It is not the defect; it is the fifth copy of the code the
+defect was a bad rewrite of, and `SolverRegistry.register` now refuses it.
+
+**What is needed.** Three lines, matching the other seven adapters:
+
+```python
+class Conduction1DSolver(DeclaredSupport):
+    serves_capabilities = frozenset({THERMAL_CONDUCTION_1D.name})
+    served_models = CONDUCTION_MODELS
+    # ... and delete supports()
+```
+
+**Why it was not done.** `src/engcore/domains/thermal/conduction1d/` is frozen
+for this round and byte-pinned by `experiments/thermal_t1/t1_config.py`.
+
+**What it costs.** The three lines, a re-pinned digest, and a T1 re-run. No
+behaviour changes: the core makes the same three comparisons this adapter makes
+by hand, so every problem it accepts today it accepts after.
+
+**What breaks meanwhile.** `SolverRegistry.register(Conduction1DSolver())`
+raises `TypeError`. Nothing in `src` or in the test suite does that today --
+the conduction1d solver is used directly by `solve_slab` and by the refinement
+gate, never resolved through a registry -- so the guard costs nothing now and
+will cost exactly one migration the first time someone wants that solver
+resolvable. `tests/test_core_guards.py` names it and asserts it is the only
+adapter left in that position.
+
+### G5.1 A binding still cannot prove the execution it describes
+
+**Where** `src/engcore/scientific/results/provenance.py`.
+
+`ExecutionBinding.from_execution(prepared, raw, model=...)` takes the two
+objects that exist *because* the work happened, reads the solver identity off
+`prepared.solver` rather than accepting it, and refuses a model the prepared
+problem does not name. That removes the accident this round was written for: a
+transport boundary assembling participants from what it *believes* ran.
+
+It does not remove the lie. `RawSolverOutput` is an ordinary dataclass and a
+caller can construct one. `PreparedSolve` likewise. Someone determined to
+record work that did not happen can still do it, in about four lines.
+
+**What a real guarantee needs.** One of three, in increasing cost:
+
+1. **An execution token.** `solve()` returns a `RawSolverOutput` carrying an
+   opaque token minted by the solver and keyed to the `PreparedSolve` it was
+   given; `from_execution` verifies it. Cheap to write and easy to defeat by
+   anyone reading the source, so it catches accidents and honest bugs and
+   nothing else. That is most of the value, and it is roughly a day.
+
+2. **The solver as the only producer.** Make `RawSolverOutput.__init__`
+   private to the protocol module and have solvers obtain instances through a
+   factory that stamps `prepared`'s identity. Defeats casual construction
+   entirely but changes the signature every adapter and every test builds raw
+   output through -- roughly 60 call sites in `src` and `tests`.
+
+3. **A signed run log.** The only version that survives an adversary: the
+   solver appends to a per-run log keyed by `run_id`, and `ProvenanceRecord`
+   refuses a binding with no corresponding entry. This is a persistence
+   feature, not a dataclass change, and it interacts with the campaign
+   persistence layer that already exists.
+
+**The recommendation is (1) plus the rule already shipped.** The threat this
+guard is really for is a boundary that assembles provenance from belief, not a
+forger; that boundary is now structurally unable to name an unbound solver, and
+a token would close the remaining accidental path -- a solver refactored to
+return output it did not produce.
+
+### G5.2 The battery march still returns steps rather than a ScientificResult
+
+NEEDS C.6 asked for a `solve_cell` in `battery/solver.py` returning a
+`ScientificResult`, so `CredibilityEvidenceReport.from_result` would apply and
+`engcore/mcp/battery.py` would stop assembling a provenance record by hand.
+
+Half of that is now unnecessary: the march runs the full solver path, carries
+`ExecutionBinding`s produced by those executions, and the boundary builds its
+record from them rather than from a list of participants it wrote out. The
+`models` and `solvers` fields are derived, and the core refuses a solver the
+bindings do not cover.
+
+What remains is that a marched run is still not a `ScientificResult`: it has
+many steps and one result record describes one solve. That is a real modelling
+question -- is a march one result with a trajectory, or N results with a parent
+run id? -- and it is bigger than the plumbing C.6 described. Recorded so C.6 is
+not read as still open in full.
+
+### G6.1 One fingerprint verifier still treats absence as a match
+
+**Where** `src/engcore/domains/thermal/conduction1d/problem.py:443`.
+
+```python
+declared = problem.metadata.get("slab_fingerprint")
+if declared and declared != actual:      # absent => passes
+    raise SlabConfigurationError(...)
+```
+
+**What is needed.** Four lines: call
+`engcore.scientific.ir.fingerprints.require_matching_fingerprint` with
+`key="slab_fingerprint"`, `actual=slab.fingerprint()`,
+`error=SlabConfigurationError`, `subject="slab"`, and delete the comparison.
+
+**Why it was not done.** The file is byte-pinned by
+`THERMAL_FROZEN_FILE_DIGESTS` in `experiments/thermal_t1/t1_config.py`.
+
+**What it costs.** The four lines, a re-pinned digest, and a T1 re-run.
+**No frozen experiment relies on the permissive path** — every conduction
+problem T1, T2 and T3 pair with a slab is built by `build_conduction_problem`,
+which always writes `slab_fingerprint`. That was checked by making the two
+sibling domains strict and running the FULL tier, which passes.
+
+**What is closed meanwhile.** The two callers of that function outside the
+frozen file — `thermal_models/conduction1d_bulk.py` and
+`thermal_models/conduction1d_schemes.py`, three call sites — now call the core
+rule first and then the frozen verifier, so those paths refuse an
+unfingerprinted problem. What remains open is the path through the frozen
+solver's own `prepare` and `solve_slab`.
+
+### G6.2 The same defect was in a third place, and was not on the round's list
+
+`CampaignEventLog.from_dict` compared `if declared and declared !=
+log.head_digest`, so a stored log carrying no head digest reloaded with its
+hash chain unverified. That is the one payload whose chain nothing has checked:
+a truncated file, a hand-edited record and a writer that died between the
+events and the digest all arrive in exactly that shape.
+
+It is now a refusal — for a log that carries events. An **empty** chain has no
+digest and says so (`head_digest` is `""` for a log with no events), and that
+is a true statement rather than a missing one, so the empty case is not what
+the refusal is about. Fixed rather than reported, because
+`src/engcore/sria/` is not frozen; noted here because it means the pattern the
+round found in two domains was in three places, and the third was found by a
+repository-wide sweep rather than by review.
+
+### G7.1 Nothing forces a future provider adapter through the admission layer
+
+`engcore.scientific.solvers.admission` states the rule -- finiteness before any
+tolerance comparison -- and the one provider adapter in the repository uses it.
+Nothing makes the next one.
+
+A provider adapter is an ordinary class satisfying `ScientificSolver`. Its
+`extract_metrics` can compute whatever it likes from whatever the provider
+returned, and the core sees the result only when a `Quantity` is constructed
+from it. That is a backstop and it is where the non-finite value was in fact
+stopped before this guard -- as a `UnitCompatibilityError`, from the units
+layer, about a provider that had not delivered what was asked. It is not a
+gate, and it disappears the moment an adapter computes anything from an
+admitted number before wrapping it.
+
+**What a lock would need.** The core would have to see the provider's numbers
+before the adapter does -- a `ProviderOutput` type that `RawSolverOutput` is
+built from, constructed only through the admission layer. That is a real change
+to the solver protocol: every adapter's `solve` would return the new type, and
+`RawSolverOutput` would stop being the thing a backend produces and start being
+the thing the core derives. Perhaps two days, and it interacts with the
+`RawSolverOutput` change NEEDS G5.1 also wants; the two should be done together
+or not at all, since both are about making the core rather than the adapter the
+producer of the record.
+
+Until then this is a rule with one user and a test that checks that user.
+
+### G7.2 The finiteness rule is not swept for repository-wide
+
+Guards 2, 3, 4 and 6 each carry a `tests/test_core_guards.py` sweep that fails
+when a new site takes the shape the guard removed. Guard 7 does not, and the
+reason is that its shape -- `abs(a - b) > tol` -- is also the shape of every
+legitimate numerical comparison in the repository, of which there are dozens in
+solvers, validation checks and convergence tests. A sweep would either name all
+of them or would need to know which ones are admission gates, and "which ones
+are admission gates" is exactly the judgement no regex has.
+
+The narrower property that could be swept: no call to `require_agreement`
+passes operands it has not declared. That checks the helper is used correctly,
+not that it is used at all, which is the weaker half. Recorded rather than
+written, because a sweep that checks the wrong thing is worse than none.
+
+### G2.2 A produced metric with no declared model output is not checked
+
+**Where** `src/engcore/domains/kinetics/cstr/validation.py`,
+`src/engcore/domains/thermal_models/conduction1d_schemes.py`,
+`src/engcore/domains/electrical/dc/validation.py`.
+
+The CSTR solver reports `t:T_max` -- the time at which the maximum temperature
+occurred -- and `CSTR_MODEL` declares no output it corresponds to, so the
+dimension check has nothing to compare it against. It is now *named* in the
+check's detail rather than silently skipped, but it is not a failure.
+
+Making it one would be a verdict-rule change, which the round forbade, and it
+is not obviously the right answer: the metric is a coordinate reported
+alongside `T:max` rather than a quantity the model claims to produce. The real
+question is whether `ModelOutputSpec` should be able to declare it. Until that
+is answered, every domain's dimension check has a set of metrics it looks at
+and cannot judge, and it now says which.

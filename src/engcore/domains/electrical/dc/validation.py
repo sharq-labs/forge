@@ -41,6 +41,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from ....scientific.results.thresholds import VerificationThresholds
 from ....scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
@@ -99,6 +100,52 @@ class DCValidationSettings:
             "power_atol_watt": self.power_atol_watt,
         }
 
+    @property
+    def convergence_thresholds(self) -> VerificationThresholds:
+        """The two numbers that gate NUMERICALLY_CONVERGED, as a record.
+
+        Only these two. The other four tolerances bound checks that establish
+        no level -- KCL, Ohm, the source relation and power balance demonstrate
+        internal consistency and the core has no level for that -- so a caller
+        moving one of them is configuring a report, not buying a claim, and is
+        left alone.
+
+        ``residual_atol`` and ``residual_rtol`` are different: they decide
+        whether ``linear_system_residual`` PASSes, and that check awards
+        NUMERICALLY_CONVERGED. A caller who can set them can hand themselves
+        the level by widening the bound, which is the verification defeated
+        through its own configuration object. Comparing against the declared
+        defaults is how the level knows whether it was earned at this domain's
+        numbers or at the caller's.
+        """
+        defaults = DCValidationSettings()
+        declared = DC_CONVERGENCE_THRESHOLDS
+        if (
+            self.residual_atol == defaults.residual_atol
+            and self.residual_rtol == defaults.residual_rtol
+        ):
+            return declared
+        return declared.derive(
+            residual_atol=self.residual_atol, residual_rtol=self.residual_rtol
+        )
+
+
+#: The numbers this domain judges numerical convergence against.
+#:
+#: Named and versioned so a report says which set produced its level. A
+#: ``DCValidationSettings`` carrying anything else yields a derived set, which
+#: awards nothing -- see ``DCValidationSettings.convergence_thresholds``.
+DC_CONVERGENCE_THRESHOLDS = VerificationThresholds(
+    gate_id="electrical.dc.linear_residual",
+    version="0.1.0",
+    values={"residual_atol": 1e-9, "residual_rtol": 1e-9},
+    basis=(
+        "round-off-scale bounds on a direct factorization of a small dense "
+        "system; the residual this gates is ||A x - z|| for a solve the "
+        "backend claims to have completed"
+    ),
+)
+
 
 def _voltages(prepared: PreparedDCSystem, solution: np.ndarray) -> dict[str, float]:
     return {
@@ -139,6 +186,16 @@ def check_dimensions(metrics: dict[str, Quantity]) -> ValidationCheck:
         outcome=ValidationOutcome.PASS,
         detail=f"{len(metrics)} metrics carry their expected dimensions",
         establishes=ValidationLevel.DIMENSIONALLY_VALID,
+        # This check did compare -- the loop above walks every produced metric
+        # against `expected` and only reaches here having found no offender --
+        # but until now it recorded nothing a reader could go and check the
+        # claim against. A dimension match yields no residual that could be
+        # small, so naming the reference is the only evidence available, and
+        # a level with no evidence at all is indistinguishable from a claimed
+        # one however honest the arithmetic behind it was.
+        evidence=tuple(
+            f"{prefix}={unit}" for prefix, unit in sorted(expected.items())
+        ),
     )
 
 
@@ -151,17 +208,25 @@ def check_linear_residual(
     residual = prepared.matrix @ solution - prepared.rhs
     norm = float(np.linalg.norm(residual))
     scale = float(np.linalg.norm(prepared.rhs))
-    tolerance = settings.residual_atol + settings.residual_rtol * scale
+    thresholds = settings.convergence_thresholds
+    tolerance = (
+        thresholds["residual_atol"] + thresholds["residual_rtol"] * scale
+    )
     passed = norm <= tolerance
     return ValidationCheck(
         name="linear_system_residual",
         outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
         detail=f"||A x - z|| = {norm:.3e} (||z|| = {scale:.3e})",
-        establishes=(
-            ValidationLevel.NUMERICALLY_CONVERGED if passed else None
+        # `award`, not a conditional. The check still runs and still reports
+        # its residual against whatever bound it was given; what a caller who
+        # widened the bound does not get is the level, because the level is a
+        # claim about this domain's criterion rather than about theirs.
+        establishes=thresholds.award(
+            ValidationLevel.NUMERICALLY_CONVERGED, earned=passed
         ),
         residual=norm,
         tolerance=tolerance,
+        evidence=thresholds.evidence(),
     )
 
 

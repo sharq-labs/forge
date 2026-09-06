@@ -3,6 +3,7 @@
 from .conditions import BoundaryCondition, BoundaryKind, InitialCondition
 from .constraints import ConstraintCheck, ConstraintDefinition, ConstraintOperator
 from .objectives import ObjectiveDefinition, ObjectiveDirection
+from .fingerprints import require_matching_fingerprint
 from .problem import (
     ModelReference,
     ScientificProblem,
@@ -27,6 +28,7 @@ from .variables import (
 )
 
 __all__ = [
+    "require_matching_fingerprint",
     "BooleanValue",
     "CategoricalValue",
     "IntegerValue",

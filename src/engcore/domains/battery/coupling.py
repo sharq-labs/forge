@@ -57,6 +57,9 @@ from typing import Any, Mapping, Sequence
 
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.models.definition import ValidityAssessment, ValidityStatus
+from ...scientific.ir.problem import ModelReference
+from ...scientific.realizations.definition import RealizationReference
+from ...scientific.results.provenance import ExecutionBinding
 from ...scientific.results.validation import ValidationReport
 from ...scientific.solvers.protocol import ConvergenceState
 from ...scientific.units.quantity import Quantity
@@ -64,6 +67,7 @@ from ..thermal_models import lumped as lump
 from . import cell as bat
 from . import context as ctx
 from . import models as mdl
+from . import solver as bsol
 from .solver import cell_heat_generation, evaluate_step
 
 #: The largest number of steps a march will take before stopping and saying so.
@@ -233,6 +237,18 @@ class SelfHeatingStep:
     #: because "the answer was checked" and "the model applied" are different
     #: claims still.
     thermal_validation: ValidationReport
+    #: The **cell** sub-solve's verification report, on the same footing as the
+    #: thermal one above it.
+    #:
+    #: It did not exist. This march evaluated the cell by calling
+    #: ``evaluate_step`` directly, so ``BatteryCellSolver.validate`` never ran
+    #: and its three checks -- the dimension check against the model records,
+    #: the coulomb-balance residual, the Rint terminal residual -- reached no
+    #: report anywhere. Meanwhile the transport that assembled provenance for a
+    #: marched run named that solver among the participants. A solver named and
+    #: not run is the defect; running it is the fix, and this is where its
+    #: answer lands.
+    cell_validation: ValidationReport
     #: One verdict per battery model, keyed by model id, **over the whole
     #: interval this step covers**. Satisfied only where satisfied at every
     #: instant assessed. This is the field that changes across a march.
@@ -307,9 +323,34 @@ class SelfHeatingRun:
     coupling: CouplingDirection
     outcome: MarchOutcome
     steps: tuple[SelfHeatingStep, ...]
+    #: The model -> realization -> solver associations this march **executed**,
+    #: built by :meth:`ExecutionBinding.from_execution` from the prepared solves
+    #: and raw outputs the two sub-solvers returned.
+    #:
+    #: Carried on the run rather than assembled by whoever writes provenance
+    #: afterwards. A transport assembling it after the fact can only name what
+    #: it *believes* ran, which is precisely how this run's provenance came to
+    #: name a solver whose ``validate`` never executed. These come from the
+    #: executions themselves, and a provenance record built from them cannot
+    #: name a participant the march did not run.
+    bindings: tuple[ExecutionBinding, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "steps", tuple(self.steps))
+        object.__setattr__(
+            self,
+            "bindings",
+            tuple(
+                sorted(
+                    {b.key: b for b in self.bindings}.values(),
+                    key=lambda b: (
+                        b.model.key,
+                        b.realization.key if b.realization else ("", ""),
+                        b.solver.key,
+                    ),
+                )
+            ),
+        )
         if not self.steps:
             raise InvalidScientificProblem(
                 "a self-heating run must carry at least one step; a run that "
@@ -384,26 +425,94 @@ def thermal_body_for(
     )
 
 
-def _advance_body(
-    body: lump.ThermalBody, heat: Quantity
-) -> tuple[Quantity, ConvergenceState, ValidationReport]:
+@dataclass(frozen=True)
+class _SubSolve:
+    """What one sub-solver returned, and the binding its execution states."""
+
+    metrics: Mapping[str, Quantity]
+    convergence: ConvergenceState
+    validation: ValidationReport
+    bindings: tuple[ExecutionBinding, ...]
+    diagnostics: Mapping[str, Any]
+
+
+def _advance_body(body: lump.ThermalBody, heat: Quantity) -> _SubSolve:
     """One thermal step, through the lumped model's own public API.
 
     Nothing is reimplemented here: the body is bound, the problem is built by
     the thermal domain's builder, and the thermal domain's own solver produces,
-    interprets and validates the step. This module reads three things out of it
-    and asserts nothing about any of them.
+    interprets and validates the step. This module reads what comes out and
+    asserts nothing about any of it.
+
+    The binding comes from :meth:`ExecutionBinding.from_execution` rather than
+    from three names typed here: the solver identity is read off the prepared
+    solve, so this cannot attribute the step to a solver that did not run it.
     """
     problem = lump.build_lumped_thermal_problem(body)
     solver = lump.LumpedThermalSolver()
     solver.bind_body(body, problem.problem_id, heat_input=heat)
     prepared = solver.prepare(problem)
     raw = solver.solve(prepared)
-    metrics = solver.extract_metrics(prepared, raw)
-    return (
-        metrics[lump.TEMPERATURE_METRIC],
-        raw.convergence,
-        solver.validate(prepared, raw),
+    realization = prepared.payload.realization
+    return _SubSolve(
+        metrics=solver.extract_metrics(prepared, raw),
+        convergence=raw.convergence,
+        validation=solver.validate(prepared, raw),
+        bindings=(
+            ExecutionBinding.from_execution(
+                prepared,
+                raw,
+                model=ModelReference(*lump.LUMPED_CAPACITY_MODEL.key),
+                realization=RealizationReference(*realization.key),
+            ),
+        ),
+        diagnostics=raw.diagnostics,
+    )
+
+
+def _evaluate_cell(
+    cell: bat.CellSpecification, load: bat.DischargeLoad
+) -> _SubSolve:
+    """One cell step, through the battery domain's own solver.
+
+    This used to be a bare ``evaluate_step(cell, step_load)``. The arithmetic
+    is unchanged -- ``BatteryCellSolver.solve`` calls that same function -- and
+    three things were missing.
+
+    ``validate`` never ran, so the solver's three checks (the dimension check
+    against the model records, the coulomb-balance residual, the Rint terminal
+    residual) reached no report anywhere in a marched run. The metrics were
+    never re-attached to units through ``extract_metrics``, so the march
+    re-attached them itself from constants beside the solver's. And no
+    execution binding existed, so the transport that assembled provenance named
+    ``battery.cell.rint_ocv``'s solver among the participants of a run in which
+    it had done nothing.
+
+    Every battery model gets a binding, because this one evaluation is what
+    computes all four and a record naming only the Rint model would understate
+    what the step rests on. The realization is read off the prepared solve
+    rather than chosen here.
+    """
+    problem = bat.build_battery_problem(cell, load)
+    solver = bsol.BatteryCellSolver()
+    solver.bind_cell(cell, load, problem.problem_id)
+    prepared = solver.prepare(problem)
+    raw = solver.solve(prepared)
+    realization = prepared.payload.realization
+    return _SubSolve(
+        metrics=solver.extract_metrics(prepared, raw),
+        convergence=raw.convergence,
+        validation=solver.validate(prepared, raw),
+        bindings=tuple(
+            ExecutionBinding.from_execution(
+                prepared,
+                raw,
+                model=ModelReference(*model.key),
+                realization=RealizationReference(*realization.key),
+            )
+            for model in mdl.BATTERY_MODELS
+        ),
+        diagnostics=raw.diagnostics,
     )
 
 
@@ -471,14 +580,20 @@ def run_self_heating_discharge(
     step_s = load.duration.magnitude_in(ctx.TIME_UNIT)
 
     recorded: list[SelfHeatingStep] = []
+    executed: list[ExecutionBinding] = []
     outcome = MarchOutcome.HORIZON_REACHED
 
     for index in range(1, steps + 1):
         step_load = load.at(
             state_of_charge=state_of_charge, cell_temperature=temperature
         )
-        computed = evaluate_step(cell, step_load)
-        heat = cell_heat_generation(cell, step_load)
+        # Through the solver, not around it. Every number below is read out of
+        # what the solver produced and interpreted, so the report this march
+        # returns and the record a transport writes from it describe the same
+        # execution.
+        cell_solve = _evaluate_cell(cell, step_load)
+        executed.extend(cell_solve.bindings)
+        heat = cell_solve.metrics[mdl.HEAT_GENERATION_METRIC]
 
         body = thermal_body_for(
             cell,
@@ -487,9 +602,11 @@ def run_self_heating_discharge(
             initial_temperature=temperature,
             step_duration=load.duration,
         )
-        final_temperature, convergence, thermal_validation = _advance_body(
-            body, heat
-        )
+        thermal = _advance_body(body, heat)
+        executed.extend(thermal.bindings)
+        final_temperature = thermal.metrics[lump.TEMPERATURE_METRIC]
+        convergence = thermal.convergence
+        thermal_validation = thermal.validation
 
         problem = bat.build_battery_problem(cell, step_load)
         # Assessed at both ends of the interval, not only at the temperature
@@ -512,7 +629,7 @@ def run_self_heating_discharge(
         verdicts = _over_the_step([by_instant[i] for i in ASSESSED_INSTANTS])
 
         elapsed_s += step_s
-        final_soc = Quantity(computed.final_state_of_charge, ctx.DIMENSIONLESS)
+        final_soc = cell_solve.metrics[mdl.FINAL_STATE_OF_CHARGE_METRIC]
         recorded.append(
             SelfHeatingStep(
                 index=index,
@@ -521,12 +638,11 @@ def run_self_heating_discharge(
                 final_temperature=final_temperature,
                 state_of_charge=state_of_charge,
                 final_state_of_charge=final_soc,
-                terminal_voltage=Quantity(
-                    computed.terminal_voltage, ctx.VOLTAGE_UNIT
-                ),
+                terminal_voltage=cell_solve.metrics[mdl.TERMINAL_VOLTAGE_METRIC],
                 heat_generation=heat,
                 thermal_convergence=convergence,
                 thermal_validation=thermal_validation,
+                cell_validation=cell_solve.validation,
                 validity=verdicts,
                 validity_at=by_instant,
             )
@@ -539,8 +655,10 @@ def run_self_heating_discharge(
             outcome = MarchOutcome.VALIDITY_LOST
             break
 
-        binding = computed.binding_cutoff_state_of_charge
-        if binding is not None and computed.final_state_of_charge <= binding:
+        cutoff = cell_solve.diagnostics.get("binding_cutoff_state_of_charge")
+        if cutoff is not None and (
+            final_soc.magnitude_in(ctx.DIMENSIONLESS) <= cutoff
+        ):
             outcome = MarchOutcome.CUTOFF_REACHED
             break
 
@@ -554,7 +672,10 @@ def run_self_heating_discharge(
         )
 
     return SelfHeatingRun(
-        coupling=CouplingDirection.ONE_WAY, outcome=outcome, steps=tuple(recorded)
+        coupling=CouplingDirection.ONE_WAY,
+        outcome=outcome,
+        steps=tuple(recorded),
+        bindings=tuple(executed),
     )
 
 

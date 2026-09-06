@@ -19,7 +19,10 @@ from ....scientific.models.definition import (
     ValidityDomain,
 )
 from ....scientific.units.quantity import Quantity
+from ....scientific.errors import InvalidScientificProblem
+from ...derived_context import assembler_namespace
 from .problem import (
+    ASSEMBLER_NAMESPACE,
     CONCENTRATION_UNIT,
     DIMENSIONLESS,
     KINETICS_CSTR_NONISOTHERMAL,
@@ -117,6 +120,12 @@ CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
             "Same single-phase CSTR envelope as the primary model, with a "
             "strictly positive constant reaction-rate approximation."
         ),
+        # The reactor's own state, injected by the run's assembler rather than
+        # declared as a parameter — the same two coordinates the primary model
+        # reserves, for the same reason. A competitor model that left them
+        # forgeable would be the easier of the two to fool, which is precisely
+        # backwards for a model whose job is to lose a comparison honestly.
+        derived_quantities=frozenset({"temperature", "concentration"}),
     ),
     required_capabilities=frozenset({KINETICS_CSTR_NONISOTHERMAL.name}),
     validation_status=ModelValidationStatus.UNVALIDATED,
@@ -124,3 +133,20 @@ CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
         "K4 controlled comparison model: temperature-independent first-order rate approximation.",
     ),
 )
+
+# This model is assessed through ``ReactorRun.validity_context``, whose
+# reserved namespace is fixed by the primary model. If this record ever
+# reserves a name that assembler does not own, the name would arrive in the
+# declared half and the core would refuse the assessment -- at the K4
+# comparison, which is the worst possible place to find out. Checked here,
+# at import, instead.
+_UNOWNED = sorted(
+    CONSTANT_RATE_CSTR_MODEL.derived_quantities - ASSEMBLER_NAMESPACE
+)
+if _UNOWNED:  # pragma: no cover - structural, fires only on a bad edit
+    raise InvalidScientificProblem(
+        f'the constant-rate CSTR model reserves {_UNOWNED}, which the CSTR '
+        f'assembler does not own; a reserved name the assembler does not '
+        f'strip arrives as a caller declaration and cannot be assessed. Add '
+        f'it to the primary model, or stop reserving it here'
+    )

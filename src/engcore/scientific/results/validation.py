@@ -118,6 +118,68 @@ class ValidationCheck:
     def passed(self) -> bool:
         return self.outcome is ValidationOutcome.PASS
 
+    @property
+    def compared_something(self) -> bool:
+        """Does this check carry evidence that a comparison was performed?
+
+        Two admissible forms, and the second is why the rule is not written as
+        "must have a residual".
+
+        **A measured quantity against a stated bound** -- ``residual`` *and*
+        ``tolerance``. Both, not either: a residual with no tolerance is a
+        number nobody bounded, and a tolerance with no residual is a bound with
+        nothing measured against it. Neither on its own is a comparison.
+
+        **A named reference** -- a non-empty ``evidence``. Some levels are
+        established by comparing against something that yields no number at
+        all. ``DIMENSIONALLY_VALID`` is the standing example: what is compared
+        is the dimension of each produced metric against the ``unit_exemplar``
+        its ``ModelOutputSpec`` declares, and the outcome of that comparison is
+        a yes or a no, not a residual that could be small. Writing the rule as
+        "must have a residual" would therefore be narrower than the truth and
+        would push an honest check into claiming a number it does not have.
+        ``evidence`` names what was compared against, which is what lets a
+        reader check the claim rather than take it.
+        """
+        if self.residual is not None and self.tolerance is not None:
+            return True
+        return bool(self.evidence)
+
+    @property
+    def earns_its_level(self) -> bool:
+        """Is this check's declared level backed by an actual comparison?
+
+        **The rule.** A check that PASSes and declares ``establishes`` must
+        have compared something. A PASS with a level and no residual, no
+        tolerance and no reference is a *claimed* level -- a sentence asserting
+        that the thing it names is true, occupying the field a reader consults
+        to find out whether anybody checked. That is the single thing this
+        project exists to refuse, and it is refused here rather than at the
+        four sites that read levels.
+
+        **Scoped to PASS, deliberately.** A FAIL or NOT_RUN check contributes
+        no level to ``attained_levels`` whatever it declares, so requiring
+        evidence from one would be demanding proof of a claim nobody is making.
+        A WARNING is a pass with a caveat and is held to the same standard as a
+        PASS. A check that declares no level is asserting nothing and needs to
+        show nothing -- ``establishes=None`` remains the honest way to say a
+        check earned no level.
+
+        This property is the rule; where it is *enforced* is a separate and
+        currently incomplete question. See ``NEEDS.md`` and
+        ``tests/test_core_guards.py``: the constructor cannot refuse a check
+        that fails it, because exactly one such construction lives inside a
+        byte-pinned file that this round may not edit.
+        """
+        if self.establishes is None:
+            return True
+        if self.outcome not in (
+            ValidationOutcome.PASS,
+            ValidationOutcome.WARNING,
+        ):
+            return True
+        return self.compared_something
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": CHECK_SCHEMA,

@@ -62,7 +62,12 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from ..derived_context import assembled_validity_context, caller_declared
+from ..derived_context import (
+    DomainValidityContext,
+    assembled_validity_context,
+    assembler_namespace,
+    caller_declared,
+)
 from ...scientific.capabilities import ScientificCapability
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
@@ -103,6 +108,7 @@ from ...scientific.solvers.capability import (
     SolverCapabilityId,
 )
 from ...scientific.solvers.protocol import (
+    DeclaredSupport,
     ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
@@ -331,6 +337,11 @@ LINEAR_TCR_MODEL = ScientificModelDefinition(
     ),
     assumptions=_ASSUMPTIONS,
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                TEMPERATURE,
+            }
+        ),
         conditions=(
             RangeCondition(
                 name=TEMPERATURE,
@@ -551,6 +562,15 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
         "undeclared limit leaves its condition UNKNOWN rather than satisfied",
     ),
     validity=ValidityDomain(
+        derived_quantities=frozenset(
+            {
+                LINEAR_RESISTANCE_RATIO,
+                LINEARIZATION_EXCURSION_RATIO,
+                OPERATING_TEMPERATURE_UTILIZATION,
+                REDUCED_DEBYE_TEMPERATURE,
+                TEMPERATURE,
+            }
+        ),
         conditions=(
             RangeCondition(
                 name=TEMPERATURE,
@@ -1081,8 +1101,8 @@ def assess_resistance_validity(
     ``extra=``. A validity condition on a state coordinate is therefore never
     automatic — recorded as a finding, not worked around.
     """
-    return LINEAR_TCR_MODEL.assess_validity(
-        resistance_validity_context(problem, temperature)
+    return resistance_validity_context(problem, temperature).assess(
+        LINEAR_TCR_MODEL
     )
 
 
@@ -1099,7 +1119,7 @@ def assess_resistance_validity(
 
 def resistance_validity_context(
     problem: ScientificProblem, temperature: Quantity
-) -> dict[str, Any]:
+) -> DomainValidityContext:
     """The context :data:`LINEAR_TCR_MODEL` is assessed against.
 
     ``temperature`` is a state coordinate this model states a range condition
@@ -1110,10 +1130,11 @@ def resistance_validity_context(
     """
     return assembled_validity_context(
         declared=caller_declared(
-            problem.validity_context(), ASSEMBLED_QUANTITIES
+            problem.validity_context(reserved=ASSEMBLER_NAMESPACE),
+            ASSEMBLER_NAMESPACE,
         ),
         assembled={TEMPERATURE: temperature},
-        reserved=ASSEMBLED_QUANTITIES,
+        reserved=ASSEMBLER_NAMESPACE,
     )
 
 
@@ -1296,32 +1317,27 @@ def linear_resistance_ratio(
     return Quantity(1.0 + alpha * (kelvin - reference), DIMENSIONLESS)
 
 
-#: Every name this module assembles, and which a caller parameter may therefore
-#: never occupy. See ``engcore.domains.derived_context`` for what reserving a
-#: name means and why it is enforced at assembly rather than at problem
-#: construction.
+#: What this domain's assembler owns, and which a caller parameter may
+#: therefore never occupy: the union of what its own models reserve, read off
+#: the records rather than restated beside them. A model added to this domain
+#: brings its reserved names here without anyone editing this line.
 #:
-#: It is the derived groups **and** the state coordinates the assembler
-#: injects, because the two are in the same position: a condition reads either
-#: one by name, and either one is absent when the assembler could not supply
-#: it. Reserving only the derived groups would leave the state coordinates
-#: forgeable in exactly the same way — ``temperature`` here is a condition of
-#: both material models and is supplied by the coupling, so a caller parameter
-#: of that name would otherwise decide the linear form's own range condition.
-ASSEMBLED_QUANTITIES = frozenset(
-    {
-        TEMPERATURE,
-        LINEARIZATION_EXCURSION_RATIO,
-        OPERATING_TEMPERATURE_UTILIZATION,
-        REDUCED_DEBYE_TEMPERATURE,
-        LINEAR_RESISTANCE_RATIO,
-        # The three limit-versus-limit names are deliberately NOT here. They
-        # are no longer assembled: `CrossLimitCondition` reads the two
-        # declared limits directly, so there is no derived value for a caller
-        # parameter to impersonate. Reserving a name nothing computes and
-        # nothing reads would be dead weight pretending to be a guard.
-    }
+#: There is nothing to add by hand. Both records reserve ``temperature`` --
+#: the state coordinate the assembler injects, which the core's
+#: parameter-built context structurally cannot reach -- and both state a
+#: condition over it, so it is visible in the model rather than only here.
+#:
+#: The three limit-versus-limit names are deliberately absent. They are not
+#: assembled: ``CrossLimitCondition`` reads the two declared limits directly,
+#: so there is no derived value for a caller parameter to impersonate, and
+#: reserving a name nothing computes and nothing reads would be dead weight
+#: pretending to be a guard.
+ASSEMBLER_NAMESPACE = assembler_namespace(
+    (LINEAR_TCR_MODEL, RATED_LINEAR_TCR_MODEL)
 )
+
+#: Retained name for the same set. The models are the source of truth now.
+ASSEMBLED_QUANTITIES = ASSEMBLER_NAMESPACE
 
 
 def derived_material_quantities(
@@ -1380,7 +1396,7 @@ def rated_resistance_validity_context(
     problem: ScientificProblem,
     temperature: Quantity | None = None,
     coldest_temperature: Quantity | None = None,
-) -> dict[str, Any]:
+) -> DomainValidityContext:
     """The full context :data:`RATED_LINEAR_TCR_MODEL` is assessed against.
 
     Assembled in two separated namespaces since F03. The caller's parameters
@@ -1391,7 +1407,10 @@ def rated_resistance_validity_context(
     how a missing declaration reaches ``assess`` as UNKNOWN — the guarantee the
     old ``context.update(...)`` over the caller's own parameters quietly broke.
     """
-    declared = caller_declared(problem.validity_context(), ASSEMBLED_QUANTITIES)
+    declared = caller_declared(
+        problem.validity_context(reserved=ASSEMBLER_NAMESPACE),
+        ASSEMBLER_NAMESPACE,
+    )
     state = {} if temperature is None else {TEMPERATURE: temperature}
     return assembled_validity_context(
         declared=declared,
@@ -1403,7 +1422,7 @@ def rated_resistance_validity_context(
                 coldest_temperature=coldest_temperature,
             ),
         },
-        reserved=ASSEMBLED_QUANTITIES,
+        reserved=ASSEMBLER_NAMESPACE,
     )
 
 
@@ -1422,11 +1441,9 @@ def assess_rated_resistance_validity(
     records, so a caller can hold both answers at once and neither can be
     mistaken for the other.
     """
-    return RATED_LINEAR_TCR_MODEL.assess_validity(
-        rated_resistance_validity_context(
-            problem, temperature, coldest_temperature
-        )
-    )
+    return rated_resistance_validity_context(
+        problem, temperature, coldest_temperature
+    ).assess(RATED_LINEAR_TCR_MODEL)
 
 
 # =====================================================================
@@ -1447,7 +1464,7 @@ class PreparedResistanceEvaluation:
     temperature_k: float
 
 
-class ResistancePropertySolver:
+class ResistancePropertySolver(DeclaredSupport):
     """Evaluates R(T) for one conductor. Satisfies ScientificSolver.
 
     It is a solver in the platform's sense — something that takes a prepared
@@ -1542,15 +1559,33 @@ class ResistancePropertySolver:
                     f"declares {parameter.value}"
                 )
 
-    def supports(self, problem: ScientificProblem) -> bool:
-        """Does this evaluator implement the science the problem asks for?
+    #: What this solver is for, and what it implements. The core compares.
+    #:
+    #: The model reference was already the right discriminator and is kept:
+    #: ``core:algebraic`` says a closed-form evaluation is wanted, which is
+    #: true of countless unrelated relations, and only the model says which
+    #: one. What was missing is the other half. ``supports()`` matched on the
+    #: model alone and never looked at ``required_capabilities``, so a problem
+    #: naming this model and requiring ``core:ode`` as well got True from an
+    #: evaluator that solves nothing.
+    serves_capabilities = frozenset({CoreCapabilities.ALGEBRAIC.name})
+    served_models = (LINEAR_TCR_MODEL,)
 
-        Matched on the **model reference the problem carries**, not on a
-        capability alone: ``core:algebraic`` says a closed-form evaluation is
-        needed, which is true of countless unrelated relations.
+    def additional_support_gap(self, problem) -> tuple[str, ...]:
+        """The model must be named at this **version**, not just by id.
+
+        ``served_models`` matches on ``model_id``, which is right for a domain
+        whose models are versioned together. This evaluator implements one
+        record, and a problem asking for a future revision of the same relation
+        is asking for arithmetic this code does not perform.
         """
-        wanted = (LINEAR_TCR_MODEL.model_id, LINEAR_TCR_MODEL.version)
-        return any(model.key == wanted for model in problem.models)
+        wanted = LINEAR_TCR_MODEL.key
+        if any(model.key == wanted for model in problem.models):
+            return ()
+        return (
+            f"the problem names no model at {wanted[0]}@{wanted[1]}, which is "
+            f"the exact record this evaluator implements",
+        )
 
     def prepare(
         self,
@@ -1706,6 +1741,12 @@ class ResistancePropertySolver:
             # reader who is not filtering on `passed` first.
             establishes=(
                 ValidationLevel.DIMENSIONALLY_VALID if passed else None
+            ),
+            # The reference the comparison was made against. A dimension match
+            # yields no residual, so this is the only evidence available that
+            # one happened -- and a level with no evidence reads like a claim.
+            evidence=tuple(
+                f"{metric}={unit}" for metric, unit in sorted(declared.items())
             ),
             detail=(
                 f"{len(produced)} produced metric(s) checked against the "

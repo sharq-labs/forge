@@ -51,6 +51,8 @@ from src.engcore.domains.electrical.dc.problem import (
 from src.engcore.domains.electrical import material as mat
 from src.engcore.domains.thermal_models import lumped as lump
 from src.engcore.scientific.errors import InvalidScientificProblem
+from src.engcore.scientific.ir.problem import ScientificProblem
+from src.engcore.scientific.ir.variables import ScientificParameter
 from src.engcore.scientific.models.definition import ValidityStatus
 from src.engcore.scientific.results.validation import ValidationOutcome
 from src.engcore.scientific.solvers.protocol import ConvergenceState
@@ -742,8 +744,73 @@ def test_the_lumped_bound_is_the_standard_one_and_is_not_a_tautology():
     assert LUMPED_ELECTRICAL_LENGTH_LIMIT.magnitude_in("dimensionless") == 0.1
 
     # A distributed circuit would violate it, which is what makes it a bound.
+    # The ratio is a derived quantity of this record, so it arrives as
+    # `assembled=`; handed in as a caller declaration it would be refused,
+    # which is what the neighbouring test checks.
     verdict = KCL_MODEL.assess_validity(
-        {LUMPED_ELECTRICAL_LENGTH: Quantity(0.5, "dimensionless")}
+        assembled={LUMPED_ELECTRICAL_LENGTH: Quantity(0.5, "dimensionless")}
     )
     assert verdict.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
     assert LUMPED_ELECTRICAL_LENGTH in verdict.violated
+
+
+# =====================================================================
+# F03 in this domain: the reserved names
+# =====================================================================
+
+def test_the_utilizations_are_reserved_on_the_records_that_read_them():
+    """Each rating utilization is a derived quantity of exactly one model."""
+    assert RESISTOR_OHM_MODEL.derived_quantities == frozenset(
+        {DISSIPATED_POWER_UTILIZATION, WORKING_VOLTAGE_UTILIZATION}
+    )
+    assert IDEAL_VOLTAGE_SOURCE_MODEL.derived_quantities == frozenset(
+        {SOURCE_CURRENT_UTILIZATION}
+    )
+    assert IDEAL_CURRENT_SOURCE_MODEL.derived_quantities == frozenset(
+        {COMPLIANCE_VOLTAGE_UTILIZATION}
+    )
+    assert KCL_MODEL.derived_quantities == frozenset(
+        {LUMPED_ELECTRICAL_LENGTH}
+    )
+
+
+def test_a_caller_parameter_cannot_buy_a_rating_this_element_does_not_have():
+    """The F03 reproduction in the domain that was never protected against it.
+
+    A resistor with no rating declared is honestly UNKNOWN on both
+    utilizations. A caller parameter named after either one used to occupy the
+    key the failed derivation left empty and be read as evidence -- IN_DOMAIN
+    over a rating the element does not have. It is refused now, at the point
+    the caller-declared context is built, before any condition sees it.
+    """
+    resistor = Resistor(
+        component_id="R1",
+        node_a="n1",
+        node_b="gnd",
+        resistance=Quantity(100.0, "ohm"),
+    )
+    problem = resistor_relation_problem(resistor)
+
+    honest = assess_resistor_validity(problem)
+    assert honest.status is ValidityStatus.UNKNOWN
+    assert DISSIPATED_POWER_UTILIZATION in honest.unknown
+    assert WORKING_VOLTAGE_UTILIZATION in honest.unknown
+
+    for name in RESISTOR_OHM_MODEL.derived_quantities:
+        forged = ScientificProblem(
+            problem_id=problem.problem_id,
+            name=problem.name,
+            variables=problem.variables,
+            parameters=problem.parameters
+            + (
+                ScientificParameter(
+                    name=name, value=Quantity(0.1, "dimensionless")
+                ),
+            ),
+            models=problem.models,
+            required_capabilities=problem.required_capabilities,
+        )
+        with pytest.raises(InvalidScientificProblem, match="derives"):
+            assess_resistor_validity(forged)
+
+    assert assess_resistor_validity(problem) == honest
