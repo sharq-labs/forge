@@ -3091,14 +3091,38 @@ which is exactly the class of defect P.1 records.
 cost something and the lesson generalises.
 
 `evidence-package` is based on `c0ec657` (GUARD 3) on `core-guards`. Running
-`tests/domains/kinetics/` at each commit:
+`tests/domains/kinetics/` at **every** commit:
 
 | commit | result |
 |---|---|
-| `dd4f698` merge base | 227 passed |
-| `40e8956` GUARD 2 | passed |
+| `dd4f698` merge base | 226 passed |
+| `d92149d` GUARD 1 | 227 passed |
+| `40e8956` GUARD 2 | 227 passed |
 | **`c0ec657` GUARD 3** | **7 failed**, 220 passed |
-| `9e41f5a` GUARD 7, `core-guards` tip | **227 passed — already repaired** |
+| **`3609864` GUARD 4** | **7 failed**, 220 passed |
+| **`149b68f` GUARD 5** | **7 failed**, 220 passed |
+| `944a48b` GUARD 6 | **227 passed — repaired here** |
+| `9e41f5a` GUARD 7, tip | 227 passed |
+
+**Three tips were red, not one, and the repair is at GUARD 6, not GUARD 7.**
+
+**This table is a correction, and the first version of it was the same mistake
+it documents.** What was published first said `dd4f698` 227 passed and jumped
+from `c0ec657` straight to `9e41f5a` — "already repaired". Neither of the two
+red commits between them had been run, and the 226 at the merge base had never
+been measured at all: six named tests were run there, 227 was measured at
+`9e41f5a`, and the number was carried across as though it had been observed.
+The `core-guards` session ran the full sweep and returned 226, three red tips,
+and GUARD 6 as the earliest green. Every one of those corrections was right.
+
+An inference presented in a measurement's format, inside the round whose subject
+is that distinction — which is the rule below arriving one level up: **a number
+you did not watch appear is not a measurement, however true it turns out to
+be.** The 227 was even correct for seven of the eight commits. Being right is
+not the same as having checked, and the format claimed the second.
+
+`944a48b` is therefore the earliest base that carries the guards and is green;
+it is the rebase target if the smallest such base is wanted.
 
 Two causes. `cstr/validation.py:605` returns `self._tolerance_rel_tol` from a
 property, and that attribute is never assigned to the instance — it exists only
@@ -3109,7 +3133,8 @@ string `CSTR`, failing `test_the_scientific_core_owns_no_cstr_specific_rule` —
 the layering invariant that commit's own message reports having swept for.
 
 **The lesson is the tier, not the bug.** These live in `expensive` and appear in
-neither FAST nor any developer's default loop. GUARD 3's commit message reports
+neither FAST nor any developer's default loop, and they survived three
+consecutive commits because of it. GUARD 3's commit message reports
 "FAST 2140 passed"; the evidence round's baseline reports "FAST 2146 passed".
 Both are true, both were checked honestly, and both missed seven failures
 because the tier that runs them is the one nobody runs locally. A green FAST
@@ -3148,6 +3173,23 @@ that cannot fail, and the two are told apart by exactly one experiment.
 cost: an unearned 100 % catch rate published across two rounds; a guard that
 silently protected nothing while its own comment stated the rule it was
 violating; and seven tests failing for four commits behind a green FAST tier.
+
+**A fourth instance, from the `core-guards` session, and it is the pattern one
+level up.** Their mutation harness (`tests/mutation_guards.py`) removes each
+guard from a copy of the tree and asserts the suite goes red — 16 of 16. While
+building it, one mutation inserted a comment and removed nothing; the suite
+stayed green, which is indistinguishable from an unchecked guard. **The verifier
+was the thing that could not fail.** So the rule recurses: a mutation that
+mutates nothing is itself a check that has never been observed to fail, and the
+harness needs its own falsification — hash the tree before and after, refuse to
+run when they match. *A green result is a claim about your mutation before it is
+a claim about your check.*
+
+**A fifth, and it is mine.** The bisect table in P.3 was published with a number
+nobody had measured and two commits nobody had run. It was formatted as
+measurement and was partly inference. The check that failed there was not a test
+but a habit: nothing in the workflow required the number to have been watched.
+See P.3.
 
 **Where it bites hardest.** A check that gates a *level*, a *verdict* or a
 *publication* is worth more than a check that reports a number, because nobody
