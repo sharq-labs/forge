@@ -135,6 +135,7 @@ from ..scientific.models.definition import (
     ValidityAssessment,
     ValidityStatus,
 )
+from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
 from ..scientific.results.result import ScientificResult
 from ..scientific.results.validation import (
@@ -881,8 +882,13 @@ class AssertedContext:
         # Verbatim has to mean *round-trippable*. A payload holding a live
         # object would serialize to something a reader could not compare
         # against the declaration it came from, which defeats the purpose.
+        #
+        # Checked on the **detached** form, because that is the form a reader
+        # receives from `to_dict`. The frozen containers this record stores
+        # internally are not JSON types and checking those would refuse every
+        # nested payload for the wrong reason.
         try:
-            json.dumps(payload, sort_keys=True)
+            json.dumps(detach(payload), sort_keys=True)
         except (TypeError, ValueError) as exc:
             raise CredibilityEvidenceError(
                 f"asserted context {source!r} payload is not JSON-serializable "
@@ -898,7 +904,7 @@ class AssertedContext:
                 f"reader scanning for those shapes would find it underneath "
                 f"the markings that say this is not evidence"
             )
-        object.__setattr__(self, "payload", payload)
+        object.__setattr__(self, "payload", freeze(payload))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -913,7 +919,13 @@ class AssertedContext:
             # "consumed_by_any_check", which would be false for any payload
             # carrying an applicability declaration — see the class docstring.
             "consumed_by_verdict": False,
-            "payload": dict(sorted(self.payload.items())),
+            # Detached at every depth. A declaration's payload is the one
+            # free-form structure in this record, and it is carried verbatim —
+            # which has to mean the reader gets a copy, not a handle on the
+            # claim itself.
+            "payload": {
+                key: detach(value) for key, value in sorted(self.payload.items())
+            },
         }
 
     @classmethod
@@ -988,7 +1000,10 @@ class CredibilityEvidenceReport:
                     f"report value {name!r} must be a Quantity — a bare "
                     f"number is not a scientific result"
                 )
-        object.__setattr__(self, "values", values)
+        # Frozen for the reason ``ScientificResult.values`` is: the Quantity
+        # check above is worth nothing if a bare number can be written in
+        # afterwards. See ``scientific.results.immutable``.
+        object.__setattr__(self, "values", freeze(values))
 
         validity = tuple(self.validity)
         for record in validity:
@@ -1362,8 +1377,8 @@ class CredibilityEvidenceReport:
             "schema": EVIDENCE_PACKAGE_SCHEMA,
             "run_id": self.run_id,
             "values": {
-                name: self.values[name].to_dict()
-                for name in sorted(self.values)
+                name: value.to_dict()
+                for name, value in sorted(self.values.items())
             },
             "provenance": self.provenance.to_dict(),
             "validity": [record.to_dict() for record in self.validity],
