@@ -1227,7 +1227,7 @@ report merged checks across the closure, which A2.3 says it does not.
 **What it needs.** The A2.3 decision. The two are the same question asked from
 opposite ends.
 
-### A2.9 The resistor assessment reads the declared resistance, not the converged one
+### A2.9 The resistor assessment read the declared resistance, not the converged one — FIXED
 
 **Where** `mcp/problem.py`, `_electrical_assessments`.
 
@@ -1250,10 +1250,30 @@ about not letting those blur. The fix is to read each stage's converged
 resistance out of `run.final.result_for(prop_problem.problem_id)` and build the
 circuit from those.
 
-**Not done here** because folding a no-op change into an already-written commit
-would have meant rewriting the branch's history, and adding an eighth commit
-would have broken the one-commit-per-task shape this round was asked for. It is
-a two-line change whenever the file is next open.
+**DONE.** `_electrical_assessments` now builds its element list from
+`cp.converged_resistances(system, run)`, which reads each stage's `R(T)` back
+out of that stage's own property result rather than recomputing the TCR form a
+second time. It raises rather than falling back if a stage's result is absent:
+a rating assessed at the reference value without saying so would be a wrong
+number read confidently.
+
+The prediction above held exactly — **no verdict moved**, on any of the 2000
+hard benchmark cases or anywhere in the suite.
+
+**And it was not the cause of `S00709`.** §B.6 below said the tool "computes
+3.5634 W" for that case, the dissipation at the reference resistance. It does
+not: the rating conditions have always read the converged electrical result,
+which is 3.5240 W, and 3.5240 W is over the 3.49889 W rating too. `S00709` is
+a mislabelled case — `benchmarks/hard/generate_hard.py` sizes ratings at
+`R(T_ss)`, the steady state, while the payload declares a 66.169 s horizon
+against a 27.376 s time constant and stops 2.4 K short of it. Cooler is a
+lower resistance is more dissipation. The arithmetic is pinned in
+`tests/mcp/test_problem.py::test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer`.
+
+**Still open, and it is a benchmark need rather than a domain one:**
+`shape_rating` must size a rating at the marched endpoint rather than at a
+steady state the run never reaches. Until it does, the hard benchmark's one
+false reject is a label, not a miss.
 
 ---
 
@@ -1885,21 +1905,45 @@ benchmark cases. Two files outside that were necessarily touched:
 * `benchmarks/hard/generate_hard.py` and `cases_hard/` — the task asks for
   cases; `benchmarks/hard/**` is TASK C's stated ownership.
 
-### B.6 `S00709` — the benchmark witnessed A2.9 for the first time
+### B.6 `S00709` — this diagnosis was wrong, and the case is mislabelled
 
-One sound case is refused, and the tool is wrong about it. The resistor
-dissipates 3.4886 W at the converged fixed point against a 3.49889 W rating;
-the tool builds its circuit at the **declared reference resistance**, computes
-3.5634 W, and reports the rating violated. That is A2.9 above, recorded two
-rounds ago, and this is the first draw to place a rating close enough to the
-operating point for the TCR's 2% resistance shift to flip the verdict.
+**Superseded. The text below was checked and does not hold; the correction
+follows it.** What stood here:
 
-The error is conservative, which is why it appears as a false reject rather
-than a false accept. Fixing it means assessing the ratings at the converged
-resistance, which is a change to `systems/electrothermal/` and to the ordering
-of the coupling — this round does not own it and did not do it.
+> One sound case is refused, and the tool is wrong about it. The resistor
+> dissipates 3.4886 W at the converged fixed point against a 3.49889 W rating;
+> the tool builds its circuit at the **declared reference resistance**, computes
+> 3.5634 W, and reports the rating violated. That is A2.9 above […]
 
-### B.7 The geometry_conflict labels are wrong and were left wrong
+The tool does not compute 3.5634 W. The rating conditions have always been
+handed `dissipated_power` and `voltage_across` from the **converged** electrical
+result — A2.9 said so itself, and A2.9's element-list defect could only ever
+reach `resistance > 0`. The number actually read is 3.5240 W, and it is over the
+3.49889 W rating.
+
+**What is really wrong is the label.** `generate_hard.py::base_draw` states each
+rating against `R(T_ss)`, the resistance at the **steady state**, and
+`shape_rating` puts this one 0.2 % inside it: T_ss = 298.364 K, R = 62.605 Ω,
+P = 3.4919 W. The payload then declares a 66.169 s horizon against a 27.376 s
+time constant, so the body reaches 295.999 K and stops — 2.4 K short of the
+steady state the rating was sized at. A cooler conductor is a *less* resistive
+one, so it dissipates more: 3.5240 W, 1.0072× the rating, at the operating
+point the case itself declares. The dissipation falls monotonically from
+3.5635 W at t = 0 towards 3.4919 W and never arrives inside the horizon, so the
+part is over its rating for the whole run and the peak is at the cold start.
+
+The tool is right and the ground truth is wrong — the same failure as B.7's
+geometry labels: an expectation computed at an operating point the case does
+not declare.
+
+**What it needs.** `shape_rating` must size a rating at the marched endpoint
+rather than at the steady state. Not done alongside the A2.9 fix, because it
+moves every ratings case in the draw and the round that fixed A2.9 did not own
+the generator. The arithmetic above is pinned in
+`tests/mcp/test_problem.py::test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer`,
+so this entry is checked rather than asserted.
+
+### B.7 The geometry_conflict labels are wrong and were left wrong — FIXED
 
 `shape_geometry_conflict` draws its factor from {3, 10, 0.1, 30}, and 3 is
 *exactly* the sphere shape factor `GEOMETRY_AGREEMENT_FACTOR` was derived from,
@@ -1909,6 +1953,18 @@ right to admit every one. The fix is to draw the factor at `3 * (1 +/- margin)`
 like every other threshold shaper. Not done here: it would move the headline
 metrics for a reason that has nothing to do with this round, and the effect is
 reported separately instead.
+
+**DONE.** The factor is now drawn from {3*1.05, 1/(3*1.05), 30, 1/30} —
+strictly outside the tolerance, two just past it and two an order beyond, one
+pair on each side — and the shaper docstring records why the boundary value is
+excluded so it cannot be reintroduced. The list stays four elements long so
+`rng.choice` consumes the same draw from the same seed: exactly the 124
+`geometry_conflict` cases changed and every other case is byte-identical.
+
+The real false accepts did not move — 11 before, 11 after. The headline went
+26/1658 (1.57%) to 11/1658 (0.66%) and the catch rate 98.4% to 99.3% because
+15 mislabelled cases left the numerator, not because the tool improved. Every
+other shaper was audited for the same mistake and none has it.
 
 ## D. TASK D — the cross-limit condition type
 

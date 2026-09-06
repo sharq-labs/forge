@@ -1545,6 +1545,48 @@ def test_typed_parameter_round_trips():
     }
 
 
+def test_parameter_accessors_separate_quantities_from_the_rest():
+    """``parameter_values`` is the whole union; ``quantity_parameters`` is not.
+
+    The two accessors exist because ``ProvenanceRecord.inputs`` is a
+    Quantity-only contract. Before the split there was one method annotated
+    ``dict[str, Quantity]`` that returned categories too, so a problem holding
+    one produced a record that failed inside whatever runner was building it
+    rather than where the wrong type came from.
+    """
+    problem = ScientificProblem(
+        problem_id="accessors",
+        name="parameter accessors",
+        variables=(ScientificVariable("x", unit="meter"),),
+        parameters=(
+            ScientificParameter("mass", Quantity(2.0, "kilogram")),
+            ScientificParameter("segment_count", IntegerValue(5)),
+            ScientificParameter("steady_state", BooleanValue(True)),
+            ScientificParameter(
+                "material",
+                CategoricalValue("aluminum", vocabulary=("aluminum", "steel")),
+            ),
+        ),
+    )
+
+    every = problem.parameter_values()
+    assert set(every) == {"mass", "segment_count", "steady_state", "material"}
+    # Types survive: the union is returned as declared, not coerced.
+    assert type(every["material"]) is CategoricalValue
+    assert type(every["segment_count"]) is IntegerValue
+
+    quantities = problem.quantity_parameters()
+    assert set(quantities) == {"mass"}
+    assert quantities["mass"] == Quantity(2.0, "kilogram")
+
+    # The reason the split exists: provenance accepts one and refuses the
+    # other, and refusing is correct — there is no Quantity that stands in for
+    # a category.
+    record = ProvenanceRecord(run_id="r1", inputs=quantities)
+    assert record.inputs["mass"] == Quantity(2.0, "kilogram")
+    _raises(ScientificCoreError, ProvenanceRecord, run_id="r2", inputs=every)
+
+
 def test_typed_values_reject_invalid_payloads():
     # bool is an int subclass; the union must not erase the distinction
     _raises(InvalidScientificProblem, IntegerValue, True)

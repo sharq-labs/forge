@@ -203,6 +203,26 @@ PRANDTL_MIN = 0.6
 #: way. A CONVENTION in the domain and restated as one here.
 AGREEMENT_FACTOR = 2.0
 
+#: How far the two routes to a characteristic length may disagree before the
+#: domain calls them different objects: a factor of three either way, and the
+#: bound is INCLUSIVE on both edges. Three is the sphere's shape factor -- for
+#: a sphere L_c = r_o and V/A_s = r_o/3 -- so a body sitting exactly on the
+#: bound is the shape the factor was derived from. Restated here rather than
+#: imported, because this file never consults engcore.
+GEOMETRY_AGREEMENT_FACTOR = 3.0
+
+#: Disagreements a `geometry_conflict` case is drawn from, as the factor by
+#: which the implied V/A_s is inflated. The ratio the domain judges is its
+#: reciprocal, so these four sit strictly OUTSIDE the factor-of-3 tolerance --
+#: two just past it, two an order beyond -- one pair on each side. See
+#: :func:`shape_geometry_conflict` for why the boundary value itself is
+#: excluded.
+_GEOMETRY_NEAR = GEOMETRY_AGREEMENT_FACTOR * 1.05
+_GEOMETRY_FAR = 30.0
+GEOMETRY_CONFLICT_FACTORS = [
+    _GEOMETRY_NEAR, 1.0 / _GEOMETRY_NEAR, _GEOMETRY_FAR, 1.0 / _GEOMETRY_FAR,
+]
+
 #: Comfortable defaults, far inside both ranges, so a case that is not about
 #: convection is not accidentally about convection.
 RAYLEIGH_DEFAULT = 1.0e6
@@ -1053,13 +1073,41 @@ def shape_near_miss_units(p, rng):
 # --- consistency defects, the three the 1000-case set exposed --------------
 
 def shape_geometry_conflict(p, rng):
+    """Two routes to L_c that describe different bodies.
+
+    **The boundary value is excluded on purpose and must stay excluded.** The
+    domain admits a disagreement of up to a factor of
+    `GEOMETRY_AGREEMENT_FACTOR` (3) either way, inclusive on both edges, and
+    that inclusiveness is correct: a body whose V/A_s is exactly L_c/3 IS the
+    sphere the factor was derived from -- L_c = r_o against V/A_s = r_o/3 --
+    so it sits on the bound by construction and admitting it is the right
+    reading, not a rounding accident. An earlier draw of this shaper picked the
+    factor 3.0 itself and labelled the result `inconsistent_inputs`. The tool
+    accepted 15 such cases and the benchmark counted every one as a false
+    accept the tool had not committed: a sound sphere scored as a miss, and 15
+    of the 26 headline false accepts were this label rather than this tool. A
+    case at exactly 3x is a sphere. Reintroducing it would re-inflate the same
+    number.
+
+    The disagreement is therefore placed strictly outside the tolerance, on
+    either side, with a margin -- the declared L_c too large by more than 3x or
+    too small by more than 3x. Both sides get cases because the bound is
+    two-sided and neither route is privileged: nothing here can tell which of
+    the two numbers the caller got right, only that no standard shape
+    reconciles them.
+    """
     widen_all(p)
-    factor = rng.choice([3.0, 10.0, 0.1, 30.0])
+    factor = rng.choice(GEOMETRY_CONFLICT_FACTORS)
     p["vol"] = p["lc"] * p["area"] * factor
+    # The domain judges L_c(declared) / (V/A_s), which is 1/factor here.
+    ratio = 1.0 / factor
     return ("inconsistent_inputs", "NOT_SUPPORTED",
             f"Declared Lc = {p['lc']:.4g} m against an implied V/As of "
-            f"{p['vol']/p['area']:.4g} m ({factor:g}x apart). Two routes to one "
-            "quantity that disagree must not be silently reconciled.",
+            f"{p['vol']/p['area']:.4g} m — the two routes disagree by "
+            f"{ratio:.4g}x, past the factor of "
+            f"{GEOMETRY_AGREEMENT_FACTOR:g} that a choice of shape convention "
+            "can account for. Two routes to one quantity that disagree must "
+            "not be silently reconciled.",
             "biot_number", "geometry_conflict")
 
 

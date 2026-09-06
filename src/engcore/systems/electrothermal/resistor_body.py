@@ -452,7 +452,7 @@ def _property_result(
                 solver=solver.identity,
             ),
         ),
-        inputs=dict(problem.parameter_values())
+        inputs=dict(problem.quantity_parameters())
         | {
             mat.TEMPERATURE: Quantity(
                 prepared.payload.temperature_k, mat.TEMPERATURE_UNIT
@@ -504,7 +504,7 @@ def _thermal_result(
                 solver=solver.identity,
             ),
         ),
-        inputs=dict(problem.parameter_values())
+        inputs=dict(problem.quantity_parameters())
         | {
             lump.HEAT_INPUT: heat_input,
             lump.AMBIENT_TEMPERATURE: prepared.payload.body.ambient_temperature,

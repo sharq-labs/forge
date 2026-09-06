@@ -1232,3 +1232,227 @@ def test_an_undeclared_limit_is_not_read_as_agreement():
     report = run_electrothermal_case(payload, run_id="absent").reports[0]
     names = {c.name for c in report.validation}
     assert "declared_limits_are_mutually_consistent" not in names
+
+
+# =====================================================================
+# NEEDS A2.9 -- which resistance the rating is assessed against
+# =====================================================================
+#
+# The element list the resistor assessment is built from used to come from
+# ``system.circuit_at(reference resistances)``: the element as the CALLER
+# declared it, not the element the converged circuit was solved with. It now
+# comes from ``cp.converged_resistances``, read back out of each stage's own
+# property result.
+#
+# A2.9 predicted its own blast radius correctly, and overclaiming the fix would
+# be worse than stating it plainly: the only resistor condition that reads
+# ``resistance`` is ``resistance > 0``, and both readings are strictly positive
+# in any run that reaches this point, so NO VERDICT MOVES. The operating-point
+# values -- dissipated power, voltage across -- were already the converged
+# ones, arriving as arguments from the electrical result rather than out of the
+# element. What changed is that the report no longer names a resistance the
+# circuit did not use.
+#
+# So the tests below pin two different things. The first pins the helper, which
+# is what this change added. The third pins the property that must survive any
+# future edit: with a rating placed between the two readings, reading the
+# reference would refuse a design the converged point clears.
+
+
+def _converged_probe(payload, run_id):
+    """``(system, run, R_reference, R_converged, P_converged)`` for a payload."""
+    system = build_electrothermal_system(payload)
+    run = run_electrothermal_case(payload, run_id=run_id).run
+    problems = cp.coupled_problems(
+        system,
+        {s.component_id: s.conductor.reference_resistance for s in system.stages},
+    )
+    electrical = run.final.result_for(problems[0].problem_id)
+    return (
+        system,
+        run,
+        system.stages[0].conductor.reference_resistance,
+        cp.converged_resistances(system, run)["R1"],
+        electrical.value("resistor_power:R1"),
+    )
+
+
+def test_converged_resistances_reads_the_run_not_the_declaration():
+    """R(T), out of the property result, and into the circuit that is assessed."""
+    system, run, reference, converged, _power = _converged_probe(
+        _rated_payload(), run_id="converged_r"
+    )
+
+    # A positive TCR on a body that heats: the converged element is the
+    # stiffer one, and by 18% -- far more than any tolerance could blur.
+    assert reference.magnitude_in("ohm") == pytest.approx(10.0)
+    assert converged.magnitude_in("ohm") == pytest.approx(11.7853, rel=1e-4)
+
+    # Not recomputed here: it is the value the property solve published, so
+    # there is one implementation of the TCR form rather than two.
+    for _stage, prop_problem, _thermal in cp.stage_problems(system):
+        published = run.final.result_for(prop_problem.problem_id).value(
+            mat.RESISTANCE_METRIC
+        )
+        assert published == converged
+
+    # And it is the element the assessment is built from.
+    circuit = system.circuit_at(cp.converged_resistances(system, run))
+    assert circuit.resistors[0].resistance == converged
+
+
+def test_a_run_that_cannot_supply_the_converged_value_is_refused():
+    """No silent fall back to the declaration. A wrong value read confidently
+    is worse than an error that names what is missing."""
+    run = run_electrothermal_case(_rated_payload(), run_id="mismatch").run
+
+    renamed = copy.deepcopy(_rated_payload())
+    renamed["stages"][0]["component_id"] = "R2"
+    other = build_electrothermal_system(renamed)
+
+    with pytest.raises(InvalidScientificProblem):
+        cp.converged_resistances(other, run)
+
+
+def test_a_rating_between_the_two_readings_is_judged_at_the_converged_one():
+    """**The regression guard.** R_ref = 10 ohm and R(T) = 11.79 ohm across one
+    5 V source, so the same part dissipates 2.500 W as declared and 2.121 W as
+    run. A 2.3 W rating sits between them: assessed at the converged point the
+    design holds, assessed at the reference it is refused.
+
+    This is the assertion a future edit that quietly went back to reading the
+    declaration would break. It passes today for a reason worth being honest
+    about -- the power has always arrived from the converged electrical result,
+    so this half was already right before A2.9 was addressed -- and that is
+    exactly why it is worth pinning: nothing else in the suite says the two
+    readings must not be swapped.
+    """
+    _system, _run, reference, converged, power = _converged_probe(
+        _rated_payload(), run_id="between"
+    )
+    at_reference = 5.0**2 / reference.magnitude_in("ohm")
+    at_converged = 5.0**2 / converged.magnitude_in("ohm")
+    assert at_converged == pytest.approx(power.magnitude_in("watt"), rel=1e-6)
+    assert at_converged < 2.3 < at_reference
+
+    report = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": "2.3 watt"}), run_id="between_v"
+    ).reports[0]
+    resistor = next(r for r in report.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.satisfied
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_a_rating_exceeded_at_the_converged_point_stays_refused():
+    """Reading the converged value is not a licence to pass a part that is
+    genuinely over its rating there: 2.121 W against a 2.0 W part."""
+    report = run_electrothermal_case(
+        _rated_payload(ratings={"rated_power": "2.0 watt"}), run_id="still_over"
+    ).reports[0]
+    resistor = next(r for r in report.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+#: Benchmark case ``S00709``, field for field. The hard benchmark's one false
+#: reject. ``benchmarks/hard/README.md`` attributed it to A2.9 -- the tool
+#: "computes 3.5634 W", which is the dissipation at the reference resistance.
+#: It does not, and this case is the evidence.
+S00709_PAYLOAD = {
+    "source_voltage": "14.78541112 volt",
+    "stages": [
+        {
+            "component_id": "R1",
+            "conductor": {
+                "reference_resistance": "61.34739865 ohm",
+                "temperature_coefficient": "0.00393 1/kelvin",
+                "reference_temperature": "293.15 kelvin",
+                "limits": {
+                    "linearization_band": "68.09849035 kelvin",
+                    "maximum_operating_temperature": "328.3642412 kelvin",
+                    "debye_temperature": "107.6403019 kelvin",
+                },
+                "ratings": {
+                    "rated_power": "3.49889191 watt",
+                    "maximum_working_voltage": "44.35623337 volt",
+                },
+            },
+            "body": {
+                "heat_capacity": "3.266688028 joule/kelvin",
+                "ambient_conductance": "0.1193259777 watt/kelvin",
+                "ambient_temperature": "269.1007548 kelvin",
+                "initial_temperature": "269.1007548 kelvin",
+                "duration": "66.16911106 second",
+                "applicability": {
+                    "characteristic_length": "5.764861959e-05 meter",
+                    "body_volume": "4.638162492e-08 meter**3",
+                    "surface_area": "0.0008045574248 meter**2",
+                    "body_conductivity": "400 watt/meter/kelvin",
+                    "surface_emissivity": "0.3180459303 dimensionless",
+                    "convection_regime": "forced",
+                    "conductance_excursion_bound": "87.79045923 kelvin",
+                    "capacity_excursion_bound": "87.79045923 kelvin",
+                    "melting_temperature": "728.3642412 kelvin",
+                    "fluid_conductivity": "0.1253641637 watt/meter/kelvin",
+                    "fluid_kinematic_viscosity": "1.589e-05 meter**2/second",
+                    "fluid_prandtl_number": "0.707 dimensionless",
+                    "convection_length": "0.05 meter",
+                    "fluid_velocity": "3.178 meter/second",
+                },
+            },
+        }
+    ],
+    "source_ratings": {"maximum_current": "0.7085147846 ampere"},
+    "coupling": {
+        "seed_temperature": "269.1007548 kelvin",
+        "tolerance": "1e-06 kelvin",
+        "max_iterations": 200,
+    },
+}
+
+
+def test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer():
+    """The benchmark's one false reject is a mislabelled case, not a bad read.
+
+    The generator states each rating against ``R(T_ss)`` -- the resistance at
+    the STEADY STATE -- and places this one 0.2% inside: T_ss = 298.364 K,
+    R = 62.605 ohm, P = 3.4919 W, rated 3.4989 W. But the payload declares a
+    66.169 s run against a 27.376 s time constant, so the body reaches
+    295.999 K and stops there, 2.4 K short of the steady state it was rated
+    against. Cooler means a lower resistance means MORE dissipation, and the
+    part draws 3.5240 W: 1.0072x its rating, at the operating point the case
+    itself declares.
+
+    Reading the converged resistance is what makes the number 3.5240 W rather
+    than the reference reading's 3.5635 W, so the fix moves the utilization
+    from 1.0185 to 1.0072. Both are over. Nothing between the two readings
+    clears this part either: the dissipation falls monotonically from 3.5635 W
+    at t = 0 towards 3.4919 W and never arrives inside the declared horizon, so
+    the rating is exceeded for the whole run and its peak is at t = 0.
+
+    The tool is right and the ground truth is wrong, in the same way the
+    ``geometry_conflict`` labels were wrong -- the expectation is computed at an
+    operating point the case does not declare. The correction belongs in
+    ``benchmarks/hard/generate_hard.py::shape_rating``, which must size a rating
+    at the marched endpoint rather than at a steady state the run never reaches.
+    """
+    _system, _run, reference, converged, power = _converged_probe(
+        S00709_PAYLOAD, run_id="s00709"
+    )
+    rated = 3.49889191
+
+    assert reference.magnitude_in("ohm") == pytest.approx(61.3474, rel=1e-5)
+    assert converged.magnitude_in("ohm") == pytest.approx(62.0344, rel=1e-5)
+
+    at_converged = power.magnitude_in("watt")
+    at_reference = 14.78541112**2 / reference.magnitude_in("ohm")
+    assert at_converged == pytest.approx(3.52399, rel=1e-5)
+    assert at_reference == pytest.approx(3.56345, rel=1e-5)
+
+    # Reading the converged value is a smaller overshoot, and still one.
+    assert rated < at_converged < at_reference
+
+    report = run_electrothermal_case(S00709_PAYLOAD, run_id="s00709_v").reports[0]
+    resistor = next(r for r in report.validity if r.model_id == RESISTOR)
+    assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED

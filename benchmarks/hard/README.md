@@ -129,44 +129,75 @@ scored exactly right.**
 
 ## Baselines
 
-| Metric | after ratings round | after convection round |
-|---|---|---|
-| Catch rate | 1623/1643 (98.8%) | **1632/1658 (98.4%)** |
-| False accept | 20/1643 (1.22%) | **26/1658 (1.57%)** |
-| False reject | 0/357 (0.0%) | **1/342 (0.29%)** |
-| Exact verdict match | 1806/2000 (90.3%) | **1821/2000 (91.0%)** |
+| Metric | after ratings round | after convection round | after geometry relabel |
+|---|---|---|---|
+| Catch rate | 1623/1643 (98.8%) | 1632/1658 (98.4%) | **1647/1658 (99.3%)** |
+| False accept | 20/1643 (1.22%) | 26/1658 (1.57%) | **11/1658 (0.66%)** |
+| False reject | 0/357 (0.0%) | 1/342 (0.29%) | **1/342 (0.29%)** |
+| Exact verdict match | 1806/2000 (90.3%) | 1821/2000 (91.0%) | **1836/2000 (91.8%)** |
 
-**Both false-accept columns are dominated by cases the tool is right about.**
-`geometry_conflict` draws its factor from {3, 10, 0.1, 30} and 3 is *exactly*
-the sphere's shape factor, which is the number `GEOMETRY_AGREEMENT_FACTOR` was
-derived from and where the bound is inclusive on purpose. Admitting those is
-correct and the labels are wrong. This draw happened to produce 15 of them
-where the previous produced 8:
+**The first two false-accept columns were dominated by cases the tool is right
+about, and the third column is what happens when that is corrected.**
+`geometry_conflict` drew its factor from {3, 10, 0.1, 30}, and 3 is *exactly*
+the sphere's shape factor — the number `GEOMETRY_AGREEMENT_FACTOR` was derived
+from, and where the bound is inclusive on purpose. Admitting a body whose V/A_s
+is exactly L_c/3 is correct; those labels were wrong. This draw happened to
+produce 15 of them where the previous produced 8:
 
-| | after ratings | after convection |
-|---|---|---|
-| False accepts, total | 20 | 26 |
-| of which `geometry_conflict` at exactly 3× (correct to admit) | 8 | 15 |
-| **remaining** | **12** | **11** |
+| | after ratings | after convection | after relabel |
+|---|---|---|---|
+| False accepts, total | 20 | 26 | 11 |
+| of which `geometry_conflict` at exactly 3× (correct to admit) | 8 | 15 | 0 |
+| **remaining, and real** | **12** | **11** | **11** |
 
-So the real false accepts went **down**, 12 to 11, and the corresponding catch
-rates are 99.27% and **99.34%**. Fixing the labels means drawing the geometry
-factor at 3·(1±margin) rather than exactly 3; it is not done here because it
-would move the metrics for a reason unrelated to this round.
+The shaper now draws the factor from {3·1.05, 1/(3·1.05), 30, 1/30} — strictly
+outside the tolerance, two just past it and two an order beyond, one pair on
+each side — and the boundary value is excluded in the shaper's docstring so it
+cannot be reintroduced. The list stays four elements long so `rng.choice`
+consumes the same draw and every non-geometry case is byte-identical to the
+previous set: **only the 124 `geometry_conflict` cases changed.**
 
-**The one false reject is a real one, and the tool is wrong about it.**
-`S00709` is `rating_power_in@0.002`: the resistor dissipates 3.4886 W at the
-converged fixed point against a 3.49889 W rating, 0.3% inside. The tool builds
-its circuit at the **declared reference resistance** rather than the converged
-one, so it computes 3.5634 W and reports the rating violated. That is
-`NEEDS.md` §A2.9 — *"the resistor assessment reads the declared resistance, not
-the converged one"* — recorded two rounds ago and witnessed by the benchmark
-here for the first time, because no earlier draw put a power rating 0.2% from
-the operating point of a conductor whose TCR moved the resistance by 2%. The
-error is conservative (it over-reports dissipation for a positive-TCR part that
-heats up), which is why it shows as a false reject rather than a false accept.
-Not fixed here: the fix is in the electrothermal coupling, which this round
-does not own.
+**The real false accepts did not move: 11 before, 11 after.** The headline went
+1.57% → 0.66% because 15 mislabelled cases left the numerator, not because the
+tool improved. What remains is 8 `band_out` (including two drawn a full 20%
+outside the band, so these are genuine misses rather than rounding), 2
+`adv_unsound:small_overshoot` and 1 `runaway`.
+
+**The one false reject is a mislabelled case, and the diagnosis above it was
+wrong.** `S00709` is `rating_power_in@0.002`. The paragraph that stood here
+said the tool "builds its circuit at the declared reference resistance … so it
+computes 3.5634 W", and blamed `NEEDS.md` §A2.9. Measured, that is not what
+happens: the rating conditions have always read the **converged** electrical
+result, and the number they read is 3.5240 W.
+
+The real cause is in this file's own generator. `base_draw` states each rating
+against `R(T_ss)` — the resistance at the **steady state** — and
+`shape_rating` places this one 0.2 % inside it: T_ss = 298.364 K, R = 62.605 Ω,
+P = 3.4919 W, rated 3.49889 W. But the payload declares a 66.169 s run against
+a 27.376 s time constant, so the body reaches 295.999 K and stops, 2.4 K short
+of the steady state it was rated against. Cooler is stiffer's opposite — a
+lower resistance — so the part dissipates **more**: 3.5240 W, or 1.0072× its
+rating, at the operating point the case itself declares.
+
+Nothing the run can offer clears it. The dissipation falls monotonically from
+3.5635 W at t = 0 (the reference resistance, the cold start) towards 3.4919 W
+and never arrives inside the declared horizon, so the rating is exceeded for
+the whole run and the peak is at t = 0. **The tool is right and the label is
+wrong**, in the same way the `geometry_conflict` labels were wrong: the
+expectation is computed at an operating point the case does not declare.
+
+Not fixed here. `shape_rating` must size a rating at the marched endpoint
+rather than at a steady state the run never reaches, and that is a change to
+the generator that would move the ratings cases across the whole draw — the
+same reason the geometry relabel was kept to one shaper. The arithmetic is
+pinned in `tests/mcp/test_problem.py::
+test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer` so the
+claim in this paragraph is checked rather than asserted.
+
+§A2.9 itself *was* real and is now closed: the assessment's element list came
+from the reference resistances, so the report named a resistance the circuit
+had not used. It could never move a verdict — the only condition reading
+`resistance` is `resistance > 0` — and it did not move this one.
 
 ## The battery benchmark — 400 cases
 
