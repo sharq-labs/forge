@@ -33,21 +33,42 @@ copies trees and shells out, which is a tool's job rather than a test's, and it
 sits beside `zero_provider.py` and `sria_m4_benchmark.py`, which are support
 modules in this directory for the same reason.
 
-On writing a mutation
----------------------
+On writing a mutation, and why this file verifies its own mutations
+-------------------------------------------------------------------
 The first attempt at `G2b` inserted a comment and left the `evidence=` argument
 in place. The suite stayed green, which looked exactly like an unchecked guard
 and was not: nothing had been removed. **A green result is a claim about your
-mutation before it is a claim about the check**, and the first thing to do with
-one is to confirm the mutation removed what it says it removed.
+mutation before it is a claim about your check.**
+
+That is the same failure one level up. A check that cannot fail is the thing
+this harness exists to find; a *mutation* that changes nothing is a verifier
+that cannot fail, and it fails in the more dangerous direction, because its
+output is a clean bill of health for a guard nobody tested.
+
+So every mutation is now verified before its result is believed, and the
+verification is **not** a file hash. A file hash would have passed the bad
+`G2b`: the file did change -- a comment was added. What has to be compared is
+the code, so :func:`_code_digest` tokenizes the file and hashes the token
+stream with `COMMENT` and `STRING` tokens dropped. A mutation whose only effect
+is a comment, a docstring or reformatting produces an identical digest and is
+refused as `CHANGED NO CODE` before the suite is ever run.
+
+Dropping `STRING` is deliberate and costs nothing here: no guard in this
+repository is implemented by the contents of a string literal, and every
+mutation below changes name or operator tokens. A future mutation that acted
+only inside a string would be refused, which is the safe direction to be wrong
+in.
 """
 
 from __future__ import annotations
 
+import hashlib
+import io
 import pathlib
 import shutil
 import subprocess
 import sys
+import tokenize
 
 #: ``(id, file, old, new, what the mutation removes)``. Each entry deletes one
 #: guard from a copy of the tree; the suite is expected to fail.
@@ -137,6 +158,67 @@ TARGET = "tests/test_core_guards.py"
 _COPIED = ("src", "tests", "pyproject.toml")
 
 
+def _code_digest(text: str) -> str:
+    """A hash of the file's executable tokens, ignoring comments and strings.
+
+    The point of comparison, not decoration. A plain file hash cannot tell a
+    mutation that removed a guard from one that added a comment beside it, and
+    the second is exactly the mistake this guards against: it changes the file,
+    leaves the code alone, and reports the guard as unchecked.
+    """
+    kept: list[str] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(text).readline):
+            if token.type in (
+                tokenize.COMMENT,
+                tokenize.STRING,
+                tokenize.NL,
+                tokenize.NEWLINE,
+                tokenize.INDENT,
+                tokenize.DEDENT,
+            ):
+                continue
+            kept.append(token.string)
+    except tokenize.TokenError:  # pragma: no cover - a mutation broke the parse
+        return "unparseable:" + hashlib.sha256(text.encode()).hexdigest()[:16]
+    blob = "\x00".join(kept).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]
+
+
+def _self_test() -> None:
+    """Make the verifier fail once, on purpose, before trusting it.
+
+    The rule this harness enforces applies to the harness. `_code_digest` is a
+    check, and a check whose failure has never been observed is unverified --
+    so it is exercised here against the two cases it has to tell apart, on a
+    synthetic pair rather than on a real source file, so it cannot rot when
+    that file is edited.
+
+    If this fails, nothing below is worth running: every mutation would be
+    accepted and every green result would be a false clean bill of health.
+    """
+    base = "def f(x):\n    if x:\n        return 1\n    return 0\n"
+    commented = "def f(x):\n    # a comment, and nothing else\n    if x:\n        return 1\n    return 0\n"
+    changed = "def f(x):\n    if False:\n        return 1\n    return 0\n"
+
+    if _code_digest(base) != _code_digest(commented):
+        raise SystemExit(
+            "_code_digest reports a comment as a code change; it would accept "
+            "a mutation that mutates nothing"
+        )
+    if _code_digest(base) == _code_digest(changed):
+        raise SystemExit(
+            "_code_digest is blind to a real code change; it would refuse "
+            "every mutation"
+        )
+    # And the reason it is not a file hash, stated as an assertion rather than
+    # a claim: a file hash cannot tell these two apart.
+    if hashlib.sha256(base.encode()).digest() == hashlib.sha256(
+        commented.encode()
+    ).digest():  # pragma: no cover - would mean sha256 collided
+        raise SystemExit("file hashes collided; this test is meaningless")
+
+
 def _run(where: pathlib.Path, scratch: pathlib.Path) -> tuple[int, str, list[str]]:
     done = subprocess.run(
         [sys.executable, "-X", "utf8", "-m", "pytest", TARGET, "-q",
@@ -154,6 +236,7 @@ def main(argv: list[str]) -> int:
         print(__doc__.strip().splitlines()[0])
         print("usage: python -X utf8 tests/mutation_guards.py <scratch-dir>")
         return 2
+    _self_test()
     repo = pathlib.Path(__file__).resolve().parent.parent
     scratch = pathlib.Path(argv[0]).resolve()
     scratch.mkdir(parents=True, exist_ok=True)
@@ -182,11 +265,23 @@ def main(argv: list[str]) -> int:
             print(f"{mid:5} MUTATION DID NOT APPLY (count={text.count(old)}) -- {what}")
             unchecked.append(mid)
             continue
-        path.write_bytes(text.replace(old, new).encode("utf-8"))
+
+        mutated = text.replace(old, new)
+        before, after = _code_digest(text), _code_digest(mutated)
+        if before == after:
+            # The file changed and the code did not: a comment, a docstring or
+            # whitespace. Running the suite now would produce a green result
+            # that says nothing about the guard, which is how the bad G2b
+            # mutation nearly reported a real gap that did not exist.
+            print(f"{mid:5} MUTATION CHANGED NO CODE ({before}) -- {what}")
+            unchecked.append(mid)
+            continue
+        path.write_bytes(mutated.encode("utf-8"))
 
         code, tail, failed = _run(work, scratch)
         verdict = "RED" if code else "GREEN -- DECORATION"
         print(f"{mid:5} {verdict:20} {what}")
+        print(f"{'':26} code {before} -> {after}")
         print(f"{'':26} {tail}")
         if failed:
             shown = sorted(set(failed))
@@ -201,7 +296,8 @@ def main(argv: list[str]) -> int:
     if unchecked:
         print("NOT OBSERVED FAILING:", ", ".join(unchecked))
         print("Check the mutation before the guard: a green result is a claim "
-              "about the mutation first.")
+              "about the mutation first. Every mutation above was verified to "
+              "change executable tokens, so a GREEN here is a real finding.")
     return 1 if unchecked else 0
 
 
