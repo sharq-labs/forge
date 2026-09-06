@@ -72,6 +72,7 @@ POWER_UNIT = "watt"
 VOLTAGE_UNIT = "volt"
 CURRENT_UNIT = "ampere"
 RESISTANCE_UNIT = "ohm"
+TEMPERATURE_UNIT = "kelvin"
 DIMENSIONLESS = "dimensionless"
 
 # --- names of the ratings a caller may declare -------------------------------
@@ -81,6 +82,14 @@ DIMENSIONLESS = "dimensionless"
 # a reader holding only the records can see which declaration unlocks which
 # condition. They are the field names of :class:`ComponentRating`.
 RATED_POWER = "rated_power"
+#: The two halves of the pair that makes a rated dissipation a curve rather
+#: than a number. IEC 60115-1 states a rated dissipation against a reference
+#: ambient and requires a derating characteristic above it; a datasheet prints
+#: "0.4 W at 70 C" and a straight line falling to zero at the permissible film
+#: temperature. Declaring both turns `dissipated_power_utilization` from a
+#: comparison against a constant into a comparison against that line.
+RATED_POWER_TEMPERATURE = "rated_power_temperature"
+ZERO_POWER_TEMPERATURE = "zero_power_temperature"
 MAXIMUM_WORKING_VOLTAGE = "maximum_working_voltage"
 MAXIMUM_CURRENT = "maximum_current"
 COMPLIANCE_VOLTAGE = "compliance_voltage"
@@ -157,9 +166,25 @@ class ComponentRating:
     ambient, mounting and expected life, all of which are the caller's to
     state, and IEC 60115-1 publishes resistor ratings against a stated
     reference ambient for exactly that reason.
+
+    **A rated dissipation is a pair, and this record now lets a caller say so.**
+    ``rated_power`` alone is a number; ``rated_power`` with
+    ``rated_power_temperature`` and ``zero_power_temperature`` is the derating
+    line the datasheet prints — 0.4 W at 70 C falling to zero at 155 C. The two
+    temperatures are declared together or not at all, because one without the
+    other does not describe a line, and both require a ``rated_power`` for the
+    line to pass through. Above the rating temperature the effective rating is
+    lower than the printed one, and a part checked against the printed number in
+    a hot ambient is checked against a rating it no longer has.
+
+    Omitting the pair is not an error and changes nothing: the utilization stays
+    the comparison against the constant it has always been. What omitting it
+    costs is stated on the condition itself.
     """
 
     rated_power: Quantity | None = None
+    rated_power_temperature: Quantity | None = None
+    zero_power_temperature: Quantity | None = None
     maximum_working_voltage: Quantity | None = None
     maximum_current: Quantity | None = None
     compliance_voltage: Quantity | None = None
@@ -189,6 +214,50 @@ class ComponentRating:
                 raise InvalidScientificProblem(
                     f"{label} must be strictly positive, got {value}"
                 )
+        for label in ("rated_power_temperature", "zero_power_temperature"):
+            value = getattr(self, label)
+            if value is None:
+                continue
+            if not isinstance(value, Quantity):
+                raise InvalidScientificProblem(
+                    f"{label} must be a Quantity carrying "
+                    f"{TEMPERATURE_UNIT!r}, got {type(value).__name__} — a "
+                    f"bare number is not a declaration"
+                )
+            value.require_compatible(
+                TEMPERATURE_UNIT, context=f"component rating {label}"
+            )
+            if value.magnitude_in(TEMPERATURE_UNIT) <= 0.0:
+                raise InvalidScientificProblem(
+                    f"{label} must be strictly positive on an absolute scale, "
+                    f"got {value}"
+                )
+        # The pair is a line. Half a line is not a weaker declaration, it is an
+        # incomplete one, and admitting it would leave the reader of a report
+        # unable to say which rating was compared against.
+        rated_at = self.rated_power_temperature
+        zero_at = self.zero_power_temperature
+        if (rated_at is None) != (zero_at is None):
+            raise InvalidScientificProblem(
+                "rated_power_temperature and zero_power_temperature are the "
+                "two ends of one derating line and must be declared together; "
+                "one without the other states no line"
+            )
+        if rated_at is not None:
+            if self.rated_power is None:
+                raise InvalidScientificProblem(
+                    "a derating line was declared without a rated_power for it "
+                    "to pass through; the two temperatures say where the line "
+                    "starts and ends, not how high it is"
+                )
+            if (zero_at.magnitude_in(TEMPERATURE_UNIT)
+                    <= rated_at.magnitude_in(TEMPERATURE_UNIT)):
+                raise InvalidScientificProblem(
+                    f"zero_power_temperature ({zero_at}) must be above "
+                    f"rated_power_temperature ({rated_at}); a derating line "
+                    f"falls with temperature and a non-positive span would "
+                    f"make its slope infinite or negative"
+                )
         factor = float(self.derating_factor)
         if not 0.0 < factor <= 1.0:
             raise InvalidScientificProblem(
@@ -215,6 +284,8 @@ class ComponentRating:
         return {
             "schema": COMPONENT_RATING_SCHEMA,
             "rated_power": encode(self.rated_power),
+            "rated_power_temperature": encode(self.rated_power_temperature),
+            "zero_power_temperature": encode(self.zero_power_temperature),
             "maximum_working_voltage": encode(self.maximum_working_voltage),
             "maximum_current": encode(self.maximum_current),
             "compliance_voltage": encode(self.compliance_voltage),
@@ -231,6 +302,8 @@ class ComponentRating:
 
         return cls(
             rated_power=decode("rated_power"),
+            rated_power_temperature=decode("rated_power_temperature"),
+            zero_power_temperature=decode("zero_power_temperature"),
             maximum_working_voltage=decode("maximum_working_voltage"),
             maximum_current=decode("maximum_current"),
             compliance_voltage=decode("compliance_voltage"),
@@ -282,6 +355,31 @@ RESISTOR_OHM_MODEL = ScientificModelDefinition(
                 "Rated dissipation of the element, against the reference "
                 "ambient its datasheet states. Unlocks "
                 f"{DISSIPATED_POWER_UTILIZATION}."
+            ),
+        ),
+        ModelInputSpec(
+            name=RATED_POWER_TEMPERATURE,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=TEMPERATURE_UNIT,
+            required=False,
+            description=(
+                "The reference ambient the rated dissipation is stated at — "
+                "the 70 in a datasheet's P70. Declared together with "
+                f"{ZERO_POWER_TEMPERATURE}; the pair turns "
+                f"{DISSIPATED_POWER_UTILIZATION} from a comparison against a "
+                "constant into a comparison against the derating line. "
+                "Omitting the pair leaves that condition exactly as it was."
+            ),
+        ),
+        ModelInputSpec(
+            name=ZERO_POWER_TEMPERATURE,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=TEMPERATURE_UNIT,
+            required=False,
+            description=(
+                "The ambient at which the derating line reaches zero power, "
+                "which for a film resistor is the permissible film "
+                f"temperature. Declared together with {RATED_POWER_TEMPERATURE}."
             ),
         ),
         ModelInputSpec(
@@ -340,17 +438,36 @@ RESISTOR_OHM_MODEL = ScientificModelDefinition(
                 name=DISSIPATED_POWER_UTILIZATION,
                 maximum=RATING_UTILIZATION_LIMIT,
                 description=(
-                    "V*I / (derating * rated_power) <= 1. Above its rated "
-                    "dissipation an element's temperature rise carries it out "
-                    "of the tolerance band it was specified in and, further "
-                    "up, destroys it; the constant, temperature-independent "
+                    "The fraction of this element's dissipation rating in "
+                    "use, bounded by 1. Above its rated dissipation an "
+                    "element's temperature rise carries it out of the "
+                    "tolerance band it was specified in and, further up, "
+                    "destroys it; the constant, temperature-independent "
                     "resistance this model assumes is the first casualty. "
+                    "TWO READINGS, and which one applies depends on what the "
+                    "caller declared. (1) With rated_power alone: "
+                    "V*I / (derating * rated_power) <= 1, the comparison "
+                    "against a constant. (2) With rated_power, "
+                    f"{RATED_POWER_TEMPERATURE} and {ZERO_POWER_TEMPERATURE}: "
+                    "the comparison against the derating LINE those three "
+                    "points define, expressed as "
+                    "(T_ambient + (V*I / derating) * R_implied) / "
+                    "T_zero_power <= 1, with R_implied = (T_zero_power - "
+                    "T_rated) / rated_power. That is algebraically the same "
+                    "statement as V*I <= derating * rated_power * "
+                    "(T_zero - T_amb) / (T_zero - T_rated), and it is written "
+                    "on the temperature axis because the power form is "
+                    "infinite at and above T_zero_power, where a real part "
+                    "still has a real answer -- it may not be used at all. "
                     "Rated dissipation is defined against a stated reference "
                     "ambient in IEC 60115-1 (Fixed resistors for use in "
                     "electronic equipment, Part 1: Generic specification), "
-                    "Clause 2, which is why the derating fraction is a "
-                    "declared input rather than a constant here. UNKNOWN "
-                    "unless a rated_power is declared."
+                    "Clause 2, and the derating characteristic above that "
+                    "ambient is required by the same clause; reading (2) is "
+                    "that characteristic and reading (1) is what remains "
+                    "sayable without it. UNKNOWN unless a rated_power is "
+                    "declared, and also UNKNOWN when a derating line is "
+                    "declared without the ambient it must be evaluated at."
                 ),
             ),
             RangeCondition(
@@ -675,27 +792,111 @@ def _utilization(
     return Quantity(abs(used) / (derating * rating), DIMENSIONLESS)
 
 
+def _derated_power_utilization(
+    *,
+    dissipated: float | None,
+    rated: float | None,
+    rated_at: float,
+    zero_at: float,
+    ambient: float | None,
+    derating: float,
+) -> Quantity | None:
+    """The dissipation utilization when the rating is a line rather than a number.
+
+    WHY THIS IS A TEMPERATURE RATIO AND NOT A POWER RATIO
+    -----------------------------------------------------
+    The obvious form is ``P / P_eff`` with
+    ``P_eff = P_rated (T_zero - T_amb) / (T_zero - T_rated)``. It is right
+    wherever it is defined, and it is undefined exactly where the answer matters
+    most: at and above ``T_zero`` the effective rating is zero or negative, the
+    ratio is infinite or signed, and a condition forced to report a non-finite
+    number is a condition that has stopped measuring.
+
+    So the same statement is made in the form that stays finite. A derating line
+    from ``(T_rated, P_rated)`` to ``(T_zero, 0)`` has slope
+    ``-P_rated / (T_zero - T_rated)``, and the reciprocal of that slope is a
+    thermal resistance, ``R_implied = (T_zero - T_rated) / P_rated`` in K/W.
+    **That is what a derating curve is**: the manufacturer's statement of how
+    much temperature rise the part's own construction produces per watt, drawn
+    as a line instead of printed as a number. The element is inside its rating
+    exactly when the temperature that line implies stays at or below ``T_zero``:
+
+        utilization = (T_amb + (P / derating) * R_implied) / T_zero
+
+    which is algebraically equivalent to ``P <= derating * P_eff`` wherever the
+    power form is defined, is finite everywhere, and reports a number above 1
+    rather than an infinity when the ambient alone has already consumed the
+    rating. Both temperatures are absolute, the same convention
+    ``operating_temperature_utilization`` uses in the material domain.
+
+    Returns ``None`` -- and therefore UNKNOWN -- when the ambient is not
+    supplied. A caller who declares a derating line and does not say what
+    ambient the part sits in has not said enough to be told whether it is inside
+    its rating, and falling back to the printed number would answer a question
+    they did not ask.
+    """
+    if dissipated is None or rated is None or ambient is None:
+        return None
+    implied_thermal_resistance = (zero_at - rated_at) / rated
+    implied_temperature = (
+        ambient + (abs(dissipated) / derating) * implied_thermal_resistance
+    )
+    return Quantity(implied_temperature / zero_at, DIMENSIONLESS)
+
+
 def resistor_rating_context(
     *,
     rating: ComponentRating | None = None,
     dissipated_power: Quantity | None = None,
     voltage_across: Quantity | None = None,
+    ambient_temperature: Quantity | None = None,
 ) -> dict[str, Quantity]:
     """Utilizations of a resistor's ratings at one operating point.
 
     ``dissipated_power`` and ``voltage_across`` are *results*, not
-    declarations: they are what the solve produced, which is why they arrive
-    as arguments rather than out of the problem's parameters. A rating with no
+    declarations: they are what the solve produced, which is why they arrive as
+    arguments rather than out of the problem's parameters. A rating with no
     operating point, and an operating point with no rating, each yield nothing.
+
+    ``ambient_temperature`` is a *declaration* and arrives the same way for a
+    different reason: it belongs to the thermal environment the element sits in,
+    which no electrical problem statement carries. It is read only when the
+    rating declares a derating line, and it is what makes that line evaluable.
+
+    **One condition, two readings, and which one applies depends on what was
+    declared.** With no derating line, ``dissipated_power_utilization`` is
+    ``P / (derating * rated_power)``, exactly as it has always been. With a
+    line, it becomes the temperature form in
+    :func:`_derated_power_utilization`. The same name carries both because both
+    are "the fraction of this element's rating in use" and both are bounded by
+    1; the domain documentation states which applies when, as it already does
+    for ``convection_property_range_utilization``, whose formula likewise
+    depends on which route the caller declared.
     """
     declared = rating or ComponentRating()
     derating = declared.derating_factor
+    rated = _magnitude(declared.rated_power, POWER_UNIT, "rated_power")
+    rated_at = _magnitude(
+        declared.rated_power_temperature, TEMPERATURE_UNIT,
+        "rated_power_temperature",
+    )
+    zero_at = _magnitude(
+        declared.zero_power_temperature, TEMPERATURE_UNIT,
+        "zero_power_temperature",
+    )
+    dissipated = _magnitude(dissipated_power, POWER_UNIT, "dissipated_power")
+    ambient = _magnitude(
+        ambient_temperature, TEMPERATURE_UNIT, "ambient_temperature"
+    )
+    if rated_at is None or zero_at is None:
+        power_utilization = _utilization(dissipated, rated, derating)
+    else:
+        power_utilization = _derated_power_utilization(
+            dissipated=dissipated, rated=rated, rated_at=rated_at,
+            zero_at=zero_at, ambient=ambient, derating=derating,
+        )
     derived: dict[str, Quantity | None] = {
-        DISSIPATED_POWER_UTILIZATION: _utilization(
-            _magnitude(dissipated_power, POWER_UNIT, "dissipated_power"),
-            _magnitude(declared.rated_power, POWER_UNIT, "rated_power"),
-            derating,
-        ),
+        DISSIPATED_POWER_UTILIZATION: power_utilization,
         WORKING_VOLTAGE_UTILIZATION: _utilization(
             _magnitude(voltage_across, VOLTAGE_UNIT, "voltage_across"),
             _magnitude(
@@ -779,6 +980,7 @@ def assess_resistor_validity(
     rating: ComponentRating | None = None,
     dissipated_power: Quantity | None = None,
     voltage_across: Quantity | None = None,
+    ambient_temperature: Quantity | None = None,
 ) -> ValidityAssessment:
     """Was the ideal resistor relation applicable to this element, here?
 
@@ -797,6 +999,7 @@ def assess_resistor_validity(
             rating=rating,
             dissipated_power=dissipated_power,
             voltage_across=voltage_across,
+            ambient_temperature=ambient_temperature,
         ),
     )
 

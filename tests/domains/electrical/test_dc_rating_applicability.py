@@ -428,6 +428,8 @@ def test_the_resistor_model_still_binds_to_a_problem_that_declares_no_rating():
     optional = {s.name for s in RESISTOR_OHM_MODEL.inputs if not s.required}
     assert optional == {
         "rated_power",
+        "rated_power_temperature",
+        "zero_power_temperature",
         "maximum_working_voltage",
         "derating_factor",
     }
