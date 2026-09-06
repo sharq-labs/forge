@@ -17,6 +17,11 @@ rather than a decision. See :mod:`engcore.mcp.evidence` for the full statement.
                 record and the one pure function that decides a verdict
 - ``errors``    what this layer raises: one type for an unreadable report, one
                 per failure class for an unbuildable payload
+- ``server``    the MCP stdio transport over the three above. **Deliberately
+                not imported here**: it needs the optional ``[mcp]``
+                dependency group, and importing it from this package would
+                make the whole layer unavailable without an SDK that nothing
+                else in it uses. Import ``engcore.mcp.server`` directly.
 """
 
 from __future__ import annotations
