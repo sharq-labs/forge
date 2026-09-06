@@ -55,93 +55,23 @@ Two changes to ground truth, both because the tool turned out to be right:
 
 ## Baselines
 
-| Metric | main `b60e757` | after this round |
-|---|---|---|
-| Catch rate | 1547/1547 (100%) | **1623/1643 (98.8%)** |
-| False accept | 0/1547 (0.00%) | **20/1643 (1.22%)** |
-| False reject | 453/453 (100%) | **0/357 (0.0%)** |
-| Exact verdict match | 1236/2000 (61.8%) | **1806/2000 (90.3%)** |
-| Runs ending in an exception | 40 | **0** |
+| Metric | after ratings round | after convection round | after geometry relabel | after rating relabel |
+|---|---|---|---|---|
+| Catch rate | 1623/1643 (98.8%) | 1632/1658 (98.4%) | 1647/1658 (99.3%) | **1647/1658 (99.3%)** |
+| False accept | 20/1643 (1.22%) | 26/1658 (1.57%) | 11/1658 (0.66%) | **11/1658 (0.66%)** |
+| False reject | 0/357 (0.0%) | 1/342 (0.29%) | 1/342 (0.29%) | **0/342 (0.0%)** |
+| Exact verdict match | 1806/2000 (90.3%) | 1821/2000 (91.0%) | 1836/2000 (91.8%) | **1837/2000 (91.8%)** |
 
-**The first column's catch rate was unearned, and the second column is what
-exposed it.** `electrical.dc.kcl` declared no validity conditions, so it
-assessed UNKNOWN on every run and no payload could ever be SUPPORTED. Every
-unsound case was "caught" by a verdict the tool gave to sound and unsound cases
-alike; a tool that refuses everything catches everything. Once KCL states its
-condition, the ratings have a payload field, and a stopped run produces a
-report instead of an exception, the pair became informative for the first time
-— and then had to be earned back, which it was.
+**Both of the last two columns are label corrections, and neither is a tool
+improvement.** In both rounds the generator was the weaker of the two and the
+tool was right. Saying so is what makes the rest of the numbers worth reading.
 
-A gate on catch rate is only meaningful alongside a gate on false reject.
-NEEDS.md section 5 records why.
+### The geometry relabel
 
-Three places the tool turned out right and this benchmark wrong, all corrected
-here rather than in the domain: the linear TCR form's own 200-450 K range,
-which `verify_sound()` did not check; `Fo = (t/tau)/Bi` rather than `t/tau`;
-and component ratings, which no case declared. One place the benchmark turned
-out right and the domain wrong: the Debye floor belongs at the coldest state a
-run occupies, not at the temperature it converges to.
-
-The 20 remaining false accepts are 11 `band_out`, 8 `geometry_conflict` built
-exactly at the sphere's shape factor where the bound is inclusive on purpose,
-and one small overshoot.
-
-## Composition after the convection round
-
-342 sound, 1658 unsound, 144 distinct defect tags, seed 20260906. **The case
-set was regenerated**, because the domain now asks where `ambient_conductance`
-came from and no case in the previous draw said.
-
-### Why regenerating was not optional
-
-Scoring the *previous* 2000 cases against the new domain gives catch rate
-**100%**, false accept **0.00%** and false reject **100%**. That is the
-unearned catch rate this file already warns about, in its purest form: with
-three new conditions that no case could answer, every model assessed UNKNOWN
-and nothing could be SUPPORTED. A tool that refuses everything catches
-everything.
-
-So every case now declares a fluid conductivity, kinematic viscosity, Prandtl
-number and convection length, plus **exactly one** of an expansion coefficient
-(free convection) or a velocity (forced) — declaring both is mixed convection
-and the domain refuses it.
-
-### What is synthetic about the fluid, and why that is fine
-
-`hA` and `surface_area` are drawn independently, so h = hA/A_s spans about six
-decades. No real fluid gives 10⁵ W/(m²K) at a sane length and velocity. The
-length, velocity and expansion coefficient are therefore kept physical and the
-**fluid conductivity is solved for**, `k_f = h·L/Nu`, which makes the declared
-hA exactly what its correlation predicts. The resulting k_f is often not a real
-fluid's. That is the same status the rest of the draw has — `r0` is
-10^U(0, 3.5) ohms — and **the tool has no fluid table and claims none**, so a
-synthetic k_f tests exactly what these conditions are for: whether the declared
-numbers are consistent with each other.
-
-### Three new shapers, both sides
-
-`conv_range_in/out` (Ra against 10⁹ or Re against 5×10⁵, route drawn),
-`conv_prandtl_in/out` (Pr against 0.6, forced only — Churchill–Chu states no
-Prandtl restriction, so manufacturing one would test a bound no source prints)
-and `conv_agree_in/out` (the declared hA at a controlled distance from *both*
-edges of the factor-of-2 band). 246 convection cases in this draw, **246 of 246
-scored exactly right.**
-
-## Baselines
-
-| Metric | after ratings round | after convection round | after geometry relabel |
-|---|---|---|---|
-| Catch rate | 1623/1643 (98.8%) | 1632/1658 (98.4%) | **1647/1658 (99.3%)** |
-| False accept | 20/1643 (1.22%) | 26/1658 (1.57%) | **11/1658 (0.66%)** |
-| False reject | 0/357 (0.0%) | 1/342 (0.29%) | **1/342 (0.29%)** |
-| Exact verdict match | 1806/2000 (90.3%) | 1821/2000 (91.0%) | **1836/2000 (91.8%)** |
-
-**The first two false-accept columns were dominated by cases the tool is right
-about, and the third column is what happens when that is corrected.**
 `geometry_conflict` drew its factor from {3, 10, 0.1, 30}, and 3 is *exactly*
 the sphere's shape factor — the number `GEOMETRY_AGREEMENT_FACTOR` was derived
 from, and where the bound is inclusive on purpose. Admitting a body whose V/A_s
-is exactly L_c/3 is correct; those labels were wrong. This draw happened to
+is exactly L_c/3 is correct; those labels were wrong. That draw happened to
 produce 15 of them where the previous produced 8:
 
 | | after ratings | after convection | after relabel |
@@ -154,50 +84,82 @@ The shaper now draws the factor from {3·1.05, 1/(3·1.05), 30, 1/30} — strict
 outside the tolerance, two just past it and two an order beyond, one pair on
 each side — and the boundary value is excluded in the shaper's docstring so it
 cannot be reintroduced. The list stays four elements long so `rng.choice`
-consumes the same draw and every non-geometry case is byte-identical to the
+consumes the same draw and every non-geometry case was byte-identical to the
 previous set: **only the 124 `geometry_conflict` cases changed.**
 
 **The real false accepts did not move: 11 before, 11 after.** The headline went
 1.57% → 0.66% because 15 mislabelled cases left the numerator, not because the
-tool improved. What remains is 8 `band_out` (including two drawn a full 20%
-outside the band, so these are genuine misses rather than rounding), 2
-`adv_unsound:small_overshoot` and 1 `runaway`.
+tool improved. What remains is 8 `band_out`, 2 `adv_unsound:small_overshoot`
+and 1 `runaway`, and all eleven have since been run down — see `NEEDS.md`,
+small-corrections round, §1.
 
-**The one false reject is a mislabelled case, and the diagnosis above it was
-wrong.** `S00709` is `rating_power_in@0.002`. The paragraph that stood here
-said the tool "builds its circuit at the declared reference resistance … so it
-computes 3.5634 W", and blamed `NEEDS.md` §A2.9. Measured, that is not what
-happens: the rating conditions have always read the **converged** electrical
-result, and the number they read is 3.5240 W.
+**Eight of the eleven are the tool's, not this file's.** The `band_out` cases
+are bodies that start below `T_ref` and warm toward it, so the largest
+excursion is at t = 0; the tool judges `linearization_excursion_ratio` only at
+the converged endpoint and never looks there. Its own sibling condition, the
+Debye floor, is deliberately evaluated over the path with a docstring giving
+exactly the argument that applies to the band. Those labels are right and the
+tool misses them. The other three — 2 `small_overshoot` and 1 `runaway` — are
+this file's, and §1.2 and §1.3 say how.
 
-The real cause is in this file's own generator. `base_draw` states each rating
-against `R(T_ss)` — the resistance at the **steady state** — and
-`shape_rating` places this one 0.2 % inside it: T_ss = 298.364 K, R = 62.605 Ω,
-P = 3.4919 W, rated 3.49889 W. But the payload declares a 66.169 s run against
-a 27.376 s time constant, so the body reaches 295.999 K and stops, 2.4 K short
-of the steady state it was rated against. Cooler is stiffer's opposite — a
-lower resistance — so the part dissipates **more**: 3.5240 W, or 1.0072× its
-rating, at the operating point the case itself declares.
+**So the run of rounds in which the generator was the weaker of the two does
+not extend to what is left.** It is worth saying, because the opposite is the
+comfortable reading.
 
-Nothing the run can offer clears it. The dissipation falls monotonically from
-3.5635 W at t = 0 (the reference resistance, the cold start) towards 3.4919 W
-and never arrives inside the declared horizon, so the rating is exceeded for
-the whole run and the peak is at t = 0. **The tool is right and the label is
-wrong**, in the same way the `geometry_conflict` labels were wrong: the
-expectation is computed at an operating point the case does not declare.
+### The rating relabel — the operating point, not the asymptote
 
-Not fixed here. `shape_rating` must size a rating at the marched endpoint
-rather than at a steady state the run never reaches, and that is a change to
-the generator that would move the ratings cases across the whole draw — the
-same reason the geometry relabel was kept to one shaper. The arithmetic is
-pinned in `tests/mcp/test_problem.py::
-test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer` so the
-claim in this paragraph is checked rather than asserted.
+`S00709` was this benchmark's only false reject, and the paragraph that stood
+here blamed `NEEDS.md` §A2.9: the tool "builds its circuit at the declared
+reference resistance … so it computes 3.5634 W". **Measured, that is not what
+happens.** The rating conditions have always read the converged electrical
+result — §A2.9's defect was in the element list and could only ever reach
+`resistance > 0` — and the number they read is 3.5240 W.
 
-§A2.9 itself *was* real and is now closed: the assessment's element list came
-from the reference resistances, so the report named a resistance the circuit
-had not used. It could never move a verdict — the only condition reading
-`resistance` is `resistance > 0` — and it did not move this one.
+The cause was in this file. `base_draw` sized every rating against `R(T_ss)`,
+the resistance at the **steady state**, and `shape_rating` placed this one
+0.2 % inside it: T_ss = 298.364 K, R = 62.605 Ω, P = 3.4919 W, rated 3.49889 W.
+But each payload declares a finite `duration`, and the tool marches a
+first-order lumped model to that horizon and **stops**. This case declares
+66.169 s against a 27.376 s time constant, so the body reaches 295.999 K —
+2.4 K short of the steady state its rating was sized at. A positive-TCR
+conductor that is cooler is *less* resistive, so it dissipates **more**:
+3.5240 W, 1.0072× its rating, at the operating point the case itself declares.
+The tool refused a design that really was over its rating, and the benchmark
+scored that refusal as a miss.
+
+**The fix is `endpoint_temperature`.** It solves the same fixed point
+`steady_temperature` does, with the first-order reach factor applied:
+
+    T(dur) = T_amb + (P(T)/hA)·(1 − e^(−dur/τ)) + (T_init − T_amb)·e^(−dur/τ)
+
+`base_draw` sizes `_p_diss` and `_i` from it, and `shape_rating` refreshes the
+operating point before placing a rating, so the margin a case declares is the
+margin the tool measures. Checked against the tool on 148 sampled cases: the
+formula reproduces the converged resistance and dissipation to 1e-9 relative,
+which is the coupling tolerance rather than a difference.
+
+The map is the steady one scaled by a factor ≤ 1, so it is strictly the more
+contractive of the two and converges wherever the steady map does. It therefore
+rejects no draw the old form accepted and **the draw sequence is unchanged**:
+2000 cases, 342 sound, 1658 unsound, 144 defect tags, same seed, as before.
+
+**What moved.** 1744 of 2000 case files, because every case carries default
+ratings at 3× its operating point and that point shifted. **One verdict**:
+`S00709`, now SUPPORTED, and **all 83 rating cases score exactly right, with
+zero mismatches.** False reject 1 → 0; catch rate, false accept and the
+false-accept ID list are unchanged. No bound moved and nothing in the tool was
+touched.
+
+`_t_ss` is still drawn and still sets the thermal limits — those are about
+where the body ends up. The ratings are about what the part is doing while it
+gets there, and the two are not the same question.
+
+The original arithmetic is pinned in `tests/mcp/test_problem.py::
+test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer`, which
+keeps the pre-correction payload deliberately: it is the assertion that the
+tool refuses a part over its rating at the point it converges to, and a
+benchmark whose labels are now sized at that same point could not catch a
+regression in it.
 
 ## The battery benchmark — 400 cases
 

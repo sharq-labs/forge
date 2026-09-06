@@ -113,6 +113,82 @@ def steady_temperature(v, r0, alpha, t_ref, hA, t_amb):
     return None
 
 
+def endpoint_temperature(v, r0, alpha, t_ref, hA, t_amb, t_init, cap, dur):
+    """The temperature the marched run actually reaches. NOT the asymptote.
+
+    :func:`steady_temperature` solves ``T = T_amb + P(T)/hA``: the state the
+    body settles into given unlimited time. But every payload declares a finite
+    ``duration``, and the tool marches a first-order lumped model to that
+    horizon and stops there. A first-order response covers ``1 - exp(-t/tau)``
+    of the way, so a case declaring one or two time constants stops well short
+    of the asymptote and the two temperatures are different operating points:
+
+        T(dur) = T_amb + (P/hA)(1 - e^(-dur/tau)) + (T_init - T_amb) e^(-dur/tau)
+
+    **The difference is not academic, and it produced a wrong label.** A
+    conductor with a positive TCR is COOLER at the endpoint than at the
+    asymptote, so its resistance is LOWER and it dissipates MORE. Sizing a
+    rating against the asymptote and then declaring a horizon the run stops
+    short of states a rating the design does not actually meet. That is how
+    `S00709` came to mark a refusal the tool was right to make as this
+    benchmark's only false reject: rated 0.2% above the asymptote's 3.4919 W,
+    run to 2.42 time constants, and dissipating 3.5240 W where it stopped. See
+    ``NEEDS.md`` B.6.
+
+    Solved as a fixed point for the same reason ``steady_temperature`` is: R
+    depends on T and T depends on the dissipation R sets. The map here is the
+    steady one scaled by ``reach <= 1``, so it is strictly the more contractive
+    of the two and converges wherever the steady map does — which is why moving
+    to it rejects no draw the steady form accepted, and the draw sequence is
+    unchanged.
+    """
+    if hA <= 0 or cap <= 0 or dur <= 0:
+        return None
+    tau = cap / hA
+    decay = math.exp(-dur / tau)
+    reach = 1.0 - decay
+    t = t_init
+    for _ in range(4000):
+        r = r0 * (1.0 + alpha * (t - t_ref))
+        if r <= 0:
+            return None
+        nxt = t_amb + (v * v / r) / hA * reach + (t_init - t_amb) * decay
+        if not math.isfinite(nxt) or nxt > 1e6:
+            return None
+        if abs(nxt - t) < 1e-11:
+            return nxt
+        t = nxt
+    return None
+
+
+def set_operating_point(p):
+    """Refresh ``_t_end``, ``_r_hot``, ``_i`` and ``_p_diss`` from ``p`` as it
+    now stands. Returns False if no endpoint exists, so the caller can drop the
+    draw rather than state a rating against nothing.
+
+    Called at every point where a rating is about to be placed rather than once
+    at the top, so a shaper that moved the horizon — or the source, or the
+    conductor — cannot leave a rating stated against an operating point the
+    payload no longer declares. ``widen_all`` sets ``duration = 6 tau``, which
+    is one such move; ``shape_rating`` does not call it today, and refreshing at
+    placement time is what keeps that a detail rather than a dependency.
+    """
+    t_end = endpoint_temperature(
+        p["v"], p["r0"], p["alpha"], p["t_ref"], p["hA"],
+        p["t_amb"], p["t_init"], p["cap"], p["dur"],
+    )
+    if t_end is None:
+        return False
+    r_end = p["r0"] * (1.0 + p["alpha"] * (t_end - p["t_ref"]))
+    if r_end <= 0:
+        return False
+    p["_t_end"] = t_end
+    p["_r_hot"] = r_end
+    p["_i"] = p["v"] / r_end
+    p["_p_diss"] = p["v"] * p["v"] / r_end
+    return True
+
+
 def biot(hA, area, lc, k):
     return (hA / area) * lc / k
 
@@ -435,15 +511,17 @@ def base_draw(rng, wide=False):
     p["debye"] = min(t_amb, t_ss) / 2.5
 
     # The electrical operating point the component ratings are stated against.
-    # One resistor across one source, so the whole circuit is V, R(T_ss) and
-    # the current they set. Computed here rather than in `build` so the shapers
-    # can place a rating at a controlled distance from it.
-    r_hot = r0 * (1.0 + alpha * (t_ss - t_ref))
-    if r_hot <= 0:
+    # One resistor across one source, so the whole circuit is V, R(T) and the
+    # current they set. Computed here rather than in `build` so the shapers can
+    # place a rating at a controlled distance from it.
+    #
+    # T is the temperature the run REACHES, not the one it tends to. The
+    # asymptote was used here and it stated ratings the declared horizon never
+    # justifies -- see `endpoint_temperature`. `_t_ss` is still drawn and still
+    # sets the thermal limits, which are about where the body ends up; the
+    # ratings are about what the part is doing while it gets there.
+    if not set_operating_point(p):
         return None
-    p["_r_hot"] = r_hot
-    p["_i"] = v / r_hot
-    p["_p_diss"] = v * v / r_hot
     p["rated_power"] = p["_p_diss"] * RATING_HEADROOM
     p["max_working_voltage"] = v * RATING_HEADROOM
     p["max_current"] = p["_i"] * RATING_HEADROOM
@@ -777,7 +855,20 @@ def shape_rating(p, rng, margin, inside):
     ratings is placed is drawn, because they are independent limits — a part can
     be inside its dissipation rating and outside its working voltage, and the
     conditions must be able to disagree.
+
+    **The operating point is refreshed before the rating is placed**, so the
+    margin this shaper declares is the margin the tool will measure. The
+    dissipation and the current are read at the endpoint of the declared
+    horizon — the point the coupled run converges to, and the point the rating
+    conditions are assessed at. Sizing them at the steady state instead put
+    `S00709` 0.2% inside a rating it was in fact 0.7% OUTSIDE, and the
+    benchmark scored the tool's correct refusal as its only false reject.
+
+    The working voltage needs no such care: one resistor across one source
+    carries the full source voltage whatever the temperature does.
     """
+    if not set_operating_point(p):
+        return None
     which = rng.choice(["power", "voltage", "current"])
     factor = (1.0 - margin) if inside else (1.0 + margin)
     if which == "power":
