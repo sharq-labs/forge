@@ -18,7 +18,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]"
+      # `.[dev,mcp]`, not `.[dev]`: without the MCP group the boundary tests
+      # skip, and a skipped test proves nothing. The guard in
+      # tests/mcp/test_battery_boundary.py is the safety net for a bare
+      # install; CI is not a bare install and should exercise the transport.
+      - run: pip install -e ".[dev,mcp]"
       # -n 4, not -n auto: the worker count must not track whatever hardware
       # the runner happens to have. Memory grows ~200 MB per worker, so a
       # larger runner silently scales into the exhaustion documented in
@@ -35,7 +39,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: sudo apt-get install -y -qq ngspice
-      - run: pip install -e ".[dev]"
+      # `.[dev,mcp]`, not `.[dev]`: without the MCP group the boundary tests
+      # skip, and a skipped test proves nothing. The guard in
+      # tests/mcp/test_battery_boundary.py is the safety net for a bare
+      # install; CI is not a bare install and should exercise the transport.
+      - run: pip install -e ".[dev,mcp]"
       # The provider default is `wsl.exe -e ngspice` (the author's Windows
       # host). On Linux point it at the native binary. Three tests assert the
       # default WSL invocation itself and are Windows-only; they are deselected
@@ -59,15 +67,15 @@ jobs:
   # a bare image with no host state at all, using the same Dockerfile a buyer
   # would run. See docs/reproduce.md.
   #
-  # It is expected to FAIL at the FAST tier today, and that failure is the
-  # point: src/engcore/mcp/server.py imports `mcp`, which pyproject.toml does
-  # not declare. Measured, not asserted -- see NEEDS.md, evidence round, B.1.
-  # `continue-on-error` keeps the finding visible without pretending it is
-  # fixed; remove it in the commit that declares the dependency.
+  # This job failed at the FAST tier for one round, because
+  # src/engcore/mcp/server.py imports `mcp` and pyproject.toml did not declare
+  # it. The `[mcp]` group and the import guard close that, so
+  # `continue-on-error` is gone and this job is now load-bearing: it is the
+  # thing that would catch the next undeclared dependency on the day it lands.
+  # NEEDS.md, evidence round, B.1.
   reproduce:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t crafty-repro .

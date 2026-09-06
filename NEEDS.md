@@ -2626,3 +2626,64 @@ than the fix: **a default output path that depends on the caller's working
 directory will eventually write somewhere nobody reads.** The scorer's other new
 defaults -- `--split-file`, `--openings-log` -- were given the same treatment in
 the same commit for the same reason.
+
+---
+
+## presentation round
+
+### P.1 `mcp` and `anyio` are declared, and the guard that was supposed to exist did not work
+
+Closes `evidence round` B.1, which is left standing above as the record of what
+was found.
+
+**The declaration.** `pyproject.toml` gains an `[mcp]` optional group carrying
+`mcp>=2.1` and `anyio>=4.0`. `tests/mcp/test_server.py` has named that group in
+a comment since it was written -- *"the optional `[mcp]` dependency group"* --
+and the group did not exist, so there was no supported way to install the SDK
+and the one machine that had it got it by a route this repository does not
+record. CI and the `Dockerfile` now install `.[dev,mcp]`: a skipped boundary
+test proves nothing, and CI is not a bare install.
+
+**The guard, and why the obvious version of it is a no-op.** The first attempt
+was `pytest.importorskip("mcp")` at module scope, copied from `test_server.py`.
+Measured on a machine with no SDK, **it did not skip**, and the failure was
+identical to having no guard at all.
+
+`tests/mcp/` has no `__init__.py`. pytest's prepend import mode puts `tests/` on
+`sys.path`, which makes that directory a **PEP 420 namespace package named
+`mcp`**. `import mcp` therefore succeeds on a machine that has never seen the
+SDK. Measured with `importlib.util.find_spec` on a `sys.path` with
+site-packages removed:
+
+    find_spec(mcp)      -> FOUND
+      loader             None
+      search locations   ['.../tests/mcp']
+      mcp.types?         False
+
+which is why the error was always `No module named 'mcp.types'` and never
+`No module named 'mcp'` -- the top-level name resolved, and only the submodule
+was missing. The guard is now on **`mcp.types`**, which exists only in the real
+SDK.
+
+**`test_server.py` carried the same broken guard, and nobody could have
+noticed.** Its `importorskip("anyio")` runs first, and `anyio` was undeclared
+too, so on every machine anyone tried the module skipped for the anyio reason
+before the useless mcp check was reached. Corrected in the same commit. This is
+the second time in two rounds that a check has been credited with work it never
+did -- see the unearned catch rate in `benchmarks/hard/README.md` -- and the
+pattern is the same: a check that cannot fail is indistinguishable from a check
+that passes until something makes it fail.
+
+**What this does not close.** The module-level guard skips all eighteen tests in
+`test_battery_boundary.py` on a bare install, and only about four of them touch
+the server: `src/engcore/mcp/server.py` is the sole module importing the SDK,
+while `battery.py`, `problem.py`, `errors.py` and `evidence.py` do not. Keeping
+the guard at module scope matches `test_server.py` and was the deliberate
+choice; narrowing it to the four tests that need the transport would recover
+about thirteen tests on a bare install at the cost of diverging from the
+sibling file's pattern.
+
+**A cheaper fix nobody should reach for yet:** adding `tests/__init__.py` (or
+`tests/mcp/__init__.py`) would stop the directory shadowing the SDK's name
+entirely. That changes how pytest imports every test module in the repository
+and is not a thing to do in the same commit as a dependency declaration.
