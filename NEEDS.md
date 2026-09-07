@@ -3834,6 +3834,70 @@ to be established as used: `Fo = 0.2`, beryllium's `theta_D/3`, and
 number, its source must be re-read for both the quantity and the threshold.
 This review happens before publication, not after an anomalous case exposes it.
 
+**This rule catches three of the four bounds retired so far, and by
+construction cannot catch the fourth.** Re-reading a source finds a number that
+was never printed. It does not find a condition whose number is unimpeachable
+and whose *meaning* collapses once a real run supplies the quantity — which is
+what happened to `self_heating_resistance_drift_ratio`. The rule immediately
+below is the mitigation for that second failure, and the two are complements
+rather than alternatives: one is done with a document open, the other with a
+report open.
+
+
+
+## RULE — declaring a condition is not testing it; wiring is the test
+
+**A condition that has never been evaluated inside a real report has not been
+checked, however well it is sourced, documented and unit-tested. Wire it before
+you believe it.**
+
+`self_heating_resistance_drift_ratio` is the **fourth** bound this project has
+retired against evidence, and the first that no amount of reading could have
+caught. It was declared with its physics cited, its bound definitional, its
+description arguing the case at length, and three unit tests — IN_DOMAIN,
+OUTSIDE_VALIDATED_DOMAIN, missing-input UNKNOWN — all passing. It survived a
+review round in that state. Then it was wired into the electro-thermal
+boundary and returned **17.85** on this repository's own nominal example:
+violated eighteen times over, on a design that is correct.
+
+**The three before it were caught by re-reading a source.** `Fo = 0.2`,
+beryllium's `theta_D/3` and `Da <= 10` were each a number believed to be
+printed somewhere it was not, and the standing source-audit rule above is the
+mitigation for exactly that failure. This one had no such number to re-read:
+its bound was 1 and definitional, which is the *strongest* form available and
+was not the problem. The defect was in what the quantity meant once a real run
+supplied it. The coupled loop tears the temperature edge and converges at
+`R(T)` = 11.785 ohm against a declared 10, so the drift the condition measured
+was the effect the composition **models** — a modelled effect reported as an
+unmodelled one, which is a category error rather than a wrong threshold.
+
+**Why the unit tests could not see it.** They were written by the same person
+who wrote the condition, over inputs that person chose. Choosing an operating
+resistance of 10.08 ohm against a 10 ohm reference demonstrates the arithmetic;
+it does not ask whether 10.08 is a number the system ever produces, or whether
+the movement from 10 to it was already accounted for upstream. A hand-picked
+input tests the formula. **Only a real run tests the meaning.**
+
+**The check to run, and it is one line of work, not a round of it:** evaluate
+the condition against a design the repository already believes in — the shipped
+example is the obvious one — and look at the number before declaring anything.
+Two failures fall out of that single act, and they are the same defect seen
+from opposite ends:
+
+| What the run shows | What it means |
+|---|---|
+| the condition cannot be evaluated at all, and no source can supply its input | permanently UNKNOWN — see *a permanently-UNKNOWN condition is worse than no condition*, below |
+| the condition is evaluated and its answer was never in doubt | it measures something the system already handles, or something no design could violate |
+
+Neither is visible from the model record, from the citation, or from a unit
+test. Both are visible in one line of a real report.
+
+**And the corollary for review.** A condition declared but unwired should not be
+described as done, in a commit message or anywhere else. It is a proposal that
+has passed a spelling check. This round's own predecessor said of these records
+that they were "not yet consumed by the MCP boundary... the same status
+dc_consensus.py has" and treated that as a scheduling detail; it was the reason
+one of the three was wrong and nobody knew.
 
 
 ## RULE — prefer a declared budget to a cited constant
@@ -3920,14 +3984,11 @@ arrive**, not whether the physics was sound.
 
 **Corollary, from the same round.** The mirror-image failure is a condition
 whose inputs are always available and whose answer is therefore always the
-same. `self_heating_resistance_drift_ratio` was declared, wired, and measured
-at 17.85 on this repository's own nominal example — violated eighteen times
-over on a correct design, because the coupled run models the drift the
-condition was reporting as unmodelled. Never UNKNOWN, and never informative.
-Both failures are found the same way: **evaluate the condition against a design
-you already believe in before you declare it.** A condition that cannot be
-evaluated and a condition whose evaluation is a foregone conclusion are the
-same defect seen from two ends.
+same — `self_heating_resistance_drift_ratio`, never UNKNOWN and never
+informative. Both failures are found by the same single act: **evaluate the
+condition against a design you already believe in before you declare it.** The
+argument is in *declaring a condition is not testing it; wiring is the test*,
+above, and is not repeated here so the two cannot drift apart.
 
 
 ## repair-guidance round
