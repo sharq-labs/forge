@@ -220,14 +220,6 @@ _LEVEL_NAMES = frozenset(
     }
 )
 
-#: The one construction that cannot satisfy the rule and cannot be edited: a
-#: frozen file, pinned by SHA-256 over its bytes. See NEEDS.md.
-_FROZEN_UNEARNED_LEVEL = (
-    "src/engcore/domains/thermal/conduction1d/validation.py",
-    "dimensional_consistency",
-)
-
-
 def _static_check_constructions():
     """Every literal ``ValidationCheck(...)`` in ``src``, with its literal args.
 
@@ -286,7 +278,12 @@ def test_no_check_in_the_repository_claims_a_level_it_did_not_check_for():
         and establishes in _LEVEL_NAMES
         and not has_evidence
     ]
-    assert [(p, n) for p, _, n in offenders] == [_FROZEN_UNEARNED_LEVEL], (
+    # No exception. There was exactly one -- `dimensional_consistency` in the
+    # byte-pinned conduction1d tree, an unconditional PASS carrying
+    # DIMENSIONALLY_VALID with nothing compared -- and the thermal re-freeze
+    # replaced it with a comparison against the model record. The sweep is now
+    # clean, which is what let this rule move into `ValidationCheck` itself.
+    assert offenders == [], (
         "a validation check claims a level with no residual, no tolerance and "
         "no reference: " + repr(offenders)
     )
@@ -455,16 +452,10 @@ def test_every_check_a_live_solve_produces_earns_its_level():
 # report -- every residual, every detail -- and gets no claim.
 #
 # One gate in the repository still takes bare floats:
-# `src/engcore/domains/thermal/conduction1d/validation.py`, whose bytes are
-# pinned by `experiments/thermal_t1/t1_config.py`. It is named below and the
-# test asserts it is the ONLY one. NEEDS.md G3.1 records what migrating it
-# costs.
-
-#: Gates that judge a level against numbers a caller can still set as floats.
-_FROZEN_CALLER_THRESHOLDS = (
-    "src/engcore/domains/thermal/conduction1d/validation.py",
-    "run_verification_gate",
-)
+# `src/engcore/domains/thermal/conduction1d/validation.py`, whose bytes were
+# pinned by `experiments/thermal_t1/t1_config.py`. The thermal re-freeze
+# migrated it to `CONDUCTION_GATE_THRESHOLDS`, so the sweep below now expects
+# no offenders at all.
 
 #: Parameter names that name a threshold a verification is judged against.
 #: A gate taking one of these as a float has the defect this guard removes.
@@ -511,7 +502,11 @@ def test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against():
         (path, function)
         for path, function, _ in _gates_taking_bare_float_thresholds()
     ]
-    assert offenders == [_FROZEN_CALLER_THRESHOLDS], (
+    # No exception. `run_verification_gate` took `min_contraction` and
+    # `analytic_rel_tol` as bare floats, and both gated a level; it now takes a
+    # `VerificationThresholds` and routes both through `award`, so a caller's
+    # numbers move the verdict and buy nothing.
+    assert offenders == [], (
         "a function takes a verification threshold as a bare float: "
         + repr(list(_gates_taking_bare_float_thresholds()))
     )
@@ -695,15 +690,14 @@ def _every_solver():
 
 SOLVER_CLASSES = _every_solver()
 
-#: The one adapter that cannot inherit the core contract: a frozen file.
-_FROZEN_HANDROLLED_SUPPORT = (
-    "src.engcore.domains.thermal.conduction1d.solver.Conduction1DSolver"
-)
-
-
 def test_the_solver_discovery_found_the_adapters():
     assert len(SOLVER_CLASSES) >= 8, sorted(SOLVER_CLASSES)
-    assert _FROZEN_HANDROLLED_SUPPORT in SOLVER_CLASSES
+    # The adapter that used to be the exception here, still discovered -- it
+    # inherits `DeclaredSupport` now rather than answering for itself.
+    assert (
+        "src.engcore.domains.thermal.conduction1d.solver.Conduction1DSolver"
+        in SOLVER_CLASSES
+    )
 
 
 def test_no_adapter_answers_the_support_question_for_itself():
@@ -721,7 +715,9 @@ def test_no_adapter_answers_the_support_question_for_itself():
         if not issubclass(cls, DeclaredSupport)
         or cls.supports is not DeclaredSupport.supports
     )
-    assert handrolled == [_FROZEN_HANDROLLED_SUPPORT], handrolled
+    # No exception. `Conduction1DSolver` was the fifth copy of the three
+    # comparisons `DeclaredSupport` makes; it declares them now.
+    assert handrolled == [], handrolled
 
 
 def test_the_registry_refuses_a_solver_that_decides_its_own_support():
@@ -764,7 +760,7 @@ def _instantiate(cls):
 
 
 @pytest.mark.parametrize(
-    "name", sorted(n for n in SOLVER_CLASSES if n != _FROZEN_HANDROLLED_SUPPORT)
+    "name", sorted(SOLVER_CLASSES)
 )
 def test_a_problem_requesting_a_superset_is_refused(name):
     """The defect itself, for every adapter, with the expectation from the record.
@@ -1029,19 +1025,10 @@ def test_every_marched_step_carries_its_own_cell_report():
 
 #: Sites that still compare "if it is there", with why each is allowed to.
 #:
-#: Only two, and they are allowed for opposite reasons. Everything else that
-#: had this shape was made strict: the CSTR pairing check, and the campaign
-#: event log's head digest -- which was the same defect in a third place and
-#: was not on this round's list.
+#: One, and it is not a gap. The conduction1d slab verifier used to be the
+#: other, held open only by the freeze; the thermal re-freeze routed it through
+#: the core's strict rule and it is gone from this set.
 _PERMISSIVE_BY_EXCEPTION = {
-    # FROZEN. `verify_problem_matches_slab` still reads
-    # `if declared and declared != actual`, so a slab problem carrying no
-    # fingerprint passes it. The file is byte-pinned by
-    # `experiments/thermal_t1/t1_config.py` and this round may not edit it.
-    # Its two callers outside that file go through the core's strict rule
-    # first, so only the path through the pinned solver is still open.
-    # NEEDS.md G6.1.
-    "src/engcore/domains/thermal/conduction1d/problem.py",
     # REVIEWED AND CORRECT, which is a different thing from unfixed.
     # `ValidationReport.from_dict` cross-checks a serialized `attained_levels`
     # against the levels recomputed from the checks. That field is advisory
@@ -1169,13 +1156,18 @@ def test_the_cstr_domain_refuses_an_unfingerprinted_problem():
         verify_problem_matches_run(stripped, run)
 
 
-def test_the_non_frozen_conduction_paths_refuse_an_unfingerprinted_problem():
-    """The frozen verifier is permissive; the callers outside it are not."""
+def test_the_conduction_slab_verifier_refuses_an_unfingerprinted_problem():
+    """It used to pass one, and that was the whole of G6.1.
+
+    ``verify_problem_matches_slab`` read ``if declared and declared != actual``,
+    so the one case where nothing had said what the problem describes was the
+    one case nothing was checked. Two modules outside the freeze carried a
+    strict shim in front of it for that reason; the thermal re-freeze routed the
+    verifier itself through the core rule and both shims are gone, so this test
+    now exercises the real thing rather than the workaround.
+    """
     from src.engcore.domains.thermal.conduction1d.errors import (
         SlabConfigurationError,
-    )
-    from src.engcore.domains.thermal_models.conduction1d_bulk import (
-        _require_slab_fingerprint,
     )
     from src.engcore.domains.thermal.conduction1d.problem import (
         build_conduction_problem,
@@ -1196,12 +1188,19 @@ def test_the_non_frozen_conduction_paths_refuse_an_unfingerprinted_problem():
         }
     )
 
-    # The frozen verifier still passes it. Named, not worked around.
-    verify_problem_matches_slab(stripped, slab)
+    # An honest pairing still passes.
+    verify_problem_matches_slab(honest, slab)
 
-    # The non-frozen path does not.
+    # An absent fingerprint is an unanswered question, not an answer.
     with pytest.raises(SlabConfigurationError, match="declares no"):
-        _require_slab_fingerprint(stripped, slab)
+        verify_problem_matches_slab(stripped, slab)
+
+    # And the shims that stood in front of it are gone rather than kept.
+    import src.engcore.domains.thermal_models.conduction1d_bulk as bulk
+    import src.engcore.domains.thermal_models.conduction1d_schemes as schemes
+
+    assert not hasattr(bulk, "_require_slab_fingerprint")
+    assert not hasattr(schemes, "_require_slab_fingerprint")
 
 
 def test_the_campaign_event_log_refuses_a_payload_with_no_head_digest():

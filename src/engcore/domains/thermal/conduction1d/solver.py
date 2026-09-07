@@ -52,6 +52,7 @@ from ....scientific.results.uncertainty import Uncertainty
 from ....scientific.results.validation import ValidationReport
 from ....scientific.solvers.protocol import (
     ConvergenceState,
+    DeclaredSupport,
     PreparedSolve,
     RawSolverOutput,
     SolverIdentity,
@@ -130,8 +131,25 @@ def assemble(slab: ConductionSlab) -> PreparedConductionSystem:
 
 
 @dataclass
-class Conduction1DSolver:
-    """1D transient diffusion solver satisfying the ScientificSolver protocol."""
+class Conduction1DSolver(DeclaredSupport):
+    """1D transient diffusion solver satisfying the ScientificSolver protocol.
+
+    Support is **declared**, not compared. This class used to answer the
+    question itself, in a hand-rolled ``supports()`` that made the three
+    comparisons correctly and was the fifth copy of them in the repository.
+    ``SolverRegistry.register`` now refuses an adapter that overrides
+    ``supports``, so the copy is gone and the core does the comparing from
+    the two declarations below. Nothing about which problems are accepted
+    changes: the core performs the same subset test, the same
+    serves-capability test and the same served-model test.
+    """
+
+    #: What identifies this solver's work. A problem that does not ask for
+    #: it is not this solver's problem, however few capabilities it names.
+    serves_capabilities = frozenset({THERMAL_CONDUCTION_1D.name})
+    #: A capability says what kind of computation is wanted; only the model
+    #: says which relation.
+    served_models = CONDUCTION_MODELS
 
     settings: ConductionValidationSettings = field(
         default_factory=ConductionValidationSettings
@@ -184,19 +202,6 @@ class Conduction1DSolver:
         return self._slabs.get(str(problem_id))
 
     # ---- lifecycle -------------------------------------------------------
-    def supports(self, problem: ScientificProblem) -> bool:
-        """Capability question only — never attempts a solve."""
-        if not isinstance(problem, ScientificProblem):
-            return False
-        declared = {capability.name for capability in self.capabilities}
-        if not set(problem.required_capabilities).issubset(declared):
-            return False
-        domain_models = {model.model_id for model in CONDUCTION_MODELS}
-        referenced = {reference.model_id for reference in problem.models}
-        if not referenced & domain_models:
-            return False
-        return THERMAL_CONDUCTION_1D.name in problem.required_capabilities
-
     def prepare(self, problem: ScientificProblem) -> PreparedSolve:
         slab = self.bound_slab(problem.problem_id)
         if slab is None:
@@ -204,10 +209,11 @@ class Conduction1DSolver:
                 f"no slab bound for problem {problem.problem_id!r}; call "
                 f"bind_slab() first — the universal IR carries no geometry"
             )
-        if not self.supports(problem):
+        gap = self.support_gap(problem)
+        if gap:
             raise ThermalConduction1DError(
                 f"problem {problem.problem_id!r} is not a 1D transient "
-                f"conduction analysis"
+                f"conduction analysis: " + "; ".join(gap)
             )
         verify_problem_matches_slab(problem, slab)
         system = assemble(slab)
@@ -319,7 +325,15 @@ class Conduction1DSolver:
         self, prepared: PreparedSolve, raw: RawSolverOutput
     ) -> ValidationReport:
         system: PreparedConductionSystem = prepared.payload
-        return build_validation_report(system, raw, self.settings)
+        # The produced metrics are handed in rather than rebuilt inside the
+        # report: `dimensional_consistency` compares the units this method
+        # actually emitted against the units the model record declares, and
+        # a comparison against a locally re-stamped unit would compare the
+        # report with itself.
+        return build_validation_report(
+            system, raw, self.settings,
+            metrics=self.extract_metrics(prepared, raw),
+        )
 
 
 # =====================================================================

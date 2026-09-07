@@ -58,7 +58,6 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
 from ...scientific.capabilities import ScientificCapability
-from ...scientific.ir.fingerprints import require_matching_fingerprint
 from ...scientific.ir.problem import ModelReference, ScientificProblem
 from ...scientific.models.definition import (
     RangeCondition,
@@ -95,7 +94,6 @@ from ...scientific.solvers.protocol import (
     SolverSettings,
 )
 from ...scientific.units.quantity import Quantity
-from ..thermal.conduction1d.errors import SlabConfigurationError
 from ..thermal.conduction1d.problem import (
     DIFFUSION_MODEL,
     FIELD_UNIT,
@@ -215,31 +213,6 @@ EXPLICIT_REALIZATION = ModelRealizationDefinition(
         reference="FTCS; see module docstring",
     ),
 )
-
-
-def _require_slab_fingerprint(problem, slab) -> None:
-    """The strict pairing check, in front of the permissive frozen one.
-
-    ``conduction1d.verify_problem_matches_slab`` compares
-    ``if declared and declared != actual``, so a problem carrying no
-    ``slab_fingerprint`` at all passes it. That function lives in a byte-pinned
-    file (``experiments/thermal_t1/t1_config.py`` digests it) and this round may
-    not edit it -- but this module is not frozen, and the paths through *here*
-    can be closed. See ``NEEDS.md`` G6.1 for what closing the frozen path costs.
-
-    Called before the frozen verifier rather than instead of it: that one also
-    checks things this does not, and running both means this module's behaviour
-    is the frozen check plus a refusal of absence, rather than a reimplementation
-    that could drift from it.
-    """
-    require_matching_fingerprint(
-        problem=problem,
-        key="slab_fingerprint",
-        actual=slab.fingerprint(),
-        error=SlabConfigurationError,
-        subject="slab",
-    )
-    verify_problem_matches_slab(problem, slab)
 
 
 def conduction_realizations() -> RealizationRegistry:
@@ -527,7 +500,7 @@ class SchemeSolver(DeclaredSupport):
             raise ValueError(
                 f"problem {problem.problem_id!r} is not 1D transient conduction"
             )
-        _require_slab_fingerprint(problem, slab)
+        verify_problem_matches_slab(problem, slab)
         x_nodes, initial, r = _grid(slab)
         return PreparedSolve(
             problem=problem,
@@ -845,7 +818,7 @@ def solve_with_realization(
     """
     solver = solver or sparse_scheme_solver()
     problem = problem or build_conduction_problem(slab)
-    _require_slab_fingerprint(problem, slab)
+    verify_problem_matches_slab(problem, slab)
 
     if require_admissible:
         assessment = assess_realization(realization, slab)

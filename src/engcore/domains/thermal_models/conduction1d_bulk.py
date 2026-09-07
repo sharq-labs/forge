@@ -69,12 +69,10 @@ from typing import Mapping
 
 from ...data.capture import BulkCaptureSpec, capture_bulk
 from ...data.store import BulkDataStore, InMemoryBulkStore
-from ...scientific.ir.fingerprints import require_matching_fingerprint
 from ...scientific.ir.problem import ScientificProblem
 from ...scientific.results.provenance import ProvenanceRecord
 from ...scientific.results.result import ScientificResult
 from ...scientific.results.uncertainty import Uncertainty
-from ..thermal.conduction1d.errors import SlabConfigurationError
 from ..thermal.conduction1d.problem import (
     CONDUCTION_MODELS,
     FIELD_UNIT,
@@ -105,31 +103,6 @@ FIELD_CAPTURE = BulkCaptureSpec(
 )
 
 
-def _require_slab_fingerprint(problem, slab) -> None:
-    """The strict pairing check, in front of the permissive frozen one.
-
-    ``conduction1d.verify_problem_matches_slab`` compares
-    ``if declared and declared != actual``, so a problem carrying no
-    ``slab_fingerprint`` at all passes it. That function lives in a byte-pinned
-    file (``experiments/thermal_t1/t1_config.py`` digests it) and this round may
-    not edit it -- but this module is not frozen, and the paths through *here*
-    can be closed. See ``NEEDS.md`` G6.1 for what closing the frozen path costs.
-
-    Called before the frozen verifier rather than instead of it: that one also
-    checks things this does not, and running both means this module's behaviour
-    is the frozen check plus a refusal of absence, rather than a reimplementation
-    that could drift from it.
-    """
-    require_matching_fingerprint(
-        problem=problem,
-        key="slab_fingerprint",
-        actual=slab.fingerprint(),
-        error=SlabConfigurationError,
-        subject="slab",
-    )
-    verify_problem_matches_slab(problem, slab)
-
-
 def solve_slab_with_bulk_field(
     slab: ConductionSlab,
     *,
@@ -156,7 +129,7 @@ def solve_slab_with_bulk_field(
     solver = solver or Conduction1DSolver()
     store = store if store is not None else InMemoryBulkStore()
     problem = problem or build_conduction_problem(slab)
-    _require_slab_fingerprint(problem, slab)
+    verify_problem_matches_slab(problem, slab)
     solver.bind_slab(slab, problem.problem_id)
 
     prepared = solver.prepare(problem)

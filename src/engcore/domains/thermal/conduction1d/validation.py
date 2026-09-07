@@ -70,12 +70,14 @@ from typing import TYPE_CHECKING, Any, Mapping, Sequence
 
 import numpy as np
 
+from ....scientific.results.thresholds import VerificationThresholds
 from ....scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
 )
+from ....scientific.units.quantity import Quantity
 from .errors import SlabConfigurationError
 from .reference import REFERENCE_EXPRESSION, REFERENCE_ID, exact_midpoint
 
@@ -110,8 +112,18 @@ def build_validation_report(
     system: "PreparedConductionSystem",
     raw,
     settings: ConductionValidationSettings,
+    *,
+    metrics: Mapping[str, Quantity] | None = None,
 ) -> ValidationReport:
-    """Checks one solve can support, and an explicit note about what it cannot."""
+    """Checks one solve can support, and an explicit note about what it cannot.
+
+    ``metrics`` are what the solver's ``extract_metrics`` produced. They are
+    passed in rather than rebuilt here because ``dimensional_consistency``
+    compares them against the model record, and a report that re-derived the
+    units it was checking would be comparing itself with itself. ``None`` means
+    the caller did not supply them, and that check is then ``NOT_RUN`` rather
+    than passed -- absence of a comparison is not a comparison.
+    """
     if not raw.succeeded:
         return ValidationReport(
             checks=(
@@ -189,15 +201,70 @@ def build_validation_report(
         )
     )
 
+    # An unconditional PASS carrying DIMENSIONALLY_VALID, with a sentence
+    # about what the units were and no comparison behind it. The sentence was
+    # true and it was still a claimed level, which is the one defect this
+    # project exists to refuse -- and it sat inside a freeze, which is why the
+    # freeze had to be opened rather than the guard weakened.
+    #
+    # It compares now, against the `unit_exemplar` each `ModelOutputSpec` on
+    # `DIFFUSION_MODEL` declares. That record is outside this function's
+    # arithmetic, so a metric extracted into the wrong unit disagrees with it.
+    # **What this does and does not catch, stated rather than implied**: the
+    # solver's `extract_metrics` and the record's exemplar both read this
+    # domain's `FIELD_UNIT`, so a change to that constant moves the two
+    # together and is invisible here. What is caught is either side moving
+    # alone -- an `extract_metrics` that stamped kelvin, which this module's own
+    # docstring warns against, or a record whose declared exemplar stopped
+    # matching what is produced.
+    from .problem import DIFFUSION_MODEL
+
+    declared = {
+        spec.metric: spec.unit_exemplar for spec in DIFFUSION_MODEL.outputs
+    }
+    produced = dict(metrics or {})
+    mismatched = sorted(
+        f"{name} is {value.units!r}, {declared[name.split(':', 1)[0]]!r} declared"
+        for name, value in produced.items()
+        if name.split(":", 1)[0] in declared
+        and not value.is_compatible_with(declared[name.split(":", 1)[0]])
+    )
+    unchecked = sorted(
+        name for name in produced if name.split(":", 1)[0] not in declared
+    )
+    compared = len(produced) - len(unchecked)
     checks.append(
         ValidationCheck(
             name="dimensional_consistency",
-            outcome=ValidationOutcome.PASS,
-            detail=(
-                "all metrics carry the dimensionless field unit; u is a "
-                "normalized field and is not reported as a temperature"
+            outcome=(
+                ValidationOutcome.PASS
+                if compared and not mismatched
+                else ValidationOutcome.FAIL
+                if mismatched
+                else ValidationOutcome.NOT_RUN
             ),
-            establishes=ValidationLevel.DIMENSIONALLY_VALID,
+            detail=(
+                f"{compared} produced metric(s) checked against the dimensions "
+                f"{DIFFUSION_MODEL.model_id} declares; u is a normalized field "
+                f"and is not reported as a temperature"
+                + (f"; mismatched: {mismatched}" if mismatched else "")
+                + (
+                    f"; not a declared model output and not checked: {unchecked}"
+                    if unchecked
+                    else ""
+                )
+                + ("" if produced else "; no metrics were supplied to compare")
+            ),
+            establishes=(
+                ValidationLevel.DIMENSIONALLY_VALID
+                if compared and not mismatched
+                else None
+            ),
+            evidence=tuple(
+                f"{DIFFUSION_MODEL.model_id}@{DIFFUSION_MODEL.version}:"
+                f"{metric}={unit}"
+                for metric, unit in sorted(declared.items())
+            ),
         )
     )
 
@@ -279,6 +346,42 @@ ANALYTIC_REL_TOL = 1.0e-3
 MIN_RUNGS = 4
 
 
+#: The two numbers this gate judges against, as a record rather than as two
+#: floats a caller may replace.
+#:
+#: Both of them gate a level -- ``min_contraction`` decides
+#: ``numerically_converged`` and so ``NUMERICALLY_CONVERGED``,
+#: ``analytic_rel_tol`` decides ``analytically_verified`` and so
+#: ``ANALYTICALLY_VERIFIED``. While they were ordinary parameters, a caller
+#: passing ``min_contraction=1.0`` received a report whose ``levels_earned``,
+#: whose ``claim`` prose and whose two checks read exactly as they would at the
+#: declared 1.5, with the only trace a number in a ``tolerance`` field a reader
+#: had to know to look at. That is the verification defeated through its own
+#: configuration, and it is the same defect the CSTR and DC gates had.
+#:
+#: A caller may still supply their own numbers -- the gate still runs, still
+#: reports its residual and still says what it compared. What they cannot do is
+#: buy a level with them: ``derive`` marks the set as not this domain's, and
+#: ``award`` returns ``None`` for anything that is not declared.
+CONDUCTION_GATE_THRESHOLDS = VerificationThresholds(
+    gate_id="thermal.conduction1d.refinement",
+    version="0.1.0",
+    values={
+        "min_contraction": CONVERGENCE_MIN_CONTRACTION,
+        "analytic_rel_tol": ANALYTIC_REL_TOL,
+    },
+    basis=(
+        "min_contraction: first-order-in-dt behaviour on this coupled ladder "
+        "predicts a contraction near 2, so 1.5 is a floor the sequence must "
+        "clear; declared after exploratory analysis that had already seen "
+        "2.0-2.3. analytic_rel_tol: a conventional engineering verification "
+        "level, declared after exploratory analysis that had already seen a "
+        "finest error near 4e-4. Both frozen from that point: not retuned for "
+        "the holdout, and not to be retuned if a future case fails them"
+    ),
+)
+
+
 @dataclass(frozen=True)
 class RungResult:
     n_cells: int
@@ -324,15 +427,28 @@ class VerificationReport:
     analytic_rel_tol: float
     reference_id: str = REFERENCE_ID
     reference_expression: str = REFERENCE_EXPRESSION
+    #: The set the two numbers above came from. Defaulted so a report built by
+    #: hand still names one, and carried so `levels_earned` can ask whether the
+    #: numbers it judged against were this domain's.
+    thresholds: VerificationThresholds = CONDUCTION_GATE_THRESHOLDS
 
     @property
     def levels_earned(self) -> tuple[ValidationLevel, ...]:
-        earned: list[ValidationLevel] = []
-        if self.numerically_converged:
-            earned.append(ValidationLevel.NUMERICALLY_CONVERGED)
-        if self.analytically_verified:
-            earned.append(ValidationLevel.ANALYTICALLY_VERIFIED)
-        return tuple(earned)
+        """The levels this sequence earned, at **this domain's** numbers.
+
+        Both go through ``thresholds.award``, so a report produced against a
+        caller's own thresholds earns nothing however well the sequence
+        behaved. The booleans are untouched: what the gate measured is still
+        reported, and only the claim is withheld.
+        """
+        earned = [
+            self.thresholds.award(level, earned=verdict)
+            for level, verdict in (
+                (ValidationLevel.NUMERICALLY_CONVERGED, self.numerically_converged),
+                (ValidationLevel.ANALYTICALLY_VERIFIED, self.analytically_verified),
+            )
+        ]
+        return tuple(level for level in earned if level is not None)
 
     @property
     def claim(self) -> str:
@@ -357,15 +473,15 @@ class VerificationReport:
                 ),
                 detail=self.convergence_detail,
                 tolerance=self.min_contraction_required,
-                establishes=(
-                    ValidationLevel.NUMERICALLY_CONVERGED
-                    if self.numerically_converged
-                    else None
+                establishes=self.thresholds.award(
+                    ValidationLevel.NUMERICALLY_CONVERGED,
+                    earned=self.numerically_converged,
                 ),
                 evidence=tuple(
                     f"{r.n_cells}c/{r.n_steps}s err={r.abs_error:.6e}"
                     for r in self.rungs
-                ),
+                )
+                + self.thresholds.evidence(),
             ),
             ValidationCheck(
                 name="analytic_reference_agreement",
@@ -377,12 +493,12 @@ class VerificationReport:
                 detail=self.analytic_detail,
                 residual=self.rungs[-1].rel_error if self.rungs else None,
                 tolerance=self.analytic_rel_tol,
-                establishes=(
-                    ValidationLevel.ANALYTICALLY_VERIFIED
-                    if self.analytically_verified
-                    else None
+                establishes=self.thresholds.award(
+                    ValidationLevel.ANALYTICALLY_VERIFIED,
+                    earned=self.analytically_verified,
                 ),
-                evidence=(f"{self.reference_id}: {self.reference_expression}",),
+                evidence=(f"{self.reference_id}: {self.reference_expression}",)
+                + self.thresholds.evidence(),
             ),
         )
         return ValidationReport(checks=checks, notes=self.claim)
@@ -396,6 +512,8 @@ class VerificationReport:
             "analytic_detail": self.analytic_detail,
             "min_contraction_required": self.min_contraction_required,
             "analytic_rel_tol": self.analytic_rel_tol,
+            "thresholds": self.thresholds.identity,
+            "thresholds_are_declared": self.thresholds.is_declared,
             "levels_earned": [level.value for level in self.levels_earned],
             "claim": self.claim,
             "reference_id": self.reference_id,
@@ -408,15 +526,22 @@ def run_verification_gate(
     *,
     ladder: Sequence[RefinementRung] = VERIFICATION_LADDER,
     run_id_prefix: str = "thermal-verify",
-    min_contraction: float = CONVERGENCE_MIN_CONTRACTION,
-    analytic_rel_tol: float = ANALYTIC_REL_TOL,
+    thresholds: VerificationThresholds = CONDUCTION_GATE_THRESHOLDS,
 ) -> VerificationReport:
     """Solve the same physical slab at every rung and judge the sequence.
 
     The slab's own discretization is ignored: every rung supplies its own, and
     the physics is held identical via ``with_discretization`` so that any
     difference between rungs is numerical by construction.
+
+    ``thresholds`` replaces the two floats this function used to take. A caller
+    wanting different numbers derives them --
+    ``CONDUCTION_GATE_THRESHOLDS.derive(min_contraction=10.0)`` -- and gets a
+    gate that runs, measures and reports exactly as before while awarding
+    nothing, because the numbers it judged against were not this domain's.
     """
+    min_contraction = thresholds["min_contraction"]
+    analytic_rel_tol = thresholds["analytic_rel_tol"]
     from .problem import MIDPOINT_METRIC, SlabDiscretization, build_conduction_problem
     from .solver import Conduction1DSolver, solve_slab
 
@@ -544,4 +669,5 @@ def run_verification_gate(
         analytic_detail=analytic_detail,
         min_contraction_required=min_contraction,
         analytic_rel_tol=analytic_rel_tol,
+        thresholds=thresholds,
     )

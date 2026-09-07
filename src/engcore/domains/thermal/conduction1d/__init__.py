@@ -80,6 +80,7 @@ from .solver import (
 )
 from .validation import (
     ANALYTIC_REL_TOL,
+    CONDUCTION_GATE_THRESHOLDS,
     CONVERGENCE_MIN_CONTRACTION,
     MIN_RUNGS,
     VERIFICATION_LADDER,
@@ -114,6 +115,7 @@ __all__ = [
     "RefinementRung",
     "VERIFICATION_LADDER",
     "ANALYTIC_REL_TOL",
+    "CONDUCTION_GATE_THRESHOLDS",
     "CONVERGENCE_MIN_CONTRACTION",
     "MIN_RUNGS",
     "ConductionValidationSettings",

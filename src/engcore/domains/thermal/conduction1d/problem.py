@@ -44,6 +44,7 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from ....scientific.ir.fingerprints import require_matching_fingerprint
 from ....scientific.ir.problem import ModelReference, ScientificProblem
 from ....scientific.ir.variables import (
     ScientificParameter,
@@ -443,12 +444,25 @@ def build_conduction_problem(
 def verify_problem_matches_slab(
     problem: ScientificProblem, slab: ConductionSlab
 ) -> None:
-    """Refuse a problem/slab pairing that describes different physics."""
-    declared = problem.metadata.get("slab_fingerprint")
-    actual = slab.fingerprint()
-    if declared and declared != actual:
-        raise SlabConfigurationError(
-            f"problem {problem.problem_id!r} declares slab fingerprint "
-            f"{str(declared)[:12]}… but was paired with {actual[:12]}…; the "
-            f"problem and the slab describe different physical systems"
-        )
+    """Refuse a problem/slab pairing that describes different physics.
+
+    **Absence is a refusal, not a match.** This function used to read
+    ``if declared and declared != actual``, so a problem carrying no
+    ``slab_fingerprint`` passed — the one case where nothing had said what the
+    problem describes was the one case nothing was checked. Every problem this
+    domain builds carries the key (``build_conduction_problem`` always writes
+    it), so the permissive branch was unreachable from inside the domain and
+    open to everything from outside it.
+
+    The comparison itself now lives in the core, in
+    :func:`~engcore.scientific.ir.fingerprints.require_matching_fingerprint`,
+    which is where the same rule is stated for every other domain. The error
+    type stays this domain's, so a caller catches what it already catches.
+    """
+    require_matching_fingerprint(
+        problem=problem,
+        key="slab_fingerprint",
+        actual=slab.fingerprint(),
+        error=SlabConfigurationError,
+        subject="slab",
+    )

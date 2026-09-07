@@ -60,21 +60,39 @@ EXPERIMENT_NAME = "thermal_parameter_inference_at_fixed_fidelity"
 #: These are deliberately NOT part of ``config_hash()``: the config hash covers
 #: the experimental design, and the design is unchanged by which revision of the
 #: solver it happens to be run against. The two are checked separately.
+#:
+#: **RE-FROZEN once, deliberately, at commit 505fe89** (the parent of the
+#: commit these digests were taken in). Four defects were blocked inside this
+#: tree by the pin and are recorded in ``NEEDS.md`` as G2.1, G3.1, G4.1 and
+#: G6.1; the decisive one was a ``ValidationCheck`` that returned PASS claiming
+#: ``DIMENSIONALLY_VALID`` having compared nothing, which is the defect this
+#: project exists to refuse. A freeze that shelters one is protecting a lie
+#: rather than preserving evidence, so the pin was opened rather than the guard
+#: weakened.
+#:
+#: What that cost, measured rather than asserted. Four of the seven files above
+#: moved. Every ``*_config_frozen.json`` and every ``*_report.md`` in T1, T2 and
+#: T3 is byte-identical in content across the change, so **every preregistered
+#: design hash survived** -- which is the paragraph above doing its job. The
+#: three ``*_results.json`` moved in wall-clock telemetry only: three fields in
+#: T1, eight in T2, none at all in T3, with zero differing leaves outside
+#: telemetry in any of them. The same measurement was taken on the unmodified
+#: tree first, as a control, and produced the same shape.
 THERMAL_FROZEN_FILE_DIGESTS: dict[str, str] = {
     "src/engcore/domains/thermal/__init__.py":
         "8923de0cbe22ee4ab4ced90aa7e6b1d75529875673283f03c8ec3e2ccf9b64ef",
     "src/engcore/domains/thermal/conduction1d/__init__.py":
-        "a8d6bd0c051d57d295857492fcc1b0cb8f967363f907ea9d58945ef5e75fe963",
+        "a42ea7c129264779c2165e6d5cfdfb9ff56e8a1bf7fb4b1838c995067979572f",
     "src/engcore/domains/thermal/conduction1d/errors.py":
         "e9c6aab7564c582eb40a30caa5d34b30aec3cdc4181dad4d5ae3d0a2d1425c6b",
     "src/engcore/domains/thermal/conduction1d/problem.py":
-        "54fb8d3f1d3890f5843f128eb0553dd8d117180bb9da82182b9c46adbc51e8cb",
+        "9343e70b12b55cd2d09d3caa00290737cf98791b79121ce495b8114839b9bdf6",
     "src/engcore/domains/thermal/conduction1d/reference.py":
         "7e231b9f5adebc6c5e8b89f17cc885f325419d1d91bc3f56b3d9e2cb5e5ae23e",
     "src/engcore/domains/thermal/conduction1d/solver.py":
-        "073321a1f967baf8a776a9282e875c2892b6c3e80f29736ec9282435013a38ce",
+        "6b09dcd52739565c6cbfde1095d9041d841e79c2dea103c0fce300a216f14e52",
     "src/engcore/domains/thermal/conduction1d/validation.py":
-        "84b798bdb8340b6e8cf8c286db8db3f7c025907e4dd666c932859f5ed441abca",
+        "b8f41e7da4dfad5d8506f757e688982103e5f6c9dc2fa66c0bd000dee02ff0af",
 }
 
 # --- the physical benchmark, inherited from the frozen thermal gate ----------

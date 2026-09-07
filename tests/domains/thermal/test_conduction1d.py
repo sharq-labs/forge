@@ -19,6 +19,7 @@ import scipy.sparse as sp
 
 from src.engcore.domains.thermal.conduction1d import (
     ANALYTIC_REL_TOL,
+    CONDUCTION_GATE_THRESHOLDS,
     CONVERGENCE_MIN_CONTRACTION,
     LEFT_METRIC,
     MAX_METRIC,
@@ -254,14 +255,31 @@ def test_9_analytically_verified_requires_the_full_gate():
 
     # Tolerance alone is not enough: with convergence made unreachable, the
     # finest rung still agrees with the reference and the level is WITHHELD.
+    #
+    # The override now goes through `derive`, and that makes this the stronger
+    # claim it was always reaching for. Before, a caller-supplied 10.0 moved
+    # the verdict and the report read exactly as a declared run would; now it
+    # moves the verdict AND awards nothing, because the numbers the gate judged
+    # against were not this domain's. Both facts are asserted below.
     strict = run_verification_gate(
-        make_slab(), run_id_prefix="earn-b", min_contraction=10.0
+        make_slab(),
+        run_id_prefix="earn-b",
+        thresholds=CONDUCTION_GATE_THRESHOLDS.derive(min_contraction=10.0),
     )
     assert strict.rungs[-1].rel_error < ANALYTIC_REL_TOL
     assert strict.numerically_converged is False
     assert strict.analytically_verified is False
     assert strict.levels_earned == ()
     assert "not verification" in strict.analytic_detail
+    assert strict.thresholds.is_declared is False
+    # and the report says whose numbers they were, rather than leaving a
+    # reader to notice a changed float in a tolerance field
+    assert strict.to_dict()["thresholds_are_declared"] is False
+    assert any(
+        "thresholds-override-of" in entry
+        for check in strict.to_report().checks
+        for entry in check.evidence
+    )
 
 
 def test_10_numerically_converged_requires_the_convergence_gate():
@@ -278,13 +296,29 @@ def test_10_numerically_converged_requires_the_convergence_gate():
     assert short.analytically_verified is False
     assert "rungs" in short.convergence_detail
 
-    # Converged but not accurate enough: only the weaker level is earned.
+    # Converged but not accurate enough. The sequence still converges, and
+    # the level for it is now withheld too -- not because convergence failed
+    # but because a caller's threshold set cannot buy either level. That is the
+    # point of routing both through `award`: a report cannot be part this
+    # domain's claim and part the caller's.
     tight = run_verification_gate(
-        make_slab(), run_id_prefix="numconv-tight", analytic_rel_tol=1e-9
+        make_slab(),
+        run_id_prefix="numconv-tight",
+        thresholds=CONDUCTION_GATE_THRESHOLDS.derive(analytic_rel_tol=1e-9),
     )
     assert tight.numerically_converged is True
     assert tight.analytically_verified is False
-    assert tight.levels_earned == (ValidationLevel.NUMERICALLY_CONVERGED,)
+    assert tight.levels_earned == ()
+    assert tight.thresholds.is_declared is False
+
+    # The declared set, by contrast, earns exactly the one it should.
+    declared_tight = run_verification_gate(
+        make_slab(), run_id_prefix="numconv-declared"
+    )
+    assert declared_tight.levels_earned == (
+        ValidationLevel.NUMERICALLY_CONVERGED,
+        ValidationLevel.ANALYTICALLY_VERIFIED,
+    )
 
 
 def test_11_a_single_coarse_solve_never_receives_the_strongest_levels():

@@ -361,7 +361,7 @@ T2_FROZEN_FILE_DIGESTS: dict[str, str] = {
     "experiments/thermal_t2/__init__.py":
         "a59932c14653f6236f7193f91b2f288d205e98cd2e90a5bfa978c4de045f1eab",
     "experiments/thermal_t2/t2_config.py":
-        "4d12fbac7dba7ea37fe9d61e8e80f22b9edb1510220f22b94a29ff14dd0c1966",
+        "be116695e2ee12aa5e5ac107ed052209f306adbe6baba405dc32ff943028f621",
     "experiments/thermal_t2/t2_run.py":
         "83b016223e61d09df201d1b6e3f9cef5df4dc62b22839af658f3f44f1d8286c7",
     "experiments/thermal_t2/t2_truth.py":
