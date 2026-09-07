@@ -3835,6 +3835,101 @@ number, its source must be re-read for both the quantity and the threshold.
 This review happens before publication, not after an anomalous case exposes it.
 
 
+
+## RULE — prefer a declared budget to a cited constant
+
+**Where a bound can be written as the fraction of a budget the caller declares,
+write it that way rather than as a number this repository has to source.**
+
+The reason is measured, not stylistic. Three bounds here were believed to be
+printed in the sources they cited, were re-read, and were not established as
+used: `Fo = 0.2`, beryllium's `theta_D/3`, and `Da <= 10` — which was removed
+rather than raised. The standing source-audit rule above exists because of
+them, and it is a *mitigation*: it says re-read before you rely. A bound that
+is a fraction of a declared budget has nothing to re-read. Its value is 1
+because the quantity is constructed as "the share of the declared budget in
+use", so 1 *is* the budget. There is no threshold anybody chose and therefore
+no threshold anybody can have got wrong.
+
+Worked examples: `source_regulation_utilization` and
+`element_hot_spot_utilization` in `domains/electrical/dc_applicability.py`, and
+before them `continuous_c_rate_utilization`, `internal_resistance_drift_ratio`
+and `soc_window_margin` in the battery domain. The physics is still cited — the
+Thevenin equivalent, IEC 60115-1's derating characteristic — and only the
+*number* moves to the caller.
+
+**THE COST, which is real and is not a footnote.** A declared budget moves the
+judgement to whoever declares it. A caller who declares a regulation band of
+0.9 is told their source is inside it, and nothing in the domain can tell them
+that 0.9 is an absurd band for a logic rail. A cited constant would have
+carried an opinion about the world; a declared budget carries none, and the
+report is only as good as the declaration. Two things keep that honest and
+neither is optional:
+
+* **No default.** The condition is UNKNOWN until the caller states the budget.
+  A default would be this repository choosing the number after all, with the
+  caller's name on it.
+* **The declaration is in the report.** It reaches the reader as a declared
+  input beside the verdict, so an absurd band is visible to whoever audits the
+  result even though it was invisible to the check.
+
+**When this rule does not apply.** Where the bound is a genuine property of the
+world rather than of a design's tolerance — a transition Reynolds number, a
+Prandtl restriction printed with a correlation, a phase change — the number
+belongs in the repository with its source, and the source-audit rule governs
+it. The test is whether two competent engineers could defensibly choose
+different values for the same physical situation. If they could, it is a budget
+and it is theirs. If they could not, it is a constant and it is ours to source.
+
+
+## RULE — a permanently-UNKNOWN condition is worse than no condition
+
+**Before declaring a condition, establish that something in reach can supply
+its inputs. If nothing can, do not declare it.**
+
+An UNKNOWN condition is not neutral. It degrades every verdict it touches to
+INSUFFICIENT_EVIDENCE, forever, while never being able to say anything about
+any design — all of the cost of a condition and none of the benefit. A gap that
+can be closed is an instruction to the caller; a gap that cannot be closed is
+noise that trains readers to ignore gaps.
+
+This is why `contact_resistance` was rejected in the DC applicability round.
+The physics is real and is why four-terminal sensing exists: twenty milliohms
+of lead and joint resistance against a 1 ohm element is a two-percent error
+before the part is powered. But contact resistance is a property of the
+*assembly* — the solder joint, the socket, the trace — and not of any part.
+None of the 35 datasheets in `benchmarks/ai_designs/components.json` prints
+one, and nothing in this repository computes one. Declared, it would have sat
+UNKNOWN in every report ever produced.
+
+The contrast that makes the test operational is `output_resistance`, kept in
+the same round on the same axis: a source's internal resistance is a
+first-class published characteristic of real supplies, and this repository
+already models one directly in `battery.cell.rint_ocv`. Same kind of physics,
+opposite answer, and the thing that separated them was **whether an input could
+arrive**, not whether the physics was sound.
+
+**The check to run, in order:**
+
+1. Name the input the condition reads.
+2. Name a source that publishes it — a datasheet field, a solver output, a
+   declaration a caller can reasonably make about their own design.
+3. If step 2 has no answer, the condition is not ready. Record it as a gap in
+   the *data*, which is actionable, rather than shipping it as a gap in every
+   *verdict*, which is not.
+
+**Corollary, from the same round.** The mirror-image failure is a condition
+whose inputs are always available and whose answer is therefore always the
+same. `self_heating_resistance_drift_ratio` was declared, wired, and measured
+at 17.85 on this repository's own nominal example — violated eighteen times
+over on a correct design, because the coupled run models the drift the
+condition was reporting as unmodelled. Never UNKNOWN, and never informative.
+Both failures are found the same way: **evaluate the condition against a design
+you already believe in before you declare it.** A condition that cannot be
+evaluated and a condition whose evaluation is a foregone conclusion are the
+same defect seen from two ends.
+
+
 ## repair-guidance round
 
 ### R.1 Four abstractions measured against what already works, and deliberately not built

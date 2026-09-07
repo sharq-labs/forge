@@ -20,6 +20,7 @@ import json
 import pytest
 
 from src.engcore.domains.electrical import material as mat
+from src.engcore.domains.electrical import dc_applicability as dc_app
 from src.engcore.domains.electrical.dc import models as dc_models
 from src.engcore.domains.thermal_models import context as ctx
 from src.engcore.domains.thermal_models import lumped as lump
@@ -40,9 +41,19 @@ from src.engcore.mcp import (
     run_electrothermal_case,
 )
 from src.engcore.mcp import evidence
+# Not re-exported from the package: the check name and the
+# level-withholding rule are this boundary's internals, and the tests
+# that pin them import them where they live.
+from src.engcore.mcp.problem import (
+    CROSS_SOLVER_CHECK_NAME,
+    _withhold_level,
+)
 from src.engcore.scientific.errors import InvalidScientificProblem
 from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.validation import ValidationLevel
+from src.engcore.scientific.results.validation import (
+    ValidationLevel,
+    ValidationOutcome,
+)
 from src.engcore.scientific.units.quantity import Quantity, dimensionality
 from src.engcore.systems.electrothermal import coupled as cp
 
@@ -103,6 +114,10 @@ BIOT_VIOLATING_PAYLOAD["stages"][0]["body"]["applicability"].update(
     {"characteristic_length": "0.05 meter", "body_conductivity": "0.2 watt/meter/kelvin"}
 )
 
+#: Every model this boundary can bind, including the two companion records.
+#: The companions are *attachable* rather than always attached: they appear in
+#: a report only when the caller declared something they read, which is what
+#: `ATTACHED_MODELS` below is for.
 MODELS = (
     lump.LUMPED_CAPACITY_MODEL,
     mat.LINEAR_TCR_MODEL,
@@ -110,6 +125,18 @@ MODELS = (
     dc_models.IDEAL_VOLTAGE_SOURCE_MODEL,
     dc_models.RESISTOR_OHM_MODEL,
     dc_models.KCL_MODEL,
+    dc_app.SELF_HEATED_RESISTOR_MODEL,
+    dc_app.REGULATED_VOLTAGE_SOURCE_MODEL,
+)
+
+#: What the shipped example actually attaches. It declares the `element` block
+#: and so raises `electrical.dc.self_heated_resistor`; it declares no
+#: `source_regulation`, because this repository's component data carries no
+#: output impedance for the part the example's supply names, so
+#: `electrical.dc.regulated_voltage_source` stays off the report.
+ATTACHED_MODELS = tuple(
+    m for m in MODELS
+    if m.model_id != dc_app.REGULATED_VOLTAGE_SOURCE_MODEL.model_id
 )
 
 
@@ -353,7 +380,9 @@ def test_a_bare_number_is_refused_everywhere_a_quantity_is_expected():
         elif field.section in (
             "stages[].conductor.limits",
             "stages[].conductor.ratings",
+            "stages[].conductor.element",
             "source_ratings",
+            "source_regulation",
         ):
             continue  # absent from this payload; covered by their own tests
         elif field.section == "coupling":
@@ -1031,6 +1060,12 @@ def test_every_model_in_the_closure_is_named_and_assessed():
         KCL,
         RESISTOR,
         SOURCE,
+        # The example declares the `element` block, so the narrower element
+        # claim is in the closure too. It is not in this set by default: a
+        # payload that declares nothing about the element does not attach it,
+        # which `test_a_companion_record_is_absent_until_the_caller_widens_it`
+        # is the other half of.
+        dc_app.SELF_HEATED_RESISTOR_MODEL.model_id,
     }
     assert assessed(report) == expected
     assert {m for m, _v in report.contributing_models} >= expected
@@ -1643,3 +1678,292 @@ def test_s00709_is_over_its_rating_at_every_resistance_the_run_can_offer():
     resistor = next(r for r in report.validity if r.model_id == RESISTOR)
     assert dc_models.DISSIPATED_POWER_UTILIZATION in resistor.assessment.violated
     assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+# =====================================================================
+# The companion records, wired
+# =====================================================================
+#
+# `electrical/dc_applicability.py` declared two narrower claims and nothing
+# evaluated them. A condition nobody evaluates is a condition that does not
+# exist, so these tests are about the seam rather than about the physics --
+# the physics is `tests/domains/electrical/test_dc_applicability.py`.
+
+ELEMENT_PATH = ("stages", 0, "conductor", "element")
+
+#: Both from the Bourns PWR220T-20 record in components.json, the same part
+#: the shipped example's ratings come from.
+ELEMENT_BLOCK = {
+    "element_to_body_thermal_resistance": "6.5 kelvin/watt",
+    "permissible_element_temperature": "428.15 kelvin",
+}
+
+SELF_HEATED = dc_app.SELF_HEATED_RESISTOR_MODEL.model_id
+REGULATED = dc_app.REGULATED_VOLTAGE_SOURCE_MODEL.model_id
+
+
+def _with_source_regulation(**overrides):
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["source_regulation"] = {
+        "output_resistance": "0.05 ohm",
+        "regulation_band": 0.02,
+        **overrides,
+    }
+    return payload
+
+
+def test_the_shipped_example_evaluates_the_element_condition():
+    """The default run of the product now answers it, rather than declaring it.
+
+    0.42 A into 10 ohm is 2.12 W, the body converges to 338.6 K, and 6.5 K/W
+    puts the element 13.8 K above that at 352.4 K against a permissible
+    428.15 K. **No other condition in the report can see that number**: the
+    lumped model assigns the part one temperature and the rating conditions
+    read the declared ambient, 300 K, which is 52 K below where the element
+    actually is.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="element"
+    ).reports[0]
+
+    element = next(r for r in report.validity if r.model_id == SELF_HEATED)
+    assert element.assessment.satisfied == (
+        dc_app.ELEMENT_HOT_SPOT_UTILIZATION,
+    )
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+    assert (SELF_HEATED, dc_app.SELF_HEATED_RESISTOR_MODEL.version) in (
+        report.contributing_models
+    )
+
+    # The arithmetic itself is asserted in the domain tests; what this one is
+    # about is that the boundary reached it with the run's own numbers.
+    assert dc_app.element_hot_spot_utilization(
+        body_temperature=Quantity(338.5770175652607, "kelvin"),
+        dissipated_power=Quantity(2.1212899619439667, "watt"),
+        element_to_body_thermal_resistance=Quantity(6.5, "kelvin/watt"),
+        permissible_element_temperature=Quantity(428.15, "kelvin"),
+    ).magnitude == pytest.approx(0.823, abs=5e-4)
+
+
+def test_a_companion_record_is_absent_until_the_caller_widens_it():
+    """Omission removes a claim nobody made. It never satisfies one.
+
+    This is the rule `build_resistance_problem` states for the rated material
+    model, applied here: a payload that says nothing about the element does not
+    get `electrical.dc.self_heated_resistor` in its report at all, and is not
+    told it is under-evidenced against a question it did not ask.
+
+    The distinction that makes this honest rather than a loophole is asserted
+    in the same breath: **half** a block is a gap, not an absence.
+    """
+    bare = copy.deepcopy(example_electrothermal_payload())
+    bare["stages"][0]["conductor"].pop("element")
+    report = run_electrothermal_case(bare, run_id="bare-element").reports[0]
+    assert SELF_HEATED not in {r.model_id for r in report.validity}
+    assert SELF_HEATED not in {m for m, _v in report.contributing_models}
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+
+    half = copy.deepcopy(example_electrothermal_payload())
+    half["stages"][0]["conductor"]["element"] = {
+        "permissible_element_temperature": "428.15 kelvin"
+    }
+    partial = run_electrothermal_case(half, run_id="half-element").reports[0]
+    assert (SELF_HEATED, dc_app.ELEMENT_HOT_SPOT_UTILIZATION) in (
+        partial.unknown_conditions
+    )
+    assert partial.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+def test_an_element_hotter_than_it_may_be_is_a_violation():
+    """The finding the condition exists for, on a body that is itself fine.
+
+    The permissible element temperature is dropped to 345 K. The **body** at
+    338.6 K is below it and every other condition in the report still passes;
+    the element, 13.8 K further up at 352.4 K, is not.
+    """
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["stages"][0]["conductor"]["element"][
+        "permissible_element_temperature"
+    ] = "345 kelvin"
+    report = run_electrothermal_case(payload, run_id="hot-element").reports[0]
+
+    assert report.violated_conditions == (
+        (SELF_HEATED, dc_app.ELEMENT_HOT_SPOT_UTILIZATION),
+    )
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+
+
+def test_the_source_regulation_condition_reaches_the_report():
+    """Declared on both sides of its bound, since the example declares neither.
+
+    The shipped example carries no `source_regulation` block on purpose: this
+    repository's component data records no output impedance for the part its
+    supply names, and one invented to make a condition evaluable would be the
+    only number in that payload nobody read off a datasheet. The condition is
+    exercised here instead, with numbers this test declares and owns.
+    """
+    inside = run_electrothermal_case(
+        _with_source_regulation(), run_id="reg-in"
+    ).reports[0]
+    source = next(r for r in inside.validity if r.model_id == REGULATED)
+    assert source.assessment.satisfied == (
+        dc_app.SOURCE_REGULATION_UTILIZATION,
+    )
+    assert inside.verdict is CredibilityVerdict.SUPPORTED
+
+    # 0.42 A through 0.05 ohm is 21 mV, 0.42 % of 5 V. A band of 0.002 is
+    # tighter than that, and the same supply is then out of domain -- while
+    # `source_current_utilization` stays satisfied at 0.14 of its 3 A rating,
+    # which is the point: the two conditions fail independently.
+    outside = run_electrothermal_case(
+        _with_source_regulation(regulation_band=0.002), run_id="reg-out"
+    ).reports[0]
+    assert outside.violated_conditions == (
+        (REGULATED, dc_app.SOURCE_REGULATION_UTILIZATION),
+    )
+    ideal = next(
+        r for r in outside.validity
+        if r.model_id == "electrical.dc.ideal_voltage_source"
+    )
+    assert ideal.assessment.status is ValidityStatus.IN_DOMAIN
+
+
+def test_a_half_declared_source_regulation_block_is_a_gap():
+    """An undeclared band is not an infinite band."""
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["source_regulation"] = {"output_resistance": "0.05 ohm"}
+    report = run_electrothermal_case(payload, run_id="reg-half").reports[0]
+    assert (REGULATED, dc_app.SOURCE_REGULATION_UTILIZATION) in (
+        report.unknown_conditions
+    )
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+# =====================================================================
+# The second route, wired
+# =====================================================================
+
+def test_no_cross_solver_check_is_emitted_unless_one_is_asked_for():
+    """Not asking is not the same as asking and not getting.
+
+    A `NOT_RUN` check makes a report INSUFFICIENT_EVIDENCE, so emitting one on
+    every machine without a simulator installed would downgrade every report in
+    the repository to buy nothing. Omitting the block costs nothing and claims
+    nothing, which is how `required_levels` already works.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="no-cross"
+    ).reports[0]
+    assert CROSS_SOLVER_CHECK_NAME not in {c.name for c in report.validation}
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+
+
+def test_an_unreachable_provider_is_not_run_rather_than_a_pass(monkeypatch):
+    """The audit standard's fourth rule, at this boundary.
+
+    A caller who asked for a second route and did not get one has a gap, and
+    the report says so rather than quietly reporting agreement it never
+    measured. The provider is made unreachable here rather than assumed to be:
+    it is installed on this machine, and a test that depended on its *absence*
+    would pass for the wrong reason wherever it is missing.
+    """
+    from src.engcore.domains.electrical import ngspice as dc_ng
+
+    def unavailable(*_args, **_kwargs):
+        raise dc_ng.NgspiceUnavailable("no provider on this machine")
+
+    monkeypatch.setattr(dc_ng, "solve_circuit_with_ngspice", unavailable)
+
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["cross_solver_check"] = {"external_provider": "ngspice"}
+    report = run_electrothermal_case(payload, run_id="cross-absent").reports[0]
+
+    check = next(
+        c for c in report.validation if c.name == CROSS_SOLVER_CHECK_NAME
+    )
+    assert check.outcome is ValidationOutcome.NOT_RUN
+    assert check.establishes is None
+    assert "could not be reached" in check.detail
+    assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+
+@pytest.mark.expensive
+def test_the_second_route_actually_runs_and_the_level_is_withheld():
+    """The whole seam, end to end, against the real external simulator.
+
+    Marked expensive because it shells out to another program, the same mark
+    the cross-solver milestone's own tests carry. Measured when it landed: nine
+    quantities compared, worst relative difference 4.9e-13 against a declared
+    1e-9 -- agreement at machine epsilon, four orders inside the bound.
+
+    And the level is **not** in the report. That is the assertion this test
+    exists for: the comparison is real, its residual is recorded, a
+    disagreement would fail the report, and `CROSS_SOLVER_VALIDATED` still does
+    not attach to a set of temperatures no second route computed.
+    """
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["cross_solver_check"] = {"external_provider": "ngspice"}
+    report = run_electrothermal_case(payload, run_id="cross-real").reports[0]
+
+    check = next(
+        c for c in report.validation if c.name == CROSS_SOLVER_CHECK_NAME
+    )
+    assert check.outcome is ValidationOutcome.PASS
+    assert check.residual < check.tolerance
+    assert check.establishes is None
+    assert ValidationLevel.CROSS_SOLVER_VALIDATED not in report.attained_levels
+    assert report.attained_levels == frozenset(
+        {ValidationLevel.ANALYTICALLY_VERIFIED}
+    )
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+    # the routes' own independence argument survives into the record
+    assert "sharing no declared component" in check.detail
+    assert check.evidence
+
+
+def test_an_unknown_provider_is_refused_at_the_boundary():
+    """The vocabulary is closed, like every other category field."""
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["cross_solver_check"] = {"external_provider": "spice3f5"}
+    with pytest.raises(MalformedPayloadError, match="external_provider"):
+        run_electrothermal_case(payload, run_id="cross-bogus")
+
+
+def test_a_reached_consensus_reports_its_agreement_and_withholds_the_level():
+    """The wiring, exercised without the provider.
+
+    `_cross_solver_checks` shells out; `_withhold_level` is the part that
+    decides what a reached consensus claims **in this report**, and that is what
+    is under test. The consensus itself agrees at machine epsilon here because
+    both sides are the same numbers -- which is exactly why the level must not
+    be readable off this test, and it is not: the assertion is that the level is
+    gone and the reason is present.
+    """
+    from src.engcore.domains.electrical import dc_consensus as dc_con
+
+    payload = example_electrothermal_payload()
+    case = run_electrothermal_case(payload, run_id="cross-wiring")
+    problems = build_electrothermal_problems(payload)
+    electrical = case.run.final.result_for(problems[0].problem_id)
+
+    from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
+
+    identity = ElectricalDCSolver().identity
+    consensus = dc_con.dc_consensus(
+        native=electrical,
+        native_solver=identity,
+        external=electrical,
+        external_solver=identity,
+    )
+    raw = consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)
+    withheld = _withhold_level(raw)
+
+    assert raw.outcome is withheld.outcome
+    assert withheld.residual == raw.residual
+    assert withheld.tolerance == raw.tolerance
+    assert withheld.evidence == raw.evidence
+    assert withheld.establishes is None
+    assert "withheld" in withheld.detail
+    assert "temperatures" in withheld.detail
+    # and the reason is not a claim that the comparison was weak
+    assert "not a defect in the comparison" in withheld.detail

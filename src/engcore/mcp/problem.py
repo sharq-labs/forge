@@ -65,6 +65,7 @@ from typing import Any, Mapping, Sequence
 from ..domains.electrical import material as mat
 from ..domains.repair import ConditionRepair, merge_repairs
 from ..domains.electrical.dc import circuit as dc_circuit
+from ..domains.electrical import dc_applicability as dc_app
 from ..domains.electrical.dc import models as dc_models
 from ..domains.electrical.dc import problem as dc_problem
 from ..domains.electrical.dc import solver as dc_solver
@@ -128,11 +129,20 @@ _LINEAR_TCR = mat.LINEAR_TCR_MODEL
 _VOLTAGE_SOURCE = dc_models.IDEAL_VOLTAGE_SOURCE_MODEL
 _RESISTOR = dc_models.RESISTOR_OHM_MODEL
 _KCL = dc_models.KCL_MODEL
+#: The two companion records from ``domains/electrical/dc_applicability``.
+#: Narrower claims beside ``_RESISTOR`` and ``_VOLTAGE_SOURCE``, attached
+#: only when the caller declares something they read -- the rule
+#: ``build_resistance_problem`` already applies to ``_RATED_TCR``.
+_SELF_HEATED = dc_app.SELF_HEATED_RESISTOR_MODEL
+_REGULATED_SOURCE = dc_app.REGULATED_VOLTAGE_SOURCE_MODEL
 
 #: Every model this boundary poses a problem for. The audit below reads
 #: their inputs; widening this tuple is how a new participant becomes the
 #: description's problem rather than the caller's surprise.
-_MODELS = (_LUMPED, _LINEAR_TCR, _RATED_TCR, _VOLTAGE_SOURCE, _RESISTOR, _KCL)
+_MODELS = (
+    _LUMPED, _LINEAR_TCR, _RATED_TCR, _VOLTAGE_SOURCE, _RESISTOR, _KCL,
+    _SELF_HEATED, _REGULATED_SOURCE,
+)
 
 #: Model inputs a caller **must not** supply, and why. Each is solved for
 #: rather than declared: the body temperature is the state the thermal model
@@ -165,6 +175,22 @@ COUPLING_SUPPLIED_INPUTS: Mapping[str, str] = {
     ),
     "node_voltage": (
         "solved by the DC network; the unknowns of the MNA system"
+    ),
+    # The companion records read the run's own answers. Each is a VARIABLE on
+    # its model for that reason, and each is here for the same reason the four
+    # above are: a payload field would let a caller assert the operating point
+    # the run exists to find.
+    dc_app.SOURCE_CURRENT: (
+        "the current the network draws through the source is what the MNA "
+        "solve produced; declaring it would assert the load"
+    ),
+    dc_app.BODY_TEMPERATURE: (
+        "the element's body temperature is the converged state of the coupled "
+        "run, read back out of the property solve's own provenance"
+    ),
+    dc_app.DISSIPATED_POWER: (
+        "the element's dissipation is the electrical solve's own answer, and "
+        "it is the heat input the coupling transports"
     ),
 }
 
@@ -200,6 +226,23 @@ BODY = "stages[].body"
 APPLICABILITY = "stages[].body.applicability"
 COUPLING = "coupling"
 SOURCE_RATINGS = "source_ratings"
+#: What the resistive *element* is, as opposed to what it survives
+#: (``RATINGS``) or what its material does (``LIMITS``). Declaring
+#: anything here attaches ``electrical.dc.self_heated_resistor``.
+ELEMENT = "stages[].conductor.element"
+#: What the supply does under load. Declaring anything here attaches
+#: ``electrical.dc.regulated_voltage_source``. At the root beside
+#: ``source_voltage`` and ``source_ratings``, where the source is.
+SOURCE_REGULATION = "source_regulation"
+#: A request for a second, independent solve of the same circuit. Not a
+#: declaration about the design: it is the caller asking for evidence, and
+#: it is the one block whose absence removes a check rather than raising
+#: a gap -- for the same reason ``required_levels`` works that way. Not
+#: asking for cross-solver evidence is not the same as asking and not
+#: getting it, and only the second is INSUFFICIENT_EVIDENCE.
+CROSS_SOLVER_CHECK = "cross_solver_check"
+#: What the consensus check is called in a report.
+CROSS_SOLVER_CHECK_NAME = "cross_solver_agreement"
 
 #: Execution defaults for the coupling block, resolved at this boundary rather
 #: than at the call site so that what is validated here is what the runner
@@ -422,6 +465,57 @@ _BINDINGS: tuple[Binding, ...] = (
         kind="fraction",
         model=_VOLTAGE_SOURCE,
         input_name=dc_models.DERATING_FACTOR,
+    ),
+    # ---- the element itself ------------------------------------------
+    #
+    # Separate from `ratings` because a rating is what the part survives and
+    # these are what it *is*: how hot its element runs above its body, and how
+    # hot that element may get. Declaring either attaches the companion record;
+    # declaring neither leaves it off the report entirely, which is the honest
+    # answer for a caller who never characterised the element.
+    Binding(
+        section=ELEMENT,
+        key=dc_app.ELEMENT_TO_BODY_THERMAL_RESISTANCE,
+        kind="quantity",
+        model=_SELF_HEATED,
+        input_name=dc_app.ELEMENT_TO_BODY_THERMAL_RESISTANCE,
+    ),
+    Binding(
+        section=ELEMENT,
+        key=dc_app.PERMISSIBLE_ELEMENT_TEMPERATURE,
+        kind="quantity",
+        model=_SELF_HEATED,
+        input_name=dc_app.PERMISSIBLE_ELEMENT_TEMPERATURE,
+    ),
+    # ---- source regulation -------------------------------------------
+    Binding(
+        section=SOURCE_REGULATION,
+        key=dc_app.OUTPUT_RESISTANCE,
+        kind="quantity",
+        model=_REGULATED_SOURCE,
+        input_name=dc_app.OUTPUT_RESISTANCE,
+    ),
+    Binding(
+        section=SOURCE_REGULATION,
+        key=dc_app.REGULATION_BAND,
+        kind="fraction",
+        model=_REGULATED_SOURCE,
+        input_name=dc_app.REGULATION_BAND,
+    ),
+    # ---- the second route --------------------------------------------
+    Binding(
+        section=CROSS_SOLVER_CHECK,
+        key="external_provider",
+        kind="category",
+        vocabulary=("ngspice",),
+        required=False,
+        note=(
+            "Names the external circuit simulator to solve the same operating "
+            "point with, so the two answers can be compared. Declaring it "
+            "requests evidence: the provider must be installed, and a run "
+            "that cannot reach it reports the check NOT_RUN rather than "
+            "passing. Omitting it requests nothing and costs nothing."
+        ),
     ),
     # ---- body --------------------------------------------------------
     Binding(
@@ -912,7 +1006,11 @@ def build_electrothermal_system(
     """
     root = _require_mapping(payload, where="payload")
     root_values = _read_section(
-        root, ROOT, extra=("stages", "coupling", SOURCE_RATINGS)
+        root, ROOT,
+        extra=(
+            "stages", "coupling", SOURCE_RATINGS, SOURCE_REGULATION,
+            CROSS_SOLVER_CHECK,
+        ),
     )
     _read_ratings(root)  # checked here; consumed when the report is assembled
 
@@ -1116,6 +1214,201 @@ def _read_ratings(
     return per_component, source_rating
 
 
+# =====================================================================
+# The companion declarations, and the problems they widen
+# =====================================================================
+#
+# Both blocks are optional and both are *absent* rather than empty by default.
+# A caller who declares neither gets exactly the report they got before these
+# existed: the companion records are not attached, so they raise no condition
+# and leave no gap. That is not omission buying a pass -- the conditions on the
+# models the run actually *used* are untouched, and every one of them still
+# goes UNKNOWN when its own declaration is missing. What omission removes is a
+# narrower claim nobody made, which is the rule `build_resistance_problem`
+# states for `rated_linear_tcr_resistance` and the reason it is followed here.
+
+
+def _read_element(conductor_raw: Mapping[str, Any], index: int) -> dict[str, Any]:
+    """One stage's element declarations, or an empty mapping."""
+    return _read_section(
+        _require_mapping(
+            conductor_raw.get("element"),
+            where=f"stages[{index}].conductor.element",
+        ),
+        ELEMENT,
+        label=f"stages[{index}].conductor.element",
+    )
+
+
+def _read_source_regulation(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """The source's regulation declarations, or an empty mapping."""
+    root = _require_mapping(payload, where="payload")
+    return _read_section(
+        _require_mapping(root.get(SOURCE_REGULATION), where=SOURCE_REGULATION),
+        SOURCE_REGULATION,
+    )
+
+
+def _companion_problems(
+    system: cp.CoupledElectroThermalSystem, payload: Mapping[str, Any]
+) -> tuple[dict[str, Any], Any]:
+    """``({component_id: element problem}, source problem)`` for one payload.
+
+    Read from the payload rather than carried on the system, for the reason
+    :func:`_read_ratings` is: the coupled run solves the same circuit whether
+    or not anybody characterised the element, so these are evidence the
+    *report* needs and not a term in the arithmetic.
+    """
+    root = _require_mapping(payload, where="payload")
+    per_component: dict[str, Any] = {}
+    for index, entry in enumerate(root.get("stages") or ()):
+        stage = _require_mapping(entry, where=f"stages[{index}]")
+        conductor_raw = _require_mapping(
+            stage.get("conductor"), where=f"stages[{index}].conductor"
+        )
+        identity = _read_section(
+            stage, STAGE, extra=("conductor", "body"), label=f"stages[{index}]"
+        )
+        component_id = identity["component_id"]
+        per_component[component_id] = dc_app.self_heated_resistor_problem(
+            component_id, _read_element(conductor_raw, index)
+        )
+    # The one source this system has, named by the pack's own constant so the
+    # companion problem and the electrical result agree about which element
+    # they are talking about.
+    return per_component, dc_app.regulated_source_problem(
+        cp.SOURCE_ID,
+        {
+            dc_app.SOURCE_VOLTAGE: system.source_voltage,
+            **_read_source_regulation(payload),
+        },
+    )
+
+
+def _read_cross_solver_check(payload: Mapping[str, Any]) -> str | None:
+    """The external provider the caller asked for, or ``None``."""
+    root = _require_mapping(payload, where="payload")
+    return _read_section(
+        _require_mapping(
+            root.get(CROSS_SOLVER_CHECK), where=CROSS_SOLVER_CHECK
+        ),
+        CROSS_SOLVER_CHECK,
+    ).get("external_provider")
+
+
+def _withheld_level_reason() -> str:
+    """Why a cross-solver agreement about the circuit earns this report nothing.
+
+    The consensus is real evidence and it is about the **electrical operating
+    point**. The values this report carries are temperatures, and no second
+    route computed one. Letting the level through would mean a report whose own
+    thermal reference check was NOT_RUN could still read
+    ``CROSS_SOLVER_VALIDATED`` on the strength of two circuit solvers agreeing
+    about a voltage -- absence of evidence about the reported values, dressed
+    as presence of it, which is the substitution the level system exists to
+    prevent. So the comparison runs, its residual and its full reason are
+    recorded, a disagreement still FAILs the report, and the level is withheld.
+    """
+    return (
+        "The level is withheld in this report and this is not a defect in the "
+        "comparison. The agreement is about the electrical operating point; "
+        "the values this report carries are temperatures, which no second "
+        "route computed. A disagreement still fails this report, because a "
+        "disputed dissipation is a disputed heat input -- what does not follow "
+        "is that these temperatures are cross-solver validated."
+    )
+
+
+def _cross_solver_checks(
+    system: cp.CoupledElectroThermalSystem,
+    electrical: "ScientificResult",
+    run: "cp.CoupledRun",
+    provider: str | None,
+) -> tuple[ValidationCheck, ...]:
+    """The second route, run and compared, when the caller asked for one.
+
+    ``dc_consensus`` has existed since the cross-solver milestone and nothing
+    ran it: it declares both routes, their shared components and the tolerance,
+    and ``CrossSolverConsensus.to_check`` emits the check. What was missing was
+    a caller able to ask for it. This is that seam.
+
+    Three outcomes, and the empty tuple is one of them:
+
+    * **not asked** -- no check. Nothing about the report changes.
+    * **asked, provider unreachable** -- ``NOT_RUN``, which makes the report
+      INSUFFICIENT_EVIDENCE. That is right: the caller asked for evidence and
+      it was not produced, and this is exactly the case the audit standard's
+      *"an unavailable reference must be NOT_RUN, never a pass"* covers.
+    * **asked and reached** -- the consensus's own check, with its residual,
+      its tolerance and its independence argument, and with the level withheld
+      for the reason :func:`_withheld_level_reason` gives.
+    """
+    if provider is None:
+        return ()
+
+    # Imported here rather than at module scope. The adapter shells out to an
+    # external program and this boundary must not acquire that dependency for
+    # every caller who never asks for a second route.
+    from ..domains.electrical import dc_consensus as dc_con
+    from ..domains.electrical import ngspice as dc_ng
+
+    circuit = system.circuit_at(cp.converged_resistances(system, run))
+    # Each route's identity comes off the solver object, never off a result.
+    # ``dc_consensus`` says why in its own docstring: a ``ProvenanceRecord``
+    # keeps only ``(solver_id, version)`` and drops the backend, and the
+    # backend is what names the external route's arithmetic. Rebuilding an
+    # identity from the pair would declare a solve under a name that did not
+    # produce it -- which is the one thing a consensus record must not do.
+    external_solver = dc_ng.NgspiceDCSolver()
+    try:
+        external = dc_ng.solve_circuit_with_ngspice(
+            circuit,
+            run_id=f"{run.provenance.run_id}-cross",
+            solver=external_solver,
+        )
+    except dc_ng.NgspiceProviderError as failure:
+        return (
+            ValidationCheck(
+                name=CROSS_SOLVER_CHECK_NAME,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(
+                    f"a second route through {provider!r} was requested and "
+                    f"could not be reached: {failure}. No comparison was made, "
+                    f"and an unavailable reference is NOT_RUN rather than a "
+                    f"pass."
+                ),
+            ),
+        )
+
+    consensus = dc_con.dc_consensus(
+        native=electrical,
+        native_solver=dc_solver.ElectricalDCSolver().identity,
+        external=external,
+        external_solver=external_solver.identity,
+    )
+    return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)
+
+
+def _withhold_level(check: ValidationCheck) -> ValidationCheck:
+    """The same check, with ``establishes`` removed and the reason appended.
+
+    Rebuilt rather than mutated -- ``ValidationCheck`` is frozen, which is what
+    makes a level in a stored record something nobody edited after the fact.
+    Every other field is carried through unchanged, so the residual, the
+    tolerance and the consensus's own account of why the routes are independent
+    all reach the reader intact. Only the claim about *these* values is dropped.
+    """
+    return ValidationCheck(
+        name=check.name,
+        outcome=check.outcome,
+        detail=f"{check.detail} {_withheld_level_reason()}",
+        establishes=None,
+        residual=check.residual,
+        tolerance=check.tolerance,
+        evidence=check.evidence,
+    )
+
+
 def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
     identity = _read_section(
         entry, STAGE, extra=("conductor", "body"), label=f"stages[{index}]"
@@ -1146,7 +1439,7 @@ def _build_stage(entry: Mapping[str, Any], index: int) -> cp.CoupledStage:
         component_id=component_id,
         limits=limits,
         **_read_section(
-            conductor_raw, CONDUCTOR, extra=("limits", "ratings"),
+            conductor_raw, CONDUCTOR, extra=("limits", "ratings", "element"),
             label=f"stages[{index}].conductor",
         ),
     )
@@ -1325,6 +1618,85 @@ def _electrical_assessments(
     # the report is a model the report silently claims nothing about.
     assessments[_KCL.model_id] = dc_models.assess_kcl_validity()
     return assessments
+
+
+def _companion_assessments(
+    system: cp.CoupledElectroThermalSystem,
+    electrical: "ScientificResult",
+    run: "cp.CoupledRun",
+    element_problems: Mapping[str, Any],
+    source_problem: Any,
+) -> dict[str, ValidityAssessment]:
+    """Verdicts for the two companion records, when the caller attached them.
+
+    Separate from :func:`_electrical_assessments` because the question is
+    different in kind. That one asks whether each element survived its
+    operating point; these ask whether the *relation* still described it while
+    it comfortably did — and unlike the rating conditions, which live on models
+    the run used and are UNKNOWN when undeclared, a companion record is simply
+    absent from the report unless the caller declared something it reads.
+
+    **The element temperature comes from the thermal side and the dissipation
+    from the electrical side**, which is the whole point of
+    ``element_hot_spot_utilization``: a lumped model assigns the part one
+    temperature and the resistive element sits above it. Neither domain can
+    ask that question alone, and this is the boundary where the two
+    declarations about one physical part are a single object.
+    """
+    assessments: dict[str, ValidityAssessment] = {}
+
+    elements = []
+    for stage, prop_problem, _thermal in cp.stage_problems(system):
+        problem = element_problems.get(stage.component_id)
+        if problem is None or not problem.models:
+            continue
+        # The same read-back ``_material_assessments`` uses: the temperature
+        # the property solve was actually evaluated at, out of its own
+        # provenance, rather than one recomputed here.
+        result = run.final.result_for(prop_problem.problem_id)
+        elements.append(
+            dc_app.assess_self_heated_resistor_validity(
+                problem,
+                body_temperature=result.provenance.inputs[mat.TEMPERATURE],
+                dissipated_power=electrical.value(
+                    RESISTOR_POWER_METRIC.format(
+                        component_id=stage.component_id
+                    )
+                ),
+            )
+        )
+    if elements:
+        assessments[_SELF_HEATED.model_id] = combine_assessments(elements)
+
+    if source_problem is not None and source_problem.models:
+        assessments[_REGULATED_SOURCE.model_id] = (
+            dc_app.assess_regulated_source_validity(
+                source_problem,
+                source_current=electrical.value(
+                    f"{dc_solver.SOURCE_CURRENT_METRIC}:{cp.SOURCE_ID}"
+                ),
+            )
+        )
+    return assessments
+
+
+def _companion_model_versions(
+    element_problems: Mapping[str, Any], source_problem: Any
+) -> tuple[tuple[str, str], ...]:
+    """``(model_id, version)`` for every companion record actually attached.
+
+    Read off the problems rather than asserted, the same rule
+    :func:`_contributing_models` follows. A companion that no caller widened
+    the record for appears in neither the versions map nor the contributing
+    list, so nothing in the report claims it took part.
+    """
+    attached = {
+        (model.model_id, model.version)
+        for problem in (*element_problems.values(), source_problem)
+        if problem is not None
+        for model in problem.models
+    }
+    return tuple(sorted(attached))
 
 
 def _electrical_repairs(
@@ -1719,10 +2091,19 @@ def run_electrothermal_case(
     # Computed once: every one of these is a verdict about the whole coupled
     # composition, which is what the closure of any reported value here is.
     ratings, source_rating = _read_ratings(payload)
+    element_problems, source_problem = _companion_problems(system, payload)
+    cross_checks = _cross_solver_checks(
+        system, electrical, run, _read_cross_solver_check(payload)
+    )
     shared = _electrical_assessments(
         system, electrical, run, ratings, source_rating
     )
     shared.update(_material_assessments(system, run))
+    shared.update(
+        _companion_assessments(
+            system, electrical, run, element_problems, source_problem
+        )
+    )
     shared_repairs = (
         _electrical_repairs(system, electrical, run, ratings, source_rating)
         + _material_repairs(system, run)
@@ -1733,6 +2114,12 @@ def run_electrothermal_case(
         for problem in problems
         for model in problem.models
     }
+    # The companion records are not among ``problems`` -- they are not solved,
+    # they are asked -- so their versions come off the problems that carry
+    # them. A record with no version here would be a validity record the
+    # report could not name.
+    companions = _companion_model_versions(element_problems, source_problem)
+    versions.update(dict(companions))
 
     reports = []
     repairs: list[tuple[ConditionRepair, ...]] = []
@@ -1776,7 +2163,17 @@ def run_electrothermal_case(
                 # record names one of the six models they rest on. The
                 # sub-result's identity stays visible in ``run_id``.
                 provenance=run.provenance,
-                contributing_models=_contributing_models(problems, closure),
+                # The companions are appended rather than discovered by
+                # the closure walk, because they hang off no solved
+                # problem. Without them a validity record would name a
+                # model the report has no account of taking part, which
+                # ``CredibilityEvidenceReport`` refuses outright.
+                contributing_models=tuple(
+                    sorted(
+                        set(_contributing_models(problems, closure))
+                        | set(companions)
+                    )
+                ),
                 coupling=coupling_evidence,
                 validity=tuple(
                     ModelValidityRecord(
@@ -1786,7 +2183,7 @@ def run_electrothermal_case(
                     )
                     for model_id, assessment in sorted(assessments.items())
                 ),
-                validation=_declared_limit_checks(stage),
+                validation=_declared_limit_checks(stage) + cross_checks,
                 declarations=(
                     AssertedContext(
                         source="LumpedApplicabilityDeclaration",
@@ -2326,6 +2723,43 @@ _EXAMPLE_RESISTOR_RATINGS = {
 
 _EXAMPLE_SOURCE_RATINGS = {"maximum_current": "3 ampere"}
 
+_EXAMPLE_RESISTOR_ELEMENT = {
+    # Both from the same Bourns PWR220T-20 record as the ratings above.
+    #
+    # `thermal_resistance_k_per_w` = 6.5 with `thermal_resistance_kind` =
+    # "junction-to-case (Rthj), as printed". That KIND FIELD IS WHY THIS PART
+    # AND NOT ANOTHER: nine resistors in components.json print a thermal
+    # resistance and this is the only one that records which end it refers to.
+    # The other figures are ambient-to-film -- 170 K/W for the SFR16S is
+    # exactly (155 - 70) / 0.5 -- and feeding one of those to a condition that
+    # adds it to a computed BODY temperature would count the body's own rise
+    # twice.
+    "element_to_body_thermal_resistance": "6.5 kelvin/watt",
+    # 155 C, printed twice in the same record and consistently: as the top of
+    # `operating_temperature_range_c` and as `derating.zero_power_c`. The
+    # second reading is what makes it the element's limit rather than the
+    # package's -- the derating line reaches zero permissible dissipation
+    # there, which is the manufacturer saying the element may not be hotter.
+    "permissible_element_temperature": "428.15 kelvin",
+}
+
+#: **No `source_regulation` block, deliberately.**
+#:
+#: `electrical.dc.regulated_voltage_source` needs an `output_resistance`, and
+#: components.json records none for the LMR51430 -- it carries that part's
+#: package thermal data and the 3 A from its document title, and nothing about
+#: its output impedance. Every other number in this example was read from a
+#: datasheet, and one invented to make a condition evaluable would be the
+#: single exception in a payload whose whole point is that it has none.
+#:
+#: So the companion record is not attached and `source_regulation_utilization`
+#: is not raised. That is the attachment rule working rather than a gap: a
+#: caller who has not characterised their supply has not made the narrower
+#: claim, and is not told their design is under-evidenced against a question
+#: they did not ask. `tests/mcp/test_problem.py` exercises the condition on
+#: both sides of its bound with declared numbers.
+
+
 
 def example_electrothermal_payload() -> dict[str, Any]:
     """One complete, runnable payload with every optional field supplied.
@@ -2349,6 +2783,7 @@ def example_electrothermal_payload() -> dict[str, Any]:
                         "debye_temperature": "343 kelvin",
                     },
                     "ratings": dict(_EXAMPLE_RESISTOR_RATINGS),
+                    "element": dict(_EXAMPLE_RESISTOR_ELEMENT),
                 },
                 "body": {
                     "heat_capacity": "2.5 joule/kelvin",

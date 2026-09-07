@@ -5,27 +5,59 @@ is a **rating utilization** — how much of a published limit the operating poin
 consumes. Those are real conditions and they catch a real failure: a part used
 past what it survives. None of them asks the other question, which is whether
 the *relation* still describes the part while it is comfortably inside every
-rating. A resistor at a tenth of its rated dissipation still warms, and the
-resistance the circuit was solved with is not the resistance it then has; a
-supply well inside its current limit still has an output impedance, and the
-terminal voltage the solve imposed is not the terminal voltage it then holds.
+rating. A resistor at a tenth of its rated dissipation still has an element
+hotter than its body, and the rating is written against the element; a supply
+well inside its current limit still has an output impedance, and the terminal
+voltage the solve imposed is not the terminal voltage it then holds.
 
-Three conditions are declared here, over two model records that are the
+Two conditions are declared here, over two model records that are the
 falsifiable companions of two records in ``dc/models.py``. The base models are
 unchanged and stay applicable exactly where they always were: this is the
 ``electrical.material.rated_linear_tcr_resistance`` relationship to
 ``electrical.material.linear_tcr_resistance``, one directory over — a narrower
 claim beside a broader one, so that a caller can hold both answers at once and
-neither can be mistaken for the other.
+neither can be mistaken for the other. Each is attached only when the caller
+declares something it reads, the rule ``build_resistance_problem`` states as
+*"widening the record only when the caller widened the declaration"*.
 
-Why a new module rather than three more conditions on the existing records
---------------------------------------------------------------------------
+REMOVED: self_heating_resistance_drift_ratio
+---------------------------------------------
+This module declared a third condition, ``(|R_op - R_ref| / R_ref) /
+resistance_tolerance <= 1``, on the argument that a self-heating drift larger
+than the element's own tolerance band means the constant resistance the circuit
+was designed with has stopped describing it.
+
+**Wiring it into the electro-thermal boundary falsified it, and it is removed
+rather than weakened.** The measurement: on this repository's own nominal
+example the condition returns **17.85**, violated by a factor of eighteen, on a
+design that is correct. The reason is that the coupled run does not solve the
+circuit at ``R_ref``. It tears the temperature edge, iterates, and at
+convergence the circuit is solved at ``R(T_converged)`` — 11.785 ohm against a
+declared 10 ohm — so the drift this condition measures is exactly the effect
+the composition **models**. Reporting a modelled effect as an unmodelled one is
+a category error: a ``ValidityDomain`` condition says whether the model applies,
+and here it applies.
+
+Nor is there another regime that rescues it. Where the temperature is known the
+condition is violated by construction; where it is not known — a standalone DC
+solve, which carries no temperature at all — ``operating_resistance`` is
+unavailable and the condition is UNKNOWN. There is no operating point at which
+it says something true and useful about applicability.
+
+What it was reaching for is real and is not lost: it is a statement about
+*design intent* — a divider specified around a 10 ohm part is running an 11.79
+ohm part — and that belongs somewhere a design review reads, not in a model's
+validity domain. ``Damkoehler <= 10`` was removed rather than raised for the
+same kind of reason, and this follows it.
+
+Why a new module rather than more conditions on the existing records
+---------------------------------------------------------------------
 ``src/engcore/domains/electrical/dc/`` is frozen by file name, and new material
 belongs beside it. ``dc_consensus.py`` and ``dc_realizations.py`` already sit
 here for the same reason.
 
-NO NEW NUMERIC CONSTANT IS INTRODUCED BY ANY OF THE THREE
-----------------------------------------------------------
+NO NEW NUMERIC CONSTANT IS INTRODUCED BY EITHER
+------------------------------------------------
 Every bound below is **1, and definitional**: each quantity is constructed as
 the fraction of a *declared* budget in use, so 1 is the budget and not a
 threshold anybody chose. That is deliberate and it is the strongest form
@@ -39,7 +71,7 @@ judgement to whoever declares it. A caller who declares a regulation band of
 0.9 is told their source is inside it, and this module cannot tell them that
 0.9 is an absurd band. What it can do, and does, is refuse to answer at all
 until they say what the band is. UNKNOWN is the verdict for a part nobody
-characterised, and none of these three has a default.
+characterised, and neither of these has a default.
 
 What was examined and rejected
 -------------------------------
@@ -84,7 +116,7 @@ candidate worth keeping, and it is ``element_hot_spot_utilization`` below.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from ..derived_context import (
     DomainValidityContext,
@@ -93,7 +125,8 @@ from ..derived_context import (
     caller_declared,
 )
 from ...scientific.errors import InvalidScientificProblem
-from ...scientific.ir.problem import ScientificProblem
+from ...scientific.ir.problem import ModelReference, ScientificProblem
+from ...scientific.ir.variables import ScientificParameter
 from ...scientific.models.definition import (
     InputSourceKind,
     ModelInputSpec,
@@ -119,17 +152,12 @@ __all__ = [
     "ELEMENT_HOT_SPOT_UTILIZATION",
     "ELEMENT_TEMPERATURE_LIMIT",
     "ELEMENT_TO_BODY_THERMAL_RESISTANCE",
-    "OPERATING_RESISTANCE",
     "OUTPUT_RESISTANCE",
     "PERMISSIBLE_ELEMENT_TEMPERATURE",
-    "REFERENCE_RESISTANCE",
     "REGULATED_VOLTAGE_SOURCE_MODEL",
     "REGULATION_BAND",
     "REGULATION_BUDGET_LIMIT",
-    "RESISTANCE_TOLERANCE",
-    "RESISTANCE_TOLERANCE_BUDGET_LIMIT",
     "SELF_HEATED_RESISTOR_MODEL",
-    "SELF_HEATING_RESISTANCE_DRIFT_RATIO",
     "SOURCE_CURRENT",
     "SOURCE_REGULATION_UTILIZATION",
     "SOURCE_VOLTAGE",
@@ -137,9 +165,10 @@ __all__ = [
     "assess_self_heated_resistor_validity",
     "build_dc_applicability_registry",
     "element_hot_spot_utilization",
+    "regulated_source_problem",
     "regulated_source_validity_context",
+    "self_heated_resistor_problem",
     "self_heated_resistor_validity_context",
-    "self_heating_resistance_drift_ratio",
     "source_regulation_utilization",
 ]
 
@@ -156,7 +185,6 @@ DIMENSIONLESS = "dimensionless"
 
 # --- names of the values a solve produces ------------------------------------
 SOURCE_CURRENT = "source_current"
-OPERATING_RESISTANCE = "operating_resistance"
 BODY_TEMPERATURE = "body_temperature"
 DISSIPATED_POWER = "dissipated_power"
 
@@ -164,14 +192,11 @@ DISSIPATED_POWER = "dissipated_power"
 SOURCE_VOLTAGE = "source_voltage"
 OUTPUT_RESISTANCE = "output_resistance"
 REGULATION_BAND = "regulation_band"
-REFERENCE_RESISTANCE = "reference_resistance"
-RESISTANCE_TOLERANCE = "resistance_tolerance"
 ELEMENT_TO_BODY_THERMAL_RESISTANCE = "element_to_body_thermal_resistance"
 PERMISSIBLE_ELEMENT_TEMPERATURE = "permissible_element_temperature"
 
 # --- names of the derived groups the conditions are stated over --------------
 SOURCE_REGULATION_UTILIZATION = "source_regulation_utilization"
-SELF_HEATING_RESISTANCE_DRIFT_RATIO = "self_heating_resistance_drift_ratio"
 ELEMENT_HOT_SPOT_UTILIZATION = "element_hot_spot_utilization"
 
 #: **Definitional, not a threshold.** The quantity it bounds is the fraction of
@@ -183,10 +208,6 @@ ELEMENT_HOT_SPOT_UTILIZATION = "element_hot_spot_utilization"
 #: belongs in the declared band, where it is visible, rather than in this
 #: constant.
 REGULATION_BUDGET_LIMIT = Quantity(1.0, DIMENSIONLESS)
-
-#: **Definitional.** The fraction of the element's own declared resistance
-#: tolerance that self-heating has already consumed. 1 is that tolerance.
-RESISTANCE_TOLERANCE_BUDGET_LIMIT = Quantity(1.0, DIMENSIONLESS)
 
 #: **Definitional.** The computed element temperature as a fraction of the
 #: temperature the element is declared to permit, both on an absolute scale.
@@ -345,25 +366,6 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
     ),
     inputs=(
         ModelInputSpec(
-            name=REFERENCE_RESISTANCE,
-            source_kind=InputSourceKind.PARAMETER,
-            unit_exemplar=RESISTANCE_UNIT,
-            description=(
-                "The resistance the element is specified at, at its own "
-                "reference temperature."
-            ),
-        ),
-        ModelInputSpec(
-            name=OPERATING_RESISTANCE,
-            source_kind=InputSourceKind.VARIABLE,
-            unit_exemplar=RESISTANCE_UNIT,
-            description=(
-                "The resistance the element actually has at the operating "
-                "point. A VARIABLE: in a coupled run it is what the material "
-                "model computed at the converged body temperature."
-            ),
-        ),
-        ModelInputSpec(
             name=BODY_TEMPERATURE,
             source_kind=InputSourceKind.VARIABLE,
             unit_exemplar=TEMPERATURE_UNIT,
@@ -377,17 +379,6 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
             source_kind=InputSourceKind.VARIABLE,
             unit_exemplar=POWER_UNIT,
             description="Power absorbed by the element at the operating point.",
-        ),
-        ModelInputSpec(
-            name=RESISTANCE_TOLERANCE,
-            source_kind=InputSourceKind.PARAMETER,
-            unit_exemplar=DIMENSIONLESS,
-            required=False,
-            description=(
-                "The element's own resistance tolerance as a fraction — 0.01 "
-                "for a +/-1 % part. A datasheet number. Unlocks "
-                f"{SELF_HEATING_RESISTANCE_DRIFT_RATIO}."
-            ),
         ),
         ModelInputSpec(
             name=ELEMENT_TO_BODY_THERMAL_RESISTANCE,
@@ -449,48 +440,6 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
     validity=ValidityDomain(
         conditions=(
             RangeCondition(
-                name=SELF_HEATING_RESISTANCE_DRIFT_RATIO,
-                maximum=RESISTANCE_TOLERANCE_BUDGET_LIMIT,
-                description=(
-                    "(|R_operating - R_reference| / R_reference) / "
-                    "resistance_tolerance <= 1. THE ASSUMPTION BEING CHECKED "
-                    "IS 'temperature-independent resistance', which "
-                    "electrical.dc.resistor_ohm declares and which a coupled "
-                    "electro-thermal run falsifies directly: the material "
-                    "model computes R at the converged body temperature, and "
-                    "the circuit was solved with a resistance taken somewhere "
-                    "else. THE ARGUMENT FOR COMPARING AGAINST THE PART'S OWN "
-                    "TOLERANCE, stated as this repository's reasoning and not "
-                    "as a printed criterion: a resistance is only known to "
-                    "+/- its tolerance in the first place, so a thermal drift "
-                    "smaller than that band is smaller than the uncertainty "
-                    "the design already carries on that parameter and that "
-                    "every sample of the part already spans. Above it the "
-                    "element has moved further than its own specification "
-                    "allows a sample to differ, and the constant the circuit "
-                    "was designed with has stopped describing it. IEC 60115-1 "
-                    "(Fixed resistors for use in electronic equipment, Part 1: "
-                    "Generic specification), Clause 2 specifies resistance "
-                    "tolerance as a characteristic of a fixed resistor; the "
-                    "comparison drawn against it here is this repository's. "
-                    "The bound of 1 is DEFINITIONAL, being the fraction of the "
-                    "declared band consumed, and no constant is introduced. "
-                    "DISTINCT FROM linearization_excursion_ratio in "
-                    "electrical.material.rated_linear_tcr_resistance, which "
-                    "asks whether one alpha still fits the material over this "
-                    "temperature swing -- a question about the R(T) curve. "
-                    "This asks whether treating R as a constant at all is "
-                    "still defensible, and a material can be perfectly linear "
-                    "over a swing that moves its resistance far outside the "
-                    "element's tolerance. A CONSERVATIVE SCREEN: above the "
-                    "band the circuit is not shown to be wrong, only "
-                    "unvalidated by this reading, since a design may well "
-                    "tolerate more drift than it tolerates sample spread. "
-                    "UNKNOWN unless a resistance_tolerance is declared and "
-                    "both resistances are supplied."
-                ),
-            ),
-            RangeCondition(
                 name=ELEMENT_HOT_SPOT_UTILIZATION,
                 maximum=ELEMENT_TEMPERATURE_LIMIT,
                 description=(
@@ -526,9 +475,7 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
             "its own permissible temperature, at the operating point a coupled "
             "run actually reached."
         ),
-        derived_quantities=frozenset(
-            {SELF_HEATING_RESISTANCE_DRIFT_RATIO, ELEMENT_HOT_SPOT_UTILIZATION}
-        ),
+        derived_quantities=frozenset({ELEMENT_HOT_SPOT_UTILIZATION}),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -619,31 +566,6 @@ def source_regulation_utilization(
     magnitude = _positive(abs(voltage), f"|{SOURCE_VOLTAGE}|")
     return Quantity(
         (abs(current) * resistance / magnitude) / band, DIMENSIONLESS
-    )
-
-
-def self_heating_resistance_drift_ratio(
-    *,
-    operating_resistance: Quantity | None = None,
-    reference_resistance: Quantity | None = None,
-    resistance_tolerance: Quantity | None = None,
-) -> Quantity | None:
-    """``(|R_op - R_ref| / R_ref) / tolerance``, or ``None``."""
-    operating = _magnitude(
-        operating_resistance, RESISTANCE_UNIT, OPERATING_RESISTANCE
-    )
-    reference = _positive(
-        _magnitude(reference_resistance, RESISTANCE_UNIT, REFERENCE_RESISTANCE),
-        REFERENCE_RESISTANCE,
-    )
-    tolerance = _positive(
-        _magnitude(resistance_tolerance, DIMENSIONLESS, RESISTANCE_TOLERANCE),
-        RESISTANCE_TOLERANCE,
-    )
-    if operating is None or reference is None or tolerance is None:
-        return None
-    return Quantity(
-        (abs(operating - reference) / reference) / tolerance, DIMENSIONLESS
     )
 
 
@@ -740,7 +662,6 @@ def assess_regulated_source_validity(
 def self_heated_resistor_validity_context(
     problem: ScientificProblem,
     *,
-    operating_resistance: Quantity | None = None,
     body_temperature: Quantity | None = None,
     dissipated_power: Quantity | None = None,
 ) -> DomainValidityContext:
@@ -757,13 +678,6 @@ def self_heated_resistor_validity_context(
         ASSEMBLER_NAMESPACE,
     )
     derived: dict[str, Quantity | None] = {
-        SELF_HEATING_RESISTANCE_DRIFT_RATIO: (
-            self_heating_resistance_drift_ratio(
-                operating_resistance=operating_resistance,
-                reference_resistance=declared.get(REFERENCE_RESISTANCE),
-                resistance_tolerance=declared.get(RESISTANCE_TOLERANCE),
-            )
-        ),
         ELEMENT_HOT_SPOT_UTILIZATION: element_hot_spot_utilization(
             body_temperature=body_temperature,
             dissipated_power=dissipated_power,
@@ -787,7 +701,6 @@ def self_heated_resistor_validity_context(
 def assess_self_heated_resistor_validity(
     problem: ScientificProblem,
     *,
-    operating_resistance: Quantity | None = None,
     body_temperature: Quantity | None = None,
     dissipated_power: Quantity | None = None,
 ) -> ValidityAssessment:
@@ -800,7 +713,6 @@ def assess_self_heated_resistor_validity(
     """
     return self_heated_resistor_validity_context(
         problem,
-        operating_resistance=operating_resistance,
         body_temperature=body_temperature,
         dissipated_power=dissipated_power,
     ).assess(SELF_HEATED_RESISTOR_MODEL)
@@ -814,3 +726,117 @@ def build_dc_applicability_registry() -> ModelRegistry:
     registry, so a caller's model set can never be mutated elsewhere.
     """
     return ModelRegistry(APPLICABILITY_MODELS)
+
+
+# =====================================================================
+# The problems these records are assessed against
+# =====================================================================
+#
+# Both follow `material.build_resistance_problem` exactly, including its rule:
+# a problem carries the companion `ModelReference` **only** when the caller
+# declared something the companion reads. Widening the record only when the
+# caller widened the declaration is what keeps the narrow claim and the broad
+# one independently reportable — and it is why a caller who never characterised
+# their element is not told their design is under-evidenced against a question
+# they did not ask. What omission does *not* do is satisfy a condition: a
+# companion that is attached and half-declared leaves its condition UNKNOWN,
+# exactly as every rating condition does.
+
+
+def _parameters(declared: Mapping[str, Any]) -> tuple[ScientificParameter, ...]:
+    """The supplied declarations as typed parameters, in a fixed order.
+
+    Absent entries are dropped rather than carried as ``None``: a parameter
+    with no value is a declaration nobody made, and the assessment must see
+    its absence rather than a null.
+
+    A bare float becomes a dimensionless ``Quantity``, for the reason
+    ``dc_models.rating_declarations`` does the same to ``derating_factor``: a
+    payload carries a band as a plain number because it is a fraction rather
+    than a measurement, and a condition comparing it against a bound needs the
+    two to share a dimension.
+    """
+    return tuple(
+        ScientificParameter(
+            name=name,
+            value=(
+                Quantity(float(value), DIMENSIONLESS)
+                if isinstance(value, (int, float)) and not isinstance(value, bool)
+                else value
+            ),
+        )
+        for name, value in sorted(declared.items())
+        if value is not None
+    )
+
+
+def self_heated_resistor_problem(
+    component_id: str, declared: Mapping[str, Any]
+) -> ScientificProblem:
+    """One element's companion problem.
+
+    ``declared`` carries whatever of :data:`ELEMENT_TO_BODY_THERMAL_RESISTANCE`
+    and :data:`PERMISSIBLE_ELEMENT_TEMPERATURE` the caller supplied. Supplying
+    neither produces a problem with no companion model reference, which is how
+    a caller who did not ask this question is not answered it.
+    """
+    parameters = _parameters(declared)
+    return ScientificProblem(
+        problem_id=f"electrical_dc_self_heated_resistor:{component_id}",
+        name=f"Element applicability of resistor {component_id!r}",
+        description=(
+            "Whether the constant-resistance element relation still describes "
+            "this part at the temperature the run put its element at."
+        ),
+        parameters=parameters,
+        models=(
+            (
+                ModelReference(
+                    SELF_HEATED_RESISTOR_MODEL.model_id,
+                    SELF_HEATED_RESISTOR_MODEL.version,
+                ),
+            )
+            if parameters
+            else ()
+        ),
+        required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
+    )
+
+
+def regulated_source_problem(
+    component_id: str, declared: Mapping[str, Any]
+) -> ScientificProblem:
+    """One source's companion problem.
+
+    ``declared`` carries :data:`SOURCE_VOLTAGE` — which the source always has —
+    plus whatever of :data:`OUTPUT_RESISTANCE` and :data:`REGULATION_BAND` the
+    caller supplied. The model reference is attached only when at least one of
+    those two is present, so a source voltage on its own does not widen the
+    record: the imposed voltage is what the *ideal* model already asserts, and
+    the narrower claim needs something the caller said about the real supply.
+    """
+    parameters = _parameters(declared)
+    widened = any(
+        declared.get(name) is not None
+        for name in (OUTPUT_RESISTANCE, REGULATION_BAND)
+    )
+    return ScientificProblem(
+        problem_id=f"electrical_dc_regulated_source:{component_id}",
+        name=f"Regulation applicability of source {component_id!r}",
+        description=(
+            "Whether the imposed terminal voltage is still the terminal "
+            "voltage once the source's own internal drop is accounted for."
+        ),
+        parameters=parameters,
+        models=(
+            (
+                ModelReference(
+                    REGULATED_VOLTAGE_SOURCE_MODEL.model_id,
+                    REGULATED_VOLTAGE_SOURCE_MODEL.version,
+                ),
+            )
+            if widened
+            else ()
+        ),
+        required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
+    )

@@ -34,6 +34,7 @@ pytest.importorskip("mcp.types",
 import mcp.types as mcp_types  # noqa: E402
 from mcp import Client  # noqa: E402
 
+from src.engcore.domains.electrical import dc_applicability as dc_app  # noqa: E402
 from src.engcore.domains.electrical import material as mat  # noqa: E402
 from src.engcore.domains.electrical.dc import models as dc_models  # noqa: E402
 from src.engcore.domains.thermal_models import lumped as lump  # noqa: E402
@@ -56,6 +57,10 @@ from src.engcore.scientific.models.definition import (  # noqa: E402
     ValidityStatus,
 )
 
+#: Every model this boundary can bind, including the two companion records.
+#: The companions are *attachable* rather than always attached: they appear in
+#: a report only when the caller declared something they read, which is what
+#: `ATTACHED_MODELS` below is for.
 MODELS = (
     lump.LUMPED_CAPACITY_MODEL,
     mat.LINEAR_TCR_MODEL,
@@ -63,6 +68,18 @@ MODELS = (
     dc_models.IDEAL_VOLTAGE_SOURCE_MODEL,
     dc_models.RESISTOR_OHM_MODEL,
     dc_models.KCL_MODEL,
+    dc_app.SELF_HEATED_RESISTOR_MODEL,
+    dc_app.REGULATED_VOLTAGE_SOURCE_MODEL,
+)
+
+#: What the shipped example actually attaches. It declares the `element` block
+#: and so raises `electrical.dc.self_heated_resistor`; it declares no
+#: `source_regulation`, because this repository's component data carries no
+#: output impedance for the part the example's supply names, so
+#: `electrical.dc.regulated_voltage_source` stays off the report.
+ATTACHED_MODELS = tuple(
+    m for m in MODELS
+    if m.model_id != dc_app.REGULATED_VOLTAGE_SOURCE_MODEL.model_id
 )
 
 
@@ -395,7 +412,7 @@ def test_a_report_carries_validity_validation_provenance_and_the_claim():
     assert report["schema"] == "mcp_evidence_package/1"
 
     assert {r["model_id"] for r in report["validity"]} == {
-        m.model_id for m in MODELS
+        m.model_id for m in ATTACHED_MODELS
     }
     for record in report["validity"]:
         assert set(record["assessment"]) >= {
