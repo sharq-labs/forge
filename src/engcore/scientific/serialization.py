@@ -79,6 +79,64 @@ def encode(value: Any) -> Any:
     )
 
 
+#: Types a scientific record may hold in a free-form field. Not a style
+#: preference: this is the set that survives being written down and read back
+#: as the same value.
+_WRITABLE_LEAVES = (bool, int, float, str)
+
+
+def unwritable(value: Any, *, path: str = "") -> tuple[str, str] | None:
+    """Where a value stops being recordable, and what stopped it.
+
+    Returns ``(path, type name)`` for the first thing inside ``value`` that no
+    scientific record can carry, or ``None`` if the whole structure can be
+    written down. The path is a subscript expression -- ``['numerics']['a']``
+    -- so an error can point at the offending leaf rather than at the field
+    containing it.
+
+    THE BOUNDARY, and why it is not simply "whatever ``json.dumps`` accepts".
+    Two narrowings, both deliberate and both in the direction of a record that
+    reads back as what was stored:
+
+    * **non-finite floats are refused**, though ``json.dumps`` emits them
+      happily as the bare tokens ``NaN`` and ``Infinity``, which no conforming
+      JSON reader accepts. A record that serializes to something unreadable is
+      a record whose provenance does not exist, which is the same failure as
+      one that cannot serialize at all -- only later and quieter. ``Quantity``
+      already refuses non-finite magnitudes for this reason; this is that rule
+      reaching the free-form fields.
+    * **non-string mapping keys are refused**, though ``json.dumps`` silently
+      coerces ``1`` and ``"1"`` to the same key -- so a record holding both
+      loses one on the way out, and a record holding either reads back with a
+      key of a different type than it was given.
+
+    Everything else follows JSON: mappings, sequences, strings, numbers,
+    booleans and null. A ``tuple`` is admitted and comes back as a list, which
+    is JSON's nature rather than this function's opinion.
+    """
+    if value is None or isinstance(value, _WRITABLE_LEAVES):
+        if isinstance(value, float) and value != value:
+            return (path, "float('nan')")
+        if isinstance(value, float) and value in (float("inf"), float("-inf")):
+            return (path, "float('inf')")
+        return None
+    if isinstance(value, Mapping):
+        for key in value:
+            if not isinstance(key, str):
+                return (f"{path}[{key!r}]", f"{type(key).__name__} key")
+            found = unwritable(value[key], path=f"{path}[{key!r}]")
+            if found is not None:
+                return found
+        return None
+    if isinstance(value, (list, tuple)):
+        for index, item in enumerate(value):
+            found = unwritable(item, path=f"{path}[{index}]")
+            if found is not None:
+                return found
+        return None
+    return (path, type(value).__name__)
+
+
 def to_json(record: Any, *, indent: int | None = None) -> str:
     """Deterministic JSON for any record exposing ``to_dict()``."""
     payload = record.to_dict() if hasattr(record, "to_dict") else encode(record)

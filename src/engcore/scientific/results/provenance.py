@@ -18,7 +18,12 @@ from typing import Any, Mapping
 from ..errors import ScientificCoreError
 from ..ir.problem import ModelReference
 from ..realizations.definition import RealizationReference
-from ..serialization import require_schema, require_schema_any, schema_string
+from ..serialization import (
+    require_schema,
+    require_schema_any,
+    schema_string,
+    unwritable,
+)
 from ..solvers.protocol import SolverIdentity
 from .immutable import detach, freeze
 from ..units.quantity import Quantity
@@ -331,6 +336,17 @@ class ProvenanceRecord:
             "environment",
             freeze({str(k): str(v) for k, v in self.environment.items()}),
         )
+        # The same refusal the result makes, for the same reason and in the
+        # same words: provenance that cannot be written down is the sharpest
+        # form of provenance that does not exist.
+        unrecordable = unwritable(self.metadata, path="metadata")
+        if unrecordable is not None:
+            where, kind = unrecordable
+            raise ScientificCoreError(
+                f"provenance for run {str(self.run_id).strip()!r} cannot be "
+                f"recorded: {where} is a {kind}, which no scientific record "
+                f"can carry"
+            )
         object.__setattr__(self, "metadata", freeze(self.metadata))
 
     # ---- derived views over the canonical bindings ----------------------

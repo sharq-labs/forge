@@ -96,7 +96,7 @@ from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
 from ..models.definition import ValidityAssessment, ValidityStatus
-from ..serialization import require_schema_any, schema_string
+from ..serialization import require_schema_any, schema_string, unwritable
 from ..solvers.protocol import ConvergenceState, SolverIdentity
 from ..units.quantity import Quantity
 from ..units.validation import check_unit_map
@@ -274,6 +274,22 @@ class ScientificResult:
         object.__setattr__(self, "assumptions", tuple(self.assumptions))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
+        # Refused HERE, not at `to_dict`. A result holding a value that
+        # cannot be written down is a result whose provenance does not exist:
+        # it is in memory, it looks like every other result, and the only
+        # thing that will ever say otherwise is a TypeError from json,
+        # somewhere else, later, in whatever was trying to record it. The one
+        # free-form field is checked before it is frozen, so the error names
+        # the type the caller passed rather than the frozen form of it.
+        unrecordable = unwritable(self.metadata, path="metadata")
+        if unrecordable is not None:
+            where, kind = unrecordable
+            raise ScientificCoreError(
+                f"result {str(self.result_id).strip()!r} cannot be recorded: "
+                f"{where} is a {kind}, which no scientific record can carry. A "
+                f"result that exists in memory and cannot be written down is a "
+                f"result whose provenance does not exist"
+            )
         object.__setattr__(self, "metadata", freeze(self.metadata))
 
         references = tuple(self.data_references)

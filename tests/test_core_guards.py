@@ -2096,3 +2096,174 @@ def test_every_report_in_the_repository_still_builds():
 
     assert unverified_report("nothing ran").attained_levels == frozenset()
     assert ValidationReport(checks=(_earned_check(),)).claims(_cross_solver())
+
+
+# =====================================================================
+# GUARD 10 — a record that cannot be written down cannot be built
+# =====================================================================
+#
+# A result holding an unserializable value used to construct happily and die
+# later, inside whatever was trying to record it, with a TypeError from `json`
+# that named neither the result nor the field. A result that exists in memory
+# and cannot be recorded is a result whose provenance does not exist.
+#
+# The second half of this guard is the one worth having. Four places in this
+# repository refuse over the same value space — the result, its provenance, an
+# asserted context, and the digest helper in design memory. Two refusals over
+# one value space that do not agree is a worse defect than either alone: a
+# payload one accepts and another rejects is a record that can be built here
+# and not there, for reasons neither side stated. So they share one rule, and
+# the agreement is asserted rather than assumed.
+
+#: ``(label, value, is recordable)``. The last column is the claim; every
+#: refusing site below must agree with it, and `json.dumps` must agree too.
+_WRITABILITY_TABLE = (
+    ("plain nested containers", {"a": {"b": [1, 2.5, "x", True, None]}}, True),
+    ("a tuple", {"t": (1, 2)}, True),
+    ("an empty mapping", {}, True),
+    ("a bare object", {"o": object()}, False),
+    ("bytes", {"b": b"\x00"}, False),
+    ("a set", {"s": {1, 2}}, False),
+    ("a function", {"f": (lambda: 1)}, False),
+    ("an object nested three deep", {"a": {"b": [{"c": object()}]}}, False),
+    ("a NaN", {"n": float("nan")}, False),
+    ("an infinity", {"i": float("inf")}, False),
+    ("a non-string key", {1: "a"}, False),
+)
+
+
+def _provenance_for(metadata=None):
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+
+    return ProvenanceRecord(
+        run_id="guard10",
+        software_version="test",
+        git_commit="0" * 40,
+        models=(),
+        solvers=(),
+        inputs={},
+        metadata=metadata or {},
+    )
+
+
+@pytest.mark.parametrize(
+    "label,value,recordable",
+    _WRITABILITY_TABLE,
+    ids=[row[0] for row in _WRITABILITY_TABLE],
+)
+def test_a_result_refuses_at_construction_what_it_could_not_record(
+    label, value, recordable
+):
+    """Refused where it is introduced, naming the field and the type."""
+    import json
+
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.results.result import ScientificResult
+
+    def build():
+        return ScientificResult(
+            result_id="guard10",
+            values={"v": Quantity(1.0, "volt")},
+            provenance=_provenance_for(),
+            metadata=value,
+        )
+
+    if recordable:
+        # and the promise the refusal exists to keep: what was accepted can
+        # actually be written down.
+        json.dumps(build().to_dict(), sort_keys=True, allow_nan=False)
+        return
+
+    with pytest.raises(ScientificCoreError) as refusal:
+        build()
+    message = str(refusal.value)
+    assert "metadata" in message, message
+    assert "cannot be recorded" in message, message
+
+
+@pytest.mark.parametrize(
+    "label,value,recordable",
+    _WRITABILITY_TABLE,
+    ids=[row[0] for row in _WRITABILITY_TABLE],
+)
+def test_every_refusal_over_this_value_space_gives_the_same_answer(
+    label, value, recordable
+):
+    """The agreement, asserted rather than assumed.
+
+    Four sites and `json` itself, on one table. A row on which any two of them
+    disagreed would be a value a record could hold in one place and not in
+    another — which is how a value space ends up with a hole shaped like
+    whichever site was consulted last.
+    """
+    import json
+
+    from src.engcore.design.memory import _canonical_bytes
+    from src.engcore.mcp.errors import CredibilityEvidenceError
+    from src.engcore.mcp.evidence import AssertedContext
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.results.result import ScientificResult
+
+    def accepted(fn, expected_error):
+        try:
+            fn()
+        except expected_error:
+            return False
+        return True
+
+    verdicts = {
+        "ScientificResult.metadata": accepted(
+            lambda: ScientificResult(
+                result_id="g",
+                values={"v": Quantity(1.0, "volt")},
+                provenance=_provenance_for(),
+                metadata=value,
+            ),
+            ScientificCoreError,
+        ),
+        "ProvenanceRecord.metadata": accepted(
+            lambda: _provenance_for(value), ScientificCoreError
+        ),
+        "AssertedContext.payload": accepted(
+            lambda: AssertedContext(
+                source="guard10", description="d", payload=value
+            ),
+            CredibilityEvidenceError,
+        ),
+        "design memory _canonical_bytes": accepted(
+            lambda: _canonical_bytes(value), ScientificCoreError
+        ),
+    }
+    assert set(verdicts.values()) == {recordable}, verdicts
+
+    # And `json` itself, on the same row. The one deliberate divergence is
+    # named rather than hidden: `json.dumps` accepts a non-string key and
+    # silently coerces it, so `1` and `"1"` become one key and a record holding
+    # both loses one on the way out. These refuse it. Everything else agrees
+    # exactly, including the non-finite floats `json.dumps` will emit as bare
+    # `NaN` and `Infinity` tokens that no conforming reader accepts.
+    try:
+        json.dumps(value, sort_keys=True, allow_nan=False)
+        json_accepts = True
+    except (TypeError, ValueError):
+        json_accepts = False
+    if label == "a non-string key":
+        assert json_accepts and not recordable
+    else:
+        assert json_accepts is recordable, label
+
+
+def test_the_refusal_points_at_the_leaf_and_not_at_the_field():
+    """A path, so a caller knows which of forty metadata keys to look at."""
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.results.result import ScientificResult
+
+    with pytest.raises(ScientificCoreError) as refusal:
+        ScientificResult(
+            result_id="guard10",
+            values={"v": Quantity(1.0, "volt")},
+            provenance=_provenance_for(),
+            metadata={"fine": 1, "numerics": {"history": [0, object()]}},
+        )
+    assert "metadata['numerics']['history'][1]" in str(refusal.value)
+    assert "object" in str(refusal.value)

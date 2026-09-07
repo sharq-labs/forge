@@ -16,7 +16,7 @@ from typing import Any, Callable, Mapping, Sequence
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.ir.objectives import ObjectiveDefinition, ObjectiveDirection
 from ..scientific.ir.values import ScientificValue, decode_value, encode_value
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import require_schema, schema_string, unwritable
 from ..scientific.units.quantity import Quantity
 from .candidate import DesignCandidate, DesignCandidateReference
 from .evaluation import (
@@ -63,6 +63,23 @@ REASON_ORDER = (
 
 
 def _canonical_bytes(payload: Any) -> bytes:
+    """The bytes a digest is taken over, and a refusal in the same words.
+
+    This used to let `json.dumps` raise a bare `TypeError` from inside a hash
+    call. That is a refusal, but it is a refusal in a different vocabulary
+    from the one the records use for the same question -- and a value space
+    with two refusals that word themselves differently is one where nobody can
+    tell whether they also *decide* differently. So the rule is the core's,
+    the reading is the same, and only the sentence belongs to this module.
+    """
+    unrecordable = unwritable(payload, path="payload")
+    if unrecordable is not None:
+        where, kind = unrecordable
+        raise InvalidScientificProblem(
+            f"cannot take a canonical digest: {where} is a {kind}, which no "
+            f"scientific record can carry, so there are no canonical bytes to "
+            f"hash and any digest taken here would be over something else"
+        )
     return json.dumps(
         payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")

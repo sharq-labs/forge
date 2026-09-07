@@ -146,7 +146,11 @@ from ..scientific.results.validation import (
     ValidationOutcome,
     ValidationReport,
 )
-from ..scientific.serialization import require_schema, schema_string
+from ..scientific.serialization import (
+    require_schema,
+    schema_string,
+    unwritable,
+)
 from ..scientific.units.quantity import Quantity
 from .errors import CredibilityEvidenceError
 
@@ -883,18 +887,23 @@ class AssertedContext:
         # object would serialize to something a reader could not compare
         # against the declaration it came from, which defeats the purpose.
         #
-        # Checked on the **detached** form, because that is the form a reader
-        # receives from `to_dict`. The frozen containers this record stores
-        # internally are not JSON types and checking those would refuse every
-        # nested payload for the wrong reason.
-        try:
-            json.dumps(detach(payload), sort_keys=True)
-        except (TypeError, ValueError) as exc:
+        # Through the core's own rule, not through a second `json.dumps`
+        # probe of its own. This record and `ScientificResult` refuse over the
+        # same value space, and two refusals over one value space that do not
+        # agree is a worse defect than either alone: a payload one accepted and
+        # the other rejected would be a record that could be built here and not
+        # there, for reasons neither side stated. `unwritable` is the rule;
+        # this is the wording this record gives it, and the path it returns
+        # points at the offending leaf rather than at the payload containing it.
+        unrecordable = unwritable(payload, path="payload")
+        if unrecordable is not None:
+            where, kind = unrecordable
             raise CredibilityEvidenceError(
-                f"asserted context {source!r} payload is not JSON-serializable "
-                f"({exc}); pass the declaration's own to_dict() output so the "
-                f"claim survives the record it is stored in"
-            ) from exc
+                f"asserted context {source!r} cannot be recorded: {where} is a "
+                f"{kind}, which no scientific record can carry. Pass the "
+                f"declaration's own to_dict() output so the claim survives the "
+                f"record it is stored in"
+            )
         embedded = _embedded_core_schemas(payload)
         if embedded:
             raise CredibilityEvidenceError(
