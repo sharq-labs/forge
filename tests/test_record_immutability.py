@@ -62,6 +62,7 @@ def result(prov=None):
         result_id="immutability",
         values={"final_temperature": Quantity(338.577018, K)},
         models=(("m.a", "1"),),
+        validity_not_assessed={"m.a": "a synthetic fixture: nothing asked whether the model applied"},
         provenance=prov or provenance(),
         metadata={"nested": {"deep": 1}, "tags": ["a", "b"]},
     )

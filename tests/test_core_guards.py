@@ -1701,3 +1701,188 @@ def test_the_fingerprint_detects_what_the_refusal_cannot_prevent():
     refused("a wholly new unit", "smoot", copy.deepcopy(store["meter"]))
 
     verify_registry_unmutated()
+
+
+# =====================================================================
+# GUARD 9 — a result cannot be silent about a model it declares
+# =====================================================================
+#
+# `validity` was populated on one path of five. The four that returned `{}` are
+# not four oversights: the core made the field optional, so four domains took
+# the permission and a fifth would have taken it too. This guard is over the
+# permission rather than over the four, and it is written the way the rest of
+# this file is written — over what the repository contains, so the sixth domain
+# is covered on the day it lands.
+
+def _every_result_producing_module():
+    """Modules that construct a `ScientificResult`, found by reading the tree."""
+    root = pathlib.Path(engcore.__file__).resolve().parent
+    found = []
+    for path in sorted(root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "ScientificResult"
+            ):
+                found.append((path, node))
+    return found
+
+
+def test_the_result_construction_discovery_found_the_repository():
+    """A guard over an empty set passes and proves nothing."""
+    assert len(_every_result_producing_module()) >= 10
+
+
+def test_every_result_construction_in_the_repository_states_a_position():
+    """Read off the source, not off the paths that happen to be exercised.
+
+    A construction site reached by no test would still be a domain the core let
+    stay silent, so this asks the source: every `ScientificResult(...)` that
+    passes `models=` must also pass one of the two fields that answers for
+    them — or be a module some package answers for.
+    """
+    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+
+    # By full module path, never by file name. The first version of this line
+    # compared `path.stem`, and both the frozen thermal solver and the CSTR
+    # solver are called `solver.py` -- so it excused every `solver.py` in the
+    # repository, and the mutation that made the CSTR discard its assessment
+    # again walked straight past it. A guard that matches on a leaf name is a
+    # guard over a coincidence.
+    root = pathlib.Path(engcore.__file__).resolve().parent
+    declared_for = {
+        name.removeprefix("src.").removeprefix("engcore.")
+        for name in SCIENTIFIC_UNASSESSED_DECLARATIONS
+    }
+    silent = []
+    for path, node in _every_result_producing_module():
+        module = str(path.relative_to(root).with_suffix("")).replace("/", ".")
+        keywords = {k.arg for k in node.keywords}
+        if "models" not in keywords:
+            continue
+        if keywords & {"validity", "validity_not_assessed"}:
+            continue
+        if module in declared_for:
+            continue
+        silent.append(f"{module}:{node.lineno}")
+    assert silent == [], silent
+
+
+def test_a_result_that_declares_a_model_and_says_nothing_is_refused():
+    """The permission, gone. Made to fail here, on purpose, once."""
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from src.engcore.scientific.results.result import ScientificResult
+
+    provenance = ProvenanceRecord(
+        run_id="guard9",
+        software_version="test",
+        git_commit="0" * 40,
+        models=(("guard9.model", "1.0"),),
+        solvers=(),
+        inputs={},
+    )
+    payload = dict(
+        result_id="guard9",
+        values={"x": Quantity(1.0, "volt")},
+        models=(("guard9.model", "1.0"),),
+        provenance=provenance,
+    )
+    with pytest.raises(ScientificCoreError) as refusal:
+        ScientificResult(**payload)
+    assert "guard9.model" in str(refusal.value)
+
+    # and both ways out actually work
+    stated = ScientificResult(
+        **payload, validity_not_assessed={"guard9.model": "nobody asked"}
+    )
+    assert stated.non_assessment_reason("guard9.model") == "nobody asked"
+    assert not stated.is_assessed("guard9.model")
+
+
+def test_the_only_package_level_exemptions_are_files_a_freeze_actually_pins():
+    """The exemption is read off the pins, not off somebody's memory.
+
+    A package may state a position for a module that cannot state its own. The
+    only reason a module cannot is that its bytes are pinned — so every entry
+    is checked against the frozen experiment configs, and an entry for an
+    unpinned module fails here. That is what stops the mechanism from becoming
+    a way to be excused from answering.
+    """
+    import re
+
+    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+
+    repo = pathlib.Path(engcore.__file__).resolve().parents[2]
+    pinned: set[str] = set()
+    for config in sorted((repo / "experiments").glob("*/*_config.py")):
+        for match in re.finditer(
+            r'"((?:src|tests|benchmarks)/[^"]+\.py)"\s*:',
+            config.read_text(encoding="utf-8"),
+        ):
+            pinned.add(match.group(1))
+    assert pinned, "no frozen experiment pins were found; this test is vacuous"
+
+    assert SCIENTIFIC_UNASSESSED_DECLARATIONS, "an empty mapping proves nothing"
+    for module, reason in SCIENTIFIC_UNASSESSED_DECLARATIONS.items():
+        relative = (
+            "src/" + module.removeprefix("src.").replace(".", "/") + ".py"
+        )
+        assert relative in pinned, (
+            f"{module} is declared unassessable by its package but its source "
+            f"is not pinned by any frozen experiment, so it could simply state "
+            f"its own position"
+        )
+        assert reason.strip(), module
+
+
+def test_the_frozen_module_s_results_carry_the_stated_reason():
+    """Wiring is the test: the declaration has to reach a real result.
+
+    A mapping nothing reads is a mapping that proves nothing, and this one is
+    consulted on a path no ordinary construction takes. So a result is produced
+    by the frozen module itself and asked what it says.
+    """
+    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+    from src.engcore.domains.thermal.conduction1d.problem import (
+        ConductionSlab,
+        DIFFUSION_MODEL,
+        SlabDiscretization,
+    )
+    from src.engcore.domains.thermal.conduction1d.solver import solve_slab
+
+    slab = ConductionSlab(
+        slab_id="guard9-frozen",
+        length=Quantity(1.0, "meter"),
+        diffusivity=Quantity(1e-4, "meter**2/second"),
+        end_time=Quantity(10.0, "second"),
+        discretization=SlabDiscretization(16, 20),
+    )
+    result = solve_slab(slab, run_id="guard9-frozen")
+
+    assert result.unassessed_models == (DIFFUSION_MODEL.model_id,)
+    reason = result.non_assessment_reason(DIFFUSION_MODEL.model_id)
+    assert reason == SCIENTIFIC_UNASSESSED_DECLARATIONS[
+        "src.engcore.domains.thermal.conduction1d.solver"
+    ]
+    assert "thermal_t1" in reason
+
+
+def test_the_universal_core_names_no_module_it_exempts():
+    """The layering rule, applied to this milestone's own mechanism.
+
+    The first version of this exemption put the frozen module's dotted name in
+    `results/result.py` and `test_x2` caught it: the universal core had learned
+    a domain's name. The core knows the attribute name and nothing else, and
+    that stays true.
+    """
+    from src.engcore.scientific.results import result as result_module
+    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+
+    source = pathlib.Path(result_module.__file__).read_text(encoding="utf-8")
+    for module in SCIENTIFIC_UNASSESSED_DECLARATIONS:
+        leaf = module.rsplit(".", 1)[0].rsplit(".", 1)[-1]
+        assert module not in source
+        assert leaf not in source, leaf

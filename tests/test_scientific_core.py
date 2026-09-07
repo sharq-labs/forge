@@ -979,6 +979,11 @@ def _result(**overrides) -> ScientificResult:
         problem_id="synthetic_algebraic_v0",
         values={"load": Quantity(2.5, "watt"), "response": Quantity(0.1, "ampere")},
         models=(("synthetic.linear_response", "1.0.0"),),
+        validity_not_assessed={
+            "synthetic.linear_response": (
+                "a synthetic fixture: nothing asked whether the model applied"
+            )
+        },
         solver=SolverIdentity("algebraic", "1.0.0"),
         convergence=ConvergenceState.NOT_APPLICABLE,
         validation=ValidationReport(

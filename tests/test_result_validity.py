@@ -36,6 +36,8 @@ from src.engcore.scientific import (
     ValidityStatus,
 )
 from src.engcore.scientific.results.result import (
+    LEGACY_NON_ASSESSMENT,
+    RESULT_SCHEMA_V3,
     RESULT_SCHEMA,
     RESULT_SCHEMA_V1,
     RESULT_SCHEMA_V2,
@@ -90,6 +92,18 @@ def result(**overrides) -> ScientificResult:
         provenance=provenance(),
     )
     payload.update(overrides)
+    # The fixture states the position for whatever the caller did not assess,
+    # so a test about one assessment does not have to restate the other. The
+    # requirement that SOMEBODY state it is the subject of its own tests below
+    # -- this default is the fixture being a well-behaved caller, not the core
+    # being lenient.
+    if "validity_not_assessed" not in overrides:
+        assessed = set(payload.get("validity") or {})
+        payload["validity_not_assessed"] = {
+            model_id: "fixture: this test did not ask about this model"
+            for model_id, _version in payload["models"]
+            if model_id not in assessed
+        }
     return ScientificResult(**payload)
 
 
@@ -98,11 +112,91 @@ def result(**overrides) -> ScientificResult:
 # =====================================================================
 
 def test_a_result_built_without_validity_carries_none_and_says_so():
-    """Optional and empty by default, so no existing construction site moved."""
+    """Nothing assessed, and the record says so in words rather than by absence."""
     plain = result()
     assert plain.validity == {}
     assert plain.unassessed_models == (MATERIAL, THERMAL)
     assert not plain.is_assessed(THERMAL)
+    assert plain.non_assessment_reason(THERMAL)
+    assert set(plain.validity_not_assessed) == {THERMAL, MATERIAL}
+
+
+# =====================================================================
+# The permission that is gone: silence about a declared model
+# =====================================================================
+
+def test_a_result_that_says_nothing_about_a_declared_model_is_refused():
+    """The core mechanism of this milestone, in one assertion.
+
+    Four domains returned an empty mapping. They did not each independently
+    forget; they took a permission the core handed out, and a fifth would have
+    taken it too. The permission is gone: silence is not constructible, and the
+    error names the models and both ways to end it.
+    """
+    with pytest.raises(ScientificCoreError) as refusal:
+        ScientificResult(
+            result_id="res-0001",
+            values={"final_temperature": Quantity(338.577, "kelvin")},
+            models=((THERMAL, "1.0.0"), (MATERIAL, "1.0.0")),
+            provenance=provenance(),
+        )
+    message = str(refusal.value)
+    assert THERMAL in message and MATERIAL in message
+    assert "validity_not_assessed" in message
+
+
+def test_a_declaration_of_non_assessment_must_say_why():
+    """An empty reason is the silence the field exists to replace."""
+    for blank in ("", "   "):
+        with pytest.raises(ScientificCoreError, match="no reason"):
+            result(validity_not_assessed={THERMAL: blank, MATERIAL: "why"})
+
+
+def test_a_model_cannot_be_both_assessed_and_declared_unassessed():
+    """Two different answers to one question; a result gives one."""
+    with pytest.raises(ScientificCoreError, match="both assessed"):
+        result(
+            validity={THERMAL: IN_DOMAIN},
+            validity_not_assessed={THERMAL: "and also not asked", MATERIAL: "x"},
+        )
+
+
+def test_a_declaration_about_a_model_that_did_not_take_part_is_refused():
+    """The rule `validity` already held, held on the other mapping too."""
+    with pytest.raises(ScientificCoreError, match="not among the models"):
+        result(
+            validity_not_assessed={
+                THERMAL: "x", MATERIAL: "y", "unrelated.model": "z"
+            }
+        )
+
+
+def test_asking_an_assessed_model_for_its_reason_is_an_error():
+    """The two positions stay impossible to confuse from either direction.
+
+    A caller that got a verdict and asks why there is none is confused, and
+    gets told so rather than handed an empty string that reads like "no reason
+    given".
+    """
+    assessed = result(validity={THERMAL: IN_DOMAIN})
+    with pytest.raises(ScientificCoreError, match="WAS assessed"):
+        assessed.non_assessment_reason(THERMAL)
+    with pytest.raises(ScientificCoreError, match="does not declare"):
+        assessed.non_assessment_reason("never.heard.of.it")
+    assert assessed.non_assessment_reason(MATERIAL)
+
+
+def test_the_two_positions_round_trip_and_stay_apart():
+    original = result(validity={THERMAL: IN_DOMAIN})
+    restored = ScientificResult.from_dict(
+        json.loads(json.dumps(original.to_dict(), sort_keys=True))
+    )
+    assert restored.is_assessed(THERMAL)
+    assert not restored.is_assessed(MATERIAL)
+    assert restored.non_assessment_reason(MATERIAL) == (
+        original.non_assessment_reason(MATERIAL)
+    )
+    assert restored.to_dict() == original.to_dict()
 
 
 def test_a_result_with_no_models_and_no_validity_is_still_constructible():
@@ -247,10 +341,11 @@ def test_a_blank_model_id_is_refused():
 # =====================================================================
 
 def test_the_schema_moved_and_the_accept_set_grew_rather_than_shifting():
-    assert RESULT_SCHEMA == "scientific_result/3"
+    assert RESULT_SCHEMA == "scientific_result/4"
     assert SUPPORTED_RESULT_SCHEMAS == (
         RESULT_SCHEMA_V1,
         RESULT_SCHEMA_V2,
+        RESULT_SCHEMA_V3,
         RESULT_SCHEMA,
     )
 
@@ -277,18 +372,27 @@ def test_an_unknown_assessment_survives_the_round_trip_as_unknown():
     assert restored.validity_of(THERMAL).unknown == ("body_conductivity",)
 
 
-@pytest.mark.parametrize("version", ["scientific_result/1", "scientific_result/2"])
+@pytest.mark.parametrize(
+    "version",
+    ["scientific_result/1", "scientific_result/2", "scientific_result/3"],
+)
 def test_a_payload_written_before_this_field_loads_as_not_assessed(version):
-    """Which is the truth about it: those writers could not carry one."""
+    """Which is the truth about it: those writers could not carry one.
+
+    And the reason it loads with says exactly that, rather than a reason
+    invented on the writer's behalf or a silence the constructor would refuse.
+    """
     payload = json.loads(json.dumps(result().to_dict(), sort_keys=True))
     payload["schema"] = version
     payload.pop("validity")
+    payload.pop("validity_not_assessed")
     if version == "scientific_result/1":
         payload.pop("data_references")
 
     restored = ScientificResult.from_dict(payload)
     assert restored.validity == {}
     assert restored.unassessed_models == (MATERIAL, THERMAL)
+    assert restored.non_assessment_reason(THERMAL) == LEGACY_NON_ASSESSMENT
     # re-serializing upgrades it; the writer emits one version only
     assert restored.to_dict()["schema"] == RESULT_SCHEMA
 
@@ -300,13 +404,18 @@ def test_an_older_payload_carrying_the_key_is_not_read_as_if_it_had_written_it()
     payload["schema"] = "scientific_result/2"
     assert payload["validity"], "the payload must actually carry one"
 
-    assert ScientificResult.from_dict(payload).validity == {}
+    older = ScientificResult.from_dict(payload)
+    assert older.validity == {}
+    assert older.non_assessment_reason(THERMAL) == LEGACY_NON_ASSESSMENT
 
 
 def test_an_explicit_null_loads_as_not_assessed_and_not_as_an_error():
     """One representation of "nobody asked", reachable from either encoding."""
     payload = json.loads(json.dumps(result().to_dict(), sort_keys=True))
     payload["validity"] = None
+    payload["validity_not_assessed"] = {
+        THERMAL: "explicit", MATERIAL: "explicit"
+    }
     assert ScientificResult.from_dict(payload).validity == {}
 
 

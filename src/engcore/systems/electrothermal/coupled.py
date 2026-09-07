@@ -1493,6 +1493,22 @@ def _property_result(
         problem_id=problem.problem_id,
         values=metrics,
         models=((model.model_id, model.version),),
+        # Stated, not silent. This element solve holds the temperature it was
+        # handed and the coefficient it was given; the model's applicability
+        # conditions are about the declared temperature span and the element's
+        # ratings, which live in the applicability declaration the caller
+        # holds. That caller's verdict is merged into the evidence report, and
+        # two verdicts for one model is an error there rather than a
+        # precedence rule -- so this path states why it has none.
+        validity_not_assessed={
+            model.model_id: (
+                "not assessed by this element solve: the conditions are about "
+                "the declared validity span and the element's ratings, which "
+                "this solve does not hold. The assessment is made by the "
+                "applicability layer that holds the declaration, and reaches "
+                "the reader through the evidence report"
+            )
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=solver.validate(prepared, raw),
@@ -1543,6 +1559,22 @@ def _thermal_result(
         problem_id=problem.problem_id,
         values=metrics,
         models=((model.model_id, model.version),),
+        # Stated, not silent. This element solve holds the temperature it was
+        # handed and the coefficient it was given; the model's applicability
+        # conditions are about the declared temperature span and the element's
+        # ratings, which live in the applicability declaration the caller
+        # holds. That caller's verdict is merged into the evidence report, and
+        # two verdicts for one model is an error there rather than a
+        # precedence rule -- so this path states why it has none.
+        validity_not_assessed={
+            model.model_id: (
+                "not assessed by this element solve: the conditions are about "
+                "the declared validity span and the element's ratings, which "
+                "this solve does not hold. The assessment is made by the "
+                "applicability layer that holds the declaration, and reaches "
+                "the reader through the evidence report"
+            )
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=solver.validate(prepared, raw),

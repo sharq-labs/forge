@@ -465,6 +465,18 @@ def _property_result(
         problem_id=problem.problem_id,
         values=metrics,
         models=((model.model_id, model.version),),
+        # See `coupled.py`: the applicability question about this model is
+        # asked where the declaration lives, not here, and this path says so
+        # rather than leaving an empty mapping to be read as either.
+        validity_not_assessed={
+            model.model_id: (
+                "not assessed by this element solve: the conditions are about "
+                "the declared validity span and the element's ratings, which "
+                "this solve does not hold. The assessment is made by the "
+                "applicability layer that holds the declaration, and reaches "
+                "the reader through the evidence report"
+            )
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=solver.validate(prepared, raw),
@@ -517,6 +529,18 @@ def _thermal_result(
         problem_id=problem.problem_id,
         values=metrics,
         models=((model.model_id, model.version),),
+        # See `coupled.py`: the applicability question about this model is
+        # asked where the declaration lives, not here, and this path says so
+        # rather than leaving an empty mapping to be read as either.
+        validity_not_assessed={
+            model.model_id: (
+                "not assessed by this element solve: the conditions are about "
+                "the declared validity span and the element's ratings, which "
+                "this solve does not hold. The assessment is made by the "
+                "applicability layer that holds the declaration, and reaches "
+                "the reader through the evidence report"
+            )
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=solver.validate(prepared, raw),

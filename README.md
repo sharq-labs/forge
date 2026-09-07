@@ -21,8 +21,9 @@ Every result a domain produces is a `ScientificResult` that carries:
 | `provenance` | which model, which realization, which solver, which version, which settings |
 | `validation` | which checks ran, which passed, and which evidentiary level they establish (`dimensionally_valid` → `numerically_converged` → `analytically_verified` → `benchmark_validated` → `cross_solver_validated` → `experimentally_validated`) |
 | model `validity` | whether the inputs sit inside the model's declared validity domain: `in_domain`, `outside_validated_domain`, or `unknown` |
+| model `validity_not_assessed` | for a declared model nobody asked about: **why not**, in words. A result cannot be constructed that declares a model and says neither |
 
-Two rules make this honest: a validation level is *derived* from a passing check that declares it, never asserted; and a model with no declared validity conditions is `unknown`, not valid.
+Three rules make this honest: a validation level is *derived* from a passing check that declares it, never asserted; a model with no declared validity conditions is `unknown`, not valid; and a model that went unassessed is *said* to have gone unassessed, with a reason, rather than being left to be inferred from an empty field. The third one is a rule of the core rather than a convention of the domains — a result that is silent about a model it declares raises at construction, so a domain cannot omit the answer and a reader never has to guess whether an empty mapping means "nobody asked" or "asked and found nothing".
 
 The verification and validation (V&V) layer in `src/engcore/mcp/` collects those judgements into a **credibility evidence report** — credibility in the sense ASME V&V 10/20/40 and NASA-STD-7009 use the word — and derives one advisory verdict from them. It is input to an engineer of record, not a decision, and the project claims no certification or standards conformance. See [docs/mcp/README.md](docs/mcp/README.md).
 

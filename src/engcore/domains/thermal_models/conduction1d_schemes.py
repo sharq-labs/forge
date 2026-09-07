@@ -875,6 +875,15 @@ def solve_with_realization(
         problem_id=problem.problem_id,
         values=metrics,
         models=((DIFFUSION_MODEL.model_id, DIFFUSION_MODEL.version),),
+        # A real assessment, not a declaration of absence. This model's
+        # validity domain declares one condition, `alpha`, and the slab this
+        # solve ran on carries the diffusivity it needs -- so the question can
+        # be answered here and is.
+        validity={
+            DIFFUSION_MODEL.model_id: DIFFUSION_MODEL.validity.assess(
+                {"alpha": slab.diffusivity}
+            )
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=report,

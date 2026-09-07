@@ -143,6 +143,21 @@ def derive_constant_rate_source_result(source: ScientificResult) -> ScientificRe
         result_id=derived_id,
         problem_id=f"{source.problem_id}:constant-rate-model",
         models=(_CONSTANT_MODEL_KEY,),
+        # `replace` re-runs the constructor, and the model has changed: the
+        # source's verdict is about the Arrhenius model that executed, not
+        # about the constant-rate approximation this record now names. Both
+        # validity fields are therefore rewritten rather than inherited --
+        # carrying either across would attach a verdict to a model that never
+        # took part.
+        validity={},
+        validity_not_assessed={
+            _CONSTANT_MODEL_KEY[0]: (
+                "not assessed: this record re-labels an admitted E=0 execution "
+                "as the constant-rate approximation. The numerical evidence is "
+                "inherited; the source's applicability verdict is not, because "
+                "it was reached about the Arrhenius model that ran"
+            )
+        },
         assumptions=CONSTANT_RATE_CSTR_MODEL.assumptions,
         provenance=provenance,
         metadata={

@@ -22,13 +22,24 @@ covers several models and a single field would collapse them: a run whose
 thermal model is in domain and whose material model is not has two answers, and
 reporting one would be reporting the wrong one half the time.
 
-NOT ASSESSED IS NOT UNKNOWN
-----------------------------
-The empty mapping means **nobody asked**. ``ValidityStatus.UNKNOWN`` means
-somebody asked and the context could not settle it. They call for different
-work — go and make the assessment, versus go and gather the input the
-assessment needed — so the record makes them structurally impossible to
-confuse rather than merely documenting the difference:
+NOT ASSESSED IS NOT UNKNOWN, AND SILENCE IS NEITHER
+----------------------------------------------------
+Three positions, not two. ``ValidityStatus.UNKNOWN`` means somebody asked and
+the context could not settle it. **Not assessed** means nobody asked — and it
+is now something a result *says*, in :attr:`ScientificResult.validity_not_assessed`,
+with a reason, rather than something a reader infers from a field being empty.
+The third position, silence, no longer exists: a result that declares a model
+and neither assesses it nor declares why it did not **cannot be constructed**.
+
+That is the whole of this milestone's change, and it is aimed at the core
+rather than at the domains. ``validity`` was populated on one path of five.
+The four that returned ``{}`` did not each make the same oversight; they took
+the permission the core handed them, and a fifth domain would have taken it
+too. So the permission is gone: coverage of every declared model is checked at
+construction, and the error names the models and both ways to satisfy it.
+
+Assessed-and-empty and not-assessed remain impossible to confuse, and now a
+reader can tell which it is looking at without knowing which domain wrote it:
 
 * there is no representation of "present but unassessed". A ``None`` value in
   the mapping is refused at construction, so a model is either a key with a
@@ -38,8 +49,39 @@ confuse rather than merely documenting the difference:
   ``UNKNOWN``; a caller that wants a total function must ask
   :meth:`is_assessed` first, which is the point at which the difference
   becomes visible.
-* :attr:`ScientificResult.unassessed_models` enumerates the declared models
-  that carry no assessment, so the gap is countable rather than implicit.
+* a model that was not assessed is a key in ``validity_not_assessed`` whose
+  value is the *stated reason*, and
+  :meth:`ScientificResult.non_assessment_reason` returns it. The same model id
+  cannot appear on both mappings: assessed and not assessed at once is not a
+  position.
+* :attr:`ScientificResult.unassessed_models` enumerates them, so the gap stays
+  countable — and is now equal to the declaration by construction rather than
+  by inference.
+
+WHEN THE MODULE THAT BUILDS THE RESULT CANNOT BE EDITED
+-------------------------------------------------------
+A frozen module is a real case: this repository SHA-256 pins the source of a
+reproduced experiment, so a module inside one cannot be given a new argument
+without breaking the pin that makes "it was not edited afterwards" a checkable
+claim. Such a module can neither state a position nor be exempted from having
+one, and it still declares models.
+
+So a **package** may state the position on behalf of a module it contains, by
+defining a mapping under the name in :data:`UNASSESSED_DECLARATIONS_ATTRIBUTE`
+at package scope. The core walks the constructing module's package chain,
+takes the first such mapping that names it, and records the reason it finds.
+
+This module knows the *name* of that attribute and nothing else. Which modules
+need it, and why, is the declaring package's business and is stated in the
+declaring package's own words — the universal core names no domain, which is
+the layering rule ``test_x2`` enforces over this whole subtree.
+
+It is not an opt-out. A package-level declaration is as visible, as
+attributable and as reason-bearing as a per-result one; the only thing it
+changes is who says it. And ``tests/test_core_guards.py`` refuses any entry in
+any such mapping whose module is not SHA-256 pinned by a frozen experiment
+config — so the exemption is read off the pins rather than remembered, and it
+expires the day the freeze does.
 
 Nothing in this module ever writes an ``UNKNOWN`` of its own. The only
 statuses a result carries are ones some model's ``ValidityDomain.assess``
@@ -48,6 +90,7 @@ actually produced.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -70,7 +113,14 @@ from .validation import ValidationLevel, ValidationOutcome, ValidationReport
 #: rely on this*, and would do it most dangerously in the case that matters —
 #: a result whose model is recorded as OUTSIDE_VALIDATED_DOMAIN read as one
 #: about which nothing was said. A version bump makes that reader fail loudly.
-RESULT_SCHEMA = schema_string("scientific_result", 3)
+RESULT_SCHEMA = schema_string("scientific_result", 4)
+
+#: The version before ``validity_not_assessed`` existed. Still read, never
+#: written. Bumped for the same reason /3 was: a /3 payload can say nothing
+#: about *why* a model was not assessed, so a /4 reader loading one has to
+#: supply that reason itself rather than pretend the record carried it, and a
+#: /3 reader handed a /4 payload would silently drop a stated position.
+RESULT_SCHEMA_V3 = schema_string("scientific_result", 3)
 
 #: The version before ``validity`` existed. Still read, never written.
 RESULT_SCHEMA_V2 = schema_string("scientific_result", 2)
@@ -79,7 +129,67 @@ RESULT_SCHEMA_V2 = schema_string("scientific_result", 2)
 RESULT_SCHEMA_V1 = schema_string("scientific_result", 1)
 
 #: Exactly the versions this reader knows how to interpret. Not a range.
-SUPPORTED_RESULT_SCHEMAS = (RESULT_SCHEMA_V1, RESULT_SCHEMA_V2, RESULT_SCHEMA)
+SUPPORTED_RESULT_SCHEMAS = (
+    RESULT_SCHEMA_V1,
+    RESULT_SCHEMA_V2,
+    RESULT_SCHEMA_V3,
+    RESULT_SCHEMA,
+)
+
+#: The reason recorded for a model whose non-assessment the record itself
+#: could not carry, because the payload predates the field.
+LEGACY_NON_ASSESSMENT = (
+    "not assessed: loaded from a scientific_result payload written before a "
+    "result could state why a model went unassessed, so no reason was "
+    "recorded and none is invented here"
+)
+
+#: The package-scope attribute through which a package states the position of
+#: a module it contains that cannot state its own. A mapping from module name
+#: to the reason, in the declaring package's words.
+#:
+#: The core knows this name and nothing more. It never learns which modules
+#: are declared, why, or what domain they belong to -- that is the whole point
+#: of putting the mapping in the package rather than a list here.
+UNASSESSED_DECLARATIONS_ATTRIBUTE = "SCIENTIFIC_UNASSESSED_DECLARATIONS"
+
+
+def _constructing_module() -> str:
+    """The module that is building this result.
+
+    The first frame outside this one is the constructor's caller: the only
+    frames in between are the dataclass ``__init__`` and this record's own
+    ``__post_init__``.
+    """
+    frame = sys._getframe(1)
+    while frame is not None:
+        module = frame.f_globals.get("__name__", "")
+        if module != __name__ and not module.startswith("dataclasses"):
+            return module
+        frame = frame.f_back
+    return ""  # pragma: no cover - a result built with no caller frame
+
+
+def _stated_by_a_package_for(module: str) -> str | None:
+    """A reason some package states on ``module``'s behalf, if one does.
+
+    Walked only on the failure path -- a result that states its own position
+    never reaches here -- so the cost falls on the exemption rather than on
+    every construction. The chain is walked from the nearest package outwards,
+    so the closest declaration wins and a distant package cannot quietly
+    override one made next to the module.
+    """
+    parts = module.split(".")
+    for depth in range(len(parts) - 1, 0, -1):
+        package = sys.modules.get(".".join(parts[:depth]))
+        declarations = getattr(
+            package, UNASSESSED_DECLARATIONS_ATTRIBUTE, None
+        )
+        if isinstance(declarations, Mapping) and module in declarations:
+            reason = str(declarations[module]).strip()
+            if reason:
+                return reason
+    return None
 
 
 @dataclass(frozen=True)
@@ -103,6 +213,13 @@ class ScientificResult:
     #: without holding the operating point an assessment needs constructs
     #: exactly as it did before, and says nothing rather than something false.
     validity: Mapping[str, ValidityAssessment] = field(default_factory=dict)
+    #: One stated reason per declared model that was **not** assessed, keyed by
+    #: model id. This is the field that removed the permission: between it and
+    #: ``validity``, every model a result declares must be accounted for, and a
+    #: result that accounts for neither cannot be constructed. An empty reason
+    #: is refused -- a declaration of non-assessment that does not say why is
+    #: the silence this field exists to replace.
+    validity_not_assessed: Mapping[str, str] = field(default_factory=dict)
     uncertainty: Mapping[str, Uncertainty] = field(default_factory=dict)
     assumptions: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
@@ -184,7 +301,9 @@ class ScientificResult:
             tuple(sorted(references, key=lambda r: r.name)),
         )
 
-        object.__setattr__(self, "validity", freeze(self._checked_validity()))
+        assessed, declined = self._checked_validity()
+        object.__setattr__(self, "validity", freeze(assessed))
+        object.__setattr__(self, "validity_not_assessed", freeze(declined))
 
         uncertainty = dict(self.uncertainty)
         for name, record in uncertainty.items():
@@ -198,8 +317,13 @@ class ScientificResult:
                 )
         object.__setattr__(self, "uncertainty", freeze(uncertainty))
 
-    def _checked_validity(self) -> dict:
-        """Normalise the validity mapping, refusing every way to blur a gap."""
+    def _checked_validity(self) -> tuple[dict, dict]:
+        """Normalise both validity mappings, refusing every way to blur a gap.
+
+        Returns ``(assessed, declined)``. The second is what makes the first
+        honest: between them they must cover every declared model, so there is
+        no longer a way for a result to say nothing about one.
+        """
         declared = {model_id for model_id, _version in self.models}
         assessments = dict(self.validity)
         if assessments and not declared:
@@ -260,7 +384,59 @@ class ScientificResult:
                     unknown=assessment.unknown,
                 )
             )
-        return checked
+
+        declined: dict[str, str] = {}
+        for model_id, reason in dict(self.validity_not_assessed).items():
+            key = str(model_id).strip()
+            if not key:
+                raise ScientificCoreError(
+                    "a declaration of non-assessment must name the model it "
+                    "is about; an unattributed one cannot be acted on"
+                )
+            text = "" if reason is None else str(reason).strip()
+            if not text:
+                raise ScientificCoreError(
+                    f"validity_not_assessed for {key!r} carries no reason. "
+                    f"Declaring that nobody asked is a position, and a "
+                    f"position states why; an empty reason is the silence "
+                    f"this field exists to replace"
+                )
+            if key in checked:
+                raise ScientificCoreError(
+                    f"model {key!r} is both assessed and declared unassessed. "
+                    f"Those are two different answers to one question and a "
+                    f"result cannot give both"
+                )
+            if key not in declared:
+                raise ScientificCoreError(
+                    f"validity_not_assessed names model {key!r}, which is not "
+                    f"among the models this result declares "
+                    f"({sorted(declared)}); a statement about a model that did "
+                    f"not take part is not a statement about this result"
+                )
+            declined[key] = text
+
+        silent = sorted(declared - set(checked) - set(declined))
+        if silent:
+            module = _constructing_module()
+            stated = _stated_by_a_package_for(module)
+            if stated is None:
+                raise ScientificCoreError(
+                    f"result {self.result_id!r} declares model(s) "
+                    f"{silent} and says nothing about whether they applied. "
+                    f"Every declared model must be either assessed (a key in "
+                    f"`validity`) or declared unassessed with a reason (a key "
+                    f"in `validity_not_assessed`). 'Not assessed' is a "
+                    f"position this platform will record; it is not a default "
+                    f"it will assume on a caller's behalf. If {module!r} "
+                    f"cannot be edited to state one, a package containing it "
+                    f"may state it under "
+                    f"{UNASSESSED_DECLARATIONS_ATTRIBUTE}"
+                )
+            for key in silent:
+                declined[key] = stated
+
+        return checked, declined
 
     # ---- accessors ------------------------------------------------------
     def is_assessed(self, model_id: str) -> bool:
@@ -292,9 +468,38 @@ class ScientificResult:
                 f"invented here"
             ) from None
 
+    def non_assessment_reason(self, model_id: str) -> str:
+        """Why this model was not assessed. **Raises when it was.**
+
+        The counterpart to :meth:`validity_of`, and deliberately as partial as
+        it is: asking a model that carries a real assessment for its reason is
+        a caller confusing the two positions, and it gets an error rather than
+        an empty string that would read like "no reason given".
+        """
+        key = str(model_id).strip()
+        try:
+            return self.validity_not_assessed[key]
+        except KeyError:
+            if key in self.validity:
+                raise ScientificCoreError(
+                    f"model {key!r} in result {self.result_id!r} WAS assessed "
+                    f"({self.validity[key].status.value}); it has a verdict, "
+                    f"not a reason for having none. Ask validity_of"
+                ) from None
+            raise ScientificCoreError(
+                f"result {self.result_id!r} does not declare model {key!r} at "
+                f"all, so it has neither an assessment nor a reason for the "
+                f"absence of one"
+            ) from None
+
     @property
     def unassessed_models(self) -> tuple[str, ...]:
         """Declared models carrying no assessment, so the gap is countable.
+
+        Equal to the keys of ``validity_not_assessed`` by construction now,
+        rather than by inference: the constructor refuses a declared model that
+        is on neither mapping, so the difference this once computed can no
+        longer be non-empty for a reason nobody stated.
 
         Empty when every declared model was assessed -- including when the
         result declares no models at all, which is a result that names nothing
@@ -361,6 +566,9 @@ class ScientificResult:
             "validity": {
                 k: v.to_dict() for k, v in sorted(self.validity.items())
             },
+            "validity_not_assessed": dict(
+                sorted(self.validity_not_assessed.items())
+            ),
             "uncertainty": {
                 k: v.to_dict() for k, v in sorted(self.uncertainty.items())
             },
@@ -407,6 +615,12 @@ class ScientificResult:
                 k: ValidityAssessment.from_dict(v)
                 for k, v in (payload.get("validity") or {}).items()
             },
+            # A payload older than /4 cannot carry a reason, and a /4 payload
+            # that declares a model without one was never constructible. So the
+            # gap in an old payload is filled with the truth about it -- the
+            # record predates the field -- rather than with silence, which the
+            # constructor would refuse, or with an invented reason.
+            validity_not_assessed=_declarations_for(payload, version),
             uncertainty={
                 k: Uncertainty.from_dict(v)
                 for k, v in (payload.get("uncertainty") or {}).items()
@@ -433,3 +647,28 @@ class ScientificResult:
             provenance=ProvenanceRecord.from_dict(payload["provenance"]),
             metadata=dict(payload.get("metadata", {})),
         )
+
+
+def _declarations_for(payload: Mapping[str, Any], version: str) -> dict[str, str]:
+    """The non-assessment declarations a payload carries, or the truth if it
+    predates them.
+
+    Kept out of :meth:`ScientificResult.from_dict`'s argument list because it
+    is the one branch that has to look at two other fields at once: which
+    models the payload declares, and which of them its ``validity`` covers.
+    """
+    stated = {
+        str(k): str(v)
+        for k, v in (payload.get("validity_not_assessed") or {}).items()
+    }
+    if version == RESULT_SCHEMA:
+        return stated
+    declared = {str(m[0]) for m in payload.get("models", ())}
+    assessed = set(
+        (payload.get("validity") or {})
+        if version not in (RESULT_SCHEMA_V1, RESULT_SCHEMA_V2)
+        else {}
+    )
+    for model_id in declared - assessed - set(stated):
+        stated[model_id] = LEGACY_NON_ASSESSMENT
+    return stated

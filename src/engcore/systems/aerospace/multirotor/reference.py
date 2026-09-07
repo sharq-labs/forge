@@ -413,6 +413,19 @@ def evaluate_reference_candidate(
         },
         provenance=provenance,
         models=MODEL_IDENTITIES,
+        # MVR0's two models are reference identities: neither is a
+        # `ScientificModelDefinition` and neither declares a validity domain,
+        # so there is no envelope to assess this candidate against. That is a
+        # real gap and it is now recorded as one, on every result, rather than
+        # being indistinguishable from a domain that simply did not bother.
+        validity_not_assessed={
+            model_id: (
+                "not assessed: MVR0 declares this model as a reference "
+                "identity with no ValidityDomain, so there is no envelope to "
+                "assess against. Declaring one is MVR1's work"
+            )
+            for model_id, _version in MODEL_IDENTITIES
+        },
         convergence=ConvergenceState.NOT_APPLICABLE,
         assumptions=MVR0_ASSUMPTIONS,
         warnings=(

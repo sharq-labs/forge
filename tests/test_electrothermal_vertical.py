@@ -1696,7 +1696,7 @@ def test_o3_no_existing_schema_version_moved():
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
     assert PROVENANCE_SCHEMA == "provenance_record/2"
     assert EXECUTION_BINDING_SCHEMA == "execution_binding/1"
-    assert RESULT_SCHEMA == "scientific_result/3"
+    assert RESULT_SCHEMA == "scientific_result/4"
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"
     # and the four new ones are new
     assert cp.TORN_ENDPOINT_SCHEMA == "electrothermal_torn_endpoint/1"

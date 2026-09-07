@@ -897,6 +897,11 @@ def result_carrying(assessments, *, checks=(PASSED,)):
         models=tuple(ONE_MODEL_PROVENANCE.models),
         validation=ValidationReport(checks=tuple(checks)),
         validity=assessments,
+        validity_not_assessed={
+            model_id: "fixture: this test carries no verdict for this model"
+            for model_id, _version in ONE_MODEL_PROVENANCE.models
+            if model_id not in assessments
+        },
     )
 
 
@@ -963,6 +968,12 @@ def test_the_two_sources_merge_when_they_name_different_models():
         models=tuple(PROVENANCE.models),
         validation=ValidationReport(checks=(PASSED,)),
         validity={PROVENANCE.models[0][0]: IN_DOMAIN.assessment},
+        validity_not_assessed={
+            PROVENANCE.models[1][0]: (
+                "fixture: the caller supplies this model's verdict, not the "
+                "result"
+            )
+        },
     )
     other_id, other_version = PROVENANCE.models[1]
     pkg = CredibilityEvidenceReport.from_result(

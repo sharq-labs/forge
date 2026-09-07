@@ -180,6 +180,14 @@ def solve_slab_with_bulk_field(
         problem_id=problem.problem_id,
         values=metrics,
         models=model_identities,
+        # The addressable-field route answers the applicability question the
+        # same way the scheme route does, from the same slab: a result must
+        # not say less about its model because its field went into a data
+        # reference instead of into memory.
+        validity={
+            model.model_id: model.validity.assess({"alpha": slab.diffusivity})
+            for model in CONDUCTION_MODELS
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=report,

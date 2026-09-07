@@ -404,6 +404,25 @@ def solve_circuit(
         problem_id=problem.problem_id,
         values=metrics,
         models=model_identities,
+        # Not assessed, and now said rather than left to be inferred from an
+        # empty mapping. Every condition these models declare is about
+        # something a DC solve does not hold: KCL's lumped electrical length
+        # is the circuit's physical extent, and the source limits are the
+        # elements' ratings. The solve holds element values. The question is
+        # asked in `dc_applicability`, against a declaration that carries
+        # those facts, and its verdict reaches a reader through the evidence
+        # report -- so answering it here would either duplicate that verdict
+        # or contradict it.
+        validity_not_assessed={
+            model_id: (
+                "not assessed by this solve: this model's conditions are "
+                "about the circuit's physical extent and the elements' "
+                "ratings, which a DC solve does not hold. The assessment is "
+                "made in engcore.domains.electrical.dc_applicability, against "
+                "the declaration that carries them"
+            )
+            for model_id, _version in model_identities
+        },
         solver=solver.identity,
         convergence=raw.convergence,
         validation=report,

@@ -158,6 +158,18 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "        if not self.succeeded:\n            return",
      "        return\n        if not self.succeeded:\n            return",
      "RawSolverOutput stops refusing a non-finite value on a succeeded solve"),
+    ("G9a", "src/engcore/scientific/results/result.py",
+     "        silent = sorted(declared - set(checked) - set(declined))",
+     "        silent = []",
+     "a result may again declare a model and say nothing about it"),
+    ("G9b", "src/engcore/scientific/results/result.py",
+     "    parts = module.split(\".\")",
+     "    return \"exempt\"\n    parts = module.split(\".\")",
+     "the package exemption becomes universal (every caller excused)"),
+    ("G9c", "src/engcore/domains/kinetics/cstr/solver.py",
+     "        validity={CSTR_MODEL.model_id: assessment},",
+     "",
+     "the CSTR goes back to computing its assessment and discarding it"),
     ("G8a", "src/engcore/scientific/units/quantity.py",
      "        self.__dict__[\"_crafty_sealed\"] = True",
      "        pass",
@@ -175,7 +187,15 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
 )
 
 TARGET = "tests/test_core_guards.py"
-_COPIED = ("src", "tests", "pyproject.toml")
+#: What the mutated copy needs to be a faithful copy. ``experiments`` is here
+#: because a guard in the target suite reads the frozen experiment configs to
+#: check that every package-level validity exemption names a file a freeze
+#: actually pins. Without it that guard failed in the scratch tree for a reason
+#: having nothing to do with any mutation -- which is a RED result that says
+#: nothing, the same failure this harness exists to catch, one level up in its
+#: own machinery. A mutation is only informative if everything else is
+#: identical.
+_COPIED = ("src", "tests", "experiments", "pyproject.toml")
 
 
 def _code_digest(text: str) -> str:

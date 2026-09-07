@@ -50,6 +50,12 @@ def _source(*, activation_energy_j_per_mol: float = 0.0) -> ScientificResult:
         },
         provenance=provenance,
         models=(PRIMARY_KEY,),
+        validity_not_assessed={
+            PRIMARY_KEY[0]: (
+                "a synthetic source result: this fixture does not run the "
+                "solver that would assess the model"
+            )
+        },
         convergence=ConvergenceState.CONVERGED,
         validation=unverified_report("test source"),
         uncertainty={

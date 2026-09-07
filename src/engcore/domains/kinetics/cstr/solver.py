@@ -826,6 +826,15 @@ def solve_reactor_bundle(
     model_identities = tuple((m.model_id, m.version) for m in CSTR_MODELS)
     assumptions = CSTR_MODEL.assumptions
 
+    # The assessment `prepare` already makes, kept this time. It was computed,
+    # rendered into a note as a bare status word, and dropped -- so the record
+    # said `model validity assessment: outside_validated_domain` in prose that
+    # nothing could read, while the field built to carry that verdict was
+    # empty. Recomputed here rather than smuggled out of `prepare`, because it
+    # is a pure function of the run and this keeps the note and the field
+    # provably the same verdict rather than two that happen to agree.
+    assessment = run.validity_context().assess(CSTR_MODEL)
+
     inputs = {
         "k0": run.chemistry.k0,
         "activation_energy": run.chemistry.activation_energy,
@@ -892,6 +901,7 @@ def solve_reactor_bundle(
         problem_id=problem.problem_id,
         values=metrics,
         models=model_identities,
+        validity={CSTR_MODEL.model_id: assessment},
         solver=solver.identity,
         convergence=raw.convergence,
         validation=report,

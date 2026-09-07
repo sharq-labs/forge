@@ -1092,6 +1092,21 @@ def solve_circuit_with_ngspice(
         problem_id=problem.problem_id,
         values=metrics,
         models=model_identities,
+        # The same position the native route states, in the same words and for
+        # the same reason: substituting the provider changes which program
+        # computed the numbers, never which questions were asked about the
+        # model. A different declaration here would be the provider reaching
+        # into scientific semantics.
+        validity_not_assessed={
+            model_id: (
+                "not assessed by this solve: this model's conditions are "
+                "about the circuit's physical extent and the elements' "
+                "ratings, which a DC solve does not hold. The assessment is "
+                "made in engcore.domains.electrical.dc_applicability, against "
+                "the declaration that carries them"
+            )
+            for model_id, _version in model_identities
+        },
         solver=identity,
         convergence=raw.convergence,
         validation=report,
