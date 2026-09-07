@@ -67,6 +67,7 @@ from .problem import (
     build_electrothermal_system,
     describe_electrothermal_case,
     example_electrothermal_payload,
+    example_over_rating_payload,
     run_electrothermal_case,
 )
 
@@ -100,5 +101,6 @@ __all__ = [
     "derive_verdict",
     "describe_electrothermal_case",
     "example_electrothermal_payload",
+    "example_over_rating_payload",
     "run_electrothermal_case",
 ]

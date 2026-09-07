@@ -36,6 +36,7 @@ from src.engcore.mcp import (
     build_electrothermal_system,
     describe_electrothermal_case,
     example_electrothermal_payload,
+    example_over_rating_payload,
     run_electrothermal_case,
 )
 from src.engcore.mcp import evidence
@@ -1036,18 +1037,35 @@ def test_every_model_in_the_closure_is_named_and_assessed():
     assert report.unassessed_models == ()
 
 
+def unrated_example():
+    """The example payload with its declared ratings stripped back off.
+
+    ``example_electrothermal_payload`` now declares ratings read from real
+    datasheets, so it is no longer the payload that demonstrates what an
+    *undeclared* rating does. The behaviour it used to demonstrate has not
+    changed and is still exactly the point -- an absent rating is UNKNOWN,
+    never unlimited -- so the two tests that were about it now run against
+    this, which is that payload minus the two blocks.
+    """
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["stages"][0]["conductor"].pop("ratings", None)
+    payload.pop("source_ratings", None)
+    return payload
+
+
 def test_the_undeclared_electrical_ratings_are_reported_as_gaps():
     """Nobody declared these limits, so they stay UNKNOWN.
 
-    The example payload declares no ``ratings`` block, and an absent rating is
-    UNKNOWN rather than unlimited. That behaviour is the point and it did not
-    change when the block was added: what changed is that a caller who *can*
-    state the ratings is no longer forced into this verdict by the boundary
-    having nowhere to put them. ``test_declared_ratings_reach_the_report``
-    below is the other half.
+    A payload with no ``ratings`` block leaves every rating condition UNKNOWN,
+    because an absent rating is not an unlimited one. That behaviour is the
+    point and it did not change when the block was added, nor when the example
+    started declaring one: what changed is that a caller who *can* state the
+    ratings is no longer forced into this verdict by the boundary having
+    nowhere to put them. ``test_declared_ratings_reach_the_report`` below is
+    the other half, and the shipped example is now on that side of it.
     """
     report = run_electrothermal_case(
-        example_electrothermal_payload(), run_id="gaps"
+        unrated_example(), run_id="gaps"
     ).reports[0]
     assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
         report.unknown_conditions
@@ -1094,6 +1112,57 @@ def test_declared_ratings_reach_the_report_and_lift_their_conditions():
             assert record.assessment.status is ValidityStatus.IN_DOMAIN
 
 
+def test_the_shipped_example_declares_its_ratings_and_is_supported():
+    """The default example of the product reaches a supported verdict.
+
+    It is what a first-time reader runs, and until its ratings were declared
+    it could not get there: three rating conditions read UNKNOWN on every
+    nominal run and INSUFFICIENT_EVIDENCE was the honest answer to a payload
+    that had not said what its parts survive. No level was added and no rule
+    was relaxed to move it -- the evidence is the declaration, and the three
+    utilizations below are the numbers that declaration produces.
+    """
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="shipped"
+    ).reports[0]
+
+    assert report.unknown_conditions == ()
+    assert report.violated_conditions == ()
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+    # Comfortably inside every rating, not marginally so.
+    for model_id, condition in (
+        (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION),
+        (RESISTOR, dc_models.WORKING_VOLTAGE_UTILIZATION),
+        (SOURCE, dc_models.SOURCE_CURRENT_UTILIZATION),
+    ):
+        record = next(r for r in report.validity if r.model_id == model_id)
+        assert condition in record.assessment.satisfied
+
+
+def test_the_over_rating_example_violates_exactly_one_rating():
+    """The second exported example, and the one bound it is known to cross.
+
+    Same circuit, same element, same body: only the supply part differs, so a
+    reader can see that a violation is a finding about a *specification* and
+    not about the solve. Exactly one condition is violated, and nothing else in
+    the report moves off IN_DOMAIN.
+    """
+    report = run_electrothermal_case(
+        example_over_rating_payload(), run_id="over-rating"
+    ).reports[0]
+
+    assert report.violated_conditions == (
+        (SOURCE, dc_models.SOURCE_CURRENT_UTILIZATION),
+    )
+    assert report.unknown_conditions == ()
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+    outside = [
+        r.model_id for r in report.validity
+        if r.assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    ]
+    assert outside == [SOURCE]
+
+
 def test_an_exceeded_rating_is_a_violation_rather_than_a_gap():
     """A rating that binds is a finding about the design, not a missing field."""
     report = run_electrothermal_case(
@@ -1113,7 +1182,7 @@ def test_omitting_the_ratings_block_is_not_an_error_and_stays_unknown():
     move it onto IN_DOMAIN. An unrated part is not an unlimited part.
     """
     report = run_electrothermal_case(
-        example_electrothermal_payload(), run_id="bare"
+        unrated_example(), run_id="bare"
     ).reports[0]
     assert (RESISTOR, dc_models.DISSIPATED_POWER_UTILIZATION) in (
         report.unknown_conditions

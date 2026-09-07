@@ -108,6 +108,7 @@ __all__ = [
     "build_electrothermal_system",
     "describe_electrothermal_case",
     "example_electrothermal_payload",
+    "example_over_rating_payload",
     "run_electrothermal_case",
     "audit_bindings",
 ]
@@ -2250,6 +2251,82 @@ def describe_electrothermal_case() -> CaseDescription:
     )
 
 
+# =====================================================================
+# The ratings the example declares, and the parts they were read from
+# =====================================================================
+#
+# EVERY NUMBER BELOW IS FROM A REAL DATASHEET, recorded in
+# `benchmarks/ai_designs/components.json` under the provenance rule that file
+# states: "A number without a manufacturer, a part number and a document
+# reference does not appear in this file." Nothing here is a plausible-looking
+# figure written to make the example pass. That file exists because the first
+# language-model summary of one of these datasheets returned 0.6 W / 500 V /
+# 170 C against a document printing 0.4 W / 250 V / 155 C, and the values below
+# were taken from its extracted-text entries rather than from a summary.
+#
+# THE RESISTOR: Bourns PWR220T-20, a TO-220 thick-film power resistor.
+# components.json id `bourns-pwr220t-20`;
+# https://www.bourns.com/docs/product-datasheets/pwr220t-20.pdf
+#
+#   rated_power_w              20.0        -> rated_power
+#   rated_power_ambient_c      25          -> rated_power_temperature 298.15 K
+#   derating.zero_power_c      155         -> zero_power_temperature  428.15 K
+#   resistance_range_ohm       0.02 .. 130k   covers this example's 10 ohm
+#
+# TWO CAVEATS THE FILE ITSELF RECORDS, neither of which is papered over here.
+#
+# (1) `rated_power_reference` reads "case temperature, not ambient". The
+#     derating line this payload declares is therefore referred to the case,
+#     while `dissipated_power_utilization` evaluates it at the ambient the body
+#     declares (300 K). That reading is optimistic by the case-to-ambient rise.
+#     It is stated rather than hidden because the margin absorbs it with room
+#     to spare: at the run's own settled 338.6 K -- an upper bound on the case,
+#     since the body is the hotter end of that path -- the utilization is 0.82
+#     rather than 0.73, and the part is dissipating 2.12 W against an effective
+#     rating of 13.8 W. A worked example that quietly used a case-referenced
+#     rating as an ambient-referenced one would be teaching the mistake.
+# (2) `derating.read_from_graph` is true: the 155 C zero-power point was read
+#     off the printed curve's axis, not out of a table. The file flags it so a
+#     reader can discount it, and this comment repeats the flag for the same
+#     reason. The line's slope is corroborated: (155 - 25) / 20 = 6.5 K/W is
+#     exactly the `thermal_resistance_k_per_w` the same datasheet prints.
+#
+# THE WORKING VOLTAGE is not the headline 250 V. The datasheet gives
+# `maximum_working_voltage_formula` = "sqrt(P * R), capped at 250 V", and for
+# this element sqrt(20 W * 10 ohm) = 14.14 V, far below the cap. 14.14 V is the
+# limit that actually applies to a 10 ohm part and it is the one declared. Using
+# 250 V would have declared a rating this element does not have. The 10 ohm is
+# the reference resistance; the element runs hotter and higher, at 11.79 ohm,
+# where the formula would give 15.4 V -- so the declared bound is the
+# conservative one.
+#
+# THE SOURCE: Texas Instruments LMR51430, "SIMPLE SWITCHER 4.5-V to 36-V, 3-A
+# Synchronous Buck Converter". components.json id `ti-lmr51430-ddc-sot23-6`;
+# https://www.ti.com/lit/ds/symlink/lmr51430.pdf. The 3 A is the output current
+# printed in the document title recorded there, and 5 V is inside the part's
+# output range. This example draws 0.42 A.
+#
+# WHERE THE EXAMPLE SITS, which is comfortably inside all three:
+#
+#   dissipated_power_utilization   0.73   (2.12 W of a 19.7 W effective rating)
+#   working_voltage_utilization    0.35   (5 V of 14.14 V)
+#   source_current_utilization     0.14   (0.42 A of 3 A)
+#
+# The dissipation figure looks the least generous of the three and is not: the
+# temperature form of that condition is (T_ambient + P * R_implied) / T_zero,
+# and the 300 K ambient alone accounts for 0.70 of it before the element
+# dissipates anything. The power the run actually puts into the part is worth
+# three points of the remaining thirty.
+_EXAMPLE_RESISTOR_RATINGS = {
+    "rated_power": "20 watt",
+    "rated_power_temperature": "298.15 kelvin",
+    "zero_power_temperature": "428.15 kelvin",
+    "maximum_working_voltage": "14.14 volt",
+}
+
+_EXAMPLE_SOURCE_RATINGS = {"maximum_current": "3 ampere"}
+
+
 def example_electrothermal_payload() -> dict[str, Any]:
     """One complete, runnable payload with every optional field supplied.
 
@@ -2271,6 +2348,7 @@ def example_electrothermal_payload() -> dict[str, Any]:
                         "maximum_operating_temperature": "400 kelvin",
                         "debye_temperature": "343 kelvin",
                     },
+                    "ratings": dict(_EXAMPLE_RESISTOR_RATINGS),
                 },
                 "body": {
                     "heat_capacity": "2.5 joule/kelvin",
@@ -2305,9 +2383,48 @@ def example_electrothermal_payload() -> dict[str, Any]:
                 },
             }
         ],
+        "source_ratings": dict(_EXAMPLE_SOURCE_RATINGS),
         "coupling": {
             "seed_temperature": "300 kelvin",
             "tolerance": "1e-6 kelvin",
             "max_iterations": 50,
         },
     }
+
+
+def example_over_rating_payload() -> dict[str, Any]:
+    """The same design on a supply too small for it: **one** rating violated.
+
+    Exported beside :func:`example_electrothermal_payload` so both paths are
+    runnable from this module. The circuit is not touched — same 5 V, same
+    10 ohm element, same body, same convection, so every thermal number and
+    every material verdict is identical. The single difference is which real
+    part was specified as the supply.
+
+    The nominal example is powered from an LMR51430, a 3 A buck converter, and
+    draws 0.42 A: ``source_current_utilization`` = 0.14. This one is powered
+    from a **TPS7A02**, and 0.42 A is more than twice what that part can
+    deliver, so the same number becomes 2.12 and the condition is VIOLATED.
+    Both parts are in ``benchmarks/ai_designs/components.json``.
+
+    Why this is the violation to demonstrate rather than an exceeded resistor
+    rating: with this circuit's 2.12 W, every catalogued part small enough to
+    violate the working voltage also violates the dissipation rating, so no
+    resistor in that file violates exactly one. The supply does, and it does so
+    while changing nothing about the physics of the run -- which makes it the
+    cleanest possible demonstration that a violation is a finding about a
+    *specification*, not about the solve.
+
+    The expected verdict is NOT_SUPPORTED, and the actionable half of it is the
+    named condition: ``electrical.dc.ideal_voltage_source`` /
+    ``source_current_utilization``.
+    """
+    payload = example_electrothermal_payload()
+    payload["source_ratings"] = {
+        # Texas Instruments TPS7A02, "Nanopower IQ, 200-mA, Low-Dropout
+        # Voltage Regulator" — components.json id `ti-tps7a02-dbv-sot23-5`,
+        # https://www.ti.com/lit/ds/symlink/tps7a02.pdf. The 200 mA is the
+        # part's output current, printed in the datasheet title recorded there.
+        "maximum_current": "0.2 ampere",
+    }
+    return payload

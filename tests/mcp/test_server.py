@@ -42,6 +42,7 @@ from src.engcore.mcp import (  # noqa: E402
     COUPLING_SUPPLIED_INPUTS,
     CredibilityVerdict,
     example_electrothermal_payload,
+    example_over_rating_payload,
     run_electrothermal_case,
 )
 from src.engcore.mcp import server  # noqa: E402
@@ -91,14 +92,33 @@ def run_case(payload):
     return call("run_electrothermal", {"case": payload})
 
 
+def unrated_payload():
+    """The example case with its declared component ratings stripped off.
+
+    The shipped example declares ratings read from real datasheets, so it no
+    longer has a gap in it. Two tests below are *about* gaps — one about how a
+    gap is reported, one about a violation outranking one — and they need a
+    payload that still has one. Removing the two blocks is that payload, and it
+    is what the example was before the ratings were added.
+    """
+    payload = example_electrothermal_payload()
+    payload["stages"][0]["conductor"].pop("ratings", None)
+    payload.pop("source_ratings", None)
+    return payload
+
+
 def violating_payload():
     """The example case with the conductor rated below where it will run.
 
     `maximum_operating_temperature` is a condition of the *rated* material
     model, and the run settles near 338 K, so 301 K is a bound the run is
     known to cross — a finding, not a gap.
+
+    Built on `unrated_payload` rather than on the example directly, because the
+    test that reads it asserts *precedence* — that a violation outranks a gap
+    without erasing it — and that needs a report which has both.
     """
-    payload = example_electrothermal_payload()
+    payload = unrated_payload()
     payload["stages"][0]["conductor"]["limits"][
         "maximum_operating_temperature"
     ] = "301 kelvin"
@@ -262,16 +282,52 @@ def test_the_wire_verdict_is_the_verdict_the_runtime_produced(make_payload):
         assert stage["report"]["values"] == report.to_dict()["values"]
 
 
-def test_the_nominal_case_reports_its_gaps_and_is_not_made_nicer():
-    """INSUFFICIENT_EVIDENCE is the runtime's real answer here — this payload
-    declares no ratings — and the transport says so, naming what is missing.
+def test_the_nominal_case_reaches_a_supported_verdict_over_the_wire():
+    """The default example of the product, as an agent actually receives it.
+
+    This is the assertion the round closed. The shipped example declares
+    ratings from real parts, every condition it raises is now answered, and the
+    transport carries SUPPORTED with nothing left unknown and nothing violated.
+    """
+    stage = run_case(example_electrothermal_payload()).structured_content[
+        "stages"
+    ][0]
+    assert stage["verdict"]["value"] == CredibilityVerdict.SUPPORTED.value
+    assert stage["verdict"]["verdict_reasons"] == []
+    for record in stage["report"]["validity"]:
+        assert record["assessment"]["unknown"] == []
+        assert record["assessment"]["violated"] == []
+
+
+def test_the_over_rating_example_is_not_supported_over_the_wire():
+    """The second exported example, named by the condition it crosses."""
+    stage = run_case(example_over_rating_payload()).structured_content[
+        "stages"
+    ][0]
+    assert stage["verdict"]["value"] == CredibilityVerdict.NOT_SUPPORTED.value
+    violated = [
+        reason for reason in stage["verdict"]["verdict_reasons"]
+        if reason["rule"] == "model_validity_violated"
+    ]
+    assert violated[0]["detail"]["violated_conditions"] == [
+        {
+            "model_id": "electrical.dc.ideal_voltage_source",
+            "condition": "source_current_utilization",
+        }
+    ]
+
+
+def test_an_unrated_case_reports_its_gaps_and_is_not_made_nicer():
+    """INSUFFICIENT_EVIDENCE is the runtime's real answer to a payload that
+    declares no ratings, and the transport says so, naming what is missing.
 
     ``electrical.dc.kcl`` used to be the other half of this and no longer is:
     it declares a condition now, satisfied by the DC model's own scope, so it
-    is assessed rather than unknown. The example payload still declares no
-    ``ratings`` block, which is what keeps the verdict where it is.
+    is assessed rather than unknown. What keeps the verdict where it is here is
+    the missing ``ratings`` block, which is the only thing this payload takes
+    away from the shipped example.
     """
-    stage = run_case(example_electrothermal_payload()).structured_content[
+    stage = run_case(unrated_payload()).structured_content[
         "stages"
     ][0]
     assert stage["verdict"]["value"] == CredibilityVerdict.INSUFFICIENT_EVIDENCE.value
