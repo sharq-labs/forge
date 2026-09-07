@@ -519,3 +519,89 @@ The description text each tool carries is the literal value of
 [`server.py`](../../src/engcore/mcp/server.py), and
 `test_the_descriptions_say_what_an_agent_must_know_before_calling` pins the
 claims in it that an agent cannot be allowed to miss.
+
+## The evidence bundle
+
+Everything above arrives as one JSON object over a transport, is read once by
+whatever asked for it, and leaves nothing behind. A bundle is that object
+written to a directory, so a buyer can check a run without reading the code
+that produced it.
+
+```bash
+python -m engcore.mcp.bundle write --response response.json --case case.json ./bundle
+python -m engcore.mcp.bundle verify ./bundle
+```
+
+`write` takes a response this runtime already produced. It does not run a case:
+running one is the transport's job, and a bundle writer that reached for it
+would sit inside the path that produces the thing it records.
+
+### What a bundle contains
+
+| File | Contents |
+|---|---|
+| `manifest.json` | every other file, its SHA-256 and its byte length |
+| `run.json` | the system, the response schema, and the stage index |
+| `case.json` | the payload as submitted |
+| `coupling.json` | the coupling record, or a statement that there was none |
+| `stages/NN-<id>/report.json` | the credibility report, exactly as `to_dict` emitted it |
+| `stages/NN-<id>/verdict.json` | the verdict, its guidance, and the rules that fired |
+| `stages/NN-<id>/repairs.json` | the repair alternatives, as the domain produced them |
+| `README.md` | what the directory is, and what it is not |
+
+Nothing is reformatted and nothing is summarised: each JSON file is a verbatim
+sub-object of the response, re-serialised with sorted keys so two bundles of one
+response are byte-identical. Nothing is duplicated either — the files partition
+the response, so a verifier is never asked what to do when two statements of one
+fact disagree.
+
+### What a bundle deliberately omits
+
+**Anything the runtime does not record.** `provenance.environment` is a declared
+field of every provenance record and this system's runs leave it empty; a
+bundle carries it empty. Filling it in at write time — an interpreter version, a
+platform string, an installed package list — would be inventing evidence and
+attributing it to a run that never observed it.
+
+**A signature, and any claim of tamper resistance.** The manifest detects a file
+that changed after it was written. It detects nothing about someone who edits a
+file and recomputes the manifest, because the digests are over the same
+directory they describe and there is no key here. A bundle is a record you can
+check for damage, not a record you can check for honesty.
+
+**Its own digest.** `manifest.json` lists every file except itself, which is
+stated in the manifest rather than left for a reader to notice.
+
+### `verify` can fail, and has been seen to
+
+Four independent questions, each able to fail on its own: do the digests match,
+is anything present that the manifest does not list, does each report still load
+through its schema, and is each recorded verdict the one its own report's
+contents derive. Findings accumulate; the verifier does not stop at the first.
+It also reports *what it checked*, because a verifier that returns the same
+empty answer for "everything passed" and "nothing ran" is the failure mode this
+project has hit three times.
+
+Editing one value — `final_temperature`, 338.5770175652607 to
+677.1540351305214 — and leaving the manifest alone:
+
+```
+bundle .../demo
+checked: digests 7, reports_loaded 1, verdicts_rederived 1
+REFUSED: 1 finding(s)
+  [digest_mismatch] stages/00-R1/report.json: manifest records sha256 1ce0208480fbeead110169f84c2b50a32f9d7f34daba8c782473b53749949ce8, file hashes to f9dac32232f3a674e9e0102d9d4f2b2dff8b2f0c9d27a52532f0f2c07de9fca5
+```
+
+`tests/mcp/test_bundle.py` gives every check a bundle that should fail it, and
+asserts the failure by category rather than merely that something was refused.
+Two of those corruptions recompute the manifest afterwards, holding the manifest
+to the limitation it states about itself while showing that the checks which do
+not depend on a digest still catch the edit.
+
+### A view, never a source
+
+Nothing in the runtime imports `engcore.mcp.bundle`, and
+`test_no_runtime_module_reads_a_bundle_back` asserts it. A directory a user can
+edit must never be able to influence what the runtime concludes; the moment it
+can, every guarantee about a verdict being derived rather than asserted is worth
+whatever the file system is worth.

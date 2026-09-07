@@ -22,6 +22,13 @@ rather than a decision. See :mod:`engcore.mcp.evidence` for the full statement.
                 dependency group, and importing it from this package would
                 make the whole layer unavailable without an SDK that nothing
                 else in it uses. Import ``engcore.mcp.server`` directly.
+- ``bundle``    one run's record written to a directory, with a digest per
+                file and a ``verify`` command that reads one back. **Also
+                deliberately not imported here**, for a different reason: a
+                bundle is a view and never a source, and the cleanest
+                statement of that is that nothing in this package imports the
+                module at all. ``tests/mcp/test_bundle.py`` asserts it.
+                Import ``engcore.mcp.bundle`` directly.
 """
 
 from __future__ import annotations
