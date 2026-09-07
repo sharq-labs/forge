@@ -337,6 +337,7 @@ def test_the_verdict_rules_are_total_and_deterministic():
                                 if o is ValidationOutcome.PASS
                                 else None
                             ),
+                            evidence=("fixture:metric=dimensionless declared by the model record",),
                         )
                         for i, o in enumerate(o_combo)
                     )
@@ -709,6 +710,7 @@ def test_one_attained_level_is_what_separates_supported_from_the_gap():
                 name="ran",
                 outcome=ValidationOutcome.PASS,
                 establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                evidence=("fixture:metric=dimensionless declared by the model record",),
             ),
         )
     )
@@ -724,6 +726,7 @@ def test_a_level_established_by_a_check_that_did_not_pass_does_not_count():
                 name="ran",
                 outcome=ValidationOutcome.WARNING,
                 establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                evidence=("fixture:metric=dimensionless declared by the model record",),
             ),
         )
     )

@@ -109,6 +109,35 @@ class ValidationCheck:
                 )
             object.__setattr__(self, "establishes", establishes)
         object.__setattr__(self, "evidence", tuple(self.evidence))
+        # GUARD 2, enforced. A PASS or WARNING declaring a level must carry
+        # evidence that it compared something -- see `earns_its_level`, which
+        # states the rule and is what this refuses on.
+        #
+        # This was a checked invariant in `tests/test_core_guards.py` rather
+        # than a refusal, and the only reason was one construction inside a
+        # byte-pinned file that could not be edited. The thermal re-freeze
+        # fixed it, so the rule moves here, beside the `establishes=UNVERIFIED`
+        # refusal it belongs next to and for the identical reason: a rule
+        # enforced at the four sites that read levels is a rule that will be
+        # missed at the fifth, and a value that cannot be constructed cannot be
+        # read inconsistently.
+        #
+        # No exception, deliberately. An enforced guard with one exception is
+        # an opt-in guard with extra words, and the hole would be the shape of
+        # the next domain's mistake.
+        if not self.earns_its_level:
+            raise ScientificValidationError(
+                f"validation check {self.name!r} reports "
+                f"{self.outcome.value.upper()} and declares "
+                f"establishes={self.establishes.value}, but carries no "
+                f"evidence that anything was compared: no residual with a "
+                f"tolerance, and no reference in `evidence`. A level with "
+                f"nothing behind it is a claim occupying the field a reader "
+                f"consults to find out whether anybody checked. Record what "
+                f"was compared -- a residual and its bound, or the reference "
+                f"the comparison was made against -- or leave establishes "
+                f"unset, which is how a check says it earned nothing"
+            )
         if self.residual is not None:
             object.__setattr__(self, "residual", float(self.residual))
         if self.tolerance is not None:
@@ -165,11 +194,12 @@ class ValidationCheck:
         show nothing -- ``establishes=None`` remains the honest way to say a
         check earned no level.
 
-        This property is the rule; where it is *enforced* is a separate and
-        currently incomplete question. See ``NEEDS.md`` and
-        ``tests/test_core_guards.py``: the constructor cannot refuse a check
-        that fails it, because exactly one such construction lives inside a
-        byte-pinned file that this round may not edit.
+        **Enforced in ``__post_init__``.** This property states the rule and
+        the constructor refuses anything that fails it, so a claimed level is a
+        value that cannot be built rather than one a sweep looks for. It was a
+        checked invariant until the thermal re-freeze: exactly one construction
+        failed the rule and lived inside a byte-pinned file, and exempting it
+        would have been a guard with a hole in it.
         """
         if self.establishes is None:
             return True

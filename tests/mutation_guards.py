@@ -75,6 +75,11 @@ import tokenize
 
 #: ``(id, file, old, new, what the mutation removes)``. Each entry deletes one
 #: guard from a copy of the tree; the suite is expected to fail.
+#: Line-ending forms, named rather than written inline so the normalisation
+#: below reads as a decision instead of as an escape sequence.
+CRLF = chr(13) + chr(10)
+LF = chr(10)
+
 MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
     ("G1a", "src/engcore/scientific/ir/problem.py",
      "        forged = sorted(reserved & set(context))",
@@ -111,6 +116,10 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "        ),\n",
      "",
      "the repaired CSTR check loses its evidence (runtime half)"),
+    ("G2d", "src/engcore/scientific/results/validation.py",
+     "        if not self.earns_its_level:",
+     "        if False:",
+     "the constructor stops refusing a claimed level (GUARD 2 back to opt-in)"),
     ("G3a", "src/engcore/scientific/results/thresholds.py",
      "        if not self.is_declared:\n            return None",
      "        pass",
@@ -260,7 +269,19 @@ def main(argv: list[str]) -> int:
                 shutil.copy2(source, target)
 
         path = work / relative
-        text = path.read_bytes().decode("utf-8")
+        # Newlines are normalised before the search, and this is not
+        # fastidiousness. The read stays binary -- a text read would hide
+        # a file whose bytes differ -- but a multi-line search string is
+        # written with a bare line feed while a working tree on Windows
+        # may hold a carriage return before it, and four mutations below
+        # had silently stopped applying for exactly that reason: G1d,
+        # G2a, G2c and G3b, every one a multi-line target in a CRLF file.
+        # They were reported as NOT APPLIED rather than green, which is
+        # this harness being honest, and they were still four guards
+        # nobody was verifying. A mutation that cannot apply is a verifier
+        # that reports nothing -- the failure this file exists to catch
+        # one level down, in its own machinery.
+        text = path.read_bytes().decode("utf-8").replace(CRLF, LF)
         if text.count(old) != 1:
             # The mutation did not apply. That is a fact about this file, not
             # about the guard, and it is reported as loudly as a green result

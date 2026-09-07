@@ -889,6 +889,7 @@ class _DemoSolver(DeclaredSupport):
                     name="dimensional_consistency",
                     outcome=ValidationOutcome.PASS,
                     establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                    evidence=("fixture:metric=dimensionless declared by the model record",),
                 ),
             )
         )
@@ -986,6 +987,7 @@ def _result(**overrides) -> ScientificResult:
                     name="dimensional_consistency",
                     outcome=ValidationOutcome.PASS,
                     establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                    evidence=("fixture:metric=dimensionless declared by the model record",),
                 ),
             )
         ),
@@ -1036,7 +1038,8 @@ def test_validation_report_states():
     mixed = ValidationReport(
         checks=(
             ValidationCheck("a", ValidationOutcome.PASS,
-                            establishes=ValidationLevel.DIMENSIONALLY_VALID),
+                            establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                            evidence=("fixture:metric=dimensionless declared by the model record",),),
             ValidationCheck("b", ValidationOutcome.WARNING),
             ValidationCheck("c", ValidationOutcome.NOT_RUN),
         )
@@ -1081,6 +1084,7 @@ def test_validation_level_requires_a_passing_check():
             ValidationCheck(
                 "benchmark", ValidationOutcome.PASS,
                 establishes=ValidationLevel.BENCHMARK_VALIDATED,
+                evidence=("fixture:agreement with a named reference benchmark",),
             ),
         )
     )
@@ -2143,6 +2147,7 @@ def test_f04_the_sentinel_cannot_cross_a_serialization_boundary():
     honest = ValidationCheck(
         name="c", outcome=ValidationOutcome.PASS,
         establishes=ValidationLevel.DIMENSIONALLY_VALID,
+        evidence=("fixture:metric=dimensionless declared by the model record",),
     )
     payload = honest.to_dict()
     payload["establishes"] = ValidationLevel.UNVERIFIED.value
@@ -2156,6 +2161,7 @@ def test_f04_no_report_can_attain_or_claim_the_sentinel():
             ValidationCheck(
                 name="c", outcome=ValidationOutcome.PASS,
                 establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                evidence=("fixture:metric=dimensionless declared by the model record",),
             ),
         )
     )

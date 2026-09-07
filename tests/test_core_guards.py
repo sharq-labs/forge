@@ -240,7 +240,19 @@ def _static_check_constructions():
                 and getattr(node.func, "id", None) == "ValidationCheck"
             ):
                 continue
+            # Positional arguments count. This sweep read `node.keywords`
+            # alone and was therefore narrower than the rule it audits: three
+            # constructions written positionally were invisible to it, and the
+            # enforced constructor found them at runtime instead. A sweep that
+            # cannot see a construction cannot report it.
+            _FIELDS = (
+                "name", "outcome", "detail", "establishes",
+                "residual", "tolerance", "evidence",
+            )
             kwargs = {k.arg: k.value for k in node.keywords}
+            for _index, _arg in enumerate(node.args):
+                if _index < len(_FIELDS):
+                    kwargs.setdefault(_FIELDS[_index], _arg)
 
             def literal(key, _kwargs=kwargs):
                 value = _kwargs.get(key)
@@ -290,7 +302,17 @@ def test_no_check_in_the_repository_claims_a_level_it_did_not_check_for():
 
 
 def test_the_rule_itself_is_what_that_audit_applied():
-    """The property, exercised directly, so the audit above is not the rule."""
+    """The rule, exercised directly, so the audit above is not the rule.
+
+    **It is a refusal now, not a property to consult.** Every case that used to
+    read ``assert not check(...).earns_its_level`` is a case that can no longer
+    be constructed, so it is asserted as the exception it now raises. That is
+    the whole of what GUARD 2 becoming enforced means: a claimed level stopped
+    being a value a sweep looks for and became one nothing can build.
+    """
+    import pytest
+
+    from src.engcore.scientific.errors import ScientificValidationError
     from src.engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
@@ -300,20 +322,22 @@ def test_the_rule_itself_is_what_that_audit_applied():
     def check(**kwargs):
         return ValidationCheck(name="c", outcome=ValidationOutcome.PASS, **kwargs)
 
+    def refused(**kwargs):
+        with pytest.raises(ScientificValidationError, match="no evidence"):
+            check(**kwargs)
+
     # Claiming nothing is always honest.
     assert check().earns_its_level
-    # A level with nothing behind it is not.
-    assert not check(
-        establishes=ValidationLevel.DIMENSIONALLY_VALID
-    ).earns_its_level
+    # A level with nothing behind it is not, and cannot be built.
+    refused(establishes=ValidationLevel.DIMENSIONALLY_VALID)
     # A residual with no bound is a number nobody bounded.
-    assert not check(
+    refused(
         establishes=ValidationLevel.NUMERICALLY_CONVERGED, residual=1e-12
-    ).earns_its_level
+    )
     # A bound with nothing measured against it is not a comparison either.
-    assert not check(
+    refused(
         establishes=ValidationLevel.NUMERICALLY_CONVERGED, tolerance=1e-9
-    ).earns_its_level
+    )
     # Both is a comparison.
     assert check(
         establishes=ValidationLevel.NUMERICALLY_CONVERGED,

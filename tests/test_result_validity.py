@@ -83,6 +83,7 @@ def result(**overrides) -> ScientificResult:
                     name="metric_dimensions",
                     outcome=ValidationOutcome.PASS,
                     establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                    evidence=("fixture:metric=dimensionless declared by the model record",),
                 ),
             )
         ),
