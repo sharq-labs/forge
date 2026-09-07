@@ -65,6 +65,33 @@ alone. The `stated_only` policy still accepts them, correctly: those designs
 never state a rating temperature, and the fix gave the tool the ability to be
 told rather than the design the habit of saying. See `RESULTS.md` section 4.
 
+**Re-confirmed on `main` at `b746249`, 2026-09-07, by re-running rather than by
+reading this page.** `rated_power_temperature` and `zero_power_temperature` are
+`ModelInputSpec(..., required=False)` on `electrical.dc.resistor_ohm`
+(`dc/models.py`), each with a `Binding` in the `ratings` section of the payload
+(`mcp/problem.py`). `ComponentRating.__post_init__` refuses half a pair, a pair
+without a `rated_power`, and an inverted pair; `_derated_power_utilization`
+returns `None` — UNKNOWN — when no ambient is supplied, and its docstring gives
+the reason the condition is written on the temperature axis at all: the power
+form goes infinite at and above `T_zero`, where a real part still has a real
+answer. `tests/domains/electrical/test_dc_rating_derating_line.py` and
+`test_dc_rating_applicability.py`: **131 passed**, including
+`test_an_incomplete_or_inverted_line_is_refused` and
+`test_a_declared_line_without_an_ambient_is_unknown_not_assumed`.
+
+Re-scored, all three policies, on `main`:
+
+| policy | false accept | catch | exact | false reject |
+|---|---|---|---|---|
+| `stated_only` | **6/64 (9.4 %)** — `S049`–`S054` | 58/64 (90.6 %) | 86/92 (93.5 %) | 0/28 |
+| `datasheet_completed` | **0/64 (0.0 %)** | 64/64 (100 %) | 92/92 (100 %) | 0/28 |
+| `fully_declared` | **0/66 (0.0 %)** | 66/66 (100 %) | 92/94 (97.9 %) | 0/28 |
+
+Identical under `whole_report` and `violation_scoped`. **The six that
+`stated_only` still accepts are the correct answer and are not a defect to
+close** — they are the measurement of what a design that names a part and a
+wattage and stops does not say.
+
 ---
 
 ## F2 — The convection agreement condition catches the JEDEC θJA misuse, but only when the fluid is declared. **Confirmed. This one is in the tool's favour.**
