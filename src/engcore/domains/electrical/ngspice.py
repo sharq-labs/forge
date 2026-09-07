@@ -1019,7 +1019,9 @@ def solve_circuit_with_ngspice(
     solver: NgspiceDCSolver | None = None,
     problem: ScientificProblem | None = None,
     software_version: str = "engcore.domains.electrical.ngspice/0.1.0",
-    parent_run_id: str | None = None,
+    # The parent RECORD, not its name: `ProvenanceRecord` refuses a
+    # lineage claim it cannot see the source of.
+    parent: "ProvenanceRecord | None" = None,
 ) -> ScientificResult:
     """The full contract lifecycle for one circuit, run by the external provider.
 
@@ -1075,7 +1077,7 @@ def solve_circuit_with_ngspice(
         inputs=inputs,
         assumptions=assumptions,
         tolerances=solver.settings.tolerances,
-        parent_run_id=parent_run_id,
+        parent=parent,
         # Deliberately no environment, no executable path, no argv, no netlist
         # and no provider stdout. The provider's *version* travels in
         # SolverIdentity, which is where execution provenance belongs; where the

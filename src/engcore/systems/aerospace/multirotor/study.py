@@ -685,7 +685,7 @@ def _study_bound_result(
         tolerances=base.provenance.tolerances,
         environment=base.provenance.environment,
         timestamp=None,
-        parent_run_id=base.provenance.run_id,
+        parent=base.provenance,
         metadata=provenance_metadata,
     )
     metadata = dict(base.metadata)

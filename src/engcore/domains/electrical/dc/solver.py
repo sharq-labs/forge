@@ -334,7 +334,9 @@ def solve_circuit(
     git_commit: str | None = None,
     timestamp: str | None = None,
     environment: Mapping[str, str] | None = None,
-    parent_run_id: str | None = None,
+    # The parent RECORD, not its name: `ProvenanceRecord` refuses a
+    # lineage claim it cannot see the source of.
+    parent: "ProvenanceRecord | None" = None,
 ) -> ScientificResult:
     """Run the full contract lifecycle for one circuit and return a result.
 
@@ -383,7 +385,7 @@ def solve_circuit(
         tolerances=solver.settings.as_mapping(),
         environment=dict(environment or {}),
         timestamp=timestamp,
-        parent_run_id=parent_run_id,
+        parent=parent,
         metadata={
             "circuit_id": circuit.circuit_id,
             "reference_node": circuit.reference_node,

@@ -596,7 +596,7 @@ def run_open_loop_pass(
         circuit,
         run_id=f"{run_id}-electrical-1",
         problem=electrical_problem,
-        parent_run_id=property_result.result_id,
+        parent=property_result.provenance,
     )
     dissipated_power = electrical_result.values[system.power_metric]
 

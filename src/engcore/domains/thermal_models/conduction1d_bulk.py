@@ -114,7 +114,9 @@ def solve_slab_with_bulk_field(
     git_commit: str | None = None,
     timestamp: str | None = None,
     environment: Mapping[str, str] | None = None,
-    parent_run_id: str | None = None,
+    # The parent RECORD, not its name: `ProvenanceRecord` refuses a
+    # lineage claim it cannot see the source of.
+    parent: "ProvenanceRecord | None" = None,
 ) -> tuple[ScientificResult, BulkDataStore]:
     """Solve one slab and return the result plus the store holding its field.
 
@@ -164,7 +166,7 @@ def solve_slab_with_bulk_field(
         tolerances=solver.settings.as_mapping(),
         environment=dict(environment or {}),
         timestamp=timestamp,
-        parent_run_id=parent_run_id,
+        parent=parent,
         metadata={
             "slab_id": slab.slab_id,
             "slab_fingerprint": slab.fingerprint(),

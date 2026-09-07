@@ -190,6 +190,31 @@ class ExecutionBinding:
 
 
 @dataclass(frozen=True)
+class StoredParentClaim:
+    """A lineage claim a stored record already carries, reproduced not re-made.
+
+    :class:`ProvenanceRecord` refuses a bare ``parent_run_id``: naming a source
+    means holding it. Reading a record back is the one situation where that is
+    both impossible and not being asked for -- the claim was made by whoever
+    wrote the payload, and ``from_dict`` is reproducing it, not asserting it
+    afresh. So the reader passes this instead of the record it does not have,
+    and the difference between "I hold the parent" and "this payload says there
+    was one" is a type rather than a flag nobody can see.
+    """
+
+    run_id: str
+
+    def __post_init__(self) -> None:
+        run_id = str(self.run_id).strip()
+        if not run_id:
+            raise ScientificCoreError(
+                "a stored parent claim must name a run; a payload whose "
+                "parent_run_id is blank carries no claim to reproduce"
+            )
+        object.__setattr__(self, "run_id", run_id)
+
+
+@dataclass(frozen=True)
 class ProvenanceRecord:
     """Everything needed to attribute and re-derive a result.
 
@@ -229,7 +254,19 @@ class ProvenanceRecord:
     tolerances: Mapping[str, float] = field(default_factory=dict)
     environment: Mapping[str, str] = field(default_factory=dict)
     timestamp: str | None = None
+    #: The run this one derives from. **Never set directly.** It is filled from
+    #: ``parent``, which is the record itself -- see the refusal in
+    #: ``__post_init__``.
     parent_run_id: str | None = None
+    #: The parent, presented rather than named. Consumed by ``__post_init__``
+    #: and never stored: what survives is ``parent_run_id``, which is what a
+    #: payload can carry. Compared and repr'd out, because it is an argument
+    #: rather than a field -- two records that agree on their lineage are equal
+    #: whether one was built from a record and the other read back from a
+    #: payload.
+    parent: "ProvenanceRecord | StoredParentClaim | None" = field(
+        default=None, repr=False, compare=False
+    )
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -237,6 +274,8 @@ class ProvenanceRecord:
         if not run_id:
             raise ScientificCoreError("provenance requires a non-empty run_id")
         object.__setattr__(self, "run_id", run_id)
+
+        self._resolve_lineage(run_id)
 
         models = tuple((str(a), str(b)) for a, b in self.models)
         solvers = tuple((str(a), str(b)) for a, b in self.solvers)
@@ -424,6 +463,92 @@ class ProvenanceRecord:
             and (version is None or b.realization.version == str(version))
         )
 
+    def _resolve_lineage(self, run_id: str) -> None:
+        """Fill ``parent_run_id`` from a parent that was actually presented.
+
+        THE DEFECT. ``parent_run_id`` was a string a caller typed. Nothing
+        about ``ProvenanceRecord(parent_run_id="run-0001")`` required that
+        ``run-0001`` ever existed, ever ran, or was ever anything at all -- so
+        a provenance record could make a claim about a source that was never
+        there, which is the one claim this project exists to make impossible,
+        violated in its own record type.
+
+        THE RULE. Naming a source means holding it. ``parent`` takes the parent
+        record; ``parent_run_id`` is read off it and is not accepted on its own.
+        This is the shape ``ExecutionBinding.from_execution`` already uses one
+        field over: take the object that exists *because* the thing happened,
+        rather than the name someone believes it had.
+
+        It is not a proof that the parent run occurred, and this will not
+        pretend otherwise -- a caller determined to lie can build a
+        ``ProvenanceRecord`` to be the parent. What it removes is the accident:
+        the lineage assembled from what a boundary *believes* ran, the typo
+        that points a chain at nothing, and the copied-and-edited record whose
+        parent id still names the run it was copied from.
+
+        The one exception is a type rather than a flag.
+        :class:`StoredParentClaim` says "this payload carries a claim someone
+        else made", which is exactly what ``from_dict`` is doing and is not the
+        same act as making one.
+        """
+        parent = self.parent
+        claimed = self.parent_run_id
+        claimed = None if claimed is None else str(claimed).strip()
+
+        if parent is None:
+            if claimed:
+                raise ScientificCoreError(
+                    f"provenance {run_id!r} names {claimed!r} as its parent "
+                    f"run but was not given it. A provenance record making a "
+                    f"claim about a source it cannot show is the claim this "
+                    f"platform exists to refuse. Pass parent=<the parent "
+                    f"ProvenanceRecord>, or call parent.derived({run_id!r})"
+                )
+            object.__setattr__(self, "parent_run_id", None)
+            return
+
+        if isinstance(parent, StoredParentClaim):
+            named = parent.run_id
+        elif isinstance(parent, ProvenanceRecord):
+            named = parent.run_id
+        else:
+            raise ScientificCoreError(
+                f"provenance {run_id!r} was given a "
+                f"{type(parent).__name__} as its parent. A lineage claim is "
+                f"about a ProvenanceRecord; anything else is a name wearing an "
+                f"object's clothes"
+            )
+
+        if claimed and claimed != named:
+            raise ScientificCoreError(
+                f"provenance {run_id!r} names {claimed!r} as its parent run "
+                f"while holding a parent whose run is {named!r}. Two different "
+                f"answers to one question, and picking either would let the "
+                f"typed one silently outrank the one that exists"
+            )
+        if named == run_id:
+            raise ScientificCoreError(
+                f"provenance {run_id!r} names itself as its own parent run. A "
+                f"lineage that closes on itself has no source and no root, and "
+                f"a reader walking it does not terminate"
+            )
+        object.__setattr__(self, "parent_run_id", named)
+        # What is KEPT is the marker, never the parent record itself. Two
+        # reasons, and the second is the one that was measured rather than
+        # reasoned:
+        #
+        # A record must not hold a handle on its whole ancestry -- a chain
+        # forty runs deep would be forty records alive because the last one is.
+        #
+        # And `dataclasses.replace` re-runs this constructor with the fields it
+        # finds. Setting `parent` to None here made every `replace` on a record
+        # that HAS a parent illegal, because the rebuilt record would be naming
+        # a source with nothing behind it -- a rule that refused the honest
+        # reconstruction of a record it had already accepted. Five MVR1 tests
+        # said so. The marker is what makes the reconstruction legal and says
+        # what it is: a claim being reproduced, not made afresh.
+        object.__setattr__(self, "parent", StoredParentClaim(named))
+
     def derived(self, run_id: str, **overrides: Any) -> "ProvenanceRecord":
         """A child record that keeps the lineage link explicit.
 
@@ -452,7 +577,9 @@ class ProvenanceRecord:
             "tolerances": self.tolerances,
             "environment": self.environment,
             "timestamp": self.timestamp,
-            "parent_run_id": self.run_id,
+            # The parent, held rather than named. `derived` is the constructor
+            # that has always had it; now it is the one that says so.
+            "parent": self,
             "metadata": self.metadata,
         }
         base.update(overrides)
@@ -529,6 +656,11 @@ class ProvenanceRecord:
             tolerances=dict(payload.get("tolerances", {})),
             environment=dict(payload.get("environment", {})),
             timestamp=payload.get("timestamp"),
-            parent_run_id=payload.get("parent_run_id"),
+            # Reproducing a claim, not making one -- see StoredParentClaim.
+            parent=(
+                StoredParentClaim(payload["parent_run_id"])
+                if str(payload.get("parent_run_id") or "").strip()
+                else None
+            ),
             metadata=dict(payload.get("metadata", {})),
         )

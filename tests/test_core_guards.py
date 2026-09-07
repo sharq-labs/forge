@@ -2267,3 +2267,188 @@ def test_the_refusal_points_at_the_leaf_and_not_at_the_field():
         )
     assert "metadata['numerics']['history'][1]" in str(refusal.value)
     assert "object" in str(refusal.value)
+
+
+# =====================================================================
+# GUARD 11 — provenance cannot name a source it cannot show
+# =====================================================================
+#
+# `ProvenanceRecord.parent_run_id` was a string a caller typed. Nothing about
+# `ProvenanceRecord(parent_run_id="run-0001")` required that `run-0001` ever
+# existed, ever ran, or was ever anything at all. A provenance record making a
+# claim about a source that was never there is the one claim this project
+# exists to make impossible, and it was possible in the project's own record
+# type.
+#
+# The rule is the one `ExecutionBinding.from_execution` already uses one field
+# over: take the object that exists BECAUSE the thing happened, rather than the
+# name someone believes it had.
+
+def _bare_provenance(run_id="guard11", **overrides):
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+
+    payload = dict(
+        run_id=run_id,
+        software_version="test",
+        git_commit="0" * 40,
+        models=(),
+        solvers=(),
+        inputs={},
+    )
+    payload.update(overrides)
+    return ProvenanceRecord(**payload)
+
+
+def test_a_lineage_claim_without_the_record_it_names_is_refused():
+    """Made to fail on purpose. This is the whole guard."""
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    with pytest.raises(ScientificCoreError) as refusal:
+        _bare_provenance(parent_run_id="a-run-that-never-existed")
+    message = str(refusal.value)
+    assert "a-run-that-never-existed" in message
+    assert "cannot show" in message
+    assert "parent=" in message, "the error has to say what to do instead"
+
+
+def test_the_claim_is_accepted_when_the_parent_is_held():
+    parent = _bare_provenance("guard11-parent")
+    child = _bare_provenance("guard11-child", parent=parent)
+    assert child.parent_run_id == "guard11-parent"
+    # and `derived` -- which has always had the parent -- now says so
+    assert parent.derived("guard11-derived").parent_run_id == "guard11-parent"
+
+
+def test_a_typed_name_cannot_outrank_the_record_that_exists():
+    """Two answers to one question, and neither silently wins."""
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    parent = _bare_provenance("guard11-parent")
+    with pytest.raises(ScientificCoreError, match="Two different answers"):
+        _bare_provenance(
+            "guard11-child", parent=parent, parent_run_id="somebody-else"
+        )
+    # agreeing is fine; it is a redundant statement, not a contradiction
+    assert _bare_provenance(
+        "guard11-child", parent=parent, parent_run_id="guard11-parent"
+    ).parent_run_id == "guard11-parent"
+
+
+def test_a_record_cannot_be_its_own_source():
+    """A lineage that closes on itself has no root, and a walker does not stop."""
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    itself = _bare_provenance("guard11-loop")
+    with pytest.raises(ScientificCoreError, match="its own parent"):
+        _bare_provenance("guard11-loop", parent=itself)
+
+
+def test_a_name_wearing_an_objects_clothes_is_refused():
+    """`parent` is a record, and a stand-in with a `run_id` is not one."""
+    import types
+
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    with pytest.raises(ScientificCoreError, match="wearing an object"):
+        _bare_provenance(
+            "guard11-child", parent=types.SimpleNamespace(run_id="looks-real")
+        )
+
+
+def test_a_stored_record_reproduces_its_claim_and_does_not_re_make_it():
+    """Reading a payload is not asserting what it says.
+
+    The one exception, and it is a type rather than a flag: `from_dict` has no
+    parent record to hold and is not making a claim, so it passes the marker
+    that says exactly that. A round trip is lossless, and the marker cannot be
+    mistaken for a held parent by anyone reading the code.
+    """
+    import json
+
+    from src.engcore.scientific.errors import ScientificCoreError
+    from src.engcore.scientific.results.provenance import (
+        ProvenanceRecord,
+        StoredParentClaim,
+    )
+
+    original = _bare_provenance("guard11-child", parent=_bare_provenance("p"))
+    payload = json.loads(json.dumps(original.to_dict(), sort_keys=True))
+    restored = ProvenanceRecord.from_dict(payload)
+    assert restored.parent_run_id == "p"
+    assert restored == original
+
+    # and the marker is itself a record with a rule, not a free string
+    with pytest.raises(ScientificCoreError, match="must name a run"):
+        StoredParentClaim("   ")
+
+
+def test_a_record_with_a_parent_can_still_be_rebuilt_from_itself():
+    """`dataclasses.replace` on a record that HAS a parent.
+
+    The first version of this rule set `parent` to None once it had been
+    consumed, which made every `replace` on such a record illegal: the rebuilt
+    record named a source with nothing behind it, so the rule refused the
+    honest reconstruction of a record it had already accepted. Five MVR1 tests
+    said so. Kept as a test rather than as a comment, because the shape --
+    a constructor invariant that forbids re-running the constructor -- is easy
+    to reintroduce.
+    """
+    import dataclasses
+
+    parent = _bare_provenance("guard11-parent")
+    child = _bare_provenance("guard11-child", parent=parent)
+    again = dataclasses.replace(child, metadata={"edited": True})
+    assert again.parent_run_id == "guard11-parent"
+    assert again.metadata["edited"] is True
+
+
+def test_the_read_back_marker_is_used_where_a_claim_is_reproduced_and_nowhere_else():
+    """The one exception, kept to the one place it means something.
+
+    `StoredParentClaim` says "reproducing a claim somebody else made". Used
+    anywhere a parent record is actually available, it would be the refusal's
+    own back door, so the tree is read rather than trusted.
+    """
+    root = pathlib.Path(engcore.__file__).resolve().parent
+    users = []
+    for path in sorted(root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "StoredParentClaim"
+            ):
+                module = str(
+                    path.relative_to(root).with_suffix("")
+                ).replace("/", ".")
+                users.append(module)
+    assert sorted(set(users)) == ["scientific.results.provenance"], users
+
+
+def test_no_module_still_hands_provenance_a_lineage_name_it_does_not_hold():
+    """Over the tree, so a sixth domain is covered on the day it lands."""
+    root = pathlib.Path(engcore.__file__).resolve().parent
+    offenders = []
+    for path in sorted(root.rglob("*.py")):
+        if path.name == "provenance.py":
+            continue
+        module = str(path.relative_to(root).with_suffix("")).replace("/", ".")
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            for keyword in node.keywords:
+                if keyword.arg == "parent_run_id":
+                    offenders.append(f"{module}:{node.lineno}")
+    # By full module path. Written first as `path.name`, which excused every
+    # file called `solver.py` in the repository -- the same coincidence-matching
+    # that GUARD 9's mutation caught two commits ago, made again on the next
+    # sweep. There are five `solver.py` files here.
+    #
+    # The frozen thermal solver still THREADS one through as a parameter it
+    # cannot be edited to change; what matters is that nobody hands a bare name
+    # to the record. Its own call is `parent_run_id=parent_run_id`, a
+    # pass-through of a parameter no caller in this repository supplies, and
+    # the refusal fires if one ever does.
+    assert offenders == ["domains.thermal.conduction1d.solver:393"], offenders

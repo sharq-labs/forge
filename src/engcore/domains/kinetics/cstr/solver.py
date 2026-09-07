@@ -742,7 +742,9 @@ def solve_reactor(
     core_baseline_commit: str | None = None,
     timestamp: str | None = None,
     environment: Mapping[str, str] | None = None,
-    parent_run_id: str | None = None,
+    # The parent RECORD, not its name: `ProvenanceRecord` refuses a
+    # lineage claim it cannot see the source of.
+    parent: "ProvenanceRecord | None" = None,
 ) -> ScientificResult:
     """Run the full contract lifecycle for one reactor and return a result.
 
@@ -789,7 +791,7 @@ def solve_reactor(
         core_baseline_commit=core_baseline_commit,
         timestamp=timestamp,
         environment=environment,
-        parent_run_id=parent_run_id,
+        parent=parent,
     ).result
 
 
@@ -804,7 +806,9 @@ def solve_reactor_bundle(
     core_baseline_commit: str | None = None,
     timestamp: str | None = None,
     environment: Mapping[str, str] | None = None,
-    parent_run_id: str | None = None,
+    # The parent RECORD, not its name: `ProvenanceRecord` refuses a
+    # lineage claim it cannot see the source of.
+    parent: "ProvenanceRecord | None" = None,
 ) -> VerificationSolveBundle:
     """As :func:`solve_reactor`, but also hands back the transient trajectory.
 
@@ -875,7 +879,7 @@ def solve_reactor_bundle(
         tolerances=run.integration.as_tolerance_mapping(),
         environment=dict(environment or {}),
         timestamp=timestamp,
-        parent_run_id=parent_run_id,
+        parent=parent,
         metadata={
             "run_label": run.run_label,
             "physics_fingerprint": run.physics_fingerprint(),
