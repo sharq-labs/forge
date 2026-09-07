@@ -39,8 +39,9 @@ src/engcore/
   systems/       electrothermal/ (closed-loop electro-thermal coupling)
                  aerospace/multirotor/ (reference design study)
   sria/          evidence records, admission, assurance, decision, campaigns —
-                 an independent layer, NOT on the verification path and imported
-                 by nothing else in src/; see docs/SRIA.md
+                 19,887 lines, 27% of src/, an independent layer that is NOT on
+                 the verification path and is imported by nothing else in src/.
+                 Read the section below before reading the tree; see docs/SRIA.md
   mcp/           verification and validation (V&V) layer: assembles a
                  credibility evidence report for consumers and derives its
                  advisory verdict
@@ -58,6 +59,34 @@ docs/
   milestones/                      one prereg + freeze/evidence pair per milestone
   architecture-study/              MOOSE, PETSc, OpenFOAM, preCICE, FEniCSx, OpenMDAO studies
 ```
+
+### A third of `src/` is not on the verification path
+
+`src/engcore/sria/` is **19,887 lines across 53 modules — 26.9% of the source
+tree — and nothing in `src/` outside it imports it.** Verify that in one
+command:
+
+```bash
+grep -rn "engcore\.sria\|from \.\.sria\|from \.sria\|import sria" --include=*.py src/ | grep -v "^src/engcore/sria/"
+```
+
+It returns nothing. The MCP credibility layer, the electro-thermal system, the
+battery and kinetics domains and every solver run without it; removing the tree
+would leave every domain result, every coupling and every advisory verdict
+identical.
+
+That is a statement about **layering, not about worth**. SRIA is an
+experimental-campaign, decision and assurance layer that sits one altitude above
+the domains: where they answer *what does this system do*, it answers *what
+should we measure next, what may change belief, and on whose authority*. It has
+its own frozen milestone sequence (M1 through V0.1, plus Core V0.3 and the E1–E3
+experiment line) and 630 of the suite's 2,955 tests, two of its test modules
+being SHA-256 byte-pinned by frozen experiment configs.
+
+It is called out here rather than only in `docs/SRIA.md` because a reader
+opening this repository will meet a third of the code before they meet an
+explanation of it. [docs/SRIA.md](docs/SRIA.md) has the full account: what it
+was built for, what depends on it, and what separating it would cost.
 
 The package is still named `engcore` because several frozen experiments pin
 source paths by SHA-256; it is renamed at the next planned re-freeze.

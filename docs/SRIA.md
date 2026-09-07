@@ -1,8 +1,10 @@
 # Where `src/engcore/sria/` sits
 
-About 20,000 lines across 53 modules — roughly a third of the source tree — and
-**nothing outside it in `src/` imports it**. That fact is easy to find and easy
-to misread, so this page says what it means.
+**19,887 lines across 53 modules — 26.9% of the source tree — and nothing
+outside it in `src/` imports it.** Those numbers are measured, and the commands
+that produce them are in *The numbers, measured* below. The fact is easy to find
+and easy to misread, so this page says what it means, what depends on it, and
+what separating it would involve.
 
 It does not mean the tree is core, and it does not mean it is dead. It means
 SRIA sits at a different altitude from everything else in `src/engcore/`.
@@ -70,3 +72,142 @@ deliberately excludes; then `docs/sria/scientific_brain_v0_1.md` for the
 reasoning contract; then `tests/test_sria_m1.py`, whose twelve numbered tests
 are written as boundary proofs — each tries to do the wrong thing and asserts
 that the architecture refuses.
+
+---
+
+## The numbers, measured
+
+Taken on the tree at the commit that added this section. Every one is
+reproducible from the command beside it.
+
+| | | how |
+|---|---|---|
+| lines | **19,887** | `find src/engcore/sria -name "*.py" \| xargs wc -l \| tail -1` |
+| modules | **53** | `find src/engcore/sria -name "*.py" \| wc -l` |
+| share of `src/` | **26.9%** of 73,867 lines | the same two counts |
+| imports from outside `src/engcore/sria/` | **0** | `grep -rn "engcore\.sria\|from \.\.sria\|from \.sria\|import sria" --include=*.py src/ \| grep -v "^src/engcore/sria/"` |
+| tests | **630** across 34 `test_sria_*.py` modules, of 2,955 in the suite (21.3%) | `pytest tests/test_sria_*.py --collect-only -q` |
+| byte-pinned test modules | **2** — `test_sria_e1_electrical.py`, `test_sria_e2_model_adequacy.py` | pinned by `experiments/electrical_e2/e2_config.py` and `experiments/electrical_e3/e3_config.py` |
+
+The import count is the one worth running yourself. It is zero, and it is zero
+in the direction that matters: **nothing depends on SRIA, and SRIA depends on
+the rest of the tree.**
+
+## What depends on it
+
+Frozen experiments, and nothing in `src/`. Measured with
+`for d in experiments/*/; do grep -rl sria "$d"; done`:
+
+| Experiment | How it depends |
+|---|---|
+| `electrical_e1`, `electrical_e2`, `electrical_e3` | **They are SRIA experiments.** E1 is the campaign over an electrical model space, E2 the model-adequacy study, E3 the adequacy obligation. Their configs, harnesses, truths, results and reports are SHA-256 pinned, and two of the pinned files are SRIA's own test modules. |
+| `electrical_v01_demo` | the minimal end-to-end certification path |
+| `falsification` | `benchmark.py` and `s11_sweep.py` use the campaign and decision layers |
+| `thermal_t1` | **the one that is easy to miss.** `t1_run.py` imports `src.engcore.sria.calibration`, and T1's results carry SRIA schema strings (`sria_model_fidelity_rung/1`, `sria_model_fidelity_relationship/1`). T1's fidelity ladder *is* an SRIA record. |
+
+`design_d3`, the multirotor studies, and the kinetics experiments do **not**
+reference it — worth stating, because "the campaign layer" sounds like it would
+be under every design study and it is not.
+
+**Nothing in `src/`.** Verified by the command above, and separately by
+`tests/test_sria_m1.py`, which pins the layering in the other direction too:
+SRIA imports the Scientific Core, the core never imports SRIA, and neither
+imports an LLM provider.
+
+## Which way the dependency runs
+
+SRIA reaches into four subsystems and none of them reaches back. Counting
+import references:
+
+| SRIA imports | references |
+|---|---|
+| `scientific/` | 55 |
+| `data/` | 15 |
+| `inference/` | 3 |
+| `domains/` | 2 |
+
+`scientific.serialization` alone accounts for 39 of the 55 — schema strings for
+the records SRIA writes. That is the shape of a consumer, and it is why the
+tree can be read as a layer rather than as a fork.
+
+## What separating it would involve
+
+Stated as scope, not as a recommendation.
+
+**What is easy.** The import direction. A consumer with zero inbound edges
+lifts out without touching a single caller: no domain, no solver, no system, no
+MCP boundary would change a line. The four subsystems it imports become a
+dependency of the new repository rather than a sibling package.
+
+**What is not.**
+
+1. **The frozen experiment pins break, and they are the awkward kind.**
+   `experiments/electrical_e2/e2_config.py` and `electrical_e3/e3_config.py`
+   pin `tests/test_sria_e1_electrical.py` and
+   `tests/test_sria_e2_model_adequacy.py` by SHA-256 over their bytes. Moving
+   those files to another repository does not change their bytes, but it moves
+   them out of the path the pin resolves, so either the experiments move too or
+   the pins are rewritten to point across a repository boundary — which is the
+   thing a pin exists to make impossible. The thermal re-freeze is the worked
+   example of what a deliberate re-pin costs, and that one moved four files
+   inside one tree.
+
+2. **The thermal line is pinned to an SRIA import.** `thermal_t1/t1_run.py`
+   imports `sria.calibration` and is itself byte-pinned by
+   `t2_config.T1_FROZEN_FILE_DIGESTS`, which `t3_config` pins in turn. So
+   separating SRIA does not break one experiment line, it breaks two, and the
+   second one is the three-link cascade the thermal re-freeze had to walk.
+
+3. **The E1–E3 experiment line goes with it, or it splits.** Those experiments
+   *are* SRIA experiments; their evidence documents cite them. Leaving them
+   behind leaves `experiments/` referencing a package that is no longer present.
+
+4. **Four subsystems become a published interface.** `scientific/`, `data/`,
+   `inference/` and `domains/` are imported freely today because they are in the
+   same tree. Across a boundary they need a version, and every future change to
+   `scientific.serialization` acquires a downstream consumer.
+
+5. **The test suite splits 630/2,325**, and the tiering in `docs/TESTING.md`
+   splits with it.
+
+**What it would not fix.** Nothing about the verification path, because SRIA is
+not on it. The separation is a packaging decision about what a reader and a
+buyer are handed, not a correctness one.
+
+## Recommendation: document in place
+
+**Document in place. Do not separate.** The cost is not the code motion — that
+part is genuinely easy — it is that separation breaks two pinned experiment lines — the electrical one and, less obviously, the thermal cascade — whose
+entire purpose is to make "this was not edited" a checkable claim, and it breaks
+them to solve a problem that a paragraph in the README solves.
+
+The reasoning:
+
+* **The problem is legibility, and legibility is cheap.** A buyer's objection is
+  *why is a third of this code unexplained*, not *why is it in the same
+  repository*. That objection is answered by naming it in the README where they
+  meet it, with the numbers and the one-line command that proves the import
+  count. That is what this round did.
+* **Separation trades a documentation problem for an integrity one.** Rewriting
+  a pin to point across a repository boundary weakens exactly the guarantee this
+  project sells. This repository has re-pinned deliberately once, for the
+  thermal tree, and the justification there was that the pin was protecting a
+  defect. No defect is being protected here.
+* **The zero-import property is the asset, not the liability.** It is what makes
+  the claim "SRIA is not on the verification path" checkable in one grep. A
+  reader who doubts the credibility layer can satisfy themselves in seconds. In
+  a separate repository the same claim becomes an assertion about two trees.
+* **Nothing is foreclosed.** Zero inbound edges is what makes separation
+  cheap-in-the-code, and that stays true. If a buyer wants only the verification
+  path, the tree lifts out then, with the pins handled deliberately as part of a
+  transaction rather than pre-emptively.
+
+**The cost of the recommendation**, stated plainly: the repository stays 27%
+larger than the product it is being read for, and every future reader still has
+to be told. That is a real and recurring tax, and it is paid in prose. The
+alternative pays it once in integrity, and integrity is the thing being sold.
+
+**What would change the recommendation.** If SRIA acquires its own release
+cadence, or an outside consumer, or a dependency the verification path must not
+carry, the balance moves — at that point separation buys something, and the pin
+rewrite is a cost against a benefit rather than against a paragraph.

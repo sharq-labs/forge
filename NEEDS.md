@@ -3900,6 +3900,49 @@ dc_consensus.py has" and treated that as a scheduling detail; it was the reason
 one of the three was wrong and nobody knew.
 
 
+
+## OPEN DECISION — SRIA: document in place, or separate the repository
+
+**Measured, not estimated.** `src/engcore/sria/` is 19,887 lines across 53
+modules, **26.9% of `src/`**, with **zero** imports from anywhere else in
+`src/` — reproducible with
+
+    grep -rn "engcore\.sria|from \.\.sria|from \.sria|import sria" \
+        --include=*.py src/ | grep -v "^src/engcore/sria/"
+
+It carries 630 of the suite's 2,955 tests across 34 `test_sria_*.py` modules.
+Full account, with every command, in `docs/SRIA.md`.
+
+**The recommendation is to document in place.** It is recorded here rather than
+acted on, because the decision is the owner's.
+
+The short form: the objection a buyer raises is *why is a third of this code
+unexplained*, not *why is it in the same repository*, and that objection is
+answered by a paragraph in the README where they meet it — which this round
+added, with the numbers and the verifying command. Separation would trade a
+documentation problem for an integrity one: it breaks SHA-256 pins whose entire
+purpose is to make "this was not edited" a checkable claim.
+
+**The finding that moved the recommendation, and would have been missed by
+reading the import graph alone.** `experiments/thermal_t1/t1_run.py` imports
+`src.engcore.sria.calibration`, and T1's results carry SRIA schema strings.
+`t1_run.py` is byte-pinned by `t2_config.T1_FROZEN_FILE_DIGESTS`, which
+`t3_config` pins in turn. So separating SRIA breaks **two** pinned experiment
+lines, and the second is the three-link thermal cascade — the same one the
+thermal re-freeze had to walk deliberately. The zero-inbound-import property
+makes the *code* motion free and says nothing about the *pins*.
+
+**The cost of the recommendation, stated plainly.** The repository stays 27%
+larger than the product it is being read for, and every future reader has to be
+told. That is a real recurring tax paid in prose. The alternative pays it once
+in integrity.
+
+**What would change it.** An own release cadence for SRIA, an outside consumer,
+or a dependency the verification path must not carry. At that point separation
+buys something and the pin rewrite is a cost against a benefit rather than
+against a paragraph.
+
+
 ## RULE — prefer a declared budget to a cited constant
 
 **Where a bound can be written as the fraction of a budget the caller declares,
