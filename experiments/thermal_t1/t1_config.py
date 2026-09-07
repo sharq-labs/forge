@@ -82,17 +82,17 @@ THERMAL_FROZEN_FILE_DIGESTS: dict[str, str] = {
     "src/engcore/domains/thermal/__init__.py":
         "8923de0cbe22ee4ab4ced90aa7e6b1d75529875673283f03c8ec3e2ccf9b64ef",
     "src/engcore/domains/thermal/conduction1d/__init__.py":
-        "a42ea7c129264779c2165e6d5cfdfb9ff56e8a1bf7fb4b1838c995067979572f",
+        "2945e64ab32e708401ca1c00535a8c8989f1d272f7a239fa4394ed7941e30631",
     "src/engcore/domains/thermal/conduction1d/errors.py":
         "e9c6aab7564c582eb40a30caa5d34b30aec3cdc4181dad4d5ae3d0a2d1425c6b",
     "src/engcore/domains/thermal/conduction1d/problem.py":
-        "9343e70b12b55cd2d09d3caa00290737cf98791b79121ce495b8114839b9bdf6",
+        "0d23e57a13221e7bf7a41cbe23147348e5e613500c5e049269eb766184125b52",
     "src/engcore/domains/thermal/conduction1d/reference.py":
         "7e231b9f5adebc6c5e8b89f17cc885f325419d1d91bc3f56b3d9e2cb5e5ae23e",
     "src/engcore/domains/thermal/conduction1d/solver.py":
-        "6b09dcd52739565c6cbfde1095d9041d841e79c2dea103c0fce300a216f14e52",
+        "cd549e12d56c27c72ad84ff93d0123a17d026c756e23b1d9f624d66b50bedc45",
     "src/engcore/domains/thermal/conduction1d/validation.py":
-        "b8f41e7da4dfad5d8506f757e688982103e5f6c9dc2fa66c0bd000dee02ff0af",
+        "19a696293bd0c8728c6201b87d954e62d2c35c09da5533691e4a19a684eda1bc",
 }
 
 # --- the physical benchmark, inherited from the frozen thermal gate ----------

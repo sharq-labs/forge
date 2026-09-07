@@ -3901,6 +3901,91 @@ one of the three was wrong and nobody knew.
 
 
 
+
+## RULE — the tooling that checks the checks needs the same treatment
+
+**Mutate the verifier, not only the code. "Make it fail once on purpose"
+applies to the thing doing the checking.**
+
+Four dead checks so far. The first two were in the code being checked; the
+second two were in the machinery doing the checking, and that is the pattern
+this rule exists for.
+
+| # | The dead check | Where it was | How it was found |
+|---|---|---|---|
+| 1 | a 100% catch rate no case could lower -- `electrical.dc.kcl` declared no conditions, so nothing could reach SUPPORTED | the code | reading the benchmark's own result |
+| 2 | `pytest.importorskip("mcp")` never skipped -- `tests/mcp/` is itself an importable namespace package named `mcp`, so the guard imported the directory it lived in | the code | reading the guard |
+| 3 | `self_heating_resistance_drift_ratio`, declared, documented, unit-tested and never evaluated in a report | the code | **wiring it** -- see *declaring a condition is not testing it* |
+| 4 | four mutation entries -- G1d, G2a, G2c, G3b -- that had silently stopped applying, every one a multi-line search string matched against a CRLF file by a binary read | **the verifier** | running the harness and reading the word NOT APPLIED instead of skipping past it |
+
+**Why #4 is a different kind.** The mutation harness exists to answer "is this
+guard decoration?", and its own docstring already says a green result is a
+claim about your mutation before it is a claim about your check. It was right,
+and it protected itself in the direction it had thought about: it reported NOT
+APPLIED rather than GREEN, which is honest. What it did not do is treat NOT
+APPLIED as a **failure of the harness**. Four guards went unverified for as long
+as anyone read that line as information rather than as an alarm.
+
+A verifier that reports nothing is worse than one that reports wrongly, because
+nothing looks like nothing to be done.
+
+**The second instance in the same session, and the reason this is a rule.**
+The audit sweep in `tests/test_core_guards.py` keyed on `ast` keyword arguments
+alone, so three `ValidationCheck(...)` constructions written positionally were
+invisible to it. It reported a clean tree it had not fully read. The enforced
+constructor found them at runtime. **A sweep narrower than the rule it audits
+is the same defect as a mutation that cannot apply**: both are machinery that
+answers "nothing to report" for a reason unrelated to whether there is
+anything to report.
+
+**What to do about it.**
+
+* When a mutation reports NOT APPLIED or CHANGED NO CODE, that is a red result
+  for the harness. Fix it in the same change, not the next one.
+* Count the mutations that turned the suite red and state the number. "17/17"
+  is a measurement; "the mutations pass" is not.
+* When a sweep and a runtime rule cover the same property, make the sweep's
+  reach at least the rule's, and prefer letting the runtime rule find the
+  offenders first -- it cannot be narrower than itself.
+* A new guard ships with a mutation, and the mutation is run. That was already
+  the standing commitment; what this adds is that a mutation which does not
+  apply does not count as having been run.
+
+## The line-ending fault underneath, and why `.gitattributes` cannot fix it
+
+The mixed CRLF/LF working tree was the shared cause of two findings: the four
+dead mutations, and the inflated cascade line counts (938 and 1852 reproduce
+exactly and are 469 and 926 lines counted twice).
+
+`.gitattributes` already says `* text=auto eol=lf`, repository-wide, and its
+own comment argues against scoping that to the pinned paths -- correctly: the
+set of digest-pinned files grows with every frozen experiment, and a pin under
+a path the attributes file forgot would fail silently on someone else's machine
+and nowhere else. **No exclusion was added, and none should be.** The pinned
+trees are the reason the rule is repository-wide, not an exception to it.
+
+**But `.gitattributes` governs Git, and Git was never the problem.** It
+normalises on checkin and on hash, so a working tree an editor has rewritten in
+CRLF still reports clean: `git status` is quiet, `git hash-object` agrees with
+the blob, and only a SHA-256 over `path.read_bytes()` disagrees -- somewhere
+else, on the next clean checkout.
+
+That happened, in this project, to the thermal re-freeze. Four domain digests
+and two config digests were recomputed through Python's text mode on Windows,
+which writes CRLF. **All the pin tests passed locally and all six failed in a
+clean checkout of the same commit.** The re-pin was correct; the bytes it was
+taken over were not.
+
+So the gap is closed where it actually is, in
+`tests/test_pin_portability.py`: no file that any frozen experiment pins may
+contain a carriage return. It is deliberately not another digest check -- those
+exist, one per experiment, and they are what fails *later*, on a machine
+belonging to someone who did not cause it. This one fails on the machine that
+caused it, in the run that caused it, which is the only place the information
+is cheap. Its paths are read off the config modules rather than listed, for the
+same reason `.gitattributes` refuses to scope itself.
+
+
 ## OPEN DECISION — SRIA: document in place, or separate the repository
 
 **Measured, not estimated.** `src/engcore/sria/` is 19,887 lines across 53
