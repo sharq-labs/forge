@@ -52,6 +52,38 @@ container on an Azure kernel, carrying **ngspice-39** where both machines below
 have 42, with dependencies resolved on a different day — same case-set digest,
 same four metrics, same ten false-accept ids.
 
+### And again on the fifth draw, which is what `v1.1-benchmark` pins
+
+The run above scored the **fourth** draw, `476976c1…`. It is kept because it is
+what `v1.0-benchmark` rests on. The container has since run against the fifth
+draw as well, in Actions run
+[`34063200053`](https://github.com/sharq-labs/forge/actions/runs/34063200053),
+job `reproduce`, on `main` at `2f7e2ef` — whose `src/` and `benchmarks/` trees
+are byte-identical to the ones `v1.1-benchmark` pins:
+
+```
+Linux-6.17.0-1022-azure-x86_64-with-glibc2.36
+** ngspice-39 : Circuit level simulation program
+numpy==2.5.3
+
+== FAST tier ==
+2280 passed in 74.99s
+
+== benchmark, development split (hold-out sealed) ==
+"case_set_digest":     "e14542c1e09f258de48628a69ec61fea1ad0dab6ee4916bcf17df585dc7c35b8"
+"split_digest":        "7353123acaf903e48e3e6aa90f11de46e888edec7b055aef8ce8b35c7a48aae0"
+"exact_verdict_match": "1283/1400 (91.6%)"
+"catch_rate":          "1149/1159 (99.1%)"
+"false_accept":        "10/1159 (0.86%)"
+"false_reject":        "0/241 (0.0%)"
+```
+
+**The WSL2 environment below has not been re-run against the fifth draw.** Two
+environments agree on `e14542c1…`, not three, and `docs/release/v1.1.md` says
+two. Counting the WSL2 run toward this draw would credit it with work it never
+did — the defect this repository has now recorded three times under *a check
+whose failure has never been observed*.
+
 The second data point below was taken before the container existed, and is kept
 because two environments that agree are better evidence than one:
 
