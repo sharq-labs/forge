@@ -61,26 +61,27 @@ def solved(cell, load, realization=mdl.RINT_OCV_REALIZATION):
 def test_the_step_computes_the_hand_derived_values():
     """2.5 A for two minutes from a 2.5 Ah cell at 90 % charge.
 
-        z_end = 0.9 - 0.99 * 2.5 * (1/30) / 2.5   = 0.867
-        OCV   = 3.0 + 1.2 * 0.867                 = 4.0404 V
-        V     = 4.0404 - 2.5 * 0.030              = 3.9654 V
+        z_end = 0.9 - 2.5 * (1/30) / (0.99 * 2.5)
+        OCV   = 3.0 + 1.2 * z_end
+        V     = OCV - 2.5 * 0.030
         Q     = 2.5^2 * 0.030                     = 0.1875 W
     """
     computed = sol.evaluate_step(make_cell(), make_load())
-    assert computed.final_state_of_charge == pytest.approx(0.867)
-    assert computed.open_circuit_voltage == pytest.approx(4.0404)
-    assert computed.terminal_voltage == pytest.approx(3.9654)
+    expected_soc = 0.9 - (1.0 / 30.0) / 0.99
+    assert computed.final_state_of_charge == pytest.approx(expected_soc)
+    assert computed.open_circuit_voltage == pytest.approx(3.0 + 1.2 * expected_soc)
+    assert computed.terminal_voltage == pytest.approx(3.0 + 1.2 * expected_soc - 0.075)
     assert computed.heat_generation == pytest.approx(0.1875)
 
 
 def test_the_runtime_is_the_time_to_the_first_cutoff_reached():
     """A 0.15 SoC cutoff binds before a 3.0 V cutoff at 0.0625 SoC.
 
-        t = (0.90 - 0.15) * 2.5 Ah / (0.99 * 2.5 A) = 0.7576 h = 2727 s
+        t = (0.90 - 0.15) * 0.99 * 2.5 Ah / 2.5 A = 0.7425 h = 2673 s
     """
     computed = sol.evaluate_step(make_cell(), make_load())
     assert computed.binding_cutoff_state_of_charge == pytest.approx(0.15)
-    assert computed.runtime_to_cutoff == pytest.approx(2727.27, rel=1e-4)
+    assert computed.runtime_to_cutoff == pytest.approx(2673.0)
 
 
 def test_the_binding_cutoff_switches_to_the_voltage_limit_at_high_current():
@@ -94,8 +95,8 @@ def test_the_binding_cutoff_switches_to_the_voltage_limit_at_high_current():
     """
     computed = sol.evaluate_step(make_cell(), make_load(current=Quantity(25.0, A)))
     assert computed.binding_cutoff_state_of_charge == pytest.approx(0.625)
-    honest = (0.90 - 0.625) * 2.5 / (0.99 * 25.0) * 3600.0
-    naive = (0.90 - 0.15) * 2.5 / (0.99 * 25.0) * 3600.0
+    honest = (0.90 - 0.625) * 0.99 * 2.5 / 25.0 * 3600.0
+    naive = (0.90 - 0.15) * 0.99 * 2.5 / 25.0 * 3600.0
     assert computed.runtime_to_cutoff == pytest.approx(honest)
     assert computed.runtime_to_cutoff == pytest.approx(naive * 0.275 / 0.75)
     assert computed.runtime_to_cutoff < naive / 2.0
@@ -384,7 +385,7 @@ def test_the_realizations_point_at_their_models_and_share_one_implementation():
 def test_the_charge_balance_is_posed_as_an_ode_and_discharged_without_one():
     """Formulation is a property of the claim, not of how it is computed.
 
-    The counter poses ``dz/dt = -eta I / Q_nom``. Its realization integrates
+    The counter poses ``dz/dt = -I / (eta Q_nom)``. Its realization integrates
     that in closed form and needs no integrator, declaring only the algebraic
     solver capability — which is exactly the separation the realization
     contract exists to express.

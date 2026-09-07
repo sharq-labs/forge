@@ -196,8 +196,8 @@ def test_the_pulse_duration_utilization_is_none_without_a_rated_duration():
 # State of charge
 # =====================================================================
 
-def test_the_counter_removes_charge_at_the_declared_efficiency():
-    """0.9 - 0.99 * 2.5 A * (1/30) h / 2.5 Ah = 0.867."""
+def test_discharge_efficiency_below_one_depletes_faster_than_ideal():
+    """Discharge losses reduce usable capacity; they cannot create free charge."""
     final = ctx.final_state_of_charge(
         initial_state_of_charge=q(0.9, ONE),
         current=q(2.5, A),
@@ -205,7 +205,15 @@ def test_the_counter_removes_charge_at_the_declared_efficiency():
         coulombic_efficiency=q(0.99, ONE),
         nominal_capacity=q(2.5, AH),
     )
-    assert final.magnitude_in(ONE) == pytest.approx(0.867)
+    ideal = ctx.final_state_of_charge(
+        initial_state_of_charge=q(0.9, ONE),
+        current=q(2.5, A),
+        duration=q(120.0, S),
+        coulombic_efficiency=q(1.0, ONE),
+        nominal_capacity=q(2.5, AH),
+    )
+    assert final.magnitude_in(ONE) == pytest.approx(0.9 - (1.0 / 30.0) / 0.99)
+    assert final.magnitude_in(ONE) < ideal.magnitude_in(ONE)
 
 
 def test_the_counter_converts_the_duration_rather_than_assuming_hours():

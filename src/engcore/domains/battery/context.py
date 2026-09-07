@@ -657,12 +657,13 @@ def final_state_of_charge(
     coulombic_efficiency: Quantity | None,
     nominal_capacity: Quantity | None,
 ) -> Quantity | None:
-    """SoC(t) = SoC_0 - eta I t / Q_nom, for a current constant over ``t``.
+    """SoC(t) = SoC_0 - I t / (eta Q_nom), for constant discharge current.
 
     **Definition.** The coulomb-counting relation, Plett, *Battery Management
     Systems, Volume I: Battery Modeling* (Artech House, 2015), Ch. 2: the state
     of charge is the initial state minus the charge removed divided by the
-    cell's total charge, with a coulombic efficiency multiplying the integrand.
+    cell's usable charge, with discharge-direction coulombic efficiency reducing
+    the nominal capacity available to the external load.
     For a current held constant over the interval the integral is exact and the
     expression above is the closed form of it.
 
@@ -698,7 +699,7 @@ def final_state_of_charge(
     removed = (
         checked_current
         * checked_duration
-        * efficiency.magnitude_in(DIMENSIONLESS)
+        / efficiency.magnitude_in(DIMENSIONLESS)
         / capacity
     ).to(DIMENSIONLESS)
     return Quantity(

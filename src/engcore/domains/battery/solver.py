@@ -3,10 +3,10 @@
 Advances one declared cell under one declared load over one interval. The
 arithmetic is four expressions and no iteration:
 
-    z_end = z_0 - eta I t / Q_nom            coulomb counting
+    z_end = z_0 - I t / (eta Q_nom)          coulomb counting
     V     = OCV(z_end) - I R_int             Rint circuit
     Q_gen = I^2 R_int                        irreversible heat
-    t_run = (z_0 - z_stop) Q_nom / (eta I)   runtime to the binding cutoff
+    t_run = (z_0 - z_stop) eta Q_nom / I     runtime to the binding cutoff
 
 One solver discharges four models. That is not a merge of the claims: each
 model keeps its own record, its own validity domain and its own realization,
@@ -118,7 +118,7 @@ def evaluate_step(cell: CellSpecification, load: DischargeLoad) -> CellStepValue
     # minutes and one declared in seconds reach the same number.
     duration_h = load.duration.magnitude_in("hour")
 
-    charge_removed = efficiency * current_a * duration_h / capacity_ah
+    charge_removed = current_a * duration_h / (efficiency * capacity_ah)
     final_soc = initial_soc - charge_removed
     ocv = low + (high - low) * final_soc
     terminal = ocv - current_a * resistance_ohm
@@ -132,7 +132,7 @@ def evaluate_step(cell: CellSpecification, load: DischargeLoad) -> CellStepValue
         # real answer to a badly posed question and is reported rather than
         # clipped: the runtime model's own conditions are where that is judged.
         runtime_s = (
-            (initial_soc - binding) * capacity_ah / (efficiency * current_a)
+            (initial_soc - binding) * efficiency * capacity_ah / current_a
         ) * 3600.0
 
     effective_capacity = None
@@ -448,7 +448,7 @@ class BatteryCellSolver(DeclaredSupport):
             level: ``DIMENSIONALLY_VALID``.
 
         ``coulomb_balance_residual``
-            The state-of-charge update against ``dz/dt = -eta I / Q_nom``.
+            The state-of-charge update against ``dz/dt = -I / (eta Q_nom)``.
 
         ``rint_terminal_residual``
             The terminal voltage against ``V - OCV(z) + I R_int = 0``.
@@ -543,8 +543,8 @@ class BatteryCellSolver(DeclaredSupport):
         # dz/dt of the closed form is constant, so the residual of the balance
         # is exact everywhere on the interval and is evaluated once.
         derivative = (final - initial) / duration_h if duration_h else 0.0
-        residual = abs(derivative + efficiency * current_a / capacity_ah)
-        scale = max(abs(efficiency * current_a / capacity_ah), 1.0)
+        residual = abs(derivative + current_a / (efficiency * capacity_ah))
+        scale = max(abs(current_a / (efficiency * capacity_ah)), 1.0)
         tolerance = RESIDUAL_RELATIVE_TOLERANCE * scale
         return ValidationCheck(
             name="coulomb_balance_residual",
@@ -557,7 +557,7 @@ class BatteryCellSolver(DeclaredSupport):
             residual=residual,
             tolerance=tolerance,
             detail=(
-                f"|dz/dt + eta I / Q_nom| = {residual:.3e} per hour against a "
+                f"|dz/dt + I / (eta Q_nom)| = {residual:.3e} per hour against a "
                 f"scale of {scale:.3e}. Verification of the closed form "
                 f"against the balance it solves; no physical validation and "
                 f"no coupled-convergence claim."

@@ -24,7 +24,7 @@ reject another.
 | Model | Claim | Status |
 |---|---|---|
 | `battery.cell.rint_ocv` | `V = OCV(z) − I·R_int`, `OCV(z) = V_empty + (V_full − V_empty)·z`, `Q = I²·R_int` | `SELF_CONSISTENT` |
-| `battery.cell.coulomb_counting` | `z(t) = z₀ − η·I·t / Q_nom` | `SELF_CONSISTENT` |
+| `battery.cell.coulomb_counting` | `z(t) = z₀ − I·t / (η·Q_nom)` | `SELF_CONSISTENT` |
 | `battery.cell.constant_current_runtime` | time to the first of a declared voltage cutoff and a declared state-of-charge cutoff | `SELF_CONSISTENT` |
 | `battery.cell.peukert_capacity_derating` | `Q_eff = Q_nom·(I_ref/I)^(k−1)` | `UNVALIDATED` |
 

@@ -782,9 +782,9 @@ COULOMB_COUNTING_MODEL = ScientificModelDefinition(
     # assumptions and bounded by the capacity drift condition.
     model_type=ModelType.FUNDAMENTAL_RELATION,
     description=(
-        "Charge balance on the cell: z(t) = z_0 - eta I t / Q_nom for a "
+        "Charge balance on the cell: z(t) = z_0 - I t / (eta Q_nom) for a "
         "current constant over the interval. Exact integration of "
-        "dz/dt = -eta I / Q_nom."
+        "dz/dt = -I / (eta Q_nom)."
     ),
     inputs=(
         _CELL_PARAMETERS[0],  # nominal capacity
@@ -960,7 +960,7 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
     description=(
         "Time to the first of a declared state-of-charge cutoff and a "
         "declared terminal-voltage cutoff, under a constant discharge "
-        "current: t = (z_0 - z_stop) Q_nom / (eta I), with z_stop the higher "
+        "current: t = (z_0 - z_stop) eta Q_nom / I, with z_stop the higher "
         "of the two cutoffs expressed as a state of charge."
     ),
     inputs=_CELL_PARAMETERS
@@ -1317,15 +1317,15 @@ RINT_OCV_REALIZATION = _realization(
 COULOMB_COUNTING_REALIZATION = _realization(
     COULOMB_COUNTING_MODEL,
     "exact_constant_current",
-    # ODE: the model poses dz/dt = -eta I / Q_nom. That is what `formulation`
+    # ODE: the model poses dz/dt = -I / (eta Q_nom). That is what `formulation`
     # records — the mathematical form of the claim, not how it is discharged.
     # This realization discharges it with no integrator at all, which is
     # exactly the separation the realization contract exists to express.
     ModelFormulation.ODE,
     "Exact integration of the charge balance over one constant-current step",
     (
-        "Integrates dz/dt = -eta I / Q_nom in closed form over one interval "
-        "of constant current: z(t) = z_0 - eta I t / Q_nom."
+        "Integrates dz/dt = -I / (eta Q_nom) in closed form over one interval "
+        "of constant current: z(t) = z_0 - I t / (eta Q_nom)."
     ),
     (
         "the current is constant over the integrated interval",

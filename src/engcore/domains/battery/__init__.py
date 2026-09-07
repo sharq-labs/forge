@@ -4,7 +4,7 @@ A single cell — or a series string treated as one lumped cell — described by
 the simplest useful equivalent circuit:
 
     V_terminal = OCV(SoC) - I R_int          (discharge, I positive out)
-    SoC(t)     = SoC_0 - eta I t / Q_nom
+    SoC(t)     = SoC_0 - I t / (eta Q_nom)
     Q_gen      = I^2 R_int
 
 Four scientific claims are declared, each as its own
