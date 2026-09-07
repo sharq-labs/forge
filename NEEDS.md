@@ -3918,25 +3918,42 @@ this rule exists for.
 | 3 | `self_heating_resistance_drift_ratio`, declared, documented, unit-tested and never evaluated in a report | the code | **wiring it** -- see *declaring a condition is not testing it* |
 | 4 | four mutation entries -- G1d, G2a, G2c, G3b -- that had silently stopped applying, every one a multi-line search string matched against a CRLF file by a binary read | **the verifier** | running the harness and reading the word NOT APPLIED instead of skipping past it |
 
-**Why #4 is a different kind.** The mutation harness exists to answer "is this
-guard decoration?", and its own docstring already says a green result is a
-claim about your mutation before it is a claim about your check. It was right,
-and it protected itself in the direction it had thought about: it reported NOT
-APPLIED rather than GREEN, which is honest. What it did not do is treat NOT
-APPLIED as a **failure of the harness**. Four guards went unverified for as long
-as anyone read that line as information rather than as an alarm.
+### Nothing looks like nothing to be done
 
-A verifier that reports nothing is worse than one that reports wrongly, because
-nothing looks like nothing to be done.
+That is the whole rule, and it is worth keeping in those words.
 
-**The second instance in the same session, and the reason this is a rule.**
-The audit sweep in `tests/test_core_guards.py` keyed on `ast` keyword arguments
-alone, so three `ValidationCheck(...)` constructions written positionally were
-invisible to it. It reported a clean tree it had not fully read. The enforced
-constructor found them at runtime. **A sweep narrower than the rule it audits
-is the same defect as a mutation that cannot apply**: both are machinery that
-answers "nothing to report" for a reason unrelated to whether there is
-anything to report.
+A verifier that reports **wrongly** gets argued with. A verifier that reports
+**nothing** gets believed, because an absence of findings is indistinguishable
+from an absence of faults — and the reader who would have caught it is the same
+reader the empty output has just reassured. Both instances below were honest
+outputs. Neither was read as an alarm, because neither looked like one.
+
+**Instance one: the harness printed NOT APPLIED.** `tests/mutation_guards.py`
+exists to answer "is this guard decoration?", and its own docstring already
+says a green result is a claim about your mutation before it is a claim about
+your check. It was right, and it protected itself in the direction it had
+thought about: for G1d, G2a, G2c and G3b it printed `MUTATION DID NOT APPLY
+(count=0)` rather than GREEN. That is the correct output. What was missing is
+that **NOT APPLIED is a failure of the harness**, not a status line, and four
+guards went unverified for as long as anyone read it as information.
+
+**Instance two: the sweep reported a clean tree it had not read.** The static
+audit in `tests/test_core_guards.py` walked `ast` keyword arguments and never
+looked at positional ones, so three `ValidationCheck(...)` constructions were
+invisible to it. It returned no offenders — from a tree that had three. The
+enforced constructor found them at runtime, which is the only reason anybody
+knows. Had GUARD 2 stayed opt-in, that sweep would still be reporting zero.
+
+The two are the same defect in different machinery: **the output "nothing to
+report" carried no information about whether there was anything to report.**
+The test for it is not "did the verifier pass" but "did the verifier look" —
+which is what mutating the verifier answers and nothing else does.
+
+**And the reason this is a rule rather than a note.** Two instances in one
+session, in two unrelated tools, neither found by review. A sweep narrower than
+the rule it audits and a mutation that cannot apply are the same defect wearing
+different hats, and both are invisible to exactly the person best placed to
+notice.
 
 **What to do about it.**
 
@@ -3976,6 +3993,14 @@ which writes CRLF. **All the pin tests passed locally and all six failed in a
 clean checkout of the same commit.** The re-pin was correct; the bytes it was
 taken over were not.
 
+**One `git` artefact worth knowing before it is chased.** After a bulk
+rewrite of many tracked files, `git status --short` reports a long list of
+` M` entries for files that are byte-identical to their blobs — a stale
+stat-cache effect, not a content difference, and it survives
+`git update-index --refresh`. **`git diff HEAD --name-only` is authoritative**
+and was the command that settled it: it reported four files where `status`
+reported forty-three. Reach for it whenever the two disagree.
+
 So the gap is closed where it actually is, in
 `tests/test_pin_portability.py`: no file that any frozen experiment pins may
 contain a carriage return. It is deliberately not another digest check -- those
@@ -3984,6 +4009,17 @@ belonging to someone who did not cause it. This one fails on the machine that
 caused it, in the run that caused it, which is the only place the information
 is cheap. Its paths are read off the config modules rather than listed, for the
 same reason `.gitattributes` refuses to scope itself.
+
+**Verify a pin fix with a real `git clone`, not `git archive`.** `archive`
+streams blob bytes and applies export attributes; `clone` runs the checkout
+filters, which is where `core.autocrlf` and `eol=lf` actually meet. On this
+machine `core.autocrlf=true` is set in the **system** config, so every fresh
+clone inherits it — which is exactly the buyer's condition and the one the
+`.gitattributes` comment was written about. The two agreed here, and that is a
+result rather than a guarantee: for this one fault the difference between them
+is the entire question. The fix was confirmed by cloning the pushed commit into
+a fresh directory: zero CRLF files in the working tree, 35 of 35 pins matching,
+and the full suite green in the clone.
 
 
 ## OPEN DECISION — SRIA: document in place, or separate the repository

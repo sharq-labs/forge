@@ -20,10 +20,33 @@ pin test passed locally and all six failed in a clean checkout of the same
 commit. The re-pin was correct; the bytes it was taken over were not.
 
 So this file checks the one property that makes a pin portable: **no pinned
-file contains a carriage return.** It is deliberately not a digest check --
-those already exist, one per experiment, and they are what fails *later*. This
-fails on the machine that caused it, in the same run that caused it, which is
-the only place the information is cheap.
+file contains a carriage return.**
+
+DO NOT REPLACE THIS WITH A DIGEST CHECK
+---------------------------------------
+That is the obvious refactor and it removes the entire value. Digest checks
+already exist, one per frozen experiment, and they are precisely what did not
+help: **they were green on the machine that produced the fault.** A digest can
+only compare the bytes in front of it against a number taken from the bytes in
+front of it, so when the same wrong bytes produce both, it agrees with itself.
+Its failure surfaces on the *next clean checkout*, which is someone else's
+machine, after the person who could explain it has moved on.
+
+This check is different in exactly one way, and the way is the point: it tests
+a property of the bytes that does not depend on any recorded number. A
+carriage return in a pinned file is wrong whether or not a digest was taken
+over it, whether or not the digest matches, and whether or not anyone has
+re-pinned yet. So it fails **in the run that causes the fault**, on the machine
+that caused it, while the cause is still on screen — the only place the
+information is cheap.
+
+Concretely: the thermal re-freeze re-pinned six digests from CRLF bytes. Every
+digest test passed. This test would have failed immediately, named the six
+files, and cost one minute instead of a bad commit on the default branch.
+
+If a future reader is tempted to fold this into the experiment digest tests
+because "it is the same thing" — it is not, and the difference is which machine
+finds out.
 """
 
 from __future__ import annotations
