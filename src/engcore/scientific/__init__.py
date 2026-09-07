@@ -125,6 +125,15 @@ from .results import (
     unverified_report,
 )
 from .serialization import to_json
+from .consensus import (
+    CONSENSUS_SCHEMA,
+    ComponentKind,
+    CrossSolverConsensus,
+    IndependenceVerdict,
+    RouteComparison,
+    SharedComponent,
+    SolveRoute,
+)
 from .solvers import (
     ConvergenceState,
     CoreCapabilities,
@@ -232,6 +241,14 @@ __all__ = [
     "PreparedSolve",
     "RawSolverOutput",
     "ConvergenceState",
+    # cross-solver consensus
+    "CrossSolverConsensus",
+    "SolveRoute",
+    "SharedComponent",
+    "ComponentKind",
+    "IndependenceVerdict",
+    "RouteComparison",
+    "CONSENSUS_SCHEMA",
     # results
     "ScientificDataReference",
     "ScientificResult",

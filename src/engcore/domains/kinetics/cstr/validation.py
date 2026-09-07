@@ -73,6 +73,12 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 
+from ....scientific.consensus import (
+    ComponentKind,
+    CrossSolverConsensus,
+    SharedComponent,
+    SolveRoute,
+)
 from ....scientific.results.thresholds import VerificationThresholds
 from ....scientific.results.validation import (
     ValidationCheck,
@@ -533,6 +539,72 @@ CSTR_GATE_THRESHOLDS = VerificationThresholds(
     ),
 )
 
+#: What every integration route through this domain is made of.
+#:
+#: The four components below are shared by **every** method ``assemble`` can be
+#: asked for, because they are built once, before a method is chosen:
+#: ``assemble`` closes over one ``rhs`` and one ``jacobian`` and hands the same
+#: two callables to whichever integrator runs, and the integrator that runs is
+#: always the same library routine with the same step controller and the same
+#: error norm.
+#:
+#: Declaring them is what makes the BDF-versus-Radau comparison refuse a level
+#: in :mod:`engcore.scientific.consensus` rather than by a hard-coded ``None``
+#: in this module. The refusal is now a consequence of what the routes say they
+#: are, and a future route that genuinely shared none of this would earn the
+#: level without anybody editing the rule — which is the point of moving it.
+_SHARED_INTEGRATION_COMPONENTS = frozenset(
+    {
+        SharedComponent(
+            ComponentKind.RESIDUAL,
+            "engcore.domains.kinetics.cstr.solver:assemble.rhs",
+            "one right-hand side, closed over the run and handed to whichever "
+            "integrator is asked for",
+        ),
+        SharedComponent(
+            ComponentKind.JACOBIAN,
+            "engcore.domains.kinetics.cstr.solver:assemble.jacobian",
+            "one analytic Jacobian, from the same closure as the right-hand "
+            "side",
+        ),
+        SharedComponent(
+            ComponentKind.STEP_CONTROL,
+            "scipy.integrate:solve_ivp",
+            "the same adaptive step control and error norm for every implicit "
+            "method it offers",
+        ),
+        SharedComponent(
+            ComponentKind.LIBRARY,
+            "scipy.integrate:implicit_ivp_family",
+            "both methods are members of one library's implicit family and "
+            "share its unit conversions and its termination logic",
+        ),
+    }
+)
+
+
+def integration_route(method: str, solver: Any) -> SolveRoute:
+    """One integration method, declaring what it is made of.
+
+    Every method gets the *same* component set, and that is the honest
+    declaration rather than a shortcut. BDF and Radau are genuinely different
+    families — different order selection, different stage structure — and that
+    difference is real and is why the comparison is worth running at all. What
+    it is not is independence: the two families differ in how they step, and
+    agree entirely in what they step, in what derivative they step it with, and
+    in who decides whether a step was acceptable.
+    """
+    return SolveRoute(
+        route_id=f"kinetics.cstr.integration:{method}",
+        solver=solver,
+        components=_SHARED_INTEGRATION_COMPONENTS,
+        notes=(
+            f"the {method} member of this domain's implicit integrator "
+            f"family, at the finest rung of the declared tolerance ladder"
+        ),
+    )
+
+
 #: A ladder shorter than this cannot show a trend worth calling convergence.
 MIN_RUNGS = 3
 
@@ -595,6 +667,10 @@ class CSTRVerificationReport:
     cross_method_agrees: bool | None
     cross_method_detail: str
     cross_method_max_rel_difference: float | None
+    #: The core record behind the cross-method arm, or ``None`` when no
+    #: comparison was made. It is what decides that the arm establishes
+    #: nothing; see :meth:`to_report`.
+    cross_method_consensus: CrossSolverConsensus | None = None
     thresholds: VerificationThresholds = CSTR_GATE_THRESHOLDS
 
     # The three numbers are read off the record rather than stored beside it,
@@ -749,10 +825,23 @@ class CSTRVerificationReport:
                 detail=self.cross_method_detail,
                 residual=self.cross_method_max_rel_difference,
                 tolerance=self.tolerance_rel_tol,
-                # Deliberately establishes nothing: the two methods share this
-                # domain's right-hand side, Jacobian and SciPy's step control.
-                # See the module docstring.
-                establishes=None,
+                # Establishes nothing, and no longer because this line says so.
+                # The level comes from the consensus record, which refuses it
+                # because both routes declare the same right-hand side, the
+                # same analytic Jacobian and the same step control. A hard
+                # `None` here would have been a rule one reader had to trust;
+                # this is a rule a reader can check, against a declaration that
+                # travels in the record.
+                establishes=(
+                    self.cross_method_consensus.establishes
+                    if self.cross_method_consensus is not None
+                    else None
+                ),
+                evidence=(
+                    self.cross_method_consensus.evidence()
+                    if self.cross_method_consensus is not None
+                    else ()
+                ),
             ),
         ]
         return ValidationReport(checks=tuple(checks), notes=self.claim)
@@ -777,6 +866,14 @@ class CSTRVerificationReport:
             "cross_method_detail": self.cross_method_detail,
             "cross_method_max_rel_difference":
                 self.cross_method_max_rel_difference,
+            # The declaration behind the refusal. Without it a reader of a
+            # stored report can see that the arm established nothing and not
+            # what made that true.
+            "cross_method_consensus": (
+                self.cross_method_consensus.to_dict()
+                if self.cross_method_consensus is not None
+                else None
+            ),
             "levels_earned": [level.value for level in self.levels_earned],
             "claim": self.claim,
             "thresholds": self.thresholds.to_dict(),
@@ -1122,6 +1219,7 @@ def run_verification_gate(
     # --- the cross-method arm (establishes nothing) -----------------------
     cross_method_agrees: bool | None = None
     cross_method_max_rel_difference: float | None = None
+    cross_method_consensus: CrossSolverConsensus | None = None
     if finest_result is None or cross_method == run.integration.method:
         cross_method_detail = (
             "no completed reference rung to compare against"
@@ -1155,20 +1253,38 @@ def run_verification_gate(
                 f"({alt_result.convergence.value}), so no comparison is possible"
             )
         else:
-            differences = [
-                _relative(
-                    alt_result.values[name].magnitude,
-                    finest_result.values[name].magnitude,
-                )
-                for name in CONVERGENCE_QOIS
-                if name in alt_result.values and name in finest_result.values
-            ]
-            cross_method_max_rel_difference = max(differences) if differences else None
-            cross_method_agrees = bool(
-                cross_method_max_rel_difference is not None
-                and cross_method_max_rel_difference
-                <= _tolerance_rel_tol
+            # The comparison itself, and the reason it establishes nothing,
+            # both come from the core mechanism now. `_SolverIdentity` is read
+            # off the solver that ran, so a route names the version of the
+            # library it actually used rather than a constant written here.
+            cross_method_consensus = CrossSolverConsensus.over(
+                consensus_id=f"kinetics.cstr.cross_method:{run_id_prefix}",
+                routes=(
+                    integration_route(run.integration.method, _Solver().identity),
+                    integration_route(cross_method, _Solver().identity),
+                ),
+                values={
+                    f"kinetics.cstr.integration:{run.integration.method}": {
+                        name: finest_result.values[name].magnitude
+                        for name in CONVERGENCE_QOIS
+                        if name in finest_result.values
+                    },
+                    f"kinetics.cstr.integration:{cross_method}": {
+                        name: alt_result.values[name].magnitude
+                        for name in CONVERGENCE_QOIS
+                        if name in alt_result.values
+                    },
+                },
+                thresholds=thresholds,
+                tolerance_key="tolerance_rel_tol",
+                notes=(
+                    "the same physics through two members of one implicit "
+                    "integrator family"
+                ),
             )
+            comparison = cross_method_consensus.comparison
+            cross_method_max_rel_difference = comparison.worst_relative_difference
+            cross_method_agrees = comparison.agreed
             cross_method_detail = (
                 f"{run.integration.method} and {cross_method} at "
                 f"{ladder[-1].label} agree on every QoI to "
@@ -1192,6 +1308,7 @@ def run_verification_gate(
         cross_method_agrees=cross_method_agrees,
         cross_method_detail=cross_method_detail,
         cross_method_max_rel_difference=cross_method_max_rel_difference,
+        cross_method_consensus=cross_method_consensus,
         thresholds=thresholds,
     )
 
