@@ -3577,48 +3577,6 @@ The `reproduce` job has lost its `continue-on-error` and is now load-bearing: it
 is the thing that catches the next undeclared dependency on the day it lands,
 which is exactly the class of defect P.1 records.
 
-### P.4 A release page cited a third environment that had not run this draw
-
-**Found by re-reading a pin nobody asked me to doubt, and it is the most
-valuable thing that round produced.**
-
-`docs/release/v1.1.md` opened by claiming its numbers had been reproduced on
-**three environments**, and named the container as the third: *"the Docker
-reproduction ran on a third environment and produced the same case-set digest,
-`e14542c1…`, with the same four metrics and the same ten false-accept ids."*
-
-The container really did run, it really is a genuinely different environment
-— Debian bookworm, Azure kernel, ngspice 39 against the host's 42 — and it
-really did agree. On a **different draw**. `P.2` records what it actually
-produced: case-set digest `476976c1…`, false reject `1/241 (0.4 %)`. The v1.1
-page's own digest is `e14542c1…` with false reject `0/241`. Two different case
-sets, two different numbers, one sentence claiming the second confirmed the
-first.
-
-**Why it matters more than the arithmetic.** The count was wrong by one, which
-is nothing. What was wrong is the *kind* of claim: a reproducibility page citing
-evidence from a run against different inputs, where the whole point of the
-case-set digest is to make exactly that substitution visible. The digest was
-working. Nobody read it.
-
-**Why a technical buyer finds this first.** Reproducibility is the strongest
-claim on the page and the cheapest to check — the digests are printed right
-there, and a reader who opens the linked Actions run sees `476976c1…` where the
-page says `e14542c1…`. It is the first thing a sceptical reader verifies and the
-last thing anyone re-reads before cutting a tag, because it passed once.
-
-**Corrected on the page**, which now says the count on that draw is two, not
-three, and states what the container is actually worth: not a confirmation of
-the host, but an independent resolution on a different kernel whose digest came
-out identical anyway.
-
-**The generalisation, which is not fixed.** Every cross-reference between a
-release page and a CI run is currently prose. Nothing mechanically checks that a
-digest quoted in `docs/release/*.md` is the digest the linked run produced, and
-this defect is precisely what such a check would catch. A pin that agrees with
-its own text is not evidence that the text describes the right run. **The check
-does not exist and this round did not build it.**
-
 ### P.3 GUARD 3 broke seven kinetics tests, and neither tier that anyone runs sees them
 
 **Not this round's defect and not fixed here** — recorded because measuring it
@@ -3665,6 +3623,106 @@ So the repair costs no number; it costs the `src/` tree object the release page
 pins, which must be re-read and the tag re-cut after a rebase.
 
 ---
+
+### P.4 A release page cited a third environment that had not run this draw
+
+**Found by re-reading a pin nobody asked me to doubt, and it is the most
+valuable thing that round produced.**
+
+`docs/release/v1.1.md` opened by claiming its numbers had been reproduced on
+**three environments**, and named the container as the third: *"the Docker
+reproduction ran on a third environment and produced the same case-set digest,
+`e14542c1…`, with the same four metrics and the same ten false-accept ids."*
+
+The container really did run, it really is a genuinely different environment
+— Debian bookworm, Azure kernel, ngspice 39 against the host's 42 — and it
+really did agree. On a **different draw**. `P.2` records what it actually
+produced: case-set digest `476976c1…`, false reject `1/241 (0.4 %)`. The v1.1
+page's own digest is `e14542c1…` with false reject `0/241`. Two different case
+sets, two different numbers, one sentence claiming the second confirmed the
+first.
+
+**Why it matters more than the arithmetic.** The count was wrong by one, which
+is nothing. What was wrong is the *kind* of claim: a reproducibility page citing
+evidence from a run against different inputs, where the whole point of the
+case-set digest is to make exactly that substitution visible. The digest was
+working. Nobody read it.
+
+**Why a technical buyer finds this first.** Reproducibility is the strongest
+claim on the page and the cheapest to check — the digests are printed right
+there, and a reader who opens the linked Actions run sees `476976c1…` where the
+page says `e14542c1…`. It is the first thing a sceptical reader verifies and the
+last thing anyone re-reads before cutting a tag, because it passed once.
+
+**Corrected on the page**, which now says the count on that draw is two, not
+three, and states what the container is actually worth: not a confirmation of
+the host, but an independent resolution on a different kernel whose digest came
+out identical anyway.
+
+**The generalisation, deliberately costed and left unbuilt.** Every
+cross-reference between a release page and a CI run is currently prose. Nothing
+mechanically checks that a digest quoted in `docs/release/*.md` is the digest
+the linked run produced, and this defect is precisely what such a check would
+catch. A pin that agrees with its own text is not evidence that the text
+describes the right run.
+
+The check is the same class as the case-set digest, which *did* work here — the
+digest correctly recorded that the container scored a different case set, and
+the only thing missing was something that reads it. That is an argument for
+building it and not an argument for urgency: the failure it prevents happens at
+the moment a release page is written, so **the next release is the right time
+to build it, and this round deliberately did not.** Costed at: one script that
+parses the digests out of `docs/release/*.md`, fetches the linked Actions run's
+`results_hard.json`, and fails when they differ; plus a CI job to run it.
+
+### P.5 A condition's binding instant follows the shape of the condition, not the direction of the run
+
+**The general lesson behind TASK 5, recorded because the next domain will need
+it and the obvious wrong answer looks right.**
+
+Two conditions on the rated conductor model are bounds on a *path* rather than
+on a state, and both are now assessed away from the converged endpoint:
+
+| Condition | Shape | Binding instant |
+|---|---|---|
+| `reduced_debye_temperature` | floor on `T` | the **coldest** state |
+| `linearization_excursion_ratio` | ceiling on `\|T - T_ref\|` | the state **furthest from `T_ref`** |
+
+The floor came first, and it makes the wrong rule look right. A floor on `T`
+binds at the coldest state, so the natural generalisation — *"take the extreme
+temperature of the run"* — produces the correct answer for it, and produces a
+`max` over temperature for the ceiling.
+
+**That is wrong, and it fails silently.** The band is a ceiling on the
+*distance from a reference*, not on temperature, so which endpoint binds depends
+on where `T_ref` sits relative to the run:
+
+- warming away from a cold reference → binds at the **final** state
+- cooling towards the reference → binds at the **initial** state
+- crossing the reference → binds on whichever side reaches further
+
+`max` over temperature gets the first case right and the second case wrong, and
+the second case is a real one: a cold-soaked part warming into its band starts
+outside it. Every other condition in such a report passes, so nothing else
+notices, and the reading looks correct because it agrees with the floor's
+answer whenever the run happens to warm.
+
+**The rule.** Derive the binding instant from what the bound is *over* — the
+quantity the condition constrains — never from the direction the run happens to
+move. `max` of `|T - T_ref|` over the endpoints answers all three cases above
+without casing on them, and is exact because the lumped trajectory is monotone
+between its endpoints.
+
+**The test is the part that matters**, because the defect is invisible without
+one: `test_the_band_binds_on_a_cold_swing_as_well_as_a_hot_one` is the only
+thing standing between this and a `max`-over-temperature that would pass every
+other test in the suite.
+
+**Where this lands next.** Any condition of the form "bound on a function of
+state, over a run" inherits it. The thermal excursion budgets already take
+their own extremes; a future condition on a rate, a gradient, or a distance
+from any reference will need the same question asked, and the answer will not
+be "the hottest" or "the coldest" in general.
 
 ## RULE — a check whose failure has never been observed is unverified
 
