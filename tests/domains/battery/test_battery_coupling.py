@@ -260,6 +260,23 @@ def test_the_state_of_charge_falls_and_the_terminal_voltage_falls_with_it():
     assert voltages == sorted(voltages, reverse=True)
 
 
+def test_step_count_cannot_change_the_polarization_verdict():
+    """One 120 s exposure is settled whether divided into 1, 10, or 100 steps."""
+    statuses = []
+    final_charges = []
+    for steps in (1, 10, 100):
+        run = march(
+            load=build_load(duration=Quantity(120.0 / steps, S)),
+            steps=steps,
+            step_limit=100,
+        )
+        statuses.append(run.final.status(RINT))
+        final_charges.append(run.final.final_state_of_charge.magnitude_in(ONE))
+
+    assert statuses == [ValidityStatus.IN_DOMAIN] * 3
+    assert final_charges == pytest.approx([final_charges[0]] * 3)
+
+
 def test_the_heat_is_constant_because_r_int_does_not_depend_on_temperature():
     """The reason the coupling is one-way, visible in the numbers.
 
@@ -443,6 +460,7 @@ def test_a_coupled_run_and_a_standalone_assessment_agree_at_the_same_point():
         state_of_charge=step.state_of_charge,
         discharge_current=build_load().current,
         cell_temperature=step.cell_temperature,
+        elapsed_time_under_load=step.elapsed,
     )
     assert standalone == dict(step.validity)
 

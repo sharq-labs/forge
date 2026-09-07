@@ -608,6 +608,14 @@ def run_self_heating_discharge(
         convergence = thermal.convergence
         thermal_validation = thermal.validation
 
+        # The solve above advances one numerical interval, but polarization is
+        # a response to time since the load was applied.  Judging it with the
+        # interval length makes a purely numerical choice of step count change
+        # the physical verdict.  Carry the elapsed end time into the validity
+        # problem instead; both temperature extrema belong to this interval's
+        # verdict at that accumulated exposure.
+        elapsed_end_s = elapsed_s + step_s
+        elapsed_under_load = Quantity(elapsed_end_s, ctx.TIME_UNIT)
         problem = bat.build_battery_problem(cell, step_load)
         # Assessed at both ends of the interval, not only at the temperature
         # the step started from. The state of charge and the current are the
@@ -620,6 +628,7 @@ def run_self_heating_discharge(
                 state_of_charge=state_of_charge,
                 discharge_current=load.current,
                 cell_temperature=instant_temperature,
+                elapsed_time_under_load=elapsed_under_load,
             )
             for instant, instant_temperature in (
                 (STEP_START, temperature),
@@ -628,7 +637,7 @@ def run_self_heating_discharge(
         }
         verdicts = _over_the_step([by_instant[i] for i in ASSESSED_INSTANTS])
 
-        elapsed_s += step_s
+        elapsed_s = elapsed_end_s
         final_soc = cell_solve.metrics[mdl.FINAL_STATE_OF_CHARGE_METRIC]
         recorded.append(
             SelfHeatingStep(

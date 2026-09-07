@@ -1575,6 +1575,7 @@ def derived_cell_quantities(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    elapsed_time_under_load: Quantity | None = None,
 ) -> dict[str, Quantity]:
     """Every quantity a validity condition in this domain is stated over.
 
@@ -1604,6 +1605,9 @@ def derived_cell_quantities(
     ocv_empty = base.get(OCV_AT_EMPTY)
     ocv_full = base.get(OCV_AT_FULL)
     duration = base.get(DURATION)
+    polarization_duration = (
+        duration if elapsed_time_under_load is None else elapsed_time_under_load
+    )
 
     rate = c_rate(current=discharge_current, nominal_capacity=capacity)
     final_soc = final_state_of_charge(
@@ -1697,11 +1701,11 @@ def derived_cell_quantities(
             span=base.get(CAPACITY_TEMPERATURE_SPAN),
         ),
         POLARIZATION_SETTLING_RATIO: polarization_settling_ratio(
-            duration=duration,
+            duration=polarization_duration,
             time_constant=base.get(POLARIZATION_TIME_CONSTANT),
         ),
         POLARIZATION_UNMODELLED_FRACTION: polarization_unmodelled_fraction(
-            duration=duration,
+            duration=polarization_duration,
             time_constant=base.get(POLARIZATION_TIME_CONSTANT),
         ),
         PEUKERT_CAPACITY_RATIO: peukert_capacity_ratio(

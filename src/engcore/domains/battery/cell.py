@@ -597,6 +597,7 @@ def battery_validity_context(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    elapsed_time_under_load: Quantity | None = None,
 ) -> DomainValidityContext:
     """The full context every ``assess_*`` below consumes.
 
@@ -643,6 +644,7 @@ def battery_validity_context(
                 state_of_charge=state_of_charge,
                 discharge_current=discharge_current,
                 cell_temperature=cell_temperature,
+                elapsed_time_under_load=elapsed_time_under_load,
             ),
         },
         reserved=ASSEMBLER_NAMESPACE,
@@ -764,6 +766,7 @@ def assess_all(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    elapsed_time_under_load: Quantity | None = None,
 ) -> dict[str, ValidityAssessment]:
     """Every model's verdict, keyed by model id, from one context build.
 
@@ -777,6 +780,7 @@ def assess_all(
         state_of_charge=state_of_charge,
         discharge_current=discharge_current,
         cell_temperature=cell_temperature,
+        elapsed_time_under_load=elapsed_time_under_load,
     )
     return {
         model.model_id: context.assess(model) for model in mdl.BATTERY_MODELS
