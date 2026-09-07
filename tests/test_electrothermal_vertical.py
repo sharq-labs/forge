@@ -1270,13 +1270,21 @@ def test_i_universal_core_gained_nothing():
     assert set(composition.__all__) == {
         "QUANTITY_DEPENDENCY_SCHEMA",
         "QuantityDependency",
+        # Added by the core round: the *realization* of a dependency -- the
+        # value that crossed, the record it came from, the instant it was read
+        # at. It is a second record in this package, not a twelfth candidate
+        # abstraction: no system, component, port, connector, material or mesh
+        # type was created, which is what the loop above still asserts.
+        "QUANTITY_TRANSFER_SCHEMA",
+        "QuantityTransfer",
         "externally_imposed",
+        "require_agreeing_transfers",
         "unresolved_inputs",
     }
     package = REPO_ROOT / "src/engcore/scientific/composition"
     assert sorted(
         p.name for p in package.rglob("*.py") if "__pycache__" not in p.parts
-    ) == ["__init__.py", "dependency.py"]
+    ) == ["__init__.py", "dependency.py", "transfer.py"]
 
     for path in (REPO_ROOT / "src/engcore/scientific").rglob("*.py"):
         if "__pycache__" in path.parts:
@@ -1694,7 +1702,7 @@ def test_o3_no_existing_schema_version_moved():
     from src.engcore.scientific.solvers.protocol import RAW_OUTPUT_SCHEMA
 
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
-    assert PROVENANCE_SCHEMA == "provenance_record/2"
+    assert PROVENANCE_SCHEMA == "provenance_record/3"
     assert EXECUTION_BINDING_SCHEMA == "execution_binding/1"
     assert RESULT_SCHEMA == "scientific_result/4"
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"

@@ -67,10 +67,12 @@ from ..domains.repair import ConditionRepair, merge_repairs
 from ..domains.electrical.dc import circuit as dc_circuit
 from ..domains.electrical import dc_applicability as dc_app
 from ..domains.electrical.dc import models as dc_models
+from ..domains.electrical.dc import components as dc_components
 from ..domains.electrical.dc import problem as dc_problem
 from ..domains.electrical.dc import solver as dc_solver
 from ..domains.thermal_models import context as thermal_ctx
 from ..domains.thermal_models import lumped as lump
+from ..scientific.composition import QuantityTransfer
 from ..scientific.errors import ScientificCoreError
 from ..scientific.models.definition import (
     ModelInputSpec,
@@ -1567,18 +1569,20 @@ def _electrical_assessments(
     circuit = system.circuit_at(cp.converged_resistances(system, run))
     assessments: dict[str, ValidityAssessment] = {}
 
-    # The ambient each element sits in, taken from the thermal body that shares
-    # its component_id. It reaches the resistor's assessment because a rated
-    # dissipation is stated against a reference ambient and derates away from
-    # it: without the ambient, a declared derating line cannot be evaluated and
-    # `dissipated_power_utilization` is UNKNOWN rather than answered from the
-    # printed number. This is the one place where a thermal declaration crosses
-    # into an electrical model's assessment, and it crosses because the
-    # datasheet it comes from puts the two on the same line.
-    ambient_of = {
-        stage.component_id: stage.body.ambient_temperature
-        for stage in system.stages
-    }
+    # The ambient each element sits in, read OFF THE RECORD the coupled run
+    # made. It used to be re-derived here as
+    # `{stage.component_id: stage.body.ambient_temperature}` -- a dict
+    # comprehension matching component ids, with nothing saying a value had
+    # crossed a domain boundary, which problem it came from, or when. It
+    # crosses because a rated dissipation is stated against a reference ambient
+    # and derates away from it, so without it a declared derating line cannot
+    # be evaluated and `dissipated_power_utilization` is UNKNOWN rather than
+    # answered from the printed number.
+    #
+    # `cp.ambient_transfers` makes the declaration once and the run's
+    # provenance carries it; this reads it. One statement, not two that can
+    # drift.
+    ambient_of = _ambient_by_component(run)
 
     resistors = []
     for resistor in circuit.resistors:
@@ -1591,7 +1595,7 @@ def _electrical_assessments(
                     RESISTOR_POWER_METRIC.format(component_id=cid)
                 ),
                 voltage_across=electrical.value(f"resistor_voltage:{cid}"),
-                ambient_temperature=ambient_of.get(cid),
+                ambient=ambient_of.get(cid),
             )
         )
     if resistors:
@@ -1699,6 +1703,28 @@ def _companion_model_versions(
     return tuple(sorted(attached))
 
 
+def _ambient_by_component(
+    run: "cp.CoupledRun",
+) -> dict[str, "QuantityTransfer"]:
+    """The declared ambient crossings of this run, keyed by the element they
+    reach.
+
+    Read off ``run.provenance.transfers`` rather than rebuilt from the system,
+    so the crossing a report acts on is the crossing the record states. A run
+    whose provenance carries none supplies none, and every element's derating
+    line is then honestly UNKNOWN -- which is what happens, rather than a
+    quantity arriving from a dict nobody wrote down.
+    """
+    by_component: dict[str, QuantityTransfer] = {}
+    for transfer in run.provenance.transfers:
+        component = dc_components.resistor_component_id(
+            transfer.dependency.target_problem_id
+        )
+        if component is not None:
+            by_component[component] = transfer
+    return by_component
+
+
 def _electrical_repairs(
     system: cp.CoupledElectroThermalSystem,
     electrical: "ScientificResult",
@@ -1716,10 +1742,9 @@ def _electrical_repairs(
     about.
     """
     circuit = system.circuit_at(cp.converged_resistances(system, run))
-    ambient_of = {
-        stage.component_id: stage.body.ambient_temperature
-        for stage in system.stages
-    }
+    # The same declared crossings the assessments read. See
+    # `_electrical_assessments`.
+    ambient_of = _ambient_by_component(run)
     collected: list[tuple[ConditionRepair, ...]] = []
     for resistor in circuit.resistors:
         cid = resistor.component_id
@@ -1732,7 +1757,7 @@ def _electrical_repairs(
                     RESISTOR_POWER_METRIC.format(component_id=cid)
                 ),
                 voltage_across=electrical.value(f"resistor_voltage:{cid}"),
-                ambient_temperature=ambient_of.get(cid),
+                ambient=ambient_of.get(cid),
             )
         )
     for source in circuit.voltage_sources:
@@ -2415,6 +2440,21 @@ _PROBE_CURRENT = Quantity(0.01, "ampere")
 _PROBE_AMBIENT = Quantity(300.0, "kelvin")
 
 
+#: The probe's own ambient crossing. A probe is not exempt from declaring one:
+#: this domain refuses a bare quantity that came from elsewhere, and "elsewhere"
+#: for a probe is a probe.
+_PROBE_AMBIENT_TRANSFER = QuantityTransfer(
+    dependency=dc_models.ambient_transfer_declaration(
+        source_problem_id="capability-probe-ambient",
+        source_quantity="ambient_temperature",
+        component_id=_PROBE_RESISTOR.component_id,
+    ),
+    value=_PROBE_AMBIENT,
+    source_record_id="capability-probe",
+    instant="capability-probe",
+)
+
+
 def _unknown_rating_conditions(
     rating: dc_models.ComponentRating,
 ) -> frozenset[str]:
@@ -2429,7 +2469,11 @@ def _unknown_rating_conditions(
         rating=rating,
         dissipated_power=_PROBE_POWER,
         voltage_across=_PROBE_VOLTAGE,
-        ambient_temperature=_PROBE_AMBIENT,
+        # The probe declares its own crossing, because there is no rule that a
+        # probe may skip one. It names a probe problem and a probe instant --
+        # which is exactly what it is, said out loud, rather than a bare
+        # temperature with nothing behind it.
+        ambient=_PROBE_AMBIENT_TRANSFER,
     )
     source = dc_models.assess_voltage_source_validity(
         dc_problem.voltage_source_relation_problem(_PROBE_SOURCE),

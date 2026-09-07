@@ -51,6 +51,7 @@ from ...repair import (
     RefusedInversion,
     condition_repairs,
 )
+from ....scientific.composition import QuantityDependency, QuantityTransfer
 from ....scientific.errors import InvalidScientificProblem
 from ....scientific.ir.problem import ScientificProblem
 from ....scientific.models.definition import (
@@ -68,6 +69,7 @@ from ....scientific.models.registry import ModelRegistry
 from ....scientific.serialization import require_schema, schema_string
 from ....scientific.solvers.capability import CoreCapabilities, SolverCapability
 from ....scientific.units.quantity import Quantity
+from .components import resistor_problem_id
 
 #: Domain capability. Declared here, in the electrical package — the
 #: universal ``CoreCapabilities`` is never extended with domain constants.
@@ -102,6 +104,11 @@ RATED_POWER = "rated_power"
 #: temperature. Declaring both turns `dissipated_power_utilization` from a
 #: comparison against a constant into a comparison against that line.
 RATED_POWER_TEMPERATURE = "rated_power_temperature"
+#: The ambient this element sits in. Not a name this domain computes and not
+#: one a circuit statement carries: it is supplied from outside, and the only
+#: sanctioned way in is a declared :class:`QuantityTransfer`. See
+#: :func:`ambient_transfer_declaration`.
+AMBIENT_TEMPERATURE = "ambient_temperature"
 ZERO_POWER_TEMPERATURE = "zero_power_temperature"
 MAXIMUM_WORKING_VOLTAGE = "maximum_working_voltage"
 MAXIMUM_CURRENT = "maximum_current"
@@ -987,13 +994,77 @@ def assess_kcl_validity() -> ValidityAssessment:
     )
 
 
+def ambient_transfer_declaration(
+    *, source_problem_id: str, source_quantity: str, component_id: str
+) -> QuantityDependency:
+    """The declaration an ambient must cross under to reach this domain.
+
+    THE CROSSING THIS EXISTS FOR. A resistor's rated dissipation is stated
+    against a reference ambient and derates away from it, so a declared
+    derating line cannot be evaluated without the ambient the part sits in --
+    and no circuit statement carries one. It came in from whatever body shared
+    the element's ``component_id``, matched in a dict comprehension. No record
+    said it crossed, no reader could tell this model's verdict depended on
+    another problem's declaration, and nothing checked that the two sides meant
+    the same quantity at the same instant.
+
+    This function is the electrical half of the contract: the target name and
+    the unit are this domain's to state, because this domain is the one that
+    reads them. The source half is the supplying domain's, and neither side
+    gets to assume the other's.
+    """
+    return QuantityDependency(
+        source_problem_id=source_problem_id,
+        source_quantity=source_quantity,
+        target_problem_id=resistor_problem_id(component_id),
+        target_quantity=AMBIENT_TEMPERATURE,
+        unit_exemplar=TEMPERATURE_UNIT,
+        name=f"ambient_into_resistor:{component_id}",
+        description=(
+            "The ambient the element sits in, which places its derating line. "
+            "Without it a declared line cannot be evaluated and "
+            "dissipated_power_utilization is UNKNOWN rather than answered "
+            "from the printed number."
+        ),
+    )
+
+
+def _received_ambient(ambient: "QuantityTransfer | None") -> Quantity | None:
+    """The ambient, taken out of the declaration it crossed under.
+
+    FAIL-CLOSED, and this is the whole of it: a bare ``Quantity`` is refused.
+    A caller holding a number that came from another problem must say so with
+    a record, or this domain will not read it. That is the difference between
+    a crossing and a coincidence of component ids.
+    """
+    if ambient is None:
+        return None
+    if not isinstance(ambient, QuantityTransfer):
+        raise InvalidScientificProblem(
+            f"the ambient reaching this element arrived as a "
+            f"{type(ambient).__name__}, not a declared QuantityTransfer. It "
+            f"is supplied by another problem, and a value that crosses a "
+            f"domain boundary without a record saying where it came from and "
+            f"when is a value nobody can check. Build one with "
+            f"ambient_transfer_declaration()"
+        )
+    if ambient.dependency.target_quantity != AMBIENT_TEMPERATURE:
+        raise InvalidScientificProblem(
+            f"the transfer reaching this element declares its target as "
+            f"{ambient.dependency.target_quantity!r}, not "
+            f"{AMBIENT_TEMPERATURE!r}. A declaration that names a different "
+            f"quantity is not a declaration of this one"
+        )
+    return ambient.received_as(TEMPERATURE_UNIT)
+
+
 def assess_resistor_validity(
     problem: ScientificProblem,
     *,
     rating: ComponentRating | None = None,
     dissipated_power: Quantity | None = None,
     voltage_across: Quantity | None = None,
-    ambient_temperature: Quantity | None = None,
+    ambient: "QuantityTransfer | None" = None,
 ) -> ValidityAssessment:
     """Was the ideal resistor relation applicable to this element, here?
 
@@ -1003,16 +1074,29 @@ def assess_resistor_validity(
     being used inside what it is rated for. A network can be solved perfectly
     and still be one whose resistor is at three times its rated dissipation,
     and those two facts must be separately reportable.
+
+    ``ambient`` is a :class:`QuantityTransfer` rather than a ``Quantity``: it
+    is supplied by another problem, and this domain will not read a crossed
+    value that arrives without the record of its crossing.
     """
-    return RESISTOR_OHM_MODEL.assess_validity(
-        declared=problem.validity_context(
+    received = _received_ambient(ambient)
+    declared = dict(
+        problem.validity_context(
             reserved=RESISTOR_OHM_MODEL.derived_quantities
-        ),
+        )
+    )
+    if received is not None:
+        # Into the DECLARED half, not the assembled one. It is not a quantity
+        # this model computed; it is a condition the element is in, and it now
+        # arrives with a record saying which problem stated it and when.
+        declared.setdefault(AMBIENT_TEMPERATURE, received)
+    return RESISTOR_OHM_MODEL.assess_validity(
+        declared=declared,
         assembled=resistor_rating_context(
             rating=rating,
             dissipated_power=dissipated_power,
             voltage_across=voltage_across,
-            ambient_temperature=ambient_temperature,
+            ambient_temperature=received,
         ),
     )
 
@@ -1145,22 +1229,61 @@ def _no_derating_line(context: Mapping[str, Any]) -> bool:
     )
 
 
-def _constant_rating_only(exponent: float):
-    """The exponent of the constant-rating reading; nothing on the line reading."""
+def _dissipation_offset(context: Mapping[str, Any]) -> Quantity | None:
+    """The offset ``A`` of ``dissipated_power_utilization``, for both readings.
 
-    def resolve(context: Mapping[str, Any]) -> float | None:
-        return exponent if _no_derating_line(context) else None
+    THIS FUNCTION IS THE CAPABILITY THAT CAME BACK. Both readings of this
+    condition are reciprocal in the rating and in the derating factor, so the
+    exponent was never the problem. The *offset* was:
 
-    return resolve
+        with no derating line   u = P / (d P_rated)                  A = 0
+        with a derating line    u = T_amb/T_zero
+                                    + (P/d)(T_zero - T_rated)/(T_zero P_rated)
+
+    and on the second line ``A = T_amb / T_zero``. The ambient used to cross
+    into this model's assessment undeclared, from whatever body shared the
+    element's component id, so it was not in the assessed context and the
+    offset could not be formed. Both inversions were therefore reported as
+    unavailable -- a real capability lost to where a number happened to live.
+
+    It is a declared input of this problem now, arriving under a
+    :class:`QuantityTransfer`, so the offset forms and the inversions are real.
+
+    Returns ``None`` when a line is declared and the ambient did NOT cross.
+    That is still the honest answer for that case, and ``condition_repairs``
+    refuses rather than reading a missing offset as zero -- zero is a different
+    algebraic claim, and it would turn an affine form into a power law.
+    """
+    if _no_derating_line(context):
+        # Not "no offset was found": the power-law reading genuinely has none,
+        # and saying so is what keeps the two cases apart.
+        return Quantity(0.0, DIMENSIONLESS)
+    ambient = context.get(AMBIENT_TEMPERATURE)
+    zero_at = context.get(ZERO_POWER_TEMPERATURE)
+    if not isinstance(ambient, Quantity) or not isinstance(zero_at, Quantity):
+        return None
+    denominator = zero_at.magnitude_in(TEMPERATURE_UNIT)
+    if denominator == 0.0:  # pragma: no cover - ComponentRating refuses it
+        return None
+    return Quantity(
+        ambient.magnitude_in(TEMPERATURE_UNIT) / denominator, DIMENSIONLESS
+    )
 
 
-_DERATING_LINE_OFFSET_IS_ELSEWHERE = (
+_AMBIENT_DID_NOT_CROSS = (
     "with a derating line declared this utilization is affine in the "
-    "reciprocal of the rating, with offset T_ambient / T_zero_power. The "
-    "ambient temperature is not a declared input of this model -- it crosses "
-    "in from the thermal body sharing this element's component id -- so the "
-    "offset cannot be formed from the assessed context and the form is not "
-    "anchored"
+    "reciprocal of the rating, with offset T_ambient / T_zero_power. No "
+    "ambient crossed into this assessment under a declared transfer, so the "
+    "offset cannot be formed and the form is not anchored. Supply it with "
+    "ambient_transfer_declaration()"
+)
+
+_A_LINE_IS_THE_PART_NOT_ITS_USE = (
+    "this temperature places the derating line, which is the manufacturer's "
+    "statement of what the part is. Moving it to make the element pass would "
+    "change the claimed part rather than how it is being used -- the "
+    "raise-the-limit move wearing a declared input's name, the same one "
+    "`ComponentRating` refuses for a derating factor above 1"
 )
 
 
@@ -1190,41 +1313,38 @@ RESISTOR_INVERSIONS = ModelInversionTable(
             inversions=(
                 MonotoneInversion(
                     target=RATED_POWER,
-                    exponent=_constant_rating_only(-1.0),
-                    unavailable=_DERATING_LINE_OFFSET_IS_ELSEWHERE,
+                    exponent=-1.0,
+                    offset=_dissipation_offset,
                     justification=(
-                        "with no derating line the utilization is "
-                        "P / (d P_rated), a reciprocal in the rating"
+                        "both readings are reciprocal in the rating: with no "
+                        "derating line the utilization is P / (d P_rated), and "
+                        "with one it is T_amb/T_zero + (P/d)(T_zero - "
+                        "T_rated)/(T_zero P_rated), affine in 1/P_rated"
                     ),
                 ),
                 MonotoneInversion(
                     target=DERATING_FACTOR,
-                    exponent=_constant_rating_only(-1.0),
-                    unavailable=_DERATING_LINE_OFFSET_IS_ELSEWHERE,
+                    exponent=-1.0,
+                    offset=_dissipation_offset,
                     admissible_maximum=Quantity(
                         NO_DERATING, DIMENSIONLESS
                     ),
                     beyond_admissible=_DERATING_ABOVE_ONE,
                     justification=(
-                        "with no derating line the utilization is "
-                        "P / (d P_rated), a reciprocal in the derating factor"
+                        "both readings are reciprocal in the derating factor, "
+                        "which divides the dissipation on the line reading "
+                        "exactly as it divides the rating on the other"
                     ),
                 ),
             ),
             refusals=(
                 RefusedInversion(
                     target=RATED_POWER_TEMPERATURE,
-                    reason=(
-                        "this temperature exists only to place the derating "
-                        "line, and " + _DERATING_LINE_OFFSET_IS_ELSEWHERE
-                    ),
+                    reason=_A_LINE_IS_THE_PART_NOT_ITS_USE,
                 ),
                 RefusedInversion(
                     target=ZERO_POWER_TEMPERATURE,
-                    reason=(
-                        "this temperature exists only to place the derating "
-                        "line, and " + _DERATING_LINE_OFFSET_IS_ELSEWHERE
-                    ),
+                    reason=_A_LINE_IS_THE_PART_NOT_ITS_USE,
                 ),
             ),
         ),
@@ -1374,6 +1494,7 @@ def _repair_context(
     problem: ScientificProblem,
     rating: ComponentRating | None,
     assembled: Mapping[str, Quantity],
+    extra_declared: Mapping[str, Quantity] | None = None,
 ) -> DomainValidityContext:
     """The assessed context, widened by the rating the caller declared.
 
@@ -1387,6 +1508,11 @@ def _repair_context(
     reserved = model.derived_quantities
     declared = dict(problem.validity_context(reserved=reserved))
     for name, value in rating_declarations(rating).items():
+        declared.setdefault(name, value)
+    # A quantity that crossed in under a declaration. Folded into the declared
+    # half for the same reason the ratings are: a hint is about the caller's
+    # numbers, and this is now one of them.
+    for name, value in dict(extra_declared or {}).items():
         declared.setdefault(name, value)
     return assembled_validity_context(
         declared=caller_declared(declared, reserved),
@@ -1402,12 +1528,18 @@ def resistor_repairs(
     rating: ComponentRating | None = None,
     dissipated_power: Quantity | None = None,
     voltage_across: Quantity | None = None,
-    ambient_temperature: Quantity | None = None,
+    ambient: "QuantityTransfer | None" = None,
 ) -> tuple[ConditionRepair, ...]:
     """What would have to change for this element's violated conditions to pass.
 
-    The arguments are exactly :func:`assess_resistor_validity`'s.
+    The arguments are exactly :func:`assess_resistor_validity`'s -- which now
+    includes the ambient, and that is what changed here. While it crossed in
+    undeclared it was not in the assessed context, so the offset of the derated
+    form could not be formed and both inversions of
+    ``dissipated_power_utilization`` were reported as unavailable. It is a
+    declared input of this problem now, so they are not.
     """
+    received = _received_ambient(ambient)
     return condition_repairs(
         model=RESISTOR_OHM_MODEL,
         context=_repair_context(
@@ -1418,7 +1550,10 @@ def resistor_repairs(
                 rating=rating,
                 dissipated_power=dissipated_power,
                 voltage_across=voltage_across,
-                ambient_temperature=ambient_temperature,
+                ambient_temperature=received,
+            ),
+            extra_declared=(
+                {} if received is None else {AMBIENT_TEMPERATURE: received}
             ),
         ),
         table=RESISTOR_INVERSIONS,

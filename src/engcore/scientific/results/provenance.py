@@ -26,6 +26,7 @@ from ..serialization import (
 )
 from ..solvers.protocol import SolverIdentity
 from .immutable import detach, freeze
+from ..composition.transfer import QuantityTransfer, require_agreeing_transfers
 from ..units.quantity import Quantity
 
 #: Bumped for ``bindings``. A record carrying only participant *sets* cannot
@@ -35,14 +36,26 @@ from ..units.quantity import Quantity
 #: scientific content, so an old reader dropping it would attribute a result
 #: to a computation it did not perform. Same rule, and same mechanism, as
 #: ``scientific_result/2`` (DATA-BOUNDARY0 §4).
-PROVENANCE_SCHEMA = schema_string("provenance_record", 2)
+PROVENANCE_SCHEMA = schema_string("provenance_record", 3)
+
+#: The version before ``transfers`` existed. Still read, never written. Bumped
+#: on the argument every other bump here has used: a quantity that crossed into
+#: this run from another domain is scientific content, not decoration. A reader
+#: that dropped it would report a result while losing the fact that one of the
+#: numbers behind it came from somewhere else -- which is exactly the state
+#: this field was added to end.
+PROVENANCE_SCHEMA_V2 = schema_string("provenance_record", 2)
 
 #: The version before ``bindings`` existed. Still read, never written.
 PROVENANCE_SCHEMA_V1 = schema_string("provenance_record", 1)
 
 #: Exactly the versions this reader interprets. A tuple of exact strings, not
 #: a range: a range would admit versions that do not exist yet.
-SUPPORTED_PROVENANCE_SCHEMAS = (PROVENANCE_SCHEMA_V1, PROVENANCE_SCHEMA)
+SUPPORTED_PROVENANCE_SCHEMAS = (
+    PROVENANCE_SCHEMA_V1,
+    PROVENANCE_SCHEMA_V2,
+    PROVENANCE_SCHEMA,
+)
 
 EXECUTION_BINDING_SCHEMA = schema_string("execution_binding")
 
@@ -249,6 +262,13 @@ class ProvenanceRecord:
     #: association was recorded — never that none existed, and never a licence
     #: to infer one by pairing ``models`` with ``solvers`` positionally.
     bindings: tuple[ExecutionBinding, ...] = ()
+    #: Quantities that crossed into this run from another problem, each with
+    #: the declaration it realizes, the record it was read from and the instant
+    #: it was read at. Empty means nothing crossed *that anybody declared* —
+    #: which, until this field existed, was indistinguishable from nothing
+    #: crossing at all. Two transfers of one declaration at one instant must
+    #: agree; a contradiction is refused rather than resolved by order.
+    transfers: tuple[QuantityTransfer, ...] = ()
     inputs: Mapping[str, Quantity] = field(default_factory=dict)
     assumptions: tuple[str, ...] = ()
     tolerances: Mapping[str, float] = field(default_factory=dict)
@@ -276,6 +296,9 @@ class ProvenanceRecord:
         object.__setattr__(self, "run_id", run_id)
 
         self._resolve_lineage(run_id)
+        object.__setattr__(
+            self, "transfers", require_agreeing_transfers(tuple(self.transfers))
+        )
 
         models = tuple((str(a), str(b)) for a, b in self.models)
         solvers = tuple((str(a), str(b)) for a, b in self.solvers)
@@ -572,6 +595,7 @@ class ProvenanceRecord:
             "models": self.models,
             "solvers": self.solvers,
             "bindings": self.bindings,
+            "transfers": self.transfers,
             "inputs": self.inputs,
             "assumptions": self.assumptions,
             "tolerances": self.tolerances,
@@ -603,6 +627,7 @@ class ProvenanceRecord:
             "inputs": {
                 k: v.to_dict() for k, v in sorted(self.inputs.items())
             },
+            "transfers": [t.to_dict() for t in self.transfers],
             "assumptions": list(self.assumptions),
             # Not detached, and provably not needing to be: __post_init__
             # coerces every value here through ``float`` and ``str``, so these
@@ -648,6 +673,18 @@ class ProvenanceRecord:
             models=tuple(tuple(m) for m in payload.get("models", ())),
             solvers=tuple(tuple(s) for s in payload.get("solvers", ())),
             bindings=bindings,
+            # By version, not by key presence — the rule ``/1`` established.
+            # A ``/1`` or ``/2`` writer could not carry a transfer, and a key
+            # appearing in one of their payloads was not written by this
+            # contract and is not read as if it were.
+            transfers=(
+                ()
+                if version in (PROVENANCE_SCHEMA_V1, PROVENANCE_SCHEMA_V2)
+                else tuple(
+                    QuantityTransfer.from_dict(x)
+                    for x in payload.get("transfers", ())
+                )
+            ),
             inputs={
                 k: Quantity.from_dict(v)
                 for k, v in (payload.get("inputs") or {}).items()

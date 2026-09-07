@@ -744,7 +744,15 @@ def test_f2_no_system_or_component_instance_type_was_created():
     assert set(composition.__all__) == {
         "QUANTITY_DEPENDENCY_SCHEMA",
         "QuantityDependency",
+        # Added by the core round: the *realization* of a dependency -- the
+        # value that crossed, the record it came from, the instant it was read
+        # at. It is a second record in this package, not a twelfth candidate
+        # abstraction: no system, component, port, connector, material or mesh
+        # type was created, which is what the loop above still asserts.
+        "QUANTITY_TRANSFER_SCHEMA",
+        "QuantityTransfer",
         "externally_imposed",
+        "require_agreeing_transfers",
         "unresolved_inputs",
     }
 
@@ -790,7 +798,7 @@ def test_g3_no_existing_schema_version_moved():
     assert MODEL_SCHEMA == "scientific_model_definition/1"
     assert REALIZATION_SCHEMA == "model_realization_definition/1"
     assert RESULT_SCHEMA == "scientific_result/4"
-    assert PROVENANCE_SCHEMA == "provenance_record/2"
+    assert PROVENANCE_SCHEMA == "provenance_record/3"
     assert SCIENTIFIC_TWIN_SCHEMA == "scientific_twin/1"
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
 

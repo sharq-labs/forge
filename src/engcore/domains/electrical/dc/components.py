@@ -19,6 +19,29 @@ from ....scientific.serialization import require_schema, schema_string
 from ....scientific.units.quantity import Quantity
 from ....scientific.units.validation import require_same_dimension
 
+#: How a per-element relation problem is named. One function rather than an
+#: f-string in three modules: the ambient crossing declares this id as its
+#: target and the report assembler reads it back, so a convention written out
+#: three times would be three places for it to drift.
+RESISTOR_PROBLEM_PREFIX = "electrical_dc_resistor:"
+
+
+def resistor_problem_id(component_id: str) -> str:
+    """The problem id of one resistor's constitutive relation."""
+    return f"{RESISTOR_PROBLEM_PREFIX}{component_id}"
+
+
+def resistor_component_id(problem_id: str) -> str | None:
+    """The component a relation problem id names, or None if it names none.
+
+    The inverse of :func:`resistor_problem_id`, so a consumer matching on the
+    convention asks this rather than slicing the prefix itself.
+    """
+    text = str(problem_id)
+    if not text.startswith(RESISTOR_PROBLEM_PREFIX):
+        return None
+    return text[len(RESISTOR_PROBLEM_PREFIX):]
+
 NODE_SCHEMA = schema_string("electrical_dc_node")
 RESISTOR_SCHEMA = schema_string("electrical_dc_resistor")
 VSOURCE_SCHEMA = schema_string("electrical_dc_voltage_source")

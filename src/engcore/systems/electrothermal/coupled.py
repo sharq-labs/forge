@@ -94,7 +94,7 @@ knowledge.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
@@ -113,7 +113,10 @@ from ...domains.electrical.dc import (
 # sibling's constant rather than re-deriving the convention a second time keeps
 # one source of truth per name inside this pack.
 from ...domains.electrical.dc.problem import resistance_name
-from ...scientific.composition import QuantityDependency
+# The electrical half of the ambient crossing: the target name and unit
+# are that domain's to state, not this pack's to assume.
+from ...domains.electrical.dc import models as dc_models
+from ...scientific.composition import QuantityDependency, QuantityTransfer
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
@@ -1002,6 +1005,63 @@ def coupled_problems(
     for _, prop, thermal in stage_problems(system):
         problems += [prop, thermal]
     return tuple(problems)
+
+
+def ambient_transfers(
+    system: CoupledElectroThermalSystem,
+    final: "CoupledIteration | None",
+) -> tuple[QuantityTransfer, ...]:
+    """The ambient each element sits in, as a declared crossing.
+
+    THE CROSSING THIS ROUND MADE EXPLICIT. A resistor's rated dissipation is
+    stated against a reference ambient and derates away from it, so the
+    electrical model's applicability verdict depends on a temperature the
+    thermal side declares. It used to reach that verdict as
+    ``{stage.component_id: stage.body.ambient_temperature}`` -- a dict
+    comprehension in the report assembler, matched by component id. Nothing
+    recorded that it crossed, and `repair.py` could not invert
+    ``dissipated_power_utilization`` because the ambient "is not a declared
+    input of this model".
+
+    Each crossing is now a :class:`QuantityTransfer`: the declaration it
+    realizes, the value, the record it was read from, and the instant. It is
+    made HERE, once, and recorded in the run's provenance -- so a consumer
+    reads the crossing off the record instead of re-deriving it from a dict,
+    which is the difference between one statement and two that can drift.
+
+    ``final`` is the iteration the values were read at. With no iterations
+    there is nothing to have crossed and the answer is nothing, which is the
+    honest answer for a run that never executed.
+    """
+    if final is None:
+        return ()
+    produced = {result.problem_id: result for result in final.results}
+    transfers: list[QuantityTransfer] = []
+    for stage, _prop, thermal in stage_problems(system):
+        source = produced.get(thermal.problem_id)
+        if source is None:
+            # A run the loop stopped mid-pass has no record for this stage in
+            # its final iteration, so nothing crossed FROM one and no transfer
+            # is recorded. This is not an error swallowed: the consumer then
+            # supplies no ambient, the declared derating line cannot be
+            # evaluated, and `dissipated_power_utilization` comes back UNKNOWN
+            # -- which is the true state of a stage whose thermal side never
+            # produced a result. Naming a source record that does not exist to
+            # avoid an UNKNOWN would be the whole defect this record ends.
+            continue
+        transfers.append(
+            QuantityTransfer(
+                dependency=dc_models.ambient_transfer_declaration(
+                    source_problem_id=thermal.problem_id,
+                    source_quantity=lump.AMBIENT_TEMPERATURE,
+                    component_id=stage.component_id,
+                ),
+                value=stage.body.ambient_temperature,
+                source_record_id=source.result_id,
+                instant=f"coupled_iteration:{final.index}",
+            )
+        )
+    return tuple(transfers)
 
 
 def stage_problems(
@@ -1903,13 +1963,20 @@ def run_fixed_point_coupling(
     Everything domain-specific happens here — the problems, and the dispatch
     table that says how each of them is solved. :func:`run_fixed_point` receives
     both as data and runs the iteration without being able to name either.
+
+    The declared ambient crossings are attached HERE, after the run, for the
+    same reason: they are one domain's quantity reaching another domain's
+    assessment, and the iteration cannot name either. They are not edges of the
+    coupling graph and never were — their target is a per-element assessment
+    sub-problem, not a problem the loop solves, which is exactly why the
+    crossing went undeclared for as long as it did.
     """
     problems = coupled_problems(
         system,
         {stage.component_id: stage.conductor.reference_resistance
          for stage in system.stages},
     )
-    return run_fixed_point(
+    run = run_fixed_point(
         problems,
         _executors(system, problems),
         plan,
@@ -1929,5 +1996,14 @@ def run_fixed_point_coupling(
             "statement over one interval and carries a coupling error that is "
             "not quantified here",
             "the whole dissipated power of an element enters its body",
+        ),
+    )
+    return replace(
+        run,
+        provenance=replace(
+            run.provenance,
+            transfers=ambient_transfers(
+                system, run.iterations[-1] if run.iterations else None
+            ),
         ),
     )

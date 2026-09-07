@@ -2452,3 +2452,209 @@ def test_no_module_still_hands_provenance_a_lineage_name_it_does_not_hold():
     # pass-through of a parameter no caller in this repository supplies, and
     # the refusal fires if one ever does.
     assert offenders == ["domains.thermal.conduction1d.solver:393"], offenders
+
+
+# =====================================================================
+# GUARD 12 — a quantity crossing a domain boundary arrives declared
+# =====================================================================
+#
+# The ambient a body declares reaches an element's applicability assessment,
+# because a rated dissipation is stated against a reference ambient and derates
+# away from it. It used to arrive as `{stage.component_id: ...}` — a dict
+# comprehension matching component ids, with no declaration, no source record,
+# no instant and no check that both sides meant the same quantity.
+#
+# What is enforced here is the crossing that exists. A crossing nobody has
+# written yet is NOT enforced, and `NEEDS.md` C4 says so in those words rather
+# than leaving the reader to assume otherwise.
+
+def _ambient_transfer(value=None, **overrides):
+    from src.engcore.domains.electrical.dc import models as dc_models
+    from src.engcore.scientific.composition import QuantityTransfer
+
+    payload = dict(
+        dependency=dc_models.ambient_transfer_declaration(
+            source_problem_id="thermal-lumped-R1",
+            source_quantity="ambient_temperature",
+            component_id="R1",
+        ),
+        value=value if value is not None else Quantity(300.0, "kelvin"),
+        source_record_id="thermal-result-1",
+        instant="coupled_iteration:3",
+    )
+    payload.update(overrides)
+    return QuantityTransfer(**payload)
+
+
+def test_a_crossed_quantity_arriving_undeclared_is_refused():
+    """Fail-closed at the crossing that exists. Made to fail on purpose."""
+    from src.engcore.domains.electrical.dc import models as dc_models
+    from src.engcore.domains.electrical.dc import problem as dc_problem
+    from src.engcore.scientific.errors import InvalidScientificProblem
+
+    class Element:
+        component_id = "R1"
+        resistance = Quantity(100.0, "ohm")
+
+    problem = dc_problem.resistor_relation_problem(Element())
+    with pytest.raises(InvalidScientificProblem) as refusal:
+        dc_models.assess_resistor_validity(
+            problem,
+            dissipated_power=Quantity(0.9, "watt"),
+            # A bare Quantity: the shape the dict comprehension produced.
+            ambient=Quantity(300.0, "kelvin"),
+        )
+    message = str(refusal.value)
+    assert "QuantityTransfer" in message
+    assert "where it came from and when" in message
+
+    # and a transfer declaring some other target is not a declaration of this
+    with pytest.raises(InvalidScientificProblem, match="not a declaration of"):
+        dc_models.assess_resistor_validity(
+            problem,
+            dissipated_power=Quantity(0.9, "watt"),
+            ambient=_ambient_transfer(
+                dependency=__import__(
+                    "src.engcore.scientific.composition",
+                    fromlist=["QuantityDependency"],
+                ).QuantityDependency(
+                    source_problem_id="t",
+                    source_quantity="ambient_temperature",
+                    target_problem_id="electrical_dc_resistor:R1",
+                    target_quantity="something_else",
+                    unit_exemplar="kelvin",
+                )
+            ),
+        )
+
+
+def test_a_transfer_states_a_source_an_instant_and_an_agreeing_dimension():
+    """Each refusal, once, on purpose."""
+    from src.engcore.scientific.errors import InvalidScientificProblem
+
+    assert _ambient_transfer().received_as("degC").magnitude == pytest.approx(
+        26.85
+    )
+    with pytest.raises(InvalidScientificProblem, match="do not mean the same"):
+        _ambient_transfer(value=Quantity(5.0, "volt"))
+    with pytest.raises(InvalidScientificProblem, match="no source_record_id"):
+        _ambient_transfer(source_record_id="  ")
+    with pytest.raises(InvalidScientificProblem, match="no instant"):
+        _ambient_transfer(instant="")
+    with pytest.raises(InvalidScientificProblem, match="QuantityDependency"):
+        _ambient_transfer(dependency="thermal-lumped-R1")
+
+
+def test_two_values_crossing_one_declaration_at_one_instant_are_refused():
+    """One fact, stated twice, must be one fact."""
+    from src.engcore.scientific.composition import require_agreeing_transfers
+    from src.engcore.scientific.errors import InvalidScientificProblem
+
+    one = _ambient_transfer()
+    same = _ambient_transfer()
+    other = _ambient_transfer(value=Quantity(310.0, "kelvin"))
+    assert require_agreeing_transfers((one, same)) == (one,)
+    with pytest.raises(InvalidScientificProblem, match="nothing here can say"):
+        require_agreeing_transfers((one, other))
+
+
+def test_the_crossing_is_recorded_in_the_provenance_of_the_run_that_made_it():
+    """Not re-derived by the consumer: made once, carried, read back.
+
+    Marked by its own cost — this runs a coupled solve — but the claim needs a
+    real run: a transfer set nothing produced would prove that the record can
+    hold one, which is not the question.
+    """
+    from src.engcore.mcp.problem import (
+        example_electrothermal_payload,
+        run_electrothermal_case,
+    )
+
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="guard12"
+    ).reports[0]
+    transfers = report.provenance.transfers
+    assert transfers, "the coupled run recorded no crossing"
+    for transfer in transfers:
+        assert transfer.dependency.target_quantity == "ambient_temperature"
+        assert transfer.source_record_id
+        assert transfer.instant.startswith("coupled_iteration:")
+        assert transfer.dependency.target_problem_id.startswith(
+            "electrical_dc_resistor:"
+        )
+    # and it survives the record boundary
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+
+    restored = ProvenanceRecord.from_dict(report.provenance.to_dict())
+    assert restored.transfers == transfers
+
+
+def test_the_declared_crossing_is_what_lets_repair_invert_the_condition():
+    """The proof the fix is real, and the reason it is the proof.
+
+    `repair.py` refused to invert `dissipated_power_utilization` because the
+    ambient "is not a declared input of this model -- it crosses in from the
+    thermal body sharing this element's component id -- so the offset cannot be
+    formed from the assessed context". Both halves are asserted here: without a
+    declared crossing the condition is UNKNOWN and nothing inverts; with one,
+    the verdict is reached and the hint carries a number.
+
+    The number is checked against the formula rather than against itself:
+    u = (T_amb + (P/d)(T_zero - T_rated)/P_rated) / T_zero <= 1 gives
+    P_rated >= (P/d)(T_zero - T_rated)/(T_zero - T_amb).
+    """
+    from src.engcore.domains.electrical.dc import models as dc_models
+    from src.engcore.domains.electrical.dc import problem as dc_problem
+
+    class Element:
+        component_id = "R1"
+        resistance = Quantity(100.0, "ohm")
+
+    rating = dc_models.ComponentRating(
+        rated_power=Quantity(0.25, "watt"),
+        maximum_working_voltage=Quantity(200.0, "volt"),
+        rated_power_temperature=Quantity(343.15, "kelvin"),
+        zero_power_temperature=Quantity(428.15, "kelvin"),
+        derating_factor=0.8,
+    )
+    problem = dc_problem.resistor_relation_problem(Element())
+    state = dict(
+        rating=rating,
+        dissipated_power=Quantity(0.9, "watt"),
+        voltage_across=Quantity(9.4868, "volt"),
+    )
+
+    # Before: the ambient did not cross, so the line cannot be evaluated.
+    undeclared = dc_models.assess_resistor_validity(problem, **state)
+    assert undeclared.unknown == ("dissipated_power_utilization",)
+    refusals = [
+        r
+        for repair in dc_models.resistor_repairs(
+            problem, subject="R1", **state
+        )
+        for r in repair.refusals
+    ]
+    assert refusals == [], "nothing is violated, so nothing is repaired yet"
+
+    # After: it crossed under a declaration.
+    declared = dc_models.assess_resistor_validity(
+        problem, ambient=_ambient_transfer(), **state
+    )
+    assert declared.violated == ("dissipated_power_utilization",)
+    repairs = dc_models.resistor_repairs(
+        problem, subject="R1", ambient=_ambient_transfer(), **state
+    )
+    hints = [h for repair in repairs for h in repair.hints]
+    assert [h.target_name for h in hints] == ["rated_power"], hints
+
+    expected = (0.9 / 0.8) * (428.15 - 343.15) / (428.15 - 300.0)
+    assert hints[0].threshold.magnitude_in("watt") == pytest.approx(expected)
+
+    # The derating factor inverts too, and is then refused at its ceiling --
+    # the inversion working, not failing.
+    refused = {
+        r.target: r.reason
+        for repair in repairs
+        for r in repair.refusals
+    }
+    assert "past" in refused["derating_factor"]

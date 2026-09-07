@@ -35,7 +35,12 @@ from ....scientific.ir.variables import (
     VariableRole,
 )
 from .circuit import CANONICAL_SCHEMA, DOMAIN_ARTIFACT_TYPE, DCCircuit
-from .components import CURRENT_UNIT, RESISTANCE_UNIT, VOLTAGE_UNIT
+from .components import (
+    CURRENT_UNIT,
+    RESISTANCE_UNIT,
+    VOLTAGE_UNIT,
+    resistor_problem_id,
+)
 from .errors import CircuitBindingError
 from .models import ELECTRICAL_DC_LINEAR, models_for_circuit
 
@@ -262,7 +267,7 @@ def resistor_relation_problem(resistor) -> ScientificProblem:
     names, so binding is verified per component rather than circuit-wide.
     """
     return ScientificProblem(
-        problem_id=f"electrical_dc_resistor:{resistor.component_id}",
+        problem_id=resistor_problem_id(resistor.component_id),
         name=f"Constitutive relation of resistor {resistor.component_id!r}",
         variables=(
             ScientificVariable(

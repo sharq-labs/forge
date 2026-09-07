@@ -513,7 +513,7 @@ def test_f4_old_provenance_payloads_still_load_and_declare_no_relation():
 
 def test_f5_an_unknown_provenance_version_fails_loudly():
     payload = ProvenanceRecord(run_id="x").to_dict()
-    payload["schema"] = "provenance_record/3"
+    payload["schema"] = "provenance_record/4"
     with pytest.raises(Exception):
         ProvenanceRecord.from_dict(payload)
 

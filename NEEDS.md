@@ -4364,3 +4364,90 @@ and not a note:
 Each time the guard was correct about the axis it guarded and silent about the
 one it did not. The common failure is not a weak guard; it is a **complete
 guard over the wrong axis**, and completeness on one axis reads as safety.
+
+---
+
+# CORE ROUND — six mechanisms
+
+## C4. What a general cross-domain transfer contract would need
+
+`QuantityTransfer` is the smallest record that makes the **one existing**
+undeclared crossing declared and checkable: a body's ambient reaching an
+element's applicability assessment. It carries the declaration it realizes, the
+value, the record it was read from and the instant. It was built to that
+crossing on purpose, and it is not a transfer framework.
+
+**What it enforces, and where.** A bare `Quantity` is refused where the
+crossing lands — `assess_resistor_validity` will not read an ambient that
+arrives without the record of its crossing. That is enforced at the crossing
+that exists. It is **not** enforced on a crossing nobody has written yet: a new
+domain writing a new receiving function can accept a bare `Quantity`, and
+nothing in the core stops it. Said plainly because the distinction matters:
+this fix is fail-closed at the existing boundary and opt-in for a future one.
+
+The drone is four coupled domains and crosses temperature, thrust, current and
+voltage. Here is what it will hit that this record does not answer.
+
+**1. Enforcement, generally.** The core cannot today tell that a value in a
+model's assessed context came from another problem. Nothing marks a `Quantity`
+with its origin, and adding a field to `Quantity` is out of the question — it
+is a magnitude and a unit, and it is compared and serialized by value. The
+candidate that survives a first look is the other end: a model declares
+*which of its inputs are supplied rather than stated*, the way it already
+declares `derived_quantities`, and `assess_validity` refuses a supplied input
+that did not arrive under a transfer. That is a real mechanism and it is a
+model-record change, which is a milestone rather than a task.
+
+**2. The instant, when the two sides do not share one.** Ours is a string, and
+deliberately so: our crossings are indexed by a fixed-point iteration and by an
+open-loop stage, and a marching one would be indexed by a step. A drone couples
+a marching flight dynamics to a quasi-static electrical solve. "The same
+instant" then needs a rule for *which* source step a target step reads, and
+that rule is interpolation policy — which this record refuses to carry and
+which a general contract cannot avoid carrying. Nothing here forecloses it; the
+`instant` field is where it would land, and it would stop being a string.
+
+**3. Staleness.** A value read at iteration 3 and used at iteration 7 is a
+defect our record can *detect* — the instants differ — and cannot *prevent*,
+because nothing consults it at the moment of use. A general contract needs the
+receiving side to state the tolerance it accepts (same instant, one behind, any)
+and to refuse outside it. That is a receiving-side declaration and it does not
+exist.
+
+**4. Cycles.** Ours is acyclic by construction: the ambient crosses into an
+assessment sub-problem, not into the coupling loop. Four coupled domains will
+have cycles that the transfer set itself has to be checked for, against the
+tearing the plan declares. `FixedPointCouplingPlan` tears `QuantityDependency`
+edges today and knows nothing about transfers.
+
+**5. Fan-in.** One target quantity supplied by two sources is refused here only
+in the accidental sense that two transfers of *one declaration* at *one
+instant* must agree. Two *different* declarations targeting one quantity is not
+refused and has no combination rule. `MIN-FOUNDATION-ET` already recorded that
+fan-in has no combination rule; a transfer set makes the gap concrete rather
+than closing it.
+
+**6. Conversion at the boundary.** `received_as` converts through the units
+backend, so an interval-scale source and an absolute-scale target cannot
+silently differ by their offset. That is correct and it is not a policy: it
+says nothing about a source whose value is a rate the target wants as a total,
+or a per-element quantity the target wants aggregated. A general contract needs
+those to be *declared*, not inferred from dimension.
+
+## C4b. The capability the declaration returned
+
+`repair.py` refused to invert `dissipated_power_utilization` in `rated_power`
+and in `derating_factor`, with the reason that the ambient "is not a declared
+input of this model — it crosses in from the thermal body sharing this
+element's component id — so the offset cannot be formed from the assessed
+context and the form is not anchored". That was true and it was a real
+capability lost to where a number happened to live.
+
+With the crossing declared, the ambient is a declared input of the receiving
+problem, the offset `T_amb / T_zero` forms, and the inversion is real. Measured
+on a 0.9 W dissipation in a 0.25 W part derated to 0.8 on a 343.15 K → 428.15 K
+line at a 300 K ambient: the verdict moves from UNKNOWN to
+OUTSIDE_VALIDATED_DOMAIN, and the hint is `rated_power ≥ 0.746195864222 watt
+(declared 0.25 watt)`. The `derating_factor` route inverts too and is then
+refused at its ceiling — 2.388 is past 1 — which is the raise-the-limit refusal
+working, not the inversion failing.
