@@ -42,10 +42,11 @@ here would be drift with no benefit.
 
 Sources
 -------
-The Damkohler number and the segregation argument that bounds it follow
-Levenspiel, O., *Chemical Reaction Engineering*, 3rd ed. (Wiley, 1999), Ch. 16
-("Earliness of Mixing, Segregation and RTD"). The temperature ceiling follows
-from the reactor's own exact invariant ``Z = T + beta C_A``, which
+The Damkohler number is retained as reaction/residence-time telemetry. The
+mixing and segregation argument in Levenspiel, O., *Chemical Reaction
+Engineering*, 3rd ed. (Wiley, 1999), Ch. 16 concerns mixing time, which this
+domain does not declare and therefore cannot assess. The temperature ceiling
+follows from the reactor's own exact invariant ``Z = T + beta C_A``, which
 :mod:`.reference` already implements and which the module docstring of
 :mod:`.problem` states.
 """
@@ -83,7 +84,6 @@ __all__ = [
     "INITIAL_CONCENTRATION",
     "INITIAL_TEMPERATURE",
     "K0",
-    "MAX_WELL_MIXED_DAMKOHLER",
     "MOLAR_ENERGY_UNIT",
     "MOLAR_GAS_CONSTANT",
     "RATE_CONSTANT_UNIT",
@@ -153,54 +153,6 @@ ADIABATIC_CEILING_TEMPERATURE = "adiabatic_ceiling_temperature"
 # Envelope bounds -- DOMAIN-OWNED, declared here and nowhere else
 # =====================================================================
 
-#: Da <= 10, and **the 10 is a convention**, recorded as one.
-#:
-#: **What is established, and by whom.** The direction is. This model's first
-#: declared assumption is a perfectly mixed tank with no spatial gradient in
-#: concentration or temperature. A tank is called stirred because it
-#: homogenizes in a blend time ``t_m`` short compared with its residence time
-#: ``tau``; the perfect-mixing idealization additionally requires that it
-#: homogenizes at least as fast as the reaction changes the local state,
-#: ``t_m <= 1/k``. Combining the two gives ``Da = k tau <= tau / t_m``, so the
-#: admissible Damkohler number is bounded above by the tank's own mixing
-#: quality and by nothing else. Levenspiel, O., *Chemical Reaction
-#: Engineering*, 3rd ed. (Wiley, 1999), Ch. 16 ("Earliness of Mixing,
-#: Segregation and RTD") is the standard treatment of what happens past that
-#: point: the fluid reacts in partially segregated parcels rather than at one
-#: composition, and the tank has a residence-time distribution but not a single
-#: state for these balances to be written over.
-#:
-#: **What is not established: the number.** ``tau / t_m`` is not declared
-#: anywhere in this model. There is no impeller, no power input and no blend
-#: time in the declaration, so the ceiling has to be set by an assumed mixing
-#: quality. **10 is the conventional well-stirred design reading** -- a blend
-#: time of a tenth of the residence time -- read together with the weakest form
-#: of the mixing requirement, ``t_m <= 1/k`` rather than ``t_m << 1/k``. No
-#: source prints 10 as a threshold for this quantity, and it is recorded here
-#: as a convention rather than dressed as a citation. It is deliberately the
-#: permissive reading of a chain that has a convention in it: a bound that
-#: refused the standard worked example of this very reactor would be a
-#: statement about the convention rather than about the tank.
-#:
-#: **What this condition claims, and what it does not.** It claims the
-#: declaration is one a perfectly mixed tank can describe. It does *not* claim
-#: that a faster reaction makes the answer wrong; OUTSIDE_VALIDATED_DOMAIN
-#: means outside the domain we have validated, not wrong.
-#:
-#: **The caveat that decides which field this is about.** For the concentration
-#: field alone this bound would be unfounded: the rate is first order in
-#: ``C_A``, hence linear in it, and the classical result is that the degree of
-#: segregation does not change the conversion of a first-order reaction
-#: (Levenspiel, Ch. 16). The bound is about the **temperature** field.
-#: ``k(T) = k0 exp(-E/(R T))`` is convex in ``T``, so a tank with any spread in
-#: temperature reacts faster on average than a tank at the mean temperature,
-#: and the discrepancy grows with ``E/(R T)`` -- the same exponential the energy
-#: balance feeds back into. The one temperature this model asserts is not a
-#: harmless average, and Da is the measure of how hard the reaction is driving
-#: the tank away from having one.
-MAX_WELL_MIXED_DAMKOHLER = Quantity(10.0, DIMENSIONLESS)
-
-
 def _as_quantity(value: Any, unit: str, label: str) -> Quantity | None:
     """A supplied value, checked against ``unit``; ``None`` stays ``None``.
 
@@ -248,19 +200,20 @@ def damkohler_number(
     feed_temperature: Quantity | None,
     residence_time: Quantity | None,
 ) -> Quantity | None:
-    """Da = k(T_f) tau -- reaction rate against the rate the tank turns over.
+    """Da = k(T_f) tau -- reaction rate against tank turnover, as telemetry.
 
     **Definition.** ``Da = k(T_f) / (q/V) = k(T_f) tau`` with
     ``k(T) = k0 exp(-E/(R T))``: the ratio of the residence time to the
     reaction time ``1/k``, or equivalently how many reaction times a parcel of
-    fluid spends in the tank. Evaluated at the **feed** temperature because it
-    is then a property of the *declaration*, decidable before any integration,
-    and because the tank temperature is what the solve produces.
+    fluid spends in the tank. It is evaluated at feed temperature only to keep
+    the existing descriptive solver diagnostic reproducible; no validity
+    decision reads it.
 
-    **What it bounds.** See :data:`MAX_WELL_MIXED_DAMKOHLER`: the perfect
-    mixing this model asserts requires the tank to homogenize at least as fast
-    as the reaction changes the local state, and Da is the only measure of that
-    available from the declaration.
+    **Telemetry, not validity.** ``k tau`` compares reaction and residence
+    times and predicts the conversion scale of an ideal first-order CSTR. It
+    contains no mixing time, spatial temperature variation, or transport
+    declaration, so it cannot assess the model's perfect-mixing assumption and
+    is deliberately not a validity condition.
 
     **The bound is one-sided, and that is a claim.** There is no minimum. As
     ``Da -> 0`` the tank becomes a mixing vessel: conversion falls to zero, the
@@ -435,9 +388,7 @@ def adiabatic_ceiling_temperature(
 #: :data:`~engcore.domains.kinetics.cstr.problem.ASSEMBLER_NAMESPACE`, which
 #: can see the model record that reserves them; this module is imported by
 #: that one and cannot.
-ASSEMBLED_QUANTITIES = frozenset(
-    {DAMKOHLER_NUMBER, ADIABATIC_CEILING_TEMPERATURE}
-)
+ASSEMBLED_QUANTITIES = frozenset({ADIABATIC_CEILING_TEMPERATURE})
 
 
 def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
@@ -455,12 +406,6 @@ def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
     path through this function by which omitting an input yields IN_DOMAIN.
     """
     derived: dict[str, Quantity | None] = {
-        DAMKOHLER_NUMBER: damkohler_number(
-            k0=base.get(K0),
-            activation_energy=base.get(ACTIVATION_ENERGY),
-            feed_temperature=base.get(FEED_TEMPERATURE),
-            residence_time=base.get(RESIDENCE_TIME),
-        ),
         ADIABATIC_CEILING_TEMPERATURE: adiabatic_ceiling_temperature(
             heat_of_reaction=base.get(HEAT_OF_REACTION),
             density=base.get(DENSITY),

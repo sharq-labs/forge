@@ -185,7 +185,6 @@ def test_a_registry_can_enumerate_every_reserved_name_in_the_repository():
         reserved |= model.derived_quantities
     assert {
         "biot_number",
-        "damkohler_number",
         "dissipated_power_utilization",
         "peukert_capacity_ratio",
         "reduced_debye_temperature",

@@ -3755,3 +3755,41 @@ audits the ones that keep saying yes. Every validity condition in
 `src/engcore/scientific/` is in that category, and this round did not sweep them
 — it only names the pattern. **A census of conditions that have never been
 observed to fail is the obvious next round, and it has not been done.**
+
+---
+
+# NEEDS — CSTR mixing validity after removal of the Da ceiling
+
+## The model cannot currently assess its perfect-mixing assumption
+
+Levenspiel's mixing argument compares reaction time with **mixing time**. The
+removed condition instead bounded `Da = k tau`, which compares reaction time
+with residence time and contains no `t_mix`. At `Da = 8666` the ideal
+first-order CSTR predicts near-complete conversion; that is an operating regime
+the ideal equations describe, not evidence that the tank is unmixed.
+
+A real mixing condition needs at least one declaration that can carry the
+missing evidence: a measured blend time `t_mix`, a bounded spatial temperature
+variation, or an equivalent transport/micromixing declaration. This domain has
+none. Adding one would require a new typed operation input, provenance and MCP
+surface, a sourced criterion over the resulting group, applicability tests,
+and benchmark cases. Cost: roughly two engineering days plus source review.
+It is deliberately unbuilt; until then the mixing assumption is unassessed.
+
+## Rule: establish the quantity before moving its assessment instant
+
+An instant-of-assessment error and a wrong-quantity error look alike from the
+outside: a condition passes where physics suggests concern. Their fixes are
+opposites. Debye and the excursion band needed the same valid quantity read at
+the binding point on a path. Damkohler needed removal: reading `k tau` at the
+tank temperature is more temporally accurate but still supplies no mixing
+time. Before changing *where* a condition is assessed, first establish that
+the quantity being assessed is the one the claim is actually about.
+
+## Standing source-audit rule for convention-labelled bounds
+
+Three bounds have now been checked against their cited sources and found not
+to be established as used: `Fo = 0.2`, beryllium's `theta_D/3`, and
+`Da <= 10`. Before any convention-labelled bound is relied on in a published
+number, its source must be re-read for both the quantity and the threshold.
+This review happens before publication, not after an anomalous case exposes it.

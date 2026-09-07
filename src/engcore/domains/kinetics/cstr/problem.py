@@ -110,7 +110,6 @@ from .context import (
     FLOW_UNIT,
     GAS_CONSTANT_UNIT,
     HEAT_CAPACITY_UNIT,
-    MAX_WELL_MIXED_DAMKOHLER,
     MOLAR_ENERGY_UNIT,
     MOLAR_GAS_CONSTANT,
     RATE_CONSTANT_UNIT,
@@ -269,7 +268,6 @@ CSTR_MODEL = ScientificModelDefinition(
             {
                 ADIABATIC_CEILING_TEMPERATURE,
                 'concentration',
-                DAMKOHLER_NUMBER,
                 'temperature',
             }
         ),
@@ -314,43 +312,13 @@ CSTR_MODEL = ScientificModelDefinition(
                 minimum_inclusive=False,
                 description="Strictly positive residence time V/q.",
             ),
-            # ---- the two dimensionless statements ------------------------
+            # ---- the derived envelope statement --------------------------
             #
             # Every condition above is a positivity or an envelope on one
             # declared value. The two below are groups: they combine several
             # declarations into a number that says something the individual
-            # values cannot, and both are decidable from the declaration alone,
+            # values cannot, and it is decidable from the declaration alone,
             # before a solver runs.
-            RangeCondition(
-                name=DAMKOHLER_NUMBER,
-                maximum=MAX_WELL_MIXED_DAMKOHLER,
-                description=(
-                    "Da = k(T_f) tau <= 10. The model's first assumption is a "
-                    "perfectly mixed tank with no spatial gradient in "
-                    "concentration or temperature. A tank homogenizes in a "
-                    "blend time t_m, and the idealization needs it to do so at "
-                    "least as fast as the reaction changes the local state, "
-                    "t_m <= 1/k; with Da = k tau that is Da <= tau/t_m, so the "
-                    "admissible Damkohler number is bounded above by the "
-                    "tank's own mixing quality. Past it the fluid reacts in "
-                    "partially segregated parcels rather than at one state: "
-                    "Levenspiel, Chemical Reaction Engineering, 3rd ed. "
-                    "(Wiley, 1999), Ch. 16. **The 10 IS A CONVENTION**, not a "
-                    "number that source or any other prints as a threshold — "
-                    "it is the conventional well-stirred reading tau/t_m = 10, "
-                    "and it is recorded here as a convention. Bounded above "
-                    "only: at Da -> 0 the tank is a mixing vessel and the "
-                    "equations still describe it exactly, and Da of order "
-                    "unity is where multiplicity and ignition live, which is "
-                    "what this model is for. This bounds the TEMPERATURE "
-                    "field, not the concentration field — a first-order rate "
-                    "is linear in C_A and segregation does not change its "
-                    "conversion, but k(T) is convex in T, so any spread in "
-                    "temperature makes the mean rate exceed the rate at the "
-                    "mean. UNKNOWN unless k0, the activation energy, the feed "
-                    "temperature and the residence time are all declared."
-                ),
-            ),
             RangeCondition(
                 name=ADIABATIC_CEILING_TEMPERATURE,
                 maximum=Quantity(MAX_VALID_TEMPERATURE_K, TEMPERATURE_UNIT),
@@ -872,9 +840,9 @@ class ReactorRun:
         ignition, extinction — and that is a statement about where to *look*,
         not a validity bound. What bounds this group is the perfect-mixing
         assumption, from above only; see
-        :data:`~engcore.domains.kinetics.cstr.context.MAX_WELL_MIXED_DAMKOHLER`
-        and the ``damkohler_number`` condition, which is what actually decides
-        anything. This property and
+        the model's reaction-to-residence-time scale. It is telemetry, not an
+        applicability condition: no mixing time or transport declaration is
+        present. This property and
         :func:`~engcore.domains.kinetics.cstr.context.damkohler_number` compute
         the same number by different routes — floats through the chemistry's
         own Arrhenius kernel here, unit-checked Quantities there — and a test

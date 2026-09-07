@@ -1,9 +1,8 @@
-"""The CSTR's two dimensionless applicability conditions.
+"""The CSTR's derived applicability condition and Damkohler telemetry.
 
-Before this file the domain declared five conditions and all five were
-positivity or a single-value envelope. These two are groups: they combine
-several declarations into a number that says something no individual value
-does, and both are decidable from the declaration alone.
+The adiabatic ceiling combines declarations into a quantity that supports a
+validity condition. Damkohler remains derived telemetry but no longer pretends
+to assess mixing without a declared mixing time or spatial variation.
 
 What is tested here, in order:
 
@@ -28,7 +27,6 @@ from src.engcore.domains.kinetics.cstr import (
     CSTR_MODEL,
     DAMKOHLER_NUMBER,
     MAX_VALID_TEMPERATURE_K,
-    MAX_WELL_MIXED_DAMKOHLER,
     IntegrationSettings,
     ReactorChemistry,
     ReactorOperation,
@@ -104,9 +102,10 @@ def status_of(run: ReactorRun, condition: str) -> ValidityStatus:
 # Both conditions exist, and neither replaces what was there
 # =====================================================================
 
-def test_the_model_now_declares_two_dimensionless_conditions() -> None:
+def test_damkohler_is_telemetry_not_a_validity_condition() -> None:
     names = {c.name for c in CSTR_MODEL.validity.conditions}
-    assert {DAMKOHLER_NUMBER, ADIABATIC_CEILING_TEMPERATURE} <= names
+    assert DAMKOHLER_NUMBER not in names
+    assert ADIABATIC_CEILING_TEMPERATURE in names
     # The five positivity and envelope conditions are still there.
     assert {
         "temperature", "concentration", "k0", "activation_energy",
@@ -114,9 +113,8 @@ def test_the_model_now_declares_two_dimensionless_conditions() -> None:
     } <= names
 
 
-def test_the_nominal_reactor_is_in_domain_on_both() -> None:
+def test_the_nominal_reactor_is_in_domain_on_the_derived_ceiling() -> None:
     run = reactor()
-    assert status_of(run, DAMKOHLER_NUMBER) is ValidityStatus.IN_DOMAIN
     assert (
         status_of(run, ADIABATIC_CEILING_TEMPERATURE)
         is ValidityStatus.IN_DOMAIN
@@ -138,7 +136,12 @@ def test_the_derived_group_equals_the_domain_s_own_float_property() -> None:
     """
     for tf in (300.0, 340.0, 350.0, 360.0, 380.0):
         run = reactor(op=operation(tf=tf))
-        derived = run.validity_context()[DAMKOHLER_NUMBER]
+        derived = damkohler_number(
+            k0=run.chemistry.k0,
+            activation_energy=run.chemistry.activation_energy,
+            feed_temperature=run.operation.feed_temperature,
+            residence_time=Q(run.operation.residence_time_s, "second"),
+        )
         assert derived.magnitude_in("dimensionless") == pytest.approx(
             run.damkohler_at_feed_temperature, rel=1e-12
         )
@@ -174,49 +177,21 @@ def test_the_damkohler_number_is_unit_checked_not_magnitude_read() -> None:
         )
 
 
-def test_a_reaction_faster_than_the_tank_mixes_is_outside_the_domain() -> None:
-    """The bound fires above, which is the direction the physics argues for."""
-    # A feed hot enough to put Da past the ceiling. Every other declaration is
-    # nominal, so this isolates the one condition.
+def test_large_damkohler_is_high_conversion_telemetry_not_a_refusal() -> None:
+    """k tau has no mixing time and cannot assess the mixing assumption."""
     hot = reactor(op=operation(tf=400.0))
     assert hot.damkohler_at_feed_temperature > 10.0
-    assert (
-        status_of(hot, DAMKOHLER_NUMBER)
-        is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert DAMKOHLER_NUMBER not in assess(hot).violated
+
+
+def test_frozen_k1_r2_remains_applicable_at_high_conversion() -> None:
+    """Reading k tau at 549 K is correct; using it as a mixing bound was not."""
+    run = reactor(op=operation(tf=340.0, tc=300.0, ua=0.0, end=600.0), t0=340.0)
+    result = solve_reactor(run, run_id="task1c-frozen-k1-r2")
+    assert result.value("T:max").magnitude_in("kelvin") == pytest.approx(
+        549.181, abs=0.01
     )
-
-
-def test_the_damkohler_bound_is_inclusive_and_sits_where_it_says() -> None:
-    """1 % inside is accepted; 1 % outside is refused. No epsilon either way."""
-    ceiling = MAX_WELL_MIXED_DAMKOHLER.magnitude_in("dimensionless")
-    assert ceiling == 10.0
-
-    # Solve for the feed temperature that puts Da exactly on the bound, then
-    # step off it by 1 % in Da on each side by moving the residence time — the
-    # one input Da is exactly linear in, so the distance is exact.
-    base = reactor(op=operation(tf=380.0))
-    da_base = base.damkohler_at_feed_temperature
-    for factor, expected in (
-        (0.99 * ceiling / da_base, ValidityStatus.IN_DOMAIN),
-        (1.00 * ceiling / da_base, ValidityStatus.IN_DOMAIN),
-        (1.01 * ceiling / da_base, ValidityStatus.OUTSIDE_VALIDATED_DOMAIN),
-    ):
-        run = ReactorRun(
-            run_label="ladder",
-            chemistry=CHEMISTRY,
-            operation=ReactorOperation(
-                volume=Q(0.1 * factor, "m**3"),
-                flow_rate=Q(0.1 / 60.0, "m**3/s"),
-                feed_concentration=Q(1000.0, "mol/m**3"),
-                feed_temperature=Q(380.0, "kelvin"),
-                coolant_temperature=Q(290.0, "kelvin"),
-                ua=Q(5.0e4 / 60.0, "W/K"),
-                end_time=Q(1800.0, "second"),
-            ),
-            initial_concentration=Q(1000.0, "mol/m**3"),
-            initial_temperature=Q(300.0, "kelvin"),
-        )
-        assert status_of(run, DAMKOHLER_NUMBER) is expected
+    assert result.is_usable is True
 
 
 def test_a_reactor_that_barely_reacts_is_still_in_domain() -> None:
@@ -236,7 +211,6 @@ def test_a_reactor_that_barely_reacts_is_still_in_domain() -> None:
     )
     run = reactor(chemistry=inert, op=operation(ua=0.0, end=600.0), ca0=0.0)
     assert run.damkohler_at_feed_temperature < 1e-30
-    assert status_of(run, DAMKOHLER_NUMBER) is ValidityStatus.IN_DOMAIN
     assert assess(run).status is ValidityStatus.IN_DOMAIN
 
 
@@ -245,7 +219,6 @@ def test_the_interesting_band_is_not_excluded() -> None:
     for tf in (340.0, 350.0, 360.0):
         run = reactor(op=operation(tf=tf))
         assert 0.1 < run.damkohler_at_feed_temperature < 10.0
-        assert status_of(run, DAMKOHLER_NUMBER) is ValidityStatus.IN_DOMAIN
 
 
 # =====================================================================
@@ -342,10 +315,6 @@ def test_an_endothermic_reaction_does_not_lower_its_own_ceiling() -> None:
 @pytest.mark.parametrize(
     "dropped, condition",
     [
-        ("k0", DAMKOHLER_NUMBER),
-        ("activation_energy", DAMKOHLER_NUMBER),
-        ("feed_temperature", DAMKOHLER_NUMBER),
-        ("residence_time", DAMKOHLER_NUMBER),
         ("heat_of_reaction", ADIABATIC_CEILING_TEMPERATURE),
         ("density", ADIABATIC_CEILING_TEMPERATURE),
         ("heat_capacity", ADIABATIC_CEILING_TEMPERATURE),
@@ -390,7 +359,6 @@ def test_a_caller_cannot_assert_either_group() -> None:
         declared.pop(name, None)
 
     forged = dict(declared)
-    forged[DAMKOHLER_NUMBER] = Q(1.0, "dimensionless")
     forged[ADIABATIC_CEILING_TEMPERATURE] = Q(300.0, "kelvin")
     assembled = cstr_validity_context(forged, reserved=ASSEMBLER_NAMESPACE)
     assert assembled[ADIABATIC_CEILING_TEMPERATURE].magnitude_in(
@@ -408,9 +376,7 @@ def test_a_caller_cannot_assert_either_group() -> None:
 
 
 def test_the_assembler_refuses_a_group_it_did_not_reserve() -> None:
-    assert ASSEMBLED_QUANTITIES == frozenset(
-        {DAMKOHLER_NUMBER, ADIABATIC_CEILING_TEMPERATURE}
-    )
+    assert ASSEMBLED_QUANTITIES == frozenset({ADIABATIC_CEILING_TEMPERATURE})
     assert set(
         derived_cstr_quantities(reactor().validity_context())
     ) <= ASSEMBLED_QUANTITIES
@@ -422,7 +388,7 @@ def test_nothing_is_derived_from_an_empty_declaration() -> None:
         {}, reserved=ASSEMBLER_NAMESPACE
     ).assess(CSTR_MODEL)
     assert verdict.status is ValidityStatus.UNKNOWN
-    assert DAMKOHLER_NUMBER in verdict.unknown
+    assert DAMKOHLER_NUMBER not in verdict.unknown
     assert ADIABATIC_CEILING_TEMPERATURE in verdict.unknown
 
 
@@ -430,26 +396,11 @@ def test_nothing_is_derived_from_an_empty_declaration() -> None:
 # The convention is labelled a convention
 # =====================================================================
 
-def test_the_damkohler_ceiling_is_recorded_as_a_convention() -> None:
-    """Rule: a number the source does not establish must say so.
-
-    The Fo = 0.2 episode is the precedent. Here the *direction* is
-    Levenspiel's and the *number* is a reading of "well stirred", so the
-    constant, the condition description and the docs row all have to say
-    convention out loud, or the citation is doing work it cannot do.
-    """
-    condition = next(
-        c for c in CSTR_MODEL.validity.conditions if c.name == DAMKOHLER_NUMBER
-    )
-    assert "CONVENTION" in condition.description.upper()
-    assert "Levenspiel" in condition.description
-    # And the constant itself, where a reader meets the number first.
-    source = ctx.__doc__ or ""
-    assert "Levenspiel" in source
-    import inspect
-    module_text = inspect.getsource(ctx)
-    marker = module_text.split("MAX_WELL_MIXED_DAMKOHLER = ")[0]
-    assert "convention" in marker.rsplit("#: Da <= 10", 1)[-1].lower()
+def test_no_damkohler_ceiling_survives_as_a_comfortable_convention() -> None:
+    assert not hasattr(ctx, "MAX_WELL_MIXED_DAMKOHLER")
+    assert DAMKOHLER_NUMBER not in {
+        condition.name for condition in CSTR_MODEL.validity.conditions
+    }
 
 
 def test_the_ceiling_condition_names_no_new_number() -> None:
