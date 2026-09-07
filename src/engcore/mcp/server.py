@@ -387,8 +387,17 @@ def _response(payload: Mapping[str, Any]) -> dict[str, Any]:
                 # check including NOT_RUN, provenance, and the caller's own
                 # asserted context under its `caller_asserted` marking.
                 "report": report.to_dict(),
+                # What would have to change for each violated condition to
+                # enter the validated domain: one line per declared input the
+                # domain can invert exactly, and every input it could not,
+                # named with the reason. Alternatives, never a plan -- nothing
+                # here ranks them or recommends one, and no entry can name a
+                # bound. See `engcore.domains.repair`.
+                "repairs": [repair.to_dict() for repair in repairs],
             }
-            for stage, report in zip(stages, case.reports)
+            for stage, report, repairs in zip(
+                stages, case.reports, case.repairs
+            )
         ],
     }
 

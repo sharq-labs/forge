@@ -152,10 +152,16 @@ def test_comparison_still_answers_which_is_larger():
 # The sweep: what the domains do by hand, and why it stays
 # =====================================================================
 
-#: Every place in the domains that forms a temperature difference by hand, as
-#: ``a.magnitude_in(kelvin) - b.magnitude_in(kelvin)``. Found by sweeping
-#: ``src/engcore`` for arithmetic joining two ``magnitude_in(TEMPERATURE_UNIT)``
-#: calls; the list is asserted below to be exactly what is there.
+#: Every place in the domains that does arithmetic on a temperature magnitude
+#: by hand, found by sweeping ``src/engcore`` for a ``+`` or ``-`` joining a
+#: ``magnitude_in(TEMPERATURE_UNIT)`` call. The list is asserted below to be
+#: exactly what is there, so a new site cannot appear unreviewed.
+#:
+#: **Most of these form a temperature difference** -- the operation this file
+#: exists for, ambiguous on an offset scale and therefore done in kelvin by
+#: hand rather than delegated. One does not, and is marked: the sweep is
+#: deliberately wider than the hazard, because a regex that matched only
+#: differences would be a regex that could be stepped around.
 HAND_ROLLED_SITES = {
     "domains/thermal_models/context.py": {
         "steady_state_temperature",
@@ -167,6 +173,17 @@ HAND_ROLLED_SITES = {
         # the shared helper behind internal_resistance_drift_ratio and
         # peukert_temperature_drift_ratio
         "_temperature_drift_ratio",
+    },
+    "domains/electrical/material.py": {
+        # NOT a temperature difference. It forms 1 + alpha T, the offset of
+        # `linear_resistance_ratio` read as a function of the reference
+        # temperature, for the repair inversion in `domains/repair.py`. One
+        # absolute temperature, multiplied by a coefficient per kelvin and
+        # added to a dimensionless 1 -- there is no second temperature for the
+        # scale origin to cancel against, so the offset hazard this file is
+        # about does not arise. It is registered because the sweep found it,
+        # and a site the sweep finds is a site somebody has to have looked at.
+        "_ratio_offset_in_reference",
     },
 }
 

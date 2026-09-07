@@ -3793,3 +3793,123 @@ to be established as used: `Fo = 0.2`, beryllium's `theta_D/3`, and
 `Da <= 10`. Before any convention-labelled bound is relied on in a published
 number, its source must be re-read for both the quantity and the threshold.
 This review happens before publication, not after an anomalous case exposes it.
+
+
+## repair-guidance round
+
+### R.1 Four abstractions measured against what already works, and deliberately not built
+
+**ExecutionPlan, DecisionPolicy, Claim-level Evidence, Confidence Budget.**
+All four have been proposed for this tree. None is built, and this entry
+records why so the proposal does not arrive a third time as though it were
+new.
+
+Each of them is an abstraction *over a mechanism that already works*, and in
+each case the mechanism it would wrap is already the thing a reader acts on:
+
+| Proposed | The mechanism it would abstract over | What the mechanism already gives |
+|---|---|---|
+| `ExecutionPlan` | `ProvenanceRecord` plus the realization/solver split | which model, which realization, which solver, which version, which settings — recorded per value, not per run |
+| `DecisionPolicy` | `derive_verdict` over the three-value verdict | one advisory verdict with its precedence written down and its inputs named; the rules that fired and the rules that did not are both in the payload |
+| Claim-level `Evidence` | `required_levels` and `attained_levels` on the validation report | which evidentiary level each check establishes, derived from a passing check that declares it and never asserted |
+| `ConfidenceBudget` | the same two level sets, plus `missing_required_levels` | exactly which level a claim is short of, by name |
+
+The argument against each is the same and it is not aesthetic. An abstraction
+earns its place by removing a decision from every caller. These four would
+add a record between the caller and a mechanism that is already legible, and
+the record would have to carry an escape hatch for everything the mechanism
+expresses that the record does not — at which point the caller reads the
+mechanism anyway and also maintains the record.
+
+**The precedent is measured, not asserted.** §E.2 of this document is the
+`DerivedQuantity` measurement: a declarative record — name, required
+declarations, formula — proposed to replace the derivation functions in the
+domain context modules. It was costed against the ten derived quantities added
+that round, and **six of the ten needed an escape hatch out of the resolver on
+day one**. A third of its callers bypassing it would have meant the abstraction
+had not abstracted the hard part; two thirds meant it had abstracted almost
+none of it. It was refused, and the repository is smaller for it.
+
+That is the standard these four are held to, and none of them has been
+measured against it. **The bar for building any of them is a count**: take the
+claims, verdicts or plans this tree actually produces, and show what fraction
+could be expressed in the proposed record without an escape hatch. If the
+fraction is not high, the answer is the `DerivedQuantity` answer.
+
+Recorded as deliberately unbuilt rather than as a gap. Nothing here is
+blocked on them, and a report that grew a fifth record without a caller
+asking for one would be a larger repository claiming to be a clearer one.
+
+### R.2 Repair guidance can name a declared input and never a bound, and the guarantee is structural
+
+Built this round: for every violated `RangeCondition`, what would have to
+change for the case to enter the validated domain — one line per declared
+input the domain can invert exactly, and every input it could not, named with
+the reason. `src/engcore/domains/repair.py`.
+
+**Why "raise the limit" had to be unsayable rather than untested.** Commit
+`d57a88e` removed `damkohler_number` as a validity condition. The bound was
+not wrong in its *value*: it constrained `k tau` while the claim was about
+`k t_mix`, so no adjustment of the number would have repaired it, and raising
+it would have produced a condition that passed while measuring the wrong
+ratio. A hint reading "raise the Damkohler ceiling" would have been exactly
+that move, and it would have looked like help. See also the rule at *Establish
+the quantity before moving its assessment instant*, which is the same finding
+from the other side.
+
+The guarantee is that **a bound has no name**. `RepairHint` accepts only a
+`RepairTarget`; `RepairTarget` refuses construction unless the name is a
+declared `PARAMETER` input of the model it is about; and a `RangeCondition`'s
+bounds are anonymous `Quantity` attributes of the condition, absent from
+`context_keys` and from `model.inputs`. There is no string that denotes a
+bound, so no argument can make a target name one. `ModelInversionTable` mints
+a target for every row at import, so a domain shipping the forbidden hint does
+not import.
+
+**A second route to the same move, found by the applied-hint test.**
+`derating_factor` divides a rating, so `dissipated_power_utilization` is an
+exact reciprocal in it and the inversion is genuinely available. At 4.5x over
+rating it says 3.6 — and `ComponentRating` admits only `(0, 1]`, because a
+factor above 1 uses more of a component than it is rated for while reporting
+that it is inside its rating. That is the raise-the-limit move reached
+*through a declared input* rather than through a limit, and no amount of
+guarding the bound namespace would have caught it. It was caught by the test
+that applies each hint literally, which could not construct the rating the
+hint proposed. Inversions now carry an `admissible_maximum` for exactly this,
+and the report refuses the hint and names the ceiling it hit.
+
+**The general lesson.** Guarding the namespace a hint may name is necessary
+and not sufficient. An input can be a legitimate declaration and still be a
+knob whose only effect is to loosen the check, and the way that was found was
+not review — it was applying the hint and watching the record refuse it.
+
+### R.3 The exact inversion is not the printed threshold, and the difference is not cosmetic
+
+A hint's threshold is the solution of `A + s x**p = B`, exact in the reals: at
+`x*` the group equals the bound, and an inclusive bound admits it. In floating
+point it need not. The Biot repair for a body at 4.2x its limit is
+`L_c = 0.1 k A_s / hA`; the nearest double to that value re-derives
+`Bi = 0.10000000000000002`, one ulp above an inclusive 0.1, and the condition
+stays violated. **The hint would have been right about the mathematics and
+useless in practice.**
+
+So the printed threshold is the exact solution rounded *into* the admissible
+side at twelve significant figures — one deterministic step, not a search —
+and it is always a strict step. Rounding alone is not enough: the conductance
+repair for the same body is `0.004 W/K` exactly, already on the grid, and
+rounding it returns the same number and the same ulp. A value on the grid is
+therefore moved one grid step further in.
+
+Twelve figures is chosen, not tuned: a double carries about 15.95 decimal
+digits and these derivations compose a handful of multiplications, so
+re-deriving the group carries a few ulps of relative error, order 1e-15.
+Discarding four digits places the threshold about 1e-12 relative inside the
+boundary — three orders clear of that round-off, and far finer than the
+precision of any declaration a caller writes down.
+
+**Recorded because the general form will recur.** Any guidance this repository
+emits that a caller is expected to *apply* has to be correct in the arithmetic
+the caller will re-run it in, not only in the arithmetic it was derived in.
+The test that catches this is the one that applies the hint literally and
+asserts the verdict flips; a test that applied a comfortable value inside the
+threshold would have passed throughout and proved nothing.

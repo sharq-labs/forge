@@ -38,6 +38,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from ...derived_context import (
+    DomainValidityContext,
+    assembled_validity_context,
+    caller_declared,
+)
+from ...repair import (
+    ConditionInversions,
+    ConditionRepair,
+    ModelInversionTable,
+    MonotoneInversion,
+    RefusedInversion,
+    condition_repairs,
+)
 from ....scientific.errors import InvalidScientificProblem
 from ....scientific.ir.problem import ScientificProblem
 from ....scientific.models.definition import (
@@ -1090,3 +1103,347 @@ def dc_solver_capabilities() -> frozenset[SolverCapability]:
     future planner reasoning about problem form rather than domain.
     """
     return frozenset({ELECTRICAL_DC_LINEAR, CoreCapabilities.LINEAR_SYSTEM})
+
+
+# =====================================================================
+# Repair guidance
+# =====================================================================
+#
+# The mechanism is `engcore.domains.repair`; the algebra is this domain's.
+#
+# EVERY UTILIZATION HERE IS |used| / (derating * rating), so it is a
+# reciprocal in the rating and a reciprocal in the derating factor, and those
+# invert exactly. The numerator is never a target: a dissipated power, a
+# working voltage, a source current and a terminal voltage are what the
+# network solve produced, and each is declared on the model record as a
+# VARIABLE for precisely that reason. `RepairTarget` refuses them, so a hint
+# saying "draw less current" -- which is not a declaration anyone edits -- is
+# not expressible.
+#
+# THE DERATING LINE IS THE HONEST GAP. With `rated_power_temperature` and
+# `zero_power_temperature` both declared, `dissipated_power_utilization` stops
+# being P/(d*P_rated) and becomes
+#
+#     (T_amb + (P/d) (T_zero - T_rated)/P_rated) / T_zero
+#
+# which is affine in 1/P_rated rather than a power law in it. That form is
+# invertible in principle -- but its offset is T_amb/T_zero, and the ambient
+# temperature is NOT a declared input of this model: it arrives as an argument
+# to `assess_resistor_validity`, crossing in from the thermal body that shares
+# the element's component id, and never enters the assessed context. The
+# offset therefore cannot be formed from what a repair sees, and the honest
+# report is that this reading is not inverted here, with that reason. It is a
+# real limitation of where the ambient lives, recorded rather than papered
+# over by inverting the constant-rating reading and pretending the line was
+# not declared.
+
+
+def _no_derating_line(context: Mapping[str, Any]) -> bool:
+    return not (
+        isinstance(context.get(RATED_POWER_TEMPERATURE), Quantity)
+        and isinstance(context.get(ZERO_POWER_TEMPERATURE), Quantity)
+    )
+
+
+def _constant_rating_only(exponent: float):
+    """The exponent of the constant-rating reading; nothing on the line reading."""
+
+    def resolve(context: Mapping[str, Any]) -> float | None:
+        return exponent if _no_derating_line(context) else None
+
+    return resolve
+
+
+_DERATING_LINE_OFFSET_IS_ELSEWHERE = (
+    "with a derating line declared this utilization is affine in the "
+    "reciprocal of the rating, with offset T_ambient / T_zero_power. The "
+    "ambient temperature is not a declared input of this model -- it crosses "
+    "in from the thermal body sharing this element's component id -- so the "
+    "offset cannot be formed from the assessed context and the form is not "
+    "anchored"
+)
+
+
+_DERATING_ABOVE_ONE = (
+    "a derating factor above 1 would use more of a component than it is "
+    "rated for while reporting that it is inside its rating, which is the "
+    "raise-the-limit move wearing a declared input's name. "
+    "`ComponentRating` refuses it, and so does this"
+)
+
+
+RESISTOR_INVERSIONS = ModelInversionTable(
+    model=RESISTOR_OHM_MODEL,
+    rows=(
+        ConditionInversions(
+            condition="resistance",
+            inversions=(
+                MonotoneInversion(
+                    target="resistance",
+                    exponent=1.0,
+                    justification="the condition bounds this declaration itself",
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=DISSIPATED_POWER_UTILIZATION,
+            inversions=(
+                MonotoneInversion(
+                    target=RATED_POWER,
+                    exponent=_constant_rating_only(-1.0),
+                    unavailable=_DERATING_LINE_OFFSET_IS_ELSEWHERE,
+                    justification=(
+                        "with no derating line the utilization is "
+                        "P / (d P_rated), a reciprocal in the rating"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=DERATING_FACTOR,
+                    exponent=_constant_rating_only(-1.0),
+                    unavailable=_DERATING_LINE_OFFSET_IS_ELSEWHERE,
+                    admissible_maximum=Quantity(
+                        NO_DERATING, DIMENSIONLESS
+                    ),
+                    beyond_admissible=_DERATING_ABOVE_ONE,
+                    justification=(
+                        "with no derating line the utilization is "
+                        "P / (d P_rated), a reciprocal in the derating factor"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=RATED_POWER_TEMPERATURE,
+                    reason=(
+                        "this temperature exists only to place the derating "
+                        "line, and " + _DERATING_LINE_OFFSET_IS_ELSEWHERE
+                    ),
+                ),
+                RefusedInversion(
+                    target=ZERO_POWER_TEMPERATURE,
+                    reason=(
+                        "this temperature exists only to place the derating "
+                        "line, and " + _DERATING_LINE_OFFSET_IS_ELSEWHERE
+                    ),
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=WORKING_VOLTAGE_UTILIZATION,
+            inversions=(
+                MonotoneInversion(
+                    target=MAXIMUM_WORKING_VOLTAGE,
+                    exponent=-1.0,
+                    justification=(
+                        "the utilization is |V| / (d V_max), a reciprocal in "
+                        "the rating"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=DERATING_FACTOR,
+                    exponent=-1.0,
+                    admissible_maximum=Quantity(
+                        NO_DERATING, DIMENSIONLESS
+                    ),
+                    beyond_admissible=_DERATING_ABOVE_ONE,
+                    justification=(
+                        "the utilization is |V| / (d V_max), a reciprocal in "
+                        "the derating factor"
+                    ),
+                ),
+            ),
+        ),
+    ),
+)
+
+
+VOLTAGE_SOURCE_INVERSIONS = ModelInversionTable(
+    model=IDEAL_VOLTAGE_SOURCE_MODEL,
+    rows=(
+        ConditionInversions(
+            condition=SOURCE_CURRENT_UTILIZATION,
+            inversions=(
+                MonotoneInversion(
+                    target=MAXIMUM_CURRENT,
+                    exponent=-1.0,
+                    justification=(
+                        "the utilization is |I| / (d I_max), a reciprocal in "
+                        "the rating"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=DERATING_FACTOR,
+                    exponent=-1.0,
+                    admissible_maximum=Quantity(
+                        NO_DERATING, DIMENSIONLESS
+                    ),
+                    beyond_admissible=_DERATING_ABOVE_ONE,
+                    justification=(
+                        "the utilization is |I| / (d I_max), a reciprocal in "
+                        "the derating factor"
+                    ),
+                ),
+            ),
+        ),
+    ),
+)
+
+
+CURRENT_SOURCE_INVERSIONS = ModelInversionTable(
+    model=IDEAL_CURRENT_SOURCE_MODEL,
+    rows=(
+        ConditionInversions(
+            condition=COMPLIANCE_VOLTAGE_UTILIZATION,
+            refusals=(
+                RefusedInversion(
+                    target=COMPLIANCE_VOLTAGE_UTILIZATION,
+                    reason=(
+                        "this model declares no compliance_voltage input, so "
+                        "the rating this group divides by is not among the "
+                        "things a caller declares to it -- it arrives on a "
+                        "ComponentRating beside the problem. There is nothing "
+                        "here a hint could be about, and the honest report is "
+                        "that this condition is not repairable through any "
+                        "declared input of this model"
+                    ),
+                ),
+            ),
+        ),
+    ),
+)
+
+
+KCL_INVERSIONS = ModelInversionTable(
+    model=KCL_MODEL,
+    rows=(
+        ConditionInversions(
+            condition=LUMPED_ELECTRICAL_LENGTH,
+            refusals=(
+                RefusedInversion(
+                    target=LUMPED_ELECTRICAL_LENGTH,
+                    reason=(
+                        "this group is identically zero by the model's own "
+                        "scope -- f = 0 is an assumption of the record, so "
+                        "lambda is unbounded and L/lambda is zero for a "
+                        "circuit of any size. No declared input enters it and "
+                        "no circuit can violate it"
+                    ),
+                ),
+            ),
+        ),
+    ),
+)
+
+
+def rating_declarations(
+    rating: ComponentRating | None,
+) -> dict[str, Quantity]:
+    """A component's rating as the declared inputs the model record names.
+
+    Every field below is a ``ModelInputSpec`` on the element's model, declared
+    ``required=False``: they *are* caller declarations, and the only reason
+    they do not already arrive through ``problem.validity_context`` is that a
+    rating is carried on its own record beside the problem rather than as a
+    problem parameter. A repair reads them from here so that a hint about
+    ``rated_power`` is a hint about a value the caller actually wrote down.
+
+    ``derating_factor`` is a bare float on the rating and becomes a
+    dimensionless ``Quantity``, because a hint's threshold and the value it is
+    compared with must share a dimension.
+    """
+    declared = rating or ComponentRating()
+    values: dict[str, Quantity] = {
+        DERATING_FACTOR: Quantity(declared.derating_factor, DIMENSIONLESS)
+    }
+    for name in (
+        RATED_POWER,
+        RATED_POWER_TEMPERATURE,
+        ZERO_POWER_TEMPERATURE,
+        MAXIMUM_WORKING_VOLTAGE,
+        MAXIMUM_CURRENT,
+        COMPLIANCE_VOLTAGE,
+    ):
+        value = getattr(declared, name)
+        if value is not None:
+            values[name] = value
+    return values
+
+
+def _repair_context(
+    model: Any,
+    problem: ScientificProblem,
+    rating: ComponentRating | None,
+    assembled: Mapping[str, Quantity],
+) -> DomainValidityContext:
+    """The assessed context, widened by the rating the caller declared.
+
+    The ratings that a model names as inputs but that travel on a
+    ``ComponentRating`` are folded into the *declared* half, never the
+    assembled one: they are the caller's numbers and a hint is about them. The
+    assembled half stays exactly what `resistor_rating_context` and its
+    siblings produced, so the hints are anchored to the same utilizations the
+    verdict was formed from.
+    """
+    reserved = model.derived_quantities
+    declared = dict(problem.validity_context(reserved=reserved))
+    for name, value in rating_declarations(rating).items():
+        declared.setdefault(name, value)
+    return assembled_validity_context(
+        declared=caller_declared(declared, reserved),
+        assembled=dict(assembled),
+        reserved=reserved,
+    )
+
+
+def resistor_repairs(
+    problem: ScientificProblem,
+    *,
+    subject: str,
+    rating: ComponentRating | None = None,
+    dissipated_power: Quantity | None = None,
+    voltage_across: Quantity | None = None,
+    ambient_temperature: Quantity | None = None,
+) -> tuple[ConditionRepair, ...]:
+    """What would have to change for this element's violated conditions to pass.
+
+    The arguments are exactly :func:`assess_resistor_validity`'s.
+    """
+    return condition_repairs(
+        model=RESISTOR_OHM_MODEL,
+        context=_repair_context(
+            RESISTOR_OHM_MODEL,
+            problem,
+            rating,
+            resistor_rating_context(
+                rating=rating,
+                dissipated_power=dissipated_power,
+                voltage_across=voltage_across,
+                ambient_temperature=ambient_temperature,
+            ),
+        ),
+        table=RESISTOR_INVERSIONS,
+        subject=subject,
+    )
+
+
+def voltage_source_repairs(
+    problem: ScientificProblem,
+    *,
+    subject: str,
+    rating: ComponentRating | None = None,
+    source_current: Quantity | None = None,
+) -> tuple[ConditionRepair, ...]:
+    """What would have to change for this source's violated conditions to pass."""
+    return condition_repairs(
+        model=IDEAL_VOLTAGE_SOURCE_MODEL,
+        context=_repair_context(
+            IDEAL_VOLTAGE_SOURCE_MODEL,
+            problem,
+            rating,
+            voltage_source_rating_context(
+                rating=rating, source_current=source_current
+            ),
+        ),
+        table=VOLTAGE_SOURCE_INVERSIONS,
+        subject=subject,
+    )

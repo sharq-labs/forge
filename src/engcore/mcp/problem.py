@@ -63,6 +63,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 from ..domains.electrical import material as mat
+from ..domains.repair import ConditionRepair, merge_repairs
 from ..domains.electrical.dc import circuit as dc_circuit
 from ..domains.electrical.dc import models as dc_models
 from ..domains.electrical.dc import problem as dc_problem
@@ -1196,6 +1197,34 @@ class ElectroThermalCaseRun:
 
     run: cp.CoupledRun
     reports: tuple[CredibilityEvidenceReport, ...]
+    #: One tuple of repair hints per stage, in the same order as ``reports``.
+    #:
+    #: Carried BESIDE the report rather than inside it. A ``RepairHint``'s
+    #: subject is a ``RepairTarget``, which cannot be minted without the model
+    #: record it names -- that is where the guarantee lives that no hint can
+    #: name a bound. A report record that round-tripped repairs through JSON
+    #: would have to rebuild one from a payload, with no model to check it
+    #: against, and a hint nobody checked is exactly the thing that must not
+    #: exist. So repairs are emitted with the report and never parsed back
+    #: into one; they are recomputable from the domain at any time, being a
+    #: function of the same assembly the verdict came from.
+    repairs: tuple[tuple[ConditionRepair, ...], ...] = ()
+
+    def __post_init__(self) -> None:
+        # A refused transfer produces reports and no repairs, which is right:
+        # there is no converged operating point for a hint to be anchored to.
+        # An empty tuple therefore means "none computed" and is padded here,
+        # so a consumer may zip the two without casing on which it got.
+        if not self.repairs:
+            object.__setattr__(
+                self, "repairs", tuple(() for _ in self.reports)
+            )
+        elif len(self.repairs) != len(self.reports):
+            raise ProblemPayloadError(
+                f"{len(self.repairs)} repair groups for "
+                f"{len(self.reports)} reports; each report's repairs are the "
+                f"ones about its own stage and the two travel together"
+            )
 
 
 
@@ -1295,6 +1324,104 @@ def _electrical_assessments(
     # the report is a model the report silently claims nothing about.
     assessments[_KCL.model_id] = dc_models.assess_kcl_validity()
     return assessments
+
+
+def _electrical_repairs(
+    system: cp.CoupledElectroThermalSystem,
+    electrical: "ScientificResult",
+    run: "cp.CoupledRun",
+    ratings: Mapping[str, dc_models.ComponentRating] | None = None,
+    source_rating: dc_models.ComponentRating | None = None,
+) -> tuple[ConditionRepair, ...]:
+    """What would have to change for each electrical element's violations to pass.
+
+    Deliberately **per element**, where :func:`_electrical_assessments` is per
+    model. A verdict combines across elements because a report names a model;
+    a repair cannot, because two resistors violating the same condition are
+    two different declarations with two different thresholds, and merging them
+    would mean choosing one. Each repair carries the ``component_id`` it is
+    about.
+    """
+    circuit = system.circuit_at(cp.converged_resistances(system, run))
+    ambient_of = {
+        stage.component_id: stage.body.ambient_temperature
+        for stage in system.stages
+    }
+    collected: list[tuple[ConditionRepair, ...]] = []
+    for resistor in circuit.resistors:
+        cid = resistor.component_id
+        collected.append(
+            dc_models.resistor_repairs(
+                dc_problem.resistor_relation_problem(resistor),
+                subject=cid,
+                rating=(ratings or {}).get(cid),
+                dissipated_power=electrical.value(
+                    RESISTOR_POWER_METRIC.format(component_id=cid)
+                ),
+                voltage_across=electrical.value(f"resistor_voltage:{cid}"),
+                ambient_temperature=ambient_of.get(cid),
+            )
+        )
+    for source in circuit.voltage_sources:
+        collected.append(
+            dc_models.voltage_source_repairs(
+                dc_problem.voltage_source_relation_problem(source),
+                subject=source.component_id,
+                rating=source_rating,
+                source_current=electrical.value(
+                    f"{dc_solver.SOURCE_CURRENT_METRIC}:{source.component_id}"
+                ),
+            )
+        )
+    return merge_repairs(collected)
+
+
+def _material_repairs(
+    system: cp.CoupledElectroThermalSystem, run: "cp.CoupledRun"
+) -> tuple[ConditionRepair, ...]:
+    """Repair hints for the conductor claims, at the instants each was read at.
+
+    The three state arguments are resolved exactly as
+    :func:`_material_assessments` resolves them -- the operating point, the
+    coldest state and the state furthest from the reference -- so a hint about
+    ``debye_temperature`` is a hint about the coldest instant the floor was
+    actually assessed at, and not about the endpoint.
+    """
+    collected: list[tuple[ConditionRepair, ...]] = []
+    for stage, prop_problem, _thermal in cp.stage_problems(system):
+        result = run.final.result_for(prop_problem.problem_id)
+        temperature = result.provenance.inputs[mat.TEMPERATURE]
+        coldest = min(
+            (stage.body.initial_temperature, temperature),
+            key=lambda value: value.magnitude_in(mat.TEMPERATURE_UNIT),
+        )
+        reference = stage.conductor.reference_temperature
+        furthest = max(
+            (stage.body.initial_temperature, temperature),
+            key=lambda value: abs(
+                value.magnitude_in(mat.TEMPERATURE_UNIT)
+                - reference.magnitude_in(mat.TEMPERATURE_UNIT)
+            ),
+        )
+        collected.append(
+            mat.resistance_repairs(
+                prop_problem, temperature, subject=stage.component_id
+            )
+        )
+        if any(
+            model.model_id == _RATED_TCR.model_id
+            for model in prop_problem.models
+        ):
+            collected.append(
+                mat.rated_resistance_repairs(
+                    prop_problem,
+                    temperature,
+                    coldest,
+                    furthest,
+                    subject=stage.component_id,
+                )
+            )
+    return merge_repairs(collected)
 
 
 def _material_assessments(
@@ -1595,6 +1722,10 @@ def run_electrothermal_case(
         system, electrical, run, ratings, source_rating
     )
     shared.update(_material_assessments(system, run))
+    shared_repairs = (
+        _electrical_repairs(system, electrical, run, ratings, source_rating)
+        + _material_repairs(system, run)
+    )
 
     versions = {
         model.model_id: model.version
@@ -1603,6 +1734,7 @@ def run_electrothermal_case(
     }
 
     reports = []
+    repairs: list[tuple[ConditionRepair, ...]] = []
     for stage, (_, _prop, thermal_problem) in zip(
         system.stages, cp.stage_problems(system)
     ):
@@ -1615,6 +1747,23 @@ def run_electrothermal_case(
             initial_temperature=stage.body.initial_temperature,
             ambient_temperature=stage.body.ambient_temperature,
             heat_input=power,
+        )
+        # The thermal repairs are this stage's alone; the electrical and
+        # material ones are the whole composition's and are the same in every
+        # stage's report, exactly as their assessments are.
+        repairs.append(
+            merge_repairs(
+                (
+                    shared_repairs,
+                    lump.lumped_repairs(
+                        thermal_problem,
+                        subject=stage.body.body_id,
+                        initial_temperature=stage.body.initial_temperature,
+                        ambient_temperature=stage.body.ambient_temperature,
+                        heat_input=power,
+                    ),
+                )
+            )
         )
         thermal_result = run.final.result_for(thermal_problem.problem_id)
         closure = cp.dependency_closure(thermal_problem.problem_id, dependencies)
@@ -1646,7 +1795,9 @@ def run_electrothermal_case(
                 ),
             )
         )
-    return ElectroThermalCaseRun(run=run, reports=tuple(reports))
+    return ElectroThermalCaseRun(
+        run=run, reports=tuple(reports), repairs=tuple(repairs)
+    )
 
 
 # =====================================================================

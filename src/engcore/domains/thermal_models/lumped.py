@@ -54,8 +54,16 @@ import math
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Mapping
 
+from ..repair import (
+    ConditionInversions,
+    ConditionRepair,
+    ModelInversionTable,
+    MonotoneInversion,
+    RefusedInversion,
+    condition_repairs,
+)
 from ...scientific.capabilities import ScientificCapability
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.conditions import InitialCondition
@@ -1732,3 +1740,516 @@ class LumpedThermalSolver(DeclaredSupport):
             ),
             evidence=evidence,
         )
+
+
+# =====================================================================
+# Repair guidance
+# =====================================================================
+#
+# What would have to change for a violated condition here to enter the
+# validated domain. The mechanism is `engcore.domains.repair`; what lives
+# below is this domain's own algebra, beside the derivations it is read off,
+# because the exponent of `surface_area` in the Biot number is a fact about
+# `context.biot_number` and not about the repair engine.
+#
+# EVERY RANGE CONDITION ON THE MODEL HAS A ROW. `ModelInversionTable` refuses
+# to construct otherwise, so a condition added to this model without an
+# inversion decision does not import.
+#
+# THE EXPONENTS ARE READ OFF THE DERIVATIONS, AND HERE IS THE ONE THAT MATTERS
+# MOST. Composing the definitions in `context.py`:
+#
+#     Bi = h L_c / k          h = hA / A_s
+#     tau = C / hA            t/tau = t hA / C
+#     Fo = (t/tau) / Bi = t hA / C  *  A_s k / (hA L_c)  =  t A_s k / (C L_c)
+#
+# so `ambient_conductance` cancels out of the internal Fourier number exactly.
+# It is refused below for that reason and not for want of an inverse: a hint
+# telling a caller to move hA to repair Fo would have moved nothing at all,
+# which is the quietest way a hint can be wrong.
+#
+# TWO ROUTES, TWO EXPONENTS. `characteristic_length` may be declared or
+# derived as V/A_s, and `surface_area` enters the Biot number once on the
+# first route and twice on the second. The exponent therefore resolves from
+# the assessed context rather than being a constant, and `body_volume` reports
+# no inversion at all on the declared-length route because it genuinely does
+# not enter. The same split governs the convection correlations, where the
+# route is chosen by which declaration is present -- an expansion coefficient
+# or a velocity -- exactly as `correlated_coefficient` chooses it.
+
+
+def _has(context: Mapping[str, Any], name: str) -> bool:
+    return isinstance(context.get(name), Quantity)
+
+
+def _natural_route(context: Mapping[str, Any]) -> bool:
+    """The Rayleigh route, selected as `correlated_coefficient` selects it."""
+    return _has(context, FLUID_EXPANSION_COEFFICIENT)
+
+
+def _forced_route(context: Mapping[str, Any]) -> bool:
+    return _has(context, FLUID_VELOCITY)
+
+
+def _route_exponent(natural: float | None, forced: float | None):
+    def resolve(context: Mapping[str, Any]) -> float | None:
+        if _natural_route(context):
+            return natural
+        if _forced_route(context):
+            return forced
+        return None
+
+    return resolve
+
+
+def _length_route_exponent(declared: float, implied: float):
+    """The exponent when L_c is declared, and when it comes from V/A_s."""
+
+    def resolve(context: Mapping[str, Any]) -> float | None:
+        return declared if _has(context, CHARACTERISTIC_LENGTH) else implied
+
+    return resolve
+
+
+_NO_ROUTE = (
+    "neither convection route is declared here, so this group carries no "
+    "dependence on this input"
+)
+_CHURCHILL_CHU_IS_A_SUM = (
+    "on the natural route the correlated coefficient comes from "
+    "Nu = 0.68 + 0.670 Ra^(1/4) / [1 + (0.492/Pr)^(9/16)]^(4/9), a sum rather "
+    "than a power law, so this ratio is not a power law in this input and has "
+    "no closed-form inverse in it"
+)
+_EXCURSION_IS_A_MAX = (
+    "hA reaches this group only through the surface excursion "
+    "max(|T_0 - T_amb|, |T_ss - T_amb|), a piecewise maximum of a term that "
+    "moves with hA and one that does not; it has no unique inverse"
+)
+
+
+LUMPED_INVERSIONS = ModelInversionTable(
+    model=LUMPED_CAPACITY_MODEL,
+    rows=(
+        # ---- the two well-formedness conditions ----------------------
+        # Each bounds a declared input directly, so the inversion is the
+        # identity and the threshold is the bound restated in the caller's
+        # own units. That is not "change the limit": the limit is unmoved and
+        # the hint is about the declaration that failed to meet it.
+        ConditionInversions(
+            condition=HEAT_CAPACITY,
+            inversions=(
+                MonotoneInversion(
+                    target=HEAT_CAPACITY,
+                    exponent=1.0,
+                    justification="the condition bounds this declaration itself",
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=AMBIENT_CONDUCTANCE,
+            inversions=(
+                MonotoneInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    exponent=1.0,
+                    justification="the condition bounds this declaration itself",
+                ),
+            ),
+        ),
+        # ---- applicability of the lumped approximation ---------------
+        ConditionInversions(
+            condition=BIOT_NUMBER,
+            inversions=(
+                MonotoneInversion(
+                    target=CHARACTERISTIC_LENGTH,
+                    exponent=1.0,
+                    justification="Bi = h L_c / k is linear in L_c",
+                ),
+                MonotoneInversion(
+                    target=BODY_CONDUCTIVITY,
+                    exponent=-1.0,
+                    justification="Bi = h L_c / k goes as 1/k",
+                ),
+                MonotoneInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    exponent=1.0,
+                    justification=(
+                        "h = hA/A_s, and hA enters neither L_c nor k, so Bi is "
+                        "linear in hA"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=SURFACE_AREA,
+                    exponent=_length_route_exponent(-1.0, -2.0),
+                    unavailable=_NO_ROUTE,
+                    justification=(
+                        "A_s divides hA to give h; with no declared L_c it "
+                        "also divides V to give L_c, so Bi goes as 1/A_s with "
+                        "a declared length and as 1/A_s^2 without one"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=BODY_VOLUME,
+                    exponent=lambda ctx: (
+                        None if _has(ctx, CHARACTERISTIC_LENGTH) else 1.0
+                    ),
+                    unavailable=(
+                        "a declared characteristic_length wins over the V/A_s "
+                        "route, so the volume does not enter the Biot number "
+                        "at all here"
+                    ),
+                    justification=(
+                        "without a declared L_c, L_c = V/A_s is linear in V"
+                    ),
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=INTERNAL_FOURIER_NUMBER,
+            inversions=(
+                MonotoneInversion(
+                    target="duration",
+                    exponent=1.0,
+                    justification="Fo = t A_s k / (C L_c) is linear in t",
+                ),
+                MonotoneInversion(
+                    target=BODY_CONDUCTIVITY,
+                    exponent=1.0,
+                    justification="Fo = t A_s k / (C L_c) is linear in k",
+                ),
+                MonotoneInversion(
+                    target=HEAT_CAPACITY,
+                    exponent=-1.0,
+                    justification="Fo = t A_s k / (C L_c) goes as 1/C",
+                ),
+                MonotoneInversion(
+                    target=CHARACTERISTIC_LENGTH,
+                    exponent=-1.0,
+                    justification="Fo = t A_s k / (C L_c) goes as 1/L_c",
+                ),
+                MonotoneInversion(
+                    target=SURFACE_AREA,
+                    exponent=_length_route_exponent(1.0, 2.0),
+                    unavailable=_NO_ROUTE,
+                    justification=(
+                        "Fo goes as A_s with a declared length, and as A_s^2 "
+                        "when L_c = V/A_s carries a second factor"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=BODY_VOLUME,
+                    exponent=lambda ctx: (
+                        None if _has(ctx, CHARACTERISTIC_LENGTH) else -1.0
+                    ),
+                    unavailable=(
+                        "a declared characteristic_length wins over the V/A_s "
+                        "route, so the volume does not enter Fo at all here"
+                    ),
+                    justification="without a declared L_c, Fo goes as 1/V",
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    reason=(
+                        "hA cancels exactly: Fo = (t/tau)/Bi = "
+                        "t A_s k/(C L_c), and hA multiplies t/tau and Bi by "
+                        "the same factor. Changing it moves nothing"
+                    ),
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=CONDUCTANCE_EXCURSION_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=CONDUCTANCE_EXCURSION_BOUND,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is dT / dT_bound, so it goes as 1/dT_bound"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=AMBIENT_CONDUCTANCE, reason=_EXCURSION_IS_A_MAX
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=CAPACITY_EXCURSION_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=CAPACITY_EXCURSION_BOUND,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is |T_ss - T_0| / dT_bound, so it goes as "
+                        "1/dT_bound"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    reason=(
+                        "the span |T_amb + Q/hA - T_0| is an absolute value "
+                        "that passes through zero as hA varies, so it is not "
+                        "monotone in hA and the inverse is not unique"
+                    ),
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=RADIATION_TO_CONVECTION_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=SURFACE_EMISSIVITY,
+                    exponent=1.0,
+                    justification=(
+                        "h_r = eps sigma (T_s + T_sur)(T_s^2 + T_sur^2) is "
+                        "linear in eps and h does not read it"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=SURFACE_AREA,
+                    exponent=1.0,
+                    justification=(
+                        "h = hA/A_s goes as 1/A_s and h_r does not read the "
+                        "area, so h_r/h is linear in A_s"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    reason=(
+                        "hA sets h directly and also sets T_ss, which is where "
+                        "the peak surface temperature h_r is evaluated at "
+                        "comes from; the two move the ratio in opposite "
+                        "directions through a maximum of two endpoints, and "
+                        "the composite is neither a power law nor monotone"
+                    ),
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=CONVECTION_FLOW_RANGE,
+            inversions=(
+                MonotoneInversion(
+                    target=CONVECTION_LENGTH,
+                    exponent=_route_exponent(3.0, 1.0),
+                    unavailable=_NO_ROUTE,
+                    justification=(
+                        "Ra = g beta dT L^3 Pr / nu^2 goes as L^3; "
+                        "Re = u L / nu is linear in L"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=FLUID_VISCOSITY,
+                    exponent=_route_exponent(-2.0, -1.0),
+                    unavailable=_NO_ROUTE,
+                    justification=(
+                        "Ra goes as 1/nu^2 in the g beta dT L^3 Pr / nu^2 "
+                        "form; Re goes as 1/nu"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=FLUID_EXPANSION_COEFFICIENT,
+                    exponent=_route_exponent(1.0, None),
+                    unavailable=(
+                        "the expansion coefficient enters the Rayleigh number "
+                        "only; the forced route reads a Reynolds number, which "
+                        "does not contain it"
+                    ),
+                    justification="Ra is linear in beta",
+                ),
+                MonotoneInversion(
+                    target=FLUID_PRANDTL_NUMBER,
+                    exponent=_route_exponent(1.0, None),
+                    unavailable=(
+                        "the Reynolds number carries no Prandtl number, so the "
+                        "forced route's flow range does not read it"
+                    ),
+                    justification="Ra = Gr Pr is linear in Pr",
+                ),
+                MonotoneInversion(
+                    target=FLUID_VELOCITY,
+                    exponent=_route_exponent(None, 1.0),
+                    unavailable=(
+                        "the Rayleigh number carries no velocity, so the "
+                        "natural route's flow range does not read it"
+                    ),
+                    justification="Re = u L / nu is linear in u",
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=AMBIENT_CONDUCTANCE, reason=_EXCURSION_IS_A_MAX
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=CONVECTION_PROPERTY_RANGE,
+            inversions=(
+                MonotoneInversion(
+                    target=FLUID_PRANDTL_NUMBER,
+                    exponent=_route_exponent(None, -1.0),
+                    unavailable=(
+                        "Churchill-Chu states no Prandtl restriction, so on "
+                        "the natural route this group is identically zero and "
+                        "cannot be the condition that failed"
+                    ),
+                    justification="the forced route's group is 0.6/Pr",
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=CONVECTION_AGREEMENT_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=SURFACE_AREA,
+                    exponent=-1.0,
+                    justification=(
+                        "the area appears only in h_declared = hA/A_s; neither "
+                        "correlation reads it, so the ratio goes as 1/A_s on "
+                        "both routes"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    exponent=_route_exponent(None, 1.0),
+                    unavailable=(
+                        "on the natural route hA moves the excursion the "
+                        "Rayleigh number is formed from, so it appears on both "
+                        "sides of the ratio through a maximum and a sum"
+                    ),
+                    justification=(
+                        "the Reynolds number carries no temperature "
+                        "difference, so on the forced route h_correlated does "
+                        "not read hA and the ratio is linear in it"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=FLUID_CONDUCTIVITY,
+                    exponent=_route_exponent(None, -1.0),
+                    unavailable=_CHURCHILL_CHU_IS_A_SUM,
+                    justification=(
+                        "h_correlated = Nu k_f / L is linear in k_f, so the "
+                        "ratio goes as 1/k_f"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=CONVECTION_LENGTH,
+                    exponent=_route_exponent(None, 0.5),
+                    unavailable=_CHURCHILL_CHU_IS_A_SUM,
+                    justification=(
+                        "h_correlated = 0.664 (uL/nu)^(1/2) Pr^(1/3) k_f / L "
+                        "goes as L^(-1/2), so the ratio goes as L^(1/2)"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=FLUID_VELOCITY,
+                    exponent=_route_exponent(None, -0.5),
+                    unavailable=(
+                        "the Rayleigh route reads no velocity, and its Nusselt "
+                        "number is a sum rather than a power law"
+                    ),
+                    justification=(
+                        "h_correlated goes as u^(1/2), so the ratio goes as "
+                        "u^(-1/2)"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=FLUID_VISCOSITY,
+                    exponent=_route_exponent(None, 0.5),
+                    unavailable=_CHURCHILL_CHU_IS_A_SUM,
+                    justification=(
+                        "h_correlated goes as nu^(-1/2), so the ratio goes as "
+                        "nu^(1/2)"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=FLUID_PRANDTL_NUMBER,
+                    exponent=_route_exponent(None, -1.0 / 3.0),
+                    unavailable=_CHURCHILL_CHU_IS_A_SUM,
+                    justification=(
+                        "h_correlated goes as Pr^(1/3), so the ratio goes as "
+                        "Pr^(-1/3)"
+                    ),
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=GEOMETRY_ROUTE_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=CHARACTERISTIC_LENGTH,
+                    exponent=1.0,
+                    justification="the ratio is L_c/(V/A_s), linear in L_c",
+                ),
+                MonotoneInversion(
+                    target=BODY_VOLUME,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is L_c A_s / V, so it goes as 1/V"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=SURFACE_AREA,
+                    exponent=1.0,
+                    justification="the ratio is L_c A_s / V, linear in A_s",
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=MELTING_TEMPERATURE_UTILIZATION,
+            inversions=(
+                MonotoneInversion(
+                    target=MELTING_TEMPERATURE,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is T_peak / T_melt, so it goes as 1/T_melt"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=AMBIENT_CONDUCTANCE,
+                    reason=(
+                        "the peak is max(T_0, T_amb + Q/hA), a piecewise "
+                        "maximum; below the crossover hA does not move it at "
+                        "all and the inverse is not unique"
+                    ),
+                ),
+            ),
+        ),
+    ),
+)
+
+
+def lumped_repairs(
+    problem: ScientificProblem,
+    *,
+    subject: str,
+    initial_temperature: Quantity | None = None,
+    ambient_temperature: Quantity | None = None,
+    heat_input: Quantity | None = None,
+) -> tuple[ConditionRepair, ...]:
+    """What would have to change for this body's violated conditions to pass.
+
+    The arguments are exactly :func:`assess_lumped_validity`'s, so the hints
+    are anchored to the same assembly the verdict came from. A body with no
+    violated condition yields an empty tuple.
+    """
+    context = lumped_validity_context(
+        problem,
+        initial_temperature=initial_temperature,
+        ambient_temperature=ambient_temperature,
+        heat_input=heat_input,
+    )
+    return condition_repairs(
+        model=LUMPED_CAPACITY_MODEL,
+        context=context,
+        table=LUMPED_INVERSIONS,
+        subject=subject,
+    )

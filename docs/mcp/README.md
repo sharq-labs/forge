@@ -393,6 +393,84 @@ response:
 The bound that was violated is named, with the model that declared it. The
 gaps are still reported, under `other_findings`, outranked rather than erased.
 
+## What would have to change
+
+Each stage carries a `repairs` list beside its `report`. For every violated
+`RangeCondition`, it says what a caller would have to declare differently for
+that condition to enter the validated domain — and, just as deliberately, which
+of the inputs it could not answer for.
+
+From the `NOT_SUPPORTED` example above:
+
+```json
+{
+  "model_id": "electrical.material.rated_linear_tcr_resistance",
+  "subject": "R1",
+  "condition": "operating_temperature_utilization",
+  "observed": {"schema": "quantity/1", "magnitude": 1.1248405914928992, "units": "dimensionless"},
+  "bound": {"schema": "quantity/1", "magnitude": 1.0, "units": "dimensionless"},
+  "bound_side": "maximum",
+  "bound_inclusive": true,
+  "repairable": true,
+  "hints": [
+    {
+      "condition": "operating_temperature_utilization",
+      "target": "maximum_operating_temperature",
+      "direction": "at_least",
+      "inclusive": true,
+      "threshold": {"schema": "quantity/1", "magnitude": 338.57701804000004, "units": "kelvin"},
+      "declared": {"schema": "quantity/1", "magnitude": 301.0, "units": "kelvin"},
+      "basis": "the ratio is T / T_max, so it goes as 1/T_max"
+    }
+  ],
+  "not_invertible": [
+    {
+      "condition": "operating_temperature_utilization",
+      "target": "temperature",
+      "reason": "the operating temperature is the state the run converged to, not a declaration; it is a model VARIABLE and no hint can be about it"
+    }
+  ]
+}
+```
+
+**Alternatives, never a plan.** Several hints for one condition are choices the
+caller makes between; nothing ranks them, costs them or recommends one. Each
+holds every other declaration fixed and repairs *its own condition only* — so
+with two conditions violated, applying one hint repairs one of them and the
+verdict stays where it was. That is the honest behaviour and is why nothing
+here composes hints.
+
+**`not_invertible` is part of the answer.** An input reaches a group through a
+maximum, an absolute value or a sum often enough that a list of only the
+answerable inputs would read as though the rest did not matter. Three shapes
+recur: an input that does not move the group at all (`ambient_conductance`
+cancels exactly out of the internal Fourier number), one whose admissible set
+is an interval rather than a one-sided bound (`reference_temperature` in the
+linearization band), and one that is not a declaration at all (the operating
+temperature). When no declared input can repair a condition, `repairable` is
+`false` and the report says so rather than naming something adjacent.
+
+**No hint can ever say "raise the limit".** A hint's subject must be a declared
+`PARAMETER` input of the model, and a validity bound is an anonymous `Quantity`
+on the condition — it is in no namespace, so there is no string that denotes
+one. The guarantee is structural rather than conventional; see
+`src/engcore/domains/repair.py`, which also records the commit where a bound
+was *removed* rather than raised because it constrained the wrong ratio.
+
+**A rating is not a bound, and the difference matters when reading the example
+above.** `maximum_operating_temperature` is a declaration about the material —
+a datasheet fact — so a hint about it says *this conductor is not rated for
+this operating point; one rated to 338.6 K would be*. The model's own bound,
+`operating_temperature_utilization <= 1`, is untouched and untouchable. A
+caller who instead edits the declared rating to make the condition pass has
+falsified a declaration, and the report carries every declaration marked as the
+caller's own claim for exactly that reason.
+
+**Thresholds land inside.** Each is the exact solution of the inversion, rounded
+into the admissible side, because a value that satisfies the condition in exact
+arithmetic can miss it by one ulp when re-derived. Declaring the number printed
+is enough; it does not need a margin added to it.
+
 ## The schemas an agent sees
 
 Both tools take and return free-form JSON objects, so the schemas are

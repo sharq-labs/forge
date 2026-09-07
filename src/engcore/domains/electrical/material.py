@@ -68,6 +68,14 @@ from ..derived_context import (
     assembler_namespace,
     caller_declared,
 )
+from ..repair import (
+    ConditionInversions,
+    ConditionRepair,
+    ModelInversionTable,
+    MonotoneInversion,
+    RefusedInversion,
+    condition_repairs,
+)
 from ...scientific.capabilities import ScientificCapability
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
@@ -1790,3 +1798,247 @@ class ResistancePropertySolver(DeclaredSupport):
                 + (f"; mismatched: {sorted(mismatched)}" if mismatched else "")
             ),
         )
+
+
+# =====================================================================
+# Repair guidance
+# =====================================================================
+#
+# The mechanism is `engcore.domains.repair`; the algebra below is this
+# domain's, beside the derivations it is read off.
+#
+# WHAT THIS DOMAIN CANNOT INVERT, AND WHY THE LIST IS NOT AN OVERSIGHT.
+#
+# Every condition on the rated model is a bound on a group formed from the
+# operating temperature and one declared limit. The temperature is a VARIABLE
+# -- the state the coupled run converged to -- so it is not a target at all:
+# `RepairTarget` refuses it, and the report says so rather than suggesting a
+# caller "run it cooler", which is not a declaration anybody edits.
+#
+# That leaves the declared limit in each case, and three of the four invert
+# cleanly as reciprocals. The fourth does not, and it is the one worth
+# reading. `linearization_excursion_ratio` is |T - T_ref| / band. In `band` it
+# is a reciprocal; in `reference_temperature` the numerator is an ABSOLUTE
+# VALUE, so the group falls to zero at T_ref and rises on both sides. The set
+# of reference temperatures that satisfy the condition is the closed interval
+# [T - band, T + band] -- a two-sided constraint, not a one-sided bound -- and
+# there is no single inequality a hint could state about it. A hint reading
+# "reference_temperature >= 318 K" would be true of half the admissible set
+# and silent about the rest, which is worse than saying nothing. So it says
+# nothing, and says why.
+#
+# `linear_resistance_ratio` is the one affine inversion here: 1 + alpha
+# (T - T_ref) is linear in alpha with offset 1, and linear in T_ref with
+# offset 1 + alpha T. Both are exact, both are single-valued, and neither is a
+# power law -- which is why the inversion form carries an offset at all.
+
+
+def _dimensionless(value: float) -> Quantity:
+    return Quantity(value, DIMENSIONLESS)
+
+
+def _unity(_context: Mapping[str, Any]) -> Quantity:
+    """A = 1 in ``1 + alpha (T - T_ref)`` read as a function of alpha."""
+    return _dimensionless(1.0)
+
+
+def _ratio_offset_in_reference(context: Mapping[str, Any]) -> Quantity | None:
+    """A = 1 + alpha T in ``1 + alpha (T - T_ref)`` read as a function of T_ref.
+
+    ``None`` when either factor is absent -- in which case the group itself was
+    never derived and no condition over it can have been violated, so this is
+    a guard rather than a branch the report reaches.
+    """
+    alpha = context.get(TEMPERATURE_COEFFICIENT)
+    temperature = context.get(TEMPERATURE)
+    if not isinstance(alpha, Quantity) or not isinstance(temperature, Quantity):
+        return None
+    return _dimensionless(
+        1.0
+        + alpha.magnitude_in(TCR_UNIT)
+        * temperature.magnitude_in(TEMPERATURE_UNIT)
+    )
+
+
+_TEMPERATURE_IS_A_STATE = (
+    "the operating temperature is the state the run converged to, not a "
+    "declaration; it is a model VARIABLE and no hint can be about it"
+)
+
+_REFERENCE_IS_TWO_SIDED = (
+    "the numerator is |T - T_ref|, which falls to zero at T_ref and rises on "
+    "both sides of it. The reference temperatures that satisfy this condition "
+    "form the interval [T - band, T + band], a two-sided constraint rather "
+    "than a one-sided bound, and no single inequality states it"
+)
+
+
+TCR_INVERSIONS = ModelInversionTable(
+    model=LINEAR_TCR_MODEL,
+    rows=(
+        ConditionInversions(
+            condition=TEMPERATURE,
+            refusals=(
+                RefusedInversion(
+                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=REFERENCE_RESISTANCE,
+            inversions=(
+                MonotoneInversion(
+                    target=REFERENCE_RESISTANCE,
+                    exponent=1.0,
+                    justification="the condition bounds this declaration itself",
+                ),
+            ),
+        ),
+    ),
+)
+
+
+RATED_TCR_INVERSIONS = ModelInversionTable(
+    model=RATED_LINEAR_TCR_MODEL,
+    rows=(
+        ConditionInversions(
+            condition=TEMPERATURE,
+            refusals=(
+                RefusedInversion(
+                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=REFERENCE_RESISTANCE,
+            inversions=(
+                MonotoneInversion(
+                    target=REFERENCE_RESISTANCE,
+                    exponent=1.0,
+                    justification="the condition bounds this declaration itself",
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=LINEARIZATION_EXCURSION_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=LINEARIZATION_BAND,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is |T - T_ref| / band, so it goes as 1/band"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=REFERENCE_TEMPERATURE,
+                    reason=_REFERENCE_IS_TWO_SIDED,
+                ),
+                RefusedInversion(
+                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=OPERATING_TEMPERATURE_UTILIZATION,
+            inversions=(
+                MonotoneInversion(
+                    target=MAXIMUM_OPERATING_TEMPERATURE,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is T / T_max, so it goes as 1/T_max"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=REDUCED_DEBYE_TEMPERATURE,
+            inversions=(
+                MonotoneInversion(
+                    target=DEBYE_TEMPERATURE,
+                    exponent=-1.0,
+                    justification=(
+                        "the ratio is T_coldest / theta_D, so it goes as "
+                        "1/theta_D"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
+                ),
+            ),
+        ),
+        ConditionInversions(
+            condition=LINEAR_RESISTANCE_RATIO,
+            inversions=(
+                MonotoneInversion(
+                    target=TEMPERATURE_COEFFICIENT,
+                    exponent=1.0,
+                    offset=_unity,
+                    justification=(
+                        "1 + alpha (T - T_ref) is affine in alpha with offset "
+                        "1 and slope (T - T_ref)"
+                    ),
+                ),
+                MonotoneInversion(
+                    target=REFERENCE_TEMPERATURE,
+                    exponent=1.0,
+                    offset=_ratio_offset_in_reference,
+                    must_stay_positive=True,
+                    justification=(
+                        "1 + alpha (T - T_ref) is affine in T_ref with offset "
+                        "1 + alpha T and slope -alpha"
+                    ),
+                ),
+            ),
+            refusals=(
+                RefusedInversion(
+                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
+                ),
+            ),
+        ),
+    ),
+)
+
+
+def resistance_repairs(
+    problem: ScientificProblem, temperature: Quantity, *, subject: str
+) -> tuple[ConditionRepair, ...]:
+    """What would have to change for the unrated claim's violations to pass."""
+    return condition_repairs(
+        model=LINEAR_TCR_MODEL,
+        context=resistance_validity_context(problem, temperature),
+        table=TCR_INVERSIONS,
+        subject=subject,
+    )
+
+
+def rated_resistance_repairs(
+    problem: ScientificProblem,
+    temperature: Quantity | None = None,
+    coldest_temperature: Quantity | None = None,
+    furthest_temperature: Quantity | None = None,
+    *,
+    subject: str,
+) -> tuple[ConditionRepair, ...]:
+    """What would have to change for the rated claim's violations to pass.
+
+    The arguments are exactly :func:`assess_rated_resistance_validity`'s, so
+    the hints are anchored to the same assembly the verdict came from --
+    including which instant each path condition was read at.
+    """
+    return condition_repairs(
+        model=RATED_LINEAR_TCR_MODEL,
+        context=rated_resistance_validity_context(
+            problem, temperature, coldest_temperature, furthest_temperature
+        ),
+        table=RATED_TCR_INVERSIONS,
+        subject=subject,
+    )

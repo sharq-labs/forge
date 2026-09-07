@@ -62,6 +62,28 @@ docs/
 The package is still named `engcore` because several frozen experiments pin
 source paths by SHA-256; it is renamed at the next planned re-freeze.
 
+## Where this stands
+
+Measured on the adversarial benchmark in `benchmarks/hard/` — 2000 cases, of
+which the **development split** is 1400. These are the development figures and
+only the development figures:
+
+| | dev split |
+|---|---|
+| Exact verdict match | 1291/1400 (92.2%) |
+| Catch rate (unsound cases refused) | 1157/1159 (99.8%) |
+| False accept (unsound case reported sound) | 2/1159 (0.17%) |
+| False reject (sound case refused) | 0/241 (0.0%) |
+
+**The hold-out split remains sealed** and has not been scored against this
+tree. The full-set figures are withdrawn rather than reported: publishing both
+the dev numbers and the full-set numbers would recover the hold-out by
+subtraction, which is the same leak as opening it. Reproduce the table with
+
+```bash
+python benchmarks/hard/score_hard.py --src src --cases benchmarks/hard/cases_hard --workers 4 --split dev
+```
+
 ## Working evidence
 
 Each item is preregistered and frozen in `docs/milestones/`, with the tests
