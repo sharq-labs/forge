@@ -3776,6 +3776,46 @@ surface, a sourced criterion over the resulting group, applicability tests,
 and benchmark cases. Cost: roughly two engineering days plus source review.
 It is deliberately unbuilt; until then the mixing assumption is unassessed.
 
+## What the removal is worth, seen from repair guidance
+
+**A second argument for `d57a88e`, from a direction nobody looked from at the
+time.** The case for removing the `Da` ceiling was made about the condition:
+it bounded `k tau` while the claim was about `k t_mix`, so it measured the
+wrong ratio and no value of the bound would have repaired that. That argument
+stands on its own. This is a different one, and it is sharper.
+
+`Da = k0 exp(-E/(R T_f)) tau` is a **clean power law** in two declared inputs:
+linear in `residence_time` and linear in `k0`. Had the ceiling survived into
+the round that built repair guidance, and had the kinetics domain been given
+an inversion table, the condition would have produced *hints* -- not refusals:
+
+    Da = 8666 (bound <= 10)
+    To enter the validated domain, one of:
+      · residence_time <= ...      (declared ...)
+      · k0 <= ...                  (declared ...)
+
+Both would have been arithmetically exact. Applied, both would have flipped
+the verdict. And both would have been physically meaningless, because they
+repair a ratio that carries no mixing time: a caller who shortened the
+residence time on that advice would have bought a SUPPORTED verdict and
+learned nothing about whether their tank is mixed.
+
+**So the removal took away a working hint for a claim that was never real,
+which is strictly worse than a condition that produces no hint at all.** A
+condition with no inversion says nothing and costs nothing. A condition with
+an exact inversion over the wrong quantity actively spends a caller's design
+change to move a number that was not measuring what its name said. The
+`activation_energy` route would have been refused -- an exponential is not a
+power law -- so the refusal list would have looked responsible while the two
+hints beside it did the damage.
+
+**The general form, for the next condition somebody is tempted to keep.**
+Invertibility is not evidence that a condition is sound. It is a property of
+the algebra and is entirely independent of whether the group means what the
+claim needs it to mean. A condition that is easy to give advice about is
+therefore *more* dangerous when it is wrong, not less, and "callers would at
+least know what to change" is an argument for removal rather than against it.
+
 ## Rule: establish the quantity before moving its assessment instant
 
 An instant-of-assessment error and a wrong-quantity error look alike from the
@@ -3913,3 +3953,94 @@ the caller will re-run it in, not only in the arithmetic it was derived in.
 The test that catches this is the one that applies the hint literally and
 asserts the verdict flips; a test that applied a comfortable value inside the
 threshold would have passed throughout and proved nothing.
+
+### R.4 The forced-route agreement exponents are argued, spot-checked, and unexercised by the suite
+
+**A known-open path, recorded so the next reader can close it instead of
+re-deriving that it is open.**
+
+`convection_conductance_agreement_ratio` is `h_declared / h_correlated`, and
+its inversion splits by route. On the **natural** route every fluid property
+is refused, because Churchill-Chu's Nusselt number is a sum
+(`0.68 + 0.670 Ra^(1/4)/D(Pr)`) and not a power law. On the **forced** route
+the correlation is `Nu = 0.664 Re^(1/2) Pr^(1/3)` with `h = Nu k_f / L`, which
+*is* a power law, so seven exponents are declared:
+
+| Target | Exponent in the ratio |
+|---|---|
+| `surface_area` | -1 (both routes; the area is only in `h_declared`) |
+| `ambient_conductance` | +1 |
+| `fluid_conductivity` | -1 |
+| `convection_length` | +1/2 |
+| `fluid_velocity` | -1/2 |
+| `fluid_kinematic_viscosity` | +1/2 |
+| `fluid_prandtl_number` | -1/3 |
+
+**What is and is not established.** Only `surface_area` is exercised by a
+committed test, because no payload in the suite violates this condition on the
+forced route. The other six were read off the correlation and then
+spot-checked by hand during the round that built them: all seven hints were
+applied literally and all seven left the condition satisfied. **That check was
+not committed**, so it protects nothing against a future edit, and the six
+half-integer and third-integer exponents are the most fragile declarations in
+the repository -- a sign error or a `1/2` for a `1/3` would produce a hint
+that is confidently wrong in a direction nothing would notice.
+
+**The payload that closes this.** `APPLICABLE_PAYLOAD` in
+`tests/mcp/test_problem.py` is already on the forced route and sits at a ratio
+of exactly 1.0. Divide its fluid conductivity by three:
+
+    payload["stages"][0]["body"]["applicability"]["fluid_conductivity"] = (
+        "0.0087 watt/meter/kelvin"
+    )
+
+That gives `convection_conductance_agreement_ratio = 3.0` against a maximum of
+2, and it violates **that condition alone** -- `fluid_conductivity` enters no
+other group, and the Reynolds and Prandtl range utilizations both have ample
+headroom for the values the hints propose. Drop it into the
+`test_an_applied_lumped_hint_flips_the_condition` pattern in
+`tests/test_repair_guidance.py` and all seven exponents are measured rather
+than argued. Roughly twenty minutes.
+
+### R.5 A guard by name and a test by effect catch different things, and both are needed
+
+**The rule this round earned, and the third instance of its shape.**
+
+Repair guidance had to make one move impossible: a hint reading "raise the
+limit". That was closed structurally and it was closed well -- a bound is an
+anonymous `Quantity` on a condition, in no namespace, so no string denotes one
+and `RepairTarget` cannot be made to name one. The guard is over a
+**namespace**, and it is complete over that namespace.
+
+It did not catch the move. `derating_factor` is a declared `PARAMETER` input
+of the resistor model, so it passes every namespace check there is. It also
+divides the rating, so `dissipated_power_utilization` is an exact reciprocal
+in it, and at 4.5x over rating the inversion proposes 3.6 -- a derating factor
+above 1, which uses more of a component than it is rated for while reporting
+that it is inside its rating. **That is the same move as raising the bound,
+arriving without its name.**
+
+What caught it was the test that applies each hint literally and re-runs the
+case: `ComponentRating.__post_init__` refused to be constructed from the value
+the hint proposed. Not review, not a namespace rule -- the record downstream
+rejecting the outcome.
+
+**The rule.** A guard over a namespace catches a forbidden move *by name*. A
+test over an applied outcome catches it *by effect*. Neither subsumes the
+other, and a forbidden move that can be expressed through a legitimate input
+is invisible to the first and obvious to the second. Where a repository can
+state what must never happen, it should guard the name **and** exercise the
+outcome.
+
+**Third instance of this shape in this project**, which is why it is a rule
+and not a note:
+
+| Round | The guard that held | What it did not see |
+|---|---|---|
+| A check whose failure has never been observed | the check ran and passed everywhere | it had never been observed to fail, so nothing established it *could* -- see *RULE: a check whose failure has never been observed is unverified*, above |
+| GUARD 3 (P.3) | the guard never skipped a case | it broke seven kinetics tests that neither tier anyone runs would show |
+| Repair guidance (R.2) | no hint can name a bound | a declared input whose only effect is to loosen the check |
+
+Each time the guard was correct about the axis it guarded and silent about the
+one it did not. The common failure is not a weak guard; it is a **complete
+guard over the wrong axis**, and completeness on one axis reads as safety.

@@ -228,6 +228,69 @@ def test_a_single_lumped_hint_carries_the_whole_verdict_to_in_domain():
     assert after_repairs == ()
 
 
+def test_a_hint_repairs_its_own_condition_and_promises_nothing_else():
+    """The caveat a caller is most likely to hit, pinned rather than described.
+
+    A hint holds every *other declaration* fixed. It does not hold every other
+    *condition* fixed, because one declaration can feed several groups, and
+    moving it to repair one can carry another out.
+
+    `geometry_route_ratio` is `L_c A_s / V`, so it falls as the surface area
+    falls. The Biot number is `(hA/A_s) L_c / k`, so it *rises* as the area
+    falls. Applying the area hint therefore does exactly what it says --
+    `geometry_route_ratio` becomes satisfied -- and leaves the model outside
+    its validated domain on a condition that was satisfied before.
+
+    That is the honest contract and not a defect. Detecting it would mean
+    evaluating the whole domain at each proposed point and reporting which
+    hints are jointly workable, which is the ranking this module refuses to
+    do: it would turn alternatives into a recommendation. So the report says
+    what each hint repairs, the caller re-runs the case, and this test is what
+    stops the contract from quietly widening into a promise it does not keep.
+    """
+    before, repairs = lumped_case(**LUMPED_VIOLATIONS["geometry_route_ratio"])
+    assert before.violated == ("geometry_route_ratio",)
+    assert "biot_number" in before.satisfied
+
+    hint = next(
+        h
+        for h in only_hints_for(repairs, "geometry_route_ratio")
+        if h.target_name == "surface_area"
+    )
+    assert hint.direction is rp.RepairDirection.AT_MOST
+
+    after, after_repairs = lumped_case(
+        **{
+            **LUMPED_VIOLATIONS["geometry_route_ratio"],
+            "surface_area": hint.threshold,
+        }
+    )
+    # It did what it said.
+    assert "geometry_route_ratio" in after.satisfied
+    # And no more than that: the verdict is still outside, on a different
+    # condition, and the report now carries that condition's own repair.
+    assert after.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert after.violated == ("biot_number",)
+    assert [r.condition for r in after_repairs] == ["biot_number"]
+
+    # The other two hints for the same condition do carry the whole verdict,
+    # so this is a property of which declaration is moved and not of the
+    # condition -- which is exactly why the caller has to be the one choosing.
+    for target in ("characteristic_length", "body_volume"):
+        alternative = next(
+            h
+            for h in only_hints_for(repairs, "geometry_route_ratio")
+            if h.target_name == target
+        )
+        recovered, _ = lumped_case(
+            **{
+                **LUMPED_VIOLATIONS["geometry_route_ratio"],
+                target: alternative.threshold,
+            }
+        )
+        assert recovered.violated == ()
+
+
 # =====================================================================
 # The material domain
 # =====================================================================
