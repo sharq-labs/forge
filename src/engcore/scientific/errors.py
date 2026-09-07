@@ -20,6 +20,23 @@ class UnitCompatibilityError(ScientificCoreError):
     was required. Raised instead of silently dropping or coercing units."""
 
 
+class UnitRegistryMutationError(ScientificCoreError):
+    """Something tried to change the units backend after it was sealed.
+
+    The registry behind :mod:`engcore.scientific.units` is one object for the
+    life of the process, and a unit definition is not run-scoped state: a
+    ``Quantity`` is a magnitude and a *unit string*, so the meaning of
+    ``"volt"`` has to be the same for every run that serializes one, and for
+    every reader that deserializes one later. A run that redefined a unit
+    would not be configuring itself; it would be changing the arithmetic of
+    every other run in the process and the interpretation of every record
+    already written.
+
+    So the registry refuses to change rather than being copied per run. This
+    is raised on any attempt.
+    """
+
+
 class ModelNotFoundError(ScientificCoreError):
     """No registered model matches the requested identity."""
 

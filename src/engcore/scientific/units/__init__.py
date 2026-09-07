@@ -7,6 +7,8 @@ from .quantity import (
     dimensionality,
     normalize_unit,
     registry,
+    registry_fingerprint,
+    verify_registry_unmutated,
 )
 from .validation import (
     check_unit_map,
@@ -22,6 +24,8 @@ __all__ = [
     "dimensionality",
     "normalize_unit",
     "registry",
+    "registry_fingerprint",
+    "verify_registry_unmutated",
     "check_unit_map",
     "require_expected_dimension",
     "require_same_dimension",

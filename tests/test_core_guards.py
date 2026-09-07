@@ -1524,3 +1524,180 @@ def test_the_admission_layer_is_still_the_route_that_says_what_went_wrong():
         )
     assert not isinstance(refusal.value, ScientificCoreError)
     assert "non-finite" in str(refusal.value)
+
+
+# =====================================================================
+# GUARD 8 — the units backend cannot be changed by a run
+# =====================================================================
+#
+# `Quantity` is a magnitude and a unit *string*. It is serialized as a string,
+# compared across runs as a string, and read back by someone who was not there
+# for the run that wrote it. So the meaning of "volt" is not run-scoped state,
+# and a registry a run could edit is a registry in which run A silently changes
+# run B's arithmetic — the same class of defect as a fingerprint collision,
+# because it produces a wrong number with a correct-looking record around it.
+#
+# The choice made here is refusal rather than a registry per run, and the
+# reason is in `registry()`'s own docstring: per-run isolation would trade a
+# mutation hazard for an interpretation hazard, letting "volt" mean one thing
+# in the run that wrote a record and another in the run that reads it, with
+# nothing in the record able to say which.
+#
+# Two halves, and they are not equally strong. The refusal is ENFORCED: it is
+# on the registry object itself, so there is no route through pint's API or
+# through an attribute that does not hit it. The fingerprint is a DETECTOR for
+# the one surface refusal cannot reach — a caller writing into the backend's
+# own dictionaries — and it detects when it is called. Both are exercised
+# below; neither is described as the other.
+
+def _sealed_registry():
+    from src.engcore.scientific.units import registry
+
+    return registry()
+
+
+def test_every_route_pint_offers_for_changing_the_registry_is_refused():
+    """The enumeration, not a sample of it.
+
+    Every mutating callable the sealed registry names, called on the live
+    registry, must refuse — including through the back-reference a pint
+    quantity carries to the registry that made it, which is the route a proxy
+    would have left open.
+    """
+    from src.engcore.scientific.errors import UnitRegistryMutationError
+    from src.engcore.scientific.units.quantity import _SEALED_MUTATORS
+
+    registry = _sealed_registry()
+    assert len(_SEALED_MUTATORS) >= 15
+
+    unreached = []
+    for operation in _SEALED_MUTATORS:
+        if not hasattr(registry, operation):
+            continue
+        try:
+            getattr(registry, operation)()
+        except UnitRegistryMutationError:
+            continue
+        except TypeError:  # pragma: no cover - would mean the refusal is
+            unreached.append(operation)  # behind an argument check
+        else:  # pragma: no cover
+            unreached.append(operation)
+    assert unreached == [], unreached
+
+    # attribute assignment and deletion, which is what covers every behaviour
+    # flag without anyone having to list them
+    with pytest.raises(UnitRegistryMutationError):
+        registry.autoconvert_offset_to_baseunit = True
+    with pytest.raises(UnitRegistryMutationError):
+        registry.default_format = "~P"
+    with pytest.raises(UnitRegistryMutationError):
+        del registry._units
+
+    # and the back-reference every pint quantity carries
+    with pytest.raises(UnitRegistryMutationError):
+        registry.Quantity(1.0, "volt")._REGISTRY.define("smoot = 1.702 * meter")
+
+
+def test_one_run_cannot_change_another_run_s_arithmetic():
+    """The influence, constructed deliberately, then watched being refused.
+
+    This is the whole claim in one test: run A redefines the volt to be worth
+    two of them, run B converts a volt, and run B's answer is the answer it
+    would have given if run A had never executed.
+    """
+    from src.engcore.scientific.errors import UnitRegistryMutationError
+    from src.engcore.scientific.units import Quantity
+
+    def run_a_tries_to_redefine_the_volt():
+        _sealed_registry().define(
+            "volt = 2 * kilogram * meter ** 2 / ampere / second ** 3"
+        )
+
+    def run_b_converts_a_volt():
+        return Quantity(1.0, "volt").magnitude_in("millivolt")
+
+    assert run_b_converts_a_volt() == 1000.0
+    with pytest.raises(UnitRegistryMutationError) as refusal:
+        run_a_tries_to_redefine_the_volt()
+    assert "sealed" in str(refusal.value)
+    assert run_b_converts_a_volt() == 1000.0
+
+
+def test_nothing_in_the_repository_mutates_the_registry():
+    """The refusal's precondition, checked over the tree rather than asserted.
+
+    Refusal is only a workable choice if nothing needs the thing refused. That
+    is a claim about every file, so it is read off every file: no module
+    outside the units package may import the backend at all, which forecloses
+    a private registry as well as a mutation of this one.
+    """
+    root = pathlib.Path(engcore.__file__).resolve().parent
+    permitted = root / "scientific" / "units"
+    offenders = []
+    for path in sorted(root.rglob("*.py")):
+        if permitted in path.parents:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            if any(n == "pint" or n.startswith("pint.") for n in names):
+                offenders.append(str(path.relative_to(root)))
+    assert offenders == [], offenders
+
+
+def test_the_fingerprint_detects_what_the_refusal_cannot_prevent():
+    """The detector, made to fail on purpose, on each shape it must tell apart.
+
+    A redefinition, a removal, a shadowing name and a wholly new one. And the
+    case it must NOT flag: pint materialises prefixed units lazily into the
+    same mapping the declared ones live in, so `millivolt` appearing after the
+    seal is the backend doing its own job, not a mutation.
+    """
+    import copy
+
+    from src.engcore.scientific.errors import UnitRegistryMutationError
+    from src.engcore.scientific.units import (
+        Quantity,
+        verify_registry_unmutated,
+    )
+
+    registry = _sealed_registry()
+    store = registry._units.maps[0]
+
+    # pint's own lazy prefixing is not a mutation
+    Quantity(1.0, "volt").magnitude_in("millivolt")
+    Quantity(1.0, "kiloohm").magnitude_in("ohm")
+    verify_registry_unmutated()
+
+    def refused(label, name, value):
+        had, previous = name in store, store.get(name)
+        if value is None:
+            store.pop(name, None)
+        else:
+            store[name] = value
+        try:
+            with pytest.raises(UnitRegistryMutationError) as refusal:
+                verify_registry_unmutated()
+            assert "suspect" in str(refusal.value), label
+        finally:
+            if had:
+                store[name] = previous
+            else:
+                store.pop(name, None)
+
+    doubled = copy.deepcopy(store["volt"])
+    object.__setattr__(
+        doubled, "converter", type(doubled.converter)(scale=2.0)
+    )
+    refused("a redefinition", "volt", doubled)
+    refused("a removal", "ohm", None)
+    refused("a shadowing prefixed name", "millivolt",
+            copy.deepcopy(store["meter"]))
+    refused("a wholly new unit", "smoot", copy.deepcopy(store["meter"]))
+
+    verify_registry_unmutated()

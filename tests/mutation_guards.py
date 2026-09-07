@@ -158,6 +158,14 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "        if not self.succeeded:\n            return",
      "        return\n        if not self.succeeded:\n            return",
      "RawSolverOutput stops refusing a non-finite value on a succeeded solve"),
+    ("G8a", "src/engcore/scientific/units/quantity.py",
+     "        self.__dict__[\"_crafty_sealed\"] = True",
+     "        pass",
+     "the unit registry is never sealed (every refusal becomes a no-op)"),
+    ("G8b", "src/engcore/scientific/units/quantity.py",
+     "    units, prefixes = reg._units, reg._prefixes",
+     "    return True\n    units, prefixes = reg._units, reg._prefixes",
+     "a name appearing after the seal is taken on trust as pint's own prefixing"),
     ("G7b", "src/engcore/domains/electrical/ngspice.py",
      "        require_finite(\n            values,\n"
      "            error=NgspiceExecutionFailure,\n"

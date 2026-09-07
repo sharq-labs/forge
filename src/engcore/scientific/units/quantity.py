@@ -25,6 +25,7 @@ Invariants:
 
 from __future__ import annotations
 
+import hashlib
 import math
 import operator as _operator
 from dataclasses import dataclass
@@ -32,12 +33,127 @@ from typing import Any, Mapping
 
 import pint
 
-from ..errors import UnitCompatibilityError
+from ..errors import UnitCompatibilityError, UnitRegistryMutationError
 from ..serialization import require_schema, schema_string
 
 QUANTITY_SCHEMA = schema_string("quantity")
 
-_REGISTRY: pint.UnitRegistry | None = None
+#: Every route pint offers for changing a registry after it exists, named so
+#: the sealed registry can refuse each one by the name a caller would reach
+#: for. The list is not the guarantee -- :meth:`_SealedUnitRegistry.__setattr__`
+#: below refuses *any* attribute assignment, which is what covers the flags
+#: (``autoconvert_offset_to_baseunit``, ``default_format``, ``default_system``,
+#: ``formatter``, ``force_ndarray`` ...) without anyone having to remember
+#: them. These are the callables, which an attribute guard cannot see.
+_SEALED_MUTATORS: tuple[str, ...] = (
+    # definition surface
+    "define",
+    "load_definitions",
+    "_define",
+    "_add_unit",
+    "_add_prefix",
+    "_add_dimension",
+    "_add_derived_dimension",
+    "_add_alias",
+    "_add_defaults",
+    "_add_group",
+    "_add_system",
+    "_redefine",
+    "_register_adder",
+    # context surface: enabling a context changes what conversions mean
+    "add_context",
+    "remove_context",
+    "enable_contexts",
+    "disable_contexts",
+    "context",
+    "with_context",
+    # display surface, which reaches serialization
+    "setup_matplotlib",
+)
+
+#: Registry attributes that are behaviour rather than definitions. They cannot
+#: be assigned once sealed, so they are here for the *fingerprint* rather than
+#: for enforcement -- see :func:`registry_fingerprint`.
+_SEALED_FLAGS: tuple[str, ...] = (
+    "autoconvert_offset_to_baseunit",
+    "autoconvert_to_preferred",
+    "force_ndarray",
+    "force_ndarray_like",
+    "case_sensitive",
+    "non_int_type",
+    "default_system",
+)
+
+
+def _refusal(operation: str):
+    """A sealed stand-in for one of pint's mutators.
+
+    Not a blanket refusal: the same methods build the registry in the first
+    place, so each defers to pint until the seal is set and refuses afterwards.
+    """
+
+    def refuse(self, *args: Any, **kwargs: Any):
+        if self.__dict__.get("_crafty_sealed", False):
+            raise UnitRegistryMutationError(
+                f"the Scientific Core unit registry is sealed: "
+                f"{operation}() would change the units backend for every run "
+                f"in this process, and for the meaning of every unit string "
+                f"already serialized. A unit this repository does not define "
+                f"is not a run's to add; add it to the sealed baseline in "
+                f"engcore.scientific.units instead."
+            )
+        return getattr(pint.UnitRegistry, operation)(self, *args, **kwargs)
+
+    refuse.__name__ = operation
+    refuse.__qualname__ = f"_SealedUnitRegistry.{operation}"
+    return refuse
+
+
+class _SealedUnitRegistry(pint.UnitRegistry):
+    """A pint registry that refuses to change once it has been built.
+
+    See :class:`~engcore.scientific.errors.UnitRegistryMutationError` for why
+    the choice here is refusal rather than a registry per run.
+
+    The refusal is on the registry itself rather than on a proxy around it,
+    and that is the difference between a guard and a suggestion: a pint
+    ``Quantity`` carries a reference back to the registry that made it, so
+    ``registry().Quantity(1, "V")._REGISTRY`` hands any caller the real object.
+    A proxy would have been one attribute access from irrelevant. This *is*
+    the real object.
+    """
+
+    def _seal(self) -> None:
+        self.__dict__["_crafty_sealed"] = True
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if self.__dict__.get("_crafty_sealed", False):
+            raise UnitRegistryMutationError(
+                f"the Scientific Core unit registry is sealed: setting "
+                f"{name!r} would change how every run in this process reads "
+                f"and renders units"
+            )
+        super().__setattr__(name, value)
+
+    def __delattr__(self, name: str) -> None:
+        if self.__dict__.get("_crafty_sealed", False):
+            raise UnitRegistryMutationError(
+                f"the Scientific Core unit registry is sealed: deleting "
+                f"{name!r} would change how every run in this process reads "
+                f"and renders units"
+            )
+        super().__delattr__(name)
+
+
+for _operation in _SEALED_MUTATORS:
+    if hasattr(pint.UnitRegistry, _operation):
+        setattr(_SealedUnitRegistry, _operation, _refusal(_operation))
+del _operation
+
+
+_REGISTRY: _SealedUnitRegistry | None = None
+_SEALED_SNAPSHOT: dict[str, dict[str, str]] | None = None
+_SEALED_DIGEST: str | None = None
 
 
 def registry() -> pint.UnitRegistry:
@@ -46,11 +162,171 @@ def registry() -> pint.UnitRegistry:
     Deliberately *not* pint's application registry: that is process-global and
     mutable by any co-resident library, which would make our dimensional
     guarantees depend on unrelated code.
+
+    It is also deliberately **not** one registry per run. That was the other
+    candidate and it is the wrong one, for a reason that is about this
+    repository's own value type rather than about cost. :class:`Quantity` is a
+    magnitude and a unit *string*; it serializes as a string, is compared
+    across runs as a string, and is read back by a reader who was not present
+    for the run that wrote it. Per-run registries would let ``"volt"`` mean one
+    thing in the run that wrote a record and another in the run that reads it,
+    with nothing in the record able to say which -- trading a mutation hazard
+    for an interpretation hazard, and a louder one for a silent one.
+
+    The cost that buys, measured rather than asserted: a fresh
+    ``pint.UnitRegistry()`` takes ~0.16 s to build on the machine this was
+    written on, against ~0.1 ms for a ``Quantity`` construction. Per-run
+    isolation would have added ~0.16 s to each of the 1400 hard-benchmark
+    cases -- roughly 224 s onto an 80 s scoring run -- and there is no run
+    context threaded through this function to hang a registry on, so every
+    caller outside a run would have quietly fallen back to a shared one
+    anyway. The refusal costs nothing on any path.
+
+    What the refusal covers, exactly: every callable in
+    :data:`_SEALED_MUTATORS`, and *any* attribute assignment or deletion on
+    the registry. What it does not cover is a caller reaching past pint's API
+    into the definition containers themselves (``registry()._units.maps[0]``).
+    That half is **detected, not prevented** -- see
+    :func:`verify_registry_unmutated`.
+
+    The snapshot is taken *before* the seal is set, because taking it is a
+    read through the same object the seal is about to close.
     """
-    global _REGISTRY
+    global _REGISTRY, _SEALED_SNAPSHOT, _SEALED_DIGEST
     if _REGISTRY is None:
-        _REGISTRY = pint.UnitRegistry()
+        built = _SealedUnitRegistry()
+        snapshot = _snapshot_of(built)
+        built._seal()
+        _REGISTRY, _SEALED_SNAPSHOT = built, snapshot
+        _SEALED_DIGEST = _digest_of(snapshot)
     return _REGISTRY
+
+
+_SNAPSHOT_SECTIONS: tuple[tuple[str, str], ...] = (
+    ("unit", "_units"),
+    ("prefix", "_prefixes"),
+    ("dimension", "_dimensions"),
+    ("context", "_contexts"),
+    ("system", "_systems"),
+    ("group", "_groups"),
+)
+
+
+def _snapshot_of(reg: pint.UnitRegistry) -> dict[str, dict[str, str]]:
+    """Every declaration the registry's arithmetic reads, as text."""
+    snapshot: dict[str, dict[str, str]] = {}
+    for label, attribute in _SNAPSHOT_SECTIONS:
+        mapping = getattr(reg, attribute, None)
+        if mapping is None:  # pragma: no cover - a backend without the facet
+            continue
+        snapshot[label] = {str(name): repr(mapping[name]) for name in mapping}
+    snapshot["flag"] = {
+        flag: repr(getattr(reg, flag, None)) for flag in _SEALED_FLAGS
+    }
+    return snapshot
+
+
+def _digest_of(snapshot: Mapping[str, Mapping[str, str]]) -> str:
+    digest = hashlib.sha256()
+    for label in sorted(snapshot):
+        digest.update(f"\x1d{label}".encode())
+        section = snapshot[label]
+        for name in sorted(section):
+            digest.update(f"{name}\x1f{section[name]}\x1e".encode())
+    return digest.hexdigest()
+
+
+def _is_a_prefix_of_a_sealed_unit(
+    reg: pint.UnitRegistry, name: str, sealed_units: Mapping[str, str]
+) -> bool:
+    """Is ``name`` a unit pint built itself out of sealed parts?
+
+    Pint materialises prefixed units lazily: ``"millivolt"`` is not in the
+    registry until something asks for it, and then it is, written into the
+    same mapping the declared units live in. So a name appearing after the
+    seal is *usually* pint doing its own job and carries no new information --
+    but only if it really is ``prefix + sealed unit``, with the prefix's own
+    scale, and the same reference as the unit it prefixes. A hand-written
+    entry that merely looked like one would not survive those three tests, and
+    a shadowing ``"millivolt"`` worth 3 metres is precisely the mutation this
+    has to tell apart from the harmless case.
+    """
+    units, prefixes = reg._units, reg._prefixes
+    definition = units.get(name)
+    if definition is None:  # pragma: no cover - it was read from this mapping
+        return False
+    for prefix_name in prefixes:
+        text = str(prefix_name)
+        if not text or not name.startswith(text):
+            continue
+        base_name = name[len(text) :]
+        if base_name not in sealed_units:
+            continue
+        base = units[base_name]
+        expected_reference = type(base.reference)({base_name: 1})
+        if getattr(definition, "reference", None) != expected_reference:
+            continue
+        prefix_value = getattr(prefixes[prefix_name], "value", None)
+        scale = getattr(getattr(definition, "converter", None), "scale", None)
+        if prefix_value is None or scale is None:
+            continue
+        if float(scale) == float(prefix_value):
+            return True
+    return False
+
+
+def registry_fingerprint() -> str:
+    """The digest of the declarations the registry was sealed with.
+
+    Stable for the life of the process by construction -- it is taken once,
+    when the registry is built -- so it is the value a record can cite to say
+    *which* unit definitions its numbers were computed against.
+    """
+    registry()
+    return _SEALED_DIGEST or ""
+
+
+def verify_registry_unmutated() -> None:
+    """Refuse if the registry's declarations have moved since it was sealed.
+
+    This is a **detector, not an enforcer**, and the distinction is the point.
+    :class:`_SealedUnitRegistry` *prevents* every mutation that goes through
+    pint's API or through an attribute, and that prevention needs nobody to
+    call anything. It cannot prevent a caller from writing straight into
+    ``registry()._units.maps[0]``, because that is a plain dictionary owned by
+    the backend. Nothing in this repository does that. If something starts,
+    this is what says so -- but it says so when it is called, not when the
+    write happens, and calling it is opt-in in a way the refusal is not.
+    """
+    registry()
+    assert _REGISTRY is not None and _SEALED_SNAPSHOT is not None
+    current = _snapshot_of(_REGISTRY)
+    for label, sealed_section in _SEALED_SNAPSHOT.items():
+        now = current.get(label, {})
+        for name, sealed_text in sealed_section.items():
+            if name not in now:
+                raise UnitRegistryMutationError(
+                    f"the sealed unit registry lost the {label} {name!r}; "
+                    f"every quantity computed since is suspect"
+                )
+            if now[name] != sealed_text:
+                raise UnitRegistryMutationError(
+                    f"the sealed unit registry's {label} {name!r} was "
+                    f"redefined behind the seal: {sealed_text} became "
+                    f"{now[name]}; every quantity computed since is suspect"
+                )
+        for name in now:
+            if name in sealed_section:
+                continue
+            if label == "unit" and _is_a_prefix_of_a_sealed_unit(
+                _REGISTRY, name, sealed_section
+            ):
+                continue
+            raise UnitRegistryMutationError(
+                f"the sealed unit registry gained the {label} {name!r}, which "
+                f"is not pint's own prefixing of a sealed unit; every quantity "
+                f"computed since is suspect"
+            )
 
 
 def normalize_unit(unit: str) -> str:
