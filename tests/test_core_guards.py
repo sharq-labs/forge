@@ -1886,3 +1886,213 @@ def test_the_universal_core_names_no_module_it_exempts():
         leaf = module.rsplit(".", 1)[0].rsplit(".", 1)[-1]
         assert module not in source
         assert leaf not in source, leaf
+
+
+# =====================================================================
+# GUARD 2, second axis — a level cannot be smuggled past the constructor
+# =====================================================================
+#
+# THE ENUMERATION. Every way a `ValidationCheck` can come into existence, and
+# where each is covered. This list is the deliverable, not the fix: the fix was
+# one route, and the reason to write the list is that this is the third time a
+# guard complete on one axis has been read as complete.
+#
+#   1. `ValidationCheck(...)`            constructor rule in __post_init__
+#   2. `ValidationCheck.from_dict`       delegates to the constructor
+#   3. `dataclasses.replace(check, ...)` re-runs __post_init__
+#   4. `ValidationReport(checks=...)`    THE OPEN ROUTE. Closed here: anything
+#                                        that is not a ValidationCheck is
+#                                        refused, and the rule is re-applied to
+#                                        the fields of everything held
+#   5. `ValidationReport.with_check`     builds a ValidationReport, so (4)
+#   6. `ValidationReport.from_dict`      delegates to (2), and separately
+#                                        recomputes attained_levels against the
+#                                        payload's own declaration
+#   7. copy / deepcopy / pickle          bypasses __post_init__, but reproduces
+#                                        an already-valid check. A forged
+#                                        payload is caught by (4) on entry to a
+#                                        report
+#   8. `object.__setattr__` on a built   available for EVERY frozen record in
+#      check                             this repository and closable on none
+#                                        of them. Closed where it matters
+#                                        instead: a level becomes a claim only
+#                                        through a report, and the report
+#                                        re-applies the rule on construction
+#                                        AND on every read of attained_levels
+#   9. a ValidationCheck SUBCLASS that   isinstance passes, so (4)'s type test
+#      overrides earns_its_level         alone would not. The report applies
+#                                        `level_is_earned` to FIELDS, so the
+#                                        object does not get to answer the
+#                                        question about itself
+#
+# Every one is exercised below.
+
+def _cross_solver():
+    from src.engcore.scientific.results.validation import ValidationLevel
+
+    return ValidationLevel.CROSS_SOLVER_VALIDATED
+
+
+def _earned_check(name="earned"):
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationOutcome,
+    )
+
+    return ValidationCheck(
+        name=name,
+        outcome=ValidationOutcome.PASS,
+        establishes=_cross_solver(),
+        evidence=("route a vs route b",),
+    )
+
+
+def test_the_construction_axis_is_still_closed_on_every_route_to_it():
+    """Routes 1, 2, 3 and 6 — re-measured rather than assumed still true."""
+    import dataclasses
+
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        CHECK_SCHEMA,
+        ValidationCheck,
+        ValidationOutcome,
+    )
+
+    with pytest.raises(ScientificValidationError):  # 1. constructor
+        ValidationCheck(
+            name="claimed",
+            outcome=ValidationOutcome.PASS,
+            establishes=_cross_solver(),
+        )
+
+    with pytest.raises(ScientificValidationError):  # 2. from_dict
+        ValidationCheck.from_dict({
+            "schema": CHECK_SCHEMA,
+            "name": "claimed",
+            "outcome": "pass",
+            "detail": "",
+            "establishes": _cross_solver().value,
+            "residual": None,
+            "tolerance": None,
+            "evidence": [],
+        })
+
+    with pytest.raises(ScientificValidationError):  # 3. replace
+        dataclasses.replace(_earned_check(), evidence=())
+
+
+def test_a_report_refuses_anything_that_is_not_a_validation_check():
+    """Route 4, the one that was open.
+
+    Nothing was smuggled in: a stand-in object with a `passed` and an
+    `establishes` reached `attained_levels`, satisfied `claims` and passed
+    `require_level`, because the constructor rule was never consulted -- the
+    constructor was never called.
+    """
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        ValidationOutcome,
+        ValidationReport,
+    )
+
+    class NotACheck:
+        name = "smuggled"
+        outcome = ValidationOutcome.PASS
+        passed = True
+        establishes = _cross_solver()
+        residual = None
+        tolerance = None
+        evidence = ()
+        detail = ""
+
+    with pytest.raises(ScientificValidationError, match="not a ValidationCheck"):
+        ValidationReport(checks=(NotACheck(),))
+    with pytest.raises(ScientificValidationError, match="not a ValidationCheck"):
+        ValidationReport().with_check(NotACheck())  # 5. with_check
+
+
+def test_a_check_altered_after_it_was_built_cannot_carry_a_level():
+    """Route 8, at both moments a level becomes a claim.
+
+    A frozen dataclass refuses `check.evidence = ()`. It does not refuse
+    `object.__setattr__`, and nothing on the record can make it: that hole is
+    the same size for every frozen record in this repository. So it is closed
+    where a level stops being a field and becomes a claim -- on entry to a
+    report, and on every read of the levels off one.
+    """
+    import copy
+
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import ValidationReport
+
+    poked = copy.deepcopy(_earned_check())
+    object.__setattr__(poked, "evidence", ())
+    with pytest.raises(ScientificValidationError, match="altered after"):
+        ValidationReport(checks=(poked,))
+
+    # and after the report already exists
+    report = ValidationReport(checks=(_earned_check(),))
+    assert report.attained_levels == frozenset({_cross_solver()})
+    object.__setattr__(report.checks[0], "evidence", ())
+    with pytest.raises(ScientificValidationError, match="altered after"):
+        report.attained_levels
+    with pytest.raises(ScientificValidationError):
+        report.claims(_cross_solver())
+    with pytest.raises(ScientificValidationError):
+        report.require_level(_cross_solver())
+
+
+def test_a_subclass_does_not_get_to_answer_the_question_about_itself():
+    """Route 9. `isinstance` alone would have let this through.
+
+    The rule is applied to FIELDS by a module-level function, so overriding
+    `earns_its_level` changes what the object says and not what the report
+    concludes.
+    """
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationOutcome,
+        ValidationReport,
+    )
+
+    class Liar(ValidationCheck):
+        @property
+        def earns_its_level(self):  # pragma: no cover - never consulted
+            return True
+
+        @property
+        def compared_something(self):  # pragma: no cover - never consulted
+            return True
+
+    liar = Liar.__new__(Liar)
+    for field, value in dict(
+        name="liar",
+        outcome=ValidationOutcome.PASS,
+        detail="",
+        establishes=_cross_solver(),
+        residual=None,
+        tolerance=None,
+        evidence=(),
+    ).items():
+        object.__setattr__(liar, field, value)
+
+    assert isinstance(liar, ValidationCheck), "the type test alone would pass"
+    assert liar.earns_its_level, "and the object says it is fine"
+    with pytest.raises(ScientificValidationError, match="altered after"):
+        ValidationReport(checks=(liar,))
+
+
+def test_every_report_in_the_repository_still_builds():
+    """The closure is not vacuous and is not disruptive.
+
+    Every check the repository's own solvers produce still constructs a report,
+    which is the difference between a rule and a wall.
+    """
+    from src.engcore.scientific.results.validation import (
+        ValidationReport,
+        unverified_report,
+    )
+
+    assert unverified_report("nothing ran").attained_levels == frozenset()
+    assert ValidationReport(checks=(_earned_check(),)).claims(_cross_solver())
