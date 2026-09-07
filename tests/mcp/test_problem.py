@@ -220,6 +220,99 @@ def test_a_violated_bound_reaches_the_report_as_a_finding():
     )
 
 
+#: A cold-soaked part warming towards a warmer ambient. It starts 93.15 K from
+#: its 293.15 K reference and converges 37.41 K from it, so a 60 K band covers
+#: where it ends and not where it began — which is the only shape that can tell
+#: a path-assessed band from an endpoint-assessed one.
+#: The thermal excursion budgets are widened to cover the 143 K span this body
+#: traverses, so that the *only* thing the 200 K start violates is the material
+#: band. Left at their default 60 K and 100 K the run is refused three times
+#: over and the test could not tell which reading earned the refusal.
+COLD_START_PAYLOAD = copy.deepcopy(APPLICABLE_PAYLOAD)
+COLD_START_PAYLOAD["stages"][0]["body"]["initial_temperature"] = "200 kelvin"
+COLD_START_PAYLOAD["stages"][0]["body"]["applicability"].update(
+    {
+        "conductance_excursion_bound": "150 kelvin",
+        "capacity_excursion_bound": "200 kelvin",
+    }
+)
+COLD_START_PAYLOAD["stages"][0]["conductor"]["limits"] = {
+    "linearization_band": "60 kelvin",
+    "maximum_operating_temperature": "450 kelvin",
+    "debye_temperature": "343 kelvin",
+}
+
+
+def test_the_band_is_assessed_over_the_path_not_at_the_converged_endpoint():
+    """A run that begins outside its linear band is refused for beginning there.
+
+    The body starts at 200 K and converges to 330.56 K against a 293.15 K
+    reference and a declared 60 K band. The endpoint is 37.41 K out — 0.62 of
+    the band, comfortably inside. The start is 93.15 K out — 1.55 of it. The
+    same single alpha produced R(T) at both, so the band has to hold at both,
+    and a reading taken only where the run stops would report the 0.62 and
+    never the 1.55.
+
+    This is the assertion that ``_material_assessments`` hands the domain the
+    furthest state and not just the converged one. If a future edit dropped
+    that argument the endpoint alone would satisfy the band, and every other
+    condition in this report would still pass — so nothing else here would
+    notice.
+    """
+    outcome = run_electrothermal_case(COLD_START_PAYLOAD, run_id="payload-cold")
+    report = outcome.reports[0]
+
+    assert report.verdict is CredibilityVerdict.NOT_SUPPORTED
+    assert report.violated_conditions == (
+        (mat.RATED_LINEAR_TCR_MODEL.model_id, mat.LINEARIZATION_EXCURSION_RATIO),
+    )
+    assert report.values["final_temperature"].magnitude_in(K) == pytest.approx(
+        330.5643, abs=1e-3
+    )
+
+    # The distinction itself: the same conductor, the same converged
+    # temperature, assessed at the endpoint alone, satisfies the band. The
+    # refusal above is the path and nothing else.
+    problem = mat.build_resistance_problem(
+        mat.TemperatureDependentConductor(
+            component_id="R1",
+            reference_resistance=Quantity(10.0, "ohm"),
+            temperature_coefficient=Quantity(0.00393, "1/kelvin"),
+            reference_temperature=Quantity(293.15, K),
+            limits=mat.MaterialLimits(
+                linearization_band=Quantity(60.0, K),
+                maximum_operating_temperature=Quantity(450.0, K),
+                debye_temperature=Quantity(343.0, K),
+            ),
+        )
+    )
+    endpoint_only = mat.assess_rated_resistance_validity(
+        problem, Quantity(330.5643, K)
+    )
+    assert mat.LINEARIZATION_EXCURSION_RATIO in endpoint_only.satisfied
+
+
+def test_a_run_that_stays_inside_its_band_the_whole_way_is_still_accepted():
+    """The other half: assessing the path must not refuse a sound case.
+
+    Same body, same 60 K band, started at 300 K instead of 200 K. Both
+    endpoints are inside the band now, so the wider reading finds nothing and
+    the band is satisfied — the guard against a change that simply refuses
+    more.
+    """
+    payload = copy.deepcopy(COLD_START_PAYLOAD)
+    payload["stages"][0]["body"]["initial_temperature"] = "300 kelvin"
+    report = run_electrothermal_case(payload, run_id="payload-warm").reports[0]
+
+    rated = next(
+        record
+        for record in report.validity
+        if record.model_id == mat.RATED_LINEAR_TCR_MODEL.model_id
+    )
+    assert mat.LINEARIZATION_EXCURSION_RATIO in rated.assessment.satisfied
+    assert mat.LINEARIZATION_EXCURSION_RATIO not in rated.assessment.violated
+
+
 def test_the_declaration_is_carried_as_the_callers_claim():
     outcome = run_electrothermal_case(APPLICABLE_PAYLOAD, run_id="payload-declared")
     (declaration,) = outcome.reports[0].declarations

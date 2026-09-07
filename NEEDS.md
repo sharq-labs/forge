@@ -3577,6 +3577,48 @@ The `reproduce` job has lost its `continue-on-error` and is now load-bearing: it
 is the thing that catches the next undeclared dependency on the day it lands,
 which is exactly the class of defect P.1 records.
 
+### P.4 A release page cited a third environment that had not run this draw
+
+**Found by re-reading a pin nobody asked me to doubt, and it is the most
+valuable thing that round produced.**
+
+`docs/release/v1.1.md` opened by claiming its numbers had been reproduced on
+**three environments**, and named the container as the third: *"the Docker
+reproduction ran on a third environment and produced the same case-set digest,
+`e14542c1…`, with the same four metrics and the same ten false-accept ids."*
+
+The container really did run, it really is a genuinely different environment
+— Debian bookworm, Azure kernel, ngspice 39 against the host's 42 — and it
+really did agree. On a **different draw**. `P.2` records what it actually
+produced: case-set digest `476976c1…`, false reject `1/241 (0.4 %)`. The v1.1
+page's own digest is `e14542c1…` with false reject `0/241`. Two different case
+sets, two different numbers, one sentence claiming the second confirmed the
+first.
+
+**Why it matters more than the arithmetic.** The count was wrong by one, which
+is nothing. What was wrong is the *kind* of claim: a reproducibility page citing
+evidence from a run against different inputs, where the whole point of the
+case-set digest is to make exactly that substitution visible. The digest was
+working. Nobody read it.
+
+**Why a technical buyer finds this first.** Reproducibility is the strongest
+claim on the page and the cheapest to check — the digests are printed right
+there, and a reader who opens the linked Actions run sees `476976c1…` where the
+page says `e14542c1…`. It is the first thing a sceptical reader verifies and the
+last thing anyone re-reads before cutting a tag, because it passed once.
+
+**Corrected on the page**, which now says the count on that draw is two, not
+three, and states what the container is actually worth: not a confirmation of
+the host, but an independent resolution on a different kernel whose digest came
+out identical anyway.
+
+**The generalisation, which is not fixed.** Every cross-reference between a
+release page and a CI run is currently prose. Nothing mechanically checks that a
+digest quoted in `docs/release/*.md` is the digest the linked run produced, and
+this defect is precisely what such a check would catch. A pin that agrees with
+its own text is not evidence that the text describes the right run. **The check
+does not exist and this round did not build it.**
+
 ### P.3 GUARD 3 broke seven kinetics tests, and neither tier that anyone runs sees them
 
 **Not this round's defect and not fixed here** — recorded because measuring it

@@ -13,10 +13,16 @@ this file for why. `--workers` is bounded rather than `auto` because each worker
 carries its own engcore import and the pool dies as a `BrokenProcessPool` when a
 many-core machine exhausts RAM.
 
-**Current numbers live in `results_hard.json` and in the release page,
-[docs/release/v1.0.md](../../docs/release/v1.0.md). The tables below are the
-round-by-round history that produced them, and every figure in them is a
-full-set figure the generator was tuned against.**
+**Current numbers live in `results_hard.json`. The release pages
+[v1.0](../../docs/release/v1.0.md) and [v1.1](../../docs/release/v1.1.md) are
+frozen records of what those tags scored and are no longer the current
+figures**: the band condition is now assessed over the path rather than at the
+converged endpoint, which moved catch from `1149/1159 (99.1 %)` to
+`1157/1159 (99.8 %)` and false accept from `10` to `2`. The release pages are
+deliberately *not* back-edited — v1.1 really did score 99.1 % with the detector
+it shipped, and rewriting that would destroy the only record of it. **The tables
+below are the round-by-round history, and every figure in them is a full-set
+figure the generator was tuned against.**
 
 ## Files
 | File | What |

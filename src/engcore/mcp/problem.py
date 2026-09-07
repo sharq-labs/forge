@@ -1313,6 +1313,14 @@ def _material_assessments(
     The temperature each conductor was evaluated at is read back out of the
     property solve's own provenance, so the assessment is made at the operating
     point the run actually used rather than at one recomputed here.
+
+    Two of the rated conditions are deliberately *not* assessed there. Both are
+    one-sided bounds on a path rather than on a state — a floor on the coldest
+    temperature, a ceiling on the largest excursion from the reference — and a
+    run's endpoint is neither of those in general. Each is resolved below from
+    the two endpoints the lumped trajectory is monotone between, and each names
+    in its own condition description which instant it was read at, so a report
+    never says "assessed" without saying "when".
     """
     unrated: list[ValidityAssessment] = []
     rated: list[ValidityAssessment] = []
@@ -1331,6 +1339,24 @@ def _material_assessments(
             (stage.body.initial_temperature, temperature),
             key=lambda value: value.magnitude_in(mat.TEMPERATURE_UNIT),
         )
+        # The state furthest from T_ref, by the same monotonicity argument and
+        # for the mirror-image reason. The band is a *ceiling* on |T - T_ref|,
+        # so it binds where the excursion is largest, and on a monotone path
+        # that is one of the two endpoints — but which one depends on where
+        # T_ref sits relative to the run, not on which endpoint is hotter. A
+        # body warming away from a cold reference binds at its final state; one
+        # cooling towards the reference binds at its initial state; one that
+        # crosses T_ref binds on whichever side reaches further. Taking the max
+        # of |T - T_ref| over the two endpoints answers all three without
+        # casing on them.
+        reference = stage.conductor.reference_temperature
+        furthest = max(
+            (stage.body.initial_temperature, temperature),
+            key=lambda value: abs(
+                value.magnitude_in(mat.TEMPERATURE_UNIT)
+                - reference.magnitude_in(mat.TEMPERATURE_UNIT)
+            ),
+        )
         unrated.append(
             mat.assess_resistance_validity(prop_problem, temperature)
         )
@@ -1340,7 +1366,7 @@ def _material_assessments(
         ):
             rated.append(
                 mat.assess_rated_resistance_validity(
-                    prop_problem, temperature, coldest
+                    prop_problem, temperature, coldest, furthest
                 )
             )
 

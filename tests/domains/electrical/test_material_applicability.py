@@ -159,6 +159,79 @@ def test_linear_tcr_law_is_rejected_beyond_the_materials_linearization_band():
     assert assessment.violated == (mat.LINEARIZATION_EXCURSION_RATIO,)
 
 
+def test_the_band_is_read_at_the_furthest_state_not_at_the_endpoint():
+    """A run that swings outside the band and settles back inside is refused.
+
+    The same single alpha is read at every point of the path, so the band has
+    to hold at every point of it. Reading only the converged temperature would
+    report the return and not the swing — which is exactly the case the
+    endpoint cannot see, because by then the excursion is over.
+
+    340 K is 46.85 K from the 293.15 K reference and inside the declared 100 K
+    band; the path reached 420 K, which is 126.85 K from it and is not.
+    """
+    problem = mat.build_resistance_problem(conductor())
+    endpoint_only = mat.assess_rated_resistance_validity(problem, OPERATING)
+    assert mat.LINEARIZATION_EXCURSION_RATIO in endpoint_only.satisfied
+
+    over_the_path = mat.assess_rated_resistance_validity(
+        problem, OPERATING, None, Quantity(420.0, K)
+    )
+    assert over_the_path.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert mat.LINEARIZATION_EXCURSION_RATIO in over_the_path.violated
+
+
+def test_the_band_binds_on_a_cold_swing_as_well_as_a_hot_one():
+    """A ceiling on |T - T_ref| is two-sided; a floor would not be.
+
+    The Debye condition is a floor and binds only on the cold end. This one is
+    a ceiling on distance from the reference, so a run that dips 150 K below
+    T_ref is as far outside its band as one that climbs 150 K above it, and
+    a `max` over the endpoints has to find both.
+    """
+    problem = mat.build_resistance_problem(conductor())
+    cold_swing = mat.assess_rated_resistance_validity(
+        problem, OPERATING, None, Quantity(143.15, K)
+    )
+    assert mat.LINEARIZATION_EXCURSION_RATIO in cold_swing.violated
+
+
+def test_the_band_falls_back_to_the_operating_point_when_no_path_is_supplied():
+    """Absence of a path is not a claim about one.
+
+    A caller that names no other state gets the endpoint assessed, which is
+    what every caller got before the path was threaded through and is the
+    honest answer for one that did not say. It is not a licence: the ratio is
+    the same number, read at the only instant the caller offered.
+    """
+    problem = mat.build_resistance_problem(conductor())
+    context = mat.rated_resistance_validity_context(problem, OPERATING)
+    assert context.assembled[
+        mat.LINEARIZATION_EXCURSION_RATIO
+    ].magnitude_in("dimensionless") == pytest.approx(
+        abs(340.0 - 293.15) / 100.0, rel=1e-12
+    )
+    assert mat.assess_rated_resistance_validity(
+        problem, OPERATING, None, None
+    ) == mat.assess_rated_resistance_validity(problem, OPERATING)
+
+
+def test_the_band_condition_names_the_instant_it_was_read_at():
+    """A report may not say "assessed" without saying "when".
+
+    The mirror of the Debye floor's own wording, and the reason both are
+    readable: a condition evaluated somewhere other than the operating point
+    has to say so where the reader meets it.
+    """
+    description = condition(mat.LINEARIZATION_EXCURSION_RATIO).description
+    assert "furthest from T_ref" in description
+    assert "rather than at the temperature it converges to" in description
+    # and the bound itself is untouched by any of this
+    assert condition(mat.LINEARIZATION_EXCURSION_RATIO).maximum == (
+        mat.LINEARIZATION_BUDGET_LIMIT
+    )
+
+
 def test_linearization_band_is_unknown_when_the_material_declares_none():
     assessment = assess(limits(linearization_band=None))
     assert assessment.status is ValidityStatus.UNKNOWN

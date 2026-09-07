@@ -594,13 +594,26 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                 name=LINEARIZATION_EXCURSION_RATIO,
                 maximum=LINEARIZATION_BUDGET_LIMIT,
                 description=(
-                    "|T - T_ref| / linearization_band <= 1. R(T) = R_ref "
+                    "|T - T_ref| / linearization_band <= 1, evaluated at the "
+                    "state furthest from T_ref that the run occupies rather "
+                    "than at the temperature it converges to. R(T) = R_ref "
                     "(1 + alpha (T - T_ref)) is the first-order Taylor "
                     "expansion of rho(T) about T_ref, so the neglected "
                     "curvature grows with the excursion and how far a single "
                     "alpha carries is a property of the material rather than "
-                    "of the algebra. UNKNOWN unless the material declares "
-                    "linearization_band."
+                    "of the algebra. The same single coefficient is read at "
+                    "every point of the path, so the band has to hold at "
+                    "every point of it: a body that swings outside the band "
+                    "and settles back inside spent the excursion on a "
+                    "coefficient that was never supported there, and reading "
+                    "only the endpoint would report the return and not the "
+                    "swing. Which endpoint binds depends on where T_ref sits "
+                    "— a run warming away from a cold reference binds at its "
+                    "final state, one cooling towards it binds at its "
+                    "initial state — so this is a ceiling on the furthest "
+                    "state, not on the last one, exactly as "
+                    "reduced_debye_temperature is a floor on the coldest. "
+                    "UNKNOWN unless the material declares linearization_band."
                 ),
             ),
             RangeCondition(
@@ -1345,6 +1358,7 @@ def derived_material_quantities(
     *,
     temperature: Quantity | None = None,
     coldest_temperature: Quantity | None = None,
+    furthest_temperature: Quantity | None = None,
 ) -> dict[str, Quantity]:
     """Every rated group derivable from ``base`` and the supplied temperature.
 
@@ -1353,14 +1367,33 @@ def derived_material_quantities(
     cannot reach — the same limitation :func:`assess_resistance_validity`
     records, met again and not worked around.
 
+    Two groups are evaluated somewhere other than the operating point, and
+    both take the same argument shape: the caller names the binding instant,
+    and each falls back to ``temperature`` when it was not named. The caller
+    chooses because only the caller knows the path — this function is handed
+    states, never a trajectory.
+
     **A key that could not be derived is absent.** No placeholder, no zero, no
     typical value, so a condition depending on it reaches
     ``ValidityDomain.assess`` as UNKNOWN.
     """
     reference_temperature = base.get(REFERENCE_TEMPERATURE)
     derived: dict[str, Quantity | None] = {
+        # A *ceiling* on |T - T_ref|, so the binding state is the one furthest
+        # from the reference along the path rather than the one it ends at.
+        # Which endpoint that is depends on where T_ref sits relative to the
+        # run: a body warming away from a cold reference binds at its final
+        # state, one cooling towards it binds at its initial state, and a run
+        # that straddles T_ref binds at whichever side reaches further. The
+        # caller resolves that and passes the answer; see the condition for
+        # why the endpoint alone is not enough. Falls back to the operating
+        # point when no other state was supplied, which is the honest answer
+        # for a caller that did not say.
         LINEARIZATION_EXCURSION_RATIO: linearization_excursion_ratio(
-            temperature=temperature,
+            temperature=(
+                temperature if furthest_temperature is None
+                else furthest_temperature
+            ),
             reference_temperature=reference_temperature,
             band=base.get(LINEARIZATION_BAND),
         ),
@@ -1396,6 +1429,7 @@ def rated_resistance_validity_context(
     problem: ScientificProblem,
     temperature: Quantity | None = None,
     coldest_temperature: Quantity | None = None,
+    furthest_temperature: Quantity | None = None,
 ) -> DomainValidityContext:
     """The full context :data:`RATED_LINEAR_TCR_MODEL` is assessed against.
 
@@ -1420,6 +1454,7 @@ def rated_resistance_validity_context(
                 {**declared, **state},
                 temperature=temperature,
                 coldest_temperature=coldest_temperature,
+                furthest_temperature=furthest_temperature,
             ),
         },
         reserved=ASSEMBLER_NAMESPACE,
@@ -1430,6 +1465,7 @@ def assess_rated_resistance_validity(
     problem: ScientificProblem,
     temperature: Quantity | None = None,
     coldest_temperature: Quantity | None = None,
+    furthest_temperature: Quantity | None = None,
 ) -> ValidityAssessment:
     """Is the *rated* claim applicable here? **Validity, not validation.**
 
@@ -1442,7 +1478,7 @@ def assess_rated_resistance_validity(
     mistaken for the other.
     """
     return rated_resistance_validity_context(
-        problem, temperature, coldest_temperature
+        problem, temperature, coldest_temperature, furthest_temperature
     ).assess(RATED_LINEAR_TCR_MODEL)
 
 
