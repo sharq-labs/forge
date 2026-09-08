@@ -384,6 +384,26 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "SRIA reaches into a domain through a relative import -- the syntax it "
      "uses for all 50 of its real imports, and the one the existing scanner "
      "is blind to"),
+    # Both of these name a package that IS INSTALLED here and is NOT declared
+    # in pyproject.toml -- `joblib` and `threadpoolctl` arrive under
+    # scikit-learn. That is deliberate: the import succeeds, nothing else in
+    # the suite breaks, and the ONLY thing that goes red is GUARD 19. A
+    # mutation naming a package that does not exist would also go red, on
+    # ImportError, from every test that touches the module -- red for a
+    # reason that says nothing about the guard.
+    ("G19a", "src/engcore/mcp/evidence.py",
+     "from __future__ import annotations",
+     "from __future__ import annotations\n\nimport joblib\n",
+     "a module acquires an undeclared dependency by import statement, and a "
+     "clean install stops working -- the `mcp` half of 8107745"),
+    ("G19b", "src/engcore/scientific/units/quantity.py",
+     "from __future__ import annotations",
+     "from __future__ import annotations\n\n\n"
+     "def _lazy_backend():\n"
+     "    import importlib\n\n"
+     "    return importlib.import_module(\"threadpoolctl\")\n",
+     "the same, reached as a STRING rather than a statement -- the `anyio` "
+     "half, which a scan of ast.Import alone would miss"),
 )
 
 # WHAT THESE TWO CANNOT VERIFY, stated rather than left to be assumed.

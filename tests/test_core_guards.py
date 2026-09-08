@@ -4071,3 +4071,324 @@ def test_the_sria_dependency_table_in_the_docs_matches_the_tree():
     for stale in ("| `data/` | 15 |", "| `inference/` | 3 |",
                   "| `domains/` | 2 |", "| `scientific/` | 55 |"):
         assert stale not in doc, f"docs/SRIA.md still claims {stale}"
+
+
+# =====================================================================
+# GUARD 19: every dependency the tree reaches for is declared
+# =====================================================================
+#
+# Commit 8107745 fixed a clean install: `src/engcore/mcp/server.py` imports
+# the MCP SDK at module scope and `pyproject.toml` declared neither it nor
+# `anyio`, so CI was red on both jobs for three runs and a fresh clone lost 55
+# tests. The declaration is correct now -- verified from a fresh clone of the
+# pushed commit, `pip install .[dev,mcp]`, 2554 passed.
+#
+# NOTHING KEEPS IT CORRECT. That commit's own answer was CI: "the `reproduce`
+# job loses its continue-on-error and becomes load-bearing: it is now the
+# thing that catches the next undeclared dependency on the day it lands." That
+# is a real answer and it is the slowest one available -- it catches the
+# mistake after it is pushed, on a machine the author is not looking at, and
+# only while that job stays green for unrelated reasons. This catches it
+# before the commit, in FAST.
+#
+# THE AXIS A NAIVE VERSION WOULD MISS. `anyio` -- half of the original bug --
+# is not imported anywhere. It is reached as a STRING:
+#
+#     tests/mcp/test_server.py:22:  anyio = pytest.importorskip("anyio")
+#
+# A guard walking `ast.Import` and `ast.ImportFrom` would have found `mcp` and
+# not `anyio`, gone green on half the bug, and been credited with the catch.
+# This project has now found two guards "complete on one axis and blind on
+# another", so the string forms are read as well: `importorskip(...)` and
+# `importlib.import_module(...)` with a literal argument.
+#
+# TESTS ARE SCANNED, NOT JUST `src/`. The `anyio` half of the bug was in a
+# test file. A guard over `src/` alone would not have caught the thing it
+# exists to catch.
+
+_STRING_IMPORTERS = frozenset({"importorskip", "import_module"})
+
+
+def _source_of(path: pathlib.Path) -> str:
+    """Read a module's source, tolerating a UTF-8 BOM.
+
+    `utf-8-sig` rather than `utf-8`, and this is not defensive coding.
+    `tests/test_sria_falsification_transport.py`, `test_sria_m42_replay.py`
+    and `test_sria_m5_campaign.py` are stored WITH a byte-order mark. Python
+    imports them without complaint -- the import machinery strips it -- but
+    `ast.parse` on a string decoded as plain `utf-8` sees a leading U+FEFF and
+    raises SyntaxError. A sweep that read them that way would not report a
+    clean tree; it would crash, which is the honest half. The dangerous
+    version is a sweep that skips unparseable files, which is how a scan
+    silently stops covering three modules.
+    """
+    return path.read_text(encoding="utf-8-sig")
+
+
+def _declared_distributions() -> dict[str, frozenset[str]]:
+    """Distribution names from pyproject: the main list and every extra."""
+    import tomllib
+
+    data = tomllib.loads(
+        (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    project = data["project"]
+    groups = {"(required)": project.get("dependencies", [])}
+    groups.update(project.get("optional-dependencies", {}))
+
+    def name_of(spec: str) -> str:
+        for sep in (">=", "<=", "==", "!=", "~=", ">", "<", "[", ";", " "):
+            spec = spec.split(sep)[0]
+        return spec.strip().lower().replace("_", "-")
+
+    return {g: frozenset(name_of(s) for s in specs) for g, specs in groups.items()}
+
+
+def _pythonpath_roots() -> tuple[pathlib.Path, ...]:
+    """The sys.path entries pytest is configured to add, read from pyproject.
+
+    Derived rather than listed, because the answer to "is this name
+    first-party?" is exactly "does it resolve at one of these roots?", and
+    that set is configuration. `pyproject.toml` currently says
+    `pythonpath = ["src", "."]`, which is why `import experiments.thermal_t1`
+    works from a test and names no distribution.
+    """
+    import tomllib
+
+    data = tomllib.loads(
+        (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    configured = (
+        data.get("tool", {}).get("pytest", {})
+        .get("ini_options", {}).get("pythonpath", ["."])
+    )
+    return tuple((REPO_ROOT / entry).resolve() for entry in configured)
+
+
+def _importable_top_level() -> frozenset[str]:
+    """Every top-level name that resolves at a configured sys.path root.
+
+    A directory counts when it contains Python at all, package or namespace
+    package alike -- `experiments/` has no `__init__.py` and is imported by
+    103 sites regardless, because a namespace package does not need one.
+    Hidden directories are skipped so a local `.venv` at the repository root
+    does not enter the answer.
+    """
+    names: set[str] = set()
+    for root in _pythonpath_roots():
+        if not root.is_dir():
+            continue
+        for child in root.iterdir():
+            if child.name.startswith("."):
+                continue
+            if child.suffix == ".py":
+                names.add(child.stem)
+            elif child.is_dir() and next(child.rglob("*.py"), None) is not None:
+                names.add(child.name)
+    return frozenset(names)
+
+
+def _sibling_names(directory: pathlib.Path) -> frozenset[str]:
+    """Names importable from `directory` because they sit in it.
+
+    `pytest`'s prepend import mode puts a test file's own directory on
+    `sys.path`, so `tests/domains/battery/test_battery_applicability.py`
+    reaches its neighbour as `import battery_cases` -- an absolute import of a
+    first-party module that no distribution provides.
+
+    SIBLINGS ONLY, and that restriction is the whole correctness of this
+    function. The first version collected every directory name anywhere under
+    `src/` and `tests/`, which swallowed `mcp` -- because `tests/mcp/` is a
+    directory with that name -- and quietly excused the one dependency this
+    guard exists to check. That is the PEP 420 collision commit 8107745
+    documented at length, reappearing inside the guard written to prevent its
+    recurrence, and the guard passed while doing it.
+    """
+    names: set[str] = set()
+    if not directory.is_dir():
+        return frozenset(names)
+    for child in directory.iterdir():
+        if child.is_dir() and (child / "__init__.py").is_file():
+            names.add(child.name)
+        elif child.suffix == ".py":
+            names.add(child.stem)
+    return frozenset(names)
+
+
+def _reached_modules() -> dict[str, list[str]]:
+    """Top-level module names the tree reaches, and where, third-party only.
+
+    Both forms: the statements, and the string arguments that do the same job
+    at runtime.
+    """
+    top_level = _importable_top_level()
+    found: dict[str, list[str]] = {}
+
+    def note(name: str, path: pathlib.Path, lineno: int, local: frozenset[str]) -> None:
+        head = name.split(".")[0]
+        if not head or head in sys.stdlib_module_names:
+            return
+        if head in local or head in top_level:
+            return
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        found.setdefault(head, []).append(f"{rel}:{lineno}")
+
+    for tree in (REPO_ROOT / "src", REPO_ROOT / "tests"):
+        for path in sorted(tree.rglob("*.py")):
+            if "__pycache__" in path.parts:
+                continue
+            parsed = ast.parse(_source_of(path))
+            local = _sibling_names(path.parent)
+            for node in ast.walk(parsed):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        note(alias.name, path, node.lineno, local)
+                elif isinstance(node, ast.ImportFrom):
+                    if node.level == 0 and node.module:
+                        note(node.module, path, node.lineno, local)
+                elif isinstance(node, ast.Call):
+                    func = node.func
+                    attr = getattr(func, "attr", None) or getattr(func, "id", None)
+                    if attr in _STRING_IMPORTERS and node.args:
+                        first = node.args[0]
+                        if isinstance(first, ast.Constant) and isinstance(
+                            first.value, str
+                        ):
+                            note(first.value, path, node.lineno, local)
+    return found
+
+
+def _distributions_providing(module: str) -> frozenset[str]:
+    """Distributions that provide an importable top-level `module`.
+
+    `sklearn` comes from `scikit-learn` and `mcp` comes from `mcp`, and only
+    the first of those needs looking up. The lookup is best-effort by design:
+    on a bare install the optional SDK is absent and its mapping is unknown,
+    so the module's own name is always a candidate. That is what lets this
+    guard stay green on an install that does not have the `[mcp]` extra --
+    which is the rule `pyproject.toml` states about that group.
+    """
+    import importlib.metadata as md
+
+    try:
+        provided = md.packages_distributions().get(module, [])
+    except Exception:  # pragma: no cover - metadata unreadable
+        provided = []
+    return frozenset(
+        {module.lower().replace("_", "-")}
+        | {name.lower().replace("_", "-") for name in provided}
+    )
+
+
+def test_every_dependency_the_tree_reaches_for_is_declared():
+    """GUARD 19. The check that would have caught 8107745's bug before CI did.
+
+    Walked, not listed, on both sides: the population is every `.py` under
+    `src/` and `tests/`, and the declared set is read out of `pyproject.toml`
+    including every extra, so adding a group does not need this test edited.
+    """
+    declared: set[str] = set()
+    for names in _declared_distributions().values():
+        declared |= names
+    assert "mcp" in declared and "anyio" in declared, sorted(declared)
+
+    reached = _reached_modules()
+    assert len(reached) >= 4, f"the scan found only {sorted(reached)}"
+
+    undeclared = {
+        module: where
+        for module, where in sorted(reached.items())
+        if not (_distributions_providing(module) & declared)
+    }
+    assert undeclared == {}, (
+        "these are imported and not declared in pyproject.toml, so a clean "
+        "install does not have them:\n  "
+        + "\n  ".join(
+            f"{module} -- e.g. {where[0]} ({len(where)} sites)"
+            for module, where in undeclared.items()
+        )
+    )
+
+
+def test_the_scan_reads_the_string_forms_and_not_only_the_statements():
+    """Make the axis that would have been missed fail once, on purpose.
+
+    `anyio` was half of 8107745's bug and appears in no import statement
+    anywhere -- `pytest.importorskip("anyio")` is the only thing that reaches
+    it. A guard that walked only `ast.Import`/`ast.ImportFrom` would have gone
+    green on it while catching `mcp`, which is a check credited with a catch
+    it did not make. Asserted against the real call site, and on a synthetic
+    file for the forms not currently present.
+    """
+    reached = _reached_modules()
+    assert "anyio" in reached, sorted(reached)
+    assert any("test_server.py" in site for site in reached["anyio"])
+
+    # No import statement mentions it, which is the whole point.
+    statements: set[str] = set()
+    for path in sorted((REPO_ROOT / "tests").rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        for node in ast.walk(ast.parse(_source_of(path))):
+            if isinstance(node, ast.Import):
+                statements |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.level == 0:
+                statements.add((node.module or "").split(".")[0])
+    assert "anyio" not in statements
+
+
+def test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed():
+    """The other direction, and it is not clean.
+
+    Two declarations are never imported, and they are not the same thing:
+
+    `pytest-xdist` is a pytest PLUGIN. It is activated by `-n 4` on the
+    command line and by nothing in the source, so being declared and never
+    imported is correct for it and always will be.
+
+    `scikit-learn` is a REQUIRED dependency that nothing under `src/` or
+    `tests/` imports, by statement or by string. Every clean install pays for
+    an 8 MB wheel and its `joblib`/`threadpoolctl` tail to satisfy a
+    declaration no code reads.
+
+    Recorded exactly rather than acted on: dropping a required dependency
+    changes what a clean install contains, which is a decision about the
+    package rather than a fix to a guard, and this commit is a guard. Exact
+    rather than a floor, for the reason `EXPECTED_MODELS` is -- if something
+    starts importing `scikit-learn` this fails and the note comes out, and if
+    a THIRD unused declaration lands this fails and somebody looks at it
+    instead of it joining a list nobody rereads.
+    """
+    declared: set[str] = set()
+    for names in _declared_distributions().values():
+        declared |= names
+
+    reached = set()
+    for module in _reached_modules():
+        reached |= _distributions_providing(module)
+
+    assert declared - reached == {"pytest-xdist", "scikit-learn"}, sorted(
+        declared - reached
+    )
+
+
+def test_the_suite_stays_green_without_the_optional_group():
+    """`pyproject.toml` states the rule; this is it as a check.
+
+    "It stays OPTIONAL because the rule that comment states is the right one:
+    the suite must stay runnable, and green, without it." That is a claim
+    about `[mcp]`, and it is only true while the SDK is reached from exactly
+    one module and every test that needs it skips. `server.py` is that module.
+    """
+    mcp_group = _declared_distributions()["mcp"]
+    assert mcp_group == {"mcp", "anyio"}, sorted(mcp_group)
+
+    importers = [
+        site
+        for site in _reached_modules().get("mcp", [])
+        if site.startswith("src/")
+    ]
+    assert all(s.startswith("src/engcore/mcp/server.py") for s in importers), (
+        "the MCP SDK is reached from a module other than server.py, so a bare "
+        f"install no longer works: {importers}"
+    )
