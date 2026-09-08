@@ -411,22 +411,29 @@ def test_the_model_declares_its_own_validity_domain() -> None:
 def test_the_scientific_core_owns_no_cstr_specific_rule() -> None:
     """F1: the Core must contain no branch on this domain.
 
-    Matched on word boundaries rather than raw substrings — ``cstr`` occurs
-    inside ``docstring``, and a naive search reports the Core as contaminated
-    by its own comments.
-    """
-    import re
+    **The sweep moved; this is the half that is still this domain’s
+    business.** F1 used to be a six-word regex over ``scientific/`` living
+    here. It caught GUARD 3 leaking ``CSTR`` into ``results/thresholds.py``,
+    and then two things about it aged badly: it forbade six *domain names*
+    when the vocabulary actually arriving next is ``thrust`` and ``rpm``, and
+    it sat in an EXPENSIVE module without a ``STATIC_GUARDS`` exception, so a
+    test that only parses source never ran in FAST.
 
-    core = REPO_ROOT / "src" / "engcore" / "scientific"
-    pattern = re.compile(
-        r"\b(cstr|arrhenius|reactor|kinetics|coolant|concentration)\b",
-        re.IGNORECASE,
-    )
-    offenders = []
-    for path in core.rglob("*.py"):
-        for match in pattern.finditer(path.read_text(encoding="utf-8")):
-            offenders.append(f"{path.relative_to(REPO_ROOT)}: {match.group(0)}")
-    assert offenders == [], offenders
+    The widened sweep is
+    ``test_core_guards.py::test_the_scientific_core_knows_shapes_and_not_things``
+    — in FAST, and a ``mutation_guards.TARGETS`` module, which this was not.
+
+    What is asserted here is the thing a domain should assert about a shared
+    list: that the six words F1 named are still on it. A widened list is only
+    an improvement while it stays widened, and the way that reverses is not a
+    deletion anybody reviews — it is one term leaving years later with
+    nothing recording that this domain ever depended on it.
+    """
+    from tests import core_vocabulary
+
+    assert {"cstr", "arrhenius", "reactor", "kinetics", "coolant",
+            "concentration"} <= core_vocabulary.FORBIDDEN_TERMS
+    assert core_vocabulary.offenders() == []
 
 
 # =====================================================================

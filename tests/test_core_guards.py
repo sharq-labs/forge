@@ -3766,3 +3766,132 @@ def test_the_coupling_loop_spends_the_budget_where_the_value_crosses():
     with pytest.raises(cp.TransportRefused) as excinfo:
         cp._transport(produced, silent, 1)
     assert "efficiency is not declared" in str(excinfo.value)
+
+
+# =====================================================================
+# GUARD 17: the core knows shapes, not things
+# =====================================================================
+#
+# `test_the_scientific_core_owns_no_cstr_specific_rule` in
+# `tests/domains/kinetics/test_cstr_domain.py` has enforced a narrow version
+# of this since GUARD 3, and it earned its place immediately -- it caught that
+# commit putting `CSTR` into `scientific/results/thresholds.py`. It checks six
+# known domain words.
+#
+# Two things are wrong with stopping there, and composite quantities,
+# relational conditions and hierarchical problems are about to make both
+# expensive:
+#
+#   1. It forbids today's domain NAMES. The vocabulary that will actually
+#      arrive with a composite quantity is `thrust`, `propeller`, `rpm` --
+#      words no domain is called, that name things all the same.
+#   2. Its six words are a hand-maintained list, so the sixth domain's name is
+#      not forbidden until somebody remembers to add it. That is the defect
+#      `mutation_guards.TARGETS` names about itself, one level down.
+#
+# `tests/core_vocabulary.py` carries the rule, the derivation and the term
+# list, with the three selection rules written out. It lives beside
+# `zero_provider.py` as a support module because it is imported by two test
+# modules and by nothing else.
+#
+# WHY THIS MOVED HERE. The narrow guard lives in an EXPENSIVE module, and is
+# not in that module's `STATIC_GUARDS` exception set, so it runs in SCIENTIFIC
+# and FULL and **never in FAST** -- a test that only parses source, paying the
+# expensive-tier tax and absent from the suite that runs on every change.
+# `test_core_guards.py` is untiered, so the widened guard runs in FAST, and it
+# is a `mutation_guards.TARGETS` module, so the harness can verify it. The
+# narrow guard was in neither.
+
+from tests import core_vocabulary as _core_vocabulary
+
+
+def test_the_scientific_core_knows_shapes_and_not_things():
+    """GUARD 17. The rule the core follows, checked over the whole core.
+
+    Two reaches, and the difference is the design rather than an accident:
+    a derived domain name is forbidden in **code**, because prose naming a
+    domain is usually the core documenting its own ignorance; a curated
+    thing-term is forbidden in **all text**, because the `CSTR` this replaces
+    was in a class docstring and a code-only rule would have let it through.
+
+    `tests/core_vocabulary.py` has the full account.
+    """
+    found = _core_vocabulary.offenders()
+    assert found == [], (
+        "the Scientific Core has acquired vocabulary for a thing:\n  "
+        + "\n  ".join(found)
+    )
+
+
+def test_the_domain_names_were_derived_from_the_packages_not_listed():
+    """A guard over an empty set passes and proves nothing.
+
+    If the walk finds no domain packages -- a move, a rename, a missing
+    `__init__.py` -- the code reach silently forbids nothing and GUARD 17
+    goes green over a rule it is no longer applying. So the derivation is
+    asserted against the tree it is supposed to have read.
+
+    The count is exact for the reason `EXPECTED_MODELS` is: a floor never
+    fails on an addition, and an added domain is precisely the moment this
+    should be looked at.
+    """
+    names = _core_vocabulary.derived_domain_names()
+    assert set(names) == {
+        "aerospace",
+        "battery",
+        "electrical",
+        "electrothermal",
+        "kinetics",
+        "thermal",
+        "thermal_models",
+    }, names
+    assert len(names) == 7
+
+    # Whole names, never split on `_`. Splitting `thermal_models` yields
+    # `models`, which is core vocabulary in every sense, and forbidding it
+    # would fail on arrival for a reason having nothing to do with layering.
+    assert "models" not in names
+
+
+def test_the_shape_vocabulary_is_allowed_and_is_actually_used():
+    """`quantity`, `condition`, `relation`, `component`, `series`,
+    `composition` are the core's own language.
+
+    Asserted to be *present* rather than only permitted: an allowance for
+    words the core does not use is decoration, and would go on reading as a
+    working exemption after the words it exempts had gone.
+    """
+    words: set[str] = set()
+    for path in sorted(_core_vocabulary.CORE.rglob("*.py")):
+        words |= _core_vocabulary.prose_and_code_words(path)
+
+    missing = sorted(_core_vocabulary.SHAPE_VOCABULARY - words)
+    assert missing == [], (
+        f"the core no longer uses {missing}, so exempting them is decoration"
+    )
+
+
+def test_a_domain_named_after_a_shape_word_is_reported_rather_than_excused():
+    """The hole in the allowance, made loud.
+
+    The shape exemption is unconditional, so a domain package named
+    `composition` would be silently un-forbidden by it -- the guard would go
+    green on exactly the leak it exists to catch. Empty today; this fails the
+    day it is not, instead of the exemption quietly winning.
+    """
+    assert _core_vocabulary.shape_vocabulary_collisions() == ()
+
+
+def test_the_widened_list_still_covers_what_the_narrow_guard_caught():
+    """Widenable, not shrinkable.
+
+    GUARD 17 replaces a guard that worked. The way that goes wrong is not a
+    deletion anybody would notice; it is a term quietly leaving the list years
+    later, with nothing recording that it used to be checked. These six were
+    checked before this commit and are checked after it.
+    """
+    assert _core_vocabulary.NARROW_GUARD_TERMS <= _core_vocabulary.FORBIDDEN_TERMS
+    # And the reach they had -- prose included -- is the reach they keep.
+    assert not (
+        _core_vocabulary.NARROW_GUARD_TERMS & _core_vocabulary.SHAPE_VOCABULARY
+    )

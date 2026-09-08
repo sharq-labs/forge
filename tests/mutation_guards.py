@@ -352,7 +352,48 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "    return value\n    if dependency.conversion is None:\n        return value",
      "the coupling loop stops spending the budget at the transport boundary, "
      "so a declared efficiency decorates a crossing that ignores it"),
+    # GUARD 17 inverts the usual shape. Every mutation above REMOVES a check
+    # and expects the suite to notice; a static guard over the source text
+    # cannot be verified that way, because deleting its check makes the suite
+    # greener rather than redder. So these two INTRODUCE the leak the guard
+    # exists to catch -- the same direction as G8a, which adds an import to
+    # break a module -- and the guard is what must go red.
+    ("G17a", "src/engcore/scientific/results/result.py",
+     "from __future__ import annotations",
+     "from __future__ import annotations\n\n\n"
+     "def _special_case(domain: str) -> bool:\n"
+     "    return domain == \"battery\"\n",
+     "the core branches on a domain by name and GUARD 17's derived reach is "
+     "what notices -- the leak a sixth domain arrives through"),
+    ("G17b", "src/engcore/scientific/ir/conditions.py",
+     "from __future__ import annotations",
+     "from __future__ import annotations\n\n\n"
+     "def thrust_margin(a: float, b: float) -> float:\n"
+     "    return a - b\n",
+     "the core learns the name of a thing -- a relation between two "
+     "quantities is stated as a fact about thrust"),
 )
+
+# WHAT THESE TWO CANNOT VERIFY, stated rather than left to be assumed.
+#
+# GUARD 17 has two reaches: derived domain names in CODE, and curated
+# thing-terms in ALL TEXT, prose included. The prose reach is the one that
+# matters most -- the `CSTR` GUARD 3 leaked was in a class docstring, and a
+# code-only rule would have let it through -- and it is the one this harness
+# structurally CANNOT exercise. `_code_digest` drops COMMENT and STRING
+# tokens, by a deliberate decision recorded in this module's docstring, so a
+# mutation that writes a forbidden term into a docstring changes no code and
+# is refused as CHANGED NO CODE before the suite ever runs.
+#
+# That is the right call for the verifier and it leaves a real gap here. The
+# prose reach was instead made to fail by hand, on a throwaway copy, by
+# restoring the exact docstring sentence from c0ec657 that GUARD 3 leaked:
+#
+#     src/engcore/scientific/results/thresholds.py:
+#         'cstr' names a thing -- the core knows shapes, not things
+#
+# Recorded here because the next person to read this list should not conclude
+# from two green mutations that both reaches are covered.
 
 #: The suites a mutation must turn red.
 #:
