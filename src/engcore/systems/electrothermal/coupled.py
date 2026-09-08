@@ -761,6 +761,19 @@ def _transport(
 
     A validation report whose failures nothing consults is a check that does not
     check anything. This is the consumer that makes it one.
+
+    **And the declared conversion is applied here, for the same reason.** A
+    conversion that validates its own declared numbers and is never applied to
+    what the run produced is a budget nobody spends: an edge declaring that
+    half the energy arrives would transport all of it, and every downstream
+    number would be twice what the declaration says. The efficiency is not
+    advice about the crossing; it *is* the crossing, so the one place a value
+    crosses is the one place it must be spent.
+
+    An edge whose conversion states no efficiency refuses rather than
+    transporting the whole input. That is the same rule the record states --
+    an undeclared efficiency is UNKNOWN, not 1 -- reaching the moment it
+    decides a number.
     """
     if not transportable(result):
         failed = ", ".join(c.name for c in result.validation.failures)
@@ -777,7 +790,27 @@ def _transport(
             dependency=dependency,
             iteration=iteration,
         )
-    return result.value(dependency.source_quantity)
+    value = result.value(dependency.source_quantity)
+    if dependency.conversion is None:
+        return value
+
+    outcome = dependency.conversion.convert(value)
+    if outcome.value is None:
+        raise TransportRefused(
+            f"iteration {iteration}: {dependency.source_quantity!r} crosses "
+            f"into {dependency.target_problem_id!r}."
+            f"{dependency.target_quantity} as an energy conversion whose "
+            f"efficiency is not declared ({outcome.reason}). Transporting the "
+            f"whole input would assume the crossing is lossless, which is the "
+            f"one reading nobody stated and the one that cannot be checked. "
+            f"Declare an efficiency on "
+            f"{dependency.conversion.name!r}, or declare that this crossing "
+            f"converts nothing",
+            result=result,
+            dependency=dependency,
+            iteration=iteration,
+        )
+    return outcome.value
 
 
 def dependency_closure(

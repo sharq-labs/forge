@@ -299,7 +299,10 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "a shipped model stops declaring what it does not represent, and the "
      "tree sweep is what notices"),
     ("G14b", "src/engcore/mcp/evidence.py",
-     "        return None if model is None else model.exclusions",
+     # Repointed: the line this named changed when the property learned to
+     # tell NOT_DECLARED from None, and the harness said so rather than going
+     # green. The claim is unchanged.
+     "        return model.exclusions",
      "        return None",
      "the credibility report stops carrying exclusions beside validity, so a "
      "reader sees only the checkable half"),
@@ -308,6 +311,16 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "            if False:",
      "a blank exclusion is admitted -- a statement-shaped thing that states "
      "nothing"),
+    ("G14d", "src/engcore/scientific/models/definition.py",
+     "        if self.exclusions is NOT_DECLARED:",
+     "        if False:",
+     "exclusions go back to being optional, so omitting them is accepted at "
+     "construction instead of refused"),
+    ("G14e", "src/engcore/scientific/models/definition.py",
+     "            if not exclusions and not because:",
+     "            if False:",
+     "an empty exclusion list stops having to justify itself -- the strongest "
+     "claim the field can carry, made for free"),
     ("G15a", "src/engcore/scientific/composition/dependency.py",
      "        if carries_energy and self.conversion is None:",
      "        if False:",
@@ -324,6 +337,21 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "        if self.efficiency is None:\n            return ConversionOutcome(\n"
      "                ValidityStatus.IN_DOMAIN,",
      "an undeclared efficiency stops reporting UNKNOWN"),
+    ("G16a", "src/engcore/scientific/composition/transfer.py",
+     "        if abs(arrived - budgeted) > BUDGET_TOLERANCE * scale:",
+     "        if False:",
+     "a transfer may carry more than its conversion budgets -- declared 0.5 "
+     "while transporting all of it"),
+    ("G16b", "src/engcore/scientific/composition/transfer.py",
+     "        if self.source_value is None:",
+     "        if False:",
+     "a conversion transfer stops having to say what entered it, so the "
+     "declared ratio has nothing to be checked against"),
+    ("G16c", "src/engcore/systems/electrothermal/coupled.py",
+     "    if dependency.conversion is None:\n        return value",
+     "    return value\n    if dependency.conversion is None:\n        return value",
+     "the coupling loop stops spending the budget at the transport boundary, "
+     "so a declared efficiency decorates a crossing that ignores it"),
 )
 
 #: The suites a mutation must turn red.

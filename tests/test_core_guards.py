@@ -318,6 +318,11 @@ def test_a_derived_quantity_declared_as_an_input_is_refused_at_assessment():
 
     model = ScientificModelDefinition(
         model_id="synthetic.sixth_domain",
+        exclusions=(),
+        excludes_nothing_because=(
+            "a test fixture: it stands for a model record's shape and "
+            "represents no physical process"
+        ),
         version="0.1.0",
         name="A domain that declared its derived quantity",
         domain="synthetic",
@@ -3166,10 +3171,12 @@ def test_every_shipped_model_declares_what_it_does_not_represent():
     before the field existed does not declare exclusions, and refusing to load
     it would destroy information rather than prevent a claim.
     """
+    from src.engcore.scientific.models.definition import NOT_DECLARED
+
     undeclared = sorted(
         model.model_id
         for model in MODELS
-        if model.exclusions is None
+        if model.exclusions is NOT_DECLARED
         and model.model_id not in EXCLUSIONS_NOT_DECLARED
     )
     assert undeclared == [], (
@@ -3190,23 +3197,53 @@ def test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident():
     model claims it at all.
     """
     from src.engcore.scientific.models.definition import (
-        ModelType,
+        NOT_DECLARED,
         ScientificModelDefinition,
     )
 
     claiming_nothing = sorted(
-        model.model_id for model in MODELS if model.exclusions == ()
+        model.model_id
+        for model in MODELS
+        if model.exclusions is not NOT_DECLARED and model.exclusions == ()
     )
     assert claiming_nothing == [], (
         f"{claiming_nothing} claim to exclude nothing, which is almost never "
         f"true; check that this was written deliberately"
     )
 
-    # The default is None, not (). A model that says nothing has said nothing.
-    silent = ScientificModelDefinition(
-        model_id="probe.silent", version="0.1.0", model_type=ModelType.APPROXIMATION
+    # THE FIELD IS MANDATORY. Omitting it raises -- there is no usable
+    # default, because a default records whether somebody thought about the
+    # question and not what the model excludes, and it reads exactly like a
+    # declaration.
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        ScientificModelDefinition(model_id="probe.silent", version="0.1.0")
+    assert "declares no exclusions" in str(excinfo.value)
+
+    # An empty list justifies itself. It is the strongest claim the field can
+    # carry and the one least often true, so it costs a sentence.
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        ScientificModelDefinition(
+            model_id="probe.empty", version="0.1.0", exclusions=()
+        )
+    assert "does not say why" in str(excinfo.value)
+
+    justified = ScientificModelDefinition(
+        model_id="probe.empty",
+        version="0.1.0",
+        exclusions=(),
+        excludes_nothing_because="a probe with no physical content",
     )
-    assert silent.exclusions is None
+    assert justified.exclusions == ()
+
+    # And the justification may not accompany a non-empty list, where it would
+    # contradict it.
+    with pytest.raises(InvalidScientificProblem):
+        ScientificModelDefinition(
+            model_id="probe.both",
+            version="0.1.0",
+            exclusions=("no phase change",),
+            excludes_nothing_because="but also nothing",
+        )
 
     # A blank exclusion is refused: it looks like a statement and is not one.
     with pytest.raises(InvalidScientificProblem):
@@ -3260,6 +3297,18 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
         ),
     )
     assert frozen.to_dict()["exclusions"] is None
+
+    # And the exemption is stated by the DOMAIN layer, not by the core: the
+    # universal core names no domain, and `test_x2` refused the first version
+    # of this field for putting a model id in `definition.py`.
+    from src import engcore
+    from src.engcore.scientific.models.definition import (
+        UNDECLARED_EXCLUSIONS_ATTRIBUTE,
+    )
+
+    stated = getattr(engcore.domains, UNDECLARED_EXCLUSIONS_ATTRIBUTE)
+    assert any("conduction1d" in module for module in stated)
+    assert all(reason.strip() for reason in stated.values())
 
 
 def test_an_exclusion_is_not_an_assumption_and_the_records_are_separate():
@@ -3478,6 +3527,7 @@ def test_the_conversion_appears_in_provenance_with_its_efficiency():
             QuantityTransfer(
                 dependency=dependency,
                 value=Quantity(4.0, "watt"),
+                source_value=Quantity(4.0, "watt"),
                 source_record_id="electrical-result-1",
                 instant="iteration:3",
             ),
@@ -3527,3 +3577,192 @@ def test_the_electrothermal_crossing_is_the_declaration_it_always_was():
     # Both systems that make this crossing declare it, and neither leaves it
     # to be inferred from two dimensionally-compatible names.
     assert rb.JOULE_HEATING_CONVERSION.efficiency == 1.0
+
+
+# =====================================================================
+# GUARD 16 -- the declared conversion budget is spent on the real value
+# =====================================================================
+#
+# GUARD 15 checks that a conversion's own declared numbers add up. That is a
+# statement about the declaration and says nothing about the run. A conversion
+# declaring that half the energy arrives, realized by a crossing that moved all
+# of it, satisfies every check in GUARD 15 -- and every number downstream is
+# then twice what the record claims. The budget has to be spent where the value
+# actually crosses.
+
+
+def _halving_motor():
+    """A conversion with a real loss: half arrives, half leaves as heat."""
+    from src.engcore.scientific.composition import EnergyConversion, LossPath
+
+    return EnergyConversion(
+        name="motor",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+        efficiency=0.5,
+        losses=(LossPath(form="thermal", fraction=0.5),),
+    )
+
+
+def _conversion_edge(conversion):
+    from src.engcore.scientific.composition import QuantityDependency
+
+    return QuantityDependency(
+        source_problem_id="electrical",
+        source_quantity="drive_power",
+        target_problem_id="mechanical",
+        target_quantity="shaft_power",
+        unit_exemplar="watt",
+        conversion=conversion,
+    )
+
+
+def test_a_transfer_may_not_carry_more_than_its_conversion_budgets():
+    """The gap GUARD 15 left: declared 0.5, transported all of it.
+
+    Every check written before this one passes on that record. It is the
+    confident-and-wrong crossing arriving through the realization instead of
+    through the declaration.
+    """
+    from src.engcore.scientific.composition import QuantityTransfer
+
+    edge = _conversion_edge(_halving_motor())
+    common = dict(source_record_id="electrical-1", instant="iteration:1")
+
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        QuantityTransfer(
+            dependency=edge,
+            value=Quantity(100.0, "watt"),
+            source_value=Quantity(100.0, "watt"),
+            **common,
+        )
+    assert "budgets" in str(excinfo.value)
+    assert "efficiency of 0.5" in str(excinfo.value)
+
+    # The budgeted one constructs, and says where the rest went.
+    spent = QuantityTransfer(
+        dependency=edge,
+        value=Quantity(50.0, "watt"),
+        source_value=Quantity(100.0, "watt"),
+        **common,
+    )
+    assert spent.realized_losses == {"thermal": Quantity(50.0, "watt")}
+
+
+def test_a_conversion_transfer_must_say_what_entered_and_a_transport_may_not():
+    """A ratio needs both numbers, and a transport has only one."""
+    from src.engcore.scientific.composition import (
+        QuantityDependency,
+        QuantityTransfer,
+    )
+
+    common = dict(source_record_id="electrical-1", instant="iteration:1")
+
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        QuantityTransfer(
+            dependency=_conversion_edge(_halving_motor()),
+            value=Quantity(50.0, "watt"),
+            **common,
+        )
+    assert "does not say what entered" in str(excinfo.value)
+
+    transport = QuantityDependency(
+        source_problem_id="body",
+        source_quantity="temperature",
+        target_problem_id="material",
+        target_quantity="temperature",
+        unit_exemplar="kelvin",
+    )
+    assert (
+        QuantityTransfer(
+            dependency=transport, value=Quantity(300.0, "kelvin"), **common
+        ).realized_losses
+        == {}
+    )
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        QuantityTransfer(
+            dependency=transport,
+            value=Quantity(300.0, "kelvin"),
+            source_value=Quantity(300.0, "kelvin"),
+            **common,
+        )
+    assert "is a transport, not a conversion" in str(excinfo.value)
+
+
+def test_an_uncharacterised_conversion_cannot_be_realized_with_a_number():
+    """Declaring the crossing is allowed; running a value through it is not.
+
+    This is the drone's motor before anybody measures it. An efficiency nobody
+    stated cannot become a definite arriving value, because the only way to
+    produce one is to assume the crossing is lossless -- the assumption this
+    whole record exists to stop being silent.
+    """
+    from src.engcore.scientific.composition import (
+        EnergyConversion,
+        QuantityTransfer,
+    )
+
+    uncharacterised = EnergyConversion(
+        name="motor",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+    )
+    assert uncharacterised.efficiency is None
+
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        QuantityTransfer(
+            dependency=_conversion_edge(uncharacterised),
+            value=Quantity(100.0, "watt"),
+            source_value=Quantity(100.0, "watt"),
+            source_record_id="electrical-1",
+            instant="iteration:1",
+        )
+    assert "efficiency is not declared" in str(excinfo.value)
+
+
+def test_the_coupling_loop_spends_the_budget_where_the_value_crosses():
+    """`_transport` is the one place a value moves, so it is where it is spent.
+
+    A record that is checked and a loop that ignores it would leave the
+    declaration decorative. This drives the real transport boundary rather
+    than the record, because they are two different things to get wrong.
+    """
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from src.engcore.scientific.results.result import ScientificResult
+    from src.engcore.systems.electrothermal import coupled as cp
+
+    produced = ScientificResult(
+        result_id="electrical-1",
+        values={"drive_power": Quantity(100.0, "watt")},
+        provenance=ProvenanceRecord(run_id="r1"),
+    )
+
+    # A lossless edge moves the whole value, exactly as before this existed.
+    from src.engcore.systems.electrothermal.coupled import (
+        JOULE_HEATING_CONVERSION,
+    )
+
+    lossless = _conversion_edge(JOULE_HEATING_CONVERSION)
+    assert cp._transport(produced, lossless, 1) == Quantity(100.0, "watt")
+
+    # A halving edge moves half. Before the binding this returned 100 W and
+    # the declaration said 50 -- with nothing anywhere comparing the two.
+    halved = cp._transport(produced, _conversion_edge(_halving_motor()), 1)
+    assert halved == Quantity(50.0, "watt")
+
+    # And an uncharacterised one refuses rather than moving all of it.
+    from src.engcore.scientific.composition import EnergyConversion
+
+    silent = _conversion_edge(
+        EnergyConversion(
+            name="motor",
+            input_form="electrical",
+            output_form="mechanical",
+            unit_exemplar="watt",
+        )
+    )
+    with pytest.raises(cp.TransportRefused) as excinfo:
+        cp._transport(produced, silent, 1)
+    assert "efficiency is not declared" in str(excinfo.value)

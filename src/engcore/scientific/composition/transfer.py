@@ -57,11 +57,22 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from .dependency import QuantityDependency
 
-QUANTITY_TRANSFER_SCHEMA = schema_string("quantity_transfer")
+#: Bumped to /2 by `source_value`. Additive for a transport, required for a
+#: conversion: a /1 record of a conversion carries no input, so the budget it
+#: claims cannot be checked against what crossed, and it is refused on read
+#: rather than believed.
+QUANTITY_TRANSFER_SCHEMA = schema_string("quantity_transfer", 2)
+QUANTITY_TRANSFER_SCHEMA_V1 = schema_string("quantity_transfer")
+
+#: How far the arriving value may miss the declared budget, relatively.
+#: A representation allowance for the multiplication, not a modelling
+#: tolerance: a crossing that misses its own declared efficiency by more than
+#: this is not rounding, it is a different claim.
+BUDGET_TOLERANCE = 1e-9
 
 
 @dataclass(frozen=True)
@@ -76,6 +87,14 @@ class QuantityTransfer:
     source_record_id: str
     #: When, in the source's own terms. See the module docstring.
     instant: str
+    #: What entered, when the declaration this realizes is a conversion.
+    #:
+    #: Required for a conversion and refused for a plain transport. A
+    #: conversion's efficiency is a claim about a ratio, and a record carrying
+    #: only one of the two numbers states nothing checkable -- which is how a
+    #: declaration of 0.5 and a crossing that moved all of it would look
+    #: identical to a reader.
+    source_value: Quantity | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.dependency, QuantityDependency):
@@ -113,6 +132,77 @@ class QuantityTransfer:
                 f"do not mean the same thing"
             )
 
+        self._check_against_the_declared_budget()
+
+    def _check_against_the_declared_budget(self) -> None:
+        """What arrived must be what the declared conversion says arrives.
+
+        THE BINDING. Everything the conversion record checks up to here is
+        about its own declared numbers: that an efficiency and its loss paths
+        sum to one. That is a statement about the declaration and says nothing
+        about the run. A conversion declaring that half the energy arrives,
+        realized by a transfer carrying the whole input, satisfies every check
+        written before this one -- and every number downstream of it is then
+        twice what the record claims.
+
+        So the budget is spent here, against the value that actually crossed.
+        """
+        conversion = self.dependency.conversion
+
+        if conversion is None:
+            if self.source_value is not None:
+                raise InvalidScientificProblem(
+                    f"transfer of {self.dependency.source_quantity!r} carries "
+                    f"a source_value and its declaration is a transport, not "
+                    f"a conversion. Nothing changes form across it, so what "
+                    f"entered is what arrived and a second number could only "
+                    f"disagree with the first"
+                )
+            return
+
+        if self.source_value is None:
+            raise InvalidScientificProblem(
+                f"transfer of {self.dependency.source_quantity!r} realizes "
+                f"the energy conversion {conversion.name!r} and does not say "
+                f"what entered it. The declared efficiency is a ratio, and a "
+                f"record carrying only the arriving half states nothing any "
+                f"reader can check: a conversion claiming "
+                f"{conversion.efficiency!r} and a crossing that moved all of "
+                f"it would look identical. Supply source_value"
+            )
+        if not isinstance(self.source_value, Quantity):
+            raise InvalidScientificProblem(
+                f"transfer of {self.dependency.source_quantity!r} carries a "
+                f"source_value of {type(self.source_value).__name__}; what "
+                f"entered a conversion is a Quantity or it is not checkable"
+            )
+
+        outcome = conversion.convert(self.source_value)
+        if outcome.value is None:
+            raise InvalidScientificProblem(
+                f"transfer of {self.dependency.source_quantity!r} realizes "
+                f"{conversion.name!r}, whose efficiency is not declared "
+                f"({outcome.reason}). A crossing whose budget nobody stated "
+                f"cannot be realized with a definite value: what arrived "
+                f"would be believed on the strength of an assumption nobody "
+                f"wrote down"
+            )
+
+        arrived = self.value.magnitude_in(conversion.unit_exemplar)
+        budgeted = outcome.value.magnitude_in(conversion.unit_exemplar)
+        scale = max(abs(budgeted), abs(arrived), 1.0)
+        if abs(arrived - budgeted) > BUDGET_TOLERANCE * scale:
+            raise InvalidScientificProblem(
+                f"transfer of {self.dependency.source_quantity!r} carries "
+                f"{arrived} {conversion.unit_exemplar} where "
+                f"{conversion.name!r} budgets "
+                f"{budgeted} {conversion.unit_exemplar} -- "
+                f"{self.source_value.magnitude_in(conversion.unit_exemplar)} "
+                f"in at an efficiency of {conversion.efficiency}. The "
+                f"declaration and the crossing disagree about how much "
+                f"arrived, and the declaration is the one a reader is given"
+            )
+
     # ---- reading -------------------------------------------------------
     @property
     def key(self) -> tuple[str, str, str, str, str]:
@@ -124,6 +214,20 @@ class QuantityTransfer:
             self.dependency.target_quantity,
             self.instant,
         )
+
+    @property
+    def realized_losses(self) -> Mapping[str, Quantity]:
+        """What actually left by each declared loss path, for a report.
+
+        Empty for a transport and for a lossless conversion. This is the half
+        of a conversion a reader most needs and could least see: the energy
+        that did not arrive is usually another domain's input, and until it is
+        a number beside the crossing it is a fraction in a docstring.
+        """
+        conversion = self.dependency.conversion
+        if conversion is None or self.source_value is None:
+            return {}
+        return dict(conversion.convert(self.source_value).losses)
 
     def received_as(self, unit: str) -> Quantity:
         """The value, in the unit the receiving side works in.
@@ -145,16 +249,36 @@ class QuantityTransfer:
             "value": self.value.to_dict(),
             "source_record_id": self.source_record_id,
             "instant": self.instant,
+            "source_value": (
+                None if self.source_value is None else self.source_value.to_dict()
+            ),
+            # Derived, and written out because a reader cannot recompute it
+            # without the conversion record in hand: where the energy that did
+            # not arrive went, as quantities rather than fractions.
+            "realized_losses": {
+                form: quantity.to_dict()
+                for form, quantity in sorted(self.realized_losses.items())
+            },
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "QuantityTransfer":
-        require_schema(payload, QUANTITY_TRANSFER_SCHEMA)
+        require_schema_any(
+            payload, (QUANTITY_TRANSFER_SCHEMA_V1, QUANTITY_TRANSFER_SCHEMA)
+        )
+        source_value = payload.get("source_value")
+        # `realized_losses` is deliberately not read back: it is derived from
+        # the conversion and the source value, and a record that took it from
+        # the payload would let a hand-edited report state a loss the
+        # declaration does not imply.
         return cls(
             dependency=QuantityDependency.from_dict(payload["dependency"]),
             value=Quantity.from_dict(payload["value"]),
             source_record_id=payload["source_record_id"],
             instant=payload["instant"],
+            source_value=(
+                None if source_value is None else Quantity.from_dict(source_value)
+            ),
         )
 
 
