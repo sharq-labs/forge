@@ -123,6 +123,7 @@ EXPENSIVE_MODULES: dict[str, str] = {
     "tests/domains/kinetics/test_k3_configuration.py": "solves K3 truth holdouts against the K1.5 boundary",
     "tests/systems/aerospace/test_multirotor_mvr0.py": "runs multirotor reference design studies",
     "tests/systems/aerospace/test_multirotor_mvr1.py": "runs target-driven multirotor design studies",
+    "tests/test_benchmark_records.py": "re-scores the committed benchmark records through the real scorer",
 }
 
 #: Tests inside an expensive module that stay in FAST. Each only reads files,
@@ -193,6 +194,15 @@ STATIC_GUARDS: dict[str, frozenset[str]] = {
     "tests/systems/aerospace/test_multirotor_mvr1.py": frozenset(
         {
             "test_no_mvr1_logic_leaks_into_frozen_general_design_layer",
+        }
+    ),
+    # Neither launches the scorer: one perturbs an already-read record in
+    # memory, the other reads the scorer's source. Same criterion as every
+    # other entry in this table.
+    "tests/test_benchmark_records.py": frozenset(
+        {
+            "test_the_guard_would_notice_a_record_that_stopped_reproducing",
+            "test_the_scorer_default_would_overwrite_the_record_it_is_checking",
         }
     ),
 }

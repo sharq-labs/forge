@@ -5056,3 +5056,156 @@ command — and no such binary exists here. Identical before and after this
 gate's change; reported because "run the full suite" does not currently have a
 green baseline to compare against on this platform. Not investigated: outside
 this gate.
+
+---
+
+# NEEDS — GATE 2: an unguarded record, and a suite not green on a bare install
+
+Owned paths this gate: `tests/mcp/test_bundle.py`, `tests/test_core_guards.py`,
+`.github/workflows/tests.yml`, `benchmarks/hard/`.
+
+## 1. What the brief assumed, and what the tree actually is
+
+### 1.1 There is no mechanism guarding the hard benchmark to mirror
+
+The brief asked for a battery guard "mirroring whatever mechanism already
+guards the hard benchmark. Find that mechanism first and follow it rather than
+inventing a second shape."
+
+**That mechanism does not exist.** `grep -rn "results_hard" tests/ .github/`
+returns nothing. The `benchmark` job scored the hard case set into
+`/tmp/results_dev.json` and the battery set into `/tmp/results_battery.json`,
+and compared neither against its committed record. Both records are unguarded,
+not one — and both are quoted in `docs/release/v1.0.md` and `v1.1.md`.
+
+So `tests/test_benchmark_records.py` follows the nearest shape that *does*
+exist: the CI step named "split is reproducible from the seed and the rule",
+which re-derives the split and compares declared fields against the committed
+file. One shape, applied to **both** records rather than a second one invented
+per record.
+
+The hard record still reproduces exactly (1291/1400, 2 false accepts, 0 false
+rejects), which is what makes the battery failure informative rather than a
+guard that fails on everything.
+
+### 1.2 `score_hard.py --results` defaults to the tracked record
+
+`ap.add_argument("--results",default=str(HERE/"results_hard.json"))`. A guard
+that re-scored without passing `--results` would **overwrite the record it is
+checking**, then compare it against itself, and pass forever. Pinned in
+`test_the_scorer_default_would_overwrite_the_record_it_is_checking` rather than
+left as a comment, because the dangerous default is one refactor away from
+turning the whole module into a no-op.
+
+## 2. Deliberately left red
+
+`test_the_committed_benchmark_record_is_what_the_code_still_produces[battery]`
+**fails on landing.** That is the gate working, not the gate broken. The brief
+forbids regenerating `results_battery.json` to make it pass, and it is right
+to: the record and the code disagree by 28 verdicts, and deciding which is
+correct is GATE 3. A guard that went green by overwriting the number it was
+built to protect would be worse than no guard.
+
+The failure message carries the diagnosis rather than just the disagreement:
+
+```
+17  polarization_unmodelled_fraction_out       NOT_SUPPORTED -> SUPPORTED
+ 6  soc_step_resolution_ratio_in               SUPPORTED -> NOT_SUPPORTED
+ 5  soc_window_margin_in                       SUPPORTED -> NOT_SUPPORTED
+```
+
+## 3. The bare-install failures, and the shape of the fix
+
+`pip install -e ".[dev]" && python -m pytest -m "not expensive" -q -n auto`
+now reports **2501 passed, 26 skipped, 0 failed**. With `.[dev,mcp]` it reports
+**2582 passed, 0 skipped**. Both were verified on this checkout.
+
+### 3.1 `test_bundle.py` — guarded at the fixture, not at the module
+
+The brief said to guard it "the way `test_server.py` is guarded", which is a
+module-level `pytest.importorskip`. **Done differently, deliberately.**
+
+A module-level skip would skip all 27 tests; only 24 need the SDK. The three
+that do not include `test_no_runtime_module_reads_a_bundle_back` and
+`test_the_bundle_module_writes_no_scientific_record`, which parse source and
+assert an architectural boundary — checks with nothing to do with the
+transport. This repository's own reasoning, quoted twice in the CI file, is
+that "a skipped test proves nothing"; skipping five tests that do not need the
+dependency would be obeying the letter of the instruction against its point.
+So `src.engcore.mcp.server` is imported **inside the `response` fixture**,
+behind `importorskip("mcp.types", ...)`, and the module imports cleanly on a
+bare install.
+
+`mcp.types` and not `mcp`, for the trap `test_server.py` already documents:
+`tests/mcp/` has no `__init__.py`, so that directory IS an importable namespace
+package named `mcp` and `importorskip("mcp")` would never fire.
+
+### 3.2 The tree sweep — an allow-list DERIVED from the packaging metadata
+
+`MODEL_DISCOVERY_FAILURES` tolerates no import failure by construction, which
+is why it is worth having and why it could not survive an optional group. The
+tolerance added is keyed to what `pyproject.toml` **declares**:
+
+* `_declared_optional_top_level_names()` reads
+  `[project.optional-dependencies]` and derives `{anyio, mcp, pytest,
+  pytest_xdist}`. Never hard-coded — a literal set would be a second place to
+  state a fact the metadata already states, and the drift would be in the
+  direction of tolerating an absence nobody declared.
+* `_missing_optional_distribution()` admits **only** a `ModuleNotFoundError`,
+  reads the exception's own `name` rather than its message text, and matches
+  only the top-level package. A module raising
+  `ImportError("mcp is required")` from its own body is still a loss.
+* Anything unattributable stays in `MODEL_DISCOVERY_FAILURES` and is still
+  fatal.
+
+**The half that stops this being a silent skip.** Tolerating an absence is only
+safe if the absence cannot narrow what the guards cover, so
+`test_the_only_modules_the_walk_lost_are_declared_optional_ones` statically
+parses every skipped module and fails if it constructs a
+`ScientificModelDefinition` or a `ScientificSolver` — the two record types the
+sweeps count. Static, because the module cannot be imported; that is the whole
+situation. And
+`test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green`
+asks the same question of every module that *could* be absent, so it keeps
+working on a machine where the optional groups are installed and the absence
+dict is empty. It pins the answer exactly: `src/engcore/mcp/server.py` is the
+only module in `src/` that reaches an optional dependency, and it constructs
+neither record type. The exact counts therefore hold in both environments.
+
+## 4. Changes wanted outside the owned paths — not made
+
+### 4.1 `EXPECTED_MODELS` and friends are environment-independent by accident, not by contract — NOT CHANGED
+
+The four exact counts in `test_core_guards.py` survive a bare install only
+because the one module that reaches an optional dependency happens to define
+no model. Nothing in `src/` says it must stay that way; the two tests above are
+what would catch it. A stronger arrangement would be a declared boundary —
+"the MCP transport constructs no scientific record" — asserted at the module
+rather than inferred by a sweep. Not made: that is a change to
+`src/engcore/mcp/`, outside this gate.
+
+### 4.2 The `benchmark` CI job installs `.[dev]` and now runs pytest — NOT WIDENED
+
+The job's own step was replaced rather than a new job added, so the record
+comparison runs where the benchmark already runs. It does **not** install
+`.[dev,mcp]`, and does not need to: `tests/test_benchmark_records.py` reaches
+`run_battery_case` and `run_electrothermal_case` through the scorer, neither of
+which touches the SDK. Recorded because a future reader may wonder whether the
+group was forgotten. It was not.
+
+## 5. What this gate revealed that the brief did not predict
+
+### 5.1 The hard record is unguarded too, and it is the bigger one
+
+1400 rows against the battery's 400, and it is the record both release pages
+lead with. It happens to reproduce today. Nothing was making it do so.
+
+### 5.2 `-n auto` is what the brief's reproduction uses and what the project forbids
+
+The brief's reproduction is `python -m pytest -m "not expensive" -q -n auto`.
+`.github/workflows/tests.yml` uses `-n 4` and explains at length why `auto` is
+unsafe here (~200 MB per worker; `docs/TESTING.md` says "`-n auto` is not safe
+here"). Both were run for this gate and both are green, so the reproduction
+stands — but the README's first command and the project's own guidance
+disagree about the flag. Not changed: `README.md` is outside this gate's owned
+paths.

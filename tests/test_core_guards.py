@@ -50,6 +50,91 @@ from src.engcore.scientific.units.quantity import Quantity
 #: empty set passes and proves nothing" passed.
 MODEL_DISCOVERY_FAILURES: dict[str, str] = {}
 
+#: Modules the walk could not import because a DECLARED OPTIONAL dependency is
+#: absent, and which one.
+#:
+#: Separate from the dict above, and the separation is the whole mechanism.
+#: `pyproject.toml` states the rule this file was breaking -- of the optional
+#: groups, "the suite must stay runnable, and green, without it" -- and
+#: `MODEL_DISCOVERY_FAILURES` could not honour it: by construction it tolerates
+#: NO import failure, so on `pip install -e ".[dev]"` the two guards below went
+#: red on `src.engcore.mcp.server`, which imports the optional `[mcp]` SDK. CI
+#: installs `.[dev,mcp]` and therefore cannot see it; the README's first
+#: command is what fails.
+#:
+#: The fix is NOT to make the sweep tolerant, which is the defect the counter
+#: above exists to prevent. It is to make the sweep tolerate exactly what the
+#: packaging metadata DECLARES optional and nothing else: an absence is
+#: admissible only if some `[project.optional-dependencies]` group names the
+#: distribution that is missing. An undeclared import failure is still fatal,
+#: and an absence that no group accounts for is fatal too -- see
+#: `test_the_only_modules_the_walk_lost_are_declared_optional_ones`.
+OPTIONAL_DEPENDENCY_ABSENCES: dict[str, str] = {}
+
+
+def _declared_optional_top_level_names() -> frozenset[str]:
+    """Top-level module names that `[project.optional-dependencies]` declares.
+
+    DERIVED from the packaging metadata, never listed here. A hard-coded
+    `{"mcp", "anyio"}` would be a second place to state a fact `pyproject.toml`
+    already states, and the two would drift the first time a group changed --
+    in the direction of this sweep quietly tolerating an absence nobody
+    declared.
+
+    Requirement strings are reduced to their distribution name and normalized
+    the way an import would spell it (`pytest-xdist` -> `pytest_xdist`). That
+    mapping is not universal -- `scikit-learn` imports as `sklearn` -- but it
+    does not need to be: a name this function gets wrong makes the sweep
+    STRICTER, never laxer, because an unmatched absence stays fatal.
+    """
+    import re
+    import tomllib
+
+    pyproject = pathlib.Path(__file__).resolve().parent.parent / "pyproject.toml"
+    with pyproject.open("rb") as handle:
+        metadata = tomllib.load(handle)
+    groups = metadata.get("project", {}).get("optional-dependencies", {})
+    names = set()
+    for requirements in groups.values():
+        for requirement in requirements:
+            distribution = re.split(r"[\s<>=!~\[;]", requirement.strip(), 1)[0]
+            if distribution:
+                names.add(distribution.replace("-", "_"))
+    return frozenset(names)
+
+
+OPTIONAL_TOP_LEVEL_NAMES = _declared_optional_top_level_names()
+
+
+def _missing_optional_distribution(exception: BaseException) -> str | None:
+    """The declared-optional distribution this failure is attributable to.
+
+    ``None`` when the failure is anything else, which is what keeps this from
+    becoming a blanket `except ImportError: pass`. Only a `ModuleNotFoundError`
+    counts, only its own `name` is read -- not the message text -- and only its
+    TOP-LEVEL package is matched, so a missing `mcp.types` is attributed to the
+    declared `mcp` while a missing `engcore.anything` is attributed to nothing
+    and stays fatal.
+    """
+    if not isinstance(exception, ModuleNotFoundError):
+        return None
+    missing = getattr(exception, "name", None)
+    if not missing:
+        return None
+    top_level = missing.split(".", 1)[0]
+    return top_level if top_level in OPTIONAL_TOP_LEVEL_NAMES else None
+
+
+def _classify_import_failure(module_name: str, exception: BaseException) -> None:
+    """Record one failed import as either a declared absence or a real loss."""
+    optional = _missing_optional_distribution(exception)
+    if optional is not None:
+        OPTIONAL_DEPENDENCY_ABSENCES[module_name] = optional
+        return
+    MODEL_DISCOVERY_FAILURES[module_name] = (
+        f"{type(exception).__name__}: {exception}"
+    )
+
 
 def _record_walk_failure(name: str) -> None:
     """`pkgutil`'s own error hook, which otherwise swallows ImportError.
@@ -59,7 +144,7 @@ def _record_walk_failure(name: str) -> None:
     fails loudly here rather than quietly narrowing the sweep.
     """
     exception = sys.exc_info()[1]
-    MODEL_DISCOVERY_FAILURES[name] = f"{type(exception).__name__}: {exception}"
+    _classify_import_failure(name, exception)
     if not isinstance(exception, ImportError):
         raise  # pragma: no cover - preserves walk_packages' own behaviour
 
@@ -80,10 +165,10 @@ def _every_model() -> tuple[ScientificModelDefinition, ...]:
             module = importlib.import_module(module_info.name)
         except Exception as exc:  # an unimportable module is a different
             # test's failure -- but it is this one's population, so it is
-            # counted here instead of vanishing.
-            MODEL_DISCOVERY_FAILURES[module_info.name] = (
-                f"{type(exc).__name__}: {exc}"
-            )
+            # counted here instead of vanishing. A missing DECLARED optional
+            # dependency is sorted into the other dict rather than this one;
+            # everything else is still a loss.
+            _classify_import_failure(module_info.name, exc)
             continue
         for attribute in dir(module):
             try:
@@ -113,6 +198,125 @@ EXPECTED_MODELS = 16
 EXPECTED_RESERVING_MODELS = 15
 EXPECTED_CONDITION_NAMES = 64
 EXPECTED_RESERVED_NAMES = 46
+
+
+def test_the_only_modules_the_walk_lost_are_declared_optional_ones():
+    """The other half of the tolerance, without which it is a silent skip.
+
+    Tolerating an absence is only safe if the absence cannot narrow what the
+    guards cover. Three things are asserted, and the third is the load-bearing
+    one.
+
+    1. Every absence names a distribution some optional group DECLARES. An
+       absence attributable to nothing is not admissible, and cannot be reached
+       through `_classify_import_failure` -- this states the property the
+       classifier is supposed to have rather than trusting it.
+
+    2. The population is unchanged either way. Every module skipped for a
+       missing optional dependency is scanned STATICALLY for the two record
+       types the sweeps count. If a skipped module ever constructs one, the
+       exact counts below would differ between a bare install and a full one,
+       the sweep really would be reporting a tree it did not read, and this
+       fails and says so. Static, because the module cannot be imported here --
+       that is the entire situation.
+
+    3. The tolerance is exhaustive about what it permits. Only
+       `ModuleNotFoundError` is admissible; the classifier reads the
+       exception's own `name` rather than its message, so a module raising
+       `ImportError("mcp is required")` from its own body is still a loss.
+    """
+    for module_name, distribution in OPTIONAL_DEPENDENCY_ABSENCES.items():
+        assert distribution in OPTIONAL_TOP_LEVEL_NAMES, (
+            f"{module_name} was excused for {distribution!r}, which no "
+            f"[project.optional-dependencies] group declares"
+        )
+
+    root = pathlib.Path(__file__).resolve().parent.parent
+    counted = ("ScientificModelDefinition", "ScientificSolver")
+    for module_name in OPTIONAL_DEPENDENCY_ABSENCES:
+        relative = module_name.replace(".", "/") + ".py"
+        path = root / relative
+        if not path.exists():  # a package, not a module
+            path = root / module_name.replace(".", "/") / "__init__.py"
+        if not path.exists():  # pragma: no cover
+            continue
+        tree = ast.parse(path.read_bytes().decode("utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                name = getattr(node.func, "id", None) or getattr(
+                    node.func, "attr", None
+                )
+                assert name not in counted, (
+                    f"{module_name} was skipped because an optional "
+                    f"dependency is absent, but it constructs a {name}. The "
+                    f"exact counts in this file would then differ between a "
+                    f"bare install and a full one, which is precisely the "
+                    f"'sweep reports a tree it did not read' failure that "
+                    f"MODEL_DISCOVERY_FAILURES exists to prevent"
+                )
+
+    # The classifier admits nothing but a genuinely missing declared module.
+    assert _missing_optional_distribution(ModuleNotFoundError("x", name="mcp.types")) == "mcp"
+    assert _missing_optional_distribution(ModuleNotFoundError("x", name="mcp")) == "mcp"
+    # Not declared -> not excused.
+    assert _missing_optional_distribution(ModuleNotFoundError("x", name="numpy")) is None
+    assert (
+        _missing_optional_distribution(ModuleNotFoundError("x", name="src.engcore.z"))
+        is None
+    )
+    # Not a ModuleNotFoundError, and no `name` -> not excused, however it reads.
+    assert _missing_optional_distribution(ImportError("No module named 'mcp'")) is None
+    assert _missing_optional_distribution(ModuleNotFoundError("mcp")) is None
+    assert _missing_optional_distribution(ValueError("mcp")) is None
+
+
+def test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green():
+    """The FAST tier on `pip install -e ".[dev]"`, asserted as a property.
+
+    `pyproject.toml` states the rule for both optional groups -- "the suite
+    must stay runnable, and green, without it" -- and nothing enforced it. CI
+    installs `.[dev,mcp]` and structurally cannot observe the breakage; this
+    test can, because it asks the question about the packaging metadata and the
+    source tree rather than about the interpreter it happens to be running on.
+
+    So: every module under `src/` that imports a declared-optional
+    distribution must be one the walks can lose without narrowing what they
+    cover. That is the same property the test above checks for the modules
+    actually absent right now, checked here for every module that COULD be
+    absent -- including on a machine where the optional groups are installed
+    and `OPTIONAL_DEPENDENCY_ABSENCES` is therefore empty.
+    """
+    root = pathlib.Path(__file__).resolve().parent.parent / "src"
+    counted = ("ScientificModelDefinition", "ScientificSolver")
+    reaching_optional = {}
+    for path in sorted(root.rglob("*.py")):
+        tree = ast.parse(path.read_bytes().decode("utf-8"))
+        imported = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imported.update(alias.name.split(".", 1)[0] for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                imported.add(node.module.split(".", 1)[0])
+        optional = imported & set(OPTIONAL_TOP_LEVEL_NAMES)
+        if optional:
+            reaching_optional[path.relative_to(root.parent).as_posix()] = optional
+
+    # The one module that does. Exact, for the reason every other count in
+    # this file is exact: a second one landing is the event worth failing on.
+    assert set(reaching_optional) == {"src/engcore/mcp/server.py"}, reaching_optional
+
+    for relative in reaching_optional:
+        tree = ast.parse((root.parent / relative).read_bytes().decode("utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                name = getattr(node.func, "id", None) or getattr(
+                    node.func, "attr", None
+                )
+                assert name not in counted, (
+                    f"{relative} reaches an optional dependency AND constructs "
+                    f"a {name}, so a bare install would silently shrink the "
+                    f"population every sweep in this file claims to cover"
+                )
 
 
 def test_the_discovery_found_exactly_the_repository():
@@ -888,9 +1092,7 @@ def _every_solver():
         except Exception as exc:  # counted, for the reason MODEL_DISCOVERY_
             # FAILURES exists: a sweep that quietly loses a module reports a
             # clean tree it did not read.
-            MODEL_DISCOVERY_FAILURES[module_info.name] = (
-                f"{type(exc).__name__}: {exc}"
-            )
+            _classify_import_failure(module_info.name, exc)
             continue
         for _, value in inspect.getmembers(module, inspect.isclass):
             if not value.__module__.startswith("src.engcore."):

@@ -146,11 +146,16 @@ jobs:
                --cases benchmarks/hard/cases_hard --workers 4 --split all; then
             echo "SEAL BROKEN: --split all succeeded without --open-holdout"; exit 1
           fi
-      - run: >
-          python benchmarks/hard/score_hard.py --src src
-          --cases benchmarks/hard/cases_hard --workers 4 --split dev
-          --results /tmp/results_dev.json
-      - run: >
-          python benchmarks/hard/score_hard.py --src src
-          --cases benchmarks/hard/cases_battery --workers 4
-          --results /tmp/results_battery.json
+      # Both case sets were scored here into /tmp and the answer thrown away.
+      # Nothing compared either committed record against the re-score, and the
+      # battery one had already gone stale -- it records 400/400 and the tree
+      # produces 372/400 -- without anything going red. This step re-scores
+      # both through the same scorer and FAILS on disagreement, which is the
+      # whole difference between running a benchmark and checking one.
+      #
+      # It follows the shape of the "split is reproducible" step above:
+      # recompute, compare the declared fields, refuse to continue if they
+      # moved. The comparison lives in the test so it runs locally too;
+      # this step is what makes it run here.
+      - name: the committed benchmark records still reproduce
+        run: python -m pytest tests/test_benchmark_records.py -q

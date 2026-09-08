@@ -29,7 +29,23 @@ from src.engcore.mcp.bundle import (
 )
 from src.engcore.mcp.errors import CredibilityEvidenceError
 from src.engcore.mcp.problem import example_electrothermal_payload
-from src.engcore.mcp.server import _response
+
+# `src.engcore.mcp.server` is imported IN THE FIXTURE, not here. It is the one
+# module in `src/` that imports the optional `[mcp]` SDK, and importing it at
+# module level made this whole file a COLLECTION ERROR on
+# `pip install -e ".[dev]"` -- the command the README opens with.
+# `tests/mcp/test_server.py` guards the same dependency correctly, and
+# `pyproject.toml` states the rule both are held to: of the optional groups,
+# "the suite must stay runnable, and green, without it".
+#
+# Guarded in the fixture rather than with a module-level `importorskip`, which
+# is how test_server.py does it, because that would skip all 27 tests here and
+# only 24 need the SDK. The three that do not include
+# `test_no_runtime_module_reads_a_bundle_back` and
+# `test_the_bundle_module_writes_no_scientific_record`, which parse source and
+# assert an architectural boundary -- checks with nothing to do with the
+# transport, and exactly the ones this repository's own reasoning says must not
+# be skipped, since "a skipped test proves nothing".
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = "manifest.json"
@@ -39,6 +55,15 @@ VERDICT = "stages/00-R1/verdict.json"
 
 @pytest.fixture(scope="module")
 def response():
+    # `mcp.types`, not `mcp`: `tests/mcp/` has no `__init__.py`, so this
+    # directory IS an importable namespace package named `mcp` and
+    # `importorskip("mcp")` would never fire. The same trap test_server.py
+    # documents having fallen into.
+    pytest.importorskip(
+        "mcp.types", reason="install the optional [mcp] dependency group"
+    )
+    from src.engcore.mcp.server import _response
+
     return _response(example_electrothermal_payload())
 
 
