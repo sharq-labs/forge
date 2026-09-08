@@ -297,12 +297,46 @@ declaration is UNKNOWN and never IN_DOMAIN.
 
 ### Result
 
-| Metric | battery |
-|---|---|
-| Exact verdict match | **400/400 (100.0%)** |
-| Catch rate | **219/219 (100.0%)** |
-| False accept | **0/219 (0.00%)** |
-| False reject | **0/181 (0.0%)** |
+| Metric | battery | as first recorded |
+|---|---|---|
+| Exact verdict match | **389/400 (97.2%)** | 400/400 (100.0%) |
+| Catch rate | **219/219 (100.0%)** | 219/219 (100.0%) |
+| False accept | **0/219 (0.00%)** | 0/219 (0.00%) |
+| False reject | **11/181 (6.1%)** | 0/181 (0.0%) |
+
+**Why the exact-match figure moved, and why false accept did not.** The first
+column is this case set re-scored against the current tree; the second is what
+`results_battery.json` recorded on 2026-09-07, before two physics corrections
+landed. Both corrections are right and neither is being backed out. The case
+set is unchanged — `case_set_digest` is identical and no `expected` label
+moved.
+
+* **`14e6e55`, coulombic efficiency direction.** Coulomb counting was
+  `removed = eta I t / Q`, which makes a 99 %-efficient cell deplete *less*
+  internal charge than it delivers — free energy. It is now
+  `removed = I t / (eta Q)`. That shifts every state-of-charge excursion by
+  `1/eta^2 - 1 = +2.03 %`. **Eleven cases were placed 0.2 % or 1.0 % inside
+  `soc_window_margin` or `soc_step_resolution_ratio` using the old formula**,
+  so the shift carries them across. Under correct coulomb counting they really
+  do leave the declared window; the refusals are right and the *case
+  construction* is stale. Every case at 5 % or 20 % from the same bounds is
+  unmoved, which is what a +2.03 % shift predicts. These eleven are the whole
+  of the false-reject figure, and regenerating their placements is the fix —
+  not done here, because it changes `case_set_digest`, which the release pages
+  pin.
+
+* **`37aa10a`, polarization exposure.** `f = 1 - exp(-t/tau)` is measured from
+  the current step, so `t` is elapsed time under load, not the length of one
+  integration step. Correcting it meant only the FIRST step of a march sits in
+  the slewing band that `polarization_unmodelled_fraction` excludes. Seventeen
+  cases built to be caught by that condition then reported SUPPORTED — a false
+  accept — and the cause was **not** the correction. `run_battery_case`
+  reported the march's LAST step and discarded every earlier one, so a run that
+  entered an inadmissible region and settled out of it reported a clean domain.
+  The march had recorded all seventeen. Fixed by combining validity over every
+  step, with the same precedence `_over_the_step` already applies across
+  instants: a finding outranks a gap. False accept is back to 0/219 because a
+  real defect was removed, not because a number was rewritten.
 
 ### Scored over the battery models, and why that is not softening
 

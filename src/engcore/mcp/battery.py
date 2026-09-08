@@ -439,11 +439,20 @@ def run_battery_case(
 ) -> BatteryCaseRun:
     """March one cell's self-heating discharge and report its credibility.
 
-    The four battery verdicts are the **march's own**, taken from its final
-    step and therefore combined over that whole interval rather than read at
-    the instant it began — which is the distinction
-    :class:`~engcore.domains.battery.coupling.SelfHeatingStep` exists to keep.
-    Nothing here re-assesses anything the domain already assessed.
+    The four battery verdicts are the **march's own**, combined over EVERY
+    step rather than read off the last one — which is the distinction
+    :class:`~engcore.domains.battery.coupling.SelfHeatingStep` exists to keep,
+    and which this function got wrong. Nothing here re-assesses anything the
+    domain already assessed.
+
+    It read ``final.validity``, and the docstring claimed that was "combined
+    over that whole interval". It was not: it is combined over the two
+    INSTANTS of the final step, and every earlier step was discarded. A march
+    that entered an inadmissible region and settled out of it therefore
+    reported a clean domain. Seventeen benchmark cases constructed to be
+    caught by ``polarization_unmodelled_fraction`` were reported SUPPORTED
+    while the march itself had recorded step 1 as
+    OUTSIDE_VALIDATED_DOMAIN.
 
     The lumped model is assessed here, because the march does not return its
     body and the coupling API accepts no applicability declaration for it. It
@@ -490,7 +499,10 @@ def run_battery_case(
             model_id=model_id, version=versions[model_id], assessment=assessment
         )
         for model_id, assessment in sorted(
-            {**final.validity, _LUMPED.model_id: thermal_assessment}.items()
+            {
+                **run.validity_over_the_march,
+                _LUMPED.model_id: thermal_assessment,
+            }.items()
         )
     )
 

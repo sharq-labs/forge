@@ -563,3 +563,137 @@ def test_f10_a_condition_unknown_at_either_instant_is_unknown_over_the_step():
         ctx.INTERNAL_RESISTANCE_DRIFT_RATIO
         not in step.validity[RINT].satisfied
     )
+
+
+# =====================================================================
+# A step that left the domain is not forgotten by the step after it
+# =====================================================================
+#
+# THE DEFECT. `run_battery_case` reported `run.final.validity` -- the LAST
+# step's verdict -- and its docstring called that "combined over that whole
+# interval". It was not. It is combined over the two INSTANTS of the final
+# step; every earlier step was discarded.
+#
+# So a march that entered an inadmissible region and settled out of it again
+# reported a clean domain. Seventeen cases in `benchmarks/hard/cases_battery`
+# were built to be caught by `polarization_unmodelled_fraction` and were
+# reported SUPPORTED, while the march itself had recorded step 1 as
+# OUTSIDE_VALIDATED_DOMAIN. The detection worked. The report threw it away.
+#
+# It surfaced when polarization exposure was corrected to elapsed time under
+# load (37aa10a). Before that every step was judged with the step length, so
+# every step violated and "the last step" happened to be violated too -- the
+# answer was right for the wrong reason, and the aggregation defect was latent
+# underneath it.
+
+
+def test_a_step_that_left_the_domain_is_not_forgotten_by_the_last_step():
+    """The march detected it; the report must carry it.
+
+    Named for the defect. Asserts the three facts that make it one: the march
+    records the violation, the final step does not, and what reaches the report
+    is the combination rather than the final step.
+    """
+    import json
+    import pathlib
+
+    from src.engcore.domains.battery import coupling as bcp
+    from src.engcore.mcp.battery import build_battery_case, run_battery_case
+    from src.engcore.scientific.models.definition import ValidityStatus
+
+    case_path = (
+        pathlib.Path(__file__).resolve().parents[3]
+        / "benchmarks"
+        / "hard"
+        / "cases_battery"
+        / "X00033.json"
+    )
+    case = json.loads(case_path.read_text(encoding="utf-8"))
+    assert case["ground_truth"]["should_be_caught_by"] == (
+        "polarization_unmodelled_fraction"
+    )
+    assert case["ground_truth"]["expected_verdict"] == "NOT_SUPPORTED"
+
+    cell, load, thermal, steps = build_battery_case(case["payload"])
+    run = bcp.run_self_heating_discharge(
+        cell,
+        load,
+        heat_capacity=thermal["heat_capacity"],
+        ambient_temperature=thermal["ambient_temperature"],
+        steps=steps,
+    )
+
+    # 1. The march found it, at the first step and only there.
+    outside = run.first_step_outside("battery.cell.rint_ocv")
+    assert outside is not None and outside.index == 1
+    assert "polarization_unmodelled_fraction" in outside.validity[
+        "battery.cell.rint_ocv"
+    ].violated
+
+    # 2. The final step is clean, which is why reading it lost the finding.
+    assert (
+        run.final.validity["battery.cell.rint_ocv"].status
+        is ValidityStatus.IN_DOMAIN
+    )
+
+    # 3. The combination over the march is not clean, and that is what the
+    #    report carries.
+    combined = run.validity_over_the_march["battery.cell.rint_ocv"]
+    assert combined.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert "polarization_unmodelled_fraction" in combined.violated
+
+    report = run_battery_case(case["payload"], run_id="regression").report
+    statuses = {
+        record.model_id: record.assessment.status
+        for record in report.validity
+        if record.model_id.startswith("battery.")
+    }
+    assert ValidityStatus.OUTSIDE_VALIDATED_DOMAIN in statuses.values(), (
+        "the run left its validated domain at step 1 and the report says "
+        "nothing about it"
+    )
+
+
+def test_the_march_combination_uses_the_same_precedence_as_one_step():
+    """A finding outranks a gap; a gap outranks a claim of satisfaction.
+
+    The rule `_over_the_step` states for instants, applied one level out. It is
+    asserted here rather than inferred from the fact that both call the same
+    helper, because "they call the same function" stops being true one
+    refactor from now and the precedence is the part that matters.
+    """
+    from src.engcore.domains.battery import coupling as bcp
+    from src.engcore.scientific.models.definition import (
+        ValidityAssessment,
+        ValidityStatus,
+    )
+
+    def march(*per_step):
+        return bcp._over_the_step(list(per_step))["m"]
+
+    satisfied = {"m": ValidityAssessment(
+        status=ValidityStatus.IN_DOMAIN, satisfied=("a",))}
+    violated = {"m": ValidityAssessment(
+        status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, violated=("a",))}
+    unknown = {"m": ValidityAssessment(
+        status=ValidityStatus.UNKNOWN, unknown=("a",))}
+
+    # A violation anywhere dominates, whatever its position in the march.
+    assert march(violated, satisfied, satisfied).status is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+    assert march(satisfied, satisfied, violated).status is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+    # A gap dominates satisfaction but not a finding.
+    assert march(satisfied, unknown).status is ValidityStatus.UNKNOWN
+    assert march(unknown, violated).status is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+    # Unbroken satisfaction is the only route to IN_DOMAIN.
+    assert march(satisfied, satisfied).status is ValidityStatus.IN_DOMAIN
+    # The condition lists stay disjoint, so the status is what the shared
+    # classification implies rather than a second opinion about it.
+    combined = march(violated, unknown, satisfied)
+    assert combined.violated == ("a",)
+    assert combined.unknown == () and combined.satisfied == ()

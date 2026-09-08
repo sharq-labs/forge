@@ -361,6 +361,36 @@ class SelfHeatingRun:
     def final(self) -> SelfHeatingStep:
         return self.steps[-1]
 
+    @property
+    def validity_over_the_march(self) -> dict[str, ValidityAssessment]:
+        """One verdict per model over EVERY step, not only the last one.
+
+        THE DEFECT THIS CLOSES. A caller reporting ``run.final.validity`` reads
+        the last step and discards every earlier one, so a march that entered
+        an inadmissible region and left it again is reported as never having
+        been there. That is not hypothetical: with the polarization exposure
+        corrected to elapsed time under load, a run whose FIRST step sits in
+        the slewing band -- the band ``polarization_unmodelled_fraction``
+        exists to exclude -- settles by its second, and seventeen benchmark
+        cases built to be caught by exactly that condition were reported
+        SUPPORTED. The march detected all seventeen. The report threw the
+        finding away.
+
+        The rule is :func:`_over_the_step`'s, applied one level out, and the
+        argument is the same one that function already makes: a finding
+        outranks a gap and a gap outranks a claim of satisfaction. It holds
+        across instants within a step because a condition violated at either
+        end was violated over the interval; it holds across steps for the
+        identical reason, and there is no reading of "this model was valid for
+        this run" under which a step that left the domain does not count.
+
+        **Not conditional on ``stop_on_validity_loss``.** That flag decides
+        whether the march CONTINUES past a violation; it cannot decide whether
+        the violation happened. A run configured to continue -- the default --
+        is precisely the run whose earlier steps would otherwise vanish.
+        """
+        return _over_the_step([step.validity for step in self.steps])
+
     def temperatures(self) -> tuple[Quantity, ...]:
         """The temperature the cell was evaluated at, step by step."""
         return tuple(step.cell_temperature for step in self.steps)

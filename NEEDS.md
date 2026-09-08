@@ -5209,3 +5209,188 @@ here"). Both were run for this gate and both are green, so the reproduction
 stands — but the README's first command and the project's own guidance
 disagree about the flag. Not changed: `README.md` is outside this gate's owned
 paths.
+
+---
+
+# NEEDS — GATE 3: the 28 verdicts, diagnosed
+
+## 1. The classification, by cause
+
+Three causes, two commits, a clean split. Attribution is by **scoring at each
+commit**, not by reading commit messages: `b983ec0` (= `14e6e55~1`) reproduces
+the committed record on all 28 rows, so nothing else in the 26-commit range
+between `0c1edf4` and `35d72b6` moved a battery verdict.
+
+| stage | `soc_step_resolution_ratio_in` | `soc_window_margin_in` | `polarization_unmodelled_fraction_out` |
+|---|---|---|---|
+| the record | 6/6 | 5/5 | 17/17 |
+| `b983ec0` | 6/6 | 5/5 | 17/17 |
+| `14e6e55` efficiency | **0/6** | **0/5** | 17/17 |
+| `37aa10a` polarization | 0/6 | 0/5 | **0/17** |
+| `HEAD` | 0/6 | 0/5 | 0/17 |
+
+(cells are rows still agreeing with the record)
+
+## 2. Per cause: is the code wrong, or the record?
+
+### Cause A — coulombic efficiency direction (11 false rejects). THE CODE IS RIGHT; THE CASES ARE STALE.
+
+`14e6e55` changed coulomb counting from `removed = eta I t / Q` to
+`removed = I t / (eta Q)`, at both sites — the closed form in `context.py` and
+the march in `solver.py`.
+
+**The physics is not close.** Under the old form a cell with `eta = 0.99`
+depletes *less* internal charge than it delivers to the load: a 99 %-efficient
+cell would deliver more charge than it holds. The runtime expression had the
+same inversion — `t_run = (z0 - z_stop) Q / (eta I)` made a *lossier* cell last
+*longer*. Losses mean more internal charge is consumed per coulomb delivered,
+so `removed` must be divided by `eta` and `t_run` multiplied by it. The fix is
+correct and is not in question.
+
+**So why do eleven `valid` cases now fail?** Because the generator placed them
+0.2 % or 1.0 % inside their bound *using the old formula*, and the correction
+shifts every SoC excursion by `1/eta^2 - 1 = +2.0304 %`. A case placed 1 %
+inside a bound and then shifted 2.03 % lands outside. B00020, worked through:
+
+```
+Q = 9000 C, I = 1.5 A, t = 60 s, eta = 0.99, soc_step_resolution = 0.01
+OLD  removed = 0.00990000 -> ratio 0.990000  (1.00% inside, as the label says)
+NEW  removed = 0.01010101 -> ratio 1.010101  (1.01% OUTSIDE -> violated)
+```
+
+**The control settles it.** Margin against movement, across both families:
+
+| margin inside bound | `soc_step_resolution_ratio_in` | `soc_window_margin_in` |
+|---|---|---|
+| 0.2 % | 2/2 moved | 5/5 moved |
+| 1.0 % | 4/4 moved | 0/7 moved |
+| 5 % | 0/3 moved | 0/3 moved |
+| 20 % | 0/1 moved | 0/4 moved |
+
+Only near-edge cases moved, and the two families have different thresholds
+because they are different functions of `final_soc` — exactly what one shift in
+one quantity produces. Nothing here is a core defect: under correct coulomb
+counting these runs really do traverse more of the charge axis than the caller
+declared a single step may cover, or really do leave the declared window. **The
+refusals are right.** The `expected: SUPPORTED` labels are stale *for these
+payloads*.
+
+**This is the answer to the brief's primary question.** The eleven are not
+"sound designs now refused". They are cases whose construction arithmetic used
+physics that has since been corrected. The standing "false reject stays at
+zero" constraint is not violated by the core.
+
+### Cause B — 17 false accepts. THE CODE IS WRONG, AND NOT THE COMMIT THAT EXPOSED IT.
+
+`37aa10a` made polarization exposure the elapsed time under load rather than
+the length of one integration step. **That is also correct**:
+`f = 1 - exp(-t/tau)` is the fraction of the diffusion overpotential developed
+*since the current step*, so over a constant-current march at step `k` the
+exposure is `k dt`, not `dt`. Judging it with the step length made a purely
+numerical choice of step count change a physical verdict.
+
+The correction meant only the **first** step of a march sits in the slewing
+band the condition excludes. Traced on X00033 (tau = 20.095 s, dt = 60 s,
+ceiling 0.05):
+
+```
+step  1: min(f, 1-f) = 0.0505   -> OUTSIDE (0.05 x 1.01, as the label says)
+step  2: min(f, 1-f) = 0.00255  -> inside
+step 10: min(f, 1-f) = 1.08e-13 -> inside
+```
+
+**The march detected it.** `run.first_step_outside("battery.cell.rint_ocv")`
+returns step 1 with `polarization_unmodelled_fraction` violated, for all
+seventeen. The defect is in the report:
+
+```python
+final = run.final
+... {**final.validity, ...}          # the LAST step, and only the last step
+```
+
+`run_battery_case`'s docstring called that "combined over that whole interval".
+It is not: it is combined over the two **instants** of the final step, and every
+earlier step was discarded. So a march that entered an inadmissible region and
+settled out of it again reported a clean domain.
+
+Before `37aa10a` every step violated, so "the last step" happened to be
+violated too — the answer was right for the wrong reason and this aggregation
+defect was latent underneath it. `polarization_unmodelled_fraction` violated in
+**0 of 400** cases at HEAD before the fix, including the seventeen built to
+violate it: a condition that had become structurally unable to bite.
+
+**Fixed**, by combining validity over every step through the same
+`_over_the_step` helper already used across instants, whose own stated rule — a
+finding outranks a gap, a gap outranks a claim of satisfaction — extends across
+steps verbatim. Not made conditional on `stop_on_validity_loss`: that flag
+decides whether the march *continues* past a violation, not whether the
+violation happened, and a run configured to continue is precisely the one whose
+earlier steps would otherwise vanish.
+
+False accept returned to **0/219** and catch rate to **219/219** because a real
+defect was removed, not because a number was rewritten.
+
+## 3. The re-freeze
+
+`benchmarks/hard/results_battery.json` re-frozen at **389/400 (97.2 %)**, catch
+rate 219/219, false accept 0/219, false reject 11/181. `case_set_digest`
+unchanged (`32a7bff3…`); no `expected` label touched.
+
+`benchmarks/hard/README.md` updated with both figures side by side and the
+reason for each. The guard added in GATE 2a is now green — because the code was
+corrected, not because the record was overwritten.
+
+## 4. Changes wanted outside the owned paths — not made
+
+### 4.1 The eleven stale cases need their placements regenerated — NOT MADE
+
+The correct remedy for cause A is to re-run `generate_battery.py` for those
+eleven so the payloads sit 0.2 %/1.0 % inside their bounds under *correct*
+coulomb counting, preserving the labels' intent. **Not done**: it changes
+`case_set_digest`, which `docs/release/v1.0.md` and `v1.1.md` pin the case set
+by, and regenerating ground truth to move a number is the move this whole
+exercise exists to refuse. Until it is done, false reject on this case set
+reads 6.1 % and the reason is recorded above rather than absorbed.
+
+### 4.2 `docs/release/v1.0.md` and `v1.1.md` quote a figure now known to be wrong — NOT MADE
+
+Both quote the battery benchmark at 400/400 / 100 %. That number was produced
+by a tree with an inverted efficiency direction and a report that discarded
+every step but the last. **The release pages were not edited**: they are dated
+records of what was claimed at a release, and silently restating a historical
+figure is worse than an erratum. What they need is an erratum note pointing
+here. That is a call for whoever owns the release record.
+
+### 4.3 `polarization_unmodelled_fraction` is now hard to falsify, and this case set no longer tests it — NOT ADDRESSED
+
+With exposure measured as elapsed time under load, only the first step of a
+march can sit in the excluded middle band. Every case in this set uses a step
+duration long enough that step 1 either violates or clears it immediately, so
+the condition's *interior* behaviour is untested. A case set that exercised it
+would need short steps relative to `tau_pol`. Recorded, not built: generating
+new cases is out of scope here for the reason 4.1 gives.
+
+## 5. What this gate revealed that the brief did not predict
+
+### 5.1 The false accepts were not a benchmark problem at all
+
+The brief framed the whole gate as "decide whether the record or the code is
+right". For the 17 that framing has a third answer: **the record was right, the
+code was wrong, and the commit the brief named as the suspect was a correct
+fix that exposed an older defect.** A pure record-vs-code choice would have
+re-frozen 17 false accepts into the benchmark.
+
+### 5.2 The scorer overwrote the hard record while re-freezing the battery one
+
+`score_hard.py --results` defaults to `benchmarks/hard/results_hard.json`
+regardless of `--cases`. Re-freezing the battery record without the flag wrote
+400 battery rows into the 1400-row hard record. Caught immediately and
+reverted, by the guard written one gate earlier — which is the only reason it
+was visible at all.
+
+### 5.3 A condition can stop being falsifiable without anything failing
+
+`polarization_unmodelled_fraction` went from catching 17 cases to catching 0,
+and the FULL tier stayed green throughout. Nothing in the tree measures whether
+a declared condition still discriminates. That is a gap of the same shape as
+the unguarded record: a check that quietly stops checking.
