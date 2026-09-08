@@ -1481,6 +1481,77 @@ class CredibilityEvidenceReport:
             checks=self.validation, notes=self.validation_notes
         )
 
+    @property
+    def energy_conversions(self) -> tuple[dict[str, Any], ...]:
+        """Every declared conversion a value in this report crossed.
+
+        **Read from the provenance, never supplied.** A property and not a
+        field, for the reason :attr:`ModelValidityRecord.exclusions` is one: a
+        caller must not be able to assemble a report claiming a crossing was
+        efficient when the transfer that produced the value says otherwise.
+        The transfers are already in `provenance`; nothing here is new
+        science, and that is the point -- this is a rendering, and the record
+        it renders was landed by "energy crossing a boundary says how much of
+        it arrives, and where the rest goes".
+
+        WHY A READER NEEDS IT. A conversion is the one thing in this report
+        that changes a number *between* two results while both of them remain
+        correct. A crossing declared at 30 % efficiency means 70 % of the
+        energy went somewhere named, and until this the report showed the
+        arrived value with no trace anywhere in it that a conversion had
+        happened at all -- the same defect `CouplingEvidence` was written for,
+        where a fully SUPPORTED report carried no sign that the fixed point
+        was never reached. The engineer of record reads this document; they
+        cannot read `provenance.transfers[i].dependency.conversion`.
+
+        A transport -- a crossing that moves a value without converting it --
+        contributes nothing here, which is why an empty tuple is the common
+        answer and is not a claim that nothing crossed.
+
+        An undeclared efficiency cannot appear. `QuantityTransfer` refuses to
+        construct over a conversion whose efficiency is `None`, so a crossing
+        in a provenance record has always been characterised, and this needs
+        no UNKNOWN case. That refusal is the load-bearing one; if it were ever
+        relaxed, this rendering would start reporting `efficiency: null` and
+        would need a verdict of its own.
+        """
+        found: list[dict[str, Any]] = []
+        for transfer in self.provenance.transfers:
+            conversion = transfer.dependency.conversion
+            if conversion is None:
+                continue
+            found.append(
+                {
+                    "name": conversion.name,
+                    "crossing": transfer.dependency.name,
+                    "input_form": conversion.input_form,
+                    "output_form": conversion.output_form,
+                    "crosses_forms": conversion.crosses_forms,
+                    "efficiency": conversion.efficiency,
+                    "entered": (
+                        None
+                        if transfer.source_value is None
+                        else transfer.source_value.to_dict()
+                    ),
+                    "arrived": transfer.value.to_dict(),
+                    "losses": [
+                        {
+                            "form": loss.form,
+                            "fraction": loss.fraction,
+                            "description": loss.description,
+                        }
+                        for loss in conversion.losses
+                    ],
+                    "realized_losses": {
+                        form: quantity.to_dict()
+                        for form, quantity in sorted(
+                            transfer.realized_losses.items()
+                        )
+                    },
+                }
+            )
+        return tuple(found)
+
     # ---- serialization --------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1501,6 +1572,13 @@ class CredibilityEvidenceReport:
             "notes": self.notes,
             # Derived, emitted for readers, and re-derived on the way back in.
             "verdict": self.verdict.value,
+            # Derived, and emitted for the same reason `exclusions` is: the
+            # record is in `provenance`, and a reader of this document will
+            # not go and find it there. Deliberately NOT read back by
+            # `from_dict` -- a report that took its conversions from the
+            # payload would let a hand-edited file claim a crossing was more
+            # efficient than the transfer that produced the value says.
+            "energy_conversions": [dict(c) for c in self.energy_conversions],
             # Also derived. Emitted because a reader of the JSON who never
             # opens the check list should still see that a SUPPORTED verdict
             # carries warnings, or rests on no attained level at all.

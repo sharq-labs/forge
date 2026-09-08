@@ -404,6 +404,27 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "    return importlib.import_module(\"threadpoolctl\")\n",
      "the same, reached as a STRING rather than a statement -- the `anyio` "
      "half, which a scan of ast.Import alone would miss"),
+    # Two halves, mutated separately, because they fail independently and a
+    # single mutation could not tell them apart: the run must RECORD the
+    # crossing, and the report must RENDER it. G20a is the line as it stood
+    # before this commit.
+    ("G20a", "src/engcore/systems/electrothermal/coupled.py",
+     "            transfers=(\n"
+     "                ambient_transfers(system, final)\n"
+     "                + converted_transfers(plan, final)\n"
+     "            ),",
+     "            transfers=ambient_transfers(system, final),",
+     "the coupled run goes back to dropping every converting crossing from "
+     "its provenance, so a declared efficiency is spent and recorded nowhere"),
+    ("G20b", "src/engcore/mcp/evidence.py",
+     "            conversion = transfer.dependency.conversion\n"
+     "            if conversion is None:\n"
+     "                continue",
+     "            conversion = transfer.dependency.conversion\n"
+     "            if True:\n"
+     "                continue",
+     "the credibility report stops rendering the conversions its provenance "
+     "carries, so the record exists and no reader sees it"),
 )
 
 # WHAT THESE TWO CANNOT VERIFY, stated rather than left to be assumed.

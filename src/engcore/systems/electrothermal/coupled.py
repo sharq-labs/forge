@@ -1101,6 +1101,70 @@ def ambient_transfers(
     return tuple(transfers)
 
 
+def converted_transfers(
+    plan: "FixedPointCouplingPlan",
+    final: "CoupledIteration | None",
+) -> tuple[QuantityTransfer, ...]:
+    """Every crossing on which the declared conversion changed the value.
+
+    THE CROSSINGS THAT CANNOT BE RE-DERIVED. `CoupledIteration` records every
+    result, and for a TRANSPORT that is genuinely enough: the value that
+    crossed is `result_for(dep.source_problem_id).value(dep.source_quantity)`,
+    and a transfer record would restate it. That was true when the docstring
+    saying so was written, and a conversion made it false. What crosses a
+    converting edge is `conversion.convert(source)`, and neither the arrived
+    value nor `realized_losses` -- where the energy that did not arrive went
+    -- is recoverable from the results, because the conversion is applied in
+    :func:`_transport` between one result and the next problem's inputs.
+
+    So this records exactly the edges a conversion is declared on, and no
+    others. Not an arbitrary subset: it is the set of crossings whose value
+    the loop CHANGED, which is precisely the set a reader cannot reconstruct.
+
+    Constructing the record is itself the check. `QuantityTransfer` refuses a
+    value larger than its conversion budgets and refuses a conversion transfer
+    that does not say what entered it, so a transfer that constructs here has
+    had the arrived value re-checked against the declaration -- independently
+    of `_transport`, which computed it.
+
+    A stage whose source problem produced no result in the final pass records
+    nothing, for the reason :func:`ambient_transfers` records nothing: naming
+    a source record that does not exist, to avoid an absence, is the defect
+    these records end.
+    """
+    if final is None:
+        return ()
+    produced = {result.problem_id: result for result in final.results}
+    transfers: list[QuantityTransfer] = []
+    for dependency in plan.dependencies:
+        conversion = dependency.conversion
+        if conversion is None:
+            continue
+        source = produced.get(dependency.source_problem_id)
+        if source is None:
+            continue
+        if dependency.source_quantity not in source.values:
+            continue
+        entered = source.value(dependency.source_quantity)
+        arrived = conversion.convert(entered).value
+        if arrived is None:
+            # An undeclared efficiency. `_transport` refuses such an edge, so
+            # a run that reached this point cannot have one -- but this is a
+            # record and not a solver, and inventing an arrived value to fill
+            # a row is the failure the conversion record exists to prevent.
+            continue
+        transfers.append(
+            QuantityTransfer(
+                dependency=dependency,
+                value=arrived,
+                source_value=entered,
+                source_record_id=source.result_id,
+                instant=f"coupled_iteration:{final.index}",
+            )
+        )
+    return tuple(transfers)
+
+
 def stage_problems(
     system: CoupledElectroThermalSystem,
 ) -> tuple[tuple[CoupledStage, ScientificProblem, ScientificProblem], ...]:
@@ -1386,6 +1450,15 @@ class CoupledIteration:
     ``result_for(dep.source_problem_id).values[dep.source_quantity]``. A
     companion ``CouplingTransfer`` record was designed and dropped for exactly
     that reason: it would have restated what these results already say.
+
+    **That reasoning held until an edge could convert.** It is still exactly
+    right for a transport, and it is wrong for a conversion: what crosses a
+    converting edge is ``conversion.convert(source)``, applied in
+    :func:`_transport` between one result and the next problem's inputs, so
+    neither the arrived value nor where the rest of the energy went appears in
+    any result here. :func:`converted_transfers` records those edges and only
+    those, which is the same rule this paragraph states, applied to the case
+    it did not have.
 
     ``largest_iterate_change`` is the **change in the iterate**, not the
     residual of any equation. Those are different quantities: the iterate
@@ -2066,12 +2139,21 @@ def run_fixed_point_coupling(
             "the whole dissipated power of an element enters its body",
         ),
     )
+    final = run.iterations[-1] if run.iterations else None
     return replace(
         run,
         provenance=replace(
             run.provenance,
-            transfers=ambient_transfers(
-                system, run.iterations[-1] if run.iterations else None
+            # Both kinds, and the second used to be dropped on this line. The
+            # ambient crossings were attached by REPLACING `transfers`, and
+            # the heat crossing -- the one edge in this composition that
+            # declares an `EnergyConversion` -- was never recorded anywhere,
+            # so no report could show that a conversion had been applied at
+            # all. `_transport` spent the budget and the record of spending
+            # it went nowhere.
+            transfers=(
+                ambient_transfers(system, final)
+                + converted_transfers(plan, final)
             ),
         ),
     )

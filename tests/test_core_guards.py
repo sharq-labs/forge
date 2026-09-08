@@ -2780,13 +2780,31 @@ def test_the_crossing_is_recorded_in_the_provenance_of_the_run_that_made_it():
     ).reports[0]
     transfers = report.provenance.transfers
     assert transfers, "the coupled run recorded no crossing"
-    for transfer in transfers:
-        assert transfer.dependency.target_quantity == "ambient_temperature"
+
+    # Two kinds now. This loop used to assert `ambient_temperature` of EVERY
+    # transfer, which was true only because the converting edge was being
+    # dropped from the record on the line that attached these.
+    ambient = [
+        t for t in transfers
+        if t.dependency.target_quantity == "ambient_temperature"
+    ]
+    assert ambient, "the ambient crossings are no longer recorded"
+    for transfer in ambient:
         assert transfer.source_record_id
         assert transfer.instant.startswith("coupled_iteration:")
         assert transfer.dependency.target_problem_id.startswith(
             "electrical_dc_resistor:"
         )
+
+    converted = [t for t in transfers if t.dependency.conversion is not None]
+    assert converted, "the declared conversion crossed and was not recorded"
+    for transfer in converted:
+        assert transfer.source_record_id
+        assert transfer.instant.startswith("coupled_iteration:")
+        # A conversion transfer must say what entered it, which is what makes
+        # the declared ratio checkable against the value that arrived.
+        assert transfer.source_value is not None
+    assert len(ambient) + len(converted) == len(transfers)
     # and it survives the record boundary
     from src.engcore.scientific.results.provenance import ProvenanceRecord
 
@@ -4392,3 +4410,176 @@ def test_the_suite_stays_green_without_the_optional_group():
         "the MCP SDK is reached from a module other than server.py, so a bare "
         f"install no longer works: {importers}"
     )
+
+
+# =====================================================================
+# GUARD 20: a declared conversion reaches the reader
+# =====================================================================
+#
+# `EnergyConversion` landed with the record complete and the reader missing.
+# `QuantityDependency.conversion` carries the efficiency and the loss paths,
+# `_transport` spends the budget on the value that crosses, and
+# `QuantityTransfer.realized_losses` turns the fractions into quantities. None
+# of it reached anybody: `run_fixed_point_coupling` attached the ambient
+# crossings by REPLACING `provenance.transfers`, so the one edge in this
+# composition that declares a conversion was recorded nowhere, and
+# `CredibilityEvidenceReport` rendered no conversion field even if it had been.
+#
+# A mechanism whose output no report shows is a mechanism the next domain will
+# not find, and the next domain is the one with a motor at 30 % rather than a
+# resistor at 100 %.
+
+
+def test_a_declared_conversion_reaches_the_credibility_report():
+    """GUARD 20. End to end, over the real coupled run.
+
+    Driven through the MCP boundary rather than assembled here: a conversion
+    rendered from a report somebody built in a test would prove the field can
+    hold one, which is not the question. The question is whether the run
+    records it.
+    """
+    from src.engcore.mcp.problem import (
+        example_electrothermal_payload,
+        run_electrothermal_case,
+    )
+
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="guard20"
+    ).reports[0]
+
+    conversions = report.energy_conversions
+    assert conversions, "the run declared a conversion and the report shows none"
+    joule = conversions[0]
+    assert joule["input_form"] == "electrical"
+    assert joule["output_form"] == "thermal"
+    assert joule["crosses_forms"] is True
+    assert joule["efficiency"] == 1.0
+    assert joule["entered"] is not None
+    assert joule["arrived"] is not None
+
+    # Lossless by declaration, so nothing left by another path -- and that is
+    # a statement, not an absence. The declaration says 1.0 rather than saying
+    # nothing, which is the distinction the record exists for.
+    assert joule["losses"] == []
+    assert joule["realized_losses"] == {}
+
+    # And it is in the serialized document a reader actually opens.
+    payload = report.to_dict()
+    assert payload["energy_conversions"] == [dict(c) for c in conversions]
+    __import__("json").dumps(payload)
+
+
+def test_the_report_shows_where_the_energy_that_did_not_arrive_went():
+    """The case the resistor cannot exercise, which is the case that matters.
+
+    Every conversion in this repository is lossless today, so a guard driven
+    only by the shipped composition would pass with `efficiency == 1.0` for
+    every field and could not tell a working rendering from one that hardcodes
+    it. This drives a 60 % motor with two named loss paths.
+    """
+    from src.engcore.mcp.evidence import CredibilityEvidenceReport
+    from src.engcore.scientific.composition import (
+        EnergyConversion,
+        LossPath,
+        QuantityTransfer,
+    )
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+
+    motor = EnergyConversion(
+        name="motor",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+        efficiency=0.6,
+        losses=(
+            LossPath(form="thermal", fraction=0.3, description="winding I2R"),
+            LossPath(form="acoustic", fraction=0.1, description="noise"),
+        ),
+    )
+    transfer = QuantityTransfer(
+        dependency=_conversion_edge(motor),
+        value=Quantity(60.0, "watt"),
+        source_value=Quantity(100.0, "watt"),
+        source_record_id="electrical-1",
+        instant="iteration:1",
+    )
+    report = CredibilityEvidenceReport(
+        run_id="motor-report",
+        values={"shaft_power": Quantity(60.0, "watt")},
+        provenance=ProvenanceRecord(run_id="motor-report", transfers=(transfer,)),
+    )
+
+    (rendered,) = report.energy_conversions
+    assert rendered["efficiency"] == 0.6
+    assert rendered["entered"]["magnitude"] == 100.0
+    assert rendered["arrived"]["magnitude"] == 60.0
+    assert [loss["form"] for loss in rendered["losses"]] == ["thermal", "acoustic"]
+    # The half a reader most needs and could least see: quantities, not
+    # fractions, and they add up with the arrived value to what entered.
+    realized = rendered["realized_losses"]
+    assert set(realized) == {"acoustic", "thermal"}
+    assert realized["thermal"]["magnitude"] == pytest.approx(30.0)
+    assert realized["acoustic"]["magnitude"] == pytest.approx(10.0)
+    assert rendered["arrived"]["magnitude"] + sum(
+        v["magnitude"] for v in realized.values()
+    ) == pytest.approx(100.0)
+
+
+def test_the_report_cannot_be_handed_a_conversion_its_provenance_denies():
+    """Derived, never supplied -- the reason `exclusions` is a property too.
+
+    A caller who could set this field could publish a crossing as efficient
+    while the transfer that produced the value says otherwise. The constructor
+    refuses the keyword outright, from Python rather than from a check that
+    could be forgotten.
+    """
+    from src.engcore.mcp.evidence import CredibilityEvidenceReport
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+
+    with pytest.raises(TypeError):
+        CredibilityEvidenceReport(
+            run_id="forged",
+            values={"p": Quantity(1.0, "watt")},
+            provenance=ProvenanceRecord(run_id="forged"),
+            energy_conversions=({"name": "motor", "efficiency": 0.99},),
+        )
+
+
+def test_recording_the_crossing_moved_no_electro_thermal_number():
+    """The record is a record. It must not have changed the physics.
+
+    `converted_transfers` recomputes the arrived value from the declaration in
+    order to record it, which is a SECOND computation of something
+    `_transport` already did. So the two are compared rather than assumed
+    equal: if they ever disagreed, the report and the run would be telling a
+    reader different numbers, which is worse than not reporting at all.
+    """
+    from src.engcore.mcp.problem import (
+        example_electrothermal_payload,
+        run_electrothermal_case,
+    )
+    from src.engcore.systems.electrothermal import coupled as cp
+
+    report = run_electrothermal_case(
+        example_electrothermal_payload(), run_id="guard20-parity"
+    ).reports[0]
+
+    checked = 0
+    for transfer in report.provenance.transfers:
+        conversion = transfer.dependency.conversion
+        if conversion is None:
+            continue
+        entered = transfer.source_value
+        assert entered is not None
+        # The recorded arrival equals what `_transport` computes from the same
+        # declaration and the same input.
+        assert transfer.value == conversion.convert(entered).value
+        checked += 1
+    assert checked, "no converting crossing was recorded to compare"
+
+    # And the composition's own numbers are untouched: this edge is lossless
+    # by declaration, so what entered is what arrived.
+    assert cp.JOULE_HEATING_CONVERSION.efficiency == 1.0
+    for transfer in report.provenance.transfers:
+        if transfer.dependency.conversion is cp.JOULE_HEATING_CONVERSION:
+            assert transfer.value == transfer.source_value
