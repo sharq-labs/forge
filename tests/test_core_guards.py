@@ -1958,7 +1958,7 @@ def test_every_result_construction_in_the_repository_states_a_position():
     }
     silent = []
     for path, node in _every_result_producing_module():
-        module = str(path.relative_to(root).with_suffix("")).replace("/", ".")
+        module = path.relative_to(root).with_suffix("").as_posix().replace("/", ".")
         keywords = {k.arg for k in node.keywords}
         if "models" not in keywords:
             continue
@@ -2619,8 +2619,8 @@ def test_the_read_back_marker_is_used_where_a_claim_is_reproduced_and_nowhere_el
                 and isinstance(node.func, ast.Name)
                 and node.func.id == "StoredParentClaim"
             ):
-                module = str(
-                    path.relative_to(root).with_suffix("")
+                module = (
+                    path.relative_to(root).with_suffix("").as_posix()
                 ).replace("/", ".")
                 users.append(module)
     assert sorted(set(users)) == ["scientific.results.provenance"], users
@@ -2633,7 +2633,7 @@ def test_no_module_still_hands_provenance_a_lineage_name_it_does_not_hold():
     for path in sorted(root.rglob("*.py")):
         if path.name == "provenance.py":
             continue
-        module = str(path.relative_to(root).with_suffix("")).replace("/", ".")
+        module = path.relative_to(root).with_suffix("").as_posix().replace("/", ".")
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
