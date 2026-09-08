@@ -1,6 +1,6 @@
 """Validation reporting.
 
-Two deliberate design decisions:
+Three deliberate design decisions:
 
 1. **Checks coexist; the level is derived, never asserted.** A single scalar
    "validation level" is misleading, because dimensional validity, numerical
@@ -11,10 +11,21 @@ Two deliberate design decisions:
 2. **NOT_RUN is distinct from PASS.** A check that never executed can never
    contribute evidence. This is the mechanism that prevents a result from
    claiming validation that was not actually performed.
+
+3. **A check may not claim more than its own numbers support.** Decisions 1
+   and 2 between them established that a level is backed by a *passing* check
+   that *compared something*. Neither of them asked whether the comparison
+   succeeded, and so neither of them stopped a check from reporting PASS with
+   ``residual=10.0`` beside ``tolerance=1e-6`` -- seven orders outside its own
+   bound -- and carrying ``ANALYTICALLY_VERIFIED`` all the way to a SUPPORTED
+   verdict. The level was derived, exactly as decision 1 promises. The *pass*
+   was asserted. See :func:`comparison_met_its_bound` and
+   :func:`outcome_is_earned`.
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
@@ -53,6 +64,104 @@ def compared_something(
     if residual is not None and tolerance is not None:
         return True
     return bool(evidence)
+
+
+def comparison_met_its_bound(
+    residual: float | None,
+    tolerance: float | None,
+) -> bool | None:
+    """Did the measured quantity actually meet the bound it was judged against?
+
+    Three answers, and the third is the one that keeps this rule from
+    swallowing the evidence-only form :func:`compared_something` exists to
+    protect.
+
+    ``None`` -- **there is no comparison of this shape to judge.** Either
+    number absent. ``DIMENSIONALLY_VALID`` is the standing example: what it
+    compares is a dimension against a ``unit_exemplar``, and the outcome is a
+    yes or a no, not a number that could be small. A check in that form has
+    nothing here to contradict, and this function says so rather than
+    inventing a verdict about it.
+
+    ``False`` -- the residual missed the bound, *or* either number is not
+    finite. A NaN is refused for the reason :class:`RouteComparison` already
+    refuses one: ``nan <= tolerance`` is ``False`` and ``nan > tolerance`` is
+    also ``False``, so a rule written only as "not greater than" would read a
+    NaN as compliant and let the identical defect back in wearing a different
+    hat. A quantity that cannot be ordered against its bound was not compared
+    to it.
+
+    ``True`` -- both numbers are finite and ``residual <= tolerance``.
+    """
+    if residual is None or tolerance is None:
+        return None
+    residual = float(residual)
+    tolerance = float(tolerance)
+    if not (math.isfinite(residual) and math.isfinite(tolerance)):
+        return False
+    return residual <= tolerance
+
+
+def outcome_is_earned(
+    outcome: "ValidationOutcome",
+    establishes: "ValidationLevel | None",
+    residual: float | None,
+    tolerance: float | None,
+) -> bool:
+    """GUARD 21's rule, over plain fields rather than over an object.
+
+    Fields rather than a check, for the reason :func:`level_is_earned` gives
+    and for the same reason: a rule an object could answer for itself is the
+    shape of the defect being closed.
+
+    **The rule.** A check that *claims success* while carrying both a residual
+    and a tolerance must have met that tolerance. ``compared_something``
+    establishes that a comparison happened; this establishes that it
+    succeeded. Nothing else in this module asked, which is how a PASS carrying
+    ``residual=10.0`` against ``tolerance=1e-6`` reached a SUPPORTED verdict
+    with its own numbers standing seven orders away, in the same record,
+    disagreeing with it.
+
+    **What counts as claiming success**, and why this is not scoped to
+    ``outcome`` alone. Two claims live on a check and they are separable:
+
+    * ``outcome is PASS`` claims *this check succeeded*. There is no reading
+      of PASS under which "the number missed its bound" is consistent, so a
+      PASS is held to the comparison unconditionally -- level or no level.
+    * ``establishes=X`` claims *X is now backed by this check*. That claim is
+      made by a WARNING too, and a WARNING is a pass with a caveat when it
+      makes it, so a level-declaring WARNING is held to the same standard.
+
+    **A WARNING that declares no level claims neither, and is left alone.**
+    That is not an exemption carved for a site; it is the rule reaching only
+    as far as the claims. A level-free WARNING is inert as evidence:
+    ``attained_levels`` reads ``c.passed``, which is ``outcome is PASS``, so
+    such a check contributes nothing for a residual to contradict. And the
+    form is load-bearing rather than incidental -- ``RouteConsensus.to_check``
+    builds exactly one, deliberately, for routes that share their machinery
+    and disagree: the disagreement is a real finding about the implementation,
+    reported with the two numbers that are the *reason* for the WARNING, while
+    the level is already withheld because ``earned`` requires agreement.
+    Refusing that construction would delete the platform's only way to say
+    "these routes disagreed and I am not calling it a scientific failure" and
+    would replace a correct scientific report with an exception.
+
+    **FAIL and NOT_RUN claim nothing** and are not held to anything here. A
+    FAIL is free to sit inside its tolerance, and one in this repository does:
+    a refinement gate FAILs on a residual that is *within* bound when the
+    sequence behind it never contracted, because agreement with no convergent
+    sequence behind it is not verification. That construction is also why this
+    is a refusal and not a derivation -- see
+    :meth:`ValidationCheck.__post_init__`.
+    """
+    met = comparison_met_its_bound(residual, tolerance)
+    if met is None or met:
+        return True
+    if outcome is ValidationOutcome.PASS:
+        return False
+    if outcome is ValidationOutcome.WARNING and establishes is not None:
+        return False
+    return True
 
 
 def level_is_earned(
@@ -206,6 +315,54 @@ class ValidationCheck:
             object.__setattr__(self, "residual", float(self.residual))
         if self.tolerance is not None:
             object.__setattr__(self, "tolerance", float(self.tolerance))
+        # GUARD 21, enforced. Last, because it reads the two numbers and wants
+        # them coerced to float first.
+        #
+        # REFUSED, NOT DERIVED, and the choice is decided by a construction in
+        # this repository rather than by taste. Deriving `outcome` from the two
+        # numbers is the stronger-looking move and matches the platform's own
+        # principle that a derivable fact should be derived -- but that
+        # principle applies only where the fact really is derivable from what
+        # is at hand, and `outcome` is not. `residual <= tolerance` is
+        # NECESSARY for a PASS and it is not SUFFICIENT: the outcome is a
+        # conjunction over evidence the check does not carry.
+        #
+        # A refinement-gate check in this repository proves it, and the FAST
+        # suite exercises the branch. It FAILs while the residual it reports
+        # sits INSIDE its own tolerance, because the outcome is a conjunction:
+        # the sequence must also have contracted. A single refinement can land
+        # close by luck while the sequence never contracts, and agreement with
+        # no convergent sequence behind it is not verification, it is a
+        # coincidence. A derivation would read those two numbers, see
+        # agreement, and promote that FAIL to a PASS carrying a level. It
+        # would not close this defect; it would open its mirror image, and the
+        # mirror image is the worse one, because it manufactures a level
+        # nobody claimed.
+        #
+        # So the implication is kept in the one direction the numbers support:
+        # PASS implies the bound was met, never the converse. What deriving
+        # would have cost, beyond that FAIL: the two WARNING forms below, and
+        # a change to the meaning of `outcome` at every one of the sixty-odd
+        # construction sites across five domains that pass it in today.
+        if not self.outcome_is_earned:
+            raise ScientificValidationError(
+                f"validation check {self.name!r} reports "
+                f"{self.outcome.value.upper()}"
+                + (
+                    f" and declares establishes={self.establishes.value}"
+                    if self.establishes is not None
+                    else ""
+                )
+                + f", but its own numbers say the comparison did not succeed: "
+                f"residual={self.residual!r} against tolerance="
+                f"{self.tolerance!r}. A check that reports success while the "
+                f"quantity it measured stands outside the bound it was judged "
+                f"against contradicts itself in the same record, and the "
+                f"contradiction is invisible to every reader who consults the "
+                f"outcome. Report the outcome the comparison actually had, or "
+                f"-- if the outcome turns on something these two numbers do "
+                f"not decide -- do not report it as a success"
+            )
 
     @property
     def passed(self) -> bool:
@@ -243,6 +400,36 @@ class ValidationCheck:
             self.residual,
             self.tolerance,
             self.evidence,
+        )
+
+    @property
+    def comparison_met_its_bound(self) -> bool | None:
+        """Did this check's residual meet its tolerance? ``None`` if no such pair.
+
+        The rule itself is :func:`comparison_met_its_bound`; this is the way to
+        ask it about this check.
+        """
+        return comparison_met_its_bound(self.residual, self.tolerance)
+
+    @property
+    def outcome_is_earned(self) -> bool:
+        """Is this check's claim of success consistent with its own numbers?
+
+        The rule itself is :func:`outcome_is_earned`, which reads fields rather
+        than objects. This is the way to ask it about this check, and -- as
+        with :attr:`earns_its_level` -- it is deliberately not the only way:
+        ``ValidationReport`` asks the same function about whatever it has been
+        handed, because a report that asked the object would be letting the
+        object answer for itself.
+
+        **Enforced in ``__post_init__``.** A PASS whose residual exceeds its
+        tolerance is a value that cannot be built, not one a sweep looks for.
+        """
+        return outcome_is_earned(
+            self.outcome,
+            self.establishes,
+            self.residual,
+            self.tolerance,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -310,6 +497,7 @@ class ValidationReport:
                     f"never consulted, because the constructor was never called"
                 )
         self._require_every_level_earned()
+        self._require_no_check_contradicts_its_numbers()
         names = [c.name for c in self.checks]
         duplicates = {n for n in names if names.count(n) > 1}
         if duplicates:
@@ -348,10 +536,48 @@ class ValidationReport:
                     f"is a claim and not a finding"
                 )
 
+    def _require_no_check_contradicts_its_numbers(self) -> None:
+        """Apply GUARD 21's rule to the fields of every check held here.
+
+        Redundant with ``ValidationCheck.__post_init__`` for a check that was
+        constructed and never touched again, and deliberately so -- the
+        argument is :meth:`_require_every_level_earned`'s, verbatim and for the
+        same reason. A frozen dataclass refuses ``check.residual = 10.0``; it
+        does not refuse ``object.__setattr__(check, "residual", 10.0)``, which
+        is available for every frozen record in this repository and cannot be
+        closed on the record itself. What *can* be closed is the place where an
+        outcome stops being a field and becomes a claim a reader acts on, and
+        that place is here.
+        """
+        for check in self.checks:
+            if not outcome_is_earned(
+                check.outcome,
+                check.establishes,
+                check.residual,
+                check.tolerance,
+            ):
+                raise ScientificValidationError(
+                    f"validation check {check.name!r} in this report reports "
+                    f"{ValidationOutcome(check.outcome).value.upper()} while "
+                    f"its own residual {check.residual!r} stands outside its "
+                    f"own tolerance {check.tolerance!r}. The constructor "
+                    f"refuses this, so a check that reaches a report in this "
+                    f"state was altered after it was built or never went "
+                    f"through the constructor at all -- either way the success "
+                    f"is a claim and not a finding"
+                )
+
     # ---- derived state --------------------------------------------------
     @property
     def status(self) -> ValidationOutcome:
-        """Aggregate outcome. FAIL dominates; an empty report is NOT_RUN."""
+        """Aggregate outcome. FAIL dominates; an empty report is NOT_RUN.
+
+        The comparison rule is re-applied here for the reason it is re-applied
+        on :attr:`attained_levels`, one field over. GUARD 2 is about levels, so
+        it is re-read where a level becomes a claim; GUARD 21 is about
+        *outcomes*, and this is where an outcome becomes one.
+        """
+        self._require_no_check_contradicts_its_numbers()
         outcomes = {c.outcome for c in self.checks}
         if ValidationOutcome.FAIL in outcomes:
             return ValidationOutcome.FAIL
@@ -376,6 +602,7 @@ class ValidationReport:
         # matters at the moment it is read as a claim -- so the rule is applied
         # at that moment, over fields, whatever the object says about itself.
         self._require_every_level_earned()
+        self._require_no_check_contradicts_its_numbers()
         return frozenset(
             c.establishes
             for c in self.checks

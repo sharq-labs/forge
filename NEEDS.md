@@ -4906,3 +4906,153 @@ Not fixed here, deliberately: diagnosing 28 verdicts and deciding whether the
 record or the code is right is its own task, and doing it inside a round about
 three mechanisms would have buried it. What this entry buys is that the number
 stops being quoted as 100 % without somebody having looked.
+
+---
+
+# NEEDS — GATE 1: a PASS that contradicts its own numbers
+
+Owned paths this gate: `src/engcore/scientific/results/validation.py`, `tests/`.
+
+## 1. Changes wanted outside the owned paths — not made
+
+### 1.1 `RouteConsensus.to_check` is the one construction the brief's literal invariant would have refused — NOT CHANGED
+
+`src/engcore/scientific/consensus.py:587`, check name `cross_solver_agreement`.
+
+The brief's invariant reads: *a `ValidationCheck` whose `outcome` is `PASS` or
+`WARNING` and which carries both a `residual` and a `tolerance` must not be
+constructible when `residual > tolerance`.* Applied literally, that refuses this
+construction, which is reachable and deliberate:
+
+```python
+elif comparison.agreed:      outcome = PASS
+elif self.routes_are_independent: outcome = FAIL
+else:                        outcome = WARNING     # <- residual > tolerance, by construction
+```
+
+`RouteComparison.agreed` is exactly `worst_relative_difference <= tolerance`, so
+the WARNING branch is entered *only* when the residual exceeds the tolerance.
+The two numbers are not a contradiction of the WARNING; they are its reason.
+The module argues the case: *"A disagreement between routes that share their
+machinery is a WARNING: a real finding about the implementation, but calling it
+a scientific failure would hand the comparison an authority this same record has
+just denied it."*
+
+**This file was not edited.** Escalating that WARNING to a FAIL to satisfy a
+core rule would overturn a domain-level scientific judgement from inside the
+core, which is the wrong direction of travel and outside this gate's owned
+paths. It is recorded here as the finding the brief's fail condition asked for,
+by name and location, rather than acted on.
+
+### 1.2 The scoping departure this forced, stated plainly
+
+The rule as landed is **not** the brief's literal text, and the difference is
+one case: a **level-free WARNING** is not held to the comparison. This is a
+deliberate departure and it is argued in `outcome_is_earned`'s docstring and in
+the commit message; it is written here so nobody has to reconstruct it.
+
+The rule as landed is *a check may not claim more than its own numbers support*,
+which reaches exactly as far as the claims a check makes:
+
+| what is on the check | what it claims | held to the comparison |
+|---|---|---|
+| `outcome is PASS` | this check succeeded | **yes, unconditionally** — level or no level |
+| `establishes=X` on a PASS or WARNING | X is backed by this check | **yes** |
+| `outcome is WARNING`, `establishes is None` | neither | no |
+| `outcome is FAIL` / `NOT_RUN` | nothing | no |
+
+This is *stronger* than the brief's text in one place — it holds a level-free
+PASS, which the brief's outcome-scoped wording also holds but for a reason that
+does not survive the WARNING case — and narrower in exactly one: the level-free
+WARNING above. That form is inert as evidence, because `attained_levels` reads
+`c.passed`, which is `outcome is PASS`; a level-free WARNING contributes no
+level for a residual to contradict, and cannot on its own carry a verdict.
+Asserted in `test_the_rule_reaches_a_pass_with_no_level_and_a_warning_with_one`,
+in both directions, so the boundary stays deliberate rather than becoming an
+accident somebody later widens.
+
+It is **not** an exemption keyed to `consensus.py`. No site is named in the
+rule. Any check anywhere may take the level-free WARNING form, and every
+level-declaring one is held.
+
+### 1.3 `derive_verdict` absorbs WARNING into SUPPORTED, and this gate did not change that — NOT MADE
+
+`src/engcore/mcp/evidence.py:669` lists `WARNING` among the outcomes that may
+fall through to `SUPPORTED`, and `warning_checks` says so in as many words:
+*"WARNING is the one outcome the verdict deliberately absorbs into SUPPORTED,
+which makes it the one a reader is most likely to miss."*
+
+So a run whose only reported disagreement is a level-free WARNING still reaches
+SUPPORTED — on the strength of some *other* check's level, since the WARNING
+carries none. That is defensible and it is also the place a reader would next
+look for this defect's relatives. **Not changed**: `evidence.py` is outside this
+gate's owned paths, and the brief's Gate 4 explicitly forbids changing
+`derive_verdict`'s rules. Recorded as a proposal only.
+
+## 2. What the fix revealed that the brief did not predict
+
+### 2.1 `residual <= tolerance` is necessary for a PASS and is not sufficient — and the tree proves it
+
+The brief offered *refuse or derive* and noted that deriving "is stronger and
+matches the project's own stated principle that a derivable scientific fact
+should be derived rather than accepted".
+
+A runtime sweep of every `ValidationCheck` the suite builds — 11,233
+constructions, 54 distinct shapes — found exactly one whose outcome does not
+track its own comparison: `analytic_reference_agreement` in the conduction1d
+verification gate **FAILs while its residual is inside its tolerance**, because
+
+```python
+analytically_verified = bool(numerically_converged and within_tolerance)
+```
+
+A single refinement can land close by luck while the sequence never contracts,
+and the module says why that is not verification: *"agreement without a
+convergent sequence behind it is not verification"*.
+
+A derivation of `outcome` from the two numbers would read that FAIL's numbers,
+see agreement, and promote it to a PASS carrying `ANALYTICALLY_VERIFIED`. It
+would not close this defect; it would open its mirror image, and the mirror
+image is worse, because it manufactures a level nobody claimed. Refusal keeps
+the implication in the one direction the numbers support: `PASS` implies the
+bound was met, never the converse.
+
+### 2.2 A NaN residual is the same defect wearing a different hat
+
+`nan <= tolerance` is `False` and `nan > tolerance` is also `False`, so the
+invariant phrased strictly as "must not be constructible when
+`residual > tolerance`" reads a NaN residual as compliant and admits the
+original PASS-with-a-lying-number unchanged. `comparison_met_its_bound` refuses
+non-finite numbers on both sides, which is the argument `RouteComparison`
+already makes about a non-finite worst difference. Not predicted by the brief;
+found by writing the rule down.
+
+### 2.3 The core's no-domain-conditional guard scans prose, not just code
+
+`test_x2_no_domain_conditional_was_added_to_universal_core` is a substring sweep
+over the whole text of every file under `src/engcore/scientific/`, docstrings
+and comments included. Naming `conduction1d` in a *comment* explaining why the
+rule is a refusal broke it. The guard was **not weakened**; the prose was
+rewritten to describe the construction's shape rather than its domain, which is
+the better sentence anyway. Worth knowing before the next core round writes a
+comment.
+
+### 2.4 This rule cannot be swept statically, and GUARD 2's sweep can
+
+GUARD 2 audits every literal `ValidationCheck(...)` in `src` with an AST walk,
+because a construction on a branch no test exercises is the one worth auditing.
+That technique does not transfer here: `residual=self.rel_error` is a number no
+AST knows. Constructor enforcement is what covers the tree — every one of the
+~11,000 checks the suite builds goes through it. Stated in
+`test_no_check_the_repository_builds_reports_a_success_it_did_not_have` so a
+later reader does not look for the sweep that cannot exist and conclude one is
+missing.
+
+### 2.5 The expensive tier is not green on a bare Linux container, for a third reason
+
+Beyond Gate 2b's two failures, 28 expensive-tier tests fail because the ngspice
+provider is configured as `('wsl.exe', '-e', 'ngspice')` — a Windows-host
+command — and no such binary exists here. Identical before and after this
+gate's change; reported because "run the full suite" does not currently have a
+green baseline to compare against on this platform. Not investigated: outside
+this gate.

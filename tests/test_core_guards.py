@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import inspect
 import pathlib
 import pkgutil
 import sys
@@ -4583,3 +4584,326 @@ def test_recording_the_crossing_moved_no_electro_thermal_number():
     for transfer in report.provenance.transfers:
         if transfer.dependency.conversion is cp.JOULE_HEATING_CONVERSION:
             assert transfer.value == transfer.source_value
+
+
+# =====================================================================
+# GUARD 21 — a check cannot report success while its own numbers disagree
+# =====================================================================
+#
+# THE DEFECT. `ValidationCheck(outcome=PASS, establishes=ANALYTICALLY_VERIFIED,
+# residual=10.0, tolerance=1e-6)` was constructible, and `derive_verdict`
+# returned SUPPORTED for it. Seven orders outside its own bound, in the same
+# record, and every reader who consults `outcome` sees a pass.
+#
+# GUARD 2 is why it survived. `level_is_earned` delegates to
+# `compared_something`, which is satisfied by the mere PRESENCE of a residual
+# and a tolerance. That guard establishes that a comparison HAPPENED. Nothing
+# on the path asked whether it SUCCEEDED — there was no `residual <= tolerance`
+# anywhere in the tree on this path. The README's claim is that a validation
+# level is derived from a passing check, never asserted. The level was indeed
+# derived. The pass was asserted.
+#
+# THE RULE REACHES EXACTLY AS FAR AS THE CLAIMS. Two separable claims live on a
+# check: `outcome is PASS` claims "this check succeeded", and `establishes=X`
+# claims "X is backed by this check". A PASS is held unconditionally; a WARNING
+# is held when — and only when — it declares a level, because that is when a
+# WARNING is a pass with a caveat. A level-free WARNING claims neither and is
+# left alone: it is inert as evidence (`attained_levels` reads `c.passed`), and
+# `RouteConsensus.to_check` builds one deliberately for routes that share
+# machinery and disagree, where the two numbers are the REASON for the WARNING.
+# That boundary is asserted below, in both directions, so it stays deliberate.
+
+
+def _validation_module():
+    from src.engcore.scientific.results import validation
+
+    return validation
+
+
+def test_a_pass_can_stand_seven_orders_outside_its_own_tolerance():
+    """The reproduction, end to end: a PASS whose numbers say it failed.
+
+    Named for the defect. Before the rule landed this asserted
+    `CredibilityVerdict.SUPPORTED`; the check is now unbuildable, which is the
+    whole of what closing this means — the contradiction stopped being a value
+    a reader had to notice and became one nothing can construct.
+    """
+    import pytest
+
+    from src.engcore.mcp.evidence import ModelValidityRecord, derive_verdict
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.models.definition import (
+        ValidityAssessment,
+        ValidityStatus,
+    )
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationLevel,
+        ValidationOutcome,
+    )
+
+    with pytest.raises(ScientificValidationError, match="did not succeed"):
+        ValidationCheck(
+            name="analytic_verification",
+            outcome=ValidationOutcome.PASS,
+            establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+            residual=10.0,
+            tolerance=1e-6,
+        )
+
+    # And the verdict path it reached. The honest form of the same check —
+    # same level, same tolerance, a residual that actually met it — still
+    # produces SUPPORTED, so the rule refuses the contradiction and not the
+    # evidence.
+    honest = ValidationCheck(
+        name="analytic_verification",
+        outcome=ValidationOutcome.PASS,
+        establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+        residual=1e-9,
+        tolerance=1e-6,
+    )
+    record = ModelValidityRecord(
+        model_id="thermal.lumped",
+        version="1.0",
+        assessment=ValidityAssessment(
+            status=ValidityStatus.IN_DOMAIN, satisfied=("biot_number",)
+        ),
+    )
+    assert derive_verdict(validity=[record], validation=[honest]).value == "supported"
+
+
+def test_the_comparison_rule_answers_none_when_there_is_nothing_to_compare():
+    """The evidence-only form is untouched, which is the point of the `None`.
+
+    `compared_something` is deliberately not narrowed: `DIMENSIONALLY_VALID`
+    compares a dimension against a `unit_exemplar` and yields no residual at
+    all. A rule that read a missing number as a failed comparison would push an
+    honest check into claiming a number it does not have.
+    """
+    met = _validation_module().comparison_met_its_bound
+
+    assert met(None, None) is None
+    assert met(1e-9, None) is None
+    assert met(None, 1e-6) is None
+    assert met(1e-9, 1e-6) is True
+    assert met(1e-6, 1e-6) is True, "the bound itself is met, not missed"
+    assert met(10.0, 1e-6) is False
+
+
+def test_a_nan_residual_is_not_a_comparison_that_succeeded():
+    """`nan > tolerance` is False, so "not greater than" would readmit the defect.
+
+    The same argument `RouteComparison` already makes about a non-finite worst
+    difference: a NaN satisfies every tolerance written against it, so a rule
+    phrased as "must not exceed" reads one as compliant. A quantity that cannot
+    be ordered against its bound was not compared to it.
+    """
+    import math
+
+    import pytest
+
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationLevel,
+        ValidationOutcome,
+    )
+
+    met = _validation_module().comparison_met_its_bound
+    assert met(math.nan, 1e-6) is False
+    assert met(1e-9, math.nan) is False
+    assert met(math.inf, 1e-6) is False
+
+    for residual, tolerance in ((math.nan, 1e-6), (math.inf, 1e-6)):
+        with pytest.raises(ScientificValidationError, match="did not succeed"):
+            ValidationCheck(
+                name="analytic_verification",
+                outcome=ValidationOutcome.PASS,
+                establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+                residual=residual,
+                tolerance=tolerance,
+            )
+
+
+def test_the_rule_reaches_a_pass_with_no_level_and_a_warning_with_one():
+    """The scope, asserted in both directions so it stays deliberate.
+
+    A PASS asserts success whether or not it declares a level, so a level-free
+    PASS is held. A WARNING asserts success only when it declares one, so a
+    level-declaring WARNING is held and a level-free WARNING is not. FAIL and
+    NOT_RUN assert nothing and are held to nothing.
+    """
+    import pytest
+
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationLevel,
+        ValidationOutcome,
+    )
+
+    def build(outcome, establishes=None):
+        return ValidationCheck(
+            name="c",
+            outcome=outcome,
+            establishes=establishes,
+            residual=10.0,
+            tolerance=1e-6,
+        )
+
+    # Held.
+    for outcome, establishes in (
+        (ValidationOutcome.PASS, None),
+        (ValidationOutcome.PASS, ValidationLevel.BENCHMARK_VALIDATED),
+        (ValidationOutcome.WARNING, ValidationLevel.BENCHMARK_VALIDATED),
+    ):
+        with pytest.raises(ScientificValidationError, match="did not succeed"):
+            build(outcome, establishes)
+
+    # Not held: these claim nothing a residual could contradict.
+    assert build(ValidationOutcome.WARNING).outcome is ValidationOutcome.WARNING
+    assert build(ValidationOutcome.FAIL).outcome is ValidationOutcome.FAIL
+    assert build(ValidationOutcome.NOT_RUN).outcome is ValidationOutcome.NOT_RUN
+
+    # And the level-free WARNING really is inert: it contributes no level, so
+    # it cannot carry a verdict on its own.
+    from src.engcore.scientific.results.validation import ValidationReport
+
+    report = ValidationReport(checks=(build(ValidationOutcome.WARNING),))
+    assert report.attained_levels == frozenset()
+
+
+def test_a_fail_inside_its_tolerance_is_why_this_is_refused_and_not_derived():
+    """The construction that decides the design, exercised as itself.
+
+    `analytic_reference_agreement` FAILs while its finest rung sits INSIDE
+    `analytic_rel_tol`, because `analytically_verified` is the conjunction
+    `numerically_converged and within_tolerance`: a rung can land close by luck
+    while the sequence never contracts, and agreement with no convergent
+    sequence behind it is not verification.
+
+    A derivation of `outcome` from the two numbers would read this FAIL's
+    numbers, see agreement, and promote it to a PASS carrying
+    ANALYTICALLY_VERIFIED — closing this defect by opening its mirror image.
+    `residual <= tolerance` is necessary for a PASS and is not sufficient, so
+    the implication is enforced in one direction only.
+    """
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationOutcome,
+    )
+
+    # Buildable, and deliberately so.
+    check = ValidationCheck(
+        name="analytic_reference_agreement",
+        outcome=ValidationOutcome.FAIL,
+        residual=1e-12,
+        tolerance=1e-6,
+        detail="within tolerance, but the sequence behind it never contracted",
+    )
+    assert check.comparison_met_its_bound is True
+    assert check.outcome is ValidationOutcome.FAIL
+    assert check.outcome_is_earned
+
+
+def test_a_report_cannot_be_handed_a_contradiction_the_constructor_refused():
+    """The second layer. `object.__setattr__` defeats a frozen record.
+
+    The argument is `_require_every_level_earned`'s, verbatim: a frozen
+    dataclass refuses `check.residual = 10.0` and does not refuse
+    `object.__setattr__(check, "residual", 10.0)`, which is available for every
+    frozen record here and closable on none of them. So the report re-applies
+    the rule over FIELDS — on construction, and again on every read of
+    `attained_levels`, because that is where an outcome stops being a field and
+    becomes a claim.
+    """
+    import pytest
+
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationLevel,
+        ValidationOutcome,
+        ValidationReport,
+    )
+
+    smuggled = ValidationCheck(
+        name="analytic_verification",
+        outcome=ValidationOutcome.PASS,
+        establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+        residual=1e-9,
+        tolerance=1e-6,
+    )
+    object.__setattr__(smuggled, "residual", 10.0)
+
+    # On construction of the report.
+    with pytest.raises(ScientificValidationError, match="stands outside its"):
+        ValidationReport(checks=(smuggled,))
+
+    # And on the read, for a report built before the mutation.
+    honest = ValidationCheck(
+        name="analytic_verification",
+        outcome=ValidationOutcome.PASS,
+        establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+        residual=1e-9,
+        tolerance=1e-6,
+    )
+    report = ValidationReport(checks=(honest,))
+    assert report.attained_levels == frozenset(
+        {ValidationLevel.ANALYTICALLY_VERIFIED}
+    )
+    object.__setattr__(honest, "residual", 10.0)
+    with pytest.raises(ScientificValidationError, match="stands outside its"):
+        report.attained_levels
+
+
+def test_a_serialized_contradiction_cannot_be_read_back_in():
+    """`from_dict` delegates to the constructor, so the rule covers the wire.
+
+    A stored record is the route a contradiction would take between processes,
+    where no constructor of the producer's is in scope to have refused it.
+    """
+    import pytest
+
+    from src.engcore.scientific.errors import ScientificValidationError
+    from src.engcore.scientific.results.validation import (
+        CHECK_SCHEMA,
+        ValidationCheck,
+    )
+
+    payload = {
+        "schema": CHECK_SCHEMA,
+        "name": "analytic_verification",
+        "outcome": "pass",
+        "detail": "",
+        "establishes": "analytically_verified",
+        "residual": 10.0,
+        "tolerance": 1e-6,
+        "evidence": [],
+    }
+    with pytest.raises(ScientificValidationError, match="did not succeed"):
+        ValidationCheck.from_dict(payload)
+
+
+def test_no_check_the_repository_builds_reports_a_success_it_did_not_have():
+    """The rule over the tree, at runtime, not over literals.
+
+    GUARD 2's sweep is static because a construction on a branch no test
+    exercises is the one worth auditing. This rule cannot be swept statically:
+    `residual=self.rel_error` is a number no AST knows. Enforcement in the
+    constructor is what covers the tree — every one of the ~11,000 checks the
+    suite builds goes through it — and this test states that, so a later reader
+    does not look for a sweep that cannot exist and conclude one is missing.
+    """
+    from src.engcore.scientific.results.validation import (
+        ValidationCheck,
+        outcome_is_earned,
+    )
+
+    # The enforcement site, named. If this moves, this test names what moved.
+    source = inspect.getsource(ValidationCheck.__post_init__)
+    assert "outcome_is_earned" in source, (
+        "the constructor stopped applying GUARD 21, so the tree is no longer "
+        "covered by anything: there is no static sweep behind this one"
+    )
+    assert outcome_is_earned is not None
