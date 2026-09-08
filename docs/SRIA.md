@@ -119,16 +119,36 @@ imports an LLM provider.
 SRIA reaches into four subsystems and none of them reaches back. Counting
 import references:
 
-| SRIA imports | references |
+| SRIA imports | import statements |
 |---|---|
-| `scientific/` | 55 |
-| `data/` | 15 |
-| `inference/` | 3 |
-| `domains/` | 2 |
+| `scientific/` | 50 |
+| everything else under `engcore/` | **0** |
 
-`scientific.serialization` alone accounts for 39 of the 55 — schema strings for
+`scientific.serialization` alone accounts for 39 of the 50 — schema strings for
 the records SRIA writes. That is the shape of a consumer, and it is why the
 tree can be read as a layer rather than as a fork.
+
+**This table used to say something else, and it was wrong.** It read
+`scientific/ 55, data/ 15, inference/ 3, domains/ 2`. There is no import of
+`data/`, `inference/` or `domains/` anywhere under `sria/` — not in this
+commit and not in any commit reachable in this repository. Corrected against a
+measurement rather than adjusted: every import under `sria/` is resolved,
+relative ones included, and counted by subpackage. SRIA reaches **one**
+package, not four.
+
+The numbers are now checked rather than published:
+`tests/test_core_guards.py::test_the_sria_dependency_table_in_the_docs_matches_the_tree`
+fails if the counts move or if this table stops agreeing with them, and
+`::test_nothing_under_sria_imports_a_domain_or_a_system` fails if SRIA reaches
+any `engcore` package other than `scientific/`. Both walk the tree; neither
+reads a list of module names.
+
+A caution for anyone measuring this again with `grep`: the one-line command in
+the table above answers the INBOUND question and is exact for it. The outbound
+question cannot be answered by grepping for `engcore.` — SRIA reaches the core
+through relative imports (`from ...scientific.results.result import ...`) in
+all 50 cases, and `src/engcore/sria/trust.py::scan_imports` discards relative
+imports by design, so it is not the tool for this direction either.
 
 ## What separating it would involve
 
@@ -136,8 +156,8 @@ Stated as scope, not as a recommendation.
 
 **What is easy.** The import direction. A consumer with zero inbound edges
 lifts out without touching a single caller: no domain, no solver, no system, no
-MCP boundary would change a line. The four subsystems it imports become a
-dependency of the new repository rather than a sibling package.
+MCP boundary would change a line. The one subsystem it imports, `scientific/`,
+becomes a dependency of the new repository rather than a sibling package.
 
 **What is not.**
 
@@ -162,10 +182,15 @@ dependency of the new repository rather than a sibling package.
    *are* SRIA experiments; their evidence documents cite them. Leaving them
    behind leaves `experiments/` referencing a package that is no longer present.
 
-4. **Four subsystems become a published interface.** `scientific/`, `data/`,
-   `inference/` and `domains/` are imported freely today because they are in the
-   same tree. Across a boundary they need a version, and every future change to
-   `scientific.serialization` acquires a downstream consumer.
+4. **One subsystem becomes a published interface.** `scientific/` is imported
+   freely today because it is in the same tree. Across a boundary it needs a
+   version, and every future change to `scientific.serialization` acquires a
+   downstream consumer.
+
+   This point used to name four subsystems, on the strength of the table above
+   before it was corrected. It is **one**, which makes this the cheapest of the
+   five rather than a second hard one: the interface to version is a single
+   package, and 39 of the 50 references into it are schema strings.
 
 5. **The test suite splits 630/2,325**, and the tiering in `docs/TESTING.md`
    splits with it.

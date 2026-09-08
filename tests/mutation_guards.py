@@ -372,6 +372,18 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "    return a - b\n",
      "the core learns the name of a thing -- a relation between two "
      "quantities is stated as a fact about thrust"),
+    # Planted in `trust.py` on purpose. That module owns the import scanner
+    # this repository has used for layering since M1, and it discards every
+    # relative import -- so this is the one leak it structurally cannot see,
+    # sitting in the file that cannot see it. GUARD 18 resolves relative
+    # imports and is what goes red.
+    ("G18a", "src/engcore/sria/trust.py",
+     "from __future__ import annotations",
+     "from __future__ import annotations\n\n"
+     "from ..domains import kinetics as _kinetics\n",
+     "SRIA reaches into a domain through a relative import -- the syntax it "
+     "uses for all 50 of its real imports, and the one the existing scanner "
+     "is blind to"),
 )
 
 # WHAT THESE TWO CANNOT VERIFY, stated rather than left to be assumed.
@@ -418,7 +430,18 @@ TARGETS = ("tests/test_core_guards.py", "tests/test_repair_guidance.py")
 #: nothing, the same failure this harness exists to catch, one level up in its
 #: own machinery. A mutation is only informative if everything else is
 #: identical.
-_COPIED = ("src", "tests", "experiments", "pyproject.toml")
+#:
+#: `docs` was added for the same reason, one guard later and with the mistake
+#: actually made rather than reasoned about. GUARD 18 checks that the
+#: dependency table in `docs/SRIA.md` still agrees with the tree, because a
+#: published number with nothing checking it goes stale silently -- and in a
+#: scratch tree with no `docs/` that guard raised FileNotFoundError under
+#: EVERY mutation. The harness printed 58/58 RED and the run was worthless:
+#: every mutation was red on a missing file, so a guard that had become
+#: decoration would have been reported as verified. A RED result that says
+#: nothing is the failure this file exists to catch, and it had reappeared in
+#: this very tuple two paragraphs below the sentence warning about it.
+_COPIED = ("src", "tests", "experiments", "docs", "pyproject.toml")
 
 
 def _code_digest(text: str) -> str:

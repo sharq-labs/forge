@@ -3895,3 +3895,179 @@ def test_the_widened_list_still_covers_what_the_narrow_guard_caught():
     assert not (
         _core_vocabulary.NARROW_GUARD_TERMS & _core_vocabulary.SHAPE_VOCABULARY
     )
+
+
+# =====================================================================
+# GUARD 18: SRIA imports the core, and nothing else in the tree
+# =====================================================================
+#
+# README and docs/SRIA.md both assert a layering, and until this guard the
+# tree checked only HALF of it. `test_sria_m1.py::
+# test_scientific_core_does_not_import_sria` checks that nothing in the core
+# imports SRIA. Nothing checked the outbound direction -- what SRIA imports --
+# and docs/SRIA.md published a table of exactly that, which had gone wrong
+# with nothing to notice.
+#
+# THE HOLE IN THE EXISTING CHECK. Both directions were scanned by
+# `src/engcore/sria/trust.py::scan_imports`, and it drops every relative
+# import:
+#
+#     # level > 0 is a relative import: inside our own package by
+#     # construction, so it cannot introduce an external dependency.
+#     if node.level == 0 and node.module:
+#
+# That comment is true of the question it was written for -- an LLM provider
+# is never reached relatively -- and false of this one. `from ...domains
+# .kinetics import X` inside `sria/decision/foo.py` is a level-3 relative
+# import resolving to `engcore.domains.kinetics`, which is the cross-layer
+# dependency being forbidden, and that scanner cannot see it. SRIA reaches the
+# core through exactly this syntax 50 times out of 50, so a leak into
+# `domains/` would arrive spelled like everything around it.
+#
+# This guard resolves relative imports rather than skipping them. `trust.py`
+# is left alone: widening it changes production code on the LLM trust
+# boundary, which is not this commit's business, and the guard that needed
+# the resolution now has it.
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+_ENGCORE_DIR = pathlib.Path(engcore.__file__).resolve().parent
+_SRIA_DIR = _ENGCORE_DIR / "sria"
+
+#: What SRIA is allowed to reach. `scientific/` is the layer it consumes,
+#: `sria` is itself. Everything else under `engcore/` is forbidden and is
+#: DERIVED by walking, so a package added tomorrow is forbidden on arrival
+#: rather than when somebody remembers to list it.
+_SRIA_MAY_IMPORT = frozenset({"scientific", "sria"})
+
+
+def _engcore_subpackages(engcore_dir: pathlib.Path | None = None) -> frozenset[str]:
+    """Every subpackage of `engcore`, read off the tree."""
+    root = _ENGCORE_DIR if engcore_dir is None else engcore_dir
+    return frozenset(
+        child.name
+        for child in root.iterdir()
+        if child.is_dir() and (child / "__init__.py").is_file()
+    )
+
+
+def _resolved_imports(
+    path: pathlib.Path, engcore_dir: pathlib.Path | None = None
+) -> list[tuple[int, str]]:
+    """(lineno, dotted module) for every import, relative ones resolved.
+
+    The resolution is the point. A relative import carries a level and a
+    suffix, and the module it names depends on where the importing file sits,
+    so skipping them -- as `sria.trust` does -- leaves a layering scan blind
+    to the syntax the layer actually uses.
+    """
+    root = _ENGCORE_DIR if engcore_dir is None else engcore_dir
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    parts = list(path.relative_to(root.parent).with_suffix("").parts)
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    package = parts if path.name == "__init__.py" else parts[:-1]
+
+    out: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            out.extend((node.lineno, alias.name) for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0:
+                out.append((node.lineno, node.module or ""))
+                continue
+            base = package[: len(package) - (node.level - 1)]
+            suffix = [node.module] if node.module else []
+            out.append((node.lineno, ".".join(list(base) + suffix)))
+    return out
+
+
+def _sria_outbound_counts() -> dict[str, int]:
+    """How many imports reach each `engcore` subpackage other than `sria`."""
+    counts: dict[str, int] = {}
+    for path in sorted(_SRIA_DIR.rglob("*.py")):
+        for _lineno, module in _resolved_imports(path):
+            head = module.split(".")
+            if len(head) >= 2 and head[0] == "engcore" and head[1] != "sria":
+                counts[head[1]] = counts.get(head[1], 0) + 1
+    return counts
+
+
+def test_nothing_under_sria_imports_a_domain_or_a_system():
+    """GUARD 18. The outbound half of the layering README asserts.
+
+    Walked, not listed, in both halves: the population is every `.py` under
+    `sria/`, and the forbidden set is every `engcore` subpackage that is not
+    on the two-name allow-list. A sixth domain, or a new sibling package of
+    any kind, is forbidden to SRIA the day it exists -- a guard from a
+    hand-maintained list guards only what someone remembered.
+    """
+    forbidden = _engcore_subpackages() - _SRIA_MAY_IMPORT
+    assert {"domains", "systems"} <= forbidden, sorted(forbidden)
+
+    files = sorted(_SRIA_DIR.rglob("*.py"))
+    assert len(files) >= 50, f"the walk found only {len(files)} modules"
+
+    violations: list[str] = []
+    for path in files:
+        for lineno, module in _resolved_imports(path):
+            head = module.split(".")
+            if len(head) >= 2 and head[0] == "engcore" and head[1] in forbidden:
+                rel = path.relative_to(REPO_ROOT).as_posix()
+                violations.append(f"{rel}:{lineno} imports {module}")
+    assert violations == [], (
+        "SRIA reached outside the layer it consumes:\n  "
+        + "\n  ".join(violations)
+    )
+
+
+def test_the_layering_scan_resolves_relative_imports():
+    """Make the resolver fail once, on purpose, against the blind one.
+
+    `sria.trust.scan_imports` returns nothing for a relative import, so a
+    guard built on it reports a clean layer it never read -- the failure mode
+    `mutation_guards.py` exists for. Asserted on a synthetic file rather than
+    a real one, so it cannot rot when the tree is edited.
+    """
+    import tempfile
+
+    from src.engcore.sria.trust import scan_imports
+
+    with tempfile.TemporaryDirectory() as tmp:
+        engcore_dir = pathlib.Path(tmp) / "src" / "engcore"
+        pkg = engcore_dir / "sria" / "decision"
+        pkg.mkdir(parents=True)
+        leak = pkg / "leaky.py"
+        leak.write_bytes(b"from ...domains.kinetics import cstr\n")
+
+        # What the existing scanner sees: nothing at all.
+        assert scan_imports(pkg) == {str(leak): set()}
+
+        # What this one sees.
+        resolved = _resolved_imports(leak, engcore_dir)
+        assert resolved == [(1, "engcore.domains.kinetics")], resolved
+
+
+def test_the_sria_dependency_table_in_the_docs_matches_the_tree():
+    """docs/SRIA.md publishes what SRIA imports. It was wrong.
+
+    The table read `scientific/ 55, data/ 15, inference/ 3, domains/ 2`. The
+    measured answer is `scientific/` and nothing else -- there is no import of
+    `data/`, `inference/` or `domains/` anywhere under `sria/`, and no commit
+    reachable in this repository has one.
+
+    That is not a rounding error in a number. Point 4 of "What separating it
+    would involve" was built on the table -- "`scientific/`, `data/`,
+    `inference/` and `domains/` are imported freely today" -- and overstated
+    the cost of separating a tree that reaches one package. The document
+    described a more entangled layer than the code is.
+
+    A published number with nothing checking it goes stale silently, which is
+    why the corrected table is checked here rather than only corrected.
+    """
+    assert _sria_outbound_counts() == {"scientific": 50}
+
+    doc = (REPO_ROOT / "docs" / "SRIA.md").read_text(encoding="utf-8")
+    assert "| `scientific/` | 50 |" in doc
+    for stale in ("| `data/` | 15 |", "| `inference/` | 3 |",
+                  "| `domains/` | 2 |", "| `scientific/` | 55 |"):
+        assert stale not in doc, f"docs/SRIA.md still claims {stale}"
