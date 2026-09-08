@@ -51,6 +51,26 @@ KELVIN = "kelvin"
 TOL = Quantity(1e-6, KELVIN)
 
 
+
+def _lossless(name, *, arrives_as, leaves_as, unit="watt"):
+    """A declared, lossless conversion for a fixture crossing.
+
+    Spelled out rather than defaulted because a power-dimensioned dependency
+    that declares no conversion is now refused. Every crossing here is one this
+    repository already made; what is new is that each states the claim it was
+    always making, which is that the whole of the input arrives.
+    """
+    from src.engcore.scientific.composition import EnergyConversion
+
+    return EnergyConversion(
+        name=name,
+        input_form=leaves_as,
+        output_form=arrives_as,
+        unit_exemplar=unit,
+        efficiency=1.0,
+    )
+
+
 # =====================================================================
 # Declarations
 # =====================================================================
@@ -742,6 +762,9 @@ def test_g2_an_undeclared_quantity_is_refused_before_the_first_iteration():
         target_problem_id=problems[2].problem_id,
         target_quantity="heat_flux",
         unit_exemplar=lump.POWER_UNIT,
+        conversion=_lossless(
+            "undeclared-target", leaves_as="electrical", arrives_as="thermal"
+        ),
         name="undeclared-target",
     )
     plan = cp.FixedPointCouplingPlan(
@@ -931,6 +954,9 @@ def test_h4_fan_in_remains_representable_unreported_and_uncombined():
         target_problem_id=thermal_one,
         target_quantity=lump.HEAT_INPUT,
         unit_exemplar=lump.POWER_UNIT,
+        conversion=_lossless(
+            "second-source", leaves_as="electrical", arrives_as="thermal"
+        ),
         name="second-source-on-one-body",
     )
     assert fan_in.check_against(target_problem=by_id[thermal_one]) == ()
@@ -969,6 +995,9 @@ def test_h4b_a_plan_refuses_fan_in_rather_than_resolving_it_by_declaration_order
         target_problem_id="thermal-lumped-R1",
         target_quantity=lump.HEAT_INPUT,
         unit_exemplar=lump.POWER_UNIT,
+        conversion=_lossless(
+            "second-source", leaves_as="electrical", arrives_as="thermal"
+        ),
         name="second-source-on-one-body",
     )
     torn = cp.nominal_plan(
@@ -1268,6 +1297,16 @@ def test_i_universal_core_gained_nothing():
     from src.engcore.scientific import composition
 
     assert set(composition.__all__) == {
+        # Added by the core round: what a crossing that carries energy must
+        # declare -- which form enters, which arrives, what fraction survives
+        # and where the rest goes. A composition fact, and still not a system,
+        # component, port or connector type, which is what the loop above
+        # asserts. The set stays pinned exactly, so a further name costs an
+        # edit here.
+        "ENERGY_CONVERSION_SCHEMA",
+        "ConversionOutcome",
+        "EnergyConversion",
+        "LossPath",
         "QUANTITY_DEPENDENCY_SCHEMA",
         "QuantityDependency",
         # Added by the core round: the *realization* of a dependency -- the
@@ -1284,7 +1323,7 @@ def test_i_universal_core_gained_nothing():
     package = REPO_ROOT / "src/engcore/scientific/composition"
     assert sorted(
         p.name for p in package.rglob("*.py") if "__pycache__" not in p.parts
-    ) == ["__init__.py", "dependency.py", "transfer.py"]
+    ) == ["__init__.py", "conversion.py", "dependency.py", "transfer.py"]
 
     for path in (REPO_ROOT / "src/engcore/scientific").rglob("*.py"):
         if "__pycache__" in path.parts:
@@ -1392,6 +1431,9 @@ def test_i4_the_plan_and_the_graph_readers_work_for_an_unrelated_domain_pair():
         target_problem_id="lubricant-film",
         target_quantity="dissipated_power",
         unit_exemplar="watt",
+        conversion=_lossless(
+            "friction-heats-film", leaves_as="mechanical", arrives_as="thermal"
+        ),
     )
     viscosity = QuantityDependency(
         source_problem_id="lubricant-film",
@@ -1691,7 +1733,14 @@ def test_o2_an_unknown_schema_is_rejected(case_a):
 def test_o3_no_existing_schema_version_moved():
     """``scientific_result`` reads ``/3``: the recommendations round added
     ``ScientificResult.validity`` and bumped the writer deliberately. Updated
-    rather than deleted, so a schema still cannot move without an edit here."""
+    rather than deleted, so a schema still cannot move without an edit here.
+
+    ``quantity_dependency`` reads ``/2``: the core round added
+    ``QuantityDependency.conversion``, so a crossing that carries energy states
+    how much of it arrives and where the rest goes. Additive -- a ``/1`` record
+    reads back declaring no conversion, which the constructor then refuses if
+    it carried energy, so an old record of an energy crossing fails loudly
+    rather than reading back as lossless."""
     from src.engcore.scientific.composition.dependency import (
         QUANTITY_DEPENDENCY_SCHEMA,
     )
@@ -1701,7 +1750,7 @@ def test_o3_no_existing_schema_version_moved():
     from src.engcore.scientific.results.result import RESULT_SCHEMA
     from src.engcore.scientific.solvers.protocol import RAW_OUTPUT_SCHEMA
 
-    assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
+    assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
     assert PROVENANCE_SCHEMA == "provenance_record/3"
     assert EXECUTION_BINDING_SCHEMA == "execution_binding/1"
     assert RESULT_SCHEMA == "scientific_result/4"
@@ -1843,12 +1892,16 @@ def test_r5_the_policy_is_not_a_property_of_the_dependency(case_a):
         d.to_dict() for d in strict.dependencies
     ]
     assert run_a.outcome is not run_b.outcome
-    # and a schema bump would be the cost of moving it onto the declaration
+    # and a schema bump would be the cost of moving it onto the declaration.
+    # The schema HAS since moved, for an unrelated and additive reason -- the
+    # conversion a crossing that carries energy must declare -- which does not
+    # weaken this test: what it checks is the loop below, that no coupling
+    # policy appears in the payload at any version.
     from src.engcore.scientific.composition.dependency import (
         QUANTITY_DEPENDENCY_SCHEMA,
     )
 
-    assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
+    assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
     for dependency in dependencies:
         payload = dependency.to_dict()
         for banned in ("tolerance", "seed", "max_iterations", "outcome",

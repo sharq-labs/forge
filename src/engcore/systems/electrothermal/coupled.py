@@ -116,7 +116,11 @@ from ...domains.electrical.dc.problem import resistance_name
 # The electrical half of the ambient crossing: the target name and unit
 # are that domain's to state, not this pack's to assume.
 from ...domains.electrical.dc import models as dc_models
-from ...scientific.composition import QuantityDependency, QuantityTransfer
+from ...scientific.composition import (
+    EnergyConversion,
+    QuantityDependency,
+    QuantityTransfer,
+)
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.ir.problem import ModelReference, ScientificProblem
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
@@ -1114,6 +1118,36 @@ def converged_resistances(
     return resistances
 
 
+#: The crossing this system has always made, declared as the conversion it is.
+#:
+#: Electrical power dissipated in the conductor arrives as heat in the body.
+#: The efficiency is 1 and the loss set is empty, and that is a **claim**, not
+#: an absence: the twin has always asserted "the whole dissipated power of an
+#: element enters its body", and until now that sentence was the entire record
+#: of it. Written here it is checkable, it travels with the declaration, and it
+#: reaches a report -- so a reader can see that the value changed form on the
+#: way across and on what terms, rather than seeing two watt-valued quantities
+#: that happen to be dimensionally compatible.
+#:
+#: An element that radiated or conducted part of its dissipation away before it
+#: reached the body would declare an efficiency below 1 and a LossPath saying
+#: where. This system does not model one, so it says 1 rather than saying
+#: nothing.
+JOULE_HEATING_CONVERSION = EnergyConversion(
+    name=DEPENDENCY_HEAT,
+    input_form="electrical",
+    output_form="thermal",
+    unit_exemplar=lump.POWER_UNIT,
+    efficiency=1.0,
+    description=(
+        "Joule dissipation in the conductor is the heat input to the body it "
+        "is thermally represented by. Lossless by declaration: the element and "
+        "the body are the same physical object, so there is no path by which "
+        "dissipated power could fail to arrive."
+    ),
+)
+
+
 def coupled_dependencies(
     system: CoupledElectroThermalSystem,
     problems: Sequence[ScientificProblem],
@@ -1155,6 +1189,7 @@ def coupled_dependencies(
                 target_problem_id=thermal.problem_id,
                 target_quantity=lump.HEAT_INPUT,
                 unit_exemplar=lump.POWER_UNIT,
+                conversion=JOULE_HEATING_CONVERSION,
                 name=f"{DEPENDENCY_HEAT}:{cid}",
                 description=(
                     "The power absorbed by this element is the heat delivered "

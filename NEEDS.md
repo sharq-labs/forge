@@ -4647,3 +4647,93 @@ No model claims to exclude nothing.
 between two declared endpoints, not a measured curve". That stopped being true
 in the previous commit. Corrected in place rather than left to rot, which is
 the same class of staleness as the mutation entry pointing at deleted code.
+
+## T3. Energy conversion, and what a general energy-flow graph would need
+
+`EnergyConversion` declares that a quantity crossing a boundary changes form:
+which form enters, which arrives, what fraction survives, and where the rest
+goes. It hangs off `QuantityDependency.conversion`, so it travels with the
+declaration and reaches provenance through the existing
+`ProvenanceRecord.transfers` without a new provenance field.
+
+### Fail-closed, and it is enforced by dimension
+
+**A `QuantityDependency` whose `unit_exemplar` is an energy or a power and
+which declares no conversion cannot be constructed.** Dimension is what makes
+this enforceable without asking a domain to opt in: an energy moving between
+two problems either arrives whole or does not, and which of those is a claim
+somebody has to make. Writing nothing used to mean "all of it arrives", which
+is the one reading that cannot be checked and is usually wrong.
+
+The converse is refused too: a crossing of any other dimension may not declare
+a conversion. A state coordinate or a material property crossing a boundary is
+transported, not converted, and a record that let a temperature claim an
+efficiency would make the word mean nothing.
+
+**What the refusal caught immediately, and this is the evidence it works.**
+Eight fixture crossings across two test files were power-dimensioned and
+declared nothing -- including `friction_loss -> dissipated_power` in the test
+whose whole purpose is to show the contract works for a domain pair we do not
+own, and `release_rate -> heat_input` from a burner. Every one is a real energy
+conversion, and every one now says so.
+
+### Conservation, and one check that could not fail
+
+Checked at declaration: efficiency plus the declared loss fractions must be 1.
+A conversion that does not balance cannot be constructed.
+
+The first draft had **two** checks -- the balance, and a separate refusal of "an
+efficiency below one with no loss path". The second could never fire: the sum
+is exactly what detects that case, so `total == 1` and `efficiency < 1` and no
+losses cannot all hold. It was deleted and its message folded into the balance
+error, which is the check that actually catches it. Recorded here because it is
+the fifth instance of the pattern this repository keeps paying for, and it was
+found by reading rather than by the harness -- a mutation of dead code would
+have been reported as `MUTATION DID NOT APPLY`, not as a green.
+
+### What moved: nothing
+
+Dev split unchanged in aggregate **and row by row** -- 0 of 1400 rows differ,
+`detail` field included. The migration is a declaration of what the twin
+already asserted ("the whole dissipated power of an element enters its body"),
+so efficiency 1 with no loss path is the same arithmetic written down.
+
+### What a general energy-flow graph would need, and why this is not one
+
+1. **Summation across a path.** Chemical to electrical to mechanical to thrust
+   is three conversions, and the question a drone asks is what fraction of the
+   pack's energy reaches the air. Composing efficiencies is multiplication only
+   when the losses are disjoint and none of them re-enters the chain; a motor's
+   winding loss becomes the body's heat input, which is a *node in the same
+   graph*. That is a cycle, and a product is wrong across one.
+
+2. **Loss paths that are edges.** Ours name a form as a string. In a real
+   graph, `LossPath(form="thermal")` on a motor is not a label, it is a
+   dependency into a thermal problem, and the graph has to know they are the
+   same energy. That is the single biggest thing missing, and it is the reason
+   the loss fractions are already *of the input* rather than of the loss: they
+   are ready to become edge weights and are not edges yet.
+
+3. **A balance over a system, not over a crossing.** What this checks is one
+   conversion's internal arithmetic. A system balance asks whether every joule
+   entering a boundary leaves it, across all crossings, at one instant. That
+   needs a boundary, a set, and an instant that all sides share --
+   `QuantityTransfer.instant` is a string in the source's own terms, and C4
+   already records that a marching source and a quasi-static target have no
+   common clock.
+
+4. **Efficiency that is not a constant.** A motor's efficiency is a curve
+   against speed and torque, and a cell's charge acceptance is a curve against
+   state of charge. `efficiency` is a float. **T1 built the record that would
+   express it** -- a `DeclaredCurve` against a named variable over a declared
+   interval -- and joining the two is a small change to this record and a large
+   one to what a caller must declare. It is the obvious next step and is not
+   taken here.
+
+5. **Reversibility.** A regenerative path runs the conversion backwards with a
+   different efficiency. Nothing here has a direction beyond the dependency's,
+   and a reverse edge would be a second conversion that has to be checked
+   against the first for consistency.
+
+None of the five is needed by the one crossing that exists, and every one of
+them would have been a framework with a single consumer.

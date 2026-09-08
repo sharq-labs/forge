@@ -308,6 +308,22 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "            if False:",
      "a blank exclusion is admitted -- a statement-shaped thing that states "
      "nothing"),
+    ("G15a", "src/engcore/scientific/composition/dependency.py",
+     "        if carries_energy and self.conversion is None:",
+     "        if False:",
+     "a crossing may carry energy again without saying how much of it "
+     "arrives -- the fail-closed edge of the conversion record"),
+    ("G15b", "src/engcore/scientific/composition/conversion.py",
+     "        if abs(total - 1.0) > CONSERVATION_TOLERANCE:",
+     "        if False:",
+     "conservation stops being checked, so a conversion that loses energy to "
+     "nowhere constructs"),
+    ("G15c", "src/engcore/scientific/composition/conversion.py",
+     "        if self.efficiency is None:\n            return ConversionOutcome(\n"
+     "                ValidityStatus.UNKNOWN,",
+     "        if self.efficiency is None:\n            return ConversionOutcome(\n"
+     "                ValidityStatus.IN_DOMAIN,",
+     "an undeclared efficiency stops reporting UNKNOWN"),
 )
 
 #: The suites a mutation must turn red.

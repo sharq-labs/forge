@@ -112,11 +112,17 @@ from typing import Any, Iterable, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..models.definition import BindingIssue, BindingIssueKind
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_unit
+from .conversion import ENERGY_DIMENSIONS, EnergyConversion
 
-QUANTITY_DEPENDENCY_SCHEMA = schema_string("quantity_dependency")
+#: Bumped to /2 by the `conversion` field. Additive: a /1 record carries no
+#: conversion, and reads back as one that declares none -- which the
+#: constructor then refuses if it carries energy, so an old record of an
+#: energy crossing fails loudly rather than reading back as lossless.
+QUANTITY_DEPENDENCY_SCHEMA = schema_string("quantity_dependency", 2)
+QUANTITY_DEPENDENCY_SCHEMA_V1 = schema_string("quantity_dependency")
 
 __all__ = [
     "QUANTITY_DEPENDENCY_SCHEMA",
@@ -147,6 +153,10 @@ class QuantityDependency:
     unit_exemplar: str
     name: str = ""
     description: str = ""
+    #: How the energy changes form on the way across. Required when the
+    #: transported quantity is an energy or a power, and refused otherwise --
+    #: see the refusal in ``__post_init__``.
+    conversion: "EnergyConversion | None" = None
 
     def __post_init__(self) -> None:
         for label in (
@@ -183,6 +193,51 @@ class QuantityDependency:
                 f"itself in problem {self.source_problem_id!r}; a quantity "
                 f"cannot be its own source"
             )
+
+        # A crossing that carries energy is a conversion, and must say so.
+        #
+        # THE FAIL-CLOSED EDGE OF THE CONVERSION RECORD, and it is here rather
+        # than in `EnergyConversion` because here is where a domain that has
+        # not adopted the mechanism arrives. Dimension is what makes it
+        # enforceable without asking a domain to opt in: an energy or a power
+        # moving from one problem to another either arrives whole or does not,
+        # and the difference is a claim somebody has to make. Writing nothing
+        # used to mean "all of it arrives", which is the one reading that
+        # cannot be checked and is usually wrong.
+        #
+        # A dependency of any other dimension may not carry one: a state
+        # coordinate or a material property crossing a boundary is not an
+        # energy conversion, and a record that let it claim an efficiency
+        # would make the word mean nothing.
+        carries_energy = self.dimension in ENERGY_DIMENSIONS
+        if carries_energy and self.conversion is None:
+            raise InvalidScientificProblem(
+                f"quantity dependency {self.source_quantity!r} -> "
+                f"{self.target_quantity!r} carries {self.unit_exemplar!r} "
+                f"[{self.dimension}], an energy crossing a domain boundary, "
+                f"and declares no conversion. How much of it arrives, and "
+                f"where the rest goes, is a claim about the system: declare "
+                f"an EnergyConversion. An undeclared efficiency is UNKNOWN and "
+                f"is deliberately not 1"
+            )
+        if self.conversion is not None:
+            if not carries_energy:
+                raise InvalidScientificProblem(
+                    f"quantity dependency {self.source_quantity!r} -> "
+                    f"{self.target_quantity!r} carries "
+                    f"{self.unit_exemplar!r} [{self.dimension}] and declares "
+                    f"an energy conversion. Only an energy or a power is "
+                    f"converted; anything else crossing a boundary is "
+                    f"transported"
+                )
+            if self.conversion.dimension != self.dimension:
+                raise InvalidScientificProblem(
+                    f"quantity dependency {self.source_quantity!r} -> "
+                    f"{self.target_quantity!r} carries [{self.dimension}] and "
+                    f"its conversion converts "
+                    f"[{self.conversion.dimension}]; the two sides do not "
+                    f"mean the same thing"
+                )
 
     # A ``key`` property was written here and deleted during the adversarial
     # pass: nothing read it, and no collection type exists that would dedup or
@@ -328,11 +383,17 @@ class QuantityDependency:
             "unit_exemplar": self.unit_exemplar,
             "name": self.name,
             "description": self.description,
+            "conversion": (
+                None if self.conversion is None else self.conversion.to_dict()
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "QuantityDependency":
-        require_schema(payload, QUANTITY_DEPENDENCY_SCHEMA)
+        require_schema_any(
+            payload, (QUANTITY_DEPENDENCY_SCHEMA_V1, QUANTITY_DEPENDENCY_SCHEMA)
+        )
+        conversion = payload.get("conversion")
         return cls(
             source_problem_id=payload["source_problem_id"],
             source_quantity=payload["source_quantity"],
@@ -341,6 +402,9 @@ class QuantityDependency:
             unit_exemplar=payload["unit_exemplar"],
             name=payload.get("name", ""),
             description=payload.get("description", ""),
+            conversion=(
+                None if conversion is None else EnergyConversion.from_dict(conversion)
+            ),
         )
 
 

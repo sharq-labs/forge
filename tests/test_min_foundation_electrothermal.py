@@ -106,6 +106,26 @@ def _values_by_problem(passed):
     return {pid: r.values for pid, r in _results_by_problem(passed).items()}
 
 
+
+def _lossless(name, *, arrives_as, leaves_as, unit="watt"):
+    """A declared, lossless conversion for a fixture crossing.
+
+    Spelled out rather than defaulted because a power-dimensioned dependency
+    that declares no conversion is now refused. Every crossing here is one this
+    repository already made; what is new is that each states the claim it was
+    always making, which is that the whole of the input arrives.
+    """
+    from src.engcore.scientific.composition import EnergyConversion
+
+    return EnergyConversion(
+        name=name,
+        input_form=leaves_as,
+        output_form=arrives_as,
+        unit_exemplar=unit,
+        efficiency=1.0,
+    )
+
+
 # =====================================================================
 # THE N0 GATE (prereg §6) — run before the new contract is allowed to help
 # =====================================================================
@@ -338,6 +358,9 @@ def test_b3_a_dimensionally_wrong_wiring_is_refused(executed):
         target_problem_id=thermal.problem_id,
         target_quantity=lump.HEAT_INPUT,     # watts
         unit_exemplar=lump.POWER_UNIT,
+        conversion=_lossless(
+            "mis-wired", leaves_as="electrical", arrives_as="thermal"
+        ),
     )
     issues = wrong.check_against(
         target_problem=thermal,
@@ -455,6 +478,11 @@ def test_b8_fan_in_is_representable_and_its_combination_rule_is_not(executed):
             target_problem_id=thermal.problem_id,
             target_quantity=lump.HEAT_INPUT,
             unit_exemplar=lump.POWER_UNIT,
+            conversion=_lossless(
+                f"heater-into-body:{source}",
+                leaves_as="electrical",
+                arrives_as="thermal",
+            ),
         )
         for source in ("heater-a", "heater-b")
     )
@@ -612,6 +640,9 @@ def test_d3_another_domain_pair_can_use_the_contract_unchanged():
         target_problem_id="lubricant-film",
         target_quantity="dissipated_power",
         unit_exemplar="watt",
+        conversion=_lossless(
+            "friction-heats-film", leaves_as="mechanical", arrives_as="thermal"
+        ),
     )
     assert dependency.dimension == dimensionality("watt")
     assert QuantityDependency.from_dict(dependency.to_dict()) == dependency
@@ -679,7 +710,12 @@ def test_f_the_twin_is_the_only_instance_state_authority(executed):
     # The new record holds no value of any kind — it cannot be a second
     # authority for instance state because it carries no state.
     fields = set(QuantityDependency.__dataclass_fields__)
+    # `conversion` is the sixth: how much of an energy crossing arrives and
+    # where the rest goes. It is a property OF THE CROSSING and not of either
+    # instance, so it does not make this record a second state authority --
+    # which is what this test is about.
     assert fields == {
+        "conversion",
         "source_problem_id", "source_quantity",
         "target_problem_id", "target_quantity",
         "unit_exemplar", "name", "description",
@@ -742,6 +778,16 @@ def test_f2_no_system_or_component_instance_type_was_created():
     from src.engcore.scientific import composition
 
     assert set(composition.__all__) == {
+        # Added by the core round: what a crossing that carries energy must
+        # declare -- which form enters, which arrives, what fraction survives
+        # and where the rest goes. A composition fact, and still not a system,
+        # component, port or connector type, which is what the loop above
+        # asserts. The set stays pinned exactly, so a further name costs an
+        # edit here.
+        "ENERGY_CONVERSION_SCHEMA",
+        "ConversionOutcome",
+        "EnergyConversion",
+        "LossPath",
         "QUANTITY_DEPENDENCY_SCHEMA",
         "QuantityDependency",
         # Added by the core round: the *realization* of a dependency -- the
@@ -772,7 +818,10 @@ def test_g_the_new_record_round_trips_deterministically(executed):
 
 def test_g2_an_unknown_schema_is_refused_rather_than_guessed(executed):
     payload = dict(executed.dependencies[0].to_dict())
-    payload["schema"] = "quantity_dependency/2"
+    # `/2` became a real version when the conversion field landed, so the
+    # unknown one has to be a version that does not exist. What this checks is
+    # unchanged: a reader refuses a schema it was not taught.
+    payload["schema"] = "quantity_dependency/3"
     with pytest.raises(ScientificCoreError):
         QuantityDependency.from_dict(payload)
 
@@ -792,6 +841,12 @@ def test_g3_no_existing_schema_version_moved():
     what a model does not represent, and bumped the writer. Additive — a ``/1``
     record still loads and reads back with ``exclusions=None``, which says the
     record does not declare them rather than that the model excludes nothing.
+
+    ``quantity_dependency`` reads ``/2`` by the same route again: the same
+    round added ``QuantityDependency.conversion``, so a crossing that carries
+    energy states how much arrives and where the rest goes. Additive, and a
+    ``/1`` record of an energy crossing is refused on read rather than being
+    taken as lossless.
     """
     from src.engcore.scientific.ir.problem import PROBLEM_SCHEMA
     from src.engcore.scientific.models.definition import MODEL_SCHEMA
@@ -806,7 +861,7 @@ def test_g3_no_existing_schema_version_moved():
     assert RESULT_SCHEMA == "scientific_result/4"
     assert PROVENANCE_SCHEMA == "provenance_record/3"
     assert SCIENTIFIC_TWIN_SCHEMA == "scientific_twin/1"
-    assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/1"
+    assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
 
 
 def test_g4_the_whole_representation_serializes(executed):
@@ -877,6 +932,9 @@ def test_h2_reduction_the_supplier_cannot_live_on_the_model(executed):
         target_problem_id=thermal.problem_id,
         target_quantity=lump.HEAT_INPUT,
         unit_exemplar=lump.POWER_UNIT,
+        conversion=_lossless(
+            "combustion-heats-body", leaves_as="chemical", arrives_as="thermal"
+        ),
     )
     assert combustion.check_against(target_problem=thermal) == ()
     # unchanged model, unchanged problem, different supplier

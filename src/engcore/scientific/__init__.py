@@ -100,6 +100,9 @@ from .models import (
 )
 from .composition import (
     QUANTITY_DEPENDENCY_SCHEMA,
+    ConversionOutcome,
+    EnergyConversion,
+    LossPath,
     QuantityDependency,
     QuantityTransfer,
     externally_imposed,
@@ -226,6 +229,9 @@ __all__ = [
     "RealizationReference",
     "RealizationRegistry",
     # system composition
+    "ConversionOutcome",
+    "EnergyConversion",
+    "LossPath",
     "QuantityDependency",
     "QuantityTransfer",
     "QUANTITY_DEPENDENCY_SCHEMA",

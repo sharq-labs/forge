@@ -3282,3 +3282,248 @@ def test_an_exclusion_is_not_an_assumption_and_the_records_are_separate():
     assert not any(
         "phase" in name for name in lumped.validity.context_keys
     ), "a phase-change condition would make this an assumption, not an exclusion"
+
+
+# =====================================================================
+# GUARD 15 -- energy crossing a boundary says how much of it arrives
+# =====================================================================
+#
+# The repository's one energy conversion was an ordinary dependency plus a
+# sentence in a twin's assumptions. "All of it arrives" was what you got by
+# writing nothing, and the next four systems all convert energy with real
+# losses. A crossing that means "all of it arrives" and one that means "82 %
+# arrives and the rest is heat" must not be written identically.
+
+
+def test_a_crossing_that_carries_energy_must_say_how_much_arrives():
+    """The fail-closed edge: a power-dimensioned dependency with no conversion.
+
+    Enforced by dimension, so a domain does not have to opt in. An energy or a
+    power moving between two problems either arrives whole or does not, and
+    which of those is a claim somebody has to make.
+    """
+    from src.engcore.scientific.composition import (
+        EnergyConversion,
+        QuantityDependency,
+    )
+
+    common = dict(
+        source_problem_id="shaft",
+        source_quantity="friction_loss",
+        target_problem_id="film",
+        target_quantity="dissipated_power",
+    )
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        QuantityDependency(unit_exemplar="watt", **common)
+    assert "declares no conversion" in str(excinfo.value)
+    assert "deliberately not 1" in str(excinfo.value)
+
+    # Energy, not only power.
+    with pytest.raises(InvalidScientificProblem):
+        QuantityDependency(unit_exemplar="joule", **common)
+
+    # A crossing of anything else is transported, not converted, and may not
+    # claim an efficiency -- a record that let a temperature declare one would
+    # make the word mean nothing.
+    temperature = QuantityDependency(
+        source_problem_id="body",
+        source_quantity="temperature",
+        target_problem_id="material",
+        target_quantity="temperature",
+        unit_exemplar="kelvin",
+    )
+    assert temperature.conversion is None
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        QuantityDependency(
+            source_problem_id="body",
+            source_quantity="temperature",
+            target_problem_id="material",
+            target_quantity="temperature",
+            unit_exemplar="kelvin",
+            conversion=EnergyConversion(
+                name="not-a-conversion",
+                input_form="a",
+                output_form="b",
+                unit_exemplar="watt",
+                efficiency=1.0,
+            ),
+        )
+    assert "is transported" in str(excinfo.value)
+
+
+def test_an_undeclared_efficiency_is_unknown_and_never_one():
+    """The confident-and-wrong failure, refused at the one place it arrives."""
+    from src.engcore.scientific.composition import EnergyConversion
+    from src.engcore.scientific.models.definition import ValidityStatus
+
+    silent = EnergyConversion(
+        name="motor",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+    )
+    assert silent.efficiency is None
+    assert silent.is_declared is False
+
+    outcome = silent.convert(Quantity(100.0, "watt"))
+    assert outcome.status is ValidityStatus.UNKNOWN
+    assert outcome.value is None, "a lossless number was invented"
+    assert "not assumed to be all of it" in outcome.reason
+
+    # And a declared one answers, losses and all.
+    from src.engcore.scientific.composition import LossPath
+
+    declared = EnergyConversion(
+        name="motor",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+        efficiency=0.82,
+        losses=(LossPath(form="thermal", fraction=0.18),),
+    )
+    answered = declared.convert(Quantity(100.0, "watt"))
+    assert answered.status is ValidityStatus.IN_DOMAIN
+    assert answered.value == Quantity(82.0, "watt")
+    assert answered.losses == {"thermal": Quantity(18.0, "watt")}
+
+
+def test_conservation_is_checked_and_a_conversion_that_does_not_balance_fails():
+    """What enters equals what leaves plus what is declared lost.
+
+    Checked at declaration rather than at use: a conversion that does not
+    balance is wrong before anything is run through it, and the caller who
+    wrote it is the only one who can fix it.
+    """
+    from src.engcore.scientific.composition import EnergyConversion, LossPath
+
+    base = dict(
+        name="motor",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+    )
+
+    # Loses energy and says nothing about where it went.
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        EnergyConversion(efficiency=0.82, **base)
+    assert "does not balance" in str(excinfo.value)
+    assert "18 % that does not arrive has gone somewhere" in str(excinfo.value)
+
+    # Declares a destination, and the fractions still do not add up.
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        EnergyConversion(
+            efficiency=0.82,
+            losses=(LossPath(form="thermal", fraction=0.10),),
+            **base,
+        )
+    assert "does not balance" in str(excinfo.value)
+
+    # Accounts for more than it was given.
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        EnergyConversion(
+            efficiency=0.82,
+            losses=(LossPath(form="thermal", fraction=0.30),),
+            **base,
+        )
+    assert "more than it was given" in str(excinfo.value)
+
+    # Balances, and constructs.
+    balanced = EnergyConversion(
+        efficiency=0.82,
+        losses=(
+            LossPath(form="thermal", fraction=0.15),
+            LossPath(form="acoustic", fraction=0.03),
+        ),
+        **base,
+    )
+    assert balanced.efficiency == 0.82
+
+    # Two paths to one destination is a duplicate or a disagreement, and this
+    # record will not add them up on a caller's behalf.
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        EnergyConversion(
+            efficiency=0.82,
+            losses=(
+                LossPath(form="thermal", fraction=0.09),
+                LossPath(form="thermal", fraction=0.09),
+            ),
+            **base,
+        )
+    assert "two loss paths" in str(excinfo.value)
+
+
+def test_the_conversion_appears_in_provenance_with_its_efficiency():
+    """A report must show that a value crossed a boundary, and on what terms."""
+    from src.engcore.scientific.composition import (
+        QuantityDependency,
+        QuantityTransfer,
+    )
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from src.engcore.systems.electrothermal.coupled import (
+        JOULE_HEATING_CONVERSION,
+    )
+
+    dependency = QuantityDependency(
+        source_problem_id="electrical-series",
+        source_quantity="resistor_power:R1",
+        target_problem_id="thermal-lumped-R1",
+        target_quantity="heat_input",
+        unit_exemplar="watt",
+        conversion=JOULE_HEATING_CONVERSION,
+        name="joule-dissipation-heats-body",
+    )
+    record = ProvenanceRecord(
+        run_id="r1",
+        transfers=(
+            QuantityTransfer(
+                dependency=dependency,
+                value=Quantity(4.0, "watt"),
+                source_record_id="electrical-result-1",
+                instant="iteration:3",
+            ),
+        ),
+    )
+    carried = record.to_dict()["transfers"][0]["dependency"]["conversion"]
+    assert carried["input_form"] == "electrical"
+    assert carried["output_form"] == "thermal"
+    assert carried["efficiency"] == 1.0
+    assert carried["losses"] == []
+
+    # And it survives the round trip, efficiency and all.
+    assert (
+        ProvenanceRecord.from_dict(record.to_dict()).transfers[0].dependency
+        == dependency
+    )
+
+    # An old record that declared no conversion is refused on read rather than
+    # taken as lossless -- the same direction the writer refuses.
+    stale = record.to_dict()
+    stale["transfers"][0]["dependency"].pop("conversion")
+    stale["transfers"][0]["dependency"]["schema"] = "quantity_dependency/1"
+    with pytest.raises(InvalidScientificProblem):
+        ProvenanceRecord.from_dict(stale)
+
+
+def test_the_electrothermal_crossing_is_the_declaration_it_always_was():
+    """Migrated, not changed: efficiency 1, no losses, and now written down.
+
+    The twin has always asserted that the whole dissipated power enters the
+    body. That sentence was the entire record of it. It is now a conversion
+    that travels with the declaration and reaches a report, and it says the
+    same thing.
+    """
+    from src.engcore.systems.electrothermal import resistor_body as rb
+    from src.engcore.systems.electrothermal.coupled import (
+        JOULE_HEATING_CONVERSION,
+    )
+
+    assert JOULE_HEATING_CONVERSION.efficiency == 1.0
+    assert JOULE_HEATING_CONVERSION.losses == ()
+    assert JOULE_HEATING_CONVERSION.crosses_forms is True
+    assert JOULE_HEATING_CONVERSION.convert(
+        Quantity(4.0, "watt")
+    ).value == Quantity(4.0, "watt")
+
+    # Both systems that make this crossing declare it, and neither leaves it
+    # to be inferred from two dimensionally-compatible names.
+    assert rb.JOULE_HEATING_CONVERSION.efficiency == 1.0

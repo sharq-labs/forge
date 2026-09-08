@@ -31,6 +31,14 @@ crossing that had none: one problem's declared quantity reaching another
 problem's applicability assessment by matching component identifiers in a dict
 comprehension.
 
+:class:`~engcore.scientific.composition.conversion.EnergyConversion` — the
+declaration a crossing needs when what crosses is *energy*: which form enters,
+which form arrives, what fraction of it survives and where the rest goes. A
+dependency carrying an energy or a power cannot be declared without one, which
+is the point: the repository's one existing conversion was an ordinary
+dependency plus a sentence in a twin's assumptions, and "all of it arrives" was
+what you got by writing nothing.
+
 Nothing here executes, schedules, interpolates, relaxes or converges anything.
 A ``QuantityTransfer`` records that a value moved; it does not move it, does not
 decide when to, and does not reconcile two that disagree — it refuses them.
@@ -38,6 +46,12 @@ Composition is stated; running it is a later milestone's contract, and
 ``NEEDS.md`` C4 says what that contract would have to add.
 """
 
+from .conversion import (
+    ENERGY_CONVERSION_SCHEMA,
+    ConversionOutcome,
+    EnergyConversion,
+    LossPath,
+)
 from .dependency import (
     QUANTITY_DEPENDENCY_SCHEMA,
     QuantityDependency,
@@ -51,6 +65,10 @@ from .transfer import (
 )
 
 __all__ = [
+    "ENERGY_CONVERSION_SCHEMA",
+    "ConversionOutcome",
+    "EnergyConversion",
+    "LossPath",
     "QUANTITY_DEPENDENCY_SCHEMA",
     "QuantityDependency",
     "QUANTITY_TRANSFER_SCHEMA",
