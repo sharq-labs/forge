@@ -32,6 +32,8 @@ from src.engcore.scientific import (
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
+    UnknownCondition,
+    UnknownReason,
     ValidityAssessment,
     ValidityStatus,
 )
@@ -54,7 +56,13 @@ VIOLATED = ValidityAssessment(
     status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, violated=("biot_number",)
 )
 UNKNOWN = ValidityAssessment(
-    status=ValidityStatus.UNKNOWN, unknown=("body_conductivity",)
+    status=ValidityStatus.UNKNOWN,
+    unknown=("body_conductivity",),
+    unknown_reasons=(
+        UnknownCondition(
+            name="body_conductivity", reason=UnknownReason.NOT_SUPPLIED
+        ),
+    ),
 )
 
 

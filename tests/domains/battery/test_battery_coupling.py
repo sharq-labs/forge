@@ -664,6 +664,8 @@ def test_the_march_combination_uses_the_same_precedence_as_one_step():
     """
     from src.engcore.domains.battery import coupling as bcp
     from src.engcore.scientific.models.definition import (
+        UnknownCondition,
+        UnknownReason,
         ValidityAssessment,
         ValidityStatus,
     )
@@ -676,7 +678,9 @@ def test_the_march_combination_uses_the_same_precedence_as_one_step():
     violated = {"m": ValidityAssessment(
         status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, violated=("a",))}
     unknown = {"m": ValidityAssessment(
-        status=ValidityStatus.UNKNOWN, unknown=("a",))}
+        status=ValidityStatus.UNKNOWN, unknown=("a",),
+        unknown_reasons=(UnknownCondition(
+            name="a", reason=UnknownReason.NOT_SUPPLIED),))}
 
     # A violation anywhere dominates, whatever its position in the march.
     assert march(violated, satisfied, satisfied).status is (

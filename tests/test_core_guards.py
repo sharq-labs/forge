@@ -3484,6 +3484,8 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
     """
     from src.engcore.mcp.evidence import ModelValidityRecord
     from src.engcore.scientific.models.definition import (
+        UnknownCondition,
+        UnknownReason,
         ValidityAssessment,
         ValidityStatus,
     )
@@ -3514,7 +3516,14 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
         model_id="thermal.conduction1d.linear_diffusion",
         version="0.1.0",
         assessment=ValidityAssessment(
-            status=ValidityStatus.UNKNOWN, unknown=("mesh_resolution",)
+            status=ValidityStatus.UNKNOWN,
+            unknown=("mesh_resolution",),
+            unknown_reasons=(
+                UnknownCondition(
+                    name="mesh_resolution",
+                    reason=UnknownReason.UNREADABLE_SHAPE,
+                ),
+            ),
         ),
     )
     assert frozen.to_dict()["exclusions"] is None

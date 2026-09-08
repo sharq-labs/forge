@@ -398,6 +398,7 @@ class ScientificResult:
                     satisfied=assessment.satisfied,
                     violated=assessment.violated,
                     unknown=assessment.unknown,
+                    unknown_reasons=assessment.unknown_reasons,
                 )
             )
 

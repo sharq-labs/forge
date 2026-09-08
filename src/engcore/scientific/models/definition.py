@@ -16,7 +16,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
-from ..errors import InvalidScientificProblem, ModelValidityError
+from ..errors import (
+    InvalidScientificProblem,
+    ModelValidityError,
+    ScientificCoreError,
+)
 from ..ir.values import ValueKind
 from ..ir.variables import VariableRole
 from ..serialization import require_schema, require_schema_any, schema_string
@@ -38,7 +42,8 @@ CROSS_LIMIT_CONDITION_SCHEMA = schema_string("validity_cross_limit_condition")
 CATEGORY_CONDITION_SCHEMA = schema_string("validity_category_condition")
 FLAG_CONDITION_SCHEMA = schema_string("validity_flag_condition")
 VALIDITY_DOMAIN_SCHEMA = schema_string("validity_domain")
-VALIDITY_ASSESSMENT_SCHEMA = schema_string("validity_assessment")
+#: Retained as the name the rest of the tree imports; it now means /2.
+VALIDITY_ASSESSMENT_SCHEMA = schema_string("validity_assessment", 2)
 
 
 class ModelType(str, Enum):
@@ -117,6 +122,27 @@ def _within(
     return ValidityStatus.IN_DOMAIN
 
 
+def _absent_or_unreadable(value: Any) -> "UnknownReason":
+    """The reason a single-key condition could not read its own input.
+
+    Two situations and one test between them, so every condition type answers
+    the question the same way. ``None`` means nobody supplied it -- actionable,
+    and the caller can name it. Anything else means it arrived and this core
+    could not read it: a field, a mesh, an array, a bare float where a
+    ``Quantity`` was required. That is a gap in the core and the caller can do
+    nothing about it, which is precisely why the two must not arrive as the
+    same symbol.
+
+    **Absence is tested as ``is None``, not by truthiness.** A declared
+    ``0.0`` state of charge, an empty string and ``False`` are all supplied
+    values, and reading them as "missing" would report a caller who declared
+    something as a caller who declared nothing.
+    """
+    if value is None:
+        return UnknownReason.NOT_SUPPLIED
+    return UnknownReason.UNREADABLE_SHAPE
+
+
 @dataclass(frozen=True)
 class RangeCondition:
     """A bounded validity range, with open or closed endpoints.
@@ -179,6 +205,17 @@ class RangeCondition:
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
         """This condition reads exactly one key: its own name."""
         return self.evaluate(context.get(self.name))
+
+    def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
+        """Why this condition could not be assessed. Asked only when UNKNOWN.
+
+        DERIVED from what is actually in the context, not asserted: absent is
+        ``NOT_SUPPLIED`` and a caller can fix it; present-but-unreadable is
+        ``UNREADABLE_SHAPE`` and a caller cannot. The second is the case a
+        field, a mesh or an array lands in, and it is the one that used to be
+        indistinguishable from the first.
+        """
+        return _absent_or_unreadable(context.get(self.name))
 
     @property
     def context_keys(self) -> frozenset[str]:
@@ -245,6 +282,10 @@ class CategoryCondition:
         """This condition reads exactly one key: its own name."""
         return self.evaluate(context.get(self.name))
 
+    def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
+        """Why this condition could not be assessed. Asked only when UNKNOWN."""
+        return _absent_or_unreadable(context.get(self.name))
+
     @property
     def context_keys(self) -> frozenset[str]:
         """The context names this condition reads. See :class:`ValidityDomain`."""
@@ -294,6 +335,10 @@ class FlagCondition:
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
         """This condition reads exactly one key: its own name."""
         return self.evaluate(context.get(self.name))
+
+    def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
+        """Why this condition could not be assessed. Asked only when UNKNOWN."""
+        return _absent_or_unreadable(context.get(self.name))
 
     @property
     def context_keys(self) -> frozenset[str]:
@@ -412,6 +457,25 @@ class CrossLimitCondition:
                     f"minimum"
                 )
 
+    def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
+        """Why this condition could not be assessed. Asked only when UNKNOWN.
+
+        Two keys, so two chances to be unreadable, and the precedence matters:
+        if **either** operand arrived in a shape this core cannot read, that is
+        the situation, because supplying the other one would not help. Only
+        when neither was supplied at all is this a caller's omission.
+        """
+        operands = (
+            context.get(self.numerator),
+            context.get(self.denominator),
+        )
+        if any(
+            _absent_or_unreadable(value) is UnknownReason.UNREADABLE_SHAPE
+            for value in operands
+        ):
+            return UnknownReason.UNREADABLE_SHAPE
+        return UnknownReason.NOT_SUPPLIED
+
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
         """The ratio of the two named declarations, against the bound.
 
@@ -510,32 +574,254 @@ def _decode_condition(payload: Mapping[str, Any]) -> ValidityCondition:
     return decoder.from_dict(payload)
 
 
+class UnknownReason(str, Enum):
+    """Why one condition could not be assessed. **Closed, and exhaustive.**
+
+    ``ValidityStatus.UNKNOWN`` was one symbol carrying at least four distinct
+    situations, and every one of them reached ``derive_verdict`` as
+    ``INSUFFICIENT_EVIDENCE``. The external verdict stayed honest -- it
+    degraded to "I do not know" rather than lying -- but the *reason* was lost,
+    so no consumer could act on it and no audit could tell a core limitation
+    from a missing declaration. These are those situations, named:
+
+    ``NOT_SUPPLIED``
+        Nobody supplied the input. **Actionable and nameable**: the caller
+        declares it and the condition becomes assessable. This is the only one
+        of the four a caller can fix by declaring something.
+
+    ``UNREADABLE_SHAPE``
+        The input arrived, and in a shape this core cannot read -- a field, a
+        mesh, an array, anything that is not the scalar ``Quantity`` (or
+        ``str``, or ``bool``) the condition is stated over. **The caller can do
+        nothing about this**; it is a gap in the core, and it is the ceiling on
+        the universality claim: a domain built on fields can never reach
+        SUPPORTED however good its physics, because every one of its
+        conditions returns UNKNOWN silently. Naming the situation does not
+        close it -- see the module note -- but it makes it visible and
+        countable instead of indistinguishable from a caller's omission.
+
+    ``CONSERVATIVE_SCREEN``
+        The condition is a deliberately conservative screen and the run did not
+        clear it. **Not shown wrong, and may still be fine.** A screen that
+        refuses to certify is not a screen that found a defect, and collapsing
+        the two overstates what was learned.
+
+    ``PREREQUISITE_NOT_ESTABLISHED``
+        The condition cannot be assessed until another one is. **No producer
+        exists in this tree**, deliberately: a prerequisite mechanism built
+        before there was anywhere to record *why* a condition was skipped
+        would have to be rewritten once there was. The name is here so that
+        mechanism has somewhere to put its answer, and so this enum is the one
+        place the four situations are listed.
+
+    A reason outside this enum is refused rather than defaulted, which is what
+    stops the channel from silently re-collapsing into one symbol.
+    """
+
+    NOT_SUPPLIED = "not_supplied"
+    UNREADABLE_SHAPE = "unreadable_shape"
+    CONSERVATIVE_SCREEN = "conservative_screen"
+    PREREQUISITE_NOT_ESTABLISHED = "prerequisite_not_established"
+
+
+UNKNOWN_CONDITION_SCHEMA = schema_string("unknown_condition")
+
+
+@dataclass(frozen=True)
+class UnknownCondition:
+    """One condition that could not be assessed, and why.
+
+    ``detail`` is prose for a reader and carries no meaning a consumer should
+    branch on; ``reason`` is the machine-readable part and is what
+    :mod:`engcore.domains.repair` and every other consumer decides on.
+    """
+
+    name: str
+    reason: UnknownReason
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        if not str(self.name).strip():
+            raise ModelValidityError("unknown-condition record requires a name")
+        object.__setattr__(self, "name", str(self.name).strip())
+        try:
+            object.__setattr__(self, "reason", UnknownReason(self.reason))
+        except ValueError as exc:
+            raise ModelValidityError(
+                f"unknown-condition record {self.name!r} carries reason "
+                f"{self.reason!r}, which is not one of the declared "
+                f"situations {[r.value for r in UnknownReason]}. A reason that "
+                f"cannot be attributed to one of them is refused rather than "
+                f"defaulted: defaulting is how UNKNOWN became one symbol "
+                f"meaning four things in the first place"
+            ) from exc
+        object.__setattr__(self, "detail", str(self.detail))
+
+    @property
+    def is_actionable(self) -> bool:
+        """Can the caller make this condition assessable by declaring something?
+
+        True for ``NOT_SUPPLIED`` alone. A shape this core cannot read is not
+        fixed by declaring it again, a conservative screen was assessed and did
+        not clear, and a prerequisite is the other condition's problem.
+        """
+        return self.reason is UnknownReason.NOT_SUPPLIED
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": UNKNOWN_CONDITION_SCHEMA,
+            "name": self.name,
+            "reason": self.reason.value,
+            "detail": self.detail,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "UnknownCondition":
+        require_schema(payload, UNKNOWN_CONDITION_SCHEMA)
+        return cls(
+            name=payload["name"],
+            reason=UnknownReason(payload["reason"]),
+            detail=payload.get("detail", ""),
+        )
+
+
+#: Bumped from /1 because a /1 record carrying unknown conditions has no place
+#: to say WHY, and the missing reason cannot be defaulted -- "not recorded" is
+#: not one of the four situations. `from_dict` therefore accepts /1 only when
+#: its `unknown` list is empty, where there is nothing to explain. The
+#: `quantity_transfer/1 -> /2` bump is the same move for the same reason.
+VALIDITY_ASSESSMENT_SCHEMA_V1 = schema_string("validity_assessment", 1)
+VALIDITY_ASSESSMENT_SCHEMA_V2 = schema_string("validity_assessment", 2)
+
+
 @dataclass(frozen=True)
 class ValidityAssessment:
-    """Result of testing a validity domain against a context."""
+    """Result of testing a validity domain against a context.
+
+    ``unknown`` names the conditions that could not be assessed;
+    ``unknown_reasons`` says why each one could not, and **covering the first
+    exactly is an enforced invariant**, not a convention. A name in ``unknown``
+    with no reason beside it is the defect this record was changed to close:
+    one symbol standing for a missing declaration, a shape the core cannot
+    read, a conservative screen, and an unmet prerequisite, with no way for a
+    consumer to tell them apart.
+
+    ``unknown`` stays a tuple of plain names, deliberately. Every consumer in
+    the tree does ``for name in assessment.unknown`` and set arithmetic against
+    ``violated`` and ``satisfied``; making the entries records would break all
+    of them, and making them a ``str`` subclass carrying a reason would buy
+    compatibility with the same weaker guarantee ``NEEDS.md A2.6`` already
+    criticises ``FrozenMapping`` for. Two fields with an enforced correspondence
+    says the same thing without the sleight of hand.
+    """
 
     status: ValidityStatus
     satisfied: tuple[str, ...] = ()
     violated: tuple[str, ...] = ()
     unknown: tuple[str, ...] = ()
+    unknown_reasons: tuple[UnknownCondition, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "satisfied", tuple(self.satisfied))
+        object.__setattr__(self, "violated", tuple(self.violated))
+        object.__setattr__(self, "unknown", tuple(self.unknown))
+        object.__setattr__(self, "unknown_reasons", tuple(self.unknown_reasons))
+        for entry in self.unknown_reasons:
+            if not isinstance(entry, UnknownCondition):
+                raise ModelValidityError(
+                    f"unknown_reasons entry {entry!r} is a "
+                    f"{type(entry).__name__}, not an UnknownCondition. The "
+                    f"reason is the machine-readable half of this record and "
+                    f"a bare string is exactly the thing it replaces"
+                )
+        explained = [entry.name for entry in self.unknown_reasons]
+        duplicated = sorted({n for n in explained if explained.count(n) > 1})
+        if duplicated:
+            raise ModelValidityError(
+                f"conditions {duplicated} each carry more than one reason for "
+                f"being unknown; a condition was not assessed for exactly one "
+                f"reason"
+            )
+        stray = sorted(set(explained) - set(self.unknown))
+        if stray:
+            raise ModelValidityError(
+                f"unknown_reasons explains {stray}, which this assessment does "
+                f"not report as unknown"
+            )
+        unexplained = [n for n in self.unknown if n not in set(explained)]
+        if unexplained:
+            raise ModelValidityError(
+                f"conditions {sorted(unexplained)} are reported UNKNOWN with "
+                f"no reason. UNKNOWN carries at least four distinct "
+                f"situations -- a missing declaration, a shape this core "
+                f"cannot read, a conservative screen, an unmet prerequisite -- "
+                f"and a name on its own cannot be acted on by any consumer or "
+                f"told apart by any audit. Give each one an UnknownCondition; "
+                f"the declared reasons are "
+                f"{[r.value for r in UnknownReason]}"
+            )
+
+    def reason_for(self, name: str) -> UnknownReason | None:
+        """Why ``name`` was not assessed, or ``None`` if it was."""
+        for entry in self.unknown_reasons:
+            if entry.name == name:
+                return entry.reason
+        return None
+
+    def unknown_because(self, reason: UnknownReason) -> tuple[str, ...]:
+        """The conditions not assessed for one particular reason."""
+        return tuple(
+            entry.name
+            for entry in self.unknown_reasons
+            if entry.reason is UnknownReason(reason)
+        )
+
+    @property
+    def actionable_unknowns(self) -> tuple[str, ...]:
+        """Conditions a caller could make assessable by declaring something.
+
+        ``NOT_SUPPLIED`` only. This is the distinction repair guidance needs
+        and could not previously make: "declare this and the condition becomes
+        assessable" is a different sentence from "this cannot be assessed at
+        all", and before there were reasons both arrived as a bare name.
+        """
+        return self.unknown_because(UnknownReason.NOT_SUPPLIED)
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": VALIDITY_ASSESSMENT_SCHEMA,
+            "schema": VALIDITY_ASSESSMENT_SCHEMA_V2,
             "status": self.status.value,
             "satisfied": list(self.satisfied),
             "violated": list(self.violated),
             "unknown": list(self.unknown),
+            "unknown_reasons": [e.to_dict() for e in self.unknown_reasons],
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidityAssessment":
-        require_schema(payload, VALIDITY_ASSESSMENT_SCHEMA)
+        version = require_schema_any(
+            payload,
+            (VALIDITY_ASSESSMENT_SCHEMA_V1, VALIDITY_ASSESSMENT_SCHEMA_V2),
+        )
+        unknown = tuple(payload.get("unknown", ()))
+        if version == VALIDITY_ASSESSMENT_SCHEMA_V1 and unknown:
+            raise ScientificCoreError(
+                f"{VALIDITY_ASSESSMENT_SCHEMA_V1} record reports "
+                f"{sorted(unknown)} as unknown and has no field to say why. "
+                f"The reason cannot be reconstructed and must not be "
+                f"defaulted: 'not recorded' is not one of the four declared "
+                f"situations. Re-derive the assessment, or read it with the "
+                f"code that wrote it"
+            )
         return cls(
             status=ValidityStatus(payload["status"]),
             satisfied=tuple(payload.get("satisfied", ())),
             violated=tuple(payload.get("violated", ())),
-            unknown=tuple(payload.get("unknown", ())),
+            unknown=unknown,
+            unknown_reasons=tuple(
+                UnknownCondition.from_dict(e)
+                for e in payload.get("unknown_reasons", ())
+            ),
         )
 
 
@@ -654,6 +940,7 @@ class ValidityDomain:
         satisfied: list[str] = []
         violated: list[str] = []
         unknown: list[str] = []
+        reasons: list[UnknownCondition] = []
         for condition in self.conditions:
             # ``evaluate_in`` rather than ``evaluate(context.get(name))``: a
             # cross-limit condition reads two keys and neither is its own
@@ -666,6 +953,17 @@ class ValidityDomain:
                 violated.append(condition.name)
             else:
                 unknown.append(condition.name)
+                # DERIVED, at the one place that knows both the condition and
+                # the context it failed to read. A reason assembled later from
+                # a name alone would be a guess, and a reason supplied by the
+                # caller would be the assertion this channel exists to
+                # replace.
+                reasons.append(
+                    UnknownCondition(
+                        name=condition.name,
+                        reason=condition.explain_in(merged),
+                    )
+                )
 
         if violated:
             status = ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
@@ -679,6 +977,7 @@ class ValidityDomain:
             satisfied=tuple(satisfied),
             violated=tuple(violated),
             unknown=tuple(unknown),
+            unknown_reasons=tuple(reasons),
         )
 
     def _merge(

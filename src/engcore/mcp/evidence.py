@@ -133,6 +133,7 @@ from typing import Any, Iterable, Mapping, Sequence
 from ..scientific.models.definition import (
     VALIDITY_ASSESSMENT_SCHEMA,
     ScientificModelDefinition,
+    UnknownCondition,
     ValidityAssessment,
     ValidityStatus,
 )
@@ -464,6 +465,10 @@ def combine_assessments(
     violated: list[str] = []
     unknown: list[str] = []
     satisfied: list[str] = []
+    # Why each name is unknown travels with it, first-seen wins. A name that
+    # turns out to be violated somewhere is dropped from `unknown` below and
+    # its reason goes with it.
+    reasons: dict[str, UnknownCondition] = {}
     for assessment in assessments:
         for source, sink in (
             (assessment.violated, violated),
@@ -473,6 +478,8 @@ def combine_assessments(
             for name in source:
                 if name not in sink:
                     sink.append(name)
+        for entry in assessment.unknown_reasons:
+            reasons.setdefault(entry.name, entry)
     unknown = [n for n in unknown if n not in violated]
     satisfied = [n for n in satisfied if n not in violated and n not in unknown]
     combined = ValidityAssessment(
@@ -480,12 +487,14 @@ def combine_assessments(
         satisfied=tuple(satisfied),
         violated=tuple(violated),
         unknown=tuple(unknown),
+        unknown_reasons=tuple(reasons[n] for n in unknown if n in reasons),
     )
     return ValidityAssessment(
         status=classify_assessment(combined),
         satisfied=combined.satisfied,
         violated=combined.violated,
         unknown=combined.unknown,
+        unknown_reasons=combined.unknown_reasons,
     )
 
 
@@ -778,6 +787,7 @@ class ModelValidityRecord:
             satisfied=tuple(self.assessment.satisfied),
             violated=tuple(self.assessment.violated),
             unknown=tuple(self.assessment.unknown),
+            unknown_reasons=tuple(self.assessment.unknown_reasons),
         )
         object.__setattr__(self, "assessment", assessment)
 

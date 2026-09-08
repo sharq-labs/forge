@@ -38,6 +38,8 @@ from src.engcore.mcp import (
 )
 from src.engcore.scientific.models.definition import (
     RangeCondition,
+    UnknownCondition,
+    UnknownReason,
     ValidityAssessment,
     ValidityDomain,
     ValidityStatus,
@@ -73,7 +75,14 @@ def validity(status, *, model_id="thermal.lumped", version="0.1.0", **names):
         names = {
             ValidityStatus.IN_DOMAIN: {"satisfied": ("biot_number",)},
             ValidityStatus.OUTSIDE_VALIDATED_DOMAIN: {"violated": ("biot_number",)},
-            ValidityStatus.UNKNOWN: {"unknown": ("biot_number",)},
+            ValidityStatus.UNKNOWN: {
+                "unknown": ("biot_number",),
+                "unknown_reasons": (
+                    UnknownCondition(
+                        name="biot_number", reason=UnknownReason.NOT_SUPPLIED
+                    ),
+                ),
+            },
         }[ValidityStatus(status)]
     return ModelValidityRecord(
         model_id=model_id,
@@ -86,7 +95,13 @@ IN_DOMAIN = validity(ValidityStatus.IN_DOMAIN, satisfied=("biot_number",))
 OUTSIDE = validity(
     ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, violated=("biot_number",)
 )
-UNKNOWN = validity(ValidityStatus.UNKNOWN, unknown=("biot_number",))
+UNKNOWN = validity(
+    ValidityStatus.UNKNOWN,
+    unknown=("biot_number",),
+    unknown_reasons=(
+        UnknownCondition(name="biot_number", reason=UnknownReason.NOT_SUPPLIED),
+    ),
+)
 
 PASSED = ValidationCheck(
     name="lumped_balance_residual",
@@ -610,7 +625,17 @@ def test_a_record_whose_status_contradicts_its_own_conditions_is_refused():
     """
     for status, names in (
         (ValidityStatus.IN_DOMAIN, {"violated": ("biot_number",)}),
-        (ValidityStatus.IN_DOMAIN, {"unknown": ("biot_number",)}),
+        (
+            ValidityStatus.IN_DOMAIN,
+            {
+                "unknown": ("biot_number",),
+                "unknown_reasons": (
+                    UnknownCondition(
+                        name="biot_number", reason=UnknownReason.NOT_SUPPLIED
+                    ),
+                ),
+            },
+        ),
         (ValidityStatus.UNKNOWN, {"violated": ("biot_number",)}),
         (ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, {"satisfied": ("biot_number",)}),
     ):
@@ -1044,7 +1069,14 @@ def test_a_carried_unknown_is_a_gap_and_a_missing_key_is_a_different_gap():
         result_carrying(
             {
                 only_model(): ValidityAssessment(
-                    status=ValidityStatus.UNKNOWN, unknown=("emissivity",)
+                    status=ValidityStatus.UNKNOWN,
+                    unknown=("emissivity",),
+                    unknown_reasons=(
+                        UnknownCondition(
+                            name="emissivity",
+                            reason=UnknownReason.NOT_SUPPLIED,
+                        ),
+                    ),
                 )
             }
         )
@@ -1369,7 +1401,13 @@ def test_f09_a_status_that_contradicts_its_own_conditions_is_still_refused():
             model_id="probe",
             version="0.1.0",
             assessment=ValidityAssessment(
-                status=ValidityStatus.IN_DOMAIN, unknown=("biot_number",)
+                status=ValidityStatus.IN_DOMAIN,
+                unknown=("biot_number",),
+                unknown_reasons=(
+                    UnknownCondition(
+                        name="biot_number", reason=UnknownReason.NOT_SUPPLIED
+                    ),
+                ),
             ),
         )
     # and an assessment that named nothing may not claim IN_DOMAIN either:
@@ -1560,6 +1598,12 @@ def test_combining_assessments_keeps_a_finding_above_a_gap():
             status=ValidityStatus.UNKNOWN,
             satisfied=("resistance",),
             unknown=("working_voltage_utilization",),
+            unknown_reasons=(
+                UnknownCondition(
+                    name="working_voltage_utilization",
+                    reason=UnknownReason.NOT_SUPPLIED,
+                ),
+            ),
         ),
     )
     combined = combine_assessments(parts)

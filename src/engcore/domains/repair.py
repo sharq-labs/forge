@@ -116,6 +116,7 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 from ..scientific.models.definition import (
     InputSourceKind,
     RangeCondition,
+    UnknownReason,
     ValidityAssessment,
 )
 from ..scientific.units import Quantity
@@ -947,4 +948,119 @@ def merge_repairs(
         collected.extend(group)
     return tuple(
         sorted(collected, key=lambda r: (r.model_id, r.subject, r.condition))
+    )
+
+
+# =====================================================================
+# Conditions that were never assessed — guidance, and the refusal to invent it
+# =====================================================================
+#
+# Everything above this line is about a **violated** condition: one that was
+# assessed, found outside its bound, and can therefore be inverted into "move
+# this declaration to here". A condition that was never assessed has no bound
+# to invert toward and no observed value to invert from, and the single most
+# damaging thing this module could do is produce a number for one anyway.
+#
+# It never has: `condition_repairs` iterates `_violated_range_conditions`, so
+# an unknown condition has never reached a hint. What was missing is the other
+# half — saying anything useful about it at all. Before reasons existed there
+# was nothing useful to say: every unknown arrived as a bare name, and
+# "declare `body_conductivity` and `biot_number` becomes assessable" was
+# indistinguishable from "this cannot be assessed at all".
+
+
+@dataclass(frozen=True)
+class Unassessable:
+    """One condition that was not assessed, and what the caller can do.
+
+    ``actionable`` is the whole point of this record. It is true for exactly
+    one reason — ``NOT_SUPPLIED`` — and a consumer that shows a user "here is
+    what to fix" should show these and only these.
+    """
+
+    condition: str
+    reason: UnknownReason
+    actionable: bool
+    guidance: str
+
+
+#: What to tell a reader for each declared situation. A mapping rather than a
+#: chain of `if`s so that a new `UnknownReason` member fails loudly here —
+#: `unassessable_guidance` raises on a reason it has no sentence for, instead
+#: of falling through to a default that would quietly say the wrong thing
+#: about a situation nobody had considered.
+_GUIDANCE: dict[UnknownReason, tuple[bool, str]] = {
+    UnknownReason.NOT_SUPPLIED: (
+        True,
+        "declare {condition} and this condition becomes assessable",
+    ),
+    UnknownReason.UNREADABLE_SHAPE: (
+        False,
+        "{condition} was supplied in a shape this core cannot evaluate a "
+        "condition over. Declaring it again will not help: the gap is in the "
+        "core, not in the declaration",
+    ),
+    UnknownReason.CONSERVATIVE_SCREEN: (
+        False,
+        "{condition} is a deliberately conservative screen and this run did "
+        "not clear it. That is not a finding against the run — it was not "
+        "shown wrong, and may still be fine",
+    ),
+    UnknownReason.PREREQUISITE_NOT_ESTABLISHED: (
+        False,
+        "{condition} cannot be assessed until its prerequisite is established. "
+        "Repair the prerequisite; there is nothing to change about this one",
+    ),
+}
+
+
+def unassessable_guidance(
+    assessment: ValidityAssessment,
+) -> tuple[Unassessable, ...]:
+    """What to say about each condition the assessment could not evaluate.
+
+    **No numbers, ever.** This returns guidance and never a
+    :class:`RepairHint`: a hint states the value a declaration would have to
+    take for a bound to be met, and a condition that was never assessed has
+    neither a bound it failed nor an observed value to move. Fabricating one
+    would be the most damaging thing this module could do, because it would
+    look exactly like the hints that are real.
+
+    Ordered by condition name so two runs of the same assessment produce the
+    same guidance.
+    """
+    out: list[Unassessable] = []
+    for entry in sorted(assessment.unknown_reasons, key=lambda e: e.name):
+        try:
+            actionable, template = _GUIDANCE[entry.reason]
+        except KeyError as exc:  # pragma: no cover - a new enum member
+            raise RepairGuidanceError(
+                f"no guidance is written for unknown-reason "
+                f"{entry.reason.value!r}. A reason without a sentence must "
+                f"fail here rather than fall through to a default that would "
+                f"say the wrong thing about a situation nobody considered"
+            ) from exc
+        out.append(
+            Unassessable(
+                condition=entry.name,
+                reason=entry.reason,
+                actionable=actionable,
+                guidance=template.format(condition=entry.name),
+            )
+        )
+    return tuple(out)
+
+
+def actionable_declarations(
+    assessment: ValidityAssessment,
+) -> tuple[str, ...]:
+    """The conditions a caller could unlock by declaring something.
+
+    The short answer to "what should I supply?", and the reason this gate
+    exists: before reasons, this list could not be computed at all without
+    guessing, because a condition the core cannot read looks identical to one
+    nobody declared.
+    """
+    return tuple(
+        item.condition for item in unassessable_guidance(assessment) if item.actionable
     )

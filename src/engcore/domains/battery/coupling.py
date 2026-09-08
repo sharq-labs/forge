@@ -56,7 +56,11 @@ from enum import Enum
 from typing import Any, Mapping, Sequence
 
 from ...scientific.errors import InvalidScientificProblem
-from ...scientific.models.definition import ValidityAssessment, ValidityStatus
+from ...scientific.models.definition import (
+    UnknownCondition,
+    ValidityAssessment,
+    ValidityStatus,
+)
 from ...scientific.ir.problem import ModelReference
 from ...scientific.realizations.definition import RealizationReference
 from ...scientific.results.provenance import ExecutionBinding
@@ -124,6 +128,12 @@ def _over_the_step(
         violated: list[str] = []
         unknown: list[str] = []
         satisfied: list[str] = []
+        # Why each name is unknown travels with it. The first reason seen for
+        # a name wins: a condition unreadable at one instant is unreadable at
+        # every instant of the same step, and one that was never supplied was
+        # never supplied. A name that becomes violated later is dropped from
+        # `unknown` below and its reason with it.
+        reasons: dict[str, UnknownCondition] = {}
         for assessment in assessments:
             for name in assessment.violated:
                 if name not in violated:
@@ -131,6 +141,8 @@ def _over_the_step(
             for name in assessment.unknown:
                 if name not in unknown:
                     unknown.append(name)
+            for entry in assessment.unknown_reasons:
+                reasons.setdefault(entry.name, entry)
             for name in assessment.satisfied:
                 if name not in satisfied:
                     satisfied.append(name)
@@ -151,6 +163,7 @@ def _over_the_step(
             satisfied=tuple(satisfied),
             violated=tuple(violated),
             unknown=tuple(unknown),
+            unknown_reasons=tuple(reasons[n] for n in unknown if n in reasons),
         )
     return combined
 

@@ -5394,3 +5394,120 @@ was visible at all.
 and the FULL tier stayed green throughout. Nothing in the tree measures whether
 a declared condition still discriminates. That is a gap of the same shape as
 the unguarded record: a check that quietly stops checking.
+
+---
+
+# NEEDS — GATE 4: UNKNOWN carried four meanings
+
+## 1. What landed
+
+`ValidityStatus.UNKNOWN` still means what it meant; it can now say **which**
+of the four situations it stands for.
+
+* `UnknownReason` — a **closed** enum: `NOT_SUPPLIED`, `UNREADABLE_SHAPE`,
+  `CONSERVATIVE_SCREEN`, `PREREQUISITE_NOT_ESTABLISHED`. A reason outside it is
+  refused, never defaulted.
+* `UnknownCondition(name, reason, detail)` — the machine-readable record.
+  `detail` is prose; `reason` is what consumers branch on.
+* `ValidityAssessment.unknown_reasons`, with an **enforced total
+  correspondence**: every name in `unknown` has exactly one reason, no reason
+  names anything not in `unknown`, no duplicates, and a bare string is refused.
+* Reasons are **derived** by `ValidityDomain.assess` at the one place that
+  holds both the condition and the context it failed to read — never asserted
+  by a caller.
+
+`unknown` stays a tuple of plain names. Making the entries records would break
+every `for name in assessment.unknown` and every set operation against
+`violated`; making them a `str` subclass would buy compatibility with exactly
+the weaker guarantee `A2.6` criticises `FrozenMapping` for. Two fields with an
+enforced correspondence says the same thing without the sleight of hand.
+
+Schema bumped `validity_assessment/1 -> /2`. A `/1` record with unknown
+conditions has no field to say why, and "not recorded" is not one of the four
+situations, so it is **refused** on read; a `/1` record with nothing unknown
+still reads. Same move as `quantity_transfer/1 -> /2`.
+
+## 2. The non-goals, honoured
+
+* **No field, mesh, tensor or topology support.** `UNREADABLE_SHAPE` names the
+  gap and counts it. It does not close it.
+* **No `requires` / prerequisite primitive.** `PREREQUISITE_NOT_ESTABLISHED`
+  has **no producer in this tree**, deliberately. The name exists so that
+  mechanism has somewhere to put its answer when it is built.
+* **`derive_verdict` unchanged.** UNKNOWN still produces
+  `INSUFFICIENT_EVIDENCE`; asserted directly in
+  `test_the_verdict_rules_did_not_change`.
+
+## 3. The second consumer, verified before it was changed
+
+`repair.py`'s only use of the word "unknown" was `declared - set(ranges)` at
+line 564 — **unrecognised condition names**, exactly as the brief predicted,
+and a different thing entirely. It said nothing at all about an unassessed
+condition, because there was nothing useful to say: every unknown arrived as a
+bare name.
+
+Added: `unassessable_guidance()` and `actionable_declarations()`. They separate
+*"declare `body_conductivity` and `biot_number` becomes assessable"* from
+*"this cannot be assessed at all"*, and the second now has three distinct
+forms rather than one silence.
+
+**No numbers, ever.** `Unassessable` has no field a value could occupy, and
+`condition_repairs` still iterates `_violated_range_conditions` only — a
+condition that was never assessed has no bound it failed and no observed value
+to move, and a fabricated hint for one would look exactly like the hints that
+are real. Asserted structurally rather than by inspection.
+
+`_GUIDANCE` is a mapping keyed by every `UnknownReason`, so a new member fails
+loudly instead of falling through to a default that would say the wrong thing
+about a situation nobody had considered.
+
+## 4. Changes wanted outside the owned paths — not made
+
+### 4.1 No domain declares a `CONSERVATIVE_SCREEN` — NOT MADE
+
+The vocabulary has the reason; nothing in the tree emits it. The brief's own
+example (a Fourier-number screen) is a domain declaration, and deciding which
+existing conditions are screens rather than findings is a per-domain scientific
+judgement, not a core one. Until a domain says so, every core-derived unknown
+is `NOT_SUPPLIED` or `UNREADABLE_SHAPE`.
+
+### 4.2 Nothing counts how often `UNREADABLE_SHAPE` fires — NOT MADE
+
+That count is the actual measurement of the universality ceiling: it is the
+number of times a domain's physics was fine and this core could not read its
+inputs. It is now *derivable*, which it was not before. Surfacing it in the
+credibility report is a change to `mcp/evidence.py`'s public record and was
+left alone.
+
+### 4.3 `ModelInputSpec` still cannot say which condition an input unlocks — STILL NOT MADE
+
+`NEEDS.md §1.1` of the problem-builder round proposed this and a previous
+review reported it as implemented. It is not, and this gate did not add it:
+`ModelInputSpec` carries `name, source_kind, unit_exemplar, value_kind, role,
+required, description, varies_with` and nothing else. `actionable_declarations`
+returns *condition* names, not the input names that would unlock them, and
+closing that gap is the prerequisite primitive this gate was told not to build.
+
+## 5. What this gate revealed that the brief did not predict
+
+### 5.1 The four situations are not equally reachable
+
+Two of the four have producers (`NOT_SUPPLIED`, `UNREADABLE_SHAPE`); two do
+not. That is the honest state and it is now visible in the type, rather than
+being a distinction nobody could make. Worth knowing before anyone reads the
+enum as a description of what the tree does.
+
+### 5.2 Absence had to be defined, and truthiness was the wrong test
+
+A declared `0.0` state of charge, an empty string and `False` are all supplied
+values. `_absent_or_unreadable` tests `is None`, so a caller who declared zero
+is not reported as a caller who declared nothing — which would have sent repair
+guidance to ask for a declaration that was already there. Not something the
+brief raised; it falls straight out of writing the rule down.
+
+### 5.3 The invariant found six hand-built assessments across the tree
+
+All six were in tests, all six said UNKNOWN without saying why, and each had to
+choose a reason to keep compiling. That is the invariant doing its job on day
+one: the sites that had been asserting a bare gap are exactly the sites that
+now have to say which gap.
