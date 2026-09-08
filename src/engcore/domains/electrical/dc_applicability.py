@@ -221,6 +221,15 @@ ELEMENT_TEMPERATURE_LIMIT = Quantity(1.0, DIMENSIONLESS)
 # =====================================================================
 
 REGULATED_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
+    exclusions=(
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "the supply's behaviour outside the regulation band it was declared "
+        "to hold",
+        "any internal dynamics; the source is a Thevenin equivalent with one "
+        "constant open-circuit voltage and one constant resistance",
+    ),
     model_id="electrical.dc.regulated_voltage_source",
     version=DC_APPLICABILITY_VERSION,
     name="Ideal voltage source relation, inside a declared regulation band",
@@ -350,6 +359,15 @@ REGULATED_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
 
 
 SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
+    exclusions=(
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "temperature non-uniformity over the element, apart from the single "
+        "element-to-body drop this record's own condition computes",
+        "any change of resistance over the run; one resistance describes the "
+        "element throughout",
+    ),
     model_id="electrical.dc.self_heated_resistor",
     version=DC_APPLICABILITY_VERSION,
     name="Resistor constitutive relation for an element the run heats",

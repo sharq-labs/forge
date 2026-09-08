@@ -947,18 +947,44 @@ def test_legacy_model_record_still_loads_unchanged():
     assert model.required_capabilities == frozenset({"core:algebraic"})
 
 
-def test_legacy_model_record_re_serializes_byte_identically():
-    """MODEL0-R must not perturb one byte of a frozen scientific record."""
+def test_legacy_model_record_re_serializes_with_exclusions_undeclared():
+    """A /1 record still loads, and re-serializes as /2 saying it declared none.
+
+    It was byte-identical, and the `exclusions` field ended that: the writer
+    moved to `scientific_model_definition/2`. The contract worth keeping is
+    the one that still holds -- a record written before the field existed
+    loads unchanged, and nothing it *did* carry is altered.
+
+    What it must NOT do is read back as `exclusions: []`. A /1 record does not
+    say what its model excludes, and "does not say" is not "excludes nothing".
+    That is the whole distinction the field was added for, and the round trip
+    is where it would have been quietly lost.
+    """
     model = ScientificModelDefinition.from_dict(LEGACY_MODEL_JSON)
-    assert model.to_dict() == LEGACY_MODEL_JSON
-    assert to_json(model) == json.dumps(LEGACY_MODEL_JSON, sort_keys=True)
+    assert model.exclusions is None
+
+    written = model.to_dict()
+    assert written["schema"] == "scientific_model_definition/2"
+    assert written["exclusions"] is None
+    assert {k: v for k, v in written.items() if k not in ("schema", "exclusions")} == {
+        k: v for k, v in LEGACY_MODEL_JSON.items() if k != "schema"
+    }
+    assert to_json(model) == json.dumps(written, sort_keys=True)
+
+    # And /2 round-trips as itself, exclusions and all.
+    declared = ScientificModelDefinition.from_dict(
+        dict(written, exclusions=["no phase change"])
+    )
+    assert declared.exclusions == ("no phase change",)
+    assert declared.to_dict()["exclusions"] == ["no phase change"]
 
 
 def test_model_definition_gained_no_realization_fields():
     fields = set(ScientificModelDefinition.__dataclass_fields__)
     assert fields == {
         "model_id", "version", "name", "domain", "model_type", "description",
-        "inputs", "outputs", "assumptions", "validity", "references",
+        "inputs", "outputs", "assumptions", "exclusions", "validity",
+        "references",
         "required_capabilities", "validation_status", "metadata",
     }
     for added in ("realization", "formulation", "fidelity", "realizations"):

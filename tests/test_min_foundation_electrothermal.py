@@ -786,6 +786,12 @@ def test_g3_no_existing_schema_version_moved():
     argument DATA-BOUNDARY0 made for ``data_references``. The assertion is
     updated rather than deleted because what it is for is unchanged — a schema
     must never move without somebody having to come here and say why.
+
+    ``scientific_model_definition`` reads ``/2`` for the same reason and by the
+    same route: the core round added ``ScientificModelDefinition.exclusions``,
+    what a model does not represent, and bumped the writer. Additive — a ``/1``
+    record still loads and reads back with ``exclusions=None``, which says the
+    record does not declare them rather than that the model excludes nothing.
     """
     from src.engcore.scientific.ir.problem import PROBLEM_SCHEMA
     from src.engcore.scientific.models.definition import MODEL_SCHEMA
@@ -795,7 +801,7 @@ def test_g3_no_existing_schema_version_moved():
     from src.engcore.scientific.twins.definition import SCIENTIFIC_TWIN_SCHEMA
 
     assert PROBLEM_SCHEMA == "scientific_problem/1"
-    assert MODEL_SCHEMA == "scientific_model_definition/1"
+    assert MODEL_SCHEMA == "scientific_model_definition/2"
     assert REALIZATION_SCHEMA == "model_realization_definition/1"
     assert RESULT_SCHEMA == "scientific_result/4"
     assert PROVENANCE_SCHEMA == "provenance_record/3"

@@ -331,7 +331,17 @@ class ComponentRating:
         )
 
 
+#: The exclusion-shaped half of _DC_ASSUMPTIONS, separated for the report.
+_DC_EXCLUSIONS = (
+    "distributed and field effects; the circuit is lumped",
+    "transients and reactive elements; steady-state DC only",
+    "non-linear and time-varying elements",
+    "temperature dependence of resistance",
+    "parasitics",
+)
+
 RESISTOR_OHM_MODEL = ScientificModelDefinition(
+    exclusions=_DC_EXCLUSIONS,
     model_id="electrical.dc.resistor_ohm",
     version=DC_MODEL_VERSION,
     name="Resistor constitutive relation (Ohm's law)",
@@ -525,6 +535,7 @@ RESISTOR_OHM_MODEL = ScientificModelDefinition(
 
 
 KCL_MODEL = ScientificModelDefinition(
+    exclusions=_DC_EXCLUSIONS + ("charge accumulation at nodes",),
     model_id="electrical.dc.kcl",
     version=DC_MODEL_VERSION,
     name="Kirchhoff current law (nodal charge balance)",
@@ -606,6 +617,11 @@ KCL_MODEL = ScientificModelDefinition(
 
 
 IDEAL_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
+    exclusions=_DC_EXCLUSIONS
+    + (
+        "internal impedance; the source is ideal",
+        "any current compliance limit",
+    ),
     model_id="electrical.dc.ideal_voltage_source",
     version=DC_MODEL_VERSION,
     name="Ideal independent DC voltage source relation",
@@ -696,6 +712,11 @@ IDEAL_VOLTAGE_SOURCE_MODEL = ScientificModelDefinition(
 
 
 IDEAL_CURRENT_SOURCE_MODEL = ScientificModelDefinition(
+    exclusions=_DC_EXCLUSIONS
+    + (
+        "finite output impedance; the source is ideal",
+        "any compliance voltage limit",
+    ),
     model_id="electrical.dc.ideal_current_source",
     version=DC_MODEL_VERSION,
     name="Ideal independent DC current source relation",

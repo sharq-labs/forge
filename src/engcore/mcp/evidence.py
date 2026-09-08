@@ -132,6 +132,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from ..scientific.models.definition import (
     VALIDITY_ASSESSMENT_SCHEMA,
+    ScientificModelDefinition,
     ValidityAssessment,
     ValidityStatus,
 )
@@ -170,6 +171,54 @@ __all__ = [
     "combine_assessments",
     "derive_verdict",
 ]
+
+#: Every model definition this package can reach, by ``(model_id, version)``.
+#:
+#: Built by walking ``engcore`` once, lazily, on first use. Lazily because
+#: this module is imported *from* that tree and a walk at import time would
+#: close the cycle; once because the walk costs more than the lookup and a
+#: report may carry many records.
+#:
+#: Derived from what the repository contains rather than from a list, which is
+#: the same reason the repo-wide guards are written that way: a sixth domain's
+#: model is covered on the day it lands, and a list would cover it on the day
+#: somebody remembered.
+_MODEL_INDEX: dict[tuple[str, str], Any] | None = None
+
+
+def _declared_models() -> Mapping[tuple[str, str], Any]:
+    global _MODEL_INDEX
+    if _MODEL_INDEX is None:
+        import importlib
+        import pkgutil
+
+        # This module's own package, not the literal name `engcore`. The tree
+        # is importable under two names here -- `engcore` and `src.engcore` --
+        # and they are different module objects with different class objects,
+        # so a walk under the wrong one finds definitions that fail an
+        # `isinstance` against the class this module imported. Every model
+        # would then report no exclusions, which is the quiet wrong answer
+        # this whole field exists to stop. Derived from `__name__` so it is
+        # right under either.
+        root_name = __name__.rsplit(".", 2)[0]
+        root = importlib.import_module(root_name)
+
+        index: dict[tuple[str, str], Any] = {}
+        for found in pkgutil.walk_packages(root.__path__, f"{root_name}."):
+            try:
+                module = importlib.import_module(found.name)
+            except Exception:  # pragma: no cover - an optional dependency
+                # A module that will not import contributes no models, and a
+                # report is not the place to raise about it. The repo-wide
+                # guard over the same walk is where an unimportable domain
+                # module is a failure.
+                continue
+            for value in vars(module).values():
+                if isinstance(value, ScientificModelDefinition):
+                    index.setdefault(value.key, value)
+        _MODEL_INDEX = index
+    return _MODEL_INDEX
+
 
 MODEL_VALIDITY_SCHEMA = schema_string("mcp_model_validity_record")
 ASSERTED_CONTEXT_SCHEMA = schema_string("mcp_asserted_context")
@@ -760,17 +809,46 @@ class ModelValidityRecord:
     def status(self) -> ValidityStatus:
         return self.assessment.status
 
+    @property
+    def exclusions(self) -> tuple[str, ...] | None:
+        """What this model does not represent, beside what it assessed.
+
+        **Read from the model record, never supplied.** A property and not a
+        field, so no caller can construct a record claiming exclusions the
+        model does not declare -- the same reason the assessment is
+        cross-checked rather than trusted. ``None`` when the model is not
+        found or declares nothing, which a reader must be able to tell from
+        an empty tuple: one says nobody wrote them down, the other is a claim
+        that the model excludes nothing.
+
+        The distinction from ``assessment`` is the point of having both. An
+        assessment says whether the run was inside the conditions the model
+        can check. Exclusions are the phenomena no condition can check,
+        because the model does not represent them at all -- and a reader who
+        sees only IN_DOMAIN has been told the checkable half.
+        """
+        model = _declared_models().get((self.model_id, self.version))
+        return None if model is None else model.exclusions
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": MODEL_VALIDITY_SCHEMA,
             "model_id": self.model_id,
             "version": self.version,
             "assessment": self.assessment.to_dict(),
+            "exclusions": (
+                None if self.exclusions is None else list(self.exclusions)
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ModelValidityRecord":
         require_schema(payload, MODEL_VALIDITY_SCHEMA)
+        # `exclusions` in a payload is deliberately not read back. It is a
+        # rendering of the model record, and a record that took it from the
+        # payload would let a hand-edited report assert a shorter exclusion
+        # list than the model declares -- which is the failure this field
+        # exists to prevent, arriving through the reader instead of the writer.
         return cls(
             model_id=payload["model_id"],
             version=payload["version"],

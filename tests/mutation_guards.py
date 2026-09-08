@@ -293,6 +293,21 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "            else \"\",",
      "a declared curve stops entering the cell's physical identity, so two "
      "cells with different OCV curves are cached as one"),
+    ("G14a", "src/engcore/domains/electrical/dc/models.py",
+     "    exclusions=_DC_EXCLUSIONS,",
+     "    exclusions=None,",
+     "a shipped model stops declaring what it does not represent, and the "
+     "tree sweep is what notices"),
+    ("G14b", "src/engcore/mcp/evidence.py",
+     "        return None if model is None else model.exclusions",
+     "        return None",
+     "the credibility report stops carrying exclusions beside validity, so a "
+     "reader sees only the checkable half"),
+    ("G14c", "src/engcore/scientific/models/definition.py",
+     "            if any(not e for e in exclusions):",
+     "            if False:",
+     "a blank exclusion is admitted -- a statement-shaped thing that states "
+     "nothing"),
 )
 
 #: The suites a mutation must turn red.

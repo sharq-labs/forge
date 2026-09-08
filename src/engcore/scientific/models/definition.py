@@ -18,11 +18,16 @@ from typing import Any, Mapping
 from ..errors import InvalidScientificProblem, ModelValidityError
 from ..ir.values import ValueKind
 from ..ir.variables import VariableRole
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_same_dimension, require_unit
 
-MODEL_SCHEMA = schema_string("scientific_model_definition")
+#: Bumped to /2 by the `exclusions` field. Additive: a /1 record carries no
+#: exclusions and reads back as `None` -- "this record does not say" --
+#: which is the truthful reading and is distinguishable from a declared
+#: empty list. Both versions load; only /2 is written.
+MODEL_SCHEMA = schema_string("scientific_model_definition", 2)
+MODEL_SCHEMA_V1 = schema_string("scientific_model_definition")
 MODEL_INPUT_SCHEMA = schema_string("model_input_spec")
 MODEL_OUTPUT_SCHEMA = schema_string("model_output_spec")
 BINDING_ISSUE_SCHEMA = schema_string("model_binding_issue")
@@ -1064,7 +1069,38 @@ class ModelBindingReport:
 
 @dataclass(frozen=True)
 class ScientificModelDefinition:
-    """A versioned scientific model contract."""
+    """A versioned scientific model contract.
+
+    ``exclusions`` states what the model **does not represent**, as distinct
+    from ``assumptions``, which states the conditions under which it holds.
+    The two are close enough to have been written into one tuple across this
+    repository and different enough that a reader needs them apart: "the Biot
+    number is small enough" is something a run can be checked against, and
+    "no phase change" is not -- it is a phenomenon nobody will be warned about
+    because no condition can detect it.
+
+    **Three values, not two.** ``None`` means *not declared* and is the
+    default. An empty tuple means the model claims to exclude nothing, which
+    is almost never true and so must be written out deliberately; it cannot be
+    arrived at by omission. A caller reading a report can tell the two apart,
+    which is the entire point -- an undeclared exclusion list read as "excludes
+    nothing" is the silent assumption this field exists to end.
+
+    **A model shipped in this repository must declare exclusions, and the rule
+    is not enforced here.** It was, briefly, and the constructor is the wrong
+    place: this same constructor reads archived records through
+    :meth:`from_dict`, and a record written before the field existed genuinely
+    does not declare exclusions. Refusing to load it would destroy information
+    rather than prevent a claim, and the round-trip test for a legacy record is
+    what said so. The rule is about *authoring* a model, and it is enforced
+    over the authored population -- every definition reachable in this package
+    -- by a repository-wide guard, which owns its own single named exemption:
+    one model, in a frozen tree the round that added this field could not
+    edit. That name lives with the guard rather than here, for the same reason
+    nothing else domain-shaped lives in this package -- the core does not know
+    which model it is. What is refused here is a malformed exclusion: a blank
+    one, which says nothing while looking like it does.
+    """
 
     model_id: str
     version: str
@@ -1075,6 +1111,7 @@ class ScientificModelDefinition:
     inputs: tuple[ModelInputSpec, ...] = ()
     outputs: tuple[ModelOutputSpec, ...] = ()
     assumptions: tuple[str, ...] = ()
+    exclusions: tuple[str, ...] | None = None
     validity: ValidityDomain = field(default_factory=ValidityDomain)
     references: tuple[str, ...] = ()
     required_capabilities: frozenset[str] = frozenset()
@@ -1092,6 +1129,19 @@ class ScientificModelDefinition:
         )
         for label in ("inputs", "outputs", "assumptions", "references"):
             object.__setattr__(self, label, tuple(getattr(self, label)))
+
+        # Declared, or explicitly not. See the class docstring for why an
+        # omission may not be read as an empty list.
+        if self.exclusions is not None:
+            exclusions = tuple(str(e).strip() for e in self.exclusions)
+            if any(not e for e in exclusions):
+                raise InvalidScientificProblem(
+                    f"model {self.model_id!r} declares an empty exclusion; an "
+                    f"exclusion is a sentence about what the model does not "
+                    f"represent, and a blank one says nothing while looking "
+                    f"like it does"
+                )
+            object.__setattr__(self, "exclusions", exclusions)
         input_names = [spec.name for spec in self.inputs]
         duplicates = {n for n in input_names if input_names.count(n) > 1}
         if duplicates:
@@ -1308,6 +1358,9 @@ class ScientificModelDefinition:
             "inputs": [spec.to_dict() for spec in self.inputs],
             "outputs": [spec.to_dict() for spec in self.outputs],
             "assumptions": list(self.assumptions),
+            "exclusions": (
+                None if self.exclusions is None else list(self.exclusions)
+            ),
             "validity": self.validity.to_dict(),
             "references": list(self.references),
             "required_capabilities": sorted(self.required_capabilities),
@@ -1317,7 +1370,7 @@ class ScientificModelDefinition:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificModelDefinition":
-        require_schema(payload, MODEL_SCHEMA)
+        require_schema_any(payload, (MODEL_SCHEMA_V1, MODEL_SCHEMA))
         return cls(
             model_id=payload["model_id"],
             version=payload["version"],
@@ -1332,6 +1385,16 @@ class ScientificModelDefinition:
                 ModelOutputSpec.from_dict(s) for s in payload.get("outputs", ())
             ),
             assumptions=tuple(payload.get("assumptions", ())),
+            # `.get` would read a payload written before this field existed as
+            # "excludes nothing". A missing key means the record does not say,
+            # and that is `None` -- which the constructor then refuses for a
+            # domained model, so an old payload fails loudly rather than
+            # reading back as a stronger claim than it carried.
+            exclusions=(
+                None
+                if payload.get("exclusions") is None
+                else tuple(payload["exclusions"])
+            ),
             validity=ValidityDomain.from_dict(payload["validity"])
             if payload.get("validity")
             else ValidityDomain(),

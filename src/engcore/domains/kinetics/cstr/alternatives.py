@@ -37,6 +37,23 @@ from .problem import (
 CONSTANT_RATE_MODEL_VERSION = "0.1.0"
 
 CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
+    exclusions=(
+        "spatial gradients in concentration or temperature; the tank is "
+        "perfectly mixed",
+        "volume change; inflow and outflow volumetric rates are equal",
+        "a second phase, boiling and a vapour space",
+        "reverse and side reactions; one irreversible A -> B, first "
+        "order in A",
+        "temperature dependence of the density and the heat capacity",
+        "jacket dynamics; a prescribed constant jacket temperature and a "
+        "constant UA",
+        "Arrhenius temperature dependence of the rate constant, which "
+        "is approximated as temperature independent -- a comparison "
+        "approximation, not a claim that it is absent in the physical "
+        "system",
+        "any change of reactor volume with time; the volume is constant",
+    ),
+
     model_id="kinetics.cstr.nonisothermal_first_order_constant_rate",
     version=CONSTANT_RATE_MODEL_VERSION,
     name="Non-isothermal CSTR with temperature-independent first-order rate",

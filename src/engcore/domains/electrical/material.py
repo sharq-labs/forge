@@ -282,7 +282,20 @@ _ASSUMPTIONS = (
 )
 
 
+#: The exclusion-shaped half of _ASSUMPTIONS, separated for the report.
+_MATERIAL_EXCLUSIONS = (
+    "higher-order temperature dependence; the coefficient is first order "
+    "about a reference state",
+    "self-heating; the temperature is supplied and never inferred from the "
+    "resistance",
+    "tensor conductivity; the resistance is an isotropic scalar",
+    "strain, ageing, frequency and magnetic-field dependence",
+    "temperature non-uniformity over the conductor",
+)
+
 LINEAR_TCR_MODEL = ScientificModelDefinition(
+    exclusions=_MATERIAL_EXCLUSIONS,
+
     model_id="electrical.material.linear_tcr_resistance",
     version=MODEL_VERSION,
     name="Linear temperature-coefficient conductor resistance",
@@ -478,6 +491,8 @@ MINIMUM_LINEAR_RESISTANCE_RATIO = Quantity(0.0, DIMENSIONLESS)
 
 
 RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
+    exclusions=_MATERIAL_EXCLUSIONS,
+
     model_id="electrical.material.rated_linear_tcr_resistance",
     version=MODEL_VERSION,
     name="Linear-TCR conductor resistance within its material limits",

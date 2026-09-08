@@ -341,6 +341,19 @@ _ASSUMPTIONS = (
 
 
 LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
+    exclusions=(
+        "internal spatial gradients; the body is one uniform temperature",
+        "radiation",
+        "phase change",
+        "mass transport",
+        "temperature dependence of the heat capacity, which is taken as "
+        "constant over the range considered",
+        "temperature dependence of the ambient conductance; one constant "
+        "exchange path to one ambient",
+        "the origin of the heat input, which is externally imposed and "
+        "not claimed here",
+    ),
+
     model_id="thermal.lumped.first_order_capacity",
     version=MODEL_VERSION,
     name="Lumped first-order thermal capacity",

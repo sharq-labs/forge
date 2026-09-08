@@ -3134,3 +3134,151 @@ def test_the_unmigrated_inversion_refuses_rather_than_answering_from_the_chord()
             DischargeLoad(cutoff_voltage=Quantity(1.0, "volt"), **common),
         )
     assert "has not been migrated" in str(excinfo.value)
+
+
+# =====================================================================
+# GUARD 14 -- a model states what it does not represent, where a reader is
+# =====================================================================
+#
+# Ten models stated their exclusions in a docstring and in an `assumptions`
+# tuple that no report carries. A caller reads a report; a caller cannot read
+# the source. An exclusion a caller cannot see is not declared -- it is a
+# silent assumption, and a risk nobody was told about.
+
+
+#: The one model allowed to leave `exclusions` undeclared, and why. It is
+#: constructed inside a frozen, byte-pinned tree the round that added the
+#: field could not edit, so its exclusions cannot be written where they
+#: belong. Its own `assumptions` carry them -- no convection, no radiation, no
+#: phase change, no source term -- and a reader of a report still cannot see
+#: them, which is what closing this entry would fix. One entry, for one stated
+#: reason: the difference between that and a general escape is the whole of
+#: whether the guard below means anything.
+EXCLUSIONS_NOT_DECLARED = frozenset({"thermal.conduction1d.linear_diffusion"})
+
+
+def test_every_shipped_model_declares_what_it_does_not_represent():
+    """Over the tree, so a sixth domain is covered on the day it lands.
+
+    The rule is about authoring, and this is the authored population: every
+    model definition reachable in the package. It is deliberately not enforced
+    in the constructor, which also reads archived records -- a record written
+    before the field existed does not declare exclusions, and refusing to load
+    it would destroy information rather than prevent a claim.
+    """
+    undeclared = sorted(
+        model.model_id
+        for model in MODELS
+        if model.exclusions is None
+        and model.model_id not in EXCLUSIONS_NOT_DECLARED
+    )
+    assert undeclared == [], (
+        f"{undeclared} name a domain and do not say what they leave out. A "
+        f"reader of a credibility report cannot read this source"
+    )
+
+    # And the exemption is one model, for a stated reason, not a hole. A
+    # second entry appearing here is a decision somebody has to defend.
+    assert len(MODELS) >= 16, "the sweep must actually reach the models"
+
+
+def test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident():
+    """`None` and `()` are different, and the difference is the whole field.
+
+    An undeclared list read as "excludes nothing" is the defect. So no shipped
+    model may reach `()` by omission -- it is not the default -- and today no
+    model claims it at all.
+    """
+    from src.engcore.scientific.models.definition import (
+        ModelType,
+        ScientificModelDefinition,
+    )
+
+    claiming_nothing = sorted(
+        model.model_id for model in MODELS if model.exclusions == ()
+    )
+    assert claiming_nothing == [], (
+        f"{claiming_nothing} claim to exclude nothing, which is almost never "
+        f"true; check that this was written deliberately"
+    )
+
+    # The default is None, not (). A model that says nothing has said nothing.
+    silent = ScientificModelDefinition(
+        model_id="probe.silent", version="0.1.0", model_type=ModelType.APPROXIMATION
+    )
+    assert silent.exclusions is None
+
+    # A blank exclusion is refused: it looks like a statement and is not one.
+    with pytest.raises(InvalidScientificProblem):
+        ScientificModelDefinition(
+            model_id="probe.blank",
+            version="0.1.0",
+            exclusions=("no phase change", "   "),
+        )
+
+
+def test_the_credibility_report_carries_exclusions_beside_validity():
+    """What the model does not represent, next to what it assessed.
+
+    IN_DOMAIN answers the checkable half. The exclusions are the phenomena no
+    condition can check, because the model does not represent them -- so a
+    reader who sees only a status has been told less than they think.
+    """
+    from src.engcore.mcp.evidence import ModelValidityRecord
+    from src.engcore.scientific.models.definition import (
+        ValidityAssessment,
+        ValidityStatus,
+    )
+
+    record = ModelValidityRecord(
+        model_id="thermal.lumped.first_order_capacity",
+        version="0.1.0",
+        assessment=ValidityAssessment(
+            status=ValidityStatus.IN_DOMAIN, satisfied=("biot_number",)
+        ),
+    )
+    payload = record.to_dict()
+    assert payload["assessment"]["status"] == "in_domain"
+    assert "phase change" in payload["exclusions"]
+    assert "radiation" in payload["exclusions"]
+
+    # Read from the model record, never supplied: a caller cannot construct a
+    # record claiming a shorter list, and a payload's own `exclusions` is not
+    # read back, so a hand-edited report cannot shrink it either.
+    assert "exclusions" not in ModelValidityRecord.__dataclass_fields__
+    shrunk = dict(payload, exclusions=["nothing at all"])
+    assert ModelValidityRecord.from_dict(shrunk).exclusions == record.exclusions
+
+    # The one model that cannot declare them reports None, not an empty list.
+    # A reader must be able to tell "nobody wrote them down" from "there are
+    # none", and that is exactly the model this round could not edit.
+    frozen = ModelValidityRecord(
+        model_id="thermal.conduction1d.linear_diffusion",
+        version="0.1.0",
+        assessment=ValidityAssessment(
+            status=ValidityStatus.UNKNOWN, unknown=("mesh_resolution",)
+        ),
+    )
+    assert frozen.to_dict()["exclusions"] is None
+
+
+def test_an_exclusion_is_not_an_assumption_and_the_records_are_separate():
+    """Two fields because they answer different questions.
+
+    An assumption is a condition a run can be checked against. An exclusion is
+    a phenomenon that no condition can detect, because the model does not
+    represent it. Collapsing them is how "no phase change" ended up in a tuple
+    that no report carries.
+    """
+    by_id = {model.model_id: model for model in MODELS}
+    lumped = by_id["thermal.lumped.first_order_capacity"]
+
+    # The checkable one stays an assumption; it has a condition behind it.
+    assert any("Biot" in a for a in lumped.assumptions)
+    assert "biot_number" in lumped.validity.context_keys
+
+    # The undetectable one is an exclusion, and no condition names it.
+    assert "phase change" in lumped.exclusions
+    assert not any(
+        "phase" in name for name in lumped.validity.context_keys
+    ), "a phase-change condition would make this an assumption, not an exclusion"

@@ -423,11 +423,36 @@ _SHARED_ASSUMPTIONS = (
 )
 
 
+#: What every battery cell model here does NOT represent, taken from the same
+#: source as _SHARED_ASSUMPTIONS: the exclusion-shaped half of that tuple,
+#: separated because a condition can be checked against a run and an exclusion
+#: cannot. Nobody will be warned about a phenomenon no condition can detect,
+#: which is exactly why it has to be stated where a report can carry it.
+_SHARED_EXCLUSIONS = (
+    "cell-to-cell variation and balancing; a series string is treated as one "
+    "lumped cell",
+    "charging; discharge only, and no condition here would catch a charge",
+    "diffusion and double-layer dynamics: no RC branch, no hysteresis",
+    "ageing: no cycle life, no capacity fade, no resistance growth",
+    "thermal runaway, abuse response and gas generation",
+    "reversible (entropic) heat; the irreversible Joule term only",
+    "any inference of the cell temperature, which is supplied from outside",
+)
+
 # =====================================================================
 # Model 1 — Rint terminal behaviour and irreversible heat
 # =====================================================================
 
 RINT_OCV_MODEL = ScientificModelDefinition(
+    exclusions=_SHARED_EXCLUSIONS
+    + (
+        "the overpotential beyond one constant series resistance",
+        "the reversible term -I T dU/dT in the heat, which is of the same "
+        "order at low rate and changes sign with current direction and state "
+        "of charge",
+        "any dependence of the internal resistance on temperature or state of "
+        "charge; one measured value stands for the whole run",
+    ),
     model_id="battery.cell.rint_ocv",
     version=MODEL_VERSION,
     name="Rint equivalent-circuit cell with affine open-circuit voltage",
@@ -544,7 +569,8 @@ RINT_OCV_MODEL = ScientificModelDefinition(
     + (
         "one constant series resistance stands for the whole overpotential",
         "the open-circuit voltage is an affine chord between two declared "
-        "endpoints, not a measured curve",
+        "endpoints unless the cell declares a curve for it, in which case "
+        "the curve governs and is evidence only over its declared interval",
         "the heat generated is I^2 R_int; the reversible term -I T dU/dT is "
         "omitted, is of the same order at low rate, and changes sign with "
         "current direction and state of charge",
@@ -799,6 +825,14 @@ RINT_OCV_MODEL = ScientificModelDefinition(
 # =====================================================================
 
 COULOMB_COUNTING_MODEL = ScientificModelDefinition(
+    exclusions=_SHARED_EXCLUSIONS
+    + (
+        "self-discharge, and coulombic loss beyond the declared efficiency",
+        "any feedback: no voltage-based correction, so an error in the "
+        "starting state of charge persists undiminished",
+        "rate derating; the nominal capacity is taken as the charge available "
+        "at this temperature and rate",
+    ),
     model_id="battery.cell.coulomb_counting",
     version=MODEL_VERSION,
     name="State of charge by coulomb counting",
@@ -979,6 +1013,12 @@ COULOMB_COUNTING_MODEL = ScientificModelDefinition(
 # =====================================================================
 
 CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
+    exclusions=_SHARED_EXCLUSIONS
+    + (
+        "a varying load; the current is held constant for the whole run, not "
+        "merely for one step",
+        "anything beyond the first cutoff reached",
+    ),
     model_id="battery.cell.constant_current_runtime",
     version=MODEL_VERSION,
     name="Runtime to a declared cutoff under a constant current",
@@ -1115,6 +1155,13 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
 # =====================================================================
 
 PEUKERT_DERATING_MODEL = ScientificModelDefinition(
+    exclusions=_SHARED_EXCLUSIONS
+    + (
+        "a varying load; the law is defined over a constant-current discharge "
+        "and says nothing about one that varies",
+        "any derivation of the exponent, which is a fit and is treated as "
+        "constant over the declared current and temperature range only",
+    ),
     model_id="battery.cell.peukert_capacity_derating",
     version=MODEL_VERSION,
     name="Peukert rate-capacity derating",

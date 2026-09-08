@@ -4541,3 +4541,109 @@ remaining six. What *would* close it is a per-quantity assertion — a model
 stating, for each input, whether its own claim is that the quantity is
 constant — and that is a model-record change on ten models, not a mechanism.
 It is the honest next step and it is not built here.
+
+## T2. Exclusions: the field, the count, and two premises that were wrong
+
+`ScientificModelDefinition.exclusions` states what a model **does not
+represent**, three-valued: `None` is not declared, `()` is the claim that it
+excludes nothing, and a tuple is the list. It is surfaced in the credibility
+report on `ModelValidityRecord`, beside the assessment.
+
+### Two things the round's premise had slightly wrong, and they matter
+
+**There are sixteen models, not ten.** The task named ten; the tree holds
+sixteen `ScientificModelDefinition` values. Fifteen now declare exclusions.
+
+**They were not only in docstrings.** Most of these exclusions were already in
+each model's `assumptions` tuple -- "no radiation, no phase change, no mass
+transport" is a literal entry on the lumped body. So the record *did* carry
+them. What no report carried was either field: `CredibilityEvidenceReport` has
+never rendered `assumptions`, and a caller reading a report saw neither. The
+defect is therefore real and is one step to the left of where it was stated:
+not "written only in prose" but "written in a record nothing shows a reader".
+
+That reframing is why `exclusions` is a second field rather than a rename of
+`assumptions`. An assumption is a condition a run can be checked against --
+"Biot number small enough", which has `biot_number` behind it in the validity
+domain. An exclusion is a phenomenon no condition can detect, because the
+model does not represent it. A reader who sees IN_DOMAIN has been told the
+checkable half and needs to be told the other one explicitly, because nothing
+will ever raise about it.
+
+### Required, and the answer is "not in the constructor"
+
+It was, for about an hour. The constructor refused a model that named a domain
+and declared no exclusions. `test_legacy_model_record_still_loads_unchanged`
+is what said no: **the same constructor reads archived records through
+`from_dict`**, and a record written before the field existed genuinely does
+not declare exclusions. Refusing to load it destroys information rather than
+preventing a claim.
+
+So the rule is about *authoring*, and it is enforced over the authored
+population -- every definition the package sweep reaches -- by a repo-wide
+guard in `test_core_guards.py`, with one named exemption. What the constructor
+still refuses is a *malformed* exclusion: a blank string, which is
+statement-shaped and states nothing.
+
+**This is weaker than an import-time refusal and the difference should be
+named.** A library consumer constructing their own model gets no error until
+they run this repository's suite. What that buys is the ability to read a `/1`
+record at all. The alternative -- a private "this came from a payload" flag
+threaded through `from_dict` -- was considered and rejected as a worse record.
+
+`exclusions=()` is deliberately **not** the default, so no model reaches "I
+exclude nothing" by omission. Today none claims it.
+
+### The wire format moved, additively
+
+`scientific_model_definition/1` -> `/2`. `require_schema_any` reads both; only
+`/2` is written. A `/1` payload reads back with `exclusions=None`, not `[]` --
+"this record does not say" is not "this model excludes nothing", and the round
+trip is exactly where that distinction would have been quietly lost.
+`test_g3_no_existing_schema_version_moved` is updated with the reason, which
+is what that test asks of anyone who moves a schema.
+
+### The one model that could not be given exclusions
+
+`thermal.conduction1d.linear_diffusion` is constructed inside
+`src/engcore/domains/thermal/`, a frozen byte-pinned tree this round may not
+edit. Its exclusions exist -- no convection, no radiation, no phase change, no
+source term, all in its `assumptions` -- and a report reader still cannot see
+them. It reports `None`, which is the honest rendering, and it is the guard's
+single named exemption. **The exemption is named in the guard, not in the
+core:** the core does not know a domain's model id, and
+`test_x2_no_domain_conditional_was_added_to_universal_core` caught the first
+attempt to put it there.
+
+Closing this entry costs one edit to a frozen file and a re-freeze of its
+digests.
+
+### Counts, by model
+
+| model | exclusions |
+|---|---|
+| `battery.cell.rint_ocv` | 10 |
+| `battery.cell.coulomb_counting` | 10 |
+| `battery.cell.constant_current_runtime` | 9 |
+| `battery.cell.peukert_capacity_derating` | 9 |
+| `electrical.dc.resistor_ohm` | 5 |
+| `electrical.dc.kcl` | 6 |
+| `electrical.dc.ideal_voltage_source` | 7 |
+| `electrical.dc.ideal_current_source` | 7 |
+| `electrical.dc.regulated_voltage_source` | 5 |
+| `electrical.dc.self_heated_resistor` | 5 |
+| `electrical.material.linear_tcr_resistance` | 5 |
+| `electrical.material.rated_linear_tcr_resistance` | 5 |
+| `kinetics.cstr.nonisothermal_first_order` | 10 |
+| `kinetics.cstr.nonisothermal_first_order_constant_rate` | 8 |
+| `thermal.lumped.first_order_capacity` | 7 |
+| `thermal.conduction1d.linear_diffusion` | **undeclared — frozen tree** |
+
+No model claims to exclude nothing.
+
+### One correction the curve mechanism forced
+
+`battery.cell.rint_ocv` assumed "the open-circuit voltage is an affine chord
+between two declared endpoints, not a measured curve". That stopped being true
+in the previous commit. Corrected in place rather than left to rot, which is
+the same class of staleness as the mutation entry pointing at deleted code.
