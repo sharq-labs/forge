@@ -91,10 +91,23 @@ if sp.exists():
 
 if split is None:
     if a.split!="all":
+        # The regeneration line is deliberately last and deliberately qualified.
+        # It is the instruction this refusal hands over, and following it on a
+        # case set that has NOT changed reallocates the sealed seats: cases move
+        # from holdout into dev and the next --split dev run scores them, with no
+        # --open-holdout and no line in the openings log. Read the
+        # "REGENERATING AN EXISTING SPLIT OPENS THE HOLD-OUT" section of
+        # split_hard.py before acting on it.
         sys.exit(f"--split {a.split} needs a split file matching these cases.\n"
                  f"  cases           {a.cases}\n  digest          {FULL_DIGEST[:16]}\n"
                  f"  split file      {sp} ({'digest mismatch' if sp.exists() else 'absent'})\n"
-                 f"Regenerate with: python benchmarks/hard/split_hard.py --cases {a.cases}")
+                 f"Check the digest above against the split file before doing anything:\n"
+                 f"  python benchmarks/hard/split_hard.py --cases {a.cases} --verify\n"
+                 f"ONLY if the case set really changed, regenerate. Regenerating an\n"
+                 f"unchanged set reallocates the sealed seats -- cases move from holdout\n"
+                 f"into dev and get scored, which opens the hold-out without saying so.\n"
+                 f"See split_hard.py, 'REGENERATING AN EXISTING SPLIT OPENS THE HOLD-OUT'.\n"
+                 f"  python benchmarks/hard/split_hard.py --cases {a.cases}")
     scope="all (no split defined for this case set)"
 else:
     if a.split in ("holdout","all") and not a.open_holdout:

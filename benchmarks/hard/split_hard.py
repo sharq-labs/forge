@@ -67,6 +67,44 @@ hold-out ≈ (full − dev) is arithmetic anyone can do. Claiming otherwise woul
 be the same kind of unearned number this benchmark's README already warns
 about. The seal is procedural, and the procedure is the part that matters.
 
+REGENERATING AN EXISTING SPLIT OPENS THE HOLD-OUT
+--------------------------------------------------
+**Read this before running this file against a case set that already has a
+split.** It is the one operation here that looks like maintenance and is not.
+
+Regenerating does not re-derive the same partition and leave it in place. It
+reallocates seats: the stratified order is recomputed, the largest-remainder
+allocation runs again, and cases move between `dev` and `holdout`. Every case
+that moves from `holdout` to `dev` is then scored by the next `--split dev`
+run — the seal broken without `--open-holdout`, without a line in
+`HOLDOUT_OPENINGS.log`, and without anybody intending it. The hold-out is
+opened through a side door, and the door is labelled "regenerate".
+
+The route to it is short, and it has been walked. `score_hard.py` refuses
+`--split dev` whenever the case-set digest does not match this file's, and
+that refusal ends with *"Regenerate with: python
+benchmarks/hard/split_hard.py"*. Anyone who has been told the digest is stale
+— correctly, or as happened once on a number relayed from a review rather than
+measured — follows the line they were given, and the seal is gone before the
+first score. The instruction and the breach are the same keystroke.
+
+So, in order:
+
+1. **Recompute the digest yourself first.** `--verify` prints the composition
+   proof and the digest this file expects; compare it against the case files
+   on disk. A mismatch reported by anyone, a review included, is a claim until
+   you have measured it. This project's first rule is that an inference is not
+   a measurement, and a digest is the cheapest measurement in the repository.
+2. **Regenerate only when the case set has genuinely changed** — cases added,
+   removed, or edited. Then the old hold-out is about a case set that no
+   longer exists, reallocation is the honest thing to do, and the cases that
+   move were never sealed against *these* cases in the first place.
+3. **When it has not changed, do nothing.** There is no repair to make, and
+   regenerating would move sealed cases into the partition that gets scored.
+   Doing nothing is the action; it is not the absence of one.
+
+The seal is procedural, and this is the procedure's weakest hour.
+
 Run
 ---
     python benchmarks/hard/split_hard.py --cases benchmarks/hard/cases_hard

@@ -17,6 +17,7 @@ import ast
 import importlib
 import pathlib
 import pkgutil
+import sys
 
 import pytest
 
@@ -36,6 +37,32 @@ from src.engcore.scientific.units.quantity import Quantity
 # Discovery
 # =====================================================================
 
+#: Modules the walk could not import, and what stopped each.
+#:
+#: Recorded rather than discarded. Every discovery below is a sweep, and a
+#: sweep that loses part of its population reports a clean tree it did not
+#: read -- the failure mode `mutation_guards.py` exists for, in the machinery
+#: doing the checking. The floor that was supposed to notice could not: with
+#: `assert len(MODELS) >= 14` against sixteen models, one unimportable leaf
+#: dropped the sweep to fourteen, silently removed twelve parametrized guard
+#: instances, and the assertion whose own docstring reads "a guard over an
+#: empty set passes and proves nothing" passed.
+MODEL_DISCOVERY_FAILURES: dict[str, str] = {}
+
+
+def _record_walk_failure(name: str) -> None:
+    """`pkgutil`'s own error hook, which otherwise swallows ImportError.
+
+    Re-raises anything that is not an ImportError, which is what
+    `walk_packages` does with no hook supplied, so a broken module still
+    fails loudly here rather than quietly narrowing the sweep.
+    """
+    exception = sys.exc_info()[1]
+    MODEL_DISCOVERY_FAILURES[name] = f"{type(exception).__name__}: {exception}"
+    if not isinstance(exception, ImportError):
+        raise  # pragma: no cover - preserves walk_packages' own behaviour
+
+
 def _every_model() -> tuple[ScientificModelDefinition, ...]:
     """Every model record reachable from ``engcore``, by import rather than list.
 
@@ -45,11 +72,18 @@ def _every_model() -> tuple[ScientificModelDefinition, ...]:
     would be exactly the domain worth testing.
     """
     found: dict[tuple[str, str], ScientificModelDefinition] = {}
-    for module_info in pkgutil.walk_packages(engcore.__path__, "src.engcore."):
+    for module_info in pkgutil.walk_packages(
+        engcore.__path__, "src.engcore.", onerror=_record_walk_failure
+    ):
         try:
             module = importlib.import_module(module_info.name)
-        except Exception:  # pragma: no cover - an unimportable module is a
-            continue       # different test's failure, not this one's
+        except Exception as exc:  # an unimportable module is a different
+            # test's failure -- but it is this one's population, so it is
+            # counted here instead of vanishing.
+            MODEL_DISCOVERY_FAILURES[module_info.name] = (
+                f"{type(exc).__name__}: {exc}"
+            )
+            continue
         for attribute in dir(module):
             try:
                 value = getattr(module, attribute)
@@ -65,14 +99,48 @@ MODEL_IDS = [f"{m.model_id}@{m.version}" for m in MODELS]
 RESERVING = [m for m in MODELS if m.derived_quantities]
 RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 
+#: What the repository contains, as counted by the walk above.
+#:
+#: **Exact, not a floor, and that is the whole point.** A floor fails on a
+#: loss only if the loss is bigger than its slack, and it never fails on an
+#: addition at all -- so a model that lands without being covered here is
+#: indistinguishable from one that was. An exact count is wrong in both
+#: directions and has to be updated deliberately, which is the moment somebody
+#: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
+#: the pattern: derive the population, then assert its size.
+EXPECTED_MODELS = 16
+EXPECTED_RESERVING_MODELS = 15
+EXPECTED_CONDITION_NAMES = 64
+EXPECTED_RESERVED_NAMES = 46
 
-def test_the_discovery_actually_found_the_repository():
-    """A guard over an empty set passes and proves nothing."""
-    assert len(MODELS) >= 14
+
+def test_the_discovery_found_exactly_the_repository():
+    """A guard over an empty set passes and proves nothing -- and so does a
+    guard over most of one.
+
+    Four numbers, all exact. If a model, a condition or a reserved name is
+    added, this fails and names what changed; if one is lost -- to a rename, a
+    move, or a module that stopped importing -- it fails the same way. Neither
+    direction can be reached by accident, and the assertion message carries the
+    import failures so a loss names its own cause instead of being a number
+    that got smaller.
+    """
+    assert not MODEL_DISCOVERY_FAILURES, (
+        "the model walk could not import these, so every guard below ran over "
+        "a smaller repository than it claims to cover: "
+        f"{MODEL_DISCOVERY_FAILURES}"
+    )
+    assert len(MODELS) == EXPECTED_MODELS, sorted(m.model_id for m in MODELS)
+    assert len(RESERVING) == EXPECTED_RESERVING_MODELS, sorted(
+        m.model_id for m in RESERVING
+    )
     domains = {m.domain for m in MODELS}
-    assert {"electrical", "thermal", "battery"} <= domains
-    # And most of them reserve something, so the guards below are not vacuous.
-    assert len(RESERVING) >= 12
+    assert {"electrical", "thermal", "battery", "kinetics"} == domains
+
+    condition_names = sum(len(m.validity.context_keys) for m in MODELS)
+    reserved_names = sum(len(m.derived_quantities) for m in MODELS)
+    assert condition_names == EXPECTED_CONDITION_NAMES
+    assert reserved_names == EXPECTED_RESERVED_NAMES
 
 
 # =====================================================================
@@ -189,6 +257,121 @@ def test_a_registry_can_enumerate_every_reserved_name_in_the_repository():
         "peukert_capacity_ratio",
         "reduced_debye_temperature",
     } <= reserved
+
+
+def test_no_model_declares_a_quantity_its_own_domain_derives():
+    """The census, over every model, of the door the constructors leave open.
+
+    ``ScientificModelDefinition`` refuses a condition reading a name that is
+    neither reserved nor a declared input. ``ValidityDomain`` refuses a
+    reserved name that no condition reads. Between them every condition name
+    is classified -- and a domain that declares its own derived quantity as a
+    model **input** satisfies both rules, because the name is then genuinely
+    declared. That is the fifth instance of the forgery wearing the one
+    disguise the two constructors cannot see through.
+
+    This measures the population rather than asserting a list: every condition
+    name in the repository, in one of exactly two buckets. It is what makes
+    the claim "there is no instance today" a measurement.
+
+    ``temperature`` is the case that shows why the obvious cheap test -- no
+    reserved name may be any model's declared input -- would be wrong. The two
+    material models both reserve it *and* declare it, and that is correct:
+    ``resistance_validity_context`` assembles it, the record documents that
+    the model consumes a temperature, and ``validity_context(reserved=...)``
+    refuses a caller parameter of that name. Reserved-and-declared is safe;
+    declared-and-not-reserved is the defect, and only the second is asserted.
+    """
+    classified = 0
+    for model in MODELS:
+        inputs = {spec.name for spec in model.inputs}
+        for name in sorted(model.validity.context_keys):
+            assert name in model.derived_quantities or name in inputs, (
+                model.model_id,
+                name,
+            )
+            classified += 1
+    assert classified == EXPECTED_CONDITION_NAMES
+
+
+def test_a_derived_quantity_declared_as_an_input_is_refused_at_assessment():
+    """And the refusal, for the sixth domain that gets there before the census.
+
+    The census above is a fact about today. This is the rule, and it lives on
+    ``DomainValidityContext.assess`` rather than in a sweep for the reason
+    GUARD 1 moved into the core in the first place: a sweep over the five
+    domains that exist is a guard over what somebody remembered.
+
+    The model below is exactly the shape a domain reaches by accident --
+    ``forged_group`` is read by a condition and declared as a parameter, so
+    the record constructs, imports and passes every guard above it. Handing
+    the assembler's own value for it to ``assess`` used to drop the value
+    silently, after which the condition read the caller's half instead.
+    """
+    from src.engcore.domains.derived_context import DomainValidityContext
+    from src.engcore.scientific.models.definition import (
+        InputSourceKind,
+        ModelInputSpec,
+        RangeCondition,
+        ValidityDomain,
+    )
+
+    model = ScientificModelDefinition(
+        model_id="synthetic.sixth_domain",
+        version="0.1.0",
+        name="A domain that declared its derived quantity",
+        domain="synthetic",
+        inputs=(
+            ModelInputSpec(
+                name="forged_group",
+                source_kind=InputSourceKind.PARAMETER,
+                unit_exemplar="dimensionless",
+            ),
+        ),
+        validity=ValidityDomain(
+            conditions=(
+                RangeCondition(
+                    name="forged_group",
+                    maximum=Quantity(1.0, "dimensionless"),
+                ),
+            ),
+        ),
+    )
+    # It constructs. That is the point: nothing before this refuses it.
+    assert model.validity.context_keys == frozenset({"forged_group"})
+    assert model.derived_quantities == frozenset()
+
+    context = DomainValidityContext(
+        declared={},
+        assembled={"forged_group": Quantity(0.5, "dimensionless")},
+    )
+    with pytest.raises(InvalidScientificProblem, match="forged_group"):
+        context.assess(model)
+
+
+def test_the_refusal_does_not_fire_on_another_model_s_business():
+    """The narrowness of the rule above, asserted rather than assumed.
+
+    One domain assembles once for every model it serves -- the four battery
+    models reserve four different subsets of one assembly -- so an assembled
+    name a model's conditions never read must still be dropped silently. A
+    refusal that could not tell the two apart would break every multi-model
+    domain in the repository, which is a louder failure than the one it fixes
+    and would have been found immediately; this is here so that the day it is
+    made narrower by mistake, it is found immediately too.
+    """
+    from src.engcore.domains.derived_context import DomainValidityContext
+
+    model = next(m for m in RESERVING if m.model_id == "electrical.dc.kcl")
+    context = DomainValidityContext(
+        declared={},
+        assembled={
+            "lumped_electrical_length": Quantity(0.0, "dimensionless"),
+            "a_name_another_model_reserves": Quantity(1.0, "dimensionless"),
+        },
+    )
+    assessment = context.assess(model)
+    assert assessment.satisfied == ("lumped_electrical_length",)
 
 
 # =====================================================================
@@ -464,7 +647,10 @@ def test_every_check_a_live_solve_produces_earns_its_level():
         for check in report.checks:
             seen += 1
             assert check.earns_its_level, (check.name, check.to_dict())
-    assert seen >= 10
+    # Exact. `>= 10` against the thirteen these two solves produce would have
+    # let three checks stop being emitted -- which is how a check stops being
+    # audited without anyone deciding that it should.
+    assert seen == 13, [c.name for r in reports for c in r.checks]
 
 
 # =====================================================================
@@ -688,10 +874,17 @@ def _every_solver():
     from src.engcore.scientific.solvers.protocol import ScientificSolver
 
     seen: dict[str, type] = {}
-    for module_info in pkgutil.walk_packages(engcore.__path__, "src.engcore."):
+    for module_info in pkgutil.walk_packages(
+        engcore.__path__, "src.engcore.", onerror=_record_walk_failure
+    ):
         try:
             module = importlib.import_module(module_info.name)
-        except Exception:  # pragma: no cover
+        except Exception as exc:  # counted, for the reason MODEL_DISCOVERY_
+            # FAILURES exists: a sweep that quietly loses a module reports a
+            # clean tree it did not read.
+            MODEL_DISCOVERY_FAILURES[module_info.name] = (
+                f"{type(exc).__name__}: {exc}"
+            )
             continue
         for _, value in inspect.getmembers(module, inspect.isclass):
             if not value.__module__.startswith("src.engcore."):
@@ -714,8 +907,15 @@ def _every_solver():
 
 SOLVER_CLASSES = _every_solver()
 
+#: Exact, for the reason EXPECTED_MODELS is. A tenth adapter that lands
+#: without being covered by the guards below should fail here on the day it
+#: lands, and `>= 8` could not tell that from the nine there are.
+EXPECTED_SOLVER_CLASSES = 9
+
+
 def test_the_solver_discovery_found_the_adapters():
-    assert len(SOLVER_CLASSES) >= 8, sorted(SOLVER_CLASSES)
+    assert not MODEL_DISCOVERY_FAILURES, MODEL_DISCOVERY_FAILURES
+    assert len(SOLVER_CLASSES) == EXPECTED_SOLVER_CLASSES, sorted(SOLVER_CLASSES)
     # The adapter that used to be the exception here, still discovered -- it
     # inherits `DeclaredSupport` now rather than answering for itself.
     assert (

@@ -21,8 +21,8 @@ What this does
 --------------
 For each entry in :data:`MUTATIONS`, copy `src`, `tests` and `pyproject.toml`
 into a throwaway directory, remove one guard from the copy **as if it had never
-been written**, and run `tests/test_core_guards.py` against it. The suite must
-go red. A mutation that leaves it green names a check that is decoration.
+been written**, and run every suite in :data:`TARGETS` against it. They must go
+red. A mutation that leaves them green names a check that is decoration.
 
 Nothing is written to the repository. Run it as::
 
@@ -93,6 +93,34 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "        unregistered = sorted(set(assembled) - self.derived_quantities)",
      "        unregistered = []",
      "assess stops refusing an assembled name the model does not reserve"),
+    ("G1e", "src/engcore/domains/derived_context.py",
+     "        read_and_unreserved = sorted(\n"
+     "            (set(self.assembled) & set(model.validity.context_keys)) - reserved\n"
+     "        )",
+     "        read_and_unreserved = []",
+     "assess goes back to silently dropping a derived quantity a model reads "
+     "and does not reserve (the sixth-domain door)"),
+    ("G1f", "src/engcore/domains/derived_context.py",
+     "            (set(self.assembled) & set(model.validity.context_keys)) - reserved\n",
+     "            set(self.assembled) - reserved\n",
+     "the same refusal stops distinguishing another model's business from "
+     "this model's forgery"),
+    ("G8a", "src/engcore/domains/electrical/dc_applicability.py",
+     "SOURCE_REGULATION_UTILIZATION = \"source_regulation_utilization\"",
+     "import _an_optional_dependency_that_is_not_installed\n"
+     "SOURCE_REGULATION_UTILIZATION = \"source_regulation_utilization\"",
+     "a domain module stops importing and the model sweep silently shrinks "
+     "(the floor that could not see it)"),
+    ("G8b", "src/engcore/domains/electrical/dc/validation.py",
+     "            check_power_balance(prepared, solution, settings),\n",
+     "",
+     "a domain quietly stops emitting one validation check (the live-solve "
+     "count that was a floor)"),
+    ("G8c", "src/engcore/domains/electrical/dc/models.py",
+     "        return exponent if _no_derating_line(context) else None",
+     "        return exponent",
+     "the power utilization inverts against the PRINTED rating when a "
+     "derating line is declared -- a hint that leaves the design refused"),
     ("G1d", "src/engcore/domains/electrical/dc/models.py",
      "        derived_quantities=frozenset(\n"
      "            {DISSIPATED_POWER_UTILIZATION, WORKING_VOLTAGE_UTILIZATION}\n"
@@ -239,7 +267,21 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "the provider adapter stops admitting its parsed values"),
 )
 
-TARGET = "tests/test_core_guards.py"
+#: The suites a mutation must turn red.
+#:
+#: **A list, and therefore the thing this file is worst at.** The harness's own
+#: reach is the one guard here nothing else checks: a guard written into a
+#: module not named below is verified by nobody, and the harness reports a
+#: clean 21/21 either way -- "a guard derived from a hand-maintained list
+#: guards only what someone remembered", which is the same defect one level up
+#: from the four mutations that had silently stopped applying.
+#:
+#: It cannot be derived: which suite covers which guard is a fact about intent,
+#: not about the tree. So it is written down, kept short, and every entry in
+#: MUTATIONS names the suite it expects to fail in its description. The rule
+#: for the next person is the cheap one: **a guard whose suite is not in this
+#: tuple is not verified, whatever the harness prints.**
+TARGETS = ("tests/test_core_guards.py", "tests/test_repair_guidance.py")
 #: What the mutated copy needs to be a faithful copy. ``experiments`` is here
 #: because a guard in the target suite reads the frozen experiment configs to
 #: check that every package-level validity exemption names a file a freeze
@@ -314,7 +356,7 @@ def _self_test() -> None:
 
 def _run(where: pathlib.Path, scratch: pathlib.Path) -> tuple[int, str, list[str]]:
     done = subprocess.run(
-        [sys.executable, "-X", "utf8", "-m", "pytest", TARGET, "-q",
+        [sys.executable, "-X", "utf8", "-m", "pytest", *TARGETS, "-q",
          "-p", "no:randomly", "--basetemp", str(scratch / "pt" / "bt")],
         cwd=where, capture_output=True, text=True, timeout=900,
     )

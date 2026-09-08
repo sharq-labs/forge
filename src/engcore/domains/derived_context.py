@@ -140,8 +140,46 @@ class DomainValidityContext:
     assembled: Mapping[str, Any]
 
     def assess(self, model: Any) -> Any:
-        """This model's verdict, over the slice of the assembly it reserves."""
-        reserved = model.derived_quantities
+        """This model's verdict, over the slice of the assembly it reserves.
+
+        **The filter is narrow, and what it does not cover raises.** A name in
+        the assembly that this model's conditions never read is another
+        model's business and is dropped -- that is what the filter is for and
+        the only reason it exists. A name in the assembly that this model's
+        conditions *do* read and that it does not reserve is a sixth instance
+        of the forgery, arriving through the one door the constructors leave
+        open.
+
+        ``ScientificModelDefinition`` refuses a condition reading a name that
+        is neither reserved nor a declared input; ``ValidityDomain`` refuses a
+        reserved name nothing reads. A domain that declares its derived
+        quantity as a model **input** satisfies both. The record imports,
+        GUARD 1 passes, and this filter then silently discards the value the
+        assembler computed -- after which the condition reads that name out of
+        ``declared``, which is the caller's half. The verdict is formed over
+        the caller's number and nothing anywhere says so.
+
+        There is no instance today, and the census in
+        ``tests/test_core_guards.py`` is what measures that rather than
+        asserting it. This refuses the shape, so the sixth domain finds out at
+        its first assessment instead of in a report. Deliberately a refusal
+        here and not a sweep: a sweep over the five domains that exist is a
+        guard over what somebody remembered.
+        """
+        reserved = frozenset(model.derived_quantities)
+        read_and_unreserved = sorted(
+            (set(self.assembled) & set(model.validity.context_keys)) - reserved
+        )
+        if read_and_unreserved:
+            raise InvalidScientificProblem(
+                f"model {model.model_id!r} reads {read_and_unreserved} in its "
+                f"validity conditions but reserves only {sorted(reserved)}, "
+                f"and this domain's assembler computed them. Dropping them "
+                f"here would send those conditions to the caller-declared "
+                f"half for quantities the domain derives, which is the "
+                f"forgery this module exists to prevent. Add them to the "
+                f"model's derived_quantities"
+            )
         return model.assess_validity(
             declared=self.declared,
             assembled={

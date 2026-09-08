@@ -861,3 +861,189 @@ def test_no_emitted_hint_anywhere_names_something_that_is_not_declared():
             model = by_id[repair.model_id]
             for hint in repair.hints:
                 assert hint.target_name in parameter_inputs(model)
+
+
+# =====================================================================
+# The temperature-adjusted rating
+# =====================================================================
+#
+# `dissipated_power_utilization` is one condition with two readings. With no
+# derating line it is P / (d * P_rated) and is a reciprocal in both the rating
+# and the derating factor, so both invert. With a line declared it becomes
+# affine in the reciprocal of the rating, with an offset formed from the
+# ambient temperature -- which is not a declared input of the resistor model,
+# because it crosses in from the thermal body sharing the element's component
+# id. The offset cannot be formed from the assessed context, so the form is
+# not anchored and `_constant_rating_only` resolves no exponent.
+#
+# The domain already does the right thing here: it emits no hint and four
+# named refusals. What it did not have was a test, and correct behaviour that
+# nothing verifies is one refactor from being wrong -- which is the whole
+# argument of "a check whose failure has never been observed is unverified",
+# applied to a behaviour rather than to a check. The specific wrong answer
+# this guards against is a hint computed against the PRINTED rating: at the
+# operating point below that would read "raise rated_power to 2.43 W" when the
+# part is already declared at 7 W, and applying it would leave the condition
+# violated. A hint that leads to a still-refused design is worse than no hint.
+
+#: 7 W at 25 C falling to zero at 155 C, run at an ambient of 400 K.
+#: The line gives an effective rating of 7 * (428.15 - 400) / (428.15 - 298.15)
+#: = 1.5158 W, so a part dissipating ~1.58 W is at 1.04 of its rating -- and
+#: at 0.23 of the printed one, which is the number a reader must not be given.
+DERATING_LINE_PAYLOAD = copy.deepcopy(BIOT_VIOLATING_PAYLOAD)
+DERATING_LINE_PAYLOAD["stages"][0]["body"].update(
+    {"ambient_temperature": "400 kelvin", "initial_temperature": "400 kelvin"}
+)
+DERATING_LINE_PAYLOAD["coupling"]["seed_temperature"] = "400 kelvin"
+DERATING_LINE_PAYLOAD["stages"][0]["conductor"]["ratings"] = {
+    "rated_power": "7.0 watt",
+    "rated_power_temperature": "298.15 kelvin",
+    "zero_power_temperature": "428.15 kelvin",
+    "maximum_working_voltage": "8.0 volt",
+}
+
+
+def _power_utilization_repair():
+    case = run_electrothermal_case(copy.deepcopy(DERATING_LINE_PAYLOAD))
+    for repairs in case.repairs:
+        for repair in repairs:
+            if repair.condition == "dissipated_power_utilization":
+                return case, repair
+    raise AssertionError(
+        "this payload is meant to violate dissipated_power_utilization; it "
+        "violates "
+        + str(
+            [
+                (r.model_id, r.condition)
+                for repairs in case.repairs
+                for r in repairs
+            ]
+        )
+    )
+
+
+def test_the_derated_rating_is_what_the_condition_is_measured_against():
+    """The observed value is the effective rating's, not the printed one's.
+
+    The two readings differ by a factor of 4.6 here, and they differ across
+    the bound: judged against the printed 7 W this part is at 0.22 of its
+    rating and the case is not violated at all.
+    """
+    _case, repair = _power_utilization_repair()
+    assert repair.bound.magnitude == 1.0
+    assert repair.bound_side == "maximum"
+    assert repair.observed.magnitude == pytest.approx(1.00484, rel=1e-4)
+
+    # The same dissipation against the printed rating, spelled out so the
+    # number this test exists to keep out of a report is visible in it.
+    effective = 7.0 * (428.15 - 400.0) / (428.15 - 298.15)
+    dissipated = repair.observed.magnitude * effective
+    assert dissipated / 7.0 == pytest.approx(0.2176, rel=1e-3)
+    assert dissipated / 7.0 < 1.0
+
+
+def test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest():
+    """One inversion succeeds now that the ambient crosses in declared.
+
+    `rated_power` inverts against the temperature-adjusted form, not the
+    printed-rating one -- the hint this test guards is 7.515354 W, not the
+    2.43 W a naive inversion against the constant reading would report at
+    this operating point, which would leave the design refused if followed.
+    The other three inputs stay refused: moving `rated_power_temperature` or
+    `zero_power_temperature` would change the manufacturer's stated part
+    rather than how it is used, and `derating_factor` would have to exceed
+    1.0, which `ComponentRating` itself refuses.
+    """
+    _case, repair = _power_utilization_repair()
+    assert repair.repairable is True
+    assert len(repair.hints) == 1
+    hint = repair.hints[0]
+    assert hint.target_name == "rated_power"
+    assert hint.direction is rp.RepairDirection.AT_LEAST
+    assert hint.threshold.magnitude_in("watt") == pytest.approx(
+        7.515353987089999, rel=1e-9
+    )
+    naive = 7.0 * 1.00484 / 1.0  # the printed-rating reading's own hint, avoided
+    assert hint.threshold.magnitude_in("watt") != pytest.approx(naive, rel=1e-3)
+
+    assert {refusal.target for refusal in repair.refusals} == {
+        "derating_factor",
+        "rated_power_temperature",
+        "zero_power_temperature",
+    }
+    for refusal in repair.refusals:
+        assert refusal.reason.strip()
+
+
+def test_without_the_line_the_same_condition_does_invert():
+    """The refusal is about the derating line, not about the condition.
+
+    A refusal that fired whichever way the rating was declared would be a
+    condition nothing can ever repair, dressed as a route decision. Same
+    payload, same operating point, rating declared as a constant instead of a
+    line: both reciprocals come back.
+    """
+    payload = copy.deepcopy(DERATING_LINE_PAYLOAD)
+    ratings = payload["stages"][0]["conductor"]["ratings"]
+    del ratings["rated_power_temperature"]
+    del ratings["zero_power_temperature"]
+    ratings["rated_power"] = "1.5 watt"  # the effective rating, now as a constant
+
+    case = run_electrothermal_case(payload)
+    repair = next(
+        r
+        for repairs in case.repairs
+        for r in repairs
+        if r.condition == "dissipated_power_utilization"
+    )
+    assert {hint.target_name for hint in repair.hints} == {"rated_power"}
+
+    # `derating_factor` is the other reciprocal and it comes back as a refusal
+    # rather than a hint, which is the R.2 ceiling doing its job: meeting the
+    # bound would need 1.085, and a factor above 1 uses more of a component
+    # than it is rated for while reporting that it is inside its rating. The
+    # raise-the-limit move, reached through a declared input and refused by
+    # name in the report.
+    ceiling = next(x for x in repair.refusals if x.target == "derating_factor")
+    assert "past 1.0 dimensionless" in ceiling.reason
+
+
+def test_the_applied_hint_flips_the_condition_on_the_constant_rating_route():
+    """And the applied-hint reading of it, which is the only proof that counts.
+
+    `derating_factor` is excluded deliberately and it is the more interesting
+    half: its inversion carries an `admissible_maximum` of 1.0, so at this
+    overload the hint is refused rather than printed -- a derating factor above
+    1 uses more of a component than it is rated for while reporting that it is
+    inside its rating. That is the raise-the-limit move reached through a
+    declared input, and the record refusing it is what this asserts.
+    """
+    payload = copy.deepcopy(DERATING_LINE_PAYLOAD)
+    ratings = payload["stages"][0]["conductor"]["ratings"]
+    del ratings["rated_power_temperature"]
+    del ratings["zero_power_temperature"]
+    ratings["rated_power"] = "1.5 watt"
+
+    case = run_electrothermal_case(payload)
+    repair = next(
+        r
+        for repairs in case.repairs
+        for r in repairs
+        if r.condition == "dissipated_power_utilization"
+    )
+    hint = next(h for h in repair.hints if h.target_name == "rated_power")
+
+    repaired = copy.deepcopy(payload)
+    repaired["stages"][0]["conductor"]["ratings"]["rated_power"] = (
+        f"{hint.threshold.magnitude_in('watt')} watt"
+    )
+    after = run_electrothermal_case(repaired)
+    violated = {
+        name
+        for report in after.reports
+        for record in report.validity
+        for name in record.assessment.violated
+    }
+    assert "dissipated_power_utilization" not in violated, (
+        f"applying {hint.line()} left the condition violated"
+    )
