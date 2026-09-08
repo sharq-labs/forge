@@ -311,3 +311,187 @@ def test_a_frozen_mapping_is_a_dict_where_the_repository_expects_one():
     assert json.dumps(record.metadata, sort_keys=True)
     assert {**record.metadata} == dict(record.metadata)
     assert json.dumps(record.provenance.inputs, default=str)
+
+
+# =====================================================================
+# GATE 5 — frozen=True protects the binding, not the container behind it
+# =====================================================================
+#
+# THE DEFECT.
+#
+#     p = ScientificProblem(problem_id="p", metadata={"a": 1})
+#     p.metadata["injected"] = "after construction"   # succeeds; frozen=True
+#     s = SolverSettings(tolerances={"rtol": 1e-8})
+#     s.tolerances["injected"] = 999.0                # succeeds
+#     r = RawSolverOutput(convergence=CONVERGED, values={"v": 1.0})
+#     r.values["injected"] = 42.0                     # succeeds
+#
+# These are the records that cross a trust boundary: a tolerance edited after
+# the record was built makes the run claim it was solved to a bound nobody
+# solved it to, and a value injected into RawSolverOutput is a number that
+# never passed `_require_finite_on_success` sitting in the record that exists
+# to say numbers did.
+
+
+TRUST_BOUNDARY_FIELDS = {
+    # The brief that prompted this listed four records "in priority order".
+    # Two of them -- ProvenanceRecord and ScientificResult -- were ALREADY
+    # frozen before this gate; that is checked here too, so the coverage is a
+    # measured property of the tree rather than a claim about which commit did
+    # what.
+    "RawSolverOutput": ("values", "residuals", "diagnostics"),
+    "SolverSettings": ("tolerances", "options"),
+    "ProvenanceRecord": ("inputs", "tolerances", "environment", "metadata"),
+    "ScientificResult": ("values", "metadata"),
+    "ScientificProblem": ("metadata",),
+}
+
+
+def _trust_boundary_records():
+    """One built instance of each record, with every listed field non-empty.
+
+    Built rather than introspected: the question is whether the CONSTRUCTED
+    record protects its containers, and a type annotation cannot answer it.
+    """
+    from src.engcore.scientific.ir.problem import ScientificProblem
+    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from src.engcore.scientific.results.result import ScientificResult
+    from src.engcore.scientific.results.validation import unverified_report
+    from src.engcore.scientific.solvers.protocol import (
+        ConvergenceState,
+        RawSolverOutput,
+        SolverSettings,
+    )
+    from src.engcore.scientific.units.quantity import Quantity
+
+    provenance = ProvenanceRecord(
+        run_id="run-0001",
+        software_version="v",
+        git_commit="0" * 40,
+        inputs={"t_in": Quantity(1.0, "kelvin")},
+        tolerances={"rtol": 1e-8},
+        environment={"python": "3.12"},
+        metadata={"note": "x"},
+    )
+    return {
+        "RawSolverOutput": RawSolverOutput(
+            convergence=ConvergenceState.CONVERGED,
+            values={"v": 1.0},
+            residuals={"r": 0.0},
+            diagnostics={"d": 1},
+        ),
+        "SolverSettings": SolverSettings(
+            tolerances={"rtol": 1e-8}, options={"linear": True}
+        ),
+        "ProvenanceRecord": provenance,
+        "ScientificResult": ScientificResult(
+            result_id="res-1",
+            values={"t_out": Quantity(2.0, "kelvin")},
+            provenance=provenance,
+            validation=unverified_report(),
+            metadata={"note": "x"},
+        ),
+        "ScientificProblem": ScientificProblem(
+            problem_id="p", metadata={"a": 1}
+        ),
+    }
+
+
+def test_a_record_that_crossed_a_trust_boundary_cannot_be_edited_afterwards():
+    """Every listed container refuses ordinary mutation, on a built record.
+
+    Named for the defect. A sweep rather than five assertions, so a field added
+    to one of these records without freezing fails here on the day it lands
+    rather than the day somebody edits one.
+    """
+    records = _trust_boundary_records()
+    escaped = []
+    for name, fields in sorted(TRUST_BOUNDARY_FIELDS.items()):
+        record = records[name]
+        for field_name in fields:
+            container = getattr(record, field_name)
+            try:
+                container["injected_by_the_test"] = 42.0
+            except TypeError:
+                continue
+            escaped.append(f"{name}.{field_name}")
+    assert escaped == [], (
+        "these fields sit on frozen records and were still editable after "
+        "construction: " + repr(escaped)
+    )
+
+
+def test_the_containers_are_frozen_deeply_and_not_only_at_the_top():
+    """`freeze` is recursive, so a nested dict is not a way back in.
+
+    A top-level-only freeze would refuse `settings.options["a"] = 1` and allow
+    `settings.options["nested"]["a"] = 1`, which is the same defect one level
+    down and reads exactly like a fix.
+    """
+    from src.engcore.scientific.solvers.protocol import SolverSettings
+
+    settings = SolverSettings(options={"nested": {"a": 1}, "listed": [1, 2]})
+    with pytest.raises(TypeError):
+        settings.options["nested"]["a"] = 2
+    with pytest.raises(TypeError):
+        settings.options["listed"][0] = 9
+
+
+def test_freezing_did_not_change_what_the_records_serialize_to():
+    """A FrozenMapping still equals, prints and serializes as what it replaced.
+
+    The whole reason the `dict` subclass was kept. If this fails, the fix
+    bought immutability by changing the wire format, which is not a trade this
+    gate was authorised to make.
+    """
+    import json
+
+    from src.engcore.scientific.solvers.protocol import (
+        ConvergenceState,
+        RawSolverOutput,
+        SolverSettings,
+    )
+
+    settings = SolverSettings(tolerances={"rtol": 1e-8}, options={"linear": True})
+    assert settings.tolerances == {"rtol": 1e-8}
+    assert dict(settings.options) == {"linear": True}
+    assert json.dumps(settings.to_dict(), sort_keys=True)
+    assert {**settings.tolerances} == {"rtol": 1e-8}
+    assert isinstance(settings.tolerances, dict)
+
+    raw = RawSolverOutput(
+        convergence=ConvergenceState.CONVERGED, values={"v": 1.0}
+    )
+    assert raw.values == {"v": 1.0}
+    assert json.dumps(dict(raw.values)) == '{"v": 1.0}'
+
+
+def test_the_residual_hole_is_the_one_the_platform_already_accepts():
+    """A2.6, decided: `dict.__setitem__` and `object.__setattr__` are one hole.
+
+    This does not assert that tampering is impossible — it asserts the two
+    escape routes are the *same class*, which is the whole argument for
+    accepting the `dict` subclass rather than auditing every consumer to
+    replace it. A caller willing to reach for an unbound `dict` method is
+    already willing to reach one level up, where nothing can stop them on any
+    frozen record in this repository.
+
+    The platform's answer to that caller is re-validation where a value becomes
+    a claim (`ValidationReport._require_every_level_earned`,
+    `_require_no_check_contradicts_its_numbers`), not a stronger container.
+    """
+    from src.engcore.scientific.results.immutable import FrozenMapping
+    from src.engcore.scientific.solvers.protocol import SolverSettings
+
+    settings = SolverSettings(tolerances={"rtol": 1e-8})
+
+    # Ordinary use cannot mutate the record. That is the stated guarantee.
+    with pytest.raises(TypeError):
+        settings.tolerances["rtol"] = 1.0
+
+    # Both deliberate routes remain open, and equally so.
+    mapping = FrozenMapping({"a": 1})
+    dict.__setitem__(mapping, "b", 2)
+    assert mapping["b"] == 2
+    object.__setattr__(settings, "tolerances", {"rtol": 1.0})
+    assert settings.tolerances == {"rtol": 1.0}

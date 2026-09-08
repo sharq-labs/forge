@@ -146,7 +146,20 @@ class ScientificProblem:
         object.__setattr__(
             self, "validation_requirements", frozenset(self.validation_requirements)
         )
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        # `freeze`, not `dict`. The two capability sets above are already
+        # `frozenset`s and were safe; this was the one container on the record
+        # that a caller could still edit after construction, and a problem is
+        # what a solve, a provenance record and every downstream verdict are
+        # anchored to.
+        #
+        # Imported here rather than at module scope: `results` imports
+        # `ir.problem` for `ModelReference`, so a top-level import closes a
+        # cycle. The same deferral `mcp/evidence.py` already uses for
+        # `NOT_DECLARED`, and it costs a `sys.modules` lookup against the
+        # validation this method already does.
+        from ..results.immutable import freeze
+
+        object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
         self._require_unique_names()
         self._require_condition_targets()

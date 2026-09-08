@@ -1188,10 +1188,15 @@ broke fifteen multirotor tests, because records' mappings are handed to
 exactly `set(dir(dict)) - set(dir(Mapping))` against the running interpreter, so
 a future CPython dict method fails there rather than opening a hole silently.
 
-**What it needs.** Nothing, unless the platform decides it wants the stronger
-guarantee — in which case the work is auditing every consumer that treats a
-record's mapping as a `dict`, which is the audit this round declined to do
-inside a fix for something else.
+**What it needs.** **DECIDED IN GATE 5: accepted, not strengthened.** The
+argument is in `FrozenMapping`'s own docstring so it travels with the type, and
+in the GATE 5 section below. In short: `dict.__setitem__(m, k, v)` and
+`object.__setattr__(record, field, value)` are the same hole, every frozen
+record in this repository has the second one and none of them can close it, so
+a container that closed the first would defend against a caller who does not
+exist. The platform's answer to that caller is already settled and is not
+stronger containers — it is re-applying the rule where a value becomes a claim.
+What would reopen the question is recorded with the decision.
 
 ### A2.7 Serialization got slower and no consumer was profiled
 
@@ -5511,3 +5516,115 @@ All six were in tests, all six said UNKNOWN without saying why, and each had to
 choose a reason to keep compiling. That is the invariant doing its job on day
 one: the sites that had been asserting a bare gap are exactly the sites that
 now have to say which gap.
+
+---
+
+# NEEDS — GATE 5: immutability is not transitive
+
+## 1. What the sweep actually found
+
+The brief listed four records "in priority order". **Two of them were already
+frozen** before this gate, and that is worth stating precisely rather than
+letting a fix take credit for it:
+
+| record | fields | before this gate |
+|---|---|---|
+| `RawSolverOutput` | `values`, `residuals`, `diagnostics` | **mutable** |
+| `SolverSettings` | `tolerances`, `options` | **mutable** |
+| `ProvenanceRecord` | `inputs`, `tolerances`, `environment`, `metadata` | already frozen |
+| `ScientificResult` | `values`, `validity`, `validity_not_assessed`, `uncertainty`, `metadata` | already frozen |
+| `ScientificProblem` | `metadata` | **mutable** (in the reproduction, not in the priority list) |
+
+So the work was three records, not four, and the third is the one the
+reproduction opens with and the priority list omits.
+
+A sweep of every frozen dataclass under `scientific/` finds **34**
+container-typed fields (the brief said 33). The `frozenset` ones are safe by
+construction; the remainder are listed in §3 as recorded-not-done.
+
+## 2. The A2.6 decision, taken
+
+`NEEDS.md A2.6` raised the `dict`-subclass weakness and closed twice with
+"nothing, unless the platform decides". **Decided: accept it.** Written into
+`FrozenMapping`'s docstring so it travels with the type rather than living only
+here. The argument:
+
+1. `dict.__setitem__(m, k, v)` and `object.__setattr__(record, f, v)` are the
+   **same hole**. Every frozen record here has the second, none can close it —
+   it is a property of the language. Closing the first defends against a caller
+   who does not exist: anyone reaching for an unbound `dict` method is already
+   willing to reach one level up.
+2. The platform's answer to that caller **is already settled and is not
+   stronger containers**: it is re-applying the rule where a value stops being
+   a field and becomes a claim. `ValidationReport._require_every_level_earned`
+   and `_require_no_check_contradicts_its_numbers` both exist for exactly this,
+   and re-validation catches a tampered record *however* it was tampered with.
+3. The cost of strengthening is an audit of every `json.dumps`,
+   `isinstance(..., dict)` and `{**m}` in this repository and its consumers,
+   for a guarantee that shuts one of two doors into the same room.
+
+**What would reopen it:** a consumer that must accept a record's mapping from
+an untrusted process without re-deriving anything from it. No such consumer
+exists today, and if one is written it needs the stronger type *and*
+re-validation — the type alone would still not be enough.
+
+`test_the_residual_hole_is_the_one_the_platform_already_accepts` asserts the
+equivalence rather than asserting tamper-proofing, so the decision is checkable
+instead of merely stated.
+
+## 3. Changes wanted outside the owned paths — not made
+
+### 3.1 The other container-typed fields on frozen core records — NOT FROZEN
+
+Not on the trust-boundary list this gate was scoped to, and each needs its own
+look at whether a caller legitimately mutates it:
+
+`ConversionOutcome.losses`, `SolveRoute.components`,
+`ScientificEvaluation.candidate/objective_values/metadata`,
+`BoundaryCondition.coefficients`,
+`ScientificProblem.required_capabilities/validation_requirements` (already
+`frozenset`, therefore safe), `ScientificParameter.metadata`,
+`ScientificModelDefinition.required_capabilities/metadata`,
+`ValidityDomain.derived_quantities`,
+`ModelRealizationDefinition.*_capabilities`, `VerificationThresholds.values`,
+`PreparedSolve.settings`, `ScientificTwin.metadata`.
+
+`VerificationThresholds.values` is the one worth doing next: the brief's own
+scope note says "especially inspect verification thresholds", a threshold is
+what a level is awarded against, and a threshold widened after the award is
+exactly the shape of GATE 1's defect one layer out. **Not done here** — it is
+outside the four named records and deserves its own change rather than being
+smuggled in.
+
+### 3.2 `ir/problem.py` imports `freeze` inside `__post_init__` — RECORDED
+
+`results` imports `ir.problem` for `ModelReference`, so a module-level import
+closes a cycle. The deferral is the pattern `mcp/evidence.py` already uses for
+`NOT_DECLARED` and costs a `sys.modules` lookup against validation the method
+already does. The cleaner fix is to move `immutable.py` out from under
+`results/`, since it depends on nothing in that package — **not made**, because
+it moves a module every record imports.
+
+## 4. What this gate revealed that the brief did not predict
+
+### 4.1 Two of the four "priority" records needed nothing
+
+Stated as a finding rather than quietly skipped: a brief that lists work in
+priority order is not evidence that the work is outstanding, which is Rule 0
+applied to a task list instead of to a document.
+
+### 4.2 The freeze is recursive, and a top-level-only fix would have looked identical
+
+`settings.options["nested"]["a"] = 1` is the same defect one level down, and a
+fix that refused only the top level would pass every obvious test. `freeze` was
+already recursive; `test_the_containers_are_frozen_deeply_and_not_only_at_the_top`
+pins it, because the property is now load-bearing on records it was not
+load-bearing on before.
+
+### 4.3 Nothing broke, which is the part worth checking
+
+2600 FAST tests pass and the expensive-tier failure set is byte-identical. That
+matters more than usual here: the reason `FrozenMapping` subclasses `dict` is
+that a previous attempt at the stronger type broke fifteen tests, so "the suite
+did not move" is the evidence that this fix took the cheap door and not the
+expensive one.

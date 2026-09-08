@@ -24,6 +24,7 @@ from typing import Any, Mapping, Protocol, runtime_checkable
 
 from ..errors import ScientificCoreError
 from ..results.data_reference import ScientificDataReference
+from ..results.immutable import freeze
 from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity
 from .capability import SolverCapability
@@ -110,8 +111,15 @@ class SolverSettings:
                     f"{tolerance!r}"
                 )
             tolerances[str(key)] = tolerance
-        object.__setattr__(self, "tolerances", tolerances)
-        object.__setattr__(self, "options", dict(self.options))
+        # `freeze`, not `dict`. `frozen=True` protects the BINDING, never the
+        # container behind it: `settings.tolerances["rtol"] = 1e-3` was
+        # refused and `settings.tolerances["rtol"] = 1e-3` through the mapping
+        # itself was not. These two mappings are recorded for provenance and
+        # travel into `PreparedSolve`, so a tolerance edited after the record
+        # was built changes what a stored claim means -- the run says it was
+        # solved to a bound nobody solved it to.
+        object.__setattr__(self, "tolerances", freeze(tolerances))
+        object.__setattr__(self, "options", freeze(dict(self.options)))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -187,16 +195,25 @@ class RawSolverOutput:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "convergence", ConvergenceState(self.convergence))
+        # Frozen, for the reason `SolverSettings` above is: this is the record
+        # a solver's numbers arrive in, and it is the first thing on the trust
+        # boundary. A value injected here after `_require_finite_on_success`
+        # ran would be a number that never passed admission, sitting in the
+        # record that exists to say numbers did.
         object.__setattr__(
-            self, "values", {str(k): float(v) for k, v in self.values.items()}
+            self,
+            "values",
+            freeze({str(k): float(v) for k, v in self.values.items()}),
         )
         object.__setattr__(
-            self, "residuals", {str(k): float(v) for k, v in self.residuals.items()}
+            self,
+            "residuals",
+            freeze({str(k): float(v) for k, v in self.residuals.items()}),
         )
         self._require_finite_on_success()
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
-        object.__setattr__(self, "diagnostics", dict(self.diagnostics))
+        object.__setattr__(self, "diagnostics", freeze(dict(self.diagnostics)))
         references = tuple(self.data_references)
         for reference in references:
             if not isinstance(reference, ScientificDataReference):

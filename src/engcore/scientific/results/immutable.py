@@ -138,6 +138,45 @@ class FrozenMapping(dict):
     Equality, ordering, hashing and serialization are ``dict``'s own, so a
     field that became a ``FrozenMapping`` still equals, prints and serializes
     as what it replaced.
+
+    THE DECISION, TAKEN RATHER THAN DEFERRED AGAIN
+    ----------------------------------------------
+    ``NEEDS.md A2.6`` raised the ``dict``-subclass weakness twice and closed
+    both times with "nothing, unless the platform decides it wants the stronger
+    guarantee". **The platform has now decided: accept it.** The argument is
+    not that the hole is small, it is that closing it would buy nothing:
+
+    1. ``dict.__setitem__(m, k, v)`` and
+       ``object.__setattr__(record, field, value)`` are the *same* hole. Every
+       frozen record in this repository has the second one and **none of them
+       can close it** — it is a property of the language, not of a design
+       choice. A container that closed the first would leave the record it sits
+       on wide open through the second, so the class of caller it defends
+       against does not exist: anyone willing to reach for an unbound
+       ``dict`` method is already willing to reach for ``object.__setattr__``
+       one level up.
+
+    2. **The platform's answer to that class of caller is already settled, and
+       it is not stronger containers.** It is re-applying the rule where a
+       value stops being a field and becomes a claim —
+       ``ValidationReport._require_every_level_earned`` and
+       ``_require_no_check_contradicts_its_numbers`` both exist for precisely
+       this, and both say so. Strengthening this type would add a second,
+       weaker mechanism answering a question that one already answers better,
+       because re-validation catches a tampered record *however* it was
+       tampered with.
+
+    3. What a stronger type would cost is not hypothetical: it is the audit of
+       every ``json.dumps``, ``isinstance(..., dict)`` and ``{**m}`` in this
+       repository and in every consumer of it, for a guarantee that stops one
+       of two doors into the same room.
+
+    **What would reopen this.** A consumer that must accept a record's mapping
+    from an untrusted process without re-deriving anything from it. That
+    consumer does not exist today; if one is written, it needs the stronger
+    type *and* re-validation, and the stronger type alone would still not be
+    enough. Recorded so the next reader inherits a decision rather than a third
+    round of the same question.
     """
 
     __slots__ = ()
