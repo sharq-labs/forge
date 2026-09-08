@@ -4860,3 +4860,49 @@ joining `DeclaredCurve` to `EnergyConversion.efficiency` is the small change
 to this record and the large one to what a caller must declare. Nothing about
 the binding forecloses it — `convert` is the single place a fraction becomes a
 number, and it is where the curve would be evaluated.
+
+## FINDING — the battery benchmark record and the code disagree by 28 verdicts
+
+Found while checking whether this round moved a battery verdict. It did not
+move any. This is a separate, pre-existing divergence, and it is release-facing.
+
+`benchmarks/hard/results_battery.json`, and both release pages that quote it,
+record:
+
+| | recorded | the same tree today |
+|---|---|---|
+| exact verdict match | 400/400 (100.0 %) | **372/400 (93.0 %)** |
+| catch rate | 219/219 (100.0 %) | **202/219 (92.2 %)** |
+| false accept | 0/219 (0.00 %) | **17/219 (7.76 %)** |
+| false reject | 0/181 (0.0 %) | **11/181 (6.1 %)** |
+
+**It is not a changed case set.** The `case_set_digest` is identical
+(`32a7bff3…`), which is the same digest `docs/release/v1.0.md` and
+`docs/release/v1.1.md` pin the 400-case tree by, and **every** row's `expected`
+label is unchanged. 28 rows differ only in `actual`: 17 sound-in-record cases
+now report SUPPORTED where the record says NOT_SUPPORTED, and 11 report
+NOT_SUPPORTED where the record says SUPPORTED. So the behaviour moved under a
+fixed case set and a fixed set of expectations.
+
+**It predates the core round.** Scored at `35d72b6` -- the commit before this
+round's first -- the figures are identical to today's, and 0 of 400 rows differ
+between that commit and `HEAD`. So the three mechanisms did not cause it and
+did not mask it.
+
+**Nothing catches it.** The FULL tier is green: no test compares
+`results_battery.json` against a re-score, unlike the hard benchmark whose
+figures are cross-checked. The file is a written-down number that no longer
+matches the code, which is the exact class of defect ``C.2`` in this document
+was written about -- three sources disagreeing about one number -- except that
+here nothing is disagreeing out loud.
+
+**What is not yet known**: which commit moved it, and whether the movement is a
+regression or a correction. The false-reject direction (11 sound cases now
+refused) is the one that matters most: this repository's standing constraint is
+that false reject stays at zero, and on this case set it is 6.1 %. The eleven
+ids are in the row diff and none of them was touched by the core round.
+
+Not fixed here, deliberately: diagnosing 28 verdicts and deciding whether the
+record or the code is right is its own task, and doing it inside a round about
+three mechanisms would have buried it. What this entry buys is that the number
+stops being quoted as 100 % without somebody having looked.
