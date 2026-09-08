@@ -827,8 +827,12 @@ class ModelValidityRecord:
         because the model does not represent them at all -- and a reader who
         sees only IN_DOMAIN has been told the checkable half.
         """
+        from ..scientific.models.definition import NOT_DECLARED
+
         model = _declared_models().get((self.model_id, self.version))
-        return None if model is None else model.exclusions
+        if model is None or model.exclusions is NOT_DECLARED:
+            return None
+        return model.exclusions
 
     def to_dict(self) -> dict[str, Any]:
         return {

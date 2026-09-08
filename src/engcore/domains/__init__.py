@@ -39,6 +39,36 @@ _THERMAL_T1_FREEZE = (
     "conduction1d_bulk); this route reports the gap rather than the verdict"
 )
 
+#: The same statement, for the same freeze, about a different field.
+#:
+#: ``thermal.conduction1d.problem`` constructs the linear-diffusion model
+#: record, and its source file is SHA-256 pinned by the frozen ``thermal_t1``
+#: experiment -- so it cannot be edited to declare what that model excludes.
+#: Its exclusions are real and are written in its own ``assumptions``: no
+#: convection, no radiation, no phase change, no source term. A reader of a
+#: credibility report still cannot see them, and that is the cost of the
+#: freeze rather than a position this layer would rather not take.
+#:
+#: Closing it means editing a byte-pinned file and re-freezing three digest
+#: tables, which would leave those digests attesting that the new bytes
+#: produced the old recorded results. That is a worse record than an
+#: undeclared exclusion list, and it is why this entry exists.
+_THERMAL_T1_FREEZE_EXCLUSIONS = (
+    "not declared: this model record is built by a module whose source is "
+    "SHA-256 pinned by the frozen thermal_t1 experiment, so it cannot be "
+    "edited to pass an exclusions argument. What it excludes is stated in its "
+    "own assumptions -- one spatial dimension, no source term, no convection, "
+    "no radiation, no phase change -- and is visible in the model record but "
+    "not in a credibility report"
+)
+
+SCIENTIFIC_UNDECLARED_EXCLUSIONS: dict[str, str] = {
+    "engcore.domains.thermal.conduction1d.problem": _THERMAL_T1_FREEZE_EXCLUSIONS,
+    "src.engcore.domains.thermal.conduction1d.problem": (
+        _THERMAL_T1_FREEZE_EXCLUSIONS
+    ),
+}
+
 SCIENTIFIC_UNASSESSED_DECLARATIONS: dict[str, str] = {
     "engcore.domains.thermal.conduction1d.solver": _THERMAL_T1_FREEZE,
     "src.engcore.domains.thermal.conduction1d.solver": _THERMAL_T1_FREEZE,

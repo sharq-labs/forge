@@ -914,6 +914,11 @@ def test_a_model_with_no_declared_conditions_would_be_unknown():
     """
     empty = ScientificModelDefinition(
         model_id="battery.cell.undeclared",
+        exclusions=(),
+        excludes_nothing_because=(
+            "a test fixture: it stands for a model record's shape and "
+            "represents no physical process"
+        ),
         version="0.0.0",
         validity=ValidityDomain(),
     )

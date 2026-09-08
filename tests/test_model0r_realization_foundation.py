@@ -43,6 +43,25 @@ from src.engcore.scientific import (
 from src.engcore.scientific.capabilities import SCIENTIFIC_CAPABILITY_SCHEMA
 from src.engcore.scientific.solvers.capability import CoreCapabilities
 
+
+def _fixture_model(**fields):
+    """A fixture model record, with the now-mandatory exclusions filled in.
+
+    A fixture stands for a record's *shape* and represents no physical
+    process, so it genuinely excludes nothing -- and now has to say so, which
+    is the field working as intended even here. Written once rather than at
+    every construction, so what these tests are about stays legible.
+    """
+    fields.setdefault("exclusions", ())
+    if not fields["exclusions"]:
+        fields.setdefault(
+            "excludes_nothing_because",
+            "a test fixture: it stands for a model record's shape and "
+            "represents no physical process",
+        )
+    return ScientificModelDefinition(**fields)
+
+
 SCIENTIFIC_ROOT = (
     pathlib.Path(__file__).resolve().parents[1] / "src" / "engcore" / "scientific"
 )
@@ -469,7 +488,7 @@ def test_realization_construction_records_every_declared_field():
 
 
 def test_realization_references_a_model_without_embedding_it():
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="example.model",
         version="1.0.0",
         model_type=ModelType.FUNDAMENTAL_RELATION,
@@ -488,7 +507,7 @@ def test_realization_references_a_model_without_embedding_it():
 
 
 def test_realization_refuses_an_embedded_model_definition():
-    model = ScientificModelDefinition(model_id="example.model", version="1.0.0")
+    model = _fixture_model(model_id="example.model", version="1.0.0")
     with pytest.raises(InvalidModelRealization) as excinfo:
         _realization(model=model)
     assert "ModelReference" in str(excinfo.value)
@@ -765,7 +784,7 @@ def test_registry_allows_a_second_version_of_the_same_realization():
 def test_registry_rejects_a_non_realization():
     registry = RealizationRegistry()
     with pytest.raises(TypeError):
-        registry.register(ScientificModelDefinition("m", "1.0.0"))
+        registry.register(_fixture_model(model_id="m", version="1.0.0"))
 
 
 def test_registry_missing_identity_raises_its_own_error():
@@ -916,7 +935,13 @@ def test_registry_never_selects_or_ranks():
 # 6. Backward compatibility
 # =====================================================================
 
-LEGACY_MODEL_JSON = {
+#: A record written before ``exclusions`` existed. It can no longer be read,
+#: and that is the decision rather than an oversight: an optional field
+#: records whether somebody thought about the question, not what the model
+#: excludes, and its default reads exactly like a declaration. No stored
+#: ``/1`` record exists anywhere in this repository -- the cost of the
+#: decision was this fixture and nothing else.
+LEGACY_V1_MODEL_JSON = {
     "schema": "scientific_model_definition/1",
     "model_id": "legacy.model",
     "version": "0.1.0",
@@ -938,53 +963,77 @@ LEGACY_MODEL_JSON = {
     "metadata": {},
 }
 
+LEGACY_MODEL_JSON = {
+    "schema": "scientific_model_definition/2",
+    "exclusions": ["no time dependence", "no spatial variation"],
+    "excludes_nothing_because": "",
+    "model_id": "legacy.model",
+    "version": "0.1.0",
+    "name": "Legacy model",
+    "domain": "example",
+    "model_type": "empirical_correlation",
+    "description": "A record written before MODEL0-R existed.",
+    "inputs": [],
+    "outputs": [],
+    "assumptions": ["steady state"],
+    "validity": {
+        "schema": "validity_domain/1",
+        "conditions": [],
+        "description": "",
+    },
+    "references": [],
+    "required_capabilities": ["core:algebraic"],
+    "validation_status": "self_consistent",
+    "metadata": {},
+}
 
-def test_legacy_model_record_still_loads_unchanged():
+
+def test_a_record_that_declares_exclusions_loads_unchanged():
+    """Nothing a record DID carry is altered. That contract still holds."""
     model = ScientificModelDefinition.from_dict(LEGACY_MODEL_JSON)
     assert model.key == ("legacy.model", "0.1.0")
     assert model.model_type is ModelType.EMPIRICAL_CORRELATION
     assert model.validation_status is ModelValidationStatus.SELF_CONSISTENT
     assert model.required_capabilities == frozenset({"core:algebraic"})
+    assert model.exclusions == ("no time dependence", "no spatial variation")
 
 
-def test_legacy_model_record_re_serializes_with_exclusions_undeclared():
-    """A /1 record still loads, and re-serializes as /2 saying it declared none.
+def test_a_record_predating_exclusions_is_refused_rather_than_assumed_empty():
+    """The cost of making the field mandatory, stated where it is paid.
 
-    It was byte-identical, and the `exclusions` field ended that: the writer
-    moved to `scientific_model_definition/2`. The contract worth keeping is
-    the one that still holds -- a record written before the field existed
-    loads unchanged, and nothing it *did* carry is altered.
+    A ``/1`` record does not say what its model excludes. Reading it back as
+    "excludes nothing" would be the silent assumption the field exists to end,
+    arriving through the reader instead of the writer -- so it is refused, and
+    the refusal says which field is missing and why it cannot be defaulted.
 
-    What it must NOT do is read back as `exclusions: []`. A /1 record does not
-    say what its model excludes, and "does not say" is not "excludes nothing".
-    That is the whole distinction the field was added for, and the round trip
-    is where it would have been quietly lost.
+    This is a real loss and it was measured before it was accepted: no stored
+    ``/1`` model record exists in this repository, so the cost was this
+    fixture.
+    """
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    with pytest.raises(ScientificCoreError) as excinfo:
+        ScientificModelDefinition.from_dict(LEGACY_V1_MODEL_JSON)
+    assert "declares no exclusions" in str(excinfo.value)
+
+
+def test_a_declaring_record_re_serializes_byte_identically():
+    """MODEL0-R must not perturb one byte of a frozen scientific record.
+
+    The original contract, restated at ``/2``: a record that declares what the
+    field requires reads back and writes out as exactly itself.
     """
     model = ScientificModelDefinition.from_dict(LEGACY_MODEL_JSON)
-    assert model.exclusions is None
-
-    written = model.to_dict()
-    assert written["schema"] == "scientific_model_definition/2"
-    assert written["exclusions"] is None
-    assert {k: v for k, v in written.items() if k not in ("schema", "exclusions")} == {
-        k: v for k, v in LEGACY_MODEL_JSON.items() if k != "schema"
-    }
-    assert to_json(model) == json.dumps(written, sort_keys=True)
-
-    # And /2 round-trips as itself, exclusions and all.
-    declared = ScientificModelDefinition.from_dict(
-        dict(written, exclusions=["no phase change"])
-    )
-    assert declared.exclusions == ("no phase change",)
-    assert declared.to_dict()["exclusions"] == ["no phase change"]
+    assert model.to_dict() == LEGACY_MODEL_JSON
+    assert to_json(model) == json.dumps(LEGACY_MODEL_JSON, sort_keys=True)
 
 
 def test_model_definition_gained_no_realization_fields():
     fields = set(ScientificModelDefinition.__dataclass_fields__)
     assert fields == {
         "model_id", "version", "name", "domain", "model_type", "description",
-        "inputs", "outputs", "assumptions", "exclusions", "validity",
-        "references",
+        "inputs", "outputs", "assumptions", "exclusions",
+        "excludes_nothing_because", "validity", "references",
         "required_capabilities", "validation_status", "metadata",
     }
     for added in ("realization", "formulation", "fidelity", "realizations"):
@@ -1025,7 +1074,7 @@ def test_model_registry_and_realization_registry_do_not_accept_each_other():
     with pytest.raises(TypeError):
         models.register(_realization())
     with pytest.raises(TypeError):
-        realizations.register(ScientificModelDefinition("m", "1.0.0"))
+        realizations.register(_fixture_model(model_id="m", version="1.0.0"))
 
 
 # =====================================================================

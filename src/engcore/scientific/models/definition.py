@@ -11,6 +11,7 @@ No physical laws are implemented here, and none are registered by the core.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
@@ -1067,6 +1068,75 @@ class ModelBindingReport:
         )
 
 
+#: The value of ``exclusions`` on a record that never declared them.
+#:
+#: A distinct object, not ``None`` and not ``()``. Both of those read like
+#: declarations -- ``None`` like "nothing to say", ``()`` like "excludes
+#: nothing" -- and the whole point of the field is that neither of those is
+#: what an omission means. This one renders as ``NOT DECLARED`` and is refused
+#: at construction, so no model reaches it by writing nothing.
+class _NotDeclared:
+    __slots__ = ()
+
+    def __repr__(self) -> str:  # pragma: no cover - display only
+        return "NOT_DECLARED"
+
+    def __bool__(self) -> bool:
+        return False
+
+
+NOT_DECLARED = _NotDeclared()
+
+#: The attribute a package defines to state, for a module it contains, that a
+#: model built there cannot declare its exclusions.
+#:
+#: The same mechanism :data:`~engcore.scientific.results.result.
+#: UNASSESSED_DECLARATIONS_ATTRIBUTE` uses, for the same reason and with the
+#: same shape: a module whose source is byte-pinned by a frozen experiment
+#: cannot be edited to pass a new argument, and the position is therefore
+#: stated one package above the freeze, in the declaring package's own words.
+#:
+#: This module knows the *name* and nothing else. Which model is exempt, and
+#: why, is the domain layer's business -- the universal core names no domain,
+#: which is the layering rule ``test_x2`` enforces over this subtree, and it
+#: refused the first version of this field for exactly that.
+#:
+#: It is not an opt-out. A guard reads the frozen experiment configs and
+#: refuses any entry whose module is not actually pinned by one, so the
+#: exemption is read off the pins rather than remembered, and it expires the
+#: day the freeze does.
+UNDECLARED_EXCLUSIONS_ATTRIBUTE = "SCIENTIFIC_UNDECLARED_EXCLUSIONS"
+
+
+def _exclusions_exempted(module: str) -> str | None:
+    """A reason some package states for ``module`` leaving exclusions undeclared.
+
+    Walked only on the failure path, from the nearest package outwards, so the
+    closest declaration wins and a distant package cannot quietly override one
+    made beside the module.
+    """
+    parts = module.split(".")
+    for depth in range(len(parts) - 1, 0, -1):
+        package = sys.modules.get(".".join(parts[:depth]))
+        stated = getattr(package, UNDECLARED_EXCLUSIONS_ATTRIBUTE, None)
+        if isinstance(stated, Mapping) and module in stated:
+            reason = str(stated[module]).strip()
+            if reason:
+                return reason
+    return None
+
+
+def _constructing_module() -> str:
+    """The module building this record. See the sibling in ``results.result``."""
+    frame = sys._getframe(1)
+    while frame is not None:
+        name = frame.f_globals.get("__name__", "")
+        if name != __name__ and not name.startswith("dataclasses"):
+            return name
+        frame = frame.f_back
+    return ""  # pragma: no cover - a record built with no caller frame
+
+
 @dataclass(frozen=True)
 class ScientificModelDefinition:
     """A versioned scientific model contract.
@@ -1079,12 +1149,17 @@ class ScientificModelDefinition:
     "no phase change" is not -- it is a phenomenon nobody will be warned about
     because no condition can detect it.
 
-    **Three values, not two.** ``None`` means *not declared* and is the
-    default. An empty tuple means the model claims to exclude nothing, which
-    is almost never true and so must be written out deliberately; it cannot be
-    arrived at by omission. A caller reading a report can tell the two apart,
-    which is the entire point -- an undeclared exclusion list read as "excludes
-    nothing" is the silent assumption this field exists to end.
+    **Mandatory, and there is no usable default.** Omitting it raises. An
+    optional field records whether somebody thought about the question, not
+    what the model excludes, and its default reads exactly like a declaration
+    -- which is the failure the field was added to end, reproduced one level
+    up. The only value reachable by writing nothing is :data:`NOT_DECLARED`,
+    which is not a declaration, renders as ``NOT DECLARED``, and is refused.
+
+    **An empty list justifies itself.** ``exclusions=()`` is the claim that
+    the model excludes nothing, which is almost never true, so it must be
+    accompanied by ``excludes_nothing_because``. A claim that strong is
+    allowed and is not free.
 
     **A model shipped in this repository must declare exclusions, and the rule
     is not enforced here.** It was, briefly, and the constructor is the wrong
@@ -1111,7 +1186,11 @@ class ScientificModelDefinition:
     inputs: tuple[ModelInputSpec, ...] = ()
     outputs: tuple[ModelOutputSpec, ...] = ()
     assumptions: tuple[str, ...] = ()
-    exclusions: tuple[str, ...] | None = None
+    #: Mandatory. See the class docstring; the default is a sentinel that is
+    #: refused, not a value.
+    exclusions: tuple[str, ...] = NOT_DECLARED  # type: ignore[assignment]
+    #: Required exactly when ``exclusions`` is empty, and refused otherwise.
+    excludes_nothing_because: str = ""
     validity: ValidityDomain = field(default_factory=ValidityDomain)
     references: tuple[str, ...] = ()
     required_capabilities: frozenset[str] = frozenset()
@@ -1130,9 +1209,23 @@ class ScientificModelDefinition:
         for label in ("inputs", "outputs", "assumptions", "references"):
             object.__setattr__(self, label, tuple(getattr(self, label)))
 
-        # Declared, or explicitly not. See the class docstring for why an
-        # omission may not be read as an empty list.
-        if self.exclusions is not None:
+        # Mandatory. See the class docstring for why an omission may not be
+        # read as an empty list, and why the sentinel is not None.
+        if self.exclusions is NOT_DECLARED:
+            if _exclusions_exempted(_constructing_module()) is None:
+                raise InvalidScientificProblem(
+                    f"model {self.model_id!r} declares no exclusions. A model "
+                    f"is a claim about a physical system, and a claim that "
+                    f"does not say what it leaves out -- no phase change, no "
+                    f"ageing, no reversible heat, no saturation, whichever it "
+                    f"omits -- is a claim a reader cannot assess. A reader of "
+                    f"a credibility report cannot read this source. Pass "
+                    f"exclusions=(...) with what this model does not "
+                    f"represent, or exclusions=() with "
+                    f"excludes_nothing_because=... if it truly represents "
+                    f"everything in its scope"
+                )
+        else:
             exclusions = tuple(str(e).strip() for e in self.exclusions)
             if any(not e for e in exclusions):
                 raise InvalidScientificProblem(
@@ -1142,6 +1235,26 @@ class ScientificModelDefinition:
                     f"like it does"
                 )
             object.__setattr__(self, "exclusions", exclusions)
+
+            # An empty list justifies itself. It is the strongest claim this
+            # field can carry and the one least often true, so it costs a
+            # sentence; every other list is its own justification.
+            because = str(self.excludes_nothing_because).strip()
+            if not exclusions and not because:
+                raise InvalidScientificProblem(
+                    f"model {self.model_id!r} declares that it excludes "
+                    f"nothing and does not say why. That is a claim to "
+                    f"represent every phenomenon in its scope, which is "
+                    f"almost never true; if it is true here, say what makes "
+                    f"it true in excludes_nothing_because"
+                )
+            if exclusions and because:
+                raise InvalidScientificProblem(
+                    f"model {self.model_id!r} declares {len(exclusions)} "
+                    f"exclusion(s) and also excludes_nothing_because; the "
+                    f"second contradicts the first"
+                )
+            object.__setattr__(self, "excludes_nothing_because", because)
         input_names = [spec.name for spec in self.inputs]
         duplicates = {n for n in input_names if input_names.count(n) > 1}
         if duplicates:
@@ -1359,8 +1472,11 @@ class ScientificModelDefinition:
             "outputs": [spec.to_dict() for spec in self.outputs],
             "assumptions": list(self.assumptions),
             "exclusions": (
-                None if self.exclusions is None else list(self.exclusions)
+                None
+                if self.exclusions is NOT_DECLARED
+                else list(self.exclusions)
             ),
+            "excludes_nothing_because": self.excludes_nothing_because,
             "validity": self.validity.to_dict(),
             "references": list(self.references),
             "required_capabilities": sorted(self.required_capabilities),
@@ -1385,16 +1501,17 @@ class ScientificModelDefinition:
                 ModelOutputSpec.from_dict(s) for s in payload.get("outputs", ())
             ),
             assumptions=tuple(payload.get("assumptions", ())),
-            # `.get` would read a payload written before this field existed as
-            # "excludes nothing". A missing key means the record does not say,
-            # and that is `None` -- which the constructor then refuses for a
-            # domained model, so an old payload fails loudly rather than
-            # reading back as a stronger claim than it carried.
+            # A missing or null key means the record does not say, which is
+            # NOT_DECLARED and is refused by the constructor -- so a payload
+            # written before this field existed fails loudly rather than
+            # reading back as a stronger claim than it carried. `.get` would
+            # have read it as "excludes nothing".
             exclusions=(
-                None
+                NOT_DECLARED
                 if payload.get("exclusions") is None
                 else tuple(payload["exclusions"])
             ),
+            excludes_nothing_because=payload.get("excludes_nothing_because", ""),
             validity=ValidityDomain.from_dict(payload["validity"])
             if payload.get("validity")
             else ValidityDomain(),

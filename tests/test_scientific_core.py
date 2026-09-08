@@ -81,6 +81,25 @@ from src.engcore.scientific.units.quantity import dimensionality
 from src.engcore.scientific.solvers.capability import SolverCapability
 
 
+def _fixture_model(**fields):
+    """A fixture model record, with the now-mandatory exclusions filled in.
+
+    A fixture stands for a record's *shape* and represents no physical
+    process, so it genuinely excludes nothing -- and now has to say so, which
+    is the field working as intended even here. Written once rather than at
+    every construction, so what these tests are about stays legible.
+    """
+    fields.setdefault("exclusions", ())
+    if not fields["exclusions"]:
+        fields.setdefault(
+            "excludes_nothing_because",
+            "a test fixture: it stands for a model record's shape and "
+            "represents no physical process",
+        )
+    return ScientificModelDefinition(**fields)
+
+
+
 def _raises(exc_type, fn, *args, **kwargs):
     try:
         fn(*args, **kwargs)
@@ -515,7 +534,7 @@ def test_constraint_bound_must_be_quantity():
 # =====================================================================
 
 def _demo_model() -> ScientificModelDefinition:
-    return ScientificModelDefinition(
+    return _fixture_model(
         model_id="synthetic.linear_response",
         version="1.0.0",
         name="Synthetic linear response",
@@ -634,7 +653,7 @@ def test_model_validity_states():
 
 
 def test_empty_validity_domain_is_unknown_not_valid():
-    model = ScientificModelDefinition(model_id="m", version="1")
+    model = _fixture_model(model_id="m", version="1")
     assert model.assess_validity({"anything": True}).status is ValidityStatus.UNKNOWN
 
 
@@ -665,7 +684,7 @@ def test_model_binding_reports_missing_inputs():
 def test_model_binding_rejects_wrong_dimension():
     """The defect this contract exists to prevent: a name match in volts
     satisfying a requirement declared in kelvin."""
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(
@@ -687,7 +706,7 @@ def test_model_binding_rejects_wrong_dimension():
 def test_model_binding_accepts_compatible_but_different_units():
     """degC and kelvin are the same dimension; exact unit strings are not
     required."""
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(
@@ -705,7 +724,7 @@ def test_model_binding_accepts_compatible_but_different_units():
 
 def test_model_binding_rejects_wrong_source_kind():
     """A required variable supplied as a parameter (and vice versa)."""
-    as_variable = ScientificModelDefinition(
+    as_variable = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(
@@ -722,7 +741,7 @@ def test_model_binding_rejects_wrong_source_kind():
     assert not report.is_satisfied
     assert report.of_kind(BindingIssueKind.WRONG_SOURCE_KIND)
 
-    as_parameter = ScientificModelDefinition(
+    as_parameter = _fixture_model(
         model_id="m2", version="1",
         inputs=(
             ModelInputSpec(
@@ -740,7 +759,7 @@ def test_model_binding_rejects_wrong_source_kind():
 
 
 def test_model_binding_rejects_wrong_value_type():
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(
@@ -759,7 +778,7 @@ def test_model_binding_rejects_wrong_value_type():
 
 
 def test_model_binding_rejects_wrong_role():
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(
@@ -780,7 +799,7 @@ def test_model_binding_rejects_wrong_role():
 
 
 def test_model_binding_optional_input_is_not_missing():
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(
@@ -795,7 +814,7 @@ def test_model_binding_optional_input_is_not_missing():
 def test_model_output_dimensional_check():
     """A model producing load in amperes cannot serve a problem that
     declares load in watts."""
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         outputs=(ModelOutputSpec(metric="load", unit_exemplar="ampere"),),
     )
@@ -805,7 +824,7 @@ def test_model_output_dimensional_check():
     assert issue.name == "load"
 
     # A metric the problem never references is not an error.
-    unreferenced = ScientificModelDefinition(
+    unreferenced = _fixture_model(
         model_id="m2", version="1",
         outputs=(ModelOutputSpec(metric="not_requested", unit_exemplar="ampere"),),
     )
@@ -2083,7 +2102,7 @@ def test_legacy_range_payload_defaults_to_inclusive():
 
 def test_open_range_inside_a_validity_domain():
     """The end-to-end path a domain model uses: R > 0 as a validity claim."""
-    model = ScientificModelDefinition(
+    model = _fixture_model(
         model_id="m", version="1",
         inputs=(
             ModelInputSpec(

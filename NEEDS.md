@@ -4737,3 +4737,126 @@ so efficiency 1 with no loss path is the same arithmetic written down.
 
 None of the five is needed by the one crossing that exists, and every one of
 them would have been a framework with a single consumer.
+
+## RULE — an assumption correct in every case so far is still undeclared
+
+The claim-versus-capability audit looked for places where the code is right
+and the claim is wider than the capability. This is the same defect with the
+sign flipped, and it is harder to see: **the claim is right, in every case the
+project has ever run, and nobody ever made it.**
+
+The instance. Every electro-thermal result this repository has produced rests
+on complete conversion of dissipated power into body heat. It is true for a
+resistor — the element and the body are the same physical object, so there is
+no path by which the power fails to arrive — and it was never declared. It
+lived as a sentence in a twin's ``assumptions`` and as two dimensionally
+compatible quantity names. Nothing checked it, no report showed it, and the
+efficiency was 1 because 1 is what you get by writing nothing at all.
+
+Why it is not excused by being correct:
+
+* **A reader cannot tell a checked 1 from an absent one.** Both render as the
+  value arriving unchanged. The record that says "this crossing is lossless,
+  and here is why" and the record that says nothing are the same bytes.
+* **Correct-so-far is a property of the case set, not of the code.** The next
+  system is a motor. The same crossing, written the same way, is then wrong by
+  eighteen per cent and nothing in the record has changed to say so.
+* **It cannot be found by review of the failing cases**, because there are
+  none. It is found by asking, of each number that crosses a boundary, *who
+  said it arrives whole* — and the answer here was nobody.
+
+The rule. **An assumption that has held in every case so far is an undeclared
+assumption, and the argument "it has always been true here" is evidence about
+the cases, not about the record.** Where a value crosses a boundary, a domain
+boundary especially, the thing that makes it the same value on both sides is a
+claim, and the claim is declared or it is silent.
+
+How this one was closed: ``EnergyConversion`` makes the efficiency and the
+loss path a required part of the declaration, a dependency carrying energy
+cannot be built without one, and the budget is spent at ``_transport`` against
+the value that actually crossed. The electro-thermal crossing now declares
+efficiency 1 with no loss path — the same arithmetic, said out loud, and 0 of
+1400 benchmark rows moved when it was written down.
+
+The generalisation worth carrying: **look for the assumptions that are load
+bearing and have never been wrong.** They leave no failing case behind them,
+so no test finds them, and they are exactly the ones the next system breaks.
+
+## T2b. Exclusions are mandatory, and what that cost
+
+Reversed from the previous round on the owner's call, and the call was right.
+An optional field records whether somebody thought about the question, not
+what the model excludes, and its default reads exactly like a declaration --
+which is the defect the field exists to end, reproduced one level up.
+
+`exclusions` is now refused at construction. Three shapes:
+
+* omitted — raises. The only value reachable by writing nothing is
+  `NOT_DECLARED`, a sentinel that is not `None` and not `()`, renders as
+  `NOT DECLARED`, and is refused.
+* `()` — allowed, and must be accompanied by `excludes_nothing_because`. An
+  empty list is the strongest claim the field can carry and the one least
+  often true, so it costs a sentence. Supplying the justification beside a
+  non-empty list is also refused, where it would contradict it.
+* a tuple — every entry must be a non-blank sentence.
+
+**What it cost, measured before it was accepted.** No stored `/1` model record
+exists anywhere in this repository, so the entire cost of refusing to read one
+was a single test fixture. That measurement is why the previous round's
+argument -- that the constructor also reads archived records -- was weaker
+than it looked: there were no archived records. Nineteen fixture constructions
+across four test files now declare exclusions, through one `_fixture_model`
+factory that fills in "a test fixture represents no physical process, so it
+excludes nothing" rather than nineteen hand-written copies.
+
+**The one exemption moved out of the core.** `thermal.conduction1d.problem` is
+SHA-256 pinned by the frozen `thermal_t1` experiment and cannot be edited to
+pass an argument. The exemption is now stated by `engcore.domains`, under the
+attribute name the core looks up on the constructing module's package chain --
+the identical mechanism `ScientificResult` already uses for an unassessed
+declaration, built for this exact situation. The core knows the attribute
+*name* and nothing else; it names no domain and no model. The first attempt
+put a model id in `definition.py` and `test_x2` refused it, correctly.
+
+Closing that exemption means editing a byte-pinned file and re-freezing three
+digest tables, which would leave those digests attesting that the new bytes
+produced the old recorded results. That is a worse record than an undeclared
+exclusion list, and it is why the entry exists rather than being fixed.
+
+## T3b. The conversion budget is bound to the value that crosses
+
+The gap named at the end of the last round, and it was real: `EnergyConversion`
+checked that its own declared numbers add up and nothing checked them against
+what the run produced. A composition declaring 0.5 while transporting all of it
+satisfied every check that existed.
+
+Closed in two places, because they are two different things to get wrong:
+
+* **The run.** `_transport` in the coupled loop is the one place a value
+  crosses an edge, so it is where the budget is spent. It now applies the
+  declared conversion, and refuses an edge whose efficiency is undeclared
+  rather than moving the whole input.
+* **The record.** `QuantityTransfer` carries `source_value` — required for a
+  conversion, refused for a plain transport — and checks that what arrived is
+  what the conversion budgets, to a named relative tolerance. `realized_losses`
+  renders where the missing energy went, as quantities rather than fractions,
+  so a report shows it.
+
+An uncharacterised conversion can be *declared* and cannot be *realized*: the
+declaration is a placeholder saying "this is a conversion and nobody has
+measured it", and running a definite value through it would require assuming
+the crossing is lossless. That is the drone's motor before somebody measures
+it, and the refusal is the point.
+
+`quantity_transfer/1` -> `/2`. A `/1` record of a conversion carries no input,
+so its budget cannot be checked, and it is refused on read.
+
+Electro-thermal unmoved: efficiency 1 is the same arithmetic, and 0 of 1400
+dev-split rows differ.
+
+**Still open, and next.** The efficiency is a float. A motor's efficiency is a
+curve against speed and torque; T1 built the record that expresses one, and
+joining `DeclaredCurve` to `EnergyConversion.efficiency` is the small change
+to this record and the large one to what a caller must declare. Nothing about
+the binding forecloses it — `convert` is the single place a fraction becomes a
+number, and it is where the curve would be evaluated.

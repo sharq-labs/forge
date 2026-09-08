@@ -80,6 +80,25 @@ from src.engcore.scientific.solvers.protocol import (
 )
 from src.engcore.scientific.units.quantity import Quantity
 
+
+def _fixture_model(**fields):
+    """A fixture model record, with the now-mandatory exclusions filled in.
+
+    A fixture stands for a record's *shape* and represents no physical
+    process, so it genuinely excludes nothing -- and now has to say so, which
+    is the field working as intended even here. Written once rather than at
+    every construction, so what these tests are about stays legible.
+    """
+    fields.setdefault("exclusions", ())
+    if not fields["exclusions"]:
+        fields.setdefault(
+            "excludes_nothing_because",
+            "a test fixture: it stands for a model record's shape and "
+            "represents no physical process",
+        )
+    return ScientificModelDefinition(**fields)
+
+
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 LENGTH = Quantity(0.1, "meter")
