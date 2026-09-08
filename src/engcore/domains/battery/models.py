@@ -108,6 +108,7 @@ from .context import (
     NOMINAL_CAPACITY,
     OCV_AT_EMPTY,
     OCV_AT_FULL,
+    OCV_CURVE,
     PEUKERT_CAPACITY_RATIO,
     PEUKERT_EXPONENT,
     PEUKERT_EXTRAPOLATION_RATIO,
@@ -314,6 +315,32 @@ _CELL_PARAMETERS = (
     ),
 )
 
+#: The same open-circuit voltage the two endpoints above approximate, declared
+#: instead as a curve against state of charge.
+#:
+#: ``varies_with`` is what makes this input curve-valued, and it names the axis
+#: rather than leaving a consumer to infer it from a table's shape. A caller
+#: declaring a measured OCV curve supplies this and omits the two endpoints,
+#: which are then derived from the curve's ends; a caller declaring neither
+#: gets the chord, which is what every cell in this repository does today.
+#:
+#: ``required=False``, so this widens what may be declared and requires
+#: nothing. Omitting it changes no verdict: the chord answers exactly as it
+#: did before this input existed.
+_OCV_CURVE_SPEC = ModelInputSpec(
+    name=OCV_CURVE,
+    source_kind=InputSourceKind.PARAMETER,
+    unit_exemplar=VOLTAGE_UNIT,
+    required=False,
+    varies_with=STATE_OF_CHARGE,
+    description=(
+        "Open-circuit voltage as a declared function of state of charge, in "
+        "volts over a stated interval of z. Supersedes the two endpoint "
+        "voltages. Outside its declared interval it yields "
+        "OUTSIDE_VALIDATED_DOMAIN and no voltage rather than an extrapolation."
+    ),
+)
+
 _COULOMBIC_EFFICIENCY_SPEC = ModelInputSpec(
     name=COULOMBIC_EFFICIENCY,
     source_kind=InputSourceKind.PARAMETER,
@@ -416,7 +443,7 @@ RINT_OCV_MODEL = ScientificModelDefinition(
         "Q = I^2 R_int."
     ),
     inputs=_CELL_PARAMETERS
-    + (_COULOMBIC_EFFICIENCY_SPEC, _DURATION_SPEC)
+    + (_COULOMBIC_EFFICIENCY_SPEC, _DURATION_SPEC, _OCV_CURVE_SPEC)
     + _STATE_VARIABLES
     + (
         _optional(

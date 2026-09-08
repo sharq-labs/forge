@@ -4451,3 +4451,93 @@ OUTSIDE_VALIDATED_DOMAIN, and the hint is `rated_power ≥ 0.746195864222 watt
 (declared 0.25 watt)`. The `derating_factor` route inverts too and is then
 refused at its ceiling — 2.388 is past 1 — which is the raise-the-limit refusal
 working, not the inversion failing.
+
+
+# CORE ROUND — three inherited mechanisms
+
+## T1. The declared-curve mechanism, and what migrating one quantity cost
+
+`DeclaredCurve` lets a model input be a function of one named variable over a
+stated interval, in one of three forms: a table with a stated interpolation, a
+polynomial about a stated reference, and piecewise polynomial pieces over
+declared breakpoints. Two primitives and one composition. `battery.rint_ocv`'s
+open-circuit voltage is migrated onto it and nothing else is.
+
+### The cost, measured
+
+| | lines |
+|---|---|
+| the mechanism (`scientific/models/curves.py`) | 552 |
+| the model-record gate (`ModelInputSpec.varies_with`, `accept_curve`) | 86 |
+| **mechanism subtotal** | **638** |
+| migrating one quantity — battery domain + the MCP boundary | 309 |
+| guards and mutation entries | 308 |
+
+**The mechanism is written once; 309 lines is the number to estimate the other
+six from, and it is an over-estimate for most of them.** About half of it is
+specific to this quantity being declared at two depths at once: the OCV had two
+existing endpoint declarations (`open_circuit_voltage_at_full`, `..._at_empty`)
+that the curve had to supersede without a second source of truth, plus the
+derived-endpoint path, plus the round-trip that has to reproduce them. A
+quantity with one existing constant declaration — a heat capacity, an ambient
+conductance, a reactor volume — has no such reconciliation and should land
+nearer 150 lines. The `linear_tcr` coefficient is the cheapest of the seven: it
+is already a polynomial coefficient and needs only the higher order declared.
+
+### What the mechanism cannot express, and it is one of the seven
+
+**`R_int(T, z)` is a function of two variables and does not fit.** A
+`DeclaredCurve` declares one `against` axis. Six of the seven audited
+quantities are one-dimensional; the internal resistance against both
+temperature and state of charge is not, and it is left undone rather than
+approximated by a product of two curves — a separable product is a modelling
+claim about the cell, not a representation choice, and this record has no way
+to say whether the claimer meant it.
+
+What a two-variable form needs: a declared pair of axes, a rectangular sample
+grid with its own interpolation in each axis (bilinear is not "linear twice"
+at a corner), and a declared *region* rather than an interval, since a grid
+that is dense in temperature and sparse in charge is evidence over a rectangle
+with holes in it. That is a bigger record than this one and it is not a
+generalisation of it.
+
+### The seam this migration left, stated rather than implied
+
+**A cutoff voltage still inverts through the chord.** Converting a cutoff
+voltage to a state of charge inverts the open-circuit relation, and inverting
+a tabulated or piecewise curve is separate work that was not done. Rather than
+answering from a chord the caller replaced, `_binding_cutoff` refuses when a
+cell declares a curve and its load declares a cutoff voltage. The refusal is
+the boundary of the migration made visible; closing it means a monotone-curve
+inversion with its own refusal for the non-monotone case.
+
+**A curve cannot reach the MCP boundary.** Every field of that payload is one
+quantity and there is no field shape for a form, an interpolation, a sample
+set and an interval. The input is entered in `BATTERY_SUPPLIED_INPUTS` with
+that reason, which is what `audit_bindings` demands and is the honest state:
+callers through the MCP declare endpoints and get the chord. Giving the
+boundary a curve field is a payload-schema change, not a domain one.
+
+**A curve cannot travel in the problem IR either.** `ScientificProblem`
+parameters are Quantity-valued, so `battery_validity_context` takes the curve
+as an explicit keyword exactly as it takes the state coordinates, for exactly
+the reason recorded for those: the parameter-built context structurally cannot
+reach it. Same limitation, met again, not worked around.
+
+### Fail-closed, and where it is not
+
+Closed: a curve handed to an input that declares no `varies_with` raises; a
+curve against an axis the input did not name raises; a curve whose declared
+interval reaches past its samples cannot be constructed; evaluation outside
+the interval yields `OUTSIDE_VALIDATED_DOMAIN` and no number, on every path;
+declaring a curve and the endpoints it implies raises; a curve that does not
+span the whole charge axis cannot supply the endpoints the chord models need.
+
+**Open, and it cannot be closed by this mechanism:** nothing compels a model
+to declare a curve. A model whose input genuinely is a constant is
+indistinguishable from one whose input varies and was never migrated, because
+both are a `ModelInputSpec` with `varies_with=None`. That is the shape of the
+remaining six. What *would* close it is a per-quantity assertion — a model
+stating, for each input, whether its own claim is that the quantity is
+constant — and that is a model-record change on ten models, not a mechanism.
+It is the honest next step and it is not built here.

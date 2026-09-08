@@ -120,7 +120,7 @@ def evaluate_step(cell: CellSpecification, load: DischargeLoad) -> CellStepValue
 
     charge_removed = current_a * duration_h / (efficiency * capacity_ah)
     final_soc = initial_soc - charge_removed
-    ocv = low + (high - low) * final_soc
+    ocv = _open_circuit_voltage_at(cell, final_soc, low, high)
     terminal = ocv - current_a * resistance_ohm
     heat = current_a * current_a * resistance_ohm
 
@@ -160,6 +160,37 @@ def evaluate_step(cell: CellSpecification, load: DischargeLoad) -> CellStepValue
     )
 
 
+def _open_circuit_voltage_at(
+    cell: CellSpecification, state_of_charge: float, low: float, high: float
+) -> float:
+    """OCV at one state of charge: the cell's declared curve, or its chord.
+
+    ``low`` and ``high`` are the chord endpoints already read off the cell, so
+    a cell with no curve takes exactly the arithmetic this function replaced.
+
+    **A curve asked outside its declared interval raises.** That is not a
+    validity verdict dressed as an exception -- this module computes and does
+    not judge applicability, and that separation is kept. It is the narrower
+    fact that there is nothing to compute: the caller declared a function over
+    an interval, the state of charge is not in it, and no value of OCV has
+    been declared there. Holding at the nearest endpoint or continuing the
+    last segment would be inventing evidence, which is the failure the curve
+    was declared to prevent.
+    """
+    curve = cell.open_circuit_voltage_curve
+    if curve is None:
+        return low + (high - low) * state_of_charge
+    evaluated = curve.evaluate(Quantity(state_of_charge, ctx.DIMENSIONLESS))
+    if evaluated.value is None:
+        raise InvalidScientificProblem(
+            f"cell {cell.cell_id!r} declares its open-circuit voltage as a "
+            f"curve, and this step reaches a state of charge of "
+            f"{state_of_charge!r} where that curve states nothing: "
+            f"{evaluated.reason}"
+        )
+    return evaluated.value.magnitude_in(ctx.VOLTAGE_UNIT)
+
+
 def _binding_cutoff(
     cell: CellSpecification,
     load: DischargeLoad,
@@ -185,6 +216,23 @@ def _binding_cutoff(
             load.cutoff_state_of_charge.magnitude_in(ctx.DIMENSIONLESS)
         )
     if load.cutoff_voltage is not None:
+        # The inversion is the chord's, and only the chord's. One quantity was
+        # migrated onto a declared curve -- the open-circuit voltage itself --
+        # and inverting a tabulated or piecewise curve for the charge at which
+        # a terminal voltage is reached is a second, separate piece of work
+        # that was not done. Running it against a chord derived from a curve's
+        # endpoints would answer with a number from a model the caller
+        # replaced, so it is refused instead of quietly approximated.
+        if cell.open_circuit_voltage_curve is not None:
+            raise InvalidScientificProblem(
+                f"cell {cell.cell_id!r} declares its open-circuit voltage as "
+                f"a curve and this load declares a cutoff voltage. Converting "
+                f"a cutoff voltage to a state of charge inverts the "
+                f"open-circuit relation, and that inversion has not been "
+                f"migrated onto declared curves -- it still assumes the "
+                f"affine chord. Declare a cutoff state of charge, or declare "
+                f"the cell with endpoint voltages instead of a curve"
+            )
         candidates.append(
             (
                 load.cutoff_voltage.magnitude_in(ctx.VOLTAGE_UNIT)

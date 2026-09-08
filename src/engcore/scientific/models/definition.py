@@ -780,6 +780,16 @@ class ModelInputSpec:
     ``unit_exemplar`` states the *dimension* the input must have by naming
     any unit of that dimension; binding compares dimensionality, so a model
     declaring ``"kelvin"`` accepts a problem in ``"degC"``.
+
+    ``varies_with`` widens the input from a constant to a **declared curve**.
+    Its value is the name of the independent variable the model will accept a
+    curve against, and it is a property of the *model's* contract rather than
+    of any curve handed to it: the model states which axis it is prepared to
+    read, and :meth:`accept_curve` refuses a curve declared against any other.
+    That is what stops a caller handing over a table and letting the model
+    guess which axis it is. ``None`` -- the default, and what every existing
+    input has -- means this input is a constant and a curve is refused
+    outright.
     """
 
     name: str
@@ -789,6 +799,7 @@ class ModelInputSpec:
     role: VariableRole | None = None
     required: bool = True
     description: str = ""
+    varies_with: str | None = None
 
     def __post_init__(self) -> None:
         name = str(self.name).strip()
@@ -827,6 +838,79 @@ class ModelInputSpec:
                 f"model input {name!r}: role applies to variables only"
             )
 
+        if self.varies_with is not None:
+            varies_with = str(self.varies_with).strip()
+            if not varies_with:
+                raise InvalidScientificProblem(
+                    f"model input {name!r}: varies_with must name the "
+                    f"independent variable, or be omitted entirely. An empty "
+                    f"name declares that the input varies and does not say "
+                    f"with what, which is the guess this field exists to stop"
+                )
+            if varies_with == name:
+                raise InvalidScientificProblem(
+                    f"model input {name!r}: varies_with names the input "
+                    f"itself, which is not a function of anything"
+                )
+            if self.unit_exemplar is None:
+                raise InvalidScientificProblem(
+                    f"model input {name!r}: varies_with applies to "
+                    f"quantity-valued inputs only, and this one declares no "
+                    f"unit_exemplar"
+                )
+            object.__setattr__(self, "varies_with", varies_with)
+
+    def accept_curve(self, curve: Any) -> None:
+        """Refuse a declared curve this input's contract does not cover.
+
+        **The fail-closed gate.** Four ways a curve is refused, and the first
+        is the one that matters for a model that never adopted this mechanism:
+        an input that declares no ``varies_with`` is a constant, and handing
+        it a curve raises rather than being read as a constant, being
+        evaluated at some default, or being stored and quietly ignored.
+
+        Returns ``None`` on acceptance; raises
+        :class:`~engcore.scientific.errors.InvalidScientificProblem` otherwise.
+        """
+        from .curves import DeclaredCurve
+
+        if not isinstance(curve, DeclaredCurve):
+            raise InvalidScientificProblem(
+                f"model input {self.name!r}: a curve must be a DeclaredCurve, "
+                f"got {type(curve).__name__}. A bare table, mapping or "
+                f"callable states neither which variable it is against nor "
+                f"over what interval it is evidence"
+            )
+        if self.varies_with is None:
+            raise InvalidScientificProblem(
+                f"model input {self.name!r} is declared as a constant and was "
+                f"handed a curve of {self.name!r} against "
+                f"{curve.against!r}. A model that reads this input as one "
+                f"number cannot be handed a function of state without saying "
+                f"so: declare varies_with={curve.against!r} on this input if "
+                f"the model evaluates it, and do not if it does not"
+            )
+        if curve.against != self.varies_with:
+            raise InvalidScientificProblem(
+                f"model input {self.name!r} accepts a curve against "
+                f"{self.varies_with!r}, but this curve is declared against "
+                f"{curve.against!r}. The independent variable is part of the "
+                f"declaration on both sides and neither side infers it"
+            )
+        if curve.quantity != self.name:
+            raise InvalidScientificProblem(
+                f"model input {self.name!r} was handed a curve of "
+                f"{curve.quantity!r}; a curve states which quantity it gives "
+                f"and this one gives another"
+            )
+        if dimensionality(curve.unit) != dimensionality(self.unit_exemplar):
+            raise InvalidScientificProblem(
+                f"model input {self.name!r} expects the dimension of "
+                f"{self.unit_exemplar!r} "
+                f"[{dimensionality(self.unit_exemplar)}], but its curve gives "
+                f"{curve.unit!r} [{dimensionality(curve.unit)}]"
+            )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": MODEL_INPUT_SCHEMA,
@@ -837,6 +921,7 @@ class ModelInputSpec:
             "role": self.role.value if self.role else None,
             "required": self.required,
             "description": self.description,
+            "varies_with": self.varies_with,
         }
 
     @classmethod
@@ -852,6 +937,7 @@ class ModelInputSpec:
             role=VariableRole(role_raw) if role_raw else None,
             required=bool(payload.get("required", True)),
             description=payload.get("description", ""),
+            varies_with=payload.get("varies_with"),
         )
 
 

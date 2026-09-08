@@ -629,6 +629,7 @@ def run_self_heating_discharge(
                 discharge_current=load.current,
                 cell_temperature=instant_temperature,
                 elapsed_time_under_load=elapsed_under_load,
+                open_circuit_voltage_curve=cell.open_circuit_voltage_curve,
             )
             for instant, instant_temperature in (
                 (STEP_START, temperature),

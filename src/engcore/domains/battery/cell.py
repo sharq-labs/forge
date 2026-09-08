@@ -24,6 +24,7 @@ from ...scientific.ir.variables import (
     ScientificVariable,
     VariableRole,
 )
+from ...scientific.models.curves import DeclaredCurve
 from ...scientific.models.definition import ValidityAssessment
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
@@ -56,6 +57,25 @@ def _required(value: Any, unit: str, label: str, *, positive: bool = False) -> Q
     return checked
 
 
+def _ocv_curve_spec():
+    """The model record's declaration that this input may be a curve.
+
+    Resolved from :data:`~engcore.domains.battery.models.RINT_OCV_MODEL` at
+    each use rather than captured at import, so the *model* is what permits a
+    curve here. Delete the declaration from the record and this raises, which
+    means a cell can no longer be built with a curve the model does not say it
+    reads -- the failure direction a lookup returning ``None`` would have got
+    backwards.
+    """
+    for spec in mdl.RINT_OCV_MODEL.inputs:
+        if spec.name == ctx.OCV_CURVE:
+            return spec
+    raise InvalidScientificProblem(
+        f"{mdl.RINT_OCV_MODEL.model_id} declares no input named "
+        f"{ctx.OCV_CURVE!r}, so no curve can be accepted for it"
+    )
+
+
 @dataclass(frozen=True)
 class CellSpecification:
     """One declared cell, or one series string treated as a single cell.
@@ -79,13 +99,14 @@ class CellSpecification:
     cell_id: str
     nominal_capacity: Quantity
     internal_resistance: Quantity
-    open_circuit_voltage_at_full: Quantity
-    open_circuit_voltage_at_empty: Quantity
+    open_circuit_voltage_at_full: Quantity | None = None
+    open_circuit_voltage_at_empty: Quantity | None = None
     coulombic_efficiency: Quantity = field(
         default_factory=lambda: Quantity(1.0, ctx.DIMENSIONLESS)
     )
     limits: ctx.CellLimits = field(default_factory=ctx.CellLimits)
     chemistry: str | None = None
+    open_circuit_voltage_curve: DeclaredCurve | None = None
 
     def __post_init__(self) -> None:
         cell_id = str(self.cell_id).strip()
@@ -117,6 +138,50 @@ class CellSpecification:
                 positive=True,
             ),
         )
+        # The open-circuit voltage is declared once, in one of two depths.
+        #
+        # A curve supersedes the endpoints and the endpoints are then derived
+        # from its ends, so nothing downstream has to ask which of two
+        # declarations to believe. Supplying both is refused rather than
+        # reconciled: two declarations of one quantity that disagree is
+        # precisely the state where a silent precedence rule decides physics,
+        # and there is no reading of "both" that is not a caller error.
+        curve = self.open_circuit_voltage_curve
+        if curve is not None:
+            _ocv_curve_spec().accept_curve(curve)
+            supplied = [
+                label
+                for label in (ctx.OCV_AT_FULL, ctx.OCV_AT_EMPTY)
+                if getattr(self, label) is not None
+            ]
+            if supplied:
+                raise InvalidScientificProblem(
+                    f"cell {cell_id!r} declares {ctx.OCV_CURVE} and also "
+                    f"{supplied}. The curve is the open-circuit voltage of "
+                    f"this cell and the endpoints are read off its ends; "
+                    f"declaring both states the same quantity twice, and "
+                    f"nothing here will choose between them. Drop the "
+                    f"endpoint declaration(s)"
+                )
+            # At z = 1 and z = 0, not at the curve's own interval ends. The
+            # two endpoint names mean the open-circuit voltage at full and at
+            # empty; reading them off a curve that stops at z = 0.95 would
+            # label a 0.95 value as the full-charge one, which is the quiet
+            # mislabelling this whole round is about. So a curve that does not
+            # reach both ends of the charge axis cannot supply them, and says
+            # so instead of supplying something near enough.
+            for label, at in ((ctx.OCV_AT_FULL, 1.0), (ctx.OCV_AT_EMPTY, 0.0)):
+                evaluated = curve.evaluate(Quantity(at, ctx.DIMENSIONLESS))
+                if evaluated.value is None:
+                    raise InvalidScientificProblem(
+                        f"cell {cell_id!r}: {ctx.OCV_CURVE} gives no voltage "
+                        f"at a state of charge of {at}, so it cannot supply "
+                        f"{label}. {evaluated.reason}. A curve declared over "
+                        f"less than the whole charge axis is evidence over "
+                        f"that part of it and cannot stand in for the "
+                        f"endpoints the chord models need"
+                    )
+                object.__setattr__(self, label, evaluated.value)
         for label in (ctx.OCV_AT_FULL, ctx.OCV_AT_EMPTY):
             object.__setattr__(
                 self,
@@ -168,7 +233,7 @@ class CellSpecification:
             object.__setattr__(self, "chemistry", chemistry)
 
     @property
-    def physical_key(self) -> tuple[str, float, float, float, float, float]:
+    def physical_key(self) -> tuple[str, float, float, float, float, float, str]:
         """What makes this *this cell*: its id and its five declared numbers.
 
         The limits and the chemistry are excluded deliberately. A cell declared
@@ -186,14 +251,24 @@ class CellSpecification:
             self.open_circuit_voltage_at_full.magnitude_in(ctx.VOLTAGE_UNIT),
             self.open_circuit_voltage_at_empty.magnitude_in(ctx.VOLTAGE_UNIT),
             self.coulombic_efficiency.magnitude_in(ctx.DIMENSIONLESS),
+            # A seventh element, and not a cosmetic one. Two cells sharing all
+            # six numbers but declaring different OCV curves answer differently
+            # everywhere between the endpoints, and a solver keyed on this
+            # tuple would otherwise treat one march as continuing the other.
+            # Empty when no curve is declared, so every existing cell's key is
+            # its five numbers and a blank, and no cached identity moves.
+            ""
+            if self.open_circuit_voltage_curve is None
+            else self.open_circuit_voltage_curve.fingerprint,
         )
 
     def open_circuit_voltage(self, state_of_charge: Quantity) -> Quantity | None:
-        """OCV on this cell's declared chord. A convenience over ``context``."""
+        """This cell's OCV: its declared curve if it has one, else its chord."""
         return ctx.open_circuit_voltage(
             state_of_charge=state_of_charge,
             ocv_at_empty=self.open_circuit_voltage_at_empty,
             ocv_at_full=self.open_circuit_voltage_at_full,
+            curve=self.open_circuit_voltage_curve,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -207,28 +282,48 @@ class CellSpecification:
             ctx.COULOMBIC_EFFICIENCY: self.coulombic_efficiency.to_dict(),
             "limits": self.limits.to_dict(),
             "chemistry": self.chemistry,
+            # The endpoints above are always written, derived ones included,
+            # so a reader that predates the curve still gets a cell it
+            # understands -- with the chord this cell's curve implies rather
+            # than with nothing.
+            ctx.OCV_CURVE: (
+                None
+                if self.open_circuit_voltage_curve is None
+                else self.open_circuit_voltage_curve.to_dict()
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CellSpecification":
         require_schema(payload, CELL_SPECIFICATION_SCHEMA)
+        curve_payload = payload.get(ctx.OCV_CURVE)
+        curve = (
+            None if curve_payload is None else DeclaredCurve.from_dict(curve_payload)
+        )
         return cls(
             cell_id=payload["cell_id"],
             nominal_capacity=Quantity.from_dict(payload[ctx.NOMINAL_CAPACITY]),
             internal_resistance=Quantity.from_dict(
                 payload[ctx.INTERNAL_RESISTANCE]
             ),
-            open_circuit_voltage_at_full=Quantity.from_dict(
-                payload[ctx.OCV_AT_FULL]
+            # Not read back when a curve is present: the endpoints in the
+            # payload were derived from that curve on the way out, and handing
+            # both to the constructor is the refusal above. Deriving them again
+            # reproduces them exactly, so the round trip is closed.
+            open_circuit_voltage_at_full=(
+                None if curve is not None else Quantity.from_dict(payload[ctx.OCV_AT_FULL])
             ),
-            open_circuit_voltage_at_empty=Quantity.from_dict(
-                payload[ctx.OCV_AT_EMPTY]
+            open_circuit_voltage_at_empty=(
+                None
+                if curve is not None
+                else Quantity.from_dict(payload[ctx.OCV_AT_EMPTY])
             ),
             coulombic_efficiency=Quantity.from_dict(
                 payload[ctx.COULOMBIC_EFFICIENCY]
             ),
             limits=ctx.CellLimits.from_dict(payload["limits"]),
             chemistry=payload.get("chemistry"),
+            open_circuit_voltage_curve=curve,
         )
 
 
@@ -598,6 +693,7 @@ def battery_validity_context(
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
     elapsed_time_under_load: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> DomainValidityContext:
     """The full context every ``assess_*`` below consumes.
 
@@ -645,6 +741,7 @@ def battery_validity_context(
                 discharge_current=discharge_current,
                 cell_temperature=cell_temperature,
                 elapsed_time_under_load=elapsed_time_under_load,
+                open_circuit_voltage_curve=open_circuit_voltage_curve,
             ),
         },
         reserved=ASSEMBLER_NAMESPACE,
@@ -657,12 +754,14 @@ def _assess(
     state_of_charge: Quantity | None,
     discharge_current: Quantity | None,
     cell_temperature: Quantity | None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> ValidityAssessment:
     return battery_validity_context(
         problem,
         state_of_charge=state_of_charge,
         discharge_current=discharge_current,
         cell_temperature=cell_temperature,
+        open_circuit_voltage_curve=open_circuit_voltage_curve,
     ).assess(model)
 
 
@@ -672,6 +771,7 @@ def assess_rint_validity(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> ValidityAssessment:
     """Is the Rint circuit applicable to this cell at this operating point?
 
@@ -692,6 +792,7 @@ def assess_rint_validity(
         state_of_charge,
         discharge_current,
         cell_temperature,
+        open_circuit_voltage_curve,
     )
 
 
@@ -701,6 +802,7 @@ def assess_coulomb_counting_validity(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> ValidityAssessment:
     """Is the charge balance applicable to this step?
 
@@ -714,6 +816,7 @@ def assess_coulomb_counting_validity(
         state_of_charge,
         discharge_current,
         cell_temperature,
+        open_circuit_voltage_curve,
     )
 
 
@@ -723,6 +826,7 @@ def assess_runtime_validity(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> ValidityAssessment:
     """Is a runtime to the declared cutoffs a claim this domain can make?
 
@@ -735,6 +839,7 @@ def assess_runtime_validity(
         state_of_charge,
         discharge_current,
         cell_temperature,
+        open_circuit_voltage_curve,
     )
 
 
@@ -744,6 +849,7 @@ def assess_peukert_validity(
     state_of_charge: Quantity | None = None,
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> ValidityAssessment:
     """Is the fitted rate-capacity law applicable at this current?
 
@@ -757,6 +863,7 @@ def assess_peukert_validity(
         state_of_charge,
         discharge_current,
         cell_temperature,
+        open_circuit_voltage_curve,
     )
 
 
@@ -767,6 +874,7 @@ def assess_all(
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
     elapsed_time_under_load: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> dict[str, ValidityAssessment]:
     """Every model's verdict, keyed by model id, from one context build.
 
@@ -781,6 +889,7 @@ def assess_all(
         discharge_current=discharge_current,
         cell_temperature=cell_temperature,
         elapsed_time_under_load=elapsed_time_under_load,
+        open_circuit_voltage_curve=open_circuit_voltage_curve,
     )
     return {
         model.model_id: context.assess(model) for model in mdl.BATTERY_MODELS

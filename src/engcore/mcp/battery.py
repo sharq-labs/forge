@@ -89,7 +89,18 @@ _LUMPED = lump.LUMPED_CAPACITY_MODEL
 #: solves for less than the electro-thermal one does: the march advances the
 #: temperature and the state of charge, and the caller declares where both
 #: start rather than where they end.
-BATTERY_SUPPLIED_INPUTS: Mapping[str, str] = {}
+BATTERY_SUPPLIED_INPUTS: Mapping[str, str] = {
+    bctx.OCV_CURVE: (
+        "not supplied at this boundary at all, and the honest entry for that "
+        "is here rather than a payload field nobody can fill. Every field of "
+        "this payload is one quantity; a declared curve is a form, an "
+        "interpolation, a set of samples and the interval they are evidence "
+        "over, and there is no field shape here that carries one. A caller "
+        "through this boundary declares the two endpoint voltages and gets "
+        "the affine chord between them, exactly as before. A caller "
+        "constructing a CellSpecification directly may declare the curve."
+    ),
+}
 
 # =====================================================================
 # The payload shape
@@ -619,6 +630,7 @@ def _unknown_battery_conditions(
         state_of_charge=load.initial_state_of_charge,
         discharge_current=load.current,
         cell_temperature=load.cell_temperature,
+        open_circuit_voltage_curve=cell.open_circuit_voltage_curve,
     )
     return frozenset(
         name

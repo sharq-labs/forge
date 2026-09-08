@@ -63,6 +63,8 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ...scientific.errors import InvalidScientificProblem
+from ...scientific.models.curves import CurveEvaluation, DeclaredCurve
+from ...scientific.models.definition import ValidityStatus
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
 
@@ -89,6 +91,10 @@ NOMINAL_CAPACITY = "nominal_capacity"
 INTERNAL_RESISTANCE = "internal_resistance"
 OCV_AT_FULL = "open_circuit_voltage_at_full"
 OCV_AT_EMPTY = "open_circuit_voltage_at_empty"
+#: The optional curve-valued declaration that supersedes the two endpoints
+#: above. Named here with them because it is the same physical quantity
+#: declared to a different depth, not a different one.
+OCV_CURVE = "open_circuit_voltage_curve"
 COULOMBIC_EFFICIENCY = "coulombic_efficiency"
 
 # --- names of the load's declarations ----------------------------------------
@@ -808,39 +814,79 @@ def soc_step_resolution_ratio(
 # Voltage
 # =====================================================================
 
+def open_circuit_voltage_evaluation(
+    *,
+    state_of_charge: Quantity | None,
+    ocv_at_empty: Quantity | None,
+    ocv_at_full: Quantity | None,
+    curve: DeclaredCurve | None = None,
+) -> CurveEvaluation:
+    """OCV(z), with the status under which it was answered.
+
+    **Two declarations, one of which is a curve.** Without ``curve`` this is
+    the affine chord ``OCV(z) = V_empty + (V_full - V_empty) z`` between the
+    two open-circuit voltages the caller declares at the ends of the charge
+    axis. That is a *linearisation* and is declared as one: a real cell's
+    OCV(z) is a measured curve with a plateau and a knee, and Plett, *Battery
+    Management Systems, Volume I* (2015), Ch. 3 treats it as tabulated data
+    precisely because no two-point line reproduces it everywhere. An alkaline
+    cell falls from about 1.6 V to about 0.9 V across a discharge and does
+    almost none of it linearly.
+
+    With ``curve``, the caller has declared that measured curve, and it
+    governs. The chord is then not consulted at all: there is one source of
+    truth for what this cell's OCV is, and a cell carrying a curve derives its
+    chord endpoints *from* the curve rather than alongside it.
+
+    **Three statuses, and only one carries a number.** A curve is evidence
+    over the interval it was declared across; asked outside it, this returns
+    ``OUTSIDE_VALIDATED_DOMAIN`` and no value rather than extrapolating. The
+    chord has no such interval and answers everywhere it is given three
+    numbers, which is exactly the wider claim the curve exists to narrow.
+    """
+    charge = _checked(state_of_charge, DIMENSIONLESS, STATE_OF_CHARGE)
+    if curve is not None:
+        return curve.evaluate(charge)
+    empty = _checked(ocv_at_empty, VOLTAGE_UNIT, OCV_AT_EMPTY)
+    full = _checked(ocv_at_full, VOLTAGE_UNIT, OCV_AT_FULL)
+    if charge is None or empty is None or full is None:
+        return CurveEvaluation(
+            ValidityStatus.UNKNOWN,
+            None,
+            "the affine chord needs a state of charge and both endpoint "
+            "voltages, and at least one was not declared",
+        )
+    low = empty.magnitude_in(VOLTAGE_UNIT)
+    high = full.magnitude_in(VOLTAGE_UNIT)
+    return CurveEvaluation(
+        ValidityStatus.IN_DOMAIN,
+        Quantity(
+            low + (high - low) * charge.magnitude_in(DIMENSIONLESS), VOLTAGE_UNIT
+        ),
+        "",
+    )
+
+
 def open_circuit_voltage(
     *,
     state_of_charge: Quantity | None,
     ocv_at_empty: Quantity | None,
     ocv_at_full: Quantity | None,
+    curve: DeclaredCurve | None = None,
 ) -> Quantity | None:
-    """OCV(z) = V_empty + (V_full - V_empty) z — the declared affine chord.
+    """The value :func:`open_circuit_voltage_evaluation` produced, or ``None``.
 
-    **Definition.** A straight line between the two open-circuit voltages the
-    caller declares at the ends of the charge axis. This is a *linearisation*
-    and is declared as one: a real cell's OCV(z) is a measured curve with a
-    plateau and a knee, and Plett, *Battery Management Systems, Volume I*
-    (2015), Ch. 3 treats it as tabulated data precisely because no two-point
-    line reproduces it everywhere.
-
-    The domain uses the chord anyway, on purpose: it is the simplest form that
-    makes runtime, cutoff and terminal voltage answerable at all, and its error
-    is largest at the ends of the axis — which is exactly what
-    :func:`soc_window_margin` bounds. A tabulated OCV is the obvious next
-    model and is deliberately not this one.
-
-    Returns ``None`` if any of the three is absent.
+    The shape every other derivation in this module has, kept so that a
+    caller who does not care *why* there is no number does not have to learn
+    a new one. ``None`` covers both "not declared" and "outside the curve's
+    interval"; a caller who needs to tell those apart reads the evaluation.
     """
-    charge = _checked(state_of_charge, DIMENSIONLESS, STATE_OF_CHARGE)
-    empty = _checked(ocv_at_empty, VOLTAGE_UNIT, OCV_AT_EMPTY)
-    full = _checked(ocv_at_full, VOLTAGE_UNIT, OCV_AT_FULL)
-    if charge is None or empty is None or full is None:
-        return None
-    low = empty.magnitude_in(VOLTAGE_UNIT)
-    high = full.magnitude_in(VOLTAGE_UNIT)
-    return Quantity(
-        low + (high - low) * charge.magnitude_in(DIMENSIONLESS), VOLTAGE_UNIT
-    )
+    return open_circuit_voltage_evaluation(
+        state_of_charge=state_of_charge,
+        ocv_at_empty=ocv_at_empty,
+        ocv_at_full=ocv_at_full,
+        curve=curve,
+    ).value
 
 
 def terminal_voltage(
@@ -1576,6 +1622,7 @@ def derived_cell_quantities(
     discharge_current: Quantity | None = None,
     cell_temperature: Quantity | None = None,
     elapsed_time_under_load: Quantity | None = None,
+    open_circuit_voltage_curve: DeclaredCurve | None = None,
 ) -> dict[str, Quantity]:
     """Every quantity a validity condition in this domain is stated over.
 
@@ -1623,6 +1670,7 @@ def derived_cell_quantities(
         state_of_charge=final_soc,
         ocv_at_empty=ocv_empty,
         ocv_at_full=ocv_full,
+        curve=open_circuit_voltage_curve,
     )
     worst_terminal = terminal_voltage(
         open_circuit=worst_ocv,

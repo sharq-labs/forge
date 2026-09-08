@@ -2858,3 +2858,279 @@ def test_the_declared_crossing_is_what_lets_repair_invert_the_condition():
         for r in repair.refusals
     }
     assert "past" in refused["derating_factor"]
+
+
+# =====================================================================
+# GUARD 13 -- an input may be a declared function, and only on stated terms
+# =====================================================================
+#
+# Seven inputs across this repository are fixed while their own models say
+# they vary. The mechanism that lets one be declared as a function is only
+# worth having if every way of misusing it is refused, because a curve that
+# can be handed over loosely is a second way to be confidently wrong rather
+# than the fix for the first.
+
+
+def _ocv_curve(**overrides):
+    """An alkaline-shaped OCV curve: 0.9 V empty to 1.6 V full, with a knee."""
+    from src.engcore.scientific.models.curves import DeclaredCurve, TabulatedForm
+
+    fields = dict(
+        quantity="open_circuit_voltage_curve",
+        against="state_of_charge",
+        against_unit="dimensionless",
+        unit="volt",
+        lower=0.0,
+        upper=1.0,
+        form=TabulatedForm(
+            samples=((0.0, 0.9), (0.1, 1.15), (0.3, 1.30), (0.6, 1.42), (1.0, 1.6))
+        ),
+    )
+    fields.update(overrides)
+    return DeclaredCurve(**fields)
+
+
+def test_an_input_declared_as_a_constant_refuses_a_curve():
+    """The fail-closed edge: not using the mechanism is an error, not a pass.
+
+    A model whose input is one number and which is handed a function of state
+    has been handed something it cannot read. The refusal is what stops that
+    arriving as a silent first-sample, a silent midpoint, or a stored object
+    nothing consults.
+    """
+    from src.engcore.scientific.models.definition import (
+        InputSourceKind,
+        ModelInputSpec,
+    )
+
+    constant = ModelInputSpec(
+        name="open_circuit_voltage_curve",
+        source_kind=InputSourceKind.PARAMETER,
+        unit_exemplar="volt",
+    )
+    assert constant.varies_with is None
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        constant.accept_curve(_ocv_curve())
+    assert "declared as a constant" in str(excinfo.value)
+
+    # And the same spec, having declared the axis, takes it.
+    declaring = ModelInputSpec(
+        name="open_circuit_voltage_curve",
+        source_kind=InputSourceKind.PARAMETER,
+        unit_exemplar="volt",
+        varies_with="state_of_charge",
+    )
+    assert declaring.accept_curve(_ocv_curve()) is None
+
+
+def test_the_curve_axis_is_declared_on_both_sides_and_inferred_by_neither():
+    """A caller cannot hand over a table and let the model guess the axis."""
+    from src.engcore.scientific.models.curves import PolynomialForm
+    from src.engcore.scientific.models.definition import (
+        InputSourceKind,
+        ModelInputSpec,
+    )
+
+    spec = ModelInputSpec(
+        name="open_circuit_voltage_curve",
+        source_kind=InputSourceKind.PARAMETER,
+        unit_exemplar="volt",
+        varies_with="state_of_charge",
+    )
+    against_temperature = _ocv_curve(
+        against="cell_temperature",
+        against_unit="kelvin",
+        lower=250.0,
+        upper=350.0,
+        form=PolynomialForm(coefficients=(1.5, 0.001)),
+    )
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        spec.accept_curve(against_temperature)
+    assert "state_of_charge" in str(excinfo.value)
+    assert "cell_temperature" in str(excinfo.value)
+
+    # A curve with no axis at all cannot be built in the first place.
+    with pytest.raises(InvalidScientificProblem):
+        _ocv_curve(against="   ")
+
+
+def test_outside_a_declared_interval_there_is_no_number_only_a_status():
+    """A curve is evidence over the interval it covers and nothing beyond it."""
+    from src.engcore.scientific.models.definition import ValidityStatus
+
+    curve = _ocv_curve()
+    inside = curve.evaluate(Quantity(0.5, "dimensionless"))
+    assert inside.status is ValidityStatus.IN_DOMAIN
+    assert inside.value == Quantity(1.38, "volt")
+
+    for beyond in (1.2, -0.05):
+        outside = curve.evaluate(Quantity(beyond, "dimensionless"))
+        assert outside.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+        assert outside.value is None, "an extrapolation arrived"
+        assert "not extrapolated" in outside.reason
+
+    # Absence is still UNKNOWN, which is what every unsupplied input here is.
+    unsupplied = curve.evaluate(None)
+    assert unsupplied.status is ValidityStatus.UNKNOWN
+    assert unsupplied.value is None
+
+
+def test_a_declared_interval_may_not_reach_past_the_samples():
+    """Claiming evidence over ground the measurement never covered.
+
+    Refused at declaration rather than at evaluation: by evaluation time the
+    held-flat value past the last sample is indistinguishable from a measured
+    one, and the caller is the only party who can still tell.
+    """
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        _ocv_curve(upper=1.4)
+    assert "past the samples" in str(excinfo.value)
+
+
+def test_a_curve_is_structured_data_and_the_record_rules_agree_it_is_writable():
+    """C1's refusal and this mechanism, checked against each other.
+
+    A function was the obvious implementation and would have produced a model
+    record no reader could reconstruct. Every form here is data: it survives
+    the writability rule, round-trips, and digests.
+    """
+    from src.engcore.scientific.models.curves import (
+        DeclaredCurve,
+        PiecewiseForm,
+        PolynomialForm,
+        TabulatedForm,
+    )
+    from src.engcore.scientific.serialization import unwritable
+
+    forms = (
+        TabulatedForm(samples=((0.0, 0.9), (1.0, 1.6))),
+        PolynomialForm(coefficients=(1.5, -0.002, 1e-6), reference=298.15),
+        PiecewiseForm(
+            breakpoints=(0.5,),
+            pieces=(
+                PolynomialForm(coefficients=(0.0,)),
+                PolynomialForm(coefficients=(2.0, 1.0), reference=0.5),
+            ),
+        ),
+    )
+    for form in forms:
+        curve = _ocv_curve(form=form)
+        assert unwritable(curve.to_dict()) is None, form
+        back = DeclaredCurve.from_dict(curve.to_dict())
+        assert back == curve
+        assert back.fingerprint == curve.fingerprint
+
+    # And the digest separates curves that answer differently, which is what
+    # a physical identity needs from it.
+    steeper = _ocv_curve(form=TabulatedForm(samples=((0.0, 0.9), (1.0, 1.7))))
+    assert steeper.fingerprint != _ocv_curve(
+        form=TabulatedForm(samples=((0.0, 0.9), (1.0, 1.6)))
+    ).fingerprint
+
+
+def test_a_cell_declaring_a_curve_is_a_different_cell_and_says_so_everywhere():
+    """The migrated quantity, end to end: value, identity, record.
+
+    The chord and the curve disagree by 130 mV at half charge on an
+    alkaline-shaped discharge -- about 10 % of the terminal voltage. A solver
+    keyed on the cell's identity must not treat the two as one cell.
+    """
+    from src.engcore.domains.battery.cell import CellSpecification
+
+    common = dict(
+        cell_id="G13",
+        nominal_capacity=Quantity(2.5, "ampere_hour"),
+        internal_resistance=Quantity(0.1, "ohm"),
+    )
+    chord = CellSpecification(
+        open_circuit_voltage_at_full=Quantity(1.6, "volt"),
+        open_circuit_voltage_at_empty=Quantity(0.9, "volt"),
+        **common,
+    )
+    curved = CellSpecification(open_circuit_voltage_curve=_ocv_curve(), **common)
+
+    half = Quantity(0.5, "dimensionless")
+    assert chord.open_circuit_voltage(half) == Quantity(1.25, "volt")
+    assert curved.open_circuit_voltage(half) == Quantity(1.38, "volt")
+
+    # The endpoints agree, which is exactly why the identity may not.
+    assert curved.open_circuit_voltage_at_full == chord.open_circuit_voltage_at_full
+    assert curved.open_circuit_voltage_at_empty == chord.open_circuit_voltage_at_empty
+    assert chord.physical_key != curved.physical_key
+    assert chord.physical_key[-1] == ""
+    assert curved.physical_key[-1] == _ocv_curve().fingerprint
+
+    assert CellSpecification.from_dict(curved.to_dict()) == curved
+    assert CellSpecification.from_dict(chord.to_dict()) == chord
+
+
+def test_one_quantity_may_not_be_declared_twice_at_two_depths():
+    """A curve and the endpoints it would imply is a caller error, not a merge."""
+    from src.engcore.domains.battery.cell import CellSpecification
+    from src.engcore.scientific.models.curves import TabulatedForm
+
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        CellSpecification(
+            cell_id="G13",
+            nominal_capacity=Quantity(2.5, "ampere_hour"),
+            internal_resistance=Quantity(0.1, "ohm"),
+            open_circuit_voltage_at_full=Quantity(1.6, "volt"),
+            open_circuit_voltage_curve=_ocv_curve(),
+        )
+    assert "states the same quantity twice" in str(excinfo.value)
+
+    # A curve that does not reach both ends of the charge axis cannot supply
+    # the endpoints the chord models still need, and says so.
+    partial = _ocv_curve(
+        lower=0.1,
+        upper=0.9,
+        form=TabulatedForm(samples=((0.1, 1.15), (0.9, 1.55))),
+    )
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        CellSpecification(
+            cell_id="G13",
+            nominal_capacity=Quantity(2.5, "ampere_hour"),
+            internal_resistance=Quantity(0.1, "ohm"),
+            open_circuit_voltage_curve=partial,
+        )
+    assert "whole charge axis" in str(excinfo.value)
+
+
+def test_the_unmigrated_inversion_refuses_rather_than_answering_from_the_chord():
+    """One quantity was migrated. The boundary of that is stated, not implied.
+
+    A cutoff voltage becomes a state of charge by inverting the open-circuit
+    relation, and that inversion still assumes the chord. Run against a cell
+    that declared a curve it would answer from a model the caller replaced,
+    so it refuses.
+    """
+    from src.engcore.domains.battery.cell import CellSpecification, DischargeLoad
+    from src.engcore.domains.battery.solver import evaluate_step
+
+    curved = CellSpecification(
+        cell_id="G13",
+        nominal_capacity=Quantity(2.5, "ampere_hour"),
+        internal_resistance=Quantity(0.1, "ohm"),
+        open_circuit_voltage_curve=_ocv_curve(),
+    )
+    common = dict(
+        load_id="G13-load",
+        current=Quantity(0.5, "ampere"),
+        initial_state_of_charge=Quantity(0.9, "dimensionless"),
+        cell_temperature=Quantity(298.15, "kelvin"),
+        duration=Quantity(600.0, "second"),
+    )
+    # Without a cutoff voltage the step computes, and on the curve. The step
+    # ends at z = 0.8666..., where the curve reads 1.540 V and the chord this
+    # cell would otherwise have carried reads 1.507 V -- 33 mV of difference
+    # in the number the terminal voltage is built from.
+    step = evaluate_step(curved, DischargeLoad(**common))
+    assert step.open_circuit_voltage == pytest.approx(1.54)
+    assert 0.9 + 0.7 * (0.9 - 0.5 / 6 / 2.5) == pytest.approx(1.5066666666666666)
+
+    with pytest.raises(InvalidScientificProblem) as excinfo:
+        evaluate_step(
+            curved,
+            DischargeLoad(cutoff_voltage=Quantity(1.0, "volt"), **common),
+        )
+    assert "has not been migrated" in str(excinfo.value)

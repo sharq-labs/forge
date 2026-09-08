@@ -116,9 +116,17 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "",
      "a domain quietly stops emitting one validation check (the live-solve "
      "count that was a floor)"),
+    # Repointed. The old target text -- `return exponent if
+    # _no_derating_line(context) else None` -- has not existed since the
+    # offset refactor, so this entry reported MUTATION DID NOT APPLY and the
+    # guard behind it was verified by nobody. That is the harness being
+    # honest and it is still an unverified guard, which is the whole point of
+    # the file. The claim is unchanged: with a derating line declared the
+    # utilization is affine in 1/P_rated, and forcing the offset to zero
+    # inverts it against the PRINTED rating instead.
     ("G8c", "src/engcore/domains/electrical/dc/models.py",
-     "        return exponent if _no_derating_line(context) else None",
-     "        return exponent",
+     "    if _no_derating_line(context):",
+     "    if True:",
      "the power utilization inverts against the PRINTED rating when a "
      "derating line is declared -- a hint that leaves the design refused"),
     ("G1d", "src/engcore/domains/electrical/dc/models.py",
@@ -265,6 +273,26 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "            source=\"the ngspice provider\",\n        )",
      "",
      "the provider adapter stops admitting its parsed values"),
+    ("G13a", "src/engcore/scientific/models/definition.py",
+     "        if self.varies_with is None:",
+     "        if False:",
+     "an input declared as a constant stops refusing a declared curve -- the "
+     "fail-closed edge of the curve mechanism"),
+    ("G13b", "src/engcore/scientific/models/curves.py",
+     "        if x < self.lower or x > self.upper:",
+     "        if False:",
+     "a curve extrapolates past the interval it was declared over instead of "
+     "answering OUTSIDE_VALIDATED_DOMAIN"),
+    ("G13c", "src/engcore/scientific/models/curves.py",
+     "            if lower < first or upper > last:",
+     "            if False:",
+     "a declared interval may reach past the samples, claiming evidence that "
+     "was never measured"),
+    ("G13d", "src/engcore/domains/battery/cell.py",
+     "            else self.open_circuit_voltage_curve.fingerprint,",
+     "            else \"\",",
+     "a declared curve stops entering the cell's physical identity, so two "
+     "cells with different OCV curves are cached as one"),
 )
 
 #: The suites a mutation must turn red.
