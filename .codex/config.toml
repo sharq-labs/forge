@@ -1,0 +1,9 @@
+[mcp_servers.engcore]
+command = 'C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Scripts\\python.exe'
+args = [
+    "-m",
+    "engcore.mcp.server",
+]
+
+[mcp_servers.engcore.env]
+PYTHONPATH = 'C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\src'
