@@ -4,7 +4,7 @@
  "holdout_fraction": 0.3,
  "rule": "stratify on ground_truth.defect; order each stratum by sha256(f'{seed}:{case_id}') with case_id as tiebreak; allocate round(0.30*total) hold-out seats across strata by largest remainder, ties broken by stratum name; the hold-out is the first k_s of each stratum's order",
  "cases_dir": "cases_hard",
- "case_set_digest": "e14542c1e09f258de48628a69ec61fea1ad0dab6ee4916bcf17df585dc7c35b8",
+ "case_set_digest": "2f0a48db54c0264f6d12607ec67d66ee267cc2c24c7ba69ebf113eee031f09b9",
  "n_total": 2000,
  "n_dev": 1400,
  "n_holdout": 600,
@@ -113,14 +113,14 @@
   },
   "by_expected_verdict": {
    "INSUFFICIENT_EVIDENCE": {
-    "dev_share": 0.13142857142857142,
-    "holdout_share": 0.13,
-    "abs_share_gap": 0.001428571428571418
+    "dev_share": 0.1442857142857143,
+    "holdout_share": 0.13833333333333334,
+    "abs_share_gap": 0.005952380952380959
    },
    "NOT_SUPPORTED": {
-    "dev_share": 0.6964285714285714,
-    "holdout_share": 0.7016666666666667,
-    "abs_share_gap": 0.005238095238095264
+    "dev_share": 0.6835714285714286,
+    "holdout_share": 0.6933333333333334,
+    "abs_share_gap": 0.00976190476190475
    },
    "SUPPORTED": {
     "dev_share": 0.17214285714285715,

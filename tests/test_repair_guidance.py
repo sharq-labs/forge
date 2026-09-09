@@ -493,30 +493,71 @@ def test_the_reference_temperature_is_refused_because_the_set_is_an_interval():
     assert "two-sided" in refusal.reason
 
 
-def test_the_conductance_is_refused_from_fourier_because_it_cancels():
+def test_the_fourier_screen_still_refuses_and_refuses_as_a_gap():
+    """The horizon screen REFUSES. What changed is the category, not the answer.
+
+    `internal_fourier_number` is declared a `conservative_screen`: a horizon
+    under the floor means the run ran out of evolution before the criterion
+    could observe anything, so there is no evidence the lumped model is wrong
+    and none that it is right. The run is still not certified.
+
+    This guard exists to stop the screen from being read as acceptance. The
+    dangerous mutation is not the one that removes the refusal, it is the one
+    that turns it into IN_DOMAIN -- so the assertion is on all three states,
+    not just on the one that holds.
+    """
+    # Bi = (hA/A_s) L_c / k = 5 * 0.002 / 0.1 = 0.1 exactly, which the
+    # inclusive limit admits, so the Biot condition is satisfied and Fo is the
+    # only bound in question. tau = C/hA = 50 s, so Fo = (0.5/50)/0.1 = 0.1.
+    before, repairs = lumped_case(
+        duration=Quantity(0.5, "second"),
+        body_conductivity=Quantity(0.1, "watt/meter/kelvin"),
+    )
+
+    # REFUSED. Not satisfied, and the domain as a whole is not in-domain.
+    assert "internal_fourier_number" not in before.satisfied
+    assert before.status is not ValidityStatus.IN_DOMAIN
+    assert "internal_fourier_number" in before.unknown
+
+    # AND REFUSED AS A GAP, with the reason that says which gap.
+    assert (
+        before.reason_for("internal_fourier_number")
+        is UnknownReason.CONSERVATIVE_SCREEN
+    )
+    # A screen is not something a caller can declare their way out of.
+    assert "internal_fourier_number" not in rp.actionable_declarations(before)
+
+    # NOT A FINDING. It contributes nothing to `violated`, which is what stops
+    # a design being reported as shown wrong by a criterion that saw nothing.
+    assert "internal_fourier_number" not in before.violated
+
+    # And therefore no repair is emitted for it: a hint states the value a
+    # declaration would have to take for a bound to be MET, and this bound was
+    # never tested against.
+    assert not [r for r in repairs if r.condition == "internal_fourier_number"]
+
+
+def test_the_conductance_is_still_refused_from_fourier_because_it_cancels():
     """Fo = (t/tau)/Bi = t A_s k / (C L_c): hA is not in it.
 
     The most useful refusal in the repository, because the hint it prevents
     would have looked right and moved nothing at all. Distinct from "there is
     no inverse": there is no dependence.
+
+    Asserted against the inversion table rather than through a produced
+    repair. The screen decision means this condition no longer reaches
+    `condition_repairs` -- it is never violated -- and the refusal would
+    otherwise have become unreachable and then quietly deletable. It is
+    declared knowledge about the algebra of this group and it survives the
+    classification change unchanged.
     """
-    # Bi = (hA/A_s) L_c / k = 5 * 0.002 / 0.1 = 0.1 exactly, which the
-    # inclusive limit admits, so the Biot condition is satisfied and Fo is the
-    # only violation. tau = C/hA = 50 s, so Fo = (0.5/50)/0.1 = 0.1 < 0.2.
-    before, repairs = lumped_case(
-        duration=Quantity(0.5, "second"),
-        body_conductivity=Quantity(0.1, "watt/meter/kelvin"),
-    )
-    assert "internal_fourier_number" in before.violated
-    repair = next(
-        r for r in repairs if r.condition == "internal_fourier_number"
-    )
-    assert "ambient_conductance" not in {h.target_name for h in repair.hints}
-    refusal = next(
-        r for r in repair.refusals if r.target == "ambient_conductance"
-    )
+    row = lump.LUMPED_INVERSIONS.row("internal_fourier_number")
+    refusal = next(r for r in row.refusals if r.target == "ambient_conductance")
     assert "cancels exactly" in refusal.reason
     assert "moves nothing" in refusal.reason
+    # And no inversion offers it as a target, which is the other half: a
+    # refusal beside a hint for the same target would be a contradiction.
+    assert "ambient_conductance" not in {i.target for i in row.inversions}
 
 
 def test_a_condition_no_declared_input_can_repair_says_so_plainly():

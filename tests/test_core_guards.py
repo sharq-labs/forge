@@ -5187,69 +5187,103 @@ def test_an_undeclared_bound_still_finds_against_a_design():
     )
 
 
-def test_the_records_that_claim_a_screen_do_not_yet_declare_one():
-    """GUARD 22. A KNOWN, OPEN CONTRADICTION, pinned so it cannot be forgotten.
+def test_a_screen_is_declared_on_a_bound_that_observed_nothing_and_nowhere_else():
+    """GUARD 22. WHICH bounds are screens, decided, with the rule that decides.
 
-    Two shipped records describe a bound in their own prose as a screen -- past
-    it the model "is not shown to be wrong, it is outside what this criterion
-    validates" -- while `assess` classifies a value past it as `violated` and
-    `derive_verdict` turns that into NOT_SUPPORTED, the verdict that says there
-    is evidence AGAINST the design. The record and the machinery disagree, in
-    the same file.
+    The distinction is not "how confident is the bound" and it is not "how
+    conventional is the threshold". Both of these bounds rest on a convention
+    and neither cites a published limit. The rule is what the criterion
+    OBSERVED when it failed:
 
-    `RangeCondition.conservative_screen` is the mechanism that would settle it
-    and it is implemented and tested; what is NOT settled is whether these two
-    particular bounds should use it, because the benchmarks disagree with each
-    other about the answer:
+    `internal_fourier_number` -- SCREEN. Under the floor the horizon ran out
+        before the one-term approximation could be compared to anything. The
+        criterion observed nothing at all, so there is no evidence for the
+        lumped model and none against it. Refusing as a finding would report
+        evidence that was never gathered.
 
-      * `internal_fourier_number` -- 102 hard cases whose ground truth names it
-        as the catcher expect INSUFFICIENT_EVIDENCE (screen semantics), and 70
-        expect NOT_SUPPORTED (finding semantics). Declaring the screen scores
-        1342/1400 against 1291; not declaring it scores 1291.
-      * `polarization_unmodelled_fraction` -- 17 battery cases expect
-        NOT_SUPPORTED, and none expects otherwise. Declaring the screen moves
-        all 17 to INSUFFICIENT_EVIDENCE (false accept stays 0/219: a gap still
-        refuses to certify) and breaks
-        `test_a_step_that_left_the_domain_is_not_forgotten_by_the_last_step`,
-        which pins case X00033 by id.
+    `polarization_unmodelled_fraction` -- NOT A SCREEN. Inside the band the RC
+        branch is slewing and no constant resistance reproduces the terminal
+        voltage. The model's own constitutive assumption is OBSERVED TO FAIL.
+        That is evidence against applying it here, and reporting it as a gap
+        would understate a finding the run actually made.
 
-    Declaring the flag on either bound breaks a landed guard; leaving it off
-    leaves the prose overstating what the machinery does. This test asserts the
-    SECOND state, which is the one the tree is in, so that resolving the
-    question has to come here and say so. Flip it when the decision is made --
-    do not delete it, and do not edit a record's prose to make it agree.
+    Both still refuse. What differs is what the refusal claims to know.
     """
     from src.engcore.scientific.models.definition import RangeCondition
 
-    #: The claim a record makes when it is a screen, in the words both
-    #: records independently reached for.
-    CLAIM = "not shown to be wrong"
+    #: Every range condition in the tree that declares itself a screen, read
+    #: off the shipped models rather than from a list kept here.
+    screens = {
+        (model.model_id, condition.name)
+        for model in MODELS
+        for condition in model.validity.conditions
+        if isinstance(condition, RangeCondition) and condition.conservative_screen
+    }
+    assert screens == {
+        ("thermal.lumped.first_order_capacity", "internal_fourier_number"),
+    }, (
+        f"the set of declared conservative screens has changed: {sorted(screens)}. "
+        f"A screen says a criterion observed nothing; adding one to a bound "
+        f"that observed a failure downgrades a finding to a gap, and removing "
+        f"this one reports evidence that was never gathered"
+    )
 
-    claims_but_does_not_declare: list[tuple[str, str]] = []
+
+def test_the_polarization_bound_is_a_finding_and_says_so_in_its_own_prose():
+    """GUARD 22. The record and the machinery have to agree, both ways.
+
+    This bound's description once called it a conservative screen while
+    `assess` classified a value past it as `violated`. The prose was the half
+    that was wrong and the prose was corrected; this guard is what stops it
+    drifting back, in either direction.
+    """
+    from src.engcore.scientific.models.definition import RangeCondition
+    from src.engcore.domains.battery import models as bm
+
+    condition = next(
+        c for c in bm.RINT_OCV_MODEL.validity.conditions
+        if isinstance(c, RangeCondition)
+        and c.name == "polarization_unmodelled_fraction"
+    )
+    assert condition.conservative_screen is False
+    text = condition.description
+    assert "NOT A CONSERVATIVE SCREEN" in text
+    assert "OUTSIDE_VALIDATED_DOMAIN" in text
+
+
+def test_every_screen_still_refuses_and_none_of_them_can_certify():
+    """GUARD 22. The invariant that makes the flag safe to have at all.
+
+    A screen may move a failure from `violated` to `unknown`. It may never
+    move one into `satisfied`. Asserted over every declared screen in the
+    tree, at a value its own bound excludes, so a flag that ever started
+    admitting values fails here rather than in a benchmark months later.
+    """
+    from src.engcore.scientific.models.definition import (
+        RangeCondition, ValidityStatus,
+    )
+
+    seen = 0
     for model in MODELS:
         for condition in model.validity.conditions:
             if not isinstance(condition, RangeCondition):
                 continue
-            says = CLAIM in condition.description
-            declares = condition.conservative_screen
-            assert not (declares and not says), (
-                f"{model.model_id}/{condition.name} declares "
-                f"conservative_screen without its description claiming a bound "
-                f"that does not certify against. The flag may not spread to "
-                f"records that never made the claim"
-            )
-            if says and not declares:
-                claims_but_does_not_declare.append((model.model_id, condition.name))
-
-    assert sorted(n for _, n in claims_but_does_not_declare) == [
-        "internal_fourier_number",
-        "polarization_unmodelled_fraction",
-    ], (
-        f"the set of records whose prose claims a screen while the machinery "
-        f"reports a finding has changed: {sorted(claims_but_does_not_declare)}. "
-        f"If a bound was resolved, update this guard to say so; if a new one "
-        f"acquired the claim, it has joined an open contradiction"
-    )
+            if not condition.conservative_screen:
+                continue
+            seen += 1
+            for bound, outside in (
+                (condition.minimum, lambda q: q * 0.5),
+                (condition.maximum, lambda q: q * 2.0),
+            ):
+                if bound is None:
+                    continue
+                verdict = condition.evaluate(outside(bound))
+                assert verdict is ValidityStatus.UNKNOWN, (
+                    f"{model.model_id}/{condition.name} returned {verdict} for "
+                    f"a value outside its own bound; a screen reports a gap "
+                    f"and never certifies"
+                )
+    assert seen, "no declared screen was exercised; this guard is vacuous"
 
 
 def test_the_screen_survives_the_record_a_consumer_reads():

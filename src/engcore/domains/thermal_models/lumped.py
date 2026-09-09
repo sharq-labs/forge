@@ -688,6 +688,7 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
             RangeCondition(
                 name=INTERNAL_FOURIER_NUMBER,
                 minimum=LUMPED_MIN_FOURIER_NUMBER,
+                conservative_screen=True,
                 description=(
                     "Fo = (t/tau)/Bi >= 0.2: the horizon is long enough that "
                     "the exact series solution for this body is within about "
@@ -700,7 +701,15 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
                     "screen: below 0.2 the lumped model is not shown to be "
                     "wrong, it is outside what this criterion validates — at "
                     "small Bi the higher modes are suppressed by amplitude "
-                    "too, and a shorter horizon may well be adequate."
+                    "too, and a shorter horizon may well be adequate. "
+                    "DECLARED `conservative_screen`, so a horizon under the "
+                    "floor STILL REFUSES — nothing here can be certified — but "
+                    "refuses as a gap in the evidence rather than as a finding "
+                    "against the design. What is insufficient is the horizon "
+                    "available to establish the downstream claim, not the "
+                    "body: this criterion never observed the lumped model "
+                    "being wrong, it ran out of evolution before it could "
+                    "observe anything at all."
                 ),
             ),
             RangeCondition(
