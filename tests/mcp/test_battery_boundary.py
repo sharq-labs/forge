@@ -302,3 +302,89 @@ def test_the_example_each_system_publishes_actually_runs() -> None:
 def test_an_unregistered_system_is_a_loud_failure() -> None:
     with pytest.raises(KeyError):
         system("thermodynamics")
+
+
+# =====================================================================
+# An inert category says so where the caller reads it, not only in source
+# =====================================================================
+#
+# `chemistry` and `duty_type` are validated, stored and serialized, and they
+# select no equation and gate no condition. A caller who declares
+# `lithium_ion` and believes the physics changed has been misled by the field
+# existing. The records and the binding table have said "inert" in prose since
+# they were written -- but prose in a source file is not the caller boundary,
+# and nothing asserted that the sentence survives as far as the caller.
+#
+# These tests are that assertion. They do not narrow anything: the notes were
+# already correct and already reaching `describe_capabilities`. What was
+# missing is that deleting one would have broken nothing.
+
+#: Every caller-declarable category that no condition reads, and the field
+#: path a caller sees it at. Written out rather than derived: the claim is
+#: about these four specifically, and a fifth inert category should have to be
+#: added here deliberately.
+INERT_CATEGORY_FIELDS = (
+    "cell.chemistry",
+    "cell.limits.cooling_mode",
+    "load.duty_type",
+)
+
+
+@pytest.mark.parametrize("path", INERT_CATEGORY_FIELDS)
+def test_an_inert_category_declares_its_inertness_to_the_caller(path):
+    """The word a caller needs is in the description they are handed."""
+    field = describe_battery_case().field(path)
+    text = field.description.lower()
+    assert any(
+        phrase in text
+        for phrase in ("inert", "not modelled", "unlocks nothing")
+    ), f"{path} does not tell the caller it is inert: {field.description!r}"
+
+
+@pytest.mark.parametrize("path", INERT_CATEGORY_FIELDS)
+def test_an_inert_category_unlocks_no_condition(path):
+    """And the prose agrees with the machinery.
+
+    `unlocks` is computed by measurement -- declare the field, see which
+    conditions stop being UNKNOWN. An inert category must move none, or the
+    description above is the thing that is wrong.
+    """
+    field = describe_battery_case().field(path)
+    assert field.unlocks == ()
+    assert field.group_unlocks == ()
+    assert field.alternative_to == ()
+
+
+def test_the_inertness_survives_to_describe_capabilities():
+    """The tool a caller actually calls, not the helper underneath it.
+
+    `describe_capabilities` is the MCP surface. If the battery description
+    were ever assembled into it by a path that drops `note`, every test above
+    would still pass and the caller would still be misled.
+    """
+    import json
+
+    blob = json.dumps(srv.describe_capabilities(), default=str)
+    for phrase in (
+        "no validity condition reads it and it unlocks nothing",
+        "Declaring 'pulsed' does not satisfy the pulse conditions",
+    ):
+        assert phrase in blob, phrase
+
+
+def test_the_chemistry_vocabulary_is_families_and_not_cathode_chemistries():
+    """A caller cannot declare LFP or NMC at all, which is worth knowing.
+
+    The vocabulary is three broad families. A lithium-ion sub-chemistry is
+    refused at construction rather than silently accepted and ignored, so the
+    "does LFP change the physics" question never reaches the inert field. That
+    is a stronger answer than the note, and it is asserted here so that
+    widening the vocabulary is a deliberate act.
+    """
+    assert set(bctx.CHEMISTRY_VOCABULARY) == {
+        "lithium_ion", "lead_acid", "nickel_metal_hydride",
+    }
+    payload = copy.deepcopy(example_battery_payload())
+    payload["cell"]["chemistry"] = "LFP"
+    with pytest.raises(Exception):
+        build_battery_case(payload)

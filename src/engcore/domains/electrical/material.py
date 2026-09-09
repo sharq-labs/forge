@@ -286,6 +286,9 @@ _ASSUMPTIONS = (
 _MATERIAL_EXCLUSIONS = (
     "higher-order temperature dependence; the coefficient is first order "
     "about a reference state",
+    "thermistors of either sign; an NTC is exponential in 1/T and a PTC "
+    "switches over a few kelvin, and neither is the straight line this record "
+    "evaluates, whatever the sign of the coefficient",
     "self-heating; the temperature is supplied and never inferred from the "
     "resistance",
     "tensor conductivity; the resistance is an isotropic scalar",
@@ -319,8 +322,18 @@ LINEAR_TCR_MODEL = ScientificModelDefinition(
             source_kind=InputSourceKind.PARAMETER,
             unit_exemplar=TCR_UNIT,
             description=(
-                "Temperature coefficient of resistance. Positive for metals, "
-                "negative for a thermistor; both are representable."
+                "Temperature coefficient of resistance, as the slope of a "
+                "STRAIGHT LINE through the reference state. Positive for "
+                "metals; a negative value is accepted and is representable. "
+                "A NEGATIVE COEFFICIENT IS NOT A THERMISTOR. An NTC "
+                "thermistor follows R = R_ref exp(B (1/T - 1/T_ref)), and a "
+                "PTC switches by orders of magnitude over a few kelvin; "
+                "neither is a straight line, and this record represents "
+                "nothing but a straight line. What a negative alpha "
+                "represents here is a conductor whose resistance falls "
+                "linearly with temperature over the declared band -- a "
+                "semiconductor or an alloy read off a local tangent -- and "
+                "the band is how far that tangent is claimed to carry."
             ),
         ),
         ModelInputSpec(
@@ -517,8 +530,18 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
             source_kind=InputSourceKind.PARAMETER,
             unit_exemplar=TCR_UNIT,
             description=(
-                "Temperature coefficient of resistance. Positive for metals, "
-                "negative for a thermistor; both are representable."
+                "Temperature coefficient of resistance, as the slope of a "
+                "STRAIGHT LINE through the reference state. Positive for "
+                "metals; a negative value is accepted and is representable. "
+                "A NEGATIVE COEFFICIENT IS NOT A THERMISTOR. An NTC "
+                "thermistor follows R = R_ref exp(B (1/T - 1/T_ref)), and a "
+                "PTC switches by orders of magnitude over a few kelvin; "
+                "neither is a straight line, and this record represents "
+                "nothing but a straight line. What a negative alpha "
+                "represents here is a conductor whose resistance falls "
+                "linearly with temperature over the declared band -- a "
+                "semiconductor or an alloy read off a local tangent -- and "
+                "the band is how far that tangent is claimed to carry."
             ),
         ),
         ModelInputSpec(

@@ -81,11 +81,40 @@ MVR0_ASSUMPTIONS = (
     "no propeller tip-Mach constraint",
     "benchmark mass and efficiency coefficients are reference coefficients, not catalog evidence",
     "target satisfaction is meaningful only under the frozen MVR0 reference model",
+    "air density defaults to ISA sea level (1.225 kg/m^3); altitude is not modelled and is not asked for",
+    "usable battery fraction defaults to 0.80, a reference depth of discharge and not a property of any pack",
+    "hover efficiency defaults to 0.72, one lumped figure for the whole motor/ESC/propeller chain",
+    "auxiliary power defaults to 25 W, fixed and independent of airframe, payload and flight time",
+    "a result computed from those four defaults is a result about this benchmark, not about a vehicle",
 )
 
 
 @dataclass(frozen=True)
 class MultirotorTargetSpec:
+    """The hover target, and FOUR VALUES THAT DEFAULT RATHER THAN BEING ASKED.
+
+    ``air_density``, ``usable_battery_fraction``, ``base_hover_efficiency`` and
+    ``auxiliary_power`` all carry defaults, so ``MultirotorTargetSpec()``
+    constructs and answers without the caller stating any of them. **The answer
+    then reads as general and is not.** What those defaults commit to:
+
+    * ``air_density = 1.225 kg/m^3`` -- ISA sea level, 15 degC, dry. A design
+      that hovers at sea level does not hover at 2000 m on this number.
+    * ``usable_battery_fraction = 0.80`` -- a reference depth of discharge, not
+      a property of any pack, and not derived from a cell record.
+    * ``base_hover_efficiency = 0.72`` -- one lumped figure standing for the
+      whole motor/ESC/propeller chain. There is no efficiency map behind it;
+      ``MVR0_ASSUMPTIONS`` says so twice.
+    * ``auxiliary_power = 25 W`` -- a fixed avionics draw, independent of the
+      airframe, the payload and the flight time.
+
+    Each is a REFERENCE COEFFICIENT of the frozen MVR0/MVR1 benchmark, not a
+    measurement and not a catalogue value. A result computed from the defaults
+    is a result about that benchmark. Supplying your own is the supported way
+    to ask about a real vehicle, and doing so is what makes the answer yours
+    rather than the benchmark's.
+    """
+
     payload_mass: Quantity = field(default_factory=lambda: Quantity(0.50, "kg"))
     minimum_hover_endurance: Quantity = field(
         default_factory=lambda: Quantity(15.0, "min")
