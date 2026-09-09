@@ -95,8 +95,18 @@ def main(argv: list[str]) -> int:
         common.write_results(name, measurements, extra=extra or None)
         every.extend(measurements)
 
-    common.write_results("_suite", every)
-    print(f"\n{len(every)} measurements written to {common.RESULTS}")
+    # ONLY a full run writes the combined record. A selective run
+    # (`run_suite.py units`) that overwrote `_suite.json` would replace the
+    # whole-suite baseline with a fragment of it, and the next before/after
+    # comparison would compare against that fragment without saying so --
+    # which is exactly what happened once while this round was being run, and
+    # was caught only because the comparison reported 20 rows instead of 166.
+    if len(names) == len(MODULES):
+        common.write_results("_suite", every)
+    else:
+        print(f"\npartial run ({len(names)} of {len(MODULES)} modules): "
+              f"_suite.json left untouched")
+    print(f"{len(every)} measurements written to {common.RESULTS}")
     return 0
 
 

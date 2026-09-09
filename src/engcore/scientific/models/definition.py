@@ -752,9 +752,14 @@ def _dependency_order(
     same conditions always evaluate in the same sequence regardless of how the
     graph is shaped.
     """
+    # Read ONCE, here, and reused by the ordering below. The two used to walk
+    # the conditions separately and call `_required_names` on each of them
+    # twice over.
+    requirements = {c.name: frozenset(_required_names(c)) for c in conditions}
+
     known = {c.name for c in conditions}
     for condition in conditions:
-        missing = sorted(set(_required_names(condition)) - known)
+        missing = sorted(requirements[condition.name] - known)
         if missing:
             raise ModelValidityError(
                 f"condition {condition.name!r} requires {missing}, which "
@@ -781,7 +786,19 @@ def _dependency_order(
     # the ordering provably cannot change a verdict -- `tests/
     # test_core_invariants_adversarial.py` asserts that over every permutation
     # -- reproducing it exactly keeps this a performance change and nothing else.
-    requirements = {c.name: frozenset(_required_names(c)) for c in conditions}
+    # NOTHING DECLARES A PREREQUISITE -- which is every model shipped today:
+    # 0 of 64 validity conditions in this repository use `requires`. With no
+    # edges the graph has one layer, declaration order is already a valid
+    # topological order, and the index below would be five mappings built to
+    # discover that.
+    #
+    # Without this the index cost 22-33% more than the old rescan on flat and
+    # fan graphs -- a real regression, measured, and the price of removing the
+    # quadratic. This gives the common case back rather than accepting a trade
+    # that was never necessary.
+    if not any(requirements.values()):
+        return tuple(conditions)
+
     position = {c.name: index for index, c in enumerate(conditions)}
     by_name = {c.name: c for c in conditions}
 
