@@ -187,7 +187,12 @@ class ScientificParameter:
             raise InvalidScientificProblem("parameter name must be non-empty")
         object.__setattr__(self, "name", name)
         require_scientific_value(self.value, context=f"parameter {name!r}")
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        # Imported here rather than at module scope: `results` imports
+        # `ir.problem`, which imports this module, so a top-level import
+        # closes a cycle. Same deferral as `ScientificProblem.__post_init__`.
+        from ..results.immutable import freeze
+
+        object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
     @property
     def kind(self) -> ValueKind:

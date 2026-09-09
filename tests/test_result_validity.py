@@ -324,15 +324,25 @@ def test_validity_without_declared_models_is_refused():
 def test_an_unrecognised_status_is_refused_rather_than_carried():
     """A status no branch understands must not travel inside a result.
 
-    ``ValidityAssessment`` has no ``__post_init__`` (``NEEDS.md`` §1.9), so it
-    accepts a bare string. This field refuses one it cannot recognise, and
-    normalises one it can.
+    ``ValidityAssessment`` now coerces its own status and refuses one it cannot
+    recognise, so the refusal happens at construction rather than on the way
+    into this field. A bare string that IS a status is still normalised.
+
+    The IN_DOMAIN assessment names a satisfied condition deliberately. An
+    assessment with three empty lists has evaluated nothing and classifies as
+    UNKNOWN, so ``ValidityAssessment(status="in_domain")`` is itself a
+    contradiction now — a separate and correct refusal, which would make this
+    test pass for a reason that has nothing to do with normalising a string.
     """
     with pytest.raises(ScientificCoreError):
         result(validity={THERMAL: ValidityAssessment(status="probably_fine")})
 
     normalised = result(
-        validity={THERMAL: ValidityAssessment(status="in_domain")}
+        validity={
+            THERMAL: ValidityAssessment(
+                status="in_domain", satisfied=("biot_number",)
+            )
+        }
     )
     assert normalised.validity_of(THERMAL).status is ValidityStatus.IN_DOMAIN
     # and the normalised copy serializes, which a bare string would not

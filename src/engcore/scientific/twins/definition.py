@@ -25,6 +25,7 @@ from ..ir.values import (
     require_scientific_value,
 )
 from ..serialization import require_schema, schema_string
+from ..results.immutable import freeze
 
 TWIN_REFERENCE_SCHEMA = schema_string("scientific_twin_reference")
 TWIN_DATUM_SCHEMA = schema_string("scientific_twin_datum")
@@ -202,7 +203,7 @@ class ScientificTwin:
         object.__setattr__(self, "assumptions", assumptions)
         object.__setattr__(self, "evidence_refs", evidence_refs)
         object.__setattr__(self, "calibration_evidence_refs", calibration_refs)
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
     @staticmethod
     def _normalize_refs(values: tuple[str, ...], label: str) -> tuple[str, ...]:

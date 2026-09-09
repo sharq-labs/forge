@@ -136,6 +136,7 @@ from ..scientific.models.definition import (
     UnknownCondition,
     ValidityAssessment,
     ValidityStatus,
+    classify_conditions,
 )
 from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
@@ -482,19 +483,19 @@ def combine_assessments(
             reasons.setdefault(entry.name, entry)
     unknown = [n for n in unknown if n not in violated]
     satisfied = [n for n in satisfied if n not in violated and n not in unknown]
-    combined = ValidityAssessment(
-        status=ValidityStatus.UNKNOWN,
+    # Classified BEFORE construction, in one step rather than two. The old
+    # shape built a placeholder assessment carrying `status=UNKNOWN` beside a
+    # non-empty `violated`, read the real status off it and rebuilt -- which
+    # the core now refuses outright, correctly: that placeholder was a
+    # contradictory record, and it existed only because nothing stopped it.
+    return ValidityAssessment(
+        status=classify_conditions(
+            satisfied=satisfied, violated=violated, unknown=unknown
+        ),
         satisfied=tuple(satisfied),
         violated=tuple(violated),
         unknown=tuple(unknown),
         unknown_reasons=tuple(reasons[n] for n in unknown if n in reasons),
-    )
-    return ValidityAssessment(
-        status=classify_assessment(combined),
-        satisfied=combined.satisfied,
-        violated=combined.violated,
-        unknown=combined.unknown,
-        unknown_reasons=combined.unknown_reasons,
     )
 
 
@@ -718,13 +719,7 @@ def classify_assessment(assessment: ValidityAssessment) -> ValidityStatus:
     layer never holds a domain and never evaluates a condition. It classifies
     what it was handed, by the rule the core used to produce it.
     """
-    if assessment.violated:
-        return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    if assessment.unknown:
-        return ValidityStatus.UNKNOWN
-    if assessment.satisfied:
-        return ValidityStatus.IN_DOMAIN
-    return ValidityStatus.UNKNOWN
+    return assessment.implied_status
 
 
 @dataclass(frozen=True)

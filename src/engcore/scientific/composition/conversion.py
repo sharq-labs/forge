@@ -68,6 +68,7 @@ from ..models.definition import ValidityStatus
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_unit
+from ..results.immutable import freeze
 
 ENERGY_CONVERSION_SCHEMA = schema_string("energy_conversion")
 LOSS_PATH_SCHEMA = schema_string("conversion_loss_path")
@@ -195,8 +196,13 @@ class ConversionOutcome:
     reason: str = ""
 
     def __post_init__(self) -> None:
-        if self.losses is None:
-            object.__setattr__(self, "losses", {})
+        # Frozen on BOTH paths. Freezing only the defaulted one would leave
+        # every outcome that actually carries losses -- which is every outcome
+        # a declared conversion produces -- with a writable mapping, and the
+        # empty case, which has nothing to protect, as the only one protected.
+        object.__setattr__(
+            self, "losses", freeze({} if self.losses is None else dict(self.losses))
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {

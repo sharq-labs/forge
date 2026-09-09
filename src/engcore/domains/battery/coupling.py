@@ -60,6 +60,7 @@ from ...scientific.models.definition import (
     UnknownCondition,
     ValidityAssessment,
     ValidityStatus,
+    classify_conditions,
 )
 from ...scientific.ir.problem import ModelReference
 from ...scientific.realizations.definition import RealizationReference
@@ -150,16 +151,14 @@ def _over_the_step(
         satisfied = [
             n for n in satisfied if n not in violated and n not in unknown
         ]
-        if violated:
-            status = ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        elif unknown:
-            status = ValidityStatus.UNKNOWN
-        elif satisfied:
-            status = ValidityStatus.IN_DOMAIN
-        else:
-            status = ValidityStatus.UNKNOWN
+        # The core's own classification, not a fourth copy of it. This block
+        # spelled the same four rules out again; the core now states them once
+        # and refuses an assessment that disagrees, so a local copy could only
+        # ever drift into being refused.
         combined[model_id] = ValidityAssessment(
-            status=status,
+            status=classify_conditions(
+                satisfied=satisfied, violated=violated, unknown=unknown
+            ),
             satisfied=tuple(satisfied),
             violated=tuple(violated),
             unknown=tuple(unknown),

@@ -26,6 +26,7 @@ from ..ir.variables import VariableRole
 from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_same_dimension, require_unit
+from ..results.immutable import freeze
 
 #: Bumped to /2 by the `exclusions` field. Additive: a /1 record carries no
 #: exclusions and reads back as `None` -- "this record does not say" --
@@ -934,6 +935,44 @@ VALIDITY_ASSESSMENT_SCHEMA_V1 = schema_string("validity_assessment", 1)
 VALIDITY_ASSESSMENT_SCHEMA_V2 = schema_string("validity_assessment", 2)
 
 
+def classify_conditions(
+    *,
+    satisfied: Sequence[str],
+    violated: Sequence[str],
+    unknown: Sequence[str],
+) -> ValidityStatus:
+    """The status these condition lists imply. **The one statement of the rule.**
+
+    * anything violated -> ``OUTSIDE_VALIDATED_DOMAIN``;
+    * else anything unknown -> ``UNKNOWN``;
+    * else something satisfied -> ``IN_DOMAIN``;
+    * else -- **nothing was evaluated at all** -- ``UNKNOWN``.
+
+    That last clause is not an edge case and not a convenience. *Absence of
+    declared limits is not evidence of unlimited validity*: a domain with no
+    conditions has established nothing, and ``ValidityDomain.assess`` returns
+    exactly this for one. Classifying an all-empty assessment as IN_DOMAIN
+    would let a model that checked nothing certify itself, which is the
+    strongest claim in the vocabulary awarded for the least work.
+
+    **Why this lives here.** The rule was written out three times -- in
+    ``ValidityDomain.assess``, in the credibility boundary's
+    ``classify_assessment``, and again in a domain's coupling combiner -- and
+    the boundary's copy existed *because* the core did not enforce it. Three
+    statements of one rule is three chances for it to drift, and the drift
+    would not be visible: each copy looks correct on its own. It is stated
+    once, where the record that has to obey it lives, and the other two
+    delegate.
+    """
+    if violated:
+        return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    if unknown:
+        return ValidityStatus.UNKNOWN
+    if satisfied:
+        return ValidityStatus.IN_DOMAIN
+    return ValidityStatus.UNKNOWN
+
+
 @dataclass(frozen=True)
 class ValidityAssessment:
     """Result of testing a validity domain against a context.
@@ -966,6 +1005,27 @@ class ValidityAssessment:
         object.__setattr__(self, "violated", tuple(self.violated))
         object.__setattr__(self, "unknown", tuple(self.unknown))
         object.__setattr__(self, "unknown_reasons", tuple(self.unknown_reasons))
+
+        # The status is COERCED first and CROSS-CHECKED second, and both were
+        # previously the credibility boundary's job -- which is one layer too
+        # late and one layer too narrow, because an assessment reaches plenty
+        # of readers that never cross that boundary.
+        #
+        # `ValidityAssessment(status="in_domain")` stored a raw str, which then
+        # crashed this record's own `to_dict` on `self.status.value`;
+        # `status="typo"` stored a string that is no status at all.
+        try:
+            object.__setattr__(self, "status", ValidityStatus(self.status))
+        except ValueError as exc:
+            raise ModelValidityError(
+                f"validity assessment carries status {self.status!r}, which is "
+                f"not a ValidityStatus. An unrecognised status matches no "
+                f"branch of any consumer and is read as 'nothing argues "
+                f"against this result'; the declared statuses are "
+                f"{[s.value for s in ValidityStatus]}"
+            ) from exc
+        self._require_status_agrees_with_its_own_conditions()
+
         for entry in self.unknown_reasons:
             if not isinstance(entry, UnknownCondition):
                 raise ModelValidityError(
@@ -1000,6 +1060,49 @@ class ValidityAssessment:
                 f"the declared reasons are "
                 f"{[r.value for r in UnknownReason]}"
             )
+
+    @property
+    def implied_status(self) -> ValidityStatus:
+        """The status this assessment's own condition lists imply."""
+        return classify_conditions(
+            satisfied=self.satisfied,
+            violated=self.violated,
+            unknown=self.unknown,
+        )
+
+    def _require_status_agrees_with_its_own_conditions(self) -> None:
+        """A record that contradicts itself must not exist.
+
+        ``status=IN_DOMAIN, violated=("biot_number",)`` constructed happily and
+        would report the model applicable on the same record that names the
+        bound it broke. Three more of the same shape were reachable: OUTSIDE
+        with nothing violated, IN_DOMAIN with unknowns outstanding, and
+        IN_DOMAIN having evaluated nothing at all -- the last being the
+        strongest claim in the vocabulary awarded for the least work.
+
+        Recompute-and-verify rather than derive-and-overwrite. Deriving would
+        make a producer that had the classification wrong silently *right*, and
+        the thing that was wrong -- a caller assembling an assessment by hand
+        instead of through ``assess`` -- would go on being wrong somewhere this
+        record cannot see. A refusal names it.
+
+        Every assessment ``ValidityDomain.assess`` produces passes untouched:
+        it uses this same classification.
+        """
+        implied = self.implied_status
+        if self.status is implied:
+            return
+        raise ModelValidityError(
+            f"validity assessment declares status {self.status.value!r} while "
+            f"its own conditions imply {implied.value!r} "
+            f"(satisfied={list(self.satisfied)}, "
+            f"violated={list(self.violated)}, unknown={list(self.unknown)}). "
+            f"An assessment may report a status but may not contradict the "
+            f"conditions it carries: a violated condition is evidence against "
+            f"the model, an unknown one is evidence of nothing either way, and "
+            f"an assessment that evaluated nothing has established nothing -- "
+            f"absence of declared limits is not evidence of unlimited validity"
+        )
 
     def reason_for(self, name: str) -> UnknownReason | None:
         """Why ``name`` was not assessed, or ``None`` if it was."""
@@ -1849,7 +1952,7 @@ class ScientificModelDefinition:
         object.__setattr__(
             self, "required_capabilities", frozenset(self.required_capabilities)
         )
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
         # Every context name this model's conditions read must be accounted
         # for: either a declared input, which the caller is *supposed* to

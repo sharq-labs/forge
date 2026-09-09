@@ -14,6 +14,7 @@ from typing import Any, Mapping
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
+from ..units.validation import require_same_dimension
 
 INITIAL_CONDITION_SCHEMA = schema_string("initial_condition")
 BOUNDARY_CONDITION_SCHEMA = schema_string("boundary_condition")
@@ -53,9 +54,28 @@ class InitialCondition:
             raise InvalidScientificProblem(
                 f"initial condition for {variable!r} requires a Quantity value"
             )
-        if self.time is not None and not isinstance(self.time, Quantity):
-            raise InvalidScientificProblem(
-                f"initial condition for {variable!r}: time must be a Quantity"
+        if self.time is not None:
+            if not isinstance(self.time, Quantity):
+                raise InvalidScientificProblem(
+                    f"initial condition for {variable!r}: time must be a Quantity"
+                )
+            # A Quantity check alone admitted `time = 5 volt`. The type says
+            # "this carries a unit", which is not the same statement as "this
+            # is a time", and the second is the one an integrator needs: the
+            # instant a state is declared at is what every later instant is
+            # measured from, so a wrong dimension here is not a labelling slip
+            # but a wrong origin for the whole march.
+            #
+            # Nothing downstream would catch it either. The field is optional
+            # and no solver in this repository reads it yet, so a voltage
+            # would sit in the record, serialize, round-trip and be waiting for
+            # the first time solver that does.
+            require_same_dimension(
+                self.time,
+                "second",
+                context=(
+                    f"initial condition for {variable!r}: time"
+                ),
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -107,6 +127,11 @@ class BoundaryCondition:
         object.__setattr__(self, "region", str(self.region).strip())
         object.__setattr__(self, "kind", BoundaryKind(self.kind))
 
+        # Imported here rather than at module scope: `results` imports
+        # `ir.problem`, which imports this module, so a top-level import
+        # closes a cycle. Same deferral as `ScientificProblem.__post_init__`.
+        from ..results.immutable import freeze
+
         coefficients = dict(self.coefficients)
         for key, coefficient in coefficients.items():
             if not isinstance(coefficient, Quantity):
@@ -114,7 +139,7 @@ class BoundaryCondition:
                     f"boundary condition {self.name!r}: coefficient {key!r} "
                     f"must be a Quantity"
                 )
-        object.__setattr__(self, "coefficients", coefficients)
+        object.__setattr__(self, "coefficients", freeze(coefficients))
 
         if self.value is not None and not isinstance(self.value, Quantity):
             raise InvalidScientificProblem(

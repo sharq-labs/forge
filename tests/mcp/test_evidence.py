@@ -44,7 +44,10 @@ from src.engcore.scientific.models.definition import (
     ValidityDomain,
     ValidityStatus,
 )
-from src.engcore.scientific.errors import ScientificValidationError
+from src.engcore.scientific.errors import (
+    ModelValidityError,
+    ScientificValidationError,
+)
 from src.engcore.scientific.results.provenance import ProvenanceRecord
 from src.engcore.scientific.results.result import ScientificResult
 from src.engcore.scientific.results.validation import (
@@ -551,13 +554,26 @@ def test_the_package_copies_the_mappings_it_is_given():
 
 
 def test_an_unrecognised_validity_status_is_refused_rather_than_read_as_clean():
-    """ValidityAssessment coerces nothing, so a bogus status can reach here.
+    """An unrecognised status must never reach a verdict.
 
-    It must not: an unrecognised status matches neither the NOT_SUPPORTED nor
-    the INSUFFICIENT_EVIDENCE branch, so it would fall through to SUPPORTED —
-    the most favourable verdict available, earned by malformation.
+    It would match neither the NOT_SUPPORTED nor the INSUFFICIENT_EVIDENCE
+    branch and fall through to SUPPORTED — the most favourable verdict
+    available, earned by malformation.
+
+    **The refusal moved into the core** and this test moved with it. It used to
+    be this package's job because ``ValidityAssessment`` coerced nothing, so a
+    bogus status could be constructed and had to be caught on arrival here. The
+    core now refuses it at construction, which is strictly earlier and strictly
+    wider: an assessment reaches plenty of readers that never cross this
+    boundary, and every one of them used to be exposed.
     """
-    with pytest.raises(CredibilityEvidenceError):
+    with pytest.raises(ModelValidityError):
+        ValidityAssessment(status="probably_fine")
+
+    # And therefore no such record can be built to hand to this boundary at
+    # all. Asserted rather than assumed: "the input cannot be constructed" is
+    # the whole reason the boundary check below is no longer reachable.
+    with pytest.raises(ModelValidityError):
         ModelValidityRecord(
             model_id="m",
             version="1",
@@ -618,10 +634,16 @@ def test_a_validity_record_for_a_model_that_did_not_run_is_refused():
 def test_a_record_whose_status_contradicts_its_own_conditions_is_refused():
     """IN_DOMAIN over a non-empty `violated` would report SUPPORTED.
 
-    ValidityAssessment enforces no relation between its status and its
-    condition lists, so the package cross-checks against exactly the
-    classification `ValidityDomain.assess` performs: every assessment the core
-    actually produced passes untouched, and only a hand-built one is refused.
+    **The cross-check moved into the core**, and this test moved with it.
+    ``ValidityAssessment`` used to enforce no relation between its status and
+    its condition lists, so this package cross-checked on arrival. The core now
+    refuses the contradiction at construction, against the same classification
+    ``ValidityDomain.assess`` performs, so every assessment the core actually
+    produced still passes untouched and a hand-built one cannot be built at
+    all — which is what makes this boundary safe rather than merely careful.
+
+    The fourth case is the quiet one: OUTSIDE_VALIDATED_DOMAIN over an empty
+    ``violated`` claims a finding nothing recorded.
     """
     for status, names in (
         (ValidityStatus.IN_DOMAIN, {"violated": ("biot_number",)}),
@@ -639,13 +661,28 @@ def test_a_record_whose_status_contradicts_its_own_conditions_is_refused():
         (ValidityStatus.UNKNOWN, {"violated": ("biot_number",)}),
         (ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, {"satisfied": ("biot_number",)}),
     ):
-        with pytest.raises(CredibilityEvidenceError) as caught:
+        with pytest.raises(ModelValidityError) as caught:
             ModelValidityRecord(
                 model_id="m",
                 version="1",
                 assessment=ValidityAssessment(status=status, **names),
             )
         assert "contradict" in str(caught.value)
+
+    # The assessments the core really emits are unaffected, which is the half
+    # a refusal this strict has to keep proving.
+    assert ValidityAssessment(
+        status=ValidityStatus.IN_DOMAIN, satisfied=("biot_number",)
+    ).status is ValidityStatus.IN_DOMAIN
+    assert ValidityAssessment(
+        status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, violated=("biot_number",)
+    ).status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    # A domain with no conditions: UNKNOWN over three empty lists, and still
+    # legitimate. Absence of declared limits is not evidence of unlimited
+    # validity, so this must not be swept up by the rule above.
+    assert ValidityAssessment(
+        status=ValidityStatus.UNKNOWN
+    ).status is ValidityStatus.UNKNOWN
 
 
 def test_a_status_given_as_a_bare_string_is_normalised_not_merely_probed():
@@ -1387,8 +1424,13 @@ def test_f09_the_wrapper_agrees_with_the_core_on_every_assessment_it_emits():
 
 
 def test_f09_a_status_that_contradicts_its_own_conditions_is_still_refused():
-    """The fix widens the classification; it does not remove the cross-check."""
-    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+    """The fix widens the classification; it does not remove the cross-check.
+
+    Raised by the core now rather than by this boundary -- the check moved to
+    where the record lives, so it fires for every reader and not only for the
+    ones that cross into credibility evidence.
+    """
+    with pytest.raises(ModelValidityError, match="may not contradict"):
         ModelValidityRecord(
             model_id="probe",
             version="0.1.0",
@@ -1396,7 +1438,7 @@ def test_f09_a_status_that_contradicts_its_own_conditions_is_still_refused():
                 status=ValidityStatus.IN_DOMAIN, violated=("biot_number",)
             ),
         )
-    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+    with pytest.raises(ModelValidityError, match="may not contradict"):
         ModelValidityRecord(
             model_id="probe",
             version="0.1.0",
@@ -1412,7 +1454,7 @@ def test_f09_a_status_that_contradicts_its_own_conditions_is_still_refused():
         )
     # and an assessment that named nothing may not claim IN_DOMAIN either:
     # nothing was evaluated, so nothing was found to hold.
-    with pytest.raises(CredibilityEvidenceError, match="may not contradict"):
+    with pytest.raises(ModelValidityError, match="may not contradict"):
         ModelValidityRecord(
             model_id="probe",
             version="0.1.0",

@@ -18,6 +18,7 @@ from ..ir.constraints import ConstraintCheck
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 from ..results.result import ScientificResult
+from ..results.immutable import freeze
 
 EVALUATION_SCHEMA = schema_string("scientific_evaluation")
 
@@ -58,7 +59,7 @@ class ScientificEvaluation:
                 raise ScientificCoreError(
                     f"candidate value {name!r} must be a Quantity"
                 )
-        object.__setattr__(self, "candidate", candidate)
+        object.__setattr__(self, "candidate", freeze(candidate))
 
         objectives = dict(self.objective_values)
         for name, value in objectives.items():
@@ -66,9 +67,9 @@ class ScientificEvaluation:
                 raise ScientificCoreError(
                     f"objective value {name!r} must be a Quantity"
                 )
-        object.__setattr__(self, "objective_values", objectives)
+        object.__setattr__(self, "objective_values", freeze(objectives))
         object.__setattr__(self, "constraint_checks", tuple(self.constraint_checks))
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
         if self.status is EvaluationStatus.OK and self.result is None:
             raise ScientificCoreError(
