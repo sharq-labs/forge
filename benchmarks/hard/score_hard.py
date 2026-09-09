@@ -32,8 +32,14 @@ ap.add_argument("--open-holdout",action="store_true",
 ap.add_argument("--openings-log",default=str(HERE/"HOLDOUT_OPENINGS.log"))
 ap.add_argument("--note",default="",help="why the seal was broken; goes in the log")
 a=ap.parse_args(); sys.path.insert(0,a.src)
+sys.path.insert(0,str(HERE))
 from engcore.mcp.problem import run_electrothermal_case
 from engcore.mcp.battery import run_battery_case
+# The three questions a case answers, kept apart. See scoring.py for why a
+# verdict match and a caught defect are not the same measurement.
+from scoring import (
+    ReportFacts, ScoredCase, per_family, score_case, scorecard,
+)
 # One scorer, two systems. Each case names the system it belongs to; the key is
 # absent on every electro-thermal case ever written, so its absence means that
 # system rather than an error. A scorer that only knew one system would have
@@ -133,24 +139,55 @@ else:
                  f"the split does not describe {a.cases}")
     scope=a.split
 
+def _condition_facts(reports, scope=None):
+    """Pool every condition name by what the run did with it.
+
+    Across every model of every report, because `should_be_caught_by` names a
+    condition and never says which model declares it -- so a scorer that looked
+    in one model would miss a catcher that fired in another and call it a miss.
+    `scope` restricts the models considered, which is how a battery case is
+    read over the battery models the way its verdict already is.
+    """
+    violated, unknown, satisfied = set(), set(), set()
+    for rep in reports:
+        for record in rep.validity:
+            if scope is not None and not record.model_id.startswith(scope):
+                continue
+            violated.update(record.assessment.violated)
+            unknown.update(record.assessment.unknown)
+            satisfied.update(record.assessment.satisfied)
+    return violated, unknown, satisfied
+
+
 def work(f):
     c=json.loads(f.read_text(encoding="utf-8")); g=c["ground_truth"]
+    system=c.get("system","electrothermal")
     try:
-        system=c.get("system","electrothermal")
         r=RUNNERS[system](c["payload"])
         if system=="battery":
             actual=_battery_scope(r.report)
+            reports=(r.report,)
+            # Same scope as the verdict: a battery case is answered over the
+            # battery models, so its catcher is looked for there too.
+            violated,unknown,satisfied=_condition_facts(reports,scope="battery.")
+            refused=False
         else:
-            vs={rep.verdict.value.upper() for rep in r.reports}
+            reports=r.reports
+            vs={rep.verdict.value.upper() for rep in reports}
             actual=next((v for v in ("NOT_SUPPORTED","INSUFFICIENT_EVIDENCE","SUPPORTED") if v in vs),"NO_REPORT")
+            violated,unknown,satisfied=_condition_facts(reports)
+            refused=r.run.outcome.name=="TRANSFER_REFUSED"
         det=""
     except Exception as e:
         n=type(e).__name__
         actual="REJECTED_AT_BOUNDARY" if n in BOUND else f"ERROR:{n}"; det=str(e)[:120]
-    return {"id":c["id"],"system":c.get("system","electrothermal"),
-            "defect":g["defect"],"label":g["label"],
-            "expected":g["expected_verdict"],"actual":actual,
-            "match":actual==g["expected_verdict"],"detail":det}
+        violated=unknown=satisfied=set(); refused=False
+    facts=ReportFacts(verdict=actual,violated=frozenset(violated),
+                      unknown=frozenset(unknown),satisfied=frozenset(satisfied),
+                      coupling_refused=refused,error=det)
+    row=score_case(g,c["id"],system,facts).as_row()
+    row["detail"]=det
+    return row
 # The driver is guarded because this pool uses the "spawn" start method on
 # Windows: each child re-imports this module, and without the guard that
 # re-entered the pool construction below and died as a BrokenProcessPool.
@@ -159,12 +196,20 @@ def work(f):
 if __name__ == "__main__":
     with cf.ProcessPoolExecutor(max_workers=a.workers or os.cpu_count()) as ex:
         rows=list(ex.map(work,files,chunksize=40))
-    hit=sum(r["match"] for r in rows)
-    unsound=[r for r in rows if r["label"]!="valid"]; sound=[r for r in rows if r["label"]=="valid"]
-    fa=[r for r in unsound if r["actual"]=="SUPPORTED"]
-    fr=[r for r in sound if r["actual"]!="SUPPORTED"]
-    caught=[r for r in unsound if r["actual"]!="SUPPORTED"]
+    # Rebuilt from the rows rather than recomputed, so the JSON a reader sees
+    # and the numbers below it are the same objects.
+    scored=[ScoredCase(case_id=r["id"],system=r["system"],defect=r["defect"],
+                       label=r["label"],expected_verdict=r["expected"],
+                       actual_verdict=r["actual"],verdict_match=r["match"],
+                       catcher_raw=r["catcher"],catcher_form=r["catcher_form"],
+                       catcher_name=None,
+                       declared_catcher_status=r["catcher_status"],
+                       catch_type=r["catch_type"],reason_match=r["reason_match"],
+                       false_accept=r["false_accept"],false_reject=r["false_reject"],
+                       deciding_conditions=tuple(r["deciding"])) for r in rows]
+    card=scorecard(scored)
     summary={"generated":datetime.datetime.now().isoformat(timespec="seconds"),
+     "scorecard_version":2,
      # Identity of the thing measured, carried next to the measurement. Without
      # these three fields a number in this file is unattributable: it could
      # have come from any case set, any partition, any commit.
@@ -175,15 +220,12 @@ if __name__ == "__main__":
      "split_digest":(split["holdout_digest"] if a.split=="holdout" else
                      split["dev_digest"] if split and a.split=="dev" else None),
      "scored":f"{len(files)} of {len(list(pathlib.Path(a.cases).glob('*.json')))} cases on disk",
-     "total":len(rows),
-     "sound":len(sound),"unsound":len(unsound),
-     "exact_verdict_match":f"{hit}/{len(rows)} ({hit/len(rows):.1%})",
-     "catch_rate":f"{len(caught)}/{len(unsound)} ({len(caught)/len(unsound):.1%})",
-     "false_accept":f"{len(fa)}/{len(unsound)} ({len(fa)/len(unsound):.2%})",
-     "false_reject":f"{len(fr)}/{len(sound)} ({len(fr)/len(sound):.1%})",
-     "false_accept_ids":[r["id"] for r in fa][:60],
+     **card,
      "errors":dict(collections.Counter(r["actual"] for r in rows if r["actual"].startswith("ERROR")))}
-    pathlib.Path(a.results).write_text(json.dumps({"summary":summary,"rows":rows},ensure_ascii=False),encoding="utf-8")
+    families=per_family(scored)
+    pathlib.Path(a.results).write_text(
+        json.dumps({"summary":summary,"families":families,"rows":rows},
+                   ensure_ascii=False,sort_keys=False),encoding="utf-8")
     # A seal that leaves no trace when it is broken is not a seal. The log is
     # append-only and tracked, so an opening is a line in the history rather
     # than a claim in a README, and a second opening cannot be mistaken for the
