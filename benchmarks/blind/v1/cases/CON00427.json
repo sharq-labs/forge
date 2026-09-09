@@ -1,0 +1,1 @@
+{"family":"cond.mesh","family_kind":"clean","id":"CON00427","intended_position":null,"intended_stratum":"","payload":{"diffusivity":"2.7290143965351014e-06 meter**2/second","end_time":"629.1679143235849 second","length":"0.4443458736192252 meter","n_cells":32,"n_steps":36,"realization":"thermal.conduction1d.explicit_forward_euler"},"system":"conduction_1d","target":null}

@@ -1,0 +1,282 @@
+{
+ "actual_counts": {
+  "battery": 120,
+  "conduction_1d": 60,
+  "electrothermal": 207,
+  "kinetics_cstr": 57
+ },
+ "actual_total": 444,
+ "arithmetic_sensitive_total": 42,
+ "bound_registry_version": "blind-bound-registry/1.0.0",
+ "boundary_stratum_counts": {
+  "AT_BOUNDARY": 42,
+  "CONSTRUCTION_REFUSED": 12,
+  "FAR_INSIDE": 52,
+  "FAR_OUTSIDE": 46,
+  "MALFORMED": 12,
+  "NEAR_INSIDE": 149,
+  "NEAR_OUTSIDE": 43,
+  "NOT_APPLICABLE": 50,
+  "SOFT_BOUND_NEAR": 38
+ },
+ "causal_status_counts": {
+  "MULTIPLE_CAUSAL_CATCHERS": 55,
+  "NOT_APPLICABLE": 250,
+  "NO_UNIQUE_PRIMARY": 14,
+  "ONE_CAUSAL_PLUS_REDUNDANT": 34,
+  "UNIQUE_CAUSAL_CATCHER": 91
+ },
+ "challenge_id": "forge-blind-v1",
+ "denominator_policy": "The primary denominator is the DECIDED, non-UNRESOLVED set. ARITHMETIC_SENSITIVE cases stay in the archive and are scored separately; UNRESOLVED cases are scored not at all. Neither is counted as a Forge failure and neither is counted as a pass.",
+ "distribution_contrast": {
+  "blind_v1": {
+   "ambient_conductance_w_per_k": {
+    "decades_spanned": 3.65,
+    "max": 4.758635109384993,
+    "min": 0.0010534029938669446,
+    "n": 499,
+    "p50": 0.072004563993339
+   },
+   "ambient_temperature_k": {
+    "decades_spanned": null,
+    "max": 339.7860767154334,
+    "min": -40.0,
+    "n": 499,
+    "p50": 272.2869251700482
+   },
+   "n_stages": {
+    "decades_spanned": 0.6,
+    "max": 4.0,
+    "min": 1.0,
+    "n": 206,
+    "p50": 3.0
+   },
+   "reference_resistance_ohm": {
+    "decades_spanned": 6.68,
+    "max": 15411.509414920902,
+    "min": 0.0032442006545314287,
+    "n": 499,
+    "p50": 7.115412268527645
+   },
+   "source_voltage_v": {
+    "decades_spanned": 5.24,
+    "max": 9438.109126252873,
+    "min": 0.054334389933484044,
+    "n": 204,
+    "p50": 105.93902564400794
+   }
+  },
+  "existing_hard": {
+   "ambient_conductance_w_per_k": {
+    "decades_spanned": 3.19,
+    "max": 9.945032282,
+    "min": 0.006378555082,
+    "n": 2000,
+    "p50": 0.2756779252
+   },
+   "ambient_temperature_k": {
+    "decades_spanned": 0.26,
+    "max": 399.5289718,
+    "min": 220.0308679,
+    "n": 2000,
+    "p50": 297.8457154
+   },
+   "n_stages": {
+    "decades_spanned": 0.0,
+    "max": 1.0,
+    "min": 1.0,
+    "n": 2000,
+    "p50": 1.0
+   },
+   "reference_resistance_ohm": {
+    "decades_spanned": 3.5,
+    "max": 3133.821833,
+    "min": 1.000751616,
+    "n": 2000,
+    "p50": 62.51583379
+   },
+   "source_voltage_v": {
+    "decades_spanned": 2.18,
+    "max": 85.9374928,
+    "min": 0.5631817691,
+    "n": 2000,
+    "p50": 17.46078642
+   }
+  },
+  "note": "Electro-thermal scalars only, measured on both corpora. The comparison is against the FULL existing set, development and sealed hold-out together, because the question is whether this challenge's parameters are new -- not which split they would have landed in."
+ },
+ "dual_oracle_available": {
+  "electrical_ngspice": true
+ },
+ "excluded_by_design": [
+  "Thermal-runaway and non-converging electro-thermal designs. The VERDICT of such a case is decidable, but the CONDITION SET a refused coupling reports is a property of the iteration driver's bookkeeping rather than of the science, so an independent oracle cannot state it without copying the driver. Cases whose fixed point does not converge are rejected pre-freeze under `oracle_non_convergence` and counted. This challenge therefore does NOT test refusal-path reporting.",
+  "Every capability named in the round's exclusion list: ContextOfUse, ScientificClaim, ScientificArtifact, arrays, fields, meshes, new domains, new solvers, new APIs, MCP features, UI."
+ ],
+ "generated_utc": "2026-09-09T23:25:32.090073+00:00",
+ "generator_version": "blind-generator/1.1.0",
+ "intended_stratum_hits": 156,
+ "intended_stratum_misses": 288,
+ "intended_stratum_note": "A miss is not a defect. A family TARGETS a stratum by solving for a declaration; what the case IS, is whatever the oracle measured afterwards, and the measured stratum is what the truth carries. Misses are counted here so the gap between intent and content is visible rather than assumed away.",
+ "master_seed": 20260909,
+ "measured_state_agreement": {
+  "final_temperature_relative": 3.77e-16,
+  "measured_over": "1400 open development cases, benchmarks/hard/cases_hard",
+  "method": "independent oracle vs engcore.mcp.problem.run_electrothermal_case",
+  "steady_state_temperature_relative": 2.05e-09
+ },
+ "oracle_register": {
+  "blind.oracle.battery.analytic": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "The Rint model has no diffusion or polarisation dynamics; this checks its algebra and the contract, not its fidelity to a real cell.",
+   "statement": "Coulomb counting, the Rint terminal relation, Peukert derating and the self-heating march, written from Plett (2015) and Peukert (1897), evaluated at both ends of every marched step."
+  },
+  "blind.oracle.battery.rk4_and_charge_balance": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "Shares the definitions; bounds an accumulation or integration error, not a wrong model.",
+   "statement": "The state of charge re-derived once from the total charge that crossed rather than accumulated step by step, and the cell temperature re-derived by RK4 rather than by the closed form."
+  },
+  "blind.oracle.conduction1d.ftcs_march": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "The finite grid is slightly MORE forgiving than r = 1/2, so the declared bound is conservative rather than wrong; only growth at r <= 1/2 would falsify it.",
+   "statement": "The exact highest discrete eigenmode is seeded, FTCS is actually marched, and the growth per step is measured. The criterion's own prediction put to an experiment."
+  },
+  "blind.oracle.conduction1d.vonneumann": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "A statement about a diffusion problem. A negative declared diffusivity is not one, and `alpha > 0` is the condition that catches it.",
+   "statement": "von Neumann stability of FTCS in closed form: the amplification of the highest representable mode is 1 - 4r, so |g| > 1 once r > 1/2."
+  },
+  "blind.oracle.electrical.ngspice": {
+   "class": "INDEPENDENT_EXECUTABLE",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "A netlist carries no temperature, so this bounds the ELECTRICAL solve alone -- the resistances handed to it are already the oracle's answer to the thermal question. Absent ngspice the coverage is lost, not satisfied.",
+   "statement": "ngspice solves the series loop from a netlist written here, and the loop current is read back and compared."
+  },
+  "blind.oracle.electrothermal.analytic": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "Shares the CONTRACT with the runtime -- what each condition means and which state coordinate it is read at. The arithmetic is independent; the reading of the specification is common to both, by design.",
+   "statement": "The coupled electro-thermal fixed point and every quantity the validity conditions are stated over, written from the literature definitions and evaluated on plain floats in SI."
+  },
+  "blind.oracle.electrothermal.rk4": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "A different ALGORITHM against the same equation. It verifies the integration, not the choice of equation. The nonlinear variant is reported beside it as a model-fidelity note and arbitrates nothing.",
+   "statement": "Classical RK4 march of the same lumped balance the closed form integrates, with the heat held at I^2 R for the interval exactly as the declared model states it."
+  },
+  "blind.oracle.kinetics.cstr.analytic": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "The ceiling is an upper bound derived from the Z = T + beta C invariant, not a prediction of where the trajectory goes.",
+   "statement": "The CSTR's six declared conditions and the adiabatic ceiling in closed form, plus the record's own construction guards, which refuse a declaration before any condition is assessed."
+  },
+  "blind.oracle.kinetics.cstr.rk4": {
+   "class": "INDEPENDENT_ANALYTIC",
+   "executable": true,
+   "independent_of_forge": true,
+   "limitations": "An explicit fixed-step march on a stiff exothermic reactor overshoots and leaves the region the bound is proved over; such a trajectory is reported as diverged and convicts nothing.",
+   "statement": "Fixed-step RK4 of the two balances, reporting the hottest state the trajectory reaches. It exists to FALSIFY the analytic ceiling."
+  }
+ },
+ "oracle_unit_table_version": "blind-units/1.0.0",
+ "plan_version": "blind-plan/1.0.0",
+ "planned_counts": {
+  "battery": 120,
+  "conduction_1d": 60,
+  "electrothermal": 207,
+  "kinetics_cstr": 60
+ },
+ "planned_total": 447,
+ "rejection_counts": {
+  "invalid_sampled_state": 3
+ },
+ "rejections": [
+  {
+   "detail": "no draw in 40 attempts produced a design whose fixed point converges at the requested placement",
+   "family": "kin.ceiling",
+   "index": 0,
+   "reason": "invalid_sampled_state"
+  },
+  {
+   "detail": "no draw in 40 attempts produced a design whose fixed point converges at the requested placement",
+   "family": "kin.envelope",
+   "index": 0,
+   "reason": "invalid_sampled_state"
+  },
+  {
+   "detail": "no draw in 40 attempts produced a design whose fixed point converges at the requested placement",
+   "family": "kin.envelope",
+   "index": 9,
+   "reason": "invalid_sampled_state"
+  }
+ ],
+ "resolution_floor": 0.001,
+ "resolvable_total": 402,
+ "second_oracle_counts": {
+  "AGREED": 408,
+  "NOT_REACHED": 12,
+  "SINGLE_ORACLE": 24
+ },
+ "seed_derivation": "sha256(f'{MASTER_SEED}:{system}:{family}:{index}')[:8], big-endian. Per case, so a family added later cannot redraw an earlier one.",
+ "truth_builder_version": "blind-truth/1.0.0",
+ "truth_class_counts": {
+  "CONTRACT_ONLY": 74,
+  "INDEPENDENT_SCIENTIFIC": 272,
+  "MIXED_SCIENCE_AND_POLICY": 2,
+  "POLICY_DEPENDENT": 96
+ },
+ "units_emitted": [
+  "1/hour",
+  "1/kelvin",
+  "1/second",
+  "ampere",
+  "ampere_hour",
+  "degC",
+  "dimensionless",
+  "joule/kelvin",
+  "joule/kilogram/kelvin",
+  "joule/mole",
+  "kelvin",
+  "kilogram/meter**3",
+  "kilohm",
+  "kilojoule/mole",
+  "kilovolt",
+  "meter",
+  "meter**2",
+  "meter**2/second",
+  "meter**3",
+  "milliampere",
+  "milliampere_hour",
+  "millimeter",
+  "milliohm",
+  "millivolt",
+  "minute",
+  "mole/liter",
+  "mole/meter**3",
+  "ohm",
+  "second",
+  "volt",
+  "watt",
+  "watt/kelvin",
+  "watt/meter/kelvin"
+ ],
+ "unresolved_total": 0,
+ "verdict_counts": {
+  "INSUFFICIENT_EVIDENCE": 50,
+  "NOT_SUPPORTED": 120,
+  "REJECTED_AT_BOUNDARY": 24,
+  "SUPPORTED": 250
+ },
+ "version": "1.0.0"
+}

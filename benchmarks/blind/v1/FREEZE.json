@@ -1,0 +1,38 @@
+{
+ "bound_registry_digest": "eb401fe901abc142344c6f3c9d9d8dce2a6c46fbd0e6fa73d28b513911cdbb6d",
+ "case_count": 444,
+ "case_set_digest": "72c74f8133265b48ebbb3a37744c8a2d57a4cf258c569b0f7c55f8d2797661ec",
+ "challenge_id": "forge-blind-v1",
+ "forge_has_not_been_run": true,
+ "frozen_utc": "2026-09-09T23:25:32.169445+00:00",
+ "generator_digest": {
+  "benchmarks/blind/bound_registry.py": "f8e74e28dbac0234d3c3f2fd9678543eef44bbfaf7e6d28c52f205b64772aa9a",
+  "benchmarks/blind/build_truth.py": "8c0c4d9c7196b0440d8b1cc6442daf03993a0284b47584db2a467fcbf86edd5b",
+  "benchmarks/blind/families.py": "65708aa9064e42407a2538e2d4734f11a097ce15a596c9155f0737f25c797d31",
+  "benchmarks/blind/freeze.py": "91b374316690367ed0c99363d29e43955f1458bb3d7c0dcb1e706585c61b8439",
+  "benchmarks/blind/generate.py": "a1785632a6a3ab5c49da49ad3d403fc35f0601ce153b792b1d0072e8d7afd94c",
+  "benchmarks/blind/oracles/battery.py": "9736fe79a097898f777f5e88a6a52f6d0540bcfd2d687890dde04d1ab0e6e317",
+  "benchmarks/blind/oracles/conduction.py": "1007d6cab3644ada71626ad676db74c66b49d39f46a5b2013aa1822368dbed1f",
+  "benchmarks/blind/oracles/electrothermal.py": "3bee060f6dd4c46939e9a95fe9e278be30ccde7feadd50d16f28b6612e55ba3b",
+  "benchmarks/blind/oracles/kinetics.py": "bbf96b900a82f1336da5fe58359d4ebdeeb3b27116699bbe6ec054b0c7adbde0",
+  "benchmarks/blind/oracles/spice.py": "6e8ec85a94531b371b5d42627ecb6799a44a9eedf5183587c88782b209590ae3",
+  "benchmarks/blind/oracles/units.py": "b88a7b310ad74aeae346fa7539d18e362c9931608fcf14c1b331a7aa9b065f9b"
+ },
+ "manifest_digest": "40199454282a8de25140ed773c878f878f9918c8a41c85623605eac732a6287d",
+ "oracle_disagreements_digest": "a6615617cac92f7ef5032593c1ee02d85da59de3b8d371af6accd05b93137cc1",
+ "oracle_registry_digest": "7d6fe9a18844b9275cc40a9825f68eec935c28e11ff122816f29df10731f10ef",
+ "statement": "These digests were computed before Forge was executed against this corpus even once. The commit that carries this file is the scientific firewall: anything dated after it that changes a case or a truth byte is visible as a digest that no longer matches.",
+ "truth_class_counts": {
+  "CONTRACT_ONLY": 74,
+  "INDEPENDENT_SCIENTIFIC": 272,
+  "MIXED_SCIENCE_AND_POLICY": 2,
+  "POLICY_DEPENDENT": 96
+ },
+ "truth_digest": "96e246e79e5a793c06b610b3946ce9b86527fae3013708123c2fa57f054ff45f",
+ "verdict_counts": {
+  "INSUFFICIENT_EVIDENCE": 50,
+  "NOT_SUPPORTED": 120,
+  "REJECTED_AT_BOUNDARY": 24,
+  "SUPPORTED": 250
+ }
+}

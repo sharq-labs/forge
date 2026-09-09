@@ -1,0 +1,1 @@
+{"family":"cond.alpha","family_kind":"threshold","id":"CON00418","intended_position":0.9,"intended_stratum":"NEAR_INSIDE","payload":{"diffusivity":"0.0 meter**2/second","end_time":"1.105919588284018 second","length":"0.01249357053342817 meter","n_cells":10,"n_steps":24,"realization":"thermal.conduction1d.explicit_forward_euler"},"system":"conduction_1d","target":"alpha"}

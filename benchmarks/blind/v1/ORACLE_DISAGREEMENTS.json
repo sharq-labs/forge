@@ -1,0 +1,58 @@
+{
+ "note": "Every disagreement between two independently implemented oracles found BEFORE the freeze, with its resolution. None was resolved by consulting Forge.",
+ "post_generation_live": [],
+ "pre_freeze": [
+  {
+   "candidates": "the conduction `cond.alpha` family (3 candidates at the time of discovery)",
+   "difference": "The FTCS march measured growth at a Fourier number of -1.6e-4, -7.7e-4 and -1942, and reported the r <= 1/2 stability bound as falsified.",
+   "excluded": false,
+   "exclusion_reason": "",
+   "found_at": "oracle development, before case generation",
+   "id": "DIS-001",
+   "oracle_a": "blind.oracle.conduction1d.vonneumann",
+   "oracle_b": "blind.oracle.conduction1d.ftcs_march",
+   "resolution": "Oracle B was wrong, and about its own scope. r = alpha dt / dx^2 is negative when the declared diffusivity is, and |1 - 4r| > 1 for every r < 0, so a backwards-diffusing slab grows trivially. The von Neumann criterion is a statement about a diffusion problem and a negative diffusivity is not one. `falsifies_bound` now requires 0 <= r <= 1/2.",
+   "resolved_by_consulting_forge": false,
+   "tolerance_basis": "not a tolerance question: the two agreed on the amplification factor to 2.2e-16; they disagreed about what it MEANT."
+  },
+  {
+   "candidates": "one kinetics `kin.ceiling` candidate",
+   "difference": "The RK4 march reported a peak of 9847 K against an analytic ceiling of 999 K, i.e. the ceiling falsified.",
+   "excluded": false,
+   "exclusion_reason": "",
+   "found_at": "oracle development, before case generation",
+   "id": "DIS-002",
+   "oracle_a": "blind.oracle.kinetics.cstr.analytic",
+   "oracle_b": "blind.oracle.kinetics.cstr.rk4",
+   "resolution": "Oracle B was wrong. A fixed-step explicit integrator on a stiff exothermic reactor overshoots, and the overshoot left the region the bound is PROVED over -- the proof needs C >= 0. A numerical artefact is not a counterexample to a theorem. The march now reports `diverged` when it drives the concentration negative or the temperature through absolute zero, and convicts nothing. A trajectory that stays physical and still passes the ceiling would still falsify it.",
+   "resolved_by_consulting_forge": false,
+   "tolerance_basis": "the trajectory's own physicality, not a number: the same march ended at -3.9e22 K and a concentration of +1.3e23 mol/m3."
+  },
+  {
+   "candidates": "33 electro-thermal candidates across 11 families",
+   "difference": "Stage temperatures disagreed by up to 1.1e-2 relative \u2014 larger than the 1e-3 placement distance, which would have made 33 decidable cases UNRESOLVED.",
+   "excluded": false,
+   "exclusion_reason": "",
+   "found_at": "oracle development, before case generation",
+   "id": "DIS-003",
+   "oracle_a": "blind.oracle.electrothermal.analytic",
+   "oracle_b": "blind.oracle.electrothermal.rk4",
+   "resolution": "NEITHER oracle was wrong; they were answering different questions. Oracle B re-evaluated R(T) at every RK4 stage and so marched the NONLINEAR balance, while the declared lumped model \u2014 and the closed form that solves it \u2014 holds the heat at I^2 R across the interval. The gap was the linearisation error of the declared model, a real fact about the approximation and not an implementation defect. Oracle B now marches the same balance with the resistance frozen, which is a pure integration check and agrees to round-off; the nonlinear gap is reported beside it as a model-fidelity note and arbitrates nothing.",
+   "resolved_by_consulting_forge": false,
+   "tolerance_basis": "the deciding condition's own distance from its bound: a disagreement matters exactly when it could move the condition across it."
+  },
+  {
+   "candidates": "the electro-thermal ARITHMETIC_SENSITIVE stratum",
+   "difference": "For cases placed exactly ON a bound the deciding distance is ~1e-13, so ANY disagreement is formally material and every such case became UNRESOLVED.",
+   "excluded": false,
+   "exclusion_reason": "the 35 cases at the floor are RETAINED in the archive, tagged ARITHMETIC_SENSITIVE, and scored separately rather than in the primary denominator.",
+   "found_at": "oracle development, before case generation",
+   "id": "DIS-004",
+   "oracle_a": "blind.oracle.electrothermal.analytic",
+   "oracle_b": "blind.oracle.electrothermal.rk4",
+   "resolution": "A gap must now exceed max(deciding distance, RESOLUTION_FLOOR) to be material. Below the floor the case is already ARITHMETIC_SENSITIVE and out of the primary denominator; calling it UNRESOLVED as well counted one limitation twice.",
+   "resolved_by_consulting_forge": false,
+   "tolerance_basis": "RESOLUTION_FLOOR = 0.001, five orders above the measured runtime/oracle disagreement."
+  }
+ ]
+}

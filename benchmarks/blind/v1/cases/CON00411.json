@@ -1,0 +1,1 @@
+{"family":"cond.implicit","family_kind":"clean","id":"CON00411","intended_position":null,"intended_stratum":"","payload":{"diffusivity":"1.216973468605607e-05 meter**2/second","end_time":"4.686278115780512 second","length":"0.31724557705360745 meter","n_cells":64,"n_steps":8,"realization":"thermal.conduction1d.implicit_backward_euler"},"system":"conduction_1d","target":null}

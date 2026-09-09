@@ -1,0 +1,149 @@
+{
+  "challenge_id": "forge-blind-v1",
+  "version": "1.0.0",
+  "creation_date": "2026-09-09",
+  "purpose": "Test whether the CURRENT Forge core generalises to unseen scientific cases whose truth is established, and frozen, before Forge sees them.",
+
+  "phases": {
+    "1_truth_construction": "Cases generated and truth established by independent oracles. Forge is never invoked against a challenge case.",
+    "FREEZE": "Case bytes, truth bytes, manifest, oracle-disagreement log and every generator source file digested and committed. The commit SHA is the firewall.",
+    "2_forge_evaluation": "Forge run ONCE over the frozen corpus. Nothing in phase 1 may change because of phase 2."
+  },
+
+  "eligible_domains": ["electrical", "thermal", "materials", "conduction", "battery", "kinetics"],
+
+  "systems": {
+    "electrothermal": {
+      "tier": "SYSTEM_BOUNDARY",
+      "forge_entry_point": "engcore.mcp.problem.run_electrothermal_case",
+      "what_is_tested": "the full pipeline: build, solve the coupled fixed point, assess every model, derive a verdict",
+      "domains_exercised": ["electrical", "materials", "thermal", "conduction"]
+    },
+    "battery": {
+      "tier": "SYSTEM_BOUNDARY",
+      "forge_entry_point": "engcore.mcp.battery.run_battery_case",
+      "what_is_tested": "the full pipeline over a marched self-heating discharge",
+      "verdict_scope": "the four battery.* models only, by the same precedence derive_verdict uses. run_self_heating_discharge accepts no applicability declaration for the thermal body it marches, so the lumped model in every battery report is honestly UNKNOWN and no battery case can reach SUPPORTED over the whole report. Scoring the whole report would measure that one gap once per case and nothing else. This is the scope benchmarks/hard/score_hard.py already uses, adopted unchanged so the two are comparable.",
+      "domains_exercised": ["battery"]
+    },
+    "kinetics_cstr": {
+      "tier": "MODEL_CONTRACT",
+      "forge_entry_point": "ReactorRun(...).validity_context().assess(CSTR_MODEL), plus the ReactorChemistry / ReactorOperation / ReactorRun construction guards",
+      "what_is_tested": "contract assessment and construction refusal. There is NO MCP case boundary for this domain in the current tree, so no end-to-end verdict exists to test. This is a narrower claim than the system-boundary tier and is reported separately rather than blended into one number.",
+      "domains_exercised": ["kinetics"]
+    },
+    "conduction_1d": {
+      "tier": "MODEL_CONTRACT",
+      "forge_entry_point": "assess_realization(realization, slab)",
+      "what_is_tested": "realization applicability: the FTCS von Neumann stability condition, and the empty-domain UNKNOWN that backward Euler's A-stability produces. Same narrower claim as kinetics.",
+      "domains_exercised": ["conduction"]
+    }
+  },
+
+  "excluded_capabilities": [
+    "ContextOfUse", "ScientificClaim", "ScientificArtifact",
+    "arrays/fields/meshes", "new domains", "new production solvers",
+    "new APIs", "MCP features", "UI", "architecture refactors",
+    "performance tuning"
+  ],
+
+  "excluded_by_design": [
+    {
+      "what": "thermal-runaway and non-converging electro-thermal designs",
+      "why": "The VERDICT of such a case is decidable, but the CONDITION SET a refused coupling reports is a property of the iteration driver's bookkeeping rather than of the science. An independent oracle cannot state it without copying the driver, and an oracle that copies the driver is not an oracle. Cases whose oracle fixed point does not converge are rejected pre-freeze under `oracle_non_convergence` and counted.",
+      "cost": "this challenge does NOT test refusal-path reporting, and says so rather than scoring it"
+    }
+  ],
+
+  "truth_classes": {
+    "INDEPENDENT_SCIENTIFIC": "Every bound that decides the case is definitional, a positivity domain, or a substantive threshold with a citation or a derivation. The oracle decides it from first principles plus the caller's own declaration.",
+    "POLICY_DEPENDENT": "Every bound that decides the case is a declared convention rather than a measured criterion — B-RAD, B-DEBYE, B-DEBYE-CEIL, B-POL, B-TCR-RANGE, B-CSTR-RANGE, B-CSTR-CEIL. The truth is what the declaration says, and the declaration is a policy. NEVER reported as a scientific result.",
+    "MIXED_SCIENCE_AND_POLICY": "Both kinds of bound decide the case.",
+    "CONTRACT_ONLY": "The truth follows from the record's semantics rather than from the world: an absent declaration cannot be assessed, a malformed payload cannot be built, an empty validity domain is UNKNOWN rather than valid.",
+    "UNRESOLVED": "Two independently implemented oracles disagree by enough to move the deciding condition across its bound, or the oracle declined to state a truth. EXCLUDED from every accuracy and agreement denominator."
+  },
+
+  "oracle_requirements": {
+    "independence": "No module that generates a case or decides its truth may import, call, or name any engcore surface. Enforced by AST import audit, name-reference audit, transitive import-graph walk and a runtime sys.modules check in tests/test_blind_challenge_guards.py, which also contains a falsification test proving the audit fails on a module that does peek.",
+    "what_is_shared_on_purpose": "The CONTRACT — what each condition means and which state coordinate it is read at — is taken from the model records. A second implementer given a spec implements the spec; an oracle that GUESSED which temperature melting_temperature_utilization is read at would test whether two authors guessed alike, not whether Forge computes the right number. The arithmetic is what is independent, and the arithmetic is where a defect lives. This is stated as a limitation on independence rather than claimed away.",
+    "calibration": "Each oracle's contract reading was checked against the runtime on the ALREADY-OPEN development corpus before any blind case existed: electro-thermal 1399/1400 verdicts and 1392/1399 violated-sets over benchmarks/hard/cases_hard dev split; battery 400/400 verdicts, violated-sets and unknown-sets over cases_battery; kinetics 379 assessed + 21 construction refusals, 0 mismatches, over 400 throwaway draws at calibration seed 777000; conduction 400/400 over the same draws. This is a real limitation on blindness and is reported as one: the challenge tests arithmetic and generalisation to unseen parameter regimes, NOT the contract reading itself.",
+    "dual_oracle": "electrical — analytic + ngspice as a subprocess from a netlist written here; conduction — closed-form von Neumann + an actual FTCS march of the exact highest discrete eigenmode; kinetics — analytic ceiling from the Z = T + beta C invariant + fixed-step RK4 that exists to falsify it; thermal — closed form + RK4 of the same balance; battery — step-walked coulomb counting + a single charge balance, and closed-form self-heating + RK4."
+  },
+
+  "case_generation_policy": {
+    "new_corpus": "Payloads are generated from scratch. No existing benchmark payload is copied, mutated, or reused; freeze.py digests every existing payload in cases_hard and cases_battery and refuses to seal if any blind payload matches one.",
+    "legacy_holdout": "NOT REUSED. The 600-case hold-out is OPENED and CONTAMINATED and this challenge does not touch it.",
+    "generator_may_use": ["the independent oracle layer", "the standard library", "ngspice"],
+    "generator_may_not_use": ["Forge solvers", "Forge applicability", "Forge condition evaluation", "Forge verdict derivation", "existing benchmark expected verdicts", "existing benchmark catcher metadata", "any Forge result"],
+    "separation": "generate.py writes payloads and states no verdict; build_truth.py reads payloads and states truth. A generator that also decided truth could place a case and label it in one step, and the label would be the placement's intention rather than a measurement."
+  },
+
+  "boundary_policy": {
+    "strata": ["FAR_INSIDE", "NEAR_INSIDE", "AT_BOUNDARY", "NEAR_OUTSIDE", "FAR_OUTSIDE", "SOFT_BOUND_NEAR", "MALFORMED", "CONSTRUCTION_REFUSED", "NOT_APPLICABLE"],
+    "normalisation": "excess = value/maximum for an upper bound, minimum/value for a lower one, the larger of the two for a two-sided bound. Below 1 is inside, above 1 is outside, exactly 1 is on the bound.",
+    "thresholds": {"FAR_INSIDE": "excess <= 0.8", "NEAR_INSIDE": "0.8 < excess < 1 - 1e-3", "AT_BOUNDARY": "|excess - 1| < 1e-3", "NEAR_OUTSIDE": "1 + 1e-3 < excess <= 1.2", "FAR_OUTSIDE": "excess > 1.2"},
+    "soft_bounds": "A soft bound is an approximation criterion, not a transition — nothing changes in the world at the number — so a case beside one is tagged SOFT_BOUND_NEAR instead of being given an exact-boundary truth it cannot support. B-BIOT, B-FOURIER, B-CONV-AGREE, B-RAD, B-DEBYE, B-DEBYE-CEIL, B-DEBYE-REF, B-POL, B-ELEC-LEN.",
+    "resolution_floor": 0.001,
+    "resolution_floor_basis": "Measured, not chosen. The oracle and the runtime agree on the final temperature to 3.77e-16 relative and on the steady-state temperature to 2.05e-09 relative over the 1400 open development cases; the latter is set by the caller-declared coupling tolerance. The floor is 5e5x the worse of those. A case inside it is ARITHMETIC_SENSITIVE and leaves the primary denominator, because at that distance the answer is decided by which implementation rounds which way — U00611 in the existing corpus computes working_voltage_utilization at 1 + 1.2e-10 and the two implementations disagree about it.",
+    "policy_bounds_kept_separate": "A case whose deciding bound is INTERNAL_POLICY carries truth_class POLICY_DEPENDENT and is scored in its own denominator."
+  },
+
+  "random_seed_policy": {
+    "master_seed": 20260909,
+    "derivation": "sha256(f'{MASTER_SEED}:{system}:{family}:{index}')[:8], big-endian, per case",
+    "why_derived": "A single global stream would make every case's draw depend on how many were generated before it, so adding one family would silently redraw every later family. A derived seed makes each draw independent of the corpus around it and one case reproducible without replaying the whole generation.",
+    "no_adaptive_reseeding": "The seed is fixed before generation and never changed after Forge runs. Retrying a rejected draw advances that case's own RNG and is bounded at 40 attempts; the retry is a documented scientific rejection, never a search for an easier case."
+  },
+
+  "distribution_policy": {
+    "must_differ_from_existing_dev": true,
+    "axes_varied": ["source voltage decades", "resistance decades", "ambient conductance decades", "stage count", "ambient temperature regime including the cold end", "unit spelling", "battery capacity and C-rate decades", "mesh and step counts", "reaction parameter decades"],
+    "measured_not_asserted": "MANIFEST.json carries a distribution_contrast measured on BOTH corpora. A claim to have varied the distribution is easy to make and easy to be wrong about.",
+    "forbidden": "Forge performance may never be used to choose a regime, and no difficult case may be discarded because Forge might fail it."
+  },
+
+  "rejection_policy": {
+    "permitted_reasons": ["invalid sampled physical state", "oracle non-convergence", "ambiguous truth", "outside the CURRENT supported model definition"],
+    "forbidden_reasons": ["the case looks hard", "Forge might fail it", "it would lower a score"],
+    "accounting": "Every rejection before the freeze is counted and classified in MANIFEST.json."
+  },
+
+  "reason_truth_requirements": {
+    "all_sufficient_reasons": "Every violated condition is a valid reason for NOT_SUPPORTED; every unknown condition is a valid reason for INSUFFICIENT_EVIDENCE. No single primary reason is required, and a truth that named one would score a correct answer wrong.",
+    "classes": "Each reason carries its bound class: DEFINITIONAL, POSITIVITY, SOURCED_SCIENTIFIC or INTERNAL_POLICY.",
+    "before_forge": "Reason truth is written into TRUTH.json and digested in FREEZE.json before Forge runs."
+  },
+
+  "causal_truth_requirements": {
+    "method": "Counterfactual repair on the condition set. A condition is causal when repairing IT ALONE changes the verdict. The verdict is a pure function of the condition statuses, so the repair is exact rather than approximate and no physics is re-run.",
+    "classes": ["UNIQUE_CAUSAL_CATCHER", "ONE_CAUSAL_PLUS_REDUNDANT", "MULTIPLE_CAUSAL_CATCHERS", "NO_UNIQUE_PRIMARY", "UNRESOLVED", "NOT_APPLICABLE"],
+    "no_forcing": "Where several conditions are each violated, repairing any one leaves the verdict where it was, so none is uniquely causal. That is reported, not resolved by picking one. NO_UNIQUE_PRIMARY is never scored as a failure."
+  },
+
+  "minimum_domain_coverage": {
+    "electrical": "exercised by every electro-thermal case",
+    "materials": "exercised by every electro-thermal case",
+    "thermal": "exercised by every electro-thermal case",
+    "conduction": "exercised by every electro-thermal case (Biot, Fourier, geometry route) and by the conduction_1d tier",
+    "battery": "its own system tier",
+    "kinetics": "its own model-contract tier"
+  },
+
+  "freeze_procedure": [
+    "run the Phase 1N quality guards; refuse to write anything if any fails",
+    "write cases/*.json, TRUTH.json, MANIFEST.json, ORACLE_DISAGREEMENTS.json",
+    "digest the case set, the truth, the manifest, the disagreement log, the oracle register, the bound register and every generator source file into FREEZE.json",
+    "commit — the commit SHA is PRE_FORGE_FREEZE_SHA",
+    "verify the working tree is clean",
+    "only then run Forge"
+  ],
+
+  "post_freeze_mutation_policy": {
+    "cases": "immutable",
+    "truth": "immutable. A truth proven wrong after Forge runs is recorded as a TRUTH_ERRATUM naming the case, the old frozen truth, the new evidence and why the original oracle failed. It is never edited in place, and the v1 first-run score stands.",
+    "first_run": "FORGE_FIRST_RUN.json is written once and sealed by digest. A re-run after a fix goes in a POST_FIX artifact and never replaces it.",
+    "a_change_is_a_new_version": "Any change to a case or a truth byte requires blind/v2. tests/test_blind_challenge_guards.py turns red otherwise."
+  },
+
+  "no_forge_result_appears_in_this_specification": true
+}
