@@ -109,6 +109,33 @@ def require_agreement(
     comparison below **cannot** perform, and putting it after the comparison
     would put it after the thing it exists to catch.
     """
+    # THE BOUND IS CHECKED BEFORE THE OPERANDS, because a malformed bound
+    # defeats the comparison more completely than a malformed operand does.
+    #
+    # `atol + rtol * abs(expected)` is NaN if either tolerance is NaN, and
+    # `anything > nan` is False -- so a NaN tolerance admits every disagreement
+    # in existence while the two operands are perfectly finite and the
+    # finiteness check below passes. An infinite tolerance does the same thing
+    # arithmetically honestly: every difference is inside it.
+    #
+    # Negative tolerances are refused in the other direction. They do not
+    # create false agreement, they create false disagreement -- but a bound
+    # below zero is not a bound anybody meant, and admitting it would leave the
+    # gate's behaviour depending on a number nobody can defend.
+    for label, bound in (("atol", atol), ("rtol", rtol)):
+        value = float(bound)
+        if not math.isfinite(value) or value < 0.0:
+            raise error(
+                f"{detail}: {label}={bound!r} is not a usable tolerance. A "
+                f"tolerance must be finite and non-negative -- a NaN bound "
+                f"makes `abs(actual - expected) > atol + rtol * abs(expected)` "
+                f"False for EVERY pair of operands, so the gate admits every "
+                f"disagreement while looking exactly like a working check, and "
+                f"an infinite one admits them arithmetically. The bound is "
+                f"checked before the operands because a comparison cannot "
+                f"detect the bound that disabled it"
+            )
+
     checked: dict[str, float] = {"actual": float(actual), "expected": float(expected)}
     checked.update({str(k): float(v) for k, v in (operands or {}).items()})
     require_finite(checked, error=error, source=detail)

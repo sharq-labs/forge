@@ -385,6 +385,48 @@ def _compare(
                 "to compare; this is an absence of evidence, not agreement"
             ),
         )
+
+    # FINITENESS FIRST, BEFORE ANY COMPARISON.
+    #
+    # `relative_difference` returns NaN for every non-finite pairing --
+    # `abs(nan - x)` is NaN, `abs(inf - inf)` is NaN, and `inf / inf` is NaN --
+    # and the accumulator below advances on `difference > worst`, which is
+    # False for NaN. So a non-finite reading was not merely mishandled: it was
+    # SKIPPED, `worst` stayed at its initial 0.0, and the routes were recorded
+    # as agreeing exactly. Two routes that both diverged to infinity, or one
+    # that returned NaN against a finite partner, earned CROSS_SOLVER_VALIDATED
+    # on a worst difference of zero.
+    #
+    # This is the same hole `solvers.admission` closes one layer out, in the
+    # same direction and for the same reason: a comparison cannot detect the
+    # values that defeat comparison, so the check has to run before it rather
+    # than inside it.
+    #
+    # The refusal covers EVERY reading a route supplied, not only the shared
+    # ones. A route that produced a NaN anywhere did not finish; admitting its
+    # other numbers as an independent confirmation would credit a run that
+    # failed with corroborating one that did not.
+    offenders = sorted(
+        f"{route_id}.{name}={value!r}"
+        for route_id, produced in values.items()
+        for name, value in produced.items()
+        if not math.isfinite(float(value))
+    )
+    if offenders:
+        return RouteComparison(
+            quantities=(),
+            worst_quantity="",
+            worst_relative_difference=None,
+            tolerance=tolerance,
+            detail=(
+                f"non-finite value(s) {offenders} were reported, so no "
+                f"comparison was made. A NaN or an infinity satisfies every "
+                f"tolerance written against it and is skipped by the worst-case "
+                f"accumulator, which would record the routes as agreeing "
+                f"exactly. A route that produced one did not finish, and an "
+                f"unfinished route corroborates nothing"
+            ),
+        )
     worst = 0.0
     worst_name = shared[0]
     for name in shared:

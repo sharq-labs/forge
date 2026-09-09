@@ -68,6 +68,7 @@ from typing import Any, Mapping
 
 from ..errors import ScientificValidationError
 from ..serialization import require_schema, schema_string
+from .immutable import freeze
 from .validation import ValidationLevel
 
 THRESHOLDS_SCHEMA = schema_string("verification_thresholds")
@@ -123,7 +124,19 @@ class VerificationThresholds:
                     f"against it unconditionally true or unconditionally false"
                 )
             cleaned[str(name)] = number
-        object.__setattr__(self, "values", dict(sorted(cleaned.items())))
+        # FROZEN, not merely copied. `frozen=True` protects the attribute and
+        # not the object behind it, so `thresholds.values[k] = v` was accepted
+        # on every threshold set this platform has ever produced -- on the one
+        # record whose entire purpose is to be the number a gate cannot be
+        # talked out of.
+        #
+        # The mutation was not academic. It moved `fingerprint`, so the
+        # evidence line a report carries described numbers the gate had not
+        # been judged against; and it left `derived_from` empty, so `award`
+        # went on granting the level that `derive` exists to withhold. A caller
+        # who could not widen a tolerance through the sanctioned path could
+        # widen it through the mapping and keep the claim.
+        object.__setattr__(self, "values", freeze(dict(sorted(cleaned.items()))))
         object.__setattr__(self, "derived_from", str(self.derived_from).strip())
 
     # ---- identity -------------------------------------------------------
