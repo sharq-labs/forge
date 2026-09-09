@@ -237,3 +237,25 @@ unlabelled.**
   Forge having checked a rating.
 * **No bound is verified against experiment.** Every entry above is a
   definition, a derivation, a citation, or a policy.
+
+---
+
+## Addendum: an existence condition, not a bound
+
+`thermal_runaway_no_steady_state` was introduced by the reason round and
+carries **no number**. It is satisfied or violated by whether the coupled
+balance
+
+    u² + u(α T_ref − 1 − α T_off) − α S V² / (hA R_ref) = 0
+
+has a real root, with `u = 1 + α(T − T_ref)`. There is no threshold to source
+because there is no threshold: a negative discriminant means no temperature
+makes generation equal loss, which is a property of the declared quantities
+and not of any convention. It is classed `DEFINITIONAL` for that reason, and
+it is the one condition in the set for which "where does the number come
+from?" has no answer because no number exists.
+
+Its companion `linear_resistance_ratio` (floor 0, `DEFINITIONAL`) is now
+evaluated at the **extreme of the excursion** rather than at the endpoint: a
+conductor whose linear form goes non-positive part-way through a run has left
+the region the model describes, even if it recovers by the horizon.

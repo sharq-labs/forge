@@ -222,6 +222,7 @@ comes from the generator.
 |---|---|---|
 | oracle suite ↔ Forge | **NONE** to **LOW** | expected values from citations, other programs, or derivations here |
 | `ORA-LUMPED-ODE` ↔ lumped model | **MEDIUM** | different algorithm, same governing balance |
+| independent evaluator development ↔ Forge | **MEDIUM** | five defects in it were found via Forge disagreement — three in the verdict round, two more below |
 | benchmark truth ↔ Forge | **HIGH** | shared repository, generator tuned against scoring |
 | benchmark truth ↔ Forge, thermal constants | **FULLY_CIRCULAR** where the generator imports the same limit (e.g. `GEOMETRY_AGREEMENT_FACTOR = 3.0` appears in both) |
 | hold-out | **HIGH** and opened | see `HOLDOUT_STATUS.md` |
@@ -229,3 +230,30 @@ comes from the generator.
 A passing benchmark case under `FULLY_CIRCULAR` truth is regression evidence.
 It is not independent scientific validation, and this round did not change that
 for a single case.
+
+---
+
+## 9. Development contamination, itemised
+
+The independent evaluator and reason analyser under `benchmarks/oracles/` are
+*structurally* independent — they import nothing from `engcore`, proven by AST
+in `tests/oracles/`. Their **development** was partly guided by Forge, and a
+construction that had never been compared would be worth more. Each fix below
+stands on an argument that does not mention Forge, but the prompt is recorded.
+
+| # | defect in the evaluator | how it was found | round |
+|---|---|---|---|
+| 1 | `missing:*` declarations skipped instead of becoming `UNKNOWN(not_supplied)` | Forge disagreement | verdict |
+| 2 | `geometry_route_ratio` undecidable with one route, when it is *vacuous* | Forge disagreement | verdict |
+| 3 | a missing fluid property made the whole case `UNRESOLVED` | Forge disagreement | verdict |
+| 4 | the largest positive root selected across the `R = 0` singularity | Forge disagreement (U01031) | reason |
+| 5 | all three convection conditions gated behind the full fluid property set | Forge disagreement | reason |
+
+**One defect was found without Forge and is the counter-example worth keeping:**
+the damped iteration in `_coupled_operating_point` reported *no operating point
+exists* on five DEV cases where the closed-form quadratic shows a positive root
+plainly does. The iteration and the closed form disagreeing with **each other**
+exposed it. All five still produced `NOT_SUPPORTED`, so the 100 % verdict
+agreement figure was, at that moment, concealing a solver that failed on five
+cases. Verdict-level agreement cannot find a defect of that shape; asking for
+the mechanism can.

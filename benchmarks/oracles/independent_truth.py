@@ -224,60 +224,111 @@ class IndependentCaseTruth:
 # The physics, written out
 # =====================================================================
 
+class NoOperatingPoint(Exception):
+    """The coupled loop admits no physical steady state.
+
+    Carries the condition the failure corresponds to, because the two ways it
+    happens are different physics about different designs and collapsing them
+    into one label would report a conductor that has left its linear region as
+    though it were a runaway.
+    """
+
+    def __init__(self, condition, detail):
+        super().__init__(detail)
+        self.condition = condition
+        self.detail = detail
+
+
 def _coupled_operating_point(*, voltage, r_ref, alpha, t_ref, hA, t_amb,
                              t_init, capacity, duration):
     """The self-consistent end-of-interval state of the coupled loop.
 
     The electrical side sets the dissipation from the conductor's resistance at
     the body's temperature; the thermal side marches a first-order lumped body
-    to its declared horizon under that dissipation. Both are closed forms, so
-    the coupled state is the fixed point of
+    to its declared horizon under that dissipation. The coupled state is the
+    fixed point of
 
         T = T_amb + (V^2 / R(T)) / hA * reach + (T_0 - T_amb) * decay
 
-    with ``decay = exp(-duration/tau)`` and ``reach = 1 - decay``. Solved by
-    damped iteration here -- damping rather than plain substitution because the
-    map is not contracting for every conductor, and a scheme that only worked
-    where the answer was easy would quietly refuse the interesting cases.
+    with ``decay = exp(-duration/tau)`` and ``reach = 1 - decay``.
 
-    Returns ``(endpoint, asymptote, tau)`` or raises if no physical state
-    exists -- a resistance that goes non-positive means the linear TCR form has
-    left the region where it describes a conductor at all.
+    Solved in CLOSED FORM. Writing ``u = 1 + alpha (T - T_ref)`` so that
+    ``R = R_ref u`` and ``T = T_ref + (u - 1)/alpha``, and letting ``T_off`` be
+    the constant part of the balance and ``S`` its scale, the fixed point is
+
+        u^2 + u (alpha T_ref - 1 - alpha T_off) - alpha S V^2 / (hA R_ref) = 0
+
+    which decides EXISTENCE outright. That matters: this function previously
+    used a damped iteration, and on five DEV cases it reported that no
+    operating point existed when the quadratic shows a positive root plainly
+    does. Those cases still came out NOT_SUPPORTED, so a verdict comparison
+    could not see the defect -- only asking for the mechanism exposed it.
+
+    Root selection is a REACHABILITY question, not just a sign question. A root
+    with u > 0 is a state the conductor could hold, but only a root the body
+    can actually arrive at from ``t_init`` describes this run.
+
+    * The linear form must describe a conductor at the initial state. If
+      ``R(t_init) <= 0`` the body begins where the model has already failed --
+      note that this happens for a POSITIVE alpha whenever ``t_init`` falls
+      below ``T_ref - 1/alpha``, which is easy to miss -- and no trajectory
+      exists to follow. U01031 is exactly this: alpha = +0.05/K about a 293.15 K
+      reference makes R negative below 273.15 K, and its body starts at 255.9 K.
+    * For ``alpha > 0`` the constant term is negative, so exactly one root has
+      u > 0 and there is nothing further to choose.
+    * For ``alpha < 0`` both roots share a sign. Two positive roots are the two
+      steady states of an NTC conductor: the lower-temperature one is stable --
+      above it the loss term grows faster than the dissipation, below it the
+      reverse -- and the upper is the ignition point. A body starting below the
+      upper root settles on the lower one; a body starting above it runs away,
+      even though steady states exist.
+
+    Returns ``(endpoint, asymptote, tau)``.
     """
     if hA <= 0 or capacity <= 0 or duration <= 0:
         raise UnresolvedInput("non-positive thermal declaration")
+    if 1.0 + alpha * (t_init - t_ref) <= 0.0:
+        raise NoOperatingPoint(
+            "linear_resistance_ratio",
+            "the linear form gives R <= 0 at the initial temperature",
+        )
     tau = capacity / hA
     decay = math.exp(-duration / tau)
     reach = 1.0 - decay
+    drive = voltage * voltage / (hA * r_ref)
 
-    def resistance(temperature):
-        return r_ref * (1.0 + alpha * (temperature - t_ref))
+    def settle(scale, offset, start):
+        t_off = t_amb + offset
+        if alpha == 0.0:
+            return t_off + scale * drive
+        b = alpha * t_ref - 1.0 - alpha * t_off
+        c = -alpha * scale * drive
+        discriminant = b * b - 4.0 * c
+        if discriminant < 0.0:
+            raise NoOperatingPoint(
+                "thermal_runaway_no_steady_state",
+                "dissipation outruns the loss term at every temperature",
+            )
+        root = math.sqrt(discriminant)
+        states = sorted(
+            t_ref + (u - 1.0) / alpha
+            for u in ((-b + root) / 2.0, (-b - root) / 2.0)
+            if u > 0.0
+        )
+        if not states:
+            raise NoOperatingPoint(
+                "linear_resistance_ratio",
+                "every steady state of the loop requires R <= 0",
+            )
+        if len(states) == 2 and start > states[1]:
+            raise NoOperatingPoint(
+                "thermal_runaway_no_steady_state",
+                "the body starts above the ignition point and does not return",
+            )
+        return states[0]
 
-    def step(temperature, scale, offset):
-        r = resistance(temperature)
-        if r <= 0.0:
-            raise UnresolvedInput("resistance is non-positive at this state")
-        return t_amb + (voltage * voltage / r) / hA * scale + offset
-
-    def solve(scale, offset, start):
-        temperature = start
-        relaxation = 1.0
-        for iteration in range(20000):
-            nxt = step(temperature, scale, offset)
-            if not math.isfinite(nxt) or abs(nxt) > 1e7:
-                raise UnresolvedInput("iterate left the physical range")
-            candidate = temperature + relaxation * (nxt - temperature)
-            if abs(candidate - temperature) < 1e-12:
-                return candidate
-            temperature = candidate
-            # Under-relax progressively; a non-contracting map still converges
-            # once the step is short enough, and the fixed point is unchanged.
-            if iteration and iteration % 400 == 0:
-                relaxation *= 0.5
-        raise UnresolvedInput("no fixed point found")
-
-    endpoint = solve(reach, (t_init - t_amb) * decay, t_init)
-    asymptote = solve(1.0, 0.0, endpoint)
+    endpoint = settle(reach, (t_init - t_amb) * decay, t_init)
+    asymptote = settle(1.0, 0.0, t_init)
     return endpoint, asymptote, tau
 
 
@@ -348,21 +399,24 @@ def evaluate_electrothermal(case_id, payload):
             voltage=voltage, r_ref=r_ref, alpha=alpha, t_ref=t_ref, hA=hA,
             t_amb=t_amb, t_init=t_init, capacity=capacity, duration=duration,
         )
-    except UnresolvedInput as exc:
+    except NoOperatingPoint as exc:
         # No physical operating point: the design has no state the lumped
         # linear-TCR composition can describe. That is a finding about the
         # design, and it is the one place this evaluator returns a verdict
-        # without evaluating conditions.
+        # without evaluating conditions. The condition NAME comes from the
+        # root structure, not from which numerical path gave out.
         return IndependentCaseTruth(
             case_id=case_id, domain="electrothermal", values={},
-            satisfied=(), violated=("coupled_operating_point",), unknown=(),
+            satisfied=(), violated=(exc.condition,), unknown=(),
             unknown_reasons={}, independent_verdict="NOT_SUPPORTED",
             truth_class="INDEPENDENT_SCIENTIFIC",
             oracle_ids=("ORA-LUMPED-ODE",), policy_bound_ids=(),
             unresolved_dependencies=(),
-            reason=f"no physical coupled operating point exists: {exc}",
-            confidence_basis="closed-form fixed point of the coupled loop",
+            reason=f"no physical coupled operating point exists: {exc.detail}",
+            confidence_basis="closed-form roots of the coupled fixed point",
         )
+    except UnresolvedInput as exc:
+        return _unresolved(case_id, "electrothermal", [str(exc)])
 
     peak = max(t_init, asymptote)
     coldest = min(t_init, endpoint)
@@ -379,7 +433,13 @@ def evaluate_electrothermal(case_id, payload):
 
     # --- material conditions ------------------------------------------
     values["temperature"] = endpoint
-    values["linear_resistance_ratio"] = 1.0 + alpha * (endpoint - t_ref)
+    # The WORST state the run occupies, not the final one. A conductor whose
+    # linear form goes non-positive part-way through has left the region the
+    # model describes, and a body that recovers by the horizon has still been
+    # somewhere the composition cannot represent. u is linear in T, so the
+    # minimum over the excursion sits at whichever end the sign of alpha picks.
+    extreme = coldest if alpha > 0.0 else peak
+    values["linear_resistance_ratio"] = 1.0 + alpha * (extreme - t_ref)
 
     band = si(limits.get("linearization_band")) if limits.get("linearization_band") else None
     if band:
@@ -460,41 +520,52 @@ def evaluate_electrothermal(case_id, payload):
     prandtl = si(app.get("fluid_prandtl_number")) if app.get("fluid_prandtl_number") is not None else None
     expansion = si(app.get("fluid_expansion_coefficient")) if app.get("fluid_expansion_coefficient") else None
 
-    if regime == "natural" and None not in (conv_length, fluid_k, nu_visc, prandtl, expansion):
+    # Each of the three conditions is formed from EXACTLY the declarations it
+    # needs. An earlier draft gated all three behind the whole property set,
+    # so a case missing only the fluid conductivity reported two gaps it did
+    # not have -- the flow range is a Reynolds or Rayleigh number and never
+    # needs k, and the property range is 0.6/Pr and needs nothing else at all.
+    # Over-reporting a gap is not the safe direction it looks like: it claims
+    # the payload settles less than it does, and on a `missing:*` case it
+    # spreads one omission across conditions the omission does not touch.
+    #
+    # The Prandtl floor belongs to both correlations, so it is formed once
+    # here rather than inside either route.
+    if prandtl:
+        values["convection_property_range_utilization"] = 0.6 / prandtl
+
+    nusselt = None
+    if regime == "natural" and None not in (conv_length, nu_visc, prandtl,
+                                            expansion):
         delta = abs(peak - t_amb)
         rayleigh = (
             STANDARD_GRAVITY * expansion * delta * conv_length ** 3
             * prandtl / (nu_visc * nu_visc)
         )
         values["rayleigh_number"] = rayleigh
-        # Range utilisations: the correlation is declared for Ra <= 1e9 and
-        # Pr >= 0.6 (Churchill & Chu 1975 / Incropera Eq. 9.27).
+        # Declared for Ra <= 1e9 (Churchill & Chu 1975 / Incropera Eq. 9.27).
         values["convection_flow_range_utilization"] = rayleigh / 1.0e9
-        values["convection_property_range_utilization"] = 0.6 / prandtl
-        if rayleigh > 0.0 and coefficient:
+        if rayleigh > 0.0:
             nusselt = _churchill_chu(rayleigh, prandtl)
-            correlated = nusselt * fluid_k / conv_length
-            values["convection_conductance_agreement_ratio"] = (
-                coefficient / correlated
-            )
     elif regime == "forced":
         velocity = si(app.get("fluid_velocity")) if app.get("fluid_velocity") else None
-        if None not in (conv_length, fluid_k, nu_visc, prandtl, velocity):
+        if None not in (conv_length, nu_visc, velocity):
             reynolds = velocity * conv_length / nu_visc
             values["reynolds_number"] = reynolds
-            # Declared for Re <= 5e5 and Pr >= 0.6 (Incropera Eq. 7.30).
+            # Declared for Re <= 5e5 (Incropera Eq. 7.30).
             values["convection_flow_range_utilization"] = reynolds / 5.0e5
-            values["convection_property_range_utilization"] = 0.6 / prandtl
-            if reynolds > 0.0 and coefficient:
-                correlated = (
-                    _flat_plate_nusselt(reynolds, prandtl) * fluid_k / conv_length
-                )
-                values["convection_conductance_agreement_ratio"] = (
-                    coefficient / correlated
-                )
+            if reynolds > 0.0 and prandtl:
+                nusselt = _flat_plate_nusselt(reynolds, prandtl)
     elif regime not in (None, "natural", "forced"):
         unresolved.append(
             f"convection regime {regime!r} is not reconstructed"
+        )
+
+    # The agreement ratio is the only one of the three that needs the fluid
+    # conductivity, because it is the only one that reconstructs a coefficient.
+    if nusselt is not None and fluid_k and conv_length and coefficient:
+        values["convection_conductance_agreement_ratio"] = (
+            coefficient / (nusselt * fluid_k / conv_length)
         )
     # A declared regime whose fluid properties are incomplete leaves the three
     # convection conditions undecidable -- which the missing-declaration pass

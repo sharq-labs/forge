@@ -5,7 +5,8 @@ payload alone, before anything read the stored answer or ran Forge.
 
 Machine-readable results:
 `benchmarks/oracles/results/independent_case_truth_dev.json`
-truth digest `e9ebfe974a6ac5f831d53a5fa8e146d85d3269edd8e5cf505a3a0bc4effe524e`
+truth digest `5e6c5b68a39a7b76fb95712db336e01dad24c4d6d293def92ff8bd9a91fa038e`
+(revised — see §1a)
 
 ---
 
@@ -26,15 +27,43 @@ where the stored answer key disagrees with Forge are the same 38 where it
 disagrees with an independent reconstruction.
 
 **The caveat, stated once and plainly: the evaluator's development was
-Forge-guided.** Three defects in it were found by looking at where it disagreed
+Forge-guided.** Four defects in it were found by looking at where it disagreed
 with Forge — a vacuous two-route comparison treated as undecidable, a missing
-declared-limits check, and a missing fluid property treated as unreconstructable
-rather than as a gap. Each was then fixed on an argument that stands without
-Forge, and the module is *structurally* independent. But a construction that had
+declared-limits check, a missing fluid property treated as unreconstructable
+rather than as a gap, and an unreachable root selected across the R = 0
+singularity. Each was then fixed on an argument that stands without Forge, and
+the module is *structurally* independent. But a construction that had
 never been compared would be worth more, and this one has not earned that
 description. The agreement figure should be read as **"two independent
 implementations of the governed contract agree"**, not as "Forge was blind-tested
 against nature".
+
+---
+
+## 1a. Revision: two solver defects, and what they did and did not move
+
+This section was rewritten after the reason round found defects in the
+evaluator's coupled-loop solver. The verdict figures above are **unchanged** —
+1400/1400 with Forge, 38 stored-truth mismatches, and every truth-class and
+family count identical. What changed is the digest and the *mechanisms*.
+
+**The first defect was found without Forge.** The solver used a damped
+iteration; deriving the same balance in closed form showed it reported "no
+operating point exists" on five cases where a positive root plainly does. The
+iteration and the closed form disagreeing with *each other* is what exposed it.
+All five still came out `NOT_SUPPORTED`, so no verdict comparison could have
+seen it — which is the point worth keeping: **a 100 % verdict agreement figure
+was hiding a solver that failed on five cases.**
+
+**The second was Forge-prompted** and is counted as contamination: the first
+closed form took the largest positive root, which on U01031 selects a branch
+across the R = 0 singularity that the body cannot reach. The fix — the linear
+form must be physical at the initial state — stands on its own.
+
+The old single label `coupled_operating_point` covered 26 cases and is now
+split into two real findings, 17 and 9. `docs/assurance/INDEPENDENT_REASON_CATCHER_TRUTH.md`
+§5a shows why that split matters: eight of those nine are benchmark cases
+labelled `runaway` that do not run away.
 
 ---
 
