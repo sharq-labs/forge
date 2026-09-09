@@ -27,6 +27,7 @@ Citations only — no reproduced text.
 | **PLETT-1** | Plett, G., *Battery Management Systems, Volume I: Battery Modeling*, Artech House (2015), Ch. 2–3 | coulomb counting with discharge-direction efficiency; OCV as tabulated data |
 | **CODATA-18** | CODATA 2018 recommended values | σ = 5.670374419e-8 W m⁻² K⁻⁴ |
 | **NGSPICE-42** | ngspice 42, U.C. Berkeley CAD Group | linear resistive DC solution |
+| **SEBORG-3** | Seborg, Edgar, Mellichamp & Doyle, *Process Dynamics and Control*, 3rd ed., Wiley (2011), Ch. 2 | the non-isothermal first-order CSTR balances |
 
 ---
 
@@ -42,8 +43,13 @@ Citations only — no reproduced text.
 | `ORA-TCR-LIMITS` | `INDEPENDENT_ANALYTIC` | **YES** | **YES** | R(T_ref)=R_ref, exact linearity, α→0, sign symmetry | the linear form's algebra, not its applicability |
 | `ORA-PEUKERT` | `LITERATURE_REFERENCE` | **YES** | **YES** | published law, k=1 limit, anchor, monotonicity | empirical fit; limited rate range, fixed temperature |
 | `ORA-DIMENSIONAL` | `INDEPENDENT_ANALYTIC` | **YES** | **YES** | dimensions composed from SI base units here | necessary, not sufficient |
+| `ORA-CONDUCTION-DISCRETE` | `INDEPENDENT_ANALYTIC` | **YES** | **YES** | exact backward-Euler amplification `(1+r·mu_1)^-N`, matched to 1e-10 at any mesh | checks assembly and linear solve, not the choice of scheme |
+| `ORA-CONDUCTION-ANALYTIC` | `INDEPENDENT_ANALYTIC` | **YES** | **YES** | `u = sin(pi x/L) exp(-alpha pi^2 t/L^2)`, approached under refinement | verifies discretisation by convergence, not to round-off |
+| `ORA-CSTR-STEADY` | `INDEPENDENT_ANALYTIC` | **YES** | **YES** | steady state by bisection of the energy residual with C eliminated | shares the balances; uniqueness in range is asserted, not assumed |
+| `ORA-CSTR-RK4` | `INDEPENDENT_ANALYTIC` | **YES** | **YES** | trajectory by RK4 against Forge's BDF | tolerance from Forge's declared `rtol`, the less accurate side |
+| `ORA-BATTERY-COULOMB` | `LITERATURE_REFERENCE` | **YES** | **YES** | coulomb counting, C-rate, Rint terminal voltage, affine OCV, the two SoC definitions | Rint is an approximation; the oracle checks its algebra, not cell fidelity |
 
-**Eight oracles, all independent of Forge, all executable.** Before this round
+**Thirteen oracles, all independent of Forge, all executable.** Before this round
 the register carried three independent oracles, two of which were citations
 nothing ran.
 
@@ -73,6 +79,25 @@ and restored byte-identical:
 
 **14 applied, 14 killed, 0 survivors.**
 
+A further twelve against the two domains added since:
+
+| mutation | outcome |
+|---|---|
+| CSTR: reaction sign in the mass balance | KILLED |
+| CSTR: exotherm sign | KILLED |
+| CSTR: cooling term sign | KILLED |
+| CSTR: reaction order `kC` → `kC²` | KILLED |
+| CSTR: rate constant halved | KILLED |
+| CSTR: dilution term dropped | KILLED |
+| conduction: `r` doubled | KILLED |
+| conduction: `dx²` → `dx` | KILLED |
+| conduction: operator sign `(1+2r)` → `(1−2r)` | KILLED |
+| conduction: off-diagonal sign flipped | KILLED |
+| conduction: off-diagonal halved | KILLED |
+| conduction: initial eigenmode 1 → 2 | KILLED |
+
+**26 applied in total, 26 killed, 0 survivors.**
+
 ---
 
 ## 4. Per-domain coverage
@@ -85,9 +110,9 @@ and restored byte-identical:
 | free convection | 5 | cross-correlation | CC-75, MCA-54, INC-6 | **MODERATE** — Churchill–Chu verified; Rayleigh/Reynolds range bounds unsourced |
 | lumped transient | 4 | RK4 | INC-6 | **MODERATE** — solution verified, equation choice not |
 | material TCR | 5 | limits + identities | KIT-8 (one datum) | **MODERATE** — form verified, band/floor policy unsourced |
-| battery cell | ~25 | Peukert, Joule heating | PEU-1897, PLETT-1 | **WEAK** — 2 of ~25 relationships |
-| kinetics CSTR | ~15 | none this round | — | **UNVERIFIED** |
-| 1-D conduction | ~10 | none this round | — | **UNVERIFIED** |
+| battery cell | ~25 | 12 relationships incl. coulomb counting with the efficiency direction pinned | PEU-1897, PLETT-1 | **MODERATE** — 12 of ~25 |
+| kinetics CSTR | ~15 | steady state by bisection, trajectory by RK4, five derived limits | Seborg et al. 3rd ed. Ch. 2 | **MODERATE** — solution verified, model choice not |
+| 1-D conduction | ~10 | exact discrete + exact continuous solution | INC-6 Ch. 5 | **STRONG** — the only domain checked against a closed form to round-off |
 | coupling / consensus / uncertainty | — | none (contractual, not physical) | — | **N/A** |
 
 ---
