@@ -61,9 +61,11 @@ from src.engcore.scientific import (
     SolverIdentity,
     SolverNotFoundError,
     SolverRegistry,
+    ModelValidityError,
     Uncertainty,
     UncertaintyKind,
     UnitCompatibilityError,
+    UnknownReason,
     ValidationCheck,
     ValidationLevel,
     ValidationOutcome,
@@ -2212,6 +2214,373 @@ def test_f04_a_check_establishing_nothing_is_still_the_way_to_say_nothing():
     assert unverified_report("no solver was available").attained_levels == (
         frozenset()
     )
+
+
+# =====================================================================
+# Conservative screens and condition prerequisites
+# =====================================================================
+#
+# Two additive declarations on RangeCondition, and the assessment machinery
+# that reads them. Both exist to stop a validity domain from saying something
+# it has not established:
+#
+#   `conservative_screen`  a value outside this bound is a GAP, not a finding.
+#   `requires`             this bound means nothing until another one holds.
+#
+# Every test below fixes behaviour that the reason channel makes observable:
+# it is not enough that a blocked condition lands in `unknown`, it has to
+# arrive with the reason that says WHY, or a consumer is back to one symbol
+# meaning four things.
+
+
+def _screen_kelvin(name, low, high, **kw):
+    return RangeCondition(
+        name=name,
+        minimum=Quantity(low, "kelvin"),
+        maximum=Quantity(high, "kelvin"),
+        **kw,
+    )
+
+
+# ---------------------------------------------------------------- screens
+
+
+def test_a_conservative_screen_reports_unknown_outside_its_bounds():
+    """Outside a screen is a gap in the evidence, not evidence against."""
+    domain = ValidityDomain(conditions=(_screen_kelvin("t", 0, 10, conservative_screen=True),))
+    assessment = domain.assess({"t": Quantity(99.0, "kelvin")})
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert assessment.unknown == ("t",)
+    assert assessment.violated == ()
+
+
+def test_a_conservative_screen_says_that_is_why_it_is_unknown():
+    """And the reason channel carries which of the four situations it is.
+
+    Landing in `unknown` is half the claim. Without the reason a consumer
+    cannot tell a screen that declined to certify from an input nobody
+    supplied, which is the collapse UnknownReason exists to prevent.
+    """
+    domain = ValidityDomain(conditions=(_screen_kelvin("t", 0, 10, conservative_screen=True),))
+    assessment = domain.assess({"t": Quantity(99.0, "kelvin")})
+    assert assessment.reason_for("t") is UnknownReason.CONSERVATIVE_SCREEN
+    assert assessment.unknown_because(UnknownReason.CONSERVATIVE_SCREEN) == ("t",)
+
+
+def test_a_failed_screen_is_not_reported_as_actionable():
+    """A caller cannot fix a screen by declaring the value again."""
+    domain = ValidityDomain(conditions=(_screen_kelvin("t", 0, 10, conservative_screen=True),))
+    assessment = domain.assess({"t": Quantity(99.0, "kelvin")})
+    assert assessment.actionable_unknowns == ()
+
+
+def test_a_range_condition_is_not_a_screen_unless_it_says_so():
+    """The default is an ordinary bound: outside is outside."""
+    domain = ValidityDomain(conditions=(_screen_kelvin("t", 0, 10),))
+    assessment = domain.assess({"t": Quantity(99.0, "kelvin")})
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert assessment.violated == ("t",)
+    assert assessment.unknown == ()
+
+
+def test_a_screen_still_certifies_a_value_it_does_admit():
+    """It weakens one direction only. Inside the bound is still IN_DOMAIN."""
+    domain = ValidityDomain(conditions=(_screen_kelvin("t", 0, 10, conservative_screen=True),))
+    assessment = domain.assess({"t": Quantity(5.0, "kelvin")})
+    assert assessment.status is ValidityStatus.IN_DOMAIN
+    assert assessment.satisfied == ("t",)
+
+
+def test_a_screen_does_not_swallow_the_other_two_unknown_reasons():
+    """An absent or unreadable value is not a screen that declined.
+
+    The screen check runs first in `explain_in`, so this is the test that it
+    runs first *only* for a value that was actually read and placed outside.
+    """
+    domain = ValidityDomain(conditions=(_screen_kelvin("t", 0, 10, conservative_screen=True),))
+    assert domain.assess({}).reason_for("t") is UnknownReason.NOT_SUPPLIED
+    assert (
+        domain.assess({"t": "a string"}).reason_for("t")
+        is UnknownReason.UNREADABLE_SHAPE
+    )
+
+
+def test_the_screen_flag_does_not_reach_the_endpoint_decision():
+    """A screen changes what outside MEANS, never where outside STARTS."""
+    for screen in (False, True):
+        closed = RangeCondition(
+            name="t",
+            minimum=Quantity(0.0, "kelvin"),
+            conservative_screen=screen,
+        )
+        opened = RangeCondition(
+            name="t",
+            minimum=Quantity(0.0, "kelvin"),
+            minimum_inclusive=False,
+            conservative_screen=screen,
+        )
+        on_the_bound = Quantity(0.0, "kelvin")
+        assert closed.evaluate(on_the_bound) is ValidityStatus.IN_DOMAIN
+        assert opened.evaluate(on_the_bound) is not ValidityStatus.IN_DOMAIN
+
+
+# ----------------------------------------------------------- prerequisites
+
+
+def _gate_pair(**dependent_kw):
+    gate = _screen_kelvin("gate", 0, 10)
+    dependent = _screen_kelvin("dependent", 0, 10, requires=("gate",), **dependent_kw)
+    return gate, dependent
+
+
+def test_a_dependent_condition_is_evaluated_when_its_gate_is_satisfied():
+    gate, dependent = _gate_pair()
+    domain = ValidityDomain(conditions=(gate, dependent))
+    assessment = domain.assess(
+        {"gate": Quantity(5.0, "kelvin"), "dependent": Quantity(5.0, "kelvin")}
+    )
+    assert assessment.status is ValidityStatus.IN_DOMAIN
+    assert assessment.satisfied == ("gate", "dependent")
+
+
+def test_a_dependent_condition_is_unknown_when_its_gate_is_violated():
+    """And UNKNOWN with the prerequisite reason -- never the gate's violation.
+
+    Inheriting `violated` would report evidence against a bound nobody
+    evaluated: the same overclaim this field exists to prevent, in the
+    opposite direction.
+    """
+    gate, dependent = _gate_pair()
+    domain = ValidityDomain(conditions=(gate, dependent))
+    assessment = domain.assess(
+        {"gate": Quantity(99.0, "kelvin"), "dependent": Quantity(5.0, "kelvin")}
+    )
+    assert assessment.violated == ("gate",)
+    assert assessment.unknown == ("dependent",)
+    assert (
+        assessment.reason_for("dependent")
+        is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+    )
+
+
+def test_a_dependent_condition_is_unknown_when_its_gate_is_unknown():
+    gate, dependent = _gate_pair()
+    domain = ValidityDomain(conditions=(gate, dependent))
+    assessment = domain.assess({"dependent": Quantity(5.0, "kelvin")})
+    assert assessment.reason_for("gate") is UnknownReason.NOT_SUPPLIED
+    assert (
+        assessment.reason_for("dependent")
+        is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+    )
+
+
+def test_a_failed_conservative_screen_gates_exactly_like_any_other_gap():
+    """A screen that did not clear is not satisfied, so it establishes nothing."""
+    gate = _screen_kelvin("gate", 0, 10, conservative_screen=True)
+    dependent = _screen_kelvin("dependent", 0, 10, requires=("gate",))
+    domain = ValidityDomain(conditions=(gate, dependent))
+    assessment = domain.assess(
+        {"gate": Quantity(99.0, "kelvin"), "dependent": Quantity(5.0, "kelvin")}
+    )
+    assert assessment.reason_for("gate") is UnknownReason.CONSERVATIVE_SCREEN
+    assert (
+        assessment.reason_for("dependent")
+        is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+    )
+
+
+def test_a_blocked_dependent_does_not_pretend_its_own_bound_was_tested():
+    """Its value is out of its own range, and that must not be reported.
+
+    Reading the value would produce a finding about a number derived from a
+    state nothing established. The dependent is UNKNOWN, and `violated` names
+    only the gate.
+    """
+    gate, dependent = _gate_pair()
+    domain = ValidityDomain(conditions=(gate, dependent))
+    assessment = domain.assess(
+        {"gate": Quantity(99.0, "kelvin"), "dependent": Quantity(9999.0, "kelvin")}
+    )
+    assert assessment.violated == ("gate",)
+    assert assessment.unknown == ("dependent",)
+    assert (
+        assessment.reason_for("dependent")
+        is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+    )
+
+
+def test_a_condition_with_no_requires_is_completely_unaffected():
+    """Which is every condition written before this field existed."""
+    plain = _screen_kelvin("t", 0, 10)
+    assert plain.requires == ()
+    domain = ValidityDomain(conditions=(plain,))
+    assert domain.assess({"t": Quantity(5.0, "kelvin")}).status is ValidityStatus.IN_DOMAIN
+    assert (
+        domain.assess({"t": Quantity(99.0, "kelvin")}).status
+        is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+
+
+# -------------------------------------------------- order and graph shape
+
+
+def test_dependency_evaluation_does_not_depend_on_declaration_order():
+    """Reordering the tuple changes the listing order and no outcome."""
+    gate, dependent = _gate_pair()
+    forward = ValidityDomain(conditions=(gate, dependent))
+    backward = ValidityDomain(conditions=(dependent, gate))
+    contexts = (
+        {"gate": Quantity(5.0, "kelvin"), "dependent": Quantity(5.0, "kelvin")},
+        {"gate": Quantity(99.0, "kelvin"), "dependent": Quantity(5.0, "kelvin")},
+        {"dependent": Quantity(5.0, "kelvin")},
+    )
+    for context in contexts:
+        a, b = forward.assess(context), backward.assess(context)
+        assert a.status is b.status
+        assert set(a.satisfied) == set(b.satisfied)
+        assert set(a.violated) == set(b.violated)
+        assert set(a.unknown) == set(b.unknown)
+        assert {(e.name, e.reason) for e in a.unknown_reasons} == {
+            (e.name, e.reason) for e in b.unknown_reasons
+        }
+
+
+def test_an_assessment_lists_conditions_in_declaration_order():
+    """Dependency order decides evaluation; the domain's own order decides reporting."""
+    gate, dependent = _gate_pair()
+    backward = ValidityDomain(conditions=(dependent, gate))
+    assessment = backward.assess(
+        {"gate": Quantity(5.0, "kelvin"), "dependent": Quantity(5.0, "kelvin")}
+    )
+    assert assessment.satisfied == ("dependent", "gate")
+
+
+def test_a_dependency_chain_deeper_than_one_level_is_supported():
+    """Depth is not restricted: the graph is a general DAG.
+
+    A depth limit would refuse a well-formed declaration for the
+    implementation's convenience. What has to be refused is a graph with no
+    valid evaluation order, and that is a cycle.
+    """
+    first = _screen_kelvin("first", 0, 10)
+    second = _screen_kelvin("second", 0, 10, requires=("first",))
+    third = _screen_kelvin("third", 0, 10, requires=("second",))
+    domain = ValidityDomain(conditions=(third, second, first))
+    inside = {n: Quantity(5.0, "kelvin") for n in ("first", "second", "third")}
+    assert domain.assess(inside).status is ValidityStatus.IN_DOMAIN
+
+
+def test_a_broken_gate_propagates_down_a_chain_as_a_prerequisite_gap():
+    first = _screen_kelvin("first", 0, 10)
+    second = _screen_kelvin("second", 0, 10, requires=("first",))
+    third = _screen_kelvin("third", 0, 10, requires=("second",))
+    domain = ValidityDomain(conditions=(third, second, first))
+    context = {n: Quantity(5.0, "kelvin") for n in ("second", "third")}
+    context["first"] = Quantity(99.0, "kelvin")
+    assessment = domain.assess(context)
+    assert assessment.violated == ("first",)
+    for blocked in ("second", "third"):
+        assert (
+            assessment.reason_for(blocked)
+            is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+        )
+
+
+def test_a_condition_may_not_require_itself():
+    try:
+        _screen_kelvin("t", 0, 10, requires=("t",))
+    except ModelValidityError as exc:
+        assert "requires itself" in str(exc)
+    else:
+        raise AssertionError("a self-dependency was accepted")
+
+
+def test_a_duplicate_dependency_is_refused():
+    try:
+        _screen_kelvin("t", 0, 10, requires=("gate", "gate"))
+    except ModelValidityError as exc:
+        assert "more than once" in str(exc)
+    else:
+        raise AssertionError("a duplicate dependency was accepted")
+
+
+def test_a_requires_naming_a_condition_the_domain_does_not_have_is_refused():
+    """Refused at construction: it could never be satisfied."""
+    try:
+        ValidityDomain(conditions=(_screen_kelvin("t", 0, 10, requires=("absent",)),))
+    except ModelValidityError as exc:
+        assert "absent" in str(exc)
+    else:
+        raise AssertionError("a dependency on a missing sibling was accepted")
+
+
+def test_a_dependency_cycle_is_refused_directly():
+    """Caught as a cycle, not as a side effect of a depth rule."""
+    for names in (("a", "b"), ("a", "b", "c")):
+        conditions = tuple(
+            _screen_kelvin(name, 0, 10, requires=(names[i - 1],))
+            for i, name in enumerate(names)
+        )
+        try:
+            ValidityDomain(conditions=conditions)
+        except ModelValidityError as exc:
+            assert "cycle" in str(exc)
+        else:
+            raise AssertionError(f"a cycle over {names} was accepted")
+
+
+# ------------------------------------------------------------ serialization
+
+
+def test_range_condition_round_trip_preserves_the_new_declarations():
+    original = _screen_kelvin(
+        "t", 0, 10, conservative_screen=True, requires=("gate",), description="d"
+    )
+    assert RangeCondition.from_dict(original.to_dict()) == original
+
+
+def test_the_new_declarations_are_written_even_when_they_are_the_default():
+    """Otherwise "an ordinary bound" and "a writer that predates the field"
+    are the same payload, and a reader cannot tell them apart."""
+    payload = _screen_kelvin("t", 0, 10).to_dict()
+    assert payload["conservative_screen"] is False
+    assert payload["requires"] == []
+
+
+def test_serialization_of_a_condition_is_deterministic():
+    condition = _screen_kelvin("t", 0, 10, conservative_screen=True, requires=("gate",))
+    assert json.dumps(condition.to_dict()) == json.dumps(condition.to_dict())
+
+
+def test_a_legacy_range_payload_is_an_ordinary_independent_bound():
+    """The absent key had exactly one meaning while it was absent."""
+    payload = dict(_screen_kelvin("t", 0, 10).to_dict())
+    del payload["conservative_screen"]
+    del payload["requires"]
+    restored = RangeCondition.from_dict(payload)
+    assert restored.conservative_screen is False
+    assert restored.requires == ()
+
+
+def test_a_non_boolean_screen_flag_is_refused_and_not_coerced():
+    """`bool("false")` is True, so coercion would invert the declaration."""
+    payload = _screen_kelvin("t", 0, 10).to_dict()
+    for malformed in ("false", "true", 0, 1, [], {}, None):
+        try:
+            RangeCondition.from_dict(dict(payload, conservative_screen=malformed))
+        except ModelValidityError:
+            continue
+        raise AssertionError(f"accepted a non-boolean screen flag: {malformed!r}")
+
+
+def test_a_bare_string_requires_is_refused():
+    """It would otherwise decode as one dependency per character."""
+    payload = _screen_kelvin("t", 0, 10).to_dict()
+    try:
+        RangeCondition.from_dict(dict(payload, requires="gate"))
+    except ModelValidityError:
+        return
+    raise AssertionError("accepted a bare string as a dependency list")
 
 
 def _all_tests():

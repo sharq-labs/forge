@@ -49,6 +49,8 @@ from src.engcore.mcp import run_electrothermal_case
 from src.engcore.scientific.models.definition import (
     InputSourceKind,
     RangeCondition,
+    UnknownReason,
+    ValidityDomain,
     ValidityStatus,
 )
 from src.engcore.scientific.units.quantity import Quantity
@@ -1047,3 +1049,92 @@ def test_the_applied_hint_flips_the_condition_on_the_constant_rating_route():
     assert "dissipated_power_utilization" not in violated, (
         f"applying {hint.line()} left the condition violated"
     )
+
+
+# =====================================================================
+# A condition that was never evaluated gets guidance, and never a number
+# =====================================================================
+#
+# `conservative_screen` and `requires` both produce conditions that end in
+# `unknown` having never been tested against their own bound. That is exactly
+# the population this module refuses to invent numbers for: a hint states the
+# value a declaration would have to take for a bound to be met, and neither of
+# these has a bound it failed or an observed value to move.
+#
+# The guarantee is structural rather than incidental -- `condition_repairs`
+# reads `assessment.violated`, and neither situation ever lands there -- and
+# these tests pin it at the surface a consumer actually calls.
+
+
+def _screen(name, low, high, **kw):
+    return RangeCondition(
+        name=name,
+        minimum=Quantity(low, "kelvin"),
+        maximum=Quantity(high, "kelvin"),
+        **kw,
+    )
+
+
+def _prerequisite_assessment():
+    """A gate placed outside its bound, and a dependent that reads a value."""
+    gate = _screen("gate", 0, 10)
+    dependent = _screen("dependent", 0, 10, requires=("gate",))
+    domain = ValidityDomain(conditions=(gate, dependent))
+    return domain.assess(
+        {"gate": Quantity(99.0, "kelvin"), "dependent": Quantity(9999.0, "kelvin")}
+    )
+
+
+def test_a_blocked_dependent_is_never_a_violated_condition():
+    """Which is what stops any repair being emitted for it at all.
+
+    Its declared value is far outside its own range. If it were evaluated it
+    would be a finding, and a hint would then be produced for a bound that was
+    never tested.
+    """
+    assessment = _prerequisite_assessment()
+    assert assessment.violated == ("gate",)
+    assert "dependent" not in assessment.violated
+    assert rp._violated_range_conditions.__name__  # the selector exists
+    assert (
+        assessment.reason_for("dependent")
+        is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+    )
+
+
+def test_a_blocked_dependent_gets_guidance_pointing_at_its_prerequisite():
+    """And the sentence sends the reader to the blocker, not to this bound."""
+    assessment = _prerequisite_assessment()
+    guidance = {item.condition: item for item in rp.unassessable_guidance(assessment)}
+    entry = guidance["dependent"]
+    assert entry.reason is UnknownReason.PREREQUISITE_NOT_ESTABLISHED
+    assert entry.actionable is False
+    assert "prerequisite" in entry.guidance.lower()
+    assert "nothing to change about this one" in entry.guidance
+
+
+def test_a_blocked_dependent_is_not_offered_as_something_to_declare():
+    """Declaring it changes nothing while its gate is still unmet."""
+    assessment = _prerequisite_assessment()
+    assert "dependent" not in rp.actionable_declarations(assessment)
+
+
+def test_a_conservative_screen_emits_no_repair_because_it_finds_nothing():
+    """A screen that did not clear was not shown wrong, so nothing is wrong to fix."""
+    domain = ValidityDomain(conditions=(_screen("t", 0, 10, conservative_screen=True),))
+    assessment = domain.assess({"t": Quantity(99.0, "kelvin")})
+    assert assessment.violated == ()
+    entry = rp.unassessable_guidance(assessment)[0]
+    assert entry.reason is UnknownReason.CONSERVATIVE_SCREEN
+    assert entry.actionable is False
+    assert "not a finding against the run" in entry.guidance
+    assert rp.actionable_declarations(assessment) == ()
+
+
+def test_guidance_for_the_new_reasons_is_deterministic():
+    """Two runs of the same assessment produce the same guidance, in order."""
+    assessment = _prerequisite_assessment()
+    first = [(i.condition, i.reason, i.guidance) for i in rp.unassessable_guidance(assessment)]
+    second = [(i.condition, i.reason, i.guidance) for i in rp.unassessable_guidance(assessment)]
+    assert first == second
+    assert [c for c, _, _ in first] == sorted(c for c, _, _ in first)
