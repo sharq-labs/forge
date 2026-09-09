@@ -35,7 +35,7 @@ U00005       a *conservative screen*: UNKNOWN(``conservative_screen``), which
 U00048       the coupling refuses a transfer -- negative resistance, two FAILing
              checks, and no thermal march at all
 U00204       a former false accept, now agreeing with its adjudicated truth
-U01001       the remaining false accept, pinned as CURRENT BEHAVIOUR
+U01001       the same, and the residual gap the adjudication did not close
 B00006       the battery gap, stated rather than hidden
 ===========  ==================================================================
 
@@ -46,12 +46,11 @@ That is what made the disagreement impossible to move quietly, and it worked:
 adjudicating ``U00204`` turned this module red and forced the change to be
 stated rather than absorbed into a benchmark count.
 
-``U00204`` now asserts agreement, and every number it checks is the number it
-checked before the adjudication -- the run did not change, the answer key did.
-``U01001`` still pins a disagreement.
+Both now assert agreement, and every number either one checks is the number it
+checked before its adjudication -- the runs did not change, the answer key did.
 
-If ``U01001`` starts passing, that is not automatically good news: read
-``docs/assurance/FALSE_ACCEPT_ADJUDICATIONS.md`` first.
+Neither adjudication closed the residual `U01001` names: the asymptote this
+run is heading for DOES exceed the declared ceiling, and no condition reads it.
 """
 
 from __future__ import annotations
@@ -358,18 +357,24 @@ def test_u00204_agrees_with_its_truth_now_that_the_truth_was_adjudicated():
     )
 
 
-def test_u01001_is_still_the_false_accept_the_adjudication_describes():
-    """The ceiling sits between the endpoint and the asymptote.
+def test_u01001_agrees_with_its_truth_now_that_the_truth_was_adjudicated():
+    """Adjudicated by `2026-09-09.u01001.ceiling-sized-against-the-asymptote`.
 
-    Moving the condition to the asymptote fixes this case and breaks eighteen
-    that a landed adjudication requires to stay INSUFFICIENT_EVIDENCE. The
-    three numbers below are the whole argument, so they are asserted together.
+    The ceiling sits between the endpoint and the asymptote, and the three
+    numbers below are the whole argument, so they are asserted together.
+    Moving the condition to the asymptote would fix this case and break
+    eighteen that a landed adjudication requires to stay
+    INSUFFICIENT_EVIDENCE -- so the truth moved and the runtime did not.
+
+    The residual this does NOT close: `steady_state_temperature` exceeds the
+    ceiling and no condition reads it, so a design whose equilibrium is above a
+    declared hard limit is flagged nowhere. That is recorded as a capability
+    gap, not waived.
     """
     case, run = _electrothermal("U01001")
-    assert case["ground_truth"]["expected_verdict"] == "NOT_SUPPORTED"
-    assert case["ground_truth"]["should_be_caught_by"] == (
-        "operating_temperature_utilization"
-    )
+    assert case["ground_truth"]["expected_verdict"] == "SUPPORTED"
+    assert case["ground_truth"]["label"] == "valid"
+    assert case["ground_truth"]["defect"] == "adv_unsound:small_overshoot"
 
     report = run.reports[0]
     endpoint = report.values["final_temperature"].magnitude

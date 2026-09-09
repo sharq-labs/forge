@@ -4,7 +4,7 @@
  "holdout_fraction": 0.3,
  "rule": "stratify on ground_truth.defect; order each stratum by sha256(f'{seed}:{case_id}') with case_id as tiebreak; allocate round(0.30*total) hold-out seats across strata by largest remainder, ties broken by stratum name; the hold-out is the first k_s of each stratum's order",
  "cases_dir": "cases_hard",
- "case_set_digest": "585eff4bbdf0aad7468984f1acab6488f60226ad331030e78257aa65c5da4399",
+ "case_set_digest": "e0ae5086e941f40d6e4500780fb052baac2511e33643025716801e039744a1c3",
  "n_total": 2000,
  "n_dev": 1400,
  "n_holdout": 600,
@@ -91,9 +91,9 @@
     "abs_share_gap": 0.0
    },
    "limit_exceeded": {
-    "dev_share": 0.20285714285714285,
+    "dev_share": 0.20214285714285715,
     "holdout_share": 0.20166666666666666,
-    "abs_share_gap": 0.0011904761904761862
+    "abs_share_gap": 0.00047619047619049115
    },
    "model_inapplicable": {
     "dev_share": 0.4007142857142857,
@@ -106,9 +106,9 @@
     "abs_share_gap": 0.0004761904761904764
    },
    "valid": {
-    "dev_share": 0.17285714285714285,
+    "dev_share": 0.17357142857142857,
     "holdout_share": 0.16833333333333333,
-    "abs_share_gap": 0.004523809523809513
+    "abs_share_gap": 0.005238095238095236
    }
   },
   "by_expected_verdict": {
@@ -118,14 +118,14 @@
     "abs_share_gap": 0.005952380952380959
    },
    "NOT_SUPPORTED": {
-    "dev_share": 0.6828571428571428,
+    "dev_share": 0.6821428571428572,
     "holdout_share": 0.6933333333333334,
-    "abs_share_gap": 0.010476190476190528
+    "abs_share_gap": 0.011190476190476195
    },
    "SUPPORTED": {
-    "dev_share": 0.17285714285714285,
+    "dev_share": 0.17357142857142857,
     "holdout_share": 0.16833333333333333,
-    "abs_share_gap": 0.004523809523809513
+    "abs_share_gap": 0.005238095238095236
    }
   },
   "seed_sweep_composition_only": [

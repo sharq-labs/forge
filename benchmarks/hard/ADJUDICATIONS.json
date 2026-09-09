@@ -361,6 +361,44 @@
           "unknown_at_adjudication": []
         }
       ]
+    },
+    {
+      "adjudication_id": "2026-09-09.u01001.ceiling-sized-against-the-asymptote",
+      "recorded_utc": "2026-09-09T22:10:00+00:00",
+      "commit": "5fb4400",
+      "benchmark_schema": "benchmark_ground_truth/1",
+      "deciding_condition": "operating_temperature_utilization",
+      "field_revised": "expected_verdict, label, should_be_caught_by, reason",
+      "adjudication_basis": "The ceiling sits between the two operating points this case has. Computed from the payload alone: the run reaches 428.0256666 K at the 268.8634 s horizon the payload declares (6 tau), the declared maximum_operating_temperature is 428.1227789 K, and the self-consistent asymptote is 428.2969484 K. The stated 0.174 K overshoot is measured against the asymptote, which this run does not reach; against the state the run occupies the conductor is 0.0971 K UNDER its ceiling. maximum_operating_temperature is evaluated at the state the declared run occupies, and that convention is not a preference -- it is the one the 2026-09-09 internal-fourier-number adjudication already requires. Moving the condition to the peak max(T_0, T_ss) was measured over the whole development split: 28 cases sit between the two conventions, and the move fixes exactly 1 case (this one) while breaking 18, every one of them a compound:horizon+tmax case that the landed adjudication ruled must be INSUFFICIENT_EVIDENCE on the grounds that under the Fourier floor the criterion observed nothing. Reading the ceiling at the asymptote would convert all 18 to NOT_SUPPORTED and contradict a decision already on the record. So the endpoint convention stands and this case's truth is what does not fit it.",
+      "generator_fault": "shape_adversarial_unsound's `small_overshoot` arm sets p['t_max'] = p['_t_ss'] - uniform(0.1, 0.5), sizing the ceiling against the ASYMPTOTE while every payload it emits declares a finite duration. widen_all sets duration = 6 tau, so the marched run stops 1 - e^-6 of the way and falls short of the asymptote by (T_ss - T_init) * e^-6 -- 0.2563 K here, which is larger than the 0.1742 K by which the ceiling was undercut. This is the same defect class the generator's own endpoint_temperature() docstring documents for power ratings: 'sizing a rating against the asymptote and then declaring a horizon the run stops short of states a rating the design does not actually meet' (case S00709, NEEDS.md B.6). The correction was applied there to rated_power and never to t_max. The repair is to size t_max against endpoint_temperature(), which the generator already computes.",
+      "independent_violation_search": "The case was run and every model's assessment in every report was inspected. Across all six models `violated` is empty and `unknown` is empty; every validation check passes; the coupling met its criterion in 8 iterations at 1.45e-7 K against a 1e-6 K tolerance. operating_temperature_utilization is present and SATISFIED. There is no independent violation on which the previous NOT_SUPPORTED could stand.",
+      "family_audit": "All 50 dev cases in the adv_unsound:small_overshoot family were measured for where their endpoint, ceiling and asymptote sit. 45 have an endpoint genuinely above the ceiling and are caught by the declared condition; their truth is correct and is not revised. 5 have an endpoint at or below the ceiling, so their declared condition is correctly satisfied: U01000, U01769, U01940 and U01830 are nonetheless refused by an unrelated condition and so keep a correct NOT_SUPPORTED verdict for an undeclared reason, and U01001 is not refused at all. Only U01001 is revised here. The other four are a should_be_caught_by defect rather than an expected_verdict defect, they are now visible as COINCIDENTAL in the scorecard rather than hidden inside a catch rate, and they are left for a separate adjudication -- see RESIDUAL below.",
+      "residual": "Forge computes and reports steady_state_temperature, and on this case that value exceeds the conductor's declared operating ceiling. No condition reads it. A design whose equilibrium is above a declared hard material limit is therefore not flagged anywhere, and this adjudication does not close that: it decides only that such a design is not a violation WITHIN the horizon its payload declares. Recorded as a capability gap in docs/assurance/, not as a defect being waived.",
+      "not_revised": [
+        "defect",
+        "needs_review",
+        "payload",
+        "id"
+      ],
+      "classification": "benchmark truth correction",
+      "runtime_behaviour_changed": false,
+      "cases": [
+        {
+          "case_id": "U01001",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "SUPPORTED",
+          "previous_label": "limit_exceeded",
+          "label": "valid",
+          "previous_declared_catcher": "operating_temperature_utilization",
+          "declared_catcher": "",
+          "previous_reason": "Over the ceiling by 0.174 K. Small, and still over.",
+          "reason": "The ceiling sits between the two operating points. The run reaches 428.0257 K at the 268.863 s horizon this payload declares (6 tau); the ceiling is 428.1228 K; the asymptote is 428.2969 K. maximum_operating_temperature is evaluated at the state the declared run occupies, so the conductor does not reach its ceiling within the mission this case states. The 0.174 K overshoot is against the asymptote, which this run does not reach.",
+          "defect_family": "adv_unsound:small_overshoot",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": []
+        }
+      ]
     }
   ]
 }

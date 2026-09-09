@@ -58,6 +58,8 @@ LANDED_EVENT_DIGESTS = {
         "4f7a0de9d587e4d7d2de6f3de9be5f91ecc3feabf7835a9a236b598537b546c2",
     "2026-09-09.u00204.runaway-that-does-not-run-away":
         "0b0a06a71fa5457a4f60b5cded301a178d4ce7658fe80b1cbfb46a9015ed71d9",
+    "2026-09-09.u01001.ceiling-sized-against-the-asymptote":
+        "a6a59004267189fd0b9dc14771751f3e461a443ec3f966a2708d7e9e5d17eef1",
 }
 
 
