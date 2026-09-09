@@ -1,6 +1,6 @@
 # Where `src/engcore/sria/` sits
 
-**19,887 lines across 53 modules — 26.9% of the source tree — and nothing
+**19,887 lines across 53 modules — 25.6% of the source tree — and nothing
 outside it in `src/` imports it.** Those numbers are measured, and the commands
 that produce them are in *The numbers, measured* below. The fact is easy to find
 and easy to misread, so this page says what it means, what depends on it, and
@@ -77,16 +77,17 @@ that the architecture refuses.
 
 ## The numbers, measured
 
-Taken on the tree at the commit that added this section. Every one is
-reproducible from the command beside it.
+Re-measured on **2026-09-08** against a pristine `git archive` export of
+`a35144e`. Every one is reproducible from the command beside it, and the two
+that had drifted since this section was written are marked.
 
 | | | how |
 |---|---|---|
 | lines | **19,887** | `find src/engcore/sria -name "*.py" \| xargs wc -l \| tail -1` |
 | modules | **53** | `find src/engcore/sria -name "*.py" \| wc -l` |
-| share of `src/` | **26.9%** of 73,867 lines | the same two counts |
+| share of `src/` | **25.6%** of 77,743 lines | the same two counts — *was 26.9% of 73,867; `src/` grew by 3,876 lines and SRIA did not* |
 | imports from outside `src/engcore/sria/` | **0** | `grep -rn "engcore\.sria\|from \.\.sria\|from \.sria\|import sria" --include=*.py src/ \| grep -v "^src/engcore/sria/"` |
-| tests | **630** across 34 `test_sria_*.py` modules, of 2,955 in the suite (21.3%) | `pytest tests/test_sria_*.py --collect-only -q` |
+| tests | **630** across 34 `test_sria_*.py` modules, of 3,095 in the suite (20.4%) | `pytest tests/test_sria_*.py --collect-only -q`, and `pytest --collect-only -q` for the total — *the 630 and the 34 are unchanged; the suite total was 2,955 and the share 21.3%* |
 | byte-pinned test modules | **2** — `test_sria_e1_electrical.py`, `test_sria_e2_model_adequacy.py` | pinned by `experiments/electrical_e2/e2_config.py` and `experiments/electrical_e3/e3_config.py` |
 
 The import count is the one worth running yourself. It is zero, and it is zero
@@ -192,8 +193,9 @@ becomes a dependency of the new repository rather than a sibling package.
    five rather than a second hard one: the interface to version is a single
    package, and 39 of the 50 references into it are schema strings.
 
-5. **The test suite splits 630/2,325**, and the tiering in `docs/TESTING.md`
-   splits with it.
+5. **The test suite splits 630/2,465**, and the tiering in `docs/TESTING.md`
+   splits with it. (Was 630/2,325: the SRIA half is unchanged and the rest of
+   the suite grew.)
 
 **What it would not fix.** Nothing about the verification path, because SRIA is
 not on it. The separation is a packaging decision about what a reader and a
@@ -227,7 +229,7 @@ The reasoning:
   path, the tree lifts out then, with the pins handled deliberately as part of a
   transaction rather than pre-emptively.
 
-**The cost of the recommendation**, stated plainly: the repository stays 27%
+**The cost of the recommendation**, stated plainly: the repository stays 26%
 larger than the product it is being read for, and every future reader still has
 to be told. That is a real and recurring tax, and it is paid in prose. The
 alternative pays it once in integrity, and integrity is the thing being sold.
