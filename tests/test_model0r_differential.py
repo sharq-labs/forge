@@ -532,7 +532,11 @@ def test_f4_old_provenance_payloads_still_load_and_declare_no_relation():
 
 def test_f5_an_unknown_provenance_version_fails_loudly():
     payload = ProvenanceRecord(run_id="x").to_dict()
-    payload["schema"] = "provenance_record/4"
+    # One PAST the newest version this reader knows. Kept one ahead of
+    # SUPPORTED_PROVENANCE_SCHEMAS deliberately: the day /5 is real, this
+    # line stops testing an unknown version and starts testing a known
+    # one, and the guard goes green while proving nothing.
+    payload["schema"] = "provenance_record/5"
     with pytest.raises(Exception):
         ProvenanceRecord.from_dict(payload)
 

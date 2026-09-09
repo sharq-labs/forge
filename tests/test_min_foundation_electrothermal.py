@@ -859,7 +859,7 @@ def test_g3_no_existing_schema_version_moved():
     assert MODEL_SCHEMA == "scientific_model_definition/2"
     assert REALIZATION_SCHEMA == "model_realization_definition/1"
     assert RESULT_SCHEMA == "scientific_result/4"
-    assert PROVENANCE_SCHEMA == "provenance_record/3"
+    assert PROVENANCE_SCHEMA == "provenance_record/4"
     assert SCIENTIFIC_TWIN_SCHEMA == "scientific_twin/1"
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
 

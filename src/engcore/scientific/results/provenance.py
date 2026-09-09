@@ -17,6 +17,12 @@ from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
 from ..ir.problem import ModelReference
+from ..ir.values import (
+    ScientificValue,
+    decode_value,
+    encode_value,
+    require_scientific_value,
+)
 from ..realizations.definition import RealizationReference
 from ..serialization import (
     require_schema,
@@ -29,14 +35,26 @@ from .immutable import detach, freeze
 from ..composition.transfer import QuantityTransfer, require_agreeing_transfers
 from ..units.quantity import Quantity
 
-#: Bumped for ``bindings``. A record carrying only participant *sets* cannot
-#: state which realization computed which model on which solver once any of
-#: them has more than one member, and a producer writing four models and one
-#: realization would leave the association unrecoverable. That association is
-#: scientific content, so an old reader dropping it would attribute a result
-#: to a computation it did not perform. Same rule, and same mechanism, as
+#: Bumped for typed ``inputs``. A record may now carry any
+#: :data:`~engcore.scientific.ir.values.ScientificValue` -- an integer count, a
+#: declared flag, a category -- where /1../3 could carry only a ``Quantity``.
+#: The bump is about the READER, not the writer: an older reader calls
+#: ``Quantity.from_dict`` on every input and would fail on a categorical one, so
+#: a /4 record is not readable by code that predates it. Reading older records
+#: needs no migration at all -- ``decode_value`` dispatches on each value's own
+#: schema, and a /1 input is a ``quantity/1`` payload, which decodes to the same
+#: ``Quantity`` it always did.
+PROVENANCE_SCHEMA = schema_string("provenance_record", 4)
+
+#: The version before ``inputs`` could hold anything but a ``Quantity``. Bumped
+#: for ``bindings``: a record carrying only participant *sets* cannot state
+#: which realization computed which model on which solver once any of them has
+#: more than one member, and a producer writing four models and one realization
+#: would leave the association unrecoverable. That association is scientific
+#: content, so an old reader dropping it would attribute a result to a
+#: computation it did not perform. Same rule, and same mechanism, as
 #: ``scientific_result/2`` (DATA-BOUNDARY0 §4).
-PROVENANCE_SCHEMA = schema_string("provenance_record", 3)
+PROVENANCE_SCHEMA_V3 = schema_string("provenance_record", 3)
 
 #: The version before ``transfers`` existed. Still read, never written. Bumped
 #: on the argument every other bump here has used: a quantity that crossed into
@@ -54,6 +72,7 @@ PROVENANCE_SCHEMA_V1 = schema_string("provenance_record", 1)
 SUPPORTED_PROVENANCE_SCHEMAS = (
     PROVENANCE_SCHEMA_V1,
     PROVENANCE_SCHEMA_V2,
+    PROVENANCE_SCHEMA_V3,
     PROVENANCE_SCHEMA,
 )
 
@@ -269,7 +288,9 @@ class ProvenanceRecord:
     #: crossing at all. Two transfers of one declaration at one instant must
     #: agree; a contradiction is refused rather than resolved by order.
     transfers: tuple[QuantityTransfer, ...] = ()
-    inputs: Mapping[str, Quantity] = field(default_factory=dict)
+    #: Every execution-relevant scientific input, as the typed union
+    #: `ScientificProblem` already speaks. See `__post_init__`.
+    inputs: Mapping[str, ScientificValue] = field(default_factory=dict)
     assumptions: tuple[str, ...] = ()
     tolerances: Mapping[str, float] = field(default_factory=dict)
     environment: Mapping[str, str] = field(default_factory=dict)
@@ -377,11 +398,27 @@ class ProvenanceRecord:
 
         inputs = dict(self.inputs)
         for name, value in inputs.items():
-            if not isinstance(value, Quantity):
-                raise ScientificCoreError(
-                    f"provenance input {name!r} must be a Quantity — provenance "
-                    f"never records unit-stripped values"
-                )
+            # THE UNION, not the Quantity alone. `ScientificProblem` has always
+            # carried its parameters as a `ScientificValue` -- a dimensional
+            # Quantity, an exact integer count, a declared flag, or a category
+            # -- and provenance accepted only the first of the four. A study
+            # legitimately turns on `steady_state = True` or
+            # `material = "aluminum"`, and those change which model applies and
+            # what the result means.
+            #
+            # This was not a silent drop, which is the one thing that would
+            # have been worse: the record REFUSED them, so a producer either
+            # left an execution-relevant input out of provenance entirely or
+            # smuggled it into untyped `metadata`, where nothing checks it and
+            # nothing can read its type back.
+            #
+            # `require_scientific_value` refuses everything outside the union,
+            # so a bare int or a naked string is still refused -- and a bare
+            # float still is, which is what "provenance never records
+            # unit-stripped values" was protecting.
+            require_scientific_value(
+                value, context=f"provenance input {name!r}"
+            )
         # Frozen rather than merely copied. ``frozen=True`` protects the
         # attribute and not the object behind it, so `provenance.inputs[...] = 5`
         # was accepted on every record this platform has ever produced —
@@ -625,7 +662,7 @@ class ProvenanceRecord:
             # truth this contract exists to remove.
             "bindings": [b.to_dict() for b in self.bindings],
             "inputs": {
-                k: v.to_dict() for k, v in sorted(self.inputs.items())
+                k: encode_value(v) for k, v in sorted(self.inputs.items())
             },
             "transfers": [t.to_dict() for t in self.transfers],
             "assumptions": list(self.assumptions),
@@ -685,8 +722,12 @@ class ProvenanceRecord:
                     for x in payload.get("transfers", ())
                 )
             ),
+            # `decode_value` dispatches on each value's OWN schema, so a
+            # /1../3 record -- whose inputs are all `quantity/1` payloads --
+            # decodes to exactly the Quantities it always did. No migration,
+            # no version branch, and nothing older is reinterpreted.
             inputs={
-                k: Quantity.from_dict(v)
+                k: decode_value(v)
                 for k, v in (payload.get("inputs") or {}).items()
             },
             assumptions=tuple(payload.get("assumptions", ())),

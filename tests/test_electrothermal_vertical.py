@@ -1751,7 +1751,7 @@ def test_o3_no_existing_schema_version_moved():
     from src.engcore.scientific.solvers.protocol import RAW_OUTPUT_SCHEMA
 
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
-    assert PROVENANCE_SCHEMA == "provenance_record/3"
+    assert PROVENANCE_SCHEMA == "provenance_record/4"
     assert EXECUTION_BINDING_SCHEMA == "execution_binding/1"
     assert RESULT_SCHEMA == "scientific_result/4"
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"

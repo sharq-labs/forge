@@ -1602,11 +1602,18 @@ def test_typed_parameter_round_trips():
 def test_parameter_accessors_separate_quantities_from_the_rest():
     """``parameter_values`` is the whole union; ``quantity_parameters`` is not.
 
-    The two accessors exist because ``ProvenanceRecord.inputs`` is a
-    Quantity-only contract. Before the split there was one method annotated
-    ``dict[str, Quantity]`` that returned categories too, so a problem holding
-    one produced a record that failed inside whatever runner was building it
-    rather than where the wrong type came from.
+    The split was introduced because ``ProvenanceRecord.inputs`` was a
+    Quantity-only contract: before it, one method annotated
+    ``dict[str, Quantity]`` returned categories too, so a problem holding one
+    produced a record that failed inside whatever runner was building it rather
+    than where the wrong type came from.
+
+    **That contract has since widened** and provenance now records the whole
+    union, so the split no longer exists to keep a category away from a record
+    that would refuse it. It stays because "the dimensional parameters" is a
+    question callers legitimately ask -- a dimensional check has nothing to say
+    about a flag -- and because a method annotated ``dict[str, Quantity]``
+    should return exactly that.
     """
     problem = ScientificProblem(
         problem_id="accessors",
@@ -1633,12 +1640,27 @@ def test_parameter_accessors_separate_quantities_from_the_rest():
     assert set(quantities) == {"mass"}
     assert quantities["mass"] == Quantity(2.0, "kilogram")
 
-    # The reason the split exists: provenance accepts one and refuses the
-    # other, and refusing is correct — there is no Quantity that stands in for
-    # a category.
+    # Provenance takes either, and the whole union round-trips with its types
+    # intact. It used to REFUSE the non-Quantity half -- not drop it, refuse it
+    # -- so a producer either left an execution-relevant input out of the
+    # record entirely or smuggled it into untyped metadata. A study that turns
+    # on `steady_state` or `material` has those inputs in its provenance now.
     record = ProvenanceRecord(run_id="r1", inputs=quantities)
     assert record.inputs["mass"] == Quantity(2.0, "kilogram")
-    _raises(ScientificCoreError, ProvenanceRecord, run_id="r2", inputs=every)
+
+    full = ProvenanceRecord(run_id="r2", inputs=every)
+    assert set(full.inputs) == set(every)
+    restored = ProvenanceRecord.from_dict(full.to_dict())
+    assert restored == full
+    assert type(restored.inputs["material"]) is CategoricalValue
+    assert type(restored.inputs["segment_count"]) is IntegerValue
+    assert type(restored.inputs["steady_state"]) is BooleanValue
+    assert restored.inputs["material"].value == "aluminum"
+
+    # What is still refused is a value outside the union -- a bare float is a
+    # unit-stripped number, which is what the original rule was protecting.
+    _raises(ScientificCoreError, ProvenanceRecord, run_id="r3", inputs={"m": 2.0})
+    _raises(ScientificCoreError, ProvenanceRecord, run_id="r4", inputs={"m": "2 kg"})
 
 
 def test_typed_values_reject_invalid_payloads():
