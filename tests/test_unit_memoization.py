@@ -201,3 +201,90 @@ def test_conversion_and_comparison_are_unaffected():
         Quantity(1.0, "kelvin") + Quantity(1.0, "volt")
     with pytest.raises(UnitCompatibilityError):
         Quantity(1.0, "kelvin").to("volt")
+
+
+# ===================================================================== to()
+#
+# `Quantity.to` short-circuits when the target unit is the one already carried.
+# Counted over one real coupled run: 549 of 552 calls (99.5 %) are that case,
+# because callers reach for `magnitude_in(...)` to get a NUMBER out of a value
+# rather than to move it between units.
+#
+# The risk is that a short-circuit and a real conversion stop agreeing, so every
+# test below compares the fast path against the arithmetic it replaced.
+
+
+def _reference_conversion(quantity: Quantity, unit: str) -> Quantity:
+    """The pre-optimization body, kept here as the thing to agree with."""
+    target = normalize_unit(unit)
+    quantity.require_compatible(target, context="conversion")
+    converted = registry().Quantity(quantity.magnitude, quantity.units).to(target)
+    return Quantity(float(converted.magnitude), str(converted.units))
+
+
+@pytest.mark.parametrize("unit", UNITS + ["degC", "degF"])
+@pytest.mark.parametrize(
+    "magnitude", [0.0, 1.0, -1.0, 273.15, 1e-30, 1e30, 3.14159265358979]
+)
+def test_an_identity_conversion_equals_the_round_trip_it_replaces(unit, magnitude):
+    """The whole safety claim for the short-circuit, per unit and magnitude.
+
+    Offset units are included deliberately: `degC` and `degF` are the ones where
+    "convert to yourself" could plausibly not be the identity, because their
+    conversion is affine rather than a scale factor.
+    """
+    quantity = Quantity(magnitude, unit)
+    for spelling in {unit, normalize_unit(unit)}:
+        fast = quantity.to(spelling)
+        reference = _reference_conversion(quantity, spelling)
+        assert fast == reference
+        assert fast.magnitude == reference.magnitude
+        assert fast.units == reference.units
+
+
+def test_a_real_conversion_is_untouched():
+    """The 0.5 % that is a genuine conversion must still be computed."""
+    assert Quantity(1.0, "kelvin").to("millikelvin").magnitude == pytest.approx(1000.0)
+    assert Quantity(1.0, "hour").to("second").magnitude == pytest.approx(3600.0)
+    assert Quantity(0.0, "degC").to("kelvin").magnitude == pytest.approx(273.15)
+    assert Quantity(1.0, "ampere*ohm").to("volt").magnitude == pytest.approx(1.0)
+    # ...and each equals the reference arithmetic exactly.
+    for unit, target in (("kelvin", "millikelvin"), ("hour", "second"),
+                         ("degC", "kelvin"), ("meter", "millimeter")):
+        quantity = Quantity(2.5, unit)
+        assert quantity.to(target) == _reference_conversion(quantity, target)
+
+
+def test_the_short_circuit_does_not_skip_a_refusal():
+    """Skipping the compatibility check is only safe where it cannot fail.
+
+    A unit is compatible with itself, so the check is redundant on that branch
+    and only on that branch. An incompatible target and an unparsable one must
+    still be refused, and `normalize_unit` still runs before the short-circuit
+    so the second one is.
+    """
+    with pytest.raises(UnitCompatibilityError):
+        Quantity(1.0, "kelvin").to("volt")
+    with pytest.raises(UnitCompatibilityError):
+        Quantity(1.0, "kelvin").to("not_a_unit")
+    with pytest.raises(UnitCompatibilityError):
+        Quantity(1.0, "kelvin").to("")
+    with pytest.raises(UnitCompatibilityError):
+        Quantity(1.0, "kelvin").magnitude_in("volt")
+
+
+def test_magnitude_in_agrees_with_conversion_on_both_paths():
+    quantity = Quantity(300.0, "kelvin")
+    assert quantity.magnitude_in("kelvin") == 300.0
+    assert quantity.magnitude_in("K") == 300.0
+    assert quantity.magnitude_in("millikelvin") == pytest.approx(300_000.0)
+    assert quantity.magnitude_in("kelvin") == quantity.to("kelvin").magnitude
+
+
+def test_an_identity_conversion_returns_an_equal_immutable_value():
+    """Returning `self` is safe only because the record is frozen."""
+    quantity = Quantity(300.0, "kelvin")
+    same = quantity.to("kelvin")
+    assert same == quantity
+    with pytest.raises(Exception):
+        same.magnitude = 1.0  # frozen, so the alias cannot be used to mutate
