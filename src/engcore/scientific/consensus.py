@@ -14,11 +14,31 @@ did the routes agree             a comparison, always performed and always
                                  reported, whatever it finds
 were the routes independent      a **declaration**, made by whoever wrote the
                                  routes, never inferred from anything
+did each route answer the        a **declaration** too: the required outputs,
+whole question                   named up front and checked against what each
+                                 route actually reported
 ===============================  ==============================================
 
-``CROSS_SOLVER_VALIDATED`` is awarded only when both are true. Agreement
+``CROSS_SOLVER_VALIDATED`` is awarded only when all three are true. Agreement
 between routes that share their machinery is recorded in full — every residual,
-every route, the tolerance it was judged against — and establishes nothing.
+every route, the tolerance it was judged against — and establishes nothing. So
+is agreement between routes that answered different fractions of the question.
+
+Completeness is declared for the same reason independence is
+------------------------------------------------------------
+The comparison used to run over the INTERSECTION of what the routes reported.
+A route producing three quantities and a route producing one were compared on
+the one they shared, and agreement there earned the level for the whole
+consensus. The record was honest about which quantities it compared; nothing
+said which ones it *should* have, so nothing could tell a complete confirmation
+from a partial one — and the partial one is the cheaper to produce.
+
+So a consensus names its ``required_outputs``, and an empty set is a refusal
+rather than a wildcard, exactly as an empty component declaration is. Extra
+quantities the routes happen to share are compared too, which can only make
+agreement harder to reach: two routes that agree on the contract and differ
+wildly outside it have still found something, and hiding that to protect a
+claim is the failure this module exists to refuse.
 
 Independence is declared, never inferred
 ----------------------------------------
@@ -64,6 +84,24 @@ Both errors are possible and neither is detectable from here, which is why the
 declaration travels in the record: a reader who disagrees with it can see it
 and say so.
 
+What independence does NOT establish, stated so nobody has to discover it
+-------------------------------------------------------------------------
+The verdict rests entirely on the declaration, and the declaration is not
+checked against the world. In particular a level can be earned by two routes
+that carry the **same solver identity**, share an underlying provider, or were
+served the same cached result -- because the record cannot see any of that, and
+inferring it would be the analysis this module refuses to perform.
+
+One of those is at least visible, so it is reported:
+:attr:`CrossSolverConsensus.shared_solver_identities` names every
+``solver_id@version[backend]`` appearing on more than one route. It does not
+defeat independence -- one integrator asked for two different methods is two
+routes under one identity, and those methods can be genuinely separate
+arithmetic -- but two routes declaring disjoint components while naming one
+program is a claim a reviewer should see rather than one that should pass
+silently. The residual risk is not closed: **independence is only as good as
+the declaration**, and nothing here can tell a careless one from a careful one.
+
 What this module does not do
 -----------------------------
 It does not run anything. Routes are executed by whoever owns them; this
@@ -82,20 +120,36 @@ from typing import Any, Iterable, Mapping
 from .errors import ScientificValidationError
 from .results.thresholds import VerificationThresholds
 from .results.validation import ValidationCheck, ValidationLevel, ValidationOutcome
-from .serialization import require_schema, schema_string
+from .results.immutable import freeze
+from .serialization import (
+    require_schema,
+    require_schema_any,
+    schema_string,
+)
 from .solvers.protocol import SolverIdentity
 
 SHARED_COMPONENT_SCHEMA = schema_string("shared_component")
 SOLVE_ROUTE_SCHEMA = schema_string("solve_route")
-CONSENSUS_SCHEMA = schema_string("cross_solver_consensus")
+
+#: Bumped for ``required_outputs``. A /1 record has no field naming the
+#: quantities the routes were obliged to produce, so a level it claims was
+#: awarded under a rule that could not tell a complete confirmation from a
+#: partial one. The missing declaration cannot be defaulted -- an empty set
+#: means "nothing was required", which is precisely the state this version
+#: refuses to award on -- so ``from_dict`` accepts /1 only where it claims no
+#: level. Same shape, and same reason, as ``validity_assessment/1``.
+CONSENSUS_SCHEMA = schema_string("cross_solver_consensus", 2)
+CONSENSUS_SCHEMA_V1 = schema_string("cross_solver_consensus", 1)
 
 __all__ = [
     "CONSENSUS_SCHEMA",
+    "CONSENSUS_SCHEMA_V1",
     "SHARED_COMPONENT_SCHEMA",
     "SOLVE_ROUTE_SCHEMA",
     "ComponentKind",
     "CrossSolverConsensus",
     "IndependenceVerdict",
+    "OutputCompleteness",
     "RouteComparison",
     "SharedComponent",
     "SolveRoute",
@@ -265,6 +319,28 @@ class IndependenceVerdict(str, Enum):
     TOO_FEW_ROUTES = "too_few_routes"
 
 
+class OutputCompleteness(str, Enum):
+    """Did every route answer the whole question, or only part of it?
+
+    The second question a consensus has to ask and previously did not.
+    ``_compare`` took the INTERSECTION of what the routes reported, so a route
+    that produced one quantity and a route that produced three were compared on
+    the one they shared -- and agreement on that one earned
+    ``CROSS_SOLVER_VALIDATED`` for the whole comparison. The record said which
+    quantities were compared, honestly; nothing said which ones *should* have
+    been, so nothing could tell a complete confirmation from a partial one.
+
+    ``UNDECLARED`` is a refusal, exactly as it is for independence. An
+    undeclared required set intersects with everything to nothing and would
+    otherwise be the cheapest possible route to a level: say nothing about what
+    the routes owed and the arithmetic says they delivered it.
+    """
+
+    COMPLETE = "complete"
+    INCOMPLETE = "incomplete"
+    UNDECLARED = "undeclared"
+
+
 def relative_difference(a: float, b: float) -> float:
     """``|a - b| / max(|a|, |b|, tiny)``.
 
@@ -349,15 +425,31 @@ class RouteComparison:
 
 
 def _compare(
-    values: Mapping[str, Mapping[str, float]], tolerance: float
+    values: Mapping[str, Mapping[str, float]],
+    tolerance: float,
+    required: tuple[str, ...] = (),
 ) -> RouteComparison:
-    """The worst relative difference over every quantity every route produced.
+    """The worst relative difference over the quantities that must agree.
 
-    Only quantities **all** routes report are compared. A quantity one route
-    produced and another did not is not a disagreement; it is an absence, and
-    scoring it as either would be inventing a comparison nobody made. Which
-    quantities were compared travels in the record, so an absence shows up as a
-    shorter list rather than as a silently smaller worst case.
+    **What is compared** is the declared ``required`` set together with every
+    quantity all routes happen to report. The union, and each half earns its
+    place:
+
+    * the *required* half is the contract. It is checked for presence by
+      :attr:`CrossSolverConsensus.missing_outputs`, so a route that skipped one
+      cannot be compared into agreement on the rest.
+    * the *common* half is every additional quantity the routes both produced.
+      Including it means an extra output can only make agreement HARDER to
+      reach, never easier -- two routes that agree on the contract and differ
+      wildly on a quantity outside it have still found something, and a
+      comparison that ignored it would be hiding a real disagreement to protect
+      a claim.
+
+    A quantity one route produced and another did not is still not a
+    disagreement; it is an absence, and scoring it as either would invent a
+    comparison nobody made. Which quantities were compared travels in the
+    record, so an absence shows up as a shorter list rather than as a silently
+    smaller worst case.
     """
     if len(values) < 2:
         return RouteComparison(
@@ -373,7 +465,11 @@ def _compare(
     for produced in values.values():
         names = set(produced)
         common = names if common is None else (common & names)
-    shared = sorted(common or ())
+    # Only required names EVERY route actually reported can be compared; a
+    # missing one is refused by `missing_outputs` rather than silently dropped
+    # here, and including it in this list would index a value that is not there.
+    present_everywhere = common or set()
+    shared = sorted(present_everywhere | (set(required) & present_everywhere))
     if not shared:
         return RouteComparison(
             quantities=(),
@@ -467,6 +563,16 @@ class CrossSolverConsensus:
     routes: tuple[SolveRoute, ...]
     comparison: RouteComparison
     thresholds: VerificationThresholds
+    #: The quantities every route was obliged to produce for this consensus to
+    #: mean anything. **Declared, never inferred** -- the same rule the
+    #: components follow, for the same reason. Empty is a refusal, not a
+    #: wildcard: see :class:`OutputCompleteness`.
+    required_outputs: tuple[str, ...] = ()
+    #: What each route actually reported, by route id. Kept so
+    #: :attr:`missing_outputs` can name the route AND the quantity rather than
+    #: only reporting that something was short. Empty when a consensus was
+    #: assembled from a payload that predates the field.
+    reported_outputs: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     notes: str = ""
 
     def __post_init__(self) -> None:
@@ -476,6 +582,17 @@ class CrossSolverConsensus:
                 "a consensus requires a consensus_id"
             )
         object.__setattr__(self, "consensus_id", text)
+        object.__setattr__(
+            self, "required_outputs", tuple(sorted(set(self.required_outputs)))
+        )
+        object.__setattr__(
+            self,
+            "reported_outputs",
+            freeze({
+                str(route_id): tuple(sorted(set(names)))
+                for route_id, names in dict(self.reported_outputs).items()
+            }),
+        )
         routes = tuple(self.routes)
         identifiers = [r.route_id for r in routes]
         duplicates = sorted({r for r in identifiers if identifiers.count(r) > 1})
@@ -512,6 +629,38 @@ class CrossSolverConsensus:
         return tuple(r.route_id for r in self.routes if r.declares_nothing)
 
     @property
+    def shared_solver_identities(self) -> tuple[str, ...]:
+        """Solver identities that appear on more than one route. **Reported, not judged.**
+
+        This does NOT defeat independence and is not meant to. The module's
+        position is deliberate and is argued at the top: ``route_id`` names the
+        route rather than the solver, because one integrator asked for two
+        different methods is two routes under one identity, and those two
+        methods can be genuinely independent arithmetic.
+
+        But a reader auditing a level needs to be able to SEE it. Two routes
+        that declare disjoint components while carrying the same
+        ``solver_id@version[backend]`` are claiming that one program contains
+        two separately-implemented answers -- which is sometimes exactly true
+        and sometimes a declaration nobody checked, and the difference is not
+        decidable from here. Recording it puts the fact in front of whoever can
+        decide, which is the same reason every refused consensus still carries
+        its full comparison.
+
+        The residual risk is stated rather than closed: **independence is only
+        as good as the declaration**, and nothing in this module can tell a
+        careless declaration from a careful one.
+        """
+        counted: dict[str, int] = {}
+        for route in self.routes:
+            label = (
+                f"{route.solver.solver_id}@{route.solver.version}"
+                + (f"[{route.solver.backend}]" if route.solver.backend else "")
+            )
+            counted[label] = counted.get(label, 0) + 1
+        return tuple(sorted(label for label, n in counted.items() if n > 1))
+
+    @property
     def independence(self) -> IndependenceVerdict:
         """Do the declarations support an independence claim?
 
@@ -533,11 +682,52 @@ class CrossSolverConsensus:
     def routes_are_independent(self) -> bool:
         return self.independence is IndependenceVerdict.INDEPENDENT
 
+    # ---- the completeness side ------------------------------------------
+    @property
+    def missing_outputs(self) -> tuple[tuple[str, str], ...]:
+        """``(route_id, quantity)`` for every required output a route did not report.
+
+        Sorted, so a refusal reads the same on every run.
+        """
+        if not self.required_outputs or not self.reported_outputs:
+            return ()
+        return tuple(
+            sorted(
+                (route_id, name)
+                for route_id, reported in self.reported_outputs.items()
+                for name in self.required_outputs
+                if name not in reported
+            )
+        )
+
+    @property
+    def output_completeness(self) -> OutputCompleteness:
+        """Did every route answer the whole question?"""
+        if not self.required_outputs:
+            return OutputCompleteness.UNDECLARED
+        if self.missing_outputs:
+            return OutputCompleteness.INCOMPLETE
+        return OutputCompleteness.COMPLETE
+
+    @property
+    def outputs_are_complete(self) -> bool:
+        return self.output_completeness is OutputCompleteness.COMPLETE
+
     # ---- what it establishes --------------------------------------------
     @property
     def earned(self) -> bool:
-        """Independent routes **and** agreement inside the stated tolerance."""
-        return self.routes_are_independent and self.comparison.agreed
+        """Three conditions, and all of them.
+
+        Independent routes, a **complete** answer from each, and agreement
+        inside the stated tolerance. Completeness is the one that was missing:
+        without it, agreement on the single quantity two routes happened to
+        share bought the same level as agreement on all of them.
+        """
+        return (
+            self.routes_are_independent
+            and self.outputs_are_complete
+            and self.comparison.agreed
+        )
 
     @property
     def establishes(self) -> ValidationLevel | None:
@@ -573,6 +763,22 @@ class CrossSolverConsensus:
                 f"evidence about the shared machinery and not about the "
                 f"physics; the comparison is reported and establishes no level"
             )
+        completeness = self.output_completeness
+        if completeness is OutputCompleteness.UNDECLARED:
+            return (
+                "the consensus declares no required outputs, so there is no "
+                "statement of what the routes owed and no way to tell a "
+                "complete confirmation from a partial one; the comparison is "
+                "reported and establishes no level"
+            )
+        if completeness is OutputCompleteness.INCOMPLETE:
+            short = [f"{route}:{name}" for route, name in self.missing_outputs]
+            return (
+                f"required output(s) {short} were not reported, so at least "
+                f"one route answered only part of the question; agreement on "
+                f"the rest is agreement about less than was asked and "
+                f"establishes no level"
+            )
         if not self.comparison.compared_anything:
             return (
                 f"the routes are independent but nothing was compared "
@@ -594,8 +800,9 @@ class CrossSolverConsensus:
                 f"this gate's declared threshold set"
             )
         return (
-            f"{len(self.routes)} routes sharing no declared component agree on "
-            f"{len(self.comparison.quantities)} quantities to "
+            f"{len(self.routes)} routes sharing no declared component each "
+            f"reported all {len(self.required_outputs)} required output(s) and "
+            f"agree on {len(self.comparison.quantities)} quantities to "
             f"{self.comparison.worst_relative_difference:.3e}, within the "
             f"declared {self.comparison.tolerance:.3e}"
         )
@@ -647,10 +854,20 @@ class CrossSolverConsensus:
         lines = []
         for route in sorted(self.routes, key=lambda r: r.route_id):
             declared = ", ".join(route.component_labels) or "nothing declared"
+            reported = self.reported_outputs.get(route.route_id)
+            produced = (
+                ", ".join(reported) if reported else "nothing recorded"
+            )
+            backend = f"[{route.solver.backend}]" if route.solver.backend else ""
             lines.append(
                 f"route {route.route_id} = {route.solver.solver_id}@"
-                f"{route.solver.version} declares [{declared}]"
+                f"{route.solver.version}{backend} declares [{declared}] reports "
+                f"[{produced}]"
             )
+        lines.append(
+            "required outputs: "
+            + (", ".join(self.required_outputs) or "NONE DECLARED")
+        )
         return (*lines, *self.thresholds.evidence())
 
     # ---- construction ----------------------------------------------------
@@ -663,6 +880,7 @@ class CrossSolverConsensus:
         values: Mapping[str, Mapping[str, float]],
         thresholds: VerificationThresholds,
         tolerance_key: str,
+        required_outputs: Iterable[str] = (),
         notes: str = "",
     ) -> "CrossSolverConsensus":
         """Compare what each route produced, keyed by ``route_id``.
@@ -682,11 +900,22 @@ class CrossSolverConsensus:
                 f"be attributed and so cannot contribute to an independence "
                 f"claim. Declared routes: {sorted(known)}"
             )
+        required = tuple(sorted(set(required_outputs)))
         return cls(
             consensus_id=consensus_id,
             routes=routes,
-            comparison=_compare(values, thresholds[tolerance_key]),
+            comparison=_compare(values, thresholds[tolerance_key], required),
             thresholds=thresholds,
+            required_outputs=required,
+            # Recorded from what each route actually handed over, so a refusal
+            # can name the route and the quantity. A route that reported
+            # nothing appears with an empty tuple rather than being absent,
+            # which is what lets `missing_outputs` charge it for the whole
+            # required set instead of overlooking it.
+            reported_outputs={
+                route.route_id: tuple(sorted(values.get(route.route_id, {})))
+                for route in routes
+            },
             notes=notes,
         )
 
@@ -698,9 +927,19 @@ class CrossSolverConsensus:
             "routes": [r.to_dict() for r in self.routes],
             "comparison": self.comparison.to_dict(),
             "thresholds": self.thresholds.to_dict(),
+            "required_outputs": list(self.required_outputs),
+            "reported_outputs": {
+                route_id: list(names)
+                for route_id, names in sorted(self.reported_outputs.items())
+            },
             "notes": self.notes,
             # Derived, emitted for readers, and recomputed on the way back in.
             "independence": self.independence.value,
+            "shared_solver_identities": list(self.shared_solver_identities),
+            "output_completeness": self.output_completeness.value,
+            "missing_outputs": [
+                f"{route}:{name}" for route, name in self.missing_outputs
+            ],
             "shared_components": [c.label for c in self.shared_components],
             "establishes": (
                 self.establishes.value if self.establishes else None
@@ -710,7 +949,27 @@ class CrossSolverConsensus:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CrossSolverConsensus":
-        require_schema(payload, CONSENSUS_SCHEMA)
+        version = require_schema_any(
+            payload, (CONSENSUS_SCHEMA_V1, CONSENSUS_SCHEMA)
+        )
+        if version == CONSENSUS_SCHEMA_V1 and payload.get("establishes"):
+            # A /1 record has no field naming what the routes owed, so the
+            # level it claims was awarded by a rule that could not tell a
+            # complete confirmation from a partial one. The requirement cannot
+            # be reconstructed and must not be defaulted: an empty required set
+            # is the state this version refuses to award on, so silently
+            # re-deriving would either confirm a claim nothing here can check
+            # or fail with a message about a contradiction that is really a
+            # version difference.
+            raise ScientificValidationError(
+                f"{CONSENSUS_SCHEMA_V1} record {payload.get('consensus_id')!r} "
+                f"claims to establish {payload['establishes']!r} and has no "
+                f"field saying which outputs the routes were required to "
+                f"produce. That level was awarded under a rule that could not "
+                f"see output completeness, and the requirement cannot be "
+                f"reconstructed from the record. Re-derive the consensus, or "
+                f"read it with the code that wrote it"
+            )
         record = cls(
             consensus_id=payload["consensus_id"],
             routes=tuple(
@@ -718,6 +977,13 @@ class CrossSolverConsensus:
             ),
             comparison=RouteComparison.from_dict(payload["comparison"]),
             thresholds=VerificationThresholds.from_dict(payload["thresholds"]),
+            required_outputs=tuple(payload.get("required_outputs", ())),
+            reported_outputs={
+                route_id: tuple(names)
+                for route_id, names in (
+                    payload.get("reported_outputs") or {}
+                ).items()
+            },
             notes=payload.get("notes", ""),
         )
         # The same rule ValidationReport.from_dict applies to attained levels:

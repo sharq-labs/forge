@@ -23,6 +23,7 @@ from src.engcore.scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
     IndependenceVerdict,
+    OutputCompleteness,
     RouteComparison,
     SharedComponent,
     SolveRoute,
@@ -61,13 +62,31 @@ def _route(route_id: str, solver: SolverIdentity, *names: str) -> SolveRoute:
     )
 
 
-def _consensus(routes, values, thresholds=THRESHOLDS) -> CrossSolverConsensus:
+def _consensus(
+    routes, values, thresholds=THRESHOLDS, required_outputs=None
+) -> CrossSolverConsensus:
+    """A consensus fixture that declares its required outputs.
+
+    ``required_outputs`` defaults to the quantities every route reported, so a
+    fixture written to exercise independence or tolerance does not also have to
+    restate the output contract. Tests ABOUT completeness pass it explicitly.
+
+    The default is a fixture convenience and deliberately not the production
+    rule: the record refuses to award anything on an undeclared set, and
+    ``test_an_undeclared_required_output_set_earns_nothing`` pins that.
+    """
+    if required_outputs is None:
+        common: set[str] | None = None
+        for produced in values.values():
+            common = set(produced) if common is None else common & set(produced)
+        required_outputs = tuple(sorted(common or ()))
     return CrossSolverConsensus.over(
         consensus_id="test",
         routes=routes,
         values=values,
         thresholds=thresholds,
         tolerance_key="agreement_rel_tol",
+        required_outputs=required_outputs,
     )
 
 
@@ -202,12 +221,33 @@ def test_a_single_route_is_not_a_consensus():
 
 
 def test_only_quantities_every_route_reported_are_compared():
+    """An absence is still not a disagreement, and is still not compared.
+
+    **The award half of this test changed deliberately.** It used to assert
+    that these two routes -- one reporting ``x`` and ``only_a``, the other
+    ``x`` and ``only_b`` -- earned CROSS_SOLVER_VALIDATED on the strength of
+    agreeing about ``x``. That was the defect: agreement on the one quantity
+    two routes happened to share bought the same level as agreement on all of
+    them, and nothing in the record said which quantities SHOULD have been
+    compared.
+
+    What has not changed is the comparison itself. ``only_a`` and ``only_b``
+    are absences, not disagreements, and scoring them as either would invent a
+    comparison nobody made.
+    """
     consensus = _consensus(
         (_route("a", ALPHA, "a:rhs"), _route("b", BETA, "b:rhs")),
         {"a": {"x": 1.0, "only_a": 99.0}, "b": {"x": 1.0, "only_b": -99.0}},
+        required_outputs=("x", "only_a", "only_b"),
     )
     assert consensus.comparison.quantities == ("x",)
-    assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
+    assert consensus.comparison.agreed is True
+    # ...and it establishes nothing, because neither route answered the whole
+    # question. Both are named, so a reader can see who was short of what.
+    assert consensus.output_completeness is OutputCompleteness.INCOMPLETE
+    assert consensus.missing_outputs == (("a", "only_b"), ("b", "only_a"))
+    assert consensus.establishes is None
+    assert "only_b" in consensus.reason
 
 
 def test_a_caller_supplied_threshold_awards_nothing():

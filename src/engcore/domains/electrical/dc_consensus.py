@@ -218,6 +218,7 @@ def dc_consensus(
     the pair would silently declare the external route's arithmetic under a
     name that is not the one that produced it.
     """
+    native_values = route_values(native)
     return CrossSolverConsensus.over(
         consensus_id=consensus_id,
         routes=(
@@ -225,11 +226,24 @@ def dc_consensus(
             external_route(external_solver),
         ),
         values={
-            NATIVE_ROUTE_ID: route_values(native),
+            NATIVE_ROUTE_ID: native_values,
             EXTERNAL_ROUTE_ID: route_values(external),
         },
         thresholds=thresholds,
         tolerance_key="agreement_rel_tol",
+        # THE CONTRACT: the external route must reproduce the WHOLE operating
+        # point this repository computed, not whichever part of it the adapter
+        # happened to return.
+        #
+        # Taken from the native route because the operating point is what a DC
+        # solve produces and its members depend on the circuit -- there is no
+        # fixed list to write down here. That is a declaration, not a guess
+        # from the intersection: it says the native result defines the question
+        # and the external route is being asked to answer all of it. An
+        # external route returning a subset has confirmed part of an operating
+        # point, which is a different and weaker statement, and before this it
+        # was awarded the same level as confirming the whole one.
+        required_outputs=tuple(native_values),
         notes=(
             "one operating point, computed by this repository's own modified "
             "nodal analysis and by an external circuit simulator that shares "

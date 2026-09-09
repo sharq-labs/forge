@@ -83,13 +83,25 @@ def _route(route_id: str, component: str) -> SolveRoute:
 
 
 def _consensus(values, *, tolerance: float = 1e-6) -> CrossSolverConsensus:
+    """A consensus whose OUTPUT CONTRACT is satisfied, so finiteness is on trial.
+
+    ``required_outputs`` is the set every route reported. That is deliberate
+    here and is the point of the fixture: a consensus that declares nothing
+    earns nothing for a completeness reason, which would make every refusal in
+    this module pass for the wrong reason and prove nothing about non-finite
+    values.
+    """
     routes = [_route(name, f"impl-{name}") for name in sorted(values)]
+    common: set[str] | None = None
+    for produced in values.values():
+        common = set(produced) if common is None else common & set(produced)
     return CrossSolverConsensus.over(
         consensus_id="test-consensus",
         routes=routes,
         values=values,
         thresholds=_thresholds(rel_tol=tolerance),
         tolerance_key="rel_tol",
+        required_outputs=tuple(sorted(common or ())),
     )
 
 

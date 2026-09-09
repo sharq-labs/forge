@@ -1277,6 +1277,13 @@ def run_verification_gate(
                 },
                 thresholds=thresholds,
                 tolerance_key="tolerance_rel_tol",
+                # The contract, stated rather than left to the intersection.
+                # These are the quantities both arms were run to produce; the
+                # comprehensions above drop a missing one silently, and without
+                # this declaration a run that lost a QoI would have been
+                # compared on whatever survived and could have agreed its way
+                # to a level on a subset of the question.
+                required_outputs=CONVERGENCE_QOIS,
                 notes=(
                     "the same physics through two members of one implicit "
                     "integrator family"
