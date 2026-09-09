@@ -28,6 +28,7 @@ from __future__ import annotations
 import hashlib
 import math
 import operator as _operator
+import threading
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Mapping
@@ -156,6 +157,10 @@ _REGISTRY: _SealedUnitRegistry | None = None
 _SEALED_SNAPSHOT: dict[str, dict[str, str]] | None = None
 _SEALED_DIGEST: str | None = None
 
+#: Held only while the registry is being built. The warm path never acquires
+#: it -- see :func:`registry` for why that is safe and what it costs.
+_REGISTRY_LOCK = threading.Lock()
+
 
 def registry() -> pint.UnitRegistry:
     """The single unit registry owned by the Scientific Core.
@@ -192,14 +197,43 @@ def registry() -> pint.UnitRegistry:
 
     The snapshot is taken *before* the seal is set, because taking it is a
     read through the same object the seal is about to close.
+
+    **Built once means built once, including under threads.** A bare
+    ``if _REGISTRY is None`` is a test and an assignment with a ~0.16 s build
+    between them, so every thread arriving inside that window failed the test
+    and built its own -- eight threads produced eight registries and left seven
+    callers holding an object this module no longer had. That did not move a
+    scientific answer (pint's dimensionality containers compare and hash by
+    content, and :class:`Quantity` stores a unit *string* it re-reads, so no
+    engcore value carries a registry identity that can go stale) but it did
+    falsify the sentence :func:`_canonical_unit`'s safety argument rests on:
+    that nothing ever replaces this object. A memo justified by "the thing it
+    depends on never changes" needs that to be a guarantee.
+
+    So construction is behind :data:`_REGISTRY_LOCK`, tested again inside it,
+    and the three globals are published in **one** statement -- they are one
+    fact, and assigning them in two let one thread's snapshot stand beside
+    another thread's digest.
+
+    The warm path is unchanged and deliberately takes no lock: it is the same
+    global read and ``is None`` test it always was, because a module global is
+    rebound atomically and the value is only ever published fully built and
+    already sealed. The lock is on the cold path alone, which runs once.
     """
     global _REGISTRY, _SEALED_SNAPSHOT, _SEALED_DIGEST
     if _REGISTRY is None:
-        built = _SealedUnitRegistry()
-        snapshot = _snapshot_of(built)
-        built._seal()
-        _REGISTRY, _SEALED_SNAPSHOT = built, snapshot
-        _SEALED_DIGEST = _digest_of(snapshot)
+        with _REGISTRY_LOCK:
+            # Re-read under the lock: the thread that held it may have been
+            # the one that built this.
+            if _REGISTRY is None:
+                built = _SealedUnitRegistry()
+                snapshot = _snapshot_of(built)
+                built._seal()
+                _REGISTRY, _SEALED_SNAPSHOT, _SEALED_DIGEST = (
+                    built,
+                    snapshot,
+                    _digest_of(snapshot),
+                )
     return _REGISTRY
 
 
@@ -346,8 +380,9 @@ def _canonical_unit(text: str) -> tuple[str, Any]:
     This is a pure function of ``text`` and the registry, and the registry is a
     constant for the life of the process:
 
-    * it is built exactly once, behind an ``if _REGISTRY is None`` guard, and
-      **no path in this repository ever replaces it**;
+    * it is built exactly once -- under :data:`_REGISTRY_LOCK`, so that holds
+      when threads race for the first build too -- and **no path in this
+      repository ever replaces it**;
     * it is sealed before it is published -- every mutating callable pint
       offers is refused, as is any attribute assignment or deletion, and
       ``tests/test_core_guards.py`` exercises that enumeration rather than a

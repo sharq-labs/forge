@@ -12,9 +12,16 @@ WHAT IS CACHED, AND WHY THE KEY IS COMPLETE
 ``_canonical_unit(text)`` maps a unit string to its canonical spelling and its
 dimensionality. It is a pure function of the string and the registry, and the
 registry is a constant for the life of the process: built once behind an
-``is None`` guard with no path anywhere that replaces it, sealed before it is
-published, with every mutating route refused and that enumeration exercised by
-``test_core_guards``.
+``is None`` guard *and a lock*, with no path anywhere that replaces it, sealed
+before it is published, with every mutating route refused and that enumeration
+exercised by ``test_core_guards``.
+
+The lock is load-bearing rather than defensive. Without it the ``is None``
+guard was a test and an assignment with a registry build between them, so
+concurrent first use built one registry per racing thread and replaced the
+published one each time -- which is precisely the "nothing replaces it"
+premise this memo's safety argument stands on.
+``tests/test_unit_registry_initialization`` pins that.
 
 So the key -- the string -- is the entire varying input. **Nothing about a
 model, a threshold, a context, a solver or a verdict participates in the value**,
