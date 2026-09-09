@@ -7,6 +7,17 @@ requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26",
   "scipy>=1.11",
+  # NOTHING IN THIS REPOSITORY IMPORTS THIS, by statement or by string.
+  # Every clean install pays for an ~8 MB wheel and its joblib/threadpoolctl
+  # tail to satisfy a declaration no code reads. It is left declared rather
+  # than dropped because removing a required dependency changes what a clean
+  # install contains, which is a decision about the package and not a
+  # correction to a record. It is written here, and not only in the guard,
+  # because this list is where a reader decides what the package needs.
+  # `tests/test_core_guards.py::test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed`
+  # asserts the unimported set is EXACTLY {pytest-xdist, scikit-learn}, so if
+  # something starts importing it, or a third unused declaration lands, that
+  # test fails and this comment gets revisited.
   "scikit-learn>=1.4",
   # Scientific Core units backend. Lower bound only: the platform must not
   # pin its scientific stack to one machine's resolved versions.

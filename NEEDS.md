@@ -4901,8 +4901,25 @@ matches the code, which is the exact class of defect ``C.2`` in this document
 was written about -- three sources disagreeing about one number -- except that
 here nothing is disagreeing out loud.
 
-**What is not yet known**: which commit moved it, and whether the movement is a
-regression or a correction. The false-reject direction (11 sound cases now
+**Which commit moved it — answered 2026-09-08.** A bisect over the 88 commits
+from `fad99ff` to `a35144e`, each probe scoring `cases_battery` with that
+commit's own scorer against its own `src/`, puts the first failing commit at
+**`14e6e55` "fix battery discharge efficiency direction"** (2026-09-07). Its
+parent `b983ec0` still scores 400/400. Both release tags predate it, and
+scoring `v1.0-benchmark` and `v1.1-benchmark` against their own pinned `src/`
+still gives 400/400 today — so **neither release page is wrong and neither
+should be back-edited**; only the undated `results_battery.json` and the
+`benchmarks/hard/README.md` table were, and both were corrected on 2026-09-08.
+The record stood stale for 35 commits.
+
+The 28 rows are not scattered. All **17** false accepts are
+`polarization_unmodelled_fraction_out@*` cases — placed outside that bound and
+no longer refused — and all **11** false rejects are `soc_window_margin_in@*`
+(5) and `soc_step_resolution_ratio_in@*` (6): cases placed *inside* their
+bounds and now refused. Two conditions account for the whole divergence.
+
+**What is still not known**: whether the movement is a regression or a
+correction. The false-reject direction (11 sound cases now
 refused) is the one that matters most: this repository's standing constraint is
 that false reject stays at zero, and on this case set it is 6.1 %. The eleven
 ids are in the row diff and none of them was touched by the core round.

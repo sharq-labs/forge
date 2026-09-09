@@ -4,3 +4,4 @@
 # split rule and benchmarks/hard/README.md for why the seal exists.
 #
 # An empty log below this header means the hold-out has never been opened.
+{"opened_utc": "2026-09-08T17:22:55+00:00", "split": "holdout", "cases_dir": "cases_hard", "case_set_digest": "e14542c1e09f258de48628a69ec61fea1ad0dab6ee4916bcf17df585dc7c35b8", "holdout_digest": "e2f78a145d4b1e878bce97409379423fb7e26f94e1f362e9c45fa0632656112d", "scored": "600 of 2000 cases on disk", "exact_verdict_match": "579/600 (96.5%)", "catch_rate": "498/499 (99.8%)", "false_accept": "1/499 (0.20%)", "false_reject": "0/101 (0.0%)", "note": "Part A item 12: the seal opened once, deliberately, to publish the only untuned figure this benchmark has. Scored on the working tree that gives dev 1342/1400 (95.9%)."}

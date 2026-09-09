@@ -425,6 +425,47 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "                continue",
      "the credibility report stops rendering the conversions its provenance "
      "carries, so the record exists and no reader sees it"),
+    ("G21a", "src/engcore/scientific/models/definition.py",
+     "            and self.conservative_screen\n",
+     "            and True\n",
+     "every range condition becomes a screen, so no bound in the repository "
+     "can find against a design again"),
+    ("G21b", "src/engcore/scientific/models/definition.py",
+     "        if (\n"
+     "            outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN\n"
+     "            and self.conservative_screen\n"
+     "        ):\n"
+     "            return ValidityStatus.UNKNOWN\n",
+     "",
+     "a declared screen stops being one, so the two records that say a value "
+     "past their bound is not shown to be wrong go back to reporting it as "
+     "evidence against"),
+    ("G21c", "src/engcore/scientific/models/definition.py",
+     "            \"conservative_screen\": self.conservative_screen,\n",
+     "",
+     "the screen stops crossing the record boundary, so a consumer reading a "
+     "condition cannot tell a screen from a bound that certifies"),
+    ("G22a", "src/engcore/scientific/models/definition.py",
+     "                if set(condition.requires) <= established:\n",
+     "                if True:\n",
+     "the gate stops gating: a dependent condition is evaluated even when what "
+     "it depends on was violated or never established, which is the whole "
+     "defect and moves no benchmark number while it happens"),
+    ("G22b", "src/engcore/scientific/models/definition.py",
+     "                    unknown.append(condition.name)\n",
+     "                    satisfied.append(condition.name)\n",
+     "a blocked dependent is reported SATISFIED instead of unknown -- an "
+     "untested bound entering the list that reads as evidence"),
+    ("G22c", "src/engcore/scientific/models/definition.py",
+     "            missing = sorted(set(required) - known)\n",
+     "            missing = []\n",
+     "a requires naming a condition the domain does not have stops being "
+     "refused, so the condition is permanently UNKNOWN and nothing says why"),
+    ("G22d", "src/engcore/scientific/models/definition.py",
+     "            \"requires\": list(self.requires),\n",
+     "",
+     "the dependency stops crossing the record boundary, so a consumer "
+     "reading a condition cannot tell a gated bound from an independent one"),
 )
 
 # WHAT THESE TWO CANNOT VERIFY, stated rather than left to be assumed.

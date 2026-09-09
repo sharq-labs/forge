@@ -5118,3 +5118,330 @@ def test_no_check_the_repository_builds_reports_a_success_it_did_not_have():
         "covered by anything: there is no static sweep behind this one"
     )
     assert outcome_is_earned is not None
+
+
+# =====================================================================
+# GUARD 22: a conservative screen reports a gap, and only where declared
+# =====================================================================
+#
+# Two model records described a bound, in their own prose, as a screen -- a
+# value past it is "not shown to be wrong, it is outside what this criterion
+# validates" -- while `ValidityDomain.assess` classified that same value
+# `violated`, `classify_assessment` read that as OUTSIDE_VALIDATED_DOMAIN and
+# `derive_verdict` turned it into NOT_SUPPORTED: the verdict that says there
+# is evidence AGAINST this design. The record and the machinery contradicted
+# each other, in the same file, and the machinery won.
+#
+# `RangeCondition.conservative_screen` is how a record settles it. The three
+# things it has to keep true are each verified by failure below, because the
+# dangerous mutation here is not the one that breaks the feature -- it is the
+# one that spreads it. A flag that leaked onto every range condition would
+# turn every finding in the repository into a gap, and every benchmark case
+# that currently catches a bad design would still be "caught" by a scorer
+# that only asks whether the verdict was SUPPORTED.
+
+
+def test_a_conservative_screen_reports_a_gap_and_not_a_finding():
+    """GUARD 22. The behaviour, and that it does not reach IN_DOMAIN.
+
+    A screen may move a failure from `violated` to `unknown`. It may never
+    move one into `satisfied`: the value is still outside its bound, and a
+    flag that could admit it would be a way to declare a condition away.
+    """
+    from src.engcore.scientific.models.definition import (
+        RangeCondition,
+        ValidityStatus,
+    )
+
+    screen = RangeCondition(
+        name="x",
+        minimum=Quantity(0.2, "dimensionless"),
+        conservative_screen=True,
+    )
+    assert screen.evaluate(Quantity(0.1, "dimensionless")) is (
+        ValidityStatus.UNKNOWN
+    )
+    assert screen.evaluate(Quantity(0.5, "dimensionless")) is (
+        ValidityStatus.IN_DOMAIN
+    )
+
+
+def test_an_undeclared_bound_still_finds_against_a_design():
+    """GUARD 22. The direction that matters, stated as its own test.
+
+    This is the false-reject/false-accept edge. If the screen ever became the
+    default -- by a mutated condition, by a flipped default, by anything --
+    no bound in this repository would report OUTSIDE_VALIDATED_DOMAIN again
+    and no design could ever be found against. Asserted over a plain
+    condition, so it fails on the mutation rather than on the feature.
+    """
+    from src.engcore.scientific.models.definition import (
+        RangeCondition,
+        ValidityStatus,
+    )
+
+    ordinary = RangeCondition(name="x", minimum=Quantity(0.2, "dimensionless"))
+    assert ordinary.conservative_screen is False
+    assert ordinary.evaluate(Quantity(0.1, "dimensionless")) is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+
+
+def test_the_records_that_claim_a_screen_do_not_yet_declare_one():
+    """GUARD 22. A KNOWN, OPEN CONTRADICTION, pinned so it cannot be forgotten.
+
+    Two shipped records describe a bound in their own prose as a screen -- past
+    it the model "is not shown to be wrong, it is outside what this criterion
+    validates" -- while `assess` classifies a value past it as `violated` and
+    `derive_verdict` turns that into NOT_SUPPORTED, the verdict that says there
+    is evidence AGAINST the design. The record and the machinery disagree, in
+    the same file.
+
+    `RangeCondition.conservative_screen` is the mechanism that would settle it
+    and it is implemented and tested; what is NOT settled is whether these two
+    particular bounds should use it, because the benchmarks disagree with each
+    other about the answer:
+
+      * `internal_fourier_number` -- 102 hard cases whose ground truth names it
+        as the catcher expect INSUFFICIENT_EVIDENCE (screen semantics), and 70
+        expect NOT_SUPPORTED (finding semantics). Declaring the screen scores
+        1342/1400 against 1291; not declaring it scores 1291.
+      * `polarization_unmodelled_fraction` -- 17 battery cases expect
+        NOT_SUPPORTED, and none expects otherwise. Declaring the screen moves
+        all 17 to INSUFFICIENT_EVIDENCE (false accept stays 0/219: a gap still
+        refuses to certify) and breaks
+        `test_a_step_that_left_the_domain_is_not_forgotten_by_the_last_step`,
+        which pins case X00033 by id.
+
+    Declaring the flag on either bound breaks a landed guard; leaving it off
+    leaves the prose overstating what the machinery does. This test asserts the
+    SECOND state, which is the one the tree is in, so that resolving the
+    question has to come here and say so. Flip it when the decision is made --
+    do not delete it, and do not edit a record's prose to make it agree.
+    """
+    from src.engcore.scientific.models.definition import RangeCondition
+
+    #: The claim a record makes when it is a screen, in the words both
+    #: records independently reached for.
+    CLAIM = "not shown to be wrong"
+
+    claims_but_does_not_declare: list[tuple[str, str]] = []
+    for model in MODELS:
+        for condition in model.validity.conditions:
+            if not isinstance(condition, RangeCondition):
+                continue
+            says = CLAIM in condition.description
+            declares = condition.conservative_screen
+            assert not (declares and not says), (
+                f"{model.model_id}/{condition.name} declares "
+                f"conservative_screen without its description claiming a bound "
+                f"that does not certify against. The flag may not spread to "
+                f"records that never made the claim"
+            )
+            if says and not declares:
+                claims_but_does_not_declare.append((model.model_id, condition.name))
+
+    assert sorted(n for _, n in claims_but_does_not_declare) == [
+        "internal_fourier_number",
+        "polarization_unmodelled_fraction",
+    ], (
+        f"the set of records whose prose claims a screen while the machinery "
+        f"reports a finding has changed: {sorted(claims_but_does_not_declare)}. "
+        f"If a bound was resolved, update this guard to say so; if a new one "
+        f"acquired the claim, it has joined an open contradiction"
+    )
+
+
+def test_the_screen_survives_the_record_a_consumer_reads():
+    """GUARD 22. A flag that only exists in Python is not a declaration.
+
+    A consumer holding the serialized record has to be able to see that a
+    bound is a screen; and a record written before the flag existed has to
+    read back as the ordinary bound it was, because while the key was absent
+    it had exactly one meaning.
+    """
+    from src.engcore.scientific.models.definition import (
+        RangeCondition,
+        ValidityStatus,
+    )
+
+    screen = RangeCondition(
+        name="x",
+        minimum=Quantity(0.2, "dimensionless"),
+        conservative_screen=True,
+    )
+    payload = screen.to_dict()
+    assert payload["conservative_screen"] is True
+    assert RangeCondition.from_dict(payload) == screen
+
+    legacy = {k: v for k, v in payload.items() if k != "conservative_screen"}
+    restored = RangeCondition.from_dict(legacy)
+    assert restored.conservative_screen is False
+    assert restored.evaluate(Quantity(0.1, "dimensionless")) is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+
+
+# =====================================================================
+# GUARD 23: a condition that depends on another is not evaluated until it holds
+# =====================================================================
+#
+# `RangeCondition.evaluate_in` read exactly one key -- its own name -- and
+# `ValidityDomain.assess` was one flat loop with no ordering, so no condition
+# could say "my number is derived from a state that condition over there is
+# what establishes". Measured over the development split: with the horizon
+# bound violated, seven conditions in one model reported `satisfied` on
+# quantities the assembler builds FROM the state that bound is what
+# establishes. The verdict still arrived correctly from the violated bound,
+# which is why nothing in the confusion matrix moved and why this was
+# invisible until somebody went looking.
+#
+# `requires` is the gate. The dangerous mutation is not the one that breaks it
+# but the one that OPENS it: a gate that stops gating puts every dependent
+# condition back to reporting evidence it does not have, and every benchmark
+# number stays exactly where it is while it happens.
+
+
+def _dependency_fixture(**gate_kwargs):
+    from src.engcore.scientific.models.definition import (
+        RangeCondition, ValidityDomain,
+    )
+    gate = RangeCondition(
+        name="gate", minimum=Quantity(0.2, "dimensionless"), **gate_kwargs
+    )
+    dependent = RangeCondition(
+        name="dependent", maximum=Quantity(1.0, "dimensionless"),
+        requires=("gate",),
+    )
+    return ValidityDomain(conditions=(gate, dependent))
+
+
+def test_a_dependent_condition_is_not_evaluated_until_its_gate_holds():
+    """GUARD 23. The gate, in both directions.
+
+    Open the gate and the dependent answers. Fail the gate — by violation or
+    by absence — and the dependent is UNKNOWN, never satisfied. `satisfied` is
+    the assertion that matters: it is the list that reads as evidence.
+    """
+    from src.engcore.scientific.models.definition import ValidityStatus
+
+    domain = _dependency_fixture()
+    ok = domain.assess({"gate": Quantity(5.0, "dimensionless"),
+                        "dependent": Quantity(0.5, "dimensionless")})
+    assert ok.satisfied == ("gate", "dependent")
+
+    for gate_value in (Quantity(0.1, "dimensionless"), None):
+        context = {"dependent": Quantity(0.5, "dimensionless")}
+        if gate_value is not None:
+            context["gate"] = gate_value
+        blocked = domain.assess(context)
+        assert "dependent" not in blocked.satisfied
+        assert "dependent" in blocked.unknown
+        assert blocked.status is not ValidityStatus.IN_DOMAIN
+
+
+def test_a_blocked_dependent_is_a_gap_and_never_a_finding():
+    """GUARD 23. The design choice, asserted so it cannot drift.
+
+    A dependent condition must not inherit its gate's violation. It was never
+    evaluated: no evidence for its bound and none against it. Inheriting would
+    report evidence against a bound nobody tested.
+    """
+    blocked = _dependency_fixture().assess({
+        "gate": Quantity(0.1, "dimensionless"),
+        "dependent": Quantity(9.0, "dimensionless"),   # would violate if read
+    })
+    assert blocked.violated == ("gate",)
+    assert "dependent" not in blocked.violated
+    assert "dependent" in blocked.unknown
+
+
+def test_a_dependency_that_cannot_be_satisfied_is_refused_at_construction():
+    """GUARD 23. The family the core already polices.
+
+    A `requires` naming a non-sibling, a self-reference, or a cycle, are each refused when the record is built rather than
+    discovered from a verdict — the same discipline as a reserved name no
+    condition reads.
+
+    A CHAIN IS NOT IN THAT FAMILY. Dependencies form a general acyclic graph
+    of any depth, so ``a -> b -> c`` is well formed and is asserted to build
+    below. What has no valid evaluation order is a cycle, and that is what
+    replaces the depth rule an earlier draft of this mechanism carried.
+    """
+    from src.engcore.scientific.models.definition import (
+        RangeCondition, ValidityDomain,
+    )
+    from src.engcore.scientific.errors import ScientificCoreError
+
+    ONE = Quantity(0.0, "dimensionless")
+
+    with pytest.raises(ScientificCoreError):
+        ValidityDomain(conditions=(
+            RangeCondition(name="d", minimum=ONE, requires=("absent",)),
+        ))
+    with pytest.raises(ScientificCoreError):
+        RangeCondition(name="self", minimum=ONE, requires=("self",))
+    # Depth two builds, and evaluates. Not refused.
+    ValidityDomain(conditions=(
+        RangeCondition(name="a", minimum=ONE),
+        RangeCondition(name="b", minimum=ONE, requires=("a",)),
+        RangeCondition(name="c", minimum=ONE, requires=("b",)),
+    ))
+    # A cycle over the same three names has no order at all, and is refused.
+    with pytest.raises(ScientificCoreError):
+        ValidityDomain(conditions=(
+            RangeCondition(name="a", minimum=ONE, requires=("c",)),
+            RangeCondition(name="b", minimum=ONE, requires=("a",)),
+            RangeCondition(name="c", minimum=ONE, requires=("b",)),
+        ))
+
+
+def test_the_dependency_survives_the_record_a_consumer_reads():
+    """GUARD 23. A gate that exists only in Python gates nothing a reader can
+    see, and the record is the product."""
+    from src.engcore.scientific.models.definition import RangeCondition
+
+    condition = RangeCondition(
+        name="dependent", maximum=Quantity(1.0, "dimensionless"),
+        requires=("gate",),
+    )
+    payload = condition.to_dict()
+    assert payload["requires"] == ["gate"]
+    assert RangeCondition.from_dict(payload) == condition
+
+    legacy = {k: v for k, v in payload.items() if k != "requires"}
+    assert RangeCondition.from_dict(legacy).requires == ()
+
+
+def test_every_declared_dependency_in_the_tree_names_a_sibling():
+    """GUARD 23. Over the shipped models, not a fixture.
+
+    The construction-time check makes this true for anything that imports, so
+    this asserts the property holds across the whole repository at once and
+    reports which models declare a dependency at all.
+    """
+    from src.engcore.scientific.models.definition import RangeCondition
+
+    declared = []
+    for model in MODELS:
+        names = {c.name for c in model.validity.conditions}
+        for condition in model.validity.conditions:
+            requires = tuple(getattr(condition, "requires", ()))
+            if not requires:
+                continue
+            declared.append((model.model_id, condition.name, requires))
+            assert set(requires) <= names, (
+                f"{model.model_id}/{condition.name} requires {requires}, "
+                f"which is not all siblings"
+            )
+            for other in model.validity.conditions:
+                if other.name in requires:
+                    assert not getattr(other, "requires", ()), (
+                        f"{model.model_id}: {condition.name} -> {other.name} "
+                        f"is a chain, which is refused by design"
+                    )
+    # Reported rather than asserted non-empty: this guard must pass on a tree
+    # where no domain has declared one yet, which is the state Part 1 lands in.
+    print(f"declared dependencies in the tree: {len(declared)}")
+    for row in declared:
+        print("   ", row)
