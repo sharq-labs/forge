@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Any, Iterable, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..sequences import duplicates
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_same_dimension
@@ -188,10 +189,10 @@ class ScientificProblem:
             ("boundary condition", self.boundary_conditions),
         ):
             names = [item.name for item in items]
-            duplicates = {n for n in names if names.count(n) > 1}
-            if duplicates:
+            duplicated = duplicates(names)
+            if duplicated:
                 raise InvalidScientificProblem(
-                    f"duplicate {kind} names: {sorted(duplicates)}"
+                    f"duplicate {kind} names: {duplicated}"
                 )
 
     def _require_condition_targets(self) -> None:

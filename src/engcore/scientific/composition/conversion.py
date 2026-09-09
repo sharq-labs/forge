@@ -67,6 +67,7 @@ from ..errors import InvalidScientificProblem
 from ..models.definition import ValidityStatus
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity, dimensionality
+from ..sequences import duplicates
 from ..units.validation import require_unit
 from ..results.immutable import freeze
 
@@ -274,7 +275,7 @@ class EnergyConversion:
                 f"LossPath naming the form it leaves as"
             )
         forms = [loss.form for loss in losses]
-        repeated = sorted({f for f in forms if forms.count(f) > 1})
+        repeated = duplicates(forms)
         if repeated:
             raise InvalidScientificProblem(
                 f"energy conversion {self.name!r} declares two loss paths to "

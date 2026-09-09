@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
+from ..sequences import duplicates
 from ..errors import ScientificValidationError
 from ..serialization import require_schema, schema_string
 
@@ -499,10 +500,10 @@ class ValidationReport:
         self._require_every_level_earned()
         self._require_no_check_contradicts_its_numbers()
         names = [c.name for c in self.checks]
-        duplicates = {n for n in names if names.count(n) > 1}
-        if duplicates:
+        duplicated = duplicates(names)
+        if duplicated:
             raise ScientificValidationError(
-                f"duplicate validation check names: {sorted(duplicates)}"
+                f"duplicate validation check names: {duplicated}"
             )
 
     def _require_every_level_earned(self) -> None:
