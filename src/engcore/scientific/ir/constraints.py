@@ -39,7 +39,7 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..serialization import require_schema, schema_string
+from ..serialization import require_bool, require_schema, schema_string
 from ..units.quantity import Quantity
 from ..units.validation import require_same_dimension
 
@@ -78,7 +78,14 @@ class ConstraintCheck:
         require_schema(payload, CONSTRAINT_CHECK_SCHEMA)
         return cls(
             constraint=payload["constraint"],
-            satisfied=bool(payload["satisfied"]),
+            # A VERDICT on the wire, not a declaration: "false" coerced to
+            # True turns a violated constraint into a satisfied one, which is
+            # the single most consequential inversion in this file.
+            satisfied=require_bool(
+                payload, "satisfied", False,
+                error=InvalidScientificProblem,
+                context=f"constraint check {payload.get('constraint')!r}",
+            ),
             margin=Quantity.from_dict(payload["margin"]),
             value=Quantity.from_dict(payload["value"]),
         )

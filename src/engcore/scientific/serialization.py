@@ -55,6 +55,53 @@ def require_schema_any(
     return str(found)
 
 
+def require_bool(
+    payload: Mapping[str, Any],
+    key: str,
+    default: bool,
+    *,
+    error: type[Exception] = ScientificCoreError,
+    context: str = "",
+) -> bool:
+    """A serialized boolean must arrive as a boolean.
+
+    ``bool("false")`` is ``True``. A wire format that coerces lets a malformed
+    record **invert** a scientific declaration rather than be refused -- a flag
+    written as ``"false"`` coming back as True, a violated constraint coming
+    back satisfied. Neither is a rounding error; both are the opposite of what
+    was recorded, arriving silently.
+
+    The absent key is still the additive default, because that is a record
+    written before the field existed and the absence had exactly one meaning
+    while it lasted. What is refused is a key that is **present and is not a
+    boolean**.
+
+    ``0`` and ``1`` are refused with the strings, and this is the decision
+    rather than an accident. They are what a writer produces by losing the
+    type, and accepting them would make "this writer lost the type"
+    indistinguishable from "this writer meant False" -- so a record written by
+    a broken producer would be read as a confident scientific statement.
+
+    Stated here, at the serialization boundary, because it is a property of
+    reading a wire format and not of any one record. It was previously a
+    private helper in the model package applied to exactly one of the five
+    boolean wire fields in this core.
+    """
+    if key not in payload:
+        return default
+    value = payload[key]
+    if not isinstance(value, bool):
+        where = f"{context}: " if context else ""
+        raise error(
+            f"{where}{key!r} must be a boolean, not {type(value).__name__} "
+            f"({value!r}). A serialized scientific declaration is refused "
+            f"rather than coerced: bool('false') is True, so coercing here "
+            f"would silently invert the declaration instead of rejecting the "
+            f"record"
+        )
+    return value
+
+
 def encode(value: Any) -> Any:
     """Recursively convert a value into JSON-compatible primitives.
 
@@ -138,9 +185,38 @@ def unwritable(value: Any, *, path: str = "") -> tuple[str, str] | None:
 
 
 def to_json(record: Any, *, indent: int | None = None) -> str:
-    """Deterministic JSON for any record exposing ``to_dict()``."""
+    """Deterministic JSON for any record exposing ``to_dict()``.
+
+    ``allow_nan=False``, which is the whole of the fix and needs saying. Python's
+    ``json`` emits non-finite floats as the bare tokens ``NaN``, ``Infinity``
+    and ``-Infinity``, which **no conforming JSON reader accepts** -- they are
+    not in the grammar. So a record carrying one serialized without complaint
+    and produced a document that Python could read back and nothing else could.
+
+    That is worse than failing to serialize, not better: a record whose
+    provenance cannot be read by the consumer it was written for has no
+    provenance, and the failure surfaces at the consumer rather than at the
+    producer, long after the run that could have explained it.
+
+    ``unwritable`` already refuses non-finite floats in the free-form fields,
+    and ``Quantity`` refuses non-finite magnitudes. This closes the same rule
+    over every OTHER branch of a payload -- a residual, a tolerance, a
+    threshold -- in one place, on the way out, where no future record can miss
+    it by forgetting to call a validator.
+
+    A ``ValueError`` from here names the record that could not be written down.
+    """
     payload = record.to_dict() if hasattr(record, "to_dict") else encode(record)
-    return json.dumps(payload, sort_keys=True, indent=indent)
+    try:
+        return json.dumps(payload, sort_keys=True, indent=indent, allow_nan=False)
+    except ValueError as exc:
+        raise ScientificCoreError(
+            f"{type(record).__name__} cannot be serialized: {exc}. A non-finite "
+            f"float has no JSON representation -- Python emits the bare tokens "
+            f"NaN and Infinity, which no conforming reader accepts -- so a "
+            f"record carrying one would serialize here and be unreadable at "
+            f"the consumer it was written for"
+        ) from exc
 
 
 def decode_mapping(

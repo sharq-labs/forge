@@ -23,7 +23,12 @@ from ..errors import (
 )
 from ..ir.values import ValueKind
 from ..ir.variables import VariableRole
-from ..serialization import require_schema, require_schema_any, schema_string
+from ..serialization import (
+    require_bool,
+    require_schema,
+    require_schema_any,
+    schema_string,
+)
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_same_dimension, require_unit
 from ..results.immutable import freeze
@@ -145,31 +150,13 @@ def _absent_or_unreadable(value: Any) -> "UnknownReason":
 
 
 def _strict_bool(payload: Mapping[str, Any], key: str, default: bool) -> bool:
-    """A serialized boolean must arrive as a boolean.
+    """A serialized boolean must arrive as a boolean, as ``ModelValidityError``.
 
-    ``bool("false")`` is ``True``. A wire format that coerces lets a malformed
-    record *invert* a scientific declaration rather than be refused -- a bound
-    written as ``"false"`` for "not a screen" coming back as a screen. The
-    absent key is still the additive default, because that is a record written
-    before the field existed and the absence had exactly one meaning while it
-    lasted; what is refused is a key that is present and is not a boolean.
-
-    ``0`` and ``1`` are refused with the strings. They are what a writer
-    produces by losing the type, and accepting them would make "this writer
-    lost the type" indistinguishable from "this writer meant False".
+    The rule now lives at the serialization boundary, where it is a property of
+    reading a wire format rather than of this package. This keeps the model
+    package's own error type on the refusal, and keeps the call sites short.
     """
-    if key not in payload:
-        return default
-    value = payload[key]
-    if not isinstance(value, bool):
-        raise ModelValidityError(
-            f"{key!r} must be a boolean, not {type(value).__name__} "
-            f"({value!r}). A serialized scientific declaration is refused "
-            f"rather than coerced: bool('false') is True, so coercing here "
-            f"would silently invert the declaration instead of rejecting the "
-            f"record"
-        )
-    return value
+    return require_bool(payload, key, default, error=ModelValidityError)
 
 
 @dataclass(frozen=True)
@@ -529,7 +516,7 @@ class FlagCondition:
         require_schema(payload, FLAG_CONDITION_SCHEMA)
         return cls(
             name=payload["name"],
-            expected=bool(payload.get("expected", True)),
+            expected=_strict_bool(payload, "expected", True),
             description=payload.get("description", ""),
         )
 
@@ -718,8 +705,8 @@ class CrossLimitCondition:
             denominator=payload["denominator"],
             minimum=Quantity.from_dict(minimum) if minimum else None,
             maximum=Quantity.from_dict(maximum) if maximum else None,
-            minimum_inclusive=bool(payload.get("minimum_inclusive", True)),
-            maximum_inclusive=bool(payload.get("maximum_inclusive", True)),
+            minimum_inclusive=_strict_bool(payload, "minimum_inclusive", True),
+            maximum_inclusive=_strict_bool(payload, "maximum_inclusive", True),
             description=payload.get("description", ""),
         )
 
@@ -1621,7 +1608,7 @@ class ModelInputSpec:
             unit_exemplar=payload.get("unit_exemplar"),
             value_kind=ValueKind(value_kind_raw) if value_kind_raw else None,
             role=VariableRole(role_raw) if role_raw else None,
-            required=bool(payload.get("required", True)),
+            required=_strict_bool(payload, "required", True),
             description=payload.get("description", ""),
             varies_with=payload.get("varies_with"),
         )
