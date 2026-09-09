@@ -213,7 +213,7 @@ def composition(cases, ids):
     }
 
 
-def verify(cases, dev, holdout):
+def verify(cases, dev, holdout, seed=SPLIT_SEED):
     """Evidence that the hold-out carries the same composition as the dev set.
 
     The check is on **proportions**, not counts: the two partitions are
@@ -255,14 +255,14 @@ def verify(cases, dev, holdout):
     # gap, the composition is preserved by the stratification rather than by a
     # seed that happened to land well.
     seed_sweep = []
-    for s in range(SPLIT_SEED - 4, SPLIT_SEED + 5):
+    for s in range(seed - 4, seed + 5):
         d2, h2 = build_split(cases, seed=s)
         c2d, c2h = composition(cases, set(d2)), composition(cases, set(h2))
         gap = max(abs(c2d["by_defect"].get(t, 0) / len(d2)
                       - c2h["by_defect"].get(t, 0) / len(h2))
                   for t in set(c2d["by_defect"]) | set(c2h["by_defect"]))
         seed_sweep.append({"seed": s, "max_abs_share_gap": gap,
-                           "is_published_seed": s == SPLIT_SEED})
+                           "is_published_seed": s == seed})
 
     return {
         "n_dev": n_dev, "n_holdout": n_hold,
@@ -283,6 +283,24 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--cases", default=str(HERE / "cases_hard"))
     ap.add_argument("--out", default=str(DEFAULT_SPLIT_PATH))
+    # A SECOND CASE SET NEEDS A SECOND SEED, and this is the only reason this
+    # is a flag rather than the constant it was. `cases_battery` is a
+    # different 400 cases with its own 110 strata; splitting it under
+    # SPLIT_SEED would work, but reusing one seed across two independently
+    # generated sets makes the two hold-outs correlated through nothing but a
+    # number, and there is no reason to accept that when a seed is free.
+    #
+    # DEFAULT UNCHANGED. Omitting --seed reproduces `split_hard.json` exactly,
+    # which is what keeps this flag from being a way to redraw the sealed
+    # partition: `--seed` with a different value writes a DIFFERENT file, and
+    # rewriting `split_hard.json` still requires deliberately naming its own
+    # seed. Read "REGENERATING AN EXISTING SPLIT OPENS THE HOLD-OUT" above
+    # before pointing --out at a split that already exists.
+    ap.add_argument("--seed", type=int, default=SPLIT_SEED,
+                    help="ISO date of the round producing this split, as an "
+                         "integer; the same convention generate_hard.py uses. "
+                         f"Default {SPLIT_SEED}, which reproduces "
+                         "split_hard.json.")
     ap.add_argument("--verify", action="store_true",
                     help="print the composition-preservation evidence and exit "
                          "without writing")
@@ -292,8 +310,8 @@ def main(argv=None):
     if not cases:
         print(f"no cases under {a.cases}", file=sys.stderr)
         return 2
-    dev, holdout = build_split(cases)
-    report = verify(cases, dev, holdout)
+    dev, holdout = build_split(cases, seed=a.seed)
+    report = verify(cases, dev, holdout, seed=a.seed)
 
     if a.verify:
         print(json.dumps(report, indent=2))
@@ -301,7 +319,7 @@ def main(argv=None):
 
     doc = {
         "rule_id": RULE_ID,
-        "seed": SPLIT_SEED,
+        "seed": a.seed,
         "holdout_fraction": HOLDOUT_FRACTION,
         "rule": ("stratify on ground_truth.defect; order each stratum by "
                  "sha256(f'{seed}:{case_id}') with case_id as tiebreak; "
@@ -320,7 +338,15 @@ def main(argv=None):
         # the verification, not the tuning.
         "holdout": holdout,
     }
-    pathlib.Path(a.out).write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    # write_bytes, not write_text. On Windows, text mode translates a line
+    # feed into a carriage-return pair, so regenerating this file there
+    # produced a byte-different split whose every field was identical,
+    # and .gitattributes normalises on commit, so `git status` stays quiet
+    # about it. The repository pins other artifacts by SHA-256 over raw
+    # bytes; this one should not be the exception that teaches the habit.
+    pathlib.Path(a.out).write_bytes(
+        json.dumps(doc, indent=1).encode("utf-8")
+    )
     print(f"wrote {a.out}: {len(dev)} dev + {len(holdout)} hold-out "
           f"({len(cases)} total), case-set digest {doc['case_set_digest'][:16]}")
     print(f"max |share gap| over {report['distinct_defect_tags']['total']} "
