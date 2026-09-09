@@ -247,14 +247,88 @@ _SNAPSHOT_SECTIONS: tuple[tuple[str, str], ...] = (
 )
 
 
+def _declaration_text(definition: Any) -> str:
+    """One declaration, rendered by what it *says* rather than by where it is.
+
+    Units, prefixes and dimensions are pint definition records with a
+    content-bearing ``__repr__``, and those go in verbatim. Contexts, systems
+    and groups are plain objects that never got one, so ``repr`` on them
+    returns ``<pint.System object at 0x...>`` -- **an address**. All 35 of them
+    in a default registry are of that kind, which made the digest over this
+    snapshot a different value in every process.
+
+    Two things were wrong with that, and only one of them was theoretical:
+
+    * :func:`registry_fingerprint` is documented as "the value a record can
+      cite to say *which* unit definitions its numbers were computed against".
+      An address hash cannot be that. Two runs over identical definitions
+      disagreed, and a run over *changed* ones was indistinguishable from one
+      that was not. Nothing in this repository cites it yet -- which is the
+      only reason no record is wrong -- but the docstring recommends exactly
+      the use the value cannot support.
+    * :func:`verify_registry_unmutated` compares this snapshot against itself
+      later in the same process, where the addresses are stable because the
+      objects are. So it passed, and it would have gone on passing through any
+      in-place edit to a context, system or group: it was watching object
+      identity, not content, for three of its six sections.
+
+    What is compared instead is each object's own declared content. **What is
+    still not compared** is the body of a context transformation: pint compiles
+    those from the definition text and keeps the callable, not the source, so
+    only the transformation's key is here. That is the same class of hole as a
+    caller reaching past pint's API into ``_units.maps[0]`` -- named here so it
+    is a known limit rather than an assumed absence.
+    """
+    kind = type(definition).__name__
+    if kind == "Context":
+        return repr((
+            kind,
+            definition.name,
+            tuple(sorted(definition.aliases)),
+            tuple(
+                sorted(
+                    (str(key), str(value))
+                    for key, value in dict(definition.defaults).items()
+                )
+            ),
+            tuple(sorted(str(key) for key in dict(definition.funcs))),
+        ))
+    if kind == "System":
+        return repr((
+            kind,
+            definition.name,
+            tuple(sorted(definition.members)),
+            tuple(
+                sorted(
+                    (str(unit), str(sorted(dict(expansion).items())))
+                    for unit, expansion in dict(definition.base_units).items()
+                )
+            ),
+            tuple(sorted(map(str, definition.derived_units))),
+        ))
+    if kind == "Group":
+        return repr((
+            kind,
+            definition.name,
+            tuple(sorted(definition._unit_names)),
+            tuple(sorted(definition._used_groups)),
+        ))
+    return repr(definition)
+
+
 def _snapshot_of(reg: pint.UnitRegistry) -> dict[str, dict[str, str]]:
-    """Every declaration the registry's arithmetic reads, as text."""
+    """Every declaration the registry's arithmetic reads, as text.
+
+    Rendered by content, never by address -- see :func:`_declaration_text`.
+    """
     snapshot: dict[str, dict[str, str]] = {}
     for label, attribute in _SNAPSHOT_SECTIONS:
         mapping = getattr(reg, attribute, None)
         if mapping is None:  # pragma: no cover - a backend without the facet
             continue
-        snapshot[label] = {str(name): repr(mapping[name]) for name in mapping}
+        snapshot[label] = {
+            str(name): _declaration_text(mapping[name]) for name in mapping
+        }
     snapshot["flag"] = {
         flag: repr(getattr(reg, flag, None)) for flag in _SEALED_FLAGS
     }
@@ -316,6 +390,14 @@ def registry_fingerprint() -> str:
     Stable for the life of the process by construction -- it is taken once,
     when the registry is built -- so it is the value a record can cite to say
     *which* unit definitions its numbers were computed against.
+
+    **Reproducible across processes, which it was not.** The snapshot behind it
+    used to render three of its six sections with the default ``repr`` of an
+    object that has none, so the digest hashed memory addresses and every
+    process got a different one. It identified a run, not a set of definitions
+    -- the opposite of what the sentence above claims of it. It now renders
+    every declaration by content; see :func:`_declaration_text`, which also
+    names the one thing still outside it.
     """
     registry()
     return _SEALED_DIGEST or ""

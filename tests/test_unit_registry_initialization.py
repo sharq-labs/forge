@@ -173,3 +173,77 @@ def test_units_still_mean_what_they_meant(cold_registry):
     assert dimension_of("volt") == dimension_of("ampere * ohm")
     assert Quantity(1.0, "volt").units == "volt"
     unit_module.verify_registry_unmutated()
+
+
+# --------------------------------------------------------------------------
+# The fingerprint identifies definitions, not a process
+# --------------------------------------------------------------------------
+#
+# `registry_fingerprint` is documented as the value a record cites to say which
+# unit definitions its numbers were computed against. Three of the snapshot's
+# six sections used to be rendered with the default `repr` of an object that
+# has none -- `<pint.System object at 0x...>` -- so the digest hashed addresses
+# and was a different value in every process. These pin that it is a function
+# of the declarations.
+
+
+def test_two_separately_built_registries_declare_the_same_thing():
+    """The snapshot must not distinguish two registries built the same way."""
+    first = unit_module._SealedUnitRegistry()
+    second = unit_module._SealedUnitRegistry()
+    assert first is not second
+    assert unit_module._snapshot_of(first) == unit_module._snapshot_of(second)
+    assert unit_module._digest_of(
+        unit_module._snapshot_of(first)
+    ) == unit_module._digest_of(unit_module._snapshot_of(second))
+
+
+def test_no_declaration_is_recorded_by_its_address():
+    """A rendering containing ``object at 0x...`` is an address, not content."""
+    snapshot = unit_module._snapshot_of(unit_module._SealedUnitRegistry())
+    offenders = [
+        f"{section}:{name}"
+        for section, entries in snapshot.items()
+        for name, text in entries.items()
+        if " object at 0x" in text
+    ]
+    assert not offenders, f"rendered by address: {offenders[:5]}"
+
+
+def test_the_fingerprint_survives_rebuilding_the_registry(cold_registry):
+    """Same definitions, new object, same fingerprint."""
+    before = unit_module.registry_fingerprint()
+    unit_module._REGISTRY = None
+    unit_module._SEALED_SNAPSHOT = None
+    unit_module._SEALED_DIGEST = None
+    unit_module.clear_unit_caches()
+    assert unit_module.registry_fingerprint() == before
+
+
+@pytest.mark.parametrize("section", ["context", "system", "group"])
+def test_the_snapshot_still_sees_a_change_in_each_object_section(section):
+    """Content, not identity -- so an in-place edit must still be visible.
+
+    This is the half the address rendering silently gave up: two objects at the
+    same address compare equal however much their contents move.
+    """
+    registry = unit_module._SealedUnitRegistry()
+    baseline = unit_module._snapshot_of(registry)
+    attribute = dict(unit_module._SNAPSHOT_SECTIONS)[section]
+    mapping = getattr(registry, attribute)
+    name = sorted(mapping)[0]
+    before = unit_module._declaration_text(mapping[name])
+
+    target = mapping[name]
+    if section == "group":
+        target._unit_names = frozenset(set(target._unit_names) | {"parsec"})
+    elif section == "system":
+        target.base_units = {**dict(target.base_units), "parsec": {"parsec": 1.0}}
+    else:
+        target.aliases = tuple(list(target.aliases) + ["not_a_real_alias"])
+
+    after = unit_module._declaration_text(mapping[name])
+    assert after != before, f"{section} change was invisible to the snapshot"
+    assert unit_module._digest_of(
+        unit_module._snapshot_of(registry)
+    ) != unit_module._digest_of(baseline)
