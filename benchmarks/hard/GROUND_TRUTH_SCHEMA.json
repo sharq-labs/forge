@@ -1,8 +1,10 @@
 {
-  "schema": "benchmark_ground_truth/1",
+  "schema": "benchmark_ground_truth/2",
   "purpose": "Names the parts of a benchmark case and says which of them are GROUND TRUTH. Ground truth is a scientific decision about what the right answer is; it is not a measurement of this tree, and a change to it is never a runtime improvement. See ADJUDICATIONS.json and the 'Ground truth is versioned, and a revision is not a result' section of README.md.",
+  "supersedes": "benchmark_ground_truth/1",
+  "why_this_version": "/1 required every case to carry EXACTLY six ground-truth fields, which made it impossible to say anything true about a case that the other cases had no opinion on. Three such things turned out to be needed, and each is a distinct truth role that /1 forced into `should_be_caught_by` or into nothing at all: a case may have MORE THAN ONE valid detection mechanism (`acceptable_catchers`), a case may have a machine-checkable expected REASON as opposed to human prose (`expected_unknown_reason`), and a case's truth may come from somewhere other than the generator that drew it (`oracle`). /2 keeps the six required fields byte-identical and adds three OPTIONAL ones, so every /1 case is a valid /2 case and absence continues to mean what it meant.",
   "case_set_digests": {
-    "cases_hard": "e0ae5086e941f40d6e4500780fb052baac2511e33643025716801e039744a1c3",
+    "cases_hard": "28dcc10de866c699a6a817dac29f617a16a2c19149f9fda51167624ebf889a04",
     "cases_battery": "32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853"
   },
   "roles": {
@@ -29,19 +31,27 @@
         "defect",
         "needs_review"
       ],
-      "meaning": "What the right answer is, and why. Revised only through an event in ADJUDICATIONS.json.",
+      "optional_fields": [
+        "acceptable_catchers",
+        "expected_unknown_reason",
+        "oracle"
+      ],
+      "meaning": "What the right answer is, and why. Revised only through an event in ADJUDICATIONS.json. The required six are carried by every case; the optional three are carried only where the truth actually supports them, and their ABSENCE is a statement -- it means the benchmark has no opinion, not that the answer is empty.",
       "field_roles": {
         "defect_family": "defect",
         "expected_verdict": "expected_verdict",
         "expected_reason": "reason",
+        "expected_reason_machine_checkable": "expected_unknown_reason",
         "declared_catcher": "should_be_caught_by",
+        "acceptable_alternate_catchers": "acceptable_catchers",
         "soundness_label": "label",
-        "review_flag": "needs_review"
+        "review_status": "needs_review",
+        "oracle_id": "oracle"
       }
     },
     "adjudication_basis": {
       "fields": [],
-      "meaning": "DELIBERATELY EMPTY. The reasoning that revised a ground truth lives in ADJUDICATIONS.json and never inside a case file. A case that carried its own adjudication basis could be re-decided by editing one file, with the previous verdict and the reason for the change lost in the same edit -- which is the state this schema exists to end."
+      "meaning": "DELIBERATELY EMPTY. The reasoning that revised a ground truth lives in ADJUDICATIONS.json and never inside a case file. A case that carried its own adjudication basis could be re-decided by editing one file, with the previous verdict and the reason for the change lost in the same edit -- which is the state this schema exists to end. `oracle` is a CLASS, not a basis: it says what KIND of thing decided the truth, and the reasoning stays in the log."
     }
   },
   "vocabulary": {
@@ -57,12 +67,33 @@
       "limit_exceeded",
       "model_inapplicable",
       "unit_or_sign_error"
+    ],
+    "expected_unknown_reason": [
+      "not_supplied",
+      "unreadable_shape",
+      "conservative_screen",
+      "prerequisite_not_established"
+    ],
+    "oracle": [
+      "INDEPENDENT_EXECUTABLE",
+      "INDEPENDENT_REFERENCE",
+      "ANALYTIC_DERIVATION",
+      "EXPERT_ADJUDICATED",
+      "GENERATOR_CONSTRUCTION",
+      "INTERNAL_POLICY",
+      "UNSOURCED"
     ]
   },
+  "default_oracle": {
+    "class": "GENERATOR_CONSTRUCTION",
+    "meaning": "A case that carries no `oracle` field was decided by the generator that drew it: the shaper chose the defect and asserted the answer. That is NOT independent of this repository and must never be reported as though it were. The field exists to record the cases whose truth came from somewhere else, so absence stays meaningful."
+  },
   "invariants": [
-    "every case carries exactly the declared top-level and ground_truth fields",
+    "every case carries exactly the six required ground_truth fields, plus any subset of the optional ones",
     "no case file carries an adjudication basis",
     "label == 'valid' if and only if expected_verdict == 'SUPPORTED'",
-    "split membership is derived from id and defect, never from expected_verdict"
+    "split membership is derived from id and defect, never from expected_verdict",
+    "acceptable_catchers never contains should_be_caught_by: an alternate is an ALTERNATIVE, and listing the primary there would let a primary hit be counted twice",
+    "expected_unknown_reason is only meaningful where expected_verdict is INSUFFICIENT_EVIDENCE"
   ]
 }

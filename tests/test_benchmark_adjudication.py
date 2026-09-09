@@ -46,8 +46,32 @@ BENCH = REPO_ROOT / "benchmarks" / "hard"
 SCHEMA_FILE = BENCH / "GROUND_TRUTH_SCHEMA.json"
 LOG_FILE = BENCH / "ADJUDICATIONS.json"
 
-GROUND_TRUTH_SCHEMA = "benchmark_ground_truth/1"
+GROUND_TRUTH_SCHEMA = "benchmark_ground_truth/2"
+
+#: Every ground-truth schema version that has ever decided a landed event. An
+#: event records the schema it was decided UNDER, so the older ones stay valid
+#: forever -- rewriting them to name the current version would be editing a
+#: landed adjudication, which is the one thing this module refuses.
+LANDED_GROUND_TRUTH_SCHEMAS = {
+    "benchmark_ground_truth/1",
+    "benchmark_ground_truth/2",
+}
 ADJUDICATION_LOG_SCHEMA = "benchmark_adjudication_log/1"
+
+#: Ground-truth field -> the case-entry key carrying its value AFTER the
+#: revision, mapped from the key carrying its value BEFORE. Kept here rather
+#: than imported from `apply_adjudication` so the log's shape is asserted by an
+#: independent statement of it, not by the tool that writes it.
+_REVISABLE_FIELDS = {
+    "new_expected_verdict": "previous_expected_verdict",
+    "label": "previous_label",
+    "declared_catcher": "previous_declared_catcher",
+    "reason": "previous_reason",
+    "acceptable_catchers": "previous_acceptable_catchers",
+    "expected_unknown_reason": "previous_expected_unknown_reason",
+    "oracle": "previous_oracle",
+    "needs_review": "previous_needs_review",
+}
 
 #: Every adjudication event that has LANDED, pinned by a digest over its own
 #: bytes. Appending a new event leaves these untouched; editing one that is
@@ -60,6 +84,12 @@ LANDED_EVENT_DIGESTS = {
         "0b0a06a71fa5457a4f60b5cded301a178d4ce7658fe80b1cbfb46a9015ed71d9",
     "2026-09-09.u01001.ceiling-sized-against-the-asymptote":
         "a6a59004267189fd0b9dc14771751f3e461a443ec3f966a2708d7e9e5d17eef1",
+    "2026-09-09.geometry-conflict.declared-catcher":
+        "4a424b56cdc1b2574159ae916f6fb00d0eef5f59f5e683b81b3fb12bcf9513d7",
+    "2026-09-09.horizon-tmax.alternates-and-screen-reason":
+        "cc82143b51f7c26f3d66e392cec57d09941752cf0c9a4ce8eea3c4a627b58e18",
+    "2026-09-09.small-overshoot.declared-catcher-cannot-fire":
+        "9b6a9e3173633b267986a96f4f5b9c1875676a483a6069ea5b7914e9641b11db",
 }
 
 
@@ -120,9 +150,15 @@ def test_the_ground_truth_schema_describes_the_cases_that_are_on_disk():
 
     roles = schema["roles"]
     ground_truth_fields = set(roles["ground_truth"]["fields"])
+    optional_fields = set(roles["ground_truth"].get("optional_fields", ()))
     identity_fields = set(roles["case_identity"]["fields"])
     payload_fields = set(roles["case_payload"]["fields"])
 
+    assert not (ground_truth_fields & optional_fields), (
+        "a field cannot be both required and optional"
+    )
+
+    seen_optional: set[str] = set()
     for directory in ("cases_hard", "cases_battery"):
         cases = _cases(directory)
         assert cases, directory
@@ -134,13 +170,29 @@ def test_the_ground_truth_schema_describes_the_cases_that_are_on_disk():
                 f"{directory}/{case_id} carries {sorted(top - identity_fields - payload_fields)}, "
                 f"which {GROUND_TRUTH_SCHEMA} does not name"
             )
-            assert set(case["ground_truth"]) == ground_truth_fields, (
-                f"{directory}/{case_id} ground truth is "
-                f"{sorted(case['ground_truth'])}, not {sorted(ground_truth_fields)}"
+            present = set(case["ground_truth"])
+            # Required in full, optional as a subset, and NOTHING else. A field
+            # the schema has never heard of is the failure this catches.
+            assert ground_truth_fields <= present, (
+                f"{directory}/{case_id} is missing required ground truth "
+                f"{sorted(ground_truth_fields - present)}"
+            )
+            assert present <= ground_truth_fields | optional_fields, (
+                f"{directory}/{case_id} carries ground-truth fields "
+                f"{sorted(present - ground_truth_fields - optional_fields)}, "
+                f"which {GROUND_TRUTH_SCHEMA} does not name"
             )
             seen_top |= top
-            seen_ground_truth |= set(case["ground_truth"])
+            seen_ground_truth |= present & ground_truth_fields
+            seen_optional |= present & optional_fields
         assert seen_ground_truth == ground_truth_fields
+
+    # An optional field nothing carries is decoration, exactly as a required
+    # one nothing carries would be.
+    assert seen_optional == optional_fields, (
+        f"the schema declares optional fields no case uses: "
+        f"{sorted(optional_fields - seen_optional)}"
+    )
 
     # `system` is absent on every electro-thermal case and present on every
     # battery one; the union over both sets is what makes the declaration true.
@@ -177,6 +229,74 @@ def test_the_declared_soundness_invariant_holds_over_every_case():
             assert (ground_truth["label"] == "valid") == (
                 ground_truth["expected_verdict"] == "SUPPORTED"
             ), f"{directory}/{case_id} is sound-labelled and not SUPPORTED, or the reverse"
+
+
+def test_the_optional_truth_fields_obey_their_declared_invariants():
+    """/2 added three fields; each carries a rule the schema states.
+
+    Written as a test rather than left in the schema's prose because an
+    invariant nothing checks is a comment.
+    """
+    schema = _load(SCHEMA_FILE)
+    reasons = set(schema["vocabulary"]["expected_unknown_reason"])
+    oracles = set(schema["vocabulary"]["oracle"])
+
+    seen = {"acceptable_catchers": 0, "expected_unknown_reason": 0, "oracle": 0}
+    for directory in ("cases_hard", "cases_battery"):
+        for case_id, case in _cases(directory).items():
+            truth = case["ground_truth"]
+
+            alternates = truth.get("acceptable_catchers")
+            if alternates is not None:
+                seen["acceptable_catchers"] += 1
+                assert isinstance(alternates, list) and alternates, case_id
+                assert len(set(alternates)) == len(alternates), case_id
+                # An alternate is an ALTERNATIVE. Listing the primary would
+                # let one hit be counted as both.
+                assert truth["should_be_caught_by"] not in alternates, (
+                    f"{case_id} lists its own declared catcher as an alternate"
+                )
+
+            reason = truth.get("expected_unknown_reason")
+            if reason is not None:
+                seen["expected_unknown_reason"] += 1
+                assert reason in reasons, f"{case_id}: {reason!r}"
+                assert truth["expected_verdict"] == "INSUFFICIENT_EVIDENCE", (
+                    f"{case_id} declares an expected UNKNOWN reason while "
+                    f"expecting {truth['expected_verdict']}"
+                )
+
+            oracle = truth.get("oracle")
+            if oracle is not None:
+                seen["oracle"] += 1
+                assert oracle in oracles, f"{case_id}: {oracle!r}"
+
+    assert all(seen.values()), f"an optional field nothing uses: {seen}"
+
+
+def test_a_case_under_review_is_one_the_benchmark_does_not_stand_behind():
+    """`needs_review` is truth about the truth, and it must be earned.
+
+    Every case flagged for review must be named by an adjudication event, so
+    the flag carries a reason a reader can find rather than being a mood.
+    """
+    log = _load(LOG_FILE)
+    adjudicated = {
+        entry["case_id"]
+        for event in log["events"]
+        for entry in event["cases"]
+    }
+    flagged = {
+        case_id
+        for directory in ("cases_hard", "cases_battery")
+        for case_id, case in _cases(directory).items()
+        if case["ground_truth"]["needs_review"]
+    }
+    assert flagged, "no case is flagged; this guard would be vacuous"
+    assert flagged <= adjudicated, (
+        f"flagged for review with no adjudication saying why: "
+        f"{sorted(flagged - adjudicated)}"
+    )
 
 
 def test_no_case_file_carries_its_own_adjudication_basis():
@@ -231,18 +351,32 @@ def test_the_adjudication_log_is_internally_coherent():
     for event in log["events"]:
         missing = required_event - set(event)
         assert not missing, f"{event.get('adjudication_id')} lacks {sorted(missing)}"
-        assert event["benchmark_schema"] == GROUND_TRUTH_SCHEMA
+        assert event["benchmark_schema"] in LANDED_GROUND_TRUTH_SCHEMAS, (
+            f"{event['adjudication_id']} was decided under "
+            f"{event['benchmark_schema']!r}, which is not a schema this "
+            f"repository has ever published"
+        )
         assert event["adjudication_basis"].strip()
         assert event["cases"]
         for entry in event["cases"]:
             absent = required_case - set(entry)
             assert not absent, f"{entry.get('case_id')} lacks {sorted(absent)}"
-            assert (
-                entry["previous_expected_verdict"]
-                != entry["new_expected_verdict"]
-            ), (
-                f"{entry['case_id']} is recorded as adjudicated but its "
-                f"verdict did not move; an entry that changes nothing makes "
+            # An entry must MOVE something. It used to have to move the
+            # verdict, because a verdict was the only thing truth could say.
+            # benchmark_ground_truth/2 lets truth also name an alternate
+            # mechanism, a machine-checkable reason, an oracle class and a
+            # review flag, and a revision to any of those is a real
+            # adjudication -- so the rule generalises rather than relaxes: an
+            # entry that changes NOTHING still makes the log's own count wrong.
+            moved = [
+                field
+                for field, previous_key in _REVISABLE_FIELDS.items()
+                if previous_key in entry
+                and entry.get(previous_key) != entry.get(field)
+            ]
+            assert moved, (
+                f"{entry['case_id']} is recorded as adjudicated but no "
+                f"declared field moved; an entry that changes nothing makes "
                 f"the log's own count wrong"
             )
 
@@ -298,6 +432,24 @@ def test_every_adjudicated_case_carries_the_verdict_the_log_says_it_does():
             assert ground_truth["defect"] == entry["defect_family"]
             assert ground_truth["label"] == entry["label"]
             assert ground_truth["should_be_caught_by"] == entry["declared_catcher"]
+
+            # The /2 optional fields, checked the same way. `None` in the log
+            # means "the case carries no such field", which is what the schema
+            # says absence means -- so a log claiming null against a case that
+            # HAS the field fails here, and so does the reverse.
+            for key in (
+                "acceptable_catchers",
+                "expected_unknown_reason",
+                "oracle",
+                "needs_review",
+            ):
+                if key not in entry:
+                    continue
+                assert ground_truth.get(key) == entry[key], (
+                    f"{entry['case_id']}: the log records {key}="
+                    f"{entry[key]!r}, the case on disk says "
+                    f"{ground_truth.get(key)!r}"
+                )
 
 
 def test_an_adjudication_to_insufficient_evidence_found_no_independent_violation():

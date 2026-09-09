@@ -57,6 +57,13 @@ REVISABLE = {
     "label": "previous_label",
     "should_be_caught_by": "previous_declared_catcher",
     "reason": "previous_reason",
+    # benchmark_ground_truth/2 fields. Each is OPTIONAL on a case, so its
+    # `previous_` value is null where the case did not carry it -- which is a
+    # statement ("the benchmark had no opinion") rather than a missing entry.
+    "acceptable_catchers": "previous_acceptable_catchers",
+    "expected_unknown_reason": "previous_expected_unknown_reason",
+    "oracle": "previous_oracle",
+    "needs_review": "previous_needs_review",
 }
 
 #: Where each revisable field's NEW value lives on a case entry.
@@ -65,6 +72,10 @@ NEW_VALUE = {
     "label": "label",
     "should_be_caught_by": "declared_catcher",
     "reason": "reason",
+    "acceptable_catchers": "acceptable_catchers",
+    "expected_unknown_reason": "expected_unknown_reason",
+    "oracle": "oracle",
+    "needs_review": "needs_review",
 }
 
 
@@ -103,7 +114,13 @@ def apply_event(event: dict, *, write: bool) -> list[str]:
         if not differing:
             continue
         for key, value in differing.items():
-            truth[key] = value
+            if value is None:
+                # An optional field revised back to "no opinion" is REMOVED,
+                # not set to null. Absence is the schema's way of saying the
+                # benchmark has nothing to say, and a null would be a value.
+                truth.pop(key, None)
+            else:
+                truth[key] = value
         # The corpus' own serialization, written as BYTES: no trailing
         # newline, ensure_ascii=False, default separators. Text mode on
         # Windows would translate the line endings inside the payload strings

@@ -158,6 +158,10 @@ class ReportFacts:
     unknown: frozenset[str] = frozenset()
     satisfied: frozenset[str] = frozenset()
     coupling_refused: bool = False
+    #: ``UnknownReason`` codes observed, as ``condition:reason`` pairs and as
+    #: bare reason codes. A benchmark that declares an expected reason is
+    #: matched against these rather than against the prose.
+    unknown_reasons: frozenset[str] = frozenset()
     #: Populated only when the run produced no report at all.
     error: str = ""
 
@@ -181,6 +185,21 @@ class ScoredCase:
     false_reject: bool
     #: Conditions that actually decided the case, for the coincidence audit.
     deciding_conditions: tuple[str, ...] = ()
+    #: Does the truth DECLARE any acceptable alternate at all? Carried so the
+    #: alternate rate has a denominator that is the cases which could have
+    #: one, rather than every case in the corpus.
+    has_alternates: bool = False
+    #: Did an explicitly-declared ALTERNATE catcher fire? Only ever true when
+    #: the case lists one, so it can never be inferred from a bare failure.
+    alternate_fired: bool = False
+    #: The truth's own `needs_review` flag, surfaced so a case whose truth is
+    #: known to be suspect is visible in the scorecard rather than only in a
+    #: file. `UNDER_REVIEW` cases still score normally -- they are reported,
+    #: not excused.
+    review_status: str = "SETTLED"
+    #: What KIND of thing decided this case's truth. Absent on a case means
+    #: the corpus default, GENERATOR_CONSTRUCTION.
+    oracle: str = "GENERATOR_CONSTRUCTION"
 
     def as_row(self) -> dict:
         return {
@@ -199,6 +218,10 @@ class ScoredCase:
             "false_accept": self.false_accept,
             "false_reject": self.false_reject,
             "deciding": list(self.deciding_conditions),
+            "has_alternates": self.has_alternates,
+            "alternate_fired": self.alternate_fired,
+            "review_status": self.review_status,
+            "oracle": self.oracle,
         }
 
 
@@ -282,14 +305,16 @@ def score_case(ground_truth: dict, case_id: str, system: str, facts: ReportFacts
     )
 
     # Reason matching is reported, never invented. Only a case carrying a
-    # machine-checkable expectation can be matched; none does today.
+    # machine-checkable expectation is matched, and it is matched against the
+    # UnknownReason CODES the run produced -- never against the prose in
+    # `reason`, which no scorer can read.
     expected_unknown = ground_truth.get("expected_unknown_reason")
     if expected_unknown is None:
         reason = ReasonMatch.UNSPECIFIED
     else:
         reason = (
             ReasonMatch.MATCH
-            if expected_unknown in facts.unknown
+            if expected_unknown in facts.unknown_reasons
             else ReasonMatch.MISMATCH
         )
 
@@ -310,6 +335,12 @@ def score_case(ground_truth: dict, case_id: str, system: str, facts: ReportFacts
         false_accept=is_unsound and facts.verdict == "SUPPORTED",
         false_reject=(not is_unsound) and facts.verdict != "SUPPORTED",
         deciding_conditions=tuple(sorted(facts.violated | facts.unknown)),
+        has_alternates=bool(acceptable),
+        alternate_fired=bool(acceptable & (facts.violated | facts.unknown)),
+        review_status=(
+            "UNDER_REVIEW" if ground_truth.get("needs_review") else "SETTLED"
+        ),
+        oracle=ground_truth.get("oracle") or "GENERATOR_CONSTRUCTION",
     )
 
 
@@ -353,6 +384,26 @@ def scorecard(scored: list[ScoredCase]) -> dict:
     reason_specified = [s for s in scored if s.reason_match != ReasonMatch.UNSPECIFIED.value]
     reason_matched = [s for s in reason_specified if s.reason_match == ReasonMatch.MATCH.value]
 
+    # Alternates are counted apart from primaries throughout. `alternate_only`
+    # is the population a primary-rate alone would misreport: the declared
+    # mechanism missed and a declared ALTERNATE caught it.
+    alternate_declared = [s for s in scored if s.has_alternates]
+    alternate_hit = [s for s in alternate_declared if s.alternate_fired]
+    alternate_only = [
+        s for s in scoreable
+        if s.alternate_fired
+        and s.declared_catcher_status == CatcherStatus.NOT_FIRED.value
+    ]
+
+    unknown_expected = [
+        s for s in scored if s.expected_verdict == "INSUFFICIENT_EVIDENCE"
+    ]
+    unknown_reason_specified = [
+        s for s in unknown_expected
+        if s.reason_match != ReasonMatch.UNSPECIFIED.value
+    ]
+    under_review = [s for s in scored if s.review_status == "UNDER_REVIEW"]
+
     return {
         "total": total,
         "sound": len(sound),
@@ -375,8 +426,20 @@ def scorecard(scored: list[ScoredCase]) -> dict:
         "coincidental_catch_ids": sorted(s.case_id for s in coincidental)[:60],
         "alternate_valid_catches": len(alternate),
         "undeclared_mechanism_catches": len(undeclared_catch),
+        # --- alternates, separately from primaries. A case whose PRIMARY
+        # missed and whose declared ALTERNATE fired is a success of a
+        # different kind, and merging the two would recreate the collapse
+        # this module exists to undo.
+        "alternate_declared_cases": len(alternate_declared),
+        "alternate_catcher_fired": len(alternate_hit),
+        "alternate_catcher_rate": rate(len(alternate_hit), len(alternate_declared)),
+        "primary_or_alternate_rate": rate(
+            len(fired) + len(alternate_only), len(scoreable)
+        ),
         # --- reasons, with the denominator that makes it honest
         "reason_specified_cases": len(reason_specified),
+        "reason_matches": len(reason_matched),
+        "reason_mismatches": len(reason_specified) - len(reason_matched),
         "reason_accuracy": rate(len(reason_matched), len(reason_specified)),
         "reason_note": (
             "ground_truth.reason is human prose and is not machine-comparable; "
@@ -384,6 +447,26 @@ def scorecard(scored: list[ScoredCase]) -> dict:
             "are excluded from the denominator above rather than counted as "
             "failures"
         ),
+        # --- unknown-verdict population, reported on its own
+        "unknown_verdict_cases": len(unknown_expected),
+        "unknown_verdict_match": rate(
+            sum(s.verdict_match for s in unknown_expected), len(unknown_expected)
+        ),
+        "unknown_reason_specified": len(unknown_reason_specified),
+        "unknown_reason_accuracy": rate(
+            sum(
+                s.reason_match == ReasonMatch.MATCH.value
+                for s in unknown_reason_specified
+            ),
+            len(unknown_reason_specified),
+        ),
+        # --- truth this benchmark itself does not stand behind
+        "under_review_cases": len(under_review),
+        "under_review_ids": sorted(s.case_id for s in under_review)[:60],
+        "oracle_classes": {
+            name: sum(1 for s in scored if s.oracle == name)
+            for name in sorted({s.oracle for s in scored})
+        },
     }
 
 

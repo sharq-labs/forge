@@ -62,13 +62,15 @@ def truth(**overrides):
     return base
 
 
-def facts(verdict="NOT_SUPPORTED", violated=(), unknown=(), satisfied=(), refused=False):
+def facts(verdict="NOT_SUPPORTED", violated=(), unknown=(), satisfied=(),
+          refused=False, unknown_reasons=()):
     return scoring.ReportFacts(
         verdict=verdict,
         violated=frozenset(violated),
         unknown=frozenset(unknown),
         satisfied=frozenset(satisfied),
         coupling_refused=refused,
+        unknown_reasons=frozenset(unknown_reasons),
     )
 
 
@@ -196,13 +198,40 @@ def test_an_alternate_catcher_counts_only_when_the_truth_declares_it():
     assert card["coincidental_catches"] == 0
 
 
-def test_no_case_in_the_corpus_declares_an_alternate_today():
-    """So every ALTERNATE_VALID in a real run would be a truth revision."""
+def test_every_alternate_in_the_corpus_was_put_there_by_an_adjudication():
+    """An alternate is truth, so it must have a decision behind it.
+
+    This test used to assert that NO case declared an alternate, which was
+    true when the field did not exist. `benchmark_ground_truth/2` introduced
+    it and the horizon+tmax adjudication populated it, so the guard becomes
+    the one that actually matters: a case may only carry an alternate if an
+    adjudication event names that case. Otherwise `ALTERNATE_VALID` could be
+    granted by editing a case file, which is the laundering route this whole
+    module exists to close.
+    """
     import json
 
+    log = json.loads(
+        (BENCH / "ADJUDICATIONS.json").read_text(encoding="utf-8")
+    )
+    adjudicated = {
+        entry["case_id"]
+        for event in log["events"]
+        for entry in event["cases"]
+        if "acceptable_catchers" in entry
+    }
+    declaring = set()
     for path in sorted((BENCH / "cases_hard").glob("*.json")):
-        truth_fields = json.loads(path.read_text(encoding="utf-8"))["ground_truth"]
-        assert "acceptable_catchers" not in truth_fields
+        case = json.loads(path.read_text(encoding="utf-8"))
+        if case["ground_truth"].get("acceptable_catchers"):
+            declaring.add(case["id"])
+
+    assert declaring, "no case declares an alternate; this guard is vacuous"
+    assert declaring == adjudicated, (
+        f"alternates that no adjudication grants: "
+        f"{sorted(declaring - adjudicated)}; adjudicated but absent: "
+        f"{sorted(adjudicated - declaring)}"
+    )
 
 
 # =====================================================================
@@ -354,9 +383,10 @@ def test_declaring_an_expected_unknown_reason_opens_the_reason_denominator():
     with_reason[0] = (
         "A",
         truth(expected_verdict="INSUFFICIENT_EVIDENCE",
-              expected_unknown_reason="internal_fourier_number"),
+              expected_unknown_reason="conservative_screen"),
         facts(verdict="INSUFFICIENT_EVIDENCE",
-              unknown=["internal_fourier_number"]),
+              unknown=["internal_fourier_number"],
+              unknown_reasons=["conservative_screen"]),
     )
     card = _card(with_reason)
     assert card["reason_specified_cases"] == 1
@@ -383,3 +413,214 @@ def test_per_family_keeps_the_same_three_questions_apart():
     assert row["verdict_match"] == 3
     assert row["declared_catcher_fired"] == 3
     assert row["coincidental"] == 0
+
+
+# =====================================================================
+# benchmark_ground_truth/2 -- alternates, reasons, review, oracle
+# =====================================================================
+#
+# The three optional truth fields each answer a question /1 could not ask.
+# These pin what each one means and, below, that each moves its OWN metric.
+
+
+def test_a_primary_miss_rescued_by_a_declared_alternate_is_not_a_coincidence():
+    """The horizon+tmax shape: a compound defect with two real mechanisms."""
+    result = score(
+        truth(should_be_caught_by="internal_fourier_number",
+              acceptable_catchers=["operating_temperature_utilization"]),
+        facts(violated=["operating_temperature_utilization"],
+              unknown=["internal_fourier_number"]),
+    )
+    assert result.declared_catcher_status == "NOT_FIRED"   # the LEAD missed
+    assert result.alternate_fired is True
+    assert result.catch_type == "ALTERNATE_VALID"          # ...but not luck
+    card = scoring.scorecard([result])
+    assert card["alternate_catcher_rate"] == "1/1 (100.0%)"
+    assert card["coincidental_catches"] == 0
+    # The primary rate is NOT inflated by the rescue. That separation is the
+    # whole reason the two are reported apart.
+    assert card["declared_catcher_rate"] == "0/1 (0.0%)"
+    assert card["primary_or_alternate_rate"] == "1/1 (100.0%)"
+
+
+def test_a_declared_alternate_that_does_not_fire_is_still_a_coincidence():
+    """Declaring an alternate does not excuse a refusal by something else."""
+    result = score(
+        truth(should_be_caught_by="internal_fourier_number",
+              acceptable_catchers=["operating_temperature_utilization"]),
+        facts(violated=["radiation_to_convection_ratio"]),
+    )
+    assert result.alternate_fired is False
+    assert result.catch_type == "COINCIDENTAL"
+    card = scoring.scorecard([result])
+    assert card["alternate_catcher_rate"] == "0/1 (0.0%)"
+    assert card["coincidental_catches"] == 1
+
+
+def test_an_expected_reason_is_matched_against_the_reason_code_not_the_prose():
+    matched = score(
+        truth(expected_verdict="INSUFFICIENT_EVIDENCE",
+              expected_unknown_reason="conservative_screen"),
+        facts(verdict="INSUFFICIENT_EVIDENCE",
+              unknown=["internal_fourier_number"],
+              unknown_reasons=["conservative_screen",
+                               "internal_fourier_number:conservative_screen"]),
+    )
+    assert matched.reason_match == "MATCH"
+
+    # The same condition unknown for a DIFFERENT reason is a mismatch, which
+    # is the distinction a condition-name check could not make.
+    mismatched = score(
+        truth(expected_verdict="INSUFFICIENT_EVIDENCE",
+              expected_unknown_reason="conservative_screen"),
+        facts(verdict="INSUFFICIENT_EVIDENCE",
+              unknown=["internal_fourier_number"],
+              unknown_reasons=["not_supplied",
+                               "internal_fourier_number:not_supplied"]),
+    )
+    assert mismatched.reason_match == "MISMATCH"
+    card = scoring.scorecard([matched, mismatched])
+    assert card["reason_specified_cases"] == 2
+    assert card["reason_accuracy"] == "1/2 (50.0%)"
+    assert card["reason_mismatches"] == 1
+
+
+def test_a_case_under_review_is_reported_and_not_excused():
+    """`needs_review` makes suspect truth visible; it does not soften a score."""
+    reviewed = score(
+        truth(needs_review=True), facts(violated=["something_unrelated"])
+    )
+    settled = score(truth(), facts(violated=["something_unrelated"]))
+    assert reviewed.review_status == "UNDER_REVIEW"
+    assert settled.review_status == "SETTLED"
+    # Same catch classification either way: the flag reports, it does not excuse.
+    assert reviewed.catch_type == settled.catch_type == "COINCIDENTAL"
+    card = scoring.scorecard([reviewed, settled])
+    assert card["under_review_cases"] == 1
+    assert card["coincidental_catches"] == 2
+
+
+def test_the_oracle_class_defaults_to_the_generator_that_drew_the_case():
+    """Absence means GENERATOR_CONSTRUCTION, never 'independent'."""
+    default = score(truth(), facts(violated=["biot_number"]))
+    assert default.oracle == "GENERATOR_CONSTRUCTION"
+    adjudicated = score(
+        truth(oracle="EXPERT_ADJUDICATED"), facts(violated=["biot_number"])
+    )
+    card = scoring.scorecard([default, adjudicated])
+    assert card["oracle_classes"] == {
+        "EXPERT_ADJUDICATED": 1, "GENERATOR_CONSTRUCTION": 1
+    }
+
+
+# --- metric separation, one mutation at a time ------------------------------
+
+V3_BASELINE = [
+    ("A", truth(should_be_caught_by="internal_fourier_number",
+                acceptable_catchers=["operating_temperature_utilization"]),
+     facts(violated=["internal_fourier_number"])),
+    ("B", truth(expected_verdict="INSUFFICIENT_EVIDENCE",
+                should_be_caught_by="internal_fourier_number",
+                expected_unknown_reason="conservative_screen"),
+     facts(verdict="INSUFFICIENT_EVIDENCE",
+           unknown=["internal_fourier_number"],
+           unknown_reasons=["conservative_screen"])),
+    ("C", truth(), facts(violated=["biot_number"])),
+]
+
+
+def test_the_v3_baseline_is_perfect_on_every_axis():
+    card = _card(V3_BASELINE)
+    assert card["exact_verdict_match"] == "3/3 (100.0%)"
+    assert card["declared_catcher_rate"] == "3/3 (100.0%)"
+    assert card["reason_accuracy"] == "1/1 (100.0%)"
+    assert card["alternate_catcher_rate"] == "0/1 (0.0%)"
+    assert card["coincidental_catches"] == 0
+    assert card["under_review_cases"] == 0
+
+
+def test_changing_only_the_actual_reason_moves_only_the_reason_metric():
+    mutated = list(V3_BASELINE)
+    mutated[1] = (
+        "B",
+        V3_BASELINE[1][1],
+        facts(verdict="INSUFFICIENT_EVIDENCE",
+              unknown=["internal_fourier_number"],
+              unknown_reasons=["not_supplied"]),
+    )
+    card, base = _card(mutated), _card(V3_BASELINE)
+    assert card["reason_accuracy"] == "0/1 (0.0%)"
+    assert card["exact_verdict_match"] == base["exact_verdict_match"]
+    assert card["declared_catcher_rate"] == base["declared_catcher_rate"]
+    assert card["coincidental_catches"] == base["coincidental_catches"]
+
+
+def test_changing_only_the_expected_reason_moves_only_the_reason_metric():
+    mutated = list(V3_BASELINE)
+    mutated[1] = (
+        "B",
+        truth(expected_verdict="INSUFFICIENT_EVIDENCE",
+              should_be_caught_by="internal_fourier_number",
+              expected_unknown_reason="not_supplied"),
+        V3_BASELINE[1][2],
+    )
+    card, base = _card(mutated), _card(V3_BASELINE)
+    assert card["reason_accuracy"] == "0/1 (0.0%)"
+    assert card["exact_verdict_match"] == base["exact_verdict_match"]
+    assert card["declared_catcher_rate"] == base["declared_catcher_rate"]
+
+
+def test_adding_an_acceptable_alternate_moves_only_the_alternate_metric():
+    plain = ("A", truth(should_be_caught_by="internal_fourier_number"),
+             facts(violated=["operating_temperature_utilization"]))
+    withalt = ("A", truth(should_be_caught_by="internal_fourier_number",
+                          acceptable_catchers=["operating_temperature_utilization"]),
+               facts(violated=["operating_temperature_utilization"]))
+    before = _card([plain] + V3_BASELINE[1:])
+    after = _card([withalt] + V3_BASELINE[1:])
+    assert before["coincidental_catches"] == 1
+    assert after["coincidental_catches"] == 0
+    assert after["alternate_catcher_fired"] == 1
+    # The PRIMARY rate is untouched: the lead still missed in both.
+    assert after["declared_catcher_rate"] == before["declared_catcher_rate"]
+    assert after["exact_verdict_match"] == before["exact_verdict_match"]
+    assert after["reason_accuracy"] == before["reason_accuracy"]
+
+
+def test_flagging_a_case_for_review_moves_only_the_review_count():
+    mutated = list(V3_BASELINE)
+    mutated[2] = ("C", truth(needs_review=True), V3_BASELINE[2][2])
+    card, base = _card(mutated), _card(V3_BASELINE)
+    assert card["under_review_cases"] == 1
+    for key in ("exact_verdict_match", "declared_catcher_rate",
+                "reason_accuracy", "alternate_catcher_rate",
+                "coincidental_catches"):
+        assert card[key] == base[key], key
+
+
+def test_a_coincidence_can_never_be_promoted_to_primary_catcher_success():
+    """The invariant the whole scorer exists to hold.
+
+    Over every combination of the optional truth fields, a case whose declared
+    catcher did not fire is never counted in the primary rate.
+    """
+    import itertools
+
+    for alts, review, oracle in itertools.product(
+        (None, ["operating_temperature_utilization"], ["unrelated_thing"]),
+        (False, True),
+        (None, "EXPERT_ADJUDICATED", "UNSOURCED"),
+    ):
+        extra = {}
+        if alts is not None:
+            extra["acceptable_catchers"] = alts
+        if oracle is not None:
+            extra["oracle"] = oracle
+        result = score(
+            truth(needs_review=review, **extra),
+            facts(violated=["operating_temperature_utilization"],
+                  satisfied=["biot_number"]),
+        )
+        assert result.declared_catcher_status == "NOT_FIRED", (alts, review, oracle)
+        card = scoring.scorecard([result])
+        assert card["declared_catcher_rate"] == "0/1 (0.0%)", (alts, review, oracle)

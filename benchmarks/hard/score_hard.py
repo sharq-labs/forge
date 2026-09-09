@@ -148,7 +148,7 @@ def _condition_facts(reports, scope=None):
     `scope` restricts the models considered, which is how a battery case is
     read over the battery models the way its verdict already is.
     """
-    violated, unknown, satisfied = set(), set(), set()
+    violated, unknown, satisfied, reasons = set(), set(), set(), set()
     for rep in reports:
         for record in rep.validity:
             if scope is not None and not record.model_id.startswith(scope):
@@ -156,7 +156,13 @@ def _condition_facts(reports, scope=None):
             violated.update(record.assessment.violated)
             unknown.update(record.assessment.unknown)
             satisfied.update(record.assessment.satisfied)
-    return violated, unknown, satisfied
+            # Both shapes: the bare reason code, and the code qualified by the
+            # condition it belongs to. A case may declare either, and a case
+            # that declares neither is UNSPECIFIED rather than wrong.
+            for entry in (record.assessment.unknown_reasons or ()):
+                reasons.add(entry.reason.value)
+                reasons.add(f"{entry.name}:{entry.reason.value}")
+    return violated, unknown, satisfied, reasons
 
 
 def work(f):
@@ -169,22 +175,23 @@ def work(f):
             reports=(r.report,)
             # Same scope as the verdict: a battery case is answered over the
             # battery models, so its catcher is looked for there too.
-            violated,unknown,satisfied=_condition_facts(reports,scope="battery.")
+            violated,unknown,satisfied,reasons=_condition_facts(reports,scope="battery.")
             refused=False
         else:
             reports=r.reports
             vs={rep.verdict.value.upper() for rep in reports}
             actual=next((v for v in ("NOT_SUPPORTED","INSUFFICIENT_EVIDENCE","SUPPORTED") if v in vs),"NO_REPORT")
-            violated,unknown,satisfied=_condition_facts(reports)
+            violated,unknown,satisfied,reasons=_condition_facts(reports)
             refused=r.run.outcome.name=="TRANSFER_REFUSED"
         det=""
     except Exception as e:
         n=type(e).__name__
         actual="REJECTED_AT_BOUNDARY" if n in BOUND else f"ERROR:{n}"; det=str(e)[:120]
-        violated=unknown=satisfied=set(); refused=False
+        violated=unknown=satisfied=reasons=set(); refused=False
     facts=ReportFacts(verdict=actual,violated=frozenset(violated),
                       unknown=frozenset(unknown),satisfied=frozenset(satisfied),
-                      coupling_refused=refused,error=det)
+                      coupling_refused=refused,unknown_reasons=frozenset(reasons),
+                      error=det)
     row=score_case(g,c["id"],system,facts).as_row()
     row["detail"]=det
     return row
@@ -206,7 +213,11 @@ if __name__ == "__main__":
                        declared_catcher_status=r["catcher_status"],
                        catch_type=r["catch_type"],reason_match=r["reason_match"],
                        false_accept=r["false_accept"],false_reject=r["false_reject"],
-                       deciding_conditions=tuple(r["deciding"])) for r in rows]
+                       deciding_conditions=tuple(r["deciding"]),
+                       has_alternates=r["has_alternates"],
+                       alternate_fired=r["alternate_fired"],
+                       review_status=r["review_status"],
+                       oracle=r["oracle"]) for r in rows]
     card=scorecard(scored)
     summary={"generated":datetime.datetime.now().isoformat(timespec="seconds"),
      "scorecard_version":2,
