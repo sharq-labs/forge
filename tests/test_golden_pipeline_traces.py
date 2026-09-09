@@ -34,22 +34,24 @@ U00005       a *conservative screen*: UNKNOWN(``conservative_screen``), which
              the 2026-09-09 adjudication established must not be NOT_SUPPORTED
 U00048       the coupling refuses a transfer -- negative resistance, two FAILing
              checks, and no thermal march at all
-U00204       a known false accept, pinned as CURRENT BEHAVIOUR
-U01001       the second known false accept, likewise
+U00204       a former false accept, now agreeing with its adjudicated truth
+U01001       the remaining false accept, pinned as CURRENT BEHAVIOUR
 B00006       the battery gap, stated rather than hidden
 ===========  ==================================================================
 
-THE TWO FALSE ACCEPTS ARE PINNED ON PURPOSE
--------------------------------------------
-``U00204`` and ``U01001`` are pinned to what Forge does **today**, which is not
-what their benchmark truth says. Both are argued in
-``docs/assurance/FALSE_ACCEPT_ADJUDICATIONS.md`` as ground-truth problems, and
-neither was changed. Pinning them here means the next change to touch either
-path has to state what it did to them, instead of moving a benchmark count by
-two and leaving a reader to work out which cases moved and why.
+THE FALSE ACCEPTS ARE PINNED ON PURPOSE
+---------------------------------------
+Both were pinned here to what Forge does, which was not what their truth said.
+That is what made the disagreement impossible to move quietly, and it worked:
+adjudicating ``U00204`` turned this module red and forced the change to be
+stated rather than absorbed into a benchmark count.
 
-If one of these two starts passing, that is not automatically good news: read
-the adjudication first.
+``U00204`` now asserts agreement, and every number it checks is the number it
+checked before the adjudication -- the run did not change, the answer key did.
+``U01001`` still pins a disagreement.
+
+If ``U01001`` starts passing, that is not automatically good news: read
+``docs/assurance/FALSE_ACCEPT_ADJUDICATIONS.md`` first.
 """
 
 from __future__ import annotations
@@ -309,16 +311,25 @@ def test_u00048_refuses_the_transfer_and_never_marches_the_body():
 # The two false accepts, pinned as current behaviour
 # =====================================================================
 
-def test_u00204_is_still_the_false_accept_the_adjudication_describes():
-    """See docs/assurance/FALSE_ACCEPT_ADJUDICATIONS.md before changing this.
+def test_u00204_agrees_with_its_truth_now_that_the_truth_was_adjudicated():
+    """Adjudicated by `2026-09-09.u00204.runaway-that-does-not-run-away`.
 
-    The loop converges to a stable root the generator's own solver also finds,
-    and every declared limit is clear by a wide margin. The verdict below
-    disagrees with the case's expected truth, and this round's finding is that
-    the truth is what cannot be justified.
+    This test used to pin a disagreement: Forge said SUPPORTED and the case
+    said NOT_SUPPORTED. Nothing about the run changed -- every number asserted
+    below is the number it asserted before. What changed is the answer key,
+    because the case's stated reason ("the loop does not contract") is false
+    for this design: the ODE rises monotonically to a stable equilibrium at
+    355.8326 K that the generator's own solver also finds.
+
+    So the assertion that moved is the expected verdict, and it moved in
+    `ADJUDICATIONS.json` rather than here.
     """
     case, run = _electrothermal("U00204")
-    assert case["ground_truth"]["expected_verdict"] == "NOT_SUPPORTED"
+    assert case["ground_truth"]["expected_verdict"] == "SUPPORTED"
+    assert case["ground_truth"]["label"] == "valid"
+    # The defect family is deliberately NOT revised: the split stratifies on
+    # it, so moving it would reallocate sealed seats.
+    assert case["ground_truth"]["defect"] == "runaway"
 
     assert run.run.outcome.name == "CRITERION_MET"
     report = run.reports[0]
@@ -341,6 +352,10 @@ def test_u00204_is_still_the_false_accept_the_adjudication_describes():
         assert record.assessment.unknown == ()
 
     assert report.verdict is CredibilityVerdict.SUPPORTED
+    assert report.verdict.name == case["ground_truth"]["expected_verdict"], (
+        "Forge and the adjudicated truth now agree; if this ever fails again "
+        "read the adjudication before changing either side"
+    )
 
 
 def test_u01001_is_still_the_false_accept_the_adjudication_describes():

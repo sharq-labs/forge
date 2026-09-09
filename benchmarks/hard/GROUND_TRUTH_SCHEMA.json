@@ -2,7 +2,7 @@
   "schema": "benchmark_ground_truth/1",
   "purpose": "Names the parts of a benchmark case and says which of them are GROUND TRUTH. Ground truth is a scientific decision about what the right answer is; it is not a measurement of this tree, and a change to it is never a runtime improvement. See ADJUDICATIONS.json and the 'Ground truth is versioned, and a revision is not a result' section of README.md.",
   "case_set_digests": {
-    "cases_hard": "2f0a48db54c0264f6d12607ec67d66ee267cc2c24c7ba69ebf113eee031f09b9",
+    "cases_hard": "585eff4bbdf0aad7468984f1acab6488f60226ad331030e78257aa65c5da4399",
     "cases_battery": "32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853"
   },
   "roles": {

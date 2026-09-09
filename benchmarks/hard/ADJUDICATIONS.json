@@ -324,6 +324,43 @@
           ]
         }
       ]
+    },
+    {
+      "adjudication_id": "2026-09-09.u00204.runaway-that-does-not-run-away",
+      "recorded_utc": "2026-09-09T21:40:00+00:00",
+      "commit": "ec873c1cdc3de555fe2c086a33ef4ab454b7e68a",
+      "benchmark_schema": "benchmark_ground_truth/1",
+      "deciding_condition": "thermal runaway (declared mechanism; no condition)",
+      "field_revised": "expected_verdict, label, should_be_caught_by, reason",
+      "adjudication_basis": "The case's stated reason is that 'the electro-thermal loop does not contract'. That is a claim about the DESIGN, and it is false for this design. The steady state of a linear-TCR conductor at constant voltage is a quadratic; solved exactly it has a physical root at 355.832577 K with R = +285.789 ohm and a residual of 4.7e-10 W. The naive fixed-point map has |f'| = 0.853 at that root, so the root is ATTRACTING, and integrating the governing ODE C dT/dt = V^2/R(T) - hA (T - T_amb) forward from the declared initial state rises monotonically to it without leaving the R > 0 region. alpha = +0.05 /K is a POSITIVE temperature coefficient, which is self-limiting by construction: resistance rises with temperature and dissipation falls. The design settles at 0.31 of its declared 1163.530 K operating ceiling, 0.18 of its 1963.530 K melting point, and dissipates 1.356 W against a 10.861 W rating. Nothing about it runs away, and no declared condition on any model in the report is violated or unknown. SUPPORTED is the correct expected verdict, and the soundness invariant in GROUND_TRUTH_SCHEMA.json then forces label 'valid'. should_be_caught_by is emptied because it named a mechanism this case does not exhibit; leaving it would make the new declared-catcher metric measure a mechanism that provably cannot fire.",
+      "generator_fault": "shape_runaway keeps a draw when steady_temperature() returns None OR when abs(t - p['_t_ss']) >= 100. `_t_ss` is computed once in the base draw and is NEVER refreshed after `alpha` is overwritten two lines above the test, so the second arm compares the NEW steady state against the OLD one and fires whenever changing alpha moved the equilibrium by 100 K. That is the arm this case survived on: the generator's own steady_temperature() converges to 355.8325773546051 in 179 iterations, so the first arm did not fire. The reason string attached to every draw asserts the first arm's meaning regardless of which arm kept it.",
+      "independent_violation_search": "The case was run and every model's assessment in every report was inspected. Across all six models -- electrical.dc.ideal_voltage_source, electrical.dc.kcl, electrical.dc.resistor_ohm, electrical.material.linear_tcr_resistance, electrical.material.rated_linear_tcr_resistance and thermal.lumped.first_order_capacity -- `violated` is empty and `unknown` is empty. Every validation check passes and the coupling reached its criterion in 123 of 200 iterations at a largest iterate change of 8.5e-7 K against a 1e-6 K tolerance. There is no condition anywhere in the report that was evaluated and failed, so there is no independent violation on which the previous NOT_SUPPORTED could stand.",
+      "family_audit": "All 26 dev cases in the `runaway` family were re-decided from the ODE rather than from any iteration: for each, R(T_init) was checked for positivity and the governing ODE integrated forward for up to 60 time constants. 25 of 26 genuinely escape -- either R(T_init) is already negative (the conductor is not intact at the declared initial state) or the trajectory leaves the R > 0 region -- and Forge refuses all 25 with a coupling TRANSFER_REFUSED. U00204 is the ONLY case in the family whose trajectory reaches a bounded equilibrium. This is a single-case correction, not a family-wide one.",
+      "not_revised": [
+        "defect",
+        "needs_review",
+        "payload",
+        "id"
+      ],
+      "classification": "benchmark truth correction",
+      "runtime_behaviour_changed": false,
+      "cases": [
+        {
+          "case_id": "U00204",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "SUPPORTED",
+          "previous_label": "inconsistent_inputs",
+          "label": "valid",
+          "previous_declared_catcher": "thermal runaway",
+          "declared_catcher": "",
+          "previous_reason": "alpha = 0.05 /K: the electro-thermal loop does not contract. A design that runs away is a finding about the design, and belongs in the report rather than in an exception.",
+          "reason": "alpha = +0.05 /K is a positive temperature coefficient, which is self-limiting: resistance rises with temperature and dissipation falls. Integrating C dT/dt = V^2/R(T) - hA (T - T_amb) from the declared initial state rises monotonically to a stable equilibrium at 355.8326 K, where the fixed-point map has |f'| = 0.853 < 1. Every declared limit is clear by a wide margin: 0.31 of the 1163.530 K operating ceiling, 0.18 of the 1963.530 K melting point, 1.356 W against a 10.861 W rating. This design does not run away.",
+          "defect_family": "runaway",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": []
+        }
+      ]
     }
   ]
 }

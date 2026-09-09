@@ -56,6 +56,8 @@ ADJUDICATION_LOG_SCHEMA = "benchmark_adjudication_log/1"
 LANDED_EVENT_DIGESTS = {
     "2026-09-09.internal-fourier-number.screen":
         "4f7a0de9d587e4d7d2de6f3de9be5f91ecc3feabf7835a9a236b598537b546c2",
+    "2026-09-09.u00204.runaway-that-does-not-run-away":
+        "0b0a06a71fa5457a4f60b5cded301a178d4ce7658fe80b1cbfb46a9015ed71d9",
 }
 
 
