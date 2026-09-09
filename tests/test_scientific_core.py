@@ -2130,6 +2130,157 @@ def test_open_range_inside_a_validity_domain():
 
 
 # =====================================================================
+# A conservative screen: a bound whose failure is not evidence against
+# =====================================================================
+#
+# Two model records in this repository describe a bound in their own prose as
+# a screen -- "not shown to be wrong, it is outside what this criterion
+# validates" -- while the machinery classified a value past it as
+# OUTSIDE_VALIDATED_DOMAIN, which is the status that carries all the way to
+# NOT_SUPPORTED and means there IS evidence against this design. The record
+# and the machinery contradicted each other. `conservative_screen` is how a
+# record says which of the two a bound is; these tests are what it does.
+
+
+def test_a_conservative_screen_reports_unknown_outside_its_bounds():
+    """The whole behaviour, on one condition and both of its bounds.
+
+    Outside is still outside -- the value is not admitted, and IN_DOMAIN is
+    unreachable for it. What changes is that the failure is reported as a gap
+    in the evidence rather than as a finding against the design.
+    """
+    screen = RangeCondition(
+        name="x",
+        minimum=Quantity(0.2, "dimensionless"),
+        maximum=Quantity(2.0, "dimensionless"),
+        conservative_screen=True,
+    )
+    assert screen.evaluate(Quantity(0.1, "dimensionless")) is (
+        ValidityStatus.UNKNOWN
+    )
+    assert screen.evaluate(Quantity(9.0, "dimensionless")) is (
+        ValidityStatus.UNKNOWN
+    )
+    # and it is not a blanket UNKNOWN: a value inside is still IN_DOMAIN, so
+    # the flag can never be a way to make a condition decide nothing at all.
+    assert screen.evaluate(Quantity(1.0, "dimensionless")) is (
+        ValidityStatus.IN_DOMAIN
+    )
+    assert screen.evaluate(Quantity(0.2, "dimensionless")) is (
+        ValidityStatus.IN_DOMAIN
+    )
+
+
+def test_a_range_condition_is_not_a_screen_unless_it_says_so():
+    """The default IS the previous behaviour, stated as a test rather than
+    inferred from a signature. Every record that predates the field, and every
+    record that simply does not set it, keeps the meaning it had: outside is
+    OUTSIDE_VALIDATED_DOMAIN, and the bound certifies against."""
+    ordinary = RangeCondition(name="x", minimum=Quantity(0.2, "dimensionless"))
+    assert ordinary.conservative_screen is False
+    assert ordinary.evaluate(Quantity(0.1, "dimensionless")) is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+
+
+def test_the_screen_flag_does_not_reach_the_endpoint_decision():
+    """`_within` is shared with the cross-limit type, so the flag must not be
+    implemented inside it. An exclusive bound stays exclusive: the value on the
+    endpoint is still not admitted, it is simply reported as a gap."""
+    screen = RangeCondition(
+        name="x",
+        minimum=Quantity(0.0, "ohm"),
+        minimum_inclusive=False,
+        conservative_screen=True,
+    )
+    assert screen.evaluate(Quantity(0.0, "ohm")) is ValidityStatus.UNKNOWN
+    assert screen.evaluate(Quantity(1.0, "ohm")) is ValidityStatus.IN_DOMAIN
+
+
+def test_a_screened_condition_lands_in_unknown_and_not_in_violated():
+    """The path that decides a verdict, end to end.
+
+    `ValidityDomain.assess` sorts conditions into three lists and derives the
+    status from them; nothing in `assess`, in the assessment record or in the
+    verdict rules knows this flag exists. The screened condition simply arrives
+    in the `unknown` list, which every one of them already handles.
+    """
+    domain = ValidityDomain(
+        conditions=(
+            RangeCondition(
+                name="certifies", maximum=Quantity(10.0, "ohm")
+            ),
+            RangeCondition(
+                name="screens",
+                minimum=Quantity(0.2, "dimensionless"),
+                conservative_screen=True,
+            ),
+        )
+    )
+    inside = {
+        "certifies": Quantity(1.0, "ohm"),
+        "screens": Quantity(5.0, "dimensionless"),
+    }
+    assert domain.assess(inside).status is ValidityStatus.IN_DOMAIN
+
+    screened = dict(inside, screens=Quantity(0.1, "dimensionless"))
+    assessment = domain.assess(screened)
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert assessment.unknown == ("screens",)
+    assert assessment.violated == ()
+    assert assessment.satisfied == ("certifies",)
+
+    # And a screen does not shelter its neighbours: a real violation beside it
+    # still outranks the gap, because that precedence lives in `assess` and is
+    # untouched.
+    both = dict(screened, certifies=Quantity(99.0, "ohm"))
+    outranked = domain.assess(both)
+    assert outranked.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert outranked.violated == ("certifies",)
+    assert outranked.unknown == ("screens",)
+
+
+def test_range_condition_round_trip_preserves_the_screen_flag():
+    """A flag that only exists in Python is not a declaration a consumer can
+    read. It has to survive the record."""
+    for screen in (True, False):
+        condition = RangeCondition(
+            name="x",
+            minimum=Quantity(0.0, "ohm"),
+            maximum=Quantity(10.0, "ohm"),
+            conservative_screen=screen,
+        )
+        payload = condition.to_dict()
+        assert payload["conservative_screen"] is screen
+        assert RangeCondition.from_dict(payload) == condition
+        assert json.loads(json.dumps(payload, sort_keys=True)) == payload
+
+
+def test_legacy_range_payload_is_an_ordinary_bound_and_not_a_screen():
+    """A record written before screens existed describes an ordinary bound.
+
+    The same additive reading the inclusivity flags get, and for the same
+    reason: while the key was absent it had exactly one meaning. Reading a
+    missing flag as a screen would silently reclassify every archived finding
+    as a gap.
+    """
+    legacy = {
+        "schema": "validity_range_condition/1",
+        "name": "resistance",
+        "minimum": Quantity(0.0, "ohm").to_dict(),
+        "maximum": None,
+        "minimum_inclusive": False,
+        "maximum_inclusive": True,
+        "description": "written by an older version",
+    }
+    restored = RangeCondition.from_dict(legacy)
+    assert restored.conservative_screen is False
+    assert restored.evaluate(Quantity(0.0, "ohm")) is (
+        ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    )
+
+
+# =====================================================================
 # standalone runner (pytest optional)
 # =====================================================================
 
@@ -2245,3 +2396,189 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# =====================================================================
+# A dependent condition: one whose answer means nothing unless another holds
+# =====================================================================
+#
+# Until `requires`, every condition was evaluated independently and a domain
+# could not say "my number is derived from a state that condition over there
+# is what establishes". A bound computed from an unestablished state reported
+# IN_DOMAIN on a number nobody was entitled to, and the assessment read as
+# evidence for it.
+
+
+def _gated_domain(**gate_kwargs):
+    """A two-condition domain: one gate, one dependent on it."""
+    gate = RangeCondition(
+        name="gate", minimum=Quantity(0.2, "dimensionless"), **gate_kwargs
+    )
+    dependent = RangeCondition(
+        name="dependent",
+        maximum=Quantity(1.0, "dimensionless"),
+        requires=("gate",),
+    )
+    return ValidityDomain(conditions=(gate, dependent))
+
+
+def test_a_dependent_condition_is_evaluated_when_its_gate_is_satisfied():
+    """The gate holding buys nothing by itself: the dependent is then a
+    perfectly ordinary condition and answers either way."""
+    domain = _gated_domain()
+    inside = domain.assess({
+        "gate": Quantity(5.0, "dimensionless"),
+        "dependent": Quantity(0.5, "dimensionless"),
+    })
+    assert inside.status is ValidityStatus.IN_DOMAIN
+    assert inside.satisfied == ("gate", "dependent")
+
+    outside = domain.assess({
+        "gate": Quantity(5.0, "dimensionless"),
+        "dependent": Quantity(9.0, "dimensionless"),
+    })
+    assert outside.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert outside.violated == ("dependent",)
+
+
+def test_a_dependent_condition_is_unknown_when_its_gate_is_violated():
+    """**The row that is a design choice.** The dependent does NOT inherit the
+    violation. It was never evaluated: there is no evidence for its bound and
+    none against it, and reporting OUTSIDE_VALIDATED_DOMAIN would be reporting
+    evidence against a bound nobody tested — the same overclaim this field
+    exists to prevent, pointing the other way."""
+    assessment = _gated_domain().assess({
+        "gate": Quantity(0.1, "dimensionless"),
+        "dependent": Quantity(0.5, "dimensionless"),
+    })
+    assert assessment.violated == ("gate",)
+    assert assessment.unknown == ("dependent",)
+    assert "dependent" not in assessment.satisfied
+
+
+def test_a_dependent_condition_is_unknown_when_its_gate_is_unknown():
+    """Absence of a gate is not permission. The dependent's own value is
+    present and admissible here, and is still not read."""
+    assessment = _gated_domain().assess({
+        "dependent": Quantity(0.5, "dimensionless"),
+    })
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert set(assessment.unknown) == {"gate", "dependent"}
+    assert assessment.satisfied == ()
+
+
+def test_a_failed_conservative_screen_gates_exactly_like_any_other_gap():
+    """The fourth row of the table, which is the first three rather than a
+    rule of its own: a screen that fails lands in `unknown`, and `unknown`
+    already means the dependent is not evaluated."""
+    assessment = _gated_domain(conservative_screen=True).assess({
+        "gate": Quantity(0.1, "dimensionless"),
+        "dependent": Quantity(0.5, "dimensionless"),
+    })
+    assert assessment.violated == ()
+    assert set(assessment.unknown) == {"gate", "dependent"}
+
+
+def test_a_condition_with_no_requires_is_completely_unaffected():
+    """Every record written before this field, held to being unchanged.
+
+    Same conditions, same context, no dependency anywhere: the assessment must
+    be identical to what the single flat loop produced, including the ORDER of
+    the three lists, because the two-pass split preserves declaration order
+    within each pass and everything is in the first pass.
+    """
+    conditions = tuple(
+        RangeCondition(name=n, minimum=Quantity(0.0, "dimensionless"))
+        for n in ("a", "b", "c", "d")
+    )
+    domain = ValidityDomain(conditions=conditions)
+    assert all(c.requires == () for c in conditions)
+
+    assessment = domain.assess({
+        "a": Quantity(1.0, "dimensionless"),
+        "b": Quantity(-1.0, "dimensionless"),
+        "c": Quantity(1.0, "dimensionless"),
+    })
+    assert assessment.satisfied == ("a", "c")
+    assert assessment.violated == ("b",)
+    assert assessment.unknown == ("d",)
+
+
+def test_a_requires_naming_a_condition_the_domain_does_not_have_is_refused():
+    """A dependency on a name nothing declares can never be satisfied, so the
+    condition would be permanently UNKNOWN — a bound that decides nothing,
+    which is the defect the reserved-name check already refuses."""
+    _raises(ScientificCoreError, ValidityDomain, conditions=(
+        RangeCondition(
+            name="dependent",
+            maximum=Quantity(1.0, "dimensionless"),
+            requires=("nothing_declares_this",),
+        ),
+    ))
+
+
+def test_a_condition_may_not_require_itself():
+    """Refused by the condition rather than the domain: it is the one
+    dependency error decidable without seeing the siblings."""
+    _raises(ScientificCoreError, RangeCondition,
+            name="loop",
+            minimum=Quantity(0.0, "dimensionless"),
+            requires=("loop",))
+
+
+def test_a_dependency_chain_deeper_than_one_level_is_refused():
+    """One level, by design. Two passes then decide every domain and no
+    ordering inside a pass can matter."""
+    _raises(ScientificCoreError, ValidityDomain, conditions=(
+        RangeCondition(name="a", minimum=Quantity(0.0, "dimensionless")),
+        RangeCondition(name="b", minimum=Quantity(0.0, "dimensionless"),
+                       requires=("a",)),
+        RangeCondition(name="c", minimum=Quantity(0.0, "dimensionless"),
+                       requires=("b",)),
+    ))
+
+
+def test_a_cycle_is_refused_and_the_depth_rule_is_what_catches_it():
+    """A cycle of length two needs a dependent whose dependency is itself
+    dependent, which the one-level rule already refuses. Asserted so that
+    relaxing the depth rule cannot silently admit cycles."""
+    _raises(ScientificCoreError, ValidityDomain, conditions=(
+        RangeCondition(name="a", minimum=Quantity(0.0, "dimensionless"),
+                       requires=("b",)),
+        RangeCondition(name="b", minimum=Quantity(0.0, "dimensionless"),
+                       requires=("a",)),
+    ))
+
+
+def test_range_condition_round_trip_preserves_requires():
+    """A dependency living only in Python is invisible to every consumer of
+    the record, and the record is the product."""
+    for requires in ((), ("gate",), ("gate", "other")):
+        condition = RangeCondition(
+            name="x",
+            minimum=Quantity(0.0, "ohm"),
+            maximum=Quantity(10.0, "ohm"),
+            requires=requires,
+        )
+        payload = condition.to_dict()
+        assert payload["requires"] == list(requires)
+        assert RangeCondition.from_dict(payload) == condition
+        assert json.loads(json.dumps(payload, sort_keys=True)) == payload
+
+
+def test_legacy_range_payload_describes_an_independent_condition():
+    """A record written before dependencies existed has none. Reading a
+    missing key as anything else would invent a gate nobody declared."""
+    legacy = {
+        "schema": "validity_range_condition/1",
+        "name": "resistance",
+        "minimum": Quantity(0.0, "ohm").to_dict(),
+        "maximum": None,
+        "minimum_inclusive": True,
+        "maximum_inclusive": True,
+        "conservative_screen": False,
+        "description": "written by an older version",
+    }
+    restored = RangeCondition.from_dict(legacy)
+    assert restored.requires == ()
+    assert restored.evaluate(Quantity(1.0, "ohm")) is ValidityStatus.IN_DOMAIN

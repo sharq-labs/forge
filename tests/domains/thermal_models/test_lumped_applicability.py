@@ -223,12 +223,24 @@ def test_lumped_model_accepts_a_horizon_that_outlasts_internal_diffusion():
     assert ctx.INTERNAL_FOURIER_NUMBER in assessment.satisfied
 
 
-def test_lumped_model_rejects_a_horizon_shorter_than_internal_diffusion():
+def test_a_horizon_shorter_than_internal_diffusion_is_a_gap_not_a_finding():
     """Bi = 0.05 (inside the limit) with t = 0.1 s gives Fo = 0.04 < 0.2.
 
     A legitimately thin, isothermal-enough body asked about a horizon so short
-    that its internal profile has not relaxed. Bi passes; the model still does
-    not apply, which is why the two conditions are separate.
+    that its internal profile has not relaxed. Bi passes and the one-term
+    criterion does not reach, which is why the two conditions are separate.
+
+    **And "does not reach" is what it now reports.** The condition is declared
+    a conservative screen, so a Fourier number under the floor lands in
+    `unknown` rather than in `violated`. That is the reading the description
+    beside it has always given -- "not shown to be wrong ... outside what this
+    criterion validates" -- and until the flag existed the machinery
+    contradicted it, classifying the same case OUTSIDE_VALIDATED_DOMAIN, which
+    is the status that means there is evidence against this design.
+
+    Nothing is softened by the change. The value is still outside its bound,
+    still named in the assessment, and still costs the model IN_DOMAIN: what
+    moves is which of the two non-clean readings it gets.
     """
     assessment = assess(
         body(
@@ -236,9 +248,28 @@ def test_lumped_model_rejects_a_horizon_shorter_than_internal_diffusion():
             duration=0.1,
         )
     )
-    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert assessment.violated == (ctx.INTERNAL_FOURIER_NUMBER,)
+    assert _condition(ctx.INTERNAL_FOURIER_NUMBER).conservative_screen is True
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert assessment.violated == ()
+    assert ctx.INTERNAL_FOURIER_NUMBER in assessment.unknown
     assert ctx.BIOT_NUMBER in assessment.satisfied
+
+
+def test_the_biot_limit_is_not_a_screen_and_still_finds_against_a_body():
+    """The sibling bound in the same domain, asserted so the flag stays local.
+
+    `biot_number` certifies against: this model asserts the internal
+    temperature drop is zero and Bi measures how wrong that assertion is, so a
+    body past it is shown to be outside the model, not merely unaddressed by
+    it. It is left an ordinary bound, and a change that quietly made every
+    range condition a screen would show up here.
+    """
+    assert _condition(ctx.BIOT_NUMBER).conservative_screen is False
+    assessment = assess(
+        body(declared(body_conductivity=Quantity(0.05, "watt/meter/kelvin")))
+    )
+    assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert ctx.BIOT_NUMBER in assessment.violated
 
 
 def test_internal_fourier_number_is_unknown_when_no_surface_area_is_declared():

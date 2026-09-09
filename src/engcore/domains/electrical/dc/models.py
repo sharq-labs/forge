@@ -1,8 +1,18 @@
 """Scientific model records for linear DC circuit analysis.
 
-Three models are declared, each a versioned scientific claim with typed
-inputs and outputs, declared assumptions and a validity domain. They are
+Four models are declared -- ``RESISTOR_OHM_MODEL``, ``KCL_MODEL``,
+``IDEAL_VOLTAGE_SOURCE_MODEL`` and ``IDEAL_CURRENT_SOURCE_MODEL``, which is
+exactly what ``DC_MODELS`` holds. Each is a versioned scientific claim with
+typed inputs and outputs, declared assumptions and a validity domain. They are
 *representations*: nothing here executes: execution belongs to the solver.
+
+The four are named rather than counted because the count was wrong from the
+first commit: this docstring said "three" while the module defined four and
+``DC_MODELS`` exported four. A name that does not match a record is something a
+reader can check; a bare number is not.
+
+Three of the four are *components* and carry a rating; ``KCL_MODEL`` is a
+network law and carries none, which is the asymmetry the count concealed.
 
 Honesty notes
 -------------

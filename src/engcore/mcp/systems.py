@@ -63,9 +63,17 @@ ELECTROTHERMAL = SystemBoundary(
     name="electrothermal",
     tool="run_electrothermal",
     summary=(
-        "A DC series circuit of temperature-dependent resistors coupled to "
-        "first-order lumped thermal bodies, run to a fixed point. One "
-        "credibility evidence report per stage."
+        "N self-heating conductors IN SERIES across ONE IDEAL DC VOLTAGE "
+        "SOURCE, each paired ONE-TO-ONE with a first-order lumped thermal "
+        "body it dissipates into, run to a fixed point. One credibility "
+        "evidence report per stage. "
+        "NOT a general multiphysics coupling: the topology is fixed. There is "
+        "no parallel branch, no second source, no source impedance, no "
+        "conductor without a body or body without a conductor, and no "
+        "coupling other than dissipation into the paired body. Series is "
+        "deliberate -- across an ideal source, parallel elements do not "
+        "influence each other, so the arity this system exists to exercise "
+        "would exercise nothing."
     ),
     describe=et_boundary.describe_electrothermal_case,
     run=et_boundary.run_electrothermal_case,

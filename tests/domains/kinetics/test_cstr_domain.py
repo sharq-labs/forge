@@ -1477,3 +1477,106 @@ def test_a_valid_integer_count_is_accepted(field, value) -> None:
     settings = IntegrationSettings(**{field: value})
     assert getattr(settings, field) == value
     assert isinstance(getattr(settings, field), int)
+
+
+# =====================================================================
+# The contract and the provenance name the same inputs
+# =====================================================================
+#
+# `CSTR_MODEL` declared 7 inputs while `solve_reactor` recorded 15 in
+# provenance. Eight values influenced the answer and the record did not admit
+# to them, so no binding check could have caught one going missing: a contract
+# narrower than the solver is a contract nothing can be checked against.
+#
+# Six were brought in. The three that remain out are named here, each with the
+# reason, so the gap is a statement rather than a leftover.
+
+#: In provenance, deliberately not in `CSTR_MODEL.inputs`.
+PROVENANCE_ONLY = {
+    # A universal constant, not a caller declaration. The thermal domain does
+    # the same with the Stefan-Boltzmann constant: `surface_emissivity` is an
+    # input and sigma is not.
+    "molar_gas_constant",
+    # The two operands of the DECLARED input `residence_time` (= V / q). Which
+    # of the three is the contract input is a design decision and is not
+    # settled here; see the round report. Whichever way it goes, all three
+    # must not be required at once, because a caller supplies two of them.
+    "volume",
+    "flow_rate",
+}
+
+#: In `CSTR_MODEL.inputs`, deliberately not in provenance: the domain computes
+#: it from `volume` and `flow_rate` before handing it to the model, exactly as
+#: the thermal domain computes `characteristic_length` from V / A_s.
+CONTRACT_ONLY = {"residence_time"}
+
+
+def _provenance_input_names():
+    """The keys `solve_reactor` records, read off the source.
+
+    Read from the source rather than from a run so this test states a fact
+    about the solver rather than about one trajectory, and so it cannot be
+    satisfied by a run that happened to omit a key.
+    """
+    source = Path(
+        "src/engcore/domains/kinetics/cstr/solver.py"
+    ).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        if "inputs" not in targets or not isinstance(node.value, ast.Dict):
+            continue
+        names = {
+            k.value for k in node.value.keys
+            if isinstance(k, ast.Constant) and isinstance(k.value, str)
+        }
+        if len(names) > 5:          # the provenance dict, not a small local
+            return names
+    raise AssertionError("no provenance inputs dict found in solver.py")
+
+
+def test_the_model_contract_covers_what_the_solver_records():
+    """Every provenance input is a declared input, or a named exception."""
+    declared = {spec.name for spec in CSTR_MODEL.inputs}
+    recorded = _provenance_input_names()
+
+    undeclared = recorded - declared - PROVENANCE_ONLY
+    assert not undeclared, (
+        f"{sorted(undeclared)} influence the answer and are recorded in "
+        f"provenance, but CSTR_MODEL does not declare them. Add them to the "
+        f"contract, or add them to PROVENANCE_ONLY with the reason."
+    )
+
+    unrecorded = declared - recorded - CONTRACT_ONLY
+    assert not unrecorded, (
+        f"{sorted(unrecorded)} are declared inputs that the solver never "
+        f"records, so nothing shows a reader what value was used."
+    )
+
+
+def test_the_named_exceptions_are_still_real():
+    """A list of exceptions nobody rereads is how the first gap survived.
+
+    Each name is asserted to still be in the position that justified it: the
+    provenance-only three really are in provenance and not in the contract,
+    and `residence_time` really is in the contract and not in provenance. If
+    one moves, this fails and the reason above gets reread.
+    """
+    declared = {spec.name for spec in CSTR_MODEL.inputs}
+    recorded = _provenance_input_names()
+
+    assert PROVENANCE_ONLY <= recorded
+    assert not (PROVENANCE_ONLY & declared)
+    assert CONTRACT_ONLY <= declared
+    assert not (CONTRACT_ONLY & recorded)
+
+
+def test_the_problem_supplies_every_input_the_model_declares():
+    """A contract the problem does not honour is the same defect reversed."""
+    run = reactor()
+    problem = build_cstr_problem(run)
+    supplied = {p.name for p in problem.parameters}
+    declared = {spec.name for spec in CSTR_MODEL.inputs}
+    assert declared <= supplied, sorted(declared - supplied)

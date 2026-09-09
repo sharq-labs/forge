@@ -1,5 +1,26 @@
 # Performance runtime audit
 
+> **ARCHIVED 2026-09-08. Every number below describes a tree that is not in
+> this repository, and none of them was reproducible here.**
+>
+> `PERF-0` pins base commit `0ecc60cd57f22dcabad7b55c6807bda18aa67f3d` and
+> frozen K1 commit `bc7b1a3e5175b19d98ba22664caff777e849d135`. **Neither is
+> reachable from any ref in this repository** (`git cat-file -t` fails on
+> both), and the document names the repository `sharq-labs/crafty` where the
+> remote here is `sharq-labs/forge`. So the wall-clock figures are not
+> reproducible for the reason the document itself gives — they are
+> machine-dependent and it says so — and the *operation counts*, which the
+> document correctly calls deterministic and proposes as a regression gate,
+> are anchored to a tree nobody here can check them against.
+>
+> It was moved out of `docs/` rather than deleted or re-run. Deleting it would
+> lose a real audit; re-running it is a fresh measurement against a reachable
+> commit, which is work rather than a correction. **Nothing in it should be
+> quoted as a figure about this repository until that re-run happens.**
+>
+> One inbound link existed, in `docs/TESTING.md`, and it now points here and
+> says this.
+
 Engineering telemetry, not scientific evidence. Nothing in this document is a
 claim about a reactor, a circuit or a campaign. Where a number is a wall-clock
 time it is labelled as such and is **not** reproducible across machines; where a

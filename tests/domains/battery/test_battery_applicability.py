@@ -458,17 +458,29 @@ def test_the_cell_model_accepts_a_pulse_far_shorter_than_the_relaxation():
     assert unmodelled.magnitude_in(ONE) < 0.05
 
 
-def test_the_cell_model_rejects_an_interval_comparable_to_the_relaxation():
+def test_an_interval_comparable_to_the_relaxation_is_a_gap_not_a_finding():
     """A 30 s interval against a 30 s time constant: the excluded middle.
 
     At t = tau the diffusion overpotential is 63 % developed and still moving
     fast. It is neither absent nor constant across the interval, so no single
     resistance reproduces the terminal voltage. This is the band the condition
-    removes — and the only band it removes.
+    excludes — and the only band it excludes.
+
+    **Excluded, and not refuted.** Both edges of the band are the 0.05
+    convention this condition already labels as a convention rather than a
+    citation, and a convention cannot establish that a design is wrong. So the
+    condition is declared a conservative screen and reports the band as a gap:
+    `unknown`, not `violated`. The interval is still outside, still named, and
+    the model still does not reach IN_DOMAIN.
     """
     verdicts = assess_models(make_cell(), make_load(duration=Quantity(30.0, S)))
-    assert verdicts[RINT].status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert verdicts[RINT].violated == (ctx.POLARIZATION_UNMODELLED_FRACTION,)
+    condition = condition_of(
+        mdl.RINT_OCV_MODEL, ctx.POLARIZATION_UNMODELLED_FRACTION
+    )
+    assert condition.conservative_screen is True
+    assert verdicts[RINT].status is ValidityStatus.UNKNOWN
+    assert verdicts[RINT].violated == ()
+    assert ctx.POLARIZATION_UNMODELLED_FRACTION in verdicts[RINT].unknown
 
 
 def test_the_settling_ratio_is_unknown_when_the_cell_declares_no_time_constant():

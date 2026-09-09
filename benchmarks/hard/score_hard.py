@@ -189,7 +189,12 @@ if __name__ == "__main__":
     # than a claim in a README, and a second opening cannot be mistaken for the
     # first.
     if split is not None and a.split in ("holdout","all"):
-        with open(a.openings_log,"a",encoding="utf-8") as fh:
+        # newline="" so the record lands LF-terminated on every platform.
+        # Text mode on Windows wrote CRLF for the first opening and every
+        # other tracked artifact here is LF; an append-only log that
+        # changes line ending with the host is one more thing a reader has
+        # to discount.
+        with open(a.openings_log,"a",encoding="utf-8",newline="") as fh:
             fh.write(json.dumps({
                 "opened_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
                 "split":a.split,"cases_dir":summary["cases_dir"],

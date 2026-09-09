@@ -572,3 +572,43 @@ def test_an_undescribed_verdict_or_refusal_class_fails_at_import(monkeypatch):
     )
     with pytest.raises(RuntimeError, match="must not reach an agent"):
         server._audit_tables()
+
+
+# =====================================================================
+# The electro-thermal summary may not read wider than the topology
+# =====================================================================
+
+
+def test_the_electrothermal_summary_states_the_topology_it_actually_runs():
+    """The summary is the first and often only thing an agent reads.
+
+    `CoupledElectroThermalSystem` is documented in its own source as "N
+    self-heating conductors in series across one ideal source", and
+    `CoupledStage` as "one conductor and the thermal body it dissipates into".
+    The caller-facing summary used to say "a DC series circuit ... coupled to
+    first-order lumped thermal bodies", which is true and leaves out the two
+    constraints an agent would most likely violate: the source is ideal, and
+    the pairing is one-to-one.
+
+    This pins the narrowed wording so it cannot widen back into something that
+    reads as general multiphysics coupling.
+    """
+    summary = next(
+        s.summary for s in SYSTEMS if s.name == "electrothermal"
+    )
+
+    # the constraints, each of which the implementation actually enforces
+    assert "SERIES" in summary.upper()
+    assert "IDEAL" in summary.upper()
+    assert "ONE-TO-ONE" in summary.upper()
+
+    # and the disclaimer, in the words an agent would search for
+    assert "NOT a general multiphysics coupling" in summary
+
+
+def test_the_summary_reaches_the_capabilities_surface():
+    """A narrowed string nobody serves is not a narrowing."""
+    import json
+
+    blob = json.dumps(server.describe_capabilities(), default=str)
+    assert "NOT a general multiphysics coupling" in blob

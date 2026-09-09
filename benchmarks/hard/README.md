@@ -297,12 +297,38 @@ declaration is UNKNOWN and never IN_DOMAIN.
 
 ### Result
 
+    python benchmarks/hard/score_hard.py --src src \
+      --cases benchmarks/hard/cases_battery --workers 4
+
 | Metric | battery |
 |---|---|
-| Exact verdict match | **400/400 (100.0%)** |
-| Catch rate | **219/219 (100.0%)** |
-| False accept | **0/219 (0.00%)** |
-| False reject | **0/181 (0.0%)** |
+| Exact verdict match | **372/400 (93.0%)** |
+| Catch rate | **202/219 (92.2%)** |
+| False accept | **17/219 (7.76%)** |
+| False reject | **11/181 (6.1%)** |
+
+**These numbers replaced better ones, and the earlier ones were not wrong when
+they were written.** This table read `400/400 (100.0%)`, `219/219 (100.0%)`,
+`0/219` and `0/181` until 2026-09-08. Re-measured on 2026-09-08 with the command
+above, on a pristine `git archive` export of `a35144e`, the same 400 cases score
+as shown. The case-set digest is unchanged (`32a7bff3…`) and every case's
+`expected` label is unchanged, so this is the tool's behaviour moving under a
+fixed benchmark, not a re-drawn set.
+
+**It is materially worse, in the direction this repository treats as
+load-bearing: eleven sound designs are now refused, where the record said
+none were.** 28 of 400 rows moved — 17 from NOT_SUPPORTED to SUPPORTED and 11
+from SUPPORTED to NOT_SUPPORTED.
+
+The move is dated. `benchmarks/hard/results_battery.json` was last regenerated
+for the v1.1 candidate and was correct then; scoring the `v1.0-benchmark` and
+`v1.1-benchmark` tags against their own pinned `src/` still gives 400/400 today.
+A bisect over the 88 commits from `fad99ff` to `a35144e` puts the first failing
+commit at **`14e6e55` "fix battery discharge efficiency direction"**
+(2026-09-07), whose parent `b983ec0` still scores 400/400. Nothing regenerated
+this record afterwards, and no test compares it against a re-score, so it stood
+stale for 35 commits. **The defect itself is not fixed here** — whether the
+record or the code is right is `NEEDS.md`'s open finding, not this table's.
 
 ### Scored over the battery models, and why that is not softening
 
@@ -424,11 +450,19 @@ anyone can do. Saying otherwise would be another unearned number.
 
 | Metric | **development set (1400 of 2000)** |
 |---|---|
-| Exact verdict match | **1282/1400 (91.6%)** |
-| Catch rate | **1149/1159 (99.1%)** |
-| False accept | **10/1159 (0.86%)** |
-| False reject | **1/241 (0.41%)** |
+| Exact verdict match | **1291/1400 (92.2%)** |
+| Catch rate | **1157/1159 (99.8%)** |
+| False accept | **2/1159 (0.17%)** |
+| False reject | **0/241 (0.0%)** |
 | Runs ending in an exception | **0** |
+
+**This table used to say something else, and it had gone stale rather than
+been wrong.** It read `1282/1400 (91.6%)`, `1149/1159 (99.1%)`, `10/1159
+(0.86%)` and `1/241 (0.41%)` until 2026-09-08 — the v1.0 figures, which the top
+of this file already recorded as superseded while this table still printed them.
+Re-measured on 2026-09-08 with the command above, on a pristine `git archive`
+export of `a35144e`; the values match `results_hard.json` field for field and
+row for row. This correction moves every figure in the better direction.
 
 **These are the only metrics published for this case set.** There is no
 full-set column, and there was one until the seal was audited: printing 1400
@@ -442,8 +476,11 @@ change it, which was verified by comparing all 1400 development rows against
 the same 1400 rows of a pre-split full run — every row identical — rather than
 by scoring the hold-out.
 
-**The hold-out has not been scored.** `HOLDOUT_OPENINGS.log` is the record of
-whether that is still true.
+**The hold-out has been scored, once, on 2026-09-08.**
+`HOLDOUT_OPENINGS.log` carries the record and the figures are published in
+[The hold-out, opened once](#the-hold-out-opened-once) below. Until that
+opening this section said it had never been scored, which was true for as long
+as it lasted.
 
 ## The publication rule
 
@@ -455,4 +492,47 @@ draws are kept and labelled: their case sets have different digests, so they
 cannot be differenced against anything current.
 
 When the hold-out is opened — once — the full-set figure becomes publishable,
-because at that point there is nothing left to protect.
+because at that point there is nothing left to protect. **That has now
+happened**; see below.
+
+## The hold-out, opened once
+
+    python benchmarks/hard/score_hard.py --src src \
+      --cases benchmarks/hard/cases_hard --workers 4 \
+      --split holdout --open-holdout --note "why"
+
+**Opened 2026-09-08.** `HOLDOUT_OPENINGS.log` carries the record; it is no
+longer empty and this file no longer says the hold-out has never been scored.
+
+600 cases sealed under `stratified-hash-hamilton/1`, seed 20260906, scored once
+against the same tree that produced the development figures above, in the same
+session, so the two columns differ in nothing but which cases they contain.
+
+| Metric | development (1400) | **hold-out (600)** |
+|---|---|---|
+| Exact verdict match | 1342/1400 (95.9%) | **579/600 (96.5%)** |
+| Catch rate | 1157/1159 (99.8%) | **498/499 (99.8%)** |
+| False accept | 2/1159 (0.17%) | **1/499 (0.20%)** |
+| False reject | 0/241 (0.0%) | **0/101 (0.0%)** |
+| Runs ending in an exception | 0 | **0** |
+
+**They agree, and the hold-out is very slightly better.** This is the number
+this benchmark was built to be able to produce, and it is the only figure here
+the generator was never tuned against: the generator has been corrected five
+times against what scoring the development set revealed, and none of those
+corrections ever saw these 600 cases.
+
+**What it licenses, stated narrowly.** It says the development figures are not
+an artifact of the generator having co-evolved with the tool — a 0.6-point gap
+in the hold-out's favour on exact match, an identical catch rate to one decimal
+place, and a false-reject rate of zero on both sides. It does **not** say the
+tool is good at anything a human designer would call hard: these are generated
+cases placed at 0.2%, 1%, 5% and 20% from declared bounds, and
+`benchmarks/ai_designs/RESULTS.md` says plainly why that is not the same test
+as a design somebody actually wrote.
+
+**The seal is spent.** These 600 cases have now been scored and can never again
+be a figure nobody looked at. Any further number from this case set is a number
+from a set the tool has been measured against in full, and a fresh untuned
+figure now requires a fresh draw with a fresh seal.
+

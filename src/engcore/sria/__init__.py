@@ -1,5 +1,42 @@
 """SRIA V0.1 — Scientific Research Intelligence Architecture, milestone M1.
 
+STATUS: NOT ON THE VERIFICATION PATH, AND IMPORTED BY NOTHING IN ``src/``.
+=============================================================================
+Read this before reading the tree.
+
+**Size.** 19,887 lines across 53 modules — about a quarter of ``src/`` — and
+630 of the suite's tests. A reader meets a quarter of this package before they
+meet any explanation of it, which is why the notice is here and not only in
+``docs/SRIA.md``.
+
+**Direction of the dependency, which is the whole point.** SRIA imports the
+scientific core; **nothing outside ``src/engcore/sria/`` imports SRIA.** It is
+a consumer of the platform, not a part of it. No verdict, no validity
+assessment and no credibility evidence report passes through any module here.
+Delete the package and every number this repository publishes is unchanged.
+Verify that claim rather than believing it: the one-line command is in
+the "The numbers, measured" table of ``docs/SRIA.md`` and it returns
+nothing. And
+``tests/test_core_guards.py::test_nothing_under_sria_imports_a_domain_or_a_system``
+holds the other direction: SRIA reaches ``scientific/`` and no other
+``engcore`` package.
+
+**Why it is still here.** Lifting it out is a packaging decision with a real
+cost attached, not a tidy-up: ``tests/test_sria_e1_electrical.py`` and
+``tests/test_sria_e2_model_adequacy.py`` are SHA-256 byte-pinned by
+``experiments/electrical_e2/e2_config.py`` and
+``experiments/electrical_e3/e3_config.py``, and both import
+``src.engcore.sria``. Moving the package rewrites their import lines and breaks
+both pins, so the move requires re-freezing two frozen experiments — a
+deliberate transaction, and not something to do pre-emptively.
+``docs/SRIA.md`` sets out what separating it would involve, and recommends
+doing it *if and when* SRIA goes on the verification path.
+
+**What this notice is for.** So that nobody reads this package's size as
+evidence about the platform, in either direction. It is neither hidden nor
+load-bearing.
+=============================================================================
+
 M1 is the trust foundation and nothing else. It exists so that simulations,
 literature, measurements, benchmarks, Domain Packs, Critics, an Arbiter and
 cost/failure/fidelity learning can all be added later *without rewriting the

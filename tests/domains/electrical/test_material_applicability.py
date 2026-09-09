@@ -1019,3 +1019,89 @@ def test_a_band_narrower_than_the_ceiling_permits_is_not_a_contradiction():
     narrow = assess(limits(linearization_band=Quantity(50.0, K)))
     assert narrow.status is ValidityStatus.IN_DOMAIN
     assert narrow.violated == ()
+
+
+# =====================================================================
+# The description may not claim more than the straight line evaluates
+# =====================================================================
+
+
+def _tcr_input(model):
+    """The temperature-coefficient input spec of a material model."""
+    return next(
+        spec for spec in model.inputs
+        if spec.name == mat.TEMPERATURE_COEFFICIENT
+    )
+
+
+@pytest.mark.parametrize(
+    "model",
+    (mat.LINEAR_TCR_MODEL, mat.RATED_LINEAR_TCR_MODEL),
+    ids=("unrated", "rated"),
+)
+def test_a_negative_coefficient_is_not_advertised_as_a_thermistor(model):
+    """Both records said "negative for a thermistor; both are representable".
+
+    A negative alpha IS representable. A thermistor is not, and the two are
+    not the same claim. An NTC follows R = R_ref exp(B (1/T - 1/T_ref)) and a
+    PTC switches by orders of magnitude over a few kelvin; this record
+    evaluates R_ref (1 + alpha (T - T_ref)) and nothing else, so a caller who
+    read that sentence and declared a thermistor would get a straight line
+    through one point and no condition would object -- `linearization_band`
+    is declared by the same caller, so it cannot catch the mistake either.
+
+    The narrowing must not drift back. This test pins the description to what
+    the code does, in both records, in both directions: the capability that is
+    real must still be stated, and the one that is not must stay refused.
+    """
+    text = _tcr_input(model).description
+
+    # The overclaim, in the exact shape it had, must not come back.
+    assert "negative for a thermistor" not in text
+
+    # The real capability is still advertised: a negative alpha is accepted.
+    assert "negative" in text
+
+    # And the refusal is explicit rather than merely absent.
+    assert "NOT A THERMISTOR" in text
+    assert "straight line" in text.lower()
+
+
+@pytest.mark.parametrize(
+    "model",
+    (mat.LINEAR_TCR_MODEL, mat.RATED_LINEAR_TCR_MODEL),
+    ids=("unrated", "rated"),
+)
+def test_the_thermistor_is_named_in_the_exclusions_a_reader_sees(model):
+    """A caller reads a report, not a source file.
+
+    `exclusions` is the field the credibility report renders, so a phenomenon
+    the model does not represent belongs there and not only in an input's
+    description. This is the same argument the exclusions field was added for.
+    """
+    exclusions = model.exclusions
+    assert exclusions is not None
+    assert any("thermistor" in e.lower() for e in exclusions), exclusions
+
+
+def test_a_negative_coefficient_is_still_accepted_and_still_computes():
+    """The narrowing is to the WORDING, not to the behaviour.
+
+    Nothing about the model changed, and this holds it to that: a negative
+    alpha still evaluates, and it still falls with temperature. If somebody
+    "fixes" the overclaim by refusing negative alpha, that is a behaviour
+    change and this fails.
+    """
+    hot = mat.linear_resistance_ratio(
+        temperature=Quantity(350.0, K),
+        reference_temperature=Quantity(300.0, K),
+        temperature_coefficient=Quantity(-1e-3, "1/kelvin"),
+    )
+    cold = mat.linear_resistance_ratio(
+        temperature=Quantity(300.0, K),
+        reference_temperature=Quantity(300.0, K),
+        temperature_coefficient=Quantity(-1e-3, "1/kelvin"),
+    )
+    assert cold.magnitude_in("dimensionless") == pytest.approx(1.0)
+    assert hot.magnitude_in("dimensionless") == pytest.approx(0.95)
+    assert hot.magnitude_in("dimensionless") < cold.magnitude_in("dimensionless")

@@ -252,6 +252,87 @@ CSTR_MODEL = ScientificModelDefinition(
             unit_exemplar=TEMPERATURE_UNIT,
             description="Absolute jacket temperature.",
         ),
+        # ---- brought into the contract -------------------------------
+        #
+        # These six influence the answer and were absent from this tuple while
+        # `solve_reactor` recorded all of them in provenance: the record
+        # declared 7 inputs and the run reported 15. A model whose contract is
+        # narrower than what its solver reads is a contract nobody can check a
+        # binding against, and `assess_validity` could not have caught a
+        # missing one because it was never told to expect it.
+        #
+        # `density` and `heat_capacity` were already read by `context.py` to
+        # build the temperature envelope, so the domain depended on them
+        # before the record admitted to them.
+        ModelInputSpec(
+            name="density",
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DENSITY_UNIT,
+            description=(
+                "Liquid density. Enters the energy balance through "
+                "beta = -dH / (rho c_p) and gamma = UA / (rho V c_p), and is "
+                "read by the temperature-envelope condition. Constant: its "
+                "temperature dependence is a declared exclusion."
+            ),
+        ),
+        ModelInputSpec(
+            name="heat_capacity",
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=HEAT_CAPACITY_UNIT,
+            description=(
+                "Specific heat capacity of the liquid, on the same footing as "
+                "the density: it enters beta and gamma, is read by the "
+                "temperature-envelope condition, and is constant by "
+                "declaration."
+            ),
+        ),
+        ModelInputSpec(
+            name="ua",
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=UA_UNIT,
+            description=(
+                "Overall heat-transfer coefficient-area product for the "
+                "jacket. Sets the cooling term gamma = UA / (rho V c_p), so "
+                "it moves every trajectory this model integrates. **It is "
+                "deliberately NOT read by adiabatic_ceiling_temperature**, "
+                "which bounds the envelope with or without cooling; that "
+                "condition's own description states why, and this input being "
+                "declared does not weaken it. UA = 0 is admissible and means "
+                "adiabatic."
+            ),
+        ),
+        ModelInputSpec(
+            name="end_time",
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=TIME_UNIT,
+            description=(
+                "Horizon the balances are integrated over. Every reported "
+                "metric is a property of this horizon -- the final "
+                "concentration, the final and peak temperatures and the "
+                "conversion all move with it -- so it is an input to the "
+                "answer and not a numerical setting."
+            ),
+        ),
+        ModelInputSpec(
+            name="initial_concentration",
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=CONCENTRATION_UNIT,
+            description=(
+                "Concentration of A in the tank at t = 0. An initial "
+                "condition of the initial-value problem, and distinct from "
+                "feed_concentration: a tank started empty of A and fed at "
+                "C_Af is a different trajectory from one started at C_Af."
+            ),
+        ),
+        ModelInputSpec(
+            name="initial_temperature",
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=TEMPERATURE_UNIT,
+            description=(
+                "Tank temperature at t = 0. The other initial condition, and "
+                "the one the envelope conditions read as T_0."
+            ),
+        ),
         ModelInputSpec(
             name="residence_time",
             source_kind=InputSourceKind.PARAMETER,
@@ -1048,6 +1129,34 @@ def build_cstr_problem(
             name="residence_time",
             value=Quantity(run.operation.residence_time_s, TIME_UNIT),
             description="V/q",
+        ),
+        # The six the contract gained. Supplied here so the problem states
+        # every input the model declares; without these the record would
+        # declare inputs this problem does not carry, which is the same defect
+        # one direction over.
+        ScientificParameter(
+            name="density", value=run.chemistry.density,
+            description="Liquid density, constant",
+        ),
+        ScientificParameter(
+            name="heat_capacity", value=run.chemistry.heat_capacity,
+            description="Specific heat capacity of the liquid, constant",
+        ),
+        ScientificParameter(
+            name="ua", value=run.operation.ua,
+            description="Jacket coefficient-area product; 0 is adiabatic",
+        ),
+        ScientificParameter(
+            name="end_time", value=run.operation.end_time,
+            description="Horizon the balances are integrated over",
+        ),
+        ScientificParameter(
+            name="initial_concentration", value=run.initial_concentration,
+            description="Concentration of A in the tank at t = 0",
+        ),
+        ScientificParameter(
+            name="initial_temperature", value=run.initial_temperature,
+            description="Tank temperature at t = 0",
         ),
     )
     return ScientificProblem(

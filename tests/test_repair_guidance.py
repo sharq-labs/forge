@@ -497,24 +497,43 @@ def test_the_conductance_is_refused_from_fourier_because_it_cancels():
     The most useful refusal in the repository, because the hint it prevents
     would have looked right and moved nothing at all. Distinct from "there is
     no inverse": there is no dependence.
+
+    Read off the inversion table rather than off an emitted repair, and the
+    reason is the test below: `internal_fourier_number` is now a conservative
+    screen, so no assessment puts it in `violated` and no `ConditionRepair` is
+    ever emitted for it. The decision itself is unchanged and still checked
+    here -- the table is built and validated against the model at import, so
+    the refusal is a fact about the declaration and not about any one case.
     """
-    # Bi = (hA/A_s) L_c / k = 5 * 0.002 / 0.1 = 0.1 exactly, which the
-    # inclusive limit admits, so the Biot condition is satisfied and Fo is the
-    # only violation. tau = C/hA = 50 s, so Fo = (0.5/50)/0.1 = 0.1 < 0.2.
+    row = lump.LUMPED_INVERSIONS.row("internal_fourier_number")
+    assert row is not None
+    assert "ambient_conductance" not in {i.target for i in row.inversions}
+    refusal = next(r for r in row.refusals if r.target == "ambient_conductance")
+    assert "cancels exactly" in refusal.reason
+    assert "moves nothing" in refusal.reason
+
+
+def test_a_conservative_screen_emits_no_repair_because_it_finds_nothing():
+    """The cost of the screen, asserted rather than discovered later.
+
+    `condition_repairs` walks `assessment.violated`, so a condition that
+    reports its failures as `unknown` never reaches it. That follows from the
+    screen and is not a second decision: a repair says "change this and the
+    bound is met", which presumes the bound found against the design. A screen
+    did not. The inversion row is still there for a reader who wants to know
+    what would move Fo -- see the test above -- but nothing emits it.
+
+    Bi = (hA/A_s) L_c / k = 5 * 0.002 / 0.1 = 0.1 exactly, which the inclusive
+    limit admits, so the Biot condition is satisfied and Fo is the only bound
+    the body is outside. tau = C/hA = 50 s, so Fo = (0.5/50)/0.1 = 0.1 < 0.2.
+    """
     before, repairs = lumped_case(
         duration=Quantity(0.5, "second"),
         body_conductivity=Quantity(0.1, "watt/meter/kelvin"),
     )
-    assert "internal_fourier_number" in before.violated
-    repair = next(
-        r for r in repairs if r.condition == "internal_fourier_number"
-    )
-    assert "ambient_conductance" not in {h.target_name for h in repair.hints}
-    refusal = next(
-        r for r in repair.refusals if r.target == "ambient_conductance"
-    )
-    assert "cancels exactly" in refusal.reason
-    assert "moves nothing" in refusal.reason
+    assert "internal_fourier_number" in before.unknown
+    assert before.violated == ()
+    assert [r.condition for r in repairs] == []
 
 
 def test_a_condition_no_declared_input_can_repair_says_so_plainly():

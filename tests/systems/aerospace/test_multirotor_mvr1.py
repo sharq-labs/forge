@@ -647,3 +647,83 @@ def test_cli_exposes_only_study_fields_and_uses_non_validation_language() -> Non
         "globally optimal aircraft",
     )
     assert not any(term in lowered for term in forbidden)
+
+
+from engcore.systems.aerospace.multirotor import reference as ref  # noqa: E402
+
+# =====================================================================
+# The four silent defaults declare themselves
+# =====================================================================
+
+#: The four values `MultirotorTargetSpec` supplies when the caller does not,
+#: with the reference value each commits to. Named here so that changing one,
+#: or adding a fifth, is a deliberate act rather than a default nobody reread.
+SILENT_DEFAULTS = {
+    "air_density": 1.225,
+    "usable_battery_fraction": 0.80,
+    "base_hover_efficiency": 0.72,
+    "auxiliary_power": 25.0,
+}
+
+
+def test_the_spec_still_constructs_with_no_arguments():
+    """The narrowing is to the WORDING, not the behaviour.
+
+    The defaults are convenient and stay. What changed is that they now say
+    what they commit to. If somebody "fixes" the overclaim by making these
+    required, that is a behaviour change and this fails.
+    """
+    spec = ref.MultirotorTargetSpec()
+    assert spec.air_density.magnitude_in("kg/m^3") == pytest.approx(1.225)
+    assert spec.usable_battery_fraction == pytest.approx(0.80)
+    assert spec.base_hover_efficiency == pytest.approx(0.72)
+    assert spec.auxiliary_power.magnitude_in("W") == pytest.approx(25.0)
+
+
+@pytest.mark.parametrize("name", sorted(SILENT_DEFAULTS))
+def test_each_silent_default_is_named_in_the_spec_docstring(name):
+    """A reader meets the class before they meet the benchmark paper."""
+    doc = ref.MultirotorTargetSpec.__doc__ or ""
+    assert name in doc, f"{name} defaults silently and the docstring omits it"
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    (
+        "air density defaults to ISA sea level",
+        "usable battery fraction defaults to 0.80",
+        "hover efficiency defaults to 0.72",
+        "auxiliary power defaults to 25 W",
+        "not about a vehicle",
+    ),
+)
+def test_each_silent_default_travels_with_the_result(phrase):
+    """`MVR0_ASSUMPTIONS` is attached to the model records, so it is what a
+    reader of a result sees. A default explained only in a docstring is
+    explained to the wrong audience."""
+    assert any(phrase in a for a in ref.MVR0_ASSUMPTIONS), phrase
+
+
+def test_the_assumption_list_and_the_defaults_cannot_drift_apart():
+    """If a fifth value acquires a default, this fails and somebody looks.
+
+    Derived from the dataclass rather than listed, so it is the fields that
+    are the authority. `payload_mass`, the targets and `gravity` are excluded:
+    they are the question being asked, not coefficients standing in for
+    evidence.
+    """
+    import dataclasses
+
+    defaulted = {
+        f.name for f in dataclasses.fields(ref.MultirotorTargetSpec)
+        if f.default is not dataclasses.MISSING
+        or f.default_factory is not dataclasses.MISSING  # type: ignore[misc]
+    }
+    # every one of the four is still defaulted
+    assert set(SILENT_DEFAULTS) <= defaulted
+    # and nothing outside the known set has appeared
+    known = set(SILENT_DEFAULTS) | {
+        "payload_mass", "minimum_hover_endurance", "maximum_takeoff_mass",
+        "maximum_disk_loading", "gravity",
+    }
+    assert defaulted <= known, sorted(defaulted - known)

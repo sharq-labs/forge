@@ -3,14 +3,25 @@
 How to run the suite during development, and which subset to trust for what.
 
 This is engineering telemetry, not scientific evidence. The wall-clock figures
-below are **not reproducible across machines**, and the audit in
-[performance-runtime-audit.md](performance-runtime-audit.md) measured a 9–14%
-spread for *identical* code on the hardware they were taken on. Treat them as
+below are **not reproducible across machines**, and the archived audit in
+[archive/performance-runtime-audit.md](archive/performance-runtime-audit.md)
+measured a 9–14% spread for *identical* code on the hardware they were taken
+on. That audit was archived on 2026-09-08 because it is anchored to two commits
+that are not in this repository; the 9–14% is quoted here as the shape of the
+problem, not as a figure about this tree. Treat them as
 approximately one significant figure; the test counts are exact.
 
 **Counts and timings come from different measurements — read them
 differently.** Every test count in this document was re-measured on
-2026-09-06 and is current. Every wall-clock figure was measured earlier, on
+**2026-09-08** and is current, with
+`pytest <selection> --collect-only -q` on a pristine `git archive` export of
+`a35144e`. **Every one of them had gone stale**: the 2026-09-06 counts printed
+here until then were FAST 1406, SCIENTIFIC 1924 and FULL 1928, against 2570,
+3091 and 3095 today — the suite grew by 1167 tests and no count followed it.
+Nothing checks these numbers, which is why they drifted; treat a count here as
+current only as far as the date beside it.
+
+Every wall-clock figure was measured earlier, on
 different hardware and at a smaller suite (1526 FULL tests), and has *not* been
 re-measured; each one is marked where it appears. A timing here tells you the
 shape of the problem — which tier is worth running, why more workers stop
@@ -32,14 +43,14 @@ for prediction, and not re-measured.
 
 | Tier | Selection | Tests | Sequential † | Parallel † | Use it |
 |---|---|---|---|---|---|
-| **FAST** | `-m "not expensive"` | **1406** | 9.2 s | 7.3 s | after every ordinary code edit |
+| **FAST** | `-m "not expensive"` | **2570** | 9.2 s | 7.3 s | after every ordinary code edit |
 | **TARGETED** | a path | varies | seconds | — | the milestone you are working on |
-| **SCIENTIFIC** | `-m "not campaign"` | **1924** | 137.7 s | 53.7 s | after a scientific/core change |
-| **FULL** | *(no selection)* | **1928** | 578.3 s | 273.2 s | before a milestone freeze or merge |
+| **SCIENTIFIC** | `-m "not campaign"` | **3091** | 137.7 s | 53.7 s | after a scientific/core change |
+| **FULL** | *(no selection)* | **3095** | 578.3 s | 273.2 s | before a milestone freeze or merge |
 
 † older hardware, smaller suite, not re-measured — see the note above.
 
-FAST runs **73%** of the suite (1406 of 1928) and skips the four campaign
+FAST runs **83%** of the suite (2570 of 3095) and skips the four campaign
 tests plus every frozen-experiment reproduction and domain-solver run. On the
 hardware the timings above came from it was ~63× faster than sequential FULL;
 that ratio has not been re-measured. Use it.
@@ -114,7 +125,7 @@ Set `PY` to your interpreter (`python`, or an absolute path on Windows).
 python -m pytest tests/ -m "not expensive" -q
 ```
 
-**1406 tests** (measured 2026-09-06). This is the default loop for
+**2570 tests** (measured 2026-09-08). This is the default loop for
 AI-assisted development.
 
 ### 2. TARGETED milestone — the package you are changing
@@ -132,7 +143,7 @@ milestone's own module. See "Choosing targeted tests" below.
 python -m pytest tests/ -m "not campaign" -q
 ```
 
-**1924 tests** (measured 2026-09-06; 137.7 s sequential or 53.7 s with
+**3091 tests** (measured 2026-09-08; 137.7 s sequential or 53.7 s with
 `-n 12 --dist loadfile` on the older hardware). Every
 frozen-experiment reproduction and domain solver test, without the four largest
 campaigns. Dropping just those four removes 428 s of the 578 s FULL runtime.
@@ -143,7 +154,7 @@ campaigns. Dropping just those four removes 428 s of the 578 s FULL runtime.
 python -m pytest tests/ -q -rsxX --durations=30
 ```
 
-**1928 tests** (measured 2026-09-06; 565.8 s on that machine, 578.3 s on the
+**3095 tests** (measured 2026-09-08; 565.8 s on that machine, 578.3 s on the
 older one). This is the fallback and the reference result. If a parallel run
 and this run ever disagree, **this one is right**.
 
@@ -153,7 +164,7 @@ and this run ever disagree, **this one is right**.
 python -m pytest tests/ -n 8 --dist loadfile -q
 ```
 
-**1928 tests** (273.2 s, older hardware). **Use `-n 8`, not `-n auto`** — see
+**3095 tests** (273.2 s, older hardware). **Use `-n 8`, not `-n auto`** — see
 "Parallel execution" below, where `-n auto` is measured failing intermittently
 with `MemoryError`. `--dist loadfile` is not optional.
 
@@ -225,7 +236,7 @@ that.
 
 ## What FAST does not cover
 
-FAST is a real suite — 1406 tests including the entire scientific-core contract
+FAST is a real suite — 2570 tests including the entire scientific-core contract
 layer, the SRIA architecture layer, the design layer, campaign persistence,
 serialization, registries, error taxonomy and the dependency-direction guards.
 It is not a smoke test. But it deliberately omits these risk classes:

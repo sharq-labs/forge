@@ -745,6 +745,7 @@ RINT_OCV_MODEL = ScientificModelDefinition(
             RangeCondition(
                 name=POLARIZATION_UNMODELLED_FRACTION,
                 maximum=POLARIZATION_UNMODELLED_CEILING,
+                conservative_screen=True,
                 description=(
                     "min(f, 1 - f) <= 0.05 for f = 1 - exp(-t/tau_pol), THE "
                     "0.05 BEING A CONVENTION AND NOT A CITED THRESHOLD. TWO "
@@ -769,7 +770,10 @@ RINT_OCV_MODEL = ScientificModelDefinition(
                     "time constants mean settled, and BOTH resulting bounds "
                     "are conventions. A conservative screen: inside the band "
                     "the model is not shown to be wrong, it is outside what "
-                    "this reading validates. It does not check that R_int was "
+                    "this reading validates. Declared conservative_screen "
+                    "for that reason, so an interval inside the band is "
+                    "reported as a gap in the evidence and not as a finding "
+                    "against the design. It does not check that R_int was "
                     "characterised in the regime it is being used in, which "
                     "this domain cannot declare. UNKNOWN unless a "
                     "polarization time constant is declared."

@@ -132,6 +132,75 @@ class RangeCondition:
     This is exact contract logic: no tolerance and no epsilon is applied to a
     validity range. Numerical tolerance belongs to result validation, not to
     the question of whether a model was applicable in the first place.
+
+    **A conservative screen: a bound whose failure is not evidence against.**
+    Set ``conservative_screen`` when a value outside this range is an
+    *evidence gap* rather than a finding -- when the bound is the edge of what
+    the criterion behind it certifies, so a value past that edge is
+    unaddressed by that criterion rather than contradicted by it. Such a
+    condition reports ``UNKNOWN`` outside its bounds instead of
+    ``OUTSIDE_VALIDATED_DOMAIN``, and so lands among the gaps rather than
+    among the findings.
+
+    That distinction is the record's to make and not this class's to infer.
+    Nothing here can tell a bound that certifies against from one that merely
+    screens: both are two numbers and a name. So the declaring record says
+    which it is, and the default is ``False`` -- an ordinary bound, outside is
+    outside -- which is what every record written before this flag existed
+    keeps meaning.
+
+    **It weakens one condition, in one direction, and never into a claim.** A
+    screen cannot report ``IN_DOMAIN`` for a value it did not admit: the value
+    is still outside, still named in the assessment, and still costs it the
+    clean status. What changes is which of the two non-clean readings the
+    condition contributes, and that is the whole of the change -- the reading
+    is not consumed here, and every consumer of it was already written to
+    handle both.
+
+    **A dependent bound: one whose answer means nothing unless another holds.**
+    ``requires`` names other conditions **in the same validity domain** that
+    must be *satisfied* before this one's value licenses anything. Until this
+    field existed, every condition was evaluated independently and a domain had
+    no way to say *"my number is derived from a state that condition over there
+    is what establishes"*. A bound computed from an unestablished state reports
+    ``IN_DOMAIN`` on a number nobody is entitled to, and the assessment reads
+    as evidence.
+
+    The rule is one line: **evaluated only when every named condition is
+    satisfied; otherwise ``UNKNOWN``.**
+
+    ===========================  ==================================
+    a required condition is      this condition becomes
+    ===========================  ==================================
+    satisfied                    evaluated normally
+    violated                     ``UNKNOWN``
+    unknown                      ``UNKNOWN``
+    a screen that failed         ``UNKNOWN`` -- a failed screen lands
+                                 in ``unknown``, so this is the row
+                                 above and needs no rule of its own
+    ===========================  ==================================
+
+    **``UNKNOWN`` and not ``violated``, and that is a choice rather than a
+    derivation.** A dependent condition could inherit the violation of what it
+    depends on. It must not. This condition was never tested: its bound has no
+    evidence for it and none against it, and reporting ``OUTSIDE_VALIDATED_``
+    ``DOMAIN`` would be reporting evidence against a bound nobody evaluated --
+    the same overclaim in the opposite direction from the one this field
+    exists to prevent. A gap is what the absence of a test is. This is settled;
+    it does not need re-opening.
+
+    **One level, deliberately.** A condition named in ``requires`` may not
+    itself declare ``requires``, and a domain containing such a chain is
+    refused at construction. Two passes then decide every domain: independents
+    first, dependents against that pass's satisfied set. Supporting chains
+    would mean a topological walk and a cycle check at evaluation time, for a
+    depth nothing in this repository has yet needed -- and the refusal is
+    loud, so the day something needs depth two, it says so at import rather
+    than quietly evaluating in the wrong order.
+
+    Names are checked at construction by :class:`ValidityDomain`, which is the
+    only object that can see them: a ``requires`` naming a condition that is
+    not a sibling, or naming itself, is refused there.
     """
 
     name: str
@@ -139,12 +208,36 @@ class RangeCondition:
     maximum: Quantity | None = None
     minimum_inclusive: bool = True
     maximum_inclusive: bool = True
+    conservative_screen: bool = False
+    #: Sibling condition names that must be satisfied before this condition's
+    #: value licenses anything. Empty means independent, which is what every
+    #: record written before this field existed describes.
+    requires: tuple[str, ...] = ()
     description: str = ""
 
     def __post_init__(self) -> None:
         if not str(self.name).strip():
             raise ModelValidityError("range condition requires a name")
         object.__setattr__(self, "name", str(self.name).strip())
+        # Normalised here so `requires` is a tuple of clean names by the time
+        # ValidityDomain checks it against its siblings; the self-reference is
+        # caught here because it is the one dependency error decidable without
+        # seeing the domain.
+        required = tuple(
+            str(r).strip() for r in self.requires if str(r).strip()
+        )
+        if self.name in required:
+            raise ModelValidityError(
+                f"condition {self.name!r} requires itself, which can never be "
+                f"satisfied before it is evaluated"
+            )
+        duplicates = {r for r in required if required.count(r) > 1}
+        if duplicates:
+            raise ModelValidityError(
+                f"condition {self.name!r} names {sorted(duplicates)} more "
+                f"than once in requires"
+            )
+        object.__setattr__(self, "requires", required)
         if self.minimum is None and self.maximum is None:
             raise ModelValidityError(
                 f"range condition {self.name!r} needs a minimum or a maximum"
@@ -167,7 +260,7 @@ class RangeCondition:
     def evaluate(self, value: Any) -> ValidityStatus:
         if not isinstance(value, Quantity):
             return ValidityStatus.UNKNOWN
-        return _within(
+        outcome = _within(
             value,
             minimum=self.minimum,
             maximum=self.maximum,
@@ -175,6 +268,17 @@ class RangeCondition:
             maximum_inclusive=self.maximum_inclusive,
             name=self.name,
         )
+        # Translated here and not inside `_within`, which is shared with the
+        # sibling type that carries no such flag and exists so the two cannot
+        # drift on endpoint handling. Where a value sits relative to its
+        # bounds is the same question for both; what a value outside them
+        # licenses anybody to say is this condition's own declaration.
+        if (
+            outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+            and self.conservative_screen
+        ):
+            return ValidityStatus.UNKNOWN
+        return outcome
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
         """This condition reads exactly one key: its own name."""
@@ -193,6 +297,16 @@ class RangeCondition:
             "maximum": self.maximum.to_dict() if self.maximum else None,
             "minimum_inclusive": self.minimum_inclusive,
             "maximum_inclusive": self.maximum_inclusive,
+            # Written unconditionally, including when False. A reader has to
+            # be able to see that a bound is a screen, and a key present only
+            # on the records that set it would make "an ordinary bound" and "a
+            # writer that predates the flag" the same payload.
+            "conservative_screen": self.conservative_screen,
+            # Written unconditionally, including when empty, for the reason
+            # the screen flag is: a dependency that exists only in a Python
+            # function body is invisible to every consumer of the record, and
+            # the record is the product.
+            "requires": list(self.requires),
             "description": self.description,
         }
 
@@ -208,6 +322,16 @@ class RangeCondition:
             # ranges, so a missing flag means inclusive.
             minimum_inclusive=bool(payload.get("minimum_inclusive", True)),
             maximum_inclusive=bool(payload.get("maximum_inclusive", True)),
+            # And a record written before screens existed described an
+            # ordinary bound, so a missing flag means one. The same additive
+            # reading as the two above and for the same reason: the absent key
+            # had exactly one meaning during the time it was absent.
+            conservative_screen=bool(payload.get("conservative_screen", False)),
+            # And a record written before dependencies existed describes an
+            # independent condition. Same additive reading as the three flags
+            # above: the absent key had exactly one meaning while it was
+            # absent.
+            requires=tuple(payload.get("requires", ())),
             description=payload.get("description", ""),
         )
 
@@ -600,6 +724,44 @@ class ValidityDomain:
                 f"anything. Remove it, or add the condition that reads it"
             )
 
+        # ---- dependencies ------------------------------------------------
+        #
+        # Refused HERE and not in the condition, because this is the only
+        # object that can see the sibling names. Same family as the check
+        # above: a declaration that names something which does not exist is
+        # refused at construction rather than discovered from a verdict.
+        declares_requires = {
+            c.name: tuple(getattr(c, "requires", ()))
+            for c in self.conditions
+        }
+        known = set(names)
+        for name, required in declares_requires.items():
+            missing = sorted(set(required) - known)
+            if missing:
+                raise ModelValidityError(
+                    f"condition {name!r} requires {missing}, which "
+                    f"{'is' if len(missing) == 1 else 'are'} not a condition "
+                    f"of this validity domain. A dependency on a name nothing "
+                    f"here declares can never be satisfied, so the condition "
+                    f"would be permanently UNKNOWN"
+                )
+            # ONE LEVEL. A chain would need a topological walk and a cycle
+            # check; nothing here has needed depth two, and refusing it loudly
+            # is what makes the day something does an explicit decision rather
+            # than a silently mis-ordered evaluation. This also makes cycles
+            # unreachable: a cycle of length >= 2 requires a dependent whose
+            # dependency is itself dependent, and a self-cycle is refused by
+            # the condition's own constructor.
+            deep = sorted(r for r in required if declares_requires.get(r))
+            if deep:
+                raise ModelValidityError(
+                    f"condition {name!r} requires {deep}, which "
+                    f"{'itself declares' if len(deep) == 1 else 'themselves declare'}"
+                    f" requires. Dependency chains are one level deep by "
+                    f"design; depend on what {'it depends' if len(deep) == 1 else 'they depend'}"
+                    f" on instead, or say why depth is needed"
+                )
+
     @property
     def context_keys(self) -> frozenset[str]:
         """Every context name this domain's conditions read."""
@@ -619,6 +781,16 @@ class ValidityDomain:
 
         A domain with no conditions is UNKNOWN, not valid: absence of declared
         limits is not evidence of unlimited validity.
+
+        **Two passes, because a condition may depend on another.** Conditions
+        declaring no ``requires`` are evaluated first; a condition that
+        declares one is evaluated only if every condition it names came out of
+        that first pass *satisfied*, and is UNKNOWN otherwise. See
+        :class:`RangeCondition` for why UNKNOWN and not violated, and for why
+        chains are one level deep. Where nothing declares
+        ``requires`` -- which is every record written before the field existed
+        -- only the first pass runs, and its assessment is identical to what
+        the single flat loop produced, lists in the same order.
 
         **Two namespaces, not one merged mapping.** A condition reads a value
         by name and cannot see where it came from. If the caller's parameters
@@ -654,18 +826,47 @@ class ValidityDomain:
         satisfied: list[str] = []
         violated: list[str] = []
         unknown: list[str] = []
-        for condition in self.conditions:
-            # ``evaluate_in`` rather than ``evaluate(context.get(name))``: a
-            # cross-limit condition reads two keys and neither is its own
-            # name. Every condition type implements it, and the single-key
-            # ones implement it as exactly the lookup this line used to do.
-            outcome = condition.evaluate_in(merged)
+
+        # TWO PASSES, and the order is the whole of the dependency mechanism.
+        # Independents decide first; a dependent is then evaluated only if
+        # every condition it requires came out of that pass satisfied, and is
+        # UNKNOWN otherwise -- it has no evidence either way, which is what
+        # UNKNOWN means. Chains are refused at construction, so one gated pass
+        # is enough and no ordering inside a pass can matter.
+        #
+        # `self.conditions` order is preserved WITHIN each pass, so the
+        # assessment's lists read in declaration order for every domain that
+        # declares no dependency at all -- which is every domain that existed
+        # before this field.
+        independent = [c for c in self.conditions if not getattr(c, "requires", ())]
+        dependent = [c for c in self.conditions if getattr(c, "requires", ())]
+
+        def record(condition, outcome):
             if outcome is ValidityStatus.IN_DOMAIN:
                 satisfied.append(condition.name)
             elif outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
                 violated.append(condition.name)
             else:
                 unknown.append(condition.name)
+
+        for condition in independent:
+            # ``evaluate_in`` rather than ``evaluate(context.get(name))``: a
+            # cross-limit condition reads two keys and neither is its own
+            # name. Every condition type implements it, and the single-key
+            # ones implement it as exactly the lookup this line used to do.
+            record(condition, condition.evaluate_in(merged))
+
+        if dependent:
+            established = set(satisfied)
+            for condition in dependent:
+                if set(condition.requires) <= established:
+                    record(condition, condition.evaluate_in(merged))
+                else:
+                    # Not evaluated at all. The value may well be sitting in
+                    # the context; it is not read, because reading it would
+                    # produce a number derived from a state nothing here
+                    # established.
+                    unknown.append(condition.name)
 
         if violated:
             status = ValidityStatus.OUTSIDE_VALIDATED_DOMAIN

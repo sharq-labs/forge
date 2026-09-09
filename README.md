@@ -40,7 +40,7 @@ src/engcore/
   systems/       electrothermal/ (closed-loop electro-thermal coupling)
                  aerospace/multirotor/ (reference design study)
   sria/          evidence records, admission, assurance, decision, campaigns —
-                 19,887 lines, 27% of src/, an independent layer that is NOT on
+                 19,887 lines, 26% of src/, an independent layer that is NOT on
                  the verification path and is imported by nothing else in src/.
                  Read the section below before reading the tree; see docs/SRIA.md
   mcp/           verification and validation (V&V) layer: assembles a
@@ -63,7 +63,7 @@ docs/
 
 ### A third of `src/` is not on the verification path
 
-`src/engcore/sria/` is **19,887 lines across 53 modules — 26.9% of the source
+`src/engcore/sria/` is **19,887 lines across 53 modules — 25.6% of the source
 tree — and nothing in `src/` outside it imports it.** Verify that in one
 command:
 
@@ -81,7 +81,7 @@ experimental-campaign, decision and assurance layer that sits one altitude above
 the domains: where they answer *what does this system do*, it answers *what
 should we measure next, what may change belief, and on whose authority*. It has
 its own frozen milestone sequence (M1 through V0.1, plus Core V0.3 and the E1–E3
-experiment line) and 630 of the suite's 2,955 tests, two of its test modules
+experiment line) and 630 of the suite's 3,095 tests, two of its test modules
 being SHA-256 byte-pinned by frozen experiment configs.
 
 It is called out here rather than only in `docs/SRIA.md` because a reader
@@ -94,21 +94,30 @@ source paths by SHA-256; it is renamed at the next planned re-freeze.
 
 ## Where this stands
 
-Measured on the adversarial benchmark in `benchmarks/hard/` — 2000 cases, of
-which the **development split** is 1400. These are the development figures and
-only the development figures:
+Measured on the adversarial benchmark in `benchmarks/hard/` — 2000 cases,
+split 1400 development / 600 sealed hold-out. **The hold-out was opened once,
+on 2026-09-08**, and both columns below come from the same tree in the same
+session, so they differ in nothing but which cases they contain.
 
-| | dev split |
-|---|---|
-| Exact verdict match | 1291/1400 (92.2%) |
-| Catch rate (unsound cases refused) | 1157/1159 (99.8%) |
-| False accept (unsound case reported sound) | 2/1159 (0.17%) |
-| False reject (sound case refused) | 0/241 (0.0%) |
+| | dev split (1400) | **hold-out (600)** |
+|---|---|---|
+| Exact verdict match | 1342/1400 (95.9%) | **579/600 (96.5%)** |
+| Catch rate (unsound cases refused) | 1157/1159 (99.8%) | **498/499 (99.8%)** |
+| False accept (unsound case reported sound) | 2/1159 (0.17%) | **1/499 (0.20%)** |
+| False reject (sound case refused) | 0/241 (0.0%) | **0/101 (0.0%)** |
 
-**The hold-out split remains sealed** and has not been scored against this
-tree. The full-set figures are withdrawn rather than reported: publishing both
-the dev numbers and the full-set numbers would recover the hold-out by
-subtraction, which is the same leak as opening it. Reproduce the table with
+**The two agree, and that is the point of the hold-out.** The generator behind
+these cases has been corrected five times in response to what scoring the
+development set revealed, so every development figure is one it was tuned
+against. These 600 cases were never scored during any of that. The tool scores
+0.6 points *better* on the ones nobody looked at.
+
+Read it narrowly: it says the development figures are not an artifact of the
+benchmark having co-evolved with the tool. It does not say the tool is good at
+what a human designer would call hard — these are generated cases placed
+0.2%–20% from declared bounds, and `benchmarks/ai_designs/RESULTS.md` explains
+why that is a different test from a design somebody actually wrote. **The seal
+is now spent**: a fresh untuned figure requires a fresh draw.
 
 ```bash
 python benchmarks/hard/score_hard.py --src src --cases benchmarks/hard/cases_hard --workers 4 --split dev
