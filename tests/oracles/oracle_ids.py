@@ -166,6 +166,83 @@ _ORACLES = (
             "this is a necessary condition, not a sufficient one."
         ),
     ),
+    Oracle(
+        "ORA-CONDUCTION-ANALYTIC",
+        "INDEPENDENT_ANALYTIC",
+        "du/dt = alpha d2u/dx2 with zero Dirichlet ends and u(x,0) = "
+        "sin(pi x/L) has the closed solution u = sin(pi x/L) "
+        "exp(-alpha pi^2 t/L^2). The initial condition IS the fundamental "
+        "eigenmode, so there is no series and no truncation.",
+        "Separation of variables, performed here. Standard result; e.g. "
+        "Incropera, DeWitt, Bergman & Lavine, 6th ed. (2007), Ch. 5.",
+        independent=True,
+        executable=True,
+        limitations=(
+            "Verifies the discretisation by convergence, not to round-off -- "
+            "a discrete scheme is not supposed to equal the continuum."
+        ),
+    ),
+    Oracle(
+        "ORA-CONDUCTION-DISCRETE",
+        "INDEPENDENT_ANALYTIC",
+        "Backward Euler on the fundamental eigenmode has the closed-form "
+        "amplification (1 + r mu_1)^-N with mu_1 = 4 sin^2(pi dx/(2L)) the "
+        "second-difference eigenvalue, so the discrete answer is exact and "
+        "needs no matrix.",
+        "Eigenanalysis of the standard second-difference operator, performed "
+        "here. No matrix is assembled and nothing is inverted.",
+        independent=True,
+        executable=True,
+        limitations=(
+            "Checks assembly and linear solve, NOT whether backward Euler is "
+            "the right scheme for the problem."
+        ),
+    ),
+    Oracle(
+        "ORA-CSTR-STEADY",
+        "INDEPENDENT_ANALYTIC",
+        "At steady state the non-isothermal first-order CSTR satisfies "
+        "C = a Cf/(a + k(T)) and a(Tf - T) + beta k(T) C - gamma(T - Tc) = 0, "
+        "which reduces to one nonlinear equation in T solvable by bisection.",
+        "Mass and energy balances written out here and solved with a bracketed "
+        "bisection -- a different algorithm from the ODE march Forge runs. "
+        "Standard model; e.g. Seborg, Edgar, Mellichamp & Doyle, Process "
+        "Dynamics and Control, 3rd ed. (2011), Ch. 2.",
+        independent=True,
+        executable=True,
+        limitations=(
+            "Shares the governing balances with Forge, so it verifies the "
+            "SOLUTION and not the choice of model. The CSTR admits multiple "
+            "steady states; the oracle brackets the one the march reaches."
+        ),
+    ),
+    Oracle(
+        "ORA-CSTR-RK4",
+        "INDEPENDENT_ANALYTIC",
+        "The CSTR trajectory from a given initial state must agree with a "
+        "classical Runge-Kutta march of the same two balances.",
+        "RK4 implemented here; Forge integrates with SciPy. Algorithmically "
+        "independent, tolerance set by Richardson refinement.",
+        independent=True,
+        executable=True,
+        limitations="Same governing balances; verifies integration, not model.",
+    ),
+    Oracle(
+        "ORA-BATTERY-COULOMB",
+        "LITERATURE_REFERENCE",
+        "Coulomb counting SoC(t) = SoC_0 - I t/(eta Q), with the discharge "
+        "lasting steps * step_duration; C-rate = I/Q_nom; terminal voltage "
+        "V = OCV(z) - I R_int for the Rint model.",
+        "Plett, Battery Management Systems Volume I: Battery Modeling, Artech "
+        "House (2015), Ch. 2-3.",
+        independent=True,
+        executable=True,
+        limitations=(
+            "The Rint model is an approximation with no diffusion or "
+            "polarisation dynamics; the oracle checks its algebra and the "
+            "contract, not its fidelity to a real cell."
+        ),
+    ),
 )
 
 ORACLE_REGISTER = {oracle.oracle_id: oracle for oracle in _ORACLES}
