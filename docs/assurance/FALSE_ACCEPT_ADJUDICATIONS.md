@@ -1,13 +1,28 @@
-# The two remaining hard false accepts, traced
+# The two hard false accepts, traced — and since adjudicated
 
-`U00204` and `U01001` are the only two false accepts left on the hard
-benchmark's dev split (1360/1400 exact, catch 1157/1159, FA 2, FR 0).
+> **STATUS: both have LANDED.** This document is the investigation that
+> produced them; the decisions themselves live in
+> `benchmarks/hard/ADJUDICATIONS.json` as
+> `2026-09-09.u00204.runaway-that-does-not-run-away` and
+> `2026-09-09.u01001.ceiling-sized-against-the-asymptote`, and the log is what
+> a reader should trust if the two ever disagree.
+>
+> Both were re-derived independently before being applied — the ODE integrated
+> forward for the whole `runaway` family, the blast radius re-measured across
+> the whole dev split — and both conclusions held. Dev is now **1362/1400,
+> FA 0, FR 0**.
+>
+> **That delta is a ground-truth correction, not a runtime improvement.**
+> Nothing under `src/` changed in either round. Read
+> `BENCHMARK_SCORECARD_V2.md` §6 before quoting the new figures, and the
+> declared-catcher rate (1183/1293, 91.5%) beside them.
+
+`U00204` and `U01001` were the only two false accepts on the hard benchmark's
+dev split when this investigation started (1360/1400 exact, catch 1157/1159,
+FA 2, FR 0).
 
 Both were traced stage by stage from the case file to the verdict. **Neither is
-a code defect.** Both are proposals to correct benchmark ground truth, and
-under this round's rule nothing here has been applied: the case files, the
-expected verdicts, the split and every digest are untouched. Each section ends
-with what would have to be decided, and by whom.
+a code defect.**
 
 Format follows the landed events in `benchmarks/hard/ADJUDICATIONS.json`,
 including its `independent_violation_search` — the check for whether a case is
@@ -220,12 +235,32 @@ like U00204 it regenerates cases and therefore re-draws the hold-out.
 
 ---
 
-## Summary
+## Summary — as landed
 
-| case | old expected | old actual | new expected | new actual | root cause | fix |
-|---|---|---|---|---|---|---|
-| U00204 | `NOT_SUPPORTED` | `SUPPORTED` | `NOT_SUPPORTED` (unchanged) | `SUPPORTED` (unchanged) | `GROUND_TRUTH_PROBLEM` — reason describes a non-contracting loop; the loop contracts, to a stable root the generator's own solver finds | **stopped**; proposal above |
-| U01001 | `NOT_SUPPORTED` | `SUPPORTED` | `NOT_SUPPORTED` (unchanged) | `SUPPORTED` (unchanged) | `GROUND_TRUTH_PROBLEM` — ceiling sized against the asymptote; the endpoint convention is the one a landed adjudication requires | **stopped**; proposal above |
+| case | old expected | new expected | actual (unchanged) | root cause | outcome |
+|---|---|---|---|---|---|
+| U00204 | `NOT_SUPPORTED` | **`SUPPORTED`** | `SUPPORTED` | `GROUND_TRUTH_PROBLEM` — the reason describes a non-contracting loop; the loop contracts, to a stable root the generator's own solver finds in 179 iterations | **adjudicated** |
+| U01001 | `NOT_SUPPORTED` | **`SUPPORTED`** | `SUPPORTED` | `GROUND_TRUTH_PROBLEM` — ceiling sized against the asymptote; the endpoint convention is the one a landed adjudication requires (moving it fixes 1 case and breaks 18) | **adjudicated** |
 
-No benchmark file, expected verdict, split or digest was modified. The dev
-figures are identical before and after this round.
+Fields revised on each: `expected_verdict`, `label` (forced by the schema's
+soundness invariant), `should_be_caught_by` (emptied — each named a mechanism
+the case provably does not exhibit), and `reason`. **`defect` was not revised
+on either**, because the split stratifies on it and revising it would
+reallocate sealed seats. `payload` and `id` untouched.
+
+`benchmarks/hard/apply_adjudication.py` applies an event to the cases it names
+and re-pins the case-set digest in the schema and the split, asserting the dev
+and hold-out membership arrays are byte-identical afterwards.
+
+## What these adjudications did NOT close
+
+* **The residual on U01001.** `steady_state_temperature` exceeds the declared
+  ceiling on that case and **no condition reads it**. A design whose
+  equilibrium is above a hard material limit is flagged nowhere. Recorded in
+  the event's `residual` field and in `UNSOURCED_BOUNDS.md`, not waived.
+* **Four siblings in the same family** — U01000, U01769, U01940, U01830 — keep
+  a correct verdict for an undeclared reason. A `should_be_caught_by` defect,
+  now visible as `COINCIDENTAL` rather than hidden.
+* **75 `geometry_conflict` cases** with the same class of defect, found while
+  auditing. Not corrected: it is a third family showing a systematic generator
+  error and it spans the sealed partition. See `BENCHMARK_SCORECARD_V2.md` §4.

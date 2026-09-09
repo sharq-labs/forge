@@ -25,15 +25,32 @@ been corrected in response to what scoring it revealed.
 | `O-INCROPERA-5.1` | thermal | lumped formulation is single-phase; first-order response is monotone with one real pole | `EXTERNAL_STANDARD` — Incropera, DeWitt, Bergman & Lavine, 6th ed. (2007), §5.1, Eq. 5.6 | **YES** | `melting_temperature_utilization` bound of 1; `peak_body_temperature` max-of-endpoints argument | cited at the declaration; not machine-checked | `thermal_models/context.py` |
 | `O-KITTEL-5` | material | beryllium θ_D = 1440 K, so a 1/3 floor refuses a real engineering conductor | `EXTERNAL_STANDARD` — Kittel, *Introduction to Solid State Physics*, 8th ed. (2005), Ch. 5, Table 1 | **YES** | the θ_D/5 reference floor | one material; the general floor remains policy | `electrical/material.py` |
 | `O-NGSPICE` | electrical DC | a second circuit solver reaches the same node voltages | `CROSS_IMPLEMENTATION` — external program | **YES** | `domains/electrical/ngspice.py`; opt-in, reachable here via WSL | not on the benchmark path; absence is `NOT_RUN` | ngspice adapter tests |
-| `O-HARD` | electro-thermal | end-to-end verdicts against generated truth | `INTERNAL_BENCHMARK` | **NO — circular** | 2000 cases, 1400 dev / 600 sealed | generator corrected four times in response to scoring; every dev figure is one it was tuned against. Two dev truths are now themselves disputed (see `FALSE_ACCEPT_ADJUDICATIONS.md`) | `score_hard.py` |
-| `O-BATTERY` | battery | as above, second system | `INTERNAL_BENCHMARK` | **NO — circular** | 400 cases, no sealed split | 100 % catch rate is unearned: the lumped thermal body accepts no applicability declaration, so no battery case can reach SUPPORTED. Scored over battery models only, and the scorer says so | `score_hard.py` |
-| `O-HOLDOUT` | electro-thermal | the one figure the generator was not tuned against | `INTERNAL_BENCHMARK`, sealed | NO, but **untainted** | 600 cases, `stratified-hash-hamilton/1`, seed 20260906 | worth exactly what the seal discipline is worth. Opening it is recorded in `HOLDOUT_OPENINGS.log` | refused without `--open-holdout` |
-| `O-ADJUDICATION` | benchmark | which truths were revised, on what basis, and what was not revised | `EXPERT_ADJUDICATION` — recorded, append-only | NO — this repository's judgement | `ADJUDICATIONS.json`, 1 landed event | a recorded human decision is auditable, not independent | `test_benchmark_adjudication.py` |
+| `O-HARD` | electro-thermal | end-to-end verdicts against generated truth | `INTERNAL_GENERATOR` | **NO — circular** | 2000 cases, 1400 dev / 600 sealed | generator corrected several times in response to scoring; every dev figure is one it was tuned against. Three families carry a known truth defect in `should_be_caught_by` — see `BENCHMARK_SCORECARD_V2.md` §4 | `score_hard.py` |
+| `O-HARD-CATCHER` | electro-thermal | whether the mechanism the truth names is the one that decided the case | `INTERNAL_GENERATOR` | **NO — circular** | 1293 dev cases declaring a mechanism | **new this round.** 1183/1293 (91.5%); 110 coincidental. Strictly more informative than `O-HARD` and no more independent | `scoring.py` |
+| `O-BATTERY` | battery | as above, second system | `INTERNAL_GENERATOR` | **NO — circular** | 400 cases, no sealed split | 100 % catch rate is unearned: the lumped thermal body accepts no applicability declaration, so no battery case can reach SUPPORTED. Scored over battery models only, and the scorer says so. Declared-catcher rate 389/400, **0 coincidental** — healthier truth than `cases_hard` | `score_hard.py` |
+| `O-HOLDOUT` | electro-thermal | *formerly* the one figure the generator was not tuned against | `INTERNAL_GENERATOR`, **seal broken** | **NO — and no longer untainted** | 600 cases, `stratified-hash-hamilton/1`, seed 20260906 | **OPENED.** Deliberately on 2026-09-08 at a case set edited four times since, and incidentally on 2026-09-09 by a script that bypassed the scorer. The recorded 579/600 describes a superseded case set. See `HOLDOUT_STATUS.md` | must not be quoted as blind |
+| `O-ADJUDICATION` | benchmark | which truths were revised, on what basis, and what was not revised | `EXPERT_ADJUDICATED` — recorded, append-only | NO — this repository's judgement | `ADJUDICATIONS.json`, **3** landed events, 25 cases | a recorded human decision is auditable, not independent. Event 1's accepted alternates are recorded in **prose only**, so no scorer can read them — the direct cause of 31 cases scoring as coincidental | `test_benchmark_adjudication.py` |
+| `O-ODE` | electro-thermal | whether a design has a reachable bounded thermal equilibrium | `INTERNAL_ANALYTIC` — exact quadratic root plus forward ODE integration | NO — same governing equation as the model | the `runaway` family, 26 dev cases | shares the balance it checks, so it verifies the label and not the physics. It did decide `U00204`, where the generator's own solver and the exact root agree to 10 digits | `2026-09-09.u00204` event |
 | `O-VERDICT` | verdict | verdict rules are monotone under add/remove/repeat/reorder | `CODE_CONTRACT` | NO | `derive_verdict`, whole input space | says nothing about whether the rules are the right rules | `test_verdict_monotonicity.py` |
 | `O-CONSENSUS` | consensus | agreement, completeness and shared-component intersection compute as documented | `CODE_CONTRACT` | NO | `CrossSolverConsensus` | independence is **declared**, never checked against the world | `test_cross_solver_consensus.py`, `test_consensus_integrity.py` |
 | `O-REGISTRY` | units | the sealed registry's declarations have not moved | `CODE_CONTRACT` | NO | `verify_registry_unmutated` | context transformation *bodies* are not compared — pint keeps the callable, not the source | `test_unit_registry_initialization.py` |
 
 ---
+
+## Oracle classes, counted
+
+| class | oracles |
+|---|---|
+| `INDEPENDENT_EXECUTABLE` | `O-UNITS`, `O-NGSPICE` (off the benchmark path) |
+| `INDEPENDENT_REFERENCE` | `O-INCROPERA-5.1`, `O-KITTEL-5` — citations; nothing runs them |
+| `INTERNAL_ANALYTIC` | `O-LUMPED-CF`, `O-LUMPED-SERIES`, `O-ODE` |
+| `INTERNAL_GENERATOR` | `O-HARD`, `O-HARD-CATCHER`, `O-BATTERY`, `O-HOLDOUT` |
+| `EXPERT_ADJUDICATED` | `O-ADJUDICATION` |
+| `CODE_CONTRACT` | `O-VERDICT`, `O-CONSENSUS`, `O-REGISTRY` |
+| `UNSOURCED` | every bound in `UNSOURCED_BOUNDS.md` |
+
+Nothing was upgraded a class in this round. `O-HOLDOUT` was **downgraded**: it
+was carried as untainted and it is not.
 
 ## What this register says when read as a whole
 
@@ -46,10 +63,16 @@ red if the constant drifted away from the source.
 
 **Everything that produces a number on the scored path is internal.** The
 benchmark is circular by construction — the generator and the implementation
-share this repository, and the generator has been corrected four times in
-response to what scoring it revealed. The dev split's 1360/1400 is a number the
-generator was tuned against. That is what the sealed hold-out is for, and it is
-the only figure here that is not.
+share this repository, and the generator has been corrected several times in
+response to what scoring it revealed. The dev split's 1362/1400 is a number the
+generator was tuned against.
+
+**And the hold-out no longer supplies the exception.** It was carried as the
+one untuned figure; it has been opened twice, and its recorded result describes
+a case set edited four times since. `HOLDOUT_STATUS.md` is explicit that no
+figure from it may be presented as blind, and that no reshuffle of these 2000
+cases can restore that. **This repository currently has no untainted
+end-to-end figure.**
 
 **One level is attainable on the reference path**, `ANALYTICALLY_VERIFIED`, and
 it is earned by two routes inside one repository agreeing about one governing
