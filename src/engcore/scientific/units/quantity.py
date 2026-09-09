@@ -29,6 +29,7 @@ import hashlib
 import math
 import operator as _operator
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Mapping
 
 import pint
@@ -329,6 +330,77 @@ def verify_registry_unmutated() -> None:
             )
 
 
+#: Bound on the memo below. Unit strings come from declarations and payloads and
+#: number in the low hundreds for any real process; the bound exists so that a
+#: pathological caller cannot grow the table without limit, and a miss merely
+#: costs what every call used to cost.
+_UNIT_CACHE_SIZE = 4096
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _canonical_unit(text: str) -> tuple[str, Any]:
+    """``(canonical string, dimensionality)`` for one stripped unit expression.
+
+    WHY THIS IS SAFE TO MEMOIZE, stated rather than assumed
+    -------------------------------------------------------
+    This is a pure function of ``text`` and the registry, and the registry is a
+    constant for the life of the process:
+
+    * it is built exactly once, behind an ``if _REGISTRY is None`` guard, and
+      **no path in this repository ever replaces it**;
+    * it is sealed before it is published -- every mutating callable pint
+      offers is refused, as is any attribute assignment or deletion, and
+      ``tests/test_core_guards.py`` exercises that enumeration rather than a
+      sample of it.
+
+    So the mapping from a unit string to its canonical form and dimensionality
+    cannot change while this process runs, and the key is the *entire* varying
+    input. Nothing about a model, a threshold, a context or a verdict
+    participates in the value, so this is not a scientific-identity cache and
+    the completeness question those must answer does not arise here: it caches
+    a lexical fact about a unit string.
+
+    **The one residual hole, and it is pre-existing.** A caller reaching past
+    pint's API into the definition containers themselves
+    (``registry()._units.maps[0]``) can still mutate the registry -- the module
+    docstring already says so, and :func:`verify_registry_unmutated` exists to
+    detect exactly that. After such a mutation this memo would serve stale
+    canonical forms; so would every ``Quantity`` already constructed, and the
+    detector still fires. :func:`clear_unit_caches` is provided for the case
+    where somebody legitimately needs to reset it.
+
+    **Both halves are returned from one parse.** ``dimension_of`` used to call
+    ``normalize_unit`` -- which parsed the string and formatted it back to a
+    string -- and then parse that string *a second time* to reach
+    ``.dimensionality``, when the first parse had it all along. Two parses and a
+    format, for a value the first line already held.
+    """
+    unit = registry().Unit(text)
+    return str(unit), unit.dimensionality
+
+
+def clear_unit_caches() -> None:
+    """Drop the memoized unit tables.
+
+    Not needed in normal operation -- the registry cannot change -- and present
+    so that anything which deliberately reaches past the seal has a supported
+    way to invalidate what it invalidated.
+    """
+    _canonical_unit.cache_clear()
+    _canonical_dimensionality.cache_clear()
+
+
+def unit_cache_stats() -> dict[str, Any]:
+    """Hit/miss counts for the memo, for diagnostics and performance guards."""
+    info = _canonical_unit.cache_info()
+    return {
+        "hits": info.hits,
+        "misses": info.misses,
+        "currsize": info.currsize,
+        "maxsize": info.maxsize,
+    }
+
+
 def normalize_unit(unit: str) -> str:
     """Canonical string form of a unit expression.
 
@@ -340,7 +412,7 @@ def normalize_unit(unit: str) -> str:
             "unit must be a non-empty string; use 'dimensionless' explicitly"
         )
     try:
-        return str(registry().Unit(text))
+        return _canonical_unit(text)[0]
     except Exception as exc:  # pint raises several distinct types
         raise UnitCompatibilityError(f"unparsable unit {unit!r}: {exc}") from exc
 
@@ -357,8 +429,11 @@ def dimension_of(unit: str) -> Any:
     ``... / [time] ** 3 / [current]``. Comparing those strings made Ohm's law
     a units error; comparing these objects does not.
     """
+    # Structurally what it always was -- normalize first, so an unparsable or
+    # empty unit raises `normalize_unit`'s message and not this function's --
+    # with the second parse replaced by a memo lookup.
     try:
-        return registry().Unit(normalize_unit(unit)).dimensionality
+        return _canonical_unit(normalize_unit(unit))[1]
     except UnitCompatibilityError:
         raise
     except Exception as exc:
@@ -380,7 +455,16 @@ def dimensionality(unit: str) -> str:
     renders them (``"[temperature]"``, ``"dimensionless"``); only the ordering
     of a multi-dimension rendering is fixed, and only where it was arbitrary.
     """
-    dimensions = dimension_of(unit)
+    # Memoized on the CANONICAL form rather than on the caller's spelling, so
+    # `"K"` and `"kelvin"` share one entry. Same safety argument as
+    # `_canonical_unit`: a pure function of the string and a registry that
+    # cannot change.
+    return _canonical_dimensionality(normalize_unit(unit))
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _canonical_dimensionality(canonical: str) -> str:
+    dimensions = _canonical_unit(canonical)[1]
     # Rebuilt through the container's own type rather than string-joined by
     # hand, so the rendering stays the backend's and only its order is ours.
     return str(type(dimensions)(dict(sorted(dimensions.items()))))
