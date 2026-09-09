@@ -1,5 +1,12 @@
 # Benchmark scorecard v2
 
+> **SUPERSEDED by `BENCHMARK_SCORECARD_V3.md`.** Kept for lineage. The
+> figures below were correct for the truth on disk when they were taken;
+> the DEV truth repair afterwards moved the declared-catcher rate from
+> 91.5% to 97.3% and coincidental catches from 110 to 6, without moving a
+> single verdict. v3 §6 decomposes exactly what changed and why.
+
+
 What the hard and battery benchmarks actually measure after this round, with
 every denominator stated, and what changed for which of the three possible
 reasons.

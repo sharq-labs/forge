@@ -37,6 +37,25 @@ been corrected in response to what scoring it revealed.
 
 ---
 
+## Per-case oracle classes, now recorded in the truth itself
+
+`benchmark_ground_truth/2` gives every case an optional `oracle` field naming
+what KIND of thing decided its truth, and the scorer reports the distribution.
+Absence means the corpus default, `GENERATOR_CONSTRUCTION` — the shaper chose
+the defect and asserted the answer.
+
+| class | DEV cases | independent of Forge? | executable? |
+|---|---|---|---|
+| `GENERATOR_CONSTRUCTION` | **1378** | **no** — the generator shares this repository | yes, it runs |
+| `EXPERT_ADJUDICATED` | 18 | no — this repository's recorded judgement | no |
+| `UNSOURCED` | 4 | n/a — flagged as truth we do not stand behind | no |
+
+**98.4% of the development answer key was written by the thing being scored.**
+That is the single largest limitation in this register and no truth edit can
+change it; only an oracle from outside can.
+
+Battery: `GENERATOR_CONSTRUCTION` × 400.
+
 ## Oracle classes, counted
 
 | class | oracles |
