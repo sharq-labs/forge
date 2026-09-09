@@ -117,8 +117,11 @@ def main():
             })
         document["comparison"] = comparison
 
-    pathlib.Path(args.out).write_text(
-        json.dumps(document, ensure_ascii=False, indent=1), encoding="utf-8"
+    # write_bytes, not write_text: on Windows text mode translates every
+    # newline to CRLF, which changes the file's bytes without changing its
+    # content and makes the digest a property of the host.
+    pathlib.Path(args.out).write_bytes(
+        json.dumps(document, ensure_ascii=False, indent=1).encode("utf-8")
     )
 
     # ---- summary ------------------------------------------------------
