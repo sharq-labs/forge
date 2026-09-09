@@ -1,0 +1,209 @@
+{
+  "benchmark": "bench_units",
+  "extra": {
+    "call_counts": {
+      "Quantity.__post_init__": {
+        "normalize_unit": 1
+      },
+      "Quantity.magnitude_in": {
+        "normalize_unit": 4
+      },
+      "Quantity.to": {
+        "normalize_unit": 4
+      },
+      "is_compatible_with": {
+        "dimension_of": 2,
+        "normalize_unit": 2
+      }
+    }
+  },
+  "machine": {
+    "branch": "main",
+    "commit": "52e1ee2157dc7021d7a9688c13cceaba965cf994",
+    "implementation": "CPython",
+    "logical_cpus": 24,
+    "machine": "AMD64",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python": "3.14.2",
+    "tree_clean": false
+  },
+  "measurements": [
+    {
+      "cold_ms": null,
+      "max_ms": 0.029946002177894115,
+      "mean_ms": 0.012598420027643442,
+      "min_ms": 0.010899999178946018,
+      "name": "units.normalize_unit",
+      "note": "one unit string, canonicalised",
+      "ops_per_sec": 82808.8852007538,
+      "p50_ms": 0.012075998820364475,
+      "p95_ms": 0.015910000074654818,
+      "p99_ms": 0.020656001288443804,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.03580200020223856,
+      "mean_ms": 0.020946026632251837,
+      "min_ms": 0.018167998641729355,
+      "name": "units.dimension_of",
+      "note": "one unit string, to a comparable dimensionality",
+      "ops_per_sec": 49613.01892494065,
+      "p50_ms": 0.020155999809503555,
+      "p95_ms": 0.025456000585108995,
+      "p99_ms": 0.02880800049751997,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.0603599997702986,
+      "mean_ms": 0.033736249955836684,
+      "min_ms": 0.028799998108297586,
+      "name": "units.dimensionality",
+      "note": "canonical string rendering",
+      "ops_per_sec": 31162.355993629626,
+      "p50_ms": 0.03208999987691641,
+      "p95_ms": 0.043459999142214656,
+      "p99_ms": 0.0548299984075129,
+      "peak_kib": null,
+      "samples": 200,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.01480200095102191,
+      "mean_ms": 0.006175146663251022,
+      "min_ms": 0.005395999178290367,
+      "name": "units.Quantity.construct",
+      "note": "",
+      "ops_per_sec": 166722.26560786547,
+      "p50_ms": 0.005997999105602503,
+      "p95_ms": 0.00745000084862113,
+      "p99_ms": 0.012576000299304724,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.031194000039249655,
+      "mean_ms": 0.01906922662165016,
+      "min_ms": 0.016882000491023064,
+      "name": "units.Quantity.is_compatible_with",
+      "note": "",
+      "ops_per_sec": 54188.791351125474,
+      "p50_ms": 0.01845400081947446,
+      "p95_ms": 0.023066001012921333,
+      "p99_ms": 0.027558000292629004,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.08696499862708151,
+      "mean_ms": 0.051670666628827654,
+      "min_ms": 0.04525500116869807,
+      "name": "units.Quantity.to",
+      "note": "",
+      "ops_per_sec": 19988.00615560816,
+      "p50_ms": 0.050030002603307366,
+      "p95_ms": 0.06094500422477722,
+      "p99_ms": 0.07503499509766698,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.06995500298216939,
+      "mean_ms": 0.04568941673884789,
+      "min_ms": 0.03959499881602824,
+      "name": "units.Quantity.magnitude_in",
+      "note": "same unit -- the common case, and the one worth being cheap",
+      "ops_per_sec": 22758.30834801772,
+      "p50_ms": 0.04393999697640538,
+      "p95_ms": 0.056965003022924066,
+      "p99_ms": 0.06371000199578702,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 0.07906999671831727,
+      "mean_ms": 0.04888669995125383,
+      "min_ms": 0.041879998752847314,
+      "name": "units.Quantity.add",
+      "note": "",
+      "ops_per_sec": 21482.277403835753,
+      "p50_ms": 0.046549999387934804,
+      "p95_ms": 0.061175000155344605,
+      "p99_ms": 0.07328499923460186,
+      "peak_kib": null,
+      "samples": 300,
+      "scale": "TINY",
+      "size": 1
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 3.6231999984011054,
+      "mean_ms": 2.9716200001227357,
+      "min_ms": 2.5934999575838447,
+      "name": "units.compat_check_batch",
+      "note": "one compatibility check per quantity",
+      "ops_per_sec": 344.25778026503804,
+      "p50_ms": 2.904799999669194,
+      "p95_ms": 3.5420999629423022,
+      "p99_ms": NaN,
+      "peak_kib": null,
+      "samples": 30,
+      "scale": "SMALL",
+      "size": 100
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 31.27499995753169,
+      "mean_ms": 29.622713328960042,
+      "min_ms": 27.804899960756302,
+      "name": "units.compat_check_batch",
+      "note": "one compatibility check per quantity",
+      "ops_per_sec": 33.81760136643362,
+      "p50_ms": 29.570400016382337,
+      "p95_ms": 31.046599964611232,
+      "p99_ms": NaN,
+      "peak_kib": null,
+      "samples": 30,
+      "scale": "MEDIUM",
+      "size": 1000
+    },
+    {
+      "cold_ms": null,
+      "max_ms": 300.07100000511855,
+      "mean_ms": 294.8389233284009,
+      "min_ms": 289.45369995199144,
+      "name": "units.compat_check_batch",
+      "note": "one compatibility check per quantity",
+      "ops_per_sec": 3.3914768118033463,
+      "p50_ms": 294.85679999925196,
+      "p95_ms": 299.96979993302375,
+      "p99_ms": NaN,
+      "peak_kib": 97.4580078125,
+      "samples": 30,
+      "scale": "LARGE",
+      "size": 10000
+    }
+  ]
+}
