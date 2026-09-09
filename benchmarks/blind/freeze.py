@@ -305,7 +305,8 @@ def _source_digest() -> dict[str, str]:
     """
     roots = [
         HERE / "generate.py", HERE / "build_truth.py", HERE / "families.py",
-        HERE / "bound_registry.py", HERE / "freeze.py",
+        HERE / "bound_registry.py", HERE / "admissibility.py",
+        HERE / "freeze.py",
         HERE / "oracles" / "units.py", HERE / "oracles" / "electrothermal.py",
         HERE / "oracles" / "battery.py", HERE / "oracles" / "kinetics.py",
         HERE / "oracles" / "conduction.py", HERE / "oracles" / "spice.py",
@@ -398,6 +399,27 @@ def quality_guards(cases: list[dict], truths: list[dict]) -> list[str]:
             failures.append(
                 f"{truth['case_id']}: payload is byte-identical to an existing "
                 f"benchmark case")
+
+    # A case whose DECLARATION is inadmissible tests the boundary, not the
+    # science, and only the families built to do that may do it. Anything else
+    # refused at construction is a generator defect wearing a truth: it would
+    # score as a Forge mismatch and measure nothing. 152 of 444 cases were in
+    # exactly that state before this guard existed.
+    deliberate = ("malformed", )
+    deliberate_families = ("kin.envelope", "kin.positivity", "cond.alpha",
+                           "bat.efficiency")
+    stray = [
+        f"{t['case_id']} ({t['family']}): {t.get('construction_refusal')}"
+        for case, t in zip(cases, truths)
+        if t.get("construction_refusal")
+        and case["family_kind"] not in deliberate
+        and case["family"] not in deliberate_families
+    ]
+    if stray:
+        failures.append(
+            f"{len(stray)} cases would be refused at construction but belong "
+            f"to no family built to be refused; the first few are "
+            f"{stray[:6]}")
 
     try:
         assert_vocabulary_closed(units_used())

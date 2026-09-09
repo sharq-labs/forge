@@ -6,64 +6,64 @@
   "kinetics_cstr": 57
  },
  "actual_total": 444,
- "arithmetic_sensitive_total": 42,
+ "arithmetic_sensitive_total": 44,
  "bound_registry_version": "blind-bound-registry/1.0.0",
  "boundary_stratum_counts": {
-  "AT_BOUNDARY": 42,
-  "CONSTRUCTION_REFUSED": 12,
-  "FAR_INSIDE": 52,
-  "FAR_OUTSIDE": 46,
+  "AT_BOUNDARY": 44,
+  "CONSTRUCTION_REFUSED": 18,
+  "FAR_INSIDE": 50,
+  "FAR_OUTSIDE": 49,
   "MALFORMED": 12,
-  "NEAR_INSIDE": 149,
-  "NEAR_OUTSIDE": 43,
-  "NOT_APPLICABLE": 50,
-  "SOFT_BOUND_NEAR": 38
+  "NEAR_INSIDE": 154,
+  "NEAR_OUTSIDE": 40,
+  "NOT_APPLICABLE": 49,
+  "SOFT_BOUND_NEAR": 28
  },
  "causal_status_counts": {
-  "MULTIPLE_CAUSAL_CATCHERS": 55,
+  "MULTIPLE_CAUSAL_CATCHERS": 57,
   "NOT_APPLICABLE": 250,
-  "NO_UNIQUE_PRIMARY": 14,
-  "ONE_CAUSAL_PLUS_REDUNDANT": 34,
-  "UNIQUE_CAUSAL_CATCHER": 91
+  "NO_UNIQUE_PRIMARY": 13,
+  "ONE_CAUSAL_PLUS_REDUNDANT": 31,
+  "UNIQUE_CAUSAL_CATCHER": 93
  },
  "challenge_id": "forge-blind-v1",
  "denominator_policy": "The primary denominator is the DECIDED, non-UNRESOLVED set. ARITHMETIC_SENSITIVE cases stay in the archive and are scored separately; UNRESOLVED cases are scored not at all. Neither is counted as a Forge failure and neither is counted as a pass.",
  "distribution_contrast": {
   "blind_v1": {
    "ambient_conductance_w_per_k": {
-    "decades_spanned": 3.65,
-    "max": 4.758635109384993,
-    "min": 0.0010534029938669446,
-    "n": 499,
-    "p50": 0.072004563993339
+    "decades_spanned": 3.67,
+    "max": 4.7838877730846505,
+    "min": 0.00101405466598508,
+    "n": 484,
+    "p50": 0.05974332266549522
    },
    "ambient_temperature_k": {
     "decades_spanned": null,
-    "max": 339.7860767154334,
+    "max": 339.81036712073876,
     "min": -40.0,
-    "n": 499,
-    "p50": 272.2869251700482
+    "n": 484,
+    "p50": 273.9367262304674
    },
    "n_stages": {
     "decades_spanned": 0.6,
     "max": 4.0,
     "min": 1.0,
     "n": 206,
-    "p50": 3.0
+    "p50": 2.0
    },
    "reference_resistance_ohm": {
-    "decades_spanned": 6.68,
-    "max": 15411.509414920902,
-    "min": 0.0032442006545314287,
-    "n": 499,
-    "p50": 7.115412268527645
+    "decades_spanned": 6.67,
+    "max": 15474.000511745216,
+    "min": 0.003278294295570438,
+    "n": 484,
+    "p50": 9.03206500996064
    },
    "source_voltage_v": {
-    "decades_spanned": 5.24,
-    "max": 9438.109126252873,
-    "min": 0.054334389933484044,
+    "decades_spanned": 5.8,
+    "max": 27434.093602455618,
+    "min": 0.0435507452957113,
     "n": 204,
-    "p50": 105.93902564400794
+    "p50": 82.22600146327466
    }
   },
   "existing_hard": {
@@ -112,10 +112,10 @@
   "Thermal-runaway and non-converging electro-thermal designs. The VERDICT of such a case is decidable, but the CONDITION SET a refused coupling reports is a property of the iteration driver's bookkeeping rather than of the science, so an independent oracle cannot state it without copying the driver. Cases whose fixed point does not converge are rejected pre-freeze under `oracle_non_convergence` and counted. This challenge therefore does NOT test refusal-path reporting.",
   "Every capability named in the round's exclusion list: ContextOfUse, ScientificClaim, ScientificArtifact, arrays, fields, meshes, new domains, new solvers, new APIs, MCP features, UI."
  ],
- "generated_utc": "2026-09-09T23:25:32.090073+00:00",
+ "generated_utc": "2026-09-09T23:57:01.891234+00:00",
  "generator_version": "blind-generator/1.1.0",
- "intended_stratum_hits": 156,
- "intended_stratum_misses": 288,
+ "intended_stratum_hits": 163,
+ "intended_stratum_misses": 281,
  "intended_stratum_note": "A miss is not a defect. A family TARGETS a stratum by solving for a declaration; what the case IS, is whatever the oracle measured afterwards, and the measured stratum is what the truth carries. Misses are counted here so the gap between intent and content is visible rather than assumed away.",
  "master_seed": 20260909,
  "measured_state_agreement": {
@@ -222,19 +222,19 @@
   }
  ],
  "resolution_floor": 0.001,
- "resolvable_total": 402,
+ "resolvable_total": 400,
  "second_oracle_counts": {
-  "AGREED": 408,
-  "NOT_REACHED": 12,
+  "AGREED": 402,
+  "NOT_REACHED": 18,
   "SINGLE_ORACLE": 24
  },
  "seed_derivation": "sha256(f'{MASTER_SEED}:{system}:{family}:{index}')[:8], big-endian. Per case, so a family added later cannot redraw an earlier one.",
  "truth_builder_version": "blind-truth/1.0.0",
  "truth_class_counts": {
-  "CONTRACT_ONLY": 74,
-  "INDEPENDENT_SCIENTIFIC": 272,
+  "CONTRACT_ONLY": 79,
+  "INDEPENDENT_SCIENTIFIC": 266,
   "MIXED_SCIENCE_AND_POLICY": 2,
-  "POLICY_DEPENDENT": 96
+  "POLICY_DEPENDENT": 97
  },
  "units_emitted": [
   "1/hour",
@@ -273,9 +273,9 @@
  ],
  "unresolved_total": 0,
  "verdict_counts": {
-  "INSUFFICIENT_EVIDENCE": 50,
-  "NOT_SUPPORTED": 120,
-  "REJECTED_AT_BOUNDARY": 24,
+  "INSUFFICIENT_EVIDENCE": 49,
+  "NOT_SUPPORTED": 115,
+  "REJECTED_AT_BOUNDARY": 30,
   "SUPPORTED": 250
  },
  "version": "1.0.0"

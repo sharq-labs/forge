@@ -235,17 +235,16 @@ def _draw_electrothermal(rng: random.Random, position_for: Callable[[str, float]
         t_amb = rng.uniform(215.0, 340.0)
         capacity = 10.0 ** rng.uniform(-1.5, 2.5)
         conductance = 10.0 ** rng.uniform(-3.0, 0.7)
-        area = 10.0 ** rng.uniform(-5.0, -1.0)
-        coefficient = conductance / area
-        implied_length = 10.0 ** rng.uniform(-4.0, -1.5)
         route = position_for("geometry_route_ratio", rng.uniform(0.45, 2.4))
-        declared_length = route * implied_length
-        # Bi = h Lc / k, and Lc is the DECLARED length when there is one.
+        # Bi = h Lc / k, and Lc is the DECLARED length when there is one. Only
+        # the RATIO is fixed here; the lengths and the conductivity are solved
+        # in the payload, because the surface area they need is itself solved
+        # from the radiation ratio at the operating temperature.
         biot = 0.1 * position_for("biot_number", rng.uniform(0.05, 0.7))
-        conductivity = coefficient * declared_length / biot
         # Fo = (t/tau)/Bi, so the horizon is what places the screen. This is
         # why it is drawn HERE and not when the payload is assembled: it moves
-        # the operating point.
+        # the operating point. It needs Bi and tau, neither of which needs the
+        # area, which is why the two can be separated at all.
         fourier = 0.2 / position_for("internal_fourier_number",
                                      1.0 / rng.uniform(1.5, 40.0))
         tau = capacity / conductance
@@ -254,6 +253,9 @@ def _draw_electrothermal(rng: random.Random, position_for: Callable[[str, float]
             "r_ref": 10.0 ** rng.uniform(-2.5, 4.2),
             "alpha": rng.choice([0.0, 1.0, 1.0, 1.0, -1.0])
                      * 10.0 ** rng.uniform(-4.5, -2.8),
+            "route": route,
+            "biot": biot,
+            "implied_length": 10.0 ** rng.uniform(-4.0, -1.5),
             # TIED TO AMBIENT, not drawn independently. `t_max` is solved from
             # the operating temperature to place
             # `operating_temperature_utilization`, and an independently drawn
@@ -269,12 +271,6 @@ def _draw_electrothermal(rng: random.Random, position_for: Callable[[str, float]
             "t_amb": t_amb,
             "t_0": t_amb,
             "duration": fourier * biot * tau,
-            "area": area,
-            "coefficient": coefficient,
-            "implied_length": implied_length,
-            "declared_length": declared_length,
-            "volume": implied_length * area,
-            "conductivity": conductivity,
         })
     # Land the hottest stage inside the TCR envelope's comfortable interior,
     # unless a family is deliberately walking a temperature-shaped condition.
@@ -317,12 +313,34 @@ def _et_payload(rng: random.Random, stages: list[dict], source_v: float,
         furthest = max((stage["t_0"], temperature),
                        key=lambda value: abs(value - stage["t_ref"]))
 
-        emissivity_position = position_for("radiation_to_convection_ratio",
-                                           rng.uniform(0.05, 0.7))
-        radiation_coefficient = 0.1 * emissivity_position * stage["coefficient"]
+        # THE EMISSIVITY IS DRAWN, AND THE SURFACE AREA IS SOLVED.
+        #
+        # An emissivity is a fraction of the black-body emissive power, and
+        # `LumpedApplicabilityDeclaration` refuses a value outside [0, 1] when
+        # the body is BUILT -- a construction guard, not a validity condition.
+        # Solving the radiation ratio through the emissivity, as an earlier
+        # draft did, produced values up to 5.8 and would have had 118 of 207
+        # electro-thermal cases refused at the boundary while their frozen
+        # truth said SUPPORTED. Every one of those would have scored as a Forge
+        # mismatch and measured nothing but this function.
+        #
+        # So the emissivity is drawn where a real surface lives, h_r follows
+        # from it and the temperatures, and the ratio h_r/h is placed by
+        # solving h -- and therefore the surface area, since h = (hA)/A_s and
+        # the conductance is already fixed. The area moves no part of the fixed
+        # point, which is what makes this legal here.
+        emissivity = rng.uniform(0.02, 0.98)
         denominator = ((peak + stage["t_amb"])
                        * (peak * peak + stage["t_amb"] * stage["t_amb"]))
-        emissivity = radiation_coefficient / (STEFAN_BOLTZMANN * denominator)
+        radiation_coefficient = STEFAN_BOLTZMANN * emissivity * denominator
+        ratio = 0.1 * position_for("radiation_to_convection_ratio",
+                                   rng.uniform(0.05, 0.7))
+        coefficient = radiation_coefficient / ratio
+        area = stage["g"] / coefficient
+        implied_length = stage["implied_length"]
+        volume = implied_length * area
+        declared_length = stage["route"] * implied_length
+        conductivity = coefficient * declared_length / stage["biot"]
 
         conductance_bound = excursion / position_for(
             "conductance_excursion_ratio", rng.uniform(0.1, 0.7))
@@ -369,14 +387,14 @@ def _et_payload(rng: random.Random, stages: list[dict], source_v: float,
         # side, which is the side a caller over-declaring a conductance hits.
         agreement = 2.0 * position_for("convection_conductance_agreement_ratio",
                                        rng.uniform(0.3, 0.9))
-        fluid_conductivity = (stage["coefficient"] * convection_length
+        fluid_conductivity = (coefficient * convection_length
                               / (nusselt * agreement))
 
         applicability = {
-            "characteristic_length": _quantity(stage["declared_length"], "meter"),
-            "body_volume": _quantity(stage["volume"], "meter**3"),
-            "surface_area": _quantity(stage["area"], "meter**2"),
-            "body_conductivity": _quantity(stage["conductivity"], "watt/meter/kelvin"),
+            "characteristic_length": _quantity(declared_length, "meter"),
+            "body_volume": _quantity(volume, "meter**3"),
+            "surface_area": _quantity(area, "meter**2"),
+            "body_conductivity": _quantity(conductivity, "watt/meter/kelvin"),
             "surface_emissivity": _quantity(emissivity, "dimensionless"),
             "conductance_excursion_bound": _quantity(conductance_bound, "kelvin"),
             "capacity_excursion_bound": _quantity(capacity_bound, "kelvin"),
@@ -495,9 +513,19 @@ def _make_battery(rng: random.Random, family: Family,
     c_rate = 10.0 ** rng.uniform(-1.3, 0.7)            # 0.05 C .. 5 C
     current = c_rate * capacity
     steps = rng.choice([1, 4, 10, 25, 60])
-    step_seconds = 10.0 ** rng.uniform(0.5, 2.6)
-    total_seconds = step_seconds * steps
     soc_0 = rng.uniform(0.55, 0.99)
+    # THE DEPTH OF DISCHARGE IS CHOSEN AND THE STEP LENGTH IS SOLVED, not the
+    # other way round. Drawn independently the march ran the state of charge
+    # far below zero, and every declared window then had a negative lower edge
+    # -- which `Load` refuses at construction, so 26 cases would have been
+    # refused at the boundary against a truth that said otherwise.
+    low_soc = soc_0 * rng.uniform(0.15, 0.90)
+    drop_total = soc_0 - low_soc
+    step_seconds = (drop_total * efficiency * capacity * 3600.0
+                    / (current * steps))
+    total_seconds = step_seconds * steps
+    if not (1e-3 < step_seconds < 1e6):
+        return None
 
     continuous_rating = c_rate / place("continuous_c_rate_utilization",
                                        rng.uniform(0.25, 0.8))
@@ -516,13 +544,28 @@ def _make_battery(rng: random.Random, family: Family,
     tau_thermal = heat_capacity / conductance
     hottest = temperature + rise * (1.0 - math.exp(-total_seconds / tau_thermal))
 
-    # -- state of charge --------------------------------------------------
+    # -- the state-of-charge window ---------------------------------------
+    #
+    # `soc_window_margin` has a FLOOR at 0, not a ceiling at 1, so a position
+    # on the ladder cannot be the value: position 3.0 would mean a margin of
+    # 3, which is both impossible and *satisfied*, and the family would never
+    # have refused anything. A floor is walked by mapping position p to
+    # (1 - p) * scale, so p < 1 is a positive margin, p > 1 a negative one,
+    # and p = 1 sits on the floor.
     drop_per_step = current * (step_seconds / 3600.0) / (efficiency * capacity)
-    low_soc = soc_0 - drop_per_step * steps
-    window_high = min(1.0, soc_0 + rng.uniform(0.01, 0.05))
-    margin_fraction = 1.0 - place("soc_window_margin", rng.uniform(0.2, 0.7))
-    span = max(window_high - low_soc, 1e-6) / max(1.0 - margin_fraction, 1e-6)
-    window_low = window_high - span
+    margin = (0.35 * (1.0 - position)
+              if (target == "soc_window_margin" and position is not None)
+              else rng.uniform(0.05, 0.40))
+    margin = min(margin, 0.45)
+    # margin = min(low - w_lo, w_hi - high) / (w_hi - w_lo). Putting the LOW
+    # side on the minimum needs w_hi - high >= margin * span, which reduces to
+    # span * (1 - 2 margin) >= drop. Below 0.5 that is solvable; at or above
+    # it, it is not, which is why the cap above is 0.45.
+    span = (drop_total / max(1.0 - 2.0 * margin, 1e-6)) * rng.uniform(1.1, 2.5)
+    window_low = low_soc - margin * span
+    window_high = window_low + span
+    if not (0.0 <= window_low < window_high <= 1.0):
+        return None
 
     # -- temperature-shaped limits, all against `hottest` -----------------
     t_low = temperature - rng.uniform(15.0, 45.0)

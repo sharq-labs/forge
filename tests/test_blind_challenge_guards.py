@@ -56,6 +56,7 @@ TRUTH_LAYER = (
     "benchmarks/blind/build_truth.py",
     "benchmarks/blind/families.py",
     "benchmarks/blind/bound_registry.py",
+    "benchmarks/blind/admissibility.py",
     "benchmarks/blind/freeze.py",
     "benchmarks/blind/oracles/units.py",
     "benchmarks/blind/oracles/electrothermal.py",

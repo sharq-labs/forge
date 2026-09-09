@@ -53,6 +53,7 @@ import json
 import math
 from typing import Any
 
+from . import admissibility as adm
 from . import bound_registry as reg
 from .families import RESOLUTION_FLOOR
 from .oracles import battery as battery_oracle
@@ -310,6 +311,16 @@ def _conduction_truth(payload: dict) -> tuple[Any, list[str], dict]:
     return truth, [], second
 
 
+#: The construction contract, per system. `kinetics_cstr` keeps its own,
+#: which lives with the oracle because the CSTR's refusal ordering is part of
+#: what that oracle already models.
+_REFUSALS = {
+    "electrothermal": adm.electrothermal_refusal,
+    "battery": adm.battery_refusal,
+    "conduction_1d": adm.conduction_refusal,
+    "kinetics_cstr": kinetics_oracle.construction_refusal,
+}
+
 _BUILDERS = {
     "electrothermal": _electrothermal_truth,
     "battery": _battery_truth,
@@ -424,6 +435,29 @@ def build_truth(case: dict) -> dict:
             "second_oracle": {},
             "second_oracle_status": "SINGLE_ORACLE",
             "unresolved_dependencies": [],
+        })
+        return _portable(record)
+
+    # THE BOUNDARY REFUSES BEFORE IT ASSESSES, and a truth that did not know
+    # that would be confidently wrong about every case whose DECLARATION is
+    # inadmissible rather than whose design is. Checked first, for every
+    # system, against the contract transcribed in `admissibility`.
+    refusal = _REFUSALS[system](payload)
+    if refusal is not None:
+        record.update({
+            "independent_verdict": "REJECTED_AT_BOUNDARY",
+            "truth_class": "CONTRACT_ONLY",
+            "truth_confidence_class": "DECIDED",
+            "boundary_stratum": "CONSTRUCTION_REFUSED",
+            "evaluated_conditions": [], "satisfied_conditions": [],
+            "violated_conditions": [], "unknown_conditions": [],
+            "valid_reason_set": [refusal], "reason_names": [refusal],
+            "reason_classes": ["CONTRACT"], "causal_catcher_set": [refusal],
+            "primary_catcher_status": "UNIQUE_CAUSAL_CATCHER",
+            "policy_dependencies": [], "bound_ids": [], "second_oracle": {},
+            "second_oracle_status": "NOT_REACHED",
+            "unresolved_dependencies": [],
+            "construction_refusal": refusal,
         })
         return _portable(record)
 
