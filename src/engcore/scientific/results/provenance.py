@@ -178,7 +178,38 @@ class ExecutionBinding:
             )
         problem = getattr(prepared, "problem", None)
         named = {reference.key for reference in getattr(problem, "models", ())}
-        if named and model.key not in named:
+        # AN EMPTY DECLARATION IS A REFUSAL, NOT A WILDCARD.
+        #
+        # This read `if named and model.key not in named`, so a problem naming
+        # NO models authorised every model in existence -- and the guarantee
+        # this constructor's own docstring makes ("the model must be one the
+        # prepared problem actually names") evaporated silently in exactly the
+        # case where nothing had been established.
+        #
+        # `ScientificProblem.models` defaults to `()`, so that was not an
+        # exotic state; it is what any problem assembled without a model
+        # declaration carries. Emptiness cannot mean "unconstrained", because
+        # nothing distinguishes a problem that deliberately imposes no
+        # constraint from one that simply never declared its models -- and
+        # inferring permission from an absent declaration is the reading this
+        # round exists to remove. If an unconstrained binding is ever wanted it
+        # has to be asked for in the type, not read out of a missing field.
+        #
+        # Checked against the tree before closing: every `from_execution` call
+        # on a live path names a model its problem declares, so this refuses
+        # nothing that was previously produced.
+        if not named:
+            raise ScientificCoreError(
+                f"the prepared problem names no models, so nothing authorises "
+                f"attributing this execution to "
+                f"{model.model_id}@{model.version}. An empty model declaration "
+                f"is not a permission to bind any model: it means no model "
+                f"relation was established, and provenance may not claim one "
+                f"the problem never stated. Declare the model on the problem, "
+                f"or construct the binding directly if the association is "
+                f"known some other way"
+            )
+        if model.key not in named:
             raise ScientificCoreError(
                 f"the prepared problem does not name model "
                 f"{model.model_id}@{model.version}; it names "
