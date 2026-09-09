@@ -1,0 +1,329 @@
+{
+  "schema": "benchmark_adjudication_log/1",
+  "benchmark": "cases_hard",
+  "note": "Append-only. An entry that has landed is never edited or removed; a later decision is a NEW event. tests/test_benchmark_adjudication.py pins every landed event by digest.",
+  "events": [
+    {
+      "adjudication_id": "2026-09-09.internal-fourier-number.screen",
+      "recorded_utc": "2026-09-09T14:14:32+00:00",
+      "commit": "fc11f7d04968d00f89151afc05564c24fd7637a2",
+      "benchmark_schema": "benchmark_ground_truth/1",
+      "deciding_condition": "internal_fourier_number",
+      "field_revised": "expected_verdict",
+      "adjudication_basis": "internal_fourier_number is a CONSERVATIVE SCREEN. The rule that decides it is what the criterion OBSERVED when it failed, not how confident the bound is and not how conventional its threshold is. Under the floor the horizon ran out before the one-term approximation could be compared to anything, so the criterion observed nothing: there is no evidence for the model and none against it. NOT_SUPPORTED asserts evidence against a design; these cases had none to assert, so the honest expected verdict is INSUFFICIENT_EVIDENCE.",
+      "independent_violation_search": "Of the 70 hard cases whose ground truth names internal_fourier_number as the catcher and expected NOT_SUPPORTED, each was run and every model's assessment in every report was inspected for a condition that was evaluated and failed. 47 have one -- operating_temperature_utilization (40), reference_temperature_utilization (34), radiation_to_convection_ratio (3) -- and KEEP NOT_SUPPORTED. The 23 below have an empty `violated` across every model in every report.",
+      "not_revised": [
+        "label",
+        "defect",
+        "should_be_caught_by",
+        "reason",
+        "needs_review",
+        "payload",
+        "id"
+      ],
+      "classification": "benchmark truth correction",
+      "runtime_behaviour_changed": false,
+      "cases": [
+        {
+          "case_id": "U00009",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00049",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00060",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00062",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00113",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00236",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00256",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00414",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00516",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00545",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00563",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00613",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00689",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00803",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U00996",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01141",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01180",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01297",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01335",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01456",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01488",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01639",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        },
+        {
+          "case_id": "U01696",
+          "previous_expected_verdict": "NOT_SUPPORTED",
+          "new_expected_verdict": "INSUFFICIENT_EVIDENCE",
+          "defect_family": "compound:horizon+tmax",
+          "label": "model_inapplicable",
+          "declared_catcher": "internal_fourier_number",
+          "independent_violation": false,
+          "violated_at_adjudication": [],
+          "unknown_at_adjudication": [
+            "thermal.lumped.first_order_capacity:internal_fourier_number"
+          ]
+        }
+      ]
+    }
+  ]
+}

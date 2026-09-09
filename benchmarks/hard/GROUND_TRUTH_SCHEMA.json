@@ -1,0 +1,68 @@
+{
+  "schema": "benchmark_ground_truth/1",
+  "purpose": "Names the parts of a benchmark case and says which of them are GROUND TRUTH. Ground truth is a scientific decision about what the right answer is; it is not a measurement of this tree, and a change to it is never a runtime improvement. See ADJUDICATIONS.json and the 'Ground truth is versioned, and a revision is not a result' section of README.md.",
+  "case_set_digests": {
+    "cases_hard": "2f0a48db54c0264f6d12607ec67d66ee267cc2c24c7ba69ebf113eee031f09b9",
+    "cases_battery": "32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853"
+  },
+  "roles": {
+    "case_identity": {
+      "fields": [
+        "id"
+      ],
+      "meaning": "Stable name of the case. The split is stratified on this and on defect_family, never on expected_verdict, so re-deciding an expected verdict cannot move a case between the development set and the sealed hold-out."
+    },
+    "case_payload": {
+      "fields": [
+        "payload",
+        "system",
+        "title"
+      ],
+      "meaning": "The problem posed to the tree. `system` is absent on every electro-thermal case, and its absence means that system rather than an error."
+    },
+    "ground_truth": {
+      "fields": [
+        "label",
+        "expected_verdict",
+        "reason",
+        "should_be_caught_by",
+        "defect",
+        "needs_review"
+      ],
+      "meaning": "What the right answer is, and why. Revised only through an event in ADJUDICATIONS.json.",
+      "field_roles": {
+        "defect_family": "defect",
+        "expected_verdict": "expected_verdict",
+        "expected_reason": "reason",
+        "declared_catcher": "should_be_caught_by",
+        "soundness_label": "label",
+        "review_flag": "needs_review"
+      }
+    },
+    "adjudication_basis": {
+      "fields": [],
+      "meaning": "DELIBERATELY EMPTY. The reasoning that revised a ground truth lives in ADJUDICATIONS.json and never inside a case file. A case that carried its own adjudication basis could be re-decided by editing one file, with the previous verdict and the reason for the change lost in the same edit -- which is the state this schema exists to end."
+    }
+  },
+  "vocabulary": {
+    "expected_verdict": [
+      "SUPPORTED",
+      "NOT_SUPPORTED",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "label": [
+      "valid",
+      "inconsistent_inputs",
+      "insufficient_input",
+      "limit_exceeded",
+      "model_inapplicable",
+      "unit_or_sign_error"
+    ]
+  },
+  "invariants": [
+    "every case carries exactly the declared top-level and ground_truth fields",
+    "no case file carries an adjudication basis",
+    "label == 'valid' if and only if expected_verdict == 'SUPPORTED'",
+    "split membership is derived from id and defect, never from expected_verdict"
+  ]
+}

@@ -35,6 +35,8 @@ figure the generator was tuned against.**
 | `split_hard.json` | The split itself: seed, rule, digests, and both id lists. |
 | `results_hard.json` | The current **development-split** run. Carries the case-set digest. |
 | `HOLDOUT_OPENINGS.log` | Every time the sealed hold-out was scored. Empty means never. |
+| `GROUND_TRUTH_SCHEMA.json` | Which parts of a case are ground truth, and the case-set digests it describes. |
+| `ADJUDICATIONS.json` | Append-only log of every revision to ground truth. Never edited after landing. |
 
 ## Composition
 **As of the first draw — superseded twice below.** 453 sound, 1547 unsound, 95
@@ -62,6 +64,51 @@ the limit they targeted and left another condition violated by the base draw.
 
 **If a case turns out to be labelled wrong and the tool right, say so
 explicitly.** Do not quietly correct the generator.
+
+### Ground truth is versioned, and a revision is not a result
+
+A benchmark has two numbers that move for entirely different reasons, and they
+look identical from outside:
+
+| The score went up because | What changed | Where it is recorded |
+|---|---|---|
+| the tree got better | code | a commit, and a re-scored `results_*.json` |
+| the answer key changed | ground truth | an event in `ADJUDICATIONS.json` |
+
+**These are never the same event and must never arrive in one number.** A truth
+revision that is reported as a runtime improvement is the most flattering
+mistake this benchmark can make, because nothing about the resulting figure
+looks wrong.
+
+So every revision to `ground_truth` is an append-only event carrying, per case,
+the previous verdict, the new one, the condition that decided it, and **whether
+any independent violation existed** — the last being the field that makes the
+decision falsifiable. A case moved off `NOT_SUPPORTED` while some other
+condition was observed to fail would mean the old verdict was right and the
+screen was never the reason; `tests/test_benchmark_adjudication.py` fails on
+exactly that.
+
+`GROUND_TRUTH_SCHEMA.json` says which fields are ground truth and which are
+payload or identity. The adjudication basis lives only in the log: a case that
+carried the reasoning for its own verdict could be re-decided by editing one
+file, losing the previous verdict and the reason for the change in the same
+edit.
+
+**The split cannot notice any of this.** Membership is stratified on
+`ground_truth.defect` and ordered by `sha256(seed:case_id)` — never on
+`expected_verdict` — so re-deciding a verdict cannot move a case between the
+development set and the sealed hold-out. That is asserted by construction
+rather than by reading the rule: the split is built twice, once with the real
+verdicts and once with every verdict and label replaced by a constant, and the
+two partitions must be identical. Without that property an adjudication would
+silently reallocate sealed seats, and the hold-out would open with no line in
+`HOLDOUT_OPENINGS.log`.
+
+The first event, `2026-09-09.internal-fourier-number.screen`, revised 23 of the
+70 cases whose declared catcher is `internal_fourier_number`. The other 47 kept
+`NOT_SUPPORTED` because each has an independent violation. The 23 do not: their
+`violated` set is empty across every model in every report, so the screen was
+the only criterion that did not pass and it observed nothing.
 
 ## Composition after the ratings round
 

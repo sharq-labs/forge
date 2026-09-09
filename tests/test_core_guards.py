@@ -5219,14 +5219,41 @@ def test_a_screen_is_declared_on_a_bound_that_observed_nothing_and_nowhere_else(
         for condition in model.validity.conditions
         if isinstance(condition, RangeCondition) and condition.conservative_screen
     }
-    assert screens == {
-        ("thermal.lumped.first_order_capacity", "internal_fourier_number"),
-    }, (
-        f"the set of declared conservative screens has changed: {sorted(screens)}. "
-        f"A screen says a criterion observed nothing; adding one to a bound "
-        f"that observed a failure downgrades a finding to a gap, and removing "
-        f"this one reports evidence that was never gathered"
+    # THE TWO ADJUDICATED BOUNDS, ASSERTED INDIVIDUALLY.
+    #
+    # This was an equality against a one-element set, which said "there is
+    # exactly one conservative screen in this repository" -- a census, and a
+    # permanent one. That is a claim about the repository's INVENTORY rather
+    # than about the semantics of a screen, and it fails the day a second
+    # domain declares a screen correctly, which is a legitimate act. It also
+    # says nothing at all about what a screen has to DO; a bound could be
+    # flagged and behave like an ordinary limit and this would still pass.
+    #
+    # So the census is replaced by the decisions actually taken -- one
+    # membership and one non-membership -- plus the universal invariants
+    # below, which is the part that constrains a screen the repository has
+    # not written yet.
+    assert (
+        "thermal.lumped.first_order_capacity",
+        "internal_fourier_number",
+    ) in screens, (
+        "internal_fourier_number is no longer declared a conservative screen. "
+        "Under the floor the horizon ran out before the one-term "
+        "approximation could be compared to anything, so the criterion "
+        "observed nothing; removing the flag reports evidence that was never "
+        "gathered. See benchmarks/hard/ADJUDICATIONS.json, which revised 23 "
+        "expected verdicts on the strength of this declaration"
     )
+    assert not [
+        entry for entry in screens
+        if entry[1] == "polarization_unmodelled_fraction"
+    ], (
+        "polarization_unmodelled_fraction has been declared a conservative "
+        "screen. Inside the band the model's own constitutive assumption is "
+        "OBSERVED TO FAIL, which is evidence against applying it; reporting "
+        "that as a gap would understate a finding the run actually made"
+    )
+    assert screens, "no declared screen was found; the invariants below are vacuous"
 
 
 def test_the_polarization_bound_is_a_finding_and_says_so_in_its_own_prose():
@@ -5260,7 +5287,7 @@ def test_every_screen_still_refuses_and_none_of_them_can_certify():
     admitting values fails here rather than in a benchmark months later.
     """
     from src.engcore.scientific.models.definition import (
-        RangeCondition, ValidityStatus,
+        RangeCondition, UnknownReason, ValidityStatus,
     )
 
     seen = 0
@@ -5277,11 +5304,35 @@ def test_every_screen_still_refuses_and_none_of_them_can_certify():
             ):
                 if bound is None:
                     continue
-                verdict = condition.evaluate(outside(bound))
+                value = outside(bound)
+                verdict = condition.evaluate(value)
                 assert verdict is ValidityStatus.UNKNOWN, (
                     f"{model.model_id}/{condition.name} returned {verdict} for "
                     f"a value outside its own bound; a screen reports a gap "
                     f"and never certifies"
+                )
+                # Stated as the two refusals separately, because they fail in
+                # opposite directions and a reader of a red result needs to
+                # know which one happened. `is not SATISFIED` is the unearned
+                # certification; `is not VIOLATED` is the overstated finding --
+                # a screen that started reporting violations would turn "we
+                # could not look" into "we looked and it failed", which is
+                # exactly the confusion the flag exists to prevent.
+                assert verdict is not ValidityStatus.IN_DOMAIN
+                assert verdict is not ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, (
+                    f"{model.model_id}/{condition.name} reported a value "
+                    f"outside its bound as VIOLATED. A screen observed "
+                    f"nothing; reporting a finding overstates what was learned"
+                )
+                # And the reason channel agrees with the flag. Without this a
+                # screen could refuse for the right verdict under the wrong
+                # explanation, and every consumer that branches on the reason
+                # -- repair guidance among them -- would act on the wrong one.
+                reason = condition.explain_in({condition.name: value})
+                assert reason is UnknownReason.CONSERVATIVE_SCREEN, (
+                    f"{model.model_id}/{condition.name} refused a value "
+                    f"outside its bound with reason {reason}, not "
+                    f"CONSERVATIVE_SCREEN"
                 )
     assert seen, "no declared screen was exercised; this guard is vacuous"
 
