@@ -99,7 +99,7 @@ from ..models.definition import ValidityAssessment, ValidityStatus
 from ..serialization import require_schema_any, schema_string, unwritable
 from ..solvers.protocol import ConvergenceState, SolverIdentity
 from ..units.quantity import Quantity
-from ..units.validation import check_unit_map
+from ..units.validation import check_unit_map, require_same_dimension
 from .immutable import detach, freeze
 from .data_reference import ScientificDataReference
 from .provenance import ProvenanceRecord
@@ -330,6 +330,39 @@ class ScientificResult:
             if name not in values:
                 raise ScientificCoreError(
                     f"uncertainty declared for unknown value {name!r}"
+                )
+            # DIMENSION, not merely type. `Uncertainty` checks that an interval's
+            # two endpoints agree with EACH OTHER, and nothing checked either of
+            # them against the value they qualify -- so `350 K +/- 5 V` and
+            # `350 K in [1 V, 9 V]` both constructed, serialized and round-tripped.
+            #
+            # This is the one place the check can be made: an `Uncertainty` does
+            # not know which value it belongs to, and the record that pairs them
+            # is this one. A downstream consumer combining the two would either
+            # raise deep inside an arithmetic it did not choose, or -- worse --
+            # compare magnitudes and produce a bound in the wrong physical
+            # dimension without noticing.
+            #
+            # There is no relative or dimensionless uncertainty FORM in this
+            # vocabulary: STANDARD and INTERVAL are both absolute and carry
+            # Quantities. So the rule is unconditional, and a dimensionless
+            # result needs no special case -- its uncertainty is dimensionless
+            # by the same rule.
+            for label, quantity in (
+                ("standard_uncertainty", record.standard_uncertainty),
+                ("lower", record.lower),
+                ("upper", record.upper),
+            ):
+                if quantity is None:
+                    continue
+                require_same_dimension(
+                    quantity,
+                    values[name],
+                    context=(
+                        f"result {result_id!r}: uncertainty {label} for "
+                        f"{name!r} must carry the dimension of the value it "
+                        f"qualifies"
+                    ),
                 )
         object.__setattr__(self, "uncertainty", freeze(uncertainty))
 
