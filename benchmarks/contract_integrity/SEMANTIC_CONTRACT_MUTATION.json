@@ -1,0 +1,52 @@
+{
+  "caught": 4,
+  "relationship_to_certified_suite": "additive and independent. The certified suite remains 79/79 RED with CONTROL GREEN and is not modified by this round.",
+  "results": [
+    {
+      "caught": true,
+      "guard": "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it",
+      "id": "SC1",
+      "lie": "a published UNKNOWN promise is inverted: the record now claims the condition holds without the declaration the runtime needs",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.83s"
+    },
+    {
+      "caught": true,
+      "guard": "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it",
+      "id": "SC2",
+      "lie": "the geometry record goes back to promising a cross-check the derivation deliberately does not perform (the CORE-1 defect)",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.87s"
+    },
+    {
+      "caught": true,
+      "guard": "tests/test_core_semantic_invariants.py::test_the_flow_range_record_states_which_route_needs_a_prandtl_number",
+      "id": "SC3",
+      "lie": "the flow-range record goes back to requiring a Prandtl number on both routes, which is false on the forced one (the CI-1 defect)",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.03s"
+    },
+    {
+      "caught": true,
+      "guard": "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it",
+      "id": "SC4",
+      "lie": "the record claims a cross-check was performed where the runtime compares one route against nothing",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.87s"
+    },
+    {
+      "caught": false,
+      "guard": "(no guard known \u2014 expected SURVIVOR)",
+      "id": "SC5",
+      "lie": "an applicability claim is widened past what the condition enforces: the bound still refuses zero, the record now advertises it",
+      "status": "SURVIVOR (nothing noticed)",
+      "tail": "111 passed in 2.11s"
+    }
+  ],
+  "schema": "semantic_contract_mutation/1",
+  "survivors": [
+    "SC5"
+  ],
+  "total": 5,
+  "what_this_is": "A mutation layer for published record TEXT, separate from the certified 79-mutant suite, which it does not touch, extend or renumber. The certified harness excludes STRING-token-only changes from its code digest by design, so it cannot register any of the mutations below."
+}
