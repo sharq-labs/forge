@@ -1,0 +1,349 @@
+{
+  "adversarial_probes": {
+    "defects": 0,
+    "known_limits": 4,
+    "safe": 615,
+    "total": 619,
+    "what": "witnesses constructed for this round against the public contracts; each states what MUST happen and records SAFE, DEFECT or KNOWN_LIMIT"
+  },
+  "benchmarks": {
+    "battery_dev": {
+      "case_set_digest": "32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853",
+      "cases_dir": "cases_battery",
+      "catch_rate": "152/152 (100.0%)",
+      "exact_verdict_match": "272/280 (97.1%)",
+      "false_accept": "0/152 (0.00%)",
+      "false_accept_ids": [],
+      "false_reject": "8/128 (6.2%)",
+      "false_reject_ids": [
+        "B00020",
+        "B00066",
+        "B00106",
+        "B00149",
+        "B00160",
+        "B00184",
+        "B00305",
+        "B00311"
+      ],
+      "split": "dev",
+      "split_digest": "205197f7ced6b27819ef29add821cd5131c1f3eb221ae9e184c1c34a581eb3c8",
+      "total": 280
+    },
+    "hard_dev": {
+      "case_set_digest": "28dcc10de866c699a6a817dac29f617a16a2c19149f9fda51167624ebf889a04",
+      "cases_dir": "cases_hard",
+      "catch_rate": "1157/1157 (100.0%)",
+      "exact_verdict_match": "1362/1400 (97.3%)",
+      "false_accept": "0/1157 (0.00%)",
+      "false_accept_ids": [],
+      "false_reject": "0/243 (0.0%)",
+      "false_reject_ids": [],
+      "split": "dev",
+      "split_digest": "7353123acaf903e48e3e6aa90f11de46e888edec7b055aef8ce8b35c7a48aae0",
+      "total": 1400
+    }
+  },
+  "certification_id": "FORGE-CURRENT-CORE-V1",
+  "certification_scope": {
+    "covers": [
+      "the software contracts implementing the Core's currently declared capabilities",
+      "identity and evidence preservation across the current boundaries",
+      "fail-closed behaviour of the ambiguous and unknown states",
+      "regression resistance of those rules, measured by mutation"
+    ],
+    "does_not_cover": [
+      "experimental validation of any scientific model",
+      "any domain, shape or regime outside those exercised here",
+      "the correctness of any policy-dependent applicability bound",
+      "generalization to unseen cases -- that is Blind Challenge v2",
+      "the finality of the architecture"
+    ]
+  },
+  "core": {
+    "modules": 47,
+    "path": "src/engcore/scientific",
+    "tree_sha256": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+    "version_constant": "0.1.0-v0-foundation"
+  },
+  "environment": {
+    "interpreter_note": "a project-local .venv; the absolute path is deliberately not recorded because it is a fact about one machine and not about what was certified",
+    "mcp_sdk": "present",
+    "ngspice": "ngspice-42 via wsl.exe -e ngspice",
+    "packages": {
+      "numpy": "2.5.2",
+      "pint": "0.25.3",
+      "pytest": "9.1.1",
+      "scipy": "1.18.1",
+      "sklearn": "1.9.0"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.2",
+    "python_build": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]"
+  },
+  "generated": "2026-09-10T17:06:39",
+  "known_limitations": [
+    {
+      "fail_closed": true,
+      "false_confidence": false,
+      "limit": "field/mesh scientific semantics absent"
+    },
+    {
+      "fail_closed": true,
+      "false_confidence": false,
+      "limit": "multivariate curve semantics absent"
+    },
+    {
+      "fail_closed": true,
+      "false_confidence": false,
+      "limit": "general UQ computation absent (representation only)"
+    },
+    {
+      "fail_closed": "partial",
+      "false_confidence": true,
+      "limit": "consensus independence is declaration-based, never proven",
+      "note": "reported via shared_solver_identities; named in consensus.py and CLAIMS_AND_CAPABILITY.md"
+    },
+    {
+      "fail_closed": "n/a",
+      "false_confidence": false,
+      "limit": "capability-layer naming/type debt"
+    },
+    {
+      "fail_closed": "partial",
+      "false_confidence": "low",
+      "limit": "ScientificVariable legality split between the IR and its sampling consumer"
+    },
+    {
+      "fail_closed": true,
+      "false_confidence": false,
+      "limit": "bulk-data semantics are content identity, not scientific equality"
+    },
+    {
+      "fail_closed": "n/a",
+      "false_confidence": "low",
+      "limit": "exact float boundary equality is not invariant across every unit spelling (19 of 22 pairs exact; 3 differ by <= 1 ULP)"
+    },
+    {
+      "fail_closed": true,
+      "false_confidence": false,
+      "limit": "no universal planner; ambiguous solver selection is refused rather than resolved"
+    }
+  ],
+  "mutation": {
+    "control": "GREEN",
+    "did_not_apply": 0,
+    "green": 0,
+    "import_or_syntax_kill": 0,
+    "killed": 79,
+    "log_digest": "017d8908c37a530cc483ff49e1cf903eb98cb512565f5b6629c04f0a8d91a9e7",
+    "red": 79,
+    "runner": "tests/mutation_guards.py",
+    "timeout": 0,
+    "total": 79,
+    "unrelated_kill": 0
+  },
+  "production_defects_fixed_this_round": [
+    {
+      "class": "CONTRACT_GAP",
+      "compatibility": "no production or test construction built this state; STANDARD/INTERVAL records are unchanged",
+      "false_confidence_possible": true,
+      "fix": "the UNKNOWN branch now refuses confidence_level",
+      "id": "CERT-1",
+      "mutation": "G26a",
+      "reachable_in_production": false,
+      "record": "engcore.scientific.results.uncertainty.Uncertainty",
+      "regression_test": "tests/test_core_semantic_invariants.py::test_an_unknown_uncertainty_cannot_carry_a_confidence_level",
+      "severity": "LOW",
+      "summary": "UNKNOWN uncertainty accepted a confidence_level: a coverage probability for an interval the record does not hold"
+    },
+    {
+      "class": "CONTRACT_GAP",
+      "compatibility": "mirrors SolverSettings.tolerances, which already refused one; every recorded tolerance in this repository is finite",
+      "false_confidence_possible": true,
+      "fix": "non-finite tolerances are refused at construction",
+      "id": "CERT-2",
+      "mutation": "G26b",
+      "reachable_in_production": false,
+      "record": "engcore.scientific.results.provenance.ProvenanceRecord",
+      "regression_test": "tests/test_core_semantic_invariants.py::test_a_provenance_tolerance_must_be_finite",
+      "severity": "LOW",
+      "summary": "tolerances admitted a non-finite value at construction and through from_dict; it failed closed only at to_json"
+    },
+    {
+      "class": "CONTRACT_GAP",
+      "compatibility": "every options mapping the domains build is strings, integers and booleans and is unaffected",
+      "false_confidence_possible": false,
+      "fix": "unwritable() on construction; detach() on to_dict",
+      "id": "CERT-3",
+      "mutation": "G26c",
+      "reachable_in_production": false,
+      "record": "engcore.scientific.solvers.protocol.SolverSettings",
+      "regression_test": "tests/test_core_semantic_invariants.py::test_solver_options_are_held_to_the_free_form_rule",
+      "severity": "LOW",
+      "summary": "options was the last free-form mapping in the core not run through unwritable, and to_dict handed back the record's own containers instead of a detached payload"
+    }
+  ],
+  "repository": {
+    "branch": "main",
+    "certified_commit": "be57bf4d705606d746175cbc1c240697e68ef0c2",
+    "note": "certified_commit is the revision that CONTAINS the certified Core: the three production fixes, their six regression guards and mutations G26a/G26b/G26c. This snapshot is committed as its child, so `git checkout <certified_commit>` reproduces exactly the tree that every figure below was measured against. Nothing scientific here depends on an uncommitted working tree.",
+    "origin_main_before_this_round": "336b26fdf421b167316d7b9cbc72744874ce5de0",
+    "remote": "git@github.com:sharq-labs/forge.git",
+    "round_started_from": "7f177e1e11b408b7b12a1862e580070f10a69ea5"
+  },
+  "schema": "certification_snapshot/1",
+  "test_results": {
+    "benchmark_guards": {
+      "after": {
+        "failed": 0,
+        "passed": 57
+      },
+      "before": {
+        "failed": 0,
+        "passed": 57
+      },
+      "selection": "tests/test_benchmark_records.py tests/test_benchmark_adjudication.py tests/test_benchmark_scoring_semantics.py"
+    },
+    "blind_v1_guards": {
+      "after": {
+        "failed": 0,
+        "passed": 51
+      },
+      "before": {
+        "failed": 0,
+        "passed": 51
+      },
+      "selection": "tests/test_blind_challenge_guards.py"
+    },
+    "campaign": {
+      "after": {
+        "failed": 0,
+        "passed": 4,
+        "seconds": 75.6
+      },
+      "note": "the four tests SCIENTIFIC excludes; run once, after the mutation round, so nothing contended",
+      "selection": "tests/ -m \"campaign\""
+    },
+    "fast": {
+      "after": {
+        "failed": 0,
+        "passed": 3832,
+        "seconds": 23.1,
+        "skipped": 3
+      },
+      "before": {
+        "failed": 0,
+        "passed": 3821,
+        "seconds": 21.9,
+        "skipped": 3
+      },
+      "selection": "tests/ -m \"not expensive\" -n 4"
+    },
+    "full_tier_total": {
+      "after": {
+        "failed": 0,
+        "passed": 4373,
+        "skipped": 3
+      },
+      "note": "SCIENTIFIC + campaign, run as two non-overlapping selections"
+    },
+    "independent_reason_catcher": {
+      "after": {
+        "failed": 0,
+        "passed": 124,
+        "skipped": 2
+      },
+      "before": {
+        "failed": 0,
+        "passed": 124,
+        "skipped": 2
+      },
+      "selection": "tests/oracles/test_independent_reason_truth.py"
+    },
+    "independent_verdict": {
+      "after": {
+        "failed": 0,
+        "passed": 83
+      },
+      "before": {
+        "failed": 0,
+        "passed": 83
+      },
+      "selection": "tests/oracles/test_independent_case_truth.py"
+    },
+    "mutation_harness_self_guard": {
+      "after": {
+        "failed": 0,
+        "passed": 6
+      },
+      "selection": "tests/test_mutation_harness.py"
+    },
+    "note": "Every count measured in this round, one suite at a time, no two overlapping. Before = at base commit 7f177e1; after = with the three fixes and their guards applied.",
+    "performance_guards": {
+      "after": {
+        "failed": 0,
+        "passed": 12
+      },
+      "before": {
+        "failed": 0,
+        "passed": 12
+      },
+      "kind": "call counts and growth exponents, never wall clock",
+      "selection": "tests/test_core_performance_guards.py"
+    },
+    "scientific": {
+      "after": {
+        "failed": 0,
+        "passed": 4369,
+        "seconds": 70.4,
+        "skipped": 3
+      },
+      "before": {
+        "failed": 0,
+        "passed": 4358,
+        "seconds": 64.4,
+        "skipped": 3
+      },
+      "selection": "tests/ -m \"not campaign\" -n 4"
+    },
+    "scientific_oracles": {
+      "after": {
+        "failed": 0,
+        "passed": 363,
+        "skipped": 2
+      },
+      "before": {
+        "failed": 0,
+        "passed": 363,
+        "skipped": 2
+      },
+      "selection": "tests/oracles"
+    }
+  },
+  "unresolved_defects": [],
+  "verification": {
+    "digest_covers": "src/engcore/scientific/**/*.py, path-ordered, over raw file bytes; __pycache__ excluded",
+    "digest_excludes": "certification/ -- so this file's own bytes are not part of the value it records, and no fixed-point hash is required",
+    "expected_core_tree_sha256": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+    "how_to_reproduce_the_benchmarks": [
+      "python benchmarks/hard/score_hard.py --src src --cases benchmarks/hard/cases_hard --workers 4 --split dev",
+      "python benchmarks/hard/score_hard.py --src src --cases benchmarks/hard/cases_battery --workers 4 --split dev --split-file benchmarks/hard/split_battery.json"
+    ],
+    "how_to_reproduce_the_certified_tree": [
+      "git checkout be57bf4d705606d746175cbc1c240697e68ef0c2",
+      "python - <<'PY'",
+      "import hashlib, pathlib",
+      "root = pathlib.Path('src/engcore/scientific')",
+      "h = hashlib.sha256()",
+      "for p in sorted(p for p in root.rglob('*.py') if '__pycache__' not in p.parts):",
+      "    h.update(p.relative_to(root).as_posix().encode())",
+      "    h.update(b'\\x00')",
+      "    h.update(hashlib.sha256(p.read_bytes()).digest())",
+      "print(h.hexdigest())",
+      "PY"
+    ],
+    "how_to_reproduce_the_mutation_result": "python -X utf8 tests/mutation_guards.py <scratch-dir>  # expects: 79/79 killed, CONTROL GREEN; exit 0. Copies the tree once per mutation, so give it a scratch directory with ~6 GB free.",
+    "timestamps_are_not_identity": "`generated` records when this file was written. It is metadata: no digest, verdict or comparison in this snapshot depends on it."
+  },
+  "what_this_is": "A snapshot of SOFTWARE ASSURANCE for the Forge Scientific Core at the state recorded below. It records what was run and what it produced. It makes no scientific claim: it does not assert that any model is experimentally validated, that any applicability bound is a physical law, or that any domain outside those exercised here is supported."
+}
