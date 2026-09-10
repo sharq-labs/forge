@@ -1,0 +1,6936 @@
+{
+  "rejection_counts": {
+    "duplicate_declaration": 468,
+    "no_bracket": 105,
+    "not_constructible": 575,
+    "surplus_not_selected": 6
+  },
+  "rejections": [
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.lumped"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.lumped"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.lumped"
+    },
+    {
+      "detail": "126",
+      "proposer": "surplus",
+      "reason": "surplus_not_selected",
+      "system": "thermal.lumped"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->5.0",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->5.0",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->1.6",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->0.6",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "0e1b8d4148b0",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->5.0",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->1.0",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "linearization_excursion_ratio->0.2",
+      "proposer": "linearization_excursion_ratio",
+      "reason": "no_bracket",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "285",
+      "proposer": "surplus",
+      "reason": "surplus_not_selected",
+      "system": "electrical.material"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.08000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->5.0",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.049",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.02",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.049",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->5.0",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->0.98",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->0.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->0.98",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.08000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.08000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->0.2",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "73dc0b856b51",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->5.0",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.051000000000000004",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->0.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.02",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.049",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.051000000000000004",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.08000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->0.98",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->5.0",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.010000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.02",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.05",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.049",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.25",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->5.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->5.0",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->0.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.08000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.03",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.6",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->0.2",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->0.98",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.03",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.051000000000000004",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->5.0",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.08000000000000002",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "discharge_temperature_position->1.6",
+      "proposer": "discharge_temperature_position",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "outside_margin",
+      "proposer": "outside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "polarization_unmodelled_fraction->0.03",
+      "proposer": "polarization_unmodelled_fraction",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "internal_resistance_drift_ratio->1.0",
+      "proposer": "internal_resistance_drift_ratio",
+      "reason": "no_bracket",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "348",
+      "proposer": "surplus",
+      "reason": "surplus_not_selected",
+      "system": "battery.cell"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "adiabatic_ceiling_temperature->200.0",
+      "proposer": "adiabatic_ceiling_temperature",
+      "reason": "no_bracket",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "2670",
+      "proposer": "surplus",
+      "reason": "surplus_not_selected",
+      "system": "kinetics.cstr"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "cc2898e25bed",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "bf1a92d9ac37",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "87fd8f6330a6",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2ab4155a4f19",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "881d24d29f0e",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e88b340fa94c",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aef74ac4d134",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41691da2357e",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c20033909d11",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "3dcbff87e076",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2706ffba64c8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "dc54560b95a8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "56a6a208ac64",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41691da2357e",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0c5cf893b0c3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "252d71888b61",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "927029252508",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "3dcbff87e076",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ea42be69da50",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "87fd8f6330a6",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6ebbe23807d4",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e244f17e4fe6",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "818c8b76f7f5",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b96bc9926866",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6b99166c9529",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "66448a1849dc",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6b99166c9529",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "bf1a92d9ac37",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e88b340fa94c",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f5fc9b3a67eb",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6261fc447ca3",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0c5cf893b0c3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "66448a1849dc",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aef74ac4d134",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "84632257797f",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "76fa1392ea93",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "dc54560b95a8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "66448a1849dc",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "dc54560b95a8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ffc26f82012c",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "84632257797f",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "818c8b76f7f5",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6b99166c9529",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2706ffba64c8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aef74ac4d134",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "818c8b76f7f5",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41691da2357e",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f5fc9b3a67eb",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2706ffba64c8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e929a4f96dd8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f15d6439fa5c",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fac66cf54a83",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4e71caaa89f6",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aef74ac4d134",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "56a6a208ac64",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e929a4f96dd8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4c6f9fc4c29d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e929a4f96dd8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d6e6d0d4fc88",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41691da2357e",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6b99166c9529",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "66448a1849dc",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9621b83dbf94",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d6e6d0d4fc88",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6b99166c9529",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d6e6d0d4fc88",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b96bc9926866",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0c5cf893b0c3",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0c5cf893b0c3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ea42be69da50",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "4e71caaa89f6",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "cc2898e25bed",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "56a6a208ac64",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2ab4155a4f19",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2ab4155a4f19",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d9561a194f2a",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2ab4155a4f19",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6ebbe23807d4",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "421fd170c309",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fac66cf54a83",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ea42be69da50",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "3dcbff87e076",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2a70b5cad938",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d67360e4df2e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b5b9340bf985",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2ab4155a4f19",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aede0022d727",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8224e0aacf7e",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "56a6a208ac64",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "dc54560b95a8",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b96bc9926866",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "unit_representation",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6ccfa60f8148",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ffc26f82012c",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "599033b1707e",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b5b9340bf985",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "db4a0eb154f2",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "927029252508",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "98731f2c5948",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "83473d81c484",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aede0022d727",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2ab4155a4f19",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "cc2898e25bed",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ea42be69da50",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0c5cf893b0c3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "061d7822b99d",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c716274d79b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ffc26f82012c",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d5e009e062ba",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0c5cf893b0c3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f15d6439fa5c",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f5fc9b3a67eb",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "df01ca0690d9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "56a6a208ac64",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c735811a59b1",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "f4fd9d53e007",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "881d24d29f0e",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "83473d81c484",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41e94c176ce3",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fac66cf54a83",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "780959b8f3b8",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "41691da2357e",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c20033909d11",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "818c8b76f7f5",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8a0fb54d2361",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ac51cc4f3899",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "43077f807939",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2809dee20867",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "66448a1849dc",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "833180ab7c01",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "83473d81c484",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "215605644724",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b5b9340bf985",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e8b7836c4a00",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "76fa1392ea93",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "aede0022d727",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b5b9340bf985",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fac66cf54a83",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "b118065dafaf",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "be0706795a11",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d6e6d0d4fc88",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "0d641b4d5fde",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "881d24d29f0e",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "8224e0aacf7e",
+      "proposer": "boundary_refusal",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "34c826ff46d9",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "85a16620078c",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "5e317f0977c9",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "c56e8b4080ff",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "641660563054",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "018174af0d3a",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d0e976225d5e",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "248240b5b0a3",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "81234543818a",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "70dc7f0c458b",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "66448a1849dc",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ea42be69da50",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e88b340fa94c",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "99ba379186ce",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "fc87493fe220",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "defc69be949a",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "26bc7dbe8e5d",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "6ebbe23807d4",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "inside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "d17d79347e5c",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "50703ae1b9b8",
+      "proposer": "nominal_interior",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "ea42be69da50",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "cc2898e25bed",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "9a9759a51994",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "e5a0690cd87a",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "cc2898e25bed",
+      "proposer": "outside_margin",
+      "reason": "duplicate_declaration",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "2191",
+      "proposer": "surplus",
+      "reason": "surplus_not_selected",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "dissipated_power_utilization->0.2",
+      "proposer": "dissipated_power_utilization",
+      "reason": "no_bracket",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "c1f42fc27704",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "unit_representation",
+      "proposer": "unit_representation",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "dissipated_power_utilization->0.6",
+      "proposer": "dissipated_power_utilization",
+      "reason": "no_bracket",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "ae48550d0885",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "eb29c67f458b",
+      "proposer": "missing_evidence",
+      "reason": "duplicate_declaration",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "dissipated_power_utilization->0.6",
+      "proposer": "dissipated_power_utilization",
+      "reason": "no_bracket",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "inside_margin",
+      "proposer": "inside_margin",
+      "reason": "not_constructible",
+      "system": "electrical.dc"
+    },
+    {
+      "detail": "160",
+      "proposer": "surplus",
+      "reason": "surplus_not_selected",
+      "system": "electrical.dc"
+    }
+  ],
+  "schema": "blind_v2_generation_log/1",
+  "what_this_is": "Every sample the generator produced and did not keep, with why. A rejection is a fact about the sampler -- it could not construct a legal declaration, or the same declaration had already been made -- and never about what the system under test would have said, which the generator has no way to ask."
+}
