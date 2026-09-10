@@ -12,6 +12,7 @@ identical).
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -456,11 +457,39 @@ class ProvenanceRecord:
         # including one whose whole purpose is to say what a result was
         # computed from. See ``results.immutable``.
         object.__setattr__(self, "inputs", freeze(inputs))
-        object.__setattr__(
-            self,
-            "tolerances",
-            freeze({str(k): float(v) for k, v in self.tolerances.items()}),
-        )
+        # Finite, for the reason `SolverSettings.tolerances` is finite one
+        # layer down and `metadata` is checked one line below: this was the
+        # only float-bearing mapping in the core that admitted a NaN or an
+        # infinity.
+        #
+        # A tolerance is a bound something was compared against, so an
+        # infinite one says the run was solved to no bound at all while
+        # looking exactly like a run that was, and a NaN one says the bound
+        # cannot be ordered against anything. Both are claims about how a
+        # result was obtained, sitting in the record whose whole job is to
+        # answer that.
+        #
+        # It failed closed only at `to_json`, which is late and only on the
+        # canonical path: `to_dict` emitted the raw float, so
+        # `json.dumps(record.to_dict())` -- the ordinary thing to do with a
+        # payload -- produced `{"rtol": Infinity}`, which no conforming JSON
+        # reader accepts. And `from_dict` admitted it back, because
+        # `json.loads` reads those bare tokens by default. Refused here so the
+        # value cannot exist rather than cannot be written.
+        tolerances: dict[str, float] = {}
+        for key, value in self.tolerances.items():
+            tolerance = float(value)
+            if not math.isfinite(tolerance):
+                raise ScientificCoreError(
+                    f"provenance for run {run_id!r} records tolerance "
+                    f"{str(key)!r} as {tolerance!r}. A tolerance is the bound "
+                    f"a result was judged against: an infinite one says the "
+                    f"run was solved to no bound while reading as a run that "
+                    f"was, and a NaN one cannot be ordered against anything. "
+                    f"Record the bound that was actually used, or leave it out"
+                )
+            tolerances[str(key)] = tolerance
+        object.__setattr__(self, "tolerances", freeze(tolerances))
         object.__setattr__(
             self,
             "environment",

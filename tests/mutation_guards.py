@@ -608,6 +608,25 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "a difference -- a coupling tolerance -- is admitted on a scale whose "
      "zero is a convention, which is the refusal the degC fix had to leave "
      "standing"),
+    ("G26a", "src/engcore/scientific/results/uncertainty.py"
+             "::Uncertainty.__post_init__",
+     "            if self.confidence_level is not None:\n",
+     "            if False:\n",
+     "an uncertainty that says nothing was evaluated carries a coverage "
+     "probability again, so a reader sizes an interval off a record that "
+     "computed none"),
+    ("G26b", "src/engcore/scientific/results/provenance.py"
+             "::ProvenanceRecord.__post_init__",
+     "            if not math.isfinite(tolerance):\n",
+     "            if False:\n",
+     "provenance records the bound a run was judged against as an infinity "
+     "again, so a run solved to no bound reads as one that was"),
+    ("G26c", "src/engcore/scientific/solvers/protocol.py"
+             "::SolverSettings.__post_init__",
+     "        unrecordable = unwritable(self.options, path=\"options\")\n",
+     "        unrecordable = None\n",
+     "the settings a run says it used stop being held to what a record can "
+     "carry, so a NaN or a non-string key survives into provenance"),
 )
 
 
@@ -828,6 +847,12 @@ EVIDENCE: dict[str, tuple[str, str]] = {
              "test_a_registry_refuses_a_schema_it_did_not_write"),
     "G25d": ("TYPE_INVARIANT",
              "test_a_declared_count_is_never_silently_coerced"),
+    "G26a": ("CONTRACT_REFUSAL",
+             "test_an_unknown_uncertainty_cannot_carry_a_confidence_level"),
+    "G26b": ("PROVENANCE_INVARIANT",
+             "test_a_provenance_tolerance_must_be_finite"),
+    "G26c": ("CONTRACT_REFUSAL",
+             "test_solver_options_are_held_to_the_free_form_rule"),
 }
 
 #: The five that were dead when this round opened, pinned by name. Deleting or

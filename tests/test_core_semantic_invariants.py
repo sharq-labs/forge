@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import ast
 import dataclasses
+import json
 import pathlib
 
 import pytest
@@ -49,6 +50,11 @@ from src.engcore.scientific.realizations.registry import RealizationRegistry
 from src.engcore.scientific.results.data_reference import ScientificDataReference
 from src.engcore.scientific.results.provenance import ProvenanceRecord
 from src.engcore.scientific.results.result import ScientificResult
+from src.engcore.scientific.solvers.protocol import SolverSettings
+from src.engcore.scientific.results.uncertainty import (
+    Uncertainty,
+    UncertaintyKind,
+)
 from src.engcore.scientific.results.validation import (
     ValidationOutcome,
     ValidationReport,
@@ -630,3 +636,147 @@ def test_exact_boundary_equality_across_units_is_a_float_property_not_a_rule():
     for _label, (unit_a, value_a), (unit_b, value_b) in EQUIVALENT:
         assert Quantity(value_b, unit_b).magnitude_in(unit_a) == value_a
         assert base_unit(unit_a) == base_unit(unit_b)
+
+
+# =====================================================================
+# CURRENT-CORE CERTIFICATION ROUND — three proven contract gaps
+#
+# Each is a value the core's own stated rule forbids and its constructor
+# admitted. None could be written down by ``to_json``, so each failed closed
+# at the far end of the boundary rather than at the near end — which is the
+# difference between "cannot be recorded" and "cannot exist", and the reason
+# all three are refused at construction now.
+# =====================================================================
+
+
+def test_an_unknown_uncertainty_cannot_carry_a_confidence_level():
+    """The one value the UNKNOWN branch did not reach.
+
+    ``UNKNOWN uncertainty must not carry values`` was enforced over
+    ``standard_uncertainty``, ``lower`` and ``upper`` — the estimates. A
+    confidence level is the coverage probability *of an interval*, so a record
+    carrying one while carrying no interval states the probability that a
+    bound nobody computed contains the truth.
+
+    It round-tripped, so the number reached the wire beside ``"kind":
+    "unknown"`` and ``"lower": null``: a consumer reading the field to size a
+    coverage interval got 0.95 from a record whose entire content is "nothing
+    was evaluated". Nothing in this repository reads it, which is exactly why
+    the refusal belongs at the constructor rather than in a convention every
+    future reader has to know.
+    """
+    with pytest.raises(ScientificCoreError, match="confidence_level"):
+        Uncertainty(kind=UncertaintyKind.UNKNOWN, confidence_level=0.95)
+
+
+def test_an_unknown_uncertainty_still_says_why_nothing_was_computed():
+    """The other half of the rule, so the refusal cannot be over-read.
+
+    Prose stays permitted: an UNKNOWN record exists to say that nothing was
+    evaluated and why. What is refused is a NUMBER that means nothing except
+    beside an estimate that is not there.
+    """
+    record = Uncertainty(
+        kind=UncertaintyKind.UNKNOWN,
+        source="no propagation was performed",
+        notes="the model declares no input uncertainty",
+    )
+    assert record.kind is UncertaintyKind.UNKNOWN
+    assert record.confidence_level is None
+    assert not record.is_quantified
+    # And a level is still accepted where there IS something for it to cover.
+    quantified = Uncertainty(
+        kind=UncertaintyKind.STANDARD,
+        standard_uncertainty=Quantity(1.0, "kelvin"),
+        method="declared",
+        confidence_level=0.95,
+    )
+    assert quantified.confidence_level == 0.95
+
+
+@pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
+def test_a_provenance_tolerance_must_be_finite(bad):
+    """The only float-bearing mapping in the core that admitted a non-finite.
+
+    ``SolverSettings.tolerances`` refuses one and ``ProvenanceRecord.metadata``
+    refuses one; the tolerance mapping beside them did not. A tolerance is the
+    bound a result was judged against, so an infinite one says the run was
+    solved to no bound while reading exactly like a run that was, and a NaN one
+    cannot be ordered against anything.
+    """
+    with pytest.raises(ScientificCoreError, match="tolerance"):
+        ProvenanceRecord(run_id="r", tolerances={"rtol": bad})
+
+
+def test_a_non_finite_tolerance_cannot_return_through_the_wire_either():
+    """The reader half, which is where a lenient producer's record arrives.
+
+    It failed closed only at ``to_json``, which is both late and only on the
+    canonical path: ``to_dict`` emitted the raw float, so
+    ``json.dumps(record.to_dict())`` produced ``{"rtol": Infinity}`` — which no
+    conforming reader accepts — and ``from_dict`` admitted it straight back,
+    because ``json.loads`` reads that bare token by default. The refusal is in
+    ``__post_init__``, which ``from_dict`` goes through, so one rule closes
+    both directions.
+    """
+    assert json.loads('{"rtol": Infinity}') == {"rtol": float("inf")}
+    payload = ProvenanceRecord(run_id="r").to_dict()
+    payload["tolerances"] = {"rtol": float("inf")}
+    with pytest.raises(ScientificCoreError, match="tolerance"):
+        ProvenanceRecord.from_dict(payload)
+
+
+@pytest.mark.parametrize(
+    "label,bad",
+    [
+        ("non-finite", {"rtol": float("inf")}),
+        ("non-string key", {"nested": {1: "one"}}),
+        ("unserializable", {"handle": object()}),
+    ],
+)
+def test_solver_options_are_held_to_the_free_form_rule(label, bad):
+    """The last free-form mapping in the core that was not checked.
+
+    ``ProvenanceRecord.metadata`` and ``ScientificResult.metadata`` both run
+    ``unwritable``; ``SolverSettings.options`` did not, so the mapping sitting
+    beside a checked ``tolerances`` accepted a non-finite float, a non-string
+    key, or an object no record can carry. Settings that cannot be written down
+    are settings the run cannot say it used.
+    """
+    with pytest.raises(ScientificCoreError, match="cannot be recorded"):
+        SolverSettings(options=bad)
+
+
+def test_the_options_every_domain_actually_declares_still_pass():
+    """The rule reaches only what no record can carry.
+
+    Every ``options`` mapping the domains in this repository build is strings,
+    integers and booleans, and the check is derived from what survives being
+    written down rather than from a list of permitted shapes.
+    """
+    settings = SolverSettings(
+        options={
+            "formulation": "modified_nodal_analysis",
+            "n_output_points": 50,
+            "dense_output": True,
+        },
+    )
+    assert settings.options["n_output_points"] == 50
+    assert json.loads(json.dumps(settings.to_dict()))["options"][
+        "dense_output"] is True
+
+
+def test_a_solver_settings_payload_is_the_callers_to_edit():
+    """``to_dict`` detaches, like every other free-form branch in the core.
+
+    It handed back the record's own frozen containers, so a caller editing the
+    payload — the ordinary thing to do with a payload — got a refusal from a
+    container it had every reason to think was its own. The record was never at
+    risk; the payload was simply not a payload.
+    """
+    settings = SolverSettings(options={"nested": {"a": 1}, "listed": [1, 2]})
+    payload = settings.to_dict()
+    payload["options"]["nested"]["a"] = 99
+    payload["options"]["listed"].append(3)
+    assert settings.options["nested"]["a"] == 1
+    assert list(settings.options["listed"]) == [1, 2]

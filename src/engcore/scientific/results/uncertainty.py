@@ -96,6 +96,36 @@ class Uncertainty:
                     "UNKNOWN uncertainty must not carry values; use STANDARD "
                     "or INTERVAL when something was actually computed"
                 )
+            # `confidence_level` is a value too, and it was the one this rule
+            # did not reach. The three checked above are the *estimates*; a
+            # confidence level is the coverage probability attached to one, so
+            # a record carrying it while carrying no interval states the
+            # probability that a bound nobody computed contains the truth.
+            #
+            # That is exactly the shape this module exists to refuse. The
+            # record round-trips, so the number reaches the wire beside
+            # `"kind": "unknown"` and `"lower": null` -- and a consumer sizing
+            # a coverage interval off the field reads 0.95 from a record whose
+            # whole content is "nothing was evaluated". Nothing in this
+            # repository does; the field is public and serialized, so the
+            # refusal belongs at the constructor rather than in a convention
+            # every future reader has to know.
+            #
+            # `source`, `method` and `notes` stay permitted: they are prose
+            # about why nothing was computed, which is what an UNKNOWN record
+            # is for. What is refused is a NUMBER that only means something
+            # beside an estimate that is not there.
+            if self.confidence_level is not None:
+                raise ScientificCoreError(
+                    f"UNKNOWN uncertainty carries confidence_level="
+                    f"{self.confidence_level!r}. A confidence level is the "
+                    f"coverage probability of an interval, and this record "
+                    f"has none: it states the probability that a bound nobody "
+                    f"computed contains the truth. Use INTERVAL with lower and "
+                    f"upper when a bound was actually computed, or leave "
+                    f"confidence_level unset -- `notes` is where an UNKNOWN "
+                    f"record says why nothing was evaluated"
+                )
 
     @property
     def is_quantified(self) -> bool:

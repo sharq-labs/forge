@@ -24,8 +24,13 @@ from typing import Any, Mapping, Protocol, runtime_checkable
 
 from ..errors import ScientificCoreError
 from ..results.data_reference import ScientificDataReference
-from ..results.immutable import freeze
-from ..serialization import require_schema, require_schema_any, schema_string
+from ..results.immutable import detach, freeze
+from ..serialization import (
+    require_schema,
+    require_schema_any,
+    schema_string,
+    unwritable,
+)
 from ..units.quantity import Quantity
 from .capability import SolverCapability
 
@@ -119,12 +124,42 @@ class SolverSettings:
         # was built changes what a stored claim means -- the run says it was
         # solved to a bound nobody solved it to.
         object.__setattr__(self, "tolerances", freeze(tolerances))
+        # The same refusal `ProvenanceRecord.metadata` and
+        # `ScientificResult.metadata` make, in the same words, because this is
+        # the same kind of field: a free-form mapping that is recorded for
+        # provenance and travels into `PreparedSolve`.
+        #
+        # It was the last one in the core that did not make it. `tolerances`
+        # above is checked and `options` was not, so the mapping beside it
+        # accepted a NaN, an infinity, a non-string key or an object that no
+        # record can carry -- and settings that cannot be written down are
+        # settings the run cannot say it used.
+        unrecordable = unwritable(self.options, path="options")
+        if unrecordable is not None:
+            where, kind = unrecordable
+            raise ScientificCoreError(
+                f"solver settings cannot be recorded: {where} is a {kind}, "
+                f"which no scientific record can carry. These settings are "
+                f"what a provenance record says the run used, so one that "
+                f"cannot be written down is a claim that does not survive the "
+                f"boundary it was written for"
+            )
         object.__setattr__(self, "options", freeze(dict(self.options)))
 
     def to_dict(self) -> dict[str, Any]:
+        # `detach`, not a shallow copy, and for the reason `results.immutable`
+        # gives: a payload is a message and a caller may edit it. Every other
+        # free-form branch in this core is detached on the way out; this one
+        # handed back the record's own frozen containers, so a caller editing
+        # the payload got a refusal from a container it had every reason to
+        # think was its own.
         return {
             "tolerances": dict(sorted(self.tolerances.items())),
-            "options": dict(sorted(self.options.items(), key=lambda kv: kv[0])),
+            "options": {
+                key: detach(value)
+                for key, value in sorted(self.options.items(),
+                                         key=lambda kv: kv[0])
+            },
         }
 
     @classmethod
