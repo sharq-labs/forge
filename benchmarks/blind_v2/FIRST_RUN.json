@@ -1,0 +1,47 @@
+{
+  "artifacts": {
+    "runs/FIRST_RUN_primary.json": {
+      "cases_file_sha256": "e046948890c4df7eeefc31aeb5f0ecdcb45a78812f00a9e69bcedb588e7f136a",
+      "outcome_kinds": {
+        "construction_refusal": 214,
+        "core_error": 44,
+        "forge_verdict": 462
+      },
+      "records": 720,
+      "sha256": "ab97698b3c2818328d7b398892b99fe88143edb88efea017954579a57eb01c06",
+      "wall_seconds": 1.408
+    },
+    "runs/FIRST_RUN_shadows.json": {
+      "cases_file_sha256": "a93aca4bd9ca22dbe40a0226131db561a10ce911716361c9b0966ccdaa0c5afc",
+      "outcome_kinds": {
+        "construction_refusal": 65,
+        "core_error": 16,
+        "forge_verdict": 150
+      },
+      "records": 231,
+      "sha256": "4e95cea09d6c3c60f95a83fca1a35046af65d8c8a78d1544f24793279b4177b2",
+      "wall_seconds": 0.809
+    }
+  },
+  "certified_commit": "be57bf4d705606d746175cbc1c240697e68ef0c2",
+  "core_tree_matches_certification": true,
+  "core_tree_sha256": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+  "environment": {
+    "ngspice": "ngspice-42",
+    "note": "the certification snapshot was measured on Windows 11 with Python 3.14.2; this round ran on Linux with Python 3.11.15. The Core tree digest is identical, which is what the snapshot pins.",
+    "platform": "Linux 6.18.44-fc-v24 (x86_64 container)",
+    "python": "3.11.15"
+  },
+  "frozen_inputs": {
+    "FREEZE.json": "b138e00741c19a0042f1ceb218d74b4fdeb470db58b16a5bf8cc4071cd889950",
+    "cases/primary.jsonl": "e046948890c4df7eeefc31aeb5f0ecdcb45a78812f00a9e69bcedb588e7f136a",
+    "cases/shadows.jsonl": "a93aca4bd9ca22dbe40a0226131db561a10ce911716361c9b0966ccdaa0c5afc",
+    "truth/truth.jsonl": "feced16f2c4c06378f9c9de6fb5734a8e3020de9cddebd8b4fe01f7ccc007514"
+  },
+  "not_yet_done": "no record in either run file has been compared against truth",
+  "pre_forge_freeze_sha": "979ed983f786f38838e8db8373e02ffec5ad9b97",
+  "runner_commit_sha": "c0755c864d2a9e972508c51db06a2a27ecd40de5",
+  "schema": "blind_v2_first_run_seal/1",
+  "sealed_at": "2026-09-10T17:26:40+00:00",
+  "what_this_is": "The first and only run of the certified Core over the frozen Blind v2 corpus. Sealed before any record in it was read. It is immutable: a later run, after any fix, is a different artifact and never this one."
+}
