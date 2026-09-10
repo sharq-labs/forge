@@ -197,6 +197,28 @@ Blind run: 444 cases in 5.2 s wall, p50 2.6 ms, p95 236 ms per case.
 
 ---
 
+## One thing found by the post-round sweep, unrelated to the challenge
+
+`tests/mutation_guards.py` was run as part of the closing sweep. **64 of 64
+mutations that applied turned the guard suite red, and none went GREEN** — no
+guard is decoration.
+
+But **5 of the 69 mutations did not apply at all**: `G2f`, `G2g`, `G22a`,
+`G22b`, `G22c`. Their search patterns no longer match the source they were
+written against — `G22a` and `G22c` target text that is absent, and `G22b`'s
+target sits at a different indentation. The harness distinguishes "did not
+apply" from GREEN, which is the right design and is why this is visible at all.
+
+**It predates this round.** Each pattern was checked against both `52963eb`
+(before any fix here) and `HEAD`, and is identically absent or mismatched at
+both; two of the files were never touched by this work, and the one line that
+does exist is at `definition.py:1419` while this round's diff touches lines 32
+and 659–699.
+
+The consequence: **5 guards are currently unexercised by the harness**, so
+nothing says whether they still guard. That is worth a round of its own and is
+not one this round has authority to spend.
+
 ## Blindness audit
 
 `v1/BLINDNESS_AUDIT.json` checks each claim against git rather than asserting
