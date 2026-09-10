@@ -29,7 +29,12 @@ from ..serialization import (
     require_schema_any,
     schema_string,
 )
-from ..units.quantity import Quantity, dimensionality
+from ..units.quantity import (
+    Quantity,
+    base_unit,
+    dimensionality,
+    is_ratio_scale,
+)
 from ..sequences import duplicates
 from ..units.validation import require_same_dimension, require_unit
 from ..results.immutable import freeze
@@ -656,13 +661,42 @@ class CrossLimitCondition:
                 f"share a dimension, so their ratio is not a number this "
                 f"condition can bound"
             )
-        divisor = denominator.to(numerator.units).magnitude
+        # A RATIO NEEDS A RATIO SCALE, and converting the denominator into
+        # the numerator's unit and dividing magnitudes does not supply one.
+        #
+        # On a scale whose zero is a convention, the ratio of two values is not
+        # a property of the values. `-12.33 degC` over `407.67 kelvin` used to
+        # convert the denominator to 134.52 degC and return -0.0917; put both
+        # on the base unit, where zero means zero, and it is 0.6398. Not a
+        # rounding difference -- a satisfied condition reported as violated,
+        # and the answer depending on which unit the caller happened to write,
+        # which is the one thing this layer says a unit may never do.
+        #
+        # This is the same rule two callers already state about a DIFFERENCE
+        # and for the same reason. A ratio has the requirement too, and the
+        # test is a property of the unit, so it lives beside the unit.
+        #
+        # So when either operand sits on an interval scale, both go to the
+        # shared dimension's base unit first. When neither does -- which is
+        # every case in the existing corpus -- the original path is taken
+        # unchanged, because a ratio is already scale-invariant there and this
+        # must not perturb numbers it has no business touching.
+        #
+        # Found by a blind challenge, and only reachable once a declaration
+        # could carry an interval-scale temperature at all.
+        if is_ratio_scale(numerator.units) and is_ratio_scale(denominator.units):
+            top = numerator.magnitude
+            divisor = denominator.to(numerator.units).magnitude
+        else:
+            base = base_unit(numerator.units)
+            top = numerator.magnitude_in(base)
+            divisor = denominator.magnitude_in(base)
         if divisor == 0.0:
             raise ModelValidityError(
                 f"validity condition {self.name!r}: {self.denominator} is "
                 f"zero, and the ratio this condition bounds does not exist"
             )
-        ratio = Quantity(numerator.magnitude / divisor, "dimensionless")
+        ratio = Quantity(top / divisor, "dimensionless")
         return _within(
             ratio,
             minimum=self.minimum,

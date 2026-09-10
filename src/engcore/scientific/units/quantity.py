@@ -534,6 +534,46 @@ def normalize_unit(unit: str) -> str:
         raise UnitCompatibilityError(f"unparsable unit {unit!r}: {exc}") from exc
 
 
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def base_unit(unit: str) -> str:
+    """The SI base unit of this unit's dimension, whose zero is physical.
+
+    Where a ratio or a difference has to be taken across two scales, this is
+    the one they can both be put on. Memoized for the same reason as
+    :func:`_canonical_unit`: the registry never changes.
+    """
+    _factor, base = registry().get_base_units(
+        registry().Unit(normalize_unit(unit)))
+    return str(base)
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def is_ratio_scale(unit: str) -> bool:
+    """Does zero of this unit mean zero of the quantity?
+
+    True for kelvin, ohm, second, ``delta_degC``; false for ``degC`` and
+    ``degF``, whose zeros are conventions. It is the property that decides
+    whether a RATIO of two values means anything: 20 degC is not twice 10 degC,
+    and no amount of careful conversion makes it so.
+
+    The repository already applies this rule in two places and states it the
+    same way each time — a coupling tolerance and a temperature excursion span
+    are both refused on an affine scale, because a *difference* cannot live on
+    a scale with a conventional zero. This is that test, generalised past
+    temperature and given a name, because a third caller needed it: a ratio has
+    the same requirement as a difference and for the same reason.
+
+    Memoized on the same argument as :func:`_canonical_unit` and safe for
+    exactly the same reason — the registry is a constant for the life of the
+    process.
+    """
+    text = normalize_unit(unit)
+    base = base_unit(text)
+    if base == text:
+        return True
+    return float(registry().Quantity(0.0, text).to(base).magnitude) == 0.0
+
+
 def dimension_of(unit: str) -> Any:
     """A unit's physical dimensionality as the backend's own comparable object.
 

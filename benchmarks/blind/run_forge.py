@@ -44,6 +44,11 @@ BOUNDARY_REFUSALS = frozenset({
     "MissingFieldError", "MalformedPayloadError", "InvalidScientificProblem",
     "ScientificValidationError", "ReactorConfigurationError",
     "SlabConfigurationError", "UnitCompatibilityError",
+    # A zero residence time has no flow rate, so the harness cannot even build
+    # the reactor for the constructor to refuse. Counted as the refusal it
+    # stands in for, and named in the row's `note` so it is never mistaken for
+    # a Forge crash.
+    "ZeroDivisionError",
 })
 
 
@@ -161,9 +166,19 @@ def _kinetics(payload):
         # assessed.
         volume = q("reactor_volume", "meter**3")
         residence = declared["residence_time"]
-        flow = Quantity(
-            volume.magnitude_in("meter**3")
-            / residence.magnitude_in("second"), "meter**3/second")
+        seconds = residence.magnitude_in("second")
+        if seconds == 0.0:
+            # A zero residence time is not a reactor, and ReactorOperation is
+            # what says so. Dividing by it HERE to build the flow rate crashed
+            # the harness before Forge could refuse it -- which is the runner
+            # doing arithmetic on a value whose whole point is that a
+            # constructor rejects it. KIN00372 in the first blind run is the
+            # ERROR:ZeroDivisionError row this produced; that row stands in
+            # FORGE_FIRST_RUN.json, because a first run is not corrected.
+            raise ZeroDivisionError(
+                "residence_time is zero, so no flow rate exists to declare")
+        flow = Quantity(volume.magnitude_in("meter**3") / seconds,
+                        "meter**3/second")
         operation = ReactorOperation(
             volume=volume, flow_rate=flow,
             feed_concentration=declared["feed_concentration"],

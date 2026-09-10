@@ -330,3 +330,114 @@ def test_offset_arithmetic_is_untouched():
     assert difference.magnitude_in("kelvin") == pytest.approx(10.0)
     with pytest.raises(UnitCompatibilityError, match="offset|ambiguous"):
         Q.parse("30 degC") + Q.parse("20 degC")
+
+
+# =====================================================================
+# The second defect, which the first fix made reachable (blind/v1, T5)
+# =====================================================================
+
+def test_a_ratio_of_two_temperatures_does_not_depend_on_the_scale_written():
+    """`CrossLimitCondition` divided magnitudes after a one-sided conversion.
+
+    ``T_ref / theta_D`` is a *reduced temperature*: it means something because
+    both are absolute. The old arithmetic converted the denominator into the
+    numerator's unit and divided the magnitudes, so a reference temperature
+    declared as ``-12.33 degC`` over a Debye temperature of ``407.67 kelvin``
+    gave ``-12.33 / 134.52 = -0.0917`` instead of ``260.82 / 407.67 = 0.6398``
+    — a satisfied condition reported as violated, with the answer depending on
+    which unit the caller happened to write.
+
+    Unreachable until the payload boundary could express a degC temperature at
+    all, which is why one blind round found both in that order.
+    """
+    from src.engcore.scientific.models.definition import (
+        CrossLimitCondition, ValidityStatus,
+    )
+
+    condition = CrossLimitCondition(
+        name="reference_reduced_debye_temperature",
+        numerator="reference_temperature",
+        denominator="debye_temperature",
+        minimum=Q(0.2, "dimensionless"),
+    )
+    debye = Q(407.66979551742594, "kelvin")
+    in_celsius = condition.evaluate_in({
+        "reference_temperature": Q(-12.3330494309767, "degC"),
+        "debye_temperature": debye,
+    })
+    in_kelvin = condition.evaluate_in({
+        "reference_temperature": Q(260.81695056902327, "kelvin"),
+        "debye_temperature": debye,
+    })
+    assert in_celsius == in_kelvin == ValidityStatus.IN_DOMAIN
+
+
+@pytest.mark.parametrize(
+    "reference_c, debye_k",
+    [(-12.33, 407.67), (20.0, 300.0), (-40.0, 1440.0), (100.0, 500.0),
+     (-200.0, 400.0), (0.0, 273.15)],
+)
+def test_the_reduced_temperature_is_the_absolute_ratio(reference_c, debye_k):
+    """Computed here from the definition, not asked for."""
+    from src.engcore.scientific.models.definition import (
+        CrossLimitCondition, ValidityStatus,
+    )
+
+    expected = (reference_c + 273.15) / debye_k
+    condition = CrossLimitCondition(
+        name="reference_reduced_debye_temperature",
+        numerator="reference_temperature",
+        denominator="debye_temperature",
+        minimum=Q(0.2, "dimensionless"),
+    )
+    status = condition.evaluate_in({
+        "reference_temperature": Q(reference_c, "degC"),
+        "debye_temperature": Q(debye_k, "kelvin"),
+    })
+    assert status == (ValidityStatus.IN_DOMAIN if expected >= 0.2
+                      else ValidityStatus.OUTSIDE_VALIDATED_DOMAIN)
+
+
+def test_a_ratio_scale_pair_is_computed_exactly_as_before():
+    """The narrow path is narrow on purpose.
+
+    Every case in the existing corpus declares both operands on a ratio scale,
+    and this asserts the fix does not go near them: the ratio is the same
+    number, bit for bit, that dividing after the old one-sided conversion
+    produced.
+    """
+    from src.engcore.scientific.models.definition import (
+        CrossLimitCondition, ValidityStatus,
+    )
+
+    condition = CrossLimitCondition(
+        name="reference_temperature_utilization",
+        numerator="reference_temperature",
+        denominator="maximum_operating_temperature",
+        maximum=Q(1.0, "dimensionless"),
+    )
+    for reference, ceiling, expected in (
+        (Q(293.15, "kelvin"), Q(450.0, "kelvin"), ValidityStatus.IN_DOMAIN),
+        (Q(500.0, "kelvin"), Q(450.0, "kelvin"),
+         ValidityStatus.OUTSIDE_VALIDATED_DOMAIN),
+        (Q(0.29315, "kilokelvin"), Q(450.0, "kelvin"),
+         ValidityStatus.IN_DOMAIN),
+    ):
+        assert condition.evaluate_in({
+            "reference_temperature": reference,
+            "maximum_operating_temperature": ceiling,
+        }) == expected
+
+
+@pytest.mark.parametrize(
+    "unit, ratio_scale",
+    [("kelvin", True), ("degC", False), ("degF", False),
+     ("delta_degC", True), ("ohm", True), ("second", True),
+     ("kiloohm", True), ("dimensionless", True), ("rankine", True),
+     ("watt/meter/kelvin", True)],
+)
+def test_the_ratio_scale_test_answers_what_it_claims(unit, ratio_scale):
+    """Zero of this unit means zero of the quantity, or it does not."""
+    from src.engcore.scientific.units.quantity import is_ratio_scale
+
+    assert is_ratio_scale(unit) is ratio_scale
