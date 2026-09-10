@@ -1,0 +1,31 @@
+{
+  "artifacts": {
+    "runs/POST_FIX_primary.json": "d2b1631a40db9341454baf577180958a5edeca2d77afe3c9ae9e3aaf4ebccba5",
+    "runs/POST_FIX_shadows.json": "60ba70f6a0c79d8f1478405ceed00914eda1630efa6a9ea39c1a62714b2a154b"
+  },
+  "certified_core_digest_note": "src/engcore/scientific tree sha256 is unchanged at 82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507 because the fix is in src/engcore/domains/thermal_models/lumped.py, which is OUTSIDE the path the certification snapshot digests. Production code did change, in a shipped model record that is part of the public scientific contract, and the certified digest did not move. That is a limitation of the snapshot's scope and is reported as one rather than claimed as 'nothing changed'.",
+  "first_run_sha": "c29ec4efab17987a874ee6cd92f944bb2c85f962",
+  "fix_commit_sha": "0e9bcc219ba7d19eb823cd739dec11c115012ad3",
+  "identical_to_first_run": {
+    "note": "The scores are identical: 541 exact, 630 acceptable, 5 false accepts, 2 false rejects, both runs. That is the correct outcome and not a failed fix. CORE-1 was a contract defect: the record promised a cross-check the derivation deliberately does not perform. Correcting the record changes what a future reader would predict; it cannot change what this corpus predicted, because this corpus was frozen against the record as it was. The two false accepts stand in the first-run result and always will.",
+    "primary_records_identical": null
+  },
+  "regression_after_fix": {
+    "battery_dev": "272/280, FA 0, FR 8 -- identical to certification, same ids",
+    "benchmark_guards": 57,
+    "blind_v1_guards": 51,
+    "blind_v2_challenge_tests": 83,
+    "core_semantic_invariants": "110 (baseline 109 + this round's guard)",
+    "fast": "3833 passed, 3 skipped (baseline 3832 + this round's guard)",
+    "hard_dev": "1362/1400, FA 0, FR 0 -- identical to certification",
+    "independent_reason_catcher": "124 + 2 skipped",
+    "independent_verdict": 83,
+    "mutation_harness_self_guard": 6,
+    "oracle_suite": "363 + 2 skipped",
+    "performance_guards": 12,
+    "scientific": "4367 passed, 3 skipped (baseline 4366 + this round's guard)"
+  },
+  "schema": "blind_v2_post_fix_seal/1",
+  "sealed_at": "2026-09-10T17:43:45+00:00",
+  "what_this_is": "A second run of the same frozen corpus, after the CORE-1 fix. It is a separate artifact and FIRST_RUN.json is untouched. The first run remains the certification generalization result; this one only says what the fix changed."
+}

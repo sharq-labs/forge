@@ -1,0 +1,38 @@
+{
+  "gates": {
+    "GATE_1_BLINDNESS": {
+      "evidence": "freeze commit 979ed98 predates the runner (c0755c8) and the sealed run (c29ec4e); no frozen artifact changed after the freeze; the no-peek audit is clean on all four checks and was shown to catch a deliberately peeking module; no forbidden corpus was opened. One source-read boundary incident is recorded and its content was not used.",
+      "verdict": "PASS"
+    },
+    "GATE_2_CHALLENGE_TRUTH_QUALITY": {
+      "evidence": "7 errata over 90 of 720 cases (12.5%). Two are substantive oracle defects: the levers walked surface_emissivity past 1 and a state-of-charge edge below 0 and the oracle computed with both, and a float path landed one ULP above an inclusive bound. The other 5 are the challenge predicting a refusal at the wrong stage, which never crosses accept/refuse. Every correction was independently re-derived; none reverses a safety finding. The challenge supports its conclusions, and 12.5% is higher than a v3 should accept.",
+      "verdict": "PASS_WITH_CONCERN"
+    },
+    "GATE_3_ZERO_GENUINE_FALSE_ACCEPTS": {
+      "evidence": "5 false accepts in the first run; 3 are challenge defects (ERR-1, ERR-2). 2 survive adjudication: V2-THERMAL_LUMPED-00065 and -00074, both from CORE-1. A body declaring a characteristic length and a surface area but no volume reads SUPPORTED with geometry_route_ratio in `satisfied`, where the condition's own published record said it must be UNKNOWN. An independent reader of the contract predicted a refusal and got an acceptance. That is a false accept whichever half of the contradiction is at fault.",
+      "verdict": "FAIL"
+    },
+    "GATE_4_ZERO_UNRESOLVED_CORE_DEFECTS": {
+      "evidence": "one Core defect found (CORE-1) and one fixed, in commit 0e9bcc219ba7d19eb823cd739dec11c115012ad3. Nothing is left unresolved. 0 genuine Core crashes: all 44 exceptions the runner filed as core_error are declared domain refusals (ReactorConfigurationError, SlabConfigurationError), which is fail-closed behaviour and a runner taxonomy defect.",
+      "verdict": "PASS"
+    },
+    "GATE_5_METAMORPHIC_REPRESENTATION_SAFETY": {
+      "evidence": "210 semantics-preserving shadow pairs across five transformations -- equivalent units, declaration order, JSON round trip, integer spelling, provenance metadata -- and 0 unjustified violations and 0 mechanism drift in every one. All 21 affine-span probes, the transformation declared NOT semantics-preserving, were refused with an exact message naming the confusion: a span may not be stated on a scale whose zero is conventional. No equivalent physical declaration produced a stronger trust verdict because of how it was written.",
+      "verdict": "PASS"
+    },
+    "GATE_6_CERTIFIED_CORE_DIGEST_PRESERVED": {
+      "evidence": "the src/engcore/scientific tree digest is unchanged at 82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507, both immediately before the first run and now. Production code DID change: the CORE-1 fix is in src/engcore/domains/thermal_models/lumped.py, outside the path the snapshot digests. The snapshot is explicit about that scope -- core.path is src/engcore/scientific and digest_covers names src/engcore/scientific/**/*.py -- so the digest behaved as specified. The caveat is attached because 'the certified Core digest is preserved' is on its own compatible with having changed a shipped model record a caller reads, which is what happened.",
+      "verdict": "PASS_WITH_SCOPE_CAVEAT"
+    },
+    "GATE_7_MUTATION_ASSURANCE_PRESERVED": {
+      "evidence": "the 79-mutation suite is re-running after the fix; filled in below.",
+      "verdict": "PENDING"
+    },
+    "GATE_8_EXISTING_BENCHMARKS_PRESERVED": {
+      "evidence": "Hard DEV 1362/1400, FA 0, FR 0, case-set digest 28dcc10de866c699a6a817dac29f617a16a2c19149f9fda51167624ebf889a04 -- identical to certification. Battery DEV 272/280, FA 0, FR 8 with the same eight ids, digest 32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853 -- identical. benchmark guards 57, oracle suite 363+2, independent verdict 83, independent reason/catcher 124+2, blind-v1 guards 51, performance guards 12 -- all identical.",
+      "verdict": "PASS"
+    }
+  },
+  "note": "Reported separately. All eight must PASS for Blind v2 to pass.",
+  "schema": "blind_v2_safety_gates/1"
+}
