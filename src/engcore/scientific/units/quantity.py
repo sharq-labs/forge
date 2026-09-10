@@ -627,6 +627,42 @@ class Quantity:
                 f"{raw!r} carries no unit; state one explicitly "
                 f"(e.g. '{raw} dimensionless')"
             )
+        # SPLIT FIRST, and only fall back to the backend's string parser.
+        #
+        # ``registry().Quantity("20 degC")`` is read by the backend as the
+        # MULTIPLICATION ``20 * degC``, and multiplying by an offset unit is
+        # ambiguous, so it refuses. The two-argument constructor never
+        # multiplies -- ``Quantity(20.0, "degC").magnitude_in("kelvin")`` is
+        # 293.15 and always was -- so the whole of this class supported degrees
+        # Celsius except the one path a declaration can take.
+        #
+        # That cost the payload boundary its most common engineering
+        # temperature unit, and it did so while reporting the wrong cause: the
+        # message said the quantity could not be READ, when the unit is
+        # perfectly readable and only the multiplication was ambiguous. It also
+        # contradicted the boundary's own stated rule -- "any unit of the right
+        # dimension is accepted; the core converts it" -- which is asserted in
+        # tests/mcp/test_problem.py and was only ever exercised with a
+        # ratio-scale unit.
+        #
+        # Found by benchmarks/blind/v1: 72 of 444 cases, across two systems and
+        # every boundary stratum, refused for declaring a temperature in degC.
+        #
+        # The fallback is kept and is not decoration: it takes any spelling the
+        # split cannot handle -- "5volt" with no separator among them -- so this
+        # is strictly additive. It cannot admit an unknown unit, because the
+        # two-argument path normalises through the same registry and
+        # ``"1 kilohm"`` is still refused. Nor does it weaken the places that
+        # deliberately refuse an affine scale: a coupling tolerance and an
+        # excursion span are refused by ``_require_ratio_scale`` on the UNIT,
+        # after any parse, and those refusals are about a difference that
+        # cannot live on a scale with a conventional zero.
+        magnitude, separator, unit = raw.partition(" ")
+        if separator and unit.strip():
+            try:
+                return cls(float(magnitude), unit.strip())
+            except (ValueError, UnitCompatibilityError):
+                pass
         try:
             parsed = registry().Quantity(raw)
         except Exception as exc:
