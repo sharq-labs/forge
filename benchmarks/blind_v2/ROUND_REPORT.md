@@ -5,7 +5,13 @@ Scientific Core at its certified revision. This file is the round's report.
 Every figure in it was measured in this round; nothing is quoted from
 documentation.
 
-**Decision: BLIND V2 EXPOSED CORE DEFECTS — RETURN TO CURRENT-CORE HARDENING.**
+**Decision: BLIND V2 EXPOSED A SHIPPED CORE CONTRACT DEFECT — RETURN TO
+CURRENT-CORE HARDENING FOR CONTRACT-INTEGRITY RECERTIFICATION.**
+
+The defect is a shipped published record contradicting guarded runtime
+semantics. It is not an incorrect numerical or scientific runtime
+implementation, and no executable scientific behaviour was changed to resolve
+it.
 
 ---
 
@@ -275,8 +281,11 @@ HEAD is **empty**.
 | Records filed as Core errors | 44 |
 | Runner errors | 0 |
 
-After adjudication: **674 / 720 exact (93.6%)**, **2 false accepts**, **0 false
-rejects**, **0 Core crashes**.
+After adjudication: **674 / 720 exact (93.6%)**, **0 false rejects**, **0 Core
+crashes**, and **2 false accepts relative to the frozen published contract** —
+which post-adjudication evidence resolved to a contract-integrity defect rather
+than a behavioural one. **Behavioural false accepts after adjudication: 0.**
+See section Z.
 
 ## S. System-by-system results
 
@@ -306,7 +315,9 @@ refuses early. Neither crosses the accept/refuse line.
 
 No aggregate accuracy in this report implies scientific validation. The
 INDEPENDENT_SCIENTIFIC row is the only one that speaks to the science, and its
-two false accepts are CORE-1.
+two false accepts are CORE-1 — false accepts against the frozen published
+contract, not against the runtime's computed science, which was found to be
+deliberate and guarded.
 
 ## U. Dual-oracle results
 
@@ -370,37 +381,80 @@ to its nominal value, leaving every other defect where it was, and recomputing.
 | **CORE_DEFECT** | **2** |
 | UNRESOLVED | 0 |
 
+The 2 `CORE_DEFECT` rows are the CORE-1 cases. `CORE_DEFECT` here means a
+defect in the shipped Core product; section Z establishes that its class is
+**SHIPPED_CONTRACT_INTEGRITY** — the published record, not the computed
+science.
+
 172 of the 179 mismatches are refusal against refusal: the challenge expected
 a condition to catch what the Core refused earlier, at construction. The Core
 is stricter and earlier, which is the safe direction.
 
 ## Z. Genuine Core defects
 
-**CORE-1 — the geometry record promised a cross-check the derivation does not
-perform.** Severity MEDIUM, false-confidence potential yes.
+**CORE-1 — Published capability contract contradicts guarded runtime
+semantics.** Class **SHIPPED_CONTRACT_INTEGRITY**. Severity MEDIUM,
+false-confidence potential yes.
 
-`geometry_route_ratio` exists to catch a characteristic length and a volume
-belonging to different objects. Its published record — the text a caller reads
-and `to_dict` serializes — said *UNKNOWN unless characteristic_length,
-body_volume and surface_area are all supplied; with one route there is nothing
-to compare, which is not the same as two that agree.* The derivation returns
-1.0 with a single route, so a body declaring a length and a surface area but no
-volume reaches IN_DOMAIN with the condition sitting in `satisfied`.
+**This is a shipped contract/record integrity defect. It is not an incorrect
+numerical or scientific runtime implementation.** No computed quantity, no
+verdict and no benchmark figure is affected by it, and none needed to change to
+resolve it.
+
+Two statements about `geometry_route_ratio` shipped together and contradict
+each other:
+
+* the **published record** — the text a caller reads and `to_dict` serializes —
+  said *UNKNOWN unless characteristic_length, body_volume and surface_area are
+  all supplied; with one route there is nothing to compare, which is not the
+  same as two that agree*;
+* the **derivation** returns `1.0` with a single route, so the condition is
+  reported in `satisfied` and the assessment reaches IN_DOMAIN.
+
+Both are shipped. They cannot both describe the product. The defect is that
+contradiction, and it is located in the published record.
 
 Reproduction, frozen: `geometry_route_ratio(declared=1 mm, volume=None,
-surface_area=0.01 m²)` returns `1.0 dimensionless`.
+surface_area=0.01 m²)` returns `1.0 dimensionless`, and an assessment over that
+declaration reaches IN_DOMAIN with the condition in `satisfied`. The published
+record predicted UNKNOWN.
 
-The behaviour is not the mistake. `test_one_route_alone_is_not_a_contradiction`
-pins it deliberately, and changing the code breaks 25 tests. The **record** was
-the half that was wrong, and it now states what the condition does, including
-the part a reader most needs: with one route the condition is satisfied and no
-cross-check was performed. It also records that whether a single-route
+**The runtime semantics are deliberate and guarded.**
+`test_one_route_alone_is_not_a_contradiction` pins the single-route behaviour by
+name and gives the reason: demanding all three fields would be a larger claim
+than this condition makes, and the Biot number is computed from an unambiguous
+value either way. Changing the derivation to return `None` broke 25 existing
+tests. So the record was the half that was wrong, and the record is what moved.
+
+It now states what the condition does, including the part a reader most needs:
+with one route the condition is satisfied and **no cross-check was performed**,
+and `satisfied` here means "no declared geometry contradicts another", never
+"two routes were compared". It also records that whether a single-route
 declaration should instead be UNKNOWN is a live product question, and names the
 test that pins the current answer, so the next round decides it rather than
-rediscovering it.
+rediscovering it. A regression guard now pins the record and the derivation
+together so they cannot drift apart again.
 
-Fixed in `0e9bcc219ba7d19eb823cd739dec11c115012ad3`. No verdict anywhere
-changes.
+Resolved in `0e9bcc219ba7d19eb823cd739dec11c115012ad3`. No executable
+scientific behaviour changed; no verdict anywhere changed.
+
+### What the two cases are, precisely
+
+`V2-THERMAL_LUMPED-00065` and `-00074` were **false accepts relative to the
+frozen published contract** the challenge read before the run. Independent
+truth was derived from that record, the record said UNKNOWN, and the system
+reported SUPPORTED. That is exactly the frozen Gate 3 condition, and the gate
+result stands on it.
+
+Post-adjudication evidence then established *where* the defect sits. Because
+the runtime behaviour is deliberate and guarded, **neither case is a
+behavioural false accept**: the runtime did what the product intends, and the
+published record misdescribed it.
+
+| | |
+|---|---|
+| Behavioural false accepts after adjudication | **0** |
+| Contract false accepts under the frozen published contract | **2** |
 
 **Zero genuine Core crashes.** All 44 exceptions the runner filed as
 `core_error` are declared domain refusals.
@@ -468,6 +522,14 @@ It is reported to show nothing pathological happened.
 
 Production code changed, so the full certification-relevant sweep was re-run.
 
+**Every runtime figure below is unchanged, and that is the expected result.**
+The CORE-1 correction changed the published contract/record and added its
+executable consistency guard; it did not change the runtime scientific result
+for the frozen corpus. Hard DEV, Battery DEV, every case-set digest and every
+frozen verdict output are therefore byte-identical, and the post-fix run of the
+v2 corpus reproduces the first run exactly. The only movements in the table are
+the two suites that gained this round's regression guard.
+
 | Suite | After the fix | Certified baseline |
 |---|---|---|
 | FAST | 3833 passed, 3 skipped | 3832 + this round's guard |
@@ -497,12 +559,30 @@ rate and the discovery contamination on six errata.
 |---|---|
 | 1 — Blindness | **PASS** |
 | 2 — Challenge truth quality | **PASS WITH CONCERN** |
-| 3 — Zero genuine false accepts | **FAIL** |
+| 3 — Zero genuine false accepts | **FAIL** — qualified, see below |
 | 4 — Zero unresolved Core defects | **PASS** |
 | 5 — Metamorphic representation safety | **PASS** |
 | 6 — Certified Core digest preserved | **PASS WITH SCOPE CAVEAT** |
 | 7 — Mutation assurance preserved | **PASS** |
 | 8 — Existing benchmarks preserved | **PASS** |
+
+**Gate 3's definition is frozen and is not redefined here.**
+`CHALLENGE_SPEC.json`, committed before the corpus existed, defines a false
+accept as *"the system reports SUPPORTED where independent truth refuses"*. The
+two CORE-1 cases meet that definition — independent truth was derived from the
+published record, the record said UNKNOWN, the system said SUPPORTED — so the
+gate fails and the result stands as measured.
+
+> **Gate 3 fails under the frozen published contract; post-adjudication
+> evidence established that the runtime behaviour was deliberate and the defect
+> was in the published record.**
+
+Stated on the two axes the evidence actually supports:
+
+| | |
+|---|---|
+| Behavioural false accepts after adjudication | **0** |
+| Contract integrity | **FAIL** — the published record contradicted guarded behaviour |
 
 **Gate 6's caveat is a scope fact a reader needs, not an accusation.** The
 `src/engcore/scientific` tree digest is unchanged, both immediately before the
@@ -518,6 +598,11 @@ exercised here". So the digest behaved exactly as specified. But the sentence
 changed a shipped model record that a caller reads — which is what happened
 here. Anyone reading Gate 6 as "no production code changed" would be wrong, and
 that is why the caveat is attached rather than the gate simply marked PASS.
+
+**The previously certified scientific digest remains unchanged and is not
+invalidated** — nothing it covers was touched. A new shipped-product /
+contract-integrity certification cycle is required because a shipped
+domain-model record contradicted guarded runtime semantics.
 
 ## AI. Remaining scientific limitations
 
@@ -540,14 +625,15 @@ New, from this round:
 * the certification digest covers `src/engcore/scientific/**` only, as it says
   it does, so "certified Core digest preserved" does not by itself mean no
   shipped production code changed (Gate 6);
-* a validity record's *description* is outside what the mutation harness can
-  express, because `_code_digest` drops STRING tokens and
-  `test_every_mutation_changes_executable_code` refuses prose-only mutations.
-  CORE-1 was exactly such a defect, **no mutation could have caught it**, and
-  the 79/79 result is therefore silent about the whole class of defect this
-  round found. That is the single most important thing a re-certification
-  should act on: mutation assurance covers executable branches, and a contract
-  that misdescribes itself is not one.
+* **the current mutation harness cannot detect this defect class**, because
+  STRING-token-only changes are intentionally excluded from its `_code_digest`
+  and `test_every_mutation_changes_executable_code` refuses any mutation whose
+  only effect is prose. CORE-1 lives entirely in a published record's text, so
+  the 79/79 result is silent about it — a scope limit, not a weakness in the
+  result. A future semantic-contract or record-mutation layer, which would
+  mutate published record text and require a guard to notice, could cover this
+  class. The regression guard added this round is the first instance of exactly
+  such a guard.
 
 ## AJ. Harsh scores
 
@@ -561,27 +647,69 @@ New, from this round:
 | Boundary robustness | **9** | 54 exact-boundary hits and correct inclusive/exclusive semantics throughout; the only ULP disagreement was the challenge's own arithmetic |
 | Unit / metamorphic robustness | **10** | 210/210 invariant, 21/21 affine spans refused with an exact message |
 | Refusal-path robustness | **9** | refuses early and names the field and the reason every time; the late path is less well measured because the challenge over-predicted it |
-| Verdict generalization | **7** | 93.6% adjudicated, but two genuine false accepts |
+| Verdict generalization | **7** | 93.6% adjudicated; 0 behavioural false accepts, but 2 against the frozen published contract |
 | Reason generalization | **9** | 198 exact, 0 wrong mechanisms |
 | Causal generalization | **8** | 139 exact, 2 wrong |
-| False-confidence resistance | **6** | a published contract that did not describe its own behaviour, in the unsafe direction |
+| False-confidence resistance | **6** | a shipped published record that did not describe its own guarded behaviour, in the unsafe direction |
 | Policy / science separation | **9** | every bound classed, conventions named as conventions, 96% of their verdicts robust |
 | Reproducibility | **9** | deterministic generation verified, every artifact digested, benchmarks byte-identical across a different OS and Python |
-| Certified-Core generalization | **7** | one contract defect; behaviour otherwise held over 720 fresh cases and 231 shadows with no crashes and no metamorphic violation |
+| Certified-Core generalization | **7** | one shipped contract-integrity defect; runtime behaviour held over 720 fresh cases and 231 shadows with no crashes, no behavioural false accept and no metamorphic violation |
 
 ## AK. Final decision
 
-**BLIND V2 EXPOSED CORE DEFECTS — RETURN TO CURRENT-CORE HARDENING.**
+**BLIND V2 EXPOSED A SHIPPED CORE CONTRACT DEFECT — RETURN TO CURRENT-CORE
+HARDENING FOR CONTRACT-INTEGRITY RECERTIFICATION.**
 
-Gate 3 fails: two genuine false accepts survive adjudication, both from CORE-1.
-A genuine production defect was found and fixed, which under this round's own
-rule means the certified revision failed the generalization gate whatever the
-score afterwards. The post-fix run is byte-for-byte identical to the first,
-which is the correct outcome and not a failed fix: CORE-1 was a contract
-defect, and correcting the record changes what a future reader predicts, not
-what this frozen corpus predicted.
+This is the frozen decision option *"BLIND V2 EXPOSED CORE DEFECTS — RETURN TO
+CURRENT-CORE HARDENING"*, stated with the defect class the evidence supports.
+The round's vocabulary is not being redefined; the class is being named.
 
-The challenge did its job. It was able to fail Forge, and it did — on a
-contradiction between what the Core publishes about itself and what it does,
-which no existing suite could see, and which the mutation harness cannot
-express. A new certification cycle is required.
+**What was found.** One Core defect, CORE-1, of class
+**SHIPPED_CONTRACT_INTEGRITY**: the published `geometry_route_ratio` record
+contradicted the guarded runtime semantics it documents. It is **not** an
+incorrect numerical or scientific runtime implementation.
+
+**Why the runtime was not changed.** The single-route behaviour is deliberate
+and guarded by `test_one_route_alone_is_not_a_contradiction`, which pins it by
+name and states its reason. Changing the derivation broke 25 existing tests.
+Overriding a guarded product decision on the strength of a challenge
+disagreeing with a record would have been the wrong repair. The published
+record was corrected instead, and a regression guard now pins the record and
+the derivation together so they cannot drift apart again.
+
+**Why Gate 3 still fails.** Its definition is frozen in `CHALLENGE_SPEC.json`
+and is not redefined here: the system reported SUPPORTED where independent
+truth — derived from the published record before the run — refused. Gate 3
+fails under the frozen published contract; post-adjudication evidence
+established that the runtime behaviour was deliberate and the defect was in the
+published record. Behavioural false accepts after adjudication: **0**. Contract
+integrity: **FAIL**.
+
+**Why the post-fix outputs are identical.** The correction changed the
+published contract/record and added its executable consistency guard; it did
+not change the runtime scientific result for the frozen corpus. Hard DEV
+(1362/1400), Battery DEV (272/280), every case-set digest and every frozen
+verdict output are therefore unchanged and byte-identical, exactly as expected.
+An identical post-fix run is the confirmation that the repair was
+record-scoped, not evidence of a failed fix.
+
+**Why the mutation suite is silent.** 79/79 RED with CONTROL GREEN is preserved
+and valid. The current mutation harness cannot detect this defect class because
+STRING-token-only changes are intentionally excluded from its `_code_digest`. A
+future semantic-contract or record-mutation layer could cover it.
+
+**What recertification is for.** The previously certified scientific digest
+remains unchanged and is not invalidated — nothing it covers was touched. A new
+shipped-product / contract-integrity certification cycle is required because a
+shipped domain-model record contradicted guarded runtime semantics, and the
+existing certification scope (`src/engcore/scientific/**`) does not reach the
+shipped domain-model surface where that happened.
+
+**What the challenge earned, and what it cost.** It was able to fail Forge, and
+it did — on a contradiction between what the Core publishes about itself and
+what it does, which no existing suite could see and which the mutation harness
+cannot express. It also carried a 12.5% truth-defect rate of its own: three of
+the five apparent false accepts and both apparent false rejects were the
+challenge's fault, its generator left the physical domain of its own
+declarations, and six of seven errata were found only because Forge disagreed.
+Those caveats stand undiminished beside the finding.

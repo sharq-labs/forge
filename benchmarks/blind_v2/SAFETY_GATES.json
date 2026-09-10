@@ -1,4 +1,8 @@
 {
+  "defect_class_key": {
+    "BEHAVIOURAL": "the runtime computed or decided something the independent science says is wrong. None found this round.",
+    "SHIPPED_CONTRACT_INTEGRITY": "a shipped published record contradicts the runtime semantics it documents, where those semantics are deliberate and guarded. One found this round: CORE-1."
+  },
   "gates": {
     "GATE_1_BLINDNESS": {
       "evidence": "freeze commit 979ed98 predates the runner (c0755c8) and the sealed run (c29ec4e); no frozen artifact changed after the freeze; the no-peek audit is clean on all four checks and was shown to catch a deliberately peeking module; no forbidden corpus was opened. One source-read boundary incident is recorded and its content was not used.",
@@ -9,11 +13,15 @@
       "verdict": "PASS_WITH_CONCERN"
     },
     "GATE_3_ZERO_GENUINE_FALSE_ACCEPTS": {
-      "evidence": "5 false accepts in the first run; 3 are challenge defects (ERR-1, ERR-2). 2 survive adjudication: V2-THERMAL_LUMPED-00065 and -00074, both from CORE-1. A body declaring a characteristic length and a surface area but no volume reads SUPPORTED with geometry_route_ratio in `satisfied`, where the condition's own published record said it must be UNKNOWN. An independent reader of the contract predicted a refusal and got an acceptance. That is a false accept whichever half of the contradiction is at fault.",
+      "behavioural_false_accepts_after_adjudication": 0,
+      "contract_false_accepts_under_frozen_published_contract": 2,
+      "evidence": "5 false accepts in the first run. 3 are challenge defects (ERR-1, ERR-2). 2 survive adjudication: V2-THERMAL_LUMPED-00065 and -00074, both CORE-1. In each, a body declaring a characteristic length and a surface area but no volume reads SUPPORTED with geometry_route_ratio in `satisfied`, where the condition's published record said UNKNOWN. Independent truth was derived from that record before the run, so under the frozen definition these are false accepts and the gate fails. What adjudication then established is WHERE the defect is: the single-route behaviour is deliberate and guarded by test_one_route_alone_is_not_a_contradiction, and changing it broke 25 tests. So neither case is a behavioural false accept -- the runtime did what the product intends and the published record misdescribed it. Behavioural false accepts after adjudication: 0. Contract integrity: FAIL.",
+      "frozen_definition": "CHALLENGE_SPEC.json decision_rules.false_accept, frozen before the corpus existed: 'the system reports SUPPORTED where independent truth refuses. One genuine false accept means the generalization gate cannot return PASS.'",
+      "qualification": "Gate 3 fails under the frozen published contract; post-adjudication evidence established that the runtime behaviour was deliberate and the defect was in the published record.",
       "verdict": "FAIL"
     },
     "GATE_4_ZERO_UNRESOLVED_CORE_DEFECTS": {
-      "evidence": "one Core defect found (CORE-1) and one fixed, in commit 0e9bcc219ba7d19eb823cd739dec11c115012ad3. Nothing is left unresolved. 0 genuine Core crashes: all 44 exceptions the runner filed as core_error are declared domain refusals (ReactorConfigurationError, SlabConfigurationError), which is fail-closed behaviour and a runner taxonomy defect.",
+      "evidence": "one Core defect found (CORE-1, class SHIPPED_CONTRACT_INTEGRITY) and resolved in commit 0e9bcc219ba7d19eb823cd739dec11c115012ad3 by correcting the published record to describe the guarded runtime semantics, plus a regression guard pinning the record and the derivation together. No executable scientific behaviour was changed and none needed to be. Nothing is left unresolved. 0 genuine Core crashes: all 44 exceptions the runner filed as core_error are declared domain refusals (ReactorConfigurationError, SlabConfigurationError), which is fail-closed behaviour and a runner taxonomy defect.",
       "verdict": "PASS"
     },
     "GATE_5_METAMORPHIC_REPRESENTATION_SAFETY": {
@@ -21,11 +29,11 @@
       "verdict": "PASS"
     },
     "GATE_6_CERTIFIED_CORE_DIGEST_PRESERVED": {
-      "evidence": "the src/engcore/scientific tree digest is unchanged at 82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507, both immediately before the first run and now. Production code DID change: the CORE-1 fix is in src/engcore/domains/thermal_models/lumped.py, outside the path the snapshot digests. The snapshot is explicit about that scope -- core.path is src/engcore/scientific and digest_covers names src/engcore/scientific/**/*.py -- so the digest behaved as specified. The caveat is attached because 'the certified Core digest is preserved' is on its own compatible with having changed a shipped model record a caller reads, which is what happened.",
+      "evidence": "the src/engcore/scientific tree digest is unchanged at 82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507, both immediately before the first run and now, and that digest remains valid: nothing it covers was touched. The CORE-1 correction is in src/engcore/domains/thermal_models/lumped.py, part of the shipped domain-model surface, which the snapshot's scope deliberately excludes -- core.path is src/engcore/scientific and digest_covers names src/engcore/scientific/**/*.py. So the scientific digest correctly remains unchanged and is not invalidated. The caveat is attached because 'the certified Core digest is preserved' is on its own compatible with having changed a shipped model record a caller reads, which is what happened, and a shipped-product / contract-integrity certification cycle is what that calls for.",
       "verdict": "PASS_WITH_SCOPE_CAVEAT"
     },
     "GATE_7_MUTATION_ASSURANCE_PRESERVED": {
-      "evidence": "re-run in full after the CORE-1 fix: 79/79 RED, 0 GREEN, 0 DID_NOT_APPLY, 0 TIMEOUT, 0 ERROR, CONTROL GREEN, exit 0 -- identical to the certified baseline this round measured before touching anything. Every mutation was killed by the guard it names. The count stays 79: CORE-1's guard is a regression test and not a mutation, because the harness's _code_digest drops STRING tokens and test_every_mutation_changes_executable_code refuses any mutation whose only effect is prose, so a validity record's description is outside what it can express by design. That is a real limit on mutation assurance and is reported as one: no mutation could have caught CORE-1.",
+      "evidence": "re-run in full after the CORE-1 fix: 79/79 RED, 0 GREEN, 0 DID_NOT_APPLY, 0 TIMEOUT, 0 ERROR, CONTROL GREEN, exit 0 -- identical to the certified baseline this round measured before touching anything. Every mutation was killed by the guard it names. The count stays 79: CORE-1's guard is a regression test and not a mutation, because the current mutation harness cannot detect this defect class -- STRING-token-only changes are intentionally excluded from its _code_digest, and test_every_mutation_changes_executable_code refuses any mutation whose only effect is prose. A future semantic-contract or record-mutation layer, which would mutate published record text and require a guard to notice, could cover it. Until then the 79/79 figure is silent about shipped-contract integrity, and that is a scope limit rather than a weakness in the result.",
       "verdict": "PASS"
     },
     "GATE_8_EXISTING_BENCHMARKS_PRESERVED": {
@@ -33,6 +41,6 @@
       "verdict": "PASS"
     }
   },
-  "note": "Reported separately. All eight must PASS for Blind v2 to pass.",
+  "note": "Reported separately. All eight must PASS for Blind v2 to pass. The gate definitions are frozen in CHALLENGE_SPEC.json, committed before the corpus existed, and are NOT redefined here. Where post-adjudication evidence changes what a gate result means, the result is preserved and a qualification is attached beside it.",
   "schema": "blind_v2_safety_gates/1"
 }

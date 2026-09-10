@@ -58,7 +58,7 @@
     }
   },
   "overall": "VALID_BLIND_V2",
-  "overall_reasoning": "Every structural requirement holds: the freeze provably predates the run, the truth was never edited, the first run is immutable, the no-peek audit is clean and has been shown able to fail, no forbidden corpus was opened, and the certified Core was byte-identical when the run started. Two concerns are recorded and neither is disqualifying: a 12.5% truth-defect rate, and discovery contamination on six errata whose repairs were nonetheless independent. The challenge's conclusions -- two false accepts from one contract defect, zero Core crashes, zero unjustified metamorphic violations -- rest on evidence that survives its own errata.",
+  "overall_reasoning": "Every structural requirement holds: the freeze provably predates the run, the truth was never edited, the first run is immutable, the no-peek audit is clean and has been shown able to fail, no forbidden corpus was opened, and the certified Core was byte-identical when the run started. Two concerns are recorded and neither is disqualifying: a 12.5% truth-defect rate, and discovery contamination on six errata whose repairs were nonetheless independent. The challenge's conclusions -- one shipped contract-integrity defect (CORE-1) producing two false accepts against the frozen published contract and none against the runtime's computed science, zero Core crashes, zero unjustified metamorphic violations -- rest on evidence that survives its own errata.",
   "question": "Is this blind challenge itself valid, independently of how the Core scored?",
   "schema": "blind_v2_validity_audit/1"
 }

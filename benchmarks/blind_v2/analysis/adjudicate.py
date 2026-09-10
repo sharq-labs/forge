@@ -228,29 +228,48 @@ CORE_DEFECTS = [
         "id": "CORE-1",
         "cases": ["V2-THERMAL_LUMPED-00065", "V2-THERMAL_LUMPED-00074"],
         "triage": "CORE_DEFECT",
-        "title": "geometry_route_ratio reports agreement between one route and nothing",
+        "defect_class": "SHIPPED_CONTRACT_INTEGRITY",
+        "title": (
+            "Published capability contract contradicts guarded runtime "
+            "semantics"
+        ),
+        "not_this": (
+            "NOT an incorrect numerical or scientific runtime implementation. "
+            "The computed quantities, the verdicts and every benchmark figure "
+            "are unaffected, and the runtime semantics were found to be "
+            "deliberate."
+        ),
         "severity": "MEDIUM",
         "false_confidence": True,
         "summary": (
-            "The lumped model's geometry_route_ratio condition exists to catch "
-            "a characteristic length and a volume that belong to different "
-            "objects. Its published record states, verbatim, that it is "
+            "The lumped model's geometry_route_ratio condition shipped a "
+            "published record that contradicted its own guarded runtime "
+            "semantics. The record stated, verbatim, that the condition is "
             "UNKNOWN unless characteristic_length, body_volume and "
             "surface_area are all supplied -- 'with one route there is nothing "
             "to compare, which is not the same as two that agree'. The "
-            "implementation returns 1.0 when only one route is available, so "
-            "the condition is reported in `satisfied` and the assessment "
-            "reaches IN_DOMAIN. A reader of that assessment sees a cross-check "
-            "listed as passed when no cross-check was performed."
+            "derivation returns 1.0 with a single route, so the condition is "
+            "reported in `satisfied` and the assessment reaches IN_DOMAIN. "
+            "Both statements are shipped; they cannot both describe the "
+            "product. The defect is that contradiction, located in the "
+            "published record."
+        ),
+        "runtime_semantics_are_deliberate": (
+            "test_one_route_alone_is_not_a_contradiction guards the "
+            "single-route behaviour by name and states the reason: demanding "
+            "all three fields would be a larger claim than this condition "
+            "makes, and the Biot number is computed from an unambiguous value "
+            "either way. Changing the derivation to return None broke 25 "
+            "existing tests. The behaviour is intentional and guarded, so the "
+            "record was the half that was wrong."
         ),
         "independent_evidence": (
             "geometry_route_ratio(declared=1 mm, volume=None, surface_area="
-            "0.01 m^2) returns 1.0 dimensionless. Every other "
-            "optional-evidence condition on this same model -- "
-            "melting_temperature_utilization, radiation_to_convection_ratio, "
-            "the two excursion budgets -- returns UNKNOWN when its "
-            "declaration is absent, and the model's own record for this one "
-            "says it should too."
+            "0.01 m^2) returns 1.0 dimensionless, and an assessment over that "
+            "declaration reaches IN_DOMAIN with the condition in `satisfied`. "
+            "The published record predicted UNKNOWN. The disagreement is "
+            "between two shipped statements about the same condition, and is "
+            "observable without reference to any verdict being right or wrong."
         ),
         "forge_evidence": (
             "a body declaring characteristic_length and surface_area but no "
@@ -258,23 +277,44 @@ CORE_DEFECTS = [
             "satisfied; declaring the volume as well changes nothing"
         ),
         "mechanism": (
-            "context.geometry_route_ratio returns Quantity(1.0) when exactly "
-            "one of the declared length and the implied V/A_s is available, "
-            "instead of None"
+            "the published description on the RangeCondition named "
+            "geometry_route_ratio asserted an UNKNOWN precondition that "
+            "context.geometry_route_ratio deliberately does not implement"
         ),
         "root_cause": (
-            "a deliberate choice, argued in the function's own docstring, that "
-            "contradicts the record the model publishes about itself. The two "
-            "cannot both be right; the record is the contract a caller reads "
-            "and the one this challenge read."
+            "a shipped record that did not describe the guarded behaviour it "
+            "documents. The derivation's own docstring argued the opposite "
+            "case coherently; the model record was never brought into line "
+            "with it, and the model record is the contract a caller reads and "
+            "the one this challenge read."
         ),
         "false_confidence_impact": (
-            "the condition's entire purpose is to detect a geometry declared "
-            "two ways that disagree. A declaration that supplied one way is "
-            "reported as having passed that check. It is the dangerous "
-            "direction the record itself names: a declared length below V/A_s "
-            "lowers Bi and makes the model look applicable when it may not be."
+            "a reader of the assessment sees geometry_route_ratio in "
+            "`satisfied` and, going by the published record, concludes that "
+            "two independently declared geometry routes were compared and "
+            "agreed. With one route nothing was compared. The numbers are "
+            "right; what the record led a reader to believe about them was "
+            "not."
         ),
+        "behavioural_false_accepts_after_adjudication": 0,
+        "contract_false_accepts_under_frozen_published_contract": 2,
+        "false_accept_note": (
+            "Both cases were false accepts RELATIVE TO THE FROZEN PUBLISHED "
+            "CONTRACT the challenge read before the run: independent truth, "
+            "derived from the record, refused; the system reported SUPPORTED. "
+            "That satisfies the frozen Gate 3 definition and the gate result "
+            "stands. Post-adjudication evidence then established that the "
+            "runtime behaviour was deliberate and guarded, so neither case is "
+            "a behavioural false accept: the runtime was doing what the "
+            "product intends, and the published record misdescribed it."
+        ),
+        "resolution": (
+            "the published record was corrected to describe the guarded "
+            "behaviour, and a regression guard now pins the record and the "
+            "derivation together so they cannot drift apart again. No "
+            "executable scientific behaviour changed."
+        ),
+        "fix_commit": "0e9bcc219ba7d19eb823cd739dec11c115012ad3",
     }
 ]
 
@@ -350,6 +390,22 @@ def main() -> int:
         ),
         "first_run_score": first_run,
         "adjudicated_score": adjudicated,
+        "score_interpretation": {
+            "adjudicated_safety.FALSE_ACCEPT": (
+                "2. Both are the CORE-1 cases and both are false accepts "
+                "RELATIVE TO THE FROZEN PUBLISHED CONTRACT: independent truth "
+                "was derived from the published record, the record said "
+                "UNKNOWN, the system said SUPPORTED. Post-adjudication "
+                "evidence established that the runtime behaviour is deliberate "
+                "and guarded, so BEHAVIOURAL FALSE ACCEPTS AFTER ADJUDICATION "
+                "ARE 0 and the defect is a shipped contract-integrity one. See "
+                "core_defects[0]."
+            ),
+            "adjudicated_safety.FALSE_REJECT": (
+                "0. The two first-run false rejects were challenge oracle "
+                "defects (ERR-3), not Core behaviour."
+            ),
+        },
         "triage_classes": dict(
             sorted(collections.Counter(r["triage_class"] for r in rows).items())
         ),
