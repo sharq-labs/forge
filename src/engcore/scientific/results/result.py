@@ -373,6 +373,43 @@ class ScientificResult:
         honest: between them they must cover every declared model, so there is
         no longer a way for a result to say nothing about one.
         """
+        # ONE VERSION OF A MODEL PER RESULT, refused here because this is
+        # where the assumption lives. Every accessor below is keyed by model
+        # id alone -- `validity`, `validity_not_assessed`, `validity_of`,
+        # `non_assessment_reason`, `unassessed_models` -- while `models`
+        # carries (id, version) pairs and `ProvenanceRecord` compares them
+        # against binding keys with the version intact. A result could
+        # therefore declare `m@1` and `m@2`, have its provenance distinguish
+        # them correctly, and carry a SINGLE validity verdict that answered
+        # for both: `validity_of("m")` returned one status for two different
+        # claims, `unassessed_models` reported no gap, and the qualified key
+        # `"m@1"` was refused as naming a model the result does not declare.
+        #
+        # Two versions of one model are not the same claim, so one verdict
+        # cannot stand for both. The alternative -- keying validity by
+        # (id, version) -- was rejected on the evidence rather than on size:
+        # it would change the serialized shape of every result ever written
+        # and the signature of four public accessors, to express a state no
+        # producer in this tree emits and no consumer reads. `ModelRegistry`
+        # keys on (id, version) because a registry HOLDS versions; a result
+        # RUNS one, and a run whose system is described by two versions of
+        # one model is not a coherent scientific claim to begin with.
+        #
+        # So it is refused at construction, where an ambiguous declaration
+        # can still be a refusal instead of becoming evidence.
+        versions: dict[str, str] = {}
+        for model_id, version in self.models:
+            if model_id in versions and versions[model_id] != version:
+                raise ScientificCoreError(
+                    f"result {str(self.result_id).strip()!r} declares model "
+                    f"{model_id!r} at two versions "
+                    f"({versions[model_id]!r} and {version!r}). Validity is "
+                    f"carried per model id, so one assessment would have to "
+                    f"answer for both -- and two versions of a model are two "
+                    f"claims, not one. Report them as separate results"
+                )
+            versions[model_id] = version
+
         declared = {model_id for model_id, _version in self.models}
         assessments = dict(self.validity)
         if assessments and not declared:

@@ -165,6 +165,39 @@ def _strict_bool(payload: Mapping[str, Any], key: str, default: bool) -> bool:
     return require_bool(payload, key, default, error=ModelValidityError)
 
 
+def _declared_bool(value: Any, *, condition: str, field: str) -> bool:
+    """A semantic flag arrives as a bool or is refused. Never ``bool(value)``.
+
+    THE SAME RULE ``_strict_bool`` APPLIES ON THE WIRE, applied to the Python
+    constructor, because a declaration that this module's own reader refuses
+    must not be constructible in memory. It was: ``RangeCondition.from_dict``
+    refuses ``{"maximum_inclusive": "false"}`` with "a serialized scientific
+    declaration is refused rather than guessed", while
+    ``RangeCondition(maximum_inclusive="false")`` stored the string -- and a
+    non-empty string is truthy, so an EXCLUSIVE bound behaved as an inclusive
+    one and a value sitting exactly on the maximum was reported IN_DOMAIN
+    instead of OUTSIDE_VALIDATED_DOMAIN.
+
+    ``bool(value)`` is the wrong repair and is why this is a refusal rather
+    than a coercion. ``FlagCondition`` did coerce, and ``bool("false")`` is
+    ``True``: a domain declaring ``expected="false"`` got a condition
+    demanding the flag be **True**, which is the inversion this platform
+    exists to refuse. There is no reading of ``"false"`` that is safe to
+    guess -- the two candidate meanings are opposites.
+
+    ``conservative_screen`` already had this check inline and is now routed
+    here, so the three flags on this record cannot drift apart again.
+    """
+    if not isinstance(value, bool):
+        raise ModelValidityError(
+            f"condition {condition!r}: {field} must be a boolean, not "
+            f"{type(value).__name__} ({value!r}). A scientific flag is not "
+            f"coerced -- 'false' and 0 are truthy or falsey by Python's rules "
+            f"and neither is a declaration"
+        )
+    return value
+
+
 @dataclass(frozen=True)
 class RangeCondition:
     """A bounded validity range, with open or closed endpoints.
@@ -275,11 +308,12 @@ class RangeCondition:
                 f"in requires"
             )
         object.__setattr__(self, "requires", required)
-        if not isinstance(self.conservative_screen, bool):
-            raise ModelValidityError(
-                f"condition {self.name!r}: conservative_screen must be a "
-                f"boolean, not {type(self.conservative_screen).__name__}"
-            )
+        # All three flags on this record, by one rule. The endpoints were
+        # unchecked: `maximum_inclusive="false"` was stored as the string and
+        # read as truthy, so the bound closed instead of opening.
+        for flag in ("minimum_inclusive", "maximum_inclusive",
+                     "conservative_screen"):
+            _declared_bool(getattr(self, flag), condition=self.name, field=flag)
         if self.minimum is None and self.maximum is None:
             raise ModelValidityError(
                 f"range condition {self.name!r} needs a minimum or a maximum"
@@ -485,7 +519,10 @@ class FlagCondition:
         if not str(self.name).strip():
             raise ModelValidityError("flag condition requires a name")
         object.__setattr__(self, "name", str(self.name).strip())
-        object.__setattr__(self, "expected", bool(self.expected))
+        # Was `bool(self.expected)`. `bool("false")` is True, so a condition
+        # declared to require the flag be False required it be True instead --
+        # a silent inversion of the one thing this record states.
+        _declared_bool(self.expected, condition=self.name, field="expected")
 
     def evaluate(self, value: Any) -> ValidityStatus:
         if not isinstance(value, bool):
@@ -591,6 +628,12 @@ class CrossLimitCondition:
                 f"{self.numerator!r} with itself, which is always 1 and "
                 f"decides nothing"
             )
+        # `_within` is shared with RangeCondition so the two cannot drift on
+        # endpoint handling. That guarantee is about the comparison; it says
+        # nothing about what reaches the flags, and these two were unchecked
+        # on both records.
+        for flag in ("minimum_inclusive", "maximum_inclusive"):
+            _declared_bool(getattr(self, flag), condition=self.name, field=flag)
         if self.minimum is None and self.maximum is None:
             raise ModelValidityError(
                 f"cross-limit condition {self.name!r} needs a minimum or a "

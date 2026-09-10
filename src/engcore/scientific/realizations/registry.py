@@ -26,6 +26,7 @@ from typing import Iterable, Iterator, Mapping
 
 from ..capabilities import ScientificCapability
 from ..errors import DuplicateRegistrationError, RealizationNotFoundError
+from ..serialization import require_schema
 from ..solvers.capability import SolverCapability, SolverCapabilityId
 from .definition import ModelFormulation, ModelRealizationDefinition
 
@@ -228,6 +229,9 @@ class RealizationRegistry:
 
     @classmethod
     def from_dict(cls, payload: Mapping) -> "RealizationRegistry":
+        # The sibling of `ModelRegistry.from_dict`, with the same gap and the
+        # same repair: it wrote an explicit schema and admitted any.
+        require_schema(payload, REGISTRY_SCHEMA)
         return cls(
             ModelRealizationDefinition.from_dict(r)
             for r in payload.get("realizations", ())

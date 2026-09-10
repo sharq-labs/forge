@@ -299,7 +299,27 @@ class ScientificDataReference:
         # produce two references that claim to be different scientific things.
         object.__setattr__(self, "unit", normalize_unit(self.unit))
 
-        count = int(self.count)
+        # `int(self.count)` TRUNCATED. A reference declaring 1.9 values
+        # became one declaring 1, and `count` is part of this record's
+        # equality -- which the class docstring calls "a scientific question
+        # and never a storage one" -- so the truncated reference compared
+        # EQUAL to the honest one. `True` became 1 and `"1"` became 1 on the
+        # same line, and `"1.2"` escaped as a bare `ValueError` rather than a
+        # scientific refusal.
+        #
+        # This is the rule `IntegerValue` already states for the same reason,
+        # including its refusal of `bool`: bool is an int subclass in Python,
+        # and accepting it erases a distinction the record is supposed to
+        # keep. Rounding a count is a modelling error, not a numerical one,
+        # so there is nothing safe to normalise here.
+        if isinstance(self.count, bool) or not isinstance(self.count, int):
+            raise ScientificCoreError(
+                f"scientific data reference count must be an int, got "
+                f"{type(self.count).__name__} ({self.count!r}). A count is "
+                f"exact and discrete; truncating it would change which array "
+                f"this record names"
+            )
+        count = self.count
         if count < 0:
             raise ScientificCoreError(
                 f"scientific data reference count must be >= 0, got {count}"
@@ -382,7 +402,9 @@ class ScientificDataReference:
         return cls(
             name=payload["name"],
             unit=payload["unit"],
-            count=int(payload["count"]),
+            # Not `int(...)`: pre-coercing here would step around the
+            # constructor's refusal on the one path a foreign payload takes.
+            count=payload["count"],
             dtype=payload.get("dtype", FLOAT64),
             digest=payload["digest"],
             digest_algorithm=payload.get("digest_algorithm", SHA256),

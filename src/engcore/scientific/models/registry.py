@@ -10,7 +10,12 @@ from __future__ import annotations
 from typing import Iterable, Iterator, Mapping
 
 from ..errors import DuplicateRegistrationError, ModelNotFoundError
+from ..serialization import require_schema, schema_string
 from .definition import ScientificModelDefinition
+
+#: Named rather than written inline at the one place that emitted it, so the
+#: writer and the reader below cannot disagree about it.
+REGISTRY_SCHEMA = schema_string("model_registry")
 
 
 class ModelRegistry:
@@ -101,12 +106,20 @@ class ModelRegistry:
 
     def to_dict(self) -> dict:
         return {
-            "schema": "model_registry/1",
+            "schema": REGISTRY_SCHEMA,
             "models": [self._models[k].to_dict() for k in sorted(self._models)],
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping) -> "ModelRegistry":
+        # It wrote `model_registry/1` and read anything at all: a garbage
+        # schema, a missing one, or `model_registry/99` from a writer this
+        # reader has never seen. 174 of the 183 `from_dict` readers in this
+        # tree apply the exact-schema rule; this was one of two in the
+        # scientific core that did not, while emitting a version it never
+        # checked. A future shape read as the current one is the failure the
+        # version exists to prevent.
+        require_schema(payload, REGISTRY_SCHEMA)
         return cls(
             ScientificModelDefinition.from_dict(m)
             for m in payload.get("models", ())

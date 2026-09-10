@@ -575,6 +575,33 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "a ratio of two temperatures is taken on an interval scale again, so the "
      "answer depends on which unit the caller wrote and a satisfied condition "
      "reports as violated"),
+    # GUARD 25 is the core semantic invariants round: four contracts that
+    # were reachable through the public API and produced an ambiguous, lossy
+    # or inverted declaration rather than a refusal. Each mutation restores
+    # exactly the behaviour that was there before the fix, so a green one
+    # means the repair is unguarded.
+    ("G25a", "src/engcore/scientific/results/result.py"
+             "::ScientificResult._checked_validity",
+     "            if model_id in versions and versions[model_id] != version:\n",
+     "            if False:\n",
+     "a result may again declare one model at two versions, so a single "
+     "validity verdict answers for two different claims"),
+    ("G25b", "src/engcore/scientific/models/definition.py::_declared_bool",
+     "    if not isinstance(value, bool):\n",
+     "    if False:\n",
+     "a semantic flag takes a non-boolean again -- 'false' is truthy, so the "
+     "declaration is stored as its own opposite"),
+    ("G25c", "src/engcore/scientific/models/registry.py::ModelRegistry.from_dict",
+     "        require_schema(payload, REGISTRY_SCHEMA)\n",
+     "",
+     "a registry writes a versioned schema and reads any payload at all, "
+     "including a future version of its own family"),
+    ("G25d", "src/engcore/scientific/results/data_reference.py"
+             "::ScientificDataReference.__post_init__",
+     "        if isinstance(self.count, bool) or not isinstance(self.count, int):\n",
+     "        if False:\n",
+     "a declared count is silently truncated again, so a reference naming "
+     "1.9 values compares equal to one naming 1"),
     ("G24c", "src/engcore/systems/electrothermal/coupled.py::_require_ratio_scale",
      "    if not is_ratio_scale(normalized):\n",
      "    if False:\n",
@@ -793,6 +820,14 @@ EVIDENCE: dict[str, tuple[str, str]] = {
              "test_a_ratio_of_two_temperatures_does_not_depend_on_the_scale_written"),
     "G24c": ("CONTRACT_REFUSAL",
              "test_an_affine_coupling_tolerance_is_still_refused"),
+    "G25a": ("CONTRACT_REFUSAL",
+             "test_a_result_cannot_declare_one_model_at_two_versions"),
+    "G25b": ("CONTRACT_REFUSAL",
+             "test_a_semantic_flag_refuses_anything_that_is_not_a_boolean"),
+    "G25c": ("SERIALIZATION_INVARIANT",
+             "test_a_registry_refuses_a_schema_it_did_not_write"),
+    "G25d": ("TYPE_INVARIANT",
+             "test_a_declared_count_is_never_silently_coerced"),
 }
 
 #: The five that were dead when this round opened, pinned by name. Deleting or
@@ -845,6 +880,10 @@ TARGETS = (
     # be run against suites that cannot see them and reported GREEN --
     # a real finding about nothing.
     "tests/test_offset_unit_declaration.py",
+    # Added with G25. It carries the four contracts the core semantic
+    # invariants round proved and repaired, and without it those four
+    # mutations would run against suites that cannot see them.
+    "tests/test_core_semantic_invariants.py",
 )
 #: What the mutated copy needs to be a faithful copy. ``experiments`` is here
 #: because a guard in the target suite reads the frozen experiment configs to
