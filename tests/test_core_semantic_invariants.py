@@ -780,3 +780,67 @@ def test_a_solver_settings_payload_is_the_callers_to_edit():
     payload["options"]["listed"].append(3)
     assert settings.options["nested"]["a"] == 1
     assert list(settings.options["listed"]) == [1, 2]
+
+
+# ---------------------------------------------------------------------------
+# BLIND-V2-1: a validity record must describe the derivation it is stated over
+# ---------------------------------------------------------------------------
+def test_a_condition_that_says_unknown_unless_must_mean_it():
+    """Blind Challenge v2 found the lumped geometry record contradicting itself.
+
+    ``geometry_route_ratio`` published, in the record a caller reads and
+    ``to_dict`` serializes, that it is *UNKNOWN unless characteristic_length,
+    body_volume and surface_area are all supplied*. The derivation deliberately
+    returns 1 with a single route -- ``test_one_route_alone_is_not_a_contradiction``
+    pins that on purpose -- so a body declaring a length and no volume reached
+    IN_DOMAIN with the condition in ``satisfied``. An independent reader of the
+    contract predicted a refusal and got an acceptance.
+
+    The record was the half that was wrong, and this test is what stops the two
+    drifting apart again: for every condition on the lumped model whose
+    description promises UNKNOWN in a named circumstance, that circumstance is
+    constructed and the promise is checked against the derivation.
+    """
+    from engcore.domains.thermal_models import context as ctx
+    from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
+    from engcore.scientific.units.quantity import Quantity
+
+    conditions = {c.name: c for c in LUMPED_CAPACITY_MODEL.validity.conditions}
+
+    # The promise that was broken, now stated the way the derivation behaves.
+    geometry = conditions[ctx.GEOMETRY_ROUTE_RATIO]
+    assert "UNKNOWN only when NEITHER route is available" in geometry.description
+    assert "WITH ONE ROUTE THIS CONDITION IS SATISFIED" in geometry.description
+
+    # ... and the derivation, at each of the three declarations that matter.
+    both_routes = ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+        ctx.BODY_VOLUME: Quantity(2.0e-5, "meter**3"),
+        ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+    })
+    assert ctx.GEOMETRY_ROUTE_RATIO in both_routes
+
+    one_route = ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+    })
+    assert one_route[ctx.GEOMETRY_ROUTE_RATIO].magnitude_in("dimensionless") == 1.0
+
+    neither_route = ctx.derived_lumped_quantities({
+        ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+    })
+    assert ctx.GEOMETRY_ROUTE_RATIO not in neither_route
+
+    # Every OTHER condition on this model that promises UNKNOWN-unless keeps
+    # that promise literally: with none of its declarations supplied, the
+    # assembler does not produce it at all.
+    promises = {
+        ctx.MELTING_TEMPERATURE_UTILIZATION: (),
+        ctx.RADIATION_TO_CONVECTION_RATIO: (),
+        ctx.CONDUCTANCE_EXCURSION_RATIO: (),
+        ctx.CAPACITY_EXCURSION_RATIO: (),
+        ctx.BIOT_NUMBER: (),
+    }
+    bare = ctx.derived_lumped_quantities({})
+    for name in promises:
+        assert "UNKNOWN unless" in conditions[name].description, name
+        assert name not in bare, name
