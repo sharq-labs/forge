@@ -480,6 +480,7 @@ Production code changed, so the full certification-relevant sweep was re-run.
 | performance guards | 12 | 12 |
 | core semantic invariants | 110 | 109 + this round's guard |
 | mutation harness self-guard | 6 | 6 |
+| **mutation suite** | **79/79 RED, 0 GREEN, CONTROL GREEN, exit 0** | identical |
 | blind-v2 challenge tests | 83 | new |
 | Hard DEV | 1362/1400, FA 0, FR 0 | identical, same digests |
 | Battery DEV | 272/280, FA 0, FR 8 | identical, same ids and digests |
@@ -500,7 +501,7 @@ rate and the discovery contamination on six errata.
 | 4 — Zero unresolved Core defects | **PASS** |
 | 5 — Metamorphic representation safety | **PASS** |
 | 6 — Certified Core digest preserved | **PASS WITH SCOPE CAVEAT** |
-| 7 — Mutation assurance preserved | see `SAFETY_GATES.json` |
+| 7 — Mutation assurance preserved | **PASS** |
 | 8 — Existing benchmarks preserved | **PASS** |
 
 **Gate 6's caveat is a scope fact a reader needs, not an accusation.** The
@@ -542,7 +543,11 @@ New, from this round:
 * a validity record's *description* is outside what the mutation harness can
   express, because `_code_digest` drops STRING tokens and
   `test_every_mutation_changes_executable_code` refuses prose-only mutations.
-  CORE-1 was exactly such a defect and no mutation could have caught it.
+  CORE-1 was exactly such a defect, **no mutation could have caught it**, and
+  the 79/79 result is therefore silent about the whole class of defect this
+  round found. That is the single most important thing a re-certification
+  should act on: mutation assurance covers executable branches, and a contract
+  that misdescribes itself is not one.
 
 ## AJ. Harsh scores
 

@@ -25,8 +25,8 @@
       "verdict": "PASS_WITH_SCOPE_CAVEAT"
     },
     "GATE_7_MUTATION_ASSURANCE_PRESERVED": {
-      "evidence": "the 79-mutation suite is re-running after the fix; filled in below.",
-      "verdict": "PENDING"
+      "evidence": "re-run in full after the CORE-1 fix: 79/79 RED, 0 GREEN, 0 DID_NOT_APPLY, 0 TIMEOUT, 0 ERROR, CONTROL GREEN, exit 0 -- identical to the certified baseline this round measured before touching anything. Every mutation was killed by the guard it names. The count stays 79: CORE-1's guard is a regression test and not a mutation, because the harness's _code_digest drops STRING tokens and test_every_mutation_changes_executable_code refuses any mutation whose only effect is prose, so a validity record's description is outside what it can express by design. That is a real limit on mutation assurance and is reported as one: no mutation could have caught CORE-1.",
+      "verdict": "PASS"
     },
     "GATE_8_EXISTING_BENCHMARKS_PRESERVED": {
       "evidence": "Hard DEV 1362/1400, FA 0, FR 0, case-set digest 28dcc10de866c699a6a817dac29f617a16a2c19149f9fda51167624ebf889a04 -- identical to certification. Battery DEV 272/280, FA 0, FR 8 with the same eight ids, digest 32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853 -- identical. benchmark guards 57, oracle suite 363+2, independent verdict 83, independent reason/catcher 124+2, blind-v1 guards 51, performance guards 12 -- all identical.",
