@@ -1,0 +1,45 @@
+{
+ "PRE_FORGE_FREEZE_SHA": "52963ebd27b1509770f8568af0c02bf8a590b0f0",
+ "checks": {
+  "cases_created_before_the_forge_run": "TRUE. Every case file's last commit touching benchmarks/blind/v1/cases is 52963ebd27b1509770f8568af0c02bf8a590b0f0 at 2026-09-09T23:58:51+00:00, which is the freeze commit; the run's HEAD a9db9d5a4d93 is a descendant of it.",
+  "digests_existed_before_the_forge_run": "TRUE. FREEZE.json's last commit is 52963ebd27b1509770f8568af0c02bf8a590b0f0.",
+  "first_run_preserved": "TRUE. FIRST_RUN_SEAL.json carries its digest; the guard asserts it; the runner refuses to overwrite it; the post-fix run wrote a separate file.",
+  "generation_and_truth_could_not_consult_forge": "TRUE, and proven rather than promised: an AST import audit, a name and string reference audit, a transitive import-graph walk, and a runtime sys.modules check after importing the whole truth layer -- plus a falsification test that writes a module which DOES peek and asserts the audit catches it.",
+  "no_case_discarded_because_forge_failed": "TRUE. Forge was not run against any case until after the freeze commit, so no case could have been discarded on that basis. The 3 pre-freeze rejections are all invalid_sampled_state and are counted in MANIFEST.json.",
+  "no_existing_holdout_reused": "TRUE. No case in v1 shares a payload digest with any case in cases_hard or cases_battery -- enforced as a pre-freeze quality guard and re-checked as a post-freeze one. The opened 600-case hold-out was never read.",
+  "no_post_run_edit_to_truth_or_cases": "TRUE. tests/test_blind_challenge_guards.py recomputes the case-set, truth, manifest, disagreement-log and per-source digests on every run of the suite and is green. Two truths are now KNOWN WRONG (TRUTH_ERRATA.json) and neither was edited.",
+  "no_result_dependent_reseeding": "TRUE. The master seed is a literal in generate.py, digested in FREEZE.json, and unchanged since. Per-case seeds are derived from case identity.",
+  "pre_forge_freeze_sha_exists": "TRUE. 52963ebd27b1509770f8568af0c02bf8a590b0f0 is a commit in this history and it is the one that carries FREEZE.json.",
+  "truth_frozen_before_the_forge_run": "TRUE. TRUTH.json's last commit is 52963ebd27b1509770f8568af0c02bf8a590b0f0, the freeze commit, and its digest still matches FREEZE.json.",
+  "worktree_clean_at_the_run": "TRUE. Recorded by the runner itself in FORGE_FIRST_RUN.json as worktree_clean_at_run."
+ },
+ "classification": "VALID_BLIND_CHALLENGE",
+ "classification_reason": "The freeze firewall held. Cases, truth and digests were committed at 52963ebd27b1 before Forge was executed against the corpus even once; the first run is sealed and preserved; no case or truth byte has moved since, including the two now known to be wrong. The qualifications above bound WHAT the round measured; none of them is a break in the order of operations.",
+ "first_run_commit_sha": "4db7b223028df0996a02a9f2967ad06fbc76d2e3",
+ "first_run_head_sha": "a9db9d5a4d936d7a712459787489f2ee7108f143",
+ "first_run_head_time": "2026-09-10T00:00:32+00:00",
+ "freeze_commit_time": "2026-09-09T23:58:51+00:00",
+ "note": "Phase 2N. Every claim below is checked against git and against the bytes on disk, not asserted.",
+ "qualifications": [
+  {
+   "cost": "The challenge tests ARITHMETIC and GENERALISATION TO UNSEEN PARAMETER REGIMES. It does not test the contract reading, and no figure from it should be read as if it did.",
+   "detail": "What each condition means and which state coordinate it is read at was taken from the model records, and each oracle's reading was checked against the runtime on the ALREADY-OPEN corpus before any blind case existed: electro-thermal 1399/1400 verdicts over the open dev split, battery 400/400, kinetics and conduction 400/400 on throwaway draws at a separate seed. This is declared in BLIND_CHALLENGE_SPEC.json and was declared before the freeze.",
+   "does_it_invalidate_the_round": false,
+   "what": "The oracle's CONTRACT READING is not blind.",
+   "why_not": "The calibration used the open corpus, whose distribution the blind corpus deliberately does not reproduce, and it was complete before a blind case existed. Both defects the round found are defects the calibration could not have hidden: neither is reachable from a kelvin-only corpus."
+  },
+  {
+   "cost": "The v1 first-run figure understates the runtime by roughly 16 points, and it stands at what it scored.",
+   "detail": "73 cases carry a unit spelling the runtime does not define and 3 declare a limit its constructor refuses. See TRUTH_ERRATA.json. Forge is right about every one.",
+   "does_it_invalidate_the_round": false,
+   "what": "Two frozen truths are wrong.",
+   "why_not": "A truth defect found by the run is what an erratum is for. It makes the NUMBER less informative and the METHOD no less sound; the alternative -- editing the truth so the number improves -- is what the firewall exists to prevent."
+  },
+  {
+   "detail": "Declared in the spec before the freeze: thermal-runaway and non-converging designs are excluded because the condition set a refused coupling reports is a property of the iteration driver rather than of the science.",
+   "does_it_invalidate_the_round": false,
+   "what": "The challenge does not test refusal-path reporting."
+  }
+ ],
+ "violations": []
+}

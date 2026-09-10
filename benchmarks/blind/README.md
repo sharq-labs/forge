@@ -129,6 +129,30 @@ own denominator.
   derivation, a citation or a policy. Nothing in this repository has been
   checked against a measurement.
 
+## The result
+
+**`docs/assurance/BLIND_CHALLENGE_V1_RESULT.md` is the full account.** In short:
+
+| | decided denominator | false accepts |
+|---|---|---|
+| **first run — frozen, never revised** | **272 / 400 (68.0 %)** | 1, and it was the harness |
+| post-fix, two proven runtime defects repaired | 336 / 400 (84.0 %) | 0 |
+
+Across 444 cases whose truth was fixed before Forge saw them, **Forge accepted
+nothing the independent truth refuses**. Two model-contract tiers scored 100 %.
+
+It found two runtime defects, the second reachable only once the first was
+fixed: a declaration could not state a temperature in degrees Celsius, and a
+ratio of two declarations was computed on an interval scale, so the answer
+depended on which unit the caller wrote. Neither was reachable from the
+existing 2400-case corpus, in which every temperature is written in kelvin.
+
+It also got two things wrong itself — 73 cases spelled `kilohm` where the
+registry defines `kiloohm`, and 3 declared a limit the constructor refuses.
+Forge is right about all of them. They are recorded in `v1/TRUTH_ERRATA.json`
+and **the frozen truth was not edited**, which is why the 68.0 % stands rather
+than improving.
+
 ## After Forge has run
 
 `benchmarks/blind/v1` is closed. The first run is the result — preserved
