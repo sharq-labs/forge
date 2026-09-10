@@ -1,0 +1,183 @@
+{
+  "boundary_incidents": [
+    {
+      "boundary_incident": "OVERREAD: lines 90-140 of this read include `_within`, which is the range predicate's implementation and not its declaration. Recorded as a boundary breach rather than argued away. What it revealed -- that the comparison is exact and applies no tolerance -- was NOT used to design any case: every boundary case is stratified by the declared inclusivity flag, which is part of each condition's own published record, and the exact-boundary family reports what the arithmetic actually achieved rather than assuming an exact compare.",
+      "path": "src/engcore/scientific/models/definition.py",
+      "read_kind": "source_text",
+      "reason": "the public model record: which fields a model declares, what a validity condition record contains, and the vocabulary of ValidityStatus and UnknownReason. Read as source text, lines 1-140.",
+      "sha256": "769c3f7d4af512570de50c356686fc8359de094a846089e7c370078291833c70"
+    }
+  ],
+  "reads": [
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/battery/cell.py",
+      "read_kind": "introspection",
+      "reason": "CellSpecification, DischargeLoad and the four assessment entry points",
+      "sha256": "e2755ba5fba98468841aa5616295018caffddd6a821f468db2f12a91eabc5ae2"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/battery/context.py",
+      "read_kind": "introspection",
+      "reason": "the declared derived quantities of the battery domain",
+      "sha256": "2f3146ad9d43c651ecbea91451130e1be546ec0b93e75ec526282ad6cabd77d8"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/battery/models.py",
+      "read_kind": "introspection",
+      "reason": "the four declared cell model records",
+      "sha256": "7285341d9faa9c719e53e2f5e0f3e0bc92703d5a059ee5ccaaac829e4f5c9c69"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/derived_context.py",
+      "read_kind": "introspection",
+      "reason": "the two-namespace validity context contract",
+      "sha256": "fb430bae9a3c75fb0f2f5401bd8668d8160d9aa42ba934aeab5fdd0a62a11768"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc/circuit.py",
+      "read_kind": "introspection",
+      "reason": "DCCircuit construction",
+      "sha256": "60e161c2e7a0899c60c0f163e931be1ec9e52d2178f2787a34ea3da6dc52b3de"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc/components.py",
+      "read_kind": "introspection",
+      "reason": "Resistor and source construction",
+      "sha256": "ce4d3fcb6b8fcef1cbfb53cd6fe46a63dd2225a0dcc8adfc01cd08631864a701"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc/models.py",
+      "read_kind": "introspection",
+      "reason": "the declared DC model records, ComponentRating and the assessment entry points",
+      "sha256": "a1188c2cf33d6831627688cee543f7aab180455ac2abc366795a4e722735187f"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc/problem.py",
+      "read_kind": "introspection",
+      "reason": "DC problem construction and naming",
+      "sha256": "3cd9ad169c6a39082463d6da12c9afe89e1a00c22e1cbe21149d13233aed9533"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc/solver.py",
+      "read_kind": "introspection",
+      "reason": "the public circuit solve entry point",
+      "sha256": "d2d61a0a86208ac98dbcf060d1e86c998f668f8fb035aea04ba9f405e99d6de6"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc/validation.py",
+      "read_kind": "introspection",
+      "reason": "the public names of the DC validation settings",
+      "sha256": "db4f52bec2f1d26ef5a8dbadb2581e606bb558d3e190843a0cf74fefdb7c4862"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/dc_applicability.py",
+      "read_kind": "introspection",
+      "reason": "the two applicability model records and their problem builders",
+      "sha256": "130e9932eb7ac513ea93d2cf9145936eba8c065d087c3a50775af73661b4ab5e"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/electrical/material.py",
+      "read_kind": "introspection",
+      "reason": "TemperatureDependentConductor, MaterialLimits and the two resistance assessment entry points",
+      "sha256": "5388929e297282bdf383e165b3100e9c4ce6c8f39772be9a384ffb6780abf2f9"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/kinetics/cstr/alternatives.py",
+      "read_kind": "introspection",
+      "reason": "the constant-rate comparison model record",
+      "sha256": "eec039cf89998d911a380d0d5a6ceb45b0b05a9954fbff9744e1729cd84458ae"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/kinetics/cstr/context.py",
+      "read_kind": "introspection",
+      "reason": "the declared derived quantities of the CSTR domain",
+      "sha256": "c973038b37500bf306784daf9e27e5e39462eabe3b7b1e4fa1db2a8db90fe868"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/kinetics/cstr/problem.py",
+      "read_kind": "introspection",
+      "reason": "ReactorChemistry, ReactorOperation, ReactorRun and IntegrationSettings",
+      "sha256": "43d814cdec97c017cf9b4058eb3d17c454201cffda4ef690a78b59893cc3fb92"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/thermal/conduction1d/problem.py",
+      "read_kind": "introspection",
+      "reason": "ConductionSlab and SlabDiscretization construction",
+      "sha256": "0d23e57a13221e7bf7a41cbe23147348e5e613500c5e049269eb766184125b52"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/thermal/conduction1d/reference.py",
+      "read_kind": "introspection",
+      "reason": "the declared reference field signature",
+      "sha256": "7e231b9f5adebc6c5e8b89f17cc885f325419d1d91bc3f56b3d9e2cb5e5ae23e"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/thermal/conduction1d/solver.py",
+      "read_kind": "introspection",
+      "reason": "the public slab solve entry point",
+      "sha256": "cd549e12d56c27c72ad84ff93d0123a17d026c756e23b1d9f624d66b50bedc45"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/thermal_models/context.py",
+      "read_kind": "introspection",
+      "reason": "the declared derived quantities of the lumped domain and their published definitions",
+      "sha256": "907f19794d81f51f4774c5c0efa732e9f2bbd9ec6629f71db6fa7568fbf0b581"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/domains/thermal_models/lumped.py",
+      "read_kind": "introspection",
+      "reason": "ThermalBody construction and the lumped assessment entry point",
+      "sha256": "91e29ceb09bec54954eec7829a37e7dbc0d8e1bad61a3e8d47714962799372b2"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/scientific/ir/problem.py",
+      "read_kind": "introspection",
+      "reason": "the ScientificProblem field list and the validity_context docstring, which states that a caller-declared context is built from typed parameters and that a reserved derived name is refused. Read by runtime introspection only.",
+      "sha256": "5c7dba76542630eb1d339ef2ff013fa88bf3317a4691add92c8aa3cfc7ead333"
+    },
+    {
+      "boundary_incident": "OVERREAD: lines 90-140 of this read include `_within`, which is the range predicate's implementation and not its declaration. Recorded as a boundary breach rather than argued away. What it revealed -- that the comparison is exact and applies no tolerance -- was NOT used to design any case: every boundary case is stratified by the declared inclusivity flag, which is part of each condition's own published record, and the exact-boundary family reports what the arithmetic actually achieved rather than assuming an exact compare.",
+      "path": "src/engcore/scientific/models/definition.py",
+      "read_kind": "source_text",
+      "reason": "the public model record: which fields a model declares, what a validity condition record contains, and the vocabulary of ValidityStatus and UnknownReason. Read as source text, lines 1-140.",
+      "sha256": "769c3f7d4af512570de50c356686fc8359de094a846089e7c370078291833c70"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/scientific/models/registry.py",
+      "read_kind": "source_text",
+      "reason": "how a model is looked up by (model_id, version). Read as source text, lines 1-60.",
+      "sha256": "732f02e498308c9573bce6f4f941127187bb39ea26c2a9dd5e41b746a6e72141"
+    },
+    {
+      "boundary_incident": null,
+      "path": "src/engcore/scientific/units/quantity.py",
+      "read_kind": "introspection",
+      "reason": "which unit spellings the public Quantity constructor accepts, their dimensions, and whether each is a ratio scale. Exercised on unit strings alone -- no v2 payload was constructed. Read by runtime introspection only.",
+      "sha256": "9368cb7945a1973ed560b45e284a9d39c1918c05fcdab0ef7fc7e790aba272a5"
+    }
+  ],
+  "schema": "blind_v2_allowed_source_reads/1",
+  "what_this_is": "Every production file whose CONTENT reached this challenge before the freeze, and why. `source_text` means the bytes were read; `introspection` means only the public record -- a signature, a docstring, a declared record's to_dict -- was read at runtime. Files whose names alone were listed by a directory walk are not here, because a name is not content."
+}
