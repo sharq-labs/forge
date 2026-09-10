@@ -100,6 +100,32 @@ def _shown(path: pathlib.Path) -> str:
         return str(path)
 
 
+#: Phase 2 modules. They MUST reach the runtime -- running Forge and comparing
+#: its answer to the frozen truth is what they are for -- so they are excluded
+#: from the no-peek audit by name rather than by accident. Neither is digested
+#: in FREEZE.json, so neither can change what the challenge says.
+PHASE_TWO = (
+    "benchmarks/blind/run_forge.py",
+    "benchmarks/blind/compare.py",
+)
+
+
+def test_no_phase_two_module_is_digested_by_the_freeze() -> None:
+    """The exemption is safe only because the freeze does not depend on them.
+
+    A module that both imports the runtime and contributes to a digest in
+    FREEZE.json would be a hole in the firewall wide enough to drive the whole
+    round through. This asserts the exemption list and the digested list are
+    disjoint.
+    """
+    freeze = _freeze()
+    digested = set(freeze["generator_digest"])
+    overlap = digested & set(PHASE_TWO)
+    assert not overlap, (
+        f"{sorted(overlap)} both reaches the runtime and is digested by the "
+        f"freeze")
+
+
 def test_the_truth_layer_list_is_complete() -> None:
     """Every .py under benchmarks/blind is audited, or the audit is a subset."""
     on_disk = {
@@ -107,11 +133,12 @@ def test_the_truth_layer_list_is_complete() -> None:
         for path in BLIND.rglob("*.py")
         if "__pycache__" not in path.parts and path.name != "__init__.py"
     }
-    audited = set(TRUTH_LAYER)
+    audited = set(TRUTH_LAYER) | set(PHASE_TWO)
     unaudited = on_disk - audited
     assert not unaudited, (
-        f"these modules live in benchmarks/blind and are not in TRUTH_LAYER, "
-        f"so nothing proves they do not reach the runtime: {sorted(unaudited)}"
+        f"these modules live in benchmarks/blind and are in neither "
+        f"TRUTH_LAYER nor PHASE_TWO, so nothing says whether they may reach "
+        f"the runtime: {sorted(unaudited)}"
     )
 
 
