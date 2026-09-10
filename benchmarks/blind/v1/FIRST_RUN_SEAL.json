@@ -1,0 +1,7 @@
+{
+ "case_set_digest": "f6b3264f9198095c43acd6a5a5583d3187e8aba2dfb630d361fceef28a235f35",
+ "first_run_digest": "2bec321b5e911f3c8e5c49759169029c18b3ed6922809eb8d566f85ff0775972",
+ "pre_forge_freeze_sha": "52963ebd27b1509770f8568af0c02bf8a590b0f0",
+ "run_head_sha": "a9db9d5a4d936d7a712459787489f2ee7108f143",
+ "statement": "The first blind run, sealed by digest. It is the result of this round whatever it says. A re-run after a fix is a POST_FIX artifact and never replaces this one."
+}
