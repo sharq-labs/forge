@@ -219,6 +219,12 @@ The consequence: **5 guards are currently unexercised by the harness**, so
 nothing says whether they still guard. That is worth a round of its own and is
 not one this round has authority to spend.
 
+> **Since repaired.** That round happened: all five are red again, and it also
+> found that the copied tree had been failing one target test with no mutation
+> applied at all — which makes `G19a` and `G19b` above red for a reason that
+> was not theirs. See `MUTATION_GUARD_REPAIR.md`. Nothing in this document's
+> blind-challenge numbers changes; the harness is the only thing that moved.
+
 ## Blindness audit
 
 `v1/BLINDNESS_AUDIT.json` checks each claim against git rather than asserting

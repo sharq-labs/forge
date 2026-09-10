@@ -5460,10 +5460,25 @@ def test_a_dependency_that_cannot_be_satisfied_is_refused_at_construction():
 
     ONE = Quantity(0.0, "dimensionless")
 
-    with pytest.raises(ScientificCoreError):
+    # AND IT NAMES THE ABSENT SIBLING, which is a separate assertion from
+    # "it raised" and has to be. `_dependency_order` refuses a missing name
+    # before it orders anything; delete that refusal and the graph still has
+    # no valid order, so Kahn's algorithm reports the same record as a CYCLE.
+    # Both refuse, both raise `ScientificCoreError`, and a `pytest.raises` on
+    # its own cannot tell them apart -- so for the whole life of this guard,
+    # removing the check that finds the real cause changed nothing any test
+    # could see, and a caller would have been told to break a cycle that does
+    # not exist. Found by mutation `G22c`, which was green until this line.
+    with pytest.raises(ScientificCoreError) as absent:
         ValidityDomain(conditions=(
             RangeCondition(name="d", minimum=ONE, requires=("absent",)),
         ))
+    assert "absent" in str(absent.value)
+    assert "cycle" not in str(absent.value), (
+        "a dependency on a name nothing declares is not a cycle, and a "
+        "refusal that says it is sends the reader to look for one: "
+        f"{absent.value}"
+    )
     with pytest.raises(ScientificCoreError):
         RangeCondition(name="self", minimum=ONE, requires=("self",))
     # Depth two builds, and evaluates. Not refused.
