@@ -60,7 +60,7 @@ from engcore.domains.thermal_models.conduction1d_schemes import (
     sparse_scheme_solver,
 )
 from engcore.scientific.errors import AmbiguousSolverError, InvalidScientificProblem
-from engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.solvers.protocol import ConvergenceState, SolverIdentity
 from engcore.scientific.solvers.registry import SolverDefinition, SolverRegistry
 from engcore.scientific.units.quantity import Quantity
 from experiments.kinetics_k15.k15_config import HOLDOUT
@@ -502,6 +502,74 @@ def test_10_a_prepared_solve_carries_its_state_through_copies_and_other_sessions
     assert dict(stranger.solve(prepared).values) == expected
     with pytest.raises(dataclasses.FrozenInstanceError):
         prepared.payload = None  # type: ignore[misc]
+
+
+# ---- 10b. one prepared solve, executed more than once ----------------------------------------------
+#: Reproduced on this branch at ``dd6e0a2``: ``CSTRSolver.prepare`` assembles the
+#: right-hand side over a budget counter, and every ``solve`` of that prepared
+#: solve charges the same counter. Strict, so the fix has to remove the mark.
+PREPARED_STATE_REPRODUCED = pytest.mark.xfail(
+    strict=True,
+    reason="SL-6 reproduction: the CSTR evaluation budget is built at prepare and charged by every execution",
+)
+EXECUTED = ("battery", "conduction", "cstr", "dc", "lumped", "resistance", "scheme")
+
+
+def _executable(name):
+    if name == "cstr":
+        return (
+            CSTRSolver,
+            lambda point: build_cstr_problem(_RUN),
+            lambda s, p, point: s.bind_run(_RUN, p.problem_id),
+            None,
+            (1.0, 1.0),
+        )
+    return CASES[name]
+
+
+def _prepared_once(name):
+    factory, make_problem, bind, _observe, (a, _b) = _executable(name)
+    session = factory()
+    problem = make_problem(a)
+    bind(session, problem, a)
+    return session, session.prepare(problem)
+
+
+def _raw_record(raw) -> str:
+    record = raw.to_dict()
+    record.pop("wall_seconds")
+    return repr(record)  # repr, so a NaN diagnostic compares equal to itself
+
+
+@pytest.mark.parametrize(
+    "name", [pytest.param(n, marks=PREPARED_STATE_REPRODUCED) if n == "cstr" else n for n in EXECUTED]
+)
+def test_10b_one_prepared_solve_executed_twice_or_concurrently_is_the_same_as_once(name):
+    fresh_session, fresh = _prepared_once(name)
+    once = _raw_record(fresh_session.solve(fresh))
+    session, prepared = _prepared_once(name)
+    assert _raw_record(session.solve(prepared)) == once
+    assert _raw_record(session.solve(prepared)) == once
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        concurrent = list(pool.map(lambda _: _raw_record(session.solve(prepared)), range(4)))
+    assert concurrent == [once] * 4
+
+
+@PREPARED_STATE_REPRODUCED
+def test_10c_a_cstr_prepared_solve_spends_a_fresh_budget_on_each_execution():
+    """A budget a little above what one execution needs: the second execution of the
+    same prepared solve must not start from what the first one spent."""
+    session, prepared = _prepared_once("cstr")
+    need = int(session.solve(prepared).diagnostics["rhs_evaluations_completed"])
+    tight = _RUN.with_integration(dataclasses.replace(_RUN.integration, max_rhs_evaluations=need + 5))
+    solver = CSTRSolver()
+    problem = build_cstr_problem(tight)
+    solver.bind_run(tight, problem.problem_id)
+    prepared = solver.prepare(problem)
+    first, second = solver.solve(prepared), solver.solve(prepared)
+    assert first.convergence is ConvergenceState.CONVERGED
+    assert second.convergence is ConvergenceState.CONVERGED
+    assert second.diagnostics["rhs_evaluations_completed"] == need
 
 
 # ---- registry contract (SL-7) ------------------------------------------------------------------------
