@@ -151,6 +151,7 @@ TERMINAL_VOLTAGE_RATIO = "terminal_voltage_ratio"
 SOC_STEP_RESOLUTION_RATIO = "soc_step_resolution_ratio"
 CAPACITY_TEMPERATURE_DRIFT_RATIO = "capacity_temperature_drift_ratio"
 CUTOFF_CONSISTENCY_MARGIN = "cutoff_consistency_margin"
+CUTOFF_REACHABILITY_MARGIN = "cutoff_reachability_margin"
 PEUKERT_EXTRAPOLATION_RATIO = "peukert_extrapolation_ratio"
 PEUKERT_CAPACITY_RATIO = "peukert_capacity_ratio"
 PEUKERT_TEMPERATURE_DRIFT_RATIO = "peukert_temperature_drift_ratio"
@@ -1050,6 +1051,57 @@ def cutoff_consistency_margin(
     )
 
 
+def cutoff_reachability_margin(
+    *,
+    state_of_charge: Quantity | None,
+    cutoff_state_of_charge: Quantity | None,
+    voltage_cutoff_soc: Quantity | None,
+) -> Quantity | None:
+    """z_0 - z_stop — is the cutoff ahead of the run, or behind it?
+
+    **Definition.** The starting state of charge minus the binding cutoff,
+    where the binding cutoff is the HIGHER of the two declared cutoffs, exactly
+    as the runtime model's published equation defines ``z_stop``.
+
+    **Why this is a separate question from consistency.**
+    :func:`cutoff_consistency_margin` compares the two cutoffs *with each
+    other* and answers "which of them stops the run first". Neither is compared
+    with where the run *starts*, and a discharge at constant current walks the
+    state of charge monotonically DOWN -- "discharge only" is the model's own
+    first assumption -- so a cutoff declared ABOVE the starting state is never
+    reached at all. The published runtime ``t = (z_0 - z_stop) eta Q_nom / I``
+    returns the time to reach it anyway, and that time is negative. An elapsed
+    time to an event that does not occur is not an answer, and until this
+    condition existed the model reported IN_DOMAIN while the solver emitted it.
+
+    The bound of 0 is definitional: the two meeting exactly is a run that is
+    already at its cutoff, whose runtime is zero.
+
+    UNKNOWN unless the starting state of charge and at least one cutoff are
+    declared. A run with no cutoff at all computes no runtime, so there is
+    nothing to bound.
+    """
+    start = _checked(state_of_charge, DIMENSIONLESS, STATE_OF_CHARGE)
+    if start is None:
+        return None
+    declared = _checked(
+        cutoff_state_of_charge, DIMENSIONLESS, CUTOFF_STATE_OF_CHARGE
+    )
+    from_voltage = _checked(
+        voltage_cutoff_soc, DIMENSIONLESS, "voltage_cutoff_state_of_charge"
+    )
+    candidates = [
+        value.magnitude_in(DIMENSIONLESS)
+        for value in (declared, from_voltage)
+        if value is not None
+    ]
+    if not candidates:
+        return None
+    return Quantity(
+        start.magnitude_in(DIMENSIONLESS) - max(candidates), DIMENSIONLESS
+    )
+
+
 # =====================================================================
 # Heat and temperature
 # =====================================================================
@@ -1608,6 +1660,7 @@ ASSEMBLED_QUANTITIES = frozenset(
         SOC_STEP_RESOLUTION_RATIO,
         CAPACITY_TEMPERATURE_DRIFT_RATIO,
         CUTOFF_CONSISTENCY_MARGIN,
+        CUTOFF_REACHABILITY_MARGIN,
         PEUKERT_EXTRAPOLATION_RATIO,
         PEUKERT_CAPACITY_RATIO,
         PEUKERT_TEMPERATURE_DRIFT_RATIO,
@@ -1721,6 +1774,17 @@ def derived_cell_quantities(
             terminal=worst_terminal, open_circuit=worst_ocv
         ),
         CUTOFF_CONSISTENCY_MARGIN: cutoff_consistency_margin(
+            cutoff_state_of_charge=base.get(CUTOFF_STATE_OF_CHARGE),
+            voltage_cutoff_soc=voltage_cutoff_state_of_charge(
+                cutoff_voltage=base.get(CUTOFF_VOLTAGE),
+                current=discharge_current,
+                internal_resistance=resistance,
+                ocv_at_empty=ocv_empty,
+                ocv_at_full=ocv_full,
+            ),
+        ),
+        CUTOFF_REACHABILITY_MARGIN: cutoff_reachability_margin(
+            state_of_charge=state_of_charge,
             cutoff_state_of_charge=base.get(CUTOFF_STATE_OF_CHARGE),
             voltage_cutoff_soc=voltage_cutoff_state_of_charge(
                 cutoff_voltage=base.get(CUTOFF_VOLTAGE),

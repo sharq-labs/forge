@@ -94,6 +94,7 @@ from .context import (
     COULOMBIC_EFFICIENCY,
     CURRENT_UNIT,
     CUTOFF_CONSISTENCY_MARGIN,
+    CUTOFF_REACHABILITY_MARGIN,
     CUTOFF_STATE_OF_CHARGE,
     CUTOFF_VOLTAGE,
     C_RATE_UNIT,
@@ -1098,6 +1099,7 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
             {
                 CONTINUOUS_C_RATE_UTILIZATION,
                 CUTOFF_CONSISTENCY_MARGIN,
+                CUTOFF_REACHABILITY_MARGIN,
                 SOC_WINDOW_MARGIN,
             }
         ),
@@ -1119,6 +1121,28 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
                     "is definitional: the two meeting exactly is consistent. "
                     "UNKNOWN unless both cutoffs are declared — declaring one "
                     "leaves the question unasked, not answered."
+                ),
+            ),
+            RangeCondition(
+                name=CUTOFF_REACHABILITY_MARGIN,
+                minimum=CUTOFF_CONSISTENCY_FLOOR,
+                description=(
+                    "z_0 - z_stop >= 0: the binding cutoff is ahead of "
+                    "where the run starts. The condition above compares "
+                    "the two cutoffs WITH EACH OTHER and answers which of "
+                    "them stops the run first; neither is compared with "
+                    "the start, and that is a different question. A "
+                    "discharge at constant current walks the state of "
+                    "charge monotonically DOWN — 'discharge only' is "
+                    "this record's own first assumption — so a cutoff "
+                    "declared ABOVE the starting state is never reached. "
+                    "The published equation returns the time to reach it "
+                    "anyway and that time is NEGATIVE, which is not a "
+                    "runtime. The bound of 0 is definitional: a run "
+                    "already at its cutoff has a runtime of zero. "
+                    "UNKNOWN unless the starting state of charge and at "
+                    "least one cutoff are declared — with no cutoff "
+                    "there is no runtime to bound."
                 ),
             ),
             RangeCondition(
@@ -1147,10 +1171,11 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
             ),
         ),
         description=(
-            "Time to the first declared cutoff, applicable while the two "
-            "cutoffs are mutually consistent at this load, the current is "
-            "inside the continuous rating, and the trajectory stays inside "
-            "the declared state-of-charge window."
+            "Time to the first declared cutoff, applicable while that "
+            "cutoff is ahead of where the run starts, the two cutoffs are "
+            "mutually consistent at this load, the current is inside the "
+            "continuous rating, and the trajectory stays inside the "
+            "declared state-of-charge window."
         ),
     ),
     required_capabilities=frozenset({CELL_DISCHARGE_STEP.name}),
