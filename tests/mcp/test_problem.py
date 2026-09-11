@@ -1917,7 +1917,7 @@ def test_the_second_route_actually_runs_and_the_level_is_withheld():
     )
     assert report.verdict is CredibilityVerdict.SUPPORTED
     # the routes' own independence argument survives into the record
-    assert "sharing no declared component" in check.detail
+    assert "independent in every dimension the level requires" in check.detail
     assert check.evidence
 
 
