@@ -29,6 +29,7 @@ from engcore.scientific.consensus import (
     SolveRoute,
     relative_difference,
 )
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
 from engcore.scientific.errors import ScientificValidationError
 from engcore.scientific.results.thresholds import VerificationThresholds
 from engcore.scientific.results.validation import (
@@ -39,12 +40,10 @@ from engcore.scientific.solvers.protocol import SolverIdentity
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-THRESHOLDS = VerificationThresholds(
-    gate_id="test.consensus",
-    version="0.1.0",
-    values={"agreement_rel_tol": 1e-9},
-    basis="a test fixture, not a scientific declaration",
-)
+#: A declared gate's own set. This fixture used to invent a gate, and earned
+#: levels with it until threshold authority was verified against the domain
+#: layer's pins; a test of the awarding half now uses a real declaration.
+THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 
 ALPHA = SolverIdentity("solver.alpha", "1.0", backend="alpha")
 BETA = SolverIdentity("solver.beta", "1.0", backend="beta")

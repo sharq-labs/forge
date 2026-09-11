@@ -43,6 +43,7 @@ from engcore.scientific.consensus import (
     SharedComponent,
     SolveRoute,
 )
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
 from engcore.scientific.errors import ScientificValidationError
 from engcore.scientific.results.thresholds import VerificationThresholds
 from engcore.scientific.results.validation import (
@@ -52,12 +53,10 @@ from engcore.scientific.results.validation import (
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
 
-THRESHOLDS = VerificationThresholds(
-    gate_id="test.consensus",
-    version="1",
-    values={"rel_tol": 1e-9},
-    basis="a test fixture",
-)
+#: A declared gate's own set. This fixture used to invent a gate, and earned
+#: levels with it until threshold authority was verified against the domain
+#: layer's pins; a test of the awarding half now uses a real declaration.
+THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 
 #: The three quantities the question is about, wherever a contract is needed.
 CONTRACT = ("pressure", "stress", "temperature")
@@ -86,7 +85,7 @@ def _consensus(values, *, required=CONTRACT, routes=None, thresholds=THRESHOLDS)
         routes=routes,
         values=values,
         thresholds=thresholds,
-        tolerance_key="rel_tol",
+        tolerance_key="agreement_rel_tol",
         required_outputs=required,
     )
 
@@ -398,7 +397,7 @@ def test_the_declared_conditions_are_exactly_five_and_each_one_is_load_bearing()
     ).establishes is None
     assert _consensus(
         {"A": FULL, "B": dict(FULL)},
-        thresholds=THRESHOLDS.derive(rel_tol=1e-3),
+        thresholds=THRESHOLDS.derive(agreement_rel_tol=1e-3),
     ).establishes is None
     # ...and independence, which the E2 block covers.
     assert _consensus(

@@ -42,17 +42,16 @@ from engcore.scientific.consensus import (
     SharedComponent,
     SolveRoute,
 )
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
 from engcore.scientific.errors import ScientificValidationError
 from engcore.scientific.results.thresholds import VerificationThresholds
 from engcore.scientific.results.validation import ValidationLevel
 from engcore.scientific.solvers.protocol import SolverIdentity
 
-THRESHOLDS = VerificationThresholds(
-    gate_id="test.trust_boundary.consensus",
-    version="0.1.0",
-    values={"agreement_rel_tol": 1e-9},
-    basis="a test fixture, not a scientific declaration",
-)
+#: A declared gate's own set. This fixture used to invent a gate, and earned
+#: levels with it until threshold authority was verified against the domain
+#: layer's pins; a test of the awarding half now uses a real declaration.
+THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 TOLERANCE = 1e-9
 
 

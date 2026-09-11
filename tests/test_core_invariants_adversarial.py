@@ -58,6 +58,7 @@ from engcore.scientific.results.provenance import ProvenanceRecord
 from engcore.scientific.results.result import ScientificResult
 from engcore.scientific.results.thresholds import VerificationThresholds
 from engcore.scientific.results.validation import ValidationLevel
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
 from engcore.scientific.serialization import to_json
 from engcore.scientific.solvers.admission import require_agreement
 from engcore.scientific.solvers.protocol import SolverIdentity
@@ -66,9 +67,10 @@ from engcore.scientific.units.quantity import Quantity
 NON_FINITE = (float("nan"), float("inf"), float("-inf"))
 FINITE = (0.0, 1.0, -1.0, 1e-30, 1e30, 350.0)
 
-THRESHOLDS = VerificationThresholds(
-    gate_id="invariants", version="1", values={"rel_tol": 1e-9}, basis="fixture"
-)
+#: A declared gate's own set. This fixture used to invent a gate, and earned
+#: levels with it until threshold authority was verified against the domain
+#: layer's pins; a test of the awarding half now uses a real declaration.
+THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 
 
 def _route(route_id: str) -> SolveRoute:
@@ -87,7 +89,7 @@ def _consensus(values, required):
         routes=tuple(_route(name) for name in sorted(values)),
         values=values,
         thresholds=THRESHOLDS,
-        tolerance_key="rel_tol",
+        tolerance_key="agreement_rel_tol",
         required_outputs=required,
     )
 

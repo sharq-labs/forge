@@ -5,8 +5,13 @@ adds domain-specific fields to the universal IR: everything here is a
 *consumer* of ``engcore.scientific``, never a modifier of it.
 """
 
+from types import MappingProxyType
+
 from ..scientific.results.result import (
     UNASSESSED_DECLARATIONS_ATTRIBUTE as _UNASSESSED_ATTRIBUTE,
+)
+from ..scientific.results.thresholds import (
+    THRESHOLD_DECLARATIONS_ATTRIBUTE as _THRESHOLD_ATTRIBUTE,
 )
 
 #: Positions this package states on behalf of modules that cannot state their
@@ -80,4 +85,52 @@ SCIENTIFIC_UNASSESSED_DECLARATIONS: dict[str, str] = {
 assert _UNASSESSED_ATTRIBUTE == "SCIENTIFIC_UNASSESSED_DECLARATIONS", (
     f"the core looks for {_UNASSESSED_ATTRIBUTE!r}; this package defines "
     f"SCIENTIFIC_UNASSESSED_DECLARATIONS"
+)
+
+#: The threshold sets this layer's gates declare, pinned by gate.
+#:
+#: ``VerificationThresholds.is_declared`` is decided against this table and
+#: nothing else. A gate's name is public, so a caller can build a set under it
+#: with numbers of their own; the core awards a level only to a set whose gate
+#: is registered here, whose version is the registered one, and whose values
+#: hash to the registered digest. Any other set still runs every comparison and
+#: awards nothing.
+#:
+#: Each digest is SHA-256 over the values exactly as
+#: ``VerificationThresholds.threshold_digest`` serializes them. Changing a
+#: declared number therefore means changing it in two places, on purpose: a
+#: threshold that gates a level is a declaration, and a declaration that moves
+#: should say so here. ``tests/test_trust_boundary_threshold_authority.py``
+#: checks every entry against the constant it names, so a pin and its
+#: declaration cannot drift apart silently.
+#:
+#: The conduction entry names a constant in a module byte-pinned by the frozen
+#: thermal_t1 experiment. It is pinned from here, one package above the freeze,
+#: for the reason the two tables above are.
+SCIENTIFIC_THRESHOLD_DECLARATIONS = MappingProxyType({
+    "electrical.dc.cross_solver": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc_consensus.DC_CONSENSUS_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "d2180283b327e990e93d8b5eeffa4d7e05c65f46c1040012dd463ac7409193ce",
+    }),
+    "electrical.dc.linear_residual": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc.validation.DC_CONVERGENCE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "3f5290aba1f08882446beba6cb794512ee335c408a0e4cb6ed07d1ac0a41e9f5",
+    }),
+    "kinetics.cstr.verification_gate": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.CSTR_GATE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "eec365d1bfa9271f2e590c13dd845fae7c2948e1ae67a624b2becd2c98c8c1e3",
+    }),
+    "thermal.conduction1d.refinement": MappingProxyType({
+        "declared_by": "engcore.domains.thermal.conduction1d.validation.CONDUCTION_GATE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "88b2ce9f040139bf34e827904917dbe0ea534445b81b74a525800a877f83291e",
+    }),
+})
+
+assert _THRESHOLD_ATTRIBUTE == "SCIENTIFIC_THRESHOLD_DECLARATIONS", (
+    f"the core looks for {_THRESHOLD_ATTRIBUTE!r}; this package defines "
+    f"SCIENTIFIC_THRESHOLD_DECLARATIONS"
 )
