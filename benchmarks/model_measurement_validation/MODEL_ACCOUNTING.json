@@ -1,0 +1,76 @@
+{
+  "schema": "model_accounting/1",
+  "rule": "Every shipped model appears exactly once. None disappears because data was unavailable.",
+  "model_count": 16,
+  "counts": {
+    "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED": 7,
+    "EMPIRICAL_PARTIAL": 3,
+    "REFERENCE_VALIDATED_ONLY": 6
+  },
+  "models": {
+    "battery.cell.rint_ocv": {
+      "verdict": "EMPIRICAL_PARTIAL",
+      "why": "Two configurations, opposite results, on the same cell and the same measurement. With a declared measured curve it reproduces held-out open-circuit voltage inside the preregistered tolerance. With the affine chord it misses by up to 293 mV. Reporting either alone would be reporting half the evidence."
+    },
+    "electrical.material.linear_tcr_resistance": {
+      "verdict": "EMPIRICAL_PARTIAL",
+      "why": "Against a standards-body reference table its deviation is the omitted quadratic term to better than 5 percent from 50 degC upward, and the residual's quadratic coefficient matches |B| R0 to four significant figures. It is PARTIAL and not VALIDATED because six scored entries at the low end fail the rule as preregistered, because the reference is a transcription rather than the licensed document, and because it is a standardised relation rather than a measurement of a specimen."
+    },
+    "electrical.material.rated_linear_tcr_resistance": {
+      "verdict": "EMPIRICAL_PARTIAL",
+      "why": "Its constitutive law is the one above and carries that evidence. The claim that distinguishes it - the linearization band and the maximum operating temperature - has no measured rating behind it for any conductor used here."
+    },
+    "electrical.dc.kcl": {
+      "verdict": "REFERENCE_VALIDATED_ONLY",
+      "why": "ngspice 42, LEVEL 4, from the previous round. No physical measurement."
+    },
+    "electrical.dc.resistor_ohm": {
+      "verdict": "REFERENCE_VALIDATED_ONLY",
+      "why": "ngspice 42, LEVEL 4, from the previous round."
+    },
+    "electrical.dc.ideal_voltage_source": {
+      "verdict": "REFERENCE_VALIDATED_ONLY",
+      "why": "ngspice 42, LEVEL 4, from the previous round."
+    },
+    "electrical.dc.ideal_current_source": {
+      "verdict": "REFERENCE_VALIDATED_ONLY",
+      "why": "ngspice 42, LEVEL 4, from the previous round."
+    },
+    "electrical.dc.regulated_voltage_source": {
+      "verdict": "REFERENCE_VALIDATED_ONLY",
+      "why": "Covered numerically by the previous round; its regulation band is a caller's declaration with no external number to be right about."
+    },
+    "electrical.dc.self_heated_resistor": {
+      "verdict": "REFERENCE_VALIDATED_ONLY",
+      "why": "Covered numerically by the previous round; no datasheet with a measured element-to-body thermal resistance is reachable."
+    },
+    "thermal.lumped.first_order_capacity": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "No measured transient with independently known C and hA is reachable. Rounds 5 and 6 validated it mathematically and against an independently constructed problem; neither is a measurement."
+    },
+    "thermal.conduction1d.linear_diffusion": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "No measured transient is reachable, and the quantity this model predicts - the decay of an exactly half-sine initial profile - is not one an experiment produces."
+    },
+    "battery.cell.coulomb_counting": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "See MVF-5: the only measured constant-current discharge dataset available does not record the current."
+    },
+    "battery.cell.constant_current_runtime": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "See MVF-5."
+    },
+    "battery.cell.peukert_capacity_derating": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "See MVF-5. This is the model the available data comes closest to fitting, and the gap is one column."
+    },
+    "kinetics.cstr.nonisothermal_first_order": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "The one measured reactor experiment found was rejected at the provenance lock. CODATA fixes a constant the model is handed and validates nothing the model predicts."
+    },
+    "kinetics.cstr.nonisothermal_first_order_constant_rate": {
+      "verdict": "EMPIRICAL_EVIDENCE_NOT_ESTABLISHED",
+      "why": "Declared in the repository as a comparison approximation rather than a claim about a physical system."
+    }
+  }
+}
