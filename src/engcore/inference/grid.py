@@ -115,24 +115,56 @@ class ObservationSet:
         }
 
 
-@dataclass(frozen=True)
+def _require_observation_set(observations: object) -> None:
+    if not isinstance(observations, ObservationSet):
+        raise InferenceProblemError(
+            f"a forward row is built against an ObservationSet, got "
+            f"{type(observations).__name__}"
+        )
+
+
+@dataclass(frozen=True, init=False)
 class AdmittedForwardRow:
-    """Compact row produced only after domain predictions cross K1.5 admission."""
+    """Compact row produced only after domain predictions cross K1.5 admission.
+
+    **The admitted state is an invariant of this type, not of a factory.** The
+    constructor takes an :class:`ObservationSet` and the admitted predictions
+    by condition, and nothing else: every value in an admitted row is read out
+    of an :class:`AdmissibleNumericalPrediction` that passed
+    :func:`require_admissible_numerical_prediction`, converted to the unit of
+    the observation it will be compared with, and carries that prediction's
+    admission reference.
+
+    It used to take the finished fields. ``from_predictions`` enforced the rule
+    and the constructor did not, so ``AdmittedForwardRow(coords, keys, (1.0,),
+    ("forged",))`` was an admitted row built from a number no prediction
+    produced -- and ``AdmittedForwardTable.from_rows`` and the posterior
+    consumed it exactly like an admitted one. A safe factory beside a
+    constructor that builds the stronger state is a convention, not a boundary.
+
+    So there is no field-level constructor (``dataclasses.replace`` has nothing
+    to call either), no subclass that could redefine the one there is, and a
+    rejected row -- which asserts nothing -- is built only by :meth:`rejected`.
+    What Python cannot close is deliberate circumvention: ``object.__new__``
+    with ``object.__setattr__``, or a crafted pickle, can write any fields onto
+    any frozen record in this repository. The boundary holds against every
+    supported construction path, which is the boundary the other records hold.
+    """
 
     coordinates: tuple[float, ...]
     observation_keys: tuple[str, ...]
     values: tuple[float, ...]
     admission_refs: tuple[str, ...]
-    admissible: bool = True
-    rejection_reason: str = ""
+    admissible: bool
+    rejection_reason: str
 
-    @classmethod
-    def from_predictions(
-        cls,
+    def __init__(
+        self,
         coordinates: Sequence[float],
         observations: ObservationSet,
         predictions_by_condition: Mapping[str, AdmissibleNumericalPrediction],
-    ) -> "AdmittedForwardRow":
+    ) -> None:
+        _require_observation_set(observations)
         numeric: list[float] = []
         refs: list[str] = []
         for observation in observations.observations:
@@ -152,14 +184,40 @@ class AdmittedForwardRow:
                 f"{prediction.prediction_id}|{prediction.verification_ref}|"
                 f"{prediction.binding_ref}"
             )
-        return cls(
-            coordinates=tuple(float(v) for v in coordinates),
-            observation_keys=observations.keys,
-            values=tuple(numeric),
-            admission_refs=tuple(refs),
-            admissible=True,
-            rejection_reason="",
+        self._assign(coordinates, observations.keys, tuple(numeric), tuple(refs), True, "")
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        raise TypeError(
+            "AdmittedForwardRow cannot be subclassed: a subclass could redefine "
+            "the constructor that is its admission gate and still pass every "
+            "isinstance check downstream inference makes"
         )
+
+    def _assign(
+        self,
+        coordinates: Sequence[float],
+        observation_keys: tuple[str, ...],
+        values: tuple[float, ...],
+        admission_refs: tuple[str, ...],
+        admissible: bool,
+        rejection_reason: str,
+    ) -> None:
+        object.__setattr__(self, "coordinates", tuple(float(v) for v in coordinates))
+        object.__setattr__(self, "observation_keys", observation_keys)
+        object.__setattr__(self, "values", values)
+        object.__setattr__(self, "admission_refs", admission_refs)
+        object.__setattr__(self, "admissible", admissible)
+        object.__setattr__(self, "rejection_reason", rejection_reason)
+
+    @classmethod
+    def from_predictions(
+        cls,
+        coordinates: Sequence[float],
+        observations: ObservationSet,
+        predictions_by_condition: Mapping[str, AdmissibleNumericalPrediction],
+    ) -> "AdmittedForwardRow":
+        """The admission gate under the name its callers use. Same as the constructor."""
+        return cls(coordinates, observations, predictions_by_condition)
 
     @classmethod
     def rejected(
@@ -168,15 +226,21 @@ class AdmittedForwardRow:
         observations: ObservationSet,
         reason: str,
     ) -> "AdmittedForwardRow":
+        _require_observation_set(observations)
         text = str(reason).strip() or "forward prediction was not scientifically admissible"
-        return cls(
-            coordinates=tuple(float(v) for v in coordinates),
-            observation_keys=observations.keys,
-            values=tuple(0.0 for _ in observations.observations),
-            admission_refs=(),
-            admissible=False,
-            rejection_reason=text,
+        # Not through the constructor, which admits. A rejected row claims
+        # nothing -- the table masks it out and the posterior gives it no mass
+        # -- so it needs no evidence to be built.
+        row = object.__new__(cls)
+        row._assign(
+            coordinates,
+            observations.keys,
+            tuple(0.0 for _ in observations.observations),
+            (),
+            False,
+            text,
         )
+        return row
 
 
 @dataclass(frozen=True)
@@ -214,6 +278,19 @@ class AdmittedForwardTable:
             raise InferenceProblemError("admitted forward rows must contain finite values")
         if len(self.admission_refs) != points.shape[0] or len(self.rejection_reasons) != points.shape[0]:
             raise InferenceProblemError("forward-table audit vectors have wrong length")
+        # A table is also rebuilt from audited caches, so it cannot re-run
+        # admission. What it can refuse is a row marked admitted with no
+        # admission record behind each of its values: that is an absence of
+        # evidence, and `from_rows` never produces it.
+        for index in np.flatnonzero(mask):
+            row_refs = tuple(self.admission_refs[index])
+            if len(row_refs) != len(keys) or any(not str(ref).strip() for ref in row_refs):
+                raise InferenceProblemError(
+                    f"forward-table row {int(index)} is marked admitted with "
+                    f"{len(row_refs)} admission record(s) for {len(keys)} "
+                    f"observation(s); an admitted value needs the admission "
+                    f"record it came from"
+                )
 
         points.setflags(write=False)
         values.setflags(write=False)
@@ -237,6 +314,12 @@ class AdmittedForwardTable:
         if not rows:
             raise InferenceProblemError("cannot build an empty forward table")
         for row in rows:
+            if not isinstance(row, AdmittedForwardRow):
+                raise InferenceAdmissibilityError(
+                    f"a forward table is built from AdmittedForwardRow records, "
+                    f"got {type(row).__name__}; an object with the right "
+                    f"attribute names never crossed admission"
+                )
             if row.observation_keys != observations.keys:
                 raise InferenceProblemError("forward row observation order does not match dataset")
         return cls(
