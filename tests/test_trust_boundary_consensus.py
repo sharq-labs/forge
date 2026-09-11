@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import itertools
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -245,6 +246,33 @@ def test_a_comparison_over_a_quantity_a_route_did_not_report_is_refused():
             required=("A",),
             reported={"a": ("A",), "b": ("A",)},
         )
+
+
+def test_the_evidence_must_be_the_types_that_enforce_their_own_rules():
+    """A stand-in object carries ``agreed``, ``award`` or ``components`` past
+    the rules :class:`RouteComparison`, :class:`VerificationThresholds` and
+    :class:`SolveRoute` enforce, because their constructors never ran."""
+    reported = {"a": ("A", "B"), "b": ("A", "B")}
+    duck_comparison = SimpleNamespace(
+        quantities=("A", "B"), worst_quantity="A", worst_relative_difference=0.0,
+        tolerance=TOLERANCE, agreed=True, compared_anything=True, detail="",
+    )
+    with pytest.raises(ScientificValidationError, match="not a RouteComparison"):
+        _direct(duck_comparison, reported=reported)
+
+    duck_thresholds = SimpleNamespace(award=lambda level, *, earned: level)
+    with pytest.raises(ScientificValidationError, match="not VerificationThresholds"):
+        CrossSolverConsensus(
+            consensus_id="tb3", routes=ROUTES, comparison=_agreed("A", "B"),
+            thresholds=duck_thresholds, required_outputs=REQUIRED,
+            reported_outputs=reported,
+        )
+
+    duck_route = SimpleNamespace(
+        route_id="b", components=frozenset({"b:rhs"}), declares_nothing=False
+    )
+    with pytest.raises(ScientificValidationError, match="not a SolveRoute"):
+        _direct(_agreed("A", "B"), reported=reported, routes=(ROUTES[0], duck_route))
 
 
 def test_complete_reports_with_a_required_output_left_uncompared_are_refused():
