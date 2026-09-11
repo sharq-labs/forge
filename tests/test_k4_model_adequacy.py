@@ -58,6 +58,7 @@ def test_exact_finite_mixture_cdf_and_log_density() -> None:
         twin=twin,
         model=model,
         source_ref="heldout:test",
+        heldout_dataset_id="HOLD",
     )
 
     # Symmetric component offsets around y, but asymmetric mixture weights.
@@ -82,11 +83,11 @@ def test_unit_conversion_is_applied_before_scoring() -> None:
     twin, model = _refs()
     a = assess_predictive_observation(
         _posterior(), _table(), _spec(), Quantity(12.0, "kelvin"),
-        twin=twin, model=model, source_ref="a"
+        twin=twin, model=model, source_ref="a", heldout_dataset_id="HOLD"
     )
     b = assess_predictive_observation(
         _posterior(), _table(), _spec(), Quantity(-261.15, "degC"),
-        twin=twin, model=model, source_ref="b"
+        twin=twin, model=model, source_ref="b", heldout_dataset_id="HOLD"
     )
     assert a.predictive_cdf == pytest.approx(b.predictive_cdf, abs=1e-15)
     assert a.log_predictive_density == pytest.approx(b.log_predictive_density, abs=1e-15)
@@ -97,7 +98,7 @@ def test_missing_observation_noise_fails_closed() -> None:
     with pytest.raises(ModelAdequacyError, match="requires declared observation noise"):
         assess_predictive_observation(
             _posterior(), _table(), _spec(None), Quantity(12.0, "kelvin"),
-            twin=twin, model=model, source_ref="heldout"
+            twin=twin, model=model, source_ref="heldout", heldout_dataset_id="HOLD"
         )
 
 
@@ -106,7 +107,7 @@ def test_positive_mass_on_rejected_predictive_support_fails_closed() -> None:
     with pytest.raises(ModelAdequacyError, match="rejects parameter support carrying posterior mass"):
         assess_predictive_observation(
             _posterior(), _table((True, False)), _spec(), Quantity(12.0, "kelvin"),
-            twin=twin, model=model, source_ref="heldout"
+            twin=twin, model=model, source_ref="heldout", heldout_dataset_id="HOLD"
         )
 
 
@@ -119,10 +120,12 @@ def test_log_score_comparison_is_paired_and_model_bound() -> None:
     spec = _spec()
     obs = Quantity(12.0, "kelvin")
     aa = assess_predictive_observation(
-        posterior, table, spec, obs, twin=twin, model=ma, source_ref="a"
+        posterior, table, spec, obs, twin=twin, model=ma, source_ref="a",
+        heldout_dataset_id="HOLD",
     )
     bb = assess_predictive_observation(
-        posterior, table, spec, obs, twin=twin, model=mb, source_ref="b"
+        posterior, table, spec, obs, twin=twin, model=mb, source_ref="b",
+        heldout_dataset_id="HOLD",
     )
     comparison = compare_log_predictive_scores(ma, (aa,), mb, (bb,))
     assert comparison.delta_a_minus_b == pytest.approx(0.0)
@@ -142,5 +145,6 @@ def test_assessment_serialization_is_deterministic() -> None:
         twin=twin,
         model=model,
         source_ref="det",
+        heldout_dataset_id="HOLD",
     )
     assert assess_predictive_observation(**kwargs).to_dict() == assess_predictive_observation(**kwargs).to_dict()

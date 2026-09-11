@@ -299,6 +299,7 @@ def _assess_model(
                     f"{source_prefix}|k4-prereg:{PREREG_COMMIT}|"
                     f"source:{source_commit}|heldout:{observations.dataset_id}"
                 ),
+                heldout_dataset_id=observations.dataset_id,
                 credible_mass=CREDIBLE_MASS,
             )
         )
@@ -359,6 +360,7 @@ def _adequacy_math_selfcheck() -> bool:
         twin=TwinReference("k4-selfcheck", "1"),
         model=ARRHENIUS_MODEL_REF,
         source_ref="k4-selfcheck",
+        heldout_dataset_id="k4-selfcheck-heldout",
     )
     expected_log_density = -math.log(2.0 * math.sqrt(2.0 * math.pi))
     return bool(
