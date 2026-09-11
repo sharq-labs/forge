@@ -1,0 +1,109 @@
+{
+  "families": [
+    {
+      "conservation_tolerance": 1e-09,
+      "enforced": "C > 0, hA > 0, t > 0, T_0 and T_amb and T_ss above 100 K",
+      "generated": 200,
+      "model": "thermal.lumped.first_order_capacity",
+      "property": "the closed form equals an RK4 integration, and the first law holds",
+      "rejected": 7,
+      "tolerance": 1e-08,
+      "verdict": "HOLDS",
+      "worst_case": {
+        "ambient": 388.7634451164305,
+        "capacity": 64312.92702741663,
+        "conductance": 0.011094621067433136,
+        "duration": 1.3118196235896356,
+        "heat": 348.15291102681175,
+        "initial": 426.0165976643409,
+        "oracle": 426.02369066413786,
+        "relative_error": 1.0820997448345879e-13,
+        "runtime": 426.02369066418396
+      },
+      "worst_energy_residual": 3.1824406311165377e-10,
+      "worst_relative_error": 1.0820997448345879e-13
+    },
+    {
+      "conservation_tolerance": 1e-12,
+      "enforced": "Q > 0, R > 0, 0 < eta <= 1, V_full > V_empty, I > 0, and the whole trajectory inside [0, 1] so the chord is read where it is defined",
+      "generated": 400,
+      "model": "battery.cell.rint_ocv / coulomb_counting",
+      "property": "V = OCV(z) - I R with z from charge conservation; heat >= 0; V <= OCV",
+      "rejected": 40,
+      "tolerance": 1e-12,
+      "verdict": "HOLDS",
+      "worst_case": {
+        "relative_error": 0.0
+      },
+      "worst_charge_residual": 0.0,
+      "worst_relative_error": 0.0
+    },
+    {
+      "conservation_tolerance": 1e-09,
+      "enforced": "R > 0 and finite, one reference node, no self-loops, no two ideal sources across one node pair, every node conductively connected to the reference",
+      "generated": 60,
+      "model": "electrical.dc.*",
+      "property": "node potentials match ngspice; KCL holds at every node",
+      "rejected": 18,
+      "tolerance": 1e-05,
+      "verdict": "HOLDS",
+      "worst_case": {
+        "ngspice": -10.3682,
+        "node": "n3",
+        "relative_error": 4.493312157025344e-06,
+        "runtime": -10.368153412440893,
+        "sources": [
+          [
+            "V0",
+            "n3",
+            "gnd",
+            -10.368153412440893
+          ],
+          [
+            "V1",
+            "n2",
+            "gnd",
+            -8.452571346859404
+          ]
+        ]
+      },
+      "worst_kcl_residual": 5.750724093482517e-13,
+      "worst_relative_error_vs_ngspice": 4.493312157025344e-06
+    },
+    {
+      "enforced": "L > 0, alpha > 0, t > 0, even cell count, and the scheme's own predicted error below 1e-3 so the comparison is about correctness rather than resolution",
+      "generated": 40,
+      "model": "thermal.conduction1d.linear_diffusion",
+      "property": "the observed error never exceeds a small multiple of the error the discretization itself predicts",
+      "rejected": 190,
+      "tolerance": 3.0,
+      "verdict": "HOLDS",
+      "worst_case": {
+        "alpha": 3.0242167370203498e-06,
+        "end_time": 49.60505324542627,
+        "length": 0.01117493496083311,
+        "n_cells": 400,
+        "n_steps": 100000,
+        "observed_error": 0.0007640323679960178,
+        "predicted_error": 0.0007638035378377596,
+        "ratio": 1.000299592954107
+      },
+      "worst_error_over_predicted": 1.000299592954107
+    },
+    {
+      "enforced": "all rates and properties strictly positive, feed and coolant inside the declared 250-1000 K band, and the exact adiabatic ceiling inside it too",
+      "generated": 30,
+      "model": "kinetics.cstr.nonisothermal_first_order",
+      "property": "the trajectory never crosses the invariant ceiling max(T_0,T_f,T_c) + beta max(C_A0,C_Af), and the concentration stays in [0, C_Af]",
+      "rejected": 10,
+      "tolerance": 1e-06,
+      "verdict": "HOLDS",
+      "worst_case": {},
+      "worst_ceiling_overshoot_k": 0.0
+    }
+  ],
+  "note": "Every generator enforces the model's declared physical domain and reports how many draws it refused. A generator with no rejections is not constraining anything.",
+  "schema": "scientific_truth_property_testing/1",
+  "seed": 20260911,
+  "violations": []
+}
