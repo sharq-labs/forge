@@ -1,0 +1,109 @@
+{
+  "by_class": {
+    "CLAIM_BROADENED_BEYOND_EQUATIONS": {
+      "caught": 1,
+      "total": 1
+    },
+    "OUT_OF_REGIME_MARKED_SUPPORTED": {
+      "caught": 1,
+      "total": 1
+    },
+    "REQUIRED_APPROXIMATION_HIDDEN": {
+      "caught": 1,
+      "total": 1
+    },
+    "UNSUPPORTED_REGIME_ACCEPTED": {
+      "caught": 1,
+      "total": 1
+    },
+    "VALIDITY_LIMIT_REMOVED": {
+      "caught": 3,
+      "total": 3
+    }
+  },
+  "caught": 7,
+  "control": {
+    "green": true,
+    "id": "CONTROL",
+    "status": "GREEN",
+    "tail": "12 passed in 1.41s"
+  },
+  "relationship_to_earlier_rounds": "additive and independent. The certified 79-mutant code suite and the 15-mutant contract suite are not modified, extended or renumbered, and these counts are never merged with either.",
+  "results": [
+    {
+      "caught": true,
+      "class": "VALIDITY_LIMIT_REMOVED",
+      "file": "src/engcore/domains/electrical/material.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero",
+      "id": "CBP-1",
+      "overclaim": "the positivity bound on the linear TCR form is loosened until it cannot bite: the record still states a bound and the runtime still enforces it, so record and runtime agree perfectly, and a negative resistance is applicable again",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.56s"
+    },
+    {
+      "caught": true,
+      "class": "UNSUPPORTED_REGIME_ACCEPTED",
+      "file": "src/engcore/domains/electrical/material.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero",
+      "id": "CBP-2",
+      "overclaim": "the endpoint is reopened: a resistance of exactly zero -- a short, not a conductor -- becomes applicable, from a one-word edit that no record-versus-runtime check can see",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.51s"
+    },
+    {
+      "caught": true,
+      "class": "VALIDITY_LIMIT_REMOVED",
+      "file": "src/engcore/domains/kinetics/cstr/alternatives.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope",
+      "id": "CBP-3",
+      "overclaim": "the constant-rate CSTR's envelope ceiling is raised past any reachable temperature, so the record claims the same single-phase envelope as its sibling while checking nothing",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.87s"
+    },
+    {
+      "caught": true,
+      "class": "CLAIM_BROADENED_BEYOND_EQUATIONS",
+      "file": "src/engcore/domains/kinetics/cstr/problem.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope",
+      "id": "CBP-4",
+      "overclaim": "the single-phase liquid envelope is broadened to 3000 K, where no ordinary solvent is a liquid at all: the equations are untouched and every record still agrees with every runtime, and the claim now covers a regime the constant-property balances cannot represent",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.20s"
+    },
+    {
+      "caught": true,
+      "class": "VALIDITY_LIMIT_REMOVED",
+      "file": "src/engcore/domains/battery/models.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_runtime_model_refuses_a_cutoff_above_where_the_discharge_starts",
+      "id": "CBP-5",
+      "overclaim": "the runtime model's reachability floor is loosened until a cutoff behind the start passes it, restoring a negative runtime reported as applicable",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.54s"
+    },
+    {
+      "caught": true,
+      "class": "OUT_OF_REGIME_MARKED_SUPPORTED",
+      "file": "src/engcore/domains/thermal/conduction1d/validation.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_a_coarse_diffusion_solve_claims_no_accuracy_it_has_not_earned",
+      "id": "CBP-6",
+      "overclaim": "a single solve starts reporting discretization convergence it cannot have established, so a 25x-wrong answer carries a passing accuracy check instead of an honest NOT_RUN",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.65s"
+    },
+    {
+      "caught": true,
+      "class": "REQUIRED_APPROXIMATION_HIDDEN",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_lumped_model_refuses_a_body_its_own_run_would_melt",
+      "id": "CBP-7",
+      "overclaim": "the lumped model's phase-change limit stops binding, so a body the run carries past its melting point is applicable -- the approximation 'no phase change' is still declared in the record and is no longer checked anywhere",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.55s"
+    }
+  ],
+  "schema": "capability_boundary_planted_defects/1",
+  "survivors": [],
+  "total": 7,
+  "what_this_is": "Falsification for this round's scientific boundary guards. Each plant is one capability-overclaim class, made in a temporary copy of the repository, with a named guard that must go RED.",
+  "why_this_is_not_a_contract_mutation": "Every plant here leaves the published record and the guarded runtime in perfect agreement and breaks only the scientific boundary between them. A record-versus-runtime check cannot see any of them, which is the whole reason this round exists."
+}
