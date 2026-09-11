@@ -1,0 +1,142 @@
+{
+  "adjudicated_score": {
+    "exact": 674,
+    "safety": {
+      "FALSE_ACCEPT": 2,
+      "TRUE_ACCEPT": 255,
+      "TRUE_REJECT": 463
+    }
+  },
+  "append_only": true,
+  "contamination": {
+    "FORGE_GUIDED_DISCOVERY": [
+      "ERR-1",
+      "ERR-2",
+      "ERR-3",
+      "ERR-5",
+      "ERR-6",
+      "ERR-7"
+    ],
+    "FORGE_GUIDED_REPAIR": [],
+    "FOUND_WITHOUT_FORGE": [
+      "ERR-8"
+    ],
+    "note": "Every erratum but ERR-8 was found because the Core disagreed. No erratum took its corrected answer from the Core: each was re-derived from exact arithmetic, from the definition of the quantity, or from a fact the challenge had frozen before the run and failed to use.",
+    "rule": "A correction found because the Core disagreed is contamination of the challenge's independence, whether or not the Core supplied the answer. Both facts are recorded."
+  },
+  "errata": [
+    {
+      "cases": [
+        "V2-BATTERY_CELL-00044",
+        "V2-BATTERY_CELL-00048"
+      ],
+      "corrected_truth": "SUPPORTED",
+      "discovered_because_of_forge_disagreement": true,
+      "error_source": "the oracle formed |I/Q_nom| / rating in binary floating point, through a capacity converted to coulomb and a rate converted to inverse seconds, and landed one ULP above 1",
+      "evidence": "in exact rational arithmetic on the declared decimals -- 3.75 A against 2.5 Ah at 1.5/h, and 15 A against 5 Ah at 3/h -- the utilization is exactly 1. The bound is 1 and the record declares it inclusive, so the boundary state is inside the domain.",
+      "frozen_truth": "NOT_SUPPORTED",
+      "id": "ERR-1",
+      "repair_basis": "exact rational arithmetic on the declared values, computed independently",
+      "repair_was_forge_guided": false,
+      "triage": "CHALLENGE_TRUTH_DEFECT"
+    },
+    {
+      "cases": [
+        "V2-ELECTRICAL_DC-00088"
+      ],
+      "corrected_truth": "SUPPORTED",
+      "discovered_because_of_forge_disagreement": true,
+      "error_source": "the challenge aimed a wrong-dimension refusal probe at derating_factor, which ComponentRating declares as a bare float",
+      "evidence": "ComponentRating.derating_factor has type float in the public record. There is no unit on it for a dimension to be wrong about, so the declaration is legal and the case is the underlying nominal, which is supported.",
+      "frozen_truth": "REJECTED_AT_BOUNDARY",
+      "id": "ERR-2",
+      "repair_basis": "the declared type of the field in the public contract",
+      "repair_was_forge_guided": false,
+      "triage": "CHALLENGE_TRUTH_DEFECT"
+    },
+    {
+      "cases": [
+        "V2-THERMAL_LUMPED-00007",
+        "V2-THERMAL_LUMPED-00039",
+        "V2-THERMAL_LUMPED-00043",
+        "V2-BATTERY_CELL-00021"
+      ],
+      "corrected_truth": "REJECTED_AT_BOUNDARY",
+      "discovered_because_of_forge_disagreement": true,
+      "error_source": "the lever that drives radiation_to_convection_ratio raises surface_emissivity, and the one that drives soc_window_margin raises usable_soc_minimum. Neither the lever nor the oracle bounded the field it was moving, so the search walked emissivity past 1 and a state-of-charge edge below 0 and computed with them.",
+      "evidence": "a total hemispherical emissivity is a ratio of emitted to black-body flux and lies in [0, 1] by definition; a state of charge is a fraction of a cell's usable charge and lies in [0, 1]. A declaration outside those has no physical reading, and refusing it at construction is correct.",
+      "frozen_truth": "SUPPORTED or NOT_SUPPORTED",
+      "id": "ERR-3",
+      "repair_basis": "the definition of the two quantities, independent of any implementation",
+      "repair_was_forge_guided": false,
+      "triage": "ORACLE_DEFECT"
+    },
+    {
+      "cases": "49 cases: 26 kinetics.cstr, 23 thermal.conduction1d",
+      "corrected_truth": "REJECTED_AT_BOUNDARY",
+      "discovered_because_of_forge_disagreement": true,
+      "error_source": "the challenge's evidence map treated required declarations as droppable evidence. Dropping heat_of_reaction from a reactor or the diffusivity from a slab does not leave a condition unknown, it leaves a record that cannot be built.",
+      "evidence": "SYSTEM_INVENTORY.json records these inputs as required=true, read from the models' own declarations before the freeze. The challenge had the fact and did not use it.",
+      "frozen_truth": "INSUFFICIENT_EVIDENCE",
+      "id": "ERR-5",
+      "repair_basis": "the required flag in the frozen system inventory",
+      "repair_was_forge_guided": false,
+      "safety_axis_unchanged": true,
+      "triage": "CHALLENGE_TRUTH_DEFECT"
+    },
+    {
+      "cases": "15 electrical.dc cases",
+      "corrected_truth": "REJECTED_AT_BOUNDARY",
+      "discovered_because_of_forge_disagreement": true,
+      "error_source": "the challenge dropped rated_power while leaving the two temperatures that define the derating line, and expected the condition to report unknown",
+      "evidence": "the Core refuses the combination at construction: a derating line was declared without a rated_power for it to pass through. That is stricter than the challenge expected and is the safer of the two: a half-declared line is a declaration error, not a gap in evidence.",
+      "frozen_truth": "INSUFFICIENT_EVIDENCE",
+      "id": "ERR-6",
+      "repair_basis": "the geometry of the derating line: two points do not define it without the power they pass through",
+      "repair_was_forge_guided": false,
+      "safety_axis_unchanged": true,
+      "triage": "EXPECTED_CONTRACT_DIFFERENCE"
+    },
+    {
+      "cases": "16 cases where a strictly-positive parameter was driven to zero or below",
+      "corrected_truth": "REJECTED_AT_BOUNDARY (also acceptable)",
+      "discovered_because_of_forge_disagreement": true,
+      "error_source": "CHALLENGE_SPEC registered channel ambiguity for this exact situation, and the flag was applied only to the branch that forced a value directly, not to the branch that reached zero by solving for a margin",
+      "evidence": "the registered rule already says a physically invalid but dimensionally legal declaration may be refused at construction or caught as a condition, and that both are refusals. The accounting missed a branch; the rule did not.",
+      "frozen_truth": "NOT_SUPPORTED",
+      "id": "ERR-7",
+      "repair_basis": "a rule registered in CHALLENGE_SPEC.json before the corpus existed",
+      "repair_was_forge_guided": false,
+      "safety_axis_unchanged": true,
+      "triage": "REPRESENTATION_BOUNDARY"
+    },
+    {
+      "cases": [
+        "V2-KINETICS_CSTR-00091",
+        "V2-KINETICS_CSTR-00100"
+      ],
+      "corrected_truth": "REJECTED_AT_BOUNDARY (unchanged)",
+      "discovered_because_of_forge_disagreement": false,
+      "error_source": "the runner treated only ScientificCoreError and UnitCompatibilityError as declared refusals, so a domain's own ReactorConfigurationError was filed as a core_error",
+      "evidence": "the two cases were refused for a wrong-dimension declaration, which is exactly what the frozen truth predicted. The verdict agreed; only the runner's label did not.",
+      "frozen_truth": "REJECTED_AT_BOUNDARY",
+      "id": "ERR-8",
+      "repair_basis": "the exception classes the domains declare",
+      "repair_was_forge_guided": false,
+      "triage": "RUNNER_DEFECT"
+    }
+  ],
+  "first_run_score": {
+    "acceptable": 630,
+    "exact": 541,
+    "safety": {
+      "CORE_ERROR": 44,
+      "FALSE_ACCEPT": 5,
+      "FALSE_REJECT": 2,
+      "TRUE_ACCEPT": 252,
+      "TRUE_REJECT": 417
+    }
+  },
+  "rule": "The frozen truth in truth/truth.jsonl is NOT edited. This file records, for each case where it was wrong, what it said, what an independent re-derivation says instead, and where that re-derivation came from. The first-run score is computed against the frozen truth and stands; the adjudicated score applies these corrections and is reported beside it.",
+  "schema": "blind_v2_truth_errata/1"
+}

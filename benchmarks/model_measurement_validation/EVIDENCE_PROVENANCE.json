@@ -1,0 +1,150 @@
+{
+  "schema": "evidence_provenance/1",
+  "written_before_any_core_run": true,
+  "rule": "No measurement row enters the validation suite without an entry here. A number whose origin cannot be stated is not evidence, whatever it agrees with.",
+  "reachable_network_in_this_environment": {
+    "reachable": ["raw.githubusercontent.com", "pypi.org", "files.pythonhosted.org"],
+    "blocked_by_the_egress_proxy": ["nist.gov and every NIST subdomain", "doi.org", "zenodo.org", "arxiv.org", "osti.gov", "cdn.standards.iteh.ai", "en.wikipedia.org", "manufacturer sites", "api.github.com for repositories not attached to this session"],
+    "consequence": "Standards documents, DOI landing pages and national-laboratory datasets could not be retrieved. Everything below was obtained from the two reachable hosts, and everything that could not be obtained is recorded as EVIDENCE_UNAVAILABLE_IN_CURRENT_ENVIRONMENT rather than reconstructed from memory."
+  },
+  "sources_accepted": [
+    {
+      "source_id": "S-OCV",
+      "title": "24-hour OCV relaxation measurements after complete charge/discharge cycles for batteries with different chemistries",
+      "authors": "VOICILA Iulian-Teodor, ENACHE Bogdan-Adrian, VILCIU Irina, SERITAN George-Calin",
+      "organization": "National University of Science and Technology POLITEHNICA Bucharest",
+      "dataset_identifier": "DOI 10.21227/651q-8v82 (IEEE DataPort), version 1",
+      "related_publication": "Voicila, T. I., Enache, B. A., Argyriou, V., Sarigiannidis, P., Pisla, M. A., Seritan, G. C. (2025). Enhanced OCV Estimation in LiFePO4 Batteries: A Novel Statistical Approach Leveraging Real-time Knee/Elbow Detection. Batteries (MDPI) 11(5), 186. WOS:001496608900001",
+      "url": "https://raw.githubusercontent.com/BulyK47/battery-datasets/main/ocv-relaxation-24h/ocv_relaxation_24h.xlsx",
+      "url_note": "A git-friendly mirror of the IEEE DataPort record, published by the same dataset under CC BY 4.0. The DOI landing page itself is not reachable from this environment, so the mirror is what was retrieved and hashed; the mirror carries the dataset's own Header sheet, from which the DOI, authors, institution, equipment and test conditions above were read rather than assumed.",
+      "publication_date": "2026-05-23 (as stated in the workbook Header)",
+      "evidence_level": "LEVEL 2",
+      "evidence_level_justification": "A published experimental dataset with a DOI, a named institution, a documented instrument list and an associated peer-reviewed paper. It is raw measurement, which would argue for LEVEL 1, but this audit did not perform or witness the experiment and reaches it as a published dataset record; LEVEL 2 is the conservative reading and is the one used.",
+      "measured_quantity": "open-circuit voltage in volts against relaxation time, at declared target states of charge",
+      "experiment_description": "Cells conditioned to a target SOC by charge or by discharge, then left on open circuit with the source/load disconnected and the terminal voltage monitored for 24 h at 1-minute sampling. Ambient 23 +/- 2 degC, 65 +/- 20 %RH. Instrument input impedance 10 GOhm.",
+      "units": {"time": "hours", "voltage": "volts", "soc": "percent of nominal capacity"},
+      "uncertainty": {
+        "voltage_acquisition": "NI USB-6251, 16-bit; stated accuracy 52 uV on the 0.1 V range to 1.920 uV on the 10 V range; sensitivity 28 uV; CMRR 100 dB",
+        "state_of_charge": "Allegro ACS724 current sensor, +/-1.5% typical and +/-2.5% maximum, sensitivity error +/-1% typical, offset +/-7 mV typical",
+        "temperature": "chamber +/-0.5 degC, ambient setpoint 23 +/- 2 degC",
+        "residual_relaxation": "not stated by the source; measured from the data in this round as the voltage change over the last hour of each 24 h trace"
+      },
+      "sample_count": "8 cells, 30 relaxation traces, 1441 rows per trace; this round uses the LiFePO4 cells BATT_001 (APR, 6+6 SOC levels) and BATT_002 (BSE, 3+3 SOC levels)",
+      "transformations_required": "read the relaxed value as the sample at t = 24 h; no smoothing, no fitting, no resampling",
+      "license": "Creative Commons Attribution 4.0 International (CC BY 4.0). The dataset requires citation of the DOI and the related publication, which is done here and in ROUND_REPORT.md.",
+      "local_filename": "evidence/ocv_relaxation_24h.xlsx",
+      "sha256": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+      "bytes": 466798,
+      "used_for": ["battery.cell.rint_ocv"]
+    },
+    {
+      "source_id": "S-DCHG",
+      "title": "Charge and discharge voltage curves for APR and BSE rechargeable batteries under CCCV charging and three constant-current discharge profiles",
+      "authors": "VOICILA Iulian-Teodor, ENACHE Bogdan-Adrian, VILCIU Irina, SERITAN George-Calin",
+      "organization": "National University of Science and Technology POLITEHNICA Bucharest",
+      "dataset_identifier": "DOI 10.21227/cm0f-jg66 (IEEE DataPort), version 1",
+      "related_publication": "Voicila, T. I., Enache, B. A., Mateescu, M. V., Seritan, G. C. (2025). A high-speed multi-chemistry and multi-battery state-of-health screening system for retired lithium-ion batteries. UPB Scientific Bulletin Series C, 87(3). WOS:001562110500021",
+      "url": "https://raw.githubusercontent.com/BulyK47/battery-datasets/main/charge-discharge-voltage-curves/charge_discharge_voltage_curves.xlsx",
+      "publication_date": "2026-05-23 (as stated in the workbook Header)",
+      "evidence_level": "LEVEL 2",
+      "evidence_level_justification": "Same institution, same instrument list, same publication route as S-OCV.",
+      "measured_quantity": "cell terminal voltage in volts against time, during constant-current discharge",
+      "experiment_description": "Ten LiFePO4 cells (five Lithium Werks APR 1100 mAh, five BSE 1500 mAh). CCCV charge, 1 h rest, constant-current discharge, repeated for three discharge profiles per cell. 1-second sampling, ambient 23 +/- 2 degC.",
+      "units": {"time": "hours", "voltage": "volts"},
+      "uncertainty": {
+        "voltage_acquisition": "same NI USB-6251 as S-OCV",
+        "discharge_current": "UNCERTAINTY_NOT_REPORTED, and worse - the current VALUE is not reported either; see known_defect_of_this_source below",
+        "temperature": "chamber +/-0.5 degC"
+      },
+      "sample_count": "10 cells x 3 discharge curves = 30 measured discharge curves; 3459 to 34532 samples each",
+      "known_defect_of_this_source": "The discharge current is never given as a number. The three profiles are labelled 'C1/1, C2/2, C3/3' and the acronym table defines 'C' as C-rate, which reads as 1C, C/2 and C/3. The measured durations are approximately 1.0 h, 4.0 h and 8.8 h. A C/2 discharge of a cell that delivers its nominal capacity in 1.0 h at 1C must take about 2 h, not 4. The label and the data disagree by more than a factor of two, so the current cannot be recovered from the metadata. This round therefore uses this source ONLY for tests that need no current, and records the three models that need one as EMPIRICAL_EVIDENCE_INSUFFICIENT.",
+      "transformations_required": "every 60th sample kept, giving a 1-minute grid, plus the final sample of each curve; no smoothing and no interpolation. The reduction exists because the upstream workbook is 14.5 MB. The upstream hash below lets the reduction be checked against the original.",
+      "license": "Creative Commons Attribution 4.0 International (CC BY 4.0), citation of DOI 10.21227/cm0f-jg66 required",
+      "local_filename": "evidence/discharge_curves_1min.json",
+      "sha256": "71e035894b836e2f11f874653bbf95640cec2fb2eec5b76aac9bfd926690562e",
+      "upstream_filename": "charge_discharge_voltage_curves.xlsx",
+      "upstream_sha256": "fad9980125d4e4fe035563e91e8f6a5d3715f248fea81a7294028036c2750108",
+      "upstream_bytes": 14555690,
+      "used_for": ["battery.cell.rint_ocv (second, independent source for the affine-chord finding)"]
+    },
+    {
+      "source_id": "S-PT100",
+      "title": "Platinum resistance-temperature table for a 100 ohm platinum RTD, -200 degC to +850 degC in 1 degC steps",
+      "authors": "Daniel R. Haney (transcriber)",
+      "organization": "the pt100rtd Arduino library; the underlying table is the standards-body one",
+      "dataset_identifier": "pt100rtd, file pt100rtd.h, array Pt100_table[1051]; the file states the values are DIN 43760 resistance values, the German national adoption of the platinum thermometer standard also published as IEC 751 and now IEC 60751",
+      "url": "https://raw.githubusercontent.com/drhaney/pt100rtd/master/pt100rtd.h",
+      "publication_date": "2017-02-18 (file header)",
+      "evidence_level": "LEVEL 3",
+      "evidence_level_justification": "The underlying table is standards-body reference data for industrial platinum thermometers, which is metrology-derived. It is NOT a measurement of one specimen, and it reaches this round through a third-party transcription rather than through the licensed document, which is why the model it supports is scored PARTIAL and not YES.",
+      "transcription_risk": "This is the weakest link in the round and is named as such. The egress proxy blocks every host that serves the standard, including the publisher's own sample PDF, so the document could not be retrieved. The transcription is checked in two independent ways before use: the three anchor values the file itself documents (18.52 ohm at -200 degC, 100.00 ohm at 0 degC, 138.51 ohm at 100 degC) must be present at the right indices, and all 1051 entries must satisfy the Callendar-Van Dusen form with the coefficients recited independently in the previous round. Agreement between a transcription obtained now and a recitation written before it is real corroboration; it is not the document.",
+      "measured_quantity": "resistance in ohms of a nominal 100 ohm platinum thermometer against temperature in degrees Celsius",
+      "experiment_description": "Not an experiment. A standardised reference relation, defined by the Callendar-Van Dusen coefficients the standard fixes, tabulated at 1 degC intervals and rounded to 0.01 ohm.",
+      "units": {"temperature": "degrees Celsius", "resistance": "ohms, stored as ohms x 100 in unsigned 16-bit integers"},
+      "uncertainty": {
+        "tabulation": "+/-0.005 ohm, half of the last printed digit",
+        "specimen": "not applicable; the table is the standardised relation and not a specimen measurement"
+      },
+      "sample_count": 1051,
+      "transformations_required": "parse the integer array from the C header and divide by 100",
+      "license": "the pt100rtd library is published on GitHub; the table it transcribes is the standard's",
+      "local_filename": "evidence/pt100rtd_table.h",
+      "sha256": "d09fc50e9cbe04742273b1b6c023fb23863d72fde63d4bdbab0ae2757a0be693",
+      "bytes": 8760,
+      "used_for": ["electrical.material.linear_tcr_resistance", "electrical.material.rated_linear_tcr_resistance"]
+    },
+    {
+      "source_id": "S-CODATA",
+      "title": "CODATA 2022 recommended value of the molar gas constant",
+      "authors": "CODATA Task Group on Fundamental Constants, via the scipy constants table",
+      "organization": "CODATA / scipy",
+      "dataset_identifier": "scipy 1.17.1, scipy/constants/_codata.py, _current_codata = 'CODATA 2022'",
+      "url": "https://raw.githubusercontent.com/scipy/scipy/v1.17.1/scipy/constants/_codata.py",
+      "evidence_level": "LEVEL 3",
+      "measured_quantity": "molar gas constant, 8.31446261815324 J/(mol K), exact under the 2019 SI redefinition",
+      "uncertainty": {"value": "exact by definition since 2019"},
+      "local_filename": "../empirical_validation/evidence/scipy_codata.py",
+      "sha256": "005317bcd5e11a7cf5c51420a0027399a5c6e39149f3a124e22382dc384cd102",
+      "used_for": [],
+      "why_used_for_is_empty": "This source fixes a constant the CSTR model is HANDED. It says nothing about whether the reactor balances are right. Counting it as evidence for kinetics.cstr.nonisothermal_first_order would be counting evidence for an input as evidence for the model, which is the specific error this surface refuses. It is carried here so the record is complete and is re-verified by the previous round's guards, not by this one's.",
+      "retained_from": "benchmarks/empirical_validation, unchanged"
+    }
+  ],
+  "sources_searched_and_rejected": [
+    {
+      "source": "malfrine/Reaction-Kinetics on GitHub - a 0.637 L CSTR saponification of ethyl acetate with sodium hydroxide, raw data and analysis scripts",
+      "would_have_covered": "kinetics.cstr.nonisothermal_first_order",
+      "rejected_because": "The provenance lock cannot be satisfied. No author affiliation, no date, no publication or dataset identifier, no license, no stated measurement uncertainty, no temperature record, and the raw data in an undocumented MATLAB binary. It may well be a sound experiment; nothing retrievable establishes that, and a round that accepted it would be accepting an anonymous table."
+    },
+    {
+      "source": "PyBaMM (PyPI, 26.8.0.0) bundled half-cell open-circuit potential data: graphite_LGM50_ocp_Chen2020.csv, nmc_LGM50_ocp_Chen2020.csv, graphite_ocp_Ecker2015.csv and others",
+      "would_have_covered": "battery.cell.rint_ocv, apparently",
+      "rejected_because": "OUT_OF_SCOPE_REFERENCE. These are half-cell electrode potentials against electrode stoichiometry, measured against lithium metal. The model predicts a FULL-CELL terminal voltage against cell state of charge. Turning one into the other needs the electrode stoichiometry limits and the active-material balance, which is a different model than the one under test. Using them anyway would be validating a model this repository does not ship."
+    },
+    {
+      "source": "PyBaMM bundled ecm_example_ocv.csv, ecm_example_r0.csv and the other equivalent-circuit example tables",
+      "would_have_covered": "battery.cell.rint_ocv",
+      "rejected_because": "They are named 'example' and carry no provenance, no instrument, no cell identity and no citation. A table of plausible numbers is not a measurement."
+    },
+    {
+      "source": "ngspice 42",
+      "would_have_covered": "the six electrical.dc models",
+      "rejected_because": "It is an external numerical solver, not a physical measurement. The previous round already recorded agreement with it at 6e-13 and labelled it LEVEL 4. Relabelling that as empirical evidence in this round would be manufacturing coverage out of a result that already exists and already says what it is."
+    },
+    {
+      "source": "Teaching and course repositories carrying cooling-curve CSV files (virtual-labs, MATH-383L and similar)",
+      "would_have_covered": "thermal.lumped.first_order_capacity",
+      "rejected_because": "No documented body, no independently known heat capacity or conductance, no instrument, no uncertainty. The lumped model needs C and hA as inputs; a bare temperature-time series would force both to be fitted from the same data that is meant to validate the model, which is calibration reported as validation."
+    },
+    {
+      "source": "IEC 60751:2022, publisher's own sample PDF at cdn.standards.iteh.ai",
+      "would_have_covered": "electrical.material, at full strength",
+      "rejected_because": "EVIDENCE_UNAVAILABLE_IN_CURRENT_ENVIRONMENT. The host is blocked by the egress proxy, by curl and by the fetch tool alike. This is why S-PT100 is a transcription and why the two material models are scored PARTIAL."
+    },
+    {
+      "source": "NIST reference data (webbook, srdata, physics.nist.gov), Zenodo, DOI resolution, arXiv, OSTI",
+      "would_have_covered": "potentially thermal, material and kinetics",
+      "rejected_because": "EVIDENCE_UNAVAILABLE_IN_CURRENT_ENVIRONMENT. Every one of these hosts returns no connection through the egress proxy. Probed explicitly; the result is recorded above rather than left as an assumption."
+    }
+  ]
+}

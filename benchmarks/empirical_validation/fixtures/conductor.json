@@ -1,0 +1,21 @@
+{
+  "fixture_id": "EVF-COND-1",
+  "what_this_is": "A length of annealed copper wire, specified as a resistivity and a geometry rather than as a resistance.",
+  "why_these_numbers": "16.78 nOhm.m at 20 degC and 3930 ppm/K are the standard annealed-copper figures. Stating the wire as rho, L and A rather than as R_ref means the reference resistance is computed twice, independently, and a cross-section or length fault is visible.",
+  "evidence_level": "LEVEL 3 - reference data for the copper coefficients; LEVEL 5 for the algebra.",
+  "quantities": {
+    "resistivity_nOhm_m": 16.78,
+    "length_mm": 2500.0,
+    "cross_section_mm2": 0.5,
+    "temperature_coefficient_ppm_per_K": 3930.0,
+    "reference_temperature_degC": 20.0,
+    "operating_temperature_degC": 85.0,
+    "linearization_band_K": 150.0,
+    "maximum_operating_temperature_degC": 200.0
+  },
+  "derivations_left_to_the_adapters": [
+    "reference resistance R_ref = resistivity * length / cross_section",
+    "temperature coefficient from ppm/K to 1/K",
+    "absolute temperatures from degC"
+  ]
+}

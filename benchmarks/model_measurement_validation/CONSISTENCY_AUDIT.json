@@ -1,0 +1,66 @@
+{
+  "schema": "consistency_audit/1",
+  "checker_self_falsification": {
+    "a_number_was_changed": true,
+    "the_checker_noticed": true,
+    "verdict": "CHECKER_CAN_FAIL"
+  },
+  "numbers_checked": 17,
+  "numbers_missing_from_the_report": [],
+  "claim_checks": [
+    {
+      "check": "the decision is one of the three permitted, stated once",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "coverage is stated alongside the decision",
+      "ok": true,
+      "why": "a mismatch verdict without its coverage reads as a statement about all sixteen models"
+    },
+    {
+      "check": "no model is reported as empirically validated within scope",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "the failing gate is reported as failing",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "every audit defect is listed",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "the model family is not blamed for a configuration's failure",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "the three models with insufficient evidence are not reported as failures",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "the limitations section exists and names the coverage limit",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "the exact validation claim is stated",
+      "ok": true,
+      "why": null
+    },
+    {
+      "check": "no leakage was found, and the report does not claim otherwise",
+      "ok": true,
+      "why": null
+    }
+  ],
+  "failed_claim_checks": [],
+  "forbidden_reasoning_found": [],
+  "inconsistencies": 0,
+  "verdict": "CONSISTENT"
+}

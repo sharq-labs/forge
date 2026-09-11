@@ -1,0 +1,1190 @@
+{
+  "certified_core_commit": "b5cedffda947238c298a3d81ed08750434b8b143",
+  "measured_at": "2026-09-10T17:06:49+00:00",
+  "model_count": 16,
+  "note": "Six systems, sixteen shipped model records, discovered from the declared contract surface and not assumed. The historical expectation was 'approximately six' and the code says exactly six; the split is the model_id's own first two segments, which is how the shipped records name themselves.",
+  "schema": "blind_v2_system_inventory/1",
+  "system_count": 6,
+  "systems": [
+    {
+      "all_models": [
+        {
+          "condition_count": 12,
+          "model_id": "thermal.lumped.first_order_capacity",
+          "model_type": "fundamental_relation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        }
+      ],
+      "declared_inputs": [
+        {
+          "name": "heat_capacity",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "joule / kelvin"
+        },
+        {
+          "name": "ambient_conductance",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "watt / kelvin"
+        },
+        {
+          "name": "duration",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        },
+        {
+          "name": "temperature",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "heat_input",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "watt"
+        },
+        {
+          "name": "ambient_temperature",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "characteristic_length",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter"
+        },
+        {
+          "name": "body_volume",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter ** 3"
+        },
+        {
+          "name": "surface_area",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter ** 2"
+        },
+        {
+          "name": "body_conductivity",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "watt / kelvin / meter"
+        },
+        {
+          "name": "surface_emissivity",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "dimensionless"
+        },
+        {
+          "name": "conductance_excursion_bound",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "capacity_excursion_bound",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "melting_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "fluid_conductivity",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "watt / kelvin / meter"
+        },
+        {
+          "name": "fluid_kinematic_viscosity",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter ** 2 / second"
+        },
+        {
+          "name": "fluid_prandtl_number",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "dimensionless"
+        },
+        {
+          "name": "fluid_expansion_coefficient",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "1 / kelvin"
+        },
+        {
+          "name": "fluid_velocity",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter / second"
+        },
+        {
+          "name": "convection_length",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter"
+        }
+      ],
+      "declared_outputs": [
+        {
+          "metric": "final_temperature",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "metric": "steady_state_temperature",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "metric": "time_constant",
+          "unit_exemplar": "second"
+        }
+      ],
+      "dual_oracle_conditions": [
+        "capacity_excursion_ratio",
+        "conductance_excursion_ratio",
+        "melting_temperature_utilization",
+        "radiation_to_convection_ratio"
+      ],
+      "independently_calculable_truth": [
+        "ambient_conductance",
+        "biot_number",
+        "capacity_excursion_ratio",
+        "conductance_excursion_ratio",
+        "convection_conductance_agreement_ratio",
+        "convection_flow_range_utilization",
+        "convection_property_range_utilization",
+        "geometry_route_ratio",
+        "heat_capacity",
+        "internal_fourier_number",
+        "melting_temperature_utilization",
+        "radiation_to_convection_ratio"
+      ],
+      "input_dimensions": [
+        "1 / kelvin",
+        "dimensionless",
+        "joule / kelvin",
+        "kelvin",
+        "meter",
+        "meter ** 2",
+        "meter ** 2 / second",
+        "meter ** 3",
+        "meter / second",
+        "second",
+        "watt",
+        "watt / kelvin",
+        "watt / kelvin / meter"
+      ],
+      "predicted_metrics": false,
+      "primary_model": {
+        "model_id": "thermal.lumped.first_order_capacity",
+        "version": "0.1.0"
+      },
+      "public_construction_restrictions": [
+        "every declared quantity arrives as a Quantity with a unit the registry defines and the dimension the record states",
+        "a parameter carrying a name reserved as a derived quantity is refused",
+        "an optional declaration left out removes the conditions that depend on it from IN_DOMAIN reach; it does not default"
+      ],
+      "span_fields": [
+        "capacity_excursion_bound",
+        "conductance_excursion_bound"
+      ],
+      "system_id": "thermal.lumped",
+      "unit_spellings_exercised": {
+        "ambient_conductance": [
+          "watt / kelvin",
+          "milliwatt / kelvin"
+        ],
+        "ambient_temperature": [
+          "kelvin",
+          "degC",
+          "degF"
+        ],
+        "body_conductivity": [
+          "watt / kelvin / meter",
+          "watt / meter / kelvin"
+        ],
+        "body_volume": [
+          "meter ** 3",
+          "centimeter ** 3",
+          "liter"
+        ],
+        "capacity_excursion_bound": [
+          "kelvin"
+        ],
+        "characteristic_length": [
+          "meter",
+          "millimeter",
+          "centimeter"
+        ],
+        "conductance_excursion_bound": [
+          "kelvin"
+        ],
+        "convection_length": [
+          "meter",
+          "millimeter",
+          "centimeter"
+        ],
+        "duration": [
+          "second",
+          "minute",
+          "hour"
+        ],
+        "fluid_conductivity": [
+          "watt / kelvin / meter",
+          "watt / meter / kelvin"
+        ],
+        "fluid_kinematic_viscosity": [
+          "meter ** 2 / second",
+          "centimeter ** 2 / second"
+        ],
+        "fluid_prandtl_number": [
+          "dimensionless"
+        ],
+        "fluid_velocity": [
+          "meter / second",
+          "centimeter / second"
+        ],
+        "heat_capacity": [
+          "joule / kelvin",
+          "kilojoule / kelvin"
+        ],
+        "heat_input": [
+          "watt",
+          "milliwatt",
+          "kilowatt"
+        ],
+        "initial_temperature": [
+          "kelvin",
+          "degC",
+          "degF"
+        ],
+        "melting_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "surface_area": [
+          "meter ** 2",
+          "centimeter ** 2"
+        ],
+        "surface_emissivity": [
+          "dimensionless",
+          "percent"
+        ]
+      }
+    },
+    {
+      "all_models": [
+        {
+          "condition_count": 2,
+          "model_id": "electrical.material.linear_tcr_resistance",
+          "model_type": "constitutive_model",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 9,
+          "model_id": "electrical.material.rated_linear_tcr_resistance",
+          "model_type": "constitutive_model",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        }
+      ],
+      "declared_inputs": [
+        {
+          "name": "reference_resistance",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "ohm"
+        },
+        {
+          "name": "temperature_coefficient",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "1 / kelvin"
+        },
+        {
+          "name": "reference_temperature",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "temperature",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "linearization_band",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "maximum_operating_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "debye_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        }
+      ],
+      "declared_outputs": [
+        {
+          "metric": "resistance",
+          "unit_exemplar": "ohm"
+        }
+      ],
+      "dual_oracle_conditions": [
+        "linear_resistance_ratio"
+      ],
+      "independently_calculable_truth": [
+        "ceiling_reduced_debye_temperature",
+        "linear_resistance_ratio",
+        "linearization_excursion_ratio",
+        "operating_temperature_utilization",
+        "reduced_debye_temperature",
+        "reference_reduced_debye_temperature",
+        "reference_resistance",
+        "reference_temperature_utilization",
+        "temperature"
+      ],
+      "input_dimensions": [
+        "1 / kelvin",
+        "kelvin",
+        "ohm"
+      ],
+      "predicted_metrics": false,
+      "primary_model": {
+        "model_id": "electrical.material.rated_linear_tcr_resistance",
+        "version": "0.1.0"
+      },
+      "public_construction_restrictions": [
+        "every declared quantity arrives as a Quantity with a unit the registry defines and the dimension the record states",
+        "a parameter carrying a name reserved as a derived quantity is refused",
+        "an optional declaration left out removes the conditions that depend on it from IN_DOMAIN reach; it does not default"
+      ],
+      "span_fields": [
+        "linearization_band"
+      ],
+      "system_id": "electrical.material",
+      "unit_spellings_exercised": {
+        "debye_temperature": [
+          "kelvin"
+        ],
+        "linearization_band": [
+          "kelvin"
+        ],
+        "maximum_operating_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "reference_resistance": [
+          "ohm",
+          "milliohm",
+          "kiloohm"
+        ],
+        "reference_temperature": [
+          "kelvin",
+          "degC",
+          "degF"
+        ],
+        "temperature": [
+          "kelvin",
+          "degC",
+          "degF"
+        ],
+        "temperature_coefficient": [
+          "1 / kelvin"
+        ]
+      }
+    },
+    {
+      "all_models": [
+        {
+          "condition_count": 3,
+          "model_id": "battery.cell.constant_current_runtime",
+          "model_type": "approximation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 5,
+          "model_id": "battery.cell.coulomb_counting",
+          "model_type": "fundamental_relation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 3,
+          "model_id": "battery.cell.peukert_capacity_derating",
+          "model_type": "empirical_correlation",
+          "validation_status": "unvalidated",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 11,
+          "model_id": "battery.cell.rint_ocv",
+          "model_type": "constitutive_model",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        }
+      ],
+      "declared_inputs": [
+        {
+          "name": "nominal_capacity",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "ampere_hour"
+        },
+        {
+          "name": "internal_resistance",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "ohm"
+        },
+        {
+          "name": "open_circuit_voltage_at_full",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "volt"
+        },
+        {
+          "name": "open_circuit_voltage_at_empty",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "volt"
+        },
+        {
+          "name": "coulombic_efficiency",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "dimensionless"
+        },
+        {
+          "name": "duration",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        },
+        {
+          "name": "open_circuit_voltage_curve",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "volt"
+        },
+        {
+          "name": "state_of_charge",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "dimensionless"
+        },
+        {
+          "name": "discharge_current",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "ampere"
+        },
+        {
+          "name": "cell_temperature",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "pulse_current",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "ampere"
+        },
+        {
+          "name": "pulse_duration",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        },
+        {
+          "name": "continuous_discharge_c_rate",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "1 / hour"
+        },
+        {
+          "name": "pulse_discharge_c_rate",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "1 / hour"
+        },
+        {
+          "name": "rated_pulse_duration",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        },
+        {
+          "name": "usable_soc_minimum",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "dimensionless"
+        },
+        {
+          "name": "usable_soc_maximum",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "dimensionless"
+        },
+        {
+          "name": "minimum_discharge_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "maximum_discharge_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "resistance_reference_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "resistance_temperature_span",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "cell_thermal_conductance",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "watt / kelvin"
+        },
+        {
+          "name": "self_heating_rise_bound",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "polarization_time_constant",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        }
+      ],
+      "declared_outputs": [
+        {
+          "metric": "terminal_voltage",
+          "unit_exemplar": "volt"
+        },
+        {
+          "metric": "open_circuit_voltage",
+          "unit_exemplar": "volt"
+        },
+        {
+          "metric": "heat_generation",
+          "unit_exemplar": "watt"
+        }
+      ],
+      "dual_oracle_conditions": [
+        "soc_window_margin",
+        "terminal_voltage_ratio"
+      ],
+      "independently_calculable_truth": [
+        "continuous_c_rate_utilization",
+        "discharge_temperature_position",
+        "internal_resistance",
+        "internal_resistance_drift_ratio",
+        "nominal_capacity",
+        "polarization_unmodelled_fraction",
+        "pulse_c_rate_utilization",
+        "pulse_duration_utilization",
+        "self_heating_rise_ratio",
+        "soc_window_margin",
+        "terminal_voltage_ratio"
+      ],
+      "input_dimensions": [
+        "1 / hour",
+        "ampere",
+        "ampere_hour",
+        "dimensionless",
+        "kelvin",
+        "ohm",
+        "second",
+        "volt",
+        "watt / kelvin"
+      ],
+      "predicted_metrics": false,
+      "primary_model": {
+        "model_id": "battery.cell.rint_ocv",
+        "version": "0.1.0"
+      },
+      "public_construction_restrictions": [
+        "every declared quantity arrives as a Quantity with a unit the registry defines and the dimension the record states",
+        "a parameter carrying a name reserved as a derived quantity is refused",
+        "an optional declaration left out removes the conditions that depend on it from IN_DOMAIN reach; it does not default"
+      ],
+      "span_fields": [
+        "resistance_temperature_span",
+        "self_heating_rise_bound"
+      ],
+      "system_id": "battery.cell",
+      "unit_spellings_exercised": {
+        "cell_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "cell_thermal_conductance": [
+          "watt / kelvin"
+        ],
+        "continuous_discharge_c_rate": [
+          "1 / hour",
+          "1 / second"
+        ],
+        "coulombic_efficiency": [
+          "dimensionless"
+        ],
+        "discharge_current": [
+          "ampere",
+          "milliampere"
+        ],
+        "duration": [
+          "second",
+          "minute",
+          "hour"
+        ],
+        "internal_resistance": [
+          "ohm",
+          "milliohm"
+        ],
+        "maximum_discharge_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "minimum_discharge_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "nominal_capacity": [
+          "ampere_hour",
+          "milliampere_hour",
+          "coulomb"
+        ],
+        "open_circuit_voltage_at_empty": [
+          "volt",
+          "millivolt"
+        ],
+        "open_circuit_voltage_at_full": [
+          "volt",
+          "millivolt"
+        ],
+        "polarization_time_constant": [
+          "second",
+          "minute"
+        ],
+        "pulse_current": [
+          "ampere",
+          "milliampere"
+        ],
+        "pulse_discharge_c_rate": [
+          "1 / hour",
+          "1 / second"
+        ],
+        "pulse_duration": [
+          "second"
+        ],
+        "rated_pulse_duration": [
+          "second"
+        ],
+        "resistance_reference_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "resistance_temperature_span": [
+          "kelvin"
+        ],
+        "self_heating_rise_bound": [
+          "kelvin"
+        ],
+        "state_of_charge": [
+          "dimensionless"
+        ],
+        "usable_soc_maximum": [
+          "dimensionless"
+        ],
+        "usable_soc_minimum": [
+          "dimensionless"
+        ]
+      }
+    },
+    {
+      "all_models": [
+        {
+          "condition_count": 6,
+          "model_id": "kinetics.cstr.nonisothermal_first_order",
+          "model_type": "fundamental_relation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 4,
+          "model_id": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+          "model_type": "approximation",
+          "validation_status": "unvalidated",
+          "version": "0.1.0"
+        }
+      ],
+      "declared_inputs": [
+        {
+          "name": "k0",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "1 / second"
+        },
+        {
+          "name": "activation_energy",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "joule / mole"
+        },
+        {
+          "name": "heat_of_reaction",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "joule / mole"
+        },
+        {
+          "name": "feed_concentration",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "mole / meter ** 3"
+        },
+        {
+          "name": "feed_temperature",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "coolant_temperature",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "density",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "kilogram / meter ** 3"
+        },
+        {
+          "name": "heat_capacity",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "joule / kelvin / kilogram"
+        },
+        {
+          "name": "ua",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "watt / kelvin"
+        },
+        {
+          "name": "end_time",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        },
+        {
+          "name": "initial_concentration",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "mole / meter ** 3"
+        },
+        {
+          "name": "initial_temperature",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "residence_time",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        }
+      ],
+      "declared_outputs": [
+        {
+          "metric": "C_A",
+          "unit_exemplar": "mole / meter ** 3"
+        },
+        {
+          "metric": "T",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "metric": "conversion",
+          "unit_exemplar": "dimensionless"
+        }
+      ],
+      "dual_oracle_conditions": [
+        "adiabatic_ceiling_temperature"
+      ],
+      "independently_calculable_truth": [
+        "activation_energy",
+        "adiabatic_ceiling_temperature",
+        "k0",
+        "residence_time"
+      ],
+      "input_dimensions": [
+        "1 / second",
+        "joule / kelvin / kilogram",
+        "joule / mole",
+        "kelvin",
+        "kilogram / meter ** 3",
+        "mole / meter ** 3",
+        "second",
+        "watt / kelvin"
+      ],
+      "predicted_metrics": false,
+      "primary_model": {
+        "model_id": "kinetics.cstr.nonisothermal_first_order",
+        "version": "0.1.0"
+      },
+      "public_construction_restrictions": [
+        "every declared quantity arrives as a Quantity with a unit the registry defines and the dimension the record states",
+        "a parameter carrying a name reserved as a derived quantity is refused",
+        "an optional declaration left out removes the conditions that depend on it from IN_DOMAIN reach; it does not default"
+      ],
+      "span_fields": [],
+      "system_id": "kinetics.cstr",
+      "unit_spellings_exercised": {
+        "activation_energy": [
+          "joule / mole",
+          "kilojoule / mole"
+        ],
+        "coolant_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "density": [
+          "kilogram / meter ** 3",
+          "gram / centimeter ** 3"
+        ],
+        "end_time": [
+          "second",
+          "minute"
+        ],
+        "feed_concentration": [
+          "mole / meter ** 3",
+          "millimole / liter"
+        ],
+        "feed_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "heat_capacity": [
+          "joule / kelvin / kilogram",
+          "joule / gram / kelvin"
+        ],
+        "heat_of_reaction": [
+          "joule / mole",
+          "kilojoule / mole"
+        ],
+        "initial_concentration": [
+          "mole / meter ** 3",
+          "millimole / liter"
+        ],
+        "initial_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "k0": [
+          "1 / second",
+          "1 / minute"
+        ],
+        "residence_time": [
+          "second",
+          "minute"
+        ],
+        "ua": [
+          "watt / kelvin"
+        ],
+        "volume": [
+          "meter ** 3",
+          "liter"
+        ]
+      }
+    },
+    {
+      "all_models": [
+        {
+          "condition_count": 1,
+          "model_id": "thermal.conduction1d.linear_diffusion",
+          "model_type": "fundamental_relation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        }
+      ],
+      "declared_inputs": [
+        {
+          "name": "alpha",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter ** 2 / second"
+        },
+        {
+          "name": "length",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "meter"
+        },
+        {
+          "name": "end_time",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "second"
+        }
+      ],
+      "declared_outputs": [
+        {
+          "metric": "u",
+          "unit_exemplar": "dimensionless"
+        }
+      ],
+      "dual_oracle_conditions": [
+        "alpha"
+      ],
+      "independently_calculable_truth": [
+        "alpha"
+      ],
+      "input_dimensions": [
+        "meter",
+        "meter ** 2 / second",
+        "second"
+      ],
+      "predicted_metrics": true,
+      "primary_model": {
+        "model_id": "thermal.conduction1d.linear_diffusion",
+        "version": "0.1.0"
+      },
+      "public_construction_restrictions": [
+        "every declared quantity arrives as a Quantity with a unit the registry defines and the dimension the record states",
+        "a parameter carrying a name reserved as a derived quantity is refused",
+        "an optional declaration left out removes the conditions that depend on it from IN_DOMAIN reach; it does not default"
+      ],
+      "span_fields": [],
+      "system_id": "thermal.conduction1d",
+      "unit_spellings_exercised": {
+        "alpha": [
+          "meter ** 2 / second",
+          "centimeter ** 2 / second"
+        ],
+        "end_time": [
+          "second",
+          "minute",
+          "hour"
+        ],
+        "length": [
+          "meter",
+          "millimeter",
+          "centimeter"
+        ]
+      }
+    },
+    {
+      "all_models": [
+        {
+          "condition_count": 1,
+          "model_id": "electrical.dc.ideal_current_source",
+          "model_type": "approximation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 1,
+          "model_id": "electrical.dc.ideal_voltage_source",
+          "model_type": "approximation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 1,
+          "model_id": "electrical.dc.kcl",
+          "model_type": "fundamental_relation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 1,
+          "model_id": "electrical.dc.regulated_voltage_source",
+          "model_type": "approximation",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 3,
+          "model_id": "electrical.dc.resistor_ohm",
+          "model_type": "constitutive_model",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        },
+        {
+          "condition_count": 1,
+          "model_id": "electrical.dc.self_heated_resistor",
+          "model_type": "constitutive_model",
+          "validation_status": "self_consistent",
+          "version": "0.1.0"
+        }
+      ],
+      "declared_inputs": [
+        {
+          "name": "resistance",
+          "required": true,
+          "source_kind": "parameter",
+          "unit_exemplar": "ohm"
+        },
+        {
+          "name": "voltage_across",
+          "required": true,
+          "source_kind": "variable",
+          "unit_exemplar": "volt"
+        },
+        {
+          "name": "rated_power",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "watt"
+        },
+        {
+          "name": "rated_power_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "zero_power_temperature",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "kelvin"
+        },
+        {
+          "name": "maximum_working_voltage",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "volt"
+        },
+        {
+          "name": "derating_factor",
+          "required": false,
+          "source_kind": "parameter",
+          "unit_exemplar": "dimensionless"
+        }
+      ],
+      "declared_outputs": [
+        {
+          "metric": "current_through",
+          "unit_exemplar": "ampere"
+        },
+        {
+          "metric": "dissipated_power",
+          "unit_exemplar": "watt"
+        }
+      ],
+      "dual_oracle_conditions": [
+        "dissipated_power_utilization",
+        "working_voltage_utilization"
+      ],
+      "independently_calculable_truth": [
+        "dissipated_power_utilization",
+        "resistance",
+        "working_voltage_utilization"
+      ],
+      "input_dimensions": [
+        "dimensionless",
+        "kelvin",
+        "ohm",
+        "volt",
+        "watt"
+      ],
+      "predicted_metrics": true,
+      "primary_model": {
+        "model_id": "electrical.dc.resistor_ohm",
+        "version": "0.1.0"
+      },
+      "public_construction_restrictions": [
+        "every declared quantity arrives as a Quantity with a unit the registry defines and the dimension the record states",
+        "a parameter carrying a name reserved as a derived quantity is refused",
+        "an optional declaration left out removes the conditions that depend on it from IN_DOMAIN reach; it does not default"
+      ],
+      "span_fields": [],
+      "system_id": "electrical.dc",
+      "unit_spellings_exercised": {
+        "ambient_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "derating_factor": [
+          "dimensionless"
+        ],
+        "load_resistance": [
+          "ohm",
+          "kiloohm"
+        ],
+        "maximum_current": [
+          "ampere",
+          "milliampere"
+        ],
+        "maximum_working_voltage": [
+          "volt",
+          "kilovolt"
+        ],
+        "rated_power": [
+          "watt",
+          "milliwatt",
+          "kilowatt"
+        ],
+        "rated_power_temperature": [
+          "kelvin",
+          "degC"
+        ],
+        "resistance": [
+          "ohm",
+          "kiloohm",
+          "milliohm"
+        ],
+        "source_voltage": [
+          "volt",
+          "millivolt",
+          "kilovolt"
+        ],
+        "zero_power_temperature": [
+          "kelvin",
+          "degC"
+        ]
+      }
+    }
+  ]
+}

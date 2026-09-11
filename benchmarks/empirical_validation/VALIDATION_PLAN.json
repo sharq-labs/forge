@@ -1,0 +1,168 @@
+{
+  "schema": "empirical_validation_plan/1",
+  "preregistered_before_any_comparison_was_run": true,
+  "two_questions_kept_separate": {
+    "A_independent_problem_construction": "If the physical problem is specified independently of engcore's declaration classes, does engcore receive and solve that same problem?",
+    "B_empirical_reference_validation": "Where external physical or reference evidence exists, does the model reproduce it within a scientifically justified tolerance?",
+    "why_separate": "A model can pass A completely and have no empirical evidence at all. Merging them would let independent-problem agreement be reported as empirical validation, which it is not."
+  },
+
+  "the_blindness_this_round_targets": {
+    "name": "SHARED-PROBLEM BLINDNESS",
+    "statement": "If both the Core and its reference consume a problem built from the same declaration object, their agreement says nothing about whether the problem was constructed correctly.",
+    "what_the_previous_round_left_open": "The Scientific Truth round recorded that all five repository route pairs are PARTIAL: none shares numerics, but every one shares the problem statement. That is the gap this round closes.",
+    "design": "One raw fixture, expressed in plain physical quantities with no engcore type. Two adapters that never call each other. Adapter A builds the engcore declaration; Adapter B builds the reference problem from the same raw numbers, converting units itself."
+  },
+
+  "models_to_validate": {
+    "count": 16,
+    "note": "All 16 get an independent-problem case. External evidence is assigned per model by what actually exists, not by what would make the table look full."
+  },
+
+  "independent_fixture_rules": [
+    "A fixture is a plain JSON object of physical quantities with explicit units in the key name.",
+    "Fixtures are deliberately NOT in SI where a real caller would not be: capacities in mAh, flows in L/min, densities in g/cm3, enthalpies in kJ/mol, temperatures in degC. Unit conversion is part of what is being tested, so a fixture already in engcore's units would test nothing.",
+    "Adapter A may import engcore. Adapter B may not import engcore, may not import Adapter A, and must perform its own unit conversions with factors written in its own source.",
+    "Derived quantities are derived IN THE ADAPTERS, separately: C = m cp and hA = h A for the lumped body, alpha = k/(rho cp) for the slab, R_ref = rho L / A for the conductor, beta = -dH/(rho cp) for the reactor. A geometry or property mix-up therefore shows up as a disagreement rather than being pre-computed into the fixture."
+  ],
+
+  "numerical_independence_constraints": [
+    "The Core uses scipy.linalg.solve for DC, scipy.integrate.solve_ivp and scipy.optimize.brentq for the CSTR, and scipy.sparse.linalg for conduction. The reference path therefore may NOT use those.",
+    "numpy.linalg.solve is also excluded for DC: it is the same LAPACK routine scipy dispatches to, so using it would share the numerical kernel. The reference DC solve is a Gaussian elimination with partial pivoting written in this round.",
+    "scipy.constants is permitted: it is a data table, not a solver, and the Core does not read it."
+  ],
+
+  "evidence_levels_available": {
+    "LEVEL_1_empirical_measurement": {
+      "available": false,
+      "reason": "This environment has no measured dataset and the repository curates none. No number in this round will be labelled a measurement."
+    },
+    "LEVEL_2_published_benchmark_dataset": {
+      "available": false,
+      "reason": "Network access is restricted to a small set of hosts and no benchmark dataset was retrievable. Behavioural benchmarks documented in the literature the repository already cites are used qualitatively and labelled LEVEL 4."
+    },
+    "LEVEL_3_reference_data": {
+      "available": true,
+      "sources": [
+        "CODATA 2022 molar gas constant, retrieved as a file and hashed",
+        "IEC 60751 platinum resistance coefficients, recited and internally cross-validated"
+      ]
+    },
+    "LEVEL_4_external_canonical_implementation": {
+      "available": true,
+      "sources": ["ngspice 42, an independently written circuit simulator invoked as a separate process"]
+    },
+    "LEVEL_5_independent_analytical": {
+      "available": true,
+      "sources": ["closed forms and integrators written in this round"]
+    }
+  },
+
+  "preregistered_metrics_and_tolerances": [
+    {
+      "case": "DC node voltages against ngspice",
+      "metric": "relative error, with a 1e-9 V absolute floor for nodes near zero",
+      "tolerance": 2e-6,
+      "justification": "ngspice's print output carries seven significant figures. The tolerance is set by that printed precision, not by the physics and not by what the Core happens to achieve. Relative error alone is refused near zero volts, which is why the absolute floor is stated here rather than added later."
+    },
+    {
+      "case": "DC node voltages against a hand-written Gaussian elimination",
+      "metric": "relative error",
+      "tolerance": 1e-9,
+      "justification": "A direct dense solve of a well-conditioned conductance matrix in double precision. The condition number of every system is recorded so a large one is visible rather than absorbed."
+    },
+    {
+      "case": "DC conservation",
+      "metric": "worst KCL residual normalised by the largest branch current; power imbalance normalised by total dissipation",
+      "tolerance": 1e-9,
+      "justification": "Charge conservation is exact for a lumped network; only round-off is admissible."
+    },
+    {
+      "case": "Conductor resistance from geometry, R = rho L / A",
+      "metric": "relative error",
+      "tolerance": 1e-12,
+      "justification": "Exact algebra on both sides. Anything above round-off is a construction or unit error, which is the point of the case."
+    },
+    {
+      "case": "Linear TCR against IEC 60751 platinum",
+      "metric": "observed deviation compared against the ANALYTICALLY PREDICTED deviation |B| t^2 / (1 + A t), the quadratic term the linear model omits",
+      "tolerance": "the observed deviation must match the predicted deviation to within 5 percent of the prediction",
+      "justification": "The linear model is the first-order truncation of the Callendar-Van Dusen quadratic. Requiring it to match the standard would be testing a model the record does not claim. Requiring its deviation to be exactly the neglected term tests what it does claim, and would fail if the coefficient, the sign or the reference temperature were wrong. Preregistered as a prediction so the number cannot be chosen after seeing the error."
+    },
+    {
+      "case": "Lumped thermal transient against an independent RK4",
+      "metric": "relative error on the final temperature",
+      "tolerance": 1e-9,
+      "justification": "RK4 at 200k steps on a linear scalar ODE reaches round-off; the tolerance is far above its own error and far below any error a construction fault would produce."
+    },
+    {
+      "case": "Lumped thermal energy balance",
+      "metric": "stored energy minus (heat in minus heat out), normalised",
+      "tolerance": 1e-10,
+      "justification": "The first law; no tolerance beyond round-off is defensible."
+    },
+    {
+      "case": "1-D diffusion against the closed form",
+      "metric": "observed relative error divided by the error the scheme itself predicts, lambda^2 t dt/2 + lambda t (pi dx/L)^2/12",
+      "tolerance": "ratio in [0.5, 1.5]",
+      "justification": "Backward Euler is first order in dt and the central difference second order in dx. Comparing against the predicted error tests that the solver makes the scheme's error rather than merely a small one. A fixed tolerance would pass a solver making a different error of the same size."
+    },
+    {
+      "case": "Battery state of charge, terminal voltage and runtime",
+      "metric": "relative error",
+      "tolerance": 1e-12,
+      "justification": "Exact algebra. The fixture is stated in mAh, mV, mOhm, mA and minutes, so the whole unit chain is exercised and a scaling error is orders of magnitude outside this bound."
+    },
+    {
+      "case": "Battery charge conservation",
+      "metric": "coulombs accounted against coulombs drawn",
+      "tolerance": "1e-12 relative, or below the floating-point cancellation floor 4 ulp(z0) eta Q 3600 when little charge moved",
+      "justification": "z0 - z_end is a difference of nearly equal doubles; a purely relative criterion reports cancellation as a physics failure. The floor is derived from the representable precision, not chosen."
+    },
+    {
+      "case": "CSTR trajectory against an independent RK4",
+      "metric": "relative error on final concentration and temperature",
+      "tolerance": 1e-6,
+      "justification": "Set by the oracle's own resolution, which is evidenced by a refinement ladder, not by the accuracy anyone wants the Core to have."
+    },
+    {
+      "case": "CSTR steady states against a hand-written bisection",
+      "metric": "absolute temperature error",
+      "tolerance": 1e-5,
+      "unit": "K",
+      "justification": "An algebraic route with no time integration. brentq is excluded because the Core uses it."
+    },
+    {
+      "case": "CSTR gas constant against CODATA 2022",
+      "metric": "relative difference",
+      "tolerance": 1e-9,
+      "justification": "The Core stores 8.314462618 and CODATA gives 8.314462618153...; the truncation is 1.8e-11 relative. The tolerance admits the truncation and refuses anything larger."
+    }
+  ],
+
+  "calibration_policy": {
+    "statement": "No model parameter is fitted from any dataset in this round.",
+    "consequence": "Every comparison is therefore VALIDATION rather than CALIBRATION, and there is no train/test split to protect because nothing was trained.",
+    "how_this_is_enforced": "Every fixture value is either an independently chosen physical quantity or a published reference coefficient recorded in EVIDENCE_PROVENANCE.json. If any value had been chosen to make a comparison pass it would be CALIBRATION and could not appear as evidence.",
+    "held_out_cases": "A held-out set is declared before any result is inspected and run only after fixtures, adapters, metrics and tolerances are frozen."
+  },
+
+  "exclusions": [
+    "No empirical measurement is claimed for any model.",
+    "Rich cell-chemistry datasets are out of scope for a constant-resistance affine-OCV cell and will be labelled OUT_OF_SCOPE_FOR_MODEL rather than forced into a fit.",
+    "The IEC 60751 quadratic is not required of a linear model; only the size of the omitted term is checked."
+  ],
+
+  "expected_limitations": [
+    "No LEVEL 1 or LEVEL 2 evidence exists in this environment, so the strongest available claim is independent-problem validation with external agreement, not empirical validation.",
+    "ngspice covers one domain only. The other five rest on mathematics written in this round.",
+    "The IEC 60751 coefficients are recited from a published standard rather than retrieved from a licensed copy. They are cross-validated against the standard's own published ratio W(100) = 1.3851, which they must reproduce; that is a consistency check on the recitation and not a substitute for the document."
+  ],
+
+  "decision_rule_fixed_in_advance": {
+    "INDEPENDENT-PROBLEM VALIDATION PASSED — AVAILABLE EXTERNAL EVIDENCE AGREES": "all 16 pass independent construction, all available external cases pass, no material defect remains",
+    "EMPIRICAL VALIDATION PASSED WITH DEFINED COVERAGE": "requires LEVEL 1 or LEVEL 2 coverage across the model surface, which this environment does not have",
+    "EMPIRICAL / INDEPENDENT-PROBLEM VALIDATION EXPOSED DEFECTS — HARDENING REQUIRED": "any material unresolved defect",
+    "EXTERNAL VALIDATION INCONCLUSIVE — INSUFFICIENT INDEPENDENT EVIDENCE": "if the independent routes cannot be made independent"
+  }
+}

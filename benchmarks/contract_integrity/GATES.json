@@ -1,0 +1,40 @@
+{
+  "all_pass": true,
+  "gates": {
+    "CI_1_CONTRACT_SURFACE_COMPLETE": {
+      "evidence": "all 16 shipped model records across 6 systems inventoried in CONTRACT_SURFACE.json and reviewed; 56 distinct conditions covered with coverage_complete=true asserted by the review itself, plus capability metadata and required-input metadata for every model whose domain exposes a public constructor.",
+      "verdict": "PASS"
+    },
+    "CI_2_PUBLISHED_RUNTIME_AGREEMENT": {
+      "evidence": "after the CI-1 record correction the review reports {'MATCH': 110} over 110 checks \u2014 every published UNKNOWN promise now matches what the runtime does, on both convection routes. Zero material unresolved contradictions remain.",
+      "verdict": "PASS"
+    },
+    "CI_3_RUNTIME_CONTRACT_CORRECTNESS": {
+      "evidence": "zero authoritative contract violations. The one defect found was located in the published record, not the runtime: the runtime behaviour is deliberate, scientifically correct (Re = u L / nu carries no Prandtl number) and pinned by four named tests. No runtime change was made and none was warranted.",
+      "verdict": "PASS"
+    },
+    "CI_4_SHIPPED_CONTRACT_INTEGRITY": {
+      "evidence": "one shipped record misdescribed guarded runtime behaviour (CI-1) and it has been corrected. No published record now misdescribes what its runtime does, across 457 reviewed claims.",
+      "verdict": "PASS"
+    },
+    "CI_5_EXECUTABLE_CONSISTENCY_GUARDS": {
+      "caveat": "15 of 16 models still carry no record-vs-runtime guard. They were reviewed and found clean, but nothing executable would notice if one drifted tomorrow.",
+      "evidence": "the one fixed material defect carries a regression guard that asserts the published record and the runtime semantics together and was verified to FAIL against the pre-fix record. Two such guards now exist on thermal.lumped, one from this round and one from Blind V2's CORE-1.",
+      "verdict": "PASS"
+    },
+    "CI_6_AUDIT_TRUTH_QUALITY": {
+      "evidence": "every audit input stays inside its physical range, asserted by nominals.assert_physical() and re-asserted in the self-test: emissivity in [0,1], state of charge in [0,1], coulombic efficiency <= 1, activation energy >= 0, and every strictly-positive parameter positive. Blind V2's worst challenge-side defect was a generator that left those ranges, and this round guards against repeating it. 4 audit defects were found and corrected before any of them was recorded as a Core finding; none is counted as a Core defect. The concern is their number: three of four were in the detection logic itself.",
+      "verdict": "PASS_WITH_CONCERN"
+    },
+    "CI_7_EXISTING_SCIENTIFIC_ASSURANCE_PRESERVED": {
+      "evidence": "the only production change is a record description string. Its file's executable code digest is unchanged at bea9ff6f6d880eca \u2014 measured with the certified harness's own _code_digest, which drops STRING tokens \u2014 so no executable scientific behaviour changed and Hard DEV, Battery DEV and the 79-mutant suite cannot move. The src/engcore/scientific tree digest is unchanged at 82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507 and still matches the certification snapshot. FAST re-run: 3834 passed, 3 skipped (3833 + this round's guard).",
+      "verdict": "PASS"
+    },
+    "CI_8_FROZEN_EVIDENCE_PRESERVED": {
+      "evidence": "no path under benchmarks/blind_v2 changed at all. The Blind V2 freeze manifest still verifies 30/30 artifacts, and FIRST_RUN.json and both FIRST_RUN run files are untouched.",
+      "verdict": "PASS"
+    }
+  },
+  "note": "A NEW gate set for the Contract Integrity round. The Blind V2 gates are not modified, not reused and not renumbered; they answered a different question and their results stand as they were.",
+  "schema": "contract_integrity_gates/1"
+}

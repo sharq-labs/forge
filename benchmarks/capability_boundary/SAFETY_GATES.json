@@ -1,0 +1,265 @@
+{
+  "all_pass": true,
+  "gates": [
+    {
+      "evidence": {
+        "all_status_reviewed": true,
+        "models_reviewed": 16,
+        "real_cases_reviewed": 86,
+        "systems": 6
+      },
+      "id": "CB-1",
+      "name": "MODEL SURFACE COMPLETE",
+      "requirement": "all 16 shipped models are reviewed",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "cases_found_NO": 3,
+        "classification_counts": {
+          "EXACT": 13,
+          "VALIDITY_LIMIT_MISSING": 3
+        },
+        "note": "Three cases were found NO -- inside the wording, outside the equations, with nothing refusing them. All three were repaired in this round and each carries a resolution.",
+        "real_case_counts_as_found": {
+          "BOUNDED": 37,
+          "DISCLOSED": 27,
+          "NO": 3,
+          "YES": 19
+        },
+        "unresolved_no_cases": []
+      },
+      "id": "CB-2",
+      "name": "CLAIM BREADTH VALID",
+      "requirement": "no published claim materially exceeds the physics its equations represent",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "bounded_by_a_declared_condition": 37,
+        "disclosed_not_enforced": 27,
+        "every_case_carries_a_reason": true,
+        "every_disclosed_case_names_where_it_is_disclosed": true,
+        "unenforced_and_undisclosed": []
+      },
+      "id": "CB-3",
+      "name": "VALIDITY BOUNDARIES COMPLETE",
+      "requirement": "every material scientific validity limit is declared and enforced, or explicitly justified as disclosed-not-enforced",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "false_confidence_cases_found": [
+          "CB-1",
+          "CB-2",
+          "CB-3"
+        ],
+        "false_confidence_cases_still_open": [],
+        "response_counts_after_repair": {
+          "A_REFUSE": 4,
+          "B_UNKNOWN": 2,
+          "C_WARNED_NUMBER": 1
+        },
+        "response_counts_as_found": {
+          "A_REFUSE": 1,
+          "B_UNKNOWN": 2,
+          "C_WARNED_NUMBER": 1,
+          "D_SUPPORTED": 3
+        }
+      },
+      "id": "CB-4",
+      "name": "ZERO FALSE CONFIDENCE",
+      "requirement": "no known out-of-regime case receives a normal-looking supported result",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "disclosed_cases": 27,
+        "each_names_the_assumption_or_exclusion_that_discloses_it": true,
+        "models_declaring_exclusions": 15,
+        "models_not_declaring_exclusions": [
+          "thermal.conduction1d.linear_diffusion"
+        ],
+        "note": "thermal.conduction1d.linear_diffusion declares no exclusions tuple. Its seven assumptions name every approximation this audit identified -- the fixed initial condition, the absent source term, the constant diffusivity -- so nothing is hidden; the empty exclusions field is a record-completeness observation for a contract round, not a capability boundary."
+      },
+      "id": "CB-5",
+      "name": "APPROXIMATIONS DISCLOSED",
+      "requirement": "material approximations affecting capability are visible to the caller",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "cases_total": 7,
+        "cases_with_an_oracle": 7,
+        "every_oracle_states_its_independence": true,
+        "findings_with_an_oracle": [
+          "CB-1",
+          "CB-2",
+          "CB-3"
+        ],
+        "note": "No finding rests on the model under test. The CSTR invariant is derived by hand and cancels the rate law; the conduction reference is a closed form a test asserts never imports the solver; the sign bounds are properties of the quantities themselves.",
+        "oracle_types": [
+          "ANALYTIC closed form",
+          "INVARIANT",
+          "SIGN/DOMAIN",
+          "SIGN/DOMAIN (fail-closed expectation)",
+          "SIGN/DOMAIN, corroborated by SIBLING_RECORD",
+          "SIGN/DOMAIN, on the model's own monotonicity assumption"
+        ]
+      },
+      "id": "CB-6",
+      "name": "INDEPENDENT SCIENTIFIC EVIDENCE",
+      "requirement": "material findings are supported by scientific reasoning or oracles independent of the model under test",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "certified_core_tree_sha256_actual": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "certified_core_tree_sha256_expected": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "earlier_round_artifacts": {
+          "blind_v2": {
+            "machinery_changed": [],
+            "result_artifacts_changed": []
+          },
+          "contract_guard": {
+            "machinery_changed": [],
+            "result_artifacts_changed": []
+          },
+          "contract_integrity": {
+            "machinery_changed": [],
+            "result_artifacts_changed": []
+          }
+        },
+        "executable_domain_code_changed": true,
+        "files_changed_outside_this_round": [],
+        "machinery_change_justification": "benchmarks/contract_guard/guard/prerequisites.py merges claim-map supplements registered by later rounds. That round's own 'a condition in no claim map fails' guard fired the moment this round added a condition, which is what it exists for; the mapping is supplied in this round's directory rather than by editing the earlier round's file. No Contract Guard RESULT artifact changed.",
+        "reruns": {
+          "all_preserved": true,
+          "assurance_layers": {
+            "1_certified_executable_code_mutation": {
+              "detail": {
+                "control_green": true,
+                "harness_summary_line": null,
+                "killed": 79,
+                "log": "/tmp/claude-0/mutation_run.log",
+                "survivors": []
+              },
+              "not_evidence_for": "scientific validity. A killed mutant says a test noticed a code change, not that the code is right.",
+              "question": "are the executable branches covered by tests that fail when they change?",
+              "rerun_this_round": true,
+              "result": "79/79 RED, CONTROL GREEN",
+              "why_rerun": "executable scientific code changed in four domain modules, so the suite is re-run rather than assumed unaffected -- even though none of the four is a mutation anchor"
+            },
+            "2_contract_guard": {
+              "not_evidence_for": "scientific validity. Record and runtime agreed perfectly on all three defects this round found; agreement was the precondition for finding them, not a defence against them.",
+              "question": "does every published record say what its guarded runtime does?",
+              "rerun_this_round": true,
+              "result": "15/15 semantic contract mutants caught, CONTROL GREEN",
+              "suite": "benchmarks/contract_guard/tests: 18 passed",
+              "survivors": [],
+              "why_rerun": "three records gained a condition, so record and runtime both moved"
+            },
+            "3_capability_boundary": {
+              "new_this_round": true,
+              "not_evidence_for": "full scientific correctness. Every boundary examined here was examined one model at a time against the equations that model implements; a regime nobody thought to construct is a regime nobody checked.",
+              "question": "is that agreed behaviour scientifically valid in this regime?",
+              "result": "3 capability-boundary defects found and repaired; 7/7 planted overclaims caught",
+              "suite": "benchmarks/capability_boundary/tests: 12 passed"
+            }
+          },
+          "benchmarks": [
+            {
+              "benchmark": "Hard DEV",
+              "differing_summary_keys": [],
+              "exact_verdict_match": "1362/1400 (97.3%)",
+              "false_accept": "0/1157 (0.00%)",
+              "false_reject": "0/243 (0.0%)",
+              "identical_ignoring_timestamp": true,
+              "rows_identical": true,
+              "split": "dev",
+              "total_cases": 1400
+            },
+            {
+              "benchmark": "Battery DEV",
+              "differing_summary_keys": [],
+              "exact_verdict_match": "272/280 (97.1%)",
+              "false_accept": "0/152 (0.00%)",
+              "false_reject": "8/128 (6.2%)",
+              "identical_ignoring_timestamp": true,
+              "rows_identical": true,
+              "split": "dev",
+              "total_cases": 280
+            }
+          ],
+          "certified_scientific_core_digest_unchanged": true,
+          "contract_guard_artifacts_not_rewritten": "benchmarks/contract_guard/CONTRACT_GUARD_MATRIX.json still records the 64 conditions and 353 probes that existed when that round ran. Recomputed today it reads 67 conditions and 368 probes, with the same 88/88 guarded dimensions; the artifact is left as that round's result rather than edited to match this one.",
+          "do_not_merge_these_layers": "Three separate statements, deliberately never combined into one number. Each answers a different question and none implies another.",
+          "executable_scientific_code_changed": [
+            "src/engcore/domains/battery/context.py",
+            "src/engcore/domains/battery/models.py",
+            "src/engcore/domains/electrical/material.py",
+            "src/engcore/domains/kinetics/cstr/alternatives.py"
+          ],
+          "fast_tier": "3836 passed, 3 skipped, 541 deselected",
+          "how_the_benchmarks_were_compared": "Both scorecards for each benchmark were produced by this round, with the same command, on two trees: a pristine `git archive HEAD` checkout and the working tree. The scorecards committed in the repository are NOT used as the baseline -- see compare_benchmark for why that comparison was an audit defect.",
+          "schema": "capability_boundary_existing_assurance/1",
+          "what_changed_in_them": "Three validity conditions and one derivation. No equation, no coefficient and no numerical method was altered: every metric every model computes is bit-identical, which is why both benchmark scorecards reproduce exactly. What changed is which declarations a model reports itself APPLICABLE to."
+        },
+        "this_is_not_evidence_of_scientific_validity": "Preserving software correctness and contract consistency is a precondition of this round, not a result of it. A green suite and a matching digest say nothing about whether a claim is scientifically justified.",
+        "unexpected_working_tree_entries": []
+      },
+      "id": "CB-7",
+      "name": "EXISTING SOFTWARE ASSURANCE PRESERVED",
+      "requirement": "Contract Guard and the existing scientific assurance are preserved; any change to executable scientific code is re-certified rather than assumed harmless",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "artifacts_in_manifest": 30,
+        "blind_v2_anything_modified": [],
+        "blind_v2_paths_modified": {
+          "machinery_changed": [],
+          "result_artifacts_changed": []
+        },
+        "method": "path-restricted: every artifact named in benchmarks/blind_v2/FREEZE.json is re-hashed against the hash that manifest records, and git is asked separately whether any path under benchmarks/blind_v2 changed. No Blind V2 frozen/sealed artifact path changed.",
+        "problems": [],
+        "verified_byte_identical": 30
+      },
+      "id": "CB-8",
+      "name": "FROZEN EVIDENCE PRESERVED",
+      "requirement": "Blind V2 frozen/sealed artifacts remain untouched",
+      "verdict": "PASS"
+    }
+  ],
+  "note": "A NEW gate set for the Scientific Capability Boundary round. The Blind V2, Contract Integrity and Contract Guard gates are not modified, reused or renumbered; they answered different questions and their results stand.",
+  "planted_defect_falsification": {
+    "by_class": {
+      "CLAIM_BROADENED_BEYOND_EQUATIONS": {
+        "caught": 1,
+        "total": 1
+      },
+      "OUT_OF_REGIME_MARKED_SUPPORTED": {
+        "caught": 1,
+        "total": 1
+      },
+      "REQUIRED_APPROXIMATION_HIDDEN": {
+        "caught": 1,
+        "total": 1
+      },
+      "UNSUPPORTED_REGIME_ACCEPTED": {
+        "caught": 1,
+        "total": 1
+      },
+      "VALIDITY_LIMIT_REMOVED": {
+        "caught": 3,
+        "total": 3
+      }
+    },
+    "caught": 7,
+    "control": "GREEN",
+    "survivors": [],
+    "total": 7
+  },
+  "schema": "capability_boundary_gates/1",
+  "what_these_gates_do_not_say": "That the models are scientifically correct. They say that every shipped claim was read against the equations behind it, that the regimes found outside those equations are now refused or disclosed, and that each boundary has a guard that fails when it is removed."
+}

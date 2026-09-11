@@ -1,0 +1,64 @@
+{
+  "checks": {
+    "all_cases_accounted_for": {
+      "evidence": "720 primary and 231 shadows in, 720 and 231 records out, every one compared.",
+      "verdict": "PASS"
+    },
+    "certified_core_unchanged_before_first_run": {
+      "evidence": "the scientific-core tree digest was recomputed immediately before the run and equals the certification snapshot's value; git diff over src/ against the certified commit was empty.",
+      "verdict": "PASS"
+    },
+    "dual_oracle_target_met": {
+      "evidence": "330 of 633 scientifically decided cases carry two routes (52.1%, target 50%); per system minimum 37, target 30; levels {\"A\": 94, \"B\": 236}, no level D claimed.",
+      "verdict": "PASS"
+    },
+    "first_run_immutable": {
+      "evidence": "FIRST_RUN.json and runs/FIRST_RUN_*.json were committed before any comparison ran; the post-fix run is a separate artifact under runs/POST_FIX_*.json.",
+      "verdict": "PASS"
+    },
+    "forbidden_corpora_unopened": {
+      "evidence": "no sealed holdout, no benchmarks/hard or benchmarks/blind case payload, no existing truth or answer key was read. The string scan refuses those paths in every challenge module.",
+      "verdict": "PASS"
+    },
+    "forge_guided_truth_corrections": {
+      "evidence": "6 of 7 errata were discovered because the Core disagreed. None took its answer from the Core: each was re-derived from exact rational arithmetic, from the definition of the quantity, or from a fact the challenge had frozen and failed to use. Discovery contamination is real and is recorded; repair contamination is nil.",
+      "verdict": "CONCERN"
+    },
+    "freeze_before_run_proven": {
+      "evidence": "spec 2da8b2d at 2026-09-10T17:07:12+00:00; freeze 979ed98 at 2026-09-10T17:19:58+00:00 carrying the generator, oracles, truth, cases and shadows; runner c0755c8 at 2026-09-10T17:25:56+00:00; first run sealed c29ec4e at 2026-09-10T17:26:40+00:00. git diff over cases, truth, challenge, FREEZE, CHALLENGE_SPEC and BOUND_REGISTER between the freeze commit and HEAD is empty.",
+      "verdict": "PASS"
+    },
+    "no_peek_guard_passed": {
+      "evidence": "all four checks clean: {\"ast_imports\": [], \"name_and_string_scan\": [], \"runtime_sys_modules\": [], \"transitive_imports\": []}; and the falsification test writes a deliberately peeking module that all four catch.",
+      "verdict": "PASS"
+    },
+    "oracles_independent": {
+      "evidence": "nothing under benchmarks/blind_v2/challenge imports engcore, proven at the syntax tree, through the transitive graph, by string scan and by a fresh interpreter's sys.modules.",
+      "verdict": "PASS"
+    },
+    "runner_errors": {
+      "evidence": "0 runner exceptions in the run. Three runner defects were found and fixed during the handwritten smoke stage, before any frozen case ran; one taxonomy defect (declared domain refusals filed as core_error) survived into the run and is corrected in adjudication, not in the sealed artifact.",
+      "verdict": "PASS"
+    },
+    "source_read_allowlist_respected": {
+      "evidence": "24 production files listed with a reason and a digest: 2 read as source text, 22 read only through their public records. One boundary incident is recorded rather than argued away -- reading the model definition's contract surface ran on into `_within`, the range predicate's implementation. What that revealed was not used: boundary stratification is driven by each condition's own published inclusivity flag, and the exact-boundary family reports the margin the arithmetic achieved.",
+      "verdict": "PASS_WITH_RECORDED_INCIDENT"
+    },
+    "truth_errata_rate": {
+      "evidence": "7 errata covering 90 of 720 cases -- 12.5%. Two classes are substantive (an oracle that computed with an emissivity above 1 and a state of charge below 0; a float path one ULP off an inclusive bound). The rest are the challenge modelling a refusal at the wrong stage, which never crosses the accept/refuse line. The challenge can still support its conclusions -- every erratum was re-derived independently and none reverses a safety finding -- but a 12.5% truth-defect rate is high and is the main thing a v3 should fix.",
+      "verdict": "CONCERN"
+    },
+    "truth_unedited_after_the_run": {
+      "evidence": "truth/truth.jsonl is byte-identical to the freeze commit; every correction lives in TRUTH_ERRATA.json, which is append-only and never read by the scorer as truth.",
+      "verdict": "PASS"
+    },
+    "unresolved_truth": {
+      "evidence": "0 at freeze and 0 after adjudication.",
+      "verdict": "PASS"
+    }
+  },
+  "overall": "VALID_BLIND_V2",
+  "overall_reasoning": "Every structural requirement holds: the freeze provably predates the run, the truth was never edited, the first run is immutable, the no-peek audit is clean and has been shown able to fail, no forbidden corpus was opened, and the certified Core was byte-identical when the run started. Two concerns are recorded and neither is disqualifying: a 12.5% truth-defect rate, and discovery contamination on six errata whose repairs were nonetheless independent. The challenge's conclusions -- one shipped contract-integrity defect (CORE-1) producing two false accepts against the frozen published contract and none against the runtime's computed science, zero Core crashes, zero unjustified metamorphic violations -- rest on evidence that survives its own errata.",
+  "question": "Is this blind challenge itself valid, independently of how the Core scored?",
+  "schema": "blind_v2_validity_audit/1"
+}

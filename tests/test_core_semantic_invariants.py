@@ -780,3 +780,145 @@ def test_a_solver_settings_payload_is_the_callers_to_edit():
     payload["options"]["listed"].append(3)
     assert settings.options["nested"]["a"] == 1
     assert list(settings.options["listed"]) == [1, 2]
+
+
+# ---------------------------------------------------------------------------
+# BLIND-V2-1: a validity record must describe the derivation it is stated over
+# ---------------------------------------------------------------------------
+def test_a_condition_that_says_unknown_unless_must_mean_it():
+    """Blind Challenge v2 found the lumped geometry record contradicting itself.
+
+    ``geometry_route_ratio`` published, in the record a caller reads and
+    ``to_dict`` serializes, that it is *UNKNOWN unless characteristic_length,
+    body_volume and surface_area are all supplied*. The derivation deliberately
+    returns 1 with a single route -- ``test_one_route_alone_is_not_a_contradiction``
+    pins that on purpose -- so a body declaring a length and no volume reached
+    IN_DOMAIN with the condition in ``satisfied``. An independent reader of the
+    contract predicted a refusal and got an acceptance.
+
+    The record was the half that was wrong, and this test is what stops the two
+    drifting apart again: for every condition on the lumped model whose
+    description promises UNKNOWN in a named circumstance, that circumstance is
+    constructed and the promise is checked against the derivation.
+    """
+    from engcore.domains.thermal_models import context as ctx
+    from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
+    from engcore.scientific.units.quantity import Quantity
+
+    conditions = {c.name: c for c in LUMPED_CAPACITY_MODEL.validity.conditions}
+
+    # The promise that was broken, now stated the way the derivation behaves.
+    geometry = conditions[ctx.GEOMETRY_ROUTE_RATIO]
+    assert "UNKNOWN only when NEITHER route is available" in geometry.description
+    assert "WITH ONE ROUTE THIS CONDITION IS SATISFIED" in geometry.description
+
+    # ... and the derivation, at each of the three declarations that matter.
+    both_routes = ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+        ctx.BODY_VOLUME: Quantity(2.0e-5, "meter**3"),
+        ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+    })
+    assert ctx.GEOMETRY_ROUTE_RATIO in both_routes
+
+    one_route = ctx.derived_lumped_quantities({
+        ctx.CHARACTERISTIC_LENGTH: Quantity(0.002, "meter"),
+    })
+    assert one_route[ctx.GEOMETRY_ROUTE_RATIO].magnitude_in("dimensionless") == 1.0
+
+    neither_route = ctx.derived_lumped_quantities({
+        ctx.SURFACE_AREA: Quantity(0.01, "meter**2"),
+    })
+    assert ctx.GEOMETRY_ROUTE_RATIO not in neither_route
+
+    # Every OTHER condition on this model that promises UNKNOWN-unless keeps
+    # that promise literally: with none of its declarations supplied, the
+    # assembler does not produce it at all.
+    promises = {
+        ctx.MELTING_TEMPERATURE_UTILIZATION: (),
+        ctx.RADIATION_TO_CONVECTION_RATIO: (),
+        ctx.CONDUCTANCE_EXCURSION_RATIO: (),
+        ctx.CAPACITY_EXCURSION_RATIO: (),
+        ctx.BIOT_NUMBER: (),
+    }
+    bare = ctx.derived_lumped_quantities({})
+    for name in promises:
+        assert "UNKNOWN unless" in conditions[name].description, name
+        assert name not in bare, name
+
+
+# ---------------------------------------------------------------------------
+# CI-1: a route-dependent precondition must be described as route-dependent
+# ---------------------------------------------------------------------------
+def test_the_flow_range_record_states_which_route_needs_a_prandtl_number():
+    """The Contract Integrity round found this record over-claiming.
+
+    ``convection_flow_range_utilization`` published that it is *UNKNOWN unless
+    the convection_length, kinematic viscosity, Prandtl number, the operating
+    point and one of the two route declarations are all supplied*. On the
+    forced route that is false and deliberately so: ``Re = u L / nu`` carries
+    no Prandtl number, and two named tests pin the asymmetry --
+    ``test_one_missing_fluid_property_does_not_blank_the_others`` and
+    ``test_withholding_prandtl_on_the_natural_route_does_take_the_flow_range``.
+
+    The runtime is right and the record was wrong, so this guard holds the two
+    together: the published text must name the route asymmetry, and the runtime
+    must still exhibit it. Either drifting from the other fails here.
+    """
+    from engcore.domains.thermal_models import context as ctx
+    from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
+    from engcore.scientific.units.quantity import Quantity
+
+    condition = next(
+        c
+        for c in LUMPED_CAPACITY_MODEL.validity.conditions
+        if c.name == ctx.CONVECTION_FLOW_RANGE
+    )
+    # -- the published record names the asymmetry rather than a flat list
+    assert "forced route" in condition.description
+    assert "natural route" in condition.description.lower()
+    assert (
+        "Prandtl number, the operating point and one of the two route "
+        "declarations are all supplied" not in condition.description
+    ), "the record is back to requiring a Prandtl number on both routes"
+
+    forced = {
+        ctx.SURFACE_AREA: Quantity(0.02, "meter ** 2"),
+        ctx.FLUID_CONDUCTIVITY: Quantity(0.026, "watt / kelvin / meter"),
+        ctx.FLUID_VISCOSITY: Quantity(1.5e-5, "meter ** 2 / second"),
+        ctx.FLUID_VELOCITY: Quantity(5.0, "meter / second"),
+        ctx.CONVECTION_LENGTH: Quantity(0.05, "meter"),
+        "ambient_conductance": Quantity(0.796, "watt / kelvin"),
+        "heat_capacity": Quantity(900.0, "joule / kelvin"),
+        "duration": Quantity(5000.0, "second"),
+    }
+    operating = dict(
+        initial_temperature=Quantity(300.0, "kelvin"),
+        ambient_temperature=Quantity(295.0, "kelvin"),
+        heat_input=Quantity(6.37, "watt"),
+    )
+
+    # -- and the runtime behaves the way the record now describes
+    without_prandtl = ctx.derived_lumped_quantities(forced, **operating)
+    assert ctx.CONVECTION_FLOW_RANGE in without_prandtl, (
+        "the forced flow range needs no Prandtl number: Re = u L / nu"
+    )
+    assert ctx.CONVECTION_PROPERTY_RANGE not in without_prandtl
+    assert ctx.CONVECTION_AGREEMENT_RATIO not in without_prandtl
+
+    with_prandtl = ctx.derived_lumped_quantities(
+        dict(forced, **{ctx.FLUID_PRANDTL_NUMBER: Quantity(0.71, "dimensionless")}),
+        **operating,
+    )
+    assert with_prandtl[ctx.CONVECTION_FLOW_RANGE].magnitude_in(
+        "dimensionless"
+    ) == without_prandtl[ctx.CONVECTION_FLOW_RANGE].magnitude_in("dimensionless"), (
+        "a Prandtl number must not move a Reynolds-based flow range at all"
+    )
+
+    # -- the natural route is the one that does need it
+    natural = dict(forced)
+    del natural[ctx.FLUID_VELOCITY]
+    natural[ctx.FLUID_EXPANSION_COEFFICIENT] = Quantity(1.0 / 300.0, "1 / kelvin")
+    assert ctx.CONVECTION_FLOW_RANGE not in ctx.derived_lumped_quantities(
+        natural, **operating
+    ), "Ra = Gr Pr, so the natural flow range genuinely is a gap without Pr"

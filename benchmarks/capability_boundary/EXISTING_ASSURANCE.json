@@ -1,0 +1,72 @@
+{
+  "all_preserved": true,
+  "assurance_layers": {
+    "1_certified_executable_code_mutation": {
+      "detail": {
+        "control_green": true,
+        "harness_summary_line": null,
+        "killed": 79,
+        "log": "/tmp/claude-0/mutation_run.log",
+        "survivors": []
+      },
+      "not_evidence_for": "scientific validity. A killed mutant says a test noticed a code change, not that the code is right.",
+      "question": "are the executable branches covered by tests that fail when they change?",
+      "rerun_this_round": true,
+      "result": "79/79 RED, CONTROL GREEN",
+      "why_rerun": "executable scientific code changed in four domain modules, so the suite is re-run rather than assumed unaffected -- even though none of the four is a mutation anchor"
+    },
+    "2_contract_guard": {
+      "not_evidence_for": "scientific validity. Record and runtime agreed perfectly on all three defects this round found; agreement was the precondition for finding them, not a defence against them.",
+      "question": "does every published record say what its guarded runtime does?",
+      "rerun_this_round": true,
+      "result": "15/15 semantic contract mutants caught, CONTROL GREEN",
+      "suite": "benchmarks/contract_guard/tests: 18 passed",
+      "survivors": [],
+      "why_rerun": "three records gained a condition, so record and runtime both moved"
+    },
+    "3_capability_boundary": {
+      "new_this_round": true,
+      "not_evidence_for": "full scientific correctness. Every boundary examined here was examined one model at a time against the equations that model implements; a regime nobody thought to construct is a regime nobody checked.",
+      "question": "is that agreed behaviour scientifically valid in this regime?",
+      "result": "3 capability-boundary defects found and repaired; 7/7 planted overclaims caught",
+      "suite": "benchmarks/capability_boundary/tests: 12 passed"
+    }
+  },
+  "benchmarks": [
+    {
+      "benchmark": "Hard DEV",
+      "differing_summary_keys": [],
+      "exact_verdict_match": "1362/1400 (97.3%)",
+      "false_accept": "0/1157 (0.00%)",
+      "false_reject": "0/243 (0.0%)",
+      "identical_ignoring_timestamp": true,
+      "rows_identical": true,
+      "split": "dev",
+      "total_cases": 1400
+    },
+    {
+      "benchmark": "Battery DEV",
+      "differing_summary_keys": [],
+      "exact_verdict_match": "272/280 (97.1%)",
+      "false_accept": "0/152 (0.00%)",
+      "false_reject": "8/128 (6.2%)",
+      "identical_ignoring_timestamp": true,
+      "rows_identical": true,
+      "split": "dev",
+      "total_cases": 280
+    }
+  ],
+  "certified_scientific_core_digest_unchanged": true,
+  "contract_guard_artifacts_not_rewritten": "benchmarks/contract_guard/CONTRACT_GUARD_MATRIX.json still records the 64 conditions and 353 probes that existed when that round ran. Recomputed today it reads 67 conditions and 368 probes, with the same 88/88 guarded dimensions; the artifact is left as that round's result rather than edited to match this one.",
+  "do_not_merge_these_layers": "Three separate statements, deliberately never combined into one number. Each answers a different question and none implies another.",
+  "executable_scientific_code_changed": [
+    "src/engcore/domains/battery/context.py",
+    "src/engcore/domains/battery/models.py",
+    "src/engcore/domains/electrical/material.py",
+    "src/engcore/domains/kinetics/cstr/alternatives.py"
+  ],
+  "fast_tier": "3836 passed, 3 skipped, 541 deselected",
+  "how_the_benchmarks_were_compared": "Both scorecards for each benchmark were produced by this round, with the same command, on two trees: a pristine `git archive HEAD` checkout and the working tree. The scorecards committed in the repository are NOT used as the baseline -- see compare_benchmark for why that comparison was an audit defect.",
+  "schema": "capability_boundary_existing_assurance/1",
+  "what_changed_in_them": "Three validity conditions and one derivation. No equation, no coefficient and no numerical method was altered: every metric every model computes is bit-identical, which is why both benchmark scorecards reproduce exactly. What changed is which declarations a model reports itself APPLICABLE to."
+}

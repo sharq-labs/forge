@@ -247,6 +247,13 @@ LINEAR_RESISTANCE_RATIO = "linear_resistance_ratio"
 #: again and the same argument applies.
 REFERENCE_LINEAR_FLOOR = Quantity(1.0 / 5.0, DIMENSIONLESS)
 
+#: R(T) / R_ref > 0, strictly. The linear form is a straight line and every
+#: straight line with a non-zero slope crosses zero; past that crossing it is
+#: not an inaccurate conductor but a negative one. This bounds the
+#: extrapolation by the physics of the quantity it computes rather than by a
+#: tolerance, which is why the bound is exactly zero and needs no source.
+MINIMUM_LINEAR_RESISTANCE_RATIO = Quantity(0.0, DIMENSIONLESS)
+
 REFERENCE_TEMPERATURE_UTILIZATION = "reference_temperature_utilization"
 REFERENCE_REDUCED_DEBYE_TEMPERATURE = "reference_reduced_debye_temperature"
 CEILING_REDUCED_DEBYE_TEMPERATURE = "ceiling_reduced_debye_temperature"
@@ -374,6 +381,7 @@ LINEAR_TCR_MODEL = ScientificModelDefinition(
         derived_quantities=frozenset(
             {
                 TEMPERATURE,
+                LINEAR_RESISTANCE_RATIO,
             }
         ),
         conditions=(
@@ -392,6 +400,34 @@ LINEAR_TCR_MODEL = ScientificModelDefinition(
                 minimum=Quantity(0.0, RESISTANCE_UNIT),
                 minimum_inclusive=False,
                 description="Strictly positive reference resistance.",
+            ),
+            # THE ONE BOUND OF THE RATED SIBLING'S FOUR THAT NEEDS NOTHING
+            # DECLARING. The other three -- the linearization band, the
+            # maximum operating temperature and the Debye floor -- each ask
+            # the material for a limit this record deliberately does not take,
+            # and their absence here is what makes this the weaker claim. This
+            # one asks for nothing: the multiplier is built from the three
+            # inputs this record already requires, and the reference
+            # resistance cancels out of it.
+            #
+            # Without it, a caller declaring the very case the coefficient's
+            # own description invites -- "a semiconductor or an alloy read off
+            # a local tangent", with a negative alpha -- reached IN_DOMAIN at a
+            # temperature where this expression returns a NEGATIVE resistance.
+            # The solver's admissibility check caught the number afterwards;
+            # nothing caught the applicability question, which is the one a
+            # caller asks before deciding to run at all.
+            RangeCondition(
+                name=LINEAR_RESISTANCE_RATIO,
+                minimum=MINIMUM_LINEAR_RESISTANCE_RATIO,
+                minimum_inclusive=False,
+                description=(
+                    "1 + alpha (T - T_ref) > 0. Every straight line with a "
+                    "non-zero slope crosses zero; past the crossing the form "
+                    "does not describe a poor conductor but a negative one. "
+                    "The bound is the physics of the quantity, not a "
+                    "tolerance. UNKNOWN unless a temperature is supplied."
+                ),
             ),
         ),
         description="Linear TCR about a reference state, over a stated range.",
@@ -494,13 +530,6 @@ OPERATING_TEMPERATURE_LIMIT = Quantity(1.0, DIMENSIONLESS)
 #: engineering reading of "T much greater than theta_D"**, not a number either
 #: text prints as a threshold, and it is recorded here as a convention.
 BLOCH_GRUENEISEN_LINEAR_FLOOR = Quantity(1.0 / 3.0, DIMENSIONLESS)
-
-#: R(T) / R_ref > 0, strictly. The linear form is a straight line and every
-#: straight line with a non-zero slope crosses zero; past that crossing it is
-#: not an inaccurate conductor but a negative one. This bounds the
-#: extrapolation by the physics of the quantity it computes rather than by a
-#: tolerance, which is why the bound is exactly zero and needs no source.
-MINIMUM_LINEAR_RESISTANCE_RATIO = Quantity(0.0, DIMENSIONLESS)
 
 
 RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
@@ -1187,12 +1216,26 @@ def resistance_validity_context(
     sit in the same key and decide the same condition, which is the derived-
     quantity impersonation in its plainest form.
     """
+    declared = caller_declared(
+        problem.validity_context(reserved=ASSEMBLER_NAMESPACE),
+        ASSEMBLER_NAMESPACE,
+    )
+    # The line's own multiplier, derived from the stripped context exactly as
+    # the rated assembler derives its groups: a caller parameter of this name
+    # was removed above and cannot reach the condition. Absent when it could
+    # not be derived, which is how a missing declaration arrives as UNKNOWN
+    # rather than as a satisfied bound nobody evaluated.
+    multiplier = linear_resistance_ratio(
+        temperature=temperature,
+        reference_temperature=declared.get(REFERENCE_TEMPERATURE),
+        temperature_coefficient=declared.get(TEMPERATURE_COEFFICIENT),
+    )
     return assembled_validity_context(
-        declared=caller_declared(
-            problem.validity_context(reserved=ASSEMBLER_NAMESPACE),
-            ASSEMBLER_NAMESPACE,
-        ),
-        assembled={TEMPERATURE: temperature},
+        declared=declared,
+        assembled={
+            TEMPERATURE: temperature,
+            **({} if multiplier is None else {LINEAR_RESISTANCE_RATIO: multiplier}),
+        },
         reserved=ASSEMBLER_NAMESPACE,
     )
 
@@ -1911,6 +1954,38 @@ _REFERENCE_IS_TWO_SIDED = (
 )
 
 
+#: The repair hints for ``linear_resistance_ratio``. Both records state this
+#: condition now, and the algebra behind the hint is one derivation rather than
+#: two copies that could drift apart.
+_LINEAR_RESISTANCE_RATIO_INVERSIONS = ConditionInversions(
+    condition=LINEAR_RESISTANCE_RATIO,
+    inversions=(
+        MonotoneInversion(
+            target=TEMPERATURE_COEFFICIENT,
+            exponent=1.0,
+            offset=_unity,
+            justification=(
+                "1 + alpha (T - T_ref) is affine in alpha with offset "
+                "1 and slope (T - T_ref)"
+            ),
+        ),
+        MonotoneInversion(
+            target=REFERENCE_TEMPERATURE,
+            exponent=1.0,
+            offset=_ratio_offset_in_reference,
+            must_stay_positive=True,
+            justification=(
+                "1 + alpha (T - T_ref) is affine in T_ref with offset "
+                "1 + alpha T and slope -alpha"
+            ),
+        ),
+    ),
+    refusals=(
+        RefusedInversion(target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE),
+    ),
+)
+
+
 TCR_INVERSIONS = ModelInversionTable(
     model=LINEAR_TCR_MODEL,
     rows=(
@@ -1932,6 +2007,7 @@ TCR_INVERSIONS = ModelInversionTable(
                 ),
             ),
         ),
+        _LINEAR_RESISTANCE_RATIO_INVERSIONS,
     ),
 )
 
@@ -2013,35 +2089,7 @@ RATED_TCR_INVERSIONS = ModelInversionTable(
                 ),
             ),
         ),
-        ConditionInversions(
-            condition=LINEAR_RESISTANCE_RATIO,
-            inversions=(
-                MonotoneInversion(
-                    target=TEMPERATURE_COEFFICIENT,
-                    exponent=1.0,
-                    offset=_unity,
-                    justification=(
-                        "1 + alpha (T - T_ref) is affine in alpha with offset "
-                        "1 and slope (T - T_ref)"
-                    ),
-                ),
-                MonotoneInversion(
-                    target=REFERENCE_TEMPERATURE,
-                    exponent=1.0,
-                    offset=_ratio_offset_in_reference,
-                    must_stay_positive=True,
-                    justification=(
-                        "1 + alpha (T - T_ref) is affine in T_ref with offset "
-                        "1 + alpha T and slope -alpha"
-                    ),
-                ),
-            ),
-            refusals=(
-                RefusedInversion(
-                    target=TEMPERATURE, reason=_TEMPERATURE_IS_A_STATE
-                ),
-            ),
-        ),
+        _LINEAR_RESISTANCE_RATIO_INVERSIONS,
     ),
 )
 

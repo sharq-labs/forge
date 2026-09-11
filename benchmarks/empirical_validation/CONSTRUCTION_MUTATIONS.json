@@ -1,0 +1,105 @@
+{
+  "schema": "construction_mutations/1",
+  "what_this_is": "Seven corruptions of the PROBLEM STATEMENT, applied to one branch only. Five must be caught. Two must not be, and their blindness is the finding.",
+  "caught": 5,
+  "blind_as_expected": 2,
+  "unexpected": 0,
+  "mutations": [
+    {
+      "id": "IPM-1",
+      "mutation": "unit scale error: capacity given in Ah through a field declared in mAh",
+      "expected_detected": true,
+      "detected": true,
+      "altered_construction_fields": [
+        "nominal_capacity_ah",
+        "nominal_capacity_c"
+      ],
+      "disagreeing_quantities": [
+        "final_state_of_charge",
+        "terminal_voltage"
+      ],
+      "verdict": "DETECTED"
+    },
+    {
+      "id": "IPM-2",
+      "mutation": "temperature scale confusion: a kelvin value placed in a degC field",
+      "expected_detected": true,
+      "detected": true,
+      "altered_construction_fields": [
+        "initial_temperature_k"
+      ],
+      "disagreeing_quantities": [
+        "final_temperature"
+      ],
+      "verdict": "DETECTED"
+    },
+    {
+      "id": "IPM-3",
+      "mutation": "geometry error in a derived quantity: R_ref = rho L / A built from a length a thousand times too small",
+      "expected_detected": true,
+      "detected": true,
+      "altered_construction_fields": [
+        "reference_resistance_ohm"
+      ],
+      "disagreeing_quantities": [
+        "resistance"
+      ],
+      "verdict": "DETECTED"
+    },
+    {
+      "id": "IPM-4",
+      "mutation": "sign convention inversion: the current source's direction reversed on the reference branch",
+      "expected_detected": true,
+      "detected": true,
+      "altered_construction_fields": [],
+      "disagreeing_quantities": [
+        "n1",
+        "n2"
+      ],
+      "verdict": "DETECTED"
+    },
+    {
+      "id": "IPM-5",
+      "mutation": "reference node misassignment: the reference taken as the first node listed rather than the one declared",
+      "expected_detected": true,
+      "detected": true,
+      "altered_construction_fields": [],
+      "disagreeing_quantities": [
+        "a",
+        "b",
+        "c"
+      ],
+      "verdict": "DETECTED"
+    },
+    {
+      "id": "IPM-6",
+      "mutation": "shared pre-computation: hA derived once, wrongly, and consumed by both branches",
+      "expected_detected": false,
+      "detected": false,
+      "altered_construction_fields": [],
+      "disagreeing_quantities": [],
+      "verdict": "BLIND_AS_EXPECTED",
+      "what_the_two_branches_agreed_on_k": 295.1518947368421,
+      "what_the_physics_actually_gives_k": 348.25277204758623,
+      "size_of_the_undetected_error_k": 53.100877310744124,
+      "why_this_matters": "The two branches agreed to round-off about a body whose conductance was wrong by a factor of 10000. Agreement between two solvers is a statement about the solvers, not about the problem, whenever a number reaches both of them already derived."
+    },
+    {
+      "id": "IPM-7",
+      "mutation": "the external solver's netlist generated from the Core's own declaration instead of the raw fixture",
+      "expected_detected": false,
+      "detected": false,
+      "altered_construction_fields": [],
+      "disagreeing_quantities": [],
+      "verdict": "BLIND_AS_EXPECTED",
+      "core_node_voltage_v": 0.005054054054054056,
+      "ngspice_from_raw_fixture_v": 5.054054054054,
+      "ngspice_from_engcore_declaration_v": 0.005054054,
+      "relative_difference_against_the_fixture_netlist": 0.999,
+      "relative_difference_against_the_derived_netlist": 1.0695187738362768e-08,
+      "detected_by_the_fixture_netlist": true,
+      "detected_by_the_derived_netlist": false,
+      "why_this_matters": "The same simulator, on the same circuit, reaches opposite conclusions depending only on where its problem came from. A netlist generated from the Core's declaration inherits the Core's construction faults and can only ever confirm them, which is why reference/spice.py reads the fixture and never an engcore object."
+    }
+  ]
+}

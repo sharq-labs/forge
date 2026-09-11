@@ -1,0 +1,326 @@
+{
+  "cases": [
+    {
+      "as_found": {
+        "detail": "before the fix, all conditions SATISFIED at 380 K, 400 K and 420 K, including the two where the model's own expression returns 0.0 and -200.0 ohm",
+        "response_class": "D_SUPPORTED",
+        "verdict": "IN_DOMAIN"
+      },
+      "expected_safe_behavior": "OUTSIDE_VALIDATED_DOMAIN on a condition over 1 + alpha (T - T_ref), the same bound the rated sibling already declares.",
+      "fix": "a linear_resistance_ratio > 0 condition on the unrated record, reserved as a derived quantity and assembled from the three inputs the record already requires. The rated sibling already stated the same bound; the derivation function already existed. UNKNOWN unless a temperature is supplied.",
+      "id": "CB-1",
+      "mitigation_present": "The solver's own admissibility check does report FAIL on the computed number, so this is not a silent wrong answer. What is wrong is the applicability verdict, which a caller uses to decide whether to run at all -- the module's own comment draws exactly that distinction.",
+      "model": "electrical.material.linear_tcr_resistance",
+      "oracle": {
+        "domain_of_validity": "every temperature and every material",
+        "expected": "R > 0, or a refusal",
+        "independence": "The sign constraint is a property of the quantity, not of any implementation, and is evaluated here in arithmetic that does not call the model. The sibling record electrical.material.rated_linear_tcr_resistance independently declares the same bound and states its own reason for it.",
+        "sibling_quote": "'1 + alpha (T - T_ref) > 0. Every straight line with a non-zero slope crosses zero; past the crossing the form does not describe a poor conductor but a negative one. The bound is the physics of the quantity, not a tolerance.'",
+        "type": "SIGN/DOMAIN, corroborated by SIBLING_RECORD"
+      },
+      "physically_valid_input": "R_ref = 1000 ohm at T_ref = 300 K, alpha = -0.01 /K, evaluated at T = 420 K. Every value is inside the model's own declared 200-450 K range, and a negative alpha is a case the record's input description explicitly admits and describes.",
+      "probes": [
+        {
+          "conditions_violated": [],
+          "model_validity": "IN_DOMAIN",
+          "multiplier_1_plus_alpha_dT": 0.19999999999999996,
+          "resistance_ohm": 199.99999999999994,
+          "response": "D_SUPPORTED",
+          "solver_report": "pass",
+          "temperature_K": 380.0
+        },
+        {
+          "conditions_violated": [
+            "linear_resistance_ratio"
+          ],
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "multiplier_1_plus_alpha_dT": 0.0,
+          "resistance_ohm": 0.0,
+          "response": "A_REFUSE",
+          "solver_report": "fail",
+          "temperature_K": 400.0
+        },
+        {
+          "conditions_violated": [
+            "linear_resistance_ratio"
+          ],
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "multiplier_1_plus_alpha_dT": -0.19999999999999996,
+          "resistance_ohm": -199.99999999999994,
+          "response": "A_REFUSE",
+          "solver_report": "fail",
+          "temperature_K": 420.0
+        }
+      ],
+      "reason_text": "every condition SATISFIED; no condition names the multiplier",
+      "regression_guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero",
+      "response_class": "A_REFUSE",
+      "runtime_result": "R = -200.0 ohm",
+      "verdict": "OUTSIDE_VALIDATED_DOMAIN",
+      "why_out_of_regime": "R(T) = R_ref (1 + alpha (T - T_ref)) is a straight line, and every straight line with a non-zero slope crosses zero. Past the crossing the expression does not describe a poor conductor but a negative one, which is not a conductor resistance at all."
+    },
+    {
+      "as_found": {
+        "detail": "before the fix, all four conditions SATISFIED for a declaration whose exact invariant ceiling is 2442 K, while the primary model refused the identical one",
+        "response_class": "D_SUPPORTED",
+        "verdict": "IN_DOMAIN"
+      },
+      "expected_safe_behavior": "the same OUTSIDE_VALIDATED_DOMAIN the primary model returns; the quantity is already computed and already present in the context this model is assessed against",
+      "fix": "an adiabatic_ceiling_temperature <= 1000 K condition on the constant-rate record, reserved as a derived quantity. The CSTR assembler already computed the value and already placed it in the context this model is assessed against; the model simply did not reserve it and so could never read it.",
+      "id": "CB-2",
+      "mitigation_present": "none on the validity surface",
+      "model": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+      "oracle": {
+        "agreement": true,
+        "domain_of_validity": "exact for these balances, with or without cooling, because C_A >= 0 and C_A <= max(C_A0, C_Af)",
+        "expected": "T <= max(T_0, T_f, T_c) + beta max(C_A0, C_Af)",
+        "hand_computed_ceiling_K": 2442.050209205021,
+        "independence": "Z = T + beta C_A is derived by hand from the two balances and evaluated here in plain arithmetic. Adding beta times the species balance to the energy balance cancels the reaction term identically -- dZ/dt = (Z_f - Z)/tau - gamma (T - T_c) contains no k -- so the bound holds for ANY rate law, Arrhenius or constant, and does not depend on either model's implementation.",
+        "runtime_computed_ceiling_K": 2442.050209205021,
+        "type": "INVARIANT"
+      },
+      "physically_valid_input": "A strongly exothermic liquid-phase feed: dH = -500 kJ/mol, C_A0 = C_Af = 1000 mol/m3, rho = 1000 kg/m3, c_p = 239 J/kg/K, T_0 = T_f = 350 K, T_c = 300 K, k_const = 0.05 /s. Every declared value is ordinary and every one of the model's own conditions is satisfied.",
+      "probes": [
+        {
+          "conditions_violated": [
+            "adiabatic_ceiling_temperature"
+          ],
+          "model": "kinetics.cstr.nonisothermal_first_order",
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "response": "A_REFUSE"
+        },
+        {
+          "conditions_satisfied": [
+            "temperature",
+            "concentration",
+            "k_const",
+            "residence_time"
+          ],
+          "conditions_violated": [
+            "adiabatic_ceiling_temperature"
+          ],
+          "model": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "response": "A_REFUSE"
+        }
+      ],
+      "reason_text": "all four conditions SATISFIED; the ceiling is not among them",
+      "regression_guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope",
+      "response_class": "A_REFUSE",
+      "runtime_result": "primary model refuses on adiabatic_ceiling_temperature; the constant-rate sibling reports OUTSIDE_VALIDATED_DOMAIN on the identical declaration",
+      "verdict": "OUTSIDE_VALIDATED_DOMAIN",
+      "why_out_of_regime": "The reactor's exact invariant guarantees the contents can reach 2442 K. The model's own temperature condition declares 250-1000 K, its assumptions declare a single liquid phase with no boiling, and its validity description claims the 'Same single-phase CSTR envelope as the primary model'."
+    },
+    {
+      "as_found": {
+        "detail": "before the fix, all three conditions SATISFIED while the solver emitted runtime_to_cutoff = -4500 s",
+        "response_class": "D_SUPPORTED",
+        "verdict": "IN_DOMAIN"
+      },
+      "expected_safe_behavior": "OUTSIDE_VALIDATED_DOMAIN on a condition comparing the binding cutoff against the starting state of charge",
+      "fix": "a cutoff_reachability_margin >= 0 condition on the runtime record, with the derivation z_0 - z_stop added beside the consistency margin it complements. UNKNOWN unless the starting state of charge and at least one cutoff are declared.",
+      "id": "CB-3",
+      "mitigation_present": "none. The solver's own comment says the negative value is 'reported rather than clipped: the runtime model's own conditions are where that is judged' -- and they do not judge it.",
+      "model": "battery.cell.constant_current_runtime",
+      "oracle": {
+        "agreement": true,
+        "domain_of_validity": "every constant-current discharge",
+        "expected": "t >= 0, or a refusal",
+        "hand_computed_runtime_s": -4500.0,
+        "independence": "Computed here in plain arithmetic from the published formula without calling the solver. The reasoning is the record's own: discharge is monotone in z, so the first crossing of a cutoff above z_0 does not exist, and an elapsed time to an event that does not occur is not a number the model may report.",
+        "runtime_computed_runtime_s": -4500.0,
+        "type": "SIGN/DOMAIN, on the model's own monotonicity assumption"
+      },
+      "physically_valid_input": "A 2.5 Ah cell at 30% state of charge, discharged at 1 A, with a declared SOC cutoff of 0.8 and a declared 3.0 V cutoff. Both cutoffs sit inside the declared 0.05-0.95 usable window and the current is inside the declared continuous rating.",
+      "probes": [
+        {
+          "binding_cutoff_state_of_charge": 0.8,
+          "conditions_satisfied": [
+            "cutoff_consistency_margin",
+            "continuous_c_rate_utilization",
+            "soc_window_margin"
+          ],
+          "conditions_violated": [
+            "cutoff_reachability_margin"
+          ],
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "response": "A_REFUSE",
+          "runtime_to_cutoff_s": -4500.0
+        }
+      ],
+      "reason_text": "all three conditions SATISFIED",
+      "regression_guard": "benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_runtime_model_refuses_a_cutoff_above_where_the_discharge_starts",
+      "response_class": "A_REFUSE",
+      "runtime_result": "runtime_to_cutoff = -4500 s (-1.25 h)",
+      "verdict": "OUTSIDE_VALIDATED_DOMAIN",
+      "why_out_of_regime": "A discharge at constant current walks the state of charge monotonically DOWN -- 'discharge only' is the record's own first assumption -- so a cutoff declared ABOVE the starting state is never reached. The published equation returns the time to reach it anyway, and that time is negative."
+    },
+    {
+      "expected_safe_behavior": "exactly what it does: a number whose accuracy is explicitly not claimed",
+      "id": "CB-N1",
+      "mitigation_present": "the result contract itself. A caller who reads attained_levels cannot mistake this for a verified answer, and the explicit FTCS realization carries a von Neumann stability condition of its own.",
+      "model": "thermal.conduction1d.linear_diffusion",
+      "oracle": {
+        "domain_of_validity": "exact for this initial and boundary condition",
+        "expected": 0.0026804713028360586,
+        "independence": "engcore.domains.thermal.conduction1d.reference implements u = sin(pi x/L) exp(-alpha pi^2 t/L^2) and a test asserts it never imports the solver. The single-mode initial condition collapses the series, so the reference is exact to rounding.",
+        "observed": 0.06882488714578189,
+        "relative_error": 24.676412604366288,
+        "type": "ANALYTIC closed form"
+      },
+      "physically_valid_input": "4 cells and 2 time steps over 600 s, Fo = 4.8",
+      "probes": [
+        {
+          "attained_levels": [
+            "dimensionally_valid"
+          ],
+          "not_run_checks": [
+            "discretization_convergence",
+            "analytic_reference_agreement"
+          ],
+          "response": "C_WARNED_NUMBER",
+          "uncertainty_kind": "unknown"
+        }
+      ],
+      "reason_text": "the result attains DIMENSIONALLY_VALID and nothing more; discretization_convergence and analytic_reference_agreement are both reported NOT_RUN with their reasons, and every metric's uncertainty is UNKNOWN with the reason stated",
+      "response_class": "C_WARNED_NUMBER",
+      "runtime_result": "midpoint = 0.0688249 against an exact 0.00268047",
+      "verdict": "NOT A FINDING",
+      "why_out_of_regime": "Backward Euler is unconditionally stable but first-order accurate; at this resolution the answer is 25 times the true one."
+    },
+    {
+      "expected_safe_behavior": "exactly what it does",
+      "id": "CB-N2",
+      "mitigation_present": "soc_window_margin, which is UNKNOWN unless both edges are declared",
+      "model": "battery.cell.coulomb_counting",
+      "oracle": {
+        "domain_of_validity": "every cell",
+        "expected": "0 <= z <= 1, or a refusal",
+        "hand_computed_z_end": -1.1,
+        "independence": "z_end computed here in arithmetic, not by the solver",
+        "type": "SIGN/DOMAIN"
+      },
+      "physically_valid_input": "2.5 Ah cell at z = 0.9, discharged at 2.5 A for two hours",
+      "probes": [
+        {
+          "conditions_violated": [],
+          "declaration": "no window declared",
+          "model_validity": "UNKNOWN",
+          "response": "B_UNKNOWN"
+        },
+        {
+          "conditions_violated": [
+            "soc_window_margin"
+          ],
+          "declaration": "window declared",
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "response": "A_REFUSE"
+        }
+      ],
+      "reason_text": "the model never reaches IN_DOMAIN on this declaration",
+      "response_class": "B_UNKNOWN",
+      "runtime_result": "UNKNOWN without a declared window; OUTSIDE_VALIDATED_DOMAIN with one",
+      "verdict": "NOT A FINDING",
+      "why_out_of_regime": "the exact integral gives z_end = -1.1; a state of charge below zero is not a state of charge"
+    },
+    {
+      "expected_safe_behavior": "exactly what it does",
+      "id": "CB-N3",
+      "mitigation_present": "soc_window_margin",
+      "model": "battery.cell.rint_ocv",
+      "oracle": {
+        "domain_of_validity": "every cell",
+        "expected": "0 <= z <= 1, or a refusal",
+        "independence": "the chord's own endpoints bound OCV; computed here, not by the solver",
+        "observed_z_end": -0.09999999999999998,
+        "type": "SIGN/DOMAIN"
+      },
+      "physically_valid_input": "2.5 Ah cell at z = 0.9, 1 A for 2.5 hours",
+      "probes": [
+        {
+          "conditions_violated": [
+            "soc_window_margin"
+          ],
+          "model_validity": "OUTSIDE_VALIDATED_DOMAIN",
+          "response": "A_REFUSE"
+        }
+      ],
+      "reason_text": "soc_window_margin is VIOLATED",
+      "response_class": "A_REFUSE",
+      "runtime_result": "z_end = -0.100, refused",
+      "verdict": "NOT A FINDING",
+      "why_out_of_regime": "z_end = -0.1 walks off the end of the affine OCV chord, where the record itself says the chord fails against a real curve's knee"
+    },
+    {
+      "expected_safe_behavior": "exactly what it does",
+      "id": "CB-N4",
+      "mitigation_present": "ten UNKNOWN conditions",
+      "model": "thermal.lumped.first_order_capacity",
+      "oracle": {
+        "domain_of_validity": "n/a",
+        "expected": "UNKNOWN rather than IN_DOMAIN",
+        "independence": "structural: counted from the assessment, not from any computed value",
+        "type": "SIGN/DOMAIN (fail-closed expectation)"
+      },
+      "physically_valid_input": "a complete, buildable body: C and hA and nothing else",
+      "probes": [
+        {
+          "conditions_satisfied": [
+            "heat_capacity",
+            "ambient_conductance"
+          ],
+          "conditions_unknown": [
+            "biot_number",
+            "internal_fourier_number",
+            "conductance_excursion_ratio",
+            "capacity_excursion_ratio",
+            "radiation_to_convection_ratio",
+            "convection_flow_range_utilization",
+            "convection_property_range_utilization",
+            "convection_conductance_agreement_ratio",
+            "geometry_route_ratio",
+            "melting_temperature_utilization"
+          ],
+          "model_validity": "UNKNOWN",
+          "response": "B_UNKNOWN"
+        }
+      ],
+      "reason_text": "fail-closed; the model cannot reach IN_DOMAIN without the caller stating the regime",
+      "response_class": "B_UNKNOWN",
+      "runtime_result": "UNKNOWN with 10 of 12 conditions unanswered",
+      "verdict": "NOT A FINDING",
+      "why_out_of_regime": "nothing states the Biot number, the radiation ratio, the geometry, the melting point or the correlation ranges, so nothing establishes that a lumped description applies"
+    }
+  ],
+  "cases_run": 7,
+  "false_confidence_cases": [
+    "CB-1",
+    "CB-2",
+    "CB-3"
+  ],
+  "false_confidence_cases_still_open": [],
+  "findings": [
+    "CB-1",
+    "CB-2",
+    "CB-3"
+  ],
+  "response_counts_after_repair": {
+    "A_REFUSE": 4,
+    "B_UNKNOWN": 2,
+    "C_WARNED_NUMBER": 1
+  },
+  "response_counts_as_found": {
+    "A_REFUSE": 1,
+    "B_UNKNOWN": 2,
+    "C_WARNED_NUMBER": 1,
+    "D_SUPPORTED": 3
+  },
+  "response_legend": {
+    "A_REFUSE": "the declaration is rejected",
+    "B_UNKNOWN": "the model declines to answer",
+    "C_WARNED_NUMBER": "a number, with the limitation visible on the result",
+    "D_SUPPORTED": "a normal-looking supported result \u2014 the dangerous case"
+  },
+  "schema": "capability_boundary_false_confidence/1",
+  "what_this_is": "Adversarial cases at and beyond each model's true scientific boundary. Every declaration here is physically valid and accepted by the runtime; the question is whether the answer can be trusted in that regime."
+}

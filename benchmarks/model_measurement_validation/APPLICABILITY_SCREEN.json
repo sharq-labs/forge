@@ -1,0 +1,52 @@
+{
+  "schema": "applicability_screen/1",
+  "written_before_any_core_run": true,
+  "what_this_is": "MV-5. For every candidate dataset, whether the data actually falls inside the declared scientific capability of the model it would be compared against. Out-of-scope data is not a Core failure and is excluded here rather than reported as one.",
+  "screens": [
+    {
+      "dataset": "S-OCV, relaxed open-circuit voltage against state of charge, LiFePO4 cells BATT_001 (APR) and BATT_002 (BSE)",
+      "model": "battery.cell.rint_ocv",
+      "status": "IN_SCOPE",
+      "why": "The model's first output is the open-circuit voltage as a function of state of charge. The dataset measures exactly that, on a single cell at one uniform temperature, at rest, after a 24 h relaxation. Every assumption the model makes is satisfied by the measurement conditions: one cell, one temperature, no load, no ageing over the measurement.",
+      "what_was_checked_before_saying_in_scope": [
+        "The model declares 'discharge only'. A relaxed OCV is not a charge and not a discharge; it is the rest state both procedures end in, and the dataset provides it after BOTH a charge-based and a discharge-based conditioning, which is how the hysteresis the model excludes is separated out rather than folded in.",
+        "The model declares 'no hysteresis'. The dataset has both conditioning directions, so the size of the excluded effect is measurable and is reported instead of being absorbed into the residual.",
+        "The model declares 'one uniform cell temperature supplied from outside'. The chamber held 23 +/- 2 degC and the cells rested 24 h, so uniformity is as good as this kind of measurement gets.",
+        "The model places NO condition on the shape of the open-circuit-voltage curve. Its eleven validity conditions cover C-rate, state-of-charge window, temperature, resistance drift, self-heating, polarization and terminal voltage, and not one of them asks whether an affine chord describes the cell. So a LiFePO4 cell is not excluded by the record, and the comparison is in scope rather than out of it."
+      ]
+    },
+    {
+      "dataset": "S-DCHG, constant-current discharge voltage curves, ten LiFePO4 cells",
+      "model": "battery.cell.rint_ocv",
+      "status": "PARTIALLY_IN_SCOPE",
+      "why": "Under a constant current the model's own algebra forces the terminal voltage to be an affine function of TIME: the state of charge falls linearly, the chord is affine in it, and the IR drop is constant. That consequence can be tested without knowing the current, and it is in scope. Anything needing the current value is not, because the dataset does not record it.",
+      "used_for": "the departure-from-straight-line bound only"
+    },
+    {
+      "dataset": "S-DCHG",
+      "model": "battery.cell.coulomb_counting, battery.cell.constant_current_runtime, battery.cell.peukert_capacity_derating",
+      "status": "OUT_OF_SCOPE",
+      "why": "Not because the physics is wrong for it - the physics is exactly right for it - but because a required input is missing. All three models take the discharge current, and the dataset does not report it. This is an EMPIRICAL_EVIDENCE_INSUFFICIENT exclusion, not a model exclusion, and it is recorded so that nobody reads the absence of these three from the results as a failure."
+    },
+    {
+      "dataset": "S-PT100, the 1051-point platinum resistance table over -200 to +850 degC",
+      "model": "electrical.material.linear_tcr_resistance",
+      "status": "PARTIALLY_IN_SCOPE",
+      "why": "The model is a first-order law about a declared reference temperature. The reference relation is quadratic above 0 degC and quartic below it. A linear model cannot reproduce a quadratic over a wide interval and does not claim to; what is in scope is whether its deviation is exactly the term it drops, and over what interval it stays inside a stated band. The full -200 to +850 degC span is used to MEASURE that interval; the pass rule is stated only over 0 to 400 degC, where the omitted term has a closed form in the two coefficients that are independently available.",
+      "why_the_pass_rule_stops_at_400_degC": "The predicted omitted term |B| t^2 / (1 + A t) is itself the leading part of the exact truncation error. Past roughly 400 degC the two differ by more than the preregistered 5 percent, so the criterion would fail on its own algebra rather than on the model. The bound comes from that arithmetic and is fixed here, before any Core value was computed.",
+      "why_not_below_0_degC_for_the_pass_rule": "Below 0 degC the standard's relation carries a third coefficient C which this round could not obtain from any retrievable source. Reciting it from memory would put an unsourced number into the pass rule. The deviation below 0 degC is measured and reported; it is not scored."
+    },
+    {
+      "dataset": "PyBaMM half-cell open-circuit potentials (Chen2020, Ecker2015)",
+      "model": "battery.cell.rint_ocv",
+      "status": "OUT_OF_SCOPE",
+      "why": "Half-cell electrode potential against electrode stoichiometry, measured against lithium metal. The model predicts full-cell terminal voltage against cell state of charge. Converting between them requires the electrode stoichiometry limits and the active-material balance, which belong to a different model. Excluded at the provenance stage as well; recorded here so the reason is on both records."
+    },
+    {
+      "dataset": "ngspice 42 node voltages",
+      "model": "the six electrical.dc models",
+      "status": "OUT_OF_SCOPE",
+      "why": "Not a measurement. An external numerical solver is LEVEL 4 evidence and the previous round already reports it as such. Reclassifying it here would be the exact move this round's consistency audit rejects."
+    }
+  ]
+}

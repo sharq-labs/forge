@@ -1,0 +1,20 @@
+{
+  "fixture_id": "EVF-PT100-1",
+  "what_this_is": "The Callendar-Van Dusen coefficients for an industrial platinum resistance thermometer, above 0 degC, together with the temperatures at which the Core's linear model is compared against them.",
+  "source": "IEC 60751, Industrial platinum resistance thermometers and platinum temperature sensors. The coefficients and the W(100) ratio are the values the standard publishes.",
+  "evidence_level": "LEVEL 3 - published reference data, recited rather than retrieved from a licensed copy of the document. See EVIDENCE_PROVENANCE.json; the recitation is cross-validated against the standard's own published W(100) and is not treated as a measurement.",
+  "quantities": {
+    "r_zero_ohm": 100.0,
+    "coefficient_A_per_degC": 3.9083e-3,
+    "coefficient_B_per_degC2": -5.775e-7,
+    "published_W_100": 1.3851,
+    "validity_lower_degC": 0.0,
+    "validity_upper_degC": 850.0,
+    "comparison_temperatures_degC": [50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0]
+  },
+  "why_the_comparison_stops_at_400_degC": "The linear model is the first-order truncation of the quadratic. The preregistered test is that its deviation equals the neglected term |B| t^2 / (1 + A t) to within 5 percent, and that approximation to the exact truncation error itself degrades past roughly 400 degC. Extending the table further would make the test fail on the tolerance's own algebra rather than on the Core. The upper bound was set from that algebra, before any Core result was produced, and the arithmetic is shown in the round report.",
+  "derivations_left_to_the_adapters": [
+    "the linear model's reference temperature is 0 degC = 273.15 K and its coefficient is A",
+    "absolute temperatures from degC"
+  ]
+}

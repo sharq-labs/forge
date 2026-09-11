@@ -1,0 +1,1236 @@
+{
+  "schema": "problem_construction/1",
+  "what_this_is": "Field by field, what the reference branch computed in SI from the raw fixture against what the engcore declaration reports for the same quantity. Answers question A on its own, before any solver output is compared.",
+  "round_off_band": 1e-12,
+  "counts": {
+    "TRANSFORMED_CORRECTLY": 24,
+    "EXACT": 129
+  },
+  "fields_not_exact_or_transformed": [],
+  "rows": [
+    {
+      "case": "lumped:primary",
+      "field": "ambient_conductance_w_per_k",
+      "reference_branch_value": 0.2375,
+      "core_received_value": 0.23750000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1686558153949016e-16
+    },
+    {
+      "case": "lumped:primary",
+      "field": "ambient_temperature_k",
+      "reference_branch_value": 295.15,
+      "core_received_value": 295.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:primary",
+      "field": "duration_s",
+      "reference_branch_value": 240.0,
+      "core_received_value": 240.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:primary",
+      "field": "heat_capacity_j_per_k",
+      "reference_branch_value": 224.0,
+      "core_received_value": 224.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:primary",
+      "field": "heat_input_w",
+      "reference_branch_value": 4.5,
+      "core_received_value": 4.5,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:primary",
+      "field": "initial_temperature_k",
+      "reference_branch_value": 358.15,
+      "core_received_value": 358.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:primary",
+      "field": "diffusivity_m2_per_s",
+      "reference_branch_value": 4.05e-06,
+      "core_received_value": 4.05e-06,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:primary",
+      "field": "end_time_s",
+      "reference_branch_value": 1800.0,
+      "core_received_value": 1800.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:primary",
+      "field": "length_m",
+      "reference_branch_value": 0.12,
+      "core_received_value": 0.12,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:primary",
+      "field": "n_cells",
+      "reference_branch_value": 80,
+      "core_received_value": 80,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "slab:primary",
+      "field": "n_steps",
+      "reference_branch_value": 4000,
+      "core_received_value": 4000,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "battery:primary",
+      "field": "cell_temperature_k",
+      "reference_branch_value": 298.15,
+      "core_received_value": 298.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "coulombic_efficiency",
+      "reference_branch_value": 0.985,
+      "core_received_value": 0.985,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "current_a",
+      "reference_branch_value": 0.52,
+      "core_received_value": 0.52,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "cutoff_voltage_v",
+      "reference_branch_value": 3.3000000000000003,
+      "core_received_value": 3.3000000000000003,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "duration_s",
+      "reference_branch_value": 2700.0,
+      "core_received_value": 2700.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "initial_state_of_charge",
+      "reference_branch_value": 0.92,
+      "core_received_value": 0.92,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "internal_resistance_ohm",
+      "reference_branch_value": 0.045,
+      "core_received_value": 0.045,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "nominal_capacity_ah",
+      "reference_branch_value": 2.6,
+      "core_received_value": 2.6,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "nominal_capacity_c",
+      "reference_branch_value": 9360.0,
+      "core_received_value": 9360.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "open_circuit_voltage_at_empty_v",
+      "reference_branch_value": 3.0,
+      "core_received_value": 3.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "open_circuit_voltage_at_full_v",
+      "reference_branch_value": 4.18,
+      "core_received_value": 4.18,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "peukert_exponent",
+      "reference_branch_value": 1.06,
+      "core_received_value": 1.06,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:primary",
+      "field": "peukert_reference_current_a",
+      "reference_branch_value": 0.26,
+      "core_received_value": 0.26,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:primary",
+      "field": "linearization_band_k",
+      "reference_branch_value": 150.0,
+      "core_received_value": 150.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:primary",
+      "field": "maximum_operating_temperature_k",
+      "reference_branch_value": 473.15,
+      "core_received_value": 473.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:primary",
+      "field": "operating_temperature_k",
+      "reference_branch_value": 358.15,
+      "core_received_value": 358.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:primary",
+      "field": "reference_resistance_ohm",
+      "reference_branch_value": 0.0839,
+      "core_received_value": 0.08390000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.654086747057742e-16
+    },
+    {
+      "case": "conductor:primary",
+      "field": "reference_temperature_k",
+      "reference_branch_value": 293.15,
+      "core_received_value": 293.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:primary",
+      "field": "temperature_coefficient_per_k",
+      "reference_branch_value": 0.0039299999999999995,
+      "core_received_value": 0.0039299999999999995,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:divider",
+      "field": "node_count",
+      "reference_branch_value": 3,
+      "core_received_value": 3,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:divider",
+      "field": "reference_node",
+      "reference_branch_value": "gnd",
+      "core_received_value": "gnd",
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:divider",
+      "field": "resistor_ohm:R1",
+      "reference_branch_value": 4700.0,
+      "core_received_value": 4700.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:divider",
+      "field": "resistor_ohm:R2",
+      "reference_branch_value": 2200.0,
+      "core_received_value": 2200.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:divider",
+      "field": "voltage_source_v:V1",
+      "reference_branch_value": 12.0,
+      "core_received_value": 12.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:current_injection",
+      "field": "current_source_a:I1",
+      "reference_branch_value": 0.0025,
+      "core_received_value": 0.0025,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:current_injection",
+      "field": "node_count",
+      "reference_branch_value": 3,
+      "core_received_value": 3,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:current_injection",
+      "field": "reference_node",
+      "reference_branch_value": "gnd",
+      "core_received_value": "gnd",
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:current_injection",
+      "field": "resistor_ohm:R1",
+      "reference_branch_value": 3300.0,
+      "core_received_value": 3300.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:current_injection",
+      "field": "resistor_ohm:R2",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 1000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:current_injection",
+      "field": "resistor_ohm:R3",
+      "reference_branch_value": 6800.0,
+      "core_received_value": 6800.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "node_count",
+      "reference_branch_value": 4,
+      "core_received_value": 4,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "reference_node",
+      "reference_branch_value": "gnd",
+      "core_received_value": "gnd",
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "resistor_ohm:R1",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 1000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "resistor_ohm:R2",
+      "reference_branch_value": 2200.0,
+      "core_received_value": 2200.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "resistor_ohm:R3",
+      "reference_branch_value": 4700.0,
+      "core_received_value": 4700.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "resistor_ohm:R4",
+      "reference_branch_value": 10000.0,
+      "core_received_value": 10000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "resistor_ohm:R5",
+      "reference_branch_value": 3300.0,
+      "core_received_value": 3300.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:bridge",
+      "field": "voltage_source_v:V1",
+      "reference_branch_value": 5.0,
+      "core_received_value": 5.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "current_source_a:I1",
+      "reference_branch_value": 0.0012,
+      "core_received_value": 0.0012,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "node_count",
+      "reference_branch_value": 5,
+      "core_received_value": 5,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "reference_node",
+      "reference_branch_value": "gnd",
+      "core_received_value": "gnd",
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "resistor_ohm:R1",
+      "reference_branch_value": 1500.0,
+      "core_received_value": 1500.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "resistor_ohm:R2",
+      "reference_branch_value": 2700.0,
+      "core_received_value": 2700.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "resistor_ohm:R3",
+      "reference_branch_value": 5600.0,
+      "core_received_value": 5600.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "resistor_ohm:R4",
+      "reference_branch_value": 820.0,
+      "core_received_value": 820.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "voltage_source_v:V1",
+      "reference_branch_value": 9.0,
+      "core_received_value": 9.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:two_source_ladder",
+      "field": "voltage_source_v:V2",
+      "reference_branch_value": 3.3000000000000003,
+      "core_received_value": 3.3000000000000003,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "current_source_a:I1",
+      "reference_branch_value": 0.00075,
+      "core_received_value": 0.00075,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "node_count",
+      "reference_branch_value": 3,
+      "core_received_value": 3,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "reference_node",
+      "reference_branch_value": "b",
+      "core_received_value": "b",
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "resistor_ohm:R1",
+      "reference_branch_value": 2000.0,
+      "core_received_value": 2000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "resistor_ohm:R2",
+      "reference_branch_value": 3900.0,
+      "core_received_value": 3900.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "resistor_ohm:R3",
+      "reference_branch_value": 8200.0,
+      "core_received_value": 8200.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:primary:floating_reference",
+      "field": "voltage_source_v:V1",
+      "reference_branch_value": 6.8,
+      "core_received_value": 6.8,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "activation_energy_j_per_mol",
+      "reference_branch_value": 72750.0,
+      "core_received_value": 72750.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "beta_m3_k_per_mol",
+      "reference_branch_value": 0.20920502092050208,
+      "core_received_value": 0.2092050209205021,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3267165144270621e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "coolant_temperature_k",
+      "reference_branch_value": 300.0,
+      "core_received_value": 300.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "density_kg_per_m3",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 999.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1368683772161603e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "dilution_rate_per_s",
+      "reference_branch_value": 0.016666666666666666,
+      "core_received_value": 0.016666666666666666,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "end_time_s",
+      "reference_branch_value": 300.0,
+      "core_received_value": 300.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "feed_concentration_mol_per_m3",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 999.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1368683772161603e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "feed_temperature_k",
+      "reference_branch_value": 350.0,
+      "core_received_value": 350.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "flow_m3_per_s",
+      "reference_branch_value": 0.0016666666666666668,
+      "core_received_value": 0.001666666666666667,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3010426069826053e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "gamma_per_s",
+      "reference_branch_value": 0.03486750348675035,
+      "core_received_value": 0.03486750348675034,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.990074771640593e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "heat_of_reaction_j_per_mol",
+      "reference_branch_value": -50000.0,
+      "core_received_value": -50000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "initial_concentration_mol_per_m3",
+      "reference_branch_value": 900.0,
+      "core_received_value": 899.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.2631870857957337e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "initial_temperature_k",
+      "reference_branch_value": 340.0,
+      "core_received_value": 340.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "k0_per_s",
+      "reference_branch_value": 1200000000.0,
+      "core_received_value": 1200000000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "specific_heat_j_per_kg_k",
+      "reference_branch_value": 239.0,
+      "core_received_value": 239.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "ua_w_per_k",
+      "reference_branch_value": 833.3333333333334,
+      "core_received_value": 833.3333333333334,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "volume_m3",
+      "reference_branch_value": 0.1,
+      "core_received_value": 0.10000000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3877787807814457e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "activation_energy_j_per_mol",
+      "reference_branch_value": 0.0,
+      "core_received_value": 0.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "beta_m3_k_per_mol",
+      "reference_branch_value": 0.20920502092050208,
+      "core_received_value": 0.2092050209205021,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3267165144270621e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "coolant_temperature_k",
+      "reference_branch_value": 300.0,
+      "core_received_value": 300.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "density_kg_per_m3",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 999.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1368683772161603e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "dilution_rate_per_s",
+      "reference_branch_value": 0.016666666666666666,
+      "core_received_value": 0.016666666666666666,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "end_time_s",
+      "reference_branch_value": 300.0,
+      "core_received_value": 300.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "feed_concentration_mol_per_m3",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 999.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1368683772161603e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "feed_temperature_k",
+      "reference_branch_value": 350.0,
+      "core_received_value": 350.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "flow_m3_per_s",
+      "reference_branch_value": 0.0016666666666666668,
+      "core_received_value": 0.001666666666666667,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3010426069826053e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "gamma_per_s",
+      "reference_branch_value": 0.03486750348675035,
+      "core_received_value": 0.03486750348675034,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.990074771640593e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "heat_of_reaction_j_per_mol",
+      "reference_branch_value": -50000.0,
+      "core_received_value": -50000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "initial_concentration_mol_per_m3",
+      "reference_branch_value": 900.0,
+      "core_received_value": 899.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.2631870857957337e-16
+    },
+    {
+      "case": "reactor:primary",
+      "field": "initial_temperature_k",
+      "reference_branch_value": 340.0,
+      "core_received_value": 340.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "k0_per_s",
+      "reference_branch_value": 0.008333333333333333,
+      "core_received_value": 0.008333333333333333,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "specific_heat_j_per_kg_k",
+      "reference_branch_value": 239.0,
+      "core_received_value": 239.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "ua_w_per_k",
+      "reference_branch_value": 833.3333333333334,
+      "core_received_value": 833.3333333333334,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:primary",
+      "field": "volume_m3",
+      "reference_branch_value": 0.1,
+      "core_received_value": 0.10000000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3877787807814457e-16
+    },
+    {
+      "case": "lumped:holdout",
+      "field": "ambient_conductance_w_per_k",
+      "reference_branch_value": 0.2375,
+      "core_received_value": 0.23750000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1686558153949016e-16
+    },
+    {
+      "case": "lumped:holdout",
+      "field": "ambient_temperature_k",
+      "reference_branch_value": 295.15,
+      "core_received_value": 295.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:holdout",
+      "field": "duration_s",
+      "reference_branch_value": 3600.0,
+      "core_received_value": 3600.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:holdout",
+      "field": "heat_capacity_j_per_k",
+      "reference_branch_value": 224.0,
+      "core_received_value": 224.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:holdout",
+      "field": "heat_input_w",
+      "reference_branch_value": 20.0,
+      "core_received_value": 20.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "lumped:holdout",
+      "field": "initial_temperature_k",
+      "reference_branch_value": 278.15,
+      "core_received_value": 278.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:holdout",
+      "field": "diffusivity_m2_per_s",
+      "reference_branch_value": 4.05e-06,
+      "core_received_value": 4.05e-06,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:holdout",
+      "field": "end_time_s",
+      "reference_branch_value": 600.0,
+      "core_received_value": 600.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:holdout",
+      "field": "length_m",
+      "reference_branch_value": 0.12,
+      "core_received_value": 0.12,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "slab:holdout",
+      "field": "n_cells",
+      "reference_branch_value": 20,
+      "core_received_value": 20,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "slab:holdout",
+      "field": "n_steps",
+      "reference_branch_value": 300,
+      "core_received_value": 300,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "battery:holdout",
+      "field": "cell_temperature_k",
+      "reference_branch_value": 298.15,
+      "core_received_value": 298.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "coulombic_efficiency",
+      "reference_branch_value": 0.985,
+      "core_received_value": 0.985,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "current_a",
+      "reference_branch_value": 2.6,
+      "core_received_value": 2.6,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "cutoff_voltage_v",
+      "reference_branch_value": 3.3000000000000003,
+      "core_received_value": 3.3000000000000003,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "duration_s",
+      "reference_branch_value": 900.0,
+      "core_received_value": 900.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "initial_state_of_charge",
+      "reference_branch_value": 0.55,
+      "core_received_value": 0.55,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "internal_resistance_ohm",
+      "reference_branch_value": 0.045,
+      "core_received_value": 0.045,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "nominal_capacity_ah",
+      "reference_branch_value": 2.6,
+      "core_received_value": 2.6,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "nominal_capacity_c",
+      "reference_branch_value": 9360.0,
+      "core_received_value": 9360.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "open_circuit_voltage_at_empty_v",
+      "reference_branch_value": 3.0,
+      "core_received_value": 3.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "open_circuit_voltage_at_full_v",
+      "reference_branch_value": 4.18,
+      "core_received_value": 4.18,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "peukert_exponent",
+      "reference_branch_value": 1.06,
+      "core_received_value": 1.06,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "battery:holdout",
+      "field": "peukert_reference_current_a",
+      "reference_branch_value": 0.26,
+      "core_received_value": 0.26,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:holdout",
+      "field": "linearization_band_k",
+      "reference_branch_value": 150.0,
+      "core_received_value": 150.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:holdout",
+      "field": "maximum_operating_temperature_k",
+      "reference_branch_value": 473.15,
+      "core_received_value": 473.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:holdout",
+      "field": "operating_temperature_k",
+      "reference_branch_value": 248.14999999999998,
+      "core_received_value": 248.14999999999998,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:holdout",
+      "field": "reference_resistance_ohm",
+      "reference_branch_value": 0.0839,
+      "core_received_value": 0.08390000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.654086747057742e-16
+    },
+    {
+      "case": "conductor:holdout",
+      "field": "reference_temperature_k",
+      "reference_branch_value": 293.15,
+      "core_received_value": 293.15,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "conductor:holdout",
+      "field": "temperature_coefficient_per_k",
+      "reference_branch_value": 0.0039299999999999995,
+      "core_received_value": 0.0039299999999999995,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "current_source_a:Is",
+      "reference_branch_value": 0.00033,
+      "core_received_value": 0.00033,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "node_count",
+      "reference_branch_value": 3,
+      "core_received_value": 3,
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "reference_node",
+      "reference_branch_value": "gnd",
+      "core_received_value": "gnd",
+      "classification": "EXACT",
+      "relative_difference": null
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "resistor_ohm:Ra",
+      "reference_branch_value": 12000.0,
+      "core_received_value": 12000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "resistor_ohm:Rb",
+      "reference_branch_value": 470.0,
+      "core_received_value": 470.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "resistor_ohm:Rc",
+      "reference_branch_value": 15000.0,
+      "core_received_value": 15000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "circuit:holdout:holdout_pi",
+      "field": "voltage_source_v:Vs",
+      "reference_branch_value": 2.5,
+      "core_received_value": 2.5,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "activation_energy_j_per_mol",
+      "reference_branch_value": 72750.0,
+      "core_received_value": 72750.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "beta_m3_k_per_mol",
+      "reference_branch_value": 0.20920502092050208,
+      "core_received_value": 0.2092050209205021,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3267165144270621e-16
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "coolant_temperature_k",
+      "reference_branch_value": 290.0,
+      "core_received_value": 290.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "density_kg_per_m3",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 999.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1368683772161603e-16
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "dilution_rate_per_s",
+      "reference_branch_value": 0.016666666666666666,
+      "core_received_value": 0.016666666666666666,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "end_time_s",
+      "reference_branch_value": 180.0,
+      "core_received_value": 180.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "feed_concentration_mol_per_m3",
+      "reference_branch_value": 1000.0,
+      "core_received_value": 999.9999999999999,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.1368683772161603e-16
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "feed_temperature_k",
+      "reference_branch_value": 350.0,
+      "core_received_value": 350.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "flow_m3_per_s",
+      "reference_branch_value": 0.0016666666666666668,
+      "core_received_value": 0.001666666666666667,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3010426069826053e-16
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "gamma_per_s",
+      "reference_branch_value": 0.03486750348675035,
+      "core_received_value": 0.03486750348675034,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.990074771640593e-16
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "heat_of_reaction_j_per_mol",
+      "reference_branch_value": -50000.0,
+      "core_received_value": -50000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "initial_concentration_mol_per_m3",
+      "reference_branch_value": 200.0,
+      "core_received_value": 200.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "initial_temperature_k",
+      "reference_branch_value": 380.0,
+      "core_received_value": 380.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "k0_per_s",
+      "reference_branch_value": 1200000000.0,
+      "core_received_value": 1200000000.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "specific_heat_j_per_kg_k",
+      "reference_branch_value": 239.0,
+      "core_received_value": 239.0,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "ua_w_per_k",
+      "reference_branch_value": 833.3333333333334,
+      "core_received_value": 833.3333333333334,
+      "classification": "EXACT",
+      "relative_difference": 0.0
+    },
+    {
+      "case": "reactor:holdout",
+      "field": "volume_m3",
+      "reference_branch_value": 0.1,
+      "core_received_value": 0.10000000000000002,
+      "classification": "TRANSFORMED_CORRECTLY",
+      "relative_difference": 1.3877787807814457e-16
+    }
+  ]
+}

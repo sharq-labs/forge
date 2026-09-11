@@ -1,0 +1,270 @@
+{
+  "artifacts": {
+    "BOUND_REGISTER.json": "3e39d8b9b15a4de862819c4795f61b5d40a4d8379039adc4196ae95c94e180e1",
+    "CHALLENGE_SPEC.json": "7a7779bce3bf181cade3c739abfccfd3dc9c0a206b965bfb7bf9cbca54446456",
+    "CONTRACT_SURFACE.json": "7228c11882f4c6e0882c639fd33d6bbde88a853e848ca0f40c4af5e36a7560d4",
+    "GENERATION_LOG.json": "eea522a42202b489a40986be6ed046abbc61de425bd5a3cc9cd5e99216846e3b",
+    "PRE_FREEZE_ALLOWED_SOURCE_READS.json": "178f805e3a1d9981b41ae823d69733a888ca77e855bc1a0955260b1728d6410d",
+    "SYSTEM_INVENTORY.json": "f5bd6bbba385627be2bf12feedda99b4d3e0176322ede102bb9c2eaf82c9e4ca",
+    "cases/primary.jsonl": "e046948890c4df7eeefc31aeb5f0ecdcb45a78812f00a9e69bcedb588e7f136a",
+    "cases/shadows.jsonl": "a93aca4bd9ca22dbe40a0226131db561a10ce911716361c9b0966ccdaa0c5afc",
+    "challenge/__init__.py": "af1b2092ceb29e0f40e90cc30cc99bddbd9556269514e0e35d08d5a046442575",
+    "challenge/audit.py": "e796f7484c7159ca1bb85609336c105157028716fdc28aee7f90b9213a803547",
+    "challenge/build.py": "bb8d795ae1a6bd21684a042999c3ed00b66f26b31c2720b0d0b4b24178de7293",
+    "challenge/freeze.py": "6ce266a3ba2a53b38108bd41461a61f3ed77a1166eecdaafda37907866ce3966",
+    "challenge/generator.py": "21affaffba5614fc59e2e13bf5fc9527e324330f48447c052222e43f9c673a7b",
+    "challenge/oracles/__init__.py": "87bd81f214a4ffbd0c21a2e512332cafa66a2321ec96f3fec2826f0b06b2ece0",
+    "challenge/oracles/battery.py": "29277827eae8bae9917eaf0a5f48a2b997be115364b6f09ee8583ee15c21fbd4",
+    "challenge/oracles/conduction1d.py": "1a5ab65a865a45649a86e762389e7171fd575094bf9f6c24265155d81c554598",
+    "challenge/oracles/cstr.py": "dc57db9a40efc3391358a05aec5ea4711ecca805e23c7b43e370b778d75305e7",
+    "challenge/oracles/electrical_dc.py": "2a5f772ecc5bfe9a8dbdf2abe1d15a38cf666fe9afe943a6968021bf1b85fd4a",
+    "challenge/oracles/material_tcr.py": "d8149421dcd62044e8a20f976f4759f646e58c9f5479240b2ed67bf92cae3777",
+    "challenge/oracles/numeric.py": "e58935c8f36b74a6a56587d7b9d4fc4207d7c9abe2753018bd29fec91f1cb72d",
+    "challenge/oracles/thermal_lumped.py": "af987e19753c9c69277a3a01aaf2a209c6341db6d3d833fe7c5291805a8dedaf",
+    "challenge/shadows.py": "664b45d0294f91459597298944faa08f2ab1b8c03daaec18bf2d436f0894c244",
+    "challenge/systems.py": "54a75a9c23c53fdc829d352292091e94a50daca0a34a6b2546c919c7ec11cc7b",
+    "challenge/truth.py": "452f706abcfb39bf4e9c7ed74f90b6ba7e8a8b6027d2c1e0716e9fe3f260fe7f",
+    "challenge/units.py": "76760d0686fdd438342593e030872b8c9aa88bf24de25a1ca2e1694bc7447c73",
+    "contract_capture/build_bound_register.py": "0ec7adb0a18e9700c0a98e9fa6d144776340adbdea0782d29a584678a7ebf85e",
+    "contract_capture/capture_contract.py": "2b85191fccc648f665fdf965049fe8bf245efcfd88ecbe5bda2f6860fc49a4d6",
+    "contract_capture/write_preregistration.py": "5871d31f1b095f90974a3334a1298ad1d8e1ba446543e05ce67b135c2247dc22",
+    "tests/test_blind_v2_challenge.py": "e6fe8c00a97cac5594056d54b489f8c4124f609d219155b8022fe964028bbe29",
+    "truth/truth.jsonl": "feced16f2c4c06378f9c9de6fb5734a8e3020de9cddebd8b4fe01f7ccc007514"
+  },
+  "certified_core_commit": "2da8b2d1053b4655d0e898e12f4f0603bc2b564e",
+  "certified_core_tree_sha256": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+  "channel_ambiguous": 116,
+  "dual_oracle_cases": 330,
+  "dual_oracle_independence_levels": {
+    "A": 94,
+    "B": 236
+  },
+  "dual_oracle_share_of_decided": 0.5213,
+  "family_counts": {
+    "boundary_refusal": 87,
+    "compound_mechanism": 48,
+    "isolated_violation": 173,
+    "missing_evidence": 137,
+    "nominal_interior": 190,
+    "unit_representation": 85
+  },
+  "frozen_at": "2026-09-10T17:19:20+00:00",
+  "generator_seed": 20260910,
+  "no_peek_audit": {
+    "checks": {
+      "ast_imports": [],
+      "name_and_string_scan": [],
+      "runtime_sys_modules": [],
+      "transitive_imports": []
+    },
+    "clean": true,
+    "forbidden_modules": [
+      "engcore",
+      "src.engcore",
+      "benchmarks.hard",
+      "benchmarks.blind",
+      "benchmarks.oracles",
+      "tests.oracles",
+      "tests.mutation_guards"
+    ],
+    "forbidden_paths": [
+      "benchmarks/hard",
+      "benchmarks/blind",
+      "benchmarks/oracles",
+      "benchmarks/ai_designs",
+      "tests/oracles",
+      "cases_hard",
+      "cases_battery",
+      "split_battery",
+      "holdout"
+    ],
+    "modules_audited": [
+      "__init__.py",
+      "audit.py",
+      "build.py",
+      "freeze.py",
+      "generator.py",
+      "__init__.py",
+      "battery.py",
+      "conduction1d.py",
+      "cstr.py",
+      "electrical_dc.py",
+      "material_tcr.py",
+      "numeric.py",
+      "thermal_lumped.py",
+      "shadows.py",
+      "systems.py",
+      "truth.py",
+      "units.py"
+    ]
+  },
+  "outcome_counts": {
+    "INSUFFICIENT_EVIDENCE": 140,
+    "NOT_SUPPORTED": 239,
+    "REJECTED_AT_BOUNDARY": 87,
+    "SUPPORTED": 254
+  },
+  "per_system": {
+    "battery.cell": {
+      "dual_oracle": 49,
+      "families": {
+        "boundary_refusal": 14,
+        "compound_mechanism": 12,
+        "isolated_violation": 28,
+        "missing_evidence": 22,
+        "nominal_interior": 30,
+        "unit_representation": 14
+      },
+      "outcomes": {
+        "INSUFFICIENT_EVIDENCE": 22,
+        "NOT_SUPPORTED": 43,
+        "REJECTED_AT_BOUNDARY": 14,
+        "SUPPORTED": 41
+      },
+      "primary_cases": 120,
+      "scientifically_decided": 106,
+      "shadows": 42,
+      "truth_classes": {
+        "CONTRACT_ONLY": 13,
+        "INDEPENDENT_SCIENTIFIC": 62,
+        "MIXED_SCIENCE_AND_POLICY": 44,
+        "POLICY_DEPENDENT": 1
+      }
+    },
+    "electrical.dc": {
+      "dual_oracle": 94,
+      "families": {
+        "boundary_refusal": 14,
+        "compound_mechanism": 12,
+        "isolated_violation": 28,
+        "missing_evidence": 22,
+        "nominal_interior": 30,
+        "unit_representation": 14
+      },
+      "outcomes": {
+        "INSUFFICIENT_EVIDENCE": 22,
+        "NOT_SUPPORTED": 44,
+        "REJECTED_AT_BOUNDARY": 14,
+        "SUPPORTED": 40
+      },
+      "primary_cases": 120,
+      "scientifically_decided": 106,
+      "shadows": 35,
+      "truth_classes": {
+        "CONTRACT_ONLY": 14,
+        "INDEPENDENT_SCIENTIFIC": 106
+      }
+    },
+    "electrical.material": {
+      "dual_oracle": 39,
+      "families": {
+        "boundary_refusal": 14,
+        "compound_mechanism": 12,
+        "isolated_violation": 28,
+        "missing_evidence": 22,
+        "nominal_interior": 30,
+        "unit_representation": 14
+      },
+      "outcomes": {
+        "INSUFFICIENT_EVIDENCE": 22,
+        "NOT_SUPPORTED": 47,
+        "REJECTED_AT_BOUNDARY": 14,
+        "SUPPORTED": 37
+      },
+      "primary_cases": 120,
+      "scientifically_decided": 106,
+      "shadows": 42,
+      "truth_classes": {
+        "CONTRACT_ONLY": 13,
+        "INDEPENDENT_SCIENTIFIC": 47,
+        "MIXED_SCIENCE_AND_POLICY": 60
+      }
+    },
+    "kinetics.cstr": {
+      "dual_oracle": 37,
+      "families": {
+        "boundary_refusal": 15,
+        "isolated_violation": 29,
+        "missing_evidence": 26,
+        "nominal_interior": 35,
+        "unit_representation": 15
+      },
+      "outcomes": {
+        "INSUFFICIENT_EVIDENCE": 26,
+        "NOT_SUPPORTED": 31,
+        "REJECTED_AT_BOUNDARY": 15,
+        "SUPPORTED": 48
+      },
+      "primary_cases": 120,
+      "scientifically_decided": 105,
+      "shadows": 35,
+      "truth_classes": {
+        "CONTRACT_ONLY": 15,
+        "INDEPENDENT_SCIENTIFIC": 57,
+        "MIXED_SCIENCE_AND_POLICY": 48
+      }
+    },
+    "thermal.conduction1d": {
+      "dual_oracle": 49,
+      "families": {
+        "boundary_refusal": 16,
+        "isolated_violation": 32,
+        "missing_evidence": 23,
+        "nominal_interior": 35,
+        "unit_representation": 14
+      },
+      "outcomes": {
+        "INSUFFICIENT_EVIDENCE": 23,
+        "NOT_SUPPORTED": 32,
+        "REJECTED_AT_BOUNDARY": 16,
+        "SUPPORTED": 49
+      },
+      "primary_cases": 120,
+      "scientifically_decided": 104,
+      "shadows": 35,
+      "truth_classes": {
+        "CONTRACT_ONLY": 16,
+        "INDEPENDENT_SCIENTIFIC": 104
+      }
+    },
+    "thermal.lumped": {
+      "dual_oracle": 62,
+      "families": {
+        "boundary_refusal": 14,
+        "compound_mechanism": 12,
+        "isolated_violation": 28,
+        "missing_evidence": 22,
+        "nominal_interior": 30,
+        "unit_representation": 14
+      },
+      "outcomes": {
+        "INSUFFICIENT_EVIDENCE": 25,
+        "NOT_SUPPORTED": 42,
+        "REJECTED_AT_BOUNDARY": 14,
+        "SUPPORTED": 39
+      },
+      "primary_cases": 120,
+      "scientifically_decided": 106,
+      "shadows": 42,
+      "truth_classes": {
+        "CONTRACT_ONLY": 12,
+        "INDEPENDENT_SCIENTIFIC": 26,
+        "MIXED_SCIENCE_AND_POLICY": 63,
+        "POLICY_DEPENDENT": 19
+      }
+    }
+  },
+  "precedence_dependent": 30,
+  "primary_case_count": 720,
+  "schema": "blind_v2_freeze/1",
+  "scientifically_decided": 633,
+  "shadow_count": 231,
+  "truth_class_counts": {
+    "CONTRACT_ONLY": 83,
+    "INDEPENDENT_SCIENTIFIC": 402,
+    "MIXED_SCIENCE_AND_POLICY": 215,
+    "POLICY_DEPENDENT": 20
+  },
+  "unresolved_truth": 0,
+  "verification_recipe": "for each artifact, sha256 over raw file bytes; the manifest's own bytes are excluded from every value it records"
+}
