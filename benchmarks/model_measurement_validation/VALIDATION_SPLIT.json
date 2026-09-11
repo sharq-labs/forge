@@ -1,0 +1,72 @@
+{
+  "schema": "validation_split/1",
+  "written_before_any_core_run": true,
+  "what_held_out_means_here": "A point not used to set any parameter and not looked at until the fixtures, the splits, the metrics and the tolerances were frozen and committed. Every point below is labelled exactly once.",
+  "coverage_intent": "Where a split exists at all, it was chosen to span the low, middle and high regime of the quantity rather than to cluster where the model is comfortable. For the open-circuit voltage that means the bottom knee, the plateau and the top rise; for the platinum table it means the whole scored branch at one-degree resolution rather than a handful of sample temperatures.",
+  "splits": [
+    {
+      "case_id": "MV-A",
+      "model": "battery.cell.rint_ocv",
+      "source": "S-OCV, APR/BATT_001, LiFePO4, 1100 mAh",
+      "calibration": [
+        {"state_of_charge": 1.0, "conditioning": "charge", "role": "open_circuit_voltage_at_full"},
+        {"state_of_charge": 0.0, "conditioning": "discharge", "role": "open_circuit_voltage_at_empty"}
+      ],
+      "validation": [],
+      "held_out": [
+        {"state_of_charge": 0.2, "conditioning": "charge", "regime": "bottom of the plateau"},
+        {"state_of_charge": 0.4, "conditioning": "charge", "regime": "plateau"},
+        {"state_of_charge": 0.5, "conditioning": "charge", "regime": "plateau"},
+        {"state_of_charge": 0.6, "conditioning": "charge", "regime": "plateau"},
+        {"state_of_charge": 0.8, "conditioning": "charge", "regime": "top of the plateau"},
+        {"state_of_charge": 0.2, "conditioning": "discharge", "regime": "bottom of the plateau"},
+        {"state_of_charge": 0.4, "conditioning": "discharge", "regime": "plateau"},
+        {"state_of_charge": 0.5, "conditioning": "discharge", "regime": "plateau"},
+        {"state_of_charge": 0.6, "conditioning": "discharge", "regime": "plateau"},
+        {"state_of_charge": 0.8, "conditioning": "discharge", "regime": "top of the plateau"}
+      ],
+      "counts": {"calibration_rows": 2, "validation_rows": 0, "held_out_rows": 10},
+      "second_cell_reported_separately": "BATT_002 (BSE, 1500 mAh) has only three states of charge per conditioning direction. It is run as an independent replicate under the same split rule and reported alongside, not pooled."
+    },
+    {
+      "case_id": "MV-B",
+      "model": "battery.cell.rint_ocv",
+      "source": "S-OCV, APR/BATT_001",
+      "calibration": [
+        {"state_of_charge": 0.0, "conditioning": "discharge"},
+        {"state_of_charge": 0.2, "conditioning": "charge"},
+        {"state_of_charge": 0.5, "conditioning": "charge"},
+        {"state_of_charge": 0.8, "conditioning": "charge"},
+        {"state_of_charge": 1.0, "conditioning": "charge"}
+      ],
+      "validation": [],
+      "held_out": [
+        {"state_of_charge": 0.4, "conditioning": "charge"},
+        {"state_of_charge": 0.6, "conditioning": "charge"}
+      ],
+      "counts": {"calibration_rows": 5, "validation_rows": 0, "held_out_rows": 2},
+      "selection_rule_stated_before_construction": "hold out the two interior levels that the remaining samples bracket most widely, so the interpolation is tested where it is weakest rather than where it is easiest"
+    },
+    {
+      "case_id": "MV-C",
+      "model": "electrical.material.linear_tcr_resistance",
+      "source": "S-PT100",
+      "calibration": [{"temperature_degC": 0, "role": "R0 = 100 ohm, the standard's nominal value, which is also the table entry"}],
+      "validation": {"temperature_degC_range": [30, 400], "rows": 371, "note": "one table entry per degree, scored by the preregistered rule"},
+      "held_out": {"temperature_degC_ranges": [[-200, 29], [401, 850]], "rows": 680, "note": "measured and reported, not scored, for the reasons in APPLICABILITY_SCREEN.json"},
+      "counts": {"calibration_rows": 1, "validation_rows": 371, "held_out_rows": 680}
+    },
+    {
+      "case_id": "MV-D",
+      "model": "battery.cell.rint_ocv",
+      "source": "S-DCHG",
+      "calibration": [],
+      "validation": [],
+      "held_out": {"curves": 30, "note": "ten cells times three discharge profiles. Nothing is calibrated: the least-squares line is the best case for the model, not a fit of the model."},
+      "counts": {"calibration_rows": 0, "validation_rows": 0, "held_out_rows": 30}
+    }
+  ],
+  "totals_across_the_round": {"calibration_rows": 8, "validation_rows": 371, "held_out_rows": 722},
+  "models_with_no_rows_at_all": 13,
+  "why_that_number_is_not_a_failure": "Thirteen of the sixteen shipped models have no measured or reference-measurement evidence reachable from this environment for the quantity they predict. That is a fact about the environment and about what the models predict, and it is reported as thirteen rather than disguised by pressing unrelated data into service."
+}
