@@ -505,14 +505,10 @@ def test_10_a_prepared_solve_carries_its_state_through_copies_and_other_sessions
 
 
 # ---- 10b. one prepared solve, executed more than once ----------------------------------------------
-#: Reproduced on this branch at ``dd6e0a2``: ``CSTRSolver.prepare`` assembles the
-#: right-hand side over a budget counter, and every ``solve`` of that prepared
-#: solve charges the same counter. Strict, so the fix has to remove the mark.
-PREPARED_STATE_REPRODUCED = pytest.mark.xfail(
-    strict=True,
-    reason="SL-6 reproduction: the CSTR evaluation budget is built at prepare and charged by every execution",
-)
-EXECUTED = ("battery", "conduction", "cstr", "dc", "lumped", "resistance", "scheme")
+# Reproduced at ``6e69699`` as strict xfails: ``CSTRSolver.prepare`` assembled the
+# right-hand side over the evaluation-budget counter, and every ``solve`` of that
+# prepared solve charged the same counter. Execution now assembles its own.
+EXECUTED =("battery", "conduction", "cstr", "dc", "lumped", "resistance", "scheme")
 
 
 def _executable(name):
@@ -541,9 +537,7 @@ def _raw_record(raw) -> str:
     return repr(record)  # repr, so a NaN diagnostic compares equal to itself
 
 
-@pytest.mark.parametrize(
-    "name", [pytest.param(n, marks=PREPARED_STATE_REPRODUCED) if n == "cstr" else n for n in EXECUTED]
-)
+@pytest.mark.parametrize("name", EXECUTED)
 def test_10b_one_prepared_solve_executed_twice_or_concurrently_is_the_same_as_once(name):
     fresh_session, fresh = _prepared_once(name)
     once = _raw_record(fresh_session.solve(fresh))
@@ -555,7 +549,6 @@ def test_10b_one_prepared_solve_executed_twice_or_concurrently_is_the_same_as_on
     assert concurrent == [once] * 4
 
 
-@PREPARED_STATE_REPRODUCED
 def test_10c_a_cstr_prepared_solve_spends_a_fresh_budget_on_each_execution():
     """A budget a little above what one execution needs: the second execution of the
     same prepared solve must not start from what the first one spent."""
