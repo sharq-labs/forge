@@ -233,11 +233,31 @@ def test_a_declaration_edited_after_it_was_pinned_earns_nothing():
 
 
 def test_a_route_bound_to_another_solver_than_its_declaration_earns_nothing():
+    """Only the solver binding can catch this one: the backend matches, so a
+    route id says one implementation ran and the identity says another did."""
     declared = route("a")
-    impostor = SolveRoute(declared.route_id, MNA, dependencies=declared.dependencies)
+    impostor = SolveRoute(
+        declared.route_id,
+        SolverIdentity("another.solver", "1.0", backend=declared.solver.backend),
+        dependencies=declared.dependencies,
+    )
     consensus = _over(impostor, route("b"))
     assert consensus.independence is IndependenceVerdict.UNVERIFIED
-    assert "is for" in consensus.reason
+    assert "another.solver" in consensus.reason
+    assert consensus.establishes is None
+
+
+def test_a_route_bound_to_another_backend_than_its_declaration_earns_nothing():
+    """And only the backend binding can catch this one."""
+    declared = route("a")
+    impostor = SolveRoute(
+        declared.route_id,
+        SolverIdentity(declared.solver.solver_id, "1.0", backend="another-provider"),
+        dependencies=declared.dependencies,
+    )
+    consensus = _over(impostor, route("b"))
+    assert consensus.independence is IndependenceVerdict.UNVERIFIED
+    assert "another-provider" in consensus.reason
     assert consensus.establishes is None
 
 
