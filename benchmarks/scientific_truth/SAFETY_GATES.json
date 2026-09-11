@@ -1,0 +1,240 @@
+{
+  "all_pass": true,
+  "gates": [
+    {
+      "evidence": {
+        "all_reviewed": true,
+        "ledger_entries": 16,
+        "models_in_surface": 16
+      },
+      "id": "ST-1",
+      "layer": "inventory",
+      "name": "MODEL EQUATION SURFACE COMPLETE",
+      "requirement": "all 16 shipped models are accounted for",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "method": "every equation worked term by term in the ledger; a passing numerical test was not accepted as evidence anywhere, because a wrong power of a unit can match a reference at the one point it was built at",
+        "verdicts": {
+          "DIMENSIONALLY_VALID": 16
+        }
+      },
+      "id": "ST-2",
+      "layer": "mathematical truth",
+      "name": "DIMENSIONAL CONSISTENCY",
+      "requirement": "zero unresolved dimensional defects",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "cancellation": {
+          "clean": 8,
+          "total": 8
+        },
+        "cross_oracle": {
+          "clean": 9,
+          "total": 9
+        },
+        "external_oracle_ngspice": {
+          "clean": 14,
+          "total": 14
+        },
+        "high_precision_50_digit": {
+          "clean": 12,
+          "total": 12
+        },
+        "reference_cases": {
+          "clean": 138,
+          "total": 138
+        },
+        "total_disagreements": 0
+      },
+      "id": "ST-3",
+      "layer": "mathematical truth + implementation correctness",
+      "name": "INDEPENDENT ORACLE AGREEMENT",
+      "requirement": "zero unresolved material oracle disagreements",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "conservation_rows": {
+          "clean": 36,
+          "total": 36
+        },
+        "laws": [
+          "energy",
+          "charge",
+          "species/energy coupling"
+        ],
+        "method": "residuals measured explicitly, never inferred from the equations looking right"
+      },
+      "id": "ST-4",
+      "layer": "mathematical truth",
+      "name": "CONSERVATION",
+      "requirement": "all applicable conservation checks pass, with the residual measured",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "limit_rows": {
+          "clean": 20,
+          "total": 20
+        },
+        "monotonicity_rows": {
+          "clean": 7,
+          "total": 7
+        },
+        "sign_rows": {
+          "clean": 9,
+          "total": 9
+        }
+      },
+      "id": "ST-5",
+      "layer": "scientific validity",
+      "name": "LIMITING BEHAVIOR",
+      "requirement": "all material applicable limits behave correctly",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "convergence_rows": {
+          "clean": 2,
+          "total": 2
+        },
+        "expected_order_source": "the implemented scheme, not an invented expectation; the spatial ladder has the constant time-error floor removed before its order is read",
+        "observed_orders": "1.00 in time (backward Euler), 2.00 in space (central differences)",
+        "predicted_vs_observed_error": "the reference solves match the scheme's own predicted error to about one per cent, which is a stronger statement than being inside a tolerance"
+      },
+      "id": "ST-6",
+      "layer": "numerical accuracy",
+      "name": "NUMERICAL ACCURACY / CONVERGENCE",
+      "requirement": "numerical methods meet the accuracy their own scheme justifies",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "audit_oracles_independent": true,
+        "counts": {
+          "NO": 0,
+          "PARTIAL": 5,
+          "YES": 0
+        },
+        "finding": "no repository pair is fully independent: all five share the problem statement. None shares numerics, and the one pair that imports the route it checks takes only two metric-name strings from it. This audit's own six oracles import no engcore at all",
+        "method": "module import closure parsed from the AST, not read from docstrings"
+      },
+      "id": "ST-7",
+      "layer": "evidence quality",
+      "name": "SOLVER INDEPENDENCE",
+      "requirement": "claimed independent evidence routes are independent enough to support the claim",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "cases": 0,
+        "property_draws": 730,
+        "property_violations": 0,
+        "searched_by": [
+          "every reference case above is a search: an independent oracle against a runtime the tests already accept",
+          "randomized property testing over the declared domain of five model families, 660 admissible draws",
+          "an external simulator (ngspice) on 66 circuits",
+          "an exact conservation invariant on every applicable model",
+          "a 50-digit arithmetic on the one closed-form model"
+        ]
+      },
+      "id": "ST-8",
+      "layer": "the round's own question",
+      "name": "ZERO KNOWN FALSE AGREEMENT",
+      "requirement": "no case remains where the implementation, its tests and its record agree while an independent oracle disagrees",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "audit_defects_recorded_in_the_report": 5,
+        "by_class": {
+          "COEFFICIENT_DEFECT": {
+            "caught": 2,
+            "total": 2
+          },
+          "CONSERVATION_DEFECT": {
+            "caught": 1,
+            "total": 1
+          },
+          "NUMERICAL_METHOD_DEFECT": {
+            "caught": 1,
+            "total": 1
+          },
+          "SIGN_CONVENTION_DEFECT": {
+            "caught": 2,
+            "total": 2
+          },
+          "SOLVER_INDEPENDENCE_DEFECT": {
+            "caught": 1,
+            "total": 1
+          },
+          "TEST_ORACLE_DEFECT": {
+            "caught": 1,
+            "total": 1
+          },
+          "UNIT_CONVERSION_DEFECT": {
+            "caught": 1,
+            "total": 1
+          }
+        },
+        "control": "GREEN",
+        "detected": 9,
+        "missed": [],
+        "planted": 9,
+        "two_plants_target_this_audits_own_oracles": true
+      },
+      "id": "ST-9",
+      "layer": "the audit itself",
+      "name": "AUDITOR VALIDITY",
+      "requirement": "planted scientific defects are detected and audit mistakes are adjudicated openly",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "certified_core_digest_actual": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "certified_core_digest_expected": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "earlier_round_paths_modified": {
+          "benchmarks/blind_v2": [],
+          "benchmarks/capability_boundary": [],
+          "benchmarks/contract_guard": [],
+          "benchmarks/contract_integrity": []
+        },
+        "executable_scientific_code_changed": [],
+        "not_evidence_of_scientific_truth": "an unchanged digest says the code is the same code, not that its equations are right. The two are different layers and this gate speaks only for the first",
+        "why_no_reruns_were_needed": "this round changed no file under src/ or tests/ at all, so the 79-mutant suite, both benchmark scorecards and both earlier guard suites are evaluating byte-identical code. The guard suites were run anyway"
+      },
+      "id": "ST-10",
+      "layer": "earlier layers, kept separate",
+      "name": "PREVIOUS ASSURANCE PRESERVED",
+      "requirement": "Contract Guard, Capability Boundary and the certified scientific assurance remain valid",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "artifacts_in_manifest": 30,
+        "blind_v2_paths_modified": [],
+        "method": "every artifact named in benchmarks/blind_v2/FREEZE.json re-hashed against the value that manifest records, and git asked separately whether any path under benchmarks/blind_v2 changed. No Blind V2 frozen/sealed artifact path changed.",
+        "problems": [],
+        "verified_byte_identical": 30
+      },
+      "id": "ST-11",
+      "layer": "earlier layers",
+      "name": "FROZEN EVIDENCE PRESERVED",
+      "requirement": "Blind V2 frozen/sealed artifacts remain untouched",
+      "verdict": "PASS"
+    }
+  ],
+  "layers_kept_separate": [
+    "A. executable-code mutation assurance (79 mutants)",
+    "B. contract integrity and contract guard",
+    "C. capability-boundary validity",
+    "D. scientific truth and numerical oracle validation (this round)"
+  ],
+  "note": "A NEW gate set. The Blind V2, Contract Integrity, Contract Guard and Capability Boundary gates are not modified, reused or renumbered; they answered different questions and their results stand.",
+  "schema": "scientific_truth_gates/1",
+  "what_these_gates_do_not_say": "That the models are the right models for any particular purpose. They say that the equations each model implements are the equations its physics requires, that the implementation computes them correctly, that the numerics converge at the order the scheme justifies, and that independent mathematics agrees."
+}
