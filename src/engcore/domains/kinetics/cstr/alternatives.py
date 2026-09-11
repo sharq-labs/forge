@@ -22,6 +22,7 @@ from ....scientific.units.quantity import Quantity
 from ....scientific.errors import InvalidScientificProblem
 from ...derived_context import assembler_namespace
 from .problem import (
+    ADIABATIC_CEILING_TEMPERATURE,
     ASSEMBLER_NAMESPACE,
     CONCENTRATION_UNIT,
     DIMENSIONLESS,
@@ -132,6 +133,36 @@ CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
                 minimum=Quantity(0.0, TIME_UNIT),
                 minimum_inclusive=False,
             ),
+            # The envelope ceiling, asked at the hottest state the declaration
+            # can reach rather than at the one it starts from.
+            #
+            # THE RATE LAW CANCELS OUT OF THIS BOUND. Adding beta times the
+            # species balance to the energy balance gives
+            # dZ/dt = (Z_f - Z)/tau - gamma (T - T_c) for Z = T + beta C_A,
+            # and the reaction term vanishes identically whatever k is. The
+            # primary model's own record states the derivation; holding k
+            # constant does not weaken it by one step. This record claims the
+            # SAME single-phase envelope as that model, and without this
+            # condition it claimed it without ever checking it: a declaration
+            # whose contents can reach 2442 K came back IN_DOMAIN, on all four
+            # of the conditions above, from a record whose own temperature
+            # condition stops at 1000 K.
+            RangeCondition(
+                ADIABATIC_CEILING_TEMPERATURE,
+                maximum=Quantity(MAX_VALID_TEMPERATURE_K, TEMPERATURE_UNIT),
+                description=(
+                    "max(T_0, T_f, T_c) + beta max(C_A0, C_Af) <= 1000 K, the "
+                    "same envelope ceiling the primary model states and for "
+                    "the same reason: Z = T + beta C_A is this reactor's exact "
+                    "invariant and the reaction term cancels out of dZ/dt, so "
+                    "the bound is independent of whether k is Arrhenius or "
+                    "held constant. It introduces no new threshold -- it is "
+                    "the temperature condition above, asked at the hottest "
+                    "state the declaration can reach. UNKNOWN unless the "
+                    "enthalpy, density, heat capacity, both concentrations "
+                    "and all three temperatures are declared."
+                ),
+            ),
         ),
         description=(
             "Same single-phase CSTR envelope as the primary model, with a "
@@ -142,7 +173,9 @@ CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
         # reserves, for the same reason. A competitor model that left them
         # forgeable would be the easier of the two to fool, which is precisely
         # backwards for a model whose job is to lose a comparison honestly.
-        derived_quantities=frozenset({"temperature", "concentration"}),
+        derived_quantities=frozenset(
+            {"temperature", "concentration", ADIABATIC_CEILING_TEMPERATURE}
+        ),
     ),
     required_capabilities=frozenset({KINETICS_CSTR_NONISOTHERMAL.name}),
     validation_status=ModelValidationStatus.UNVALIDATED,
