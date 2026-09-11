@@ -132,19 +132,29 @@ from .solvers.protocol import SolverIdentity
 SHARED_COMPONENT_SCHEMA = schema_string("shared_component")
 SOLVE_ROUTE_SCHEMA = schema_string("solve_route")
 
-#: Bumped for ``required_outputs``. A /1 record has no field naming the
+#: Bumped for ``reported_values`` and ``tolerance_key``. A /2 record carries a
+#: comparison's conclusion -- the worst difference and the tolerance it met --
+#: but neither the numbers it was computed from nor the threshold that
+#: tolerance was read from, so its constructor could not tell a comparison from
+#: a claim of one: a stated worst difference of 0.0 for routes 23 % apart, or a
+#: tolerance of 1.0 under a declared set whose number is 1e-9, established the
+#: level. ``from_dict`` reads /2 only where it claims no level.
+#:
+#: /2 was the bump for ``required_outputs``. A /1 record has no field naming the
 #: quantities the routes were obliged to produce, so a level it claims was
 #: awarded under a rule that could not tell a complete confirmation from a
 #: partial one. The missing declaration cannot be defaulted -- an empty set
 #: means "nothing was required", which is precisely the state this version
 #: refuses to award on -- so ``from_dict`` accepts /1 only where it claims no
 #: level. Same shape, and same reason, as ``validity_assessment/1``.
-CONSENSUS_SCHEMA = schema_string("cross_solver_consensus", 2)
+CONSENSUS_SCHEMA = schema_string("cross_solver_consensus", 3)
+CONSENSUS_SCHEMA_V2 = schema_string("cross_solver_consensus", 2)
 CONSENSUS_SCHEMA_V1 = schema_string("cross_solver_consensus", 1)
 
 __all__ = [
     "CONSENSUS_SCHEMA",
     "CONSENSUS_SCHEMA_V1",
+    "CONSENSUS_SCHEMA_V2",
     "SHARED_COMPONENT_SCHEMA",
     "SOLVE_ROUTE_SCHEMA",
     "ComponentKind",
@@ -577,6 +587,15 @@ class CrossSolverConsensus:
     #: payload, which also declares no required outputs and so claims nothing.
     reported_outputs: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     notes: str = ""
+    #: The key in ``thresholds`` the comparison's tolerance was read from.
+    tolerance_key: str = ""
+    #: The numbers each route reported, by route id: what the comparison was
+    #: computed from. Kept so the comparison is RECOMPUTED at construction
+    #: rather than believed -- a record that carries them has exactly the
+    #: comparison they produce at the threshold set's own tolerance, or it is
+    #: refused. A record without them can carry a comparison and cannot
+    #: establish a level; see :attr:`comparison_is_derived`.
+    reported_values: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         text = str(self.consensus_id).strip()
@@ -626,6 +645,18 @@ class CrossSolverConsensus:
             )
         object.__setattr__(self, "routes", routes)
         object.__setattr__(self, "notes", str(self.notes))
+        object.__setattr__(self, "tolerance_key", str(self.tolerance_key).strip())
+        object.__setattr__(
+            self,
+            "reported_values",
+            freeze({
+                str(route_id): {
+                    str(name): float(value)
+                    for name, value in dict(produced).items()
+                }
+                for route_id, produced in dict(self.reported_values).items()
+            }),
+        )
         self._require_coherent_evidence()
 
     def _require_coherent_evidence(self) -> None:
@@ -646,7 +677,9 @@ class CrossSolverConsensus:
           agreement on part of the requirement standing for all of it.
         """
         declared = {route.route_id for route in self.routes}
-        strangers = sorted(set(self.reported_outputs) - declared)
+        strangers = sorted(
+            (set(self.reported_outputs) | set(self.reported_values)) - declared
+        )
         if strangers:
             raise ScientificValidationError(
                 f"consensus {self.consensus_id!r} records reported outputs "
@@ -654,6 +687,8 @@ class CrossSolverConsensus:
                 f"declared route cannot be attributed to any declaration. "
                 f"Declared routes: {sorted(declared)}"
             )
+        if self.reported_values:
+            self._require_the_comparison_follows_from_its_numbers()
         compared = set(self.comparison.quantities)
         for route_id, names in sorted(self.reported_outputs.items()):
             unreported = sorted(compared - set(names)) if names else []
@@ -678,6 +713,61 @@ class CrossSolverConsensus:
                     f"Agreement on the rest is agreement about less than was "
                     f"asked, and cannot stand for the whole requirement"
                 )
+
+    def _require_the_comparison_follows_from_its_numbers(self) -> None:
+        """A comparison is computed, not declared.
+
+        Run only for a record that carries ``reported_values``. The numbers
+        must be finite (a record carries only what it can write down), must be
+        numbers for exactly the outputs recorded per route, must name a
+        threshold of the set, and must reproduce ``comparison`` exactly when
+        compared at that threshold. That is what :meth:`over` does, so every
+        record it builds passes, and a record built any other way passes only
+        by carrying the numbers that produce the comparison it states.
+        """
+        non_finite = sorted(
+            f"{route_id}.{name}={value!r}"
+            for route_id, produced in self.reported_values.items()
+            for name, value in produced.items()
+            if not math.isfinite(value)
+        )
+        if non_finite:
+            raise ScientificValidationError(
+                f"consensus {self.consensus_id!r} records non-finite "
+                f"number(s) {non_finite}; a record carries only numbers it can "
+                f"write down, and a route that returned one did not finish"
+            )
+        for route in self.routes:
+            outputs = set(self.reported_outputs.get(route.route_id, ()))
+            numbers = set(self.reported_values.get(route.route_id, {}))
+            if outputs != numbers:
+                raise ScientificValidationError(
+                    f"consensus {self.consensus_id!r} records route "
+                    f"{route.route_id!r} as reporting {sorted(outputs)} but "
+                    f"carries numbers for {sorted(numbers)}"
+                )
+        if self.tolerance_key not in self.thresholds:
+            raise ScientificValidationError(
+                f"consensus {self.consensus_id!r} reads its tolerance from "
+                f"{self.tolerance_key!r}, which is not a threshold of "
+                f"{self.thresholds.identity}"
+            )
+        expected = _compare(
+            self.reported_values,
+            self.thresholds[self.tolerance_key],
+            self.required_outputs,
+        )
+        if self.comparison != expected:
+            raise ScientificValidationError(
+                f"consensus {self.consensus_id!r} carries a comparison that "
+                f"does not follow from the numbers it records: it states worst "
+                f"difference {self.comparison.worst_relative_difference!r} on "
+                f"{list(self.comparison.quantities)} at tolerance "
+                f"{self.comparison.tolerance!r}, and those numbers give "
+                f"{expected.worst_relative_difference!r} on "
+                f"{list(expected.quantities)} at {self.tolerance_key}="
+                f"{expected.tolerance!r}"
+            )
 
     # ---- the declaration side -------------------------------------------
     @property
@@ -812,17 +902,34 @@ class CrossSolverConsensus:
 
     # ---- what it establishes --------------------------------------------
     @property
-    def earned(self) -> bool:
-        """Three conditions, and all of them.
+    def comparison_is_derived(self) -> bool:
+        """Was the comparison recomputed from numbers this record carries?
 
-        Independent routes, a **complete** answer from each, and agreement
-        inside the stated tolerance. Completeness is the one that was missing:
-        without it, agreement on the single quantity two routes happened to
-        share bought the same level as agreement on all of them.
+        Construction refuses a comparison that does not follow from the
+        recorded numbers at the threshold set's own tolerance, so a record that
+        carries them has exactly the comparison they produce. Without them -- a
+        /1 or /2 payload, or a record built by hand around a comparison -- the
+        worst difference and the tolerance are a conclusion nobody can
+        recompute, and a conclusion is not evidence.
+        """
+        return bool(self.reported_values)
+
+    @property
+    def earned(self) -> bool:
+        """Four conditions, and all of them.
+
+        Independent routes, a **complete** answer from each, a comparison
+        **recomputed from the numbers the record carries**, and agreement
+        inside the threshold set's tolerance. Completeness was missing once:
+        agreement on the single quantity two routes happened to share bought
+        the same level as agreement on all of them. Recomputation was missing
+        too: a comparison was taken on its word, so a record could state the
+        agreement it wanted.
         """
         return (
             self.routes_are_independent
             and self.outputs_are_complete
+            and self.comparison_is_derived
             and self.comparison.agreed
         )
 
@@ -888,6 +995,14 @@ class CrossSolverConsensus:
                 f"difference {self.comparison.worst_relative_difference:.3e} "
                 f"on {self.comparison.worst_quantity!r} exceeds the declared "
                 f"{self.comparison.tolerance:.3e}"
+            )
+        if not self.comparison_is_derived:
+            return (
+                f"the routes are independent and the comparison states "
+                f"agreement to {self.comparison.worst_relative_difference:.3e}, "
+                f"but the record carries it without the numbers it was "
+                f"computed from, so it is a conclusion nobody can recompute and "
+                f"establishes no level"
             )
         if self.establishes is None:
             return (
@@ -998,6 +1113,15 @@ class CrossSolverConsensus:
                 f"claim. Declared routes: {sorted(known)}"
             )
         required = tuple(sorted(set(required_outputs)))
+        # The numbers travel with the record whenever they can be written down.
+        # A NaN or an infinity cannot, and the comparison below already records
+        # that a route returned one and compares nothing -- which establishes
+        # nothing whether the numbers travel or not.
+        finite = all(
+            math.isfinite(float(value))
+            for produced in values.values()
+            for value in produced.values()
+        )
         return cls(
             consensus_id=consensus_id,
             routes=routes,
@@ -1014,6 +1138,8 @@ class CrossSolverConsensus:
                 for route in routes
             },
             notes=notes,
+            tolerance_key=tolerance_key,
+            reported_values=values if finite else {},
         )
 
     # ---- serialization ---------------------------------------------------
@@ -1028,6 +1154,11 @@ class CrossSolverConsensus:
             "reported_outputs": {
                 route_id: list(names)
                 for route_id, names in sorted(self.reported_outputs.items())
+            },
+            "tolerance_key": self.tolerance_key,
+            "reported_values": {
+                route_id: dict(sorted(produced.items()))
+                for route_id, produced in sorted(self.reported_values.items())
             },
             "notes": self.notes,
             # Derived, emitted for readers, and recomputed on the way back in.
@@ -1047,7 +1178,7 @@ class CrossSolverConsensus:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CrossSolverConsensus":
         version = require_schema_any(
-            payload, (CONSENSUS_SCHEMA_V1, CONSENSUS_SCHEMA)
+            payload, (CONSENSUS_SCHEMA_V1, CONSENSUS_SCHEMA_V2, CONSENSUS_SCHEMA)
         )
         if version == CONSENSUS_SCHEMA_V1 and payload.get("establishes"):
             # A /1 record has no field naming what the routes owed, so the
@@ -1067,6 +1198,21 @@ class CrossSolverConsensus:
                 f"reconstructed from the record. Re-derive the consensus, or "
                 f"read it with the code that wrote it"
             )
+        if version == CONSENSUS_SCHEMA_V2 and payload.get("establishes"):
+            # The same rule, one version on: a /2 record keeps a comparison's
+            # conclusion and not the numbers behind it, so the level it claims
+            # was awarded by a rule that took the comparison on its word, and the
+            # numbers cannot be reconstructed.
+            raise ScientificValidationError(
+                f"{CONSENSUS_SCHEMA_V2} record {payload.get('consensus_id')!r} "
+                f"claims to establish {payload['establishes']!r} and carries no "
+                f"numbers its comparison was computed from. That level was "
+                f"awarded under a rule that took a comparison on its word, and "
+                f"the numbers cannot be reconstructed from the record. "
+                f"Re-derive the consensus, or read it with the code that wrote "
+                f"it"
+            )
+        carries_numbers = version == CONSENSUS_SCHEMA
         record = cls(
             consensus_id=payload["consensus_id"],
             routes=tuple(
@@ -1082,6 +1228,19 @@ class CrossSolverConsensus:
                 ).items()
             },
             notes=payload.get("notes", ""),
+            tolerance_key=(
+                payload.get("tolerance_key", "") if carries_numbers else ""
+            ),
+            reported_values=(
+                {
+                    route_id: dict(produced)
+                    for route_id, produced in (
+                        payload.get("reported_values") or {}
+                    ).items()
+                }
+                if carries_numbers
+                else {}
+            ),
         )
         # The same rule ValidationReport.from_dict applies to attained levels:
         # a derived field in a payload is advisory, and a hand-edited record
