@@ -56,6 +56,11 @@ from engcore.scientific.results.validation import (
     ValidationReport,
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 
 CANONICAL = (
     DC_CONSENSUS_THRESHOLDS,
@@ -71,9 +76,17 @@ ROUTES = tuple(
         route_id,
         SolverIdentity(f"solver.{route_id}", "1.0"),
         frozenset({SharedComponent(ComponentKind.RESIDUAL, f"{route_id}:rhs")}),
+        dependencies=dependencies(route_id),
     )
     for route_id in ("a", "b")
 )
+
+
+@pytest.fixture(autouse=True)
+def _declare_the_module_routes(route_declarations_for_tests):
+    """Independence is not what this module is about: its routes are declared
+    and pinned so that the threshold half is what decides every verdict."""
+    declare(*ROUTES)
 AGREEING = {"a": {"v": 1.0}, "b": {"v": 1.0}}
 #: 23 % apart: the declared 1e-9 refuses them, a loosened 0.5 would not.
 DISAGREEING = {"a": {"v": 1.0}, "b": {"v": 1.3}}

@@ -10,6 +10,9 @@ from types import MappingProxyType
 from ..scientific.results.result import (
     UNASSESSED_DECLARATIONS_ATTRIBUTE as _UNASSESSED_ATTRIBUTE,
 )
+from ..scientific.consensus import (
+    ROUTE_DECLARATIONS_ATTRIBUTE as _ROUTE_ATTRIBUTE,
+)
 from ..scientific.results.thresholds import (
     THRESHOLD_DECLARATIONS_ATTRIBUTE as _THRESHOLD_ATTRIBUTE,
 )
@@ -133,4 +136,56 @@ SCIENTIFIC_THRESHOLD_DECLARATIONS = MappingProxyType({
 assert _THRESHOLD_ATTRIBUTE == "SCIENTIFIC_THRESHOLD_DECLARATIONS", (
     f"the core looks for {_THRESHOLD_ATTRIBUTE!r}; this package defines "
     f"SCIENTIFIC_THRESHOLD_DECLARATIONS"
+)
+
+#: What each solve route this layer declares is made of, pinned by route id.
+#:
+#: ``CrossSolverConsensus`` reads independence from these and from nothing a
+#: caller supplies. A route counts only when its id is registered here, the
+#: solver that ran is the implementation the entry is for, and its dependencies
+#: hash to the pinned digest -- so a route named after a declared one, or a
+#: declaration edited after it was pinned, earns nothing.
+#:
+#: Each digest is SHA-256 over the canonical identities exactly as
+#: ``RouteDependencies.digest`` serializes them, which resolves every
+#: importable identity to its defining module and qualified name. Changing a
+#: route's dependencies therefore means changing them in two places, on
+#: purpose: what a route is made of is a declaration, and a declaration that
+#: moves should say so here.
+SCIENTIFIC_ROUTE_DECLARATIONS = MappingProxyType({
+    "electrical.dc.native_mna": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc_consensus.NATIVE_ROUTE_DEPENDENCIES",
+        "solver_id": "electrical.dc.mna",
+        "backend": "scipy.linalg.solve",
+        "dependency_digest": "c23fff6bdbda0b6038ffcf4ee78bc994bad03aee511191445efec1a55329fd70",
+    }),
+    "electrical.dc.external_simulator": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc_consensus.EXTERNAL_ROUTE_DEPENDENCIES",
+        "solver_id": "engcore.electrical.dc.ngspice",
+        "backend": "ngspice",
+        "dependency_digest": "81156a57562add4c56a9a470c6039c0e0a52c9e2fbcf0fef3fc8ab0be8b39d43",
+    }),
+    # The two integration entries pin no backend, and the DC entries above do.
+    # This solver names its backend with the library version it ran against
+    # (solve_ivp/scipy-<version>), which is execution provenance: pinning it
+    # would pin one environment and refuse the same route on the next upgrade.
+    # What independence reads is the backend *dependency* the declaration names,
+    # and the digest pins that.
+    "kinetics.cstr.integration:BDF": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.INTEGRATION_ROUTE_DEPENDENCIES",
+        "declared_key": "BDF",
+        "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+        "dependency_digest": "00f2410046eeb60a7fe3f6532da938b50493e0d3c49c20c2c124b727fc6e9288",
+    }),
+    "kinetics.cstr.integration:Radau": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.INTEGRATION_ROUTE_DEPENDENCIES",
+        "declared_key": "Radau",
+        "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+        "dependency_digest": "496c729764e156accba69ef31ec13556eb861e4b343a829a53d52a9c2d702c93",
+    }),
+})
+
+assert _ROUTE_ATTRIBUTE == "SCIENTIFIC_ROUTE_DECLARATIONS", (
+    f"the core looks for {_ROUTE_ATTRIBUTE!r}; this package defines "
+    f"SCIENTIFIC_ROUTE_DECLARATIONS"
 )

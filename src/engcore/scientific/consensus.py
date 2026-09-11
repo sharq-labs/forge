@@ -12,8 +12,8 @@ let the second answer the first:
 ===============================  ==============================================
 did the routes agree             a comparison, always performed and always
                                  reported, whatever it finds
-were the routes independent      a **declaration**, made by whoever wrote the
-                                 routes, never inferred from anything
+were the routes independent      a **declaration** the domain layer pins and
+                                 the core verifies; never a caller's labels
 did each route answer the        a **declaration** too: the required outputs,
 whole question                   named up front and checked against what each
                                  route actually reported
@@ -40,24 +40,52 @@ agreement harder to reach: two routes that agree on the contract and differ
 wildly outside it have still found something, and hiding that to protect a
 claim is the failure this module exists to refuse.
 
-Independence is declared, never inferred
-----------------------------------------
+Independence is declared by the domain layer, and verified by the core
+----------------------------------------------------------------------
 There is no analysis here that looks at two routes and decides whether they are
 independent, and there will not be one. A wrong answer in that direction awards
 a level nobody earned, and the wrongness is invisible: the report reads exactly
-the same as one that earned it. Detection would have to be right about every
-future pair of routes on the strength of an argument written before they
-existed.
+the same as one that earned it.
 
-Instead each route declares the components it is *made of* —
-:class:`SharedComponent` records naming a residual, a Jacobian, a
-discretisation, a library, a linear-algebra kernel. Two routes share whatever
-their declarations have in common, and that is a set intersection rather than a
-judgement. A component appearing in more than one route defeats independence
-for the whole consensus, and the refusal names the components by kind and by
-name so a reader can see exactly what was shared.
+Independence used to be read from :class:`SharedComponent` records attached to
+each route by whoever built it: two routes shared whatever their labels had in
+common, and nothing checked the labels against anything. One solver identity
+under two route names and two labels, one function spelled two ways, one
+numerical backend behind two wrappers -- and the DC domain's own entry point,
+handed one result under one solver twice -- all earned
+``CROSS_SOLVER_VALIDATED``. A label is data a caller supplies; authority is not.
 
-**The default is not independent.** A route that declares no components earns
+So independence is read from :class:`RouteDependencies`: what a route is made
+of, per :class:`IndependenceDimension` -- the problem declaration, the
+preprocessing that builds the computed system from it, the numerical method,
+the implementation and the backend -- in canonical identities
+(:func:`canonical_component_identity`), so one function reached through two
+import paths is one identity. A route's dependencies count only when they are
+the declaration the domain layer pins for that route id, under
+:data:`ROUTE_DECLARATIONS_ATTRIBUTE` in the domain package: the pin binds the
+route id to the solver that must have run and to the SHA-256 of the canonical
+dependencies. A route the core cannot verify earns nothing, whatever it says
+about itself. Threshold authority follows the same rule: the data travels with
+the record, and the core checks it against a pin the caller does not hold.
+
+Independence has dimensions
+---------------------------
+Routes are **fully** independent when they share nothing in any dimension,
+**partially** independent when they share something but not the
+implementation, and **not** independent when they share the implementation.
+``CROSS_SOLVER_VALIDATED`` requires independence in every one of
+:data:`SOLVER_INDEPENDENCE_DIMENSIONS`: preprocessing, numerical method,
+implementation and backend. The problem declaration is not among them -- two
+solvers asked the same question necessarily share the question, and that is
+what makes their answers comparable -- and it is still reported, as partial
+independence, because an error in the declaration is invisible to every route
+that reads it.
+
+A route's descriptive ``components`` stay in the record in its author's words,
+and :attr:`CrossSolverConsensus.shared_components` still reports their
+intersection. Nothing decides on it.
+
+**The default is not independent.** A route that declares no dependencies earns
 nothing, because an empty declaration intersects with everything to nothing and
 would otherwise be the cheapest possible route to a level: say nothing about
 what you are made of and the arithmetic says you are independent. Silence is
@@ -86,21 +114,12 @@ and say so.
 
 What independence does NOT establish, stated so nobody has to discover it
 -------------------------------------------------------------------------
-The verdict rests entirely on the declaration, and the declaration is not
-checked against the world. In particular a level can be earned by two routes
-that carry the **same solver identity**, share an underlying provider, or were
-served the same cached result -- because the record cannot see any of that, and
-inferring it would be the analysis this module refuses to perform.
-
-One of those is at least visible, so it is reported:
-:attr:`CrossSolverConsensus.shared_solver_identities` names every
-``solver_id@version[backend]`` appearing on more than one route. It does not
-defeat independence -- one integrator asked for two different methods is two
-routes under one identity, and those methods can be genuinely separate
-arithmetic -- but two routes declaring disjoint components while naming one
-program is a claim a reviewer should see rather than one that should pass
-silently. The residual risk is not closed: **independence is only as good as
-the declaration**, and nothing here can tell a careless one from a careful one.
+A verified declaration is the domain layer's statement about its own routes,
+checked for integrity and not against the world: a pin that declares two routes
+disjoint when they are not is wrong in the pin, where a reviewer can read it.
+And the core attributes numbers to routes as they are handed over. A domain
+entry point is where a result's provenance can be checked against the route it
+is presented under, and the DC domain does so.
 
 What this module does not do
 -----------------------------
@@ -112,9 +131,13 @@ route already carries.
 
 from __future__ import annotations
 
+import hashlib
+import importlib
+import json
 import math
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import lru_cache
 from typing import Any, Iterable, Mapping
 
 from .errors import ScientificValidationError
@@ -131,6 +154,13 @@ from .solvers.protocol import SolverIdentity
 
 SHARED_COMPONENT_SCHEMA = schema_string("shared_component")
 SOLVE_ROUTE_SCHEMA = schema_string("solve_route")
+ROUTE_DEPENDENCIES_SCHEMA = schema_string("route_dependencies")
+
+#: The attribute the domain layer pins route declarations under, and the package
+#: it is read from. Read by name, as threshold authority is: the core knows where
+#: declarations are pinned and never what any of them says.
+ROUTE_DECLARATIONS_ATTRIBUTE = "SCIENTIFIC_ROUTE_DECLARATIONS"
+_DECLARING_PACKAGE = f"{__name__.split('.')[0]}.domains"
 
 #: Bumped for ``reported_values`` and ``tolerance_key``. A /2 record carries a
 #: comparison's conclusion -- the worst difference and the tolerance it met --
@@ -155,15 +185,21 @@ __all__ = [
     "CONSENSUS_SCHEMA",
     "CONSENSUS_SCHEMA_V1",
     "CONSENSUS_SCHEMA_V2",
+    "ROUTE_DECLARATIONS_ATTRIBUTE",
+    "ROUTE_DEPENDENCIES_SCHEMA",
     "SHARED_COMPONENT_SCHEMA",
+    "SOLVER_INDEPENDENCE_DIMENSIONS",
     "SOLVE_ROUTE_SCHEMA",
     "ComponentKind",
     "CrossSolverConsensus",
+    "IndependenceDimension",
     "IndependenceVerdict",
     "OutputCompleteness",
     "RouteComparison",
+    "RouteDependencies",
     "SharedComponent",
     "SolveRoute",
+    "canonical_component_identity",
     "relative_difference",
 ]
 
@@ -247,6 +283,226 @@ class SharedComponent:
         )
 
 
+class IndependenceDimension(str, Enum):
+    """A respect in which two routes can share, or not share, their arithmetic.
+
+    Kept apart rather than collapsed into one boolean, because the answer differs
+    by dimension and a reader needs to see which: two different solvers on one
+    problem declaration are independent in how they compute and not in what they
+    were told.
+    """
+
+    PROBLEM_DECLARATION = "problem_declaration"
+    PREPROCESSING = "preprocessing"
+    NUMERICAL_METHOD = "numerical_method"
+    IMPLEMENTATION = "implementation"
+    BACKEND = "backend"
+
+
+#: The dimensions ``CROSS_SOLVER_VALIDATED`` requires routes to be independent in.
+#: The problem declaration is not one of them: every cross-solver comparison asks
+#: two solvers one question, and a shared declaration is what makes the answers
+#: comparable. It is still reported, as partial independence.
+SOLVER_INDEPENDENCE_DIMENSIONS = (
+    IndependenceDimension.PREPROCESSING,
+    IndependenceDimension.NUMERICAL_METHOD,
+    IndependenceDimension.IMPLEMENTATION,
+    IndependenceDimension.BACKEND,
+)
+
+
+@lru_cache(maxsize=1024)
+def canonical_component_identity(declared: str) -> str:
+    """The canonical spelling of one dependency identity.
+
+    ``py:<module>:<qualname>`` is resolved to the object it names and respelled
+    as that object's defining module and qualified name, so one function reached
+    through a re-export, an alias or a package path is one identity.
+    ``ext:<name>`` names something outside the interpreter -- an external
+    program, a native library routine -- and is normalised, not resolved.
+    Anything else is refused: an identity with no way to canonicalise it is a
+    name, and a name is what independence is no longer read from.
+    """
+    text = str(declared).strip()
+    scheme, _, rest = text.partition(":")
+    if scheme == "py":
+        module_name, _, qualname = rest.partition(":")
+        module_name, qualname = module_name.strip(), qualname.strip()
+        if not module_name or not qualname:
+            raise ScientificValidationError(
+                f"component identity {text!r} must read 'py:<module>:<qualname>'"
+            )
+        try:
+            target: Any = importlib.import_module(module_name)
+        except ImportError as exc:
+            raise ScientificValidationError(
+                f"component identity {text!r} names module {module_name!r}, which "
+                f"cannot be imported"
+            ) from exc
+        for part in qualname.split("."):
+            try:
+                target = getattr(target, part)
+            except AttributeError:
+                raise ScientificValidationError(
+                    f"component identity {text!r} names {qualname!r}, which "
+                    f"{module_name!r} does not define"
+                ) from None
+        module = getattr(target, "__module__", None)
+        name = getattr(target, "__qualname__", None)
+        if not isinstance(module, str) or not isinstance(name, str):
+            raise ScientificValidationError(
+                f"component identity {text!r} resolves to an object with no "
+                f"defining module and qualified name"
+            )
+        return f"py:{module}:{name}"
+    if scheme == "ext":
+        name = " ".join(rest.split()).lower()
+        if not name:
+            raise ScientificValidationError(f"component identity {text!r} names nothing")
+        return f"ext:{name}"
+    raise ScientificValidationError(
+        f"component identity {text!r} has no recognised scheme; a dependency is "
+        f"named 'py:<module>:<qualname>', resolved to the object it names, or "
+        f"'ext:<name>'"
+    )
+
+
+@dataclass(frozen=True)
+class RouteDependencies:
+    """What a route is made of, per :class:`IndependenceDimension`.
+
+    Every dimension must name at least one identity. A dimension left out would
+    intersect with everything to nothing and read as independent, which is the
+    undeclared-route hole one level down. Identities are kept as declared and
+    compared, and hashed, in canonical form.
+    """
+
+    identities: Mapping[IndependenceDimension, frozenset[str]]
+
+    def __post_init__(self) -> None:
+        normalised: dict[IndependenceDimension, frozenset[str]] = {}
+        for key, names in dict(self.identities).items():
+            try:
+                dimension = IndependenceDimension(key)
+            except ValueError:
+                raise ScientificValidationError(
+                    f"route dependencies name {key!r}, which is not an independence "
+                    f"dimension; the dimensions are "
+                    f"{[d.value for d in IndependenceDimension]}"
+                ) from None
+            if isinstance(names, str):
+                raise ScientificValidationError(
+                    f"route dependencies for {dimension.value!r} must be a collection "
+                    f"of identities, not the single string {names!r}"
+                )
+            texts = frozenset(str(name).strip() for name in names)
+            if not texts or "" in texts:
+                raise ScientificValidationError(
+                    f"route dependencies for {dimension.value!r} name no identity"
+                )
+            normalised[dimension] = texts
+        missing = [d.value for d in IndependenceDimension if d not in normalised]
+        if missing:
+            raise ScientificValidationError(
+                f"route dependencies declare no identity for {missing}; a dimension "
+                f"a route does not declare cannot be compared, and would read as "
+                f"independent"
+            )
+        object.__setattr__(
+            self,
+            "identities",
+            freeze({d: normalised[d] for d in IndependenceDimension}),
+        )
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RouteDependencies):
+            return NotImplemented
+        return dict(self.identities) == dict(other.identities)
+
+    def __hash__(self) -> int:
+        return hash(tuple((d.value, tuple(sorted(n))) for d, n in self.identities.items()))
+
+    def canonical(self) -> dict[IndependenceDimension, frozenset[str]]:
+        """Every identity in canonical form. Raises when one cannot be resolved."""
+        return {
+            dimension: frozenset(canonical_component_identity(name) for name in names)
+            for dimension, names in self.identities.items()
+        }
+
+    @property
+    def digest(self) -> str:
+        """SHA-256 over the canonical identities -- the number a domain pins."""
+        blob = json.dumps(
+            {d.value: sorted(names) for d, names in self.canonical().items()},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": ROUTE_DEPENDENCIES_SCHEMA,
+            "identities": {d.value: sorted(names) for d, names in self.identities.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "RouteDependencies":
+        require_schema(payload, ROUTE_DEPENDENCIES_SCHEMA)
+        return cls(
+            identities={
+                key: frozenset(names)
+                for key, names in dict(payload.get("identities") or {}).items()
+            }
+        )
+
+
+def _route_declarations() -> Mapping[str, Any]:
+    """The domain layer's pinned route declarations, or none if it states none."""
+    try:
+        package = importlib.import_module(_DECLARING_PACKAGE)
+    except ImportError:  # pragma: no cover - an installation without its domains
+        return {}
+    table = getattr(package, ROUTE_DECLARATIONS_ATTRIBUTE, None)
+    return table if isinstance(table, Mapping) else {}
+
+
+def _verify_route(route: "SolveRoute") -> str | None:
+    """``None`` when ``route`` is a declaration the domain layer pins; otherwise why not.
+
+    Every step reads the pin and nothing the route asserts about itself:
+
+    1. the route must declare dependencies at all;
+    2. its route id must be one the domain layer declares;
+    3. the solver that ran must be the implementation the declaration is for;
+    4. its dependencies must resolve, and hash to the pinned digest.
+    """
+    if route.dependencies is None:
+        return "declares no dependencies"
+    pin = _route_declarations().get(route.route_id)
+    if not isinstance(pin, Mapping):
+        return f"is not a route the domain layer declares"
+    if route.solver.solver_id != pin.get("solver_id"):
+        return (
+            f"carries solver {route.solver.solver_id!r}, and the declaration of "
+            f"{route.route_id!r} is for {pin.get('solver_id')!r}"
+        )
+    if "backend" in pin and route.solver.backend != pin["backend"]:
+        return (
+            f"carries backend {route.solver.backend!r}, and the declaration of "
+            f"{route.route_id!r} is for {pin['backend']!r}"
+        )
+    try:
+        digest = route.dependencies.digest
+    except ScientificValidationError as exc:
+        return f"declares a dependency that cannot be resolved ({exc})"
+    if digest != pin.get("dependency_digest"):
+        return (
+            f"declares dependencies hashing to {digest[:12]}…, not the "
+            f"{str(pin.get('dependency_digest'))[:12]}… the domain layer pins"
+        )
+    return None
+
+
 @dataclass(frozen=True)
 class SolveRoute:
     """One way of getting an answer, and what it is made of.
@@ -255,12 +511,17 @@ class SolveRoute:
     carry one solver identity and differ in the thing that matters — the same
     integrator asked for two different methods is two routes, one identity. The
     route id is what a comparison and a refusal name.
+
+    ``components`` describe the route in its author's words and decide
+    nothing. ``dependencies`` is what independence is read from, and only
+    when it is the declaration the domain layer pins for ``route_id``.
     """
 
     route_id: str
     solver: SolverIdentity
     components: frozenset[SharedComponent] = frozenset()
     notes: str = ""
+    dependencies: RouteDependencies | None = None
 
     def __post_init__(self) -> None:
         text = str(self.route_id).strip()
@@ -274,16 +535,25 @@ class SolveRoute:
             )
         object.__setattr__(self, "components", frozenset(self.components))
         object.__setattr__(self, "notes", str(self.notes))
+        if self.dependencies is not None and not isinstance(
+            self.dependencies, RouteDependencies
+        ):
+            raise ScientificValidationError(
+                f"solve route {text!r} carries a "
+                f"{type(self.dependencies).__name__} as its dependencies, not "
+                f"RouteDependencies"
+            )
 
     @property
     def declares_nothing(self) -> bool:
-        """Did this route say what it is made of?
+        """Did this route declare what it is made of?
 
-        A route that did not cannot contribute to an independence claim. See
-        the module docstring: an empty declaration would otherwise be the
-        cheapest route to a level in the whole platform.
+        A route without dependencies cannot contribute to an independence
+        claim, whatever its descriptive components say. See the module
+        docstring: an empty declaration would otherwise be the cheapest route to
+        a level in the whole platform.
         """
-        return not self.components
+        return self.dependencies is None
 
     @property
     def component_labels(self) -> tuple[str, ...]:
@@ -299,6 +569,9 @@ class SolveRoute:
                 for c in sorted(self.components, key=lambda c: c.label)
             ],
             "notes": self.notes,
+            "dependencies": (
+                self.dependencies.to_dict() if self.dependencies is not None else None
+            ),
         }
 
     @classmethod
@@ -312,20 +585,29 @@ class SolveRoute:
                 for c in payload.get("components", ())
             ),
             notes=payload.get("notes", ""),
+            dependencies=(
+                RouteDependencies.from_dict(payload["dependencies"])
+                if payload.get("dependencies") is not None
+                else None
+            ),
         )
 
 
 class IndependenceVerdict(str, Enum):
-    """Whether the declarations support an independence claim, and why not.
+    """How independent the routes are, as their verified declarations show.
 
-    Four members rather than a boolean, because "not independent" has three
-    causes a reader must be able to tell apart: routes that declared shared
-    machinery, routes that declared nothing at all, and a comparison that never
-    had two routes to compare.
+    ``FULLY_INDEPENDENT`` routes share nothing in any dimension;
+    ``PARTIALLY_INDEPENDENT`` routes share something, but not the
+    implementation; ``NOT_INDEPENDENT`` routes share the implementation. The
+    other three say why no such statement is available: a route declared no
+    dependencies, a route's declaration is not the one the domain layer pins,
+    or there were not two routes to compare.
     """
 
-    INDEPENDENT = "independent"
-    SHARES_COMPONENTS = "shares_components"
+    FULLY_INDEPENDENT = "fully_independent"
+    PARTIALLY_INDEPENDENT = "partially_independent"
+    NOT_INDEPENDENT = "not_independent"
+    UNVERIFIED = "unverified"
     UNDECLARED = "undeclared"
     TOO_FEW_ROUTES = "too_few_routes"
 
@@ -596,6 +878,12 @@ class CrossSolverConsensus:
     #: refused. A record without them can carry a comparison and cannot
     #: establish a level; see :attr:`comparison_is_derived`.
     reported_values: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
+    #: Each route's standing against the domain layer's pins, decided once at
+    #: construction: ``None`` for a verified route, otherwise why not. Not an
+    #: argument, and not read from a payload.
+    _route_findings: Mapping[str, str | None] = field(
+        init=False, repr=False, compare=False, default_factory=dict
+    )
 
     def __post_init__(self) -> None:
         text = str(self.consensus_id).strip()
@@ -658,6 +946,11 @@ class CrossSolverConsensus:
             }),
         )
         self._require_coherent_evidence()
+        object.__setattr__(
+            self,
+            "_route_findings",
+            freeze({route.route_id: _verify_route(route) for route in routes}),
+        )
 
     def _require_coherent_evidence(self) -> None:
         """Refuse reports and comparisons that cannot have happened.
@@ -772,10 +1065,12 @@ class CrossSolverConsensus:
     # ---- the declaration side -------------------------------------------
     @property
     def shared_components(self) -> tuple[SharedComponent, ...]:
-        """Every component more than one route declared.
+        """Every descriptive component more than one route names. **Reported, not judged.**
 
-        A set intersection over declarations, not an analysis of anything. This
-        is the whole of what "not independent" means here.
+        ``components`` are a route's author's words, and they once decided
+        independence -- one solver under two labels read as independent. The
+        intersection stays for a reader; independence is read from verified
+        dependencies.
         """
         counted: dict[SharedComponent, int] = {}
         for route in self.routes:
@@ -793,27 +1088,29 @@ class CrossSolverConsensus:
         return tuple(r.route_id for r in self.routes if r.declares_nothing)
 
     @property
+    def unverified_routes(self) -> tuple[tuple[str, str], ...]:
+        """``(route_id, why)`` for every declared route the core could not verify.
+
+        Decided at construction against the domain layer's pins. A route with no
+        dependencies is undeclared rather than unverified.
+        """
+        return tuple(
+            sorted(
+                (route.route_id, str(self._route_findings.get(route.route_id)))
+                for route in self.routes
+                if not route.declares_nothing
+                and self._route_findings.get(route.route_id) is not None
+            )
+        )
+
+    @property
     def shared_solver_identities(self) -> tuple[str, ...]:
-        """Solver identities that appear on more than one route. **Reported, not judged.**
+        """Solver identities that appear on more than one route. **Reported.**
 
-        This does NOT defeat independence and is not meant to. The module's
-        position is deliberate and is argued at the top: ``route_id`` names the
-        route rather than the solver, because one integrator asked for two
-        different methods is two routes under one identity, and those two
-        methods can be genuinely independent arithmetic.
-
-        But a reader auditing a level needs to be able to SEE it. Two routes
-        that declare disjoint components while carrying the same
-        ``solver_id@version[backend]`` are claiming that one program contains
-        two separately-implemented answers -- which is sometimes exactly true
-        and sometimes a declaration nobody checked, and the difference is not
-        decidable from here. Recording it puts the fact in front of whoever can
-        decide, which is the same reason every refused consensus still carries
-        its full comparison.
-
-        The residual risk is stated rather than closed: **independence is only
-        as good as the declaration**, and nothing in this module can tell a
-        careless declaration from a careful one.
+        Whether two routes share an implementation is decided by their verified
+        dependencies, where it is a canonical identity rather than a label. The
+        identity string is still listed, so a reader sees a repeated program
+        whatever the declarations say.
         """
         counted: dict[str, int] = {}
         for route in self.routes:
@@ -824,27 +1121,73 @@ class CrossSolverConsensus:
             counted[label] = counted.get(label, 0) + 1
         return tuple(sorted(label for label, n in counted.items() if n > 1))
 
+    def _verified_dependencies(self) -> tuple[dict[IndependenceDimension, frozenset[str]], ...]:
+        return tuple(
+            route.dependencies.canonical()
+            for route in self.routes
+            if route.dependencies is not None
+            and self._route_findings.get(route.route_id, "unverified") is None
+        )
+
+    @property
+    def shared_dependencies(self) -> tuple[tuple[IndependenceDimension, str], ...]:
+        """``(dimension, canonical identity)`` for everything verified routes share."""
+        counted: dict[tuple[IndependenceDimension, str], int] = {}
+        for identities in self._verified_dependencies():
+            for dimension, names in identities.items():
+                for name in names:
+                    counted[(dimension, name)] = counted.get((dimension, name), 0) + 1
+        return tuple(
+            sorted(
+                (key for key, n in counted.items() if n > 1),
+                key=lambda key: (key[0].value, key[1]),
+            )
+        )
+
+    @property
+    def shared_dimensions(self) -> tuple[IndependenceDimension, ...]:
+        shared = {dimension for dimension, _ in self.shared_dependencies}
+        return tuple(d for d in IndependenceDimension if d in shared)
+
     @property
     def independence(self) -> IndependenceVerdict:
-        """Do the declarations support an independence claim?
+        """How independent the routes are, as their verified declarations show.
 
         The order of the tests is the order a reader needs them in. Too few
-        routes is not a shared-component problem and saying so would mislead; a
-        route that declared nothing is reported as such rather than as
-        independent, which is what the empty intersection would otherwise make
-        it.
+        routes, a route that declared nothing and a route whose declaration is
+        not the pinned one are each a reason no statement is available, and
+        reporting "shares" or "independent" instead would mislead.
         """
         if len(self.routes) < 2:
             return IndependenceVerdict.TOO_FEW_ROUTES
         if self.undeclared_routes:
             return IndependenceVerdict.UNDECLARED
-        if self.shared_components:
-            return IndependenceVerdict.SHARES_COMPONENTS
-        return IndependenceVerdict.INDEPENDENT
+        if self.unverified_routes:
+            return IndependenceVerdict.UNVERIFIED
+        shared = self.shared_dimensions
+        if IndependenceDimension.IMPLEMENTATION in shared:
+            return IndependenceVerdict.NOT_INDEPENDENT
+        if shared:
+            return IndependenceVerdict.PARTIALLY_INDEPENDENT
+        return IndependenceVerdict.FULLY_INDEPENDENT
 
     @property
     def routes_are_independent(self) -> bool:
-        return self.independence is IndependenceVerdict.INDEPENDENT
+        """Independent in every dimension ``CROSS_SOLVER_VALIDATED`` requires.
+
+        Fully independent routes are. Partially independent routes are when
+        nothing they share lies in :data:`SOLVER_INDEPENDENCE_DIMENSIONS` -- in
+        practice, when what they share is the problem declaration.
+        """
+        if self.independence not in (
+            IndependenceVerdict.FULLY_INDEPENDENT,
+            IndependenceVerdict.PARTIALLY_INDEPENDENT,
+        ):
+            return False
+        return not any(
+            dimension in SOLVER_INDEPENDENCE_DIMENSIONS
+            for dimension in self.shared_dimensions
+        )
 
     # ---- the completeness side ------------------------------------------
     @property
@@ -957,15 +1300,29 @@ class CrossSolverConsensus:
         if independence is IndependenceVerdict.UNDECLARED:
             return (
                 f"route(s) {list(self.undeclared_routes)} declare no "
-                f"components, so no independence claim is available: a route "
+                f"dependencies, so no independence claim is available: a route "
                 f"that does not say what it is made of earns nothing"
             )
-        if independence is IndependenceVerdict.SHARES_COMPONENTS:
-            shared = [c.label for c in self.shared_components]
+        if independence is IndependenceVerdict.UNVERIFIED:
+            unverified = [
+                f"{route_id} {finding}" for route_id, finding in self.unverified_routes
+            ]
             return (
-                f"the routes share {shared}, so agreement between them is "
-                f"evidence about the shared machinery and not about the "
-                f"physics; the comparison is reported and establishes no level"
+                f"independence is read only from declarations the domain layer "
+                f"pins and the core verifies, and route(s) {unverified}; the "
+                f"comparison is reported and establishes no level"
+            )
+        if not self.routes_are_independent:
+            shared = [
+                f"{dimension.value}:{name}"
+                for dimension, name in self.shared_dependencies
+                if dimension in SOLVER_INDEPENDENCE_DIMENSIONS
+            ]
+            return (
+                f"the routes are {independence.value.replace('_', ' ')}: they "
+                f"share {shared}, so agreement between them is evidence about "
+                f"the shared machinery and not about the physics; the "
+                f"comparison is reported and establishes no level"
             )
         completeness = self.output_completeness
         if completeness is OutputCompleteness.UNDECLARED:
@@ -1011,10 +1368,15 @@ class CrossSolverConsensus:
                 f"level is withheld because {self.thresholds.identity} is not "
                 f"this gate's declared threshold set"
             )
+        shared = [
+            f"{dimension.value}:{name}" for dimension, name in self.shared_dependencies
+        ]
         return (
-            f"{len(self.routes)} routes sharing no declared component each "
-            f"reported all {len(self.required_outputs)} required output(s) and "
-            f"agree on {len(self.comparison.quantities)} quantities to "
+            f"{len(self.routes)} routes, {self.independence.value.replace('_', ' ')} "
+            f"and independent in every dimension the level requires"
+            + (f" (sharing {shared})" if shared else "")
+            + f", each reported all {len(self.required_outputs)} required output(s) "
+            f"and agree on {len(self.comparison.quantities)} quantities to "
             f"{self.comparison.worst_relative_difference:.3e}, within the "
             f"declared {self.comparison.tolerance:.3e}"
         )
@@ -1071,10 +1433,18 @@ class CrossSolverConsensus:
                 ", ".join(reported) if reported else "nothing recorded"
             )
             backend = f"[{route.solver.backend}]" if route.solver.backend else ""
+            finding = self._route_findings.get(route.route_id)
+            standing = (
+                "no dependencies declared"
+                if route.declares_nothing
+                else "dependencies verified against the domain layer's pin"
+                if finding is None
+                else f"dependencies UNVERIFIED: {finding}"
+            )
             lines.append(
                 f"route {route.route_id} = {route.solver.solver_id}@"
                 f"{route.solver.version}{backend} declares [{declared}] reports "
-                f"[{produced}]"
+                f"[{produced}]; {standing}"
             )
         lines.append(
             "required outputs: "
@@ -1169,6 +1539,15 @@ class CrossSolverConsensus:
                 f"{route}:{name}" for route, name in self.missing_outputs
             ],
             "shared_components": [c.label for c in self.shared_components],
+            "unverified_routes": [
+                f"{route_id}: {finding}" for route_id, finding in self.unverified_routes
+            ],
+            "shared_dependencies": [
+                f"{dimension.value}:{name}" for dimension, name in self.shared_dependencies
+            ],
+            "independent_dimensions": [
+                d.value for d in IndependenceDimension if d not in self.shared_dimensions
+            ],
             "establishes": (
                 self.establishes.value if self.establishes else None
             ),

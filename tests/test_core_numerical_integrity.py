@@ -61,6 +61,11 @@ from engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
 from engcore.scientific.serialization import to_json
 from engcore.scientific.solvers.admission import require_agreement
 from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 
 NON_FINITE = (float("nan"), float("inf"), float("-inf"))
 
@@ -75,13 +80,16 @@ def _thresholds(**values: float) -> VerificationThresholds:
 
 
 def _route(route_id: str, component: str) -> SolveRoute:
-    return SolveRoute(
-        route_id=route_id,
-        solver=SolverIdentity(solver_id=route_id, version="1"),
-        components=frozenset(
-            {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=component)}
-        ),
-    )
+    return declare(
+        SolveRoute(
+            route_id=route_id,
+            solver=SolverIdentity(solver_id=route_id, version="1"),
+            components=frozenset(
+                {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=component)}
+            ),
+            dependencies=dependencies(route_id, implementation=f"ext:test:{component}"),
+        )
+    )[0]
 
 
 def _consensus(values, *, tolerance: float = 1e-6) -> CrossSolverConsensus:
@@ -318,7 +326,7 @@ def test_finite_routes_that_agree_still_earn_the_level():
     consensus = _consensus({"A": {"t": 300.0}, "B": {"t": 300.0 * (1 + 1e-9)}})
     assert consensus.comparison.compared_anything is True
     assert consensus.comparison.agreed is True
-    assert consensus.independence is IndependenceVerdict.INDEPENDENT
+    assert consensus.independence is IndependenceVerdict.PARTIALLY_INDEPENDENT
     assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
     assert consensus.to_check().outcome is ValidationOutcome.PASS
 

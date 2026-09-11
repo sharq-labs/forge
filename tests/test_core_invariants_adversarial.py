@@ -62,6 +62,11 @@ from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
 from engcore.scientific.serialization import to_json
 from engcore.scientific.solvers.admission import require_agreement
 from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 from engcore.scientific.units.quantity import Quantity
 
 NON_FINITE = (float("nan"), float("inf"), float("-inf"))
@@ -74,13 +79,16 @@ THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 
 
 def _route(route_id: str) -> SolveRoute:
-    return SolveRoute(
-        route_id=route_id,
-        solver=SolverIdentity(f"solver.{route_id}", "1"),
-        components=frozenset(
-            {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=f"impl-{route_id}")}
-        ),
-    )
+    return declare(
+        SolveRoute(
+            route_id=route_id,
+            solver=SolverIdentity(f"solver.{route_id}", "1"),
+            components=frozenset(
+                {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=f"impl-{route_id}")}
+            ),
+            dependencies=dependencies(route_id),
+        )
+    )[0]
 
 
 def _consensus(values, required):

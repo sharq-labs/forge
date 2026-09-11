@@ -59,16 +59,21 @@ from typing import Any, Mapping
 from ...scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
+    IndependenceDimension,
+    RouteDependencies,
     SharedComponent,
     SolveRoute,
 )
+from ...scientific.errors import ScientificValidationError
 from ...scientific.results.thresholds import VerificationThresholds
 from ...scientific.solvers.protocol import SolverIdentity
 from ...scientific.units.quantity import Quantity
 
 __all__ = [
     "DC_CONSENSUS_THRESHOLDS",
+    "EXTERNAL_ROUTE_DEPENDENCIES",
     "EXTERNAL_ROUTE_ID",
+    "NATIVE_ROUTE_DEPENDENCIES",
     "NATIVE_ROUTE_ID",
     "dc_consensus",
     "external_route",
@@ -103,6 +108,50 @@ DC_CONSENSUS_THRESHOLDS = VerificationThresholds(
 )
 
 
+#: What the native route is made of, per independence dimension.
+#:
+#: This is the load-bearing declaration: ``engcore.domains`` pins its digest,
+#: and the core reads independence from it rather than from the component
+#: labels below, which describe the route in this module's words and decide
+#: nothing. The two routes share the problem declaration -- one circuit, which
+#: is what makes their answers comparable -- and nothing else: this repository
+#: stamps the nodal rows and factors them densely in this interpreter, and the
+#: external program does its own assembly, its own sparse factorisation and its
+#: own arithmetic in a process of its own.
+NATIVE_ROUTE_DEPENDENCIES = RouteDependencies({
+    IndependenceDimension.PROBLEM_DECLARATION: {
+        "py:engcore.domains.electrical.dc.circuit:DCCircuit",
+    },
+    IndependenceDimension.PREPROCESSING: {
+        "py:engcore.domains.electrical.dc.mna:assemble",
+    },
+    IndependenceDimension.NUMERICAL_METHOD: {"ext:lapack:gesv"},
+    IndependenceDimension.IMPLEMENTATION: {
+        "py:engcore.domains.electrical.dc.solver:ElectricalDCSolver",
+    },
+    IndependenceDimension.BACKEND: {"py:scipy.linalg:solve"},
+})
+
+#: What the external route is made of. Everything that turns the circuit into
+#: numbers belongs to the external program and is named as that program rather
+#: than described: this module does not know its internals, and a declaration
+#: that guessed at them would be the fiction the mechanism exists to refuse.
+EXTERNAL_ROUTE_DEPENDENCIES = RouteDependencies({
+    IndependenceDimension.PROBLEM_DECLARATION: {
+        "py:engcore.domains.electrical.dc.circuit:DCCircuit",
+    },
+    IndependenceDimension.PREPROCESSING: {
+        "py:engcore.domains.electrical.ngspice:build_netlist",
+        "ext:ngspice:internal_assembly",
+    },
+    IndependenceDimension.NUMERICAL_METHOD: {"ext:ngspice:sparse_lu"},
+    IndependenceDimension.IMPLEMENTATION: {
+        "py:engcore.domains.electrical.ngspice:NgspiceDCSolver",
+    },
+    IndependenceDimension.BACKEND: {"ext:ngspice"},
+})
+
+
 def native_route(solver: SolverIdentity) -> SolveRoute:
     """The in-process route: this repository assembles, and factors densely."""
     return SolveRoute(
@@ -128,6 +177,7 @@ def native_route(solver: SolverIdentity) -> SolveRoute:
                 ),
             }
         ),
+        dependencies=NATIVE_ROUTE_DEPENDENCIES,
         notes=(
             "assembles the system from the circuit description and solves it "
             "directly; no outer iteration"
@@ -170,6 +220,7 @@ def external_route(solver: SolverIdentity) -> SolveRoute:
                 ),
             }
         ),
+        dependencies=EXTERNAL_ROUTE_DEPENDENCIES,
         notes=(
             "receives a description of the circuit and returns node "
             "potentials and element quantities; its equations, its ordering "
@@ -218,6 +269,23 @@ def dc_consensus(
     the pair would silently declare the external route's arithmetic under a
     name that is not the one that produced it.
     """
+    for label, result, solver in (
+        ("native", native, native_solver),
+        ("external", external, external_solver),
+    ):
+        # A route is attributed to the solver that produced its numbers. The
+        # identities arrive beside the results rather than in them, so a result
+        # can be handed over under another route's identity -- and the two
+        # routes would then be one program compared with itself, which the core
+        # has no way to see. What a result does carry is its provenance.
+        recorded = tuple(getattr(getattr(result, "provenance", None), "solvers", ()) or ())
+        if (solver.solver_id, solver.version) not in recorded:
+            raise ScientificValidationError(
+                f"the {label} result's provenance records solvers {list(recorded)}, "
+                f"not {solver.solver_id}@{solver.version}; a result presented under "
+                f"another solver's identity is refused"
+            )
+
     native_values = route_values(native)
     return CrossSolverConsensus.over(
         consensus_id=consensus_id,

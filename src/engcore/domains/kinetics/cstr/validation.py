@@ -69,6 +69,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
@@ -76,6 +77,8 @@ import numpy as np
 from ....scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
+    IndependenceDimension,
+    RouteDependencies,
     SharedComponent,
     SolveRoute,
 )
@@ -583,6 +586,34 @@ _SHARED_INTEGRATION_COMPONENTS = frozenset(
 )
 
 
+#: What each integration route is made of, by method.
+#:
+#: The declaration the core reads; ``engcore.domains`` pins a digest of each.
+#: Both methods are declared, and they differ in exactly one dimension -- the
+#: numerical method -- because that is the truth of them: one right-hand side,
+#: one analytic Jacobian, one library routine driving the steps, two members of
+#: its implicit family. The refusal that follows is therefore a consequence of
+#: what the routes are made of rather than of a rule written for this domain,
+#: and the record now names the dimension they differ in as well as the ones
+#: they share.
+INTEGRATION_ROUTE_DEPENDENCIES = MappingProxyType({
+    method: RouteDependencies({
+        IndependenceDimension.PROBLEM_DECLARATION: {
+            "py:engcore.domains.kinetics.cstr.problem:ReactorRun",
+        },
+        IndependenceDimension.PREPROCESSING: {
+            "py:engcore.domains.kinetics.cstr.solver:assemble",
+        },
+        IndependenceDimension.NUMERICAL_METHOD: {f"py:scipy.integrate:{method}"},
+        IndependenceDimension.IMPLEMENTATION: {
+            "py:engcore.domains.kinetics.cstr.solver:CSTRSolver",
+        },
+        IndependenceDimension.BACKEND: {"py:scipy.integrate:solve_ivp"},
+    })
+    for method in ("BDF", "Radau")
+})
+
+
 def integration_route(method: str, solver: Any) -> SolveRoute:
     """One integration method, declaring what it is made of.
 
@@ -598,6 +629,7 @@ def integration_route(method: str, solver: Any) -> SolveRoute:
         route_id=f"kinetics.cstr.integration:{method}",
         solver=solver,
         components=_SHARED_INTEGRATION_COMPONENTS,
+        dependencies=INTEGRATION_ROUTE_DEPENDENCIES.get(method),
         notes=(
             f"the {method} member of this domain's implicit integrator "
             f"family, at the finest rung of the declared tolerance ladder"

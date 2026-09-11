@@ -47,6 +47,11 @@ from engcore.scientific.errors import ScientificValidationError
 from engcore.scientific.results.thresholds import VerificationThresholds
 from engcore.scientific.results.validation import ValidationLevel
 from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 
 #: A declared gate's own set. This fixture used to invent a gate, and earned
 #: levels with it until threshold authority was verified against the domain
@@ -62,10 +67,17 @@ def _route(route_id: str) -> SolveRoute:
         components=frozenset(
             {SharedComponent(ComponentKind.RESIDUAL, f"{route_id}:rhs")}
         ),
+        dependencies=dependencies(route_id),
     )
 
 
 ROUTES = (_route("a"), _route("b"))
+
+
+@pytest.fixture(autouse=True)
+def _declare_the_module_routes(route_declarations_for_tests):
+    """These routes are built once, and pinned for each test that uses them."""
+    declare(*ROUTES)
 REQUIRED = ("A", "B")
 VALIDATED = ValidationLevel.CROSS_SOLVER_VALIDATED
 AGREEING = {"a": {"A": 1.0, "B": 2.0}, "b": {"A": 1.0, "B": 2.0}}

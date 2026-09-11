@@ -52,6 +52,11 @@ from engcore.scientific.results.validation import (
     ValidationReport,
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 
 #: A declared gate's own set. This fixture used to invent a gate, and earned
 #: levels with it until threshold authority was verified against the domain
@@ -66,14 +71,24 @@ PARTIAL = {"temperature": 350.0}
 
 
 def _route(route_id: str, *components: str, solver: SolverIdentity | None = None):
-    return SolveRoute(
+    """Declared and pinned, as the domain layer pins its own routes. A component
+    name is an implementation: two routes naming one share it."""
+    built = SolveRoute(
         route_id=route_id,
         solver=solver or SolverIdentity(f"solver.{route_id}", "1.0", backend=route_id),
         components=frozenset(
             SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=name)
             for name in components
         ),
+        dependencies=(
+            dependencies(
+                route_id, implementation={f"ext:test:{name}" for name in components}
+            )
+            if components
+            else None
+        ),
     )
+    return declare(built)[0] if components else built
 
 
 def _consensus(values, *, required=CONTRACT, routes=None, thresholds=THRESHOLDS):
@@ -211,7 +226,7 @@ def test_independence_still_rests_on_the_declaration_and_nothing_else():
         {"A": dict(FULL), "B": dict(FULL)},
         routes=(_route("A", "common-rhs"), _route("B", "common-rhs")),
     )
-    assert shared.independence is IndependenceVerdict.SHARES_COMPONENTS
+    assert shared.independence is IndependenceVerdict.NOT_INDEPENDENT
     assert shared.establishes is None
 
     silent = _consensus(
