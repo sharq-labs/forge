@@ -54,12 +54,39 @@ def unknown_promise_review() -> dict:
     }
 
 
+#: Later rounds add conditions, and the claim map that must speak for them is
+#: a result artifact of the round that wrote it. Rather than edit an earlier
+#: round's file, a round registers its own entries here and they are merged.
+#: The guard is unchanged in force: a condition in no map at all still fails.
+SUPPLEMENTS = (
+    (
+        "benchmarks.capability_boundary.audit.claim_map_supplement",
+        "SUPPLEMENT",
+    ),
+)
+
+
+@functools.lru_cache(maxsize=1)
+def all_claims() -> dict:
+    """The Contract Integrity claim map plus every later round's supplement."""
+    import importlib
+
+    claims = dict(_audit_module("claim_map").CLAIMS)
+    for module_name, attribute in SUPPLEMENTS:
+        try:
+            module = importlib.import_module(module_name)
+        except ImportError:  # pragma: no cover - a round removed, not renamed
+            continue
+        claims.update(getattr(module, attribute))
+    return claims
+
+
 @functools.lru_cache(maxsize=1)
 def claim_map_coverage() -> dict:
     """Which shipped conditions the claim map speaks for, and which it misses."""
     from . import records
 
-    claims = _audit_module("claim_map").CLAIMS
+    claims = all_claims()
     mapped = set(claims)
     shipped = {(ref.system, ref.name) for ref in records.conditions()}
     return {
