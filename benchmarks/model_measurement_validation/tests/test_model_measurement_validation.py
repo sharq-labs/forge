@@ -181,6 +181,29 @@ def test_calibration_rows_carry_no_verdict():
 # =====================================================================
 
 
+def _round_audit():
+    """This round's audit package, addressed unambiguously.
+
+    Not ``from audit import ...``. Two rounds ship a top-level package by that
+    name, both directories are on sys.path once the whole benchmarks tree is
+    collected in one session, and the bare name resolves to whichever was
+    imported first -- which is the other round's, alphabetically. The
+    fully-qualified path cannot be captured, and the assertion below refuses to
+    proceed if it somehow is.
+    """
+    from benchmarks.model_measurement_validation import audit
+
+    assert pathlib.Path(audit.__file__).resolve().parent.parent == ROUND, (
+        f"loaded the wrong round's audit package: {audit.__file__}"
+    )
+    return audit
+
+
+def test_the_audit_package_resolves_to_this_round():
+    """Guards the import hazard itself, so it cannot come back unnoticed."""
+    _round_audit()
+
+
 def test_the_affine_chord_misses_measured_open_circuit_voltage():
     """The MVF-1 measurement, recomputed rather than read off a file.
 
@@ -188,7 +211,8 @@ def test_the_affine_chord_misses_measured_open_circuit_voltage():
     number it has to respect: a LiFePO4 cell whose measured open-circuit
     voltage departs from its own chord by more than a quarter of a volt.
     """
-    from audit import production, validation
+    audit = _round_audit()
+    production, validation = audit.production, audit.validation
 
     charge = validation.E.relaxation_traces("24h_Charge_APR")
     discharge = validation.E.relaxation_traces("24h_Discharge_APR")
@@ -312,9 +336,7 @@ def test_the_consistency_checker_can_fail():
 
 @pytest.mark.expensive
 def test_rebuilding_everything_reproduces_the_published_gates():
-    from audit import build_gates
-
-    payload = build_gates.build()
+    payload = _round_audit().build_gates.build()
     assert payload["passed"] == 10
     assert payload["failed"] == 1
     assert payload["_built"]["plants"]["missed"] == 0
