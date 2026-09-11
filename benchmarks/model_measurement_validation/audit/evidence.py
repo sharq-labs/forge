@@ -105,6 +105,11 @@ def relaxation_traces(sheet_name: str) -> dict:
             "label": label,
             "samples": len(points),
             "relaxed_voltage_v": points[-1][1],
+            # Which point of the trace the relaxed value was taken from. Carried
+            # into every row so that an extraction reading the wrong end of a
+            # 24-hour trace is a checkable fact rather than an invisible one.
+            "relaxed_at_hours": points[-1][0],
+            "declared_relaxation_hours": 24.0,
             "voltage_at_23h_v": at_23h,
             "final_hour_drift_v": abs(points[-1][1] - at_23h),
             "initial_voltage_v": points[0][1],
