@@ -59,6 +59,12 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# PEP 561. The package's inline annotations are part of its interface, and the
+# marker only reaches a wheel if it is declared: it is not a module, and nothing
+# else here tells setuptools to ship a non-Python file.
+[tool.setuptools.package-data]
+engcore = ["py.typed"]
+
 [tool.pytest.ini_options]
 # The project uses a src/ layout. Tests must resolve engcore from the checked-out
 # source tree even when the package has not been installed in editable mode.
