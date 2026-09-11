@@ -1,0 +1,25 @@
+{
+  "fixture_id": "EVF-CELL-1",
+  "what_this_is": "One 18650-format lithium-ion cell discharged at constant current, written the way a cell datasheet writes it.",
+  "why_these_numbers": "2600 mAh and a 45 mOhm DC resistance are ordinary figures for the format. The affine open-circuit curve is the Core's declared model, not a claim about a real cell, which is why nothing here is called a measurement. The discharge current is 0.2C and the cutoff is a common protection threshold.",
+  "evidence_level": "LEVEL 5 - independent analytical. The cell parameters are representative, not measured; no comparison in this round is labelled empirical because of them.",
+  "quantities": {
+    "nominal_capacity_mAh": 2600.0,
+    "internal_resistance_mOhm": 45.0,
+    "open_circuit_voltage_at_full_mV": 4180.0,
+    "open_circuit_voltage_at_empty_mV": 3000.0,
+    "coulombic_efficiency": 0.985,
+    "discharge_current_mA": 520.0,
+    "initial_state_of_charge": 0.92,
+    "cell_temperature_degC": 25.0,
+    "duration_min": 45.0,
+    "cutoff_voltage_mV": 3300.0,
+    "peukert_exponent": 1.06,
+    "peukert_reference_current_mA": 260.0
+  },
+  "derivations_left_to_the_adapters": [
+    "capacity in coulombs from mAh",
+    "absolute cell temperature from degC",
+    "everything in the milli- prefix"
+  ]
+}
