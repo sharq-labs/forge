@@ -27,11 +27,13 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
-from ..units.quantity import dimensionality
+from ..units.quantity import Quantity, dimensionality
 from .definition import FieldDefinition
 from .mesh import CANONICAL_LENGTH, StructuredMesh
+from .result import FieldRecord
 
 FIELD_TRANSFER_SCHEMA = schema_string("field_transfer_contract")
+FIELD_DEPENDENCY_SCHEMA = schema_string("field_dependency")
 
 
 class TransferKind(str, Enum):
@@ -118,6 +120,146 @@ class FieldTransferContract:
             kind=TransferKind(payload["kind"]),
             verdict=FieldTransferVerdict(payload["verdict"]),
             reason=payload["reason"],
+        )
+
+
+@dataclass(frozen=True)
+class FieldDependency:
+    """``target_problem.target_field`` is supplied by ``source_problem.source_field``.
+
+    The same statement ``QuantityDependency`` makes for a scalar, for a thing
+    that has a support. It is a *declaration*: it says what is expected to
+    cross and in what form, and resolves nothing.
+
+    ``kind`` is the field this record exists for. A consumer that wants the
+    field and a consumer that wants a number summarising it are two different
+    consumers, and until something states which, a produced field and its own
+    mean are interchangeable at the boundary — a summary silently standing in
+    for the distribution it summarises is the failure this names.
+    """
+
+    source_problem_id: str
+    source_field: str
+    target_problem_id: str
+    target_field: str
+    kind: TransferKind = TransferKind.FIELD_TRANSFER
+    name: str = ""
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        for label in (
+            "source_problem_id",
+            "source_field",
+            "target_problem_id",
+            "target_field",
+        ):
+            text = str(getattr(self, label)).strip()
+            if not text:
+                raise InvalidScientificProblem(
+                    f"a field dependency requires a non-empty {label}"
+                )
+            object.__setattr__(self, label, text)
+        object.__setattr__(self, "kind", TransferKind(self.kind))
+        object.__setattr__(
+            self,
+            "name",
+            str(self.name).strip()
+            or f"{self.source_problem_id}.{self.source_field}"
+            f"->{self.target_problem_id}.{self.target_field}",
+        )
+
+    def admit(self, offered: Any) -> None:
+        """Refuse a crossing whose *form* is not the form that was declared.
+
+        Before any question about supports, units or resolution: is this even
+        the kind of thing the consumer asked for? A ``FieldRecord`` offered to
+        a scalar dependency and a ``Quantity`` offered to a field dependency
+        are both wrong, and neither is caught by any check that compares
+        dimensions — the mean of a temperature field is a temperature.
+        """
+        if self.kind is TransferKind.FIELD_TRANSFER:
+            if isinstance(offered, Quantity):
+                raise InvalidScientificProblem(
+                    f"dependency {self.name!r} declares a field transfer and was "
+                    f"offered the scalar {offered}; a summary of a field is not "
+                    f"the field, and carries the same dimension as one"
+                )
+            if not isinstance(offered, FieldRecord):
+                raise InvalidScientificProblem(
+                    f"dependency {self.name!r} declares a field transfer and was "
+                    f"offered {type(offered).__name__}"
+                )
+            if offered.definition.field_id != self.source_field:
+                raise InvalidScientificProblem(
+                    f"dependency {self.name!r} names {self.source_field!r} as its "
+                    f"source and was offered {offered.definition.field_id!r}"
+                )
+            return
+        if isinstance(offered, FieldRecord):
+            raise InvalidScientificProblem(
+                f"dependency {self.name!r} declares a scalar transfer and was "
+                f"offered the field {offered.definition.field_id!r} on "
+                f"{offered.shape}; which number of it was meant is not stated "
+                f"anywhere, and picking one here would be inventing the answer"
+            )
+        if not isinstance(offered, Quantity):
+            raise InvalidScientificProblem(
+                f"dependency {self.name!r} declares a scalar transfer and was "
+                f"offered {type(offered).__name__}"
+            )
+
+    def resolve(
+        self,
+        producer: FieldDefinition,
+        producer_mesh: StructuredMesh,
+        consumer: FieldDefinition,
+        consumer_mesh: StructuredMesh,
+    ) -> FieldTransferContract:
+        """The contract for this declaration's two sides.
+
+        Refuses a producer or consumer that is not the field this dependency
+        names, so a contract cannot be obtained for one pair and quoted for
+        another.
+        """
+        if self.kind is not TransferKind.FIELD_TRANSFER:
+            raise InvalidScientificProblem(
+                f"dependency {self.name!r} declares a {self.kind.value} and has "
+                f"no field contract to resolve"
+            )
+        for label, definition, expected in (
+            ("source", producer, self.source_field),
+            ("target", consumer, self.target_field),
+        ):
+            if definition.field_id != expected:
+                raise InvalidScientificProblem(
+                    f"dependency {self.name!r} names {expected!r} as its {label} "
+                    f"and was given {definition.field_id!r}"
+                )
+        return check_field_transfer(producer, producer_mesh, consumer, consumer_mesh)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": FIELD_DEPENDENCY_SCHEMA,
+            "source_problem_id": self.source_problem_id,
+            "source_field": self.source_field,
+            "target_problem_id": self.target_problem_id,
+            "target_field": self.target_field,
+            "kind": self.kind.value,
+            "name": self.name,
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "FieldDependency":
+        require_schema(payload, FIELD_DEPENDENCY_SCHEMA)
+        return cls(
+            source_problem_id=payload["source_problem_id"],
+            source_field=payload["source_field"],
+            target_problem_id=payload["target_problem_id"],
+            target_field=payload["target_field"],
+            kind=TransferKind(payload["kind"]),
+            name=payload.get("name", ""),
+            description=payload.get("description", ""),
         )
 
 

@@ -59,7 +59,9 @@ from .result import (
     FieldSummary,
 )
 from .transfer import (
+    FIELD_DEPENDENCY_SCHEMA,
     FIELD_TRANSFER_SCHEMA,
+    FieldDependency,
     FieldTransferContract,
     FieldTransferVerdict,
     TransferKind,
@@ -73,7 +75,9 @@ __all__ = [
     "FIELD_INITIAL_CONDITION_SCHEMA",
     "FIELD_RECORD_SCHEMA",
     "FIELD_SUMMARY_SCHEMA",
+    "FIELD_DEPENDENCY_SCHEMA",
     "FIELD_TRANSFER_SCHEMA",
+    "FieldDependency",
     "MESH_SCHEMA",
     "MINIMUM_NODES",
     "REGION_SCHEMA",
