@@ -1,0 +1,163 @@
+CB-10 EVIDENCE — the scientific boundary guards, run BEFORE the fixes.
+
+Captured from `pytest benchmarks/capability_boundary/tests -q` on the tree as
+found, with the three capability-boundary defects live. Five of nine guards
+fail here; the four that pass are the boundaries this round examined and found
+already sound, and they are recorded for the same reason the failures are.
+
+After the fixes the same suite is green. Kept as a file rather than described,
+because "the test failed before the fix" is a claim a reader should be able to
+check rather than take.
+
+================================================================================
+
+FFFFF....                                                                [100%]
+=================================== FAILURES ===================================
+________ test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero ________
+
+    def test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero():
+        """R(T) = R_ref (1 + alpha (T - T_ref)) goes negative past the crossing.
+    
+        The record's own input description admits a negative alpha and justifies
+        it by "the band is how far that tangent is claimed to carry". Past the
+        zero crossing the expression does not describe a poor conductor but a
+        negative one, which is not a resistance at all.
+    
+        The rated sibling already declares this bound and states the reason: "The
+        bound is the physics of the quantity, not a tolerance." Nothing extra has
+        to be declared for it — the multiplier is computable from the three inputs
+        this record already requires.
+        """
+        from engcore.domains.electrical import material as M
+    
+        conductor = M.TemperatureDependentConductor(
+            component_id="S1",
+            reference_resistance=Q(1000.0, "ohm"),
+            temperature_coefficient=Q(-0.01, "1 / kelvin"),
+            reference_temperature=Q(300.0, "kelvin"),
+            limits=M.MaterialLimits(),
+        )
+        problem = M.build_resistance_problem(conductor)
+    
+        # Comfortably inside the line's positive half: applicable.
+        inside = M.assess_resistance_validity(problem, Q(380.0, "kelvin"))
+        assert inside.status.name == "IN_DOMAIN", inside.status
+    
+        # On the crossing and past it: the model must not call itself applicable.
+        for kelvin in (400.0, 420.0, 449.0):
+            assessment = M.assess_resistance_validity(problem, Q(kelvin, "kelvin"))
+>           assert assessment.status.name != "IN_DOMAIN", (
+                f"at {kelvin} K the model reports {assessment.status.name} while "
+                f"its own expression yields "
+                f"{1000.0 * (1.0 + -0.01 * (kelvin - 300.0)):.1f} ohm"
+            )
+E           AssertionError: at 400.0 K the model reports IN_DOMAIN while its own expression yields 0.0 ohm
+E           assert 'IN_DOMAIN' != 'IN_DOMAIN'
+E            +  where 'IN_DOMAIN' = <ValidityStatus.IN_DOMAIN: 'in_domain'>.name
+E            +    where <ValidityStatus.IN_DOMAIN: 'in_domain'> = ValidityAssessment(status=<ValidityStatus.IN_DOMAIN: 'in_domain'>, satisfied=('temperature', 'reference_resistance'), violated=(), unknown=(), unknown_reasons=()).status
+
+benchmarks/capability_boundary/tests/test_capability_boundary.py:51: AssertionError
+_ test_the_linear_tcr_bound_is_unknown_rather_than_satisfied_without_a_temperature _
+
+    def test_the_linear_tcr_bound_is_unknown_rather_than_satisfied_without_a_temperature():
+        """A bound nobody can evaluate must not be awarded by default."""
+        from engcore.domains.electrical.material import LINEAR_TCR_MODEL
+    
+        assessment = LINEAR_TCR_MODEL.assess_validity(
+            declared={"reference_resistance": Q(100.0, "ohm")}, assembled={}
+        )
+>       assert "linear_resistance_ratio" in assessment.unknown, assessment.unknown
+E       AssertionError: ('temperature',)
+E       assert 'linear_resistance_ratio' in ('temperature',)
+E        +  where ('temperature',) = ValidityAssessment(status=<ValidityStatus.UNKNOWN: 'unknown'>, satisfied=('reference_resistance',), violated=(), unkno...nknown_reasons=(UnknownCondition(name='temperature', reason=<UnknownReason.NOT_SUPPLIED: 'not_supplied'>, detail=''),)).unknown
+
+benchmarks/capability_boundary/tests/test_capability_boundary.py:65: AssertionError
+_ test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope _
+
+    def test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope():
+        """Z = T + beta C_A is an invariant of the balances, not of the rate law.
+    
+        Adding beta times the species balance to the energy balance cancels the
+        reaction term identically: dZ/dt = (Z_f - Z)/tau - gamma (T - T_c) carries
+        no k. The ceiling therefore bounds the constant-rate model exactly as it
+        bounds the Arrhenius one, and the constant-rate record claims the "Same
+        single-phase CSTR envelope as the primary model".
+        """
+        from engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
+        from engcore.domains.kinetics.cstr.problem import CSTR_MODEL
+    
+        context = _over_ceiling_run().validity_context()
+        ceiling = context.assembled["adiabatic_ceiling_temperature"].magnitude_in("kelvin")
+        assert ceiling > 1000.0, ceiling
+    
+        primary = context.assess(CSTR_MODEL)
+        assert primary.status.name == "OUTSIDE_VALIDATED_DOMAIN"
+        assert "adiabatic_ceiling_temperature" in primary.violated
+    
+        constant_rate = context.assess(CONSTANT_RATE_CSTR_MODEL)
+>       assert "adiabatic_ceiling_temperature" in constant_rate.violated, (
+            f"the constant-rate model reports {constant_rate.status.name} with "
+            f"violated={constant_rate.violated} for a declaration whose exact "
+            f"invariant ceiling is {ceiling:.0f} K, while its own temperature "
+            f"condition declares 250-1000 K and its validity description claims "
+            f"the same envelope as the primary model"
+        )
+E       AssertionError: the constant-rate model reports UNKNOWN with violated=() for a declaration whose exact invariant ceiling is 2442 K, while its own temperature condition declares 250-1000 K and its validity description claims the same envelope as the primary model
+E       assert 'adiabatic_ceiling_temperature' in ()
+E        +  where () = ValidityAssessment(status=<ValidityStatus.UNKNOWN: 'unknown'>, satisfied=('temperature', 'concentration', 'residence_t...), unknown_reasons=(UnknownCondition(name='k_const', reason=<UnknownReason.NOT_SUPPLIED: 'not_supplied'>, detail=''),)).violated
+
+benchmarks/capability_boundary/tests/test_capability_boundary.py:124: AssertionError
+____ test_the_constant_rate_cstr_reserves_the_ceiling_its_sibling_computes _____
+
+    def test_the_constant_rate_cstr_reserves_the_ceiling_its_sibling_computes():
+        """A quantity a model does not reserve is a quantity it can never read."""
+        from engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
+    
+>       assert (
+            "adiabatic_ceiling_temperature" in CONSTANT_RATE_CSTR_MODEL.derived_quantities
+        ), sorted(CONSTANT_RATE_CSTR_MODEL.derived_quantities)
+E       AssertionError: ['concentration', 'temperature']
+E       assert 'adiabatic_ceiling_temperature' in frozenset({'concentration', 'temperature'})
+E        +  where frozenset({'concentration', 'temperature'}) = ScientificModelDefinition(model_id='kinetics.cstr.nonisothermal_first_order_constant_rate', version='0.1.0', name='Non...thermal_transient'}), validation_status=<ModelValidationStatus.UNVALIDATED: 'unvalidated'>, metadata=FrozenMapping({})).derived_quantities
+
+benchmarks/capability_boundary/tests/test_capability_boundary.py:156: AssertionError
+___ test_the_runtime_model_refuses_a_cutoff_above_where_the_discharge_starts ___
+
+    def test_the_runtime_model_refuses_a_cutoff_above_where_the_discharge_starts():
+        """t = (z_0 - z_stop) eta Q_nom / I is negative when z_stop > z_0.
+    
+        A discharge at constant current walks z monotonically down -- the record's
+        own first assumption is "discharge only" -- so a cutoff above the starting
+        state is never reached, and the time to reach it is not a number this
+        model may report as applicable.
+        """
+        from engcore.domains.battery.cell import assess_runtime_validity
+        from engcore.domains.battery.solver import evaluate_step
+    
+        cell, load, problem = _runtime_declaration(cutoff_soc=0.8, initial_soc=0.3)
+        step = evaluate_step(cell, load)
+        assert step.runtime_to_cutoff < 0.0, step.runtime_to_cutoff
+    
+        assessment = assess_runtime_validity(
+            problem,
+            state_of_charge=Q(0.3, "dimensionless"),
+            discharge_current=Q(1.0, "ampere"),
+            cell_temperature=Q(298.15, "kelvin"),
+        )
+>       assert assessment.status.name != "IN_DOMAIN", (
+            f"the model reports {assessment.status.name} for a declaration whose "
+            f"own equation yields a runtime of {step.runtime_to_cutoff:.0f} s"
+        )
+E       AssertionError: the model reports IN_DOMAIN for a declaration whose own equation yields a runtime of -4500 s
+E       assert 'IN_DOMAIN' != 'IN_DOMAIN'
+E        +  where 'IN_DOMAIN' = <ValidityStatus.IN_DOMAIN: 'in_domain'>.name
+E        +    where <ValidityStatus.IN_DOMAIN: 'in_domain'> = ValidityAssessment(status=<ValidityStatus.IN_DOMAIN: 'in_domain'>, satisfied=('cutoff_consistency_margin', 'continuous_c_rate_utilization', 'soc_window_margin'), violated=(), unknown=(), unknown_reasons=()).status
+
+benchmarks/capability_boundary/tests/test_capability_boundary.py:219: AssertionError
+=========================== short test summary info ============================
+FAILED benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero
+FAILED benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_linear_tcr_bound_is_unknown_rather_than_satisfied_without_a_temperature
+FAILED benchmarks/capability_boundary/tests/test_capability_boundary.py::test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope
+FAILED benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_constant_rate_cstr_reserves_the_ceiling_its_sibling_computes
+FAILED benchmarks/capability_boundary/tests/test_capability_boundary.py::test_the_runtime_model_refuses_a_cutoff_above_where_the_discharge_starts
+5 failed, 4 passed in 1.13s
