@@ -1,0 +1,489 @@
+{
+  "by_class": {
+    "COEFFICIENT_DEFECT": {
+      "caught": 2,
+      "total": 2
+    },
+    "CONSERVATION_DEFECT": {
+      "caught": 1,
+      "total": 1
+    },
+    "NUMERICAL_METHOD_DEFECT": {
+      "caught": 1,
+      "total": 1
+    },
+    "SIGN_CONVENTION_DEFECT": {
+      "caught": 2,
+      "total": 2
+    },
+    "SOLVER_INDEPENDENCE_DEFECT": {
+      "caught": 1,
+      "total": 1
+    },
+    "TEST_ORACLE_DEFECT": {
+      "caught": 1,
+      "total": 1
+    },
+    "UNIT_CONVERSION_DEFECT": {
+      "caught": 1,
+      "total": 1
+    }
+  },
+  "caught": 9,
+  "control": {
+    "green": true,
+    "id": "CONTROL",
+    "per_family": {
+      "battery_rows": {
+        "detail": [],
+        "dirty": 0
+      },
+      "cstr_limits_and_signs": {
+        "detail": [],
+        "dirty": 0
+      },
+      "cstr_rows": {
+        "detail": [],
+        "dirty": 0
+      },
+      "diffusion_rows": {
+        "detail": [],
+        "dirty": 0
+      },
+      "independence": {
+        "detail": [],
+        "dirty": 0
+      },
+      "lumped_rows": {
+        "detail": [],
+        "dirty": 0
+      },
+      "material_rows": {
+        "detail": [],
+        "dirty": 0
+      }
+    },
+    "status": "GREEN"
+  },
+  "missed": [],
+  "results": [
+    {
+      "breaks": "beta loses its minus sign, so an exothermic reaction COOLS the tank and an endothermic one heats it. Every record still says the same thing, every validity condition still holds, and the temperatures returned are entirely plausible",
+      "caught": true,
+      "class": "SIGN_CONVENTION_DEFECT",
+      "detector": "cstr_limits_and_signs",
+      "file": "src/engcore/domains/kinetics/cstr/problem.py",
+      "findings": {
+        "detail": [
+          {
+            "check": "limit",
+            "limit": "UA -> 0: adiabatic, so T rises by beta times the conversion",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "verdict": "LIMIT_WRONG"
+          },
+          {
+            "case": "endothermic reaction (dH > 0) with no jacket",
+            "check": "sign",
+            "invariant": "an endothermic reaction absorbs heat and lowers the temperature",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "verdict": "SIGN_WRONG"
+          }
+        ],
+        "dirty": 2
+      },
+      "id": "STP-1",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "the approach to steady state is reflected: a cooling body overshoots past its ambient instead of settling on it",
+      "caught": true,
+      "class": "SIGN_CONVENTION_DEFECT",
+      "detector": "lumped_rows",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "nominal heated body",
+            "check": "reference_case",
+            "model": "thermal.lumped.first_order_capacity",
+            "relative_error": 0.00019412840234678104,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "nominal heated body: first law over the interval",
+            "check": "conservation",
+            "model": "thermal.lumped.first_order_capacity",
+            "verdict": "FAIL"
+          },
+          {
+            "case": "no heat input, pure decay",
+            "check": "reference_case",
+            "model": "thermal.lumped.first_order_capacity",
+            "relative_error": 0.2050643612611754,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "no heat input, pure decay: first law over the interval",
+            "check": "conservation",
+            "model": "thermal.lumped.first_order_capacity",
+            "verdict": "FAIL"
+          },
+          {
+            "case": "cooling from below ambient",
+            "check": "reference_case",
+            "model": "thermal.lumped.first_order_capacity",
+            "relative_error": 0.0554609171185425,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "cooling from below ambient: first law over the interval",
+            "check": "conservation",
+            "model": "thermal.lumped.first_order_capacity",
+            "verdict": "FAIL"
+          }
+        ],
+        "dirty": 8
+      },
+      "id": "STP-2",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "Joule's law becomes I R^2 instead of I^2 R -- dimensionally wrong and numerically plausible at any operating point where I and R are close",
+      "caught": true,
+      "class": "COEFFICIENT_DEFECT",
+      "detector": "battery_rows",
+      "file": "src/engcore/domains/battery/solver.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "nominal Li-ion half hour: Joule heat",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.9650000000000001,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "lossy cell, eta = 0.95: Joule heat",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.9824999999999999,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "nearly flat OCV, LFP-like: Joule heat",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.998,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "vanishing current: Joule heat",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 34999999.00000001,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "high rate: Joule heat",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.9949999999999999,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "small capacity, long horizon: Joule heat",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 1.0,
+            "verdict": "DISAGREE"
+          }
+        ],
+        "dirty": 6
+      },
+      "id": "STP-3",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "the ampere-hour conversion is out by a thousand, so every state of charge falls a thousand times too slowly. Charge conservation is broken by exactly that factor",
+      "caught": true,
+      "class": "UNIT_CONVERSION_DEFECT",
+      "detector": "battery_rows",
+      "file": "src/engcore/domains/battery/solver.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "nominal Li-ion half hour",
+            "check": "reference_case",
+            "model": "battery.cell.coulomb_counting",
+            "relative_error": 0.2854285714285716,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "nominal Li-ion half hour: OCV on the chord",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.06243750000000011,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "nominal Li-ion half hour: terminal voltage",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.06301182654402114,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "nominal Li-ion half hour: charge balance",
+            "check": "conservation",
+            "model": "battery.cell.coulomb_counting",
+            "verdict": "FAIL"
+          },
+          {
+            "case": "lossy cell, eta = 0.95",
+            "check": "reference_case",
+            "model": "battery.cell.coulomb_counting",
+            "relative_error": 0.3567857142857143,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "lossy cell, eta = 0.95: OCV on the chord",
+            "check": "reference_case",
+            "model": "battery.cell.rint_ocv",
+            "relative_error": 0.06807495741056223,
+            "verdict": "DISAGREE"
+          }
+        ],
+        "dirty": 24
+      },
+      "id": "STP-4",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "three per cent of the reactant consumed by the energy balance is not removed from the species balance, so the exact invariant Z = T + beta C_A stops being invariant and the reactor creates energy from nothing",
+      "caught": true,
+      "class": "CONSERVATION_DEFECT",
+      "detector": "cstr_rows",
+      "file": "src/engcore/domains/kinetics/cstr/solver.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "cooled, from the feed state: final C_A",
+            "check": "reference_case",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "relative_error": 0.014922550029514989,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "cooled, from the feed state: final T",
+            "check": "reference_case",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "relative_error": 4.573938433048908e-05,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "cooled, from the feed state: the endpoint sits on an algebraic steady state",
+            "check": "cross_oracle",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "relative_error": 4.5739382683089987e-05,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "cooled, hot start: the endpoint sits on an algebraic steady state",
+            "check": "cross_oracle",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "relative_error": 4.573937697859465e-05,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "cooled, hot start: the invariant ceiling on T",
+            "check": "conservation",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "verdict": "FAIL"
+          },
+          {
+            "case": "weakly cooled: the endpoint sits on an algebraic steady state",
+            "check": "cross_oracle",
+            "model": "kinetics.cstr.nonisothermal_first_order",
+            "relative_error": 0.0012466989001126045,
+            "verdict": "DISAGREE"
+          }
+        ],
+        "dirty": 13
+      },
+      "id": "STP-5",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "the Fourier number carries a two per cent error, which degrades the scheme's accuracy without making it unstable or non-convergent: the solve still converges, just to the wrong answer",
+      "caught": true,
+      "class": "NUMERICAL_METHOD_DEFECT",
+      "detector": "diffusion_rows",
+      "file": "src/engcore/domains/thermal/conduction1d/solver.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "one diffusion time, fine mesh",
+            "check": "reference_case",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 0.11158206262766115,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "early time, fine mesh",
+            "check": "reference_case",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 0.011769697081596385,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "long time, fine mesh",
+            "check": "reference_case",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 0.32576325723587973,
+            "verdict": "DISAGREE"
+          }
+        ],
+        "dirty": 3
+      },
+      "id": "STP-6",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "a coefficient error of one part in ten million -- far too small for any reference value to notice, and seven orders of magnitude above the 50-digit arithmetic's resolution",
+      "caught": true,
+      "class": "COEFFICIENT_DEFECT",
+      "detector": "material_rows",
+      "file": "src/engcore/domains/electrical/material.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "copper-like, warm",
+            "check": "high_precision",
+            "model": "electrical.material.linear_tcr_resistance",
+            "relative_error": 1.554913555433877e-08,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "copper-like, cold",
+            "check": "high_precision",
+            "model": "electrical.material.linear_tcr_resistance",
+            "relative_error": 4.8539742757608086e-08,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "platinum RTD",
+            "check": "high_precision",
+            "model": "electrical.material.linear_tcr_resistance",
+            "relative_error": 2.7797834029003985e-08,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "negative coefficient, mild",
+            "check": "high_precision",
+            "model": "electrical.material.linear_tcr_resistance",
+            "relative_error": 7.526881709229361e-09,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "near the zero crossing",
+            "check": "high_precision",
+            "model": "electrical.material.linear_tcr_resistance",
+            "relative_error": 0.00499992502082362,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "tiny reference resistance",
+            "check": "high_precision",
+            "model": "electrical.material.linear_tcr_resistance",
+            "relative_error": 2.994255297083498e-08,
+            "verdict": "DISAGREE"
+          }
+        ],
+        "dirty": 7
+      },
+      "id": "STP-7",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "THE ORACLE ITSELF is given the wrong eigenvalue -- the second mode instead of the first. The audit must not silently agree with a broken oracle, and its second, independent FTCS oracle is what catches this",
+      "caught": true,
+      "class": "TEST_ORACLE_DEFECT",
+      "detector": "diffusion_rows",
+      "file": "benchmarks/scientific_truth/oracles/diffusion.py",
+      "findings": {
+        "detail": [
+          {
+            "case": "one diffusion time, fine mesh",
+            "check": "reference_case",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 51929937.30592473,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "one diffusion time, fine mesh: explicit FTCS against the closed form",
+            "check": "cross_oracle",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 51920643.42569138,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "early time, fine mesh",
+            "check": "reference_case",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 4.909331507353077,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "early time, fine mesh: explicit FTCS against the closed form",
+            "check": "cross_oracle",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 4.90927236191942,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "long time, fine mesh",
+            "check": "reference_case",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 5.225693799301981e+25,
+            "verdict": "DISAGREE"
+          },
+          {
+            "case": "long time, fine mesh: explicit FTCS against the closed form",
+            "check": "cross_oracle",
+            "model": "thermal.conduction1d.linear_diffusion",
+            "relative_error": 5.2215596601377625e+25,
+            "verdict": "DISAGREE"
+          }
+        ],
+        "dirty": 6
+      },
+      "id": "STP-8",
+      "status": "DETECTED"
+    },
+    {
+      "breaks": "an oracle is rewritten to import the very solver it checks. The independence tracer must see that the audit's own oracle has stopped being independent",
+      "caught": true,
+      "class": "SOLVER_INDEPENDENCE_DEFECT",
+      "detector": "independence",
+      "file": "benchmarks/scientific_truth/oracles/dc.py",
+      "findings": {
+        "detail": [
+          {
+            "imports_engcore": true,
+            "oracle_module": "benchmarks.scientific_truth.oracles.dc",
+            "verdict": "IMPORTS_CORE",
+            "what_it_is": "incidence-matrix nodal solve + ngspice"
+          }
+        ],
+        "dirty": 1
+      },
+      "id": "STP-9",
+      "status": "DETECTED"
+    }
+  ],
+  "schema": "scientific_truth_planted_defects/1",
+  "total": 9,
+  "two_plants_target_the_audit_itself": "STP-8 corrupts one of this audit's own oracles and STP-9 couples another to the code it checks. An audit that cannot catch its own oracles going wrong has no business reporting that the Core is right -- and this round has already had five audit defects.",
+  "what_this_is": "Falsification of this round's own oracles. Each plant is a mathematical defect of one adjudicated class, made in a temporary copy of the repository and discarded with it.",
+  "why_these_are_not_the_earlier_rounds_plants": "Every plant here leaves the published record, the validity conditions and the software contract completely intact and changes only the mathematics. Neither a record check nor a capability-boundary check can see any of them."
+}
