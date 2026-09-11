@@ -133,6 +133,11 @@ SCIENTIFIC_THRESHOLD_DECLARATIONS = MappingProxyType({
     }),
 })
 
+#: ``thermal_models.conduction2d`` is deliberately absent. Its gate declares
+#: thresholds and reports every residual against them, and awards no level at
+#: all — so registering it would grant an authority it does not exercise. See
+#: that module's ``CONDUCTION2D_GATE_THRESHOLDS`` for the argument.
+
 assert _THRESHOLD_ATTRIBUTE == "SCIENTIFIC_THRESHOLD_DECLARATIONS", (
     f"the core looks for {_THRESHOLD_ATTRIBUTE!r}; this package defines "
     f"SCIENTIFIC_THRESHOLD_DECLARATIONS"

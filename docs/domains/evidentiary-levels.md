@@ -40,20 +40,29 @@ point of the table rather than a shortfall in it.
 |---|---|---|
 | earnable now (implemented) | **1** | **0** |
 | earnable later | **4** | **1** |
-| never earnable by this check | **16** | **9** |
-| **total audited** | **21** | **10** |
+| never earnable by this check | **17** | **9** |
+| **total audited** | **22** | **10** |
 
-**Checks that pass today while establishing nothing: 16.** That is the number
-the audit exists to report, and the arithmetic behind it is: 21 rows, minus the
+**Checks that pass today while establishing nothing: 17.** That is the number
+the audit exists to report, and the arithmetic behind it is: 22 rows, minus the
 4 whole-report routes, minus `metric_dimensions` (which now establishes
-`DIMENSIONALLY_VALID`), leaves 17 check rows; minus `cell_step_evaluated`,
-which is emitted only on the unsuccessful path and so never passes, leaves 16.
-Fifteen are in the *never* category and one — `rint_terminal_residual` — is
+`DIMENSIONALLY_VALID`), leaves 18 check rows; minus `cell_step_evaluated`,
+which is emitted only on the unsuccessful path and so never passes, leaves 17.
+Sixteen are in the *never* category and one — `rint_terminal_residual` — is
 *earnable later*.
+
+**The third pass added exactly one row**, for the structured 2-D conduction
+model built during the field/PDE architecture spike. The *of which added this
+pass* column above still describes the second pass; the third pass's single
+addition is the `field_linear_system_residual` row below. Its other two checks
+reuse names this audit has already ruled on — `field_finite` and
+`boundary_conditions_held` — deliberately, because they are the same claims
+about the same kind of evidence, and a second name for one of them would have
+split a settled verdict in two.
 
 One more sits outside `domains/**` and is visible in the product's own default
 run: `declared_limits_are_mutually_consistent`, assembled at the MCP boundary.
-It is not in the 16 because it is out of scope, and it is reasoned about under
+It is not in the 17 because it is out of scope, and it is reasoned about under
 *Found while auditing* so the next pass over that boundary does not start
 cold.
 
@@ -181,6 +190,18 @@ solver beside it, which attains `DIMENSIONALLY_VALID` and nothing else.
 | `amplitude_decay` | **never earnable by this check** | The discrete maximum principle: diffusion cannot amplify, so max\|u\| may not exceed the initial amplitude of 1. A genuinely good check — it is a property of the *equation* rather than of any scheme, so it catches a scheme run outside its stability envelope without being told which scheme ran. It is still not evidence about the answer. **Stability is not convergence**: Lax equivalence needs consistency as well, and this check establishes neither consistency nor a refinement sequence. A stable scheme marching a wrong problem decays exactly as obediently. There is no level for "did not blow up", and inventing one would make `NUMERICALLY_CONVERGED` mean two different things. |
 | `boundary_conditions_held` | **never earnable by this check** | The homogeneous Dirichlet values are held to 1e-14. The scheme imposing its own constraint, read back — the same shape as `voltage_source_relation` in the DC table and the same verdict for the same reason: a satisfied constraint is not an independently obtained solution. |
 | *(the whole report)* — a refinement study | **earnable later** | The one route to `NUMERICALLY_CONVERGED` here, and the module already says so: `discretization_convergence` is emitted `NOT_RUN` with the detail *"convergence under refinement is a claim about a sequence of solves and cannot be established by one"*, which is the correct shape and the honest one. The frozen conduction solver does exactly this and is the pattern to copy. **Cost: a report becomes N solves rather than one**, since the sequence has to refine `dx` and `dt` together and recover an observed order of accuracy — and for the explicit FTCS scheme the stability constraint ties `dt` to `dx²`, so halving `dx` quarters `dt` and each refinement level costs four times the work rather than two. That is a real decision about what a solve costs, not a missing function. **Explicitly rejected as an alternative**: comparing a single coarse march against a closed-form solution of the same PDE. Such a form is available and the route is genuinely independent, but the difference between it and the march is the scheme's *truncation error*, which is O(dt) rather than round-off, so the tolerance would have to be a truncation-error estimate — and any tolerance loose enough to let a coarse run pass would be a bound chosen from the answer. That is the failure mode this repository has already paid for three times, in `Fo = 0.2`, in beryllium's `θ_D/3` and in `Damköhler ≤ 10`. |
+
+### Thermal models — `src/engcore/domains/thermal_models/conduction2d.py`
+
+Added by the third pass. A structured-grid 2-D steady conduction model, solved
+by a direct sparse factorisation. It emits three checks; two reuse audited
+names and carry those rows' verdicts unchanged, and one is new.
+
+| Check | Category | Decision |
+|---|---|---|
+| `field_linear_system_residual` | **never earnable by this check** | max\|A T − b\| / max\|b\| after the factorisation. **This row exists to refuse the level rather than to award it.** The DC domain awards `NUMERICALLY_CONVERGED` from a linear residual, and the *Found while auditing* section below already records why that is wrong, quoting the frozen conduction validation: the linear residual of a direct sparse factorization sits at round-off in every run, coarse or fine, so treating it as convergence would certify the coarse solve exactly as confidently as the fine one. This model is the same solver kind on the same equation, so it takes the same answer: the check reports its residual, states which declared threshold set it was judged against, and establishes nothing. Its gate is deliberately absent from `SCIENTIFIC_THRESHOLD_DECLARATIONS`, because a registered set is one authorised to award a level and this one awards none. **Earnable later, and by a different route**: the manufactured-solution study in `tests/test_conduction2d_convergence.py` measures an observed order of accuracy ≈ 2.0 against two closed-form solutions, which is the evidence `NUMERICALLY_CONVERGED` would need — a claim about a *sequence* of solves, which no single solve can make. Wiring that sequence into a report is the same decision, at the same cost, as the refinement study described for `conduction1d_schemes.py` above. |
+| `field_finite` | **never earnable by this check** | The name and the verdict of the `conduction1d_schemes.py` row, reused unchanged. Every node value is finite; a number is a number. |
+| `boundary_conditions_held` | **never earnable by this check** | The name and the verdict of the `conduction1d_schemes.py` row, reused unchanged. The prescribed Dirichlet values are read back off the solved field. The scheme imposing its own constraint and confirming it — a satisfied constraint is not an independently obtained solution. |
 
 ### Thermal models — `src/engcore/domains/thermal_models/lumped.py`
 
