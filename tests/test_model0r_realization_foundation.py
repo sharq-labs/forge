@@ -300,8 +300,8 @@ def test_solver_registry_deduplicates_identically_named_capabilities():
 
     registry = SolverRegistry(
         [
-            _Solver("a", {SolverCapability("core:pde", "one wording")}),
-            _Solver("b", {SolverCapability("core:pde", "another wording")}),
+            lambda: _Solver("a", {SolverCapability("core:pde", "one wording")}),
+            lambda: _Solver("b", {SolverCapability("core:pde", "another wording")}),
         ]
     )
     assert registry.capabilities() == frozenset({SolverCapability("core:pde")})

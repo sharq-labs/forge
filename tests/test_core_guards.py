@@ -1169,7 +1169,7 @@ def test_the_registry_refuses_a_solver_that_decides_its_own_support():
             return True
 
     with pytest.raises(TypeError, match="does not use the core support"):
-        SolverRegistry([_HandRolled()])
+        SolverRegistry([_HandRolled])
 
     from engcore.scientific.solvers.protocol import DeclaredSupport
 
@@ -1181,7 +1181,7 @@ def test_the_registry_refuses_a_solver_that_decides_its_own_support():
             return True
 
     with pytest.raises(TypeError, match="overrides supports"):
-        SolverRegistry([_Overrider()])
+        SolverRegistry([_Overrider])
 
 
 def _instantiate(cls):

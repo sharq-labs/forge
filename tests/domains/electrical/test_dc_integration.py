@@ -279,14 +279,14 @@ class _SecondDCSolver(ElectricalDCSolver):
 
 
 def test_registry_resolves_the_dc_solver():
-    registry = SolverRegistry([ElectricalDCSolver(), _UnrelatedSolver()])
+    registry = SolverRegistry([ElectricalDCSolver, _UnrelatedSolver])
     problem = build_dc_problem(_divider())
     resolved = registry.resolve(problem)
     assert resolved.identity.solver_id == "electrical.dc.mna"
 
 
 def test_registry_rejects_an_unrelated_problem():
-    registry = SolverRegistry([ElectricalDCSolver()])
+    registry = SolverRegistry([ElectricalDCSolver])
     ode_problem = ScientificProblem(
         problem_id="ode",
         variables=(ScientificVariable("x", "meter"),),
@@ -296,7 +296,7 @@ def test_registry_rejects_an_unrelated_problem():
 
 
 def test_registry_reports_ambiguity_and_honours_a_selection_rule():
-    registry = SolverRegistry([ElectricalDCSolver(), _SecondDCSolver()])
+    registry = SolverRegistry([ElectricalDCSolver, _SecondDCSolver])
     problem = build_dc_problem(_divider())
     _raises(AmbiguousSolverError, registry.resolve, problem)
 
