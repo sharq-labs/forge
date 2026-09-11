@@ -1,0 +1,54 @@
+{
+  "schema": "harness_falsification/1",
+  "control": {
+    "id": "F-0",
+    "injection": "none; the control",
+    "rows": 136,
+    "disagreements": 0,
+    "verdict": "GREEN"
+  },
+  "injections": [
+    {
+      "id": "F-1",
+      "injection": "every returned temperature biased by +5 percent",
+      "rows": 5,
+      "disagreements": 5,
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "F-2",
+      "injection": "the resistance-temperature slope 2 percent too steep",
+      "rows": 9,
+      "disagreements": 8,
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "F-3",
+      "injection": "one circuit out of five shifted by one part per million, the rest untouched",
+      "rows": 103,
+      "disagreements": 4,
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "F-4",
+      "injection": "every returned battery value multiplied by 1000",
+      "rows": 9,
+      "disagreements": 9,
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "F-5",
+      "injection": "the reactor integrated one percent past the declared end time",
+      "rows": 5,
+      "disagreements": 3,
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "F-6",
+      "injection": "every resistor current's sign inverted",
+      "rows": 103,
+      "disagreements": 17,
+      "verdict": "CAUGHT"
+    }
+  ]
+}
