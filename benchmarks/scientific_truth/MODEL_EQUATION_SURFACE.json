@@ -1,0 +1,571 @@
+{
+  "model_count": 16,
+  "models": [
+    {
+      "assumptions": [
+        "one uniform temperature",
+        "C and hA constant over the interval",
+        "one exchange path to one prescribed ambient"
+      ],
+      "asymptotics": "t -> 0 gives T_0; t -> infinity gives T_ss; hA -> infinity clamps to T_amb; hA -> 0 gives adiabatic heating at Q/C.",
+      "classification": "ODE, solved in closed form",
+      "derivation": "Energy balance on a body at one uniform temperature. Rearranging, dT/dt = -(hA/C)(T - T_amb - Q/hA) = -(T - T_ss)/tau with tau = C/hA and T_ss = T_amb + Q/hA, whose solution is the exponential above. Derived here; the implementation was read afterwards and evaluates exactly this.",
+      "dimensional_check": "tau = C/hA = (J/K)/(W/K) = J/W = s. T_ss = T_amb + Q/hA = K + W/(W/K) = K + K = K. The exponent t/tau = s/s is dimensionless, which is required for exp() to have an argument at all.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "thermal",
+      "entry_point": "LumpedThermalSolver.solve",
+      "existing_oracle": "none in-repo; this round supplies an RK4 integration",
+      "existing_tests": "tests/domains/thermal/ and the lumped invariants suite",
+      "expected_form": "C dT/dt = Q_in - hA (T - T_amb); T(t) = T_ss + (T_0 - T_ss) exp(-t/tau)",
+      "expected_output": "final temperature (K), steady state (K), time constant (s)",
+      "implementation_file": "src/engcore/domains/thermal_models/lumped.py",
+      "linearity": "linear, constant coefficients",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "numerical_method": "none: the analytic solution is evaluated with one math.exp",
+      "parameters": {
+        "C": "J/K, heat capacity",
+        "Q_in": "W, imposed heat",
+        "T_amb": "K, ambient temperature",
+        "hA": "W/K, conductance to ambient"
+      },
+      "sign_convention": "Q_in > 0 adds energy; the loss term is subtracted, so a body hotter than ambient cools. A sign slip on the loss term would make every body run away exponentially, which the limit checks would catch immediately.",
+      "status": "REVIEWED",
+      "steady_or_transient": "transient",
+      "tolerances": "not applicable; no iteration and no discretization",
+      "variables": {
+        "T": "kelvin",
+        "t": "second"
+      }
+    },
+    {
+      "assumptions": [
+        "one spatial dimension",
+        "no source term",
+        "homogeneous Dirichlet boundaries held exactly at zero",
+        "single-mode sinusoidal initial condition"
+      ],
+      "asymptotics": "t -> 0 returns the initial condition; t -> infinity decays to zero under homogeneous Dirichlet ends; alpha -> 0 freezes the profile. Refinement converges at first order in dt and second in dx.",
+      "classification": "PDE, discretized",
+      "derivation": "Separation of variables gives u = SUM b_n sin(n pi x/L) exp(-alpha (n pi/L)^2 t). The initial condition is already the first eigenfunction, so the series collapses to one term and the reference is exact to rounding.",
+      "dimensional_check": "alpha d2u/dx2 = (m^2/s)(1/m^2) x u = u/s = du/dt. The exponent alpha (pi/L)^2 t = (m^2/s)(1/m^2)(s) is dimensionless. The Fourier number alpha dt/dx^2 = (m^2/s)(s)/(m^2) is dimensionless, as a stability parameter must be.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "thermal",
+      "entry_point": "solve_slab",
+      "existing_oracle": "reference.py, the closed form, which a test asserts never imports the solver",
+      "existing_tests": "tests/domains/thermal/conduction1d/",
+      "expected_form": "du/dt = alpha d2u/dx2, u(0,t)=u(L,t)=0, u(x,0)=sin(pi x/L)",
+      "expected_output": "the normalized field, read at the midpoint",
+      "implementation_file": "src/engcore/domains/thermal/conduction1d/solver.py",
+      "linearity": "linear, constant diffusivity",
+      "model_id": "thermal.conduction1d.linear_diffusion",
+      "numerical_method": "backward Euler in time, second-order central differences in space; one sparse LU factorization reused every step",
+      "parameters": {
+        "L": "m, slab length",
+        "alpha": "m^2/s, diffusivity"
+      },
+      "sign_convention": "alpha > 0 is diffusion and smooths the profile; a negative alpha would be anti-diffusion and is ill-posed, which is why the record refuses it.",
+      "status": "REVIEWED",
+      "steady_or_transient": "transient",
+      "tolerances": "residual_atol 1e-10, boundary_atol 1e-14",
+      "variables": {
+        "t": "second",
+        "u": "dimensionless",
+        "x": "meter"
+      }
+    },
+    {
+      "assumptions": [
+        "constant current over the interval",
+        "no self-discharge",
+        "no feedback"
+      ],
+      "asymptotics": "I -> 0 leaves z unchanged; t -> 0 leaves z unchanged.",
+      "classification": "ODE with an exact integral",
+      "derivation": "Charge conservation. dz/dt = -I/(eta Q_nom) with the usable charge eta Q_nom; integrating a constant current is exact.",
+      "dimensional_check": "I t/(eta Q_nom) = (A)(s)/(A h) requires the hours conversion to be present; without it the term is 3600 times too large. The Core converts through its unit system and this audit's oracle divides by an explicit 3600, so the two disagree loudly if either is wrong.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "battery",
+      "entry_point": "evaluate_step",
+      "existing_oracle": "none in-repo; this round supplies charge conservation in coulombs",
+      "existing_tests": "tests/domains/battery/",
+      "expected_form": "z(t) = z_0 - I t / (eta Q_nom)",
+      "expected_output": "the state of charge at the end of the interval",
+      "implementation_file": "src/engcore/domains/battery/solver.py",
+      "linearity": "linear",
+      "model_id": "battery.cell.coulomb_counting",
+      "numerical_method": "none: the integral is exact for a constant current",
+      "parameters": {
+        "I": "A",
+        "Q_nom": "A*h",
+        "eta": "dimensionless coulombic efficiency"
+      },
+      "sign_convention": "I > 0 is a discharge and lowers z. eta sits in the DENOMINATOR, so a cell of efficiency below 1 depletes faster than an ideal one: the usable charge is eta Q_nom. That is a modelling choice and it is self-consistent -- the runtime equation uses the same eta Q_nom, which this round checks as a pair.",
+      "status": "REVIEWED",
+      "steady_or_transient": "transient",
+      "tolerances": "not applicable",
+      "variables": {
+        "t": "second",
+        "z": "dimensionless"
+      }
+    },
+    {
+      "assumptions": [
+        "one constant series resistance",
+        "affine OCV chord unless a curve is declared"
+      ],
+      "asymptotics": "I -> 0 gives V = OCV; R -> 0 gives V = OCV; z -> 0 gives V_e.",
+      "classification": "algebraic constitutive relation",
+      "derivation": "Kirchhoff's voltage law around one source in series with one resistance; Joule's law for the dissipation in that resistance.",
+      "dimensional_check": "I R = (A)(ohm) = V, so OCV - I R is volts minus volts. I^2 R = (A^2)(ohm) = W. A model that wrote I R^2 or I^2/R would be dimensionally wrong and is not.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "battery",
+      "entry_point": "evaluate_step",
+      "existing_oracle": "none in-repo; this round supplies KVL and Joule's law",
+      "existing_tests": "tests/domains/battery/",
+      "expected_form": "V = OCV(z) - I R_int, OCV(z) = V_e + (V_f - V_e) z, Q_gen = I^2 R_int",
+      "expected_output": "terminal voltage, open-circuit voltage, heat generation",
+      "implementation_file": "src/engcore/domains/battery/solver.py",
+      "linearity": "affine in z, linear in I",
+      "model_id": "battery.cell.rint_ocv",
+      "numerical_method": "none",
+      "parameters": {
+        "I": "ampere",
+        "R_int": "ohm",
+        "V_e": "volt",
+        "V_f": "volt"
+      },
+      "sign_convention": "the IR drop OPPOSES a discharge, so V < OCV for I > 0. The heat is quadratic in current and therefore positive whichever way the current flows: a resistor cannot refrigerate.",
+      "status": "REVIEWED",
+      "steady_or_transient": "quasi-static",
+      "tolerances": "not applicable",
+      "variables": {
+        "V": "volt",
+        "z": "dimensionless"
+      }
+    },
+    {
+      "assumptions": [
+        "constant current",
+        "the affine chord for the voltage inversion"
+      ],
+      "asymptotics": "z_stop -> z_0 gives t -> 0; larger I gives a shorter runtime.",
+      "classification": "algebraic, a first-crossing time",
+      "derivation": "The charge between two states divided by the current. The voltage cutoff is inverted from the same KVL relation: setting V = V_cut in V = OCV(z) - I R and solving the affine OCV for z.",
+      "dimensional_check": "(dimensionless)(A h)/(A) = h, converted to seconds. The inversion divides volts by volts and is dimensionless, as a state of charge must be.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "battery",
+      "entry_point": "evaluate_step / _binding_cutoff",
+      "existing_oracle": "none in-repo; this round derives both the inversion and the runtime",
+      "existing_tests": "tests/domains/battery/",
+      "expected_form": "t = (z_0 - z_stop) eta Q_nom / I, with z_cut,V = (V_cut + I R - V_e)/(V_f - V_e)",
+      "expected_output": "runtime to the binding cutoff",
+      "implementation_file": "src/engcore/domains/battery/solver.py",
+      "linearity": "linear",
+      "model_id": "battery.cell.constant_current_runtime",
+      "numerical_method": "none: the binding cutoff is chosen by comparison, never by iteration",
+      "parameters": {
+        "z_0": "dimensionless",
+        "z_stop": "dimensionless"
+      },
+      "sign_convention": "a discharge walks z DOWN, so the binding cutoff is the HIGHER of the two candidates -- whichever is reached first on a falling trajectory. Taking the lower one would report the wrong stop.",
+      "status": "REVIEWED",
+      "steady_or_transient": "transient endpoint",
+      "tolerances": "not applicable",
+      "variables": {
+        "t": "second"
+      }
+    },
+    {
+      "assumptions": [
+        "constant-current discharge",
+        "k constant over the fitted range"
+      ],
+      "asymptotics": "k -> 1 gives Q_nom; I -> I_ref gives Q_nom; larger I gives less charge.",
+      "classification": "empirical correlation",
+      "derivation": "Peukert's law is I^k t = constant. At the reference current Q_nom = I_ref t_ref, so the constant is I_ref^(k-1) Q_nom; at another current Q = I t = constant/I^(k-1). Rearranged here.",
+      "dimensional_check": "(I_ref/I) is dimensionless, so raising it to any power is legitimate, and the result carries Q_nom's units unchanged. A formulation that exponentiated a dimensional current would be meaningless.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "battery",
+      "entry_point": "peukert_effective_capacity",
+      "existing_oracle": "none in-repo; this round re-derives the rearrangement",
+      "existing_tests": "tests/domains/battery/",
+      "expected_form": "Q_eff = Q_nom (I_ref/I)^(k-1)",
+      "expected_output": "effective capacity at this current",
+      "implementation_file": "src/engcore/domains/battery/context.py",
+      "linearity": "power law",
+      "model_id": "battery.cell.peukert_capacity_derating",
+      "numerical_method": "none",
+      "parameters": {
+        "I_ref": "A",
+        "k": "dimensionless exponent"
+      },
+      "sign_convention": "k > 1 makes a higher current deliver LESS charge. k = 1 is the ideal cell and the expression collapses to Q_nom.",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady, a rating",
+      "tolerances": "not applicable",
+      "variables": {
+        "Q_eff": "A*h"
+      }
+    },
+    {
+      "assumptions": [
+        "lumped elements",
+        "linear and time-invariant",
+        "steady state"
+      ],
+      "asymptotics": "an undriven passive network carries no current",
+      "classification": "linear algebraic system",
+      "derivation": "Charge conservation for a lumped network: no charge accumulates at a node.",
+      "dimensional_check": "amperes summed with amperes; the residual is an ampere and must be round-off",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "solve_circuit (modified nodal analysis)",
+      "existing_oracle": "the repository ships an ngspice bridge; this round adds its own ngspice netlist and an incidence-matrix nodal solve",
+      "existing_tests": "tests/domains/electrical/",
+      "expected_form": "SUM of currents leaving a node = 0",
+      "expected_output": "node potentials, branch currents, powers",
+      "implementation_file": "src/engcore/domains/electrical/dc/mna.py",
+      "linearity": "linear",
+      "model_id": "electrical.dc.kcl",
+      "numerical_method": "modified nodal analysis, direct dense solve",
+      "parameters": {
+        "I_src": "ampere",
+        "R": "ohm",
+        "V_src": "volt"
+      },
+      "sign_convention": "currents leaving are positive; the sum is identically zero, not approximately",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady-state DC",
+      "tolerances": "residual checks on the assembled system",
+      "variables": {
+        "i": "ampere",
+        "v": "volt"
+      }
+    },
+    {
+      "assumptions": [
+        "lumped elements",
+        "linear and time-invariant",
+        "steady state"
+      ],
+      "asymptotics": "R -> 0 shorts the branch; R -> infinity opens it",
+      "classification": "linear algebraic system",
+      "derivation": "Ohm's constitutive law and Joule's law for the dissipation.",
+      "dimensional_check": "(A)(ohm) = V and (A^2)(ohm) = W",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "solve_circuit (modified nodal analysis)",
+      "existing_oracle": "the repository ships an ngspice bridge; this round adds its own ngspice netlist and an incidence-matrix nodal solve",
+      "existing_tests": "tests/domains/electrical/",
+      "expected_form": "V = I R, P = V I = I^2 R >= 0",
+      "expected_output": "node potentials, branch currents, powers",
+      "implementation_file": "src/engcore/domains/electrical/dc/mna.py",
+      "linearity": "linear",
+      "model_id": "electrical.dc.resistor_ohm",
+      "numerical_method": "modified nodal analysis, direct dense solve",
+      "parameters": {
+        "I_src": "ampere",
+        "R": "ohm",
+        "V_src": "volt"
+      },
+      "sign_convention": "V measured a -> b with I positive in the same direction, so P is absorbed and non-negative",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady-state DC",
+      "tolerances": "residual checks on the assembled system",
+      "variables": {
+        "i": "ampere",
+        "v": "volt"
+      }
+    },
+    {
+      "assumptions": [
+        "lumped elements",
+        "linear and time-invariant",
+        "steady state"
+      ],
+      "asymptotics": "reversing the source negates every current and leaves every dissipation unchanged",
+      "classification": "linear algebraic system",
+      "derivation": "The defining relation of an ideal source; the branch current is an extra MNA unknown.",
+      "dimensional_check": "volts equated with volts",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "solve_circuit (modified nodal analysis)",
+      "existing_oracle": "the repository ships an ngspice bridge; this round adds its own ngspice netlist and an incidence-matrix nodal solve",
+      "existing_tests": "tests/domains/electrical/",
+      "expected_form": "v_pos - v_neg = V_src, irrespective of current",
+      "expected_output": "node potentials, branch currents, powers",
+      "implementation_file": "src/engcore/domains/electrical/dc/mna.py",
+      "linearity": "linear",
+      "model_id": "electrical.dc.ideal_voltage_source",
+      "numerical_method": "modified nodal analysis, direct dense solve",
+      "parameters": {
+        "I_src": "ampere",
+        "R": "ohm",
+        "V_src": "volt"
+      },
+      "sign_convention": "the reported branch current leaves the positive node, so a delivering source absorbs negative power",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady-state DC",
+      "tolerances": "residual checks on the assembled system",
+      "variables": {
+        "i": "ampere",
+        "v": "volt"
+      }
+    },
+    {
+      "assumptions": [
+        "lumped elements",
+        "linear and time-invariant",
+        "steady state"
+      ],
+      "asymptotics": "the terminal voltage is whatever the network develops",
+      "classification": "linear algebraic system",
+      "derivation": "The dual of the ideal voltage source; it injects a known current.",
+      "dimensional_check": "amperes injected into an ampere balance",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "solve_circuit (modified nodal analysis)",
+      "existing_oracle": "the repository ships an ngspice bridge; this round adds its own ngspice netlist and an incidence-matrix nodal solve",
+      "existing_tests": "tests/domains/electrical/",
+      "expected_form": "I from -> to inside the source, irrespective of terminal voltage",
+      "expected_output": "node potentials, branch currents, powers",
+      "implementation_file": "src/engcore/domains/electrical/dc/mna.py",
+      "linearity": "linear",
+      "model_id": "electrical.dc.ideal_current_source",
+      "numerical_method": "modified nodal analysis, direct dense solve",
+      "parameters": {
+        "I_src": "ampere",
+        "R": "ohm",
+        "V_src": "volt"
+      },
+      "sign_convention": "positive current flows from_node -> to_node inside the source, so it is extracted at from_node externally",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady-state DC",
+      "tolerances": "residual checks on the assembled system",
+      "variables": {
+        "i": "ampere",
+        "v": "volt"
+      }
+    },
+    {
+      "assumptions": [
+        "lumped elements",
+        "linear and time-invariant",
+        "steady state"
+      ],
+      "asymptotics": "zero output resistance recovers the ideal source exactly",
+      "classification": "linear algebraic system",
+      "derivation": "The ideal relation, with a Thevenin internal drop bounding where it is asserted.",
+      "dimensional_check": "(A)(ohm)/(V) is dimensionless, so the utilization ratio is a pure number",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "solve_circuit (modified nodal analysis)",
+      "existing_oracle": "the repository ships an ngspice bridge; this round adds its own ngspice netlist and an incidence-matrix nodal solve",
+      "existing_tests": "tests/domains/electrical/",
+      "expected_form": "v_pos - v_neg = V_src, asserted where (|I| R_out/|V_src|)/band <= 1",
+      "expected_output": "node potentials, branch currents, powers",
+      "implementation_file": "src/engcore/domains/electrical/dc/mna.py",
+      "linearity": "linear",
+      "model_id": "electrical.dc.regulated_voltage_source",
+      "numerical_method": "modified nodal analysis, direct dense solve",
+      "parameters": {
+        "I_src": "ampere",
+        "R": "ohm",
+        "V_src": "volt"
+      },
+      "sign_convention": "same as the ideal source; the band bounds the internal drop rather than changing the relation",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady-state DC",
+      "tolerances": "residual checks on the assembled system",
+      "variables": {
+        "i": "ampere",
+        "v": "volt"
+      }
+    },
+    {
+      "assumptions": [
+        "lumped elements",
+        "linear and time-invariant",
+        "steady state"
+      ],
+      "asymptotics": "zero thermal resistance puts the element at its body temperature",
+      "classification": "linear algebraic system",
+      "derivation": "Ohm's law, with the element-to-body temperature rise from a thermal resistance.",
+      "dimensional_check": "(W)(K/W) = K, added to a body temperature in K, divided by a permissible K: dimensionless",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "solve_circuit (modified nodal analysis)",
+      "existing_oracle": "the repository ships an ngspice bridge; this round adds its own ngspice netlist and an incidence-matrix nodal solve",
+      "existing_tests": "tests/domains/electrical/",
+      "expected_form": "V = I R with (T_body + |P| R_th)/T_permissible <= 1",
+      "expected_output": "node potentials, branch currents, powers",
+      "implementation_file": "src/engcore/domains/electrical/dc/mna.py",
+      "linearity": "linear",
+      "model_id": "electrical.dc.self_heated_resistor",
+      "numerical_method": "modified nodal analysis, direct dense solve",
+      "parameters": {
+        "I_src": "ampere",
+        "R": "ohm",
+        "V_src": "volt"
+      },
+      "sign_convention": "dissipation is positive and raises the element above its body",
+      "status": "REVIEWED",
+      "steady_or_transient": "steady-state DC",
+      "tolerances": "residual checks on the assembled system",
+      "variables": {
+        "i": "ampere",
+        "v": "volt"
+      }
+    },
+    {
+      "assumptions": [
+        "isotropic scalar resistance",
+        "temperature supplied, never inferred"
+      ],
+      "asymptotics": "T -> T_ref gives R_ref exactly; alpha -> 0 gives a temperature-independent resistor",
+      "classification": "algebraic constitutive relation",
+      "derivation": "The first-order Taylor expansion of rho(T) about T_ref, with alpha the relative slope (1/R)(dR/dT) at the reference.",
+      "dimensional_check": "alpha (T - T_ref) = (1/K)(K) is dimensionless, so the bracket is a pure number and the product carries R_ref's ohms. An alpha carrying ohms per kelvin would make the bracket dimensionally inhomogeneous -- one term a number, the other an ohm-kelvin -- which is the classic TCR unit error and is not present.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "ResistancePropertySolver.solve",
+      "existing_oracle": "none in-repo; this round supplies 50-digit arithmetic",
+      "existing_tests": "tests/domains/electrical/test_material_applicability.py",
+      "expected_form": "R(T) = R_ref (1 + alpha (T - T_ref))",
+      "expected_output": "resistance at the supplied temperature",
+      "implementation_file": "src/engcore/domains/electrical/material.py",
+      "linearity": "linear in temperature",
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "numerical_method": "none",
+      "parameters": {
+        "R_ref": "ohm",
+        "T_ref": "kelvin",
+        "alpha": "1/K"
+      },
+      "sign_convention": "alpha > 0 is a metal and the resistance rises with temperature; alpha < 0 falls. The slope dR/dT is exactly R_ref alpha, which this round checks numerically.",
+      "status": "REVIEWED",
+      "steady_or_transient": "a single evaluation at a supplied temperature",
+      "tolerances": "not applicable",
+      "variables": {
+        "R": "ohm",
+        "T": "kelvin"
+      }
+    },
+    {
+      "assumptions": [
+        "isotropic scalar resistance",
+        "temperature supplied, never inferred"
+      ],
+      "asymptotics": "T -> T_ref gives R_ref exactly; alpha -> 0 gives a temperature-independent resistor",
+      "classification": "algebraic constitutive relation",
+      "derivation": "The first-order Taylor expansion of rho(T) about T_ref, with alpha the relative slope (1/R)(dR/dT) at the reference.",
+      "dimensional_check": "alpha (T - T_ref) = (1/K)(K) is dimensionless, so the bracket is a pure number and the product carries R_ref's ohms. An alpha carrying ohms per kelvin would make the bracket dimensionally inhomogeneous -- one term a number, the other an ohm-kelvin -- which is the classic TCR unit error and is not present.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "electrical",
+      "entry_point": "ResistancePropertySolver.solve",
+      "existing_oracle": "none in-repo; this round supplies 50-digit arithmetic",
+      "existing_tests": "tests/domains/electrical/test_material_applicability.py",
+      "expected_form": "R(T) = R_ref (1 + alpha (T - T_ref))",
+      "expected_output": "resistance at the supplied temperature",
+      "implementation_file": "src/engcore/domains/electrical/material.py",
+      "linearity": "linear in temperature",
+      "model_id": "electrical.material.rated_linear_tcr_resistance",
+      "numerical_method": "none",
+      "parameters": {
+        "R_ref": "ohm",
+        "T_ref": "kelvin",
+        "alpha": "1/K"
+      },
+      "sign_convention": "alpha > 0 is a metal and the resistance rises with temperature; alpha < 0 falls. The slope dR/dT is exactly R_ref alpha, which this round checks numerically.",
+      "status": "REVIEWED",
+      "steady_or_transient": "a single evaluation at a supplied temperature",
+      "tolerances": "not applicable",
+      "variables": {
+        "R": "ohm",
+        "T": "kelvin"
+      }
+    },
+    {
+      "assumptions": [
+        "perfectly mixed",
+        "constant volume and properties",
+        "single liquid phase",
+        "one irreversible first-order reaction"
+      ],
+      "asymptotics": "k -> 0 washes the tank out to the feed concentration and the temperature to (a T_f + gamma T_c)/(a + gamma); UA -> 0 is adiabatic; the invariant Z = T + beta C_A bounds the temperature for any rate law",
+      "classification": "coupled nonlinear ODE system",
+      "derivation": "Species balance V dC/dt = q (C_Af - C_A) - V r and energy balance V rho cp dT/dt = q rho cp (T_f - T) + (-dH) V r - UA (T - T_c), divided through by V and by V rho cp. a = q/V, beta = (-dH)/(rho cp), gamma = UA/(V rho cp). Derived here from the balances.",
+      "dimensional_check": "a (C_Af - C_A) = (1/s)(mol/m^3) = mol/(m^3 s) = dC/dt. k C_A = (1/s)(mol/m^3), the same. beta k C_A = (m^3 K/mol)(1/s)(mol/m^3) = K/s = dT/dt. gamma (T - T_c) = (1/s)(K) = K/s. beta = (J/mol)/((kg/m^3)(J/(kg K))) = (J/mol)(m^3 K/J) = m^3 K/mol, as required. gamma = (W/K)/((m^3)(kg/m^3)(J/(kg K))) = (W/K)(K/J) = 1/s. E/(R T) = (J/mol)/((J/(mol K))(K)) is dimensionless, which it must be to be an exponent.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "kinetics",
+      "entry_point": "solve_reactor (assemble -> rhs, jacobian)",
+      "existing_oracle": "an RK45 probe in-repo; this round adds an independent RK4, steady-state root finding, and the invariant",
+      "existing_tests": "tests/domains/kinetics/",
+      "expected_form": "dC_A/dt = a (C_Af - C_A) - k C_A ; dT/dt = a (T_f - T) + beta k C_A - gamma (T - T_c) ; k(T) = k0 exp(-E/(R T))",
+      "expected_output": "concentration, temperature, conversion, peak temperature",
+      "implementation_file": "src/engcore/domains/kinetics/cstr/solver.py",
+      "linearity": "nonlinear: Arrhenius couples the two balances",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "numerical_method": "implicit stiff integration with an analytic Jacobian; RK45 admitted only as a measuring instrument",
+      "parameters": {
+        "E": "J/mol",
+        "R": "J/(mol K)",
+        "a": "1/s",
+        "beta": "m^3 K/mol",
+        "gamma": "1/s",
+        "k0": "1/s"
+      },
+      "sign_convention": "beta = (-dH)/(rho cp) is POSITIVE for an exotherm (dH < 0), so the reaction term raises the temperature; an endotherm flips it and must cool the tank. The cooling term is subtracted, so a jacket below the tank removes heat. Getting the enthalpy sign backwards is the single most consequential sign error available in reactor engineering, and it would still return entirely plausible temperatures.",
+      "status": "REVIEWED",
+      "steady_or_transient": "transient, stiff near ignition",
+      "tolerances": "solver rtol/atol, with an RHS evaluation budget",
+      "variables": {
+        "C_A": "mol/m^3",
+        "T": "kelvin",
+        "t": "second"
+      }
+    },
+    {
+      "assumptions": [
+        "perfectly mixed",
+        "constant volume and properties",
+        "single liquid phase",
+        "one irreversible first-order reaction"
+      ],
+      "asymptotics": "k -> 0 washes the tank out to the feed concentration and the temperature to (a T_f + gamma T_c)/(a + gamma); UA -> 0 is adiabatic; the invariant Z = T + beta C_A bounds the temperature for any rate law",
+      "classification": "coupled nonlinear ODE system",
+      "derivation": "Species balance V dC/dt = q (C_Af - C_A) - V r and energy balance V rho cp dT/dt = q rho cp (T_f - T) + (-dH) V r - UA (T - T_c), divided through by V and by V rho cp. a = q/V, beta = (-dH)/(rho cp), gamma = UA/(V rho cp). Derived here from the balances.",
+      "dimensional_check": "a (C_Af - C_A) = (1/s)(mol/m^3) = mol/(m^3 s) = dC/dt. k C_A = (1/s)(mol/m^3), the same. beta k C_A = (m^3 K/mol)(1/s)(mol/m^3) = K/s = dT/dt. gamma (T - T_c) = (1/s)(K) = K/s. beta = (J/mol)/((kg/m^3)(J/(kg K))) = (J/mol)(m^3 K/J) = m^3 K/mol, as required. gamma = (W/K)/((m^3)(kg/m^3)(J/(kg K))) = (W/K)(K/J) = 1/s. E/(R T) = (J/mol)/((J/(mol K))(K)) is dimensionless, which it must be to be an exponent.",
+      "dimensional_verdict": "DIMENSIONALLY_VALID",
+      "domain": "kinetics",
+      "entry_point": "solve_reactor (assemble -> rhs, jacobian)",
+      "existing_oracle": "an RK45 probe in-repo; this round adds an independent RK4, steady-state root finding, and the invariant",
+      "existing_tests": "tests/domains/kinetics/",
+      "expected_form": "dC_A/dt = a (C_Af - C_A) - k C_A ; dT/dt = a (T_f - T) + beta k C_A - gamma (T - T_c) ; k = k_const",
+      "expected_output": "concentration, temperature, conversion, peak temperature",
+      "implementation_file": "src/engcore/domains/kinetics/cstr/solver.py",
+      "linearity": "linear: the Arrhenius coupling is removed",
+      "model_id": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+      "numerical_method": "implicit stiff integration with an analytic Jacobian; RK45 admitted only as a measuring instrument",
+      "parameters": {
+        "E": "J/mol",
+        "R": "J/(mol K)",
+        "a": "1/s",
+        "beta": "m^3 K/mol",
+        "gamma": "1/s",
+        "k0": "1/s"
+      },
+      "sign_convention": "beta = (-dH)/(rho cp) is POSITIVE for an exotherm (dH < 0), so the reaction term raises the temperature; an endotherm flips it and must cool the tank. The cooling term is subtracted, so a jacket below the tank removes heat. Getting the enthalpy sign backwards is the single most consequential sign error available in reactor engineering, and it would still return entirely plausible temperatures.",
+      "status": "REVIEWED",
+      "steady_or_transient": "transient, stiff near ignition",
+      "tolerances": "solver rtol/atol, with an RHS evaluation budget",
+      "variables": {
+        "C_A": "mol/m^3",
+        "T": "kelvin",
+        "t": "second"
+      }
+    }
+  ],
+  "schema": "scientific_truth_equation_surface/1",
+  "what_this_is": "Every shipped model's governing equation as the implementation evaluates it, beside the classification and numerical method that decide which checks apply."
+}
