@@ -571,8 +571,10 @@ class CrossSolverConsensus:
     required_outputs: tuple[str, ...] = ()
     #: What each route actually reported, by route id. Kept so
     #: :attr:`missing_outputs` can name the route AND the quantity rather than
-    #: only reporting that something was short. Empty when a consensus was
-    #: assembled from a payload that predates the field.
+    #: only reporting that something was short. A declared route with no entry
+    #: here reported nothing, and is charged for every required output: the
+    #: absence of a report is not a report of everything. Empty for a /1
+    #: payload, which also declares no required outputs and so claims nothing.
     reported_outputs: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     notes: str = ""
 
@@ -595,6 +597,25 @@ class CrossSolverConsensus:
             }),
         )
         routes = tuple(self.routes)
+        # Typed evidence, for the reason `ValidationReport` types its checks: a
+        # record that reads `agreed`, `components` or `award` off whatever it
+        # was handed never consulted the rules those types enforce.
+        for index, route in enumerate(routes):
+            if not isinstance(route, SolveRoute):
+                raise ScientificValidationError(
+                    f"consensus {text!r} route {index} is a "
+                    f"{type(route).__name__}, not a SolveRoute"
+                )
+        if not isinstance(self.comparison, RouteComparison):
+            raise ScientificValidationError(
+                f"consensus {text!r} carries a {type(self.comparison).__name__} "
+                f"as its comparison, not a RouteComparison"
+            )
+        if not isinstance(self.thresholds, VerificationThresholds):
+            raise ScientificValidationError(
+                f"consensus {text!r} carries a {type(self.thresholds).__name__} "
+                f"as its thresholds, not VerificationThresholds"
+            )
         identifiers = [r.route_id for r in routes]
         duplicate_ids = duplicate_entries(identifiers)
         if duplicate_ids:
@@ -605,6 +626,58 @@ class CrossSolverConsensus:
             )
         object.__setattr__(self, "routes", routes)
         object.__setattr__(self, "notes", str(self.notes))
+        self._require_coherent_evidence()
+
+    def _require_coherent_evidence(self) -> None:
+        """Refuse reports and comparisons that cannot have happened.
+
+        The constructor is a public construction path, and so is ``from_dict``
+        through it, so they must enforce what :meth:`over` guarantees by
+        construction. Three states ``over`` never produces, each of which let
+        a record describe more evidence than it had:
+
+        * a report under a name that is no declared route -- unattributable;
+        * a compared quantity that a route which DID report something did not
+          report -- a comparison over a number that route never produced. A
+          route with no report at all sat outside the comparison, which
+          ``over`` produces legitimately and ``missing_outputs`` charges;
+        * every route reporting every required output, a comparison that
+          compared something, and a required output left out of it --
+          agreement on part of the requirement standing for all of it.
+        """
+        declared = {route.route_id for route in self.routes}
+        strangers = sorted(set(self.reported_outputs) - declared)
+        if strangers:
+            raise ScientificValidationError(
+                f"consensus {self.consensus_id!r} records reported outputs "
+                f"under {strangers}, and a report under a name that is not a "
+                f"declared route cannot be attributed to any declaration. "
+                f"Declared routes: {sorted(declared)}"
+            )
+        compared = set(self.comparison.quantities)
+        for route_id, names in sorted(self.reported_outputs.items()):
+            unreported = sorted(compared - set(names)) if names else []
+            if unreported:
+                raise ScientificValidationError(
+                    f"consensus {self.consensus_id!r} compares {unreported}, "
+                    f"which route {route_id!r} did not report; a comparison "
+                    f"over a number a route never produced is not a comparison "
+                    f"of that route"
+                )
+        if (
+            self.required_outputs
+            and self.routes
+            and self.comparison.compared_anything
+            and not self.missing_outputs
+        ):
+            uncompared = sorted(set(self.required_outputs) - compared)
+            if uncompared:
+                raise ScientificValidationError(
+                    f"consensus {self.consensus_id!r}: required output(s) "
+                    f"{uncompared} reported by every route was not compared. "
+                    f"Agreement on the rest is agreement about less than was "
+                    f"asked, and cannot stand for the whole requirement"
+                )
 
     # ---- the declaration side -------------------------------------------
     @property
@@ -690,8 +763,16 @@ class CrossSolverConsensus:
 
         Sorted, so a refusal reads the same on every run.
         """
-        if not self.required_outputs or not self.reported_outputs:
+        if not self.required_outputs:
             return ()
+        # Over the ROUTES, not over `reported_outputs`. It used to run over the
+        # reports and to return nothing when there were none, so a record built
+        # through the constructor with required outputs and no reports had
+        # nothing missing, read COMPLETE, and established CROSS_SOLVER_VALIDATED
+        # for quantities no route was recorded as producing. `over` writes an
+        # entry for every route and never showed it. A declared route with no
+        # entry reported nothing, and is charged for all of it.
+        #
         # `reported` is a TUPLE, so `name not in reported` was a linear scan --
         # once per required output, per route, making this O(routes x Q^2)
         # while the whole consensus that produced it is O(routes^2 x Q).
@@ -703,9 +784,11 @@ class CrossSolverConsensus:
         # constant, which is the obvious wrong version of this fix.
         return tuple(
             sorted(
-                (route_id, name)
-                for route_id, reported in self.reported_outputs.items()
-                for reported_set in (frozenset(reported),)
+                (route.route_id, name)
+                for route in self.routes
+                for reported_set in (
+                    frozenset(self.reported_outputs.get(route.route_id, ())),
+                )
                 for name in self.required_outputs
                 if name not in reported_set
             )
@@ -716,7 +799,10 @@ class CrossSolverConsensus:
         """Did every route answer the whole question?"""
         if not self.required_outputs:
             return OutputCompleteness.UNDECLARED
-        if self.missing_outputs:
+        # No route answered, so no route answered the whole question. The
+        # per-route search has nothing to find missing among zero routes, and
+        # an empty search is not a complete answer.
+        if not self.routes or self.missing_outputs:
             return OutputCompleteness.INCOMPLETE
         return OutputCompleteness.COMPLETE
 
