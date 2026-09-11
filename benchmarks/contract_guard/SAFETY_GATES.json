@@ -1,0 +1,191 @@
+{
+  "all_pass": true,
+  "gates": [
+    {
+      "evidence": {
+        "cells": 128,
+        "cells_with_a_status": 128,
+        "dimensions": 8,
+        "models": 16
+      },
+      "id": "CG-1",
+      "name": "MODEL SURFACE ACCOUNTED",
+      "requirement": "every shipped model is classified for guard applicability on every material contract dimension",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "applicable_dimensions": 88,
+        "blocked": 0,
+        "every_not_applicable_carries_a_reason": true,
+        "guarded": 88,
+        "not_applicable": 40,
+        "not_guarded": 0
+      },
+      "id": "CG-2",
+      "name": "MATERIAL CONTRACT DIMENSIONS COVERED",
+      "requirement": "every material record<->runtime dimension is guarded or explicitly justified NOT_APPLICABLE",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "control_on_the_unmutated_tree": "GREEN",
+        "guard_families_falsified": [
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_a_record_that_restates_its_bound_in_prose_restates_the_right_number",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_every_structured_bound_is_enforced_by_the_runtime",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_condition_is_satisfied_before_anything_is_declared",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_model_requires_a_capability_nothing_serves",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_advertises_applicability_the_runtime_refuses",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_disclaims_applicability_the_runtime_grants",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_shipped_condition_is_missing_from_the_claim_map",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_nothing_declared_derives_nothing_unless_the_record_says_so",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_required_means_required_and_optional_means_optional",
+          "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it"
+        ],
+        "guard_families_targeted": [
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_a_record_that_restates_its_bound_in_prose_restates_the_right_number",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_every_structured_bound_is_enforced_by_the_runtime",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_condition_is_satisfied_before_anything_is_declared",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_model_requires_a_capability_nothing_serves",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_advertises_applicability_the_runtime_refuses",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_disclaims_applicability_the_runtime_grants",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_shipped_condition_is_missing_from_the_claim_map",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_nothing_declared_derives_nothing_unless_the_record_says_so",
+          "benchmarks/contract_guard/tests/test_contract_guard.py::test_required_means_required_and_optional_means_optional",
+          "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it"
+        ]
+      },
+      "id": "CG-3",
+      "name": "EXECUTABLE DRIFT DETECTION",
+      "requirement": "each guard family has been falsified with a controlled planted mismatch",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "by_check": {
+          "bound_enforcement": 0,
+          "capability_service": 0,
+          "constructor_input_obligations": {
+            "MATCH": 41,
+            "NOT_CONSTRUCTOR_ADDRESSABLE": 50
+          },
+          "empty_context_derivation": 0,
+          "prose_applicability": 0,
+          "unknown_prerequisites": 0
+        },
+        "total_contradictions": 0
+      },
+      "id": "CG-4",
+      "name": "ZERO KNOWN RECORD<->RUNTIME CONTRADICTIONS",
+      "requirement": "no material mismatch remains unresolved",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "by_class": {
+          "CAPABILITY_UNSERVED": {
+            "caught": 1,
+            "total": 1
+          },
+          "INPUT_OBLIGATION_DRIFT": {
+            "caught": 1,
+            "total": 1
+          },
+          "PREREQUISITE_DISSOLVED": {
+            "caught": 1,
+            "total": 1
+          },
+          "RECORD_TOO_BROAD": {
+            "caught": 3,
+            "total": 3
+          },
+          "RECORD_TOO_NARROW": {
+            "caught": 3,
+            "total": 3
+          },
+          "REFUSAL_SEMANTICS_DRIFT": {
+            "caught": 1,
+            "total": 1
+          },
+          "RUNTIME_ENFORCEMENT_DRIFT": {
+            "caught": 1,
+            "total": 1
+          },
+          "STRUCTURED_BOUND_DRIFT": {
+            "caught": 1,
+            "total": 1
+          },
+          "UNKNOWN_PROMISE_INVERSION": {
+            "caught": 2,
+            "total": 2
+          },
+          "UNMAPPED_CONDITION": {
+            "caught": 1,
+            "total": 1
+          }
+        },
+        "caught": 15,
+        "invalid": [],
+        "survivors": [],
+        "total": 15
+      },
+      "id": "CG-5",
+      "name": "SEMANTIC MUTATION CLOSURE",
+      "requirement": "all VALID material semantic mutants are detected",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "mechanism": "prose claims are extracted to values and executed against assess_validity, so the check is record vs runtime rather than record vs record",
+        "prose_claims_executed": 156,
+        "record_too_broad_caught": [
+          "CGM-1",
+          "CGM-2",
+          "CGM-3"
+        ],
+        "record_too_broad_distinct_domains": [
+          "electrical",
+          "kinetics",
+          "thermal_models"
+        ],
+        "record_too_narrow_caught": [
+          "CGM-4",
+          "CGM-5",
+          "CGM-6"
+        ],
+        "sc5_reproduced_verbatim_as": "CGM-1"
+      },
+      "id": "CG-6",
+      "name": "SC5 CLASS CLOSED",
+      "requirement": "applicability overstatement and understatement can both be detected, as a class rather than as one string",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "certified_core_tree_sha256_actual": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "certified_core_tree_sha256_expected": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "certified_mutation_suite": "untouched: tests/mutation_guards.py and its 79 mutants are not modified, extended or renumbered, and this round's counts are never merged with them",
+        "executable_scientific_code_changed_this_round": false,
+        "working_tree_entries_outside_this_round": []
+      },
+      "id": "CG-7",
+      "name": "EXISTING SCIENTIFIC ASSURANCE PRESERVED",
+      "requirement": "scientific/runtime assurance is unchanged, or any intentional change is fully re-certified",
+      "verdict": "PASS"
+    },
+    {
+      "evidence": {
+        "artifacts_in_manifest": 30,
+        "method": "path-restricted: every artifact named in benchmarks/blind_v2/FREEZE.json is re-hashed and compared with the hash that manifest records. No Blind V2 frozen/sealed artifact path changed.",
+        "problems": [],
+        "verified_byte_identical": 30
+      },
+      "id": "CG-8",
+      "name": "FROZEN EVIDENCE PRESERVED",
+      "requirement": "Blind V2 frozen/sealed artifacts remain byte-identical",
+      "verdict": "PASS"
+    }
+  ],
+  "note": "A NEW gate set for the Contract Guard round. The Blind V2 and Contract Integrity gates are not modified, reused or renumbered; they answered different questions and their results stand.",
+  "schema": "contract_guard_gates/1"
+}
