@@ -9,8 +9,8 @@ from experiments.kinetics_k3.k3_config import (
     k3_reference_twin,
 )
 from experiments.kinetics_k3.k3_forward import holdout_truth_means
-from src.engcore.domains.kinetics.cstr.problem import CSTR_MODEL
-from src.engcore.scientific import TwinKind
+from engcore.domains.kinetics.cstr.problem import CSTR_MODEL
+from engcore.scientific import TwinKind
 
 
 def test_k3_holdouts_match_frozen_preregistration() -> None:

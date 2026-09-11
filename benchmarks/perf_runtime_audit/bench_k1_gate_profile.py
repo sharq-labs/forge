@@ -31,8 +31,8 @@ if str(REPO_ROOT) not in sys.path:
 
 import numpy as np  # noqa: E402
 
-from src.engcore.domains.kinetics.cstr import solver as cstr_solver  # noqa: E402
-from src.engcore.domains.kinetics.cstr.validation import (  # noqa: E402
+from engcore.domains.kinetics.cstr import solver as cstr_solver  # noqa: E402
+from engcore.domains.kinetics.cstr.validation import (  # noqa: E402
     run_verification_gate,
 )
 

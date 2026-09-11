@@ -17,7 +17,7 @@ import pytest
 
 from experiments.kinetics_k1 import BASE_COMMIT, K1_VERSION
 from experiments.kinetics_k1 import k1_config
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import (
     INVARIANT_REL_TOL,
     STEADY_STATE_REL_TOL,
     TOLERANCE_REL_TOL,

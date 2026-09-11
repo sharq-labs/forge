@@ -45,15 +45,15 @@ import sys
 
 import pytest
 
-from src.engcore.domains.electrical import ngspice as ng
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical import ngspice as ng
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCVoltageSource,
     ElectricalNode,
     Resistor,
 )
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.units.quantity import Quantity
 
 #: The provider script, reached the way any external provider is: as an argv
 #: prefix. ``sys.executable`` is this interpreter, so no toolchain is assumed.
@@ -192,7 +192,7 @@ def test_the_refusal_is_an_execution_failure_and_not_a_units_error(command):
     not delivered what was asked. It is refused at admission now, in the
     category this adapter documents for exactly that.
     """
-    from src.engcore.scientific.errors import UnitCompatibilityError
+    from engcore.scientific.errors import UnitCompatibilityError
 
     solver = ng.NgspiceDCSolver(
         invocation=ng.NgspiceInvocation(command=command)

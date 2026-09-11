@@ -74,11 +74,11 @@ import hashlib
 import json
 from typing import Any
 
-from src.engcore.domains.thermal.conduction1d import (
+from engcore.domains.thermal.conduction1d import (
     ConductionSlab,
     SlabDiscretization,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 # --- the nominal case, for reference -----------------------------------------
 NOMINAL_ALPHA_M2_S = 1.2e-5
@@ -120,7 +120,7 @@ def holdout_slab(n_cells: int = 64, n_steps: int = 80) -> ConductionSlab:
 
 def holdout_declaration() -> dict[str, Any]:
     """Everything fixed before the stress case ran."""
-    from src.engcore.domains.thermal.conduction1d import (
+    from engcore.domains.thermal.conduction1d import (
         ANALYTIC_REL_TOL,
         CONVERGENCE_MIN_CONTRACTION,
         MIN_RUNGS,

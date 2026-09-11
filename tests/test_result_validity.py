@@ -22,7 +22,7 @@ import json
 
 import pytest
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     ProvenanceRecord,
     Quantity,
     ScientificCoreError,
@@ -37,7 +37,7 @@ from src.engcore.scientific import (
     ValidityAssessment,
     ValidityStatus,
 )
-from src.engcore.scientific.results.result import (
+from engcore.scientific.results.result import (
     LEGACY_NON_ASSESSMENT,
     RESULT_SCHEMA_V3,
     RESULT_SCHEMA,

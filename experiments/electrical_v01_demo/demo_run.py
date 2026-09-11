@@ -30,8 +30,8 @@ from experiments.electrical_e2.e2_model import (
     posterior_weights,
     prior_weights,
 )
-from src.engcore.sria.campaign import CampaignEventType
-from src.engcore.sria.campaign.stopping import StopReviewOutcome
+from engcore.sria.campaign import CampaignEventType
+from engcore.sria.campaign.stopping import StopReviewOutcome
 
 from . import BASE_COMMIT, DEMO_VERSION
 from .demo_config import (

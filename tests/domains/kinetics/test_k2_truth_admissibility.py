@@ -13,10 +13,10 @@ from experiments.kinetics_k2.k2_forward import (
     evaluate_truth_predictions,
     observation_set_from_truth_means,
 )
-from src.engcore.domains.kinetics.cstr.problem import METRIC_UNITS
-from src.engcore.inference import require_admissible_numerical_prediction
-from src.engcore.scientific.results.validation import ValidationLevel
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.kinetics.cstr.problem import METRIC_UNITS
+from engcore.inference import require_admissible_numerical_prediction
+from engcore.scientific.results.validation import ValidationLevel
+from engcore.scientific.units.quantity import Quantity
 
 
 def test_k2_truth_conditions_cross_frozen_k15_boundary_and_seeded_observations_replay():

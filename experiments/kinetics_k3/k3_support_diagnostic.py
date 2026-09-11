@@ -26,7 +26,7 @@ from experiments.kinetics_k2.k2_forward import (  # noqa: E402
     observation_set_from_truth_means,
     truth_means,
 )
-from src.engcore.inference import (  # noqa: E402
+from engcore.inference import (  # noqa: E402
     AdmittedForwardTable,
     gaussian_grid_posterior,
 )

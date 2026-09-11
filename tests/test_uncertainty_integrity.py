@@ -33,23 +33,23 @@ import json
 
 import pytest
 
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     ScientificCoreError,
     UnitCompatibilityError,
 )
-from src.engcore.scientific.ir.problem import ModelReference
-from src.engcore.scientific.results.provenance import (
+from engcore.scientific.ir.problem import ModelReference
+from engcore.scientific.results.provenance import (
     ExecutionBinding,
     ProvenanceRecord,
 )
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.results.uncertainty import (
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.uncertainty import (
     Uncertainty,
     UncertaintyKind,
 )
-from src.engcore.scientific.serialization import to_json
-from src.engcore.scientific.solvers.protocol import SolverIdentity
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.serialization import to_json
+from engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.units.quantity import Quantity
 
 
 def _result(values, uncertainty):

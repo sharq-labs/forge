@@ -23,11 +23,11 @@ import math
 
 import pytest
 
-from src.engcore.domains.thermal_models import context as ctx
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.thermal_models import context as ctx
+from engcore.domains.thermal_models import lumped as lump
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.units.quantity import Quantity
 
 Q = Quantity
 K = "kelvin"

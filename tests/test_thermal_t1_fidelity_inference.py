@@ -27,7 +27,7 @@ from experiments.shared.grid_inference import (
 )
 from experiments.thermal_t1 import BASE_COMMIT, DECISION_PATH_MODULES, T1_VERSION
 from experiments.thermal_t1 import t1_config, t1_run, t1_truth
-from src.engcore.sria.calibration import FidelityOwnership
+from engcore.sria.calibration import FidelityOwnership
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 T1_ROOT = Path(t1_config.__file__).resolve().parent

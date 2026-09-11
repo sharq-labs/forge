@@ -20,10 +20,10 @@ import pickle
 
 import pytest
 
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.thermal_models import context as ctx
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.mcp import (
+from engcore.domains.electrical import material as mat
+from engcore.domains.thermal_models import context as ctx
+from engcore.domains.thermal_models import lumped as lump
+from engcore.mcp import (
     EVIDENCE_PACKAGE_SCHEMA,
     AssertedContext,
     CouplingCriterion,
@@ -36,7 +36,7 @@ from src.engcore.mcp import (
     combine_assessments,
     derive_verdict,
 )
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.models.definition import (
     RangeCondition,
     UnknownCondition,
     UnknownReason,
@@ -44,21 +44,21 @@ from src.engcore.scientific.models.definition import (
     ValidityDomain,
     ValidityStatus,
 )
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     ModelValidityError,
     ScientificValidationError,
 )
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
     unverified_report,
 )
-from src.engcore.scientific.units.quantity import Quantity
-from src.engcore.systems.electrothermal import coupled as cp
+from engcore.scientific.units.quantity import Quantity
+from engcore.systems.electrothermal import coupled as cp
 
 K = "kelvin"
 

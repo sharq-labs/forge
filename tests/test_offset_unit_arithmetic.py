@@ -21,8 +21,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.scientific.errors import UnitCompatibilityError
-from src.engcore.scientific.units.quantity import Quantity as Q
+from engcore.scientific.errors import UnitCompatibilityError
+from engcore.scientific.units.quantity import Quantity as Q
 
 K = "kelvin"
 

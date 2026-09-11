@@ -20,7 +20,7 @@ import math
 
 import pytest
 
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import (
     ADIABATIC_CEILING_TEMPERATURE,
     ASSEMBLED_QUANTITIES,
     ASSEMBLER_NAMESPACE,
@@ -37,13 +37,13 @@ from src.engcore.domains.kinetics.cstr import (
     derived_cstr_quantities,
     solve_reactor,
 )
-from src.engcore.domains.kinetics.cstr import context as ctx
-from src.engcore.scientific.errors import (
+from engcore.domains.kinetics.cstr import context as ctx
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     UnitCompatibilityError,
 )
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.units.quantity import Quantity
 
 Q = Quantity
 

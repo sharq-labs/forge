@@ -52,9 +52,9 @@ test.
 
 from __future__ import annotations
 
-from src.engcore.domains.battery import cell as bat
-from src.engcore.domains.battery import context as ctx
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.battery import cell as bat
+from engcore.domains.battery import context as ctx
+from engcore.scientific.units.quantity import Quantity
 
 K = "kelvin"
 S = "second"

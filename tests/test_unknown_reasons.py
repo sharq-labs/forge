@@ -30,8 +30,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from src.engcore.scientific.errors import ModelValidityError, ScientificCoreError
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.errors import ModelValidityError, ScientificCoreError
+from engcore.scientific.models.definition import (
     CategoryCondition,
     FlagCondition,
     RangeCondition,
@@ -41,7 +41,7 @@ from src.engcore.scientific.models.definition import (
     ValidityDomain,
     ValidityStatus,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 
 def peclet() -> RangeCondition:
@@ -202,12 +202,12 @@ def test_the_reason_survives_serialization_and_a_v1_record_cannot_be_guessed():
 
 def test_the_verdict_rules_did_not_change():
     """UNKNOWN still produces INSUFFICIENT_EVIDENCE. Only the reason is richer."""
-    from src.engcore.mcp.evidence import (
+    from engcore.mcp.evidence import (
         CredibilityVerdict,
         ModelValidityRecord,
         derive_verdict,
     )
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
         ValidationOutcome,
@@ -251,7 +251,7 @@ def test_repair_guidance_separates_declare_this_from_cannot_be_assessed():
     NAMES, which is a different thing. There was nothing useful it could say,
     because every unknown arrived as a bare name.
     """
-    from src.engcore.domains.repair import (
+    from engcore.domains.repair import (
         actionable_declarations,
         unassessable_guidance,
     )
@@ -301,7 +301,7 @@ def test_repair_guidance_never_fabricates_a_number_for_an_unassessed_condition()
     """
     import dataclasses
 
-    from src.engcore.domains.repair import Unassessable, unassessable_guidance
+    from engcore.domains.repair import Unassessable, unassessable_guidance
 
     fields = {f.name for f in dataclasses.fields(Unassessable)}
     assert fields == {"condition", "reason", "actionable", "guidance"}
@@ -319,7 +319,7 @@ def test_repair_guidance_never_fabricates_a_number_for_an_unassessed_condition()
 
 def test_every_declared_reason_has_guidance_written_for_it():
     """A new situation must fail loudly here, not fall through to a default."""
-    from src.engcore.domains.repair import _GUIDANCE
+    from engcore.domains.repair import _GUIDANCE
 
     assert set(_GUIDANCE) == set(UnknownReason), (
         "a declared UnknownReason has no guidance sentence, so a consumer "

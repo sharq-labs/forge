@@ -34,18 +34,18 @@ import math
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
     SharedComponent,
     SolveRoute,
 )
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     ModelValidityError,
     ScientificCoreError,
 )
-from src.engcore.scientific.ir.conditions import BoundaryCondition, BoundaryKind
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.ir.conditions import BoundaryCondition, BoundaryKind
+from engcore.scientific.models.definition import (
     RangeCondition,
     UnknownCondition,
     UnknownReason,
@@ -54,14 +54,14 @@ from src.engcore.scientific.models.definition import (
     ValidityStatus,
     classify_conditions,
 )
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import ValidationLevel
-from src.engcore.scientific.serialization import to_json
-from src.engcore.scientific.solvers.admission import require_agreement
-from src.engcore.scientific.solvers.protocol import SolverIdentity
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import ValidationLevel
+from engcore.scientific.serialization import to_json
+from engcore.scientific.solvers.admission import require_agreement
+from engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.units.quantity import Quantity
 
 NON_FINITE = (float("nan"), float("inf"), float("-inf"))
 FINITE = (0.0, 1.0, -1.0, 1e-30, 1e30, 350.0)
@@ -264,7 +264,7 @@ def test_the_mutator_list_is_complete_against_this_interpreter():
     CPython that grows a `dict` method fails here and somebody classifies it,
     instead of a new hole opening in silence.
     """
-    from src.engcore.scientific.results.immutable import (
+    from engcore.scientific.results.immutable import (
         DICT_MUTATORS,
         DICT_NON_MUTATORS,
     )

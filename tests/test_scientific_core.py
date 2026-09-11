@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     AmbiguousSolverError,
     BindingIssueKind,
     BooleanValue,
@@ -79,8 +79,8 @@ from src.engcore.scientific import (
     decode_value,
     normalize_unit,
 )
-from src.engcore.scientific.units.quantity import dimensionality
-from src.engcore.scientific.solvers.capability import SolverCapability
+from engcore.scientific.units.quantity import dimensionality
+from engcore.scientific.solvers.capability import SolverCapability
 
 
 def _fixture_model(**fields):
@@ -1563,7 +1563,7 @@ def test_objective_weight_rejects_non_finite():
 
 
 def test_solver_tolerance_rejects_non_finite():
-    from src.engcore.scientific import SolverSettings
+    from engcore.scientific import SolverSettings
 
     for bad in (NAN, POS_INF, NEG_INF):
         _raises(ScientificCoreError, SolverSettings, tolerances={"rtol": bad})

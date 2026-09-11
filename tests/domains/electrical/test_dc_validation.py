@@ -13,7 +13,7 @@ import sys
 
 import numpy as np
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCCurrentSource,
     DCValidationSettings,
@@ -26,14 +26,14 @@ from src.engcore.domains.electrical.dc import (
     build_validation_report,
     solve_circuit,
 )
-from src.engcore.domains.electrical.dc.validation import (
+from engcore.domains.electrical.dc.validation import (
     check_kcl,
     check_linear_residual,
     check_power_balance,
     check_resistor_relation,
     check_voltage_sources,
 )
-from src.engcore.scientific import Quantity, ValidationOutcome
+from engcore.scientific import Quantity, ValidationOutcome
 
 GND = ElectricalNode("gnd", is_reference=True)
 SETTINGS = DCValidationSettings()
@@ -171,7 +171,7 @@ def test_dimensional_check_rejects_a_mislabelled_metric():
     assert dimensional.outcome is ValidationOutcome.FAIL
     assert "resistor_power:R1" in dimensional.detail
     # a failed dimensional check must not establish its level
-    from src.engcore.scientific import ValidationLevel
+    from engcore.scientific import ValidationLevel
     assert ValidationLevel.DIMENSIONALLY_VALID not in report.attained_levels
 
 

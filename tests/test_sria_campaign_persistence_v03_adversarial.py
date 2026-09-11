@@ -11,22 +11,22 @@ import copy
 
 import pytest
 
-from src.engcore.sria.campaign.budget import BudgetLedger
-from src.engcore.sria.campaign.checkpoint import EffectLedger
-from src.engcore.sria.campaign.events import (
+from engcore.sria.campaign.budget import BudgetLedger
+from engcore.sria.campaign.checkpoint import EffectLedger
+from engcore.sria.campaign.events import (
     CampaignEvent,
     CampaignEventLog,
     CampaignEventType,
 )
-from src.engcore.sria.campaign.persistence import (
+from engcore.sria.campaign.persistence import (
     CampaignCheckpointV3,
     EffectJournalEntry,
     IncrementalCheckpointStore,
     PersistenceIntegrityError,
     _copy_iteration_continuation,
 )
-from src.engcore.sria.campaign.state import CampaignRun, ExecutionState, IterationRecord
-from src.engcore.sria.decision.actions import ActionFamily
+from engcore.sria.campaign.state import CampaignRun, ExecutionState, IterationRecord
+from engcore.sria.decision.actions import ActionFamily
 
 RUN_ID = "v03-adversarial"
 

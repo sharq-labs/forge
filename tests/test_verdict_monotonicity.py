@@ -53,24 +53,24 @@ import itertools
 
 import pytest
 
-from src.engcore.mcp.evidence import (
+from engcore.mcp.evidence import (
     CouplingEvidence,
     CredibilityVerdict,
     ModelValidityRecord,
     derive_verdict,
 )
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.models.definition import (
     UnknownCondition,
     UnknownReason,
     ValidityAssessment,
     ValidityStatus,
 )
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 
 #: How much a verdict claims. The whole module is written against this order.

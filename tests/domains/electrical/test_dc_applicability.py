@@ -31,12 +31,12 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.electrical import dc_applicability as app
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.ir.problem import ScientificProblem
-from src.engcore.scientific.ir.variables import ScientificParameter
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.electrical import dc_applicability as app
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.ir.problem import ScientificProblem
+from engcore.scientific.ir.variables import ScientificParameter
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.units.quantity import Quantity
 
 OHM = "ohm"
 VOLT = "volt"
@@ -111,7 +111,7 @@ def test_the_two_records_are_companions_and_not_replacements():
     reader holding a result against ``electrical.dc.resistor_ohm`` is entitled
     to find that record unchanged.
     """
-    from src.engcore.domains.electrical.dc.models import (
+    from engcore.domains.electrical.dc.models import (
         IDEAL_VOLTAGE_SOURCE_MODEL,
         RESISTOR_OHM_MODEL,
     )

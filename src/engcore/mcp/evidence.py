@@ -195,13 +195,14 @@ def _declared_models() -> Mapping[tuple[str, str], Any]:
         import pkgutil
 
         # This module's own package, not the literal name `engcore`. The tree
-        # is importable under two names here -- `engcore` and `src.engcore` --
-        # and they are different module objects with different class objects,
-        # so a walk under the wrong one finds definitions that fail an
-        # `isinstance` against the class this module imported. Every model
-        # would then report no exclusions, which is the quiet wrong answer
-        # this whole field exists to stop. Derived from `__name__` so it is
-        # right under either.
+        # was once importable under two names -- `engcore` and `src.engcore`
+        # -- as different module objects with different class objects, so a
+        # walk under the wrong one found definitions that failed an
+        # `isinstance` against the class this module imported, and every
+        # model reported no exclusions: the quiet wrong answer this whole field
+        # exists to stop. The frozen spelling is an alias for the canonical
+        # modules now (`src/__init__.py`), so there is one name; deriving it
+        # from `__name__` costs nothing and stays right if that ever changes.
         root_name = __name__.rsplit(".", 2)[0]
         root = importlib.import_module(root_name)
 

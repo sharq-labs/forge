@@ -12,15 +12,15 @@ from pathlib import Path
 
 import pytest
 
-from src.engcore.sria.campaign.budget import BudgetLedger
-from src.engcore.sria.campaign.checkpoint import (
+from engcore.sria.campaign.budget import BudgetLedger
+from engcore.sria.campaign.checkpoint import (
     CampaignCheckpoint,
     CheckpointStore,
     EffectLedger,
 )
-from src.engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
-from src.engcore.sria.campaign.persistence import IncrementalCheckpointStore
-from src.engcore.sria.campaign.state import CampaignRun, ExecutionState
+from engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
+from engcore.sria.campaign.persistence import IncrementalCheckpointStore
+from engcore.sria.campaign.state import CampaignRun, ExecutionState
 
 RUN_ID = "v03-file-backend"
 
@@ -67,7 +67,7 @@ def test_failed_atomic_replace_leaves_previous_committed_image_readable(
         raise OSError("synthetic crash before atomic rename")
 
     monkeypatch.setattr(
-        "src.engcore.sria.campaign.persistence.os.replace", fail_replace
+        "engcore.sria.campaign.persistence.os.replace", fail_replace
     )
     with pytest.raises(OSError, match="synthetic crash"):
         store.save_to_path(target)

@@ -52,8 +52,8 @@ import dataclasses
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
-from src.engcore.scientific import Quantity
-from src.engcore.sria import (
+from engcore.scientific import Quantity
+from engcore.sria import (
     AdmissionAuthority,
     AdmissionAuthorityRegistry,
     BeliefUpdateGateway,
@@ -62,25 +62,25 @@ from src.engcore.sria import (
     ResearchAction,
     TerminalDecision,
 )
-from src.engcore.sria.assurance import Arbiter
-from src.engcore.sria.assurance.assessment import CriticClass
-from src.engcore.sria.assurance.obligations import (
+from engcore.sria.assurance import Arbiter
+from engcore.sria.assurance.assessment import CriticClass
+from engcore.sria.assurance.obligations import (
     ObligationKind,
     ObligationSet,
     ValidationObligation,
 )
-from src.engcore.sria.calibration import CalibrationMemory, CalibrationMemoryEntry
-from src.engcore.sria.calibration import Consumer, MemoryKind
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.campaign import (
+from engcore.sria.calibration import CalibrationMemory, CalibrationMemoryEntry
+from engcore.sria.calibration import Consumer, MemoryKind
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.campaign import (
     AssessmentBundle,
     BudgetLedger,
     CampaignEventLog,
     CampaignRunner,
     ExecutionRecord,
 )
-from src.engcore.sria.campaign.checkpoint import CampaignCheckpoint
-from src.engcore.sria.decision import (
+from engcore.sria.campaign.checkpoint import CampaignCheckpoint
+from engcore.sria.decision import (
     ActionFamily,
     ActionProposal,
     AtomicAction,

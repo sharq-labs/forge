@@ -14,7 +14,7 @@ from experiments.kinetics_k4.k4_config import (
     constant_rate_grid,
     k4_ensemble_twin,
 )
-from src.engcore.scientific import TwinKind
+from engcore.scientific import TwinKind
 
 
 def test_constant_rate_grid_is_frozen_one_dimensional_support() -> None:

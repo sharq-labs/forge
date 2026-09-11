@@ -13,9 +13,9 @@ import numpy as np
 
 from experiments.kinetics_k1.k1_config import CHEMISTRY
 from experiments.kinetics_k3.k3_config import k3_reference_twin
-from src.engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
-from src.engcore.domains.kinetics.cstr.problem import CSTR_MODEL
-from src.engcore.scientific import ModelReference, Quantity, ScientificTwin, TwinKind
+from engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
+from engcore.domains.kinetics.cstr.problem import CSTR_MODEL
+from engcore.scientific import ModelReference, Quantity, ScientificTwin, TwinKind
 
 PREREG_COMMIT = "3e685454d44d81e3fa446f41bcc26160eb11c372"
 K31_FROZEN_COMMIT = "f5a932c03a35cb45e661d03d725ea96aecb2f974"

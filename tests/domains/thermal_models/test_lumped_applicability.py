@@ -17,16 +17,16 @@ import dataclasses
 
 import pytest
 
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.thermal_models import context as ctx
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.ir.problem import ScientificProblem
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.units.quantity import Quantity
-from src.engcore.systems.electrothermal import coupled as cp
+from engcore.domains.electrical import material as mat
+from engcore.domains.thermal_models import context as ctx
+from engcore.domains.thermal_models import lumped as lump
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.ir.problem import ScientificProblem
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.units.quantity import Quantity
+from engcore.systems.electrothermal import coupled as cp
 
 K = "kelvin"
 

@@ -19,21 +19,21 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.sria import (
+from engcore.sria import (
     AdmissionAuthority,
     AdmissionAuthorityError,
     AdmissionAuthorityRegistry,
     BeliefUpdateGateway,
 )
-from src.engcore.sria.admission import AdmissionDeclaration, DecisionBinding
-from src.engcore.sria.assurance import (
+from engcore.sria.admission import AdmissionDeclaration, DecisionBinding
+from engcore.sria.assurance import (
     Arbiter,
     AssuranceVerdict,
     CriticClass,
     NumericalCritic,
     ObligationSet,
 )
-from src.engcore.scientific import (
+from engcore.scientific import (
     ConvergenceState,
     ProvenanceRecord,
     Quantity,

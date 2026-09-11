@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     CircuitBindingError,
     DCCircuit,
     DCCurrentSource,
@@ -28,7 +28,7 @@ from src.engcore.domains.electrical.dc import (
     solve_circuit,
     verify_problem_matches_circuit,
 )
-from src.engcore.scientific import Quantity, ScientificProblem
+from engcore.scientific import Quantity, ScientificProblem
 
 GND = ElectricalNode("gnd", is_reference=True)
 
@@ -326,7 +326,7 @@ def test_same_values_different_wiring_produce_different_provenance_identity():
 
 
 def test_provenance_round_trips_with_nested_topology():
-    from src.engcore.scientific import ProvenanceRecord
+    from engcore.scientific import ProvenanceRecord
 
     result = solve_circuit(_circuit(), run_id="prov-rt")
     payload = result.provenance.to_dict()

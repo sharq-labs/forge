@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCVoltageSource,
     ELECTRICAL_DC_LINEAR,
@@ -24,7 +24,7 @@ from src.engcore.domains.electrical.dc import (
     solve_circuit,
     voltage_source_relation_problem,
 )
-from src.engcore.scientific import (
+from engcore.scientific import (
     DeclaredSupport,
     AmbiguousSolverError,
     BindingIssueKind,

@@ -56,19 +56,19 @@ from experiments.kinetics_k3.k3_forward import (  # noqa: E402
     holdout_template_observations,
     holdout_truth_means,
 )
-from src.engcore.domains.kinetics.cstr.problem import (  # noqa: E402
+from engcore.domains.kinetics.cstr.problem import (  # noqa: E402
     CA_FINAL_METRIC,
     CSTR_MODEL,
     T_FINAL_METRIC,
 )
-from src.engcore.inference import (  # noqa: E402
+from engcore.inference import (  # noqa: E402
     AdmittedForwardTable,
     ObservationSet,
     PosteriorGrid,
     gaussian_grid_posterior,
 )
-from src.engcore.scientific import ModelReference, Quantity  # noqa: E402
-from src.engcore.uq import (  # noqa: E402
+from engcore.scientific import ModelReference, Quantity  # noqa: E402
+from engcore.uq import (  # noqa: E402
     PredictiveObservableSpec,
     QuantifiedPredictiveResult,
     posterior_predictive_uq,

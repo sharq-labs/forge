@@ -18,7 +18,7 @@ import pathlib
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     CONSENSUS_SCHEMA,
     ComponentKind,
     CrossSolverConsensus,
@@ -29,13 +29,13 @@ from src.engcore.scientific.consensus import (
     SolveRoute,
     relative_difference,
 )
-from src.engcore.scientific.errors import ScientificValidationError
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.errors import ScientificValidationError
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.solvers.protocol import SolverIdentity
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -382,7 +382,7 @@ def test_the_consensus_module_names_no_domain_and_no_backend():
 # =====================================================================
 
 def test_the_two_integrator_routes_declare_the_same_machinery():
-    from src.engcore.domains.kinetics.cstr.validation import integration_route
+    from engcore.domains.kinetics.cstr.validation import integration_route
 
     solver = SolverIdentity("kinetics.cstr.scipy_implicit_ivp", "0.1.0")
     bdf = integration_route("BDF", solver)
@@ -414,7 +414,7 @@ def test_the_two_integrator_routes_declare_the_same_machinery():
 def test_the_kinetics_gate_still_refuses_to_award_for_the_cross_method_arm():
     """End to end, on a real regime: the arm agrees and establishes nothing."""
     from experiments.kinetics_k1.k1_config import regime
-    from src.engcore.domains.kinetics.cstr.validation import run_verification_gate
+    from engcore.domains.kinetics.cstr.validation import run_verification_gate
 
     report = run_verification_gate(regime("R1").build(), run_id_prefix="consensus")
     consensus = report.cross_method_consensus
@@ -447,7 +447,7 @@ def test_the_kinetics_gate_still_refuses_to_award_for_the_cross_method_arm():
 # =====================================================================
 
 def test_the_two_dc_routes_declare_no_component_in_common():
-    from src.engcore.domains.electrical.dc_consensus import (
+    from engcore.domains.electrical.dc_consensus import (
         external_route,
         native_route,
     )
@@ -463,10 +463,10 @@ def test_the_two_dc_routes_declare_no_component_in_common():
 
 @pytest.mark.expensive
 def test_the_dc_routes_earn_the_level_on_a_real_circuit():
-    from src.engcore.domains.electrical import ngspice as ng
-    from src.engcore.domains.electrical.dc import solve_circuit
-    from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
-    from src.engcore.domains.electrical.dc_consensus import dc_consensus
+    from engcore.domains.electrical import ngspice as ng
+    from engcore.domains.electrical.dc import solve_circuit
+    from engcore.domains.electrical.dc.solver import ElectricalDCSolver
+    from engcore.domains.electrical.dc_consensus import dc_consensus
     from tests.test_heterogeneous_ngspice import divider
 
     circuit = divider()

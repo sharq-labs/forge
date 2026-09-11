@@ -62,6 +62,13 @@ where = ["src"]
 [tool.pytest.ini_options]
 # The project uses a src/ layout. Tests must resolve engcore from the checked-out
 # source tree even when the package has not been installed in editable mode.
+#
+# "." is here for the top-level `experiments`, `benchmarks` and `tests`
+# packages, not for the runtime. It also makes `src` importable, and eleven
+# SHA-256-pinned experiment and test files still import `src.engcore`; that
+# spelling is an alias for the canonical `engcore` modules (`src/__init__.py`),
+# never a second copy of them. The only supported import namespace is `engcore`,
+# and `tests/test_trust_boundary_package_identity.py` holds both halves of that.
 pythonpath = ["src", "."]
 
 # Execution tiers. Assigned centrally in tests/conftest.py rather than with

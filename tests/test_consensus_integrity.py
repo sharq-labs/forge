@@ -33,7 +33,7 @@ import json
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     CONSENSUS_SCHEMA,
     CONSENSUS_SCHEMA_V1,
     ComponentKind,
@@ -43,14 +43,14 @@ from src.engcore.scientific.consensus import (
     SharedComponent,
     SolveRoute,
 )
-from src.engcore.scientific.errors import ScientificValidationError
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.errors import ScientificValidationError
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.solvers.protocol import SolverIdentity
 
 THRESHOLDS = VerificationThresholds(
     gate_id="test.consensus",

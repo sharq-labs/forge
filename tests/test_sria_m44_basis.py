@@ -27,9 +27,9 @@ import dataclasses
 import json
 import sys
 
-from src.engcore.sria.calibration import CostModel
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.decision import (
+from engcore.sria.calibration import CostModel
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.decision import (
     CandidateEvaluator,
     CoherenceStatus,
     CostTradeoff,
@@ -549,7 +549,7 @@ def test_terminal_objective_unavailable_outranks_a_basis_finding():
 
 
 def test_coherent_cannot_leave_a_blocking_dependency_unverified():
-    from src.engcore.sria.decision import CoherenceReport
+    from engcore.sria.decision import CoherenceReport
 
     _raises(
         ValueError,
@@ -598,7 +598,7 @@ def test_basis_pinned_but_unused_dependency_is_a_mismatch():
 
 
 def test_decision_basis_survives_serialization():
-    from src.engcore.sria.decision import BeliefSnapshot
+    from engcore.sria.decision import BeliefSnapshot
 
     evaluator, _ = stack()
     snapshot = basis(evaluator)

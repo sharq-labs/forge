@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     BooleanValue,
     CategoricalValue,
     IntegerValue,

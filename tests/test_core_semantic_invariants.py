@@ -33,10 +33,10 @@ import pathlib
 
 import pytest
 
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.ir.values import IntegerValue
-from src.engcore.scientific.ir.variables import ScientificVariable, VariableKind
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.ir.values import IntegerValue
+from engcore.scientific.ir.variables import ScientificVariable, VariableKind
+from engcore.scientific.models.definition import (
     CrossLimitCondition,
     FlagCondition,
     RangeCondition,
@@ -45,21 +45,21 @@ from src.engcore.scientific.models.definition import (
     ValidityAssessment,
     ValidityStatus,
 )
-from src.engcore.scientific.models.registry import ModelRegistry
-from src.engcore.scientific.realizations.registry import RealizationRegistry
-from src.engcore.scientific.results.data_reference import ScientificDataReference
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.solvers.protocol import SolverSettings
-from src.engcore.scientific.results.uncertainty import (
+from engcore.scientific.models.registry import ModelRegistry
+from engcore.scientific.realizations.registry import RealizationRegistry
+from engcore.scientific.results.data_reference import ScientificDataReference
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.solvers.protocol import SolverSettings
+from engcore.scientific.results.uncertainty import (
     Uncertainty,
     UncertaintyKind,
 )
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.results.validation import (
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.scientific.units.quantity import Quantity, base_unit
+from engcore.scientific.units.quantity import Quantity, base_unit
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 

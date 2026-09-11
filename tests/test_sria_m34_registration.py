@@ -17,19 +17,19 @@ from __future__ import annotations
 import secrets
 import sys
 
-from src.engcore.sria import (
+from engcore.sria import (
     AdmissionAuthorityError,
     AdmissionAuthorityRegistry,
     AdmissionError,
     BeliefUpdateGateway,
     EvidenceStatus,
 )
-from src.engcore.sria.admission import (
+from engcore.sria.admission import (
     AdmissionAuthority,
     DecisionBinding,
     _issue_registrar_capability,
 )
-from src.engcore.sria.assurance import Arbiter, AssuranceVerdict
+from engcore.sria.assurance import Arbiter, AssuranceVerdict
 
 from tests.test_sria_m33_authorization import (  # noqa: E402
     setup,
@@ -93,7 +93,7 @@ def test_1_trusted_authority_cannot_register_a_commitment():
             payload,
         )
     # The capability class itself refuses direct construction.
-    from src.engcore.sria.admission import _RegistrarCapability
+    from engcore.sria.admission import _RegistrarCapability
 
     _raises(AdmissionAuthorityError, _RegistrarCapability, "attacker")
 
@@ -103,7 +103,7 @@ def test_1_trusted_authority_cannot_register_a_commitment():
 def test_1b_authority_exposes_no_way_to_obtain_a_capability():
     """Holding the authority must not yield registration rights."""
     authority, arbiter, _gateway, _evidence = setup("reg1b")
-    from src.engcore.sria.admission import _RegistrarCapability
+    from engcore.sria.admission import _RegistrarCapability
 
     for name in dir(authority):
         if name.startswith("__"):

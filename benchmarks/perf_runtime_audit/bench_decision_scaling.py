@@ -27,9 +27,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.engcore.sria.decision import ActionFamily  # noqa: E402
-from src.engcore.sria.decision import belief_snapshot as belief_snapshot_mod  # noqa: E402
-from src.engcore.sria.decision.belief_snapshot import BeliefSnapshot  # noqa: E402
+from engcore.sria.decision import ActionFamily  # noqa: E402
+from engcore.sria.decision import belief_snapshot as belief_snapshot_mod  # noqa: E402
+from engcore.sria.decision.belief_snapshot import BeliefSnapshot  # noqa: E402
 from tests.sria_m4_benchmark import toy_action  # noqa: E402
 from tests.test_sria_m4_decision import engine, evaluate, objective  # noqa: E402
 
@@ -129,7 +129,7 @@ def measure_snapshot_digest(repeats: int) -> dict[str, Any]:
 
 def measure_basis_duplicate_detection(sizes: list[int], repeats: int) -> list[dict]:
     """Cost of ``BeliefSnapshot``'s O(N^2) decision-basis duplicate check."""
-    from src.engcore.sria.decision import DependencyIdentity, DependencyKind
+    from engcore.sria.decision import DependencyIdentity, DependencyKind
 
     rows = []
     for n in sizes:

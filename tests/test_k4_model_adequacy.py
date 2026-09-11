@@ -5,14 +5,14 @@ import math
 import numpy as np
 import pytest
 
-from src.engcore.adequacy import (
+from engcore.adequacy import (
     ModelAdequacyError,
     assess_predictive_observation,
     compare_log_predictive_scores,
 )
-from src.engcore.inference import AdmittedForwardTable, PosteriorGrid
-from src.engcore.scientific import ModelReference, Quantity, TwinReference
-from src.engcore.uq import PredictiveObservableSpec
+from engcore.inference import AdmittedForwardTable, PosteriorGrid
+from engcore.scientific import ModelReference, Quantity, TwinReference
+from engcore.uq import PredictiveObservableSpec
 
 
 def _posterior(dataset_id: str = "fit") -> PosteriorGrid:

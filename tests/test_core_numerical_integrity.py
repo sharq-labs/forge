@@ -40,25 +40,25 @@ import math
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
     IndependenceVerdict,
     SharedComponent,
     SolveRoute,
 )
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     ScientificCoreError,
     ScientificValidationError,
 )
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.serialization import to_json
-from src.engcore.scientific.solvers.admission import require_agreement
-from src.engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.serialization import to_json
+from engcore.scientific.solvers.admission import require_agreement
+from engcore.scientific.solvers.protocol import SolverIdentity
 
 NON_FINITE = (float("nan"), float("inf"), float("-inf"))
 

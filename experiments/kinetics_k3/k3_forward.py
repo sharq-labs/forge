@@ -30,15 +30,15 @@ from experiments.kinetics_k2.k2_config import (
     chemistry_from_coordinates,
 )
 from experiments.kinetics_k2.k2_forward import ForwardBuildStats, resolve_worker_count
-from src.engcore.domains.kinetics.cstr.inference import CSTRInferenceForwardAdapter
-from src.engcore.inference import (
+from engcore.domains.kinetics.cstr.inference import CSTRInferenceForwardAdapter
+from engcore.inference import (
     AdmittedForwardRow,
     AdmittedForwardTable,
     GaussianObservation,
     InferenceAdmissibilityError,
     ObservationSet,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from .k3_config import (
     HOLDOUT_BY_ID,

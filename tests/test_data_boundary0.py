@@ -27,7 +27,7 @@ import pathlib
 
 import pytest
 
-from src.engcore.data import (
+from engcore.data import (
     BulkDataIntegrityError,
     BulkDataResolver,
     BulkDataUnavailable,
@@ -36,25 +36,25 @@ from src.engcore.data import (
     relocate,
     store_values,
 )
-from src.engcore.domains.thermal.conduction1d import (
+from engcore.domains.thermal.conduction1d import (
     ConductionSlab,
     SlabDiscretization,
     solve_slab,
 )
-from src.engcore.domains.thermal_models.conduction1d_bulk import (
+from engcore.domains.thermal_models.conduction1d_bulk import (
     FIELD_DATA_NAME,
     FIELD_DIAGNOSTIC_KEY,
     solve_slab_with_bulk_field,
 )
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.serialization import require_schema
-from src.engcore.scientific.results.data_reference import (
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.serialization import require_schema
+from engcore.scientific.results.data_reference import (
     ScientificDataReference,
     decode_float64,
     encode_float64,
 )
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.result import (
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.result import (
     RESULT_SCHEMA,
     RESULT_SCHEMA_V1,
     RESULT_SCHEMA_V2,
@@ -62,8 +62,8 @@ from src.engcore.scientific.results.result import (
     SUPPORTED_RESULT_SCHEMAS,
     ScientificResult,
 )
-from src.engcore.scientific.results.uncertainty import Uncertainty
-from src.engcore.scientific.solvers.protocol import (
+from engcore.scientific.results.uncertainty import Uncertainty
+from engcore.scientific.solvers.protocol import (
     RAW_OUTPUT_SCHEMA,
     RAW_OUTPUT_SCHEMA_V1,
     SUPPORTED_RAW_OUTPUT_SCHEMAS,
@@ -71,7 +71,7 @@ from src.engcore.scientific.solvers.protocol import (
     RawSolverOutput,
     SolverIdentity,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -436,9 +436,9 @@ def test_b3_serialized_size_is_independent_of_field_resolution():
 
 def test_b4_the_field_is_removed_from_the_diagnostics_escape_hatch():
     """Not merely absent from the result — gone from the raw output too."""
-    from src.engcore.data.capture import BulkCaptureSpec, capture_bulk
-    from src.engcore.domains.thermal.conduction1d.solver import Conduction1DSolver
-    from src.engcore.domains.thermal.conduction1d.problem import (
+    from engcore.data.capture import BulkCaptureSpec, capture_bulk
+    from engcore.domains.thermal.conduction1d.solver import Conduction1DSolver
+    from engcore.domains.thermal.conduction1d.problem import (
         build_conduction_problem,
     )
 
@@ -1078,8 +1078,8 @@ def test_x3_relocation_verifies_the_destination_before_dropping_the_source():
 
 def test_x4_capture_failures_are_typed():
     """C-16. A milestone about typed failure does not raise a bare KeyError."""
-    from src.engcore.data.capture import BulkCaptureSpec, capture_bulk
-    from src.engcore.data.errors import BulkDataError
+    from engcore.data.capture import BulkCaptureSpec, capture_bulk
+    from engcore.data.errors import BulkDataError
 
     raw = RawSolverOutput(
         convergence=ConvergenceState.CONVERGED, diagnostics={"other": 1}
@@ -1140,7 +1140,7 @@ def test_x6_capture_runs_after_every_in_process_consumer():
     """
     import inspect
 
-    from src.engcore.domains.thermal_models import conduction1d_bulk as bridge
+    from engcore.domains.thermal_models import conduction1d_bulk as bridge
 
     source = inspect.getsource(bridge.solve_slab_with_bulk_field)
     validate_at = source.index("solver.validate(")

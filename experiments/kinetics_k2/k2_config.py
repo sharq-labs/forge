@@ -23,19 +23,19 @@ from experiments.kinetics_k1.k1_config import (
     STANDARD_RHS_BUDGET,
     VOLUME_M3,
 )
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import (
     IntegrationSettings,
     ReactorChemistry,
     ReactorOperation,
     ReactorRun,
 )
-from src.engcore.domains.kinetics.cstr.problem import (
+from engcore.domains.kinetics.cstr.problem import (
     CA_FINAL_METRIC,
     GAS_CONSTANT_UNIT,
     MOLAR_GAS_CONSTANT,
     T_FINAL_METRIC,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from . import EXPERIMENT_ID
 

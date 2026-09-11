@@ -40,26 +40,26 @@ import dataclasses
 
 import pytest
 
-from src.engcore.mcp.evidence import classify_assessment, combine_assessments
-from src.engcore.scientific.composition.conversion import ConversionOutcome
-from src.engcore.scientific.errors import (
+from engcore.mcp.evidence import classify_assessment, combine_assessments
+from engcore.scientific.composition.conversion import ConversionOutcome
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     ModelValidityError,
     UnitCompatibilityError,
 )
-from src.engcore.scientific.ir.conditions import (
+from engcore.scientific.ir.conditions import (
     BoundaryCondition,
     BoundaryKind,
     InitialCondition,
 )
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.models.definition import (
     UnknownCondition,
     UnknownReason,
     ValidityAssessment,
     ValidityStatus,
     classify_conditions,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 NOT_SUPPLIED = UnknownReason.NOT_SUPPLIED
 

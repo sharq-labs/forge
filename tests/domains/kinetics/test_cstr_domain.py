@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import (
     CA_FINAL_METRIC,
     CONVERSION_METRIC,
     CSTR_MODEL,
@@ -57,19 +57,19 @@ from src.engcore.domains.kinetics.cstr import (
 
 # White-box: `assemble` is an implementation detail deliberately kept off the
 # package's public surface, so this test reaches into its own module.
-from src.engcore.domains.kinetics.cstr.solver import assemble
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.results.uncertainty import UncertaintyKind
-from src.engcore.scientific.results.validation import (
+from engcore.domains.kinetics.cstr.solver import assemble
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.uncertainty import UncertaintyKind
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.protocol import (
+from engcore.scientific.solvers.protocol import (
     ConvergenceState,
     ScientificSolver,
 )
-from src.engcore.scientific.units.quantity import Quantity
-from src.engcore.scientific.errors import (
+from engcore.scientific.units.quantity import Quantity
+from engcore.scientific.errors import (
     ScientificValidationError,
     UnitCompatibilityError,
 )
@@ -169,7 +169,7 @@ def test_supports_answers_without_solving() -> None:
 
 
 def test_supports_refuses_a_foreign_problem() -> None:
-    from src.engcore.domains.thermal.conduction1d import (
+    from engcore.domains.thermal.conduction1d import (
         ConductionSlab,
         SlabDiscretization,
         build_conduction_problem,
@@ -1046,7 +1046,7 @@ def test_a_reactor_that_cannot_react_still_solves_and_conserves() -> None:
 
 
 def test_the_gate_refuses_a_ladder_too_short_to_show_a_trend() -> None:
-    from src.engcore.domains.kinetics.cstr.validation import ToleranceRung
+    from engcore.domains.kinetics.cstr.validation import ToleranceRung
 
     with pytest.raises(ValueError):
         run_verification_gate(
@@ -1324,7 +1324,7 @@ def test_a_coarse_scan_misses_a_close_pair_rather_than_inventing_one() -> None:
 
 
 def test_the_search_states_that_it_finds_transversal_roots_only() -> None:
-    from src.engcore.domains.kinetics.cstr.reference import SEARCH_SEMANTICS
+    from engcore.domains.kinetics.cstr.reference import SEARCH_SEMANTICS
 
     assert "transversal" in SEARCH_SEMANTICS
     assert "does not change sign" in SEARCH_SEMANTICS
@@ -1420,7 +1420,7 @@ def test_the_frozen_preregistration_erratum_is_recorded() -> None:
 
 
 def test_the_stiff_method_note_states_bdf_stability_accurately() -> None:
-    from src.engcore.domains.kinetics.cstr import problem as problem_module
+    from engcore.domains.kinetics.cstr import problem as problem_module
 
     source = Path(problem_module.__file__).read_text(encoding="utf-8")
     assert "stiffly stable" in source

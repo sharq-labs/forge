@@ -54,8 +54,8 @@ from experiments.electrical_e2.e2_model import (
     predictive_mixture,
     prior_weights,
 )
-from src.engcore.scientific import Quantity
-from src.engcore.sria import (
+from engcore.scientific import Quantity
+from engcore.sria import (
     AdmissionAuthority,
     AdmissionAuthorityRegistry,
     BeliefUpdateGateway,
@@ -64,8 +64,8 @@ from src.engcore.sria import (
     ResearchAction,
     TerminalDecision,
 )
-from src.engcore.sria.assurance import Arbiter
-from src.engcore.sria.assurance.assessment import (
+from engcore.sria.assurance import Arbiter
+from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
     CriticClass,
@@ -74,9 +74,9 @@ from src.engcore.sria.assurance.assessment import (
     FindingImpact,
     Severity,
 )
-from src.engcore.sria.assurance.obligations import ObligationKind
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.campaign import (
+from engcore.sria.assurance.obligations import ObligationKind
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.campaign import (
     AssessmentBundle,
     BudgetLedger,
     CampaignEventLog,
@@ -84,8 +84,8 @@ from src.engcore.sria.campaign import (
     CampaignRunner,
     CertificationRequirement,
 )
-from src.engcore.sria.campaign.stopping import StoppingCriterion
-from src.engcore.sria.decision import (
+from engcore.sria.campaign.stopping import StoppingCriterion
+from engcore.sria.decision import (
     ActionFamily,
     ActionProposal,
     AtomicAction,
@@ -103,7 +103,7 @@ from src.engcore.sria.decision import (
     canonical_digest,
     resolve_terminal_objective,
 )
-from src.engcore.sria.provenance import AssessmentProvenance
+from engcore.sria.provenance import AssessmentProvenance
 
 from .demo_config import (
     ACTION_FAMILY_BY_PHASE,

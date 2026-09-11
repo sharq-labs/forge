@@ -8,12 +8,12 @@ charges on every checkpoint.
 
 from __future__ import annotations
 
-from src.engcore.sria.campaign.budget import BudgetLedger
-from src.engcore.sria.campaign.checkpoint import EffectLedger
-from src.engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
-from src.engcore.sria.campaign.persistence import IncrementalCheckpointStore
-from src.engcore.sria.campaign.state import CampaignRun, ExecutionState
-from src.engcore.sria.decision.actions import ActionFamily
+from engcore.sria.campaign.budget import BudgetLedger
+from engcore.sria.campaign.checkpoint import EffectLedger
+from engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
+from engcore.sria.campaign.persistence import IncrementalCheckpointStore
+from engcore.sria.campaign.state import CampaignRun, ExecutionState
+from engcore.sria.decision.actions import ActionFamily
 
 
 def _run(run_id: str, iteration: int, max_iterations: int, events: CampaignEventLog):

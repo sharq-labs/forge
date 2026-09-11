@@ -21,9 +21,12 @@ from ..scientific.results.result import (
 #: checkable claim. So the position is stated here, one package above the
 #: freeze, in the domain layer's own words rather than in the core's.
 #:
-#: Both spellings, because this repository is importable as ``engcore`` and as
-#: ``src.engcore``, and a result constructed through one must not be judged by
-#: whether the reader happened to use the other.
+#: One spelling. The frozen experiments' ``src.engcore`` is an alias for these
+#: same module objects (see ``src/__init__.py``), so a constructing module's
+#: name is always its ``engcore`` name. This table used to carry both, because
+#: the two spellings were two module trees and a result constructed through one
+#: must not be judged by which the reader used; an entry under the alias could
+#: no longer be read by anything.
 #:
 #: This is not a place to be excused from answering. A guard in
 #: ``tests/test_core_guards.py`` reads the frozen experiment configs and
@@ -64,14 +67,10 @@ _THERMAL_T1_FREEZE_EXCLUSIONS = (
 
 SCIENTIFIC_UNDECLARED_EXCLUSIONS: dict[str, str] = {
     "engcore.domains.thermal.conduction1d.problem": _THERMAL_T1_FREEZE_EXCLUSIONS,
-    "src.engcore.domains.thermal.conduction1d.problem": (
-        _THERMAL_T1_FREEZE_EXCLUSIONS
-    ),
 }
 
 SCIENTIFIC_UNASSESSED_DECLARATIONS: dict[str, str] = {
     "engcore.domains.thermal.conduction1d.solver": _THERMAL_T1_FREEZE,
-    "src.engcore.domains.thermal.conduction1d.solver": _THERMAL_T1_FREEZE,
 }
 
 # The core reads this by name. If the name it reads and the name defined here

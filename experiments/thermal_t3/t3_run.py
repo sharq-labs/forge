@@ -27,14 +27,14 @@ import numpy as np
 
 from experiments.shared.grid_inference import posterior_weights
 from experiments.thermal_t1 import t1_run
-from src.engcore.domains.thermal.conduction1d import (
+from engcore.domains.thermal.conduction1d import (
     MIDPOINT_METRIC,
     ConductionSlab,
     SlabDiscretization,
     exact_midpoint,
     solve_slab,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from . import BASE_COMMIT, T3_VERSION
 from . import t3_truth

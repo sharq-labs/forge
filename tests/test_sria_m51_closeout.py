@@ -22,15 +22,15 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.sria import AdmissionError, EvidenceStatus
-from src.engcore.sria.assurance.arbiter import AssuranceVerdict
-from src.engcore.sria.assurance.assessment import (
+from engcore.sria import AdmissionError, EvidenceStatus
+from engcore.sria.assurance.arbiter import AssuranceVerdict
+from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
     CriticClass,
     CriticVerdict,
 )
-from src.engcore.sria.campaign import (
+from engcore.sria.campaign import (
     CampaignCheckpoint,
     CampaignEventType,
     ExecutionState,
@@ -38,7 +38,7 @@ from src.engcore.sria.campaign import (
     StopReviewOutcome,
     StoppingCriterion,
 )
-from src.engcore.sria.provenance import AssessmentProvenance
+from engcore.sria.provenance import AssessmentProvenance
 
 from tests.sria_m5_benchmark import build_assurance, critic_obligation
 from tests.test_sria_m5_campaign import S1, S1_SEED, S5, S5_SEED, build_campaign
@@ -376,13 +376,13 @@ def test_validation_level_obligations_are_unevaluable_and_fail_closed():
     Evaluating ValidationLevel belongs to the next scientific phase. Until then
     this test exists so the limitation is a decision, not a surprise.
     """
-    from src.engcore.scientific.results.validation import ValidationLevel
-    from src.engcore.sria import (
+    from engcore.scientific.results.validation import ValidationLevel
+    from engcore.sria import (
         CampaignCharter,
         ConfidenceRequirement,
         TerminalDecision,
     )
-    from src.engcore.sria.assurance.obligations import obligations_from_charter
+    from engcore.sria.assurance.obligations import obligations_from_charter
 
     charter = CampaignCharter(
         campaign_id="limitation",

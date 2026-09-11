@@ -8,26 +8,26 @@ import json
 
 import pytest
 
-from src.engcore.scientific.ir.values import IntegerValue
-from src.engcore.sria.actions import ExecutorType, ResearchAction
-from src.engcore.sria.campaign.budget import (
+from engcore.scientific.ir.values import IntegerValue
+from engcore.sria.actions import ExecutorType, ResearchAction
+from engcore.sria.campaign.budget import (
     BudgetCharge,
     BudgetHistoryViolation,
     BudgetLedger,
 )
-from src.engcore.sria.campaign.checkpoint import (
+from engcore.sria.campaign.checkpoint import (
     CampaignCheckpoint,
     CheckpointStore,
     EffectLedger,
     IterationPlan,
     ResumeViolation,
 )
-from src.engcore.sria.campaign.events import (
+from engcore.sria.campaign.events import (
     CampaignEvent,
     CampaignEventLog,
     CampaignEventType,
 )
-from src.engcore.sria.campaign.persistence import (
+from engcore.sria.campaign.persistence import (
     CampaignCheckpointV3,
     CHECKPOINT_MAPPING_SCHEMA,
     CHECKPOINT_TUPLE_SCHEMA,
@@ -36,18 +36,18 @@ from src.engcore.sria.campaign.persistence import (
     PersistenceIntegrityError,
     _copy_iteration_continuation,
 )
-from src.engcore.sria.campaign.state import (
+from engcore.sria.campaign.state import (
     CampaignRun,
     ExecutionState,
     IterationRecord,
 )
-from src.engcore.sria.decision.actions import ActionFamily, ActionProposal, AtomicAction
-from src.engcore.sria.decision.belief_snapshot import BeliefSnapshot
-from src.engcore.sria.decision.recommendation import (
+from engcore.sria.decision.actions import ActionFamily, ActionProposal, AtomicAction
+from engcore.sria.decision.belief_snapshot import BeliefSnapshot
+from engcore.sria.decision.recommendation import (
     DecisionRecommendation,
     RecommendationOutcome,
 )
-from src.engcore.sria.decision.replay import (
+from engcore.sria.decision.replay import (
     ExecutionDependencyManifest,
     canonical_digest,
 )

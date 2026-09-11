@@ -22,7 +22,7 @@ from experiments.electrical_v01_demo.demo_config import (
     scenario_hash,
 )
 from experiments.electrical_v01_demo.demo_run import result_digest, run_demo
-from src.engcore.sria.campaign.stopping import StopReviewOutcome
+from engcore.sria.campaign.stopping import StopReviewOutcome
 
 _RESULT = None
 
@@ -96,8 +96,8 @@ def test_4_demo_touches_no_production_source():
     for path in sorted(root.glob("*.py")):
         source = path.read_text(encoding="utf-8")
         assert "src/engcore" not in source.replace(
-            "from src.engcore", ""
-        ).replace("import src.engcore", ""), path.name
+            "from engcore", ""
+        ).replace("import engcore", ""), path.name
         # The demo may import production code; it may not write files into it.
         assert "write_text" not in source or path.name == "run.py"
     # run.py writes only into its own package directory.

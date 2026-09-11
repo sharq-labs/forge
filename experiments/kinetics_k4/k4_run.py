@@ -67,33 +67,33 @@ from experiments.kinetics_k4.k4_forward import (  # noqa: E402
     ConstantRateForwardBuildResult,
     build_constant_rate_forward_table_with_stats,
 )
-from src.engcore.adequacy import (  # noqa: E402
+from engcore.adequacy import (  # noqa: E402
     PredictiveObservationAssessment,
     assess_predictive_observation,
     compare_log_predictive_scores,
 )
-from src.engcore.domains.kinetics.cstr.alternative_inference import (  # noqa: E402
+from engcore.domains.kinetics.cstr.alternative_inference import (  # noqa: E402
     CONSTANT_RATE_INFERENCE_ADAPTER_ID,
 )
-from src.engcore.domains.kinetics.cstr.alternatives import (  # noqa: E402
+from engcore.domains.kinetics.cstr.alternatives import (  # noqa: E402
     CONSTANT_RATE_CSTR_MODEL,
 )
-from src.engcore.domains.kinetics.cstr.problem import (  # noqa: E402
+from engcore.domains.kinetics.cstr.problem import (  # noqa: E402
     CSTR_MODEL,
 )
-from src.engcore.inference import (  # noqa: E402
+from engcore.inference import (  # noqa: E402
     AdmittedForwardTable,
     ObservationSet,
     PosteriorGrid,
     gaussian_grid_posterior,
 )
-from src.engcore.scientific import (  # noqa: E402
+from engcore.scientific import (  # noqa: E402
     ModelType,
     ModelValidationStatus,
     Quantity,
     TwinReference,
 )
-from src.engcore.uq import (  # noqa: E402
+from engcore.uq import (  # noqa: E402
     PredictiveAdmissionAudit,
     PredictiveObservableSpec,
     condition_posterior_on_predictive_admission,

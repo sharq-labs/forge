@@ -15,9 +15,9 @@ import json
 import sys
 from pathlib import Path
 
-from src.engcore.scientific import EvaluationStatus
-from src.engcore.sria import AttributedCause, CensoringType, Disposition
-from src.engcore.sria.calibration import (
+from engcore.scientific import EvaluationStatus
+from engcore.sria import AttributedCause, CensoringType, Disposition
+from engcore.sria.calibration import (
     BridgedOutcome,
     LEGACY_MAPPING_TABLE,
     MappingConfidence,
@@ -108,7 +108,7 @@ def test_bare_failed_is_ambiguous_and_ineligible():
 
 def test_unattributed_can_never_be_pf_eligible():
     """The invariant is structural, not a convention downstream code follows."""
-    from src.engcore.sria import RunOutcome
+    from engcore.sria import RunOutcome
 
     forged = RunOutcome(
         disposition=Disposition.FAILED,
@@ -126,7 +126,7 @@ def test_unattributed_can_never_be_pf_eligible():
 
 
 def test_eligibility_flags_cannot_disagree():
-    from src.engcore.sria import RunOutcome
+    from engcore.sria import RunOutcome
 
     outcome = RunOutcome(
         disposition=Disposition.SUCCESS,
@@ -209,7 +209,7 @@ def test_bridged_outcome_round_trips():
 
 
 def test_bridge_accepts_a_scientific_evaluation():
-    from src.engcore.scientific import Quantity, ScientificEvaluation
+    from engcore.scientific import Quantity, ScientificEvaluation
 
     evaluation = ScientificEvaluation(
         evaluation_id="ev-1",

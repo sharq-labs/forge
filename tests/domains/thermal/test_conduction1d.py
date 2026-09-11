@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from src.engcore.domains.thermal.conduction1d import (
+from engcore.domains.thermal.conduction1d import (
     ANALYTIC_REL_TOL,
     CONDUCTION_GATE_THRESHOLDS,
     CONVERGENCE_MIN_CONTRACTION,
@@ -42,16 +42,16 @@ from src.engcore.domains.thermal.conduction1d import (
 
 # White-box: `assemble` is an implementation detail and is deliberately not on
 # the package's public surface, so this test reaches into its own module.
-from src.engcore.domains.thermal.conduction1d.solver import assemble
-from src.engcore.scientific.results.validation import (
+from engcore.domains.thermal.conduction1d.solver import assemble
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.protocol import (
+from engcore.scientific.solvers.protocol import (
     ConvergenceState,
     ScientificSolver,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 LENGTH = Quantity(0.1, "meter")
 ALPHA = Quantity(1.2e-5, "m**2/s")
@@ -96,8 +96,8 @@ def test_1_satisfies_the_scientific_solver_protocol():
 
 
 def test_1b_rejects_a_problem_from_another_domain():
-    from src.engcore.domains.electrical.dc import DCCircuit, ElectricalNode, Resistor
-    from src.engcore.domains.electrical.dc import DCVoltageSource, build_dc_problem
+    from engcore.domains.electrical.dc import DCCircuit, ElectricalNode, Resistor
+    from engcore.domains.electrical.dc import DCVoltageSource, build_dc_problem
 
     circuit = DCCircuit(
         circuit_id="foreign",
@@ -185,7 +185,7 @@ def test_5_solution_decays_as_this_benchmark_requires():
 
 def test_5b_reference_is_independent_of_the_solver():
     """A verification that shares code with the solver verifies nothing."""
-    import src.engcore.domains.thermal.conduction1d.reference as reference
+    import engcore.domains.thermal.conduction1d.reference as reference
 
     tree = ast.parse(Path(reference.__file__).read_text(encoding="utf-8"))
     imported: set[str] = set()
@@ -505,7 +505,7 @@ def test_13f_non_finite_solution_is_reported_not_hidden():
         initial_interior=system.initial_interior,
         r=system.r,
     )
-    from src.engcore.scientific.solvers.protocol import PreparedSolve
+    from engcore.scientific.solvers.protocol import PreparedSolve
 
     raw = solver.solve(
         PreparedSolve(

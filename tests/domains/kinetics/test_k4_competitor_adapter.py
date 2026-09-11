@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.kinetics.cstr.alternative_inference import (
+from engcore.domains.kinetics.cstr.alternative_inference import (
     CONSTANT_RATE_INFERENCE_ADAPTER_ID,
     derive_constant_rate_source_result,
 )
-from src.engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
-from src.engcore.domains.kinetics.cstr.problem import CSTR_MODEL
-from src.engcore.scientific import (
+from engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
+from engcore.domains.kinetics.cstr.problem import CSTR_MODEL
+from engcore.scientific import (
     ConvergenceState,
     ProvenanceRecord,
     Quantity,
@@ -16,7 +16,7 @@ from src.engcore.scientific import (
     Uncertainty,
     unverified_report,
 )
-from src.engcore.inference import InferenceAdmissibilityError
+from engcore.inference import InferenceAdmissibilityError
 
 
 PRIMARY_KEY = (CSTR_MODEL.model_id, CSTR_MODEL.version)

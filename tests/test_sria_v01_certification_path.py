@@ -52,9 +52,9 @@ from experiments.electrical_e3.e3_harness import (
     run_calibration,
     swap_to_faulty_executor,
 )
-from src.engcore.scientific import Quantity
-from src.engcore.sria import ExecutorType, ResearchAction
-from src.engcore.sria.assurance.assessment import (
+from engcore.scientific import Quantity
+from engcore.sria import ExecutorType, ResearchAction
+from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
     CriticClass,
@@ -63,17 +63,17 @@ from src.engcore.sria.assurance.assessment import (
     FindingImpact,
     Severity,
 )
-from src.engcore.sria.campaign import (
+from engcore.sria.campaign import (
     BudgetLedger,
     CampaignRunner,
     CertificationRequirement,
     RequirementStatus,
 )
-from src.engcore.sria.campaign.events import CampaignEventType
-from src.engcore.sria.campaign.state import PauseReason
-from src.engcore.sria.campaign.stopping import StopReviewOutcome, StoppingCriterion
-from src.engcore.sria.decision import ActionFamily, ActionProposal, AtomicAction
-from src.engcore.sria.provenance import AssessmentProvenance
+from engcore.sria.campaign.events import CampaignEventType
+from engcore.sria.campaign.state import PauseReason
+from engcore.sria.campaign.stopping import StopReviewOutcome, StoppingCriterion
+from engcore.sria.decision import ActionFamily, ActionProposal, AtomicAction
+from engcore.sria.provenance import AssessmentProvenance
 
 CRITERION_ID = "certification:constant_r:declared_range"
 REQUIRED = ADEQUACY_OBLIGATION.required_action_ids
@@ -629,7 +629,7 @@ def test_12_runner_still_has_no_family_state_machine():
     """The routing branch must not reintroduce family-based control flow."""
     import ast
 
-    import src.engcore.sria.campaign.runner as runner_module
+    import engcore.sria.campaign.runner as runner_module
 
     tree = ast.parse(Path(runner_module.__file__).read_text(encoding="utf-8"))
     family_reads = [

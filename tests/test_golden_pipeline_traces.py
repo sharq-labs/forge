@@ -60,9 +60,9 @@ import pathlib
 
 import pytest
 
-from src.engcore.mcp.battery import run_battery_case
-from src.engcore.mcp.evidence import CredibilityVerdict
-from src.engcore.mcp.problem import run_electrothermal_case
+from engcore.mcp.battery import run_battery_case
+from engcore.mcp.evidence import CredibilityVerdict
+from engcore.mcp.problem import run_electrothermal_case
 
 HARD = pathlib.Path("benchmarks/hard/cases_hard")
 BATTERY = pathlib.Path("benchmarks/hard/cases_battery")

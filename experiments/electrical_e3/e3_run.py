@@ -43,9 +43,9 @@ from typing import Any
 
 import numpy as np
 
-from src.engcore.sria.campaign import CampaignEventType
-from src.engcore.sria.campaign.stopping import StopReview, StopReviewOutcome
-from src.engcore.sria.decision.actions import ActionFamily
+from engcore.sria.campaign import CampaignEventType
+from engcore.sria.campaign.stopping import StopReview, StopReviewOutcome
+from engcore.sria.decision.actions import ActionFamily
 
 from experiments.electrical_e2 import e2_truth
 from experiments.electrical_e2.e2_adequacy import (
@@ -588,19 +588,19 @@ def run_obligation_set_placement_probe() -> dict[str, Any]:
     look for a check by that name among ONE evidence record's assessments,
     never find it, and refuse to admit anything.
     """
-    from src.engcore.sria.assurance.obligations import (
+    from engcore.sria.assurance.obligations import (
         ObligationKind,
         ObligationSet,
         ValidationObligation,
     )
     from experiments.electrical_e2.e2_harness import E2Harness
-    from src.engcore.sria.campaign import CampaignEventLog
-    from src.engcore.sria import (
+    from engcore.sria.campaign import CampaignEventLog
+    from engcore.sria import (
         AdmissionAuthority,
         AdmissionAuthorityRegistry,
         BeliefUpdateGateway,
     )
-    from src.engcore.sria.assurance import Arbiter
+    from engcore.sria.assurance import Arbiter
     from experiments.electrical_e2.e2_harness import E2Executor
     from .e3_config import CALIBRATION_ACTION
 

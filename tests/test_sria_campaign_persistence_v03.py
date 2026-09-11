@@ -12,23 +12,23 @@ import json
 
 import pytest
 
-from src.engcore.sria.campaign.budget import BudgetLedger
-from src.engcore.sria.campaign.checkpoint import (
+from engcore.sria.campaign.budget import BudgetLedger
+from engcore.sria.campaign.checkpoint import (
     CampaignCheckpoint,
     CheckpointStore,
     EffectLedger,
 )
-from src.engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
-from src.engcore.sria.campaign.persistence import (
+from engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
+from engcore.sria.campaign.persistence import (
     IncrementalCheckpointStore,
     PersistenceIntegrityError,
 )
-from src.engcore.sria.campaign.state import (
+from engcore.sria.campaign.state import (
     CampaignRun,
     ExecutionState,
     IterationRecord,
 )
-from src.engcore.sria.decision.actions import ActionFamily
+from engcore.sria.decision.actions import ActionFamily
 
 
 def _run(

@@ -15,18 +15,18 @@ import secrets
 import sys
 from pathlib import Path
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     ProvenanceRecord,
     Quantity,
     ScientificResult,
     Uncertainty,
     ValidationLevel,
 )
-from src.engcore.sria.admission import (
+from engcore.sria.admission import (
     DecisionBinding,
     _issue_registrar_capability,
 )
-from src.engcore.sria import (
+from engcore.sria import (
     AcceptanceCriterion,
     AdmissionAttempt,
     AdmissionAuthority,
@@ -86,8 +86,8 @@ from src.engcore.sria import (
     require_implemented_source,
     validate_domain_pack,
 )
-from src.engcore.sria.actions import FeasibilityVerdict
-from src.engcore.sria.trust import assert_no_llm_dependencies, find_forbidden_imports
+from engcore.sria.actions import FeasibilityVerdict
+from engcore.sria.trust import assert_no_llm_dependencies, find_forbidden_imports
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCIENTIFIC_DIR = REPO_ROOT / "src" / "engcore" / "scientific"
@@ -300,7 +300,7 @@ def test_belief_cannot_be_written_outside_gateway():
 
 
 def test_gateway_token_cannot_be_forged():
-    from src.engcore.sria.gateway import _GatewayToken
+    from engcore.sria.gateway import _GatewayToken
 
     _raises(BeliefWriteViolation, _GatewayToken)
 
@@ -1099,7 +1099,7 @@ def test_reserved_source_classes_are_representable_not_implemented():
     require_implemented_source(SourceClass.SIMULATION)  # implemented: no raise
 
     # Reserved campaign type and executor behave the same way.
-    from src.engcore.sria import require_implemented_campaign_type
+    from engcore.sria import require_implemented_campaign_type
 
     _raises(
         ReservedNotImplemented,
@@ -1151,7 +1151,7 @@ def test_llm_detector_actually_detects(tmp_path=None):
 
 def test_scientific_core_does_not_import_sria():
     """Layering runs one way only."""
-    from src.engcore.sria.trust import scan_imports
+    from engcore.sria.trust import scan_imports
 
     for filename, modules in scan_imports(SCIENTIFIC_DIR).items():
         for module in modules:

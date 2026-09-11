@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from src.engcore.inference import AdmittedForwardTable, PosteriorGrid
-from src.engcore.uq import (
+from engcore.inference import AdmittedForwardTable, PosteriorGrid
+from engcore.uq import (
     UQProblemError,
     condition_posterior_on_predictive_admission,
 )

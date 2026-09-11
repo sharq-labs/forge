@@ -39,16 +39,16 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.battery import cell as bat
-from src.engcore.domains.battery import context as ctx
-from src.engcore.domains.battery import coupling as cp
-from src.engcore.domains.battery import models as mdl
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.battery import cell as bat
+from engcore.domains.battery import context as ctx
+from engcore.domains.battery import coupling as cp
+from engcore.domains.battery import models as mdl
+from engcore.domains.thermal_models import lumped as lump
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.units.quantity import Quantity
 
 from battery_cases import assess, build_cell, build_limits, build_load
 
@@ -189,8 +189,8 @@ def test_the_three_claims_are_carried_on_three_different_types():
     fourth on the run. Collapsing any two would let one stand in for another,
     which is the confusion this whole arrangement exists to prevent.
     """
-    from src.engcore.scientific.models.definition import ValidityAssessment
-    from src.engcore.scientific.results.validation import ValidationReport
+    from engcore.scientific.models.definition import ValidityAssessment
+    from engcore.scientific.results.validation import ValidationReport
 
     step = march().final
     assert isinstance(step.thermal_convergence, ConvergenceState)
@@ -597,9 +597,9 @@ def test_a_step_that_left_the_domain_is_not_forgotten_by_the_last_step():
     import json
     import pathlib
 
-    from src.engcore.domains.battery import coupling as bcp
-    from src.engcore.mcp.battery import build_battery_case, run_battery_case
-    from src.engcore.scientific.models.definition import ValidityStatus
+    from engcore.domains.battery import coupling as bcp
+    from engcore.mcp.battery import build_battery_case, run_battery_case
+    from engcore.scientific.models.definition import ValidityStatus
 
     case_path = (
         pathlib.Path(__file__).resolve().parents[3]
@@ -662,8 +662,8 @@ def test_the_march_combination_uses_the_same_precedence_as_one_step():
     helper, because "they call the same function" stops being true one
     refactor from now and the precedence is the part that matters.
     """
-    from src.engcore.domains.battery import coupling as bcp
-    from src.engcore.scientific.models.definition import (
+    from engcore.domains.battery import coupling as bcp
+    from engcore.scientific.models.definition import (
         UnknownCondition,
         UnknownReason,
         ValidityAssessment,
