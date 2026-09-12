@@ -141,7 +141,16 @@ def test_the_official_admission_path_still_produces_an_admitted_row():
     assert row.coordinates == (0.5,)
     assert row.observation_keys == ("c:y",)
     assert row.values == (1.25,)
-    assert row.admission_refs == ("tb2-pred|verification:tb2-pred|binding:tb2-pred",)
+    # The leading field is the ADMISSION ROUTE, added when the analytic route
+    # joined the numerical one. It is first because it is the strongest thing
+    # the ref says: "numerical" means this value carries sequence-level
+    # convergence evidence, "analytic" means it carries the declared
+    # applicability of a closed form. A reader auditing what backs a number
+    # needs that before the ids, and a ref that omitted it would make the two
+    # routes indistinguishable after the fact.
+    assert row.admission_refs == (
+        "numerical|tb2-pred|verification:tb2-pred|binding:tb2-pred",
+    )
     assert row.rejection_reason == ""
     # The constructor is the same gate under its own name.
     assert AdmittedForwardRow((0.5,), OBSERVATIONS, {"c": prediction}) == row

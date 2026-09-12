@@ -13,9 +13,12 @@ same parameter" is a checkable claim rather than a matching label.
 """
 
 from .admissibility import (
+    AdmissibleAnalyticPrediction,
     AdmissibleNumericalPrediction,
     InferenceAdmissibilityError,
+    require_admissible_analytic_prediction,
     require_admissible_numerical_prediction,
+    require_admitted_prediction,
 )
 from .grid import (
     AdmittedForwardRow,
@@ -35,6 +38,20 @@ from .parameters import (
     ParameterTransform,
     bind_parameter_set_to_grid,
     require_parameter_set,
+)
+from .calibration import (
+    CalibrationError,
+    CalibrationProvenance,
+    CalibrationResult,
+    CalibrationSpec,
+    CalibrationStatus,
+    GridResolutionError,
+    IdentifiabilityReport,
+    IdentifiabilityStatus,
+    NoiseModel,
+    assess_identifiability,
+    calibrate,
+    posterior_effective_sample_size,
 )
 from .split import (
     DataLeakageError,
@@ -66,4 +83,19 @@ __all__ = [
     "ObservationSplit",
     "observation_content_digest",
     "require_split",
+    "AdmissibleAnalyticPrediction",
+    "require_admissible_analytic_prediction",
+    "require_admitted_prediction",
+    "CalibrationError",
+    "CalibrationProvenance",
+    "CalibrationResult",
+    "CalibrationSpec",
+    "CalibrationStatus",
+    "GridResolutionError",
+    "IdentifiabilityReport",
+    "IdentifiabilityStatus",
+    "NoiseModel",
+    "assess_identifiability",
+    "calibrate",
+    "posterior_effective_sample_size",
 ]
