@@ -11,21 +11,6 @@
       "note": "'79/79 killed' is a statement about these exact bytes. The same sentence over a weakened suite would be worth nothing, so the runner and the four suites it runs each mutant against are pinned here and in the manifest's harness area."
     },
     "mutation": {
-      "calibration_uq_families": {
-        "control": "GREEN",
-        "families": {
-          "CAL": 5,
-          "UQ": 5,
-          "VAL": 2
-        },
-        "in_the_formal_certificate": false,
-        "killed": 12,
-        "note": "Sprint 8 CAL/UQ/VAL mutations, run through a targeted apply/revert script because tests/mutation_guards.py is itself certified and cannot gain MUTATIONS entries without invalidating this snapshot. NOT part of the certified 79 above and never added to it.",
-        "runner": "benchmarks/calibration_uq/audit/mutations.py",
-        "stale": [],
-        "survivors": [],
-        "total": 12
-      },
       "certified_harness": {
         "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
         "control": "GREEN",
@@ -38,12 +23,30 @@
           "G14a"
         ],
         "log_bytes": 34876,
-        "log_sha256": "f37c381b85d7ba5378b20a4dd25a15a70da650584c309c6a2a037d38c1a7722d",
+        "log_sha256": "c45d2d4fc216a52a1bc529097ea4422a81e42c805e7f64378cce209dbdf69f96",
         "per_mutation_matches_runner_tally": true,
         "runner": "tests/mutation_guards.py",
         "survivors": 0,
         "total": 79,
-        "why_it_was_re_run": "tests/test_core_guards.py is one of the four TARGETS this harness runs every mutant against, and it changed this round, so the previous run's numbers are statements about different bytes"
+        "why_it_was_re_run": "Run TWICE this round. The first run found a real defect: mutation G10c came back GREEN -- DECORATION because a float fast path added in this sprint put a second copy of the non-finite refusal in front of the one G10c deletes, making the deletion invisible. Not an equivalent mutation: cls is float is False for a float subclass, so the deleted check is the only cover for a subclass NaN. The fast path was measured at ~11 us on a 0.39 ms solve -- inside run-to-run noise -- and removed. This record is the SECOND run, on the corrected tree."
+      },
+      "sprint9_runtime_families": {
+        "control": "GREEN",
+        "families": {
+          "PAR": 5,
+          "PERF-RT": 4
+        },
+        "in_the_formal_certificate": false,
+        "killed": 9,
+        "not_applicable": [
+          "PAR-5",
+          "PAR-6"
+        ],
+        "note": "Sprint 9 runtime mutations. NOT part of the certified 79 and never added to it. PAR-5 and PAR-6 are recorded NOT APPLICABLE with their reasons rather than dropped: both target a process backend this round deliberately did not build.",
+        "runner": "benchmarks/core_runtime_finalization/audit/mutations.py",
+        "stale": [],
+        "survivors": [],
+        "total": 9
       },
       "targeted_families": {
         "control": "GREEN",
@@ -79,7 +82,7 @@
         },
         "in_the_formal_certificate": false,
         "measured_in": "core_v2_recertification round",
-        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families. Sprint 8 grounds are stronger than Sprint 7s: src/engcore/scientific is byte-identical to the previous certified commit, and so are adequacy, data and the trust registry. The ONLY certified area that changed this round is inference_admission.",
+        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families. Sprint 9 changed src/engcore/scientific (5 files) and src/engcore/execution is unchanged; none of the EI/RI/FM/SP families mutates a line this round touched, and all four were measured against code whose behaviour is unchanged -- every optimization is a same-answer transformation tested against the path it replaced.",
         "re_run_this_round": false
       }
     },
@@ -90,21 +93,21 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 306,
-        "seconds": 10.0,
+        "seconds": 8.5,
         "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
         "skipped": 0,
-        "summary_line": "306 passed, 675 deselected in 9.12s"
+        "summary_line": "306 passed, 675 deselected in 7.81s"
       },
       "certification_suite": {
         "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
         "deselected": 0,
         "exit_code": 1,
-        "failed": 1,
-        "passed": 27,
-        "seconds": 5.7,
+        "failed": 2,
+        "passed": 26,
+        "seconds": 6.4,
         "selection": "tests/test_core_certificate.py",
         "skipped": 1,
-        "summary_line": "1 failed, 27 passed, 1 skipped in 5.22s"
+        "summary_line": "2 failed, 26 passed, 1 skipped in 5.85s"
       },
       "contract_guard": {
         "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
@@ -112,10 +115,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 305,
-        "seconds": 20.3,
+        "seconds": 21.1,
         "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
         "skipped": 0,
-        "summary_line": "305 passed, 5 warnings in 19.55s"
+        "summary_line": "305 passed, 5 warnings in 20.03s"
       },
       "field_profile_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
@@ -123,10 +126,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 147,
-        "seconds": 2.2,
+        "seconds": 2.3,
         "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
         "skipped": 0,
-        "summary_line": "147 passed in 1.68s"
+        "summary_line": "147 passed in 1.66s"
       },
       "field_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
@@ -134,10 +137,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 124,
-        "seconds": 1.5,
+        "seconds": 1.6,
         "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
         "skipped": 0,
-        "summary_line": "124 passed in 1.02s"
+        "summary_line": "124 passed in 1.06s"
       },
       "mutation_harness_self_guard": {
         "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
@@ -148,7 +151,7 @@
         "seconds": 1.2,
         "selection": "tests/test_mutation_harness.py",
         "skipped": 0,
-        "summary_line": "6 passed in 0.84s"
+        "summary_line": "6 passed in 0.82s"
       },
       "scientific_truth": {
         "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
@@ -159,7 +162,7 @@
         "seconds": 3.3,
         "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
         "skipped": 3,
-        "summary_line": "293 passed, 3 skipped in 2.54s"
+        "summary_line": "293 passed, 3 skipped in 2.48s"
       }
     }
   },
@@ -196,11 +199,11 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "ecce1165d41ce27da2cce200d8a590950c19ffc4051b1a0762038f52e1be639f",
+    "aggregate_digest": "99c6ea577c938431df73ba42f1532bac713ce37b2a5a705342d03e7b68cd5d4e",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "1527ed09a770b3ffef32775e1be41e74ae0930131e9b4981a5469c937cd637cf",
+        "digest": "a62fc02b54b0777b971cafb97c79dea6dd29d26ff3e03ce3a15232f7ff91f5e1",
         "file_count": 55,
         "files": {
           "src/engcore/scientific/__init__.py": "7655268eb8ae8944f17a1f5485b0b446c7b89b3fa5a549015ed9f2eb868e5072",
@@ -209,7 +212,7 @@
           "src/engcore/scientific/composition/conversion.py": "98fa9aab5a035684b0bc1696149fec9a2a7de06b634065373b6d922889b45e01",
           "src/engcore/scientific/composition/dependency.py": "ca7915ee0eae6df377225122741af8bde66a142ff5c7b86123096f343d1fd415",
           "src/engcore/scientific/composition/transfer.py": "d5769d12e80d269eada9d3a4e95ad75622243907ad5db23acd537ea2b41533bd",
-          "src/engcore/scientific/consensus.py": "b35d0e567ab6090f8d5e92870f65052de6136d3f0d6fb811b3c4d37d09ecd98a",
+          "src/engcore/scientific/consensus.py": "e5e76108bad39e486e43635db742d7d06e4ff553f0fb8ed8dc9d2aee44a0ba1a",
           "src/engcore/scientific/errors.py": "9ccee17a7957aa047931373d8f1abfcc6b8cc1cf69e3908053106cc9fb4fc12a",
           "src/engcore/scientific/experiments/__init__.py": "d993fe342fca2fc35487fda4d21300b63dc902c7318d0e570b912cbe33db776e",
           "src/engcore/scientific/experiments/evaluation.py": "4b68561046349097ab7773ec779ad7ac2c54fda1e0a4909df461e5e2071b8da1",
@@ -240,14 +243,14 @@
           "src/engcore/scientific/realizations/registry.py": "7e155c496bc950b5a554e7536a785b81e1e0fd073f7d2cef61188fb87bdd8e28",
           "src/engcore/scientific/results/__init__.py": "e324982a1aca0754ebe55bc2e29a2f30ca4b4016f85da3a7eb0c5b8420e5dff5",
           "src/engcore/scientific/results/data_reference.py": "225baf2eaaadb1cfbec6513f4645059416e0ba6bb0a7ab573fc8df6b4dff92c5",
-          "src/engcore/scientific/results/immutable.py": "654c52d56c053707b6f9493cd84018c808069afe65f13b90c8a2a7fc5aa6d0f7",
+          "src/engcore/scientific/results/immutable.py": "1335a7870336c7adb4c3ca01ef21fcf4747cca0e0612b3bdb340336b1c4fde08",
           "src/engcore/scientific/results/provenance.py": "bcb3ed882c53e83ca97fc6de610ad03d8ffa51409e3ed976b5c7ed6a31b70ebb",
-          "src/engcore/scientific/results/result.py": "1c8bcf65c367bd40b95154f592f0b9e08e544e2d0e28bfc2eaf6e8e5f078b050",
+          "src/engcore/scientific/results/result.py": "77f6bb8c9984e212b5b6eda9e0fc51207313a79459a1fa40b4ebece0c4011726",
           "src/engcore/scientific/results/thresholds.py": "d3ec465167af523bfec8f6fac5d7f9280cd2134130186b18e021b305b0790399",
           "src/engcore/scientific/results/uncertainty.py": "cc6504522af61bbf620ed76ccdeeee6963e1eb273175c835f7ff1cde35886801",
           "src/engcore/scientific/results/validation.py": "068247a5a65157b4ef4900c1933cb534096fe3ee5647dd6ddbb34efa1206ace5",
           "src/engcore/scientific/sequences.py": "9e660bbc1831926c699f4f849b6968fed7699ec2ef9bf31b25a353e94401ee2f",
-          "src/engcore/scientific/serialization.py": "6dec5da72f4c771a9bf4d2fcc753cab5f2131091259fe62a18f51f0468f8fcb3",
+          "src/engcore/scientific/serialization.py": "c26bb5013e0953be9953b60a5772bd9bf45c70569f906b8fe64f4551a6e9520e",
           "src/engcore/scientific/solvers/__init__.py": "088174933e6b593d6dba74c916a6a664c55856633516489478b9c2a9541f3f61",
           "src/engcore/scientific/solvers/admission.py": "6902a9e526cc509a24d5fbdde75dfe947cfb68a8e522da62786e51a0b7c2299a",
           "src/engcore/scientific/solvers/capability.py": "7de27ed41d545a568da8d99d76c9b01799f9962a4585800550f7241a23118093",
@@ -256,7 +259,7 @@
           "src/engcore/scientific/twins/__init__.py": "00d2812b6c27c3bce1a168d57d14436f1b1e1a563baacc283675330279eba79a",
           "src/engcore/scientific/twins/definition.py": "1a27bcf000aa6efb5b7fcf0fdccb35f55943786d0049bbce67660d13fe429fcf",
           "src/engcore/scientific/units/__init__.py": "bdbd7c000d9e9ceee92dfee8f0fe3e2bc94e71af755edce49d7355fa3639937f",
-          "src/engcore/scientific/units/quantity.py": "c120c4f36bb4e832389900c7f4fd5c380a4836581b4d94418340f05c1c7d7ec2",
+          "src/engcore/scientific/units/quantity.py": "76eacccaabf4743bbbdda8a404d4dfd09ea05d1a8ba58f37f54ba75c301908bd",
           "src/engcore/scientific/units/validation.py": "e44babc94cde2665430d37d0b9d409855732ce83460f9247d5656c241eb066c1"
         },
         "patterns": [
@@ -349,9 +352,9 @@
   },
   "notes": {},
   "repository": {
-    "branch": "claude/calibration-uq-sprint-8",
+    "branch": "claude/core-runtime-finalization-sprint-9",
     "clean": true,
-    "commit": "e090d29e21283f12b1f641e3e1f3975ef30d3a7b",
+    "commit": "73177e17604957493e1e2da68c56d2c4bb718549",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -442,7 +445,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+    "v1_compatible_core_digest_now": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }
