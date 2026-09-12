@@ -20,6 +20,11 @@ from .admissibility import (
     require_admissible_numerical_prediction,
     require_admitted_prediction,
 )
+from .field_observation import (
+    FieldObservationError,
+    FieldObservationKind,
+    FieldObservationOperator,
+)
 from .grid import (
     AdmittedForwardRow,
     AdmittedForwardTable,
@@ -52,6 +57,8 @@ from .calibration import (
     assess_identifiability,
     calibrate,
     posterior_effective_sample_size,
+    posterior_grid_diagnostics,
+    GRID_TOO_COARSE_FOR_INFERENCE,
 )
 from .split import (
     DataLeakageError,
@@ -98,4 +105,9 @@ __all__ = [
     "assess_identifiability",
     "calibrate",
     "posterior_effective_sample_size",
+    "posterior_grid_diagnostics",
+    "GRID_TOO_COARSE_FOR_INFERENCE",
+    "FieldObservationError",
+    "FieldObservationKind",
+    "FieldObservationOperator",
 ]
