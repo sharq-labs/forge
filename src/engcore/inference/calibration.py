@@ -510,6 +510,8 @@ class IdentifiabilityReport:
     width_threshold: float
     why: str
     effective_sample_size: float = float("nan")
+    occupied_support_fraction: float = float("nan")
+    spacing_to_std: tuple[float, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -519,6 +521,8 @@ class IdentifiabilityReport:
             "relative_widths": list(self.relative_widths),
             "parameter_names": list(self.parameter_names),
             "effective_sample_size": self.effective_sample_size,
+            "occupied_support_fraction": self.occupied_support_fraction,
+            "spacing_to_std": list(self.spacing_to_std),
             "thresholds": {
                 "correlation": self.correlation_threshold,
                 "condition_number": self.condition_threshold,
@@ -549,6 +553,13 @@ class GridResolutionError(CalibrationError):
     """
 
 
+#: The label a grid-resolution refusal carries. Deliberately NOT a member of
+#: :class:`IdentifiabilityStatus`: it is a statement about the instrument, and
+#: putting it in the same enum as the scientific verdicts would be an invitation
+#: to read it as one.
+GRID_TOO_COARSE_FOR_INFERENCE = "GRID_TOO_COARSE_FOR_INFERENCE"
+
+
 def posterior_effective_sample_size(posterior: PosteriorGrid) -> float:
     """Kish's effective sample size, ``1 / sum(w^2)``, over the grid weights.
 
@@ -561,6 +572,62 @@ def posterior_effective_sample_size(posterior: PosteriorGrid) -> float:
     if total <= 0.0:
         return 0.0
     return 1.0 / total
+
+
+def posterior_grid_diagnostics(posterior: PosteriorGrid) -> dict[str, Any]:
+    """Is this grid able to answer a question about this posterior at all.
+
+    Three numbers, and the third is the one that separates the two failures
+    that otherwise look identical:
+
+    ``effective_sample_size``
+        ``1/sum(w^2)``. Small means the mass is on few points.
+    ``occupied_support_fraction``
+        the fraction of grid points carrying more than a thousandth of the
+        largest weight. Small means most of the grid is wasted.
+    ``spacing_to_std``
+        per axis, the grid's own step divided by the posterior's standard
+        deviation along that axis. **This is the discriminator.**
+
+    A posterior can be concentrated on few points for two opposite reasons:
+
+    * the likelihood is far NARROWER than the grid step -- ``spacing_to_std``
+      is large, the grid cannot see the posterior's shape, and every width it
+      reports is an artefact of the step size;
+    * the parameters are weakly identified -- the posterior is BROAD,
+      ``spacing_to_std`` is small, the grid resolves it perfectly well, and the
+      wide intervals it reports are the real answer.
+
+    Effective sample size alone cannot tell those apart. Spacing relative to
+    the posterior width can, and it is why this function exists rather than a
+    bare ESS threshold.
+    """
+    if not isinstance(posterior, PosteriorGrid):
+        raise CalibrationError("grid diagnostics are computed from a PosteriorGrid")
+    weights = np.asarray(posterior.weights, dtype=np.float64)
+    points = np.asarray(posterior.points, dtype=np.float64)
+    largest = float(np.max(weights)) if weights.size else 0.0
+    occupied = (
+        float(np.mean(weights > largest * 1.0e-3)) if largest > 0.0 else 0.0
+    )
+    std = np.sqrt(np.maximum(np.diag(posterior.covariance), 0.0))
+
+    spacing_to_std: list[float] = []
+    for index in range(points.shape[1]):
+        axis = np.unique(points[:, index])
+        if axis.size < 2:
+            spacing_to_std.append(float("inf"))
+            continue
+        step = float(np.min(np.diff(axis)))
+        width = float(std[index])
+        spacing_to_std.append(step / width if width > 0.0 else float("inf"))
+
+    return {
+        "effective_sample_size": posterior_effective_sample_size(posterior),
+        "occupied_support_fraction": occupied,
+        "spacing_to_std": tuple(spacing_to_std),
+        "grid_points": int(points.shape[0]),
+    }
 
 
 def assess_identifiability(
@@ -586,19 +653,37 @@ def assess_identifiability(
     if not isinstance(posterior, PosteriorGrid):
         raise CalibrationError("identifiability is assessed from a PosteriorGrid")
 
-    ess = posterior_effective_sample_size(posterior)
-    if ess < minimum_effective_points:
+    diagnostics = posterior_grid_diagnostics(posterior)
+    ess = diagnostics["effective_sample_size"]
+    spacing = diagnostics["spacing_to_std"]
+    worst_spacing = max(spacing) if spacing else float("inf")
+
+    # BOTH conditions, and the second is what makes the refusal specific.
+    #
+    # A small ESS on its own does not mean the grid is too coarse -- it also
+    # happens when the data are sharply informative and the grid is correctly
+    # sized. What says "too coarse" is the grid's own STEP being comparable to
+    # or larger than the posterior's width: at that point every width the grid
+    # reports is quantisation, not inference.
+    #
+    # A weakly-identified posterior fails neither test: it is broad, so the
+    # step is small relative to its width and its mass is spread over many
+    # points. That is why case B and case C get different diagnoses here
+    # instead of both being called "not identifiable".
+    if ess < minimum_effective_points and worst_spacing >= 1.0:
         raise GridResolutionError(
-            f"the posterior's effective sample size is {ess:.3g} over "
-            f"{len(posterior.weights)} grid points, below the required "
-            f"{minimum_effective_points:.3g}: the likelihood is sharper than "
-            f"the grid spacing, so essentially all the mass is on a handful of "
-            f"points. Its covariance would be near zero, its correlation "
-            f"numerically 1, and its credible intervals of zero width -- all "
-            f"FALSE PRECISION, and in the direction that looks like certainty. "
-            f"Refine the grid around the estimate (a few standard errors per "
-            f"axis) and ask again. This is a statement about the grid, not "
-            f"about whether the parameters are identifiable"
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: effective sample size {ess:.3g} "
+            f"over {diagnostics['grid_points']} points, and the grid step is "
+            f"{worst_spacing:.3g}x the posterior's own standard deviation on "
+            f"its worst axis. The likelihood is sharper than the grid spacing, "
+            f"so essentially all the mass sits on a handful of points: the "
+            f"covariance goes to zero, the correlation to numerically 1, and "
+            f"the credible intervals to zero width -- all FALSE PRECISION, in "
+            f"the direction that looks like certainty. "
+            f"This is a statement about the GRID, not about whether the "
+            f"parameters are identifiable; a weakly-identified posterior is "
+            f"BROAD and would not reach this branch. Refine the grid to a few "
+            f"standard errors per axis and ask again"
         )
 
     covariance = posterior.covariance
@@ -647,19 +732,55 @@ def assess_identifiability(
             f"{over_wide!r}"
         )
 
-    if not reasons:
+    # The DISCRIMINATOR is the marginal width, not the correlation.
+    #
+    # Correlation says a ridge exists; it does not say the ridge is long. Two
+    # parameters can be strongly correlated and both still pinned to a fraction
+    # of a percent, which is an identifiable problem with a tilted posterior --
+    # a well-conditioned ridge, not an unidentified one. Conversely a parameter
+    # whose 95% interval exceeds its own value is not determined however
+    # cleanly its posterior factorises.
+    #
+    # So width decides, and correlation and conditioning are corroborating
+    # evidence that explains the SHAPE. Classifying on correlation alone would
+    # call the wide-span TCR design unidentified at |r| = 0.92 while its
+    # parameters are known to better than 2%.
+    widest = max(widths) if widths else float("inf")
+    if over_wide:
+        status = IdentifiabilityStatus.NOT_IDENTIFIABLE
+        why = (
+            "a parameter's 95% interval is wider than the parameter itself, so "
+            "the data do not determine it: " + "; ".join(reasons)
+        )
+    elif not reasons:
         status = IdentifiabilityStatus.IDENTIFIABLE
         why = (
-            f"condition number {condition:.3g}, max |correlation| "
-            f"{max_correlation:.4f}, widest relative interval "
-            f"{max(widths):.3g} -- all within the declared thresholds"
+            f"every parameter's 95% interval is small relative to its own "
+            f"value (widest {widest:.3g}, threshold {width_threshold:.3g}), "
+            f"and neither the correlation ({max_correlation:.4f}) nor the "
+            f"conditioning ({condition:.3g}) reaches its threshold"
         )
-    elif len(reasons) >= 2 or over_wide:
+    elif len(reasons) >= 2:
         status = IdentifiabilityStatus.NOT_IDENTIFIABLE
         why = "; ".join(reasons)
     else:
         status = IdentifiabilityStatus.WEAKLY_IDENTIFIABLE
-        why = "; ".join(reasons)
+        why = (
+            f"{reasons[0]}, but every marginal interval is still narrower than "
+            f"its own parameter (widest {widest:.3g}): the posterior is a "
+            f"ridge, and the data constrain along it but weakly across it"
+        )
+
+    # An identifiable verdict reached DESPITE a correlation that would look
+    # alarming on its own gets that said out loud, because a reader who sees
+    # only |r| = 0.92 will otherwise assume the classifier missed it.
+    if status is IdentifiabilityStatus.IDENTIFIABLE and max_correlation > 0.8:
+        why += (
+            f". The parameters are strongly correlated ({max_correlation:.4f}) "
+            f"and this is still IDENTIFIABLE on purpose: correlation says a "
+            f"ridge exists, not that it is long, and both marginal intervals "
+            f"here are within {widest:.3g} of their own values"
+        )
 
     return IdentifiabilityReport(
         status=status,
@@ -672,4 +793,6 @@ def assess_identifiability(
         width_threshold=width_threshold,
         why=why,
         effective_sample_size=ess,
+        occupied_support_fraction=diagnostics["occupied_support_fraction"],
+        spacing_to_std=diagnostics["spacing_to_std"],
     )
