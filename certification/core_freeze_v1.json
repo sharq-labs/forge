@@ -1,0 +1,673 @@
+{
+  "api": {
+    "canonical_modules": [
+      "engcore.scientific",
+      "engcore.data",
+      "engcore.inference",
+      "engcore.uq",
+      "engcore.adequacy",
+      "engcore.execution",
+      "engcore.studies"
+    ],
+    "deprecated": [],
+    "experimental": [
+      [
+        "engcore.inference",
+        "FieldObservationError"
+      ],
+      [
+        "engcore.inference",
+        "FieldObservationKind"
+      ],
+      [
+        "engcore.inference",
+        "FieldObservationOperator"
+      ],
+      [
+        "engcore.studies",
+        "TCR_MODEL_REF"
+      ],
+      [
+        "engcore.studies",
+        "TcrTruth"
+      ],
+      [
+        "engcore.studies",
+        "build_tcr_parameter_set"
+      ],
+      [
+        "engcore.studies",
+        "ols_reference_estimate"
+      ],
+      [
+        "engcore.studies",
+        "synthesize_tcr_observations"
+      ],
+      [
+        "engcore.studies",
+        "tcr_forward_evaluator"
+      ],
+      [
+        "engcore.studies",
+        "tcr_forward_table"
+      ],
+      [
+        "engcore.studies",
+        "tcr_prediction"
+      ]
+    ],
+    "experimental_count": 11,
+    "frozen_count": 194,
+    "frozen_count_expected": 194,
+    "frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+    "pinned_files": {
+      "tests/api/frozen_api_snapshot.json": "422bc9c1d4b4b73926a9a2974b1173a964b11963e5d20ab08737a1c385035de0",
+      "tests/api/full_api_snapshot.json": "911c02aa6021e3a5c54b738e22795e98c96ee40c220cd77f4e9168f592780675"
+    },
+    "total_count": 205
+  },
+  "certificate": {
+    "aggregate_digest": "619f43f7d1625f19c9a6bb98b401d79f4f9907695836a3dd2f4b72cc48927ca5",
+    "certified_commit": "b32f67d7ad16c1e535da4997c6db3858ed62fc4e",
+    "file_sha256": "769461a1b8e2dd09c2ea4b45c374969058a425432208e25d8638696271b0f49b",
+    "path": "certification/current_core_v2.json"
+  },
+  "change_policy": {
+    "allowed_without_breaking_freeze": [
+      "bug fixes preserving frozen behavior",
+      "internal refactors preserving frozen contracts",
+      "performance improvements preserving exact semantics",
+      "new tests",
+      "documentation",
+      "new Domain work",
+      "new optional internal implementations"
+    ],
+    "requires_core_compatibility_review": [
+      "removing a frozen symbol",
+      "renaming a frozen symbol",
+      "a signature change",
+      "changing required or default arguments",
+      "changing enum members or values",
+      "breaking a supported serialization format",
+      "changing material digest semantics",
+      "changing evidence identity semantics",
+      "changing trust or admission semantics",
+      "removing public result fields",
+      "changing stable exception classes"
+    ],
+    "requires_new_core_freeze_version": [
+      "any intentional incompatible change to the frozen contract"
+    ]
+  },
+  "contract": {
+    "excludes": [
+      "internal implementation details",
+      "incidental private helpers",
+      "benchmark implementation details",
+      "experimental surfaces",
+      "undocumented error prose",
+      "performance numbers as compatibility promises"
+    ],
+    "facts": {
+      "exceptions": {
+        "count": 24,
+        "roots": {
+          "engcore.adequacy.predictive.ModelAdequacyError": 1,
+          "engcore.data.errors.BulkDataError": 3,
+          "engcore.inference.admissibility.InferenceAdmissibilityError": 1,
+          "engcore.inference.grid.InferenceProblemError": 4,
+          "engcore.inference.parameters.ParameterIdentityError": 1,
+          "engcore.scientific.errors.ScientificCoreError": 13,
+          "engcore.uq.predictive.UQProblemError": 1
+        }
+      },
+      "identity": {
+        "pairs": {
+          "contractual_order:parameter_set": {
+            "equal": false,
+            "expected_equal": false,
+            "left": "8d37703814de3adec9ee392f35f70f8211bee4afba33a331aa68167569b64886",
+            "right": "3ed2a903461e233495630efc1b015b020b36d4e73a822bb813e5a6116077d482"
+          },
+          "material:model": {
+            "equal": false,
+            "expected_equal": false,
+            "left": "6ed2dced9a8e98fe810a6d8fe0608384d1b1422ea48eb18de2dca0ae43b65f7e",
+            "right": "430016e9635b250a8026c2c227408fcae573e45c2a068b3327c58abcaed5cebe"
+          },
+          "material:observed_value": {
+            "equal": false,
+            "expected_equal": false,
+            "left": "fd188ab9f90d8bf4035a5b737c183441dd7ce5655bb3e7f56a658df4e8e5d45c",
+            "right": "44aa6eeda10b7c105299d15fafec537f350953bb7d07bb2af7cc428077df4ee7"
+          },
+          "material:unit": {
+            "equal": false,
+            "expected_equal": false,
+            "left": "6ed2dced9a8e98fe810a6d8fe0608384d1b1422ea48eb18de2dca0ae43b65f7e",
+            "right": "12d5cb9aeaa002f5bebb494645753e3d20cc30c777ad152ba1e53cb427b53ea7"
+          },
+          "non_material:equal_range_other_unit": {
+            "equal": true,
+            "expected_equal": true,
+            "left": "6ed2dced9a8e98fe810a6d8fe0608384d1b1422ea48eb18de2dca0ae43b65f7e",
+            "right": "6ed2dced9a8e98fe810a6d8fe0608384d1b1422ea48eb18de2dca0ae43b65f7e"
+          }
+        },
+        "reference": {
+          "evidence": "fd188ab9f90d8bf4035a5b737c183441dd7ce5655bb3e7f56a658df4e8e5d45c",
+          "parameter": "6ed2dced9a8e98fe810a6d8fe0608384d1b1422ea48eb18de2dca0ae43b65f7e",
+          "parameter_set": "0217d7d3600db00578717b33b59a95a78538d850d40d6831dcd98a39dd9b23dd"
+        }
+      },
+      "ordering": {
+        "case_identities": [
+          "7de89e3ef96645265e22249e8b8fba9af66beefc6172996b2bc5532dc04833f8",
+          "d02ed767186bad3390f90aa280f1e26d301c8c127c0e53338f5d6f85cc3fde4d",
+          "0e1e9676da39ae98ef2f714e2c75ceeec248a76a9168757e688420b923e3dea7",
+          "d02ed767186bad3390f90aa280f1e26d301c8c127c0e53338f5d6f85cc3fde4d",
+          "bacd8851ff99587c0fcac5ff33789e64cf0027ddeff2c87ea8b1135840034108",
+          "a0ff97a67cb4fbcd2fb7c6ef1ada49ec8d5463420d98906e95c7104c9d26724f",
+          "aad8debd12a259f413dab709e9881db9ac96671d9c47d0cd377878ea00f49bcd",
+          "e429b96dfa16f0146e5960c3512fce40ac3afcb5ce481f2bb1c2a346556a4372",
+          "ca2e109f516285071d887506b3550d1e0e432d91ea6be752e544b208418535fb",
+          "076d496f2b28d9a4f42727cfaf87721648d7abf15c9025316d9027bd11491be5"
+        ],
+        "declaration_identity_forward": "beaa6641c04535e1a64d02b703836b213a5ff8952fac4ed5528abbec85cf08bf",
+        "declaration_identity_reversed": "fdc56ba6a999616ec9406397a1cc2b6a50ae9805baa26b35a1b5255c66d90e74",
+        "duplicate_case_ids": [
+          "c1"
+        ],
+        "fail_fast_sequential": {
+          "counts": [
+            0,
+            1,
+            9
+          ],
+          "failure_order": [
+            "c3"
+          ],
+          "identity": "beaa6641c04535e1a64d02b703836b213a5ff8952fac4ed5528abbec85cf08bf",
+          "outcomes": [
+            [
+              "c3",
+              "failed",
+              null,
+              "ValueError"
+            ],
+            [
+              "c1",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c4",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c1",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c5",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c9",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c2",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c6",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c7",
+              "not_run",
+              null,
+              ""
+            ],
+            [
+              "c12",
+              "not_run",
+              null,
+              ""
+            ]
+          ],
+          "values": []
+        },
+        "sequential": {
+          "counts": [
+            6,
+            4,
+            0
+          ],
+          "failure_order": [
+            "c3",
+            "c9",
+            "c6",
+            "c12"
+          ],
+          "identity": "beaa6641c04535e1a64d02b703836b213a5ff8952fac4ed5528abbec85cf08bf",
+          "outcomes": [
+            [
+              "c3",
+              "failed",
+              null,
+              "ValueError"
+            ],
+            [
+              "c1",
+              "succeeded",
+              1,
+              ""
+            ],
+            [
+              "c4",
+              "succeeded",
+              16,
+              ""
+            ],
+            [
+              "c1",
+              "succeeded",
+              1,
+              ""
+            ],
+            [
+              "c5",
+              "succeeded",
+              25,
+              ""
+            ],
+            [
+              "c9",
+              "failed",
+              null,
+              "ValueError"
+            ],
+            [
+              "c2",
+              "succeeded",
+              4,
+              ""
+            ],
+            [
+              "c6",
+              "failed",
+              null,
+              "ValueError"
+            ],
+            [
+              "c7",
+              "succeeded",
+              49,
+              ""
+            ],
+            [
+              "c12",
+              "failed",
+              null,
+              "ValueError"
+            ]
+          ],
+          "values": [
+            1,
+            16,
+            1,
+            25,
+            4,
+            49
+          ]
+        }
+      },
+      "serialization": {
+        "export_only": [
+          "engcore.adequacy.ModelScoreComparison",
+          "engcore.execution.SweepSummary",
+          "engcore.inference.AdmissibleAnalyticPrediction",
+          "engcore.inference.AdmissibleNumericalPrediction",
+          "engcore.inference.CalibrationProvenance",
+          "engcore.inference.CalibrationResult",
+          "engcore.inference.CalibrationSpec",
+          "engcore.inference.GaussianObservation",
+          "engcore.inference.IdentifiabilityReport",
+          "engcore.inference.NoiseModel",
+          "engcore.inference.ObservationSet",
+          "engcore.inference.ObservationSplit",
+          "engcore.scientific.ConversionOutcome",
+          "engcore.scientific.OptimizerAdapter",
+          "engcore.uq.PredictiveAdmissionAudit",
+          "engcore.uq.QuantifiedPredictiveResult"
+        ],
+        "export_only_count": 16,
+        "fixtures": {
+          "CalibrationParameterSet": {
+            "canonical_sha256": "6575d7955501c55732fc10dc2ee0547f55a0e4c0513288c1ef1a0179d2d6787f",
+            "round_trip_byte_identical": true,
+            "schema": "calibration_parameter_set/1",
+            "unknown_version_refused": true
+          },
+          "ModelReference": {
+            "canonical_sha256": "468c8b85212a12a6d5b0b32759549fdce4f43f064e94b10284cec9f91f0b04dd",
+            "round_trip_byte_identical": true,
+            "schema": "model_reference/1",
+            "unknown_version_refused": true
+          },
+          "ParameterEstimate": {
+            "canonical_sha256": "722441314dac6676a3402396c5c37780c3a0055910547a030e92a076d7ae0809",
+            "round_trip_byte_identical": true,
+            "schema": "calibration_parameter_estimate/1",
+            "unknown_version_refused": true
+          },
+          "ParameterIdentity": {
+            "canonical_sha256": "7cc444e4d8f0fd31ef68e143cf0aa2233c411d46c9edaad950f38a31bdc17a1e",
+            "round_trip_byte_identical": true,
+            "schema": "calibration_parameter_identity/1",
+            "unknown_version_refused": true
+          },
+          "PredictiveEvidenceIdentity": {
+            "canonical_sha256": "bc35ad5a51a8c4a1b4093ceeb8a7253d5cfe07e96df162cd7a022ec62d3441bf",
+            "round_trip_byte_identical": true,
+            "schema": "predictive_evidence_identity/1",
+            "unknown_version_refused": true
+          },
+          "ProvenanceRecord": {
+            "canonical_sha256": "7fd042f783fb5fbf0b72123f83e3871eb904916d8817e585b646775c906d6538",
+            "round_trip_byte_identical": true,
+            "schema": "provenance_record/4",
+            "unknown_version_refused": true
+          },
+          "Quantity": {
+            "canonical_sha256": "2fc3cec2901bb21ba8f98ea43d22cd9ab8a682458b8be88ffa92038d96fa6876",
+            "round_trip_byte_identical": true,
+            "schema": "quantity/1",
+            "unknown_version_refused": true
+          },
+          "SolverIdentity": {
+            "canonical_sha256": "87c07f8cee73a6d01a87f03bc7197c1bdf313913571844d3ff926a2083f996b9",
+            "round_trip_byte_identical": true,
+            "schema": "solver_identity/1",
+            "unknown_version_refused": true
+          },
+          "TwinReference": {
+            "canonical_sha256": "329dc0c1e084f0004429a0b82b62c28e479e5b08449f5a3a5896d3d185038d1b",
+            "round_trip_byte_identical": true,
+            "schema": "scientific_twin_reference/1",
+            "unknown_version_refused": true
+          },
+          "ValidationReport": {
+            "canonical_sha256": "e5a763335d671e473fe794268b4f289595ae50c37da1b01366a7cbeda681a585",
+            "round_trip_byte_identical": true,
+            "schema": "validation_report/1",
+            "unknown_version_refused": true
+          }
+        },
+        "legacy_readers": {
+          "CrossSolverConsensus": {
+            "accepted_versions": [
+              "cross_solver_consensus/1",
+              "cross_solver_consensus/2",
+              "cross_solver_consensus/3"
+            ],
+            "undeclared_version": "cross_solver_consensus/999",
+            "undeclared_version_refused": true
+          },
+          "ProvenanceRecord": {
+            "accepted_versions": [
+              "provenance_record/1",
+              "provenance_record/2",
+              "provenance_record/3",
+              "provenance_record/4"
+            ],
+            "undeclared_version": "provenance_record/999",
+            "undeclared_version_refused": true
+          },
+          "QuantityDependency": {
+            "accepted_versions": [
+              "quantity_dependency/1",
+              "quantity_dependency/2"
+            ],
+            "undeclared_version": "quantity_dependency/999",
+            "undeclared_version_refused": true
+          },
+          "QuantityTransfer": {
+            "accepted_versions": [
+              "quantity_transfer/1",
+              "quantity_transfer/2"
+            ],
+            "undeclared_version": "quantity_transfer/999",
+            "undeclared_version_refused": true
+          },
+          "RawSolverOutput": {
+            "accepted_versions": [
+              "raw_solver_output/1",
+              "raw_solver_output/2"
+            ],
+            "undeclared_version": "raw_solver_output/999",
+            "undeclared_version_refused": true
+          },
+          "ScientificModelDefinition": {
+            "accepted_versions": [
+              "scientific_model_definition/1",
+              "scientific_model_definition/2"
+            ],
+            "undeclared_version": "scientific_model_definition/999",
+            "undeclared_version_refused": true
+          },
+          "ScientificResult": {
+            "accepted_versions": [
+              "scientific_result/1",
+              "scientific_result/2",
+              "scientific_result/3",
+              "scientific_result/4"
+            ],
+            "undeclared_version": "scientific_result/999",
+            "undeclared_version_refused": true
+          },
+          "ValidityAssessment": {
+            "accepted_versions": [
+              "validity_assessment/1",
+              "validity_assessment/2"
+            ],
+            "undeclared_version": "validity_assessment/999",
+            "undeclared_version_refused": true
+          }
+        },
+        "round_trippable_count": 61,
+        "round_trippable_sha256": "f05144c96b93d02c477fe31c8524d3755997c1ab1d1eb1e183920e4dcdd11310"
+      }
+    },
+    "includes": [
+      "canonical public imports from the seven canonical modules",
+      "frozen function and class signatures, including parameter kind and defaults",
+      "public dataclass fields, in order, and their default factories",
+      "enum members and values",
+      "supported serialization formats, current and declared legacy",
+      "scientific identity and digest semantics (material vs non-material)",
+      "evidence identity semantics",
+      "admission and trust semantics as exercised by the certified harness",
+      "documented exception classes and their seven family roots",
+      "deterministic ordering where promised (sweep outcomes and failures in declaration order)",
+      "package identity (engcore; src.engcore absent from the wheel)",
+      "installed-wheel API parity"
+    ],
+    "reproduction_sha256": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b"
+  },
+  "domain": {
+    "algorithm": "sha256 over path-sorted (relative path utf-8, 0x00, sha256 of exact file bytes) for every file under src/engcore/domains excluding __pycache__ -- the Sprint 10 Part V algorithm",
+    "digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+    "file_count": 49
+  },
+  "experimental_policy": {
+    "forbidden": "silently promoting an experimental symbol by adding it to the frozen digest. The verifier fails on any change to the experimental set or the frozen digest.",
+    "promotion_requires": [
+      "explicit API review",
+      "compatibility review",
+      "tests",
+      "inclusion in a later freeze manifest"
+    ],
+    "rule": "Experimental public surfaces are excluded from Core Freeze V1. They remain importable and remain visibly classified EXPERIMENTAL in the API snapshot. EXPERIMENTAL != FROZEN."
+  },
+  "freeze": {
+    "baseline_commit": "af43c896f79a37ac10c0c4e981836b85b24e5a5b",
+    "blocked_candidates": [
+      {
+        "commit": "af43c896f79a37ac10c0c4e981836b85b24e5a5b",
+        "defect": "tests/test_core_api_serialization.py stated the serialization policy as `SUPPORTED_LEGACY: none. No legacy format is supported` and `62 records`. Eight FROZEN readers (ScientificResult, ProvenanceRecord, CrossSolverConsensus, RawSolverOutput, ScientificModelDefinition, ValidityAssessment, QuantityDependency, QuantityTransfer) accept older schema versions, and the frozen round-trippable count is 61. Behaviour was correct and tested; the written contract contradicted it.",
+        "defect_class": "broken compatibility claim",
+        "fix": "module docstring corrected to state the eight readers and their accepted versions, and 61. Proved docstring-only by comparing the AST of every non-docstring statement before and after.",
+        "verdict": "FREEZE_BLOCKED"
+      }
+    ],
+    "distribution_version_note": "Core Freeze V1.0 versions the frozen CONTRACT. The distribution version (0.4.0) is independent and was not changed by the freeze.",
+    "freeze_commit": "recorded in the assurance record, which cannot live in the commit it describes; the candidate's src/ tree hash below is the content-addressed identity and binds regardless",
+    "name": "Core Freeze V1",
+    "tag": "v1.0-core-freeze",
+    "tag_convention": "the repository's existing annotated-tag convention v<major>.<minor>-<subject> (v1.0-benchmark, v1.1-benchmark)",
+    "version": "1.0"
+  },
+  "non_claims": [
+    "The 11 EXPERIMENTAL symbols are not frozen and may change, subject to the experimental policy. EXPERIMENTAL != FROZEN.",
+    "Behaviour, numerical results and performance figures are not compatibility promises. The freeze is about the contract's shape and the semantics listed in `contract`, not about what a solver computes.",
+    "Undocumented error prose is not frozen. Exception CLASSES and their family roots are; the text of a message is not.",
+    "Internal implementation details, private helpers, submodule paths beneath the seven canonical modules, and benchmark implementation details are not frozen.",
+    "`except ScientificCoreError` does NOT catch everything the Core raises. There are seven exception roots.",
+    "`src.engcore` is an unsupported checkout alias. It is not part of the frozen contract and is absent from the wheel.",
+    "The non-Core packages under engcore (domains, systems, sria, design, mcp) carry no freeze guarantee.",
+    "The wheel FILE is not byte-reproducible without SOURCE_DATE_EPOCH (zip entry timestamps). The reproducible identity is the RECORD content digest; the artefact hash is reproducible only with the epoch the assurance record names.",
+    "EI/RI/FM/SP mutation families were NOT re-measured for this freeze. They were last measured in Sprint 7 (core_v2_recertification) with a harness kept outside the repository, and nothing in Core Freeze V1 rests on them.",
+    "The `workers` parameter of run_sweep / rerun_failed is EXPERIMENTAL; parallel execution is not part of the frozen contract.",
+    "Performance numbers in any benchmark round are measurements, not promises."
+  ],
+  "package": {
+    "distribution": "crafty",
+    "import_name": "engcore",
+    "package_discovery": {
+      "find": {
+        "where": [
+          "src"
+        ]
+      }
+    },
+    "requires_python": ">=3.11",
+    "version": "0.4.0"
+  },
+  "post_candidate_paths": [
+    "certification/core_freeze_v1_assurance.json",
+    "certification/CORE_FREEZE_V1.md",
+    "docs/release/v1.0-core-freeze.md",
+    "benchmarks/core_freeze_v1/REPRODUCTION.json",
+    "benchmarks/core_freeze_v1/REPRODUCTION_OUTPUT.json",
+    "benchmarks/core_freeze_v1/SUITES.json",
+    "benchmarks/core_freeze_v1/MUTATION_HARNESS_79.log",
+    "benchmarks/core_api_stability/MUTATIONS.json",
+    "benchmarks/core_api_stability/DOMAIN_BOUNDARY.json"
+  ],
+  "references": {
+    "api_snapshot_tool": {
+      "path": "src/engcore/api_snapshot.py",
+      "sha256": "2b2ad24804ea980e15ed8aaa17bc5d808db167a6ce9c91fbeb3c47c96c28a062"
+    },
+    "assurance_record": {
+      "path": "certification/core_freeze_v1_assurance.json"
+    },
+    "assurance_suites": {
+      "path": "benchmarks/core_freeze_v1/audit/suites.py",
+      "sha256": "15d782c4495bf9bb0f3ea3e11b779deaa7551d350beccb5033c5c576d536ee53"
+    },
+    "certified_mutation_harness": {
+      "path": "tests/mutation_guards.py",
+      "sha256": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b"
+    },
+    "core_certificate": {
+      "path": "certification/current_core_v2.json",
+      "sha256": "769461a1b8e2dd09c2ea4b45c374969058a425432208e25d8638696271b0f49b"
+    },
+    "dependency_hygiene": {
+      "path": "tests/test_core_api_contracts.py",
+      "sha256": "b6b5ef7d942ce9b9847c01abb8418d4d083b7bd228edf90c9b5819299b074e0d"
+    },
+    "dependency_reachability": {
+      "path": "tests/test_core_guards.py",
+      "sha256": "658db9ee95115d83e470b4ff4a41c9ae55be1c773e0f8f1ede0487d4eddac342"
+    },
+    "deprecation_policy": {
+      "path": "tests/test_core_api_deprecation.py",
+      "sha256": "b4a5dad12861eb2cdd092400f28daf6cd1ae7c0d0f5d0cb4b38cc6d487b4ca00"
+    },
+    "domain_boundary_proof": {
+      "path": "benchmarks/core_api_stability/audit/domain_boundary.py",
+      "sha256": "c26ca02cdfed626dc057594b73ac8e8db86f6956fdd2eaca78e59092eff6fcee"
+    },
+    "executable_policy": {
+      "path": "tests/test_core_freeze_policy.py",
+      "sha256": "b88b455ac568991f5935b1c07c1623f61e9ab8f7dd4446aad479ab9ee28fe30f"
+    },
+    "experimental_symbol_manifest": {
+      "path": "tests/api/full_api_snapshot.json",
+      "sha256": "911c02aa6021e3a5c54b738e22795e98c96ee40c220cd77f4e9168f592780675"
+    },
+    "freeze_manifest_tests": {
+      "path": "tests/test_core_freeze_manifest.py",
+      "sha256": "d93add15d9e1a3b21d2b5316d95796d3cfa2937487be277987f9a9a3e33b9eae"
+    },
+    "freeze_policy": {
+      "path": "docs/CORE_FREEZE_POLICY.md",
+      "sha256": "8ab3e5f64a684c4939828af1201210cf66c62c37ea774d4d52039be09fed44a7"
+    },
+    "freeze_report": {
+      "path": "certification/CORE_FREEZE_V1.md"
+    },
+    "freeze_verifier": {
+      "path": "tools/certification/core_freeze.py",
+      "sha256": "b5fb42b4136a6c407689bcd69d7e2223692857b5a99dd5048028d1e416285b9c"
+    },
+    "frozen_symbol_manifest": {
+      "path": "tests/api/frozen_api_snapshot.json",
+      "sha256": "422bc9c1d4b4b73926a9a2974b1173a964b11963e5d20ab08737a1c385035de0"
+    },
+    "layering_and_package_classification": {
+      "path": "tests/test_core_api_layering.py",
+      "sha256": "fd83ea5d642d152a91d049c808012ae2743aea1cca4c12ae7f5897a308c305b3"
+    },
+    "reproduction_driver": {
+      "path": "benchmarks/core_freeze_v1/audit/freeze_reproduction.py",
+      "sha256": "1ab0f1cdb8e40438975a9e1c1c0d03ee4f727f8b909391859c3e8581e08e55bf"
+    },
+    "reproduction_probe": {
+      "path": "benchmarks/core_freeze_v1/audit/reproduce.py",
+      "sha256": "40823bfb455ca06455b501f39b00fad2190107da08c72e27128ab555155970e2"
+    },
+    "serialization_compatibility": {
+      "path": "tests/test_core_api_serialization.py",
+      "sha256": "f27d943f3e236e1adc15fd520c0fb30a001a5678ef6fa1d4914881afb26fedfd"
+    },
+    "sprint10_mutation_matrix": {
+      "path": "benchmarks/core_api_stability/audit/mutations.py",
+      "sha256": "df3ef46d2e7dee105fbf62b705c8a865718ca0a588c051eb5345d0bad50b133b"
+    }
+  },
+  "schema": "engcore.core_freeze/1",
+  "trees": {
+    "domains": "022ee84479a8735d0115e6c2f5e13c6e473d4f02",
+    "src": "7b220ba2b28100a75e6138d9b233ba81823bd9e1",
+    "tests_api": "6676f9b8a768aebb3037c3cc7b2f0fa042e562a0"
+  }
+}

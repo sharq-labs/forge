@@ -1,0 +1,128 @@
+{
+  "all_green": true,
+  "commit": "48009651c5063eb22b873ea7300b69faab8f16c1",
+  "suites": {
+    "FAST": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 4904,
+      "selection": "tests -n 4 -m not expensive and not campaign",
+      "skipped": 4,
+      "summary": "4904 passed, 4 skipped, 42 warnings"
+    },
+    "FULL": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 5450,
+      "selection": "tests -n 4",
+      "skipped": 4,
+      "summary": "5450 passed, 4 skipped, 42 warnings"
+    },
+    "api_snapshot": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 51,
+      "selection": "tests/test_core_api_snapshot.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py",
+      "skipped": 0,
+      "summary": "51 passed"
+    },
+    "capability_boundary": {
+      "deselected": 675,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 306,
+      "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
+      "skipped": 0,
+      "summary": "306 passed, 675 deselected"
+    },
+    "certificate": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 28,
+      "selection": "tests/test_core_certificate.py",
+      "skipped": 1,
+      "summary": "28 passed, 1 skipped"
+    },
+    "contract_guard": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 305,
+      "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
+      "skipped": 0,
+      "summary": "305 passed, 7 warnings"
+    },
+    "dependency_layering": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 41,
+      "selection": "tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_trust_boundary_package_identity.py",
+      "skipped": 0,
+      "summary": "41 passed, 14 warnings"
+    },
+    "field_profile_suites": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 147,
+      "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
+      "skipped": 0,
+      "summary": "147 passed"
+    },
+    "field_suites": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 124,
+      "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
+      "skipped": 0,
+      "summary": "124 passed"
+    },
+    "freeze_manifest": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 23,
+      "selection": "tests/test_core_freeze_manifest.py",
+      "skipped": 0,
+      "summary": "23 passed"
+    },
+    "scientific_truth": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 293,
+      "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
+      "skipped": 3,
+      "summary": "293 passed, 3 skipped"
+    },
+    "serialization": {
+      "deselected": 0,
+      "exit": 0,
+      "failed": 0,
+      "failures": [],
+      "passed": 218,
+      "selection": "tests/test_core_api_serialization.py tests/test_result_validity.py tests/test_provenance_integrity.py tests/test_consensus_integrity.py tests/test_model0r_realization_foundation.py",
+      "skipped": 0,
+      "summary": "218 passed"
+    }
+  },
+  "tree_clean_after": true,
+  "tree_clean_before": true
+}

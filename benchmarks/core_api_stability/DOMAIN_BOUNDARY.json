@@ -1,0 +1,67 @@
+{
+  "base_commit": "973083e",
+  "domain_start_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+  "domain_end_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+  "digests_identical": true,
+  "git_diff_empty": true,
+  "file_count": 49,
+  "suites": [
+    {
+      "suite": "tests/test_electrical_v01_demo.py",
+      "passed": true,
+      "summary": "17 passed"
+    },
+    {
+      "suite": "tests/test_kinetics_k1.py",
+      "passed": true,
+      "summary": "30 passed"
+    },
+    {
+      "suite": "tests/test_conduction2d.py",
+      "passed": true,
+      "summary": "30 passed"
+    },
+    {
+      "suite": "tests/test_conduction2d_assembly.py",
+      "passed": true,
+      "summary": "33 passed"
+    },
+    {
+      "suite": "tests/test_conduction2d_convergence.py",
+      "passed": true,
+      "summary": "9 passed"
+    },
+    {
+      "suite": "tests/test_thermal_t1_fidelity_inference.py",
+      "passed": true,
+      "summary": "33 passed"
+    },
+    {
+      "suite": "tests/test_thermal_t2_repeated_draw_calibration.py",
+      "passed": true,
+      "summary": "34 passed"
+    },
+    {
+      "suite": "tests/test_thermal_t3_decision_aware_fidelity.py",
+      "passed": true,
+      "summary": "37 passed"
+    },
+    {
+      "suite": "tests/test_min_foundation_electrothermal.py",
+      "passed": true,
+      "summary": "47 passed"
+    },
+    {
+      "suite": "tests/test_electrothermal_vertical.py",
+      "passed": true,
+      "summary": "62 passed"
+    },
+    {
+      "suite": "tests/test_sria_e1_electrical.py",
+      "passed": true,
+      "summary": "23 passed"
+    }
+  ],
+  "all_suites_green": true,
+  "boundary_intact": true
+}

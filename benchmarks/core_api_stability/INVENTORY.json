@@ -1,0 +1,811 @@
+{
+  "above_the_core": [
+    {
+      "declared": [
+        "ASSERTED_CONTEXT_SCHEMA",
+        "COUPLING_SUPPLIED_INPUTS",
+        "EVIDENCE_PACKAGE_SCHEMA",
+        "MODEL_VALIDITY_SCHEMA",
+        "AssertedContext",
+        "CouplingCriterion",
+        "CouplingEvidence",
+        "CaseDescription",
+        "CredibilityEvidenceError",
+        "CredibilityEvidenceReport",
+        "CredibilityVerdict",
+        "ElectroThermalCaseRun",
+        "EvidencePackage",
+        "EvidencePackageError",
+        "FieldDescription",
+        "MalformedPayloadError",
+        "MissingFieldError",
+        "MissingUnitError",
+        "ModelValidityRecord",
+        "classify_assessment",
+        "combine_assessments",
+        "ProblemPayloadError",
+        "UnknownFieldError",
+        "WrongDimensionError",
+        "build_electrothermal_problems",
+        "build_electrothermal_system",
+        "derive_verdict",
+        "describe_electrothermal_case",
+        "example_electrothermal_payload",
+        "example_over_rating_payload",
+        "run_electrothermal_case"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 31,
+      "leaked": [
+        {
+          "kind": "_Feature",
+          "name": "annotations",
+          "origin": "__future__",
+          "why": "third-party-symbol"
+        },
+        {
+          "kind": "module",
+          "name": "errors",
+          "origin": "engcore.mcp.errors",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "evidence",
+          "origin": "engcore.mcp.evidence",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "problem",
+          "origin": "engcore.mcp.problem",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.mcp",
+      "reachable_count": 35
+    },
+    {
+      "declared": [
+        "SRIA_VERSION",
+        "SRIAError",
+        "CharterError",
+        "EvidenceError",
+        "LifecycleViolation",
+        "AdmissionError",
+        "AdmissionAuthorityError",
+        "BeliefWriteViolation",
+        "UncertaintyContractError",
+        "OutcomeContractError",
+        "ActionContractError",
+        "FeasibilityViolation",
+        "SignatureError",
+        "CalibrationKeyContamination",
+        "DomainPackContractError",
+        "ReservedNotImplemented",
+        "TrustBoundaryViolation",
+        "CampaignCharter",
+        "CampaignType",
+        "TerminalDecision",
+        "ConfidenceRequirement",
+        "AcceptanceCriterion",
+        "CharterAmendment",
+        "IMPLEMENTED_CAMPAIGN_TYPES",
+        "require_implemented_campaign_type",
+        "Evidence",
+        "EvidenceStatus",
+        "SourceClass",
+        "ClaimType",
+        "ClaimBinding",
+        "Assessment",
+        "AssessmentVerdict",
+        "LifecycleEvent",
+        "AdmissionDeclaration",
+        "AdmissionAttempt",
+        "AdmissionAuthority",
+        "AdmissionAuthorityRegistry",
+        "AdmissionOutcome",
+        "ALLOWED_TRANSITIONS",
+        "BELIEF_BEARING_STATUS",
+        "IMPLEMENTED_SOURCE_CLASSES",
+        "require_implemented_source",
+        "BeliefUpdateGateway",
+        "ScientificBelief",
+        "BeliefEntry",
+        "UncertaintyChannel",
+        "SubjectModel",
+        "DiscrepancyKind",
+        "ModelDiscrepancy",
+        "UncertaintyDeclaration",
+        "ResearchAction",
+        "ExecutorType",
+        "FeasibilityVerdict",
+        "HardConstraint",
+        "HardFeasibilityGate",
+        "IMPLEMENTED_EXECUTORS",
+        "require_executable",
+        "RunOutcome",
+        "Disposition",
+        "AttributedCause",
+        "BlameAssignment",
+        "CensoringType",
+        "Retryability",
+        "DetectedBy",
+        "EvidenceProvenance",
+        "AssessmentProvenance",
+        "DecisionProvenance",
+        "StructureSignature",
+        "StructureComponent",
+        "EnvironmentSignature",
+        "CalibrationKey",
+        "SemanticGuard",
+        "build_calibration_key",
+        "CALIBRATION_KEY_VERSION",
+        "DomainPack",
+        "DomainCriticHook",
+        "FidelityLevel",
+        "validate_domain_pack",
+        "guard_from_packs",
+        "REQUIRED_PACK_METHODS",
+        "FORBIDDEN_PACK_ATTRIBUTES"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 81,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "actions",
+          "origin": "engcore.sria.actions",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "admission",
+          "origin": "engcore.sria.admission",
+          "why": "submodule"
+        },
+        {
+          "kind": "_Feature",
+          "name": "annotations",
+          "origin": "__future__",
+          "why": "third-party-symbol"
+        },
+        {
+          "kind": "module",
+          "name": "charter",
+          "origin": "engcore.sria.charter",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "domain_pack",
+          "origin": "engcore.sria.domain_pack",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "errors",
+          "origin": "engcore.sria.errors",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "evidence",
+          "origin": "engcore.sria.evidence",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "gateway",
+          "origin": "engcore.sria.gateway",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "outcomes",
+          "origin": "engcore.sria.outcomes",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "provenance",
+          "origin": "engcore.sria.provenance",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "signatures",
+          "origin": "engcore.sria.signatures",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "uncertainty",
+          "origin": "engcore.sria.uncertainty",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.sria",
+      "reachable_count": 93
+    },
+    {
+      "declared": [
+        "AssessmentContext",
+        "GENERATION_BINDING_METADATA_KEY",
+        "CandidateGenerationBatch",
+        "CandidateGenerationPlan",
+        "CandidateProposal",
+        "DesignCandidate",
+        "DesignCandidateReference",
+        "DesignEvaluation",
+        "DesignEvaluationReference",
+        "DesignMemoryEntry",
+        "DesignMemoryLayerA",
+        "DesignMemoryPolicy",
+        "DesignMemoryRecord",
+        "DesignMemoryScope",
+        "DesignPopulation",
+        "DesignSpace",
+        "DesignSpaceReference",
+        "EntryClassification",
+        "ExplicitRetention",
+        "FidelityLadder",
+        "FidelityRung",
+        "FidelitySelection",
+        "GenerationStrategy",
+        "MixedVariableSampler",
+        "ParetoArchive",
+        "ProjectedObjective",
+        "ProposalDecision",
+        "ProposalGate",
+        "ProposalRejection",
+        "RetentionReason",
+        "ResultBinding",
+        "ScopedEliteArchive",
+        "SelectionEligibility",
+        "TwinMaterializer",
+        "assignment_digest",
+        "bind_generation_to_twin",
+        "classify_memory",
+        "compare_entries",
+        "dominates",
+        "generate_initial_population",
+        "generation_binding_payload",
+        "merge_layer_a_records",
+        "pareto_member_identities",
+        "project_objectives",
+        "reason_overlaps",
+        "require_result_binding",
+        "validate_generation_binding",
+        "validate_twin_generation_binding",
+        "verify_layer_a_attribution"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 49,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "archives",
+          "origin": "engcore.design.archives",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "candidate",
+          "origin": "engcore.design.candidate",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "evaluation",
+          "origin": "engcore.design.evaluation",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "fidelity",
+          "origin": "engcore.design.fidelity",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "generation",
+          "origin": "engcore.design.generation",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "memory",
+          "origin": "engcore.design.memory",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "population",
+          "origin": "engcore.design.population",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "sampling",
+          "origin": "engcore.design.sampling",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "space",
+          "origin": "engcore.design.space",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.design",
+      "reachable_count": 58
+    },
+    {
+      "declared": [],
+      "declared_but_absent": [],
+      "declared_count": 0,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "electrothermal",
+          "origin": "engcore.systems.electrothermal",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.systems",
+      "reachable_count": 1
+    }
+  ],
+  "core": [
+    {
+      "declared": [
+        "SCIENTIFIC_CORE_VERSION",
+        "ScientificCoreError",
+        "InvalidScientificProblem",
+        "UnitCompatibilityError",
+        "ModelNotFoundError",
+        "ModelValidityError",
+        "SolverNotFoundError",
+        "AmbiguousSolverError",
+        "DuplicateRegistrationError",
+        "ScientificValidationError",
+        "InvalidScientificCapability",
+        "InvalidModelRealization",
+        "RealizationNotFoundError",
+        "Quantity",
+        "coerce_quantity",
+        "dimensionality",
+        "normalize_unit",
+        "ScientificProblem",
+        "ScientificVariable",
+        "ScientificParameter",
+        "VariableKind",
+        "VariableRole",
+        "ScientificValue",
+        "ValueKind",
+        "IntegerValue",
+        "BooleanValue",
+        "CategoricalValue",
+        "encode_value",
+        "decode_value",
+        "value_kind",
+        "ObjectiveDefinition",
+        "ObjectiveDirection",
+        "ConstraintDefinition",
+        "ConstraintOperator",
+        "ConstraintCheck",
+        "InitialCondition",
+        "BoundaryCondition",
+        "BoundaryKind",
+        "ModelReference",
+        "UncertaintySpecification",
+        "UncertaintyRequirement",
+        "ScientificModelDefinition",
+        "ModelInputSpec",
+        "ModelOutputSpec",
+        "ModelBindingReport",
+        "BindingIssue",
+        "BindingIssueKind",
+        "InputSourceKind",
+        "ModelType",
+        "ModelValidationStatus",
+        "ModelRegistry",
+        "ValidityDomain",
+        "ValidityStatus",
+        "UnknownCondition",
+        "UnknownReason",
+        "ValidityAssessment",
+        "RangeCondition",
+        "CategoryCondition",
+        "FlagCondition",
+        "ScientificCapability",
+        "scientific_capabilities",
+        "capability_identifiers",
+        "ModelRealizationDefinition",
+        "ModelFormulation",
+        "ImplementationReference",
+        "RealizationReference",
+        "RealizationRegistry",
+        "ConversionOutcome",
+        "EnergyConversion",
+        "LossPath",
+        "QuantityDependency",
+        "QuantityTransfer",
+        "QUANTITY_DEPENDENCY_SCHEMA",
+        "unresolved_inputs",
+        "externally_imposed",
+        "DeclaredSupport",
+        "ScientificSolver",
+        "SolverIdentity",
+        "SolverSettings",
+        "SolverCapability",
+        "SolverCapabilityId",
+        "CoreCapabilities",
+        "SolverRegistry",
+        "PreparedSolve",
+        "RawSolverOutput",
+        "ConvergenceState",
+        "CrossSolverConsensus",
+        "SolveRoute",
+        "SharedComponent",
+        "ComponentKind",
+        "IndependenceVerdict",
+        "RouteComparison",
+        "CONSENSUS_SCHEMA",
+        "ScientificDataReference",
+        "ScientificResult",
+        "ValidationReport",
+        "ValidationCheck",
+        "ValidationOutcome",
+        "ValidationLevel",
+        "unverified_report",
+        "Uncertainty",
+        "UncertaintyKind",
+        "ProvenanceRecord",
+        "ExecutionBinding",
+        "ScientificTwin",
+        "TwinDatum",
+        "TwinDatumRole",
+        "TwinKind",
+        "TwinReference",
+        "ScientificExperiment",
+        "ExperimentBudget",
+        "ScientificEvaluation",
+        "EvaluationStatus",
+        "OptimizerAdapter",
+        "CandidateCodec",
+        "ObjectiveEncoder",
+        "NumericSearchBackend",
+        "to_json"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 118,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "capabilities",
+          "origin": "engcore.scientific.capabilities",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "composition",
+          "origin": "engcore.scientific.composition",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "consensus",
+          "origin": "engcore.scientific.consensus",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "errors",
+          "origin": "engcore.scientific.errors",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "experiments",
+          "origin": "engcore.scientific.experiments",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "ir",
+          "origin": "engcore.scientific.ir",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "models",
+          "origin": "engcore.scientific.models",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "realizations",
+          "origin": "engcore.scientific.realizations",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "results",
+          "origin": "engcore.scientific.results",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "sequences",
+          "origin": "engcore.scientific.sequences",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "serialization",
+          "origin": "engcore.scientific.serialization",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "solvers",
+          "origin": "engcore.scientific.solvers",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "twins",
+          "origin": "engcore.scientific.twins",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "units",
+          "origin": "engcore.scientific.units",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.scientific",
+      "reachable_count": 132
+    },
+    {
+      "declared": [
+        "BulkCaptureSpec",
+        "BulkDataError",
+        "BulkDataIntegrityError",
+        "BulkDataResolver",
+        "BulkDataStore",
+        "BulkDataUnavailable",
+        "FilesystemBulkStore",
+        "InMemoryBulkStore",
+        "capture_bulk",
+        "relocate",
+        "store_values"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 11,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "capture",
+          "origin": "engcore.data.capture",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "errors",
+          "origin": "engcore.data.errors",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "resolver",
+          "origin": "engcore.data.resolver",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "store",
+          "origin": "engcore.data.store",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.data",
+      "reachable_count": 15
+    },
+    {
+      "declared": [
+        "AdmissibleNumericalPrediction",
+        "InferenceAdmissibilityError",
+        "require_admissible_numerical_prediction",
+        "AdmittedForwardRow",
+        "AdmittedForwardTable",
+        "GaussianObservation",
+        "InferenceProblemError",
+        "ObservationSet",
+        "PosteriorGrid",
+        "gaussian_grid_posterior",
+        "CalibrationParameterSet",
+        "ParameterBounds",
+        "ParameterEstimate",
+        "ParameterIdentity",
+        "ParameterIdentityError",
+        "ParameterTransform",
+        "bind_parameter_set_to_grid",
+        "require_parameter_set",
+        "DataLeakageError",
+        "ObservationSplit",
+        "observation_content_digest",
+        "require_split",
+        "AdmissibleAnalyticPrediction",
+        "require_admissible_analytic_prediction",
+        "require_admitted_prediction",
+        "CalibrationError",
+        "CalibrationProvenance",
+        "CalibrationResult",
+        "CalibrationSpec",
+        "CalibrationStatus",
+        "GridResolutionError",
+        "IdentifiabilityReport",
+        "IdentifiabilityStatus",
+        "NoiseModel",
+        "assess_identifiability",
+        "calibrate",
+        "posterior_effective_sample_size",
+        "posterior_grid_diagnostics",
+        "GRID_TOO_COARSE_FOR_INFERENCE",
+        "FieldObservationError",
+        "FieldObservationKind",
+        "FieldObservationOperator"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 42,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "admissibility",
+          "origin": "engcore.inference.admissibility",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "calibration",
+          "origin": "engcore.inference.calibration",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "field_observation",
+          "origin": "engcore.inference.field_observation",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "grid",
+          "origin": "engcore.inference.grid",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "parameters",
+          "origin": "engcore.inference.parameters",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "split",
+          "origin": "engcore.inference.split",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.inference",
+      "reachable_count": 48
+    },
+    {
+      "declared": [
+        "ConditionedPosterior",
+        "PredictiveAdmissionAudit",
+        "condition_posterior_on_predictive_admission",
+        "PredictiveObservableSpec",
+        "QuantifiedPredictiveResult",
+        "UQProblemError",
+        "posterior_predictive_uq"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 7,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "admission",
+          "origin": "engcore.uq.admission",
+          "why": "submodule"
+        },
+        {
+          "kind": "module",
+          "name": "predictive",
+          "origin": "engcore.uq.predictive",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.uq",
+      "reachable_count": 9
+    },
+    {
+      "declared": [
+        "EVIDENCE_IDENTITY_FIELDS",
+        "ModelAdequacyError",
+        "ModelScoreComparison",
+        "PredictiveEvidenceIdentity",
+        "PredictiveObservationAssessment",
+        "StudyAdequacyStatus",
+        "assess_predictive_observation",
+        "compare_log_predictive_scores"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 8,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "predictive",
+          "origin": "engcore.adequacy.predictive",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.adequacy",
+      "reachable_count": 9
+    },
+    {
+      "declared": [
+        "CaseStatus",
+        "FailurePolicy",
+        "SharedContext",
+        "SweepCase",
+        "SweepDefinition",
+        "SweepError",
+        "SweepOutcome",
+        "SweepSummary",
+        "cases_from",
+        "rerun_failed",
+        "run_sweep"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 11,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "sweep",
+          "origin": "engcore.execution.sweep",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.execution",
+      "reachable_count": 12
+    },
+    {
+      "declared": [
+        "TCR_MODEL_REF",
+        "TcrTruth",
+        "build_tcr_parameter_set",
+        "ols_reference_estimate",
+        "synthesize_tcr_observations",
+        "tcr_forward_evaluator",
+        "tcr_forward_table",
+        "tcr_prediction"
+      ],
+      "declared_but_absent": [],
+      "declared_count": 8,
+      "leaked": [
+        {
+          "kind": "module",
+          "name": "tcr",
+          "origin": "engcore.studies.tcr",
+          "why": "submodule"
+        }
+      ],
+      "package": "engcore.studies",
+      "reachable_count": 9
+    }
+  ]
+}

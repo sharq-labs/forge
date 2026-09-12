@@ -15,12 +15,15 @@ dependencies = [
   # correction to a record. It is written here, and not only in the guard,
   # because this list is where a reader decides what the package needs.
   # `tests/test_core_guards.py::test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed`
-  # asserts the unimported set is EXACTLY {mpmath, pytest-xdist, scikit-learn},
-  # so if something starts importing it, or a further unused declaration lands,
-  # that test fails and this comment gets revisited. `mpmath` is in that set for
-  # a different reason than these two — it IS imported, from `benchmarks/`,
-  # which that guard's sweep does not walk. The guard's docstring has the
-  # detail.
+  # asserts the unimported set is EXACTLY {pytest-xdist, scikit-learn}, so if
+  # something starts importing it, or a further unused declaration lands, that
+  # test fails and this comment gets revisited.
+  #
+  # `mpmath` was briefly in that set on a technicality — it IS imported, from
+  # `benchmarks/`, which the guard's sweep did not walk. Sprint 10 widened the
+  # sweep to `benchmarks/` and taught it to resolve the first-party modules
+  # those rounds reach through a `sys.path` append, so `mpmath` left the set and
+  # these two are what genuinely remain.
   "scikit-learn>=1.4",
   # Scientific Core units backend. Lower bound only: the platform must not
   # pin its scientific stack to one machine's resolved versions.
@@ -69,6 +72,24 @@ mcp = [
 # dependency nobody can reinstall.
 oracles = [
   "mpmath>=1.3",
+]
+
+# The benchmark tooling boundary, and the close of a blind spot Sprint 9 named
+# and deferred: "widening the sweep means declaring `jsonschema` and `psutil`
+# too, which is its own round". This is that round.
+#
+# Neither is reached from `src/`. `jsonschema` validates the AI-design seed
+# corpus in `benchmarks/ai_designs/`; `psutil` reads process memory in
+# `benchmarks/k2_compute_efficiency/`. `psutil` was not installed at all when
+# this group was written, so that benchmark could not have run -- an undeclared
+# dependency is not only unrecorded, it is frequently absent.
+#
+# Optional rather than required for the reason `[mcp]` and `[oracles]` are: a
+# bare install of the runtime needs neither, and the suite stays green without
+# them.
+benchmarks = [
+  "jsonschema>=4.0",
+  "psutil>=5.9",
 ]
 
 [build-system]

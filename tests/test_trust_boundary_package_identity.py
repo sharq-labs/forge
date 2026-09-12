@@ -65,6 +65,49 @@ PINNED_FROZEN_SPELLERS: dict[str, str] = {
     "benchmarks/blind_v2/challenge/audit.py": "benchmarks/blind_v2/FREEZE.json",
 }
 
+#: Files that name the frozen spelling in order to TEST it rather than to use
+#: it. Sprint 10 added three: the API contract and layering guards import the
+#: alias to prove it resolves to the SAME object as the canonical module, and
+#: the wheel-parity probe imports it to prove it is ABSENT from the installed
+#: wheel. All three would be impossible to write without naming it.
+#:
+#: They cannot be exempted the way the list above is. Those entries are frozen
+#: artefacts pinned by digest; these are live guards that will keep changing,
+#: and a digest pin would have to be re-issued on every edit until somebody
+#: started re-issuing it without looking.
+#:
+#: So the exemption is a PROPERTY, in two parts, and both have to hold:
+#:
+#: 1. The number of times the file spells the alias is pinned here. A guard
+#:    that starts using `src.engcore` for a fourth purpose is a decision, and
+#:    it fails until somebody makes it. This is the part that matters: without
+#:    a count, "this file is allowed to say it" becomes "this file is allowed
+#:    to say it as often as it likes", which is the exemption swallowing the
+#:    rule.
+#: 2. The file must also state, in its own bytes, that the alias is not a
+#:    second package identity. A file that names the spelling and no longer
+#:    says why has stopped being a guard and is now just a usage.
+ALIAS_ASSERTION_FILES: dict[str, int] = {
+    "tests/test_core_api_contracts.py": 2,
+    "tests/test_core_api_layering.py": 2,
+    "benchmarks/core_api_stability/audit/wheel_parity.py": 1,
+    # The Sprint 10 mutation matrix, which names the alias in order to
+    # INSERT it: ALIAS-1 puts it into a runtime module and ALIAS-2 adds a
+    # second use to an already-exempt file, so that both halves of this
+    # rule are proved to bite rather than assumed to.
+    "benchmarks/core_api_stability/audit/mutations.py": 4,
+}
+
+#: The claim, matched as a case-insensitive substring rather than parsed:
+#: what is being checked is what the file SAYS, and the guards spell the
+#: emphasis differently -- "a second package identity" in prose, "a SECOND
+#: package identity" in an assertion message, "MUST be False" in the probe.
+ALIAS_CLAIMS = (
+    "second package identity",
+    "must be false",
+)
+
+
 _ESCAPED = re.escape(FROZEN)
 _SPELLING = re.compile(
     rf"(?:\bfrom\s+{_ESCAPED}\b|\bimport\s+{_ESCAPED}\b"
@@ -169,13 +212,47 @@ def test_no_unpinned_file_spells_the_frozen_namespace():
     offenders = []
     for path in _python_sources():
         rel = path.relative_to(REPO).as_posix()
-        if rel in PINNED_FROZEN_SPELLERS:
+        if rel in PINNED_FROZEN_SPELLERS or rel in ALIAS_ASSERTION_FILES:
             continue
         text = path.read_bytes().decode("utf-8-sig")
         for number, line in enumerate(text.splitlines(), 1):
             if _SPELLING.search(line):
                 offenders.append(f"{rel}:{number}: {line.strip()}")
     assert not offenders, "\n".join(offenders)
+
+
+def test_every_alias_asserting_file_says_it_and_says_why():
+    """The second exemption list, held to the property that earns it.
+
+    Not a digest pin -- these files are live. What is pinned is how OFTEN each
+    one names the alias, and that it still explains itself.
+    """
+    for rel, expected in sorted(ALIAS_ASSERTION_FILES.items()):
+        path = REPO / rel
+        assert path.exists(), f"{rel} is exempt and does not exist"
+        text = path.read_bytes().decode("utf-8-sig")
+
+        spellings = sum(
+            1 for line in text.splitlines() if _SPELLING.search(line)
+        )
+        assert spellings == expected, (
+            f"{rel} spells the frozen namespace {spellings} time(s); the "
+            f"exemption covers {expected}. A new use is a decision: either it "
+            f"is another assertion ABOUT the alias, in which case raise the "
+            f"number, or it is a USE of it, in which case it is the thing this "
+            f"guard exists to stop"
+        )
+        assert any(claim in text.lower() for claim in ALIAS_CLAIMS), (
+            f"{rel} names `src.engcore` but no longer states that it is not a "
+            f"second package identity. It has stopped being a guard and is now "
+            f"just a usage"
+        )
+
+
+def test_the_two_exemption_lists_do_not_overlap():
+    """A file in both would be exempt twice and checked by neither rule
+    properly -- the digest pin would stop the count from being enforced."""
+    assert not (set(PINNED_FROZEN_SPELLERS) & set(ALIAS_ASSERTION_FILES))
 
 
 def test_every_remaining_frozen_spelling_is_pinned_by_a_freeze():

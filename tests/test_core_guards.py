@@ -4424,6 +4424,116 @@ def _importable_top_level() -> frozenset[str]:
     return frozenset(names)
 
 
+def _round_local_names(path: pathlib.Path) -> frozenset[str]:
+    """Names a benchmark round reaches because it appended its OWN root to sys.path.
+
+    Several rounds under `benchmarks/` do exactly this, and say so where they do
+    it -- `benchmarks/empirical_validation/tests/test_empirical_validation.py`
+    explains that `adapters`, `reference` and `audit` are "top-level names
+    inside this round's directory, so that directory has to be importable".
+
+    After such an append, `import adapters` is an absolute import of a
+    FIRST-PARTY module. To an AST walk it looks exactly like a third-party
+    package, and treating it as one is how a dependency sweep grows seven
+    phantom dependencies it can never resolve.
+
+    SIBLINGS ONLY WOULD NOT DO IT, which is why this exists alongside
+    `_sibling_names`: the importing file is usually in `<round>/tests/` or
+    `<round>/audit/` while the imported module is at `<round>/`, so they are not
+    siblings. This walks up to the round root -- the directory directly under
+    `benchmarks/` -- and collects what a caller could reach from there. It stops
+    there rather than collecting every name under `benchmarks/`, for the reason
+    `_sibling_names` documents about `mcp`: a wider net excuses the very
+    dependencies the guard exists to catch.
+    """
+    parts = path.parts
+    try:
+        index = len(parts) - 1 - parts[::-1].index("benchmarks")
+    except ValueError:
+        return frozenset()
+    if index + 1 >= len(parts):
+        return frozenset()
+
+    roots = []
+    round_root = pathlib.Path(*parts[: index + 2])
+    if round_root.is_dir():
+        roots.append(round_root)
+
+    # Plus whatever the file ITSELF puts on sys.path, read out of its own
+    # source rather than guessed. `benchmarks/contract_guard/audit/
+    # build_matrix.py` writes
+    #
+    #     sys.path.insert(0, str(REPO / "benchmarks" / "contract_integrity" / "audit"))
+    #
+    # and then imports `claim_map` from ANOTHER round -- which no rule about
+    # this file's own directory could ever predict. The string segments of the
+    # mutation are the evidence, so they are what is used: join them under the
+    # repository root and, if that is a real directory, its modules are
+    # first-party for this file.
+    # The file itself AND its directory's `conftest.py`, because the mutation is
+    # frequently in the conftest rather than in the importing module:
+    # `benchmarks/contract_integrity/tests/conftest.py` inserts
+    # `ROUND / "audit"`, and `test_auditor_self_test.py` beside it then writes a
+    # bare `import nominals` with no sys.path line of its own.
+    sources = [path]
+    conftest = path.parent / "conftest.py"
+    if conftest.is_file() and conftest != path:
+        sources.append(conftest)
+
+    for source_path in sources:
+        source = _source_of(source_path)
+        if "sys.path" not in source:
+            continue
+        for node in ast.walk(ast.parse(source)):
+            if not isinstance(node, ast.Call):
+                continue
+            if getattr(node.func, "attr", None) not in ("insert", "append"):
+                continue
+            if getattr(getattr(node.func, "value", None), "attr", None) != "path":
+                continue
+            # SORTED BY SOURCE POSITION, not by walk order. `ast.walk` is
+            # breadth-first, and `REPO / "benchmarks" / "contract_integrity" /
+            # "audit"` parses as a LEFT-nested BinOp tree, so a breadth-first
+            # collection yields the segments outermost-first -- exactly
+            # reversed. Joining those produced
+            # `<repo>/audit/contract_integrity/benchmarks`, which does not
+            # exist, so the directory was silently skipped and `claim_map`
+            # stayed an unresolved phantom dependency.
+            segments = [
+                sub.value
+                for sub in sorted(
+                    (
+                        s for s in ast.walk(node)
+                        if isinstance(s, ast.Constant) and isinstance(s.value, str)
+                    ),
+                    key=lambda s: (s.lineno, s.col_offset),
+                )
+            ]
+            if not segments:
+                continue
+            # Resolved against BOTH bases, because both spellings occur: one
+            # round writes `REPO / "benchmarks" / <round> / "audit"` (absolute
+            # from the repository root) and another writes `ROUND / "audit"`
+            # (relative to its own round, with ROUND derived from __file__ and
+            # therefore invisible to a literal scan). Trying both is what makes
+            # this read the evidence rather than assume a convention.
+            for base in (REPO_ROOT, round_root):
+                candidate = base.joinpath(*segments)
+                if candidate.is_dir():
+                    roots.append(candidate)
+
+    names: set[str] = set()
+    for root in roots:
+        for entry in root.iterdir():
+            if entry.name.startswith("_"):
+                continue
+            if entry.suffix == ".py":
+                names.add(entry.stem)
+            elif entry.is_dir():
+                names.add(entry.name)
+    return frozenset(names)
+
+
 def _sibling_names(directory: pathlib.Path) -> frozenset[str]:
     """Names importable from `directory` because they sit in it.
 
@@ -4469,12 +4579,25 @@ def _reached_modules() -> dict[str, list[str]]:
         rel = path.relative_to(REPO_ROOT).as_posix()
         found.setdefault(head, []).append(f"{rel}:{lineno}")
 
-    for tree in (REPO_ROOT / "src", REPO_ROOT / "tests"):
+    # `benchmarks` joined `src` and `tests` in Sprint 10, closing the blind spot
+    # Sprint 9 named and deferred: "benchmarks/ also reaches jsonschema and
+    # psutil, neither declared anywhere, and several rounds append their own
+    # directory to sys.path so local names read as third-party to an AST walk.
+    # Widening the sweep means declaring those two and teaching it about the
+    # sys.path appends -- a dependency-hygiene round, not a line in an
+    # assertion."
+    #
+    # Both halves are done. The two distributions are declared in the
+    # `[benchmarks]` optional group, and `_sibling_names` is widened below to
+    # recognise the sys.path-appended roots, so `adapters`, `audit`,
+    # `challenge`, `claim_map`, `nominals`, `reference` and `review` are seen as
+    # the local modules they are rather than as seven phantom dependencies.
+    for tree in (REPO_ROOT / "src", REPO_ROOT / "tests", REPO_ROOT / "benchmarks"):
         for path in sorted(tree.rglob("*.py")):
             if "__pycache__" in path.parts:
                 continue
             parsed = ast.parse(_source_of(path))
-            local = _sibling_names(path.parent)
+            local = _sibling_names(path.parent) | _round_local_names(path)
             for node in ast.walk(parsed):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
@@ -4595,22 +4718,23 @@ def test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed()
     a THIRD unused declaration lands this fails and somebody looks at it
     instead of it joining a list nobody rereads.
 
-    A third one landed, and somebody looked at it. `mpmath` is NOT unused: it
-    is imported, by statement, at
-    `benchmarks/scientific_truth/oracles/material.py:25`, which evaluates that
-    round's reference at 50 significant digits. It appears here because
-    `_reached_modules()` walks `src/` and `tests/` and not `benchmarks/`, so
-    the whole benchmark tree is a blind spot to this sweep.
+    THE BLIND SPOT THAT USED TO BE HERE IS CLOSED. Sprint 8 added `mpmath` to
+    this set with a note saying it was not really unused -- it is imported at
+    `benchmarks/scientific_truth/oracles/material.py:25` -- but that
+    `_reached_modules()` walked `src/` and `tests/` only, so the whole
+    benchmark tree was invisible to this sweep. That note also said what
+    closing it would take: "declaring `jsonschema` and `psutil` too, and
+    teaching it about the sys.path appends -- a dependency-hygiene round".
 
-    The scan is deliberately NOT widened to close that blind spot, because
-    doing so is a larger decision than this guard should make on its own:
-    `benchmarks/` also reaches `jsonschema` and `psutil`, neither declared
-    anywhere, and several rounds append their own directory to `sys.path` so
-    local names like `adapters` and `challenge` read as third-party to an AST
-    walk. Widening the sweep means declaring those two and teaching it about
-    the sys.path appends -- a dependency-hygiene round, not a line in an
-    assertion. Recorded here so the next reader inherits the blind spot as a
-    known one rather than rediscovering it.
+    Sprint 10 is that round. The sweep now walks `benchmarks/` as well,
+    `jsonschema` and `psutil` are declared in the `[benchmarks]` group, and
+    `_round_local_names` resolves the seven first-party modules that reach
+    their importers through a `sys.path` append -- `adapters`, `audit`,
+    `challenge`, `claim_map`, `nominals`, `reference`, `review` -- by reading
+    the append each file or its conftest actually declares.
+
+    So `mpmath` has left this set, correctly, and what remains is the two that
+    were always genuinely unimported.
     """
     declared: set[str] = set()
     for names in _declared_distributions().values():
@@ -4620,7 +4744,7 @@ def test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed()
     for module in _reached_modules():
         reached |= _distributions_providing(module)
 
-    assert declared - reached == {"mpmath", "pytest-xdist", "scikit-learn"}, sorted(
+    assert declared - reached == {"pytest-xdist", "scikit-learn"}, sorted(
         declared - reached
     )
 
