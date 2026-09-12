@@ -3,9 +3,9 @@
   "python_modules": 209,
   "shipped_files": 426,
   "source": {
-    "frozen_count": 197,
-    "frozen_digest": "eb68be8d6cd1aec43dc43b57bd9ee9ec3b797c90af9e92db209cee86406eda08",
-    "full_digest": "f04c8ab690b74443c6c848ef5071ca5d694e62624801813da8a82d926a854186"
+    "frozen_count": 194,
+    "frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+    "full_digest": "b24030588f5bbdb1567fb2cd59ad5708baaa77c9110ec47998cc611c96b4900b"
   },
   "src_alias_absent_from_wheel": true,
   "top_level_names": [
@@ -14,9 +14,9 @@
   ],
   "wheel": {
     "engcore_file": "D:\\fwheel_api\\install\\engcore\\__init__.py",
-    "frozen_count": 197,
-    "frozen_digest": "eb68be8d6cd1aec43dc43b57bd9ee9ec3b797c90af9e92db209cee86406eda08",
-    "full_digest": "f04c8ab690b74443c6c848ef5071ca5d694e62624801813da8a82d926a854186",
+    "frozen_count": 194,
+    "frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+    "full_digest": "b24030588f5bbdb1567fb2cd59ad5708baaa77c9110ec47998cc611c96b4900b",
     "src_alias_importable": false
   }
 }
