@@ -1,0 +1,332 @@
+{
+  "flexibility_guard": {
+    "B2-TAB5_free_parameters": 5,
+    "calibration_observations": 3,
+    "jacobian_rank": 3,
+    "singular_values": [
+      0.9999999999999787,
+      0.8246211251235381,
+      0.8246211251234844
+    ],
+    "null_space_dimension": 2,
+    "null_space_basis": [
+      [
+        -0.9411764705882324,
+        0.23529411764708408,
+        0.0,
+        0.0588235294117585,
+        -0.23529411764704733
+      ],
+      [
+        -0.23529411764704505,
+        0.058823529411767744,
+        0.0,
+        -0.23529411764704733,
+        0.9411764705882414
+      ]
+    ],
+    "structurally_identifiable": false,
+    "frozen_calibrate_outcome": {
+      "status": "CALIBRATION_CONVERGED",
+      "termination_reason": "`xtol` termination condition is satisfied.",
+      "estimates_v": [
+        3.2026368244636125,
+        3.258965783095868,
+        3.2919999749690705,
+        3.315863160275415,
+        3.3910471850666473
+      ],
+      "objective_chi_square": 1.1600589283380418e-09
+    },
+    "reading": "rank 3 < 5: two directions in knot-voltage space leave every calibration prediction unchanged, so no amount of this data can determine them. Not scored on held-out data."
+  },
+  "coefficient_sensitivity": {
+    "coefficients_ascending_v": [
+      3.2151666666666507,
+      0.16866666666666452,
+      -0.02999999999998426
+    ],
+    "coefficient_sd_v": [
+      0.0025853612207919633,
+      0.014599237433577453,
+      0.01566281375002258
+    ],
+    "relative_95_widths": [
+      0.003152069803100662,
+      0.339296200532917,
+      2.0465700569215435
+    ],
+    "frozen_width_threshold": 1.0,
+    "would_be_classified": "NOT_IDENTIFIABLE",
+    "reading": "the same fitted function, expressed through coefficients: the curvature coefficient is small, so its interval is wide relative to itself. This is why the preregistered primary parameterizes by voltages. Linear transform of the node posterior, not a second grid."
+  },
+  "residual_structure": [
+    {
+      "state_of_charge": 0.0,
+      "partition": "held_out",
+      "observed_v": 2.8473,
+      "b2_curve_v": 3.2151666666666507,
+      "b1_chord_v": 3.219741615287903,
+      "b2_residual_mv": -367.8666666666506,
+      "b1_residual_mv": -372.44161528790266
+    },
+    {
+      "state_of_charge": 0.2,
+      "partition": "calibration",
+      "observed_v": 3.2477,
+      "b2_curve_v": 3.2476999999999845,
+      "b1_chord_v": 3.2479697340540086,
+      "b2_residual_mv": 1.554312234475219e-11,
+      "b1_residual_mv": -0.26973405400854134
+    },
+    {
+      "state_of_charge": 0.4,
+      "partition": "held_out",
+      "observed_v": 3.2894,
+      "b2_curve_v": 3.277833333333319,
+      "b1_chord_v": 3.2761978528201148,
+      "b2_residual_mv": 11.566666666681158,
+      "b1_residual_mv": 13.202147179885326
+    },
+    {
+      "state_of_charge": 0.5,
+      "partition": "calibration",
+      "observed_v": 3.292,
+      "b2_curve_v": 3.291999999999987,
+      "b1_chord_v": 3.2903119122031677,
+      "b2_residual_mv": 1.2878587085651816e-11,
+      "b1_residual_mv": 1.6880877968321606
+    },
+    {
+      "state_of_charge": 0.6,
+      "partition": "held_out",
+      "observed_v": 3.2929,
+      "b2_curve_v": 3.305566666666655,
+      "b1_chord_v": 3.3044259715862205,
+      "b2_residual_mv": -12.666666666655058,
+      "b1_residual_mv": -11.525971586220596
+    },
+    {
+      "state_of_charge": 0.8,
+      "partition": "calibration",
+      "observed_v": 3.3309,
+      "b2_curve_v": 3.3308999999999926,
+      "b1_chord_v": 3.3326540903523267,
+      "b2_residual_mv": 7.549516567451064e-12,
+      "b1_residual_mv": -1.7540903523265428
+    }
+  ],
+  "hysteresis": [
+    {
+      "state_of_charge": 0.2,
+      "charge_minus_discharge_mv": 1.3000000000000789,
+      "b2_residual_mv": 1.554312234475219e-11,
+      "partition": "calibration",
+      "ratio_to_b2_residual": null
+    },
+    {
+      "state_of_charge": 0.4,
+      "charge_minus_discharge_mv": 9.599999999999831,
+      "b2_residual_mv": 11.566666666681158,
+      "partition": "held_out",
+      "ratio_to_b2_residual": 0.8299711815551415
+    },
+    {
+      "state_of_charge": 0.5,
+      "charge_minus_discharge_mv": 7.000000000000117,
+      "b2_residual_mv": 1.2878587085651816e-11,
+      "partition": "calibration",
+      "ratio_to_b2_residual": null
+    },
+    {
+      "state_of_charge": 0.6,
+      "charge_minus_discharge_mv": 9.100000000000108,
+      "b2_residual_mv": -12.666666666655058,
+      "partition": "held_out",
+      "ratio_to_b2_residual": 0.7184210526322459
+    },
+    {
+      "state_of_charge": 0.8,
+      "charge_minus_discharge_mv": 2.0999999999999908,
+      "b2_residual_mv": 7.549516567451064e-12,
+      "partition": "calibration",
+      "ratio_to_b2_residual": null
+    }
+  ],
+  "empirical_adequacy_batt_001_held_out": {
+    "B1_chord": {
+      "status": "MODEL_EMPIRICALLY_INADEQUATE",
+      "model_applicable_status": "unknown",
+      "alpha": 0.01,
+      "chi_square": 26417.67537249175,
+      "degrees_of_freedom": 3,
+      "p_value": 0.0,
+      "scored": [
+        {
+          "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_00-SOC@24h",
+          "state_of_charge": 0.0,
+          "measured_v": 2.8473,
+          "declared_v": 3.219741615287903,
+          "residual_v": -0.37244161528790265,
+          "standard_uncertainty_v": 0.0023033207006407327,
+          "standardized_residual": -161.69768073733616
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_40-SOC@24h",
+          "state_of_charge": 0.4,
+          "measured_v": 3.2894,
+          "declared_v": 3.2761978528201148,
+          "residual_v": 0.013202147179885326,
+          "standard_uncertainty_v": 0.0009725122107202524,
+          "standardized_residual": 13.575302226907446
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_60-SOC@24h",
+          "state_of_charge": 0.6,
+          "measured_v": 3.2929,
+          "declared_v": 3.3044259715862205,
+          "residual_v": -0.011525971586220596,
+          "standard_uncertainty_v": 0.0012339663690717126,
+          "standardized_residual": -9.340588102811381
+        }
+      ],
+      "excluded": [],
+      "why": "chi-square 2.642e+04 on 3 degrees of freedom, p = 0 against alpha 0.01; worst point SOC 0.0 misses by -372.4 mV (-161.7 sigma)",
+      "independence_note": "evidence used to declare this cell must not be supplied; the scored source references are listed so that can be checked",
+      "applicability_violated": []
+    },
+    "B2_curve": {
+      "status": "MODEL_EMPIRICALLY_INADEQUATE",
+      "model_applicable_status": "unknown",
+      "alpha": 0.01,
+      "chi_square": 25754.572041578733,
+      "degrees_of_freedom": 3,
+      "p_value": 0.0,
+      "scored": [
+        {
+          "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_00-SOC@24h",
+          "state_of_charge": 0.0,
+          "measured_v": 2.8473,
+          "declared_v": 3.2151666666666507,
+          "residual_v": -0.3678666666666506,
+          "standard_uncertainty_v": 0.0023033207006407327,
+          "standardized_residual": -159.7114403410338
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_40-SOC@24h",
+          "state_of_charge": 0.4,
+          "measured_v": 3.2894,
+          "declared_v": 3.277833333333319,
+          "residual_v": 0.011566666666681158,
+          "standard_uncertainty_v": 0.0009725122107202524,
+          "standardized_residual": 11.893595308294142
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_60-SOC@24h",
+          "state_of_charge": 0.6,
+          "measured_v": 3.2929,
+          "declared_v": 3.305566666666655,
+          "residual_v": -0.012666666666655058,
+          "standard_uncertainty_v": 0.0012339663690717126,
+          "standardized_residual": -10.265001530134025
+        }
+      ],
+      "excluded": [],
+      "why": "chi-square 2.575e+04 on 3 degrees of freedom, p = 0 against alpha 0.01; worst point SOC 0.0 misses by -367.9 mV (-159.7 sigma)",
+      "independence_note": "evidence used to declare this cell must not be supplied; the scored source references are listed so that can be checked",
+      "applicability_violated": []
+    }
+  },
+  "generalization_batt_002": {
+    "B1_chord": {
+      "status": "MODEL_EMPIRICALLY_INADEQUATE",
+      "model_applicable_status": null,
+      "alpha": 0.01,
+      "chi_square": 37440.24128387289,
+      "degrees_of_freedom": 3,
+      "p_value": 0.0,
+      "scored": [
+        {
+          "source_ref": "S-OCV:24h_Discharge_BSE:BATT_002_OCV_V_00-SOC@24h",
+          "state_of_charge": 0.0,
+          "measured_v": 2.994,
+          "declared_v": 3.219741615287903,
+          "residual_v": -0.2257416152879026,
+          "standard_uncertainty_v": 0.0011675975333995305,
+          "standardized_residual": -193.3385510250628
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_BSE:BATT_002_OCV_V_50-SOC@24h",
+          "state_of_charge": 0.5,
+          "measured_v": 3.294,
+          "declared_v": 3.2903119122031677,
+          "residual_v": 0.0036880877968323844,
+          "standard_uncertainty_v": 0.0037962361623060234,
+          "standardized_residual": 0.9715116866154228
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_BSE:BATT_002_OCV_V_60-SOC@24h",
+          "state_of_charge": 0.6,
+          "measured_v": 3.296,
+          "declared_v": 3.3044259715862205,
+          "residual_v": -0.008425971586220715,
+          "standard_uncertainty_v": 0.0010923296205815223,
+          "standardized_residual": -7.713762794178363
+        }
+      ],
+      "excluded": [],
+      "why": "chi-square 3.744e+04 on 3 degrees of freedom, p = 0 against alpha 0.01; worst point SOC 0.0 misses by -225.7 mV (-193.3 sigma)",
+      "independence_note": "evidence used to declare this cell must not be supplied; the scored source references are listed so that can be checked"
+    },
+    "B2_curve": {
+      "status": "MODEL_EMPIRICALLY_INADEQUATE",
+      "model_applicable_status": null,
+      "alpha": 0.01,
+      "chi_square": 35957.028155154054,
+      "degrees_of_freedom": 3,
+      "p_value": 0.0,
+      "scored": [
+        {
+          "source_ref": "S-OCV:24h_Discharge_BSE:BATT_002_OCV_V_00-SOC@24h",
+          "state_of_charge": 0.0,
+          "measured_v": 2.994,
+          "declared_v": 3.2151666666666507,
+          "residual_v": -0.22116666666665052,
+          "standard_uncertainty_v": 0.0011675975333995305,
+          "standardized_residual": -189.420292815034
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_BSE:BATT_002_OCV_V_50-SOC@24h",
+          "state_of_charge": 0.5,
+          "measured_v": 3.294,
+          "declared_v": 3.291999999999987,
+          "residual_v": 0.0020000000000131024,
+          "standard_uncertainty_v": 0.0037962361623060234,
+          "standardized_residual": 0.5268376134950999
+        },
+        {
+          "source_ref": "S-OCV:24h_Discharge_BSE:BATT_002_OCV_V_60-SOC@24h",
+          "state_of_charge": 0.6,
+          "measured_v": 3.296,
+          "declared_v": 3.305566666666655,
+          "residual_v": -0.009566666666655177,
+          "standard_uncertainty_v": 0.0010923296205815223,
+          "standardized_residual": -8.758040143196137
+        }
+      ],
+      "excluded": [],
+      "why": "chi-square 3.596e+04 on 3 degrees of freedom, p = 0 against alpha 0.01; worst point SOC 0.0 misses by -221.2 mV (-189.4 sigma)",
+      "independence_note": "evidence used to declare this cell must not be supplied; the scored source references are listed so that can be checked"
+    },
+    "cell": "BATT_002, BSE 18650 LiFePO4, 1500 mAh; discharge-branch SOC [0.0, 0.5, 0.6]",
+    "other_chemistries": "DATA_LIMIT: BATT_003..BATT_008 carry only 0 % and 100 % OCV, and a LiFePO4 curve is no claim about them"
+  },
+  "cutoff_on_curve": {
+    "cutoff_voltage_v": 2.0,
+    "current_a": 0.22,
+    "b1_chord_state_of_charge": -8.622392624684165,
+    "b2_curve_status": "outside_validated_domain",
+    "b2_curve_state_of_charge": null,
+    "b2_curve_reason": "OCV(z) - I R_int reaches the cutoff at OCV = 2.002772 V, outside the 3.2151666666666507..3.353833333333331 V this curve spans on its declared interval [0.0, 1.0]; the curve is not extrapolated"
+  }
+}
