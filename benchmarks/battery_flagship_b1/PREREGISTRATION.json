@@ -122,6 +122,14 @@
       "what_was_wrong": "Both parameters were preregistered with an initial estimate of 3.3 V. The battery domain refuses a cell whose open_circuit_voltage_at_full does not exceed open_circuit_voltage_at_empty ('a cell whose open-circuit voltage does not rise with charge has no invertible relation between the two'), so the preregistered starting point is not a cell and calibrate() returned FAILED after one evaluation. The error is in this protocol, not in the domain.",
       "change": "initial estimates become open_circuit_voltage_at_empty = 3.2 V and open_circuit_voltage_at_full = 3.4 V: the published nominal voltage 3.3 V, moved 0.1 V each way, the smallest symmetric step that makes the starting point a cell the domain can declare. Neither the split, the bounds, the noise, the grid, nor the decision rule changes.",
       "consequence_for_the_adapter": "The same control showed that a search or grid can propose a non-cell. The adapter now returns None from the calibration evaluator and a rejected (zero-mass) row from the forward table for such a candidate, which is the frozen Core's stated contract for inadmissible points, instead of raising."
+    },
+    {
+      "amendment": "A2",
+      "made_before_any_calibration_on_measured_data": true,
+      "found_by": "reading ocv_uncertainty() while writing the harness, before it was run",
+      "what_was_wrong": "The preregistered measurement budget takes each point's state-of-charge term from the local slope between that point's MEASURED NEIGHBOURS on the sheet. Applied to the whole sheet, the calibration point at 0.2 would take its slope from the measured voltages at 0.0 and 0.4, and the point at 0.5 from 0.4 and 0.6 -- all three held out. The held-out measured values would then set the weights of the calibration likelihood. That is leakage of held-out content into calibration, however indirect, and it would survive every identity check because no held-out observation would appear in the calibration set.",
+      "change": "The function ocv_uncertainty() is used unchanged; only the set of traces it is handed changes. CALIBRATION observations take their sigma from the calibration traces alone ({0.2, 0.5, 0.8}, and in S1 {0.4, 0.5, 0.6}). HELD-OUT observations take their sigma from the whole discharge sheet: that is a property of the held-out measurement, calibration never sees it, and it only enters the scoring of the held-out point itself.",
+      "what_it_does_not_change": "No sigma is inflated. The split, bounds, initial point, grid and decision rule are unchanged."
     }
   ]
 }
