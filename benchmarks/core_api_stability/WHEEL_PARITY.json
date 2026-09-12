@@ -1,0 +1,22 @@
+{
+  "frozen_api_parity": true,
+  "python_modules": 209,
+  "shipped_files": 426,
+  "source": {
+    "frozen_count": 197,
+    "frozen_digest": "eb68be8d6cd1aec43dc43b57bd9ee9ec3b797c90af9e92db209cee86406eda08",
+    "full_digest": "f04c8ab690b74443c6c848ef5071ca5d694e62624801813da8a82d926a854186"
+  },
+  "src_alias_absent_from_wheel": true,
+  "top_level_names": [
+    "crafty-0.4.0.dist-info",
+    "engcore"
+  ],
+  "wheel": {
+    "engcore_file": "D:\\fwheel_api\\install\\engcore\\__init__.py",
+    "frozen_count": 197,
+    "frozen_digest": "eb68be8d6cd1aec43dc43b57bd9ee9ec3b797c90af9e92db209cee86406eda08",
+    "full_digest": "f04c8ab690b74443c6c848ef5071ca5d694e62624801813da8a82d926a854186",
+    "src_alias_importable": false
+  }
+}
