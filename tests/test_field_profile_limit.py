@@ -149,7 +149,14 @@ def _exact_linear_edge(mesh: StructuredMesh) -> np.ndarray:
 
 
 def _best_constant_plate(nodes: int):
-    """The closest a Sprint 4 declaration can get: the edge's mean value."""
+    """The closest a Sprint 4 declaration can get: the edge's mean value.
+
+    The sides are insulated rather than held, so that the only prescribed
+    values are on the left and right edges. That is not presentation: two
+    *constant* prescribed edges meeting at a corner disagree there by
+    construction whenever either of them is standing in for a varying one, and
+    since this sprint that is refused outright — see the test below.
+    """
     mesh = square(nodes)
     problem = plate_problem(
         problem_id=f"constant-approximation-{nodes}",
@@ -160,12 +167,39 @@ def _best_constant_plate(nodes: int):
             # to stand for all of it, and the mean is the kindest choice.
             BoundaryEdge.LEFT: Quantity(BASE + RISE / 2.0, "kelvin"),
             BoundaryEdge.RIGHT: Quantity(BASE, "kelvin"),
-            BoundaryEdge.BOTTOM: Quantity(BASE, "kelvin"),
-            BoundaryEdge.TOP: Quantity(BASE + RISE, "kelvin"),
+            BoundaryEdge.BOTTOM: Quantity(0.0, "watt/meter**2"),
+            BoundaryEdge.TOP: Quantity(0.0, "watt/meter**2"),
+        },
+        edge_kinds={
+            BoundaryEdge.BOTTOM: BoundaryKind.NEUMANN,
+            BoundaryEdge.TOP: BoundaryKind.NEUMANN,
         },
     )
     solved = solve_steady_conduction(problem, run_id=f"limit-{nodes}").values
     return mesh, solved.values
+
+
+def test_a_constant_edge_cannot_even_be_declared_next_to_a_varying_neighbour():
+    """The limit is not only inaccuracy; it is inconsistency at the corners.
+
+    A corner node lies on two edges. If the left edge truly runs 300 K to
+    320 K and the bottom edge is held at 300 K, then the one number standing
+    in for the left edge disagrees with the bottom edge at the corner they
+    share — whatever number is chosen. Before this sprint the assembly pinned
+    that node twice and the winner was whichever edge was written last.
+    """
+    with pytest.raises(InvalidScientificProblem, match="meet at corner"):
+        plate_problem(
+            problem_id="corner-conflict",
+            mesh=square(9),
+            conductivity=CONDUCTIVITY,
+            edge_values={
+                BoundaryEdge.LEFT: Quantity(BASE + RISE / 2.0, "kelvin"),
+                BoundaryEdge.RIGHT: Quantity(BASE, "kelvin"),
+                BoundaryEdge.BOTTOM: Quantity(BASE, "kelvin"),
+                BoundaryEdge.TOP: Quantity(BASE + RISE, "kelvin"),
+            },
+        )
 
 
 def test_a_constant_edge_cannot_represent_a_varying_one_and_refining_does_not_help():
@@ -179,8 +213,9 @@ def test_a_constant_edge_cannot_represent_a_varying_one_and_refining_does_not_he
     node closer to the corner where the disagreement is greatest.
 
     A second-order discretisation error would have fallen by about four per
-    step. This one does not fall at all, which is how a missing representation
-    is told apart from a coarse mesh.
+    step. This one does not move at all: it is exactly `RISE / 2` at 16, 32 and
+    64 nodes, because the largest distance from the edge's mean to its ends has
+    nothing to do with how finely the edge is sampled.
     """
     errors = []
     for nodes in (16, 32, 64):
@@ -189,21 +224,16 @@ def test_a_constant_edge_cannot_represent_a_varying_one_and_refining_does_not_he
         errors.append(float(np.max(np.abs(solved[:, 0] - exact_edge))))
 
     bound = RISE / 2.0
-    assert all(error > 0.85 * bound for error in errors), (
-        f"the constant edge should be near {bound} K wrong at every "
-        f"resolution: {errors}"
-    )
-    assert errors == sorted(errors), (
-        f"refining should not improve a representation error; it should "
-        f"approach the bound from below: {errors}"
-    )
-    assert errors[-1] > 0.96 * bound and errors[-1] <= bound, (
-        f"the finest run should be all but exactly {bound} K wrong: {errors}"
-    )
-    # What a discretisation error would have done over the same two steps.
-    assert errors[0] / errors[-1] > 0.5, (
-        f"the error fell by {errors[0] / errors[-1]:.2f}x, which would make it "
-        f"a convergent discretisation error: {errors}"
+    for nodes, error in zip((16, 32, 64), errors):
+        assert error == pytest.approx(bound, abs=1e-6), (
+            f"at {nodes} nodes the constant edge is {error} K from the edge it "
+            f"stands in for; the representation error is {bound} K by "
+            f"construction and the mesh has no bearing on it"
+        )
+    assert max(errors) - min(errors) < 1e-6, (
+        f"a 4x refinement moved the error by {max(errors) - min(errors):.3e} K. "
+        f"A discretisation error would have fallen by about sixteen over the "
+        f"same two steps; this is not one: {errors}"
     )
 
 

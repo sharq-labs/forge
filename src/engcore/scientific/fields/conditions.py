@@ -23,6 +23,13 @@ from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
 from ..units.validation import require_same_dimension
 from .definition import FieldDefinition
+from .profiles import (
+    SPATIAL_PROFILE_SCHEMA,
+    SpatialProfile,
+    as_profile,
+    edge_axis,
+    load_profile,
+)
 from .mesh import StructuredMesh
 from .regions import MeshRegion
 from .result import FieldRecord
@@ -36,6 +43,24 @@ FIELD_INITIAL_CONDITION_SCHEMA = schema_string("field_initial_condition")
 #: to make, not this record's.
 VALUED_KINDS = (BoundaryKind.DIRICHLET, BoundaryKind.NEUMANN)
 
+#: How far two conditions meeting at a corner may disagree about the value
+#: there. Relative, because the fields this guards carry magnitudes in the
+#: hundreds and an absolute bound would be a different rule at every scale.
+CORNER_AGREEMENT_REL_TOL = 1e-9
+
+
+def _read_value(payload: Any) -> "Quantity | SpatialProfile | None":
+    """A serialized boundary value, whichever of the two spellings it is.
+
+    Both carry their own schema, so the discriminator is the payload's own
+    statement about itself rather than a guess from its shape.
+    """
+    if not payload:
+        return None
+    if payload.get("schema") == SPATIAL_PROFILE_SCHEMA:
+        return load_profile(payload)
+    return Quantity.from_dict(payload)
+
 
 @dataclass(frozen=True)
 class FieldBoundaryCondition:
@@ -45,7 +70,13 @@ class FieldBoundaryCondition:
     field_id: str
     region_id: str
     kind: BoundaryKind
-    value: Quantity | None = None
+    #: What this condition imposes. A ``Quantity`` is the constant case and is
+    #: spelled, stored and serialized exactly as it was before profiles
+    #: existed; a ``SpatialProfile`` is a law that varies along the edge. One
+    #: slot rather than two, because "constant" is a law like any other and a
+    #: consumer should never have to branch on which spelling it was handed —
+    #: :attr:`law` answers for both.
+    value: Quantity | SpatialProfile | None = None
     coefficients: Mapping[str, Quantity] = dataclass_field(default_factory=dict)
     description: str = ""
 
@@ -70,9 +101,13 @@ class FieldBoundaryCondition:
                 )
         object.__setattr__(self, "coefficients", freeze(coefficients))
 
-        if self.value is not None and not isinstance(self.value, Quantity):
-            raise InvalidScientificProblem(
-                f"field boundary condition {self.name!r}: value must be a Quantity"
+        if self.value is not None:
+            # Validates and refuses; the value is stored as it was given so a
+            # constant still serializes as a bare quantity.
+            as_profile(
+                self.value,
+                context=f"field boundary condition {self.name!r}: value must be "
+                f"a Quantity or a SpatialProfile",
             )
         if self.kind in VALUED_KINDS and self.value is None:
             raise InvalidScientificProblem(
@@ -84,6 +119,25 @@ class FieldBoundaryCondition:
                 f"field boundary condition {self.name!r}: a robin condition is "
                 f"its coefficients, and none were declared"
             )
+
+    @property
+    def law(self) -> SpatialProfile:
+        """This condition's value as a spatial law, constant or not.
+
+        The one place the two spellings converge, so every consumer downstream
+        handles exactly one type.
+        """
+        if self.value is None:
+            raise InvalidScientificProblem(
+                f"field boundary condition {self.name!r} of kind "
+                f"{self.kind.value!r} prescribes no value and has no law"
+            )
+        return as_profile(self.value, context=f"condition {self.name!r}")
+
+    @property
+    def is_uniform(self) -> bool:
+        """Whether this condition is the same at every point of its region."""
+        return self.value is None or not self.law.axes
 
     # ---- what it must agree with -------------------------------------------
     def require_consistent(
@@ -110,15 +164,20 @@ class FieldBoundaryCondition:
             )
         definition.require_support(mesh)
         region.require_support(mesh)
+        if self.value is None:
+            return
+        law = self.law
+        context = (
+            f"field boundary condition {self.name!r} on field "
+            f"{definition.field_id!r}"
+        )
         if self.kind is BoundaryKind.DIRICHLET:
-            require_same_dimension(
-                self.value,
-                definition.unit,
-                context=(
-                    f"field boundary condition {self.name!r} on field "
-                    f"{definition.field_id!r}"
-                ),
-            )
+            law.require_output_dimension(definition.unit, context=context)
+        # A law varying along the wrong coordinate is the failure a region-aware
+        # boundary condition exists to catch: a profile of x bound to a left
+        # edge would evaluate to one value along the whole of it, silently.
+        law.require_axis(edge_axis(region.edge), context=context)
+        law.require_covers(*region.span(mesh), context=context)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -127,6 +186,9 @@ class FieldBoundaryCondition:
             "field_id": self.field_id,
             "region_id": self.region_id,
             "kind": self.kind.value,
+            # Both a quantity and a profile serialize to a mapping carrying
+            # its own schema, so one key holds either and a constant condition
+            # written before profiles existed round-trips byte for byte.
             "value": self.value.to_dict() if self.value is not None else None,
             "coefficients": {
                 key: self.coefficients[key].to_dict()
@@ -144,7 +206,7 @@ class FieldBoundaryCondition:
             field_id=payload["field_id"],
             region_id=payload["region_id"],
             kind=BoundaryKind(payload["kind"]),
-            value=Quantity.from_dict(value) if value else None,
+            value=_read_value(value),
             coefficients={
                 key: Quantity.from_dict(item)
                 for key, item in (payload.get("coefficients") or {}).items()
@@ -292,3 +354,59 @@ def require_complete_boundary(
             f"edge without one leaves the problem under-determined, and a "
             f"solver would answer it anyway"
         )
+    _require_corners_agree(definition, mesh, by_id, conditions)
+
+
+def _require_corners_agree(
+    definition: FieldDefinition,
+    mesh: StructuredMesh,
+    by_id: Mapping[str, MeshRegion],
+    conditions: Iterable[FieldBoundaryCondition],
+) -> None:
+    """Two prescribed values meeting at a corner must be the same value.
+
+    The defect this closes was real and silent. A corner node is on two edges,
+    so when both prescribe a value the assembly pins it twice and the winner is
+    whichever edge the solver happened to write last — an iteration order
+    deciding a boundary value. The module docstring above already called that
+    "the same defect" as two conditions on one region, and until now only the
+    second half was refused.
+
+    Only prescribed-value edges can conflict: a flux condition constrains a
+    derivative and imposes nothing at the point itself, so a value edge meeting
+    a flux edge is not a contradiction and is left alone.
+    """
+    prescribed = {
+        condition.region_id: condition
+        for condition in conditions
+        if condition.field_id == definition.field_id
+        and condition.kind is BoundaryKind.DIRICHLET
+        and condition.value is not None
+    }
+    corners: dict[tuple[float, float], list[FieldBoundaryCondition]] = {}
+    for region_id, condition in prescribed.items():
+        region = by_id.get(region_id)
+        if region is None:  # pragma: no cover - refused above
+            continue
+        for point in region.corner_points(mesh):
+            corners.setdefault(point, []).append(condition)
+
+    for (x, y), meeting in sorted(corners.items()):
+        if len(meeting) < 2:
+            continue
+        first, *rest = meeting
+        reference = first.law.evaluate(x=x, y=y)
+        for other in rest:
+            value = other.law.evaluate(x=x, y=y)
+            tolerance = CORNER_AGREEMENT_REL_TOL * max(
+                1.0, abs(reference), abs(value)
+            )
+            if abs(value - reference) > tolerance:
+                raise InvalidScientificProblem(
+                    f"conditions {first.name!r} and {other.name!r} meet at "
+                    f"corner ({x:g}, {y:g}) of support {mesh.mesh_id!r} and "
+                    f"prescribe {reference:g} and {value:g} "
+                    f"{definition.unit} there. A corner node belongs to both "
+                    f"edges, so one of these silently wins on whichever order "
+                    f"the assembly happens to use"
+                )

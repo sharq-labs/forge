@@ -190,7 +190,10 @@ def test_a_dirichlet_condition_must_be_a_value_of_its_field():
         name="bad", field_id="T", region_id=region.region_id,
         kind=BoundaryKind.DIRICHLET, value=Quantity(5.0, "volt"),
     )
-    with pytest.raises(Exception, match="not compatible with"):
+    # Since profiles, the dimension of a prescribed value is checked through
+    # the law it becomes, so the refusal is the profile layer's rather than
+    # `require_same_dimension`'s. Same fact, stated once for both spellings.
+    with pytest.raises(Exception, match="the wrong law"):
         wrong.require_consistent(temperature(), region, plate)
 
     good = _dirichlet(region.region_id)

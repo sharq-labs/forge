@@ -20,7 +20,7 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
-from .mesh import StructuredMesh
+from .mesh import CANONICAL_LENGTH, StructuredMesh
 
 REGION_SCHEMA = schema_string("mesh_region")
 
@@ -93,6 +93,35 @@ class MeshRegion:
         if self.edge is BoundaryEdge.BOTTOM:
             return tuple(mesh.node_index(i, 0) for i in range(nx))
         return tuple(mesh.node_index(i, ny - 1) for i in range(nx))
+
+    def span(self, mesh: StructuredMesh) -> tuple[float, float]:
+        """The physical extent of this edge, along the coordinate that varies on it.
+
+        Left and right edges run in y; bottom and top run in x. Returned in
+        canonical length so a law declared in any unit of length can be asked
+        whether it covers this edge.
+        """
+        self.require_support(mesh)
+        if self.edge in (BoundaryEdge.LEFT, BoundaryEdge.RIGHT):
+            lower = mesh.origin_y.magnitude_in(CANONICAL_LENGTH)
+            return (lower, lower + mesh.length_y.magnitude_in(CANONICAL_LENGTH))
+        lower = mesh.origin_x.magnitude_in(CANONICAL_LENGTH)
+        return (lower, lower + mesh.length_x.magnitude_in(CANONICAL_LENGTH))
+
+    def corner_points(self, mesh: StructuredMesh) -> tuple[tuple[float, float], ...]:
+        """The two ends of this edge, as ``(x, y)`` in canonical length."""
+        self.require_support(mesh)
+        x0 = mesh.origin_x.magnitude_in(CANONICAL_LENGTH)
+        y0 = mesh.origin_y.magnitude_in(CANONICAL_LENGTH)
+        x1 = x0 + mesh.length_x.magnitude_in(CANONICAL_LENGTH)
+        y1 = y0 + mesh.length_y.magnitude_in(CANONICAL_LENGTH)
+        if self.edge is BoundaryEdge.LEFT:
+            return ((x0, y0), (x0, y1))
+        if self.edge is BoundaryEdge.RIGHT:
+            return ((x1, y0), (x1, y1))
+        if self.edge is BoundaryEdge.BOTTOM:
+            return ((x0, y0), (x1, y0))
+        return ((x0, y1), (x1, y1))
 
     def node_count(self, mesh: StructuredMesh) -> int:
         self.require_support(mesh)
