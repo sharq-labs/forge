@@ -1,6 +1,6 @@
 {
-  "experimental_count": 8,
-  "frozen_count": 197,
+  "experimental_count": 11,
+  "frozen_count": 194,
   "modules": [
     "engcore.scientific",
     "engcore.data",
@@ -3052,7 +3052,7 @@
       "name": "DataLeakageError"
     },
     {
-      "classification": "FREEZE",
+      "classification": "EXPERIMENTAL",
       "defined_in": "engcore.inference.field_observation",
       "exception_mro": [
         "engcore.inference.field_observation.FieldObservationError",
@@ -3061,12 +3061,13 @@
         "builtins.Exception",
         "builtins.BaseException"
       ],
+      "experimental_because": "the error raised by the two above. It descends from InferenceProblemError, so a caller catching that root still catches it; what is not frozen is the promise that THIS name keeps existing",
       "kind": "exception",
       "module": "engcore.inference",
       "name": "FieldObservationError"
     },
     {
-      "classification": "FREEZE",
+      "classification": "EXPERIMENTAL",
       "defined_in": "engcore.inference.field_observation",
       "enum_members": [
         {
@@ -3082,6 +3083,7 @@
           "value": "field_maximum"
         }
       ],
+      "experimental_because": "the three kinds -- probe at a location, region mean, field maximum -- are an obviously partial enumeration of `what scalar do you take from a field`: no line integral, no flux through a surface, no time window. Adding a member later is compatible, but this enum is not yet the considered answer, and freezing it says that it is",
       "kind": "enum",
       "module": "engcore.inference",
       "name": "FieldObservationKind",
@@ -3100,7 +3102,7 @@
       }
     },
     {
-      "classification": "FREEZE",
+      "classification": "EXPERIMENTAL",
       "dataclass_fields": [
         {
           "default": {
@@ -3193,6 +3195,7 @@
         }
       ],
       "defined_in": "engcore.inference.field_observation",
+      "experimental_because": "a declared field->scalar observation operator, and its own module docstring calls it a spike. The shape is 2-D BY CONSTRUCTION: a location is spelled probe_x/probe_y, there is no probe_z, and it resolves through StructuredMesh.node_index(i, j). Freezing it would commit the Core to a contract that cannot express an observation of a 3-D field at all -- not a gap that can be filled by adding an argument, because the frozen spelling would already be wrong",
       "kind": "dataclass",
       "module": "engcore.inference",
       "name": "FieldObservationOperator",

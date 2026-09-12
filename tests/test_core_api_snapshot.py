@@ -10,9 +10,11 @@ The file is pretty-printed for review, but the COMPARISON is over
 `canonical_bytes`, so reformatting it cannot drift the check and cannot fake a
 pass either.
 
-What is NOT frozen is recorded too. Eight symbols under `engcore.studies` are
-classified EXPERIMENTAL: they are one flagship study's scaffolding, and
-freezing them would commit the Core to a demonstration's API. They are still
+What is NOT frozen is recorded too. Eleven symbols are classified EXPERIMENTAL:
+eight under `engcore.studies`, which is one flagship study's scaffolding and
+whose API would commit the Core to a demonstration; and three field-observation
+symbols under `engcore.inference`, whose own module calls itself a spike and
+whose shape cannot express a 3-D observation at all. They are still
 snapshotted, so a change to them is visible; they are simply not a promise.
 """
 
@@ -54,7 +56,7 @@ def test_the_public_api_matches_the_pinned_snapshot():
 
     When this fails, the diff below names what moved. If the change was
     deliberate, regenerate with
-    `python -X utf8 -m engcore.api_snapshot > tests/api/frozen_api_snapshot.json`
+    `python -X utf8 -m engcore.api_snapshot --frozen > tests/api/frozen_api_snapshot.json`
     AND record it as a compatibility event -- that is what the freeze policy
     makes it.
     """
@@ -182,7 +184,9 @@ def test_experimental_surface_is_explicitly_marked():
     """Nothing is EXPERIMENTAL by accident, and nothing frozen is unmarked."""
     snapshot = api_snapshot.build()
     experimental = [e for e in snapshot["symbols"] if e["classification"] == "EXPERIMENTAL"]
-    assert {e["module"] for e in experimental} == {"engcore.studies"}
+    assert {e["module"] for e in experimental} == {
+        "engcore.studies", "engcore.inference",
+    }
     for entry in experimental:
         assert entry["experimental_because"], entry["name"]
 

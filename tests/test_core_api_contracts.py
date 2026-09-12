@@ -92,6 +92,13 @@ def test_the_wheel_must_not_expose_the_alias():
 # =====================================================================
 
 EXPECTED_EXPERIMENTAL = {
+    # Part M found a second population. `engcore.inference` is a real Core
+    # contract that happened to carry one spike, and module granularity could
+    # not say so -- the only two things it could express were "freeze the
+    # spike" and "stop exporting it", and both are wrong.
+    ("engcore.inference", "FieldObservationError"),
+    ("engcore.inference", "FieldObservationKind"),
+    ("engcore.inference", "FieldObservationOperator"),
     ("engcore.studies", "TCR_MODEL_REF"),
     ("engcore.studies", "TcrTruth"),
     ("engcore.studies", "build_tcr_parameter_set"),
@@ -103,7 +110,7 @@ EXPECTED_EXPERIMENTAL = {
 }
 
 
-def test_the_experimental_manifest_is_exactly_these_eight():
+def test_the_experimental_manifest_is_exactly_these_eleven():
     snapshot = api_snapshot.build()
     actual = {
         (e["module"], e["name"])
@@ -115,7 +122,7 @@ def test_the_experimental_manifest_is_exactly_these_eight():
 def test_no_experimental_symbol_is_in_the_frozen_contract():
     frozen = {(e["module"], e["name"]) for e in api_snapshot.frozen_only()["symbols"]}
     assert not (frozen & EXPECTED_EXPERIMENTAL)
-    assert api_snapshot.frozen_only()["symbol_count"] == 197
+    assert api_snapshot.frozen_only()["symbol_count"] == 194
 
 
 def test_an_experimental_symbol_cannot_move_the_frozen_digest():
@@ -171,6 +178,67 @@ def test_the_three_named_packages_are_in_the_right_groups():
     assert any("mpmath" in r for r in groups["oracles"])
     assert any("jsonschema" in r for r in groups["benchmarks"])
     assert any("psutil" in r for r in groups["benchmarks"])
+
+
+def _guard_module():
+    """The certified guard's own machinery, reused rather than reimplemented.
+
+    Loaded by path because `tests/test_core_guards.py` is a test module, not an
+    importable helper. Reusing it matters: a second implementation of "which
+    third-party names does this tree reach" would drift from the first, and the
+    two would disagree about exactly the case that matters.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_core_guards_for_deps", REPO / "tests" / "test_core_guards.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_every_third_party_import_is_declared_somewhere():
+    """THE DIRECTION THAT HAD NO GUARD.
+
+    `test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed`
+    checks declared-but-unimported. Nothing checked the opposite and more
+    dangerous direction -- IMPORTED BUT UNDECLARED -- which is how `jsonschema`
+    and `psutil` sat unrecorded across four sprints, and how `psutil` came to be
+    imported by a benchmark that could not run because it was never installed.
+
+    Runtime and optional groups are both accepted: the rule is that every
+    third-party name the repository reaches must be declared SOMEWHERE, not
+    that everything must be a runtime dependency.
+    """
+    guard = _guard_module()
+    declared = set()
+    for names in guard._declared_distributions().values():
+        declared |= names
+
+    undeclared = sorted(
+        name for name in guard._reached_modules()
+        if not (guard._distributions_providing(name) & declared)
+    )
+    assert not undeclared, (
+        f"imported but declared in no dependency group: {undeclared}. Either "
+        f"declare it, or -- if it is a first-party module reached through a "
+        f"sys.path append -- teach `_round_local_names` about that append"
+    )
+
+
+def test_no_runtime_module_reaches_a_benchmark_only_dependency():
+    """A dev/benchmark tool imported from `src/` would make a bare install fail."""
+    guard = _guard_module()
+    reached = guard._reached_modules()
+    benchmark_only = {"jsonschema", "psutil", "mpmath", "pytest"}
+    offenders = {
+        name: [site for site in sites if site.startswith("src/")]
+        for name, sites in reached.items()
+        if name in benchmark_only
+    }
+    leaking = {n: s for n, s in offenders.items() if s}
+    assert not leaking, f"runtime code imports a non-runtime dependency: {leaking}"
 
 
 @pytest.mark.parametrize("group,module", [
@@ -251,7 +319,9 @@ def public_exceptions():
 #: event a later round can schedule deliberately.
 EXCEPTION_ROOTS = {
     "engcore.scientific.errors.ScientificCoreError": 13,
-    "engcore.inference.grid.InferenceProblemError": 5,
+    # 4, not 5: FieldObservationError is a fifth member of this family but
+    # is classified EXPERIMENTAL, and this walks the FROZEN population.
+    "engcore.inference.grid.InferenceProblemError": 4,
     "engcore.data.errors.BulkDataError": 3,
     "engcore.inference.admissibility.InferenceAdmissibilityError": 1,
     "engcore.inference.parameters.ParameterIdentityError": 1,
@@ -312,4 +382,4 @@ def test_no_public_exception_is_a_bare_builtin_alias():
 
 
 def test_the_exception_count_is_what_the_snapshot_says():
-    assert len(list(public_exceptions())) == 25
+    assert len(list(public_exceptions())) == 24

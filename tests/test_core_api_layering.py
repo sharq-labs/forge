@@ -232,3 +232,131 @@ def test_the_canonical_modules_are_exactly_the_core_packages():
     assert set(api_snapshot.CANONICAL_MODULES) == {
         f"engcore.{name}" for name in LAYERS
     }
+
+
+# =====================================================================
+# PART M -- every package under engcore is classified, none by default
+# =====================================================================
+
+#: Packages that live under `engcore` and are deliberately NOT part of the
+#: frozen Core API, each with the reason it is out of scope. This is the half
+#: of the classification that nothing else states: `CANONICAL_MODULES` says
+#: what IS the Core, and without this a new directory appearing under
+#: `src/engcore/` would be neither frozen nor experimental nor excluded -- it
+#: would simply be unclassified, which is how an accidental public surface
+#: starts.
+NON_CORE_PACKAGES = {
+    "domains": (
+        "scientific domains built ON the Core. Read-only for this round by "
+        "standing instruction, and above the Core rather than in it"
+    ),
+    "systems": "cross-domain compositions, built on domains",
+    "sria": "the evidence / admission / assurance / campaign layer, above Core",
+    "design": "design generation and design memory, above Core",
+    "mcp": "the tool-server adapter -- a consumer of the Core, not the Core",
+}
+
+
+def package_directories() -> set[str]:
+    """Real packages on disk, which is the only list that cannot go stale."""
+    root = SRC / "engcore"
+    return {
+        path.name
+        for path in root.iterdir()
+        if path.is_dir()
+        and not path.name.startswith(("_", "."))
+        and (path / "__init__.py").exists()
+    }
+
+
+def test_every_package_under_engcore_is_classified_core_or_not():
+    found = package_directories()
+    classified = set(LAYERS) | set(NON_CORE_PACKAGES)
+    unclassified = found - classified
+    assert not unclassified, (
+        f"{sorted(unclassified)} live under src/engcore/ and are neither a "
+        f"Core layer nor a recorded non-Core package. A package with no "
+        f"classification is a public surface nobody decided to have: add it to "
+        f"LAYERS (and to CANONICAL_MODULES, and to the frozen snapshot) or to "
+        f"NON_CORE_PACKAGES with the reason it is out of scope"
+    )
+    missing = classified - found
+    assert not missing, f"classified but absent from disk: {sorted(missing)}"
+
+
+def test_no_non_core_package_is_in_the_frozen_api():
+    """The classification has to MEAN something, so this checks it holds."""
+    frozen_modules = {e["module"] for e in api_snapshot.frozen_only()["symbols"]}
+    for name in NON_CORE_PACKAGES:
+        assert f"engcore.{name}" not in frozen_modules, (
+            f"engcore.{name} is recorded as non-Core but appears in the frozen "
+            f"contract"
+        )
+
+
+#: The ONE permitted Core -> non-Core edge, and what it is for.
+#:
+#: `studies` is the top layer and composing a domain is its entire job: the
+#: flagship calibration study fits a real temperature-coefficient-of-resistance
+#: model, which lives in `domains.electrical`. Forbidding this would not make
+#: the architecture cleaner, it would make `studies` unable to study anything.
+#:
+#: The first version of this rule DID forbid it, and `studies/tcr.py` failed --
+#: the rule was wrong, not the import. Recorded because the allowance is narrow
+#: and deliberate: `studies` may reach `domains` and nothing else, and no
+#: package below `studies` may reach any non-Core package at all.
+STUDIES_MAY_IMPORT = {"domains"}
+
+
+def test_no_core_package_imports_a_non_core_one():
+    """The direction that would invert the whole layering.
+
+    `scientific` importing `domains` would make the Core depend on the domains
+    built on top of it, and the read-only boundary would become unenforceable.
+    """
+    offenders = []
+    for package, path in core_modules():
+        checked = set(NON_CORE_PACKAGES) - (
+            STUDIES_MAY_IMPORT if package == 'studies' else set()
+        )
+        for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
+            reached = None
+            if isinstance(node, ast.ImportFrom) and node.level == 0:
+                head = (node.module or '').split('.')
+                if len(head) >= 2 and head[0] == 'engcore' and head[1] in checked:
+                    reached = node.module
+            elif isinstance(node, ast.ImportFrom) and node.level >= 1:
+                # `from ..domains.x import y` inside engcore/studies/tcr.py:
+                # level 2 at depth 0 leaves engcore/studies and lands on a
+                # sibling of it, which is where a non-Core name can appear.
+                depth = len(path.relative_to(SRC / 'engcore' / package).parts) - 1
+                if node.level - 1 > depth and (node.module or '').split('.')[0] in checked:
+                    reached = node.module
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    head = alias.name.split('.')
+                    if len(head) >= 2 and head[0] == 'engcore' and head[1] in checked:
+                        offenders.append(str(path.relative_to(SRC)) + ' -> ' + alias.name)
+            if reached is not None:
+                offenders.append(str(path.relative_to(SRC)) + ' -> ' + reached)
+    assert not offenders, offenders
+
+
+def test_only_studies_holds_the_one_permitted_non_core_edge():
+    """The allowance above, proved to be as narrow as it claims.
+
+    Written as its own test because an allowance that silently widens is worse
+    than no rule: `STUDIES_MAY_IMPORT` growing to include `sria` would pass the
+    test above while inverting the architecture.
+    """
+    assert STUDIES_MAY_IMPORT == {"domains"}
+    reached = set()
+    for package, path in core_modules():
+        if package != "studies":
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom) and node.level >= 1:
+                head = (node.module or "").split(".")[0]
+                if head in NON_CORE_PACKAGES:
+                    reached.add(head)
+    assert reached <= STUDIES_MAY_IMPORT, reached

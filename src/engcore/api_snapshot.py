@@ -63,6 +63,34 @@ EXPERIMENTAL_PARAMETERS = {
     "engcore.execution:rerun_failed:workers",
 }
 
+#: Individual symbols that are public but NOT frozen, keyed by
+#: ``(module, name)``, with the reason. Module granularity is not enough: a
+#: package can be a genuine Core contract and still carry one spike, and the
+#: alternative to saying so here is to freeze the spike or to stop exporting it.
+EXPERIMENTAL_SYMBOLS = {
+    ("engcore.inference", "FieldObservationOperator"): (
+        "a declared field->scalar observation operator, and its own module "
+        "docstring calls it a spike. The shape is 2-D BY CONSTRUCTION: a "
+        "location is spelled probe_x/probe_y, there is no probe_z, and it "
+        "resolves through StructuredMesh.node_index(i, j). Freezing it would "
+        "commit the Core to a contract that cannot express an observation of a "
+        "3-D field at all -- not a gap that can be filled by adding an "
+        "argument, because the frozen spelling would already be wrong"
+    ),
+    ("engcore.inference", "FieldObservationKind"): (
+        "the three kinds -- probe at a location, region mean, field maximum -- "
+        "are an obviously partial enumeration of `what scalar do you take from "
+        "a field`: no line integral, no flux through a surface, no time window. "
+        "Adding a member later is compatible, but this enum is not yet the "
+        "considered answer, and freezing it says that it is"
+    ),
+    ("engcore.inference", "FieldObservationError"): (
+        "the error raised by the two above. It descends from "
+        "InferenceProblemError, so a caller catching that root still catches "
+        "it; what is not frozen is the promise that THIS name keeps existing"
+    ),
+}
+
 #: Whole modules whose exports are public but NOT frozen, with the reason.
 #:
 #: ``engcore.studies`` is one flagship study's scaffolding, not a Core
@@ -239,12 +267,14 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
         "module": module_name,
         "name": name,
         "kind": _kind_of(value),
-        "classification": (
-            "EXPERIMENTAL" if module_name in EXPERIMENTAL_MODULES else "FREEZE"
-        ),
+        "classification": "FREEZE",
     }
-    if module_name in EXPERIMENTAL_MODULES:
-        entry["experimental_because"] = EXPERIMENTAL_MODULES[module_name]
+    why = EXPERIMENTAL_MODULES.get(module_name) or EXPERIMENTAL_SYMBOLS.get(
+        (module_name, name)
+    )
+    if why is not None:
+        entry["classification"] = "EXPERIMENTAL"
+        entry["experimental_because"] = why
 
     # A type alias is a contract too: `ScientificValue` naming a different set
     # of types is a change every annotation against it inherits. Recorded by
@@ -359,7 +389,16 @@ if __name__ == "__main__":  # pragma: no cover - a tool entry point
         print(frozen_digest())
     elif "--digest" in sys.argv:
         print(digest())
-    elif "--frozen" in sys.argv:
-        sys.stdout.buffer.write(canonical_bytes(frozen_only()))
     else:
-        sys.stdout.buffer.write(canonical_bytes())
+        # PRETTY, not canonical. The pinned files exist to be READ in review --
+        # a one-line 345 kB blob is not reviewable, and a contract nobody can
+        # read is not a contract. Nothing is lost: every comparison in the test
+        # suite runs through `canonical_bytes`, so the on-disk formatting
+        # cannot drift a check and cannot fake a pass either. The two --digest
+        # flags above stay canonical, because those ARE the bytes.
+        payload = frozen_only() if "--frozen" in sys.argv else build()
+        text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True,
+                          allow_nan=False)
+        # Written as bytes with explicit LF: on Windows a text-mode write turns
+        # every newline into CRLF, and these files are byte-pinned elsewhere.
+        sys.stdout.buffer.write((text + chr(10)).encode("utf-8"))

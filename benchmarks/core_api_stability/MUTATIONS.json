@@ -1,12 +1,12 @@
 {
   "control": "GREEN",
-  "killed": 13,
-  "written": 13,
-  "requested_total": 15,
+  "killed": 15,
+  "written": 15,
+  "requested_total": 17,
   "survivors": [],
   "stale": [],
   "not_applicable": {
-    "PKG-1": "'exclude a frozen module from the wheel'. Packaging is DISCOVERED -- `[tool.setuptools.packages.find] where = [\"src\"]` -- so there is no per-module list to delete a line from, and a mutation would have to replace the discovery mechanism itself rather than break a guard. The property is covered directly instead: the wheel-parity run asserts SOURCE == WHEEL over all 197 frozen symbols, so a module missing from the wheel changes the wheel digest and fails.",
+    "PKG-1": "'exclude a frozen module from the wheel'. Packaging is DISCOVERED -- `[tool.setuptools.packages.find] where = [\"src\"]` -- so there is no per-module list to delete a line from, and a mutation would have to replace the discovery mechanism itself rather than break a guard. The property is covered directly instead: the wheel-parity run asserts SOURCE == WHEEL over all 194 frozen symbols, so a module missing from the wheel changes the wheel digest and fails.",
     "PKG-2": "'allow the source checkout to satisfy a missing wheel module'. This cannot be expressed as a source edit: it is a property of how the PROBE runs, not of the package. It is already proved positively -- the probe runs `python -S -E` so site.py never registers the editable hook, and the launcher asserts engcore.__file__ lives under the install target before importing anything else. Removing either is a change to the probe, which would be caught by the probe failing."
   },
   "results": [
@@ -16,7 +16,7 @@
       "file": "src/engcore/execution/__init__.py",
       "target": "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
       "description": "a frozen export is removed from __all__",
-      "summary": "1 failed in 0.72s"
+      "summary": "1 failed in 0.88s"
     },
     {
       "id": "API-2",
@@ -24,7 +24,7 @@
       "file": "src/engcore/execution/sweep.py",
       "target": "tests/test_core_api_snapshot.py::test_parameter_kinds_and_defaults_are_unchanged",
       "description": "a frozen default is changed",
-      "summary": "1 failed in 0.78s"
+      "summary": "1 failed in 0.89s"
     },
     {
       "id": "API-3",
@@ -32,7 +32,7 @@
       "file": "src/engcore/execution/sweep.py",
       "target": "tests/test_core_api_snapshot.py::test_parameter_kinds_and_defaults_are_unchanged",
       "description": "a keyword-only argument becomes positional-or-keyword",
-      "summary": "1 failed in 0.78s"
+      "summary": "1 failed in 0.80s"
     },
     {
       "id": "API-4",
@@ -40,7 +40,7 @@
       "file": "src/engcore/execution/sweep.py",
       "target": "tests/test_core_api_snapshot.py::test_enum_members_and_values_are_unchanged",
       "description": "an enum member is removed",
-      "summary": "1 failed in 0.72s"
+      "summary": "1 failed in 0.84s"
     },
     {
       "id": "API-5",
@@ -48,7 +48,7 @@
       "file": "src/engcore/inference/parameters.py",
       "target": "tests/test_core_api_snapshot.py::test_public_dataclass_fields_keep_their_order",
       "description": "a public dataclass field order is changed",
-      "summary": "1 failed in 0.72s"
+      "summary": "1 failed in 0.90s"
     },
     {
       "id": "SER-1",
@@ -56,7 +56,7 @@
       "file": "src/engcore/scientific/serialization.py",
       "target": "tests/test_core_runtime_fast_paths.py::test_encode_sorts_keys_whatever_order_they_were_inserted",
       "description": "canonical field ordering is dropped",
-      "summary": "1 failed in 0.54s"
+      "summary": "1 failed in 0.63s"
     },
     {
       "id": "SER-2",
@@ -64,7 +64,7 @@
       "file": "src/engcore/scientific/serialization.py",
       "target": "tests/test_core_api_serialization.py::test_an_unknown_schema_version_is_refused_explicitly",
       "description": "a schema version mismatch is ignored",
-      "summary": "10 failed, 1 passed in 0.77s"
+      "summary": "10 failed, 1 passed in 0.83s"
     },
     {
       "id": "SER-3",
@@ -72,7 +72,7 @@
       "file": "src/engcore/inference/parameters.py",
       "target": "tests/test_core_api_serialization.py::test_material_a_different_unit_is_a_different_parameter",
       "description": "a MATERIAL field is dropped from a scientific digest -- `unit` is removed from _canonical(), which is the dict digest() actually hashes. The first version of this mutation removed it from IDENTITY_FIELDS instead and SURVIVED, correctly: that tuple drives differences(), not the digest, so the mutation did not do what its own description claimed",
-      "summary": "1 failed in 0.74s"
+      "summary": "1 failed in 0.72s"
     },
     {
       "id": "SER-4",
@@ -80,7 +80,7 @@
       "file": "src/engcore/inference/field_observation.py",
       "target": "tests/test_core_api_serialization.py::test_non_material_a_display_description_does_not_move_a_field_operator_digest",
       "description": "a NON-MATERIAL display label starts affecting a scientific digest",
-      "summary": "1 failed in 0.68s"
+      "summary": "1 failed in 0.88s"
     },
     {
       "id": "DEP-1",
@@ -88,7 +88,7 @@
       "file": "src/engcore/inference/calibration.py",
       "target": "tests/test_core_api_layering.py::test_no_core_package_imports_one_above_it",
       "description": "a forbidden upward dependency is introduced (inference -> execution)",
-      "summary": "1 failed in 0.25s"
+      "summary": "1 failed in 0.23s"
     },
     {
       "id": "DEP-2",
@@ -96,7 +96,23 @@
       "file": "pyproject.toml",
       "target": "tests/test_core_api_contracts.py::test_every_third_party_import_is_declared_somewhere",
       "description": "a benchmark dependency becomes undeclared",
-      "summary": "1 failed, 6 warnings in 7.01s"
+      "summary": "1 failed, 6 warnings in 7.10s"
+    },
+    {
+      "id": "M-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/calibration.py",
+      "target": "tests/test_core_api_layering.py::test_no_core_package_imports_a_non_core_one",
+      "description": "a Core package below studies reaches a non-Core package, inverting the layering the read-only domain boundary depends on",
+      "summary": "1 failed in 0.28s"
+    },
+    {
+      "id": "M-2",
+      "verdict": "KILLED",
+      "file": "src/engcore/api_snapshot.py",
+      "target": "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
+      "description": "the Part M symbol-level classification is emptied, so a module that is a genuine contract silently drags its spike back into the frozen surface",
+      "summary": "1 failed in 0.79s"
     },
     {
       "id": "DET-1",
@@ -104,7 +120,7 @@
       "file": "src/engcore/api_snapshot.py",
       "target": "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
       "description": "nondeterministic ordering enters a canonical digest",
-      "summary": "1 failed in 0.82s"
+      "summary": "1 failed in 0.75s"
     },
     {
       "id": "EXC-1",
@@ -112,7 +128,7 @@
       "file": "src/engcore/scientific/errors.py",
       "target": "tests/test_core_api_contracts.py::test_the_exception_roots_are_exactly_the_seven_recorded",
       "description": "a frozen public exception is reparented onto a raw builtin, so a caller's `except ScientificCoreError` silently stops catching it",
-      "summary": "1 failed in 0.82s"
+      "summary": "1 failed in 0.77s"
     }
   ]
 }

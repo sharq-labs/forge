@@ -117,6 +117,22 @@ MUTATIONS = (
      f"{T_CONTRACT}::test_every_third_party_import_is_declared_somewhere",
      "a benchmark dependency becomes undeclared"),
 
+    # ---- PART M: experimental / non-Core classification -----------------
+    ('M-1', 'src/engcore/inference/calibration.py',
+     [('from ..scientific.serialization import require_schema, schema_string',
+       'from ..scientific.serialization import require_schema, schema_string' + chr(10) +
+       'from ..domains.electrical import material  # M-1')],
+     T_LAYER + '::test_no_core_package_imports_a_non_core_one',
+     'a Core package below studies reaches a non-Core package, inverting the '
+     'layering the read-only domain boundary depends on'),
+
+    ('M-2', SNAPSHOT,
+     [('EXPERIMENTAL_SYMBOLS = {' + chr(10) + '    (' + chr(34) + 'engcore.inference' + chr(34) + ', ' + chr(34) + 'FieldObservationOperator' + chr(34) + '): (',
+       'EXPERIMENTAL_SYMBOLS = {}' + chr(10) + '_UNUSED = {' + chr(10) + '    (' + chr(34) + 'engcore.inference' + chr(34) + ', ' + chr(34) + 'FieldObservationOperator' + chr(34) + '): (')],
+     T_SNAP + '::test_the_public_api_matches_the_pinned_snapshot',
+     'the Part M symbol-level classification is emptied, so a module that is a '
+     'genuine contract silently drags its spike back into the frozen surface'),
+
     # ---- DETERMINISM / EXCEPTIONS -------------------------------------
     ("DET-1", SNAPSHOT,
      [("    symbols.sort(key=lambda entry: (entry[\"module\"], entry[\"name\"]))",
@@ -141,7 +157,7 @@ NOT_APPLICABLE = {
         "per-module list to delete a line from, and a mutation would have to "
         "replace the discovery mechanism itself rather than break a guard. The "
         "property is covered directly instead: the wheel-parity run asserts "
-        "SOURCE == WHEEL over all 197 frozen symbols, so a module missing from "
+        "SOURCE == WHEEL over all 194 frozen symbols, so a module missing from "
         "the wheel changes the wheel digest and fails."
     ),
     "PKG-2": (

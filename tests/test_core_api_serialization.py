@@ -67,7 +67,10 @@ def export_only():
 
 def test_the_serialization_inventory_is_what_the_policy_records():
     """A record gaining or losing `from_dict` changes what callers may do."""
-    assert len(round_trippable()) == 62
+    # 61, not 62: FieldObservationOperator round-trips and always did, but
+    # Part M reclassified it EXPERIMENTAL, and this inventory is over the
+    # FROZEN population -- what the Core PROMISES round-trips.
+    assert len(round_trippable()) == 61
     assert len(export_only()) == 16
 
 
