@@ -1,0 +1,38 @@
+{
+  "numerical_per_solve_us": 63.82763999863528,
+  "rows": [
+    {
+      "evaluations": 100,
+      "wall_s": 0.05236739999963902,
+      "per_eval_us": 523.6739999963902,
+      "eval_per_sec": 1909.584970815609,
+      "framework_share": 0.8781156979359769,
+      "numerical_share": 0.12188430206402312
+    },
+    {
+      "evaluations": 1000,
+      "wall_s": 0.5915720000048168,
+      "per_eval_us": 591.5720000048168,
+      "eval_per_sec": 1690.4113108663994,
+      "framework_share": 0.8921050354003983,
+      "numerical_share": 0.10789496459960168
+    },
+    {
+      "evaluations": 10000,
+      "wall_s": 4.948613899992779,
+      "per_eval_us": 494.86138999927783,
+      "eval_per_sec": 2020.767876033851,
+      "framework_share": 0.8710191554877045,
+      "numerical_share": 0.12898084451229552
+    },
+    {
+      "evaluations": 100000,
+      "wall_s": 52.92724099999759,
+      "per_eval_us": 529.2724099999759,
+      "eval_per_sec": 1889.386223627348,
+      "framework_share": 0.8794049362999327,
+      "numerical_share": 0.12059506370006734
+    }
+  ],
+  "flatness_100k_over_100": 1.010690639603311
+}
