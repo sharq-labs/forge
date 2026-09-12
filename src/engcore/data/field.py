@@ -34,12 +34,79 @@ import numpy as np
 
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.fields.definition import FieldDefinition
-from ..scientific.fields.mesh import StructuredMesh
+from ..scientific.fields.mesh import CANONICAL_LENGTH, StructuredMesh
+from ..scientific.fields.profiles import SpatialProfile
+from ..scientific.fields.regions import MeshRegion
 from ..scientific.fields.result import FieldRecord, FieldSummary
 from ..scientific.results.data_reference import ScientificDataReference
 from ..scientific.units.quantity import Quantity
 from .resolver import BulkDataResolver
 from .store import BulkDataStore, store_values
+
+
+def evaluate_on_mesh(
+    profile: SpatialProfile, mesh: StructuredMesh, *, unit: str | None = None
+) -> np.ndarray:
+    """A law's values at every node of a support, shaped ``(ny, nx)``.
+
+    The bridge between a law and an array, and the reason the law itself needs
+    no array library: a profile answers one point at a time, and this is the
+    one place that asks it for all of them.
+
+    Coordinates come from the support in canonical length, so what a law is
+    asked is a position and never an index.
+    """
+    profile.require_output_dimension(
+        unit or profile.unit, context=f"evaluating a law over {mesh.mesh_id!r}"
+    )
+    scale = 1.0
+    if unit is not None and unit != profile.unit:
+        zero = Quantity(0.0, profile.unit).magnitude_in(unit)
+        one = Quantity(1.0, profile.unit).magnitude_in(unit)
+        scale = one - zero
+    else:
+        zero = 0.0
+
+    xs, ys = mesh.axis_coordinates()
+    values = np.empty((len(ys), len(xs)), dtype=np.float64)
+    for j, y in enumerate(ys):
+        for i, x in enumerate(xs):
+            values[j, i] = profile.evaluate(x=x, y=y) * scale + zero
+    return values
+
+
+def evaluate_on_region(
+    profile: SpatialProfile,
+    region: MeshRegion,
+    mesh: StructuredMesh,
+    *,
+    unit: str | None = None,
+) -> dict[int, float]:
+    """A law's value at each node of one edge, keyed by row-major node index.
+
+    Keyed rather than ordered: the caller assembling a matrix needs to reach a
+    node by its index, and a sequence would make the association positional
+    again — which is the mistake the whole region record exists to remove.
+    """
+    region.require_support(mesh)
+    lower, upper = region.span(mesh)
+    profile.require_covers(
+        lower, upper, context=f"a law bound to region {region.region_id!r}"
+    )
+    xs, ys = mesh.axis_coordinates()
+    scale, zero = 1.0, 0.0
+    if unit is not None and unit != profile.unit:
+        profile.require_output_dimension(
+            unit, context=f"a law bound to region {region.region_id!r}"
+        )
+        zero = Quantity(0.0, profile.unit).magnitude_in(unit)
+        scale = Quantity(1.0, profile.unit).magnitude_in(unit) - zero
+
+    values: dict[int, float] = {}
+    for node in region.node_indices(mesh):
+        j, i = divmod(node, mesh.nodes_x)
+        values[node] = profile.evaluate(x=xs[i], y=ys[j]) * scale + zero
+    return values
 
 
 @dataclass(frozen=True)

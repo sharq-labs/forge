@@ -44,7 +44,7 @@ import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
-from ...data.field import FieldValue
+from ...data.field import FieldValue, evaluate_on_mesh, evaluate_on_region
 from ...data.store import BulkDataStore, InMemoryBulkStore
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.fields import (
@@ -54,6 +54,7 @@ from ...scientific.fields import (
     FieldLocation,
     FieldRecord,
     MeshRegion,
+    SpatialProfile,
     StructuredMesh,
     boundary_regions,
     require_complete_boundary,
@@ -88,8 +89,10 @@ APPLICABILITY = (
     "a rectangular Cartesian plate discretised by a structured rectilinear support",
     "one scalar field at the nodes, in a unit of temperature",
     "constant isotropic conductivity, strictly positive",
-    "a volumetric source that is uniform or a field on the same support",
-    "Dirichlet and Neumann boundary conditions only",
+    "a volumetric source that is uniform, a declared spatial law, or a field "
+    "on the same support",
+    "Dirichlet and Neumann boundary conditions only, each a constant or a "
+    "declared spatial law along its own edge",
     "at least one Dirichlet condition, or the steady problem has no unique solution",
     "the steady equation only: no time term, and no temperature-dependent property",
 )
@@ -159,7 +162,7 @@ class SteadyConductionProblem:
     field: FieldDefinition
     conductivity: Quantity
     conditions: tuple[FieldBoundaryCondition, ...]
-    source: Quantity | FieldValue | None = None
+    source: Quantity | SpatialProfile | FieldValue | None = None
     regions: tuple[MeshRegion, ...] = ()
     description: str = ""
     metadata: Mapping[str, Any] = dataclass_field(default_factory=dict)
@@ -227,6 +230,31 @@ def require_applicable(problem: SteadyConductionProblem) -> None:
             f"and was given {type(conductivity).__name__}; an anisotropic "
             f"conductivity is a different equation, not a different number"
         )
+    if isinstance(conductivity, SpatialProfile):
+        # REPRESENTABLE, NOT EXECUTED — stated here rather than in a document,
+        # because this is where a caller finds out.
+        #
+        # A coefficient that varies in space is the same kind of record as a
+        # boundary datum that does: `SpatialProfile` carries it with no change
+        # at all, which is the result of the Phase 8 spike. What it is not is a
+        # different number for the same assembly. The operator built below puts
+        # k outside the divergence, which is only valid where k is constant;
+        # a heterogeneous coefficient needs the conservative form
+        # -div(k(x,y) grad T) discretised with face conductivities between
+        # nodes. That is a different discretisation, and executing one
+        # silently under a declaration that says otherwise is the failure this
+        # refusal exists to prevent.
+        raise Conduction2DError(
+            f"{problem.problem_id!r}: a conductivity varying in space is "
+            f"representable and is not executed by this model. It was given a "
+            f"{conductivity.KIND} law in {conductivity.unit!r}, which this "
+            f"layer stores, serializes and fingerprints unchanged; what is "
+            f"missing is the discretisation. The five-point operator here "
+            f"takes k outside the divergence, which holds only for a constant "
+            f"k — a heterogeneous one needs face conductivities in the "
+            f"conservative form, which is a different scheme rather than a "
+            f"different coefficient"
+        )
     if callable(conductivity):
         raise Conduction2DError(
             f"{problem.problem_id!r}: conductivity is constant in this model "
@@ -248,7 +276,13 @@ def require_applicable(problem: SteadyConductionProblem) -> None:
 
     source = problem.source
     if source is not None:
-        if isinstance(source, FieldValue):
+        if isinstance(source, SpatialProfile):
+            _require_dimension(source.unit, SOURCE_UNIT, what="source law")
+            source.require_covers_box(
+                _axis_span(mesh, "x"), _axis_span(mesh, "y"),
+                context=f"{problem.problem_id!r}: the source law",
+            )
+        elif isinstance(source, FieldValue):
             if source.mesh.fingerprint() != mesh.fingerprint():
                 raise Conduction2DError(
                     f"{problem.problem_id!r}: the source field is on support "
@@ -260,8 +294,9 @@ def require_applicable(problem: SteadyConductionProblem) -> None:
             _require_dimension(source.units, SOURCE_UNIT, what="source")
         else:
             raise Conduction2DError(
-                f"{problem.problem_id!r}: a source is a uniform Quantity or a "
-                f"FieldValue on this support, got {type(source).__name__}"
+                f"{problem.problem_id!r}: a source is a Quantity, a "
+                f"SpatialProfile or a FieldValue on this support, got "
+                f"{type(source).__name__}"
             )
 
     for condition in problem.conditions:
@@ -273,8 +308,10 @@ def require_applicable(problem: SteadyConductionProblem) -> None:
                 f"records and is not served here"
             )
         if condition.kind is BoundaryKind.NEUMANN:
+            # `law` is the constant and the varying spelling at once, so the
+            # dimension is checked in one place for both.
             _require_dimension(
-                condition.value.units, FLUX_UNIT, what=f"condition {condition.name!r}"
+                condition.law.unit, FLUX_UNIT, what=f"condition {condition.name!r}"
             )
     require_complete_boundary(field, mesh, problem.regions, problem.conditions)
     if not any(c.kind is BoundaryKind.DIRICHLET for c in problem.conditions):
@@ -283,6 +320,56 @@ def require_applicable(problem: SteadyConductionProblem) -> None:
             f"the steady temperature is determined only up to a constant and "
             f"the system is singular. Fix the level somewhere"
         )
+
+
+def _describe_law(law: SpatialProfile) -> dict[str, Any]:
+    """A law's identity: enough to recognise it, nothing of what it evaluates to."""
+    return {
+        "kind": law.KIND,
+        "fingerprint": law.fingerprint(),
+        "unit": law.unit,
+        "varies_along": law.axes[0].value if len(law.axes) == 1 else (
+            "xy" if law.axes else None
+        ),
+    }
+
+
+def _law_identities(problem: "SteadyConductionProblem") -> dict[str, Any]:
+    return {
+        edge.value: _describe_law(condition.law)
+        for edge, condition in problem.edges.items()
+    }
+
+
+def _source_identity(problem: "SteadyConductionProblem") -> dict[str, Any]:
+    """The source's identity, in whichever of its three forms it arrived.
+
+    A stored field is already named by its own digest through the reference it
+    travels on, so it is recorded as such rather than described twice.
+    """
+    source = problem.source
+    if source is None:
+        return {}
+    if isinstance(source, SpatialProfile):
+        return {"source_law": _describe_law(source)}
+    if isinstance(source, FieldValue):
+        return {
+            "source_field": {
+                "unit": source.unit,
+                "shape": list(source.shape),
+                "mesh_fingerprint": source.mesh.fingerprint(),
+            }
+        }
+    return {"source_uniform": str(source)}
+
+
+def _axis_span(mesh: StructuredMesh, axis: str) -> tuple[float, float]:
+    """The support's physical extent along one axis, in canonical length."""
+    if axis == "x":
+        lower = mesh.origin_x.magnitude_in("meter")
+        return (lower, lower + mesh.length_x.magnitude_in("meter"))
+    lower = mesh.origin_y.magnitude_in("meter")
+    return (lower, lower + mesh.length_y.magnitude_in("meter"))
 
 
 def _require_dimension(unit: str, exemplar: str, *, what: str) -> None:
@@ -320,9 +407,16 @@ class SteadyConductionSolution:
 
 
 def _source_array(problem: SteadyConductionProblem) -> np.ndarray:
+    """The volumetric source at every node, whichever way it was declared.
+
+    Three spellings and one array: nothing downstream of here knows or cares
+    whether the source was a number, a law or a stored field.
+    """
     shape = problem.field.expected_shape(problem.mesh)
     if problem.source is None:
         return np.zeros(shape, dtype=np.float64)
+    if isinstance(problem.source, SpatialProfile):
+        return evaluate_on_mesh(problem.source, problem.mesh, unit=SOURCE_UNIT)
     if isinstance(problem.source, FieldValue):
         return problem.source.to_unit(SOURCE_UNIT).values
     return np.full(shape, problem.source.magnitude_in(SOURCE_UNIT), dtype=np.float64)
@@ -356,13 +450,20 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
         return j * nx + i
 
     dirichlet: dict[int, float] = {}
+    flux_laws: dict[BoundaryEdge, dict[int, float]] = {}
     for edge, condition in edges.items():
-        if condition.kind is not BoundaryKind.DIRICHLET:
-            continue
-        value = condition.value.magnitude_in(field.unit)
         region = next(r for r in problem.regions if r.edge is edge)
-        for node in region.node_indices(mesh):
-            dirichlet[node] = value
+        if condition.kind is BoundaryKind.DIRICHLET:
+            # Evaluated per node from physical coordinates. A constant law
+            # yields the same number at each, which is the old behaviour
+            # arrived at rather than special-cased.
+            dirichlet.update(
+                evaluate_on_region(condition.law, region, mesh, unit=field.unit)
+            )
+        else:
+            flux_laws[edge] = evaluate_on_region(
+                condition.law, region, mesh, unit=FLUX_UNIT
+            )
 
     for j in range(ny):
         for i in range(nx):
@@ -392,9 +493,11 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
                     matrix[row, index(ii, jj)] += coefficient
                     continue
                 # Off the support: this node is on `edge_here`, which carries a
-                # flux condition (a Dirichlet edge would have been pinned).
-                condition = edges[edge_here]
-                flux = condition.value.magnitude_in(FLUX_UNIT)
+                # flux condition (a Dirichlet edge would have been pinned). The
+                # flux is read at this node's own position, so an edge whose
+                # flux varies along it is imposed pointwise rather than by
+                # whatever one number was chosen to stand for the edge.
+                flux = flux_laws[edge_here][row]
                 mirror_i, mirror_j = i - di, j - dj
                 matrix[row, index(mirror_i, mirror_j)] += coefficient
                 # T_ghost = T_mirror - 2 h qn / k, for -k dT/dn = qn on an
@@ -541,6 +644,12 @@ def solve_steady_conduction(
             metadata={
                 "mesh_fingerprint": mesh.fingerprint(),
                 "support": f"{mesh.nodes_x}x{mesh.nodes_y}",
+                # Which laws produced this, by identity rather than by value.
+                # A varying edge has one value per node and none of them belong
+                # here: the declaration is what a reader needs to reconstruct
+                # the run, and the field itself is already referenced by digest.
+                "boundary_laws": _law_identities(problem),
+                **_source_identity(problem),
                 # Which set the numbers above came from, so a reader can tell a
                 # declared judgement from an explored one without re-deriving it.
                 "thresholds": thresholds.identity,
@@ -571,10 +680,12 @@ def _worst_dirichlet_error(
     for edge, condition in problem.edges.items():
         if condition.kind is not BoundaryKind.DIRICHLET:
             continue
-        prescribed = condition.value.magnitude_in(problem.field.unit)
         region = next(r for r in problem.regions if r.edge is edge)
-        for node in region.node_indices(problem.mesh):
-            worst = max(worst, abs(float(flat[node]) - prescribed))
+        prescribed = evaluate_on_region(
+            condition.law, region, problem.mesh, unit=problem.field.unit
+        )
+        for node, expected in prescribed.items():
+            worst = max(worst, abs(float(flat[node]) - expected))
     return worst
 
 
@@ -586,18 +697,19 @@ def plate_problem(
     problem_id: str,
     mesh: StructuredMesh,
     conductivity: Quantity,
-    edge_values: Mapping[BoundaryEdge, Quantity],
+    edge_values: Mapping[BoundaryEdge, Quantity | SpatialProfile],
     field_id: str = "T",
     field_unit: str = TEMPERATURE_UNIT,
-    source: Quantity | FieldValue | None = None,
+    source: Quantity | SpatialProfile | FieldValue | None = None,
     edge_kinds: Mapping[BoundaryEdge, BoundaryKind] | None = None,
     description: str = "",
 ) -> SteadyConductionProblem:
     """A plate with one condition per edge, declared rather than assembled by hand.
 
-    ``edge_values`` carries a temperature for a Dirichlet edge and a flux for a
-    Neumann one; ``edge_kinds`` says which is which and defaults to Dirichlet
-    everywhere.
+    ``edge_values`` carries a prescribed value for a Dirichlet edge and a flux
+    for a Neumann one; ``edge_kinds`` says which is which and defaults to
+    Dirichlet everywhere. Either may be a ``Quantity`` for an edge that is the
+    same all the way along, or a ``SpatialProfile`` for one that is not.
     """
     kinds = dict(edge_kinds or {})
     regions = boundary_regions(mesh)

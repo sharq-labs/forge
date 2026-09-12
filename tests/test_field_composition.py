@@ -204,6 +204,49 @@ def test_a_dependency_resolves_to_the_contract_for_its_own_two_sides():
         dependency.resolve(field(), mesh(), field(field_id="elsewhere"), mesh())
 
 
+# ---- Sprint 5, Phase 16: a law is not a payload -------------------------------------
+def profile():
+    from engcore.scientific.fields import LinearProfile1D, ProfileAxis
+
+    return LinearProfile1D(
+        ProfileAxis.Y, Quantity(300.0, "kelvin"), Quantity(20.0, "kelvin/meter")
+    )
+
+
+@pytest.mark.parametrize(
+    "kind", [TransferKind.FIELD_TRANSFER, TransferKind.SCALAR_TRANSFER]
+)
+def test_a_spatial_law_is_not_something_that_crosses(kind):
+    """Profiles are declarations; results are what cross.
+
+    The two are easy to conflate now that both carry a unit and both describe a
+    field. A law says what a field *should* be everywhere, and is an input; a
+    record names values that were computed, and is an output. A dependency
+    satisfied by a law would have been satisfied by nothing at all.
+    """
+    dependency = FieldDependency("upstream", "T", "downstream", "T_in", kind=kind)
+    with pytest.raises(InvalidScientificProblem, match="was offered"):
+        dependency.admit(profile())
+
+
+def test_a_law_and_a_field_on_one_support_are_not_interchangeable():
+    record = stored_record()
+    law = profile()
+    assert law.unit == record.definition.unit
+    assert not hasattr(law, "reference"), "a law names no bytes"
+    assert not hasattr(record, "evaluate"), "a record evaluates nothing"
+    assert law.fingerprint() != record.mesh_fingerprint
+
+
+def test_the_transfer_matrix_is_unchanged_by_profiles():
+    """Sprint 4's verdicts still hold, with the profile layer present."""
+    for label, producer, producer_mesh, consumer, consumer_mesh, expected in MATRIX:
+        contract = check_field_transfer(
+            producer, producer_mesh, consumer, consumer_mesh
+        )
+        assert contract.verdict is expected, label
+
+
 def test_a_scalar_dependency_has_no_field_contract_to_resolve():
     dependency = FieldDependency(
         "upstream", "T", "downstream", "T_in", kind=TransferKind.SCALAR_TRANSFER

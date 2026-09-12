@@ -179,7 +179,7 @@ def test_a_record_deserialized_against_the_wrong_support_is_refused():
         (dict(conductivity=Quantity(2.5, "watt")), "dimension"),
         (dict(field_unit="volt"), "dimension"),
         (dict(source=Quantity(1.0, "kelvin")), "dimension"),
-        (dict(source=object()), "uniform Quantity or a FieldValue"),
+        (dict(source=object()), "a Quantity, a SpatialProfile or a FieldValue"),
     ],
 )
 def test_a_request_outside_the_envelope_is_refused(changes, expected):
