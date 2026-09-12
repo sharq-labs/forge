@@ -157,12 +157,17 @@ cannot be forgotten the way these two were.
 
 | | before | after |
 |---|---|---|
-| tiny DC solve, p50 | 0.4282 ms | **0.3573 ms** |
-| framework portion | 0.3761 ms | **0.3105 ms** |
-| throughput | 2,335 solves/sec | **2,798 solves/sec** |
+| tiny DC solve, p50 | 0.4282 ms | **0.3626 ms** |
+| framework portion | 0.3761 ms | **0.3144 ms** |
+| throughput | 2,335 solves/sec | **2,757 solves/sec** |
 | function calls / 400 solves | 992,802 | **862,002** |
 
-**Speedup 1.20× (16.6 % faster).** Framework cost down 17.4 %.
+**Speedup 1.18× (15.3 % faster).** Framework cost down 16.4 %.
+
+> These are the numbers AFTER the float fast path was removed in
+> response to the certified harness finding G10c blinded (§19-23). With
+> it the solve measured 0.3573 ms; the difference is inside this
+> machine's run-to-run spread.
 
 ---
 
@@ -170,8 +175,8 @@ cannot be forgotten the way these two were.
 
 | | before | after |
 |---|---|---|
-| framework | 87.8 % | **86.9 %** |
-| numerical | 12.2 % | **13.1 %** |
+| framework | 87.8 % | **86.7 %** |
+| numerical | 12.2 % | **13.3 %** |
 
 The share barely moves, and that is the honest headline: **the remaining cost
 is required trust machinery, not redundancy.** What is left is unit validation
@@ -417,7 +422,7 @@ No scientific output changed. Established three ways:
    unmemoized form on eight unit pairs including Ohm's law composites and the
    degC/kelvin same-dimension-different-zero case; every fast path is checked
    against its general path.
-3. **5,530 FULL tests pass**, including the contract guards, capability
+3. **5,533 FULL tests pass**, including the contract guards, capability
    boundary, scientific truth, field suites and every domain suite.
 
 The one contract that legitimately moved is the **digest of
@@ -442,4 +447,170 @@ Run for regression detection only; no domain was edited.
 | thermal scalar | pass |
 | field / 2-D conduction + convergence | pass |
 
-All within FULL's 5,530.
+All within FULL's 5,533.
+
+---
+
+## 19–23. Final assurance
+
+Run on the frozen candidate tree, in the required order.
+
+| # | check | result |
+|---|---|---|
+| 1 | runtime/performance tests | pass |
+| 2 | cache tests | 15 passed |
+| 3 | sweep / failure isolation | 25 passed |
+| 4 | fast-path equivalence | 19 passed |
+| 5 | API classification | 6 passed |
+| 6 | **FAST** | **4,985 passed**, 7 skipped, **0 failed** |
+| 7 | **FULL** | **5,533 passed**, 7 skipped, **0 failed** |
+| 8 | Contract Guard | 305 passed |
+| 9 | Capability Boundary | 306 passed, 675 deselected |
+| 10 | Scientific Truth | 293 passed, 3 skipped |
+| 11 | field / field-profile suites | 124 / 147 passed |
+| 12 | **Sprint 9 runtime mutations** | **9/9 killed**, CONTROL GREEN, 0 survivors |
+| 13 | **certified 79-mutant harness** | **79/79 killed**, CONTROL GREEN (470 passed), **0 survivors** |
+| 14 | installed wheel smoke | **313 passed** |
+| 15 | certificate | **`certificate matches the tree` · OK** |
+| 16 | domains untouched | tree digest identical, diff empty |
+| 17 | working tree | clean |
+
+### The certified harness was run TWICE, and the first run found a real defect
+
+This is the part of the round worth reading.
+
+**First run: 78/79.** `G10c` came back **`GREEN -- DECORATION`**. That mutation
+deletes the non-finite check in `unwritable`'s general path, and it had gone RED
+for as long as it had existed. The float fast path added earlier in this sprint
+put a **second copy of the same refusal in front of it**, so deleting the first
+became invisible — and a guard that is not decoration was reported as
+decoration.
+
+It was **not an equivalent mutation**, which is what makes it a defect rather
+than a curiosity: `cls is float` is False for a float **subclass**, so the
+deleted check is the only thing refusing a subclass NaN. G10c opens a real hole
+the fast path does not cover. Nothing tested subclasses, which is exactly why
+the shadowing went unnoticed.
+
+Measured before removing it — applied and restored under a digest check — the
+float fast path was worth **~11 µs on a 0.39 ms solve**, against a run-to-run
+spread of 0.380–0.419 ms. Inside the noise. A duplicated refusal that buys
+nothing measurable and blinds a certified mutation is a bad trade, so it was
+removed: **one refusal, in one place, where it stays checkable.**
+
+Two guards added so it cannot come back quietly: subclass NaN/Inf are now
+tested, and a structural test asserts the NaN refusal appears **exactly once**
+in `unwritable()` and that no exact-float fast path has returned.
+
+**Second run, on the corrected tree: 79/79, 0 survivors, CONTROL GREEN.** Both
+runs are recorded in the certificate's assurance block. A certificate that
+reported only the run that passed would be a certificate about a tree nobody had
+to fix.
+
+---
+
+## 24. Certificate
+
+Reissued **once**, on the final tree, after the harness came back clean.
+
+| | |
+|---|---|
+| files | 76 → **76** (nothing entered or left scope) |
+| aggregate | `ecce1165d41ce27d…` → **`99c6ea577c938431…`** |
+| `core` | 55 files, **CHANGED** — 5 modified, 0 added, 0 removed |
+| `evidence_identity`, `harness`, `inference_admission`, `runtime_data`, `trust_registry` | **all byte-identical** |
+| `diagnostic` | `false` |
+| verification | **`certificate matches the tree` · OK** |
+
+No digest was hand-edited.
+
+---
+
+## 25. Domain tree digest proof
+
+```
+baseline (f5369f0)  src/engcore/domains  ->  022ee84479a8735d0115e6c2f5e13c6e473d4f02
+final    (HEAD)     src/engcore/domains  ->  022ee84479a8735d0115e6c2f5e13c6e473d4f02
+
+git diff f5369f0..HEAD -- src/engcore/domains   ->   (empty)
+domain files: 49
+```
+
+**DOMAIN FILES CHANGED: 0.**
+
+A tree digest rather than a diff, because it covers all 49 files in one value
+and cannot be satisfied by compensating edits.
+
+---
+
+## 26. Files changed
+
+25 files, +2,549 / −148. **None under `src/engcore/domains`.**
+
+| area | files |
+|---|---|
+| `src/engcore/scientific` | 5 — `consensus`, `results/immutable`, `results/result`, `serialization`, `units/quantity` |
+| `tests/` | 4 new — caches, execution, fast paths, API surface |
+| `benchmarks/core_runtime_finalization/` | 9 new — profiler, parallel bench, scaled bench, mutation harness, records, report |
+| `benchmarks/{empirical,model_measurement}_validation/` | 4 — digest re-pin and regenerated gate artifacts |
+| `certification/` | 1 — the reissued certificate |
+
+---
+
+## 28. Remaining Core blockers
+
+**None for the freeze.** Three things are carried forward, and none of them
+blocks it:
+
+1. **Persistent-process execution is unbuilt.** Measured potential ~2.58× on a
+   realistic payload. Deferred because the lifecycle, exception-transport,
+   memory, ordering and conservative AUTO-policy guarantees do not exist yet.
+   Part G's nine-point checklist is the specification for whoever builds it.
+2. **`workers` is EXPERIMENTAL, not frozen.** Threads are 0.54×–0.97× of
+   sequential. The knob stays, defaulted to 1 and keyword-only, classified so
+   nobody freezes it by accident.
+3. **The scientific-tree digest pin needs re-pinning whenever the Core moves.**
+   It was re-pinned three times in this sprint chain. The constant is a
+   snapshot of a tree other rounds are entitled to move; the gates' substantive
+   question is answered by their `git status` half. Worth redesigning one day;
+   not a freeze blocker.
+
+### The runtime conclusion, stated explicitly
+
+**The remaining tiny-solve framework share is predominantly required trust /
+contract machinery. Further reduction is not justified in this sprint.**
+
+Framework share moved 87.8 % → 86.7 % while the solve got 1.18× faster. That
+near-immobility is the finding: what is left is unit validation on every
+`Quantity`, the immutability walk, the writability boundary, provenance
+construction and canonical serialization — each a contract this repository
+exists to keep. The only two removable things found were a typing-alias lookup
+and a duplicated dimensional comparison, and both are gone. Going further would
+mean weakening a check, and the round that tried it already learned what that
+costs: the one "optimization" that touched a refusal blinded a certified
+mutation for 11 µs.
+
+---
+
+## 29. Ready for Core Freeze?
+
+**YES**, with parallel execution deferred and recorded.
+
+| criterion | status |
+|---|---|
+| domains untouched | **yes** — tree digest identical |
+| hot path measured, redundancy removed, contracts intact | yes |
+| trust / provenance / invariants unchanged | yes |
+| parallel decision evidence-based | yes — deferred |
+| failure isolation proven | yes |
+| memory measured | yes — flat |
+| caches audited | yes — and two unclear ed memos fixed |
+| public API classified and pinned | yes |
+| runtime mutants handled honestly | yes — 9/9, 2 recorded N/A |
+| certified 79-mutant harness | **79/79, 0 survivors** |
+| FAST / FULL / guards / wheel | all green |
+| certificate | **OK** |
+| tree clean | yes |
+
+**FINAL VERDICT: CORE RUNTIME FINALIZATION COMPLETE — PARALLEL EXECUTION
+DEFERRED.**
