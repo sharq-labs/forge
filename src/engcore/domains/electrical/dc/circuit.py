@@ -194,11 +194,29 @@ class DCCircuit:
         Deterministic across runs and processes: it uses a cryptographic hash
         over sorted, compact JSON, never Python's ``hash()``, object identity,
         a random UUID or a timestamp.
+
+        **Computed once per circuit.** One solve asks five separate times — the
+        problem builder, the binding check, the metric extractor and the
+        provenance assembly each want the identity — and the answer cannot
+        differ between them: this record is frozen, and every field the payload
+        reads is a string, a number or a frozen tuple of them. So the value is
+        remembered on the instance after the first call.
+
+        The memo is written through ``object.__setattr__`` because the record is
+        frozen, and it is deliberately **not** a field: it takes no part in
+        equality, in ``to_dict`` or in the payload above, so two circuits that
+        compare equal still hash identically and a round trip still produces a
+        record that is equal to the one it came from.
         """
+        cached = getattr(self, "_fingerprint_memo", None)
+        if cached is not None:
+            return cached
         payload = json.dumps(
             self.canonical_dict(), sort_keys=True, separators=(",", ":")
         )
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        object.__setattr__(self, "_fingerprint_memo", digest)
+        return digest
 
     # ---- serialization --------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
