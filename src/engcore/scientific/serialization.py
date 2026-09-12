@@ -181,17 +181,28 @@ def unwritable(value: Any, *, path: str = "") -> tuple[str, str] | None:
     booleans and null. A ``tuple`` is admitted and comes back as a list, which
     is JSON's nature rather than this function's opinion.
     """
-    # Exact-type fast paths first, for the reason `encode` above states. The
-    # `str` case is separated because it is by far the most common leaf and
-    # cannot be a non-finite float, so it skips both float tests.
+    # Exact-type fast paths first, for the reason `encode` above states -- but
+    # ONLY for types that carry no refusal of their own.
+    #
+    # THERE IS DELIBERATELY NO FAST PATH FOR `float`, and the reason is worth
+    # the lines. One was added in the Sprint 9 runtime round and the certified
+    # 79-mutant harness caught what it cost: mutation `G10c` deletes the
+    # non-finite check in the general path below, and with a second copy of
+    # that check sitting in front of it the deletion became invisible. G10c had
+    # gone RED for as long as it had existed; it came back
+    # `GREEN -- DECORATION` against a guard that is not decoration.
+    #
+    # It was not even an equivalent mutation. `cls is float` is False for a
+    # float SUBCLASS, so the general-path check below is the only thing
+    # refusing a subclass NaN -- deleting it opens a real hole that the fast
+    # path does not cover.
+    #
+    # Measured, before removing it: worth about 11 us on a 0.39 ms solve, which
+    # is inside this machine's run-to-run spread. A duplicated refusal that
+    # buys nothing measurable and blinds a certified mutation is a bad trade,
+    # and one refusal in one place is the version that stays checkable.
     cls = value.__class__
     if cls is str or value is None:
-        return None
-    if cls is float:
-        if value != value:
-            return (path, "float('nan')")
-        if value == float("inf") or value == float("-inf"):
-            return (path, "float('inf')")
         return None
     if cls is int or cls is bool:
         return None

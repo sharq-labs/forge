@@ -105,12 +105,53 @@ def test_bool_is_not_silently_widened_to_int():
 # unwritable -- the float and dict fast paths
 # =====================================================================
 
-def test_the_float_fast_path_still_refuses_non_finite_values():
-    """THE GAP PERF-RT-4 targets. A fast path that skips a refusal is a hole."""
-    assert unwritable({"x": float("nan")}, path="m") == ("m['x']", "float('nan')")
-    assert unwritable({"x": float("inf")}, path="m") == ("m['x']", "float('inf')")
-    assert unwritable({"x": float("-inf")}, path="m") == ("m['x']", "float('inf')")
+class FloatSubclass(float):
+    """A float that is NOT exactly ``float``, so ``cls is float`` is False."""
+
+
+def test_non_finite_values_are_refused_including_float_subclasses():
+    """THE GAP THE CERTIFIED HARNESS FOUND, via mutation G10c.
+
+    A float fast path was added here in this round and then removed, because
+    G10c -- which deletes the non-finite check in the general path -- went from
+    RED to `GREEN -- DECORATION` while it existed. A second copy of a refusal
+    sitting in front of the first makes deleting the first invisible.
+
+    It was not an equivalent mutation either: ``cls is float`` is False for a
+    SUBCLASS, so the general-path check is the only thing refusing a subclass
+    NaN. That case was untested, which is why the shadowing went unnoticed, and
+    it is tested here now.
+    """
+    for value in (float("nan"), FloatSubclass("nan")):
+        assert unwritable({"x": value}, path="m") == ("m['x']", "float('nan')")
+    for value in (float("inf"), float("-inf"),
+                  FloatSubclass("inf"), FloatSubclass("-inf")):
+        assert unwritable({"x": value}, path="m") == ("m['x']", "float('inf')")
+
     assert unwritable({"x": 1.5}, path="m") is None
+    assert unwritable({"x": FloatSubclass(1.5)}, path="m") is None
+
+
+def test_one_refusal_in_one_place_rather_than_two_copies():
+    """The structural half: there must not be a second non-finite check.
+
+    Not a style rule. Two copies of a refusal is exactly what blinded G10c, and
+    the next person optimizing this function will be tempted by the same fast
+    path for the same reason.
+    """
+    import inspect
+
+    import engcore.scientific.serialization as module
+
+    source = inspect.getsource(module.unwritable)
+    assert source.count('"float(\'nan\')"') == 1, (
+        "the NaN refusal appears more than once in unwritable(); a second copy "
+        "makes deleting the first invisible to mutation G10c"
+    )
+    assert source.count("if cls is float:") == 0, (
+        "an exact-float fast path is back. It was measured at ~11 us on a "
+        "0.39 ms solve -- inside run-to-run noise -- and it cost G10c its teeth"
+    )
 
 
 def test_the_dict_fast_path_still_refuses_a_non_string_key():

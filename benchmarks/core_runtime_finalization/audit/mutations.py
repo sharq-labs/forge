@@ -68,15 +68,15 @@ MUTATIONS = (
     ),
     (
         "PERF-RT-4", SERIALIZATION,
-        [("    if cls is float:\n"
-          "        if value != value:\n"
+        [("        if isinstance(value, float) and value != value:\n"
           "            return (path, \"float('nan')\")",
-          "    if cls is float:\n"
           "        if False:\n"
           "            return (path, \"float('nan')\")")],
-        f"{T_FAST}::test_the_float_fast_path_still_refuses_non_finite_values",
-        "the float fast path stops refusing NaN, so a record serializes to a "
-        "token no conforming JSON reader accepts",
+        f"{T_FAST}::test_non_finite_values_are_refused_including_float_subclasses",
+        "the non-finite refusal stops firing, so a NaN reaches a record and "
+        "serializes to a token no conforming JSON reader accepts. Retargeted "
+        "at the general-path check after the float fast path that had been "
+        "shadowing it -- and blinding certified mutation G10c -- was removed",
     ),
     (
         "PAR-1", SWEEP,
