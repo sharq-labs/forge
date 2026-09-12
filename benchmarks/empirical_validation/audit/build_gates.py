@@ -190,12 +190,18 @@ def gates(result: dict) -> list[dict]:
     provenance = json.loads(
         (ROOT / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8")
     )
+    # `invocation` joins `binary` as an answer to "where did this number come
+    # from": for an external program reached through WSL there is no single
+    # Windows-executable path to name, and the argv prefix that was actually
+    # run says it exactly. `binary` is still accepted so an artifact written
+    # before the rename still reads as sourced.
     unsourced = [
         source["id"]
         for source in provenance["sources"]
         if source.get("retrieved_from") is None
         and source.get("how_it_got_here") is None
         and source.get("binary") is None
+        and source.get("invocation") is None
     ]
     gate(
         "EV-5",

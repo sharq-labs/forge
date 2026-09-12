@@ -1,5 +1,5 @@
 {
-  "schema": "empirical_validation_gates/1",
+  "schema": "empirical_validation_gates/2",
   "gates": [
     {
       "id": "EV-1",
@@ -397,8 +397,9 @@
   "passed": 11,
   "failed": 0,
   "core_unchanged": {
-    "certified_digest": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
-    "recomputed_digest": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+    "expected_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+    "expected_digest_is": "the scientific tree as merged into the sprint chain, not a certificate. Core V1's 47-module digest was the previous value and stopped describing this lineage at 3d642dcef5db",
+    "recomputed_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
     "matches": true,
     "files_touched_under_src_or_tests": []
   },

@@ -5,11 +5,11 @@
       {
         "n_steps": 500,
         "dt_s": 3.6,
-        "observed_relative_error": 0.025761764297634084,
+        "observed_relative_error": 0.025761764297633827,
         "predicted_relative_error": 0.02560698556195618,
         "predicted_time_term": 0.02496488462008165,
         "predicted_space_term": 0.0006421009418745279,
-        "ratio": 1.0060443950071132
+        "ratio": 1.0060443950071032
       },
       {
         "n_steps": 1000,
@@ -41,40 +41,40 @@
       {
         "n_steps": 8000,
         "dt_s": 0.225,
-        "observed_relative_error": 0.0022037478147630117,
+        "observed_relative_error": 0.0022037478147627554,
         "predicted_relative_error": 0.002202406230629631,
         "predicted_time_term": 0.001560305288755103,
         "predicted_space_term": 0.0006421009418745279,
-        "ratio": 1.000609144723041
+        "ratio": 1.0006091447229246
       }
     ],
     "space_refinement": [
       {
         "n_cells": 10,
         "dx_m": 0.012,
-        "observed_relative_error": 0.045010179871666424,
+        "observed_relative_error": 0.045010179871665786,
         "predicted_relative_error": 0.04421507085747999,
         "predicted_time_term": 0.003120610577510206,
         "predicted_space_term": 0.04109446027996978,
-        "ratio": 1.0179827601486682
+        "ratio": 1.0179827601486537
       },
       {
         "n_cells": 20,
         "dx_m": 0.006,
-        "observed_relative_error": 0.013460173465006152,
+        "observed_relative_error": 0.013460173465005896,
         "predicted_relative_error": 0.013394225647502651,
         "predicted_time_term": 0.003120610577510206,
         "predicted_space_term": 0.010273615069992446,
-        "ratio": 1.0049236006051456
+        "ratio": 1.0049236006051265
       },
       {
         "n_cells": 40,
         "dx_m": 0.003,
-        "observed_relative_error": 0.005698864376751185,
+        "observed_relative_error": 0.00569886437675003,
         "predicted_relative_error": 0.005689014345008318,
         "predicted_time_term": 0.003120610577510206,
         "predicted_space_term": 0.0025684037674981114,
-        "ratio": 1.0017314127097445
+        "ratio": 1.0017314127095416
       },
       {
         "n_cells": 80,
@@ -96,21 +96,21 @@
       }
     ],
     "observed_spatial_orders_with_the_time_floor_removed": [
-      2.0184158546184747,
-      2.0037090035361467,
-      1.9973562993846872,
+      2.018415854618489,
+      2.0037090035367573,
+      1.9973562993840415,
       1.9851536824389353
     ],
     "observed_temporal_orders_with_the_space_floor_removed": [
-      1.0041551623595775,
+      1.0041551623595628,
       1.0020704873524011,
       1.0010072198850382,
-      1.0004440939872443
+      1.0004440939874815
     ],
     "expected_spatial_order": 2.0,
     "expected_temporal_order": 1.0,
-    "worst_ratio": 1.0179827601486682,
-    "best_ratio": 1.000609144723041,
+    "worst_ratio": 1.0179827601486537,
+    "best_ratio": 1.0006091447229246,
     "verdict": "ERROR_HAS_THE_PREDICTED_SHAPE"
   },
   "platinum": {
@@ -227,9 +227,9 @@
       {
         "circuit": "floating_reference",
         "condition_number": 5289.457627118643,
-        "worst_relative_disagreement": 7.706253935633446e-16,
+        "worst_relative_disagreement": 0.0,
         "round_off_expectation": 1.1744955290812527e-12,
-        "disagreement_in_units_of_the_expectation": 0.0006561331009630705
+        "disagreement_in_units_of_the_expectation": 0.0
       }
     ],
     "verdict": "DISAGREEMENT_IS_ROUND_OFF",
@@ -340,25 +340,25 @@
       {
         "circuit": "floating_reference",
         "node": "a",
-        "core_v": 2.305084745762712,
+        "core_v": 2.30508474576271,
         "ngspice_default_format_v": 2.305085,
         "ngspice_twelve_figures_v": 2.305084745763,
-        "relative_difference_default_format": 1.1029411763633882e-07,
-        "relative_difference_twelve_figures": 1.250339701056369e-13
+        "relative_difference_default_format": 1.1029411840696422e-07,
+        "relative_difference_twelve_figures": 1.2580459549920016e-13
       },
       {
         "circuit": "floating_reference",
         "node": "c",
-        "core_v": -4.494915254237288,
+        "core_v": -4.49491525423729,
         "ngspice_default_format_v": -4.49492,
         "ngspice_twelve_figures_v": -4.49491525424,
-        "relative_difference_default_format": 1.0558069381226208e-06,
-        "relative_difference_twelve_figures": 6.034589620361621e-13
+        "relative_difference_default_format": 1.0558069377274285e-06,
+        "relative_difference_twelve_figures": 6.030637695266427e-13
       }
     ],
-    "worst_relative_difference_default_format": 1.0558069381226208e-06,
-    "worst_relative_difference_twelve_figures": 6.034589620361621e-13,
-    "improvement_factor": 1749591.9433529796,
+    "worst_relative_difference_default_format": 1.0558069377274285e-06,
+    "worst_relative_difference_twelve_figures": 6.030637695266427e-13,
+    "improvement_factor": 1750738.4642857143,
     "newton_tolerance_tightening_changed_anything": false,
     "verdict": "THE_DEFAULT_DISAGREEMENT_WAS_THE_OUTPUT_FORMAT",
     "correction_to_the_preregistered_justification": "The plan justified 2e-6 as ngspice's seven significant figures. The default format is six decimal places, so the floor on a two-volt node is 1e-6 relative rather than 1e-7. The number in the plan is unchanged and was met before this was noticed; the justification printed alongside it was wrong and is corrected here rather than quietly restated."

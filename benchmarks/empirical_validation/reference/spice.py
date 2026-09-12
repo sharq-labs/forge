@@ -69,8 +69,10 @@ def available() -> bool:
 
 
 def version() -> str:
+    if ARGV is None:
+        return "unavailable"
     out = subprocess.run(
-        [NGSPICE, "-v"], capture_output=True, text=True, timeout=60
+        [*ARGV, "-v"], capture_output=True, text=True, timeout=60
     )
     for line in (out.stdout + out.stderr).splitlines():
         if "ngspice-" in line:

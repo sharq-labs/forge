@@ -397,15 +397,23 @@ def ipm_7() -> dict:
     derived_netlist = "\n".join(derived_lines)
 
     import subprocess
-    import tempfile
-    from pathlib import Path
 
-    with tempfile.TemporaryDirectory() as directory:
-        path = Path(directory) / "ipm7.cir"
-        path.write_text(derived_netlist, encoding="utf-8")
-        completed = subprocess.run(
-            [spice.NGSPICE, "-b", str(path)], capture_output=True, text=True, timeout=120
+    # stdin, and `spice.ARGV`, for the reason `spice.run` uses them: the
+    # provider may live in another filesystem namespace (here it is reached as
+    # `wsl.exe ngspice`), where a temp-file path written by this process is not
+    # resolvable. The netlist built above is unchanged.
+    if spice.ARGV is None:
+        raise RuntimeError(
+            "IPM-7 needs the ngspice provider and it is not reachable on this "
+            "host; the mutation cannot be run, which is an execution fact"
         )
+    completed = subprocess.run(
+        [*spice.ARGV, "-b"],
+        input=derived_netlist,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
     derived_voltages = {}
     for line in completed.stdout.splitlines():
         match = spice._VALUE.match(line)
