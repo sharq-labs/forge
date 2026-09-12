@@ -1,0 +1,319 @@
+{
+  "label": "PRIMARY",
+  "split": {
+    "calibration": [
+      "BATT_001.DCHG.SOC020",
+      "BATT_001.DCHG.SOC050",
+      "BATT_001.DCHG.SOC080"
+    ],
+    "held_out": [
+      "BATT_001.DCHG.SOC000",
+      "BATT_001.DCHG.SOC040",
+      "BATT_001.DCHG.SOC060"
+    ],
+    "intersection_by_identity": [],
+    "intersection_by_material_content": [],
+    "calibration_dataset_id": "S-OCV.BATT_001.discharge.calibration",
+    "held_out_dataset_id": "S-OCV.BATT_001.discharge.held_out"
+  },
+  "calibration": {
+    "method": "engcore.inference.calibrate: bounded trust-region least squares on standardized residuals",
+    "status": "CALIBRATION_CONVERGED",
+    "termination_reason": "`xtol` termination condition is satisfied.",
+    "bounds_v": [
+      2.0,
+      3.6
+    ],
+    "initial_point_v": {
+      "open_circuit_voltage_at_empty": 3.2,
+      "open_circuit_voltage_at_full": 3.4
+    },
+    "optimizer_evaluations": 5,
+    "admitted_forward_predictions": 39,
+    "objective_chi_square": 3.668621797173449,
+    "calibration_degrees_of_freedom": 1,
+    "wall_seconds_informational": 0.0121,
+    "estimates_v": {
+      "open_circuit_voltage_at_empty": 3.219741615287903,
+      "open_circuit_voltage_at_full": 3.3608822091184325
+    },
+    "standardized_calibration_residuals": [
+      0.42807757432881294,
+      -1.514492425160361,
+      1.0916428361245707
+    ]
+  },
+  "posterior": {
+    "wls_oracle": {
+      "open_circuit_voltage_at_empty": 3.2197416152889766,
+      "open_circuit_voltage_at_full": 3.3608822091385346,
+      "se": [
+        0.0009893991517947267,
+        0.0018043357183944067
+      ],
+      "correlation": -0.6643605738385805
+    },
+    "grid_points": 1681,
+    "grid_span_se": 6.0,
+    "grid_ranges_v": [
+      [
+        3.2138052203782084,
+        3.225678010199745
+      ],
+      [
+        3.350056194828168,
+        3.371708223448901
+      ]
+    ],
+    "rejected_rows": 0,
+    "posterior_mean_v": [
+      3.2197416152889744,
+      3.360882209138533
+    ],
+    "posterior_sd_v": [
+      0.0009893991330233386,
+      0.0018043356841616134
+    ],
+    "posterior_correlation": -0.6643605640798028,
+    "marginal_95_v": [
+      [
+        3.2176638770702075,
+        3.2218193535077457
+      ],
+      [
+        3.3570931041299064,
+        3.364671314147163
+      ]
+    ],
+    "diagnostics": {
+      "effective_sample_size": 104.35843271303156,
+      "occupied_support_fraction": 0.21475312314098752,
+      "spacing_to_std": [
+        0.30000000569152396,
+        0.3000000056915468
+      ],
+      "grid_points": 1681
+    }
+  },
+  "identifiability": {
+    "status": "PARAMETERS_IDENTIFIABLE",
+    "condition_number": 7.94611065639776,
+    "max_abs_correlation": 0.6643605640798029,
+    "relative_widths": [
+      0.001290624197235548,
+      0.0022548276153953693
+    ],
+    "parameter_names": [
+      "open_circuit_voltage_at_empty",
+      "open_circuit_voltage_at_full"
+    ],
+    "effective_sample_size": 104.35843271303156,
+    "occupied_support_fraction": 0.21475312314098752,
+    "spacing_to_std": [
+      0.30000000569152396,
+      0.3000000056915468
+    ],
+    "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+    },
+    "why": "every parameter's 95% interval is small relative to its own value (widest 0.00225, threshold 1), and neither the correlation (0.6644) nor the conditioning (7.95) reaches its threshold"
+  },
+  "held_out": [
+    {
+      "condition_id": "BATT_001.DCHG.SOC000",
+      "state_of_charge": 0.0,
+      "observed_v": 2.8473,
+      "predictive_mean_v": 3.219741615288977,
+      "error_v": -0.3724416152889769,
+      "parameter_standard_uncertainty_v": 0.0009893991330233384,
+      "measurement_standard_uncertainty_v": 0.0023033207006407327,
+      "total_standard_uncertainty_v": 0.002506830048971699,
+      "parameter_interval_95_v": [
+        3.2176638770702075,
+        3.2218193535077457
+      ],
+      "total_interval_95_v": [
+        3.214828318677517,
+        3.224654911900437
+      ],
+      "standardized_residual": -148.57074792196318,
+      "two_sided_tail_probability": 0.0,
+      "log_predictive_density": -12674.614801673444,
+      "covered_by_95_interval": false,
+      "evidence_digest": "e6576594424d4cb4f5aed9081450008b458640a79a0b33dab0a695c204a6ce97"
+    },
+    {
+      "condition_id": "BATT_001.DCHG.SOC040",
+      "state_of_charge": 0.4,
+      "observed_v": 3.2894,
+      "predictive_mean_v": 3.2761978528287994,
+      "error_v": 0.013202147171200718,
+      "parameter_standard_uncertainty_v": 0.0005513779839484318,
+      "measurement_standard_uncertainty_v": 0.0009725122107202524,
+      "total_standard_uncertainty_v": 0.0011179435053628737,
+      "parameter_interval_95_v": [
+        3.275115251397763,
+        3.2772804542598366
+      ],
+      "total_interval_95_v": [
+        3.2740067238216852,
+        3.2783889818359144
+      ],
+      "standardized_residual": 11.809315146846735,
+      "two_sided_tail_probability": 0.0,
+      "log_predictive_density": -63.85498766560875,
+      "covered_by_95_interval": false,
+      "evidence_digest": "79bf6e0df6edfe742c47ecdbfc019c2230f8a34ebd336714bba44971d844c0c2"
+    },
+    {
+      "condition_id": "BATT_001.DCHG.SOC060",
+      "state_of_charge": 0.6,
+      "observed_v": 3.2929,
+      "predictive_mean_v": 3.304425971598711,
+      "error_v": -0.011525971598711049,
+      "parameter_standard_uncertainty_v": 0.00087141322260185,
+      "measurement_standard_uncertainty_v": 0.0012339663690717126,
+      "total_standard_uncertainty_v": 0.001510640263108781,
+      "parameter_interval_95_v": [
+        3.3027147448192764,
+        3.3061371983781465
+      ],
+      "total_interval_95_v": [
+        3.301465171085936,
+        3.307386772111486
+      ],
+      "standardized_residual": -7.62985859716958,
+      "two_sided_tail_probability": 2.3258853438208647e-14,
+      "log_predictive_density": -23.539191288558246,
+      "covered_by_95_interval": false,
+      "evidence_digest": "83aa9e9bce8b012e13719ed84d16e4798f415e0ad807fbeb66c93486f206d9cf"
+    }
+  ],
+  "metrics": {
+    "n": 3,
+    "rmse_v": 0.21526719947566453,
+    "mae_v": 0.13238991135296288,
+    "max_abs_error_v": 0.3724416152889769,
+    "mean_log_predictive_density": -4254.002993542537,
+    "coverage_95": "0/3",
+    "chi_square": 22270.94180454187,
+    "chi_square_df": 3,
+    "chi_square_p_value": 0.0,
+    "alpha": 0.01
+  },
+  "uncertainty_sources": [
+    "PARAMETER_UNCERTAINTY",
+    "MEASUREMENT_UNCERTAINTY",
+    "MODEL_DISCREPANCY_NOT_MODELLED"
+  ],
+  "model_discrepancy": "MODEL_DISCREPANCY_NOT_MODELLED",
+  "adequacy_verdict": "inadequate_for_declared_study",
+  "observation_budgets": {
+    "BATT_001.DCHG.SOC000": {
+      "state_of_charge": 0.0,
+      "local_dOCV_dSOC_v": 2.0019999999999993,
+      "u_voltage_acquisition_v": 2.8e-05,
+      "u_state_of_charge_v": 0.0015014999999999994,
+      "u_temperature_v": 0.0004,
+      "u_residual_relaxation_v": 0.0017000000000000348,
+      "combined_standard_uncertainty_v": 0.0023033207006407327,
+      "expanded_uncertainty_k2_v": 0.004606641401281465,
+      "sigma_computed_from": [
+        0.0,
+        0.2,
+        0.4,
+        0.5,
+        0.6,
+        0.8
+      ]
+    },
+    "BATT_001.DCHG.SOC020": {
+      "state_of_charge": 0.2,
+      "local_dOCV_dSOC_v": 0.14766666666666595,
+      "u_voltage_acquisition_v": 2.8e-05,
+      "u_state_of_charge_v": 0.00044299999999999787,
+      "u_temperature_v": 0.0004,
+      "u_residual_relaxation_v": 0.00019999999999997797,
+      "combined_standard_uncertainty_v": 0.0006301055467141908,
+      "expanded_uncertainty_k2_v": 0.0012602110934283816,
+      "sigma_computed_from": [
+        0.2,
+        0.5,
+        0.8
+      ]
+    },
+    "BATT_001.DCHG.SOC040": {
+      "state_of_charge": 0.4,
+      "local_dOCV_dSOC_v": 0.14766666666666595,
+      "u_voltage_acquisition_v": 2.8e-05,
+      "u_state_of_charge_v": 0.0008859999999999957,
+      "u_temperature_v": 0.0004,
+      "u_residual_relaxation_v": 0.0,
+      "combined_standard_uncertainty_v": 0.0009725122107202524,
+      "expanded_uncertainty_k2_v": 0.0019450244214405047,
+      "sigma_computed_from": [
+        0.0,
+        0.2,
+        0.4,
+        0.5,
+        0.6,
+        0.8
+      ]
+    },
+    "BATT_001.DCHG.SOC050": {
+      "state_of_charge": 0.5,
+      "local_dOCV_dSOC_v": 0.1386666666666669,
+      "u_voltage_acquisition_v": 2.8e-05,
+      "u_state_of_charge_v": 0.0010400000000000019,
+      "u_temperature_v": 0.0004,
+      "u_residual_relaxation_v": 0.0,
+      "combined_standard_uncertainty_v": 0.001114622806154622,
+      "expanded_uncertainty_k2_v": 0.002229245612309244,
+      "sigma_computed_from": [
+        0.2,
+        0.5,
+        0.8
+      ]
+    },
+    "BATT_001.DCHG.SOC060": {
+      "state_of_charge": 0.6,
+      "local_dOCV_dSOC_v": 0.1296666666666679,
+      "u_voltage_acquisition_v": 2.8e-05,
+      "u_state_of_charge_v": 0.0011670000000000111,
+      "u_temperature_v": 0.0004,
+      "u_residual_relaxation_v": 0.0,
+      "combined_standard_uncertainty_v": 0.0012339663690717126,
+      "expanded_uncertainty_k2_v": 0.0024679327381434252,
+      "sigma_computed_from": [
+        0.0,
+        0.2,
+        0.4,
+        0.5,
+        0.6,
+        0.8
+      ]
+    },
+    "BATT_001.DCHG.SOC080": {
+      "state_of_charge": 0.8,
+      "local_dOCV_dSOC_v": 0.1296666666666679,
+      "u_voltage_acquisition_v": 2.8e-05,
+      "u_state_of_charge_v": 0.0015560000000000148,
+      "u_temperature_v": 0.0004,
+      "u_residual_relaxation_v": 0.0,
+      "combined_standard_uncertainty_v": 0.0016068353991619821,
+      "expanded_uncertainty_k2_v": 0.0032136707983239643,
+      "sigma_computed_from": [
+        0.2,
+        0.5,
+        0.8
+      ]
+    }
+  },
+  "preregistration_sha256": "55f3f4508b81fd9ce1000a181d2a52d1cdd1bfcd6e920fd3003a321defe83c97",
+  "evidence_sha256_before": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+  "evidence_sha256_after": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+  "evidence_unchanged": true,
+  "run_wall_seconds_informational": 6.2
+}

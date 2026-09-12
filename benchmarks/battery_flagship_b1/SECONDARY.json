@@ -1,0 +1,251 @@
+{
+  "S1_applicability_boundary": [
+    {
+      "calibrated_on": [
+        0.4,
+        0.5,
+        0.6
+      ],
+      "scored_state_of_charge": 0.8,
+      "identifiability": "PARAMETERS_IDENTIFIABLE",
+      "error_mv": 34.26113924070062,
+      "total_standard_uncertainty_mv": 2.488507260948992,
+      "standardized_residual": 13.767747347313401,
+      "two_sided_tail_probability": 4.440892098500626e-16,
+      "consistent_at_alpha_0.01": false,
+      "covered_by_95_interval": false
+    },
+    {
+      "calibrated_on": [
+        0.4,
+        0.5,
+        0.6
+      ],
+      "scored_state_of_charge": 0.2,
+      "identifiability": "PARAMETERS_IDENTIFIABLE",
+      "error_mv": -38.52401985966836,
+      "total_standard_uncertainty_mv": 3.473346398801692,
+      "standardized_residual": -11.091326759968192,
+      "two_sided_tail_probability": 1.3814892157342069e-28,
+      "consistent_at_alpha_0.01": false,
+      "covered_by_95_interval": false
+    },
+    {
+      "calibrated_on": [
+        0.4,
+        0.5,
+        0.6
+      ],
+      "scored_state_of_charge": 0.0,
+      "identifiability": "PARAMETERS_IDENTIFIABLE",
+      "error_mv": -435.4524062264575,
+      "total_standard_uncertainty_mv": 2.755903048699476,
+      "standardized_residual": -158.00715719370086,
+      "two_sided_tail_probability": 0.0,
+      "consistent_at_alpha_0.01": false,
+      "covered_by_95_interval": false
+    }
+  ],
+  "S2_residual_structure_vs_soc": [
+    {
+      "state_of_charge": 0.0,
+      "partition": "held_out",
+      "observed_minus_chord_mv": -372.4416152889742,
+      "in_sigma": -161.6976807378014
+    },
+    {
+      "state_of_charge": 0.2,
+      "partition": "calibration",
+      "observed_minus_chord_mv": -0.2697340588859731,
+      "in_sigma": -0.4280775820694714
+    },
+    {
+      "state_of_charge": 0.4,
+      "partition": "held_out",
+      "observed_minus_chord_mv": 13.202147171202494,
+      "in_sigma": 13.575302217979196
+    },
+    {
+      "state_of_charge": 0.5,
+      "partition": "calibration",
+      "observed_minus_chord_mv": 1.688087786246406,
+      "in_sigma": 1.514492415663198
+    },
+    {
+      "state_of_charge": 0.6,
+      "partition": "held_out",
+      "observed_minus_chord_mv": -11.525971598709717,
+      "in_sigma": -9.3405881129325
+    },
+    {
+      "state_of_charge": 0.8,
+      "partition": "calibration",
+      "observed_minus_chord_mv": -1.754090368621064,
+      "in_sigma": -1.0916428462653238
+    }
+  ],
+  "S3_relaxation_time": [
+    {
+      "state_of_charge": 0.0,
+      "voltage_at_0h_v": 2.0123,
+      "voltage_at_24h_v": 2.8473,
+      "recovery_over_24h_mv": 835.0,
+      "expanded_uncertainty_mv": 4.606641401281466,
+      "within_expanded_uncertainty_of_24h_value_from_h": 21.466666666666665
+    },
+    {
+      "state_of_charge": 0.2,
+      "voltage_at_0h_v": 3.1419,
+      "voltage_at_24h_v": 3.2477,
+      "recovery_over_24h_mv": 105.7999999999999,
+      "expanded_uncertainty_mv": 6.6917806486764,
+      "within_expanded_uncertainty_of_24h_value_from_h": 3.3666666666666667
+    },
+    {
+      "state_of_charge": 0.4,
+      "voltage_at_0h_v": 3.2552,
+      "voltage_at_24h_v": 3.2894,
+      "recovery_over_24h_mv": 34.20000000000023,
+      "expanded_uncertainty_mv": 1.9450244214405048,
+      "within_expanded_uncertainty_of_24h_value_from_h": 4.3
+    },
+    {
+      "state_of_charge": 0.5,
+      "voltage_at_0h_v": 3.261,
+      "voltage_at_24h_v": 3.292,
+      "recovery_over_24h_mv": 30.999999999999694,
+      "expanded_uncertainty_mv": 0.8438259595437875,
+      "within_expanded_uncertainty_of_24h_value_from_h": 23.083333333333332
+    },
+    {
+      "state_of_charge": 0.6,
+      "voltage_at_0h_v": 3.2703,
+      "voltage_at_24h_v": 3.2929,
+      "recovery_over_24h_mv": 22.59999999999973,
+      "expanded_uncertainty_mv": 2.4679327381434253,
+      "within_expanded_uncertainty_of_24h_value_from_h": 2.033333333333333
+    },
+    {
+      "state_of_charge": 0.8,
+      "voltage_at_0h_v": 3.2924,
+      "voltage_at_24h_v": 3.3309,
+      "recovery_over_24h_mv": 38.49999999999998,
+      "expanded_uncertainty_mv": 4.629982289383002,
+      "within_expanded_uncertainty_of_24h_value_from_h": 0.5666666666666667
+    }
+  ],
+  "S4_hysteresis_charge_minus_discharge": [
+    {
+      "state_of_charge": 0.2,
+      "charge_minus_discharge_mv": 1.3000000000000789,
+      "discharge_expanded_uncertainty_mv": 6.6917806486764,
+      "exceeds_expanded_uncertainty": false
+    },
+    {
+      "state_of_charge": 0.4,
+      "charge_minus_discharge_mv": 9.599999999999831,
+      "discharge_expanded_uncertainty_mv": 1.9450244214405048,
+      "exceeds_expanded_uncertainty": true
+    },
+    {
+      "state_of_charge": 0.5,
+      "charge_minus_discharge_mv": 7.000000000000117,
+      "discharge_expanded_uncertainty_mv": 0.8438259595437875,
+      "exceeds_expanded_uncertainty": true
+    },
+    {
+      "state_of_charge": 0.6,
+      "charge_minus_discharge_mv": 9.100000000000108,
+      "discharge_expanded_uncertainty_mv": 2.4679327381434253,
+      "exceeds_expanded_uncertainty": true
+    },
+    {
+      "state_of_charge": 0.8,
+      "charge_minus_discharge_mv": 2.0999999999999908,
+      "discharge_expanded_uncertainty_mv": 4.629982289383002,
+      "exceeds_expanded_uncertainty": false
+    }
+  ],
+  "S5_conditioning_current_invariance": [
+    {
+      "state_of_charge": 0.0,
+      "ocv_at_0.2C_v": 3.219741615287903,
+      "ocv_at_1C_v": 3.219741615287903,
+      "identical": true
+    },
+    {
+      "state_of_charge": 0.4,
+      "ocv_at_0.2C_v": 3.2761978528201148,
+      "ocv_at_1C_v": 3.2761978528201148,
+      "identical": true
+    },
+    {
+      "state_of_charge": 0.6,
+      "ocv_at_0.2C_v": 3.3044259715862205,
+      "ocv_at_1C_v": 3.3044259715862205,
+      "identical": true
+    }
+  ],
+  "applicability_assessment_of_calibrated_cell": [
+    {
+      "state_of_charge": 0.0,
+      "status": "unknown",
+      "satisfied": [
+        "nominal_capacity",
+        "internal_resistance",
+        "terminal_voltage_ratio"
+      ],
+      "unknown": [
+        "continuous_c_rate_utilization",
+        "pulse_c_rate_utilization",
+        "pulse_duration_utilization",
+        "soc_window_margin",
+        "discharge_temperature_position",
+        "internal_resistance_drift_ratio",
+        "self_heating_rise_ratio",
+        "polarization_unmodelled_fraction"
+      ],
+      "violated": []
+    },
+    {
+      "state_of_charge": 0.4,
+      "status": "unknown",
+      "satisfied": [
+        "nominal_capacity",
+        "internal_resistance",
+        "terminal_voltage_ratio"
+      ],
+      "unknown": [
+        "continuous_c_rate_utilization",
+        "pulse_c_rate_utilization",
+        "pulse_duration_utilization",
+        "soc_window_margin",
+        "discharge_temperature_position",
+        "internal_resistance_drift_ratio",
+        "self_heating_rise_ratio",
+        "polarization_unmodelled_fraction"
+      ],
+      "violated": []
+    },
+    {
+      "state_of_charge": 0.6,
+      "status": "unknown",
+      "satisfied": [
+        "nominal_capacity",
+        "internal_resistance",
+        "terminal_voltage_ratio"
+      ],
+      "unknown": [
+        "continuous_c_rate_utilization",
+        "pulse_c_rate_utilization",
+        "pulse_duration_utilization",
+        "soc_window_margin",
+        "discharge_temperature_position",
+        "internal_resistance_drift_ratio",
+        "self_heating_rise_ratio",
+        "polarization_unmodelled_fraction"
+      ],
+      "violated": []
+    }
+  ]
+}
