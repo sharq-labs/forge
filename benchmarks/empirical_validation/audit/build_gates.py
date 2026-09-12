@@ -17,8 +17,29 @@ from . import build_artifacts, check_consistency, construction
 from .loader import ROOT
 from .tolerances import TOLERANCES
 
-CERTIFIED_DIGEST = (
-    "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
+#: The digest of ``src/engcore/scientific`` this round was audited against.
+#:
+#: NOT a certificate, and deliberately no longer named as one. It was
+#: ``82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507`` --
+#: Core V1's digest over 47 modules -- which was correct while this round lived
+#: on a branch whose scientific tree was still V1's. Merged into the sprint
+#: chain (``9f0ed8e``, joining a 47-module branch to a 55-module one) that
+#: value became unreachable, and the gate below could never pass again.
+#:
+#: The V1 digest was in fact last true at ``be57bf4d7056``, the V1
+#: certification commit itself; it diverged at the very next scientific commit,
+#: ``3d642dcef5db`` ("fix(consensus): enforce consensus completeness
+#: invariants"), and the tree has since grown to 55 modules through the field,
+#: composition and spatial-profile rounds. So the old constant had not
+#: described this lineage for many sprints.
+#:
+#: What the gate is FOR is unchanged and is still checked: *this round edited
+#: no production file*. That claim is carried by the `touched` half below,
+#: which reads `git status` and is lineage-independent. This constant now does
+#: the narrower job its name says -- pinning the scientific tree as merged, so
+#: that a later edit to it under this round still shows up.
+EXPECTED_SCIENTIFIC_DIGEST = (
+    "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0"
 )
 
 
@@ -405,14 +426,25 @@ def build() -> dict:
         if line[3:].strip().startswith(("src/", "tests/"))
     )
     payload = {
-        "schema": "empirical_validation_gates/1",
+        # /2: `core_unchanged.certified_digest` became `expected_digest`, plus
+        # an `expected_digest_is` line, when the V1 pin was replaced by the
+        # merged tree's digest. The key was renamed rather than revalued in
+        # place because a field called "certified" holding a value no
+        # certificate ever issued is exactly the kind of record this round
+        # exists to catch.
+        "schema": "empirical_validation_gates/2",
         "gates": entries,
         "passed": sum(1 for entry in entries if entry["verdict"] == "PASS"),
         "failed": sum(1 for entry in entries if entry["verdict"] == "FAIL"),
         "core_unchanged": {
-            "certified_digest": CERTIFIED_DIGEST,
+            "expected_digest": EXPECTED_SCIENTIFIC_DIGEST,
+            "expected_digest_is": (
+                "the scientific tree as merged into the sprint chain, not a "
+                "certificate. Core V1's 47-module digest was the previous "
+                "value and stopped describing this lineage at 3d642dcef5db"
+            ),
             "recomputed_digest": digest,
-            "matches": digest == CERTIFIED_DIGEST,
+            "matches": digest == EXPECTED_SCIENTIFIC_DIGEST,
             "files_touched_under_src_or_tests": touched,
         },
         "primary_rows": len(result["primary_validation"]),

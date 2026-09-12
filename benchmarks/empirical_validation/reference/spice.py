@@ -15,24 +15,57 @@ environment, and it covers exactly one of the six domains.
 
 from __future__ import annotations
 
+import os
 import re
+import shlex
 import shutil
 import subprocess
-import tempfile
-from pathlib import Path
 
 # This file's own unit factors. Deliberately not imported from anywhere.
 KOHM_TO_OHM = 1.0e3
 MV_TO_V = 1.0e-3
 MA_TO_A = 1.0e-3
 
-NGSPICE = shutil.which("ngspice") or "/usr/bin/ngspice"
+def _argv() -> list[str] | None:
+    """How to launch ngspice here, or ``None`` if it cannot be launched.
+
+    An argv PREFIX rather than a path, because on some hosts -- this one -- the
+    provider is not directly executable from Windows at all and is reached as
+    ``wsl.exe -e ngspice``. The previous form was
+    ``shutil.which("ngspice") or "/usr/bin/ngspice"``, which on such a host
+    produced a POSIX path that Windows cannot execute: `available()` correctly
+    answered False and the rebuild called `run()` anyway, so the round died
+    with WinError 2 instead of reporting an unavailable channel.
+
+    Resolution order matches the production adapter
+    (``src/engcore/domains/electrical/ngspice.py``) and the blind round's
+    oracle, so all three agree about where the provider is. This is runtime
+    configuration, never science: nothing here reaches a record, and the file's
+    independence rule is untouched -- no adapter is imported, and the netlist
+    is still written from the raw fixture by this file's own factors.
+    """
+    raw = os.environ.get("CRAFTY_NGSPICE_ARGV", "").strip()
+    if raw:
+        return shlex.split(raw)
+    if shutil.which("ngspice"):
+        return ["ngspice"]
+    wsl = shutil.which("wsl.exe") or shutil.which("wsl")
+    if wsl:
+        probe = subprocess.run(
+            [wsl, "which", "ngspice"], capture_output=True, text=True, timeout=60
+        )
+        if probe.returncode == 0 and probe.stdout.strip():
+            return [wsl, "ngspice"]
+    return None
+
+
+ARGV = _argv()
 
 _VALUE = re.compile(r"^\s*([a-zA-Z0-9_()#.\-]+)\s*=\s*([-+0-9.eE]+)\s*$")
 
 
 def available() -> bool:
-    return Path(NGSPICE).exists()
+    return ARGV is not None
 
 
 def version() -> str:
@@ -132,16 +165,27 @@ def run(circuit: dict, *, tight: bool = True) -> dict:
     single-unknown circuit collapses its output to a bare ``all = value`` with
     no node label attached.
     """
-    text = netlist(circuit, tight=tight)
-    with tempfile.TemporaryDirectory() as directory:
-        path = Path(directory) / f"{circuit['circuit_id']}.cir"
-        path.write_text(text, encoding="utf-8")
-        completed = subprocess.run(
-            [NGSPICE, "-b", str(path)],
-            capture_output=True,
-            text=True,
-            timeout=120,
+    if ARGV is None:
+        raise RuntimeError(
+            "ngspice is not reachable on this host, so it cannot be used as an "
+            "independent check. Callers must consult available() first: a "
+            "missing provider is an execution fact, not a scientific one"
         )
+    text = netlist(circuit, tight=tight)
+    # The netlist goes in on STDIN rather than as a temp file, because the
+    # provider may be in a different filesystem namespace than this process:
+    # under `wsl.exe -e ngspice` a Windows path is not resolvable inside the
+    # guest. Nothing crosses the boundary but the netlist itself, so there is
+    # no path to translate and no host convention to leak. The bytes are
+    # identical either way -- `netlist()` is unchanged and still builds them
+    # from the raw fixture.
+    completed = subprocess.run(
+        [*ARGV, "-b"],
+        input=text,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
     voltages: dict[str, float] = {circuit["reference_node"]: 0.0}
     currents: dict[str, float] = {}
     for line in completed.stdout.splitlines():
