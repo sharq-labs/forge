@@ -36,7 +36,10 @@
       "level": "LEVEL 4 external canonical implementation",
       "quantity": "DC operating point of a resistive network",
       "version": "ngspice-42 : Circuit level simulation program",
-      "binary": "/usr/bin/ngspice",
+      "invocation": [
+        "C:\\WINDOWS\\system32\\wsl.exe",
+        "ngspice"
+      ],
       "how_it_is_kept_independent": "Its netlist is emitted from fixtures/circuits.json by reference/spice.py, which imports neither engcore nor either adapter and carries its own kohm and mV factors. IPM-7 demonstrates what happens when that rule is broken.",
       "used_for": "every DC node voltage comparison"
     }

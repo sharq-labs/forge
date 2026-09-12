@@ -281,7 +281,11 @@ def build() -> dict:
                     "level": "LEVEL 4 external canonical implementation",
                     "quantity": "DC operating point of a resistive network",
                     "version": spice.version() if spice.available() else None,
-                    "binary": spice.NGSPICE,
+                    # The argv PREFIX, not a path: on a host that reaches the
+                    # provider through WSL there is no single Windows-executable
+                    # path to record, and writing one would make this
+                    # provenance line describe a binary nothing ran.
+                    "invocation": list(spice.ARGV) if spice.ARGV else None,
                     "how_it_is_kept_independent": (
                         "Its netlist is emitted from fixtures/circuits.json by "
                         "reference/spice.py, which imports neither engcore nor "

@@ -4594,6 +4594,23 @@ def test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed()
     starts importing `scikit-learn` this fails and the note comes out, and if
     a THIRD unused declaration lands this fails and somebody looks at it
     instead of it joining a list nobody rereads.
+
+    A third one landed, and somebody looked at it. `mpmath` is NOT unused: it
+    is imported, by statement, at
+    `benchmarks/scientific_truth/oracles/material.py:25`, which evaluates that
+    round's reference at 50 significant digits. It appears here because
+    `_reached_modules()` walks `src/` and `tests/` and not `benchmarks/`, so
+    the whole benchmark tree is a blind spot to this sweep.
+
+    The scan is deliberately NOT widened to close that blind spot, because
+    doing so is a larger decision than this guard should make on its own:
+    `benchmarks/` also reaches `jsonschema` and `psutil`, neither declared
+    anywhere, and several rounds append their own directory to `sys.path` so
+    local names like `adapters` and `challenge` read as third-party to an AST
+    walk. Widening the sweep means declaring those two and teaching it about
+    the sys.path appends -- a dependency-hygiene round, not a line in an
+    assertion. Recorded here so the next reader inherits the blind spot as a
+    known one rather than rediscovering it.
     """
     declared: set[str] = set()
     for names in _declared_distributions().values():
@@ -4603,7 +4620,7 @@ def test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed()
     for module in _reached_modules():
         reached |= _distributions_providing(module)
 
-    assert declared - reached == {"pytest-xdist", "scikit-learn"}, sorted(
+    assert declared - reached == {"mpmath", "pytest-xdist", "scikit-learn"}, sorted(
         declared - reached
     )
 

@@ -12,16 +12,41 @@ assert that the classification still refers to tests and files that exist.
 
 from __future__ import annotations
 
+import importlib.util
 import pathlib
 
 import pytest
 
-from conftest import (
-    CAMPAIGN_TESTS,
-    EXPENSIVE_MODULES,
-    STATIC_GUARDS,
-    normalized_nodeid,
+# The tier tables are loaded from `tests/conftest.py` BY PATH, not with
+# `from conftest import ...`.
+#
+# The bare name is ambiguous and, since the benchmark rounds merged, wrong.
+# pytest imports a `conftest.py` that sits in a directory with no
+# `__init__.py` as a TOP-LEVEL module called `conftest`, and collection runs
+# alphabetically, so `benchmarks/scientific_truth/tests/conftest.py` reaches
+# `sys.modules["conftest"]` first and `from conftest import CAMPAIGN_TESTS`
+# raises ImportError for the whole FAST suite. Five benchmark rounds now ship
+# such a file.
+#
+# The repository used to defend the bare name by refusing to put a second
+# `conftest.py` anywhere that could win the race -- `tests/domains/battery/
+# battery_cases.py` says so in its header, and `benchmarks/empirical_
+# validation/tests/test_empirical_validation.py` declines to write one for the
+# same reason. That is a convention every future round has to know about and
+# one of them did not. Loading the file this test is actually about, by its
+# path, needs no convention: no import order can change which file this is.
+_CONFTEST_PATH = pathlib.Path(__file__).resolve().parent / "conftest.py"
+_spec = importlib.util.spec_from_file_location(
+    "engcore_tests_root_conftest", _CONFTEST_PATH
 )
+assert _spec is not None and _spec.loader is not None, _CONFTEST_PATH
+_root_conftest = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_root_conftest)
+
+CAMPAIGN_TESTS = _root_conftest.CAMPAIGN_TESTS
+EXPENSIVE_MODULES = _root_conftest.EXPENSIVE_MODULES
+STATIC_GUARDS = _root_conftest.STATIC_GUARDS
+normalized_nodeid = _root_conftest.normalized_nodeid
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 

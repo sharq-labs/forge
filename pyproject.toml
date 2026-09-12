@@ -15,9 +15,12 @@ dependencies = [
   # correction to a record. It is written here, and not only in the guard,
   # because this list is where a reader decides what the package needs.
   # `tests/test_core_guards.py::test_a_declared_dependency_nothing_imports_is_recorded_rather_than_assumed`
-  # asserts the unimported set is EXACTLY {pytest-xdist, scikit-learn}, so if
-  # something starts importing it, or a third unused declaration lands, that
-  # test fails and this comment gets revisited.
+  # asserts the unimported set is EXACTLY {mpmath, pytest-xdist, scikit-learn},
+  # so if something starts importing it, or a further unused declaration lands,
+  # that test fails and this comment gets revisited. `mpmath` is in that set for
+  # a different reason than these two — it IS imported, from `benchmarks/`,
+  # which that guard's sweep does not walk. The guard's docstring has the
+  # detail.
   "scikit-learn>=1.4",
   # Scientific Core units backend. Lower bound only: the platform must not
   # pin its scientific stack to one machine's resolved versions.
@@ -50,6 +53,22 @@ dev = [
 mcp = [
   "mcp>=2.1",
   "anyio>=4.0",
+]
+
+# The independent-oracle boundary. `benchmarks/scientific_truth/oracles/
+# material.py` evaluates the material-resistance reference at 50 significant
+# digits to settle whether a double-precision disagreement is the model's or
+# the arithmetic's. Without this group installed, that benchmark's test module
+# fails to COLLECT — it is a hard import, not a guarded one — which is how it
+# arrived undeclared: the round that wrote the oracle ran on a host that had
+# mpmath by some route this file did not record.
+#
+# Optional rather than required for the reason `[mcp]` is: nothing under `src/`
+# imports it, so a bare install of the runtime does not need it. It is declared
+# rather than left transitive because a dependency nothing names is a
+# dependency nobody can reinstall.
+oracles = [
+  "mpmath>=1.3",
 ]
 
 [build-system]

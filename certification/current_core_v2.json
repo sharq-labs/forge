@@ -3,8 +3,8 @@
     "harness_identity": {
       "files": {
         "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
-        "tests/test_core_guards.py": "658bd042d1562a4da8064ad9c2d4ef1f37577d39c995405e7823f770c2a73b31",
-        "tests/test_core_semantic_invariants.py": "21b8dac6635d1a4f87228962691a5813ee02f475344a8abfa54465910e778680",
+        "tests/test_core_guards.py": "0fbc3ef11246b64325b1db346d6cd97e2710bb5ee2151f4732d4acdb8f9be673",
+        "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
         "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
         "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
       },
@@ -14,12 +14,21 @@
       "certified_harness": {
         "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
         "control": "GREEN",
+        "control_means": "the four TARGET suites run against an UNMUTATED copy of the tree. Without it a red result below could be the copy being broken rather than the mutation being caught",
+        "control_suites_passed": 470,
         "in_the_formal_certificate": true,
         "killed": 79,
-        "log_sha256": "ea3cb81dc6d672e6a49f0f689c39e86c89e451f3a98f852dd839048355f4c65e",
+        "killed_before_any_test_ran": [
+          "G1d",
+          "G14a"
+        ],
+        "log_bytes": 34876,
+        "log_sha256": "4986be3d92bf85ca66cb9b4038d07aafc4de0f848313eb78de039bc233dd89be",
+        "per_mutation_matches_runner_tally": true,
         "runner": "tests/mutation_guards.py",
         "survivors": 0,
-        "total": 79
+        "total": 79,
+        "why_it_was_re_run": "tests/test_core_guards.py is one of the four TARGETS this harness runs every mutant against, and it changed this round, so the previous run's numbers are statements about different bytes"
       },
       "targeted_families": {
         "control": "GREEN",
@@ -54,7 +63,9 @@
           }
         },
         "in_the_formal_certificate": false,
-        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together."
+        "measured_in": "core_v2_recertification round",
+        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families.",
+        "re_run_this_round": false
       }
     },
     "test_suites": {
@@ -63,22 +74,22 @@
         "deselected": 675,
         "exit_code": 0,
         "failed": 0,
-        "passed": 304,
-        "seconds": 8.1,
+        "passed": 306,
+        "seconds": 9.1,
         "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
         "skipped": 0,
-        "summary_line": "304 passed, 675 deselected in 7.37s"
+        "summary_line": "306 passed, 675 deselected in 8.26s"
       },
       "certification_suite": {
         "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
         "deselected": 0,
         "exit_code": 1,
-        "failed": 2,
-        "passed": 26,
-        "seconds": 5.3,
+        "failed": 1,
+        "passed": 27,
+        "seconds": 5.5,
         "selection": "tests/test_core_certificate.py",
         "skipped": 1,
-        "summary_line": "2 failed, 26 passed, 1 skipped in 4.90s"
+        "summary_line": "1 failed, 27 passed, 1 skipped in 5.05s"
       },
       "contract_guard": {
         "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
@@ -86,10 +97,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 305,
-        "seconds": 17.6,
+        "seconds": 18.5,
         "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
         "skipped": 0,
-        "summary_line": "305 passed, 4 warnings in 16.85s"
+        "summary_line": "305 passed, 5 warnings in 17.83s"
       },
       "field_profile_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
@@ -100,7 +111,7 @@
         "seconds": 1.9,
         "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
         "skipped": 0,
-        "summary_line": "147 passed in 1.46s"
+        "summary_line": "147 passed in 1.42s"
       },
       "field_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
@@ -108,10 +119,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 124,
-        "seconds": 1.4,
+        "seconds": 1.3,
         "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
         "skipped": 0,
-        "summary_line": "124 passed in 0.90s"
+        "summary_line": "124 passed in 0.88s"
       },
       "mutation_harness_self_guard": {
         "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
@@ -122,7 +133,7 @@
         "seconds": 1.1,
         "selection": "tests/test_mutation_harness.py",
         "skipped": 0,
-        "summary_line": "6 passed in 0.76s"
+        "summary_line": "6 passed in 0.73s"
       },
       "scientific_truth": {
         "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
@@ -130,10 +141,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 293,
-        "seconds": 3.1,
+        "seconds": 2.8,
         "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
         "skipped": 3,
-        "summary_line": "293 passed, 3 skipped in 2.38s"
+        "summary_line": "293 passed, 3 skipped in 2.13s"
       }
     }
   },
@@ -170,7 +181,7 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "61f9546d367def9dd007a137d5f35e028020463459179e0d7eb47384558ef20c",
+    "aggregate_digest": "a8c1f9ca44c5eb5c4c56643a63a860c19d0ca0b424bade2c91bf418f728e30fc",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
@@ -253,12 +264,12 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "22fe10831fc4711e1bbc790601bd5c8b8109c1bfaa951f5daa2797c3f40ce55b",
+        "digest": "b8b7dfb687c8527b5d8101a0eeef1d5d6a1bafdd516f2b569413902c879081dc",
         "file_count": 5,
         "files": {
           "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
-          "tests/test_core_guards.py": "658bd042d1562a4da8064ad9c2d4ef1f37577d39c995405e7823f770c2a73b31",
-          "tests/test_core_semantic_invariants.py": "21b8dac6635d1a4f87228962691a5813ee02f475344a8abfa54465910e778680",
+          "tests/test_core_guards.py": "0fbc3ef11246b64325b1db346d6cd97e2710bb5ee2151f4732d4acdb8f9be673",
+          "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
           "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
           "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
         },
@@ -319,9 +330,9 @@
   },
   "notes": {},
   "repository": {
-    "branch": "claude/performance-campaign-sprint-7",
+    "branch": "claude/integrate-sprints-1-7",
     "clean": true,
-    "commit": "7d509fd287ca81ed2e63890b90331fabfabb3e9f",
+    "commit": "61300036b69eb7396783799f6c5570d26b66f491",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",

@@ -8,7 +8,23 @@ import subprocess
 from . import adjudication, build_artifacts, check_consistency
 from .evidence import ROOT
 
-CERTIFIED_DIGEST = "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
+#: The digest of ``src/engcore/scientific`` this round was audited against.
+#:
+#: NOT a certificate, and deliberately no longer named as one. See the twin
+#: constant in ``benchmarks/empirical_validation/audit/build_gates.py`` for the
+#: full account: the previous value was Core V1's 47-module digest
+#: ``82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507``, which
+#: was last true at the V1 certification commit ``be57bf4d7056`` and diverged
+#: at the next scientific commit ``3d642dcef5db``. This round lived on a branch
+#: still carrying that tree; merge ``9f0ed8e`` joined it to a chain at 55
+#: modules, making the old pin unreachable.
+#:
+#: MV-10's actual claim -- this round edited no production file -- is unchanged
+#: and is carried by the `touched` half, which reads `git status` and does not
+#: depend on which lineage the round is sitting in.
+EXPECTED_SCIENTIFIC_DIGEST = (
+    "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0"
+)
 
 #: Discrepancies the round has adjudicated in writing. The split check reports
 #: every difference from the preregistered counts; a difference passes the gate
@@ -188,9 +204,14 @@ def gates(built) -> list[dict]:
     gate(
         "MV-10", "PREVIOUS ASSURANCE PRESERVED",
         "Did this round change anything the earlier rounds certified?",
-        digest == CERTIFIED_DIGEST and not touched,
-        {"certified_digest": CERTIFIED_DIGEST, "recomputed_digest": digest,
-         "matches": digest == CERTIFIED_DIGEST,
+        digest == EXPECTED_SCIENTIFIC_DIGEST and not touched,
+        {"expected_digest": EXPECTED_SCIENTIFIC_DIGEST,
+         "expected_digest_is": (
+             "the scientific tree as merged into the sprint chain, not a "
+             "certificate. Core V1's 47-module digest was the previous value "
+             "and stopped describing this lineage at 3d642dcef5db"),
+         "recomputed_digest": digest,
+         "matches": digest == EXPECTED_SCIENTIFIC_DIGEST,
          "files_touched_under_src_or_tests": touched,
          "production_changes_made": 0},
         "a production file had been edited, which would have required every earlier assurance layer to be re-run",
@@ -218,7 +239,12 @@ def build() -> dict:
     built = build_artifacts.build()
     entries = gates(built)
     payload = {
-        "schema": "model_measurement_gates/1",
+        # /2: MV-10's `certified_digest` became `expected_digest`, plus an
+        # `expected_digest_is` line, when the V1 pin was replaced by the merged
+        # tree's digest. Renamed rather than revalued in place: a field called
+        # "certified" holding a value no certificate issued is the kind of
+        # record this round exists to catch.
+        "schema": "model_measurement_gates/2",
         "gates": entries,
         "passed": sum(1 for e in entries if e["verdict"] == "PASS"),
         "failed": sum(1 for e in entries if e["verdict"] == "FAIL"),
