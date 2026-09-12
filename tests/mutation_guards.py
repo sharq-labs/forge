@@ -944,7 +944,16 @@ TARGETS = (
 #
 # Reasoning about this tuple is what failed twice; `_control` below
 # measures it instead.
-_COPIED = ("src", "tests", "experiments", "docs", "benchmarks", "pyproject.toml")
+# `tools` joined this list in Sprint 7, and the reason is worth keeping: the
+# certificate drift test added in Sprint 6 imports `tools.certification`, and a
+# copy without it made `test_every_dependency_the_tree_reaches_for_is_declared`
+# fail with no mutation applied. The harness refused to run and said so —
+# CONTROL RED, ROUND VOID — which is the behaviour it was built for, and it is
+# how the omission was found at all. What the copy must contain is whatever
+# `tests/` reaches for.
+_COPIED = (
+    "src", "tests", "tools", "experiments", "docs", "benchmarks", "pyproject.toml",
+)
 
 
 def _code_digest(text: str) -> str:
