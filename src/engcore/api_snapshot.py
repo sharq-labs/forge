@@ -220,6 +220,22 @@ def _signature_of(value: Any) -> dict[str, Any] | None:
     }
 
 
+def _factory_name(factory: Any) -> str | None:
+    """A dataclass default factory, identified without running it.
+
+    ``module:qualname`` rather than ``repr``, which for a class embeds a memory
+    address and would make the snapshot non-deterministic. Returns None when
+    there is no factory, which is the common case.
+    """
+    if factory is dataclasses.MISSING:
+        return None
+    module = getattr(factory, "__module__", "?")
+    name = getattr(factory, "__qualname__", None) or getattr(
+        factory, "__name__", type(factory).__name__
+    )
+    return f"{module}:{name}"
+
+
 def _dataclass_fields(value: Any) -> list[dict[str, Any]] | None:
     if not (inspect.isclass(value) and dataclasses.is_dataclass(value)):
         return None
@@ -232,6 +248,14 @@ def _dataclass_fields(value: Any) -> list[dict[str, Any]] | None:
             or field.default_factory is not dataclasses.MISSING,  # type: ignore[misc]
             "default": _render_default(field.default),
             "has_default_factory": field.default_factory is not dataclasses.MISSING,  # type: ignore[misc]
+            # WHICH factory, not merely that there is one. `has_default_factory`
+            # alone is a hole: changing `default_factory=tuple` to
+            # `default_factory=list` changes what every caller who omits the
+            # argument receives -- mutable instead of immutable, a different
+            # type in an isinstance check -- and would not move the frozen
+            # digest. Recorded STATICALLY by name rather than by calling the
+            # factory: taking a snapshot must not execute package code.
+            "default_factory": _factory_name(field.default_factory),
             "init": field.init,
         }
         for field in dataclasses.fields(value)

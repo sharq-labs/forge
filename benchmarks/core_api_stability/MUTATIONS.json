@@ -1,8 +1,8 @@
 {
   "control": "GREEN",
-  "killed": 18,
-  "written": 18,
-  "requested_total": 20,
+  "killed": 21,
+  "written": 21,
+  "requested_total": 23,
   "survivors": [],
   "stale": [],
   "not_applicable": {
@@ -24,7 +24,7 @@
       "file": "src/engcore/execution/sweep.py",
       "target": "tests/test_core_api_snapshot.py::test_parameter_kinds_and_defaults_are_unchanged",
       "description": "a frozen default is changed",
-      "summary": "1 failed in 0.84s"
+      "summary": "1 failed in 0.74s"
     },
     {
       "id": "API-3",
@@ -32,7 +32,7 @@
       "file": "src/engcore/execution/sweep.py",
       "target": "tests/test_core_api_snapshot.py::test_parameter_kinds_and_defaults_are_unchanged",
       "description": "a keyword-only argument becomes positional-or-keyword",
-      "summary": "1 failed in 0.91s"
+      "summary": "1 failed in 0.76s"
     },
     {
       "id": "API-4",
@@ -40,7 +40,7 @@
       "file": "src/engcore/execution/sweep.py",
       "target": "tests/test_core_api_snapshot.py::test_enum_members_and_values_are_unchanged",
       "description": "an enum member is removed",
-      "summary": "1 failed in 0.91s"
+      "summary": "1 failed in 0.90s"
     },
     {
       "id": "API-5",
@@ -48,7 +48,7 @@
       "file": "src/engcore/inference/parameters.py",
       "target": "tests/test_core_api_snapshot.py::test_public_dataclass_fields_keep_their_order",
       "description": "a public dataclass field order is changed",
-      "summary": "1 failed in 1.00s"
+      "summary": "1 failed in 0.79s"
     },
     {
       "id": "SER-1",
@@ -56,7 +56,7 @@
       "file": "src/engcore/scientific/serialization.py",
       "target": "tests/test_core_runtime_fast_paths.py::test_encode_sorts_keys_whatever_order_they_were_inserted",
       "description": "canonical field ordering is dropped",
-      "summary": "1 failed in 0.70s"
+      "summary": "1 failed in 0.54s"
     },
     {
       "id": "SER-2",
@@ -64,7 +64,7 @@
       "file": "src/engcore/scientific/serialization.py",
       "target": "tests/test_core_api_serialization.py::test_an_unknown_schema_version_is_refused_explicitly",
       "description": "a schema version mismatch is ignored",
-      "summary": "10 failed, 1 passed in 0.75s"
+      "summary": "10 failed, 1 passed in 0.74s"
     },
     {
       "id": "SER-3",
@@ -72,7 +72,7 @@
       "file": "src/engcore/inference/parameters.py",
       "target": "tests/test_core_api_serialization.py::test_material_a_different_unit_is_a_different_parameter",
       "description": "a MATERIAL field is dropped from a scientific digest -- `unit` is removed from _canonical(), which is the dict digest() actually hashes. The first version of this mutation removed it from IDENTITY_FIELDS instead and SURVIVED, correctly: that tuple drives differences(), not the digest, so the mutation did not do what its own description claimed",
-      "summary": "1 failed in 0.79s"
+      "summary": "1 failed in 0.65s"
     },
     {
       "id": "SER-4",
@@ -80,7 +80,7 @@
       "file": "src/engcore/inference/field_observation.py",
       "target": "tests/test_core_api_serialization.py::test_non_material_a_display_description_does_not_move_a_field_operator_digest",
       "description": "a NON-MATERIAL display label starts affecting a scientific digest",
-      "summary": "1 failed in 0.87s"
+      "summary": "1 failed in 0.67s"
     },
     {
       "id": "DEP-1",
@@ -88,7 +88,7 @@
       "file": "src/engcore/inference/calibration.py",
       "target": "tests/test_core_api_layering.py::test_no_core_package_imports_one_above_it",
       "description": "a forbidden upward dependency is introduced (inference -> execution)",
-      "summary": "1 failed in 0.30s"
+      "summary": "1 failed in 0.24s"
     },
     {
       "id": "DEP-2",
@@ -96,7 +96,7 @@
       "file": "pyproject.toml",
       "target": "tests/test_core_api_contracts.py::test_every_third_party_import_is_declared_somewhere",
       "description": "a benchmark dependency becomes undeclared",
-      "summary": "1 failed, 6 warnings in 7.34s"
+      "summary": "1 failed, 6 warnings in 6.68s"
     },
     {
       "id": "M-1",
@@ -104,7 +104,7 @@
       "file": "src/engcore/inference/calibration.py",
       "target": "tests/test_core_api_layering.py::test_no_core_package_imports_a_non_core_one",
       "description": "a Core package below studies reaches a non-Core package, inverting the layering the read-only domain boundary depends on",
-      "summary": "1 failed in 0.30s"
+      "summary": "1 failed in 0.29s"
     },
     {
       "id": "M-2",
@@ -112,7 +112,7 @@
       "file": "src/engcore/api_snapshot.py",
       "target": "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
       "description": "the Part M symbol-level classification is emptied, so a module that is a genuine contract silently drags its spike back into the frozen surface",
-      "summary": "1 failed in 0.88s"
+      "summary": "1 failed in 1.05s"
     },
     {
       "id": "S-1",
@@ -120,7 +120,7 @@
       "file": "src/engcore/api_snapshot.py",
       "target": "tests/test_core_api_deprecation.py::test_every_registry_entry_carries_all_five_fields",
       "description": "a deprecation is registered without naming a replacement, so a caller is told a symbol is going away and not what to use instead",
-      "summary": "1 failed in 0.11s"
+      "summary": "1 failed in 0.09s"
     },
     {
       "id": "T-1",
@@ -128,7 +128,7 @@
       "file": "docs/CORE_FREEZE_POLICY.md",
       "target": "tests/test_core_freeze_policy.py::test_the_policy_states_the_real_frozen_digest",
       "description": "the freeze policy states a frozen digest that is not the real one, so the document describes a Core that does not exist",
-      "summary": "1 failed in 0.85s"
+      "summary": "1 failed in 0.78s"
     },
     {
       "id": "T-2",
@@ -139,12 +139,36 @@
       "summary": "1 failed in 0.10s"
     },
     {
+      "id": "DEF-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/execution/sweep.py",
+      "target": "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
+      "description": "a public dataclass field's default FACTORY is swapped for one producing a different type, which changes what every caller who omits the argument receives and was invisible to the snapshot until Part R",
+      "summary": "1 failed in 0.84s"
+    },
+    {
+      "id": "ALIAS-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/api_snapshot.py",
+      "target": "tests/test_trust_boundary_package_identity.py::test_no_unpinned_file_spells_the_frozen_namespace",
+      "description": "an unexempt runtime module starts importing the unsupported checkout alias, creating a second package identity in the installed wheel",
+      "summary": "1 failed in 1.08s"
+    },
+    {
+      "id": "ALIAS-2",
+      "verdict": "KILLED",
+      "file": "benchmarks/core_api_stability/audit/wheel_parity.py",
+      "target": "tests/test_trust_boundary_package_identity.py::test_every_alias_asserting_file_says_it_and_says_why",
+      "description": "an EXEMPT file quietly grows a second use of the alias, which is the exemption swallowing the rule it is an exemption from",
+      "summary": "1 failed in 0.50s"
+    },
+    {
       "id": "DET-1",
       "verdict": "KILLED",
       "file": "src/engcore/api_snapshot.py",
       "target": "tests/test_core_api_snapshot.py::test_the_public_api_matches_the_pinned_snapshot",
       "description": "nondeterministic ordering enters a canonical digest",
-      "summary": "1 failed in 0.78s"
+      "summary": "1 failed in 0.68s"
     },
     {
       "id": "EXC-1",
@@ -152,7 +176,7 @@
       "file": "src/engcore/scientific/errors.py",
       "target": "tests/test_core_api_contracts.py::test_the_exception_roots_are_exactly_the_seven_recorded",
       "description": "a frozen public exception is reparented onto a raw builtin, so a caller's `except ScientificCoreError` silently stops catching it",
-      "summary": "1 failed in 0.87s"
+      "summary": "1 failed in 0.81s"
     }
   ]
 }

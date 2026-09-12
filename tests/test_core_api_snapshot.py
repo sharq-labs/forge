@@ -233,3 +233,73 @@ def test_the_snapshot_carries_nothing_machine_specific():
     for forbidden in ("0x", "C:\\", "/home/", "Users", "site-packages",
                       ".venv", "Temp", "tmp"):
         assert forbidden not in blob, f"snapshot contains {forbidden!r}"
+
+
+# =====================================================================
+# PART R -- public defaults
+# =====================================================================
+
+def test_no_frozen_default_is_mutable():
+    """A shared mutable default is a bug every caller inherits.
+
+    `def f(x=[])` gives every call the SAME list, and one caller appending to
+    it changes what the next caller receives. There are none today; this is
+    what stops the first one.
+    """
+    offenders = []
+    for entry in api_snapshot.frozen_only()["symbols"]:
+        for parameter in entry.get("signature", {}).get("parameters", []):
+            default = parameter.get("default")
+            if isinstance(default, dict) and default.get("type") in (
+                "list", "dict", "set", "bytearray"
+            ):
+                offenders.append(
+                    f"{entry['module']}.{entry['name']}({parameter['name']}=)"
+                )
+    assert not offenders, offenders
+
+
+def test_every_default_factory_is_identified_by_name():
+    """Recording only THAT a factory exists is a hole, and this closes it.
+
+    `has_default_factory: true` is identical for `default_factory=tuple` and
+    `default_factory=list`. Changing one to the other changes what every caller
+    who omits the argument receives -- mutable instead of immutable, a
+    different type in an isinstance check -- and without the name it would not
+    move the frozen digest.
+    """
+    seen = 0
+    for entry in api_snapshot.frozen_only()["symbols"]:
+        for field in entry.get("dataclass_fields", []):
+            if not field["has_default_factory"]:
+                assert field["default_factory"] is None, field
+                continue
+            seen += 1
+            name = field["default_factory"]
+            assert name and ":" in name, field
+            assert "<lambda>" not in name, (
+                f"{entry['module']}.{entry['name']}.{field['name']} uses an "
+                f"anonymous default factory, so the snapshot can record that "
+                f"one exists but not what it produces. Give it a name"
+            )
+            assert "0x" not in name, f"{name} embeds an address"
+    assert seen == 33, f"{seen} frozen fields use a default factory"
+
+
+def test_a_changed_default_factory_moves_the_frozen_digest():
+    """The property the name is FOR, demonstrated on a copy of the snapshot."""
+    import copy
+
+    snapshot = api_snapshot.build()
+    before = api_snapshot.frozen_digest(snapshot)
+
+    mutated = copy.deepcopy(snapshot)
+    for entry in mutated["symbols"]:
+        for field in entry.get("dataclass_fields", []):
+            if field["has_default_factory"] and field["default_factory"].endswith(
+                ":dict"
+            ):
+                field["default_factory"] = "builtins:list"
+                assert api_snapshot.frozen_digest(mutated) != before
+                return
+    pytest.fail("no frozen field uses a dict factory any more")

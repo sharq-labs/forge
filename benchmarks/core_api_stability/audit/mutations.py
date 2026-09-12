@@ -43,6 +43,7 @@ T_LAYER = "tests/test_core_api_layering.py"
 T_GUARDS = "tests/test_core_guards.py"
 T_DEPR = "tests/test_core_api_deprecation.py"
 T_POLICY = "tests/test_core_freeze_policy.py"
+T_TRUST = "tests/test_trust_boundary_package_identity.py"
 
 MUTATIONS = (
     # ---- API ----------------------------------------------------------
@@ -148,8 +149,8 @@ MUTATIONS = (
      "told a symbol is going away and not what to use instead"),
 
     ("T-1", POLICY,
-     [("| frozen digest | `a8468936",
-       "| frozen digest | `08468936")],
+     [("| frozen digest | `c80e6418",
+       "| frozen digest | `080e6418")],
      f"{T_POLICY}::test_the_policy_states_the_real_frozen_digest",
      "the freeze policy states a frozen digest that is not the real one, so "
      "the document describes a Core that does not exist"),
@@ -158,6 +159,32 @@ MUTATIONS = (
      [("| frozen symbols | `194` |", "| frozen symbols | `193` |")],
      f"{T_POLICY}::test_the_stated_counts_add_up",
      "the policy's FROZEN-STATE table is half-updated and no longer adds up"),
+
+    # ---- PART R: public defaults ----------------------------------------
+    ("DEF-1", SWEEP,
+     [("    shared: SharedContext = dataclass_field(default_factory=SharedContext)",
+       "    shared: SharedContext = dataclass_field(default_factory=dict)")],
+     f"{T_SNAP}::test_the_public_api_matches_the_pinned_snapshot",
+     "a public dataclass field's default FACTORY is swapped for one producing "
+     "a different type, which changes what every caller who omits the argument "
+     "receives and was invisible to the snapshot until Part R"),
+
+    # ---- TRUST BOUNDARY: the second exemption list ----------------------
+    ("ALIAS-1", "src/engcore/api_snapshot.py",
+     [('SCHEMA = "engcore.api_snapshot/1"',
+       'SCHEMA = "engcore.api_snapshot/1"\n'
+       'import src.engcore  # ALIAS-1')],
+     f"{T_TRUST}::test_no_unpinned_file_spells_the_frozen_namespace",
+     "an unexempt runtime module starts importing the unsupported checkout "
+     "alias, creating a second package identity in the installed wheel"),
+
+    ("ALIAS-2", "benchmarks/core_api_stability/audit/wheel_parity.py",
+     [("        import src.engcore  # noqa: F401",
+       "        import src.engcore  # noqa: F401\n"
+       "        import src.engcore.scientific  # ALIAS-2")],
+     f"{T_TRUST}::test_every_alias_asserting_file_says_it_and_says_why",
+     "an EXEMPT file quietly grows a second use of the alias, which is the "
+     "exemption swallowing the rule it is an exemption from"),
 
     # ---- DETERMINISM / EXCEPTIONS -------------------------------------
     ("DET-1", SNAPSHOT,

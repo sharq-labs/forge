@@ -13,7 +13,7 @@
 | --- | --- |
 | schema | `engcore.api_snapshot/1` |
 | frozen symbols | `194` |
-| frozen digest | `a8468936ef0a0bfd3fe3b32783e8957372e41f88e4e4d425076e23a905f8616a` |
+| frozen digest | `c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929` |
 | experimental symbols | `11` |
 | total public symbols | `205` |
 | deprecated symbols | `0` |
