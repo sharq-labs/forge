@@ -2,7 +2,7 @@
   "assurance": {
     "harness_identity": {
       "files": {
-        "tests/mutation_guards.py": "1014bdb7702e1135e6d09d18d36571283c1317fd24c2347083bd96b46a9c5fed",
+        "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
         "tests/test_core_guards.py": "658bd042d1562a4da8064ad9c2d4ef1f37577d39c995405e7823f770c2a73b31",
         "tests/test_core_semantic_invariants.py": "21b8dac6635d1a4f87228962691a5813ee02f475344a8abfa54465910e778680",
         "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
@@ -16,7 +16,7 @@
         "control": "GREEN",
         "in_the_formal_certificate": true,
         "killed": 79,
-        "log_sha256": "b6ffd1890bdf553c4f9c31a27d9c7c917ac9ca0fd1bfef3e09748c1650a03f3b",
+        "log_sha256": "ea3cb81dc6d672e6a49f0f689c39e86c89e451f3a98f852dd839048355f4c65e",
         "runner": "tests/mutation_guards.py",
         "survivors": 0,
         "total": 79
@@ -64,21 +64,21 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 304,
-        "seconds": 8.5,
+        "seconds": 8.1,
         "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
         "skipped": 0,
-        "summary_line": "304 passed, 675 deselected in 7.73s"
+        "summary_line": "304 passed, 675 deselected in 7.37s"
       },
       "certification_suite": {
         "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
         "deselected": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "passed": 22,
-        "seconds": 4.7,
+        "exit_code": 1,
+        "failed": 2,
+        "passed": 26,
+        "seconds": 5.3,
         "selection": "tests/test_core_certificate.py",
-        "skipped": 5,
-        "summary_line": "22 passed, 5 skipped in 4.29s"
+        "skipped": 1,
+        "summary_line": "2 failed, 26 passed, 1 skipped in 4.90s"
       },
       "contract_guard": {
         "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
@@ -86,21 +86,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 305,
-        "seconds": 17.8,
+        "seconds": 17.6,
         "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
         "skipped": 0,
-        "summary_line": "305 passed, 4 warnings in 17.01s"
-      },
-      "fast": {
-        "command": "python -X utf8 -m pytest -m not expensive tests/ -q -p no:cacheprovider",
-        "deselected": 541,
-        "exit_code": 0,
-        "failed": 0,
-        "passed": 4471,
-        "seconds": 52.9,
-        "selection": "-m not expensive tests/",
-        "skipped": 8,
-        "summary_line": "4471 passed, 8 skipped, 541 deselected, 4 warnings in 51.81s"
+        "summary_line": "305 passed, 4 warnings in 16.85s"
       },
       "field_profile_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
@@ -108,10 +97,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 147,
-        "seconds": 3.4,
+        "seconds": 1.9,
         "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
         "skipped": 0,
-        "summary_line": "147 passed in 2.95s"
+        "summary_line": "147 passed in 1.46s"
       },
       "field_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
@@ -119,21 +108,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 124,
-        "seconds": 1.9,
+        "seconds": 1.4,
         "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
         "skipped": 0,
-        "summary_line": "124 passed in 1.44s"
-      },
-      "full": {
-        "command": "python -X utf8 -m pytest tests/ -q -p no:cacheprovider",
-        "deselected": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "passed": 5012,
-        "seconds": 203.3,
-        "selection": "tests/",
-        "skipped": 8,
-        "summary_line": "5012 passed, 8 skipped, 4 warnings in 202.13s (0:03:22)"
+        "summary_line": "124 passed in 0.90s"
       },
       "mutation_harness_self_guard": {
         "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
@@ -141,10 +119,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 6,
-        "seconds": 1.2,
+        "seconds": 1.1,
         "selection": "tests/test_mutation_harness.py",
         "skipped": 0,
-        "summary_line": "6 passed in 0.83s"
+        "summary_line": "6 passed in 0.76s"
       },
       "scientific_truth": {
         "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
@@ -152,10 +130,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 293,
-        "seconds": 3.0,
+        "seconds": 3.1,
         "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
         "skipped": 3,
-        "summary_line": "293 passed, 3 skipped in 2.29s"
+        "summary_line": "293 passed, 3 skipped in 2.38s"
       }
     }
   },
@@ -192,11 +170,11 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "2bd8a2807bdd3092ead58cba42acd01fddd3b105bdf76706aeb1a20daefcf0fc",
+    "aggregate_digest": "61f9546d367def9dd007a137d5f35e028020463459179e0d7eb47384558ef20c",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "71eeddd96dca06fef68e47f528d41fd96dfe1a0320f663f30f1e087f69dda04f",
+        "digest": "1527ed09a770b3ffef32775e1be41e74ae0930131e9b4981a5469c937cd637cf",
         "file_count": 55,
         "files": {
           "src/engcore/scientific/__init__.py": "7655268eb8ae8944f17a1f5485b0b446c7b89b3fa5a549015ed9f2eb868e5072",
@@ -252,7 +230,7 @@
           "src/engcore/scientific/twins/__init__.py": "00d2812b6c27c3bce1a168d57d14436f1b1e1a563baacc283675330279eba79a",
           "src/engcore/scientific/twins/definition.py": "1a27bcf000aa6efb5b7fcf0fdccb35f55943786d0049bbce67660d13fe429fcf",
           "src/engcore/scientific/units/__init__.py": "bdbd7c000d9e9ceee92dfee8f0fe3e2bc94e71af755edce49d7355fa3639937f",
-          "src/engcore/scientific/units/quantity.py": "9368cb7945a1973ed560b45e284a9d39c1918c05fcdab0ef7fc7e790aba272a5",
+          "src/engcore/scientific/units/quantity.py": "c120c4f36bb4e832389900c7f4fd5c380a4836581b4d94418340f05c1c7d7ec2",
           "src/engcore/scientific/units/validation.py": "e44babc94cde2665430d37d0b9d409855732ce83460f9247d5656c241eb066c1"
         },
         "patterns": [
@@ -275,10 +253,10 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "22acc63b7a206ce308fe75126f9cce69b11c9d7fe20941723f6bb1a7d9d36afd",
+        "digest": "22fe10831fc4711e1bbc790601bd5c8b8109c1bfaa951f5daa2797c3f40ce55b",
         "file_count": 5,
         "files": {
-          "tests/mutation_guards.py": "1014bdb7702e1135e6d09d18d36571283c1317fd24c2347083bd96b46a9c5fed",
+          "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
           "tests/test_core_guards.py": "658bd042d1562a4da8064ad9c2d4ef1f37577d39c995405e7823f770c2a73b31",
           "tests/test_core_semantic_invariants.py": "21b8dac6635d1a4f87228962691a5813ee02f475344a8abfa54465910e778680",
           "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
@@ -341,9 +319,9 @@
   },
   "notes": {},
   "repository": {
-    "branch": "claude/core-v2-recertification-6",
+    "branch": "claude/performance-campaign-sprint-7",
     "clean": true,
-    "commit": "af26c0989fa6856b32baa4a844a76a8177186dda",
+    "commit": "7d509fd287ca81ed2e63890b90331fabfabb3e9f",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -434,7 +412,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "0df44b404d3345d5f8b87bb4bfa885f2576de45c67a210aa0810f8a5ef523a90",
+    "v1_compatible_core_digest_now": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }
