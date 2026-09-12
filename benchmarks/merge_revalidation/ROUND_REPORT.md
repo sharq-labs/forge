@@ -361,4 +361,87 @@ lives under the install target before any test is collected.
 
 ---
 
-*Section 9 (certificate and verdict) follows the reissue.*
+## 9. Certificate
+
+Certified scope changed: `tests/test_core_guards.py`, in the `harness` area.
+The certificate went **RED and named it** before the reissue, which is the
+requirement proved rather than asserted:
+
+```
+AREA harness
+  MODIFIED: tests/test_core_guards.py
+            tests/test_core_semantic_invariants.py
+  expected area digest: 22fe10831fc4711e…
+  actual area digest:   b8b7dfb687c8527b…
+expected aggregate: 61f9546d367def9d…
+actual aggregate:   a8c1f9ca44c5eb5c…
+FAILED
+```
+
+Reissued with the tool at `6130003`. **No digest was hand-edited.**
+
+| | |
+|---|---|
+| files | 72 — unchanged; nothing entered or left scope |
+| aggregate | `61f9546d367def9d…` → `a8c1f9ca44c5eb5c…` |
+| areas changed | `harness` only |
+| areas byte-identical | `core` (55), `evidence_identity`, `inference_admission`, `runtime_data`, `trust_registry` |
+| `diagnostic` | `false` |
+| verification | `certificate matches the tree` · **OK** |
+
+One practical note: the assurance JSON must be passed from **outside** the
+repository. Copying it in first makes the tree dirty, and the build refuses a
+dirty tree — correctly, since a certificate names a commit.
+
+---
+
+## 10. Final state
+
+| | before | after |
+|---|---|---|
+| FAST | 4802 passed, **1 failed** | **4803 passed, 0 failed**, 7 skipped |
+| FULL | 5347 passed, **1 failed** | **5348 passed, 0 failed**, 7 skipped |
+| certificate | `FAILED` | **OK** |
+| working tree | clean | clean |
+
+Both rounds rebuild byte-identically, so a FULL run leaves the tree clean.
+
+---
+
+## 11. Verdict
+
+**SPRINT 7 CLOSED.** The gate that opened this round now passes:
+
+```
+$ python -m tools.certification.core_certificate --verify
+certificate matches the tree
+commit: certified commit 61300036b69e, HEAD 760b2adacf47
+OK
+```
+
+### What this round claims
+
+Merge `9f0ed8e` was re-validated. Four breakages it introduced — two collection
+failures, one unreachable external provider, one unreachable digest pin — are
+fixed, and the assurance that was never run after the merge has been run:
+FAST, FULL, the four guard suites, the certified 79 mutants with a green
+control, the installed wheel, and the certificate.
+
+### What this round does NOT claim
+
+- **The EI/RI/FM/SP families were not re-measured.** They are carried forward
+  with the grounds recorded and `re_run_this_round: false` in the certificate.
+  The grounds are checkable, not rhetorical — but they are grounds, not a
+  measurement.
+- **No claim that the merged rounds' science was re-audited.** Their gates were
+  made runnable and were run; their findings, including `MV-7`'s standing
+  `FAIL` on `MVF-1`, are unchanged and unexamined by this round.
+- **No claim about hosts other than this one.** The ngspice fix makes the
+  provider reachable through WSL *here*; the empirical round's numbers moved at
+  the noise floor because this host's ngspice is a different build, and a third
+  host would move them again.
+- **No claim that the `benchmarks/` dependency blind spot is closed.**
+  `jsonschema` and `psutil` are still reached from `benchmarks/` and declared
+  nowhere. That is recorded in the guard's docstring as known, and left.
+- **No new scientific capability.** Nothing under `src/engcore/scientific`
+  changed; its digest is identical before and after.
