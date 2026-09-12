@@ -138,7 +138,14 @@ import math
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import lru_cache
+from collections.abc import Mapping as _RuntimeMapping
 from typing import Any, Iterable, Mapping
+#: ``typing.Mapping`` and ``collections.abc.Mapping`` are the SAME CLASS
+#: (``typing.Mapping.__origin__`` IS that class), but an ``isinstance``
+#: against the typing alias routes through ``typing.__subclasscheck__`` and
+#: measures 2.56x slower here. Annotations keep ``Mapping``; runtime checks
+#: use ``_RuntimeMapping``. Same check, same answer, same refusals.
+
 
 from .errors import ScientificValidationError
 from .results.thresholds import VerificationThresholds
@@ -463,7 +470,7 @@ def _route_declarations() -> Mapping[str, Any]:
     except ImportError:  # pragma: no cover - an installation without its domains
         return {}
     table = getattr(package, ROUTE_DECLARATIONS_ATTRIBUTE, None)
-    return table if isinstance(table, Mapping) else {}
+    return table if isinstance(table, _RuntimeMapping) else {}
 
 
 def _verify_route(route: "SolveRoute") -> str | None:
@@ -479,7 +486,7 @@ def _verify_route(route: "SolveRoute") -> str | None:
     if route.dependencies is None:
         return "declares no dependencies"
     pin = _route_declarations().get(route.route_id)
-    if not isinstance(pin, Mapping):
+    if not isinstance(pin, _RuntimeMapping):
         return f"is not a route the domain layer declares"
     if route.solver.solver_id != pin.get("solver_id"):
         return (

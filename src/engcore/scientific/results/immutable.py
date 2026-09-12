@@ -61,7 +61,14 @@ other branch of a payload is built out of freshly created dicts already.
 
 from __future__ import annotations
 
+from collections.abc import Mapping as _RuntimeMapping
 from typing import Any, Iterator, Mapping, Sequence
+#: ``typing.Mapping`` and ``collections.abc.Mapping`` are the SAME CLASS
+#: (``typing.Mapping.__origin__`` IS that class), but an ``isinstance``
+#: against the typing alias routes through ``typing.__subclasscheck__`` and
+#: measures 2.56x slower here. Annotations keep ``Mapping``; runtime checks
+#: use ``_RuntimeMapping``. Same check, same answer, same refusals.
+
 
 __all__ = [
     "FrozenList",
@@ -184,7 +191,7 @@ class FrozenMapping(dict):
     def __init__(self, data=None) -> None:
         items = (
             data.items()
-            if isinstance(data, Mapping)
+            if isinstance(data, _RuntimeMapping)
             else dict(data or {}).items()
         )
         # Through ``dict.__init__`` rather than ``self[k] = v``, which the
@@ -322,7 +329,7 @@ def freeze(value: Any) -> Any:
         return FrozenList(value)
     if isinstance(value, (FrozenMapping, FrozenList, FrozenSet)):
         return value
-    if isinstance(value, Mapping):
+    if isinstance(value, _RuntimeMapping):
         return FrozenMapping(value)
     if isinstance(value, list):
         return FrozenList(value)
@@ -359,7 +366,7 @@ def detach(value: Any) -> Any:
         return [detach(item) for item in value]
     if isinstance(value, FrozenSet):
         return {detach(item) for item in value}
-    if isinstance(value, Mapping):
+    if isinstance(value, _RuntimeMapping):
         return {key: detach(item) for key, item in value.items()}
     if isinstance(value, list):
         return [detach(item) for item in value]

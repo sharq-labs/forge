@@ -13,10 +13,22 @@ Rules enforced here:
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping as _RuntimeMapping
 from enum import Enum
 from typing import Any, Mapping
 
 from .errors import ScientificCoreError
+
+#: ``typing.Mapping`` and ``collections.abc.Mapping`` are the SAME CLASS --
+#: ``typing.Mapping.__origin__ is collections.abc.Mapping`` -- but an
+#: ``isinstance`` against the typing alias is routed through
+#: ``typing.__subclasscheck__`` and measured **2.56x slower** on this
+#: interpreter (365 ns against 143 ns).
+#:
+#: So the annotations keep ``Mapping`` (they are strings under
+#: ``from __future__ import annotations`` and cost nothing at run time) and the
+#: runtime checks use ``_RuntimeMapping``. Same check, same answer, same
+#: refusals -- only the lookup path differs.
 
 
 def schema_string(name: str, version: int = 1) -> str:
@@ -108,13 +120,21 @@ def encode(value: Any) -> Any:
     Objects exposing ``to_dict()`` are delegated to; enums become their value;
     mappings are emitted with sorted keys.
     """
-    if value is None or isinstance(value, (bool, int, float, str)):
+    # Exact-type checks first, in frequency order: a pointer compare where the
+    # ABC check below is a subclass walk. The same technique `freeze` already
+    # uses and documents in `results/immutable.py`.
+    cls = value.__class__
+    if cls is str or cls is int or cls is float or cls is bool or value is None:
+        return value
+    if isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Enum):
         return value.value
     if hasattr(value, "to_dict"):
         return value.to_dict()
-    if isinstance(value, Mapping):
+    if cls is dict:
+        return {str(k): encode(value[k]) for k in sorted(value, key=str)}
+    if isinstance(value, _RuntimeMapping):
         return {str(k): encode(value[k]) for k in sorted(value, key=str)}
     if isinstance(value, (list, tuple, set, frozenset)):
         items = [encode(v) for v in value]
@@ -161,13 +181,38 @@ def unwritable(value: Any, *, path: str = "") -> tuple[str, str] | None:
     booleans and null. A ``tuple`` is admitted and comes back as a list, which
     is JSON's nature rather than this function's opinion.
     """
-    if value is None or isinstance(value, _WRITABLE_LEAVES):
+    # Exact-type fast paths first, for the reason `encode` above states -- but
+    # ONLY for types that carry no refusal of their own.
+    #
+    # THERE IS DELIBERATELY NO FAST PATH FOR `float`, and the reason is worth
+    # the lines. One was added in the Sprint 9 runtime round and the certified
+    # 79-mutant harness caught what it cost: mutation `G10c` deletes the
+    # non-finite check in the general path below, and with a second copy of
+    # that check sitting in front of it the deletion became invisible. G10c had
+    # gone RED for as long as it had existed; it came back
+    # `GREEN -- DECORATION` against a guard that is not decoration.
+    #
+    # It was not even an equivalent mutation. `cls is float` is False for a
+    # float SUBCLASS, so the general-path check below is the only thing
+    # refusing a subclass NaN -- deleting it opens a real hole that the fast
+    # path does not cover.
+    #
+    # Measured, before removing it: worth about 11 us on a 0.39 ms solve, which
+    # is inside this machine's run-to-run spread. A duplicated refusal that
+    # buys nothing measurable and blinds a certified mutation is a bad trade,
+    # and one refusal in one place is the version that stays checkable.
+    cls = value.__class__
+    if cls is str or value is None:
+        return None
+    if cls is int or cls is bool:
+        return None
+    if isinstance(value, _WRITABLE_LEAVES):
         if isinstance(value, float) and value != value:
             return (path, "float('nan')")
         if isinstance(value, float) and value in (float("inf"), float("-inf")):
             return (path, "float('inf')")
         return None
-    if isinstance(value, Mapping):
+    if cls is dict:
         for key in value:
             if not isinstance(key, str):
                 return (f"{path}[{key!r}]", f"{type(key).__name__} key")
@@ -175,7 +220,15 @@ def unwritable(value: Any, *, path: str = "") -> tuple[str, str] | None:
             if found is not None:
                 return found
         return None
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, _RuntimeMapping):
+        for key in value:
+            if not isinstance(key, str):
+                return (f"{path}[{key!r}]", f"{type(key).__name__} key")
+            found = unwritable(value[key], path=f"{path}[{key!r}]")
+            if found is not None:
+                return found
+        return None
+    if cls is list or cls is tuple or isinstance(value, (list, tuple)):
         for index, item in enumerate(value):
             found = unwritable(item, path=f"{path}[{index}]")
             if found is not None:

@@ -280,9 +280,9 @@
       "question": "Did this round change anything the earlier rounds certified?",
       "would_fail_if": "a production file had been edited, which would have required every earlier assurance layer to be re-run",
       "evidence": {
-        "expected_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+        "expected_digest": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
         "expected_digest_is": "the scientific tree as merged into the sprint chain, not a certificate. Core V1's 47-module digest was the previous value and stopped describing this lineage at 3d642dcef5db",
-        "recomputed_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+        "recomputed_digest": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
         "matches": true,
         "files_touched_under_src_or_tests": [],
         "production_changes_made": 0

@@ -513,6 +513,21 @@ def clear_unit_caches() -> None:
     # everything is worse than none, because what it leaves behind is invisible.
     _normalized.cache_clear()
     _conversion_rule.cache_clear()
+    # `_compatible` sits in front of `_canonical_unit` exactly as the two above
+    # do, so it belongs here for exactly their reason.
+    _compatible.cache_clear()
+    # `base_unit` and `is_ratio_scale` were MISSED, and had been since they
+    # were written. Both memoize a fact derived from the registry and both sit
+    # in front of it, so after a legitimate reset they would have gone on
+    # serving the pre-reset answer -- the Sprint 7 defect, in two more places,
+    # found by the enumeration test rather than by re-reading this list.
+    base_unit.cache_clear()
+    is_ratio_scale.cache_clear()
+    # This list is no longer the only thing keeping the clear complete:
+    # `tests/test_core_runtime_caches.py::
+    #  test_clear_unit_caches_clears_every_memo_in_the_module` walks the
+    # module's `lru_cache` objects and fails if any survives a clear, so a memo
+    # added later cannot be silently forgotten here the way these two were.
 
 
 def unit_cache_stats() -> dict[str, Any]:
@@ -527,6 +542,7 @@ def unit_cache_stats() -> dict[str, Any]:
     info = _canonical_unit.cache_info()
     normalized = _normalized.cache_info()
     conversions = _conversion_rule.cache_info()
+    compatible = _compatible.cache_info()
     return {
         "hits": info.hits,
         "misses": info.misses,
@@ -536,6 +552,8 @@ def unit_cache_stats() -> dict[str, Any]:
         "normalized_misses": normalized.misses,
         "conversion_rule_hits": conversions.hits,
         "conversion_rule_misses": conversions.misses,
+        "compatible_hits": compatible.hits,
+        "compatible_misses": compatible.misses,
     }
 
 
@@ -690,6 +708,30 @@ def dimension_of(unit: str) -> Any:
         ) from exc
 
 
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _compatible(source: str, target: str) -> bool:
+    """Are these two unit spellings the same physical dimension.
+
+    Memoized for the reason :func:`_canonical_unit` is, and the reason is the
+    same one: this is a pure function of two strings and a registry that cannot
+    change while the process runs. It caches a **lexical** fact about two unit
+    strings -- nothing about a model, a threshold, a context or a verdict
+    participates in the key or the value -- so it is not a scientific-identity
+    cache and the completeness question those must answer does not arise.
+
+    What it replaces: ``dimension_of(a) == dimension_of(b)``, two memo lookups
+    and a pint ``UnitsContainer.__eq__`` that walks a mapping. A tiny DC solve
+    did that 30 times. The answer is identical -- this function computes it the
+    same way on a miss -- and on a hit it is one dict lookup.
+
+    Keyed on the CALLER'S spelling rather than the canonical form, because
+    canonicalising first would itself cost the parse this exists to skip.
+    Equivalent spellings occupy separate entries and agree, which is a little
+    memory for a lot of lookups.
+    """
+    return dimension_of(source) == dimension_of(target)
+
+
 def dimensionality(unit: str) -> str:
     """Stable string form of a unit's physical dimensionality.
 
@@ -809,8 +851,14 @@ class Quantity:
 
     def is_compatible_with(self, other: "Quantity | str") -> bool:
         target = other.units if isinstance(other, Quantity) else other
-        # Objects, not their renderings. See :func:`dimension_of`.
-        return dimension_of(self.units) == dimension_of(target)
+        # Same units, same dimension -- and `self.units` is canonical, so for
+        # a Quantity-to-Quantity check this is the overwhelmingly common case
+        # and it costs one string compare.
+        if self.units == target:
+            return True
+        # Objects, not their renderings. See :func:`dimension_of`. Memoized on
+        # the pair; `_compatible` computes exactly this on a miss.
+        return _compatible(self.units, target)
 
     def require_compatible(self, other: "Quantity | str", *, context: str = "") -> None:
         if not self.is_compatible_with(other):

@@ -22,8 +22,20 @@ from .evidence import ROOT
 #: MV-10's actual claim -- this round edited no production file -- is unchanged
 #: and is carried by the `touched` half, which reads `git status` and does not
 #: depend on which lineage the round is sitting in.
+#:
+#: **Second re-pin, and the pattern is now worth naming.** Sprint 8 moved this
+#: from Core V1's 47-module digest because a 47-module branch had been merged
+#: into a 55-module chain. Sprint 9 moves it again because the Core runtime
+#: round legitimately changed files under src/engcore/scientific.
+#:
+#: That is not this gate failing. Its QUESTION -- "did THIS round change
+#: anything the earlier rounds certified?" -- is answered by the `git status`
+#: half below, which is lineage-independent and still clean. This constant is a
+#: snapshot of a tree that other rounds are entitled to move, so it will need
+#: re-pinning whenever the Core does. Recorded here so the next reader treats a
+#: mismatch as "the Core moved" rather than as evidence about this round.
 EXPECTED_SCIENTIFIC_DIGEST = (
-    "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0"
+    "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092"
 )
 
 #: Discrepancies the round has adjudicated in writing. The split check reports
