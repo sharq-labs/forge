@@ -1,0 +1,72 @@
+{
+  "rows": [
+    {
+      "metric": "RMSE (mV)",
+      "b1_chord": 215.26719947566454,
+      "b2_curve": 212.61868580996247,
+      "improvement_pct": 1.2303377719193431
+    },
+    {
+      "metric": "MAE (mV)",
+      "b1_chord": 132.38991135296288,
+      "b2_curve": 130.6999999999999,
+      "improvement_pct": 1.276465355775891
+    },
+    {
+      "metric": "max |error| (mV)",
+      "b1_chord": 372.4416152889769,
+      "b2_curve": 367.86666666666656,
+      "improvement_pct": 1.2283666578882801
+    },
+    {
+      "metric": "coverage 95 %",
+      "b1_chord": "0/3",
+      "b2_curve": "0/3",
+      "improvement_pct": null
+    },
+    {
+      "metric": "chi-square (3 df)",
+      "b1_chord": 22270.94180454187,
+      "b2_curve": 11415.604697739975,
+      "improvement_pct": 48.74215559482128
+    },
+    {
+      "metric": "free parameters",
+      "b1_chord": 2,
+      "b2_curve": 3,
+      "improvement_pct": null
+    },
+    {
+      "metric": "residual dof",
+      "b1_chord": 1,
+      "b2_curve": 0,
+      "improvement_pct": null
+    },
+    {
+      "metric": "identifiability",
+      "b1_chord": "PARAMETERS_IDENTIFIABLE",
+      "b2_curve": "PARAMETERS_IDENTIFIABLE",
+      "improvement_pct": null
+    },
+    {
+      "metric": "adequacy",
+      "b1_chord": "inadequate_for_declared_study",
+      "b2_curve": "inadequate_for_declared_study",
+      "improvement_pct": null
+    }
+  ],
+  "same_evidence_as_b1": {
+    "BATT_001.DCHG.SOC000": true,
+    "BATT_001.DCHG.SOC040": true,
+    "BATT_001.DCHG.SOC060": true
+  },
+  "rmse_reduction_fraction": 0.012303377719193431,
+  "material_threshold_fraction": 0.2,
+  "verdict": "BATTERY B2 BLOCKED -- DATA LIMIT UNDER THE BINDING SPLIT",
+  "verdict_rule": {
+    "ADEQUATE": "B2-POLY2 held-out chi-square p >= 0.01 => BATTERY B2 COMPLETE -- SOC CURVE ADEQUATE ON HELD-OUT DATA",
+    "IMPROVES": "p < 0.01 AND held-out RMSE at least 20 % below B1's 215.27 mV => BATTERY B2 COMPLETE -- SOC CURVE IMPROVES BUT REMAINS INADEQUATE. The 20 % is a CONVENTION for 'material', stated here and not moved.",
+    "NOT_MATERIAL": "p < 0.01 AND RMSE reduction below 20 % => BATTERY B2 BLOCKED -- DATA LIMIT UNDER THE BINDING SPLIT, provided the flexibility guard confirms that no richer existing curve is identifiable from the three calibration levels. 'Improves' would be false and 'cannot support honest held-out validation' would be false (the validation is honest); the blocker is that the binding split cannot give any existing curve the information the held-out points test.",
+    "UNTESTABLE": "if B2-POLY2 cannot be built, calibrated or admitted without held-out input => BATTERY B2 COMPLETE -- EXISTING CURVE CANNOT SUPPORT HONEST HELD-OUT VALIDATION"
+  }
+}

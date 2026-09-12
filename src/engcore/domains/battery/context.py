@@ -63,7 +63,12 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ...scientific.errors import InvalidScientificProblem
-from ...scientific.models.curves import CurveEvaluation, DeclaredCurve
+from ...scientific.models.curves import (
+    CurveEvaluation,
+    DeclaredCurve,
+    Interpolation,
+    TabulatedForm,
+)
 from ...scientific.models.definition import ValidityStatus
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
@@ -1012,6 +1017,150 @@ def voltage_cutoff_state_of_charge(
     )
 
 
+#: How many evenly spaced points, including both ends, the monotonicity check
+#: of a polynomial or piecewise OCV curve evaluates. A numerical resolution of a
+#: verification step, not a scientific bound, and in no validity domain. It
+#: cannot prove strict monotonicity of a polynomial between grid points; it can
+#: and does refuse every curve that is visibly non-monotone at this resolution,
+#: which is the failure a cutoff inversion must not answer through.
+CURVE_MONOTONICITY_GRID_POINTS = 2049
+
+#: Bisection budget. 200 halvings of a unit interval reach below the spacing of
+#: doubles, so the loop always terminates and always does the same work.
+CURVE_INVERSION_ITERATIONS = 200
+
+#: Largest |OCV(z_cut) - I R - V_cut| accepted at the returned root. A curve
+#: that jumps OVER the target -- a PiecewiseForm discontinuity -- bisects down
+#: onto the jump and leaves a residual as large as the jump, so this is what
+#: turns "the curve never takes this value" into a refusal instead of an answer.
+CURVE_INVERSION_RESIDUAL_TOLERANCE_V = 1.0e-9
+
+
+def voltage_cutoff_state_of_charge_on_curve(
+    *,
+    cutoff_voltage: Quantity | None,
+    current: Quantity | None,
+    internal_resistance: Quantity | None,
+    curve: DeclaredCurve | None,
+) -> CurveEvaluation:
+    """The state of charge at which OCV(z) - I R_int reaches the cutoff, on a DECLARED curve.
+
+    **The same physical semantics as** :func:`voltage_cutoff_state_of_charge`,
+    which inverts the affine chord. Here the relation being inverted is the
+    caller's declared curve, and there is no chord anywhere in this function:
+    a cell that declared a curve replaced the chord, so answering from it would
+    be answering from a model the caller rejected.
+
+    **Three statuses, and only one carries a number** -- the curve module's own
+    contract:
+
+    * ``IN_DOMAIN`` with the state of charge, when the curve is invertible on
+      its declared interval and takes the target value inside it;
+    * ``OUTSIDE_VALIDATED_DOMAIN`` and no value, when the target lies outside
+      the voltages the curve spans on its interval. The chord version returns
+      a state of charge below 0 or above 1 in that case; a curve is evidence
+      only over its interval and does not extrapolate, so it does not;
+    * ``UNKNOWN`` and no value, when an input is missing.
+
+    **Refused -- ``UNKNOWN`` with the reason -- rather than answered** when the
+    curve cannot name ONE state of charge:
+
+    * a ``PREVIOUS`` (zero-order hold) table: a step function takes a voltage
+      over a whole interval of charge, or never;
+    * a curve that is not strictly increasing on its interval, at the
+      resolution of :data:`CURVE_MONOTONICITY_GRID_POINTS` (tables are checked
+      exactly at their samples): a voltage may then name several states of
+      charge;
+    * a curve that jumps over the target (residual above
+      :data:`CURVE_INVERSION_RESIDUAL_TOLERANCE_V`).
+
+    Deterministic: a fixed grid, a fixed iteration budget, no randomness and no
+    tolerance-driven early exit.
+    """
+    def unknown_evaluation(reason: str) -> CurveEvaluation:
+        return CurveEvaluation(ValidityStatus.UNKNOWN, None, reason)
+
+    def outside_evaluation(reason: str) -> CurveEvaluation:
+        return CurveEvaluation(ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, None, reason)
+
+    def in_domain_evaluation(result: Quantity) -> CurveEvaluation:
+        return CurveEvaluation(ValidityStatus.IN_DOMAIN, result, "")
+
+    cutoff = _checked(cutoff_voltage, VOLTAGE_UNIT, CUTOFF_VOLTAGE)
+    checked_current = _checked(current, CURRENT_UNIT, DISCHARGE_CURRENT)
+    resistance = _checked(
+        internal_resistance, RESISTANCE_UNIT, INTERNAL_RESISTANCE, positive=True
+    )
+    if cutoff is None or checked_current is None or resistance is None or curve is None:
+        return unknown_evaluation(
+            "a cutoff state of charge on a curve needs the cutoff voltage, the "
+            "current, the internal resistance and the curve, and at least one "
+            "was not declared"
+        )
+    target = (
+        cutoff.magnitude_in(VOLTAGE_UNIT)
+        + _ohmic_drop(checked_current, resistance).magnitude_in(VOLTAGE_UNIT)
+    )
+    lower, upper = curve.lower, curve.upper
+    form = curve.form
+
+    def value(z: float) -> float:
+        return curve.evaluate(Quantity(z, DIMENSIONLESS)).value.magnitude_in(VOLTAGE_UNIT)
+
+    if isinstance(form, TabulatedForm):
+        if form.interpolation is not Interpolation.LINEAR:
+            return unknown_evaluation(
+                f"the OCV curve is a {form.interpolation.value!r} table, a step "
+                f"function, so a cutoff voltage names no single state of charge"
+            )
+        voltages = [v for _, v in form.samples]
+        if any(b <= a for a, b in zip(voltages, voltages[1:])):
+            return unknown_evaluation(
+                "the OCV table's voltages do not rise strictly with state of "
+                "charge, so a cutoff voltage may name several states of charge"
+            )
+    else:
+        step = (upper - lower) / (CURVE_MONOTONICITY_GRID_POINTS - 1)
+        grid = [value(min(lower + i * step, upper)) for i in range(CURVE_MONOTONICITY_GRID_POINTS)]
+        if any(b <= a for a, b in zip(grid, grid[1:])):
+            return unknown_evaluation(
+                f"the OCV curve is not strictly increasing on [{lower}, {upper}] "
+                f"at a resolution of {CURVE_MONOTONICITY_GRID_POINTS} points, so a "
+                f"cutoff voltage may name several states of charge"
+            )
+
+    low_v, high_v = value(lower), value(upper)
+    if not low_v <= target <= high_v:
+        return outside_evaluation(
+            f"OCV(z) - I R_int reaches the cutoff at OCV = {target!r} V, outside "
+            f"the {low_v!r}..{high_v!r} V this curve spans on its declared "
+            f"interval [{lower}, {upper}]; the curve is not extrapolated"
+        )
+
+    if isinstance(form, TabulatedForm):
+        for (left_z, left_v), (right_z, right_v) in zip(form.samples, form.samples[1:]):
+            if left_v <= target <= right_v:
+                z = left_z + (right_z - left_z) * (target - left_v) / (right_v - left_v)
+                return in_domain_evaluation(Quantity(z, DIMENSIONLESS))
+
+    a, b = lower, upper
+    for _ in range(CURVE_INVERSION_ITERATIONS):
+        middle = 0.5 * (a + b)
+        if value(middle) < target:
+            a = middle
+        else:
+            b = middle
+    root = 0.5 * (a + b)
+    residual = abs(value(root) - target)
+    if residual > CURVE_INVERSION_RESIDUAL_TOLERANCE_V:
+        return unknown_evaluation(
+            f"the OCV curve does not take the value {target!r} V: bisection "
+            f"converges to z = {root!r} with a residual of {residual!r} V, a "
+            f"discontinuity jumping over the cutoff"
+        )
+    return in_domain_evaluation(Quantity(root, DIMENSIONLESS))
+
+
 def cutoff_consistency_margin(
     *,
     cutoff_state_of_charge: Quantity | None,
@@ -1743,6 +1892,44 @@ def derived_cell_quantities(
         exponent=base.get(PEUKERT_EXPONENT),
     )
 
+    # ONE cutoff state of charge, and for a curve cell it comes from the curve.
+    #
+    # This used to invert the CHORD for every cell -- including a cell that
+    # declared a curve, whose chord endpoints are derived from that curve and
+    # whose chord it therefore rejected. Both cutoff conditions answered for a
+    # curve cell from the linear model while the solver refused the same
+    # combination as unmigrated: a silent linear fallback. A curve inversion
+    # that cannot name one state of charge now yields no value, and the two
+    # conditions report UNKNOWN rather than a chord answer.
+    #
+    # And a DECLARED voltage cutoff the curve cannot locate is not the same as
+    # no voltage cutoff. Handed on as a bare None, cutoff_reachability_margin
+    # would read it as "not declared" and answer from the state-of-charge
+    # cutoff alone -- but the binding cutoff is the HIGHER of the two, and one
+    # of them is unknown, so reachability cannot be satisfied on that basis.
+    # Both cutoff conditions are withheld instead.
+    cutoff_undeterminable = False
+    if open_circuit_voltage_curve is not None:
+        voltage_cutoff_soc = voltage_cutoff_state_of_charge_on_curve(
+            cutoff_voltage=base.get(CUTOFF_VOLTAGE),
+            current=discharge_current,
+            internal_resistance=resistance,
+            curve=open_circuit_voltage_curve,
+        ).value
+        cutoff_undeterminable = (
+            base.get(CUTOFF_VOLTAGE) is not None
+            and discharge_current is not None
+            and voltage_cutoff_soc is None
+        )
+    else:
+        voltage_cutoff_soc = voltage_cutoff_state_of_charge(
+            cutoff_voltage=base.get(CUTOFF_VOLTAGE),
+            current=discharge_current,
+            internal_resistance=resistance,
+            ocv_at_empty=ocv_empty,
+            ocv_at_full=ocv_full,
+        )
+
     derived: dict[str, Quantity | None] = {
         C_RATE: rate,
         FINAL_STATE_OF_CHARGE: final_soc,
@@ -1775,24 +1962,12 @@ def derived_cell_quantities(
         ),
         CUTOFF_CONSISTENCY_MARGIN: cutoff_consistency_margin(
             cutoff_state_of_charge=base.get(CUTOFF_STATE_OF_CHARGE),
-            voltage_cutoff_soc=voltage_cutoff_state_of_charge(
-                cutoff_voltage=base.get(CUTOFF_VOLTAGE),
-                current=discharge_current,
-                internal_resistance=resistance,
-                ocv_at_empty=ocv_empty,
-                ocv_at_full=ocv_full,
-            ),
+            voltage_cutoff_soc=voltage_cutoff_soc,
         ),
         CUTOFF_REACHABILITY_MARGIN: cutoff_reachability_margin(
             state_of_charge=state_of_charge,
             cutoff_state_of_charge=base.get(CUTOFF_STATE_OF_CHARGE),
-            voltage_cutoff_soc=voltage_cutoff_state_of_charge(
-                cutoff_voltage=base.get(CUTOFF_VOLTAGE),
-                current=discharge_current,
-                internal_resistance=resistance,
-                ocv_at_empty=ocv_empty,
-                ocv_at_full=ocv_full,
-            ),
+            voltage_cutoff_soc=voltage_cutoff_soc,
         ),
         SELF_HEATING_RISE_RATIO: self_heating_rise_ratio(
             rise=rise, bound=base.get(SELF_HEATING_RISE_BOUND)
@@ -1834,4 +2009,7 @@ def derived_cell_quantities(
             span=base.get(PEUKERT_TEMPERATURE_SPAN),
         ),
     }
+    if cutoff_undeterminable:
+        derived[CUTOFF_CONSISTENCY_MARGIN] = None
+        derived[CUTOFF_REACHABILITY_MARGIN] = None
     return {name: value for name, value in derived.items() if value is not None}

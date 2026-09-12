@@ -1,0 +1,123 @@
+{
+  "schema": "battery_flagship_b2_preregistration/1",
+  "written_before_any_b2_calibration_on_measured_data": true,
+  "b2_baseline_commit": "67976685a86d9ac3d54bfc86ad4dbc335bb9c490",
+  "b1_control": {
+    "results_file": "benchmarks/battery_flagship_b1/RESULTS.json",
+    "rule": "B1 artifacts are read, never rewritten. The B1 chord is re-evaluated in B2 only as the control column of the comparison, from B1's committed RESULTS.json."
+  },
+
+  "what_was_already_known_when_this_was_written": [
+    "B1 is committed and public: the chord (p = 2) calibrated on SOC {0.2, 0.5, 0.8} misses the held-out SOC {0.0, 0.4, 0.6} by -372.4, +13.2 and -11.5 mV; the measured discharge-branch OCV is flat from 0.4 to 0.6, steps at 0.2 and 0.8, and has a knee at 0.",
+    "From those public numbers alone, any curve with three parameters that passes through the three calibration levels can be expected to repeat the plateau misses (it has no information that 0.4-0.6 is flat) and to extrapolate past the knee (it has no information below 0.2). That expectation was derived by hand before this file was written. It is why this protocol includes a flexibility analysis and a verdict branch for a non-material improvement. It did NOT change the split, the uncertainty budget, the adequacy rule or alpha, all of which are B1's and binding."
+  ],
+
+  "phase1_inventory_of_the_existing_curve": {
+    "type": "engcore.scientific.models.curves.DeclaredCurve (FROZEN Core), accepted by engcore.domains.battery.cell.CellSpecification.open_circuit_voltage_curve",
+    "forms": {
+      "TabulatedForm": "strictly ascending (SOC, V) samples with a stated interpolation, LINEAR or PREVIOUS (zero-order hold). The curve module calls this the form 'measured curves arrive' in. A declared interval may not reach past the samples.",
+      "PolynomialForm": "ascending coefficients about a stated reference point, evaluated by Horner. The curve module calls this the form 'fitted correlations arrive' in.",
+      "PiecewiseForm": "polynomial pieces over strictly ascending interior breakpoints; continuity NOT required and not checked."
+    },
+    "units": "against = state_of_charge in dimensionless, value in volt",
+    "extrapolation": "none. Outside [lower, upper] evaluate() returns OUTSIDE_VALIDATED_DOMAIN and no value. With no input it returns UNKNOWN.",
+    "cell_integration": "CellSpecification derives open_circuit_voltage_at_empty / _at_full FROM the curve at z = 0 and z = 1 and refuses a curve that cannot answer at both. A cell may not declare both a curve and endpoints.",
+    "serialization_provenance": "DeclaredCurve serializes to primitives and round-trips; its fingerprint (excluding source/description) enters CellSpecification.physical_key.",
+    "solver_integration": "solver.evaluate_step evaluates OCV(z_end) on the curve, raising if z_end is outside the curve's interval.",
+    "voltage_cutoff": "solver._binding_cutoff REFUSES a curve cell with a cutoff voltage ('has not been migrated'). That refusal is pinned by the CERTIFIED harness test tests/test_core_guards.py::test_the_unmigrated_inversion_refuses_rather_than_answering_from_the_chord, so it cannot be changed while the Core is frozen. context.derived_cell_quantities, which the validity conditions read, does NOT refuse: it inverts the CHORD built from the curve's endpoints for CUTOFF_CONSISTENCY_MARGIN and CUTOFF_REACHABILITY_MARGIN -- a silent linear fallback for a curve cell. Not pinned by any certified test.",
+    "applicability_conditions": "the same eleven RangeConditions as the chord; none reads the curve's shape or any measured OCV."
+  },
+
+  "phase2_claim_boundary": {
+    "claim": "battery.cell.rint_ocv with a declared OCV curve claims exactly: OCV is the declared single-variable function of state of charge over the declared interval, and the terminal voltage is OCV(z) - I R_int with one constant R_int. It is a TABULATED OR FITTED SOC-DEPENDENT OCV inside an Rint circuit.",
+    "not_claimed": ["a general LiFePO4 electrochemical model", "hysteresis", "RC polarization", "temperature dependence", "ageing", "relaxation dynamics", "rate dependence", "charging", "anything outside the curve's declared interval"]
+  },
+
+  "phase3_same_measured_data": {
+    "file": "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+    "file_sha256": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+    "cell": "BATT_001", "sheet": "24h_Discharge_APR",
+    "observable": "relaxed OCV at t = 24 h",
+    "uncertainty": "B1's budget with amendment A2, unchanged",
+    "differences_from_b1": "none in data, split, sigma, alpha or credible mass. The ONLY change is the OCV representation."
+  },
+
+  "phase4_parameterization": {
+    "primary": {
+      "id": "B2-POLY2",
+      "form": "PolynomialForm, degree 2, reference 0.0, declared interval [0, 1]",
+      "why_this_form": "The curve module names PolynomialForm as the form fitted correlations arrive in, so calibrating it is its native use. TabulatedForm is the measured-map form (see measured_map_semantics below). Degree 1 over [0, 1] IS the B1 chord, so degree 2 is the smallest SOC-dependent step beyond it.",
+      "parameters": "the curve's voltages at three PRE-DECLARED nodes z = 0.0, 0.5, 1.0, mapped to coefficients by exact Lagrange interpolation in the adapter. Volt-valued with B1's bounds [2.0, 3.6] V, so the frozen identifiability classification (which judges each interval against its own estimate) is on the same scale as B1. A coefficient parameterization would put a near-zero curvature coefficient in that ratio; it is reported as a secondary sensitivity check, not the primary.",
+      "nodes_basis": "0 and 1 because CellSpecification requires the curve to answer at both ends; 0.5 because it is the axis midpoint. None is chosen from the data. 0.5 coincides with a calibration SOC, which is disclosed.",
+      "initial_point_v": [3.2, 3.3, 3.4],
+      "initial_basis": "the B1 A1 start extended linearly: nominal 3.3 V at the midpoint, +/-0.1 V at the ends -- a chord, so the search starts where B1 ended",
+      "free_parameters": 3,
+      "calibration_observations": 3,
+      "parameter_to_data_ratio": 1.0,
+      "residual_degrees_of_freedom": 0,
+      "consequence": "the calibration residuals are zero by construction. That is recorded as NO internal check, not as a perfect fit, and is never read as validity. Held-out predictions remain genuine: no held-out value enters the fit."
+    },
+    "secondary_same_flexibility": {
+      "id": "B2-TAB3",
+      "form": "TabulatedForm LINEAR, knots z = 0.0, 0.5, 1.0, knot voltages calibrated",
+      "free_parameters": 3, "residual_degrees_of_freedom": 0,
+      "role": "the other existing form at the same flexibility; reported, not verdict-bearing"
+    },
+    "flexibility_guard": {
+      "id": "B2-TAB5",
+      "form": "TabulatedForm LINEAR, knots z = 0.0, 0.25, 0.5, 0.75, 1.0",
+      "free_parameters": 5, "calibration_observations": 3,
+      "role": "demonstrate that more flexibility is not supported: the linear map from knot voltages to the three calibration predictions has rank at most 3 < 5, so the parameters are structurally non-identifiable. Reported by rank and null space plus the frozen calibrate() outcome; not scored on held-out data, because an unidentified fit has no prediction to score."
+    },
+    "measured_map_semantics": "A TabulatedForm whose samples ARE the calibration measurements would be the representation's native measured-map use. It is NOT TESTABLE under the binding split: CellSpecification needs the curve at z = 0 and z = 1, the discharge branch was never measured at z = 1, and z = 0 is a HELD-OUT observation. Building it would put a held-out value into the curve. Recorded as CURVE_MODEL_NOT_TESTABLE_WITH_HELD_OUT_PROTOCOL for the measured-map use only."
+  },
+
+  "phase5_no_leakage": [
+    "split identical to B1: calibration {0.2, 0.5, 0.8}, held-out {0.0, 0.4, 0.6}, disjoint by identity and content through the frozen ObservationSplit",
+    "nodes and knots are declared positions, never measured values",
+    "calibration sigmas from calibration traces only (A2)",
+    "no normalization, no prior; initial point declared above",
+    "grid centred on a closed-form estimate computed from CALIBRATION observations only"
+  ],
+
+  "phase6_synthetic_controls_before_measured_data": [
+    "A: a truth generated from B2-POLY2 itself plus declared noise must calibrate and pass held-out adequacy",
+    "B: a structurally different curve (plateau steps plus a knee) must fail held-out adequacy"
+  ],
+
+  "phase8_to_10_workflow": {
+    "calibration": "frozen engcore.inference.calibrate, max_evaluations 2000, seed 20260912",
+    "posterior": "frozen gaussian_grid_posterior over an AdmittedForwardTable of production-solver predictions; 25 points per axis spanning +/- 6 standard errors about the closed-form estimate; GridResolutionError is reported, never read as identifiability",
+    "identifiability": "frozen assess_identifiability, default thresholds",
+    "uq": "frozen posterior_predictive_uq, credible mass 0.95, MODEL_DISCREPANCY_NOT_MODELLED",
+    "adequacy": "B1's rule unchanged: chi-square of frozen standardized held-out residuals on 3 df, alpha 0.01"
+  },
+
+  "verdict_mapping_fixed_now": {
+    "ADEQUATE": "B2-POLY2 held-out chi-square p >= 0.01 => BATTERY B2 COMPLETE -- SOC CURVE ADEQUATE ON HELD-OUT DATA",
+    "IMPROVES": "p < 0.01 AND held-out RMSE at least 20 % below B1's 215.27 mV => BATTERY B2 COMPLETE -- SOC CURVE IMPROVES BUT REMAINS INADEQUATE. The 20 % is a CONVENTION for 'material', stated here and not moved.",
+    "NOT_MATERIAL": "p < 0.01 AND RMSE reduction below 20 % => BATTERY B2 BLOCKED -- DATA LIMIT UNDER THE BINDING SPLIT, provided the flexibility guard confirms that no richer existing curve is identifiable from the three calibration levels. 'Improves' would be false and 'cannot support honest held-out validation' would be false (the validation is honest); the blocker is that the binding split cannot give any existing curve the information the held-out points test.",
+    "UNTESTABLE": "if B2-POLY2 cannot be built, calibrated or admitted without held-out input => BATTERY B2 COMPLETE -- EXISTING CURVE CANNOT SUPPORT HONEST HELD-OUT VALIDATION"
+  },
+
+  "phase12_validity_condition_design": {
+    "placement": "battery domain, a separate empirical-adequacy assessment beside assess_rint_validity. NOT a new RangeCondition on the model record: adding one would turn every existing IN_DOMAIN verdict with no measured OCV into UNKNOWN, including the 400 pinned hard-benchmark cases, and would conflate two different questions.",
+    "statuses": ["EMPIRICALLY_ADEQUATE", "EMPIRICALLY_INADEQUATE", "NO_MEASURED_EVIDENCE", "EVIDENCE_OUTSIDE_CLAIM"],
+    "distinction": "MODEL_APPLICABLE is the existing applicability verdict (IN_DOMAIN). MODEL_EMPIRICALLY_ADEQUATE is the new status. Neither implies the other, both are reported, and NO_MEASURED_EVIDENCE is never adequate.",
+    "rule": "chi-square of (measured - declared OCV) / measurement standard uncertainty over the in-claim evidence points, dof = n, alpha 0.01 -- B1's rule and alpha, reused. Charge-conditioned evidence is out of claim (discharge only, no hysteresis). Evidence outside the curve's declared interval is out of representation. Evidence used to declare the cell must not be supplied; the assessment records which source refs it scored."
+  },
+
+  "phase13_cutoff_design": {
+    "scope": "domain context only. The solver refusal stays exactly as certified.",
+    "semantics": "the state of charge z at which OCV(z) - I R_int reaches the declared cutoff voltage -- the chord function's semantics, on the curve",
+    "rules": ["TabulatedForm LINEAR: exact segment inversion; refuse unless the sample voltages ascend strictly", "TabulatedForm PREVIOUS: refuse -- a step function names no single state of charge", "Polynomial / Piecewise: refuse unless strictly increasing on a dense deterministic grid over the declared interval; bisection with a fixed iteration budget; refuse if the residual at the root is not tiny (a discontinuity jumping over the target)", "target outside the curve's range on its interval: OUTSIDE_VALIDATED_DOMAIN, no value -- never a chord extrapolation", "a degree-1 polynomial over [0, 1] must reproduce the chord formula exactly inside [0, 1]"],
+    "wiring": "derived_cell_quantities uses the curve inversion whenever a curve is declared; a refusal becomes UNKNOWN for the two cutoff conditions instead of a chord answer"
+  },
+
+  "phase14_hysteresis": "charge-branch minus discharge-branch relaxed OCV at the shared SOC, measured only, compared with the B2-POLY2 held-out residual magnitude at the same SOC",
+
+  "phase15_generalization": {
+    "test": "BATT_002 (BSE 18650 LiFePO4, 1500 mAh) discharge branch {0.0, 0.5, 0.6} scored against the BATT_001 B2-POLY2 posterior-mean curve and against the B1 chord, WITHOUT recalibration, through the Phase 12 empirical assessment with BATT_002's own measurement budget",
+    "other_chemistries": "BATT_003..BATT_008 have only 0 % and 100 % OCV: DATA_LIMIT, and a LiFePO4 curve is no claim about them"
+  }
+}
