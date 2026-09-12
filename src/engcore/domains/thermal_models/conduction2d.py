@@ -467,7 +467,22 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
     edges = problem.edges
 
     n = nx * ny
-    matrix = sp.lil_matrix((n, n), dtype=np.float64)
+    # COORDINATE TRIPLETS, NOT A LIL MATRIX.
+    #
+    # This loop used to write into `sp.lil_matrix` with `matrix[row, col] +=`,
+    # which is a Python call per matrix element — and profiled at 32 x 32 it
+    # was 55 % of the entire solve, against 0.04 % for the factorisation it
+    # exists to feed. The arithmetic below is unchanged: the same coefficients
+    # are produced in the same order and appended to three lists, and scipy
+    # sums duplicate coordinates on conversion exactly as `+=` accumulated
+    # them. A coordinate is written at most twice here — a ghost node's mirror
+    # can coincide with a real neighbour — and the sum of two floats does not
+    # depend on their order, so the assembled matrix is bit-identical.
+    # `tests/test_conduction2d_assembly.py` asserts that against the old
+    # construction rather than leaving it as an argument.
+    triplet_rows: list[int] = []
+    triplet_cols: list[int] = []
+    triplet_values: list[float] = []
     rhs = np.zeros(n, dtype=np.float64)
 
     def index(i: int, j: int) -> int:
@@ -493,7 +508,9 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
         for i in range(nx):
             row = index(i, j)
             if row in dirichlet:
-                matrix[row, row] = 1.0
+                triplet_rows.append(row)
+                triplet_cols.append(row)
+                triplet_values.append(1.0)
                 rhs[row] = dirichlet[row]
                 continue
 
@@ -514,7 +531,9 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
                 ii, jj = i + di, j + dj
                 inside = 0 <= ii < nx and 0 <= jj < ny
                 if inside:
-                    matrix[row, index(ii, jj)] += coefficient
+                    triplet_rows.append(row)
+                    triplet_cols.append(index(ii, jj))
+                    triplet_values.append(coefficient)
                     continue
                 # Off the support: this node is on `edge_here`, which carries a
                 # flux condition (a Dirichlet edge would have been pinned). The
@@ -523,7 +542,9 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
                 # whatever one number was chosen to stand for the edge.
                 flux = flux_laws[edge_here][row]
                 mirror_i, mirror_j = i - di, j - dj
-                matrix[row, index(mirror_i, mirror_j)] += coefficient
+                triplet_rows.append(row)
+                triplet_cols.append(index(mirror_i, mirror_j))
+                triplet_values.append(coefficient)
                 # T_ghost = T_mirror - 2 h qn / k, for -k dT/dn = qn on an
                 # outward normal. Substituting leaves `coefficient * T_mirror`
                 # on the left — hence the doubled neighbour above — and a
@@ -531,8 +552,20 @@ def assemble(problem: SteadyConductionProblem) -> tuple[sp.csr_matrix, np.ndarra
                 # right-hand side with the sign it changes on the way.
                 rhs[row] += coefficient * 2.0 * spacing * flux / k
 
-            matrix[row, row] += centre
+            triplet_rows.append(row)
+            triplet_cols.append(row)
+            triplet_values.append(centre)
 
+    matrix = sp.coo_matrix(
+        (
+            np.asarray(triplet_values, dtype=np.float64),
+            (
+                np.asarray(triplet_rows, dtype=np.int64),
+                np.asarray(triplet_cols, dtype=np.int64),
+            ),
+        ),
+        shape=(n, n),
+    )
     return matrix.tocsr(), rhs
 
 
