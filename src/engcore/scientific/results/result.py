@@ -92,7 +92,14 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
+from collections.abc import Mapping as _RuntimeMapping
 from typing import Any, Mapping
+#: ``typing.Mapping`` and ``collections.abc.Mapping`` are the SAME CLASS
+#: (``typing.Mapping.__origin__`` IS that class), but an ``isinstance``
+#: against the typing alias routes through ``typing.__subclasscheck__`` and
+#: measures 2.56x slower here. Annotations keep ``Mapping``; runtime checks
+#: use ``_RuntimeMapping``. Same check, same answer, same refusals.
+
 
 from ..errors import ScientificCoreError
 from ..models.definition import ValidityAssessment, ValidityStatus
@@ -185,7 +192,7 @@ def _stated_by_a_package_for(module: str) -> str | None:
         declarations = getattr(
             package, UNASSESSED_DECLARATIONS_ATTRIBUTE, None
         )
-        if isinstance(declarations, Mapping) and module in declarations:
+        if isinstance(declarations, _RuntimeMapping) and module in declarations:
             reason = str(declarations[module]).strip()
             if reason:
                 return reason

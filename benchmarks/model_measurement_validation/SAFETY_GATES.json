@@ -280,14 +280,21 @@
       "question": "Did this round change anything the earlier rounds certified?",
       "would_fail_if": "a production file had been edited, which would have required every earlier assurance layer to be re-run",
       "evidence": {
-        "expected_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+        "expected_digest": "de6fa8ba5295df4d97f69e8a24c6ed85089abad584851a65b8d90ffbf04450e6",
         "expected_digest_is": "the scientific tree as merged into the sprint chain, not a certificate. Core V1's 47-module digest was the previous value and stopped describing this lineage at 3d642dcef5db",
-        "recomputed_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+        "recomputed_digest": "de6fa8ba5295df4d97f69e8a24c6ed85089abad584851a65b8d90ffbf04450e6",
         "matches": true,
-        "files_touched_under_src_or_tests": [],
+        "files_touched_under_src_or_tests": [
+          "src/engcore/scientific/consensus.py",
+          "src/engcore/scientific/results/immutable.py",
+          "src/engcore/scientific/results/result.py",
+          "src/engcore/scientific/serialization.py",
+          "src/engcore/scientific/units/quantity.py",
+          "tests/test_core_runtime_caches.py"
+        ],
         "production_changes_made": 0
       },
-      "verdict": "PASS"
+      "verdict": "FAIL"
     },
     {
       "id": "MV-11",
@@ -303,13 +310,16 @@
           "scientific_truth",
           "empirical_validation"
         ],
-        "modified": [],
+        "modified": [
+          "benchmarks/empirical_validation/SAFETY_GATES.json",
+          "benchmarks/empirical_validation/audit/build_gates.py"
+        ],
         "this_round_reads_one_earlier_file": "benchmarks/empirical_validation/evidence/scipy_codata.py, read-only, for the provenance record"
       },
-      "verdict": "PASS"
+      "verdict": "FAIL"
     }
   ],
-  "passed": 10,
-  "failed": 1,
+  "passed": 8,
+  "failed": 3,
   "note_on_a_failing_gate": "MV-7 is expected to fail and failing it is the round's result. A gate that passed by reclassifying a measured mismatch as out of scope would be worth nothing."
 }

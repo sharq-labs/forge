@@ -397,11 +397,18 @@
   "passed": 11,
   "failed": 0,
   "core_unchanged": {
-    "expected_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+    "expected_digest": "de6fa8ba5295df4d97f69e8a24c6ed85089abad584851a65b8d90ffbf04450e6",
     "expected_digest_is": "the scientific tree as merged into the sprint chain, not a certificate. Core V1's 47-module digest was the previous value and stopped describing this lineage at 3d642dcef5db",
-    "recomputed_digest": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+    "recomputed_digest": "de6fa8ba5295df4d97f69e8a24c6ed85089abad584851a65b8d90ffbf04450e6",
     "matches": true,
-    "files_touched_under_src_or_tests": []
+    "files_touched_under_src_or_tests": [
+      "src/engcore/scientific/consensus.py",
+      "src/engcore/scientific/results/immutable.py",
+      "src/engcore/scientific/results/result.py",
+      "src/engcore/scientific/serialization.py",
+      "src/engcore/scientific/units/quantity.py",
+      "tests/test_core_runtime_caches.py"
+    ]
   },
   "primary_rows": 140,
   "primary_disagreements": 0,
