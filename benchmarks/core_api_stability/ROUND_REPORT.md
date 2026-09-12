@@ -880,8 +880,24 @@ under `src/engcore/domains/`. `origin/main` carries four merge commits this
 branch does not, all of them merges of branches whose content is already in
 this lineage — `973083e` is an ancestor of `origin/main`.
 
-Push result and the remote/local HEAD comparison are recorded below the table
-in §35 RESULT.
+**Pushed.** New branch on the remote; the tree was clean at push time.
+
+| | |
+|---|---|
+| local HEAD | `9d47a7f3c158e36e0c4c9501f1d91124aa4612b9` |
+| `origin/claude/core-api-stability-sprint-10` | `9d47a7f3c158e36e0c4c9501f1d91124aa4612b9` |
+| `git ls-remote` (read from the server) | `9d47a7f3c158e36e0c4c9501f1d91124aa4612b9` |
+| **remote HEAD == local HEAD** | **YES** |
+
+Checked against `ls-remote` as well as the tracking ref, because the tracking
+ref is local state that a fetch updates and the server is the thing being
+asked about.
+
+This section is committed *after* that push and pushed again — a commit cannot
+record its own hash. The follow-up commit touches only this markdown file,
+outside certified scope, and the certificate still verifies after it.
+
+No pull request was opened; the round asked for a push.
 
 ---
 
