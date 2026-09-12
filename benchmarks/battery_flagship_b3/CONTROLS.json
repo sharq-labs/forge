@@ -1,0 +1,123 @@
+{
+ "schema": "battery_flagship_b3_controls/1",
+ "run_before_the_measured_round": true,
+ "seed": 20260913,
+ "noise": "Gaussian at each observation's preregistered primary sigma",
+ "controls": {
+  "in_model_T5": {
+   "truth_voltages_v": [
+    2.7,
+    3.2,
+    3.29,
+    3.31,
+    3.4
+   ],
+   "gate": {
+    "passed": true,
+    "identifiability_status": "PARAMETERS_IDENTIFIABLE",
+    "route": "CORE_GRID",
+    "why": "p < n_cal, rank == p, and PARAMETERS_IDENTIFIABLE"
+   },
+   "cross_check": {
+    "max_mean_deviation_in_grid_sd": 1.2808747864445984e-11,
+    "sd_ratio_domain_over_grid_range": [
+     1.000038418367833,
+     1.000044129288828
+    ],
+    "max_relative_total_predictive_sd_deviation": 5.335825657537541e-06,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 38.9980682065637,
+    "held_out_chi_square_domain": 38.99791096850047
+   },
+   "core_metrics": {
+    "n": 33,
+    "rmse_v": 0.011681127614587339,
+    "mae_v": 0.009158773279263012,
+    "max_abs_error_v": 0.027030837285447973,
+    "worst_at_state_of_charge": 0.5807177775476113,
+    "max_abs_standardized_residual": 2.572566517095151,
+    "mean_log_predictive_density": 2.986296607281466,
+    "coverage_95": "29/33",
+    "coverage_95_fraction": 0.8787878787878788,
+    "chi_square": 38.9980682065637,
+    "chi_square_df": 33,
+    "chi_square_p_value": 0.21804821300463278,
+    "alpha": 0.01,
+    "adequacy": "MODEL_ADEQUATE"
+   },
+   "domain_metrics": {
+    "n": 33,
+    "rmse_v": 0.011681127614586423,
+    "mae_v": 0.00915877327926234,
+    "max_abs_error_v": 0.027030837285448417,
+    "worst_at_state_of_charge": 0.5807177775476113,
+    "max_abs_standardized_residual": 2.5725637707180513,
+    "mean_log_predictive_density": 2.9862967890232257,
+    "coverage_95": "29/33",
+    "coverage_95_fraction": 0.8787878787878788,
+    "chi_square": 38.99791096850047,
+    "chi_square_df": 33,
+    "chi_square_p_value": 0.21805330917668297,
+    "alpha": 0.01,
+    "adequacy": "MODEL_ADEQUATE"
+   },
+   "core_identifiability": "PARAMETERS_IDENTIFIABLE",
+   "estimates_v": {
+    "open_circuit_voltage_curve@z=0": 2.684130261803469,
+    "open_circuit_voltage_curve@z=0.1": 3.1989337087577545,
+    "open_circuit_voltage_curve@z=0.4": 3.2958821906807922,
+    "open_circuit_voltage_curve@z=0.7": 3.312279459146863,
+    "open_circuit_voltage_curve@z=1": 3.4037306588403373
+   },
+   "expected": "gate pass, MODEL_ADEQUATE, routes agree",
+   "as_expected": true
+  },
+  "knee_misfit_P2": {
+   "truth": "V(z) = 3.30 - 0.62 exp(-z/0.018) + 0.06 (z - 0.5) V",
+   "gate": {
+    "passed": true,
+    "identifiability_status": "PARAMETERS_IDENTIFIABLE",
+    "route": "CORE_GRID",
+    "why": "p < n_cal, rank == p, and PARAMETERS_IDENTIFIABLE"
+   },
+   "core_metrics": {
+    "n": 33,
+    "rmse_v": 0.051230831508591625,
+    "mae_v": 0.019746756460198578,
+    "max_abs_error_v": 0.2822985924277783,
+    "worst_at_state_of_charge": 0.011684800749508504,
+    "max_abs_standardized_residual": 9.957523872586059,
+    "mean_log_predictive_density": 1.1553216250447162,
+    "coverage_95": "26/33",
+    "coverage_95_fraction": 0.7878787878787878,
+    "chi_square": 160.667793155029,
+    "chi_square_df": 33,
+    "chi_square_p_value": 1.0321724558747199e-18,
+    "alpha": 0.01,
+    "adequacy": "MODEL_INADEQUATE"
+   },
+   "worst_region": "KNEE",
+   "worst_error_v": -0.2822985924277783,
+   "expected": "MODEL_INADEQUATE with the worst held-out error in KNEE",
+   "as_expected": true,
+   "cross_check": {
+    "max_mean_deviation_in_grid_sd": 1.0864795823761641e-11,
+    "sd_ratio_domain_over_grid_range": [
+     1.0000000071958046,
+     1.0000000072676622
+    ],
+    "max_relative_total_predictive_sd_deviation": 6.543352526477975e-10,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 160.667793155029,
+    "held_out_chi_square_domain": 160.6677930998688
+   }
+  }
+ },
+ "all_as_expected": true,
+ "preregistration_sha256": "fcc80697b63e971c3a7dee40fa96b6a4643ae5dd38f1fbfcdaf090b44ba36bce",
+ "run_wall_seconds_informational": 248.0
+}
