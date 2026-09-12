@@ -328,7 +328,16 @@ def v1_compatible_core_digest(root: pathlib.Path) -> str:
 # ---------------------------------------------------------------------------
 # repository identity
 # ---------------------------------------------------------------------------
-def _git(root: pathlib.Path, *args: str) -> str:
+def _git(root: pathlib.Path, *args: str, strip: bool = True) -> str:
+    """Run git and return its stdout.
+
+    ``strip`` is a parameter rather than always-on because ``status
+    --porcelain`` encodes the index and worktree states in the **first two
+    columns**, and one of them is very often a space. Stripping the output
+    silently removes that space from the first line only, and every path parsed
+    from it then loses its first character — which is how this function spent
+    its first draft reporting an uncommitted file as ``ools/...``.
+    """
     try:
         done = subprocess.run(
             ["git", *args], cwd=root, capture_output=True, text=True, timeout=60
@@ -339,19 +348,34 @@ def _git(root: pathlib.Path, *args: str) -> str:
         raise CertificationError(
             f"git {' '.join(args)} failed: {done.stderr.strip()}"
         )
-    return done.stdout.strip()
+    return done.stdout.strip() if strip else done.stdout
+
+
+def _porcelain_paths(output: str) -> list[str]:
+    """The paths in ``git status --porcelain`` output, columns intact.
+
+    A rename is reported as ``R  old -> new``; the new name is the one that
+    exists in the tree, so that is the one recorded.
+    """
+    paths: list[str] = []
+    for line in output.splitlines():
+        if not line.strip():
+            continue
+        path = line[3:] if len(line) > 3 else line.strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        paths.append(path.strip().strip('"'))
+    return sorted(paths)
 
 
 def repository_identity(root: pathlib.Path) -> dict[str, Any]:
     """The commit a certificate is about, and whether the tree was clean."""
-    dirty = _git(root, "status", "--porcelain")
+    dirty = _git(root, "status", "--porcelain", strip=False)
     return {
         "commit": _git(root, "rev-parse", "HEAD"),
         "branch": _git(root, "rev-parse", "--abbrev-ref", "HEAD"),
-        "clean": not dirty,
-        "dirty_paths": sorted(
-            line[3:] for line in dirty.splitlines() if line.strip()
-        ),
+        "clean": not dirty.strip(),
+        "dirty_paths": _porcelain_paths(dirty),
     }
 
 
@@ -674,9 +698,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--assurance", help="JSON file of assurance results to embed")
     parser.add_argument("--allow-dirty", action="store_true")
     parser.add_argument(
-        "--no-require-commit",
+        "--require-commit",
         action="store_true",
-        help="verify content only, ignoring which commit is checked out",
+        help=(
+            "also require HEAD to be the commit the certificate names. Off by "
+            "default because a certificate is committed as a child of the "
+            "commit whose tree it certifies, so HEAD is normally that child; "
+            "the content comparison is unaffected, since the certificate file "
+            "is outside certified scope"
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -711,9 +741,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             root,
             load_certificate(certificate_path),
             require_clean=not args.allow_dirty,
-            require_commit=not args.no_require_commit,
+            require_commit=args.require_commit,
         )
         print(result.render())
+        if not args.require_commit:
+            relation = (
+                "HEAD is the certified commit"
+                if result.commit_matches
+                else f"certified commit {result.commit_expected[:12]}, "
+                     f"HEAD {result.commit_actual[:12]}"
+            )
+            print(f"commit: {relation}")
         print("OK" if result.ok else "FAILED")
         return 0 if result.ok else 1
 

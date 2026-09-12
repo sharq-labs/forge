@@ -37,6 +37,7 @@ from tools.certification.core_certificate import (
     file_digest,
     load_certificate,
     repo_root,
+    repository_identity,
     v1_compatible_core_digest,
     verify_certificate,
     write_certificate,
@@ -370,6 +371,32 @@ def test_a_certificate_that_disagrees_with_itself_is_caught(synthetic):
     result = _verify(root, tampered)
     assert not result.ok
     assert any("disagrees with itself" in problem for problem in result.problems)
+
+
+def test_dirty_paths_are_reported_with_their_first_character(synthetic):
+    """A regression guard for a one-character bug in a diagnostic.
+
+    `git status --porcelain` puts the index and worktree states in the first
+    two columns and one of them is usually a space, so stripping the output
+    removes it from the first line only — and every path parsed from that line
+    then loses its first character. The first draft of this tool reported an
+    uncommitted `tools/...` as `ools/...`, which is precisely the kind of
+    quietly wrong diagnostic the sprint exists to remove.
+    """
+    from tools.certification.core_certificate import _porcelain_paths
+
+    root, _ = synthetic
+    target = root / "src" / "engcore" / "scientific" / "record.py"
+    target.write_bytes(b"VALUE = 4\n")
+    identity = repository_identity(root)
+    assert identity["dirty_paths"] == ["src/engcore/scientific/record.py"]
+
+    # And directly, over each status shape, including a staged one whose first
+    # column is not a space.
+    assert _porcelain_paths(" M tools/a.py\n") == ["tools/a.py"]
+    assert _porcelain_paths("M  tools/a.py\n") == ["tools/a.py"]
+    assert _porcelain_paths("?? tools/a.py\n") == ["tools/a.py"]
+    assert _porcelain_paths("R  old.py -> tools/a.py\n") == ["tools/a.py"]
 
 
 def test_a_certificate_round_trips_through_disk(synthetic, tmp_path):
