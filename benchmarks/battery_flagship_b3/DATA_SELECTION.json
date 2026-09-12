@@ -1,0 +1,354 @@
+{
+ "schema": "battery_flagship_b3_data_selection/1",
+ "written_before_any_b3_model_score": true,
+ "b3_baseline_commit": "ae9d79458846e3d1bdb314a57132bf538b14ff84",
+ "what_was_looked_at_before_this_was_written": [
+  "the raw values of every candidate file named below that was retrieved, for classification and the Phase 7 quality screen (printed, plotted-by-eye as numbers, never fitted)",
+  "no B3 model was calibrated, gridded or scored on any external data before this record was committed",
+  "B1 and B2 results on S-OCV BATT_001, already public in their round reports"
+ ],
+ "network_environment_this_round": {
+  "reachable": [
+   "zenodo.org (API and file downloads)",
+   "data.mendeley.com (public API)",
+   "calce.umd.edu",
+   "static-content.springer.com",
+   "www.nature.com (with cookie redirect)",
+   "raw.githubusercontent.com",
+   "api.github.com"
+  ],
+  "not_retrievable": [
+   "basytec.de brochure PDFs (both linked URLs return an HTML 404 page, verified by the first bytes of the response)",
+   "sciencedirect.com article pages (HTTP 403)"
+  ],
+  "contrast_with_sprint_10": "benchmarks/model_measurement_validation/EVIDENCE_PROVENANCE.json recorded doi.org, zenodo.org and similar as blocked by an egress proxy. They are reachable in this round's environment, which is why an external search was possible at all."
+ },
+ "phase1_repository_inventory": {
+  "method": "git ls-files over every tracked path (not filenames containing 'battery'), filtered to xlsx/xls/csv/parquet/mat/h5/npz/zip/pdf/tsv, then every tracked json/jsonl/yaml/h grepped for open_circuit|ocv|state_of_charge|soc_|lifepo|LFP|battery; untracked and ignored paths listed with git status --ignored",
+  "tracked_tabular_or_binary_data_files": [
+   "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+   "experiments/falsification/s11_results_full.csv (not battery)"
+  ],
+  "untracked_or_ignored_data": "none relevant (.venv, caches, results_hard.json from the hard benchmark)",
+  "candidates": [
+   {
+    "id": "R1 S-OCV",
+    "path": "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+    "classification": "REAL_MEASURED",
+    "source": "IEEE DataPort, mirrored at github.com/BulyK47/battery-datasets",
+    "doi": "10.21227/651q-8v82",
+    "institution_authors": "National University of Science and Technology POLITEHNICA Bucharest; Voicila, Enache, Vilciu, Seritan",
+    "license": "CC BY 4.0",
+    "chemistry": "LiFePO4 (BATT_001, BATT_002); NMC, LCO, LiPo, NiCd, NiMH (BATT_003-008)",
+    "cells": "BATT_001 Lithium Werks APR 18650 1100 mAh; BATT_002 BSE 18650 1500 mAh; six others",
+    "capacity": "nominal only, from the Header sheet",
+    "temperature": "23 +/- 2 degC ambient",
+    "conditioning_direction": "separate charge and discharge sheets",
+    "voltage_meaning": "24 h relaxed OCV, 1 min sampling, full relaxation traces",
+    "soc_levels": "read from the workbook itself: BATT_001 discharge {0,20,40,50,60,80}%, charge {20,40,50,60,80,100}%; BATT_002 discharge {0,50,60}%, charge {50,60,100}%; BATT_003-008 one level per branch (0% or 100%)",
+    "repeated_measurements": "none (one trace per level)",
+    "raw_file_available": true,
+    "b3_verdict": "INSUFFICIENT: at most 6 SOC levels per branch against the B3 requirement of >= 10; this is B1/B2's data and the reason B2 was blocked"
+   },
+   {
+    "id": "R2 S-DCHG",
+    "path": "benchmarks/model_measurement_validation/evidence/discharge_curves_1min.json",
+    "classification": "DERIVED (1-minute decimation of REAL_MEASURED 1-second data, DOI 10.21227/cm0f-jg66)",
+    "voltage_meaning": "loaded terminal voltage during constant-current discharge; the current value is never recorded and its rate labels contradict the durations by > 2x (Sprint 10 finding)",
+    "b3_verdict": "REJECTED: loaded terminal voltage is not OCV (Phase 6), and no current is recorded to correct it"
+   },
+   {
+    "id": "R3 hard benchmark battery cases",
+    "path": "benchmarks/hard/cases_battery/, benchmarks/hard/*battery*.json",
+    "classification": "SYNTHETIC (generate_battery.py)",
+    "b3_verdict": "REJECTED"
+   },
+   {
+    "id": "R4 empirical_validation fixtures",
+    "path": "benchmarks/empirical_validation/fixtures/",
+    "classification": "SYNTHETIC ('representative, not measured'); no battery OCV table",
+    "b3_verdict": "REJECTED"
+   },
+   {
+    "id": "R5 blind / blind_v2 battery oracles and truth",
+    "path": "benchmarks/blind/v1, benchmarks/blind_v2",
+    "classification": "REFERENCE_ONLY (independent analytical reimplementation, generated truth)",
+    "b3_verdict": "REJECTED"
+   },
+   {
+    "id": "R6 scientific_truth / capability_boundary / contract_* JSON",
+    "classification": "REFERENCE_ONLY (equation ledgers, planted defects, contract surfaces); no measured OCV",
+    "b3_verdict": "REJECTED"
+   }
+  ],
+  "conclusion": "The repository contains no dataset meeting the B3 acceptance criteria. Phase 3 external search is required."
+ },
+ "phase2_acceptance_criteria": {
+  "required": [
+   ">= 10 distinct SOC observations on one conditioning branch (15-20+ preferred)",
+   "multiple observations below 20% SOC",
+   "multiple plateau observations",
+   "at least one transition region",
+   "known chemistry",
+   "known temperature",
+   "known charge/discharge conditioning, branches separable",
+   "OCV or a clearly defined relaxed/pseudo-OCV, never loaded terminal voltage",
+   "raw measured values",
+   "usable provenance (persistent identifier, named institution)",
+   "usable license (permits vendoring with attribution)"
+  ],
+  "preferred": "LiFePO4, to compare with B1/B2",
+  "forbidden_selection_basis": "how well any model predicts held-out data; no candidate was scored by any model"
+ },
+ "phase3_external_candidates": [
+  {
+   "id": "E1 JAHN-INCR",
+   "classification": "REAL_MEASURED",
+   "title": "Probability distributed equivalent circuit model - Data",
+   "persistent_id": "10.5281/zenodo.10852930 (version cited by the paper's Data availability statement; concept DOI 10.5281/zenodo.10852929). A later version 10.5281/zenodo.11958572 carries the same incrOCV and pOCV files, byte-identical (identical MD5 in both records' metadata and on download).",
+   "related_publication": "Jahn, L., Mossle, P., Roder, F., Danzer, M. A. A physically motivated voltage hysteresis model for lithium-ion batteries using a probability distributed equivalent circuit. Communications Engineering 3, 74 (2024). doi:10.1038/s44172-024-00221-4",
+   "institution": "Chair of Electrical Energy Systems (EES) and Bavarian Center for Battery Technology, University of Bayreuth (read from the paper PDF text)",
+   "license": "CC BY 4.0 (Zenodo record metadata); the article is also CC BY 4.0",
+   "file": "20230125_Hys_A123_01_25deg_incrOCV.csv, 7242 bytes, header 'Q,OCV', 202 data rows",
+   "chemistry": "LiFePO4 cathode / graphite anode (paper: 'a cylindrical A123 18650M1A cell ... consists of a graphite anode and a LFP cathode')",
+   "cell": "one cell, A123 18650M1A, file label A123_01 (the same cell model as S-OCV BATT_001, sold as Lithium Werks APR18650M1A, nominal 1100 mAh)",
+   "capacity": "not stated as a number for this test; the file's charge-branch top is Q = 1.006218 Ah",
+   "temperature": "25 degC, Binder MK115 climate chamber (paper Methods; file name '25deg')",
+   "soc_resolution": "about 1% of capacity: 101 charge-branch rows Q = 0 .. 1.006218 Ah, then 101 discharge-branch rows Q = 1.006218 .. 0.001713 Ah",
+   "protocol_as_documented": "Zenodo description only: 'Full cycle with current interupts at specific states of charge. Data: nx2 vector [Q U] with Q being the currently stored amount of charge in the cell and U being the voltage measured'. Tester BaSyTec CTS (paper Methods).",
+   "protocol_NOT_documented": [
+    "the rest duration after each current interrupt",
+    "the step current",
+    "which sample of each rest the published voltage is"
+   ],
+   "where_that_was_looked_for": [
+    "the paper PDF (Methods describe the pulse tests, the 0.05C cycle, the expanding loops, the rate-capability test and the half-cell GITT - not this file)",
+    "Supplementary Information PDF and the Peer Review File PDF",
+    "both Zenodo data records and the code record 10.5281/zenodo.10852695 (hys_sim_lfp_fc.m, hys_plett_sim.m, pdecm_fullcell.m read as text: none reads the incrOCV file)"
+   ],
+   "measured_channels": "charge throughput Q (Ah) and voltage (V)",
+   "file_format": "CSV, CRLF line endings",
+   "raw_availability": "the published file is the raw extract; voltages are integer multiples of a 190.88 uV step (a 16-bit converter code), i.e. unsmoothed and uninterpolated",
+   "b3_criteria": {
+    "soc_count": "100 discharge-conditioned + 101 charge-conditioned rows (one shared top row)",
+    "below_20pct": "20 discharge-conditioned (z < 0.2) / 21 charge-conditioned",
+    "below_10pct": "10 discharge-conditioned / 11 charge-conditioned",
+    "plateau": "30 discharge-conditioned in 0.4 <= z < 0.7 / 29 charge-conditioned",
+    "transition": "yes, several",
+    "chemistry_known": true,
+    "temperature_known": true,
+    "conditioning_known": "yes by construction: Q rising = charge branch, Q falling = discharge branch",
+    "voltage_meaning": "relaxed voltage after a current interrupt of UNDOCUMENTED duration: an interrupt-relaxed pseudo-OCV, not equilibrium OCV",
+    "raw": true,
+    "provenance": true,
+    "license": true
+   }
+  },
+  {
+   "id": "E2 JAHN-POCV",
+   "classification": "REAL_MEASURED",
+   "persistent_id": "same records as E1",
+   "file": "20230125_Hys_A123_01_25deg_pOCV.csv, 691936 bytes, 13413 rows [pt s, pQ Ah, pOCVAux V]",
+   "voltage_meaning": "terminal voltage under a continuous C/20 current (paper: 'a full cycle with a low current rate of 0.05C'), 2.0-3.6 V, 37.7 h",
+   "b3_verdict": "NOT OCV (loaded). May serve only as a labelled secondary cross-check, never as primary evidence."
+  },
+  {
+   "id": "E3 BATH-LIC-280Ah",
+   "classification": "REAL_MEASURED",
+   "persistent_id": "10.5281/zenodo.20813753",
+   "authors_institution": "Gray, R.; Vagg, C. - University of Bath (EU Horizon TEMPEST)",
+   "license": "CC BY 4.0",
+   "chemistry_cell": "LFP prismatic, 280 Ah, one cell",
+   "temperature": "15, 20, 25, 30, 35 degC",
+   "protocol_measured_from_raw_current": "25C_hppc.csv: 4 h rest, 1C-class discharge to cutoff, charge, then per 10% SOC step: 28 A discharge 64.8 min, 15 min rest, pulse pair with 20 min rests; resting SOC levels 0.95 .. 0.05 (10 levels) plus the full and cutoff states",
+   "soc_count": "10 interior discharge-conditioned levels per temperature",
+   "knee": "one interior level below 10% (0.05); 0.15 already on the low-SOC shoulder",
+   "rest": "15 min (measured from the raw current trace), not relaxed",
+   "anomalies_seen": "65 blank rows in 25C_hppc.csv; the first rows of the 25 degC file read 6.4 degC cell surface",
+   "b3_verdict": "REJECTED as primary: 10 levels leave no way to hold out >= 2 knee observations and still calibrate the knee; 15 min rests"
+  },
+  {
+   "id": "E4 UCCS-A123-26650",
+   "classification": "REAL_MEASURED",
+   "persistent_id": "10.17632/p8kf893yv3.1 (Mendeley Data)",
+   "authors_institution": "Kawakita de Souza, A. - High-Voltage Battery Research Lab, University of Colorado Colorado Springs",
+   "license": "CC BY 4.0",
+   "chemistry_cell": "A123 26650 M1B, 2.5 Ah LiFePO4",
+   "temperature": "-25 .. 45 degC in 10 degC steps",
+   "protocol_measured_from_raw": "A002_OCV_P25_S1.xlsx and _S3.xlsx (Arbin export, SHA-256 matching the Mendeley API): 2 h rest, then a CONTINUOUS -0.0825 A discharge for 31.2 h to 2.0 V, 2 h rest; S3 the same as a +0.0838 A charge to 3.6 V",
+   "voltage_meaning": "loaded terminal voltage at about C/30; relaxed values exist only at the two ends",
+   "b3_verdict": "REJECTED as primary: loaded pseudo-OCV with no interior relaxed points (Phase 6)"
+  },
+  {
+   "id": "E5 CALCE-A123 and CALCE-SP",
+   "classification": "REAL_MEASURED",
+   "source": "calce.umd.edu/battery-data (A123_OCV* 2012 low-current OCV at -10..50 degC; SP1/SP3 incremental and low-current OCV at 0/25/45 degC)",
+   "license": "NO open license. Terms: 'Use of this data for publication purposes should include references to the CALCE article(s)'. Redistribution (vendoring) is not granted.",
+   "protocol_as_documented": "A123: low-current OCV (continuous C/20-class current, loaded). SP incremental OCV: rests every 10% SOC, then 'Averaging and Linear Interpolation' - a DERIVED curve; SP cells are charged to 4.2 V, so not LFP.",
+   "b3_verdict": "REJECTED: license does not permit vendoring; A123 sets are loaded pseudo-OCV; SP sets are 10% resolution, derived, not LFP"
+  },
+  {
+   "id": "E6 BRAUN-BESSLER",
+   "classification": "DERIVED (OCV_vs_SOC_curve_*.csv is a processed curve accompanying cycling data)",
+   "persistent_id": "10.5281/zenodo.17227538, 10.5281/zenodo.13142016",
+   "license": "CC BY-NC 4.0",
+   "b3_verdict": "REJECTED: non-commercial license, processed curve rather than raw relaxed measurements, chemistry of 'Cell A' not an LFP 18650"
+  },
+  {
+   "id": "E7 WINDSOR-30T",
+   "persistent_id": "10.17632/m9w7grpjc7.1",
+   "classification": "REAL_MEASURED",
+   "chemistry_cell": "Samsung 30T INR21700 (nickel-rich, not LFP)",
+   "license": "CC BY 4.0",
+   "b3_verdict": "REJECTED: not LiFePO4, so no comparison with B1/B2 and outside the preferred chemistry"
+  },
+  {
+   "id": "E8 other Zenodo hits screened by metadata only",
+   "items": [
+    "10.5281/zenodo.18630889 Second-life LFP (1C CC/CV charging only: loaded)",
+    "10.5281/zenodo.20086298 half-cell OCP of active materials (half-cell, not a full cell)",
+    "10.5281/zenodo.13715694 LFP field data (operational, CC BY-NC)",
+    "10.5281/zenodo.20816912 280 Ah LFP pack CCCV and drive cycles (pack, loaded)",
+    "10.5281/zenodo.21008092 pulse excitation LFP 20-68 Ah (20.9 GB raw; pulse data, not an OCV test)",
+    "INR18650-LG-3500-MJ1 GITT records (nickel-rich, not LFP)"
+   ],
+   "b3_verdict": "REJECTED by the stated reason each"
+  }
+ ],
+ "phase4_scoring": {
+  "columns": [
+   "dataset",
+   "real_measured",
+   "provenance",
+   "license",
+   "soc_count_one_branch",
+   "knee_below_10pct",
+   "plateau",
+   "temp_known",
+   "voltage_meaning",
+   "suitable"
+  ],
+  "rows": [
+   [
+    "R1 S-OCV BATT_001",
+    "yes",
+    "DOI + paper + institution",
+    "CC BY 4.0",
+    "6",
+    "1",
+    "3",
+    "23+/-2 C",
+    "24 h relaxed OCV",
+    "NO - too few SOC levels"
+   ],
+   [
+    "R2 S-DCHG",
+    "derived",
+    "DOI",
+    "CC BY 4.0",
+    "continuous",
+    "yes",
+    "yes",
+    "23+/-2 C",
+    "loaded, current unknown",
+    "NO - not OCV"
+   ],
+   [
+    "E1 JAHN-INCR",
+    "yes",
+    "DOI + peer-reviewed paper + institution",
+    "CC BY 4.0",
+    "100 (discharge) / 101 (charge)",
+    "10 (discharge) / 11 (charge)",
+    "30 (discharge) / 29 (charge) in 0.4-0.7",
+    "25 C chamber",
+    "interrupt-relaxed, rest UNDOCUMENTED",
+    "YES - with a disclosed protocol defect"
+   ],
+   [
+    "E2 JAHN-POCV",
+    "yes",
+    "same",
+    "CC BY 4.0",
+    "continuous",
+    "yes",
+    "yes",
+    "25 C",
+    "loaded C/20",
+    "NO as OCV; secondary cross-check only"
+   ],
+   [
+    "E3 BATH-LIC",
+    "yes",
+    "DOI + institution",
+    "CC BY 4.0",
+    "10",
+    "1",
+    "yes",
+    "15-35 C",
+    "15 min rest after 10% steps",
+    "NO - knee coverage"
+   ],
+   [
+    "E4 UCCS-A123-26650",
+    "yes",
+    "DOI + institution",
+    "CC BY 4.0",
+    "continuous",
+    "yes",
+    "yes",
+    "-25..45 C",
+    "loaded C/30",
+    "NO - not OCV"
+   ],
+   [
+    "E5 CALCE",
+    "yes",
+    "institution",
+    "none (citation request)",
+    "10% steps or continuous",
+    "few/continuous",
+    "yes",
+    "yes",
+    "derived / loaded",
+    "NO - license"
+   ],
+   [
+    "E6 BRAUN-BESSLER",
+    "derived",
+    "DOI + paper",
+    "CC BY-NC 4.0",
+    "curve",
+    "-",
+    "-",
+    "-",
+    "processed",
+    "NO"
+   ],
+   [
+    "E7 WINDSOR-30T",
+    "yes",
+    "DOI",
+    "CC BY 4.0",
+    "-",
+    "-",
+    "-",
+    "-",
+    "-",
+    "NO - not LFP"
+   ]
+  ]
+ },
+ "selection": {
+  "primary_dataset": "E1 JAHN-INCR, discharge-conditioned branch",
+  "why": [
+   "the only candidate that is real measured, raw, openly licensed, LiFePO4, temperature-controlled, branch-separable AND has enough SOC resolution to preregister a split holding out >= 2 knee, >= 2 plateau and >= 1 transition observation while still calibrating every region",
+   "it is the same cell model as B1/B2's BATT_001, measured by a different laboratory with a different instrument, so the B1/B2 comparison is like for like in chemistry and design and independent in lab and protocol",
+   "the discharge branch is the one battery.cell.rint_ocv claims (discharge only); the charge branch is kept separate and used for hysteresis only"
+  ],
+  "why_not_by_model_performance": "no candidate was scored by any model; the ranking above uses only the Phase 2 criteria",
+  "disclosed_defect_carried_into_every_claim": "the rest duration after each interrupt, the step current and the sampled point of the rest are undocumented anywhere retrievable. The voltage is therefore an interrupt-relaxed pseudo-OCV of unknown relaxation completeness, and B3 never calls it equilibrium OCV. Phase 8 (PREREGISTRATION.json) must carry an explicit, preregistered allowance for incomplete relaxation, with a sensitivity ladder, fixed before any held-out score.",
+  "what_this_defect_does_and_does_not_block": "It does not block testing whether an existing SOC-dependent representation can reproduce the measured shape of this branch on held-out points: every observation shares the same protocol. It does block any claim about the cell's thermodynamic OCV at a precision finer than the relaxation allowance.",
+  "alternative_verdict_considered": "BATTERY B3 BLOCKED - REAL DATA INSUFFICIENT. Rejected because a dataset exists that meets every hard criterion except full protocol documentation, and that defect can be carried quantitatively rather than hidden or used as a reason to stop."
+ }
+}
