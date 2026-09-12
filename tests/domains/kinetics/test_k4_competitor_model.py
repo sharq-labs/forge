@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
-from src.engcore.scientific import ModelType, ModelValidationStatus, Quantity, ValidityStatus
-from src.engcore.scientific.errors import ModelValidityError
+from engcore.domains.kinetics.cstr.alternatives import CONSTANT_RATE_CSTR_MODEL
+from engcore.scientific import ModelType, ModelValidationStatus, Quantity, ValidityStatus
+from engcore.scientific.errors import ModelValidityError
 
 
 def test_constant_rate_competitor_has_distinct_identity_and_epistemic_type() -> None:

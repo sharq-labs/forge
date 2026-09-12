@@ -18,10 +18,10 @@ import math
 
 import pytest
 
-from src.engcore.domains.battery import context as battery
-from src.engcore.domains.electrical import material as material
-from src.engcore.domains.thermal_models import context as thermal
-from src.engcore.scientific.units.quantity import Quantity, dimensionality
+from engcore.domains.battery import context as battery
+from engcore.domains.electrical import material as material
+from engcore.domains.thermal_models import context as thermal
+from engcore.scientific.units.quantity import Quantity, dimensionality
 
 from .oracle_ids import oracle
 

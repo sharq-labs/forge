@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     AmbiguousSolverError,
     BindingIssueKind,
     BooleanValue,
@@ -79,8 +79,8 @@ from src.engcore.scientific import (
     decode_value,
     normalize_unit,
 )
-from src.engcore.scientific.units.quantity import dimensionality
-from src.engcore.scientific.solvers.capability import SolverCapability
+from engcore.scientific.units.quantity import dimensionality
+from engcore.scientific.solvers.capability import SolverCapability
 
 
 def _fixture_model(**fields):
@@ -923,12 +923,14 @@ def test_solver_registry_no_match():
     registry = SolverRegistry()
     _raises(SolverNotFoundError, registry.resolve, build_algebraic_problem())
 
-    registry.register(_DemoSolver("ode_only", {CoreCapabilities.ODE}))
+    registry.register(lambda: _DemoSolver("ode_only", {CoreCapabilities.ODE}))
     _raises(SolverNotFoundError, registry.resolve, build_algebraic_problem())
 
 
 def test_solver_registry_single_match():
-    registry = SolverRegistry([_DemoSolver("algebraic", {CoreCapabilities.ALGEBRAIC})])
+    registry = SolverRegistry(
+        [lambda: _DemoSolver("algebraic", {CoreCapabilities.ALGEBRAIC})]
+    )
     solver = registry.resolve(build_algebraic_problem())
     assert solver.identity.solver_id == "algebraic"
 
@@ -936,8 +938,8 @@ def test_solver_registry_single_match():
 def test_solver_registry_ambiguous_match():
     registry = SolverRegistry(
         [
-            _DemoSolver("first", {CoreCapabilities.ALGEBRAIC}),
-            _DemoSolver("second", {CoreCapabilities.ALGEBRAIC}),
+            lambda: _DemoSolver("first", {CoreCapabilities.ALGEBRAIC}),
+            lambda: _DemoSolver("second", {CoreCapabilities.ALGEBRAIC}),
         ]
     )
     problem = build_algebraic_problem()
@@ -954,9 +956,11 @@ def test_solver_registry_ambiguous_match():
 
 
 def test_solver_registry_duplicate_and_capabilities():
-    solver = _DemoSolver("algebraic", {CoreCapabilities.ALGEBRAIC})
-    registry = SolverRegistry([solver])
-    _raises(DuplicateRegistrationError, registry.register, solver)
+    def factory():
+        return _DemoSolver("algebraic", {CoreCapabilities.ALGEBRAIC})
+
+    registry = SolverRegistry([factory])
+    _raises(DuplicateRegistrationError, registry.register, factory)
     assert registry.capability_names() == (CoreCapabilities.ALGEBRAIC.name,)
     registry.unregister("algebraic", "1.0.0")
     assert len(registry) == 0
@@ -965,7 +969,7 @@ def test_solver_registry_duplicate_and_capabilities():
 
 def test_capability_identifier_is_extensible():
     domain_capability = SolverCapability("electrical:dc", "future domain capability")
-    registry = SolverRegistry([_DemoSolver("dc", {domain_capability})])
+    registry = SolverRegistry([lambda: _DemoSolver("dc", {domain_capability})])
     problem = ScientificProblem(
         problem_id="future_domain",
         variables=(ScientificVariable("v", "volt"),),
@@ -1563,7 +1567,7 @@ def test_objective_weight_rejects_non_finite():
 
 
 def test_solver_tolerance_rejects_non_finite():
-    from src.engcore.scientific import SolverSettings
+    from engcore.scientific import SolverSettings
 
     for bad in (NAN, POS_INF, NEG_INF):
         _raises(ScientificCoreError, SolverSettings, tolerances={"rtol": bad})

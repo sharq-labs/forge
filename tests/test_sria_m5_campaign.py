@@ -16,11 +16,11 @@ import dataclasses
 import json
 import sys
 
-from src.engcore.sria import ExecutorType, ResearchAction
-from src.engcore.sria.assurance.arbiter import AssuranceVerdict
-from src.engcore.sria.assurance.assessment import CriticVerdict
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.campaign import (
+from engcore.sria import ExecutorType, ResearchAction
+from engcore.sria.assurance.arbiter import AssuranceVerdict
+from engcore.sria.assurance.assessment import CriticVerdict
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.campaign import (
     RESEARCH_MODE_VOCABULARY,
     BudgetLedger,
     CampaignEventType,
@@ -33,13 +33,13 @@ from src.engcore.sria.campaign import (
     ValidationLivenessPolicy,
     require_simulation,
 )
-from src.engcore.sria.decision import (
+from engcore.sria.decision import (
     ActionFamily,
     ActionProposal,
     AtomicAction,
     RecommendationOutcome,
 )
-from src.engcore.sria.errors import ReservedNotImplemented
+from engcore.sria.errors import ReservedNotImplemented
 
 from tests.sria_m5_benchmark import (
     PRIOR,
@@ -479,7 +479,7 @@ def test_S5_stop_proposal_does_not_self_certify_completion():
 
 
 def test_S5_stop_is_rejected_while_an_obligation_is_unsatisfied():
-    from src.engcore.sria.campaign import ArbiterStoppingReview, StopProposal
+    from engcore.sria.campaign import ArbiterStoppingReview, StopProposal
 
     _g, arbiter, _a = build_assurance()
     proposal = StopProposal(
@@ -618,7 +618,7 @@ def test_no_research_mode_state_machine_anywhere_in_the_loop():
 
     import ast
     from pathlib import Path
-    import src.engcore.sria.campaign.runner as runner_module
+    import engcore.sria.campaign.runner as runner_module
 
     # Parse rather than grep, so the module's own prose about *not* having a
     # mode machine does not count as having one.
@@ -645,7 +645,7 @@ def test_no_research_mode_state_machine_anywhere_in_the_loop():
 
 
 def test_all_six_families_remain_eligible_peers():
-    from src.engcore.sria.decision import DEFAULT_GENERATORS
+    from engcore.sria.decision import DEFAULT_GENERATORS
 
     families = {g.family for g in DEFAULT_GENERATORS}
     assert families == set(ActionFamily)
@@ -711,8 +711,8 @@ def test_executor_and_result_cannot_write_belief():
 
 
 def test_candidate_evidence_and_critics_cannot_write_belief():
-    from src.engcore.sria.assurance.assessment import CriticAssessment
-    from src.engcore.sria.evidence import Evidence
+    from engcore.sria.assurance.assessment import CriticAssessment
+    from engcore.sria.evidence import Evidence
 
     for kind in (Evidence, CriticAssessment):
         for forbidden in ("submit", "update_standing", "_apply"):
@@ -751,7 +751,7 @@ def test_calibration_telemetry_cannot_change_scientific_belief():
 
 
 def test_infrastructure_failure_does_not_poison_solver_failure_learning():
-    from src.engcore.sria.outcomes import (
+    from engcore.sria.outcomes import (
         AttributedCause,
         BlameAssignment,
         Disposition,
@@ -816,7 +816,7 @@ def test_hard_budget_stops_further_ordinary_action():
 
 def test_retry_is_a_ranked_candidate_never_an_automatic_rerun():
     """A failed run does not re-run itself; a retry must be proposed and score."""
-    from src.engcore.sria.outcomes import (
+    from engcore.sria.outcomes import (
         AttributedCause,
         Disposition,
         Retryability,
@@ -924,7 +924,7 @@ def test_formal_decision_basis_remains_mandatory_every_iteration():
 
 
 def test_audit_and_executable_replay_remain_valid():
-    from src.engcore.sria.decision import (
+    from engcore.sria.decision import (
         ReplayOutcome,
         audit_replay,
         executable_replay,
@@ -1005,7 +1005,7 @@ def test_m3_authorization_single_use_survives_the_loop():
 
 def test_no_llm_in_the_scientific_truth_path():
     from pathlib import Path
-    import src.engcore.sria.campaign as campaign_package
+    import engcore.sria.campaign as campaign_package
 
     root = Path(campaign_package.__file__).parent
     banned = ("openai", "anthropic", "langchain", "transformers", "llm", "gpt")

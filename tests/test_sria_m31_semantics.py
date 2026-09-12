@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     ConvergenceState,
     ProvenanceRecord,
     Quantity,
@@ -25,7 +25,7 @@ from src.engcore.scientific import (
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.sria import (
+from engcore.sria import (
     AdmissionAuthority,
     AdmissionAuthorityError,
     AdmissionAuthorityRegistry,
@@ -47,8 +47,8 @@ from src.engcore.sria import (
     UncertaintyChannel,
     UncertaintyDeclaration,
 )
-from src.engcore.sria.admission import DecisionBinding
-from src.engcore.sria.assurance import (
+from engcore.sria.admission import DecisionBinding
+from engcore.sria.assurance import (
     Arbiter,
     ArbiterDecision,
     AssuranceVerdict,
@@ -65,8 +65,8 @@ from src.engcore.sria.assurance import (
     model_discrepancy_check,
     obligations_from_charter,
 )
-from src.engcore.sria.assurance.assessment import FindingImpact
-from src.engcore.sria.calibration import CalibrationReport, CalibrationVerdict
+from engcore.sria.assurance.assessment import FindingImpact
+from engcore.sria.calibration import CalibrationReport, CalibrationVerdict
 
 AUTHORITY = AdmissionAuthority("arbiter.m31", secret="m31-secret")
 
@@ -507,7 +507,7 @@ def test_tampered_decision_binding_is_rejected_by_the_gateway():
     arbiter, decision, evidence = valid_flow()
     genuine = arbiter.authorize_admission(decision, evidence)
 
-    from src.engcore.sria.admission import AdmissionDeclaration
+    from engcore.sria.admission import AdmissionDeclaration
 
     tampered = AdmissionDeclaration(
         admitted=True,
@@ -550,7 +550,7 @@ def test_binding_with_a_non_valid_verdict_is_refused():
 
 def test_unevaluated_charter_requirement_blocks_valid():
     """A ValidationLevel obligation M3 cannot evaluate must not be assumed met."""
-    from src.engcore.sria import ConfidenceRequirement
+    from engcore.sria import ConfidenceRequirement
 
     charter = CampaignCharter(
         campaign_id="camp-level",
@@ -610,15 +610,15 @@ def test_not_assessed_survives_the_m1_mapping():
     assert mapped.provenance.metadata["critic_verdict"] == "not_assessed"
 
     # And it survives serialization, so a replay can still tell them apart.
-    from src.engcore.sria.evidence import Assessment
+    from engcore.sria.evidence import Assessment
 
     reloaded = Assessment.from_dict(json.loads(json.dumps(mapped.to_dict())))
     assert reloaded.verdict is AssessmentVerdict.INCONCLUSIVE
     assert reloaded.provenance.metadata["critic_verdict"] == "not_assessed"
 
     # A genuinely inconclusive critic is distinguishable from the above.
-    from src.engcore.sria.assurance import CriticAssessment as _CA
-    from src.engcore.sria.provenance import AssessmentProvenance
+    from engcore.sria.assurance import CriticAssessment as _CA
+    from engcore.sria.provenance import AssessmentProvenance
 
     inconclusive = _CA(
         assessment_id="as-inc",
@@ -641,7 +641,7 @@ def test_not_assessed_survives_the_m1_mapping():
     )
 
     # The full critic assessment also round-trips with its impact fields.
-    from src.engcore.sria.assurance import CriticAssessment
+    from engcore.sria.assurance import CriticAssessment
 
     round_tripped = CriticAssessment.from_dict(
         json.loads(json.dumps(assessment.to_dict()))

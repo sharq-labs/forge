@@ -30,17 +30,17 @@ import json
 import secrets
 import sys
 
-from src.engcore.sria import (
+from engcore.sria import (
     AdmissionAuthorityError,
     AdmissionAuthorityRegistry,
     BeliefUpdateGateway,
 )
-from src.engcore.sria.admission import (
+from engcore.sria.admission import (
     AdmissionAuthority,
     AdmissionDeclaration,
     DecisionBinding,
 )
-from src.engcore.sria.assurance import Arbiter, AssuranceVerdict, CriticClass
+from engcore.sria.assurance import Arbiter, AssuranceVerdict, CriticClass
 
 from tests.test_sria_m31_semantics import (  # noqa: E402
     budget,

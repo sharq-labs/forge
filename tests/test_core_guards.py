@@ -22,16 +22,16 @@ import sys
 
 import pytest
 
-from src import engcore
-from src.engcore.scientific.errors import (
+import engcore
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     ModelValidityError,
 )
-from src.engcore.scientific.ir.problem import ScientificProblem
-from src.engcore.scientific.ir.variables import ScientificParameter
-from src.engcore.scientific.models.definition import ScientificModelDefinition
-from src.engcore.scientific.models.registry import ModelRegistry
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.ir.problem import ScientificProblem
+from engcore.scientific.ir.variables import ScientificParameter
+from engcore.scientific.models.definition import ScientificModelDefinition
+from engcore.scientific.models.registry import ModelRegistry
+from engcore.scientific.units.quantity import Quantity
 
 
 # =====================================================================
@@ -58,7 +58,7 @@ MODEL_DISCOVERY_FAILURES: dict[str, str] = {}
 #: groups, "the suite must stay runnable, and green, without it" -- and
 #: `MODEL_DISCOVERY_FAILURES` could not honour it: by construction it tolerates
 #: NO import failure, so on `pip install -e ".[dev]"` the two guards below went
-#: red on `src.engcore.mcp.server`, which imports the optional `[mcp]` SDK. CI
+#: red on `engcore.mcp.server`, which imports the optional `[mcp]` SDK. CI
 #: installs `.[dev,mcp]` and therefore cannot see it; the README's first
 #: command is what fails.
 #:
@@ -159,7 +159,7 @@ def _every_model() -> tuple[ScientificModelDefinition, ...]:
     """
     found: dict[tuple[str, str], ScientificModelDefinition] = {}
     for module_info in pkgutil.walk_packages(
-        engcore.__path__, "src.engcore.", onerror=_record_walk_failure
+        engcore.__path__, "engcore.", onerror=_record_walk_failure
     ):
         try:
             module = importlib.import_module(module_info.name)
@@ -267,7 +267,7 @@ def test_the_only_modules_the_walk_lost_are_declared_optional_ones():
     # Not declared -> not excused.
     assert _missing_optional_distribution(ModuleNotFoundError("x", name="numpy")) is None
     assert (
-        _missing_optional_distribution(ModuleNotFoundError("x", name="src.engcore.z"))
+        _missing_optional_distribution(ModuleNotFoundError("x", name="engcore.z"))
         is None
     )
     # Not a ModuleNotFoundError, and no `name` -> not excused, however it reads.
@@ -519,8 +519,8 @@ def test_a_derived_quantity_declared_as_an_input_is_refused_at_assessment():
     the assembler's own value for it to ``assess`` used to drop the value
     silently, after which the condition read the caller's half instead.
     """
-    from src.engcore.domains.derived_context import DomainValidityContext
-    from src.engcore.scientific.models.definition import (
+    from engcore.domains.derived_context import DomainValidityContext
+    from engcore.scientific.models.definition import (
         InputSourceKind,
         ModelInputSpec,
         RangeCondition,
@@ -576,7 +576,7 @@ def test_the_refusal_does_not_fire_on_another_model_s_business():
     and would have been found immediately; this is here so that the day it is
     made narrower by mistake, it is found immediately too.
     """
-    from src.engcore.domains.derived_context import DomainValidityContext
+    from engcore.domains.derived_context import DomainValidityContext
 
     model = next(m for m in RESERVING if m.model_id == "electrical.dc.kcl")
     context = DomainValidityContext(
@@ -711,8 +711,8 @@ def test_the_rule_itself_is_what_that_audit_applied():
     """
     import pytest
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
         ValidationOutcome,
@@ -764,10 +764,10 @@ def test_the_cstr_dimension_check_compares_against_the_model_record():
     names what it was compared against. A solve with nothing comparable earns
     nothing and says NOT_RUN, rather than passing over an empty set.
     """
-    from src.engcore.domains.kinetics.cstr.validation import (
+    from engcore.domains.kinetics.cstr.validation import (
         check_metric_dimensions,
     )
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationLevel,
         ValidationOutcome,
     )
@@ -797,13 +797,13 @@ def test_every_check_a_live_solve_produces_earns_its_level():
     computed, and most of them are. This drives two domains end to end and
     holds every check in the resulting reports to the same rule.
     """
-    from src.engcore.domains.kinetics.cstr import solve_reactor
-    from src.engcore.domains.kinetics.cstr.problem import (
+    from engcore.domains.kinetics.cstr import solve_reactor
+    from engcore.domains.kinetics.cstr.problem import (
         ReactorChemistry,
         ReactorOperation,
         ReactorRun,
     )
-    from src.engcore.domains.electrical.dc import (
+    from engcore.domains.electrical.dc import (
         DCCircuit,
         DCVoltageSource,
         ElectricalNode,
@@ -940,11 +940,11 @@ def test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against():
 
 def test_a_derived_threshold_set_awards_nothing():
     """The mechanism, on both domains that now use it."""
-    from src.engcore.domains.electrical.dc.validation import (
+    from engcore.domains.electrical.dc.validation import (
         DC_CONVERGENCE_THRESHOLDS,
     )
-    from src.engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
-    from src.engcore.scientific.results.validation import ValidationLevel
+    from engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
+    from engcore.scientific.results.validation import ValidationLevel
 
     for declared, override in (
         (CSTR_GATE_THRESHOLDS, {"invariant_rel_tol": 1e-3}),
@@ -972,7 +972,7 @@ def test_a_derived_threshold_set_awards_nothing():
 
 def test_a_derivation_that_changes_nothing_is_not_an_override():
     """Withholding a level from a caller who changed no number would be noise."""
-    from src.engcore.domains.kinetics.cstr.validation import (
+    from engcore.domains.kinetics.cstr.validation import (
         CSTR_GATE_THRESHOLDS,
         INVARIANT_REL_TOL,
     )
@@ -984,8 +984,8 @@ def test_a_derivation_that_changes_nothing_is_not_an_override():
 
 def test_a_threshold_the_gate_does_not_read_cannot_be_derived():
     """Inventing a criterion nothing evaluates is not configuration."""
-    from src.engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
-    from src.engcore.scientific.errors import ScientificValidationError
+    from engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
+    from engcore.scientific.errors import ScientificValidationError
 
     with pytest.raises(ScientificValidationError, match="have no"):
         CSTR_GATE_THRESHOLDS.derive(a_criterion_nothing_reads=1e-3)
@@ -993,8 +993,8 @@ def test_a_threshold_the_gate_does_not_read_cannot_be_derived():
 
 def test_a_non_finite_threshold_is_refused():
     """NaN makes every comparison false; infinity makes every one true."""
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.thresholds import VerificationThresholds
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.thresholds import VerificationThresholds
 
     for bad in (float("nan"), float("inf")):
         with pytest.raises(ScientificValidationError, match="non-finite"):
@@ -1005,16 +1005,16 @@ def test_a_non_finite_threshold_is_refused():
 
 def test_widening_the_dc_residual_bound_buys_no_level():
     """End to end, on a real solve: the check passes and awards nothing."""
-    from src.engcore.domains.electrical.dc import (
+    from engcore.domains.electrical.dc import (
         DCCircuit,
         DCVoltageSource,
         ElectricalNode,
         Resistor,
         solve_circuit,
     )
-    from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
-    from src.engcore.domains.electrical.dc.validation import DCValidationSettings
-    from src.engcore.scientific.results.validation import (
+    from engcore.domains.electrical.dc.solver import ElectricalDCSolver
+    from engcore.domains.electrical.dc.validation import DCValidationSettings
+    from engcore.scientific.results.validation import (
         ValidationLevel,
         ValidationOutcome,
     )
@@ -1087,11 +1087,11 @@ def _every_solver():
     """
     import inspect
 
-    from src.engcore.scientific.solvers.protocol import ScientificSolver
+    from engcore.scientific.solvers.protocol import ScientificSolver
 
     seen: dict[str, type] = {}
     for module_info in pkgutil.walk_packages(
-        engcore.__path__, "src.engcore.", onerror=_record_walk_failure
+        engcore.__path__, "engcore.", onerror=_record_walk_failure
     ):
         try:
             module = importlib.import_module(module_info.name)
@@ -1101,7 +1101,7 @@ def _every_solver():
             _classify_import_failure(module_info.name, exc)
             continue
         for _, value in inspect.getmembers(module, inspect.isclass):
-            if not value.__module__.startswith("src.engcore."):
+            if not value.__module__.startswith("engcore."):
                 continue
             if not isinstance(value, type):  # pragma: no cover
                 continue
@@ -1133,7 +1133,7 @@ def test_the_solver_discovery_found_the_adapters():
     # The adapter that used to be the exception here, still discovered -- it
     # inherits `DeclaredSupport` now rather than answering for itself.
     assert (
-        "src.engcore.domains.thermal.conduction1d.solver.Conduction1DSolver"
+        "engcore.domains.thermal.conduction1d.solver.Conduction1DSolver"
         in SOLVER_CLASSES
     )
 
@@ -1145,7 +1145,7 @@ def test_no_adapter_answers_the_support_question_for_itself():
     capability coverage that only the core sees the whole of, and the two
     adapters that did answer it got it wrong in the same way.
     """
-    from src.engcore.scientific.solvers.protocol import DeclaredSupport
+    from engcore.scientific.solvers.protocol import DeclaredSupport
 
     handrolled = sorted(
         name
@@ -1164,8 +1164,8 @@ def test_the_registry_refuses_a_solver_that_decides_its_own_support():
     ``supports`` is what ``resolve`` acts on, so the registry is where a wrong
     "yes" becomes a solve, and it is where the refusal belongs.
     """
-    from src.engcore.scientific.solvers.protocol import SolverIdentity
-    from src.engcore.scientific.solvers.registry import SolverRegistry
+    from engcore.scientific.solvers.protocol import SolverIdentity
+    from engcore.scientific.solvers.registry import SolverRegistry
 
     class _HandRolled:
         identity = SolverIdentity("hand.rolled", "1.0.0")
@@ -1175,9 +1175,9 @@ def test_the_registry_refuses_a_solver_that_decides_its_own_support():
             return True
 
     with pytest.raises(TypeError, match="does not use the core support"):
-        SolverRegistry([_HandRolled()])
+        SolverRegistry([_HandRolled])
 
-    from src.engcore.scientific.solvers.protocol import DeclaredSupport
+    from engcore.scientific.solvers.protocol import DeclaredSupport
 
     class _Overrider(DeclaredSupport):
         identity = SolverIdentity("overrider", "1.0.0")
@@ -1187,7 +1187,7 @@ def test_the_registry_refuses_a_solver_that_decides_its_own_support():
             return True
 
     with pytest.raises(TypeError, match="overrides supports"):
-        SolverRegistry([_Overrider()])
+        SolverRegistry([_Overrider])
 
 
 def _instantiate(cls):
@@ -1210,7 +1210,7 @@ def test_a_problem_requesting_a_superset_is_refused(name):
     derived rather than written down, so an adapter added tomorrow is covered
     without anybody extending a list.
     """
-    from src.engcore.scientific.ir.problem import ModelReference, ScientificProblem
+    from engcore.scientific.ir.problem import ModelReference, ScientificProblem
 
     solver = _instantiate(SOLVER_CLASSES[name])
     if solver is None:
@@ -1262,7 +1262,7 @@ def test_a_problem_that_asks_for_nothing_is_nobody_s():
     subset of what I declare" answered yes to this, which is how a solver
     claims a problem nobody asked it to serve.
     """
-    from src.engcore.scientific.ir.problem import ScientificProblem
+    from engcore.scientific.ir.problem import ScientificProblem
 
     empty = ScientificProblem(problem_id="asks-for-nothing")
     checked = 0
@@ -1300,13 +1300,13 @@ def test_provenance_refuses_a_solver_no_binding_covers():
     ran is a claim that it ran, and the binding is where a record says what it
     ran.
     """
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.ir.problem import ModelReference
-    from src.engcore.scientific.results.provenance import (
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.ir.problem import ModelReference
+    from engcore.scientific.results.provenance import (
         ExecutionBinding,
         ProvenanceRecord,
     )
-    from src.engcore.scientific.solvers.protocol import SolverIdentity
+    from engcore.scientific.solvers.protocol import SolverIdentity
 
     binding = ExecutionBinding(
         model=ModelReference("m.alpha", "1.0"),
@@ -1335,12 +1335,12 @@ def test_a_model_may_be_named_without_a_binding_and_a_solver_may_not():
     partial knowledge and it is honest. A solver has nothing to contribute
     except execution, so naming one says it executed.
     """
-    from src.engcore.scientific.ir.problem import ModelReference
-    from src.engcore.scientific.results.provenance import (
+    from engcore.scientific.ir.problem import ModelReference
+    from engcore.scientific.results.provenance import (
         ExecutionBinding,
         ProvenanceRecord,
     )
-    from src.engcore.scientific.solvers.protocol import SolverIdentity
+    from engcore.scientific.solvers.protocol import SolverIdentity
 
     record = ProvenanceRecord(
         run_id="g5d",
@@ -1359,10 +1359,10 @@ def test_a_model_may_be_named_without_a_binding_and_a_solver_may_not():
 
 def test_a_binding_from_an_execution_cannot_name_another_solver():
     """The identity is read off the prepared solve, not accepted as an argument."""
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.ir.problem import ModelReference, ScientificProblem
-    from src.engcore.scientific.results.provenance import ExecutionBinding
-    from src.engcore.scientific.solvers.protocol import (
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.ir.problem import ModelReference, ScientificProblem
+    from engcore.scientific.results.provenance import ExecutionBinding
+    from engcore.scientific.solvers.protocol import (
         ConvergenceState,
         PreparedSolve,
         RawSolverOutput,
@@ -1406,11 +1406,11 @@ def test_the_battery_march_runs_the_solver_it_names():
     ``BatteryCellSolver.validate`` never ran, its three checks reached no report
     anywhere, and the transport still named that solver among the participants.
     """
-    from src.engcore.domains.battery import models as bmdl
-    from src.engcore.domains.thermal_models import lumped as lump
+    from engcore.domains.battery import models as bmdl
+    from engcore.domains.thermal_models import lumped as lump
 
     from tests.mcp.test_battery_boundary import example_battery_payload
-    from src.engcore.mcp.battery import run_battery_case
+    from engcore.mcp.battery import run_battery_case
 
     outcome = run_battery_case(example_battery_payload())
     march, report = outcome.run, outcome.report
@@ -1444,7 +1444,7 @@ def test_the_battery_march_runs_the_solver_it_names():
 def test_every_marched_step_carries_its_own_cell_report():
     """Not just the last one: a check that stopped passing mid-march is a finding."""
     from tests.mcp.test_battery_boundary import example_battery_payload
-    from src.engcore.mcp.battery import run_battery_case
+    from engcore.mcp.battery import run_battery_case
 
     march = run_battery_case(example_battery_payload()).run
     assert len(march.steps) > 1
@@ -1519,8 +1519,8 @@ def test_no_verifier_still_treats_an_absent_fingerprint_as_a_match():
 
 def test_the_core_refuses_a_problem_that_declares_no_fingerprint():
     """Absence is an unanswered question, not an answer that happens to match."""
-    from src.engcore.scientific.errors import InvalidScientificProblem
-    from src.engcore.scientific.ir.fingerprints import require_matching_fingerprint
+    from engcore.scientific.errors import InvalidScientificProblem
+    from engcore.scientific.ir.fingerprints import require_matching_fingerprint
 
     problem = ScientificProblem(problem_id="unpaired", metadata={})
     with pytest.raises(InvalidScientificProblem, match="declares no"):
@@ -1569,8 +1569,8 @@ def test_the_core_refuses_a_problem_that_declares_no_fingerprint():
 
 def test_the_cstr_domain_refuses_an_unfingerprinted_problem():
     """The live case, end to end, in the domain that failed open."""
-    from src.engcore.domains.kinetics.cstr.errors import ReactorConfigurationError
-    from src.engcore.domains.kinetics.cstr.problem import (
+    from engcore.domains.kinetics.cstr.errors import ReactorConfigurationError
+    from engcore.domains.kinetics.cstr.problem import (
         build_cstr_problem,
         verify_problem_matches_run,
     )
@@ -1604,10 +1604,10 @@ def test_the_conduction_slab_verifier_refuses_an_unfingerprinted_problem():
     verifier itself through the core rule and both shims are gone, so this test
     now exercises the real thing rather than the workaround.
     """
-    from src.engcore.domains.thermal.conduction1d.errors import (
+    from engcore.domains.thermal.conduction1d.errors import (
         SlabConfigurationError,
     )
-    from src.engcore.domains.thermal.conduction1d.problem import (
+    from engcore.domains.thermal.conduction1d.problem import (
         build_conduction_problem,
         verify_problem_matches_slab,
     )
@@ -1634,8 +1634,8 @@ def test_the_conduction_slab_verifier_refuses_an_unfingerprinted_problem():
         verify_problem_matches_slab(stripped, slab)
 
     # And the shims that stood in front of it are gone rather than kept.
-    import src.engcore.domains.thermal_models.conduction1d_bulk as bulk
-    import src.engcore.domains.thermal_models.conduction1d_schemes as schemes
+    import engcore.domains.thermal_models.conduction1d_bulk as bulk
+    import engcore.domains.thermal_models.conduction1d_schemes as schemes
 
     assert not hasattr(bulk, "_require_slab_fingerprint")
     assert not hasattr(schemes, "_require_slab_fingerprint")
@@ -1650,7 +1650,7 @@ def test_the_campaign_event_log_refuses_a_payload_with_no_head_digest():
     verified. A truncation, a hand-edited record and a writer that died between
     the events and the digest all arrive in exactly that shape.
     """
-    from src.engcore.sria.campaign.events import (
+    from engcore.sria.campaign.events import (
         CampaignEventLog,
         CampaignEventType,
         ChainBroken,
@@ -1702,7 +1702,7 @@ def test_a_tolerance_comparison_cannot_see_a_non_finite_value():
 
 def test_the_core_admission_layer_refuses_before_it_compares():
     """Finiteness first. Ordering is the property, not an early-out."""
-    from src.engcore.scientific.solvers.admission import (
+    from engcore.scientific.solvers.admission import (
         require_agreement,
         require_finite,
     )
@@ -1746,7 +1746,7 @@ def test_the_core_admission_layer_refuses_before_it_compares():
 
 def test_the_element_gate_refuses_every_non_finite_shape():
     """The gate itself, over the shapes that used to pass it."""
-    from src.engcore.domains.electrical.ngspice import (
+    from engcore.domains.electrical.ngspice import (
         NgspiceDCSolver,
         NgspiceExecutionFailure,
     )
@@ -1787,8 +1787,8 @@ def test_a_succeeded_solve_cannot_return_a_number_that_is_not_a_number():
     pass through this constructor: ``extract_metrics`` reads this record, and a
     value invented after it is not a value the backend produced.
     """
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.solvers.protocol import (
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.solvers.protocol import (
         ConvergenceState,
         RawSolverOutput,
     )
@@ -1816,7 +1816,7 @@ def test_a_failed_solve_keeps_the_sanctioned_home_for_non_finite_values():
     solve claiming to have completed *and* returning a non-number, which is two
     stories at once.
     """
-    from src.engcore.scientific.solvers.protocol import (
+    from engcore.scientific.solvers.protocol import (
         ConvergenceState,
         RawSolverOutput,
     )
@@ -1842,8 +1842,8 @@ def test_an_adapter_that_skips_the_admission_layer_produces_nothing():
     result -- not a result carrying a NaN, and not a result whose validation
     checks all passed because every comparison against a NaN is False.
     """
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.solvers.protocol import (
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.solvers.protocol import (
         ConvergenceState,
         DeclaredSupport,
         PreparedSolve,
@@ -1882,8 +1882,8 @@ def test_the_admission_layer_is_still_the_route_that_says_what_went_wrong():
     failure category and the one its callers already catch. The adapter that
     exists admits first, so that is what a caller sees.
     """
-    from src.engcore.domains.electrical import ngspice as ng
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.domains.electrical import ngspice as ng
+    from engcore.scientific.errors import ScientificCoreError
 
     source = pathlib.Path(ng.__file__).read_bytes().decode("utf-8")
     # Admission happens where the provider's numbers first exist, not only at
@@ -1905,7 +1905,7 @@ def test_the_admission_layer_is_still_the_route_that_says_what_went_wrong():
             command=(sys.executable, script, "--nan")
         )
     )
-    from src.engcore.domains.electrical.dc import (
+    from engcore.domains.electrical.dc import (
         DCCircuit,
         DCVoltageSource,
         ElectricalNode,
@@ -1965,7 +1965,7 @@ def test_the_admission_layer_is_still_the_route_that_says_what_went_wrong():
 # below; neither is described as the other.
 
 def _sealed_registry():
-    from src.engcore.scientific.units import registry
+    from engcore.scientific.units import registry
 
     return registry()
 
@@ -1978,8 +1978,8 @@ def test_every_route_pint_offers_for_changing_the_registry_is_refused():
     quantity carries to the registry that made it, which is the route a proxy
     would have left open.
     """
-    from src.engcore.scientific.errors import UnitRegistryMutationError
-    from src.engcore.scientific.units.quantity import _SEALED_MUTATORS
+    from engcore.scientific.errors import UnitRegistryMutationError
+    from engcore.scientific.units.quantity import _SEALED_MUTATORS
 
     registry = _sealed_registry()
     assert len(_SEALED_MUTATORS) >= 15
@@ -2019,8 +2019,8 @@ def test_one_run_cannot_change_another_run_s_arithmetic():
     two of them, run B converts a volt, and run B's answer is the answer it
     would have given if run A had never executed.
     """
-    from src.engcore.scientific.errors import UnitRegistryMutationError
-    from src.engcore.scientific.units import Quantity
+    from engcore.scientific.errors import UnitRegistryMutationError
+    from engcore.scientific.units import Quantity
 
     def run_a_tries_to_redefine_the_volt():
         _sealed_registry().define(
@@ -2074,8 +2074,8 @@ def test_the_fingerprint_detects_what_the_refusal_cannot_prevent():
     """
     import copy
 
-    from src.engcore.scientific.errors import UnitRegistryMutationError
-    from src.engcore.scientific.units import (
+    from engcore.scientific.errors import UnitRegistryMutationError
+    from engcore.scientific.units import (
         Quantity,
         verify_registry_unmutated,
     )
@@ -2157,7 +2157,7 @@ def test_every_result_construction_in_the_repository_states_a_position():
     passes `models=` must also pass one of the two fields that answers for
     them — or be a module some package answers for.
     """
-    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+    from engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
 
     # By full module path, never by file name. The first version of this line
     # compared `path.stem`, and both the frozen thermal solver and the CSTR
@@ -2186,9 +2186,9 @@ def test_every_result_construction_in_the_repository_states_a_position():
 
 def test_a_result_that_declares_a_model_and_says_nothing_is_refused():
     """The permission, gone. Made to fail here, on purpose, once."""
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
-    from src.engcore.scientific.results.result import ScientificResult
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ScientificResult
 
     provenance = ProvenanceRecord(
         run_id="guard9",
@@ -2227,7 +2227,7 @@ def test_the_only_package_level_exemptions_are_files_a_freeze_actually_pins():
     """
     import re
 
-    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+    from engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
 
     repo = pathlib.Path(engcore.__file__).resolve().parents[2]
     pinned: set[str] = set()
@@ -2259,13 +2259,13 @@ def test_the_frozen_module_s_results_carry_the_stated_reason():
     consulted on a path no ordinary construction takes. So a result is produced
     by the frozen module itself and asked what it says.
     """
-    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
-    from src.engcore.domains.thermal.conduction1d.problem import (
+    from engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+    from engcore.domains.thermal.conduction1d.problem import (
         ConductionSlab,
         DIFFUSION_MODEL,
         SlabDiscretization,
     )
-    from src.engcore.domains.thermal.conduction1d.solver import solve_slab
+    from engcore.domains.thermal.conduction1d.solver import solve_slab
 
     slab = ConductionSlab(
         slab_id="guard9-frozen",
@@ -2279,7 +2279,7 @@ def test_the_frozen_module_s_results_carry_the_stated_reason():
     assert result.unassessed_models == (DIFFUSION_MODEL.model_id,)
     reason = result.non_assessment_reason(DIFFUSION_MODEL.model_id)
     assert reason == SCIENTIFIC_UNASSESSED_DECLARATIONS[
-        "src.engcore.domains.thermal.conduction1d.solver"
+        "engcore.domains.thermal.conduction1d.solver"
     ]
     assert "thermal_t1" in reason
 
@@ -2292,8 +2292,8 @@ def test_the_universal_core_names_no_module_it_exempts():
     a domain's name. The core knows the attribute name and nothing else, and
     that stays true.
     """
-    from src.engcore.scientific.results import result as result_module
-    from src.engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
+    from engcore.scientific.results import result as result_module
+    from engcore.domains import SCIENTIFIC_UNASSESSED_DECLARATIONS
 
     source = pathlib.Path(result_module.__file__).read_text(encoding="utf-8")
     for module in SCIENTIFIC_UNASSESSED_DECLARATIONS:
@@ -2342,13 +2342,13 @@ def test_the_universal_core_names_no_module_it_exempts():
 # Every one is exercised below.
 
 def _cross_solver():
-    from src.engcore.scientific.results.validation import ValidationLevel
+    from engcore.scientific.results.validation import ValidationLevel
 
     return ValidationLevel.CROSS_SOLVER_VALIDATED
 
 
 def _earned_check(name="earned"):
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationOutcome,
     )
@@ -2365,8 +2365,8 @@ def test_the_construction_axis_is_still_closed_on_every_route_to_it():
     """Routes 1, 2, 3 and 6 — re-measured rather than assumed still true."""
     import dataclasses
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         CHECK_SCHEMA,
         ValidationCheck,
         ValidationOutcome,
@@ -2403,8 +2403,8 @@ def test_a_report_refuses_anything_that_is_not_a_validation_check():
     `require_level`, because the constructor rule was never consulted -- the
     constructor was never called.
     """
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         ValidationOutcome,
         ValidationReport,
     )
@@ -2436,8 +2436,8 @@ def test_a_check_altered_after_it_was_built_cannot_carry_a_level():
     """
     import copy
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import ValidationReport
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import ValidationReport
 
     poked = copy.deepcopy(_earned_check())
     object.__setattr__(poked, "evidence", ())
@@ -2463,8 +2463,8 @@ def test_a_subclass_does_not_get_to_answer_the_question_about_itself():
     `earns_its_level` changes what the object says and not what the report
     concludes.
     """
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationOutcome,
         ValidationReport,
@@ -2503,7 +2503,7 @@ def test_every_report_in_the_repository_still_builds():
     Every check the repository's own solvers produce still constructs a report,
     which is the difference between a rule and a wall.
     """
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationReport,
         unverified_report,
     )
@@ -2547,7 +2547,7 @@ _WRITABILITY_TABLE = (
 
 
 def _provenance_for(metadata=None):
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.provenance import ProvenanceRecord
 
     return ProvenanceRecord(
         run_id="guard10",
@@ -2571,8 +2571,8 @@ def test_a_result_refuses_at_construction_what_it_could_not_record(
     """Refused where it is introduced, naming the field and the type."""
     import json
 
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.results.result import ScientificResult
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.results.result import ScientificResult
 
     def build():
         return ScientificResult(
@@ -2612,11 +2612,11 @@ def test_every_refusal_over_this_value_space_gives_the_same_answer(
     """
     import json
 
-    from src.engcore.design.memory import _canonical_bytes
-    from src.engcore.mcp.errors import CredibilityEvidenceError
-    from src.engcore.mcp.evidence import AssertedContext
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.results.result import ScientificResult
+    from engcore.design.memory import _canonical_bytes
+    from engcore.mcp.errors import CredibilityEvidenceError
+    from engcore.mcp.evidence import AssertedContext
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.results.result import ScientificResult
 
     def accepted(fn, expected_error):
         try:
@@ -2669,8 +2669,8 @@ def test_every_refusal_over_this_value_space_gives_the_same_answer(
 
 def test_the_refusal_points_at_the_leaf_and_not_at_the_field():
     """A path, so a caller knows which of forty metadata keys to look at."""
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.results.result import ScientificResult
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.results.result import ScientificResult
 
     with pytest.raises(ScientificCoreError) as refusal:
         ScientificResult(
@@ -2699,7 +2699,7 @@ def test_the_refusal_points_at_the_leaf_and_not_at_the_field():
 # name someone believes it had.
 
 def _bare_provenance(run_id="guard11", **overrides):
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.provenance import ProvenanceRecord
 
     payload = dict(
         run_id=run_id,
@@ -2715,7 +2715,7 @@ def _bare_provenance(run_id="guard11", **overrides):
 
 def test_a_lineage_claim_without_the_record_it_names_is_refused():
     """Made to fail on purpose. This is the whole guard."""
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     with pytest.raises(ScientificCoreError) as refusal:
         _bare_provenance(parent_run_id="a-run-that-never-existed")
@@ -2735,7 +2735,7 @@ def test_the_claim_is_accepted_when_the_parent_is_held():
 
 def test_a_typed_name_cannot_outrank_the_record_that_exists():
     """Two answers to one question, and neither silently wins."""
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     parent = _bare_provenance("guard11-parent")
     with pytest.raises(ScientificCoreError, match="Two different answers"):
@@ -2750,7 +2750,7 @@ def test_a_typed_name_cannot_outrank_the_record_that_exists():
 
 def test_a_record_cannot_be_its_own_source():
     """A lineage that closes on itself has no root, and a walker does not stop."""
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     itself = _bare_provenance("guard11-loop")
     with pytest.raises(ScientificCoreError, match="its own parent"):
@@ -2761,7 +2761,7 @@ def test_a_name_wearing_an_objects_clothes_is_refused():
     """`parent` is a record, and a stand-in with a `run_id` is not one."""
     import types
 
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     with pytest.raises(ScientificCoreError, match="wearing an object"):
         _bare_provenance(
@@ -2779,8 +2779,8 @@ def test_a_stored_record_reproduces_its_claim_and_does_not_re_make_it():
     """
     import json
 
-    from src.engcore.scientific.errors import ScientificCoreError
-    from src.engcore.scientific.results.provenance import (
+    from engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.results.provenance import (
         ProvenanceRecord,
         StoredParentClaim,
     )
@@ -2883,8 +2883,8 @@ def test_no_module_still_hands_provenance_a_lineage_name_it_does_not_hold():
 # than leaving the reader to assume otherwise.
 
 def _ambient_transfer(value=None, **overrides):
-    from src.engcore.domains.electrical.dc import models as dc_models
-    from src.engcore.scientific.composition import QuantityTransfer
+    from engcore.domains.electrical.dc import models as dc_models
+    from engcore.scientific.composition import QuantityTransfer
 
     payload = dict(
         dependency=dc_models.ambient_transfer_declaration(
@@ -2902,9 +2902,9 @@ def _ambient_transfer(value=None, **overrides):
 
 def test_a_crossed_quantity_arriving_undeclared_is_refused():
     """Fail-closed at the crossing that exists. Made to fail on purpose."""
-    from src.engcore.domains.electrical.dc import models as dc_models
-    from src.engcore.domains.electrical.dc import problem as dc_problem
-    from src.engcore.scientific.errors import InvalidScientificProblem
+    from engcore.domains.electrical.dc import models as dc_models
+    from engcore.domains.electrical.dc import problem as dc_problem
+    from engcore.scientific.errors import InvalidScientificProblem
 
     class Element:
         component_id = "R1"
@@ -2929,7 +2929,7 @@ def test_a_crossed_quantity_arriving_undeclared_is_refused():
             dissipated_power=Quantity(0.9, "watt"),
             ambient=_ambient_transfer(
                 dependency=__import__(
-                    "src.engcore.scientific.composition",
+                    "engcore.scientific.composition",
                     fromlist=["QuantityDependency"],
                 ).QuantityDependency(
                     source_problem_id="t",
@@ -2944,7 +2944,7 @@ def test_a_crossed_quantity_arriving_undeclared_is_refused():
 
 def test_a_transfer_states_a_source_an_instant_and_an_agreeing_dimension():
     """Each refusal, once, on purpose."""
-    from src.engcore.scientific.errors import InvalidScientificProblem
+    from engcore.scientific.errors import InvalidScientificProblem
 
     assert _ambient_transfer().received_as("degC").magnitude == pytest.approx(
         26.85
@@ -2961,8 +2961,8 @@ def test_a_transfer_states_a_source_an_instant_and_an_agreeing_dimension():
 
 def test_two_values_crossing_one_declaration_at_one_instant_are_refused():
     """One fact, stated twice, must be one fact."""
-    from src.engcore.scientific.composition import require_agreeing_transfers
-    from src.engcore.scientific.errors import InvalidScientificProblem
+    from engcore.scientific.composition import require_agreeing_transfers
+    from engcore.scientific.errors import InvalidScientificProblem
 
     one = _ambient_transfer()
     same = _ambient_transfer()
@@ -2979,7 +2979,7 @@ def test_the_crossing_is_recorded_in_the_provenance_of_the_run_that_made_it():
     real run: a transfer set nothing produced would prove that the record can
     hold one, which is not the question.
     """
-    from src.engcore.mcp.problem import (
+    from engcore.mcp.problem import (
         example_electrothermal_payload,
         run_electrothermal_case,
     )
@@ -3015,7 +3015,7 @@ def test_the_crossing_is_recorded_in_the_provenance_of_the_run_that_made_it():
         assert transfer.source_value is not None
     assert len(ambient) + len(converted) == len(transfers)
     # and it survives the record boundary
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.provenance import ProvenanceRecord
 
     restored = ProvenanceRecord.from_dict(report.provenance.to_dict())
     assert restored.transfers == transfers
@@ -3035,8 +3035,8 @@ def test_the_declared_crossing_is_what_lets_repair_invert_the_condition():
     u = (T_amb + (P/d)(T_zero - T_rated)/P_rated) / T_zero <= 1 gives
     P_rated >= (P/d)(T_zero - T_rated)/(T_zero - T_amb).
     """
-    from src.engcore.domains.electrical.dc import models as dc_models
-    from src.engcore.domains.electrical.dc import problem as dc_problem
+    from engcore.domains.electrical.dc import models as dc_models
+    from engcore.domains.electrical.dc import problem as dc_problem
 
     class Element:
         component_id = "R1"
@@ -3105,7 +3105,7 @@ def test_the_declared_crossing_is_what_lets_repair_invert_the_condition():
 
 def _ocv_curve(**overrides):
     """An alkaline-shaped OCV curve: 0.9 V empty to 1.6 V full, with a knee."""
-    from src.engcore.scientific.models.curves import DeclaredCurve, TabulatedForm
+    from engcore.scientific.models.curves import DeclaredCurve, TabulatedForm
 
     fields = dict(
         quantity="open_circuit_voltage_curve",
@@ -3130,7 +3130,7 @@ def test_an_input_declared_as_a_constant_refuses_a_curve():
     arriving as a silent first-sample, a silent midpoint, or a stored object
     nothing consults.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         InputSourceKind,
         ModelInputSpec,
     )
@@ -3157,8 +3157,8 @@ def test_an_input_declared_as_a_constant_refuses_a_curve():
 
 def test_the_curve_axis_is_declared_on_both_sides_and_inferred_by_neither():
     """A caller cannot hand over a table and let the model guess the axis."""
-    from src.engcore.scientific.models.curves import PolynomialForm
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.curves import PolynomialForm
+    from engcore.scientific.models.definition import (
         InputSourceKind,
         ModelInputSpec,
     )
@@ -3188,7 +3188,7 @@ def test_the_curve_axis_is_declared_on_both_sides_and_inferred_by_neither():
 
 def test_outside_a_declared_interval_there_is_no_number_only_a_status():
     """A curve is evidence over the interval it covers and nothing beyond it."""
-    from src.engcore.scientific.models.definition import ValidityStatus
+    from engcore.scientific.models.definition import ValidityStatus
 
     curve = _ocv_curve()
     inside = curve.evaluate(Quantity(0.5, "dimensionless"))
@@ -3226,13 +3226,13 @@ def test_a_curve_is_structured_data_and_the_record_rules_agree_it_is_writable():
     record no reader could reconstruct. Every form here is data: it survives
     the writability rule, round-trips, and digests.
     """
-    from src.engcore.scientific.models.curves import (
+    from engcore.scientific.models.curves import (
         DeclaredCurve,
         PiecewiseForm,
         PolynomialForm,
         TabulatedForm,
     )
-    from src.engcore.scientific.serialization import unwritable
+    from engcore.scientific.serialization import unwritable
 
     forms = (
         TabulatedForm(samples=((0.0, 0.9), (1.0, 1.6))),
@@ -3267,7 +3267,7 @@ def test_a_cell_declaring_a_curve_is_a_different_cell_and_says_so_everywhere():
     alkaline-shaped discharge -- about 10 % of the terminal voltage. A solver
     keyed on the cell's identity must not treat the two as one cell.
     """
-    from src.engcore.domains.battery.cell import CellSpecification
+    from engcore.domains.battery.cell import CellSpecification
 
     common = dict(
         cell_id="G13",
@@ -3298,8 +3298,8 @@ def test_a_cell_declaring_a_curve_is_a_different_cell_and_says_so_everywhere():
 
 def test_one_quantity_may_not_be_declared_twice_at_two_depths():
     """A curve and the endpoints it would imply is a caller error, not a merge."""
-    from src.engcore.domains.battery.cell import CellSpecification
-    from src.engcore.scientific.models.curves import TabulatedForm
+    from engcore.domains.battery.cell import CellSpecification
+    from engcore.scientific.models.curves import TabulatedForm
 
     with pytest.raises(InvalidScientificProblem) as excinfo:
         CellSpecification(
@@ -3336,8 +3336,8 @@ def test_the_unmigrated_inversion_refuses_rather_than_answering_from_the_chord()
     that declared a curve it would answer from a model the caller replaced,
     so it refuses.
     """
-    from src.engcore.domains.battery.cell import CellSpecification, DischargeLoad
-    from src.engcore.domains.battery.solver import evaluate_step
+    from engcore.domains.battery.cell import CellSpecification, DischargeLoad
+    from engcore.domains.battery.solver import evaluate_step
 
     curved = CellSpecification(
         cell_id="G13",
@@ -3398,7 +3398,7 @@ def test_every_shipped_model_declares_what_it_does_not_represent():
     before the field existed does not declare exclusions, and refusing to load
     it would destroy information rather than prevent a claim.
     """
-    from src.engcore.scientific.models.definition import NOT_DECLARED
+    from engcore.scientific.models.definition import NOT_DECLARED
 
     undeclared = sorted(
         model.model_id
@@ -3423,7 +3423,7 @@ def test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident():
     model may reach `()` by omission -- it is not the default -- and today no
     model claims it at all.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         NOT_DECLARED,
         ScientificModelDefinition,
     )
@@ -3488,8 +3488,8 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
     condition can check, because the model does not represent them -- so a
     reader who sees only a status has been told less than they think.
     """
-    from src.engcore.mcp.evidence import ModelValidityRecord
-    from src.engcore.scientific.models.definition import (
+    from engcore.mcp.evidence import ModelValidityRecord
+    from engcore.scientific.models.definition import (
         UnknownCondition,
         UnknownReason,
         ValidityAssessment,
@@ -3537,8 +3537,8 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
     # And the exemption is stated by the DOMAIN layer, not by the core: the
     # universal core names no domain, and `test_x2` refused the first version
     # of this field for putting a model id in `definition.py`.
-    from src import engcore
-    from src.engcore.scientific.models.definition import (
+    import engcore
+    from engcore.scientific.models.definition import (
         UNDECLARED_EXCLUSIONS_ATTRIBUTE,
     )
 
@@ -3587,7 +3587,7 @@ def test_a_crossing_that_carries_energy_must_say_how_much_arrives():
     power moving between two problems either arrives whole or does not, and
     which of those is a claim somebody has to make.
     """
-    from src.engcore.scientific.composition import (
+    from engcore.scientific.composition import (
         EnergyConversion,
         QuantityDependency,
     )
@@ -3638,8 +3638,8 @@ def test_a_crossing_that_carries_energy_must_say_how_much_arrives():
 
 def test_an_undeclared_efficiency_is_unknown_and_never_one():
     """The confident-and-wrong failure, refused at the one place it arrives."""
-    from src.engcore.scientific.composition import EnergyConversion
-    from src.engcore.scientific.models.definition import ValidityStatus
+    from engcore.scientific.composition import EnergyConversion
+    from engcore.scientific.models.definition import ValidityStatus
 
     silent = EnergyConversion(
         name="motor",
@@ -3656,7 +3656,7 @@ def test_an_undeclared_efficiency_is_unknown_and_never_one():
     assert "not assumed to be all of it" in outcome.reason
 
     # And a declared one answers, losses and all.
-    from src.engcore.scientific.composition import LossPath
+    from engcore.scientific.composition import LossPath
 
     declared = EnergyConversion(
         name="motor",
@@ -3679,7 +3679,7 @@ def test_conservation_is_checked_and_a_conversion_that_does_not_balance_fails():
     balance is wrong before anything is run through it, and the caller who
     wrote it is the only one who can fix it.
     """
-    from src.engcore.scientific.composition import EnergyConversion, LossPath
+    from engcore.scientific.composition import EnergyConversion, LossPath
 
     base = dict(
         name="motor",
@@ -3739,12 +3739,12 @@ def test_conservation_is_checked_and_a_conversion_that_does_not_balance_fails():
 
 def test_the_conversion_appears_in_provenance_with_its_efficiency():
     """A report must show that a value crossed a boundary, and on what terms."""
-    from src.engcore.scientific.composition import (
+    from engcore.scientific.composition import (
         QuantityDependency,
         QuantityTransfer,
     )
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
-    from src.engcore.systems.electrothermal.coupled import (
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.systems.electrothermal.coupled import (
         JOULE_HEATING_CONVERSION,
     )
 
@@ -3798,8 +3798,8 @@ def test_the_electrothermal_crossing_is_the_declaration_it_always_was():
     that travels with the declaration and reaches a report, and it says the
     same thing.
     """
-    from src.engcore.systems.electrothermal import resistor_body as rb
-    from src.engcore.systems.electrothermal.coupled import (
+    from engcore.systems.electrothermal import resistor_body as rb
+    from engcore.systems.electrothermal.coupled import (
         JOULE_HEATING_CONVERSION,
     )
 
@@ -3829,7 +3829,7 @@ def test_the_electrothermal_crossing_is_the_declaration_it_always_was():
 
 def _halving_motor():
     """A conversion with a real loss: half arrives, half leaves as heat."""
-    from src.engcore.scientific.composition import EnergyConversion, LossPath
+    from engcore.scientific.composition import EnergyConversion, LossPath
 
     return EnergyConversion(
         name="motor",
@@ -3842,7 +3842,7 @@ def _halving_motor():
 
 
 def _conversion_edge(conversion):
-    from src.engcore.scientific.composition import QuantityDependency
+    from engcore.scientific.composition import QuantityDependency
 
     return QuantityDependency(
         source_problem_id="electrical",
@@ -3861,7 +3861,7 @@ def test_a_transfer_may_not_carry_more_than_its_conversion_budgets():
     confident-and-wrong crossing arriving through the realization instead of
     through the declaration.
     """
-    from src.engcore.scientific.composition import QuantityTransfer
+    from engcore.scientific.composition import QuantityTransfer
 
     edge = _conversion_edge(_halving_motor())
     common = dict(source_record_id="electrical-1", instant="iteration:1")
@@ -3888,7 +3888,7 @@ def test_a_transfer_may_not_carry_more_than_its_conversion_budgets():
 
 def test_a_conversion_transfer_must_say_what_entered_and_a_transport_may_not():
     """A ratio needs both numbers, and a transport has only one."""
-    from src.engcore.scientific.composition import (
+    from engcore.scientific.composition import (
         QuantityDependency,
         QuantityTransfer,
     )
@@ -3934,7 +3934,7 @@ def test_an_uncharacterised_conversion_cannot_be_realized_with_a_number():
     produce one is to assume the crossing is lossless -- the assumption this
     whole record exists to stop being silent.
     """
-    from src.engcore.scientific.composition import (
+    from engcore.scientific.composition import (
         EnergyConversion,
         QuantityTransfer,
     )
@@ -3965,9 +3965,9 @@ def test_the_coupling_loop_spends_the_budget_where_the_value_crosses():
     declaration decorative. This drives the real transport boundary rather
     than the record, because they are two different things to get wrong.
     """
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
-    from src.engcore.scientific.results.result import ScientificResult
-    from src.engcore.systems.electrothermal import coupled as cp
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ScientificResult
+    from engcore.systems.electrothermal import coupled as cp
 
     produced = ScientificResult(
         result_id="electrical-1",
@@ -3976,7 +3976,7 @@ def test_the_coupling_loop_spends_the_budget_where_the_value_crosses():
     )
 
     # A lossless edge moves the whole value, exactly as before this existed.
-    from src.engcore.systems.electrothermal.coupled import (
+    from engcore.systems.electrothermal.coupled import (
         JOULE_HEATING_CONVERSION,
     )
 
@@ -3989,7 +3989,7 @@ def test_the_coupling_loop_spends_the_budget_where_the_value_crosses():
     assert halved == Quantity(50.0, "watt")
 
     # And an uncharacterised one refuses rather than moving all of it.
-    from src.engcore.scientific.composition import EnergyConversion
+    from engcore.scientific.composition import EnergyConversion
 
     silent = _conversion_edge(
         EnergyConversion(
@@ -4266,7 +4266,7 @@ def test_the_layering_scan_resolves_relative_imports():
     """
     import tempfile
 
-    from src.engcore.sria.trust import scan_imports
+    from engcore.sria.trust import scan_imports
 
     with tempfile.TemporaryDirectory() as tmp:
         engcore_dir = pathlib.Path(tmp) / "src" / "engcore"
@@ -4656,7 +4656,7 @@ def test_a_declared_conversion_reaches_the_credibility_report():
     hold one, which is not the question. The question is whether the run
     records it.
     """
-    from src.engcore.mcp.problem import (
+    from engcore.mcp.problem import (
         example_electrothermal_payload,
         run_electrothermal_case,
     )
@@ -4695,13 +4695,13 @@ def test_the_report_shows_where_the_energy_that_did_not_arrive_went():
     every field and could not tell a working rendering from one that hardcodes
     it. This drives a 60 % motor with two named loss paths.
     """
-    from src.engcore.mcp.evidence import CredibilityEvidenceReport
-    from src.engcore.scientific.composition import (
+    from engcore.mcp.evidence import CredibilityEvidenceReport
+    from engcore.scientific.composition import (
         EnergyConversion,
         LossPath,
         QuantityTransfer,
     )
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.provenance import ProvenanceRecord
 
     motor = EnergyConversion(
         name="motor",
@@ -4751,8 +4751,8 @@ def test_the_report_cannot_be_handed_a_conversion_its_provenance_denies():
     refuses the keyword outright, from Python rather than from a check that
     could be forgotten.
     """
-    from src.engcore.mcp.evidence import CredibilityEvidenceReport
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.mcp.evidence import CredibilityEvidenceReport
+    from engcore.scientific.results.provenance import ProvenanceRecord
 
     with pytest.raises(TypeError):
         CredibilityEvidenceReport(
@@ -4772,11 +4772,11 @@ def test_recording_the_crossing_moved_no_electro_thermal_number():
     equal: if they ever disagreed, the report and the run would be telling a
     reader different numbers, which is worse than not reporting at all.
     """
-    from src.engcore.mcp.problem import (
+    from engcore.mcp.problem import (
         example_electrothermal_payload,
         run_electrothermal_case,
     )
-    from src.engcore.systems.electrothermal import coupled as cp
+    from engcore.systems.electrothermal import coupled as cp
 
     report = run_electrothermal_case(
         example_electrothermal_payload(), run_id="guard20-parity"
@@ -4832,7 +4832,7 @@ def test_recording_the_crossing_moved_no_electro_thermal_number():
 
 
 def _validation_module():
-    from src.engcore.scientific.results import validation
+    from engcore.scientific.results import validation
 
     return validation
 
@@ -4847,13 +4847,13 @@ def test_a_pass_can_stand_seven_orders_outside_its_own_tolerance():
     """
     import pytest
 
-    from src.engcore.mcp.evidence import ModelValidityRecord, derive_verdict
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.models.definition import (
+    from engcore.mcp.evidence import ModelValidityRecord, derive_verdict
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.models.definition import (
         ValidityAssessment,
         ValidityStatus,
     )
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
         ValidationOutcome,
@@ -4919,8 +4919,8 @@ def test_a_nan_residual_is_not_a_comparison_that_succeeded():
 
     import pytest
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
         ValidationOutcome,
@@ -4952,8 +4952,8 @@ def test_the_rule_reaches_a_pass_with_no_level_and_a_warning_with_one():
     """
     import pytest
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
         ValidationOutcome,
@@ -4984,7 +4984,7 @@ def test_the_rule_reaches_a_pass_with_no_level_and_a_warning_with_one():
 
     # And the level-free WARNING really is inert: it contributes no level, so
     # it cannot carry a verdict on its own.
-    from src.engcore.scientific.results.validation import ValidationReport
+    from engcore.scientific.results.validation import ValidationReport
 
     report = ValidationReport(checks=(build(ValidationOutcome.WARNING),))
     assert report.attained_levels == frozenset()
@@ -5005,7 +5005,7 @@ def test_a_fail_inside_its_tolerance_is_why_this_is_refused_and_not_derived():
     `residual <= tolerance` is necessary for a PASS and is not sufficient, so
     the implication is enforced in one direction only.
     """
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationOutcome,
     )
@@ -5036,8 +5036,8 @@ def test_a_report_cannot_be_handed_a_contradiction_the_constructor_refused():
     """
     import pytest
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationLevel,
         ValidationOutcome,
@@ -5082,8 +5082,8 @@ def test_a_serialized_contradiction_cannot_be_read_back_in():
     """
     import pytest
 
-    from src.engcore.scientific.errors import ScientificValidationError
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.results.validation import (
         CHECK_SCHEMA,
         ValidationCheck,
     )
@@ -5112,7 +5112,7 @@ def test_no_check_the_repository_builds_reports_a_success_it_did_not_have():
     suite builds goes through it — and this test states that, so a later reader
     does not look for a sweep that cannot exist and conclude one is missing.
     """
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         outcome_is_earned,
     )
@@ -5154,7 +5154,7 @@ def test_a_conservative_screen_reports_a_gap_and_not_a_finding():
     move one into `satisfied`: the value is still outside its bound, and a
     flag that could admit it would be a way to declare a condition away.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         RangeCondition,
         ValidityStatus,
     )
@@ -5181,7 +5181,7 @@ def test_an_undeclared_bound_still_finds_against_a_design():
     and no design could ever be found against. Asserted over a plain
     condition, so it fails on the mutation rather than on the feature.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         RangeCondition,
         ValidityStatus,
     )
@@ -5215,7 +5215,7 @@ def test_a_screen_is_declared_on_a_bound_that_observed_nothing_and_nowhere_else(
 
     Both still refuse. What differs is what the refusal claims to know.
     """
-    from src.engcore.scientific.models.definition import RangeCondition
+    from engcore.scientific.models.definition import RangeCondition
 
     #: Every range condition in the tree that declares itself a screen, read
     #: off the shipped models rather than from a list kept here.
@@ -5270,8 +5270,8 @@ def test_the_polarization_bound_is_a_finding_and_says_so_in_its_own_prose():
     that was wrong and the prose was corrected; this guard is what stops it
     drifting back, in either direction.
     """
-    from src.engcore.scientific.models.definition import RangeCondition
-    from src.engcore.domains.battery import models as bm
+    from engcore.scientific.models.definition import RangeCondition
+    from engcore.domains.battery import models as bm
 
     condition = next(
         c for c in bm.RINT_OCV_MODEL.validity.conditions
@@ -5292,7 +5292,7 @@ def test_every_screen_still_refuses_and_none_of_them_can_certify():
     tree, at a value its own bound excludes, so a flag that ever started
     admitting values fails here rather than in a benchmark months later.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         RangeCondition, UnknownReason, ValidityStatus,
     )
 
@@ -5351,7 +5351,7 @@ def test_the_screen_survives_the_record_a_consumer_reads():
     read back as the ordinary bound it was, because while the key was absent
     it had exactly one meaning.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         RangeCondition,
         ValidityStatus,
     )
@@ -5394,7 +5394,7 @@ def test_the_screen_survives_the_record_a_consumer_reads():
 
 
 def _dependency_fixture(**gate_kwargs):
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         RangeCondition, ValidityDomain,
     )
     gate = RangeCondition(
@@ -5414,7 +5414,7 @@ def test_a_dependent_condition_is_not_evaluated_until_its_gate_holds():
     by absence — and the dependent is UNKNOWN, never satisfied. `satisfied` is
     the assertion that matters: it is the list that reads as evidence.
     """
-    from src.engcore.scientific.models.definition import ValidityStatus
+    from engcore.scientific.models.definition import ValidityStatus
 
     domain = _dependency_fixture()
     ok = domain.assess({"gate": Quantity(5.0, "dimensionless"),
@@ -5459,10 +5459,10 @@ def test_a_dependency_that_cannot_be_satisfied_is_refused_at_construction():
     below. What has no valid evaluation order is a cycle, and that is what
     replaces the depth rule an earlier draft of this mechanism carried.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         RangeCondition, ValidityDomain,
     )
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     ONE = Quantity(0.0, "dimensionless")
 
@@ -5505,7 +5505,7 @@ def test_a_dependency_that_cannot_be_satisfied_is_refused_at_construction():
 def test_the_dependency_survives_the_record_a_consumer_reads():
     """GUARD 23. A gate that exists only in Python gates nothing a reader can
     see, and the record is the product."""
-    from src.engcore.scientific.models.definition import RangeCondition
+    from engcore.scientific.models.definition import RangeCondition
 
     condition = RangeCondition(
         name="dependent", maximum=Quantity(1.0, "dimensionless"),
@@ -5526,7 +5526,7 @@ def test_every_declared_dependency_in_the_tree_names_a_sibling():
     this asserts the property holds across the whole repository at once and
     reports which models declare a dependency at all.
     """
-    from src.engcore.scientific.models.definition import RangeCondition
+    from engcore.scientific.models.definition import RangeCondition
 
     declared = []
     for model in MODELS:

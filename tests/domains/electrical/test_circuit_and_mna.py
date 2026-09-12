@@ -11,7 +11,7 @@ import sys
 
 import numpy as np
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCCurrentSource,
     DCVoltageSource,
@@ -19,7 +19,7 @@ from src.engcore.domains.electrical.dc import (
     Resistor,
     assemble,
 )
-from src.engcore.scientific import InvalidScientificProblem, Quantity
+from engcore.scientific import InvalidScientificProblem, Quantity
 
 
 def _raises(exc_type, fn, *args, **kwargs):

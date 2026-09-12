@@ -36,18 +36,18 @@ import json
 
 import pytest
 
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     ScientificCoreError,
 )
-from src.engcore.scientific.ir.values import (
+from engcore.scientific.ir.values import (
     BooleanValue,
     CategoricalValue,
     IntegerValue,
     ValueKind,
     value_kind,
 )
-from src.engcore.scientific.results.provenance import (
+from engcore.scientific.results.provenance import (
     PROVENANCE_SCHEMA,
     PROVENANCE_SCHEMA_V1,
     PROVENANCE_SCHEMA_V2,
@@ -55,8 +55,8 @@ from src.engcore.scientific.results.provenance import (
     SUPPORTED_PROVENANCE_SCHEMAS,
     ProvenanceRecord,
 )
-from src.engcore.scientific.serialization import to_json
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.serialization import to_json
+from engcore.scientific.units.quantity import Quantity
 
 #: One of every kind in the union, so a round trip that lost one would fail.
 EVERY_KIND = {
@@ -202,8 +202,8 @@ def test_a_problems_own_parameters_can_be_recorded_without_loss():
     problem's own accessor and returns the whole union; before this round its
     result could not be handed to `ProvenanceRecord` at all.
     """
-    from src.engcore.scientific.ir.problem import ScientificProblem
-    from src.engcore.scientific.ir.variables import (
+    from engcore.scientific.ir.problem import ScientificProblem
+    from engcore.scientific.ir.variables import (
         ScientificParameter,
         ScientificVariable,
     )

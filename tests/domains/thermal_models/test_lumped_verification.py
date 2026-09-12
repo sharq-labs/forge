@@ -31,21 +31,21 @@ from pathlib import Path
 
 import pytest
 
-from src.engcore.domains.thermal_models import context as ctx
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.domains.thermal_models import lumped_reference as ref
-from src.engcore.mcp import (
+from engcore.domains.thermal_models import context as ctx
+from engcore.domains.thermal_models import lumped as lump
+from engcore.domains.thermal_models import lumped_reference as ref
+from engcore.mcp import (
     CredibilityVerdict,
     derive_verdict,
     example_electrothermal_payload,
     run_electrothermal_case,
 )
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 K = "kelvin"
 

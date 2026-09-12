@@ -21,12 +21,12 @@ import dataclasses
 import json
 import sys
 
-from src.engcore.scientific import Quantity
-from src.engcore.scientific.ir.values import IntegerValue
-from src.engcore.sria import ExecutorType, ResearchAction
-from src.engcore.sria.calibration import CostModel
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.decision import (
+from engcore.scientific import Quantity
+from engcore.scientific.ir.values import IntegerValue
+from engcore.sria import ExecutorType, ResearchAction
+from engcore.sria.calibration import CostModel
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.decision import (
     ActionFamily,
     ActionProposal,
     AtomicAction,
@@ -687,7 +687,7 @@ def test_snapshot_state_pins_survive_serialization():
     model = CostModel().fit(training(4.0), dataset_id="corpus-v1")
     evaluator = build_stack(model)
     snapshot = pinned_snapshot(evaluator)
-    from src.engcore.sria.decision import BeliefSnapshot
+    from engcore.sria.decision import BeliefSnapshot
 
     reloaded = BeliefSnapshot.from_dict(json.loads(json.dumps(snapshot.to_dict())))
     assert reloaded.digest == snapshot.digest
@@ -703,7 +703,7 @@ def test_snapshot_state_pins_survive_serialization():
 # =====================================================================
 
 def test_original_benchmark_unchanged_after_m43():
-    from src.engcore.sria.decision import information_only_ranking
+    from engcore.sria.decision import information_only_ranking
 
     expected = {
         "A_cheap_loses_to_informative": ("expensive_strong", "expensive_strong"),

@@ -30,12 +30,12 @@ import math
 
 import pytest
 
-from src.engcore.domains.thermal.conduction1d.problem import (
+from engcore.domains.thermal.conduction1d.problem import (
     ConductionSlab,
     SlabDiscretization,
 )
-from src.engcore.domains.thermal.conduction1d.solver import solve_slab
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.thermal.conduction1d.solver import solve_slab
+from engcore.scientific.units.quantity import Quantity
 
 from .oracle_ids import oracle
 

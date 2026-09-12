@@ -20,39 +20,39 @@ import pathlib
 
 import pytest
 
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.electrical.dc import RESISTOR_OHM_MODEL
-from src.engcore.domains.electrical.dc.errors import CircuitBindingError
-from src.engcore.domains.electrical.dc.problem import resistance_name
-from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
-from src.engcore.scientific.composition import (
+from engcore.domains.thermal_models import lumped as lump
+from engcore.domains.electrical import material as mat
+from engcore.domains.electrical.dc import RESISTOR_OHM_MODEL
+from engcore.domains.electrical.dc.errors import CircuitBindingError
+from engcore.domains.electrical.dc.problem import resistance_name
+from engcore.domains.electrical.dc.solver import ElectricalDCSolver
+from engcore.scientific.composition import (
     QUANTITY_DEPENDENCY_SCHEMA,
     QuantityDependency,
     externally_imposed,
     unresolved_inputs,
 )
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     ScientificCoreError,
 )
-from src.engcore.scientific.ir.problem import ModelReference
-from src.engcore.scientific.ir.variables import VariableRole
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.ir.problem import ModelReference
+from engcore.scientific.ir.variables import VariableRole
+from engcore.scientific.models.definition import (
     BindingIssueKind,
     InputSourceKind,
     ValidityStatus,
 )
-from src.engcore.scientific.realizations.definition import ModelFormulation
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.realizations.definition import ModelFormulation
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.capability import CoreCapabilities
-from src.engcore.scientific.twins.definition import TwinDatum, TwinDatumRole
-from src.engcore.scientific.units.quantity import Quantity, dimensionality
-from src.engcore.systems.electrothermal import (
+from engcore.scientific.solvers.capability import CoreCapabilities
+from engcore.scientific.twins.definition import TwinDatum, TwinDatumRole
+from engcore.scientific.units.quantity import Quantity, dimensionality
+from engcore.systems.electrothermal import (
     ElectroThermalResistor,
     build_twin,
     candidate_sources,
@@ -60,7 +60,7 @@ from src.engcore.systems.electrothermal import (
     electrothermal_problems,
     run_open_loop_pass,
 )
-from src.engcore.systems.electrothermal import resistor_body
+from engcore.systems.electrothermal import resistor_body
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -115,7 +115,7 @@ def _lossless(name, *, arrives_as, leaves_as, unit="watt"):
     repository already made; what is new is that each states the claim it was
     always making, which is that the whole of the input arrives.
     """
-    from src.engcore.scientific.composition import EnergyConversion
+    from engcore.scientific.composition import EnergyConversion
 
     return EnergyConversion(
         name=name,
@@ -433,9 +433,9 @@ def test_b7_a_state_fixed_by_a_boundary_condition_is_not_unresolved():
     imposed — a false positive produced inside universal core, containing no
     domain word for a lexical scan to catch.
     """
-    from src.engcore.scientific.ir.conditions import BoundaryCondition, BoundaryKind
-    from src.engcore.scientific.ir.problem import ScientificProblem
-    from src.engcore.scientific.ir.variables import ScientificVariable
+    from engcore.scientific.ir.conditions import BoundaryCondition, BoundaryKind
+    from engcore.scientific.ir.problem import ScientificProblem
+    from engcore.scientific.ir.variables import ScientificVariable
 
     steady = ScientificProblem(
         problem_id="steady-boundary-value",
@@ -761,7 +761,7 @@ def test_f1b_the_twin_is_a_derived_record_that_nothing_reads(executed):
 
 def test_f2_no_system_or_component_instance_type_was_created():
     """Eleven of the twelve candidate abstractions, asserted absent."""
-    import src.engcore.scientific as core
+    import engcore.scientific as core
 
     exported = set(core.__all__)
     for forbidden in (
@@ -775,7 +775,7 @@ def test_f2_no_system_or_component_instance_type_was_created():
         assert forbidden not in exported, f"{forbidden} was created"
 
     # Exactly one new public record in the new package.
-    from src.engcore.scientific import composition
+    from engcore.scientific import composition
 
     assert set(composition.__all__) == {
         # Added by the core round: what a crossing that carries energy must
@@ -848,12 +848,12 @@ def test_g3_no_existing_schema_version_moved():
     ``/1`` record of an energy crossing is refused on read rather than being
     taken as lossless.
     """
-    from src.engcore.scientific.ir.problem import PROBLEM_SCHEMA
-    from src.engcore.scientific.models.definition import MODEL_SCHEMA
-    from src.engcore.scientific.realizations.definition import REALIZATION_SCHEMA
-    from src.engcore.scientific.results.provenance import PROVENANCE_SCHEMA
-    from src.engcore.scientific.results.result import RESULT_SCHEMA
-    from src.engcore.scientific.twins.definition import SCIENTIFIC_TWIN_SCHEMA
+    from engcore.scientific.ir.problem import PROBLEM_SCHEMA
+    from engcore.scientific.models.definition import MODEL_SCHEMA
+    from engcore.scientific.realizations.definition import REALIZATION_SCHEMA
+    from engcore.scientific.results.provenance import PROVENANCE_SCHEMA
+    from engcore.scientific.results.result import RESULT_SCHEMA
+    from engcore.scientific.twins.definition import SCIENTIFIC_TWIN_SCHEMA
 
     assert PROBLEM_SCHEMA == "scientific_problem/1"
     assert MODEL_SCHEMA == "scientific_model_definition/2"
@@ -990,7 +990,7 @@ def test_h6_the_endpoint_type_was_reduced_away():
     Two types where flat fields suffice is what a reduction attack exists to
     kill. The record has four endpoint fields and no endpoint object.
     """
-    import src.engcore.scientific.composition.dependency as module
+    import engcore.scientific.composition.dependency as module
 
     names = {n for n in dir(module) if not n.startswith("_")}
     assert "QuantityEndpoint" not in names
@@ -1069,7 +1069,7 @@ def test_j_exactly_one_electrical_solve_and_no_coupled_claim(executed):
 
 
 def test_j2_no_new_convergence_state_member_was_added():
-    from src.engcore.scientific.solvers.protocol import ConvergenceState
+    from engcore.scientific.solvers.protocol import ConvergenceState
 
     assert {s.value for s in ConvergenceState} == {
         "not_applicable", "converged", "not_converged",
@@ -1085,7 +1085,7 @@ def test_j3_a_closed_form_evaluation_reports_not_applicable(executed):
     would claim a numerical property neither of them has. The electrical MNA
     solve is a genuine linear solve and legitimately reports ``CONVERGED``.
     """
-    from src.engcore.scientific.solvers.protocol import ConvergenceState
+    from engcore.scientific.solvers.protocol import ConvergenceState
 
     assert executed.property_result.convergence is ConvergenceState.NOT_APPLICABLE
     assert executed.thermal_result.convergence is ConvergenceState.NOT_APPLICABLE

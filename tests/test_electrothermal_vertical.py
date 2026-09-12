@@ -21,26 +21,26 @@ import textwrap
 
 import pytest
 
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.electrical.dc import ElectricalDCSolver
-from src.engcore.domains.electrical.dc.errors import CircuitBindingError
-from src.engcore.scientific.composition import QuantityDependency
-from src.engcore.scientific.errors import (
+from engcore.domains.thermal_models import lumped as lump
+from engcore.domains.electrical import material as mat
+from engcore.domains.electrical.dc import ElectricalDCSolver
+from engcore.domains.electrical.dc.errors import CircuitBindingError
+from engcore.scientific.composition import QuantityDependency
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     ScientificCoreError,
 )
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.units.quantity import Quantity, dimensionality
-from src.engcore.systems.electrothermal import coupled as cp
-from src.engcore.systems.electrothermal import resistor_body
-from src.engcore.systems.electrothermal.resistor_body import (
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.units.quantity import Quantity, dimensionality
+from engcore.systems.electrothermal import coupled as cp
+from engcore.systems.electrothermal import resistor_body
+from engcore.systems.electrothermal.resistor_body import (
     ElectroThermalResistor,
     run_open_loop_pass,
 )
@@ -60,7 +60,7 @@ def _lossless(name, *, arrives_as, leaves_as, unit="watt"):
     repository already made; what is new is that each states the claim it was
     always making, which is that the whole of the input arrives.
     """
-    from src.engcore.scientific.composition import EnergyConversion
+    from engcore.scientific.composition import EnergyConversion
 
     return EnergyConversion(
         name=name,
@@ -1294,7 +1294,7 @@ def test_x8_the_final_values_key_is_structural_and_the_name_is_honest(case_a):
 
 def test_i_universal_core_gained_nothing():
     """`ET-VERTICAL` adds no file and no export under ``engcore/scientific``."""
-    from src.engcore.scientific import composition
+    from engcore.scientific import composition
 
     assert set(composition.__all__) == {
         # Added by the core round: what a crossing that carries energy must
@@ -1343,7 +1343,7 @@ def test_i2_the_new_module_uses_published_contracts_only():
     Every ``engcore.scientific`` name it imports must be one the core package
     publishes in its own ``__all__``.
     """
-    import src.engcore.scientific as core
+    import engcore.scientific as core
 
     source = pathlib.Path(inspect.getfile(cp)).read_text(encoding="utf-8")
     tree = ast.parse(source)
@@ -1741,14 +1741,14 @@ def test_o3_no_existing_schema_version_moved():
     reads back declaring no conversion, which the constructor then refuses if
     it carried energy, so an old record of an energy crossing fails loudly
     rather than reading back as lossless."""
-    from src.engcore.scientific.composition.dependency import (
+    from engcore.scientific.composition.dependency import (
         QUANTITY_DEPENDENCY_SCHEMA,
     )
-    from src.engcore.scientific.results.provenance import (
+    from engcore.scientific.results.provenance import (
         EXECUTION_BINDING_SCHEMA, PROVENANCE_SCHEMA,
     )
-    from src.engcore.scientific.results.result import RESULT_SCHEMA
-    from src.engcore.scientific.solvers.protocol import RAW_OUTPUT_SCHEMA
+    from engcore.scientific.results.result import RESULT_SCHEMA
+    from engcore.scientific.solvers.protocol import RAW_OUTPUT_SCHEMA
 
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
     assert PROVENANCE_SCHEMA == "provenance_record/4"
@@ -1897,7 +1897,7 @@ def test_r5_the_policy_is_not_a_property_of_the_dependency(case_a):
     # conversion a crossing that carries energy must declare -- which does not
     # weaken this test: what it checks is the loop below, that no coupling
     # policy appears in the payload at any version.
-    from src.engcore.scientific.composition.dependency import (
+    from engcore.scientific.composition.dependency import (
         QUANTITY_DEPENDENCY_SCHEMA,
     )
 

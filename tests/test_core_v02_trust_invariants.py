@@ -60,31 +60,31 @@ import dataclasses
 
 import pytest
 
-from src.engcore.sria.assurance.assessment import CriticVerdict
-from src.engcore.sria.decision.actions import ActionFamily
-from src.engcore.sria.admission import (
+from engcore.sria.assurance.assessment import CriticVerdict
+from engcore.sria.decision.actions import ActionFamily
+from engcore.sria.admission import (
     AdmissionAttempt,
     AdmissionDeclaration,
     DecisionBinding,
 )
-from src.engcore.sria.assurance.obligations import (
+from engcore.sria.assurance.obligations import (
     ObligationSet,
     ValidationObligation,
 )
-from src.engcore.sria.assurance.uncertainty_budget import (
+from engcore.sria.assurance.uncertainty_budget import (
     AggregationRecord,
     ChannelEntry,
     UncertaintyBudget,
 )
-from src.engcore.sria.campaign.budget import BudgetCharge, BudgetLedger
-from src.engcore.sria.campaign.checkpoint import CampaignCheckpoint, IterationPlan
-from src.engcore.sria.campaign.stopping import (
+from engcore.sria.campaign.budget import BudgetCharge, BudgetLedger
+from engcore.sria.campaign.checkpoint import CampaignCheckpoint, IterationPlan
+from engcore.sria.campaign.stopping import (
     StoppingCriterion,
     StopProposal,
     StopReview,
     StopReviewOutcome,
 )
-from src.engcore.sria.evidence import Assessment, ClaimBinding, Evidence, LifecycleEvent
+from engcore.sria.evidence import Assessment, ClaimBinding, Evidence, LifecycleEvent
 
 from tests.sria_m5_benchmark import build_assurance, critic_obligation
 from tests.test_sria_m51_durability import CRITERION, ToyStoppingEvaluator, review_with

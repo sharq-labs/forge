@@ -505,17 +505,64 @@ def clear_unit_caches() -> None:
     """
     _canonical_unit.cache_clear()
     _canonical_dimensionality.cache_clear()
+    # Every memo in this module, not only the first two. `_normalized` and
+    # `_conversion_rule` sit in FRONT of `_canonical_unit`, so leaving them
+    # populated meant a caller who cleared the caches still got an answer
+    # without a parse — and `test_a_repeated_unit_string_is_canonicalised_once`
+    # measured zero parses where it expected one. A clear that does not clear
+    # everything is worse than none, because what it leaves behind is invisible.
+    _normalized.cache_clear()
+    _conversion_rule.cache_clear()
 
 
 def unit_cache_stats() -> dict[str, Any]:
-    """Hit/miss counts for the memo, for diagnostics and performance guards."""
+    """Hit/miss counts for the memo, for diagnostics and performance guards.
+
+    The headline numbers stay those of ``_canonical_unit`` — the parse, which
+    is what "how often did this cost a parse" means and what the existing
+    guards measure. The memos in front of it are reported alongside rather
+    than folded in, because adding their hits to the parse count would change
+    what the number means.
+    """
     info = _canonical_unit.cache_info()
+    normalized = _normalized.cache_info()
+    conversions = _conversion_rule.cache_info()
     return {
         "hits": info.hits,
         "misses": info.misses,
         "currsize": info.currsize,
         "maxsize": info.maxsize,
+        "normalized_hits": normalized.hits,
+        "normalized_misses": normalized.misses,
+        "conversion_rule_hits": conversions.hits,
+        "conversion_rule_misses": conversions.misses,
     }
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _normalized(text: str) -> str:
+    """The body of :func:`normalize_unit`, memoized on the caller's spelling.
+
+    ``_canonical_unit`` was already memoized, so what this adds is the strip,
+    the emptiness check and the exception wrapper — which sound free and are
+    not: profiled over a thousand small solves this path ran 188,000 times,
+    and ``str.strip`` alone accounted for 253,000 calls. Caching the caller's
+    exact spelling rather than the stripped form means ``"K"``, ``" K"`` and
+    ``"kelvin"`` each get an entry and all three return the same canonical
+    string, which is what they did before.
+
+    Exceptions are not cached by ``lru_cache``, so an unparsable unit is
+    re-raised on every call exactly as it was.
+    """
+    stripped = text.strip()
+    if not stripped:
+        raise UnitCompatibilityError(
+            "unit must be a non-empty string; use 'dimensionless' explicitly"
+        )
+    try:
+        return _canonical_unit(stripped)[0]
+    except Exception as exc:  # pint raises several distinct types
+        raise UnitCompatibilityError(f"unparsable unit {text!r}: {exc}") from exc
 
 
 def normalize_unit(unit: str) -> str:
@@ -523,15 +570,9 @@ def normalize_unit(unit: str) -> str:
 
     Raises :class:`UnitCompatibilityError` for unparsable input.
     """
-    text = str(unit).strip()
-    if not text:
-        raise UnitCompatibilityError(
-            "unit must be a non-empty string; use 'dimensionless' explicitly"
-        )
-    try:
-        return _canonical_unit(text)[0]
-    except Exception as exc:  # pint raises several distinct types
-        raise UnitCompatibilityError(f"unparsable unit {unit!r}: {exc}") from exc
+    # `str(unit)` is kept for callers that pass something string-like, and the
+    # common case skips it: a `str` is already hashable and already itself.
+    return _normalized(unit if type(unit) is str else str(unit))
 
 
 @lru_cache(maxsize=_UNIT_CACHE_SIZE)
@@ -572,6 +613,56 @@ def is_ratio_scale(unit: str) -> bool:
     if base == text:
         return True
     return float(registry().Quantity(0.0, text).to(base).magnitude) == 0.0
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _conversion_rule(source: str, target: str) -> tuple[float | None, Any, Any]:
+    """How to move a magnitude from ``source`` to ``target``, decided once.
+
+    Returns ``(factor, source_units, target_units)``. A ``factor`` means the
+    conversion is a multiply; ``None`` means it must go through the backend,
+    and the two parsed unit containers are returned so that call does not
+    re-parse either string.
+
+    **Why a multiply is allowed for some pairs and not others.** A conversion
+    between two ratio-scale units is ``m * k``, and the backend computes it
+    that way, so multiplying by ``convert(1.0)`` reproduces it exactly. A
+    conversion across an affine scale is ``m * k + c``, and computing it as
+    ``m * (one - zero) + zero`` is *algebraically* the same and *numerically*
+    is not: the subtraction and the addition each round, and the result differs
+    from the backend's in the last place.
+
+    That is not a tolerable difference. This repository's own certificate
+    already records exact float boundary equality as a known limit, and a unit
+    layer that returned a different final bit than it did last week would move
+    scientific values for no reason a reader could see. So the rule is decided
+    by measurement, not by algebra:
+
+    * multiplicative pairs — verified bit-identical to the backend across 133
+      unit pairs and 5,412 magnitude cases, including denormals, 1e±300 and
+      randomised values — take the multiply;
+    * affine pairs — where the same check passes only 40.5 % of the time —
+      go to the backend, which still skips the quantity construction and both
+      string parses.
+
+    ``tests/test_unit_conversion_equivalence.py`` is that measurement, kept as
+    a test so the claim is re-checked rather than remembered.
+
+    Memoized on the pair of canonical unit strings, and safe for exactly the
+    reason :func:`_canonical_unit` is: the registry is a constant for the life
+    of the process, so the rule for a pair cannot change under the cache.
+    """
+    backend = registry()
+    source_units = backend.Unit(source)._units  # noqa: SLF001 - pint's own container
+    target_units = backend.Unit(target)._units  # noqa: SLF001
+    zero = float(backend.convert(0.0, source_units, target_units))
+    if zero == 0.0:
+        return (
+            float(backend.convert(1.0, source_units, target_units)),
+            source_units,
+            target_units,
+        )
+    return (None, source_units, target_units)
 
 
 def dimension_of(unit: str) -> Any:
@@ -755,8 +846,25 @@ class Quantity:
         if target == self.units:
             return self
         self.require_compatible(target, context="conversion")
-        converted = registry().Quantity(self.magnitude, self.units).to(target)
-        return Quantity(float(converted.magnitude), str(converted.units))
+        # THE CONVERSION IS PERFORMED BY THE BACKEND; WHAT IS MEMOIZED IS THE
+        # PARSE, NOT THE ARITHMETIC.
+        #
+        # This used to build a fresh `pint.Quantity` from `(magnitude, unit
+        # string)` on every call, which re-parsed the unit string every time:
+        # profiled over a thousand small solves it was 58,000 backend quantity
+        # constructions and 58,000 string parses, and the backend was the
+        # single largest cost in the run at 41 % of profiled time.
+        #
+        # `_conversion_rule` caches what does not depend on the magnitude. See
+        # its docstring for why a multiplicative pair may be a multiply and an
+        # affine one may not.
+        factor, source_units, target_units = _conversion_rule(self.units, target)
+        if factor is not None:
+            return Quantity(self.magnitude * factor, target)
+        return Quantity(
+            float(registry().convert(self.magnitude, source_units, target_units)),
+            target,
+        )
 
     def magnitude_in(self, unit: str) -> float:
         """Numeric magnitude expressed in ``unit`` — the single sanctioned way

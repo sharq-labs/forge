@@ -22,23 +22,23 @@ import pathlib
 import numpy as np
 import pytest
 
-from src.engcore.domains.thermal.conduction1d.problem import (
+from engcore.domains.thermal.conduction1d.problem import (
     DIFFUSION_MODEL,
     ConductionSlab,
     SlabDiscretization,
 )
-from src.engcore.domains.thermal.conduction1d.reference import (
+from engcore.domains.thermal.conduction1d.reference import (
     REFERENCE_ID,
     exact_midpoint,
 )
-from src.engcore.domains.thermal.conduction1d.solver import (
+from engcore.domains.thermal.conduction1d.solver import (
     Conduction1DSolver,
     solve_slab,
 )
-from src.engcore.domains.thermal.conduction1d.problem import (
+from engcore.domains.thermal.conduction1d.problem import (
     build_conduction_problem,
 )
-from src.engcore.domains.thermal_models.conduction1d_schemes import (
+from engcore.domains.thermal_models.conduction1d_schemes import (
     CORE_LINEAR_SOLVE,
     EXPLICIT_REALIZATION,
     FTCS_STABILITY_LIMIT,
@@ -54,31 +54,31 @@ from src.engcore.domains.thermal_models.conduction1d_schemes import (
     solve_with_realization,
     sparse_scheme_solver,
 )
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.ir.problem import ModelReference
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.realizations.definition import (
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.ir.problem import ModelReference
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.realizations.definition import (
     ModelFormulation,
     ModelRealizationDefinition,
     RealizationReference,
 )
-from src.engcore.scientific.results.provenance import (
+from engcore.scientific.results.provenance import (
     PROVENANCE_SCHEMA,
     PROVENANCE_SCHEMA_V1,
     ExecutionBinding,
     ProvenanceRecord,
 )
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.solvers.capability import (
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.solvers.capability import (
     CoreCapabilities,
     SolverCapabilityId,
 )
-from src.engcore.scientific.solvers.protocol import (
+from engcore.scientific.solvers.protocol import (
     ConvergenceState,
     SolverIdentity,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 
 def _fixture_model(**fields):
@@ -157,7 +157,7 @@ def test_a2_no_second_scientific_model_was_created():
     A ``Fourier analytical model`` beside a ``Fourier numerical model`` would
     make the proof easy and would prove nothing about realizations.
     """
-    import src.engcore.domains.thermal_models.conduction1d_schemes as schemes
+    import engcore.domains.thermal_models.conduction1d_schemes as schemes
 
     source = pathlib.Path(inspect.getfile(schemes)).read_text(encoding="utf-8")
     assert "ScientificModelDefinition(" not in source
@@ -618,8 +618,8 @@ def test_g2b_what_the_built_reduction_actually_costs():
       2. running it at all needs a scheme-string -> realization branch;
       3. the string is unreachable until a solver instance exists.
     """
-    from src.engcore.scientific.errors import InvalidModelRealization
-    from src.engcore.scientific.solvers.protocol import SolverSettings
+    from engcore.scientific.errors import InvalidModelRealization
+    from engcore.scientific.solvers.protocol import SolverSettings
 
     # 1. Nothing validates the option. Compare with realization identity,
     #    which is validated on construction.
@@ -821,7 +821,7 @@ def test_x3_the_realization_contract_was_not_modified():
 
 
 def test_x4_no_untyped_escape_hatch_was_used_by_the_new_module():
-    import src.engcore.domains.thermal_models.conduction1d_schemes as schemes
+    import engcore.domains.thermal_models.conduction1d_schemes as schemes
 
     source = pathlib.Path(inspect.getfile(schemes)).read_text(encoding="utf-8")
     assert "artifacts=" not in source

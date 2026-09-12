@@ -19,14 +19,14 @@ from contextlib import contextmanager
 import numpy as np
 import pytest
 
-from src.engcore.domains.kinetics.cstr import solver as solver_module
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import solver as solver_module
+from engcore.domains.kinetics.cstr import (
     TOLERANCE_LADDER,
     CSTRSolver,
     solve_reactor,
     solve_reactor_bundle,
 )
-from src.engcore.domains.kinetics.cstr.validation import (
+from engcore.domains.kinetics.cstr.validation import (
     measure_stiffness,
     run_verification_gate,
 )

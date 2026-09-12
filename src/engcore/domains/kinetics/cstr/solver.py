@@ -72,6 +72,7 @@ correctly remains CONVERGED.
 from __future__ import annotations
 
 import time
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -158,6 +159,18 @@ class _EvaluationCounter:
         self.attempted = self.completed
 
 
+#: The budget of the execution integrating in this context, when one is.
+#:
+#: A prepared solve can be executed any number of times, one after another or
+#: at once, and each execution spends a budget of its own. The right-hand side
+#: a prepared system carries charges this counter while ``CSTRSolver.solve`` is
+#: integrating it, and the system's own ``counter`` only when it is called
+#: directly. Context-local, so concurrent executions never see each other's.
+_EXECUTION_BUDGET: ContextVar[_EvaluationCounter | None] = ContextVar(
+    "cstr_execution_budget", default=None
+)
+
+
 @dataclass(frozen=True)
 class PreparedCSTRSystem:
     """The assembled right-hand side, its Jacobian, and the declaration."""
@@ -211,11 +224,15 @@ def assemble(run: ReactorRun) -> PreparedCSTRSystem:
             return float(k0 * np.exp(-energy / (_R * temperature)))
 
     def rhs(t: float, y: np.ndarray) -> np.ndarray:
-        counter.charge(float(t))
+        # The execution integrating this system is charged, not the system:
+        # see _EXECUTION_BUDGET. Called directly, the system's own counter is.
+        active = _EXECUTION_BUDGET.get()
+        charged = counter if active is None else active
+        charged.charge(float(t))
         concentration = float(y[0])
         temperature = float(y[1])
         if temperature <= 0.0 or not np.isfinite(temperature):
-            counter.non_positive_temperature_events += 1
+            charged.non_positive_temperature_events += 1
         k = rate_constant(temperature)
         reaction = k * concentration
         d_concentration = a * (caf - concentration) - reaction
@@ -224,7 +241,7 @@ def assemble(run: ReactorRun) -> PreparedCSTRSystem:
         )
         out = np.array([d_concentration, d_temperature], dtype=np.float64)
         if not np.all(np.isfinite(out)):
-            counter.non_finite_events += 1
+            charged.non_finite_events += 1
         return out
 
     def jacobian(t: float, y: np.ndarray) -> np.ndarray:
@@ -376,6 +393,14 @@ class CSTRSolver(DeclaredSupport):
         system: PreparedCSTRSystem = prepared.payload
         run = system.run
         integration = run.integration
+        # This execution's own budget. ``prepare`` assembled the right-hand side
+        # over a counter, and a counter is spent by integrating: charging the
+        # prepared one made a second execution of the same prepared solve -- or
+        # a concurrent one -- start from what an earlier one used, and report
+        # the sum. The right-hand side charges whichever execution is
+        # integrating it, so one a caller substituted into the payload is
+        # charged here too.
+        counter = _EvaluationCounter(budget=integration.max_rhs_evaluations)
         started = time.perf_counter()
 
         common: dict[str, Any] = {
@@ -398,6 +423,7 @@ class CSTRSolver(DeclaredSupport):
         if integration.is_stiff_method:
             kwargs["jac"] = system.jacobian
 
+        execution = _EXECUTION_BUDGET.set(counter)
         try:
             solution = solve_ivp(
                 system.rhs,
@@ -432,28 +458,30 @@ class CSTRSolver(DeclaredSupport):
                         if run.operation.end_time_s
                         else 0.0
                     ),
-                    "non_finite_rhs_events": system.counter.non_finite_events,
+                    "non_finite_rhs_events": counter.non_finite_events,
                     "non_positive_temperature_events":
-                        system.counter.non_positive_temperature_events,
+                        counter.non_positive_temperature_events,
                 },
             )
         except Exception as exc:  # backend raised for any other reason
             return RawSolverOutput(
                 convergence=ConvergenceState.FAILED,
                 warnings=(f"integrator raised {type(exc).__name__}",),
-                iterations=system.counter.completed,
+                iterations=counter.completed,
                 wall_seconds=time.perf_counter() - started,
                 diagnostics={
                     **common,
                     "outcome": "backend_exception",
                     "error_type": type(exc).__name__,
                     "error": str(exc),
-                    "rhs_evaluations": system.counter.completed,
-                    "rhs_evaluations_completed": system.counter.completed,
-                    "rhs_evaluations_attempted": system.counter.attempted,
-                    "non_finite_rhs_events": system.counter.non_finite_events,
+                    "rhs_evaluations": counter.completed,
+                    "rhs_evaluations_completed": counter.completed,
+                    "rhs_evaluations_attempted": counter.attempted,
+                    "non_finite_rhs_events": counter.non_finite_events,
                 },
             )
+        finally:
+            _EXECUTION_BUDGET.reset(execution)
 
         wall = time.perf_counter() - started
         times = np.asarray(solution.t, dtype=np.float64)
@@ -464,16 +492,16 @@ class CSTRSolver(DeclaredSupport):
         # measure the same thing by different routes, and a disagreement is
         # itself worth seeing.
         work = {
-            "rhs_evaluations": int(system.counter.completed),
-            "rhs_evaluations_completed": int(system.counter.completed),
-            "rhs_evaluations_attempted": int(system.counter.attempted),
+            "rhs_evaluations": int(counter.completed),
+            "rhs_evaluations_completed": int(counter.completed),
+            "rhs_evaluations_attempted": int(counter.attempted),
             "scipy_nfev": int(getattr(solution, "nfev", 0)),
             "scipy_njev": int(getattr(solution, "njev", 0)),
             "scipy_nlu": int(getattr(solution, "nlu", 0)),
             "accepted_steps": int(times.size - 1) if times.size else 0,
-            "non_finite_rhs_events": system.counter.non_finite_events,
+            "non_finite_rhs_events": counter.non_finite_events,
             "non_positive_temperature_events":
-                system.counter.non_positive_temperature_events,
+                counter.non_positive_temperature_events,
         }
 
         if solution.status == -1 or not finite_trajectory:
@@ -492,7 +520,7 @@ class CSTRSolver(DeclaredSupport):
                     if solution.status == -1
                     else "trajectory contains non-finite values",
                 ),
-                iterations=int(system.counter.completed),
+                iterations=int(counter.completed),
                 wall_seconds=wall,
                 diagnostics={
                     **common,
@@ -522,7 +550,7 @@ class CSTRSolver(DeclaredSupport):
             return RawSolverOutput(
                 convergence=ConvergenceState.FAILED,
                 warnings=(str(solution.message),),
-                iterations=int(system.counter.completed),
+                iterations=int(counter.completed),
                 wall_seconds=wall,
                 diagnostics={
                     **common,
@@ -590,7 +618,7 @@ class CSTRSolver(DeclaredSupport):
             convergence=ConvergenceState.CONVERGED,
             values=values,
             residuals={},
-            iterations=int(system.counter.completed),
+            iterations=int(counter.completed),
             wall_seconds=wall,
             diagnostics={
                 **common,

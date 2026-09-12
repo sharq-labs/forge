@@ -13,7 +13,7 @@ import math
 
 import pytest
 
-from src.engcore.domains.thermal.conduction1d import (
+from engcore.domains.thermal.conduction1d import (
     ANALYTIC_REL_TOL,
     CONVERGENCE_MIN_CONTRACTION,
     MIN_RUNGS,
@@ -21,7 +21,7 @@ from src.engcore.domains.thermal.conduction1d import (
     exact_midpoint,
     run_verification_gate,
 )
-from src.engcore.scientific.results.validation import ValidationLevel
+from engcore.scientific.results.validation import ValidationLevel
 from tests.domains.thermal.holdout_declaration import (
     DECLARED_REGIME_MAX_DECAY,
     HOLDOUT_ALPHA_M2_S,
@@ -119,11 +119,11 @@ def test_holdout_is_a_different_physical_case():
     assert report.rungs[-1].analytic == pytest.approx(holdout_qoi, abs=1e-15)
 
     # ...and it is genuinely harder than the case the gate was declared on.
-    from src.engcore.domains.thermal.conduction1d import (
+    from engcore.domains.thermal.conduction1d import (
         ConductionSlab,
         SlabDiscretization,
     )
-    from src.engcore.scientific.units.quantity import Quantity
+    from engcore.scientific.units.quantity import Quantity
 
     nominal_slab = ConductionSlab(
         slab_id="nominal-for-contrast",

@@ -59,9 +59,22 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# PEP 561. The package's inline annotations are part of its interface, and the
+# marker only reaches a wheel if it is declared: it is not a module, and nothing
+# else here tells setuptools to ship a non-Python file.
+[tool.setuptools.package-data]
+engcore = ["py.typed"]
+
 [tool.pytest.ini_options]
 # The project uses a src/ layout. Tests must resolve engcore from the checked-out
 # source tree even when the package has not been installed in editable mode.
+#
+# "." is here for the top-level `experiments`, `benchmarks` and `tests`
+# packages, not for the runtime. It also makes `src` importable, and eleven
+# SHA-256-pinned experiment and test files still import `src.engcore`; that
+# spelling is an alias for the canonical `engcore` modules (`src/__init__.py`),
+# never a second copy of them. The only supported import namespace is `engcore`,
+# and `tests/test_trust_boundary_package_identity.py` holds both halves of that.
 pythonpath = ["src", "."]
 
 # Execution tiers. Assigned centrally in tests/conftest.py rather than with

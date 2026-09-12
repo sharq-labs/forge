@@ -1,0 +1,73 @@
+{
+  "campaign_loop": {
+    "100": {
+      "cases_per_second": 1994.4275691975367,
+      "peak_bytes": 22288,
+      "seconds": 0.050139700004365295
+    },
+    "1000": {
+      "cases_per_second": 1965.7503386725425,
+      "peak_bytes": 22289,
+      "seconds": 0.5087116000067908
+    },
+    "10000": {
+      "cases_per_second": 2009.7793855163798,
+      "peak_bytes": 22289,
+      "seconds": 4.975670499989064
+    }
+  },
+  "campaign_sweep": {
+    "100": {
+      "cases_per_second": 1808.4817796018126,
+      "peak_bytes": 1154364,
+      "seconds": 0.05529499999829568
+    },
+    "1000": {
+      "cases_per_second": 1923.4105608275058,
+      "peak_bytes": 11806604,
+      "seconds": 0.5199098000011873
+    },
+    "10000": {
+      "cases_per_second": 1920.2163914882778,
+      "peak_bytes": 123588306,
+      "seconds": 5.207746400003089
+    }
+  },
+  "field": {
+    "128x128": {
+      "assemble_seconds": 0.0293729999975767,
+      "solve_seconds": 0.06904259999282658
+    },
+    "32x32": {
+      "assemble_seconds": 0.0015977000002749264,
+      "solve_seconds": 0.0035727999929804355
+    },
+    "64x64": {
+      "assemble_seconds": 0.00647160000517033,
+      "solve_seconds": 0.014640200010035187
+    }
+  },
+  "has_sweep": true,
+  "label": "after",
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python": "3.14.2"
+  },
+  "note": "Timing and memory are measured in separate passes: tracemalloc roughly halves throughput, so a figure produced under it describes the profiler. 'before' was measured in a clean worktree at the sprint base with this same script, so what is compared is the work rather than the abstraction.",
+  "recorded_for_commit": "12dd66f8f26aac321478a2758205647c13cd59fa",
+  "workers": {
+    "1": {
+      "cases_per_second": 1964.0965121331708,
+      "seconds": 1.0182799000176601
+    },
+    "2": {
+      "cases_per_second": 1832.1816849924805,
+      "seconds": 1.0915948000038043
+    },
+    "4": {
+      "cases_per_second": 1774.0447146030745,
+      "seconds": 1.127367300010519
+    }
+  }
+}

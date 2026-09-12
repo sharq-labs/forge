@@ -13,19 +13,19 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.battery import cell as bat
-from src.engcore.domains.battery import context as ctx
-from src.engcore.domains.battery import models as mdl
-from src.engcore.domains.battery import solver as sol
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.models.definition import ModelValidationStatus
-from src.engcore.scientific.realizations.definition import ModelFormulation
-from src.engcore.scientific.results.validation import (
+from engcore.domains.battery import cell as bat
+from engcore.domains.battery import context as ctx
+from engcore.domains.battery import models as mdl
+from engcore.domains.battery import solver as sol
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.models.definition import ModelValidationStatus
+from engcore.scientific.realizations.definition import ModelFormulation
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.units.quantity import Quantity
 
 from battery_cases import assess, build_cell, build_limits, build_load
 

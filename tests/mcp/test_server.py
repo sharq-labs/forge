@@ -34,25 +34,25 @@ pytest.importorskip("mcp.types",
 import mcp.types as mcp_types  # noqa: E402
 from mcp import Client  # noqa: E402
 
-from src.engcore.domains.electrical import dc_applicability as dc_app  # noqa: E402
-from src.engcore.domains.electrical import material as mat  # noqa: E402
-from src.engcore.domains.electrical.dc import models as dc_models  # noqa: E402
-from src.engcore.domains.thermal_models import lumped as lump  # noqa: E402
-from src.engcore.mcp.systems import SYSTEMS  # noqa: E402
-from src.engcore.mcp import (  # noqa: E402
+from engcore.domains.electrical import dc_applicability as dc_app  # noqa: E402
+from engcore.domains.electrical import material as mat  # noqa: E402
+from engcore.domains.electrical.dc import models as dc_models  # noqa: E402
+from engcore.domains.thermal_models import lumped as lump  # noqa: E402
+from engcore.mcp.systems import SYSTEMS  # noqa: E402
+from engcore.mcp import (  # noqa: E402
     COUPLING_SUPPLIED_INPUTS,
     CredibilityVerdict,
     example_electrothermal_payload,
     example_over_rating_payload,
     run_electrothermal_case,
 )
-from src.engcore.mcp import server  # noqa: E402
-from src.engcore.mcp.server import (  # noqa: E402
+from engcore.mcp import server  # noqa: E402
+from engcore.mcp.server import (  # noqa: E402
     CAPABILITIES_SCHEMA,
     RESPONSE_SCHEMA,
     build_server,
 )
-from src.engcore.scientific.models.definition import (  # noqa: E402
+from engcore.scientific.models.definition import (  # noqa: E402
     ValidityAssessment,
     ValidityStatus,
 )

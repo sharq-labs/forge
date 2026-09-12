@@ -22,7 +22,7 @@ import dataclasses
 import json
 import sys
 
-from src.engcore.sria.assurance.assessment import (
+from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
     CriticClass,
@@ -31,8 +31,8 @@ from src.engcore.sria.assurance.assessment import (
     FindingImpact,
     Severity,
 )
-from src.engcore.sria.provenance import AssessmentProvenance
-from src.engcore.sria.campaign import (
+from engcore.sria.provenance import AssessmentProvenance
+from engcore.sria.campaign import (
     ArbiterStoppingReview,
     BudgetLedger,
     CampaignCheckpoint,
@@ -46,7 +46,7 @@ from src.engcore.sria.campaign import (
     StopReviewOutcome,
     StoppingCriterion,
 )
-from src.engcore.sria.decision import ActionFamily
+from engcore.sria.decision import ActionFamily
 
 from tests.sria_m5_benchmark import (
     InterruptedCampaign,
@@ -261,7 +261,7 @@ def test_E_no_campaign_component_can_issue_final_stopping_approval():
 
 
 def test_E2_the_runner_routes_stopping_through_its_arbiter():
-    from src.engcore.sria.campaign import runner as runner_module
+    from engcore.sria.campaign import runner as runner_module
 
     runner, _h, _g = build_campaign(
         actions_by_iteration=S1, seed_rows=S1_SEED,
@@ -375,7 +375,7 @@ def test_the_plan_is_persisted_before_anything_executes():
 
 
 def test_the_plan_round_trips_and_preserves_m44_coherence():
-    from src.engcore.sria.decision import CoherenceStatus, check_state_coherence
+    from engcore.sria.decision import CoherenceStatus, check_state_coherence
 
     runner, harness, _g = build_campaign(
         actions_by_iteration=S1, seed_rows=S1_SEED,

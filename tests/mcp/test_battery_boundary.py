@@ -17,7 +17,7 @@ import pytest
 # runnable — and green — without it, the same rule pytest-xdist is held to.
 #
 # This module carried no guard at all, and that was not cosmetic:
-# `src.engcore.mcp.server` imports the SDK at module scope, so on any machine
+# `engcore.mcp.server` imports the SDK at module scope, so on any machine
 # without it this file raised at COLLECTION and took the whole run with it. CI
 # was red on every job from the commit that added this file (2026-09-06 16:47)
 # until this one, and a clean-machine install lost 55 tests. NEEDS.md, evidence
@@ -34,26 +34,26 @@ import pytest
 pytest.importorskip("mcp.types",
                     reason="install the optional [mcp] dependency group")
 
-from src.engcore.domains.battery import context as bctx  # noqa: E402
-from src.engcore.domains.battery import models as bmdl  # noqa: E402
-from src.engcore.domains.thermal_models import lumped as lump  # noqa: E402
-from src.engcore.mcp import server as srv  # noqa: E402
-from src.engcore.mcp.battery import (  # noqa: E402
+from engcore.domains.battery import context as bctx  # noqa: E402
+from engcore.domains.battery import models as bmdl  # noqa: E402
+from engcore.domains.thermal_models import lumped as lump  # noqa: E402
+from engcore.mcp import server as srv  # noqa: E402
+from engcore.mcp.battery import (  # noqa: E402
     build_battery_case,
     describe_battery_case,
     example_battery_payload,
     run_battery_case,
 )
-from src.engcore.mcp.errors import (  # noqa: E402
+from engcore.mcp.errors import (  # noqa: E402
     MalformedPayloadError,
     MissingFieldError,
     MissingUnitError,
     UnknownFieldError,
     WrongDimensionError,
 )
-from src.engcore.mcp.problem import describe_electrothermal_case  # noqa: E402
-from src.engcore.mcp.systems import SYSTEMS, system  # noqa: E402
-from src.engcore.scientific.models.definition import ValidityStatus  # noqa: E402
+from engcore.mcp.problem import describe_electrothermal_case  # noqa: E402
+from engcore.mcp.systems import SYSTEMS, system  # noqa: E402
+from engcore.scientific.models.definition import ValidityStatus  # noqa: E402
 
 
 def payload(**edits):

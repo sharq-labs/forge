@@ -13,7 +13,7 @@ from typing import Any, Iterable, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..sequences import duplicates
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, schema_string, unwritable
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_same_dimension
 from .conditions import BoundaryCondition, BoundaryKind, InitialCondition
@@ -160,6 +160,18 @@ class ScientificProblem:
         # validation this method already does.
         from ..results.immutable import freeze
 
+        # The refusal `ScientificResult.metadata`, `ProvenanceRecord.metadata`
+        # and `SolverSettings.options` already make. `to_dict` records this
+        # mapping with the problem, and it accepted an object, a NaN or an
+        # integer key that the record then could not write down, or wrote
+        # down as a different value.
+        unrecordable = unwritable(self.metadata, path="metadata")
+        if unrecordable is not None:
+            where, kind = unrecordable
+            raise InvalidScientificProblem(
+                f"problem {problem_id!r} cannot be recorded: {where} is a "
+                f"{kind}, which no scientific record can carry"
+            )
         object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
         self._require_unique_names()

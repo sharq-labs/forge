@@ -29,18 +29,18 @@ import pickle
 
 import pytest
 
-from src.engcore.mcp.evidence import AssertedContext
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.results.immutable import (
+from engcore.mcp.evidence import AssertedContext
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.results.immutable import (
     FrozenList,
     FrozenMapping,
     FrozenSet,
     detach,
     freeze,
 )
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.units.quantity import Quantity
 
 K = "kelvin"
 
@@ -258,7 +258,7 @@ def test_every_mutating_dict_method_is_refused():
     """
     from collections.abc import Mapping
 
-    from src.engcore.scientific.results.immutable import (
+    from engcore.scientific.results.immutable import (
         DICT_MUTATORS,
         DICT_NON_MUTATORS,
     )
@@ -353,16 +353,16 @@ def _trust_boundary_records():
     Built rather than introspected: the question is whether the CONSTRUCTED
     record protects its containers, and a type annotation cannot answer it.
     """
-    from src.engcore.scientific.ir.problem import ScientificProblem
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
-    from src.engcore.scientific.results.result import ScientificResult
-    from src.engcore.scientific.results.validation import unverified_report
-    from src.engcore.scientific.solvers.protocol import (
+    from engcore.scientific.ir.problem import ScientificProblem
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ScientificResult
+    from engcore.scientific.results.validation import unverified_report
+    from engcore.scientific.solvers.protocol import (
         ConvergenceState,
         RawSolverOutput,
         SolverSettings,
     )
-    from src.engcore.scientific.units.quantity import Quantity
+    from engcore.scientific.units.quantity import Quantity
 
     provenance = ProvenanceRecord(
         run_id="run-0001",
@@ -428,7 +428,7 @@ def test_the_containers_are_frozen_deeply_and_not_only_at_the_top():
     `settings.options["nested"]["a"] = 1`, which is the same defect one level
     down and reads exactly like a fix.
     """
-    from src.engcore.scientific.solvers.protocol import SolverSettings
+    from engcore.scientific.solvers.protocol import SolverSettings
 
     settings = SolverSettings(options={"nested": {"a": 1}, "listed": [1, 2]})
     with pytest.raises(TypeError):
@@ -446,7 +446,7 @@ def test_freezing_did_not_change_what_the_records_serialize_to():
     """
     import json
 
-    from src.engcore.scientific.solvers.protocol import (
+    from engcore.scientific.solvers.protocol import (
         ConvergenceState,
         RawSolverOutput,
         SolverSettings,
@@ -480,8 +480,8 @@ def test_the_residual_hole_is_the_one_the_platform_already_accepts():
     a claim (`ValidationReport._require_every_level_earned`,
     `_require_no_check_contradicts_its_numbers`), not a stronger container.
     """
-    from src.engcore.scientific.results.immutable import FrozenMapping
-    from src.engcore.scientific.solvers.protocol import SolverSettings
+    from engcore.scientific.results.immutable import FrozenMapping
+    from engcore.scientific.solvers.protocol import SolverSettings
 
     settings = SolverSettings(tolerances={"rtol": 1e-8})
 

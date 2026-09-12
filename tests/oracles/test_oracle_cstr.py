@@ -24,13 +24,13 @@ import math
 
 import pytest
 
-from src.engcore.domains.kinetics.cstr.problem import (
+from engcore.domains.kinetics.cstr.problem import (
     ReactorChemistry,
     ReactorOperation,
     ReactorRun,
 )
-from src.engcore.domains.kinetics.cstr.solver import solve_reactor
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.kinetics.cstr.solver import solve_reactor
+from engcore.scientific.units.quantity import Quantity
 
 from .oracle_ids import oracle
 

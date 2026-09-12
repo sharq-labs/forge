@@ -46,14 +46,14 @@ import math
 
 import pytest
 
-from src.engcore.mcp.errors import ProblemPayloadError
-from src.engcore.mcp.problem import build_electrothermal_system
-from src.engcore.scientific.errors import (
+from engcore.mcp.errors import ProblemPayloadError
+from engcore.mcp.problem import build_electrothermal_system
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     UnitCompatibilityError,
 )
 
-from src.engcore.scientific.units.quantity import Quantity as Q
+from engcore.scientific.units.quantity import Quantity as Q
 
 #: Both are refusals, and the boundary scorer treats both as one. They differ
 #: in who wraps them: `coupling.tolerance` is re-raised as the payload
@@ -350,7 +350,7 @@ def test_a_ratio_of_two_temperatures_does_not_depend_on_the_scale_written():
     Unreachable until the payload boundary could express a degC temperature at
     all, which is why one blind round found both in that order.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         CrossLimitCondition, ValidityStatus,
     )
 
@@ -379,7 +379,7 @@ def test_a_ratio_of_two_temperatures_does_not_depend_on_the_scale_written():
 )
 def test_the_reduced_temperature_is_the_absolute_ratio(reference_c, debye_k):
     """Computed here from the definition, not asked for."""
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         CrossLimitCondition, ValidityStatus,
     )
 
@@ -406,7 +406,7 @@ def test_a_ratio_scale_pair_is_computed_exactly_as_before():
     number, bit for bit, that dividing after the old one-sided conversion
     produced.
     """
-    from src.engcore.scientific.models.definition import (
+    from engcore.scientific.models.definition import (
         CrossLimitCondition, ValidityStatus,
     )
 
@@ -438,6 +438,6 @@ def test_a_ratio_scale_pair_is_computed_exactly_as_before():
 )
 def test_the_ratio_scale_test_answers_what_it_claims(unit, ratio_scale):
     """Zero of this unit means zero of the quantity, or it does not."""
-    from src.engcore.scientific.units.quantity import is_ratio_scale
+    from engcore.scientific.units.quantity import is_ratio_scale
 
     assert is_ratio_scale(unit) is ratio_scale

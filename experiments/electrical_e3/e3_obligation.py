@@ -57,7 +57,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Mapping, Sequence
 
-from src.engcore.sria.assurance.assessment import (
+from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
     CriticClass,
@@ -66,8 +66,8 @@ from src.engcore.sria.assurance.assessment import (
     FindingImpact,
     Severity,
 )
-from src.engcore.sria.campaign.stopping import StoppingCriterion
-from src.engcore.sria.provenance import AssessmentProvenance
+from engcore.sria.campaign.stopping import StoppingCriterion
+from engcore.sria.provenance import AssessmentProvenance
 
 from experiments.electrical_e2.e2_adequacy import AdequacyState, ExecutionValidity
 

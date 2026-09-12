@@ -14,15 +14,15 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.sria import Disposition
-from src.engcore.sria.calibration import (
+from engcore.sria import Disposition
+from engcore.sria.calibration import (
     ComputationalLearningRecord,
     CostModel,
     structure_for,
 )
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
-from src.engcore.sria.decision import (
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
+from engcore.sria.decision import (
     ActionFamily,
     ApplicabilitySupport,
     CalibrationCostSupplier,
@@ -39,7 +39,7 @@ from src.engcore.sria.decision import (
     UtilityPolicy,
     misdeclared_scientific_outcomes,
 )
-from src.engcore.sria.decision.belief_snapshot import BeliefSnapshot
+from engcore.sria.decision.belief_snapshot import BeliefSnapshot
 
 from tests.sria_m4_benchmark import (
     ToyCostSupplier,
@@ -193,7 +193,7 @@ def test_scientific_outcomes_cannot_be_declared_as_execution_failures():
 
 
 def test_only_execution_failures_carry_failure_information():
-    from src.engcore.sria.decision import (
+    from engcore.sria.decision import (
         INFORMATIVE_COMPUTATIONAL_FAILURE_CAUSES,
         SCIENTIFIC_OUTCOME_CAUSES,
     )
@@ -406,7 +406,7 @@ def test_supported_query_is_decision_grade():
 
 def test_unseen_environment_cannot_appear_trusted():
     """No cross-hardware evidence exists, so a new machine is not supported."""
-    from src.engcore.sria.signatures import EnvironmentSignature
+    from engcore.sria.signatures import EnvironmentSignature
 
     other_machine = EnvironmentSignature(
         hardware_class="cluster.epyc", precision="float64"
@@ -464,7 +464,7 @@ def test_incompatible_signature_version_is_degraded():
 
 def test_degraded_support_propagates_into_the_recommendation():
     model, builder = cost_model_and_builder()
-    from src.engcore.sria.signatures import EnvironmentSignature
+    from engcore.sria.signatures import EnvironmentSignature
 
     supplier = CalibrationCostSupplier(
         model,
@@ -539,7 +539,7 @@ def test_calibration_mutation_after_snapshot_does_not_change_the_record():
         cost_supplier=supplier,
         failure_supplier=ToyFailureSupplier(0.0, CalibrationVerdict.TRUSTED),
     )
-    from src.engcore.sria.decision import pin_decision_basis
+    from engcore.sria.decision import pin_decision_basis
 
     evaluator = CandidateEvaluator(eng)
     pinned = pin_decision_basis(
@@ -584,7 +584,7 @@ def test_calibration_mutation_after_snapshot_does_not_change_the_record():
     # silently produced a different number, and that the pins only made the
     # divergence *detectable*. M4.3/M4.4 closed that: reusing the basis the
     # first decision was scored against is now refused outright.
-    from src.engcore.sria.decision import CoherenceStatus
+    from engcore.sria.decision import CoherenceStatus
 
     stale = evaluator.evaluate(
         recommendation_id="rec-pin",
@@ -612,7 +612,7 @@ def test_calibration_mutation_after_snapshot_does_not_change_the_record():
 
 def test_validation_budget_claim_is_scoped_to_reservation_only():
     """M4 protects the reserved budget; it makes no scheduling guarantee."""
-    from src.engcore.sria.decision import BudgetPlan
+    from engcore.sria.decision import BudgetPlan
 
     budget = BudgetPlan(total_budget=5.0, reserved_validation_budget=3.0)
     assert budget.general_pool == 2.0
@@ -628,7 +628,7 @@ def test_validation_budget_claim_is_scoped_to_reservation_only():
 # =====================================================================
 
 def test_original_benchmark_still_holds_after_the_corrections():
-    from src.engcore.sria.decision import information_only_ranking
+    from engcore.sria.decision import information_only_ranking
 
     differed, agreed = [], []
     for name, spec in SCENARIOS.items():

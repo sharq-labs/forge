@@ -32,13 +32,13 @@ import sys
 
 import pytest
 
-from src.engcore.domains.electrical import ngspice as ng
-from src.engcore.domains.electrical.dc.problem import resistance_name
-from src.engcore.mcp import example_electrothermal_payload
-from src.engcore.mcp.problem import build_electrothermal_system
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.units.quantity import Quantity
-from src.engcore.systems.electrothermal import coupled as cp
+from engcore.domains.electrical import ngspice as ng
+from engcore.domains.electrical.dc.problem import resistance_name
+from engcore.mcp import example_electrothermal_payload
+from engcore.mcp.problem import build_electrothermal_system
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.units.quantity import Quantity
+from engcore.systems.electrothermal import coupled as cp
 
 K = "kelvin"
 
@@ -227,9 +227,9 @@ def test_a_warning_still_crosses_the_boundary(system):
 
 def _stub(outcome):
     """A minimal result carrying one check with the given outcome."""
-    from src.engcore.scientific.results.provenance import ProvenanceRecord
-    from src.engcore.scientific.results.result import ScientificResult
-    from src.engcore.scientific.results.validation import (
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ScientificResult
+    from engcore.scientific.results.validation import (
         ValidationCheck,
         ValidationReport,
     )

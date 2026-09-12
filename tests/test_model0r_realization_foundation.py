@@ -18,7 +18,7 @@ import pathlib
 
 import pytest
 
-from src.engcore.scientific import (
+from engcore.scientific import (
     DeclaredSupport,
     DuplicateRegistrationError,
     ImplementationReference,
@@ -40,8 +40,8 @@ from src.engcore.scientific import (
     scientific_capabilities,
     to_json,
 )
-from src.engcore.scientific.capabilities import SCIENTIFIC_CAPABILITY_SCHEMA
-from src.engcore.scientific.solvers.capability import CoreCapabilities
+from engcore.scientific.capabilities import SCIENTIFIC_CAPABILITY_SCHEMA
+from engcore.scientific.solvers.capability import CoreCapabilities
 
 
 def _fixture_model(**fields):
@@ -191,7 +191,7 @@ def test_scientific_capability_is_not_a_solver_capability():
 
 
 def test_capability_has_no_global_registry():
-    import src.engcore.scientific.capabilities as module
+    import engcore.scientific.capabilities as module
 
     assert not [
         name
@@ -236,7 +236,7 @@ def test_solver_capability_exposes_its_identity_separately():
 
 
 def test_solver_capability_id_validates_and_canonicalizes():
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     assert SolverCapabilityId("  core:pde  ").name == "core:pde"
     for bad in ("", "   ", "core pde", "core\tpde"):
@@ -277,7 +277,7 @@ def test_solver_capability_id_does_not_widen_what_the_core_accepts():
 
 def test_solver_registry_deduplicates_identically_named_capabilities():
     """A visible consequence of the identity fix, and the intended one."""
-    from src.engcore.scientific.solvers import SolverIdentity, SolverRegistry
+    from engcore.scientific.solvers import SolverIdentity, SolverRegistry
 
     class _Solver(DeclaredSupport):
         # Declares nothing beyond its capabilities, so `DeclaredSupport`
@@ -300,8 +300,8 @@ def test_solver_registry_deduplicates_identically_named_capabilities():
 
     registry = SolverRegistry(
         [
-            _Solver("a", {SolverCapability("core:pde", "one wording")}),
-            _Solver("b", {SolverCapability("core:pde", "another wording")}),
+            lambda: _Solver("a", {SolverCapability("core:pde", "one wording")}),
+            lambda: _Solver("b", {SolverCapability("core:pde", "another wording")}),
         ]
     )
     assert registry.capabilities() == frozenset({SolverCapability("core:pde")})
@@ -347,9 +347,9 @@ def test_no_universal_fidelity_classification_is_declared_anywhere():
     *relative* resolution are four independent things, and a single-valued
     field spanning four axes cannot record any of them honestly.
     """
-    import src.engcore.scientific as scientific
-    import src.engcore.scientific.realizations as realizations
-    from src.engcore.scientific.realizations import definition
+    import engcore.scientific as scientific
+    import engcore.scientific.realizations as realizations
+    from engcore.scientific.realizations import definition
 
     for module in (scientific, realizations, definition):
         assert not hasattr(module, "RealizationFidelity")
@@ -436,7 +436,7 @@ def test_calibration_keeps_its_existing_evidence_backed_home():
     fidelity member would have let any record claim it with none. Removing
     the enum does not orphan the question — it never owned it.
     """
-    from src.engcore.scientific.twins.definition import ScientificTwin, TwinKind
+    from engcore.scientific.twins.definition import ScientificTwin, TwinKind
 
     assert TwinKind.CALIBRATED.value == "calibrated"
     assert "calibration_evidence_refs" in ScientificTwin.__dataclass_fields__
@@ -452,7 +452,7 @@ def test_relative_fidelity_keeps_its_existing_study_scoped_home():
     repository already has the contract for it. MODEL0-R neither duplicates
     nor perturbs it, and adds no core-level competitor to it.
     """
-    from src.engcore.design.fidelity import FidelityLadder, FidelityRung
+    from engcore.design.fidelity import FidelityLadder, FidelityRung
 
     ladder = FidelityLadder(
         ladder_id="example",
@@ -729,8 +729,8 @@ def test_realization_load_rejects_a_foreign_schema():
 
 
 def test_realization_schema_is_its_own_and_not_the_models_schema():
-    from src.engcore.scientific.models.definition import MODEL_SCHEMA
-    from src.engcore.scientific.realizations.definition import REALIZATION_SCHEMA
+    from engcore.scientific.models.definition import MODEL_SCHEMA
+    from engcore.scientific.realizations.definition import REALIZATION_SCHEMA
 
     assert REALIZATION_SCHEMA == "model_realization_definition/1"
     assert REALIZATION_SCHEMA != MODEL_SCHEMA
@@ -916,7 +916,7 @@ def test_registry_serialization_round_trips_deterministically():
 
 
 def test_registry_has_no_module_level_singleton():
-    import src.engcore.scientific.realizations.registry as module
+    import engcore.scientific.realizations.registry as module
 
     assert not [
         name
@@ -1010,7 +1010,7 @@ def test_a_record_predating_exclusions_is_refused_rather_than_assumed_empty():
     ``/1`` model record exists in this repository, so the cost was this
     fixture.
     """
-    from src.engcore.scientific.errors import ScientificCoreError
+    from engcore.scientific.errors import ScientificCoreError
 
     with pytest.raises(ScientificCoreError) as excinfo:
         ScientificModelDefinition.from_dict(LEGACY_V1_MODEL_JSON)
@@ -1054,7 +1054,7 @@ def test_a_model_without_any_realization_remains_fully_usable():
 
 
 def test_existing_domain_models_still_construct_and_serialize():
-    from src.engcore.domains.electrical.dc.models import build_dc_model_registry
+    from engcore.domains.electrical.dc.models import build_dc_model_registry
 
     registry = build_dc_model_registry()
     assert len(registry) >= 1
@@ -1166,7 +1166,7 @@ def test_realizations_do_not_import_the_model_definition():
 
 def test_failure_states_are_distinguishable_error_types():
     """Section 11: five future planner outcomes must stay tellable apart."""
-    from src.engcore.scientific.errors import (
+    from engcore.scientific.errors import (
         InvalidScientificCapability,
         ModelNotFoundError,
         RealizationNotFoundError,

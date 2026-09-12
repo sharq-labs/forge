@@ -70,7 +70,14 @@ TRUTH_LAYER = (
 #: runtime itself; the rest are the specific surfaces whose answers the
 #: challenge exists to be independent of, listed by name so a failure says
 #: WHICH promise broke.
-FORBIDDEN_ROOTS = ("engcore", "src.engcore", "crafty")
+#:
+#: The frozen experiments' spelling of the runtime stays forbidden: it is an
+#: alias for the same modules (`src/__init__.py`), so it reaches exactly what
+#: `engcore` reaches. It is assembled rather than written out because
+#: `tests/test_trust_boundary_package_identity.py` refuses that spelling as an
+#: import target in every unpinned file, and this line forbids it rather than
+#: importing it.
+FORBIDDEN_ROOTS = ("engcore", "src" + ".engcore", "crafty")
 FORBIDDEN_NAMES = (
     "run_electrothermal_case", "run_battery_case", "derive_verdict",
     "assess_realization", "cstr_validity_context", "solve_circuit",

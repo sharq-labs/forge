@@ -27,13 +27,13 @@ import numpy as np
 import pytest
 from scipy.optimize import brentq
 
-from src.engcore.domains.kinetics.cstr.reference import (
+from engcore.domains.kinetics.cstr.reference import (
     _R_J_PER_MOL_K,
     steady_state_residual,
     steady_states,
 )
-from src.engcore.domains.kinetics.cstr.errors import ReactorConfigurationError
-from src.engcore.domains.kinetics.cstr.validation import (
+from engcore.domains.kinetics.cstr.errors import ReactorConfigurationError
+from engcore.domains.kinetics.cstr.validation import (
     MAX_VALID_TEMPERATURE_K,
     MIN_VALID_TEMPERATURE_K,
 )

@@ -13,8 +13,8 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.sria import AttributedCause, CensoringType, Disposition, Retryability
-from src.engcore.sria.calibration import (
+from engcore.sria import AttributedCause, CensoringType, Disposition, Retryability
+from engcore.sria.calibration import (
     CalibrationCritic,
     CalibrationMemory,
     CalibrationMemoryEntry,
@@ -40,8 +40,8 @@ from src.engcore.sria.calibration import (
     record_from_bridged_outcome,
     structure_for,
 )
-from src.engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
-from src.engcore.sria.signatures import EnvironmentSignature, SemanticGuard
+from engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
+from engcore.sria.signatures import EnvironmentSignature, SemanticGuard
 
 
 def _raises(exc_type, fn, *args, **kwargs):
@@ -202,8 +202,8 @@ def test_record_round_trips():
 
 
 def test_record_from_bridged_outcome_carries_eligibility():
-    from src.engcore.scientific import EvaluationStatus
-    from src.engcore.sria.calibration import bridge_evaluation_status
+    from engcore.scientific import EvaluationStatus
+    from engcore.sria.calibration import bridge_evaluation_status
 
     bridged = bridge_evaluation_status(EvaluationStatus.FAILED)
     record = record_from_bridged_outcome(
@@ -269,7 +269,7 @@ def test_split_refuses_a_single_group():
 
 
 def test_group_key_cannot_be_a_feature():
-    from src.engcore.sria.calibration import assert_group_key_not_a_feature
+    from engcore.sria.calibration import assert_group_key_not_a_feature
 
     leaky = ComputationalLearningRecord(
         record_id="leak",
@@ -482,7 +482,7 @@ def test_strategy_cost_ratios_are_paired_and_structure_transferable():
 
 
 def test_domain_owned_relationships_are_refused():
-    from src.engcore.sria.calibration.strategy_relationships import (
+    from engcore.sria.calibration.strategy_relationships import (
         StrategyCostRelationship,
     )
 
@@ -674,14 +674,14 @@ def test_memory_round_trips_and_filters_by_signature_version(tmp_path=None):
 
 def test_calibration_keys_do_not_contain_domain_names():
     """Structure x environment only — restated at the M2 boundary."""
-    from src.engcore.sria import build_calibration_key
+    from engcore.sria import build_calibration_key
 
     guard = SemanticGuard(["bbob", "voltage", "peak_response"])
     key = build_calibration_key(STRUCT_B, ENV, guard=guard)
     assert key.key.startswith("calib/v1/")
 
     contaminated = structure_for(5, 100)
-    from src.engcore.sria.signatures import StructureSignature
+    from engcore.sria.signatures import StructureSignature
 
     bad = StructureSignature(
         structure_kind="bbob_search_run",   # benchmark name in the structure

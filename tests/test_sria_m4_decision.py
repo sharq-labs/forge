@@ -14,10 +14,10 @@ import json
 import sys
 from pathlib import Path
 
-from src.engcore.scientific import Quantity
-from src.engcore.sria import CampaignCharter, CampaignType, ExecutorType, ResearchAction
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.decision import (
+from engcore.scientific import Quantity
+from engcore.sria import CampaignCharter, CampaignType, ExecutorType, ResearchAction
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.decision import (
     ActionFamily,
     ActionProposal,
     AtomicAction,
@@ -408,7 +408,7 @@ def test_unknown_p_fail_is_never_silently_replaced():
     assert p_fail.value is None
 
     # A component cannot claim UNAVAILABLE while carrying a value.
-    from src.engcore.sria.decision.utility import ScoreComponent
+    from engcore.sria.decision.utility import ScoreComponent
 
     _raises(
         ValueError,
@@ -502,7 +502,7 @@ def test_infrastructure_failure_creates_no_scientific_voi():
     assert component.value == 0.0
     assert "infrastructure" in component.detail
 
-    from src.engcore.sria.decision import (
+    from engcore.sria.decision import (
         excluded_failure_causes,
         informative_failure_causes,
     )
@@ -517,14 +517,14 @@ def test_infrastructure_failure_creates_no_scientific_voi():
 
 def test_cost_is_sourced_from_m2_calibration():
     """Cost comes from the M2 model, not from a number invented here."""
-    from src.engcore.sria.calibration import (
+    from engcore.sria.calibration import (
         CostModel,
         ComputationalLearningRecord,
         structure_for,
     )
-    from src.engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
-    from src.engcore.sria.decision.suppliers import CalibrationCostSupplier
-    from src.engcore.sria import Disposition
+    from engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
+    from engcore.sria.decision.suppliers import CalibrationCostSupplier
+    from engcore.sria import Disposition
 
     training = [
         ComputationalLearningRecord(
@@ -583,7 +583,7 @@ def test_untrusted_calibration_is_visible_in_the_decision_record():
 
 def test_insufficient_failure_calibration_reports_unavailable():
     """INSUFFICIENT_DATA is distinct from a low probability."""
-    from src.engcore.sria.decision.suppliers import CalibrationFailureSupplier
+    from engcore.sria.decision.suppliers import CalibrationFailureSupplier
 
     supplier = CalibrationFailureSupplier(
         None,
@@ -604,7 +604,7 @@ def test_insufficient_failure_calibration_reports_unavailable():
 
 def test_strategy_identity_cannot_masquerade_as_fidelity():
     """M2.1's boundary still holds when a proposal asks for a fidelity rung."""
-    from src.engcore.sria.calibration import (
+    from engcore.sria.calibration import (
         FidelityRung,
         FidelitySemanticError,
         assert_not_a_strategy_identity,
@@ -820,7 +820,7 @@ def test_decision_provenance_round_trips():
     assert provenance.policy_id == "toy.policy"
     assert provenance.human_override is False
 
-    from src.engcore.sria.provenance import DecisionProvenance
+    from engcore.sria.provenance import DecisionProvenance
 
     assert (
         DecisionProvenance.from_dict(json.loads(json.dumps(provenance.to_dict())))
@@ -851,7 +851,7 @@ def test_belief_snapshot_is_immutable_and_honest_about_gaps():
     assert snapshot.parameter_availability is FactorAvailability.UNAVAILABLE
     _raises(Exception, setattr, snapshot, "snapshot_id", "other")
 
-    from src.engcore.sria.decision import BeliefSnapshot
+    from engcore.sria.decision import BeliefSnapshot
 
     # Weights without declared availability are refused.
     _raises(
@@ -889,7 +889,7 @@ def test_decision_layer_cannot_touch_the_trust_path():
                 assert "gateway" not in node.module, f"{path.name}: {node.module}"
                 assert "admission" not in node.module, f"{path.name}: {node.module}"
 
-    from src.engcore.sria.decision import CandidateEvaluator, UtilityEngine
+    from engcore.sria.decision import CandidateEvaluator, UtilityEngine
 
     for cls in (CandidateEvaluator, UtilityEngine):
         for forbidden in ("submit", "belief", "gateway", "admit", "authorize"):
@@ -897,7 +897,7 @@ def test_decision_layer_cannot_touch_the_trust_path():
 
 
 def test_no_llm_dependency_in_the_decision_layer():
-    from src.engcore.sria.trust import assert_no_llm_dependencies, find_forbidden_imports
+    from engcore.sria.trust import assert_no_llm_dependencies, find_forbidden_imports
 
     assert DECISION_DIR.is_dir()
     assert find_forbidden_imports([DECISION_DIR]) == ()

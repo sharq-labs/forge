@@ -22,11 +22,11 @@ import textwrap
 
 import pytest
 
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.domains.electrical import dc_realizations as dr
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.electrical import ngspice as ng
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.thermal_models import lumped as lump
+from engcore.domains.electrical import dc_realizations as dr
+from engcore.domains.electrical import material as mat
+from engcore.domains.electrical import ngspice as ng
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCVoltageSource,
     ElectricalNode,
@@ -34,17 +34,17 @@ from src.engcore.domains.electrical.dc import (
     models_for_circuit,
     solve_circuit,
 )
-from src.engcore.domains.electrical.dc.problem import resistance_name
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.ir.problem import ModelReference
-from src.engcore.scientific.results.provenance import (
+from engcore.domains.electrical.dc.problem import resistance_name
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.ir.problem import ModelReference
+from engcore.scientific.results.provenance import (
     ExecutionBinding,
     ProvenanceRecord,
 )
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.units.quantity import Quantity
-from src.engcore.systems.electrothermal import coupled as cp
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.units.quantity import Quantity
+from engcore.systems.electrothermal import coupled as cp
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 KELVIN = "kelvin"
@@ -771,8 +771,8 @@ def test_g6_supports_does_not_claim_what_prepare_refuses():
     current source that ``build_netlist`` then refuses, and True for a problem
     declaring no capabilities at all.
     """
-    from src.engcore.domains.electrical.dc import DCCurrentSource, build_dc_problem
-    from src.engcore.scientific.ir.problem import ScientificProblem
+    from engcore.domains.electrical.dc import DCCurrentSource, build_dc_problem
+    from engcore.scientific.ir.problem import ScientificProblem
 
     solver = ng.NgspiceDCSolver()
     assert solver.supports(build_dc_problem(divider())) is True
@@ -1017,7 +1017,7 @@ def test_h_universal_core_gained_nothing_and_knows_no_provider():
 
     What must be zero is **executable** provider knowledge, and it is.
     """
-    import src.engcore.scientific as core
+    import engcore.scientific as core
 
     prose_hits = 0
     for path in _core_sources():
@@ -1063,7 +1063,7 @@ def test_i_no_provider_syntax_reaches_a_scientific_record(standalone):
     solver.bind_circuit(circuit, external.problem_id)
     prepared = solver.prepare(
         __import__(
-            "src.engcore.domains.electrical.dc", fromlist=["build_dc_problem"]
+            "engcore.domains.electrical.dc", fromlist=["build_dc_problem"]
         ).build_dc_problem(circuit)
     )
     assert prepared.payload.netlist.text.startswith("crafty ")
@@ -1245,7 +1245,7 @@ def test_r6_three_realizations_are_the_minimum_the_contract_permits():
     record cannot cover three models; and with no record at all, "the same
     realization, two solvers" has nowhere to be stated.
     """
-    from src.engcore.scientific.realizations.definition import (
+    from engcore.scientific.realizations.definition import (
         ModelRealizationDefinition,
     )
     import dataclasses

@@ -11,9 +11,9 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.scientific import EvaluationStatus
-from src.engcore.sria import AttributedCause, CensoringType, Disposition, Retryability
-from src.engcore.sria.calibration import (
+from engcore.scientific import EvaluationStatus
+from engcore.sria import AttributedCause, CensoringType, Disposition, Retryability
+from engcore.sria.calibration import (
     CalibrationCritic,
     CalibrationMemory,
     CalibrationMemoryEntry,
@@ -38,7 +38,7 @@ from src.engcore.sria.calibration import (
     mapping_table_rows,
     structure_for,
 )
-from src.engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
+from engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
 
 ENV = CAMPAIGN_ENVIRONMENT
 STRUCT = structure_for(2, 40)
@@ -250,7 +250,7 @@ def test_legacy_invalid_routes_to_feasibility_not_solver_failure():
 
 
 def test_infeasible_rows_cannot_reach_the_solver_failure_model():
-    from src.engcore.sria.calibration import FailureModel, InsufficientFailureData
+    from engcore.sria.calibration import FailureModel, InsufficientFailureData
 
     successes = [
         make_record(f"ok-{i}", group=f"g{i % 6}", success=True) for i in range(20)

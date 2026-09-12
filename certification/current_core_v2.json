@@ -1,0 +1,418 @@
+{
+  "assurance": {
+    "harness_identity": {
+      "files": {
+        "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
+        "tests/test_core_guards.py": "658bd042d1562a4da8064ad9c2d4ef1f37577d39c995405e7823f770c2a73b31",
+        "tests/test_core_semantic_invariants.py": "21b8dac6635d1a4f87228962691a5813ee02f475344a8abfa54465910e778680",
+        "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
+        "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
+      },
+      "note": "'79/79 killed' is a statement about these exact bytes. The same sentence over a weakened suite would be worth nothing, so the runner and the four suites it runs each mutant against are pinned here and in the manifest's harness area."
+    },
+    "mutation": {
+      "certified_harness": {
+        "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
+        "control": "GREEN",
+        "in_the_formal_certificate": true,
+        "killed": 79,
+        "log_sha256": "ea3cb81dc6d672e6a49f0f689c39e86c89e451f3a98f852dd839048355f4c65e",
+        "runner": "tests/mutation_guards.py",
+        "survivors": 0,
+        "total": 79
+      },
+      "targeted_families": {
+        "control": "GREEN",
+        "families": {
+          "EI": {
+            "killed": 10,
+            "survivors": 0,
+            "total": 10,
+            "what": "evidence pairing integrity (Sprint 3)"
+          },
+          "FM": {
+            "killed": 8,
+            "survivors": 0,
+            "total": 8,
+            "what": "field and mesh records (Sprint 4)"
+          },
+          "RI": {
+            "killed": 11,
+            "survivor_ids": [
+              "RI2b"
+            ],
+            "survivor_status": "KNOWN EQUIVALENT MUTANT. Proven equivalent in Sprint 3 by running the mutation in memory: the verdict gate already excludes a shared implementation, so removing the second check changes no reachable behaviour. Recorded as a survivor rather than excluded from the count",
+            "survivors": 1,
+            "total": 12,
+            "what": "route independence authority (Sprint 3)"
+          },
+          "SP": {
+            "killed": 10,
+            "survivors": 0,
+            "total": 10,
+            "what": "spatial profiles (Sprint 5)"
+          }
+        },
+        "in_the_formal_certificate": false,
+        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together."
+      }
+    },
+    "test_suites": {
+      "capability_boundary": {
+        "command": "python -X utf8 -m pytest tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py -q -p no:cacheprovider",
+        "deselected": 675,
+        "exit_code": 0,
+        "failed": 0,
+        "passed": 304,
+        "seconds": 8.1,
+        "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
+        "skipped": 0,
+        "summary_line": "304 passed, 675 deselected in 7.37s"
+      },
+      "certification_suite": {
+        "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
+        "deselected": 0,
+        "exit_code": 1,
+        "failed": 2,
+        "passed": 26,
+        "seconds": 5.3,
+        "selection": "tests/test_core_certificate.py",
+        "skipped": 1,
+        "summary_line": "2 failed, 26 passed, 1 skipped in 4.90s"
+      },
+      "contract_guard": {
+        "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
+        "deselected": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "passed": 305,
+        "seconds": 17.6,
+        "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
+        "skipped": 0,
+        "summary_line": "305 passed, 4 warnings in 16.85s"
+      },
+      "field_profile_suites": {
+        "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
+        "deselected": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "passed": 147,
+        "seconds": 1.9,
+        "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
+        "skipped": 0,
+        "summary_line": "147 passed in 1.46s"
+      },
+      "field_suites": {
+        "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
+        "deselected": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "passed": 124,
+        "seconds": 1.4,
+        "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
+        "skipped": 0,
+        "summary_line": "124 passed in 0.90s"
+      },
+      "mutation_harness_self_guard": {
+        "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
+        "deselected": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "passed": 6,
+        "seconds": 1.1,
+        "selection": "tests/test_mutation_harness.py",
+        "skipped": 0,
+        "summary_line": "6 passed in 0.76s"
+      },
+      "scientific_truth": {
+        "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
+        "deselected": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "passed": 293,
+        "seconds": 3.1,
+        "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
+        "skipped": 3,
+        "summary_line": "293 passed, 3 skipped in 2.38s"
+      }
+    }
+  },
+  "certification_id": "FORGE-CORE-V2",
+  "diagnostic": false,
+  "digest_algorithm": {
+    "aggregate": "sha256( area_name_utf8 + 0x00 + area_digest_bytes, in name order )",
+    "excluded": [
+      "**/__pycache__/**",
+      "*.pyc",
+      "*.pyo"
+    ],
+    "hash": "sha256",
+    "implemented_by": "tools/certification/core_certificate.py",
+    "line_endings": "not normalized; exact bytes are hashed",
+    "ordering": "sorted by UTF-8 encoded path bytes",
+    "path_form": "repository-relative, POSIX separators",
+    "per_area": "sha256( path_utf8 + 0x00 + file_digest_bytes, in path order )",
+    "per_file": "sha256(exact file bytes)",
+    "symlinks": "refused in scope"
+  },
+  "environment": {
+    "packages": {
+      "numpy": "2.5.2",
+      "pint": "0.25.3",
+      "pytest": "9.1.1",
+      "scipy": "1.18.1"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.2"
+  },
+  "generator": {
+    "tool": "tools/certification/core_certificate.py",
+    "version": "2.0.0"
+  },
+  "manifest": {
+    "aggregate_digest": "61f9546d367def9dd007a137d5f35e028020463459179e0d7eb47384558ef20c",
+    "areas": {
+      "core": {
+        "classification": "CORE_CERTIFIED",
+        "digest": "1527ed09a770b3ffef32775e1be41e74ae0930131e9b4981a5469c937cd637cf",
+        "file_count": 55,
+        "files": {
+          "src/engcore/scientific/__init__.py": "7655268eb8ae8944f17a1f5485b0b446c7b89b3fa5a549015ed9f2eb868e5072",
+          "src/engcore/scientific/capabilities.py": "64e3d4446c4ce4f3ecada93d379e6de5b8137c31a3a12f0c8aea446c19edac88",
+          "src/engcore/scientific/composition/__init__.py": "c18f504d46b834d3f4a69d0963ac95f5fe58525717eb102e32a1abe84e3761d1",
+          "src/engcore/scientific/composition/conversion.py": "98fa9aab5a035684b0bc1696149fec9a2a7de06b634065373b6d922889b45e01",
+          "src/engcore/scientific/composition/dependency.py": "ca7915ee0eae6df377225122741af8bde66a142ff5c7b86123096f343d1fd415",
+          "src/engcore/scientific/composition/transfer.py": "d5769d12e80d269eada9d3a4e95ad75622243907ad5db23acd537ea2b41533bd",
+          "src/engcore/scientific/consensus.py": "b35d0e567ab6090f8d5e92870f65052de6136d3f0d6fb811b3c4d37d09ecd98a",
+          "src/engcore/scientific/errors.py": "9ccee17a7957aa047931373d8f1abfcc6b8cc1cf69e3908053106cc9fb4fc12a",
+          "src/engcore/scientific/experiments/__init__.py": "d993fe342fca2fc35487fda4d21300b63dc902c7318d0e570b912cbe33db776e",
+          "src/engcore/scientific/experiments/evaluation.py": "4b68561046349097ab7773ec779ad7ac2c54fda1e0a4909df461e5e2071b8da1",
+          "src/engcore/scientific/experiments/experiment.py": "dc514d02dfc2fa8f2e2a1d22315beef58aa58e30f6c52de7387d5454d0411330",
+          "src/engcore/scientific/experiments/optimizer_adapter.py": "13d01e36043efd570355e04d19ad4e77cf4ca386687dcd2d9dd309322aab2982",
+          "src/engcore/scientific/fields/__init__.py": "32966c5659721e8b19cf87470dd3f871414ce329b84004a6f98481a6b6b795a4",
+          "src/engcore/scientific/fields/conditions.py": "743238fed9b194194438cf0c971b535559d012037dde54ad977fc51ec1b9bc37",
+          "src/engcore/scientific/fields/definition.py": "56cbc917d93ec7d3ddc13dba69697b868a96220d08f37077f6dad23038bdbbfa",
+          "src/engcore/scientific/fields/mesh.py": "35a89cb4472308292f4a2007cd5847b3850962b0437569caa28f86da8f465efe",
+          "src/engcore/scientific/fields/profiles.py": "31f749b88255e47e947586988a94ad28753688c61309a1e9284e74b2498db04f",
+          "src/engcore/scientific/fields/regions.py": "c7f88f9f552a839b4cab76608b47c2cad3e38edae5b2bc642f270a5418fd1af5",
+          "src/engcore/scientific/fields/result.py": "b8bc595e5fa8ea4ce78684cd2c5ac62d6c474cdc7f31cdfbf4dc5071d913fe4c",
+          "src/engcore/scientific/fields/transfer.py": "e4411c5927ba8d60bfe9d895c9f260f608833bcda0d7fb692babf84ef12407e6",
+          "src/engcore/scientific/ir/__init__.py": "824b29e4eb8075ddf92c540c072c590bbee3097f7e7bb149f9c61e4373882fe0",
+          "src/engcore/scientific/ir/conditions.py": "8090d33605902ad628cc24bd8c098f71ff29193bc318941506abb8d003f11aa9",
+          "src/engcore/scientific/ir/constraints.py": "43917bc80d47f9eb6fa1f2792431fa281e134285984be158a5b969dcd44a90c2",
+          "src/engcore/scientific/ir/fingerprints.py": "164f923266c7e2e103b8f65ab1aa138fe6a05c6c25c23bc76d03d4213fee96c4",
+          "src/engcore/scientific/ir/objectives.py": "f95b29b3aa5b43aa2bb413797e34d23447a241f0074e7aa87ec2e900a54af2e3",
+          "src/engcore/scientific/ir/problem.py": "73d867ec290895a54077e1676984a8c90d97ffa76ef5b0ab692a9a4b485d7d7c",
+          "src/engcore/scientific/ir/values.py": "e0997d02183c3fdd5b3b075cf272dca8b7454939489e9c64d0742b55ef143751",
+          "src/engcore/scientific/ir/variables.py": "813373ac17c62db3c51307b28d7a3d89f8bd20837b5b4cf977122277c342379c",
+          "src/engcore/scientific/models/__init__.py": "a8821bbad3408dd4eac01ac3943d256fb1dcd711320cba72270460259badfda4",
+          "src/engcore/scientific/models/curves.py": "65a627db3f3eb51f0050f4706d2cd79b94e7a17399a5fc76b6daa2c7925a3fcd",
+          "src/engcore/scientific/models/definition.py": "769c3f7d4af512570de50c356686fc8359de094a846089e7c370078291833c70",
+          "src/engcore/scientific/models/registry.py": "732f02e498308c9573bce6f4f941127187bb39ea26c2a9dd5e41b746a6e72141",
+          "src/engcore/scientific/realizations/__init__.py": "11d2ce420e3d89d1692a3dc9084ea0debe6b400b9db43857de6f59d2150358dc",
+          "src/engcore/scientific/realizations/definition.py": "0b6e2239cd863120637aa284061a03741e2548a368b9472d0462bfd5cebdd277",
+          "src/engcore/scientific/realizations/registry.py": "7e155c496bc950b5a554e7536a785b81e1e0fd073f7d2cef61188fb87bdd8e28",
+          "src/engcore/scientific/results/__init__.py": "e324982a1aca0754ebe55bc2e29a2f30ca4b4016f85da3a7eb0c5b8420e5dff5",
+          "src/engcore/scientific/results/data_reference.py": "225baf2eaaadb1cfbec6513f4645059416e0ba6bb0a7ab573fc8df6b4dff92c5",
+          "src/engcore/scientific/results/immutable.py": "654c52d56c053707b6f9493cd84018c808069afe65f13b90c8a2a7fc5aa6d0f7",
+          "src/engcore/scientific/results/provenance.py": "bcb3ed882c53e83ca97fc6de610ad03d8ffa51409e3ed976b5c7ed6a31b70ebb",
+          "src/engcore/scientific/results/result.py": "1c8bcf65c367bd40b95154f592f0b9e08e544e2d0e28bfc2eaf6e8e5f078b050",
+          "src/engcore/scientific/results/thresholds.py": "d3ec465167af523bfec8f6fac5d7f9280cd2134130186b18e021b305b0790399",
+          "src/engcore/scientific/results/uncertainty.py": "cc6504522af61bbf620ed76ccdeeee6963e1eb273175c835f7ff1cde35886801",
+          "src/engcore/scientific/results/validation.py": "068247a5a65157b4ef4900c1933cb534096fe3ee5647dd6ddbb34efa1206ace5",
+          "src/engcore/scientific/sequences.py": "9e660bbc1831926c699f4f849b6968fed7699ec2ef9bf31b25a353e94401ee2f",
+          "src/engcore/scientific/serialization.py": "6dec5da72f4c771a9bf4d2fcc753cab5f2131091259fe62a18f51f0468f8fcb3",
+          "src/engcore/scientific/solvers/__init__.py": "088174933e6b593d6dba74c916a6a664c55856633516489478b9c2a9541f3f61",
+          "src/engcore/scientific/solvers/admission.py": "6902a9e526cc509a24d5fbdde75dfe947cfb68a8e522da62786e51a0b7c2299a",
+          "src/engcore/scientific/solvers/capability.py": "7de27ed41d545a568da8d99d76c9b01799f9962a4585800550f7241a23118093",
+          "src/engcore/scientific/solvers/protocol.py": "146f5d6fdb2ec394fe2ddb06dc7e9e034f864a10a17cf0776f0b4c0e12b69be8",
+          "src/engcore/scientific/solvers/registry.py": "f2d8e858eb762d9b42675cc6f6583ba2eb065ddd332e97d6f08e8ce31a3b2c57",
+          "src/engcore/scientific/twins/__init__.py": "00d2812b6c27c3bce1a168d57d14436f1b1e1a563baacc283675330279eba79a",
+          "src/engcore/scientific/twins/definition.py": "1a27bcf000aa6efb5b7fcf0fdccb35f55943786d0049bbce67660d13fe429fcf",
+          "src/engcore/scientific/units/__init__.py": "bdbd7c000d9e9ceee92dfee8f0fe3e2bc94e71af755edce49d7355fa3639937f",
+          "src/engcore/scientific/units/quantity.py": "c120c4f36bb4e832389900c7f4fd5c380a4836581b4d94418340f05c1c7d7ec2",
+          "src/engcore/scientific/units/validation.py": "e44babc94cde2665430d37d0b9d409855732ce83460f9247d5656c241eb066c1"
+        },
+        "patterns": [
+          "src/engcore/scientific/**/*.py"
+        ],
+        "why": "the Scientific Core's contracts: the records, their invariants and their refusals. This is what V1 certified and it remains the centre of the certificate"
+      },
+      "evidence_identity": {
+        "classification": "CORE_CERTIFIED",
+        "digest": "ee591e35866f2ebd9a47a1beb7ee5abf2242a7385aab8946b866fc54fcb99aeb",
+        "file_count": 2,
+        "files": {
+          "src/engcore/adequacy/__init__.py": "bef11616bb21da2135e4620b820dba71b15603a79a53e3ef59cf2448303b478f",
+          "src/engcore/adequacy/predictive.py": "d4d8fad70da7e6a4f8a76f53857907f3c0377b7e20493283955403158e82af1f"
+        },
+        "patterns": [
+          "src/engcore/adequacy/**/*.py"
+        ],
+        "why": "predictive evidence identity and pairing. Two models may only receive a comparative conclusion if they were assessed against the same canonical evidence, and this is where that is decided"
+      },
+      "harness": {
+        "classification": "HARNESS",
+        "digest": "22fe10831fc4711e1bbc790601bd5c8b8109c1bfaa951f5daa2797c3f40ce55b",
+        "file_count": 5,
+        "files": {
+          "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
+          "tests/test_core_guards.py": "658bd042d1562a4da8064ad9c2d4ef1f37577d39c995405e7823f770c2a73b31",
+          "tests/test_core_semantic_invariants.py": "21b8dac6635d1a4f87228962691a5813ee02f475344a8abfa54465910e778680",
+          "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
+          "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
+        },
+        "patterns": [
+          "tests/mutation_guards.py",
+          "tests/test_core_guards.py",
+          "tests/test_repair_guidance.py",
+          "tests/test_offset_unit_declaration.py",
+          "tests/test_core_semantic_invariants.py"
+        ],
+        "why": "the mutation harness and the four suites it runs each mutant against. '79/79 killed' is a statement about these exact bytes: the same sentence over a weakened suite would be worth nothing, so the suites are pinned alongside the runner"
+      },
+      "inference_admission": {
+        "classification": "CORE_CERTIFIED",
+        "digest": "f02ad3ddc1b00feb4d35c95c473780b5be3c545a10d50f03b3e19ed7ab6ddfcd",
+        "file_count": 3,
+        "files": {
+          "src/engcore/inference/__init__.py": "8df015827c8fd5efa6e923daffb17e70b7b28c224f8731d075a1f0b4ce34f81f",
+          "src/engcore/inference/admissibility.py": "8ae357491804637036769f1e44e6b1fc189d390afe0e902261fe2c3945d040ad",
+          "src/engcore/inference/grid.py": "83d1b37103f84f629092137938b3f75da5ef7bc12fcb3c946308a66b1002bdd0"
+        },
+        "patterns": [
+          "src/engcore/inference/**/*.py"
+        ],
+        "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
+      },
+      "runtime_data": {
+        "classification": "RUNTIME_SUPPORT",
+        "digest": "3efad22caee14a8a597fc471663a90657c142bbc7365605d1996f1e20ac323db",
+        "file_count": 6,
+        "files": {
+          "src/engcore/data/__init__.py": "af6e798fca4a6b2bd7d917b9c949105a7c6a31de3380beff5fcad171d2e2f839",
+          "src/engcore/data/capture.py": "4d876c8523cc2c6e695d620f1fa77a6d78c493f77505092f66c1691c82e8d644",
+          "src/engcore/data/errors.py": "03a2390b174969d54e309e0e099bb1cbcdb86c82ec3530f306e8428abd6b727f",
+          "src/engcore/data/field.py": "c672e207ee9d0f8e2a5b8f03c9aee2bff2039293dd32c759db08fde0567716f3",
+          "src/engcore/data/resolver.py": "9cabf8291f8f3fb8ba9a7928c61bcebbd13fba9aaa4eb7ad42f98aa12b95d8a0",
+          "src/engcore/data/store.py": "b406ee295536904911700827628cb5aa6848339dea6e68a9e32a5af76a683e68"
+        },
+        "patterns": [
+          "src/engcore/data/**/*.py"
+        ],
+        "why": "the plane a ScientificDataReference resolves through. The core names bulk data by digest and count and never reads it; the length-then-digest verification that makes that reference worth anything is here, as is the field container's shape, support and finiteness enforcement"
+      },
+      "trust_registry": {
+        "classification": "CORE_CERTIFIED",
+        "digest": "6d6ab0fe914fa6660e7e25e64119a8833742b43f4ad527d6c3132152fc3f0af3",
+        "file_count": 1,
+        "files": {
+          "src/engcore/domains/__init__.py": "4cfdfd00d521ff4812ba171b3f5d6f44c74845275eef7aa9468aab489bcb0b29"
+        },
+        "patterns": [
+          "src/engcore/domains/__init__.py"
+        ],
+        "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
+      }
+    },
+    "file_count": 72
+  },
+  "notes": {},
+  "repository": {
+    "branch": "claude/performance-campaign-sprint-7",
+    "clean": true,
+    "commit": "7d509fd287ca81ed2e63890b90331fabfabb3e9f",
+    "dirty_paths": []
+  },
+  "schema": "core_certificate/2",
+  "scope": {
+    "in": [
+      {
+        "area": "core",
+        "classification": "CORE_CERTIFIED",
+        "patterns": [
+          "src/engcore/scientific/**/*.py"
+        ],
+        "why": "the Scientific Core's contracts: the records, their invariants and their refusals. This is what V1 certified and it remains the centre of the certificate"
+      },
+      {
+        "area": "trust_registry",
+        "classification": "CORE_CERTIFIED",
+        "patterns": [
+          "src/engcore/domains/__init__.py"
+        ],
+        "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
+      },
+      {
+        "area": "runtime_data",
+        "classification": "RUNTIME_SUPPORT",
+        "patterns": [
+          "src/engcore/data/**/*.py"
+        ],
+        "why": "the plane a ScientificDataReference resolves through. The core names bulk data by digest and count and never reads it; the length-then-digest verification that makes that reference worth anything is here, as is the field container's shape, support and finiteness enforcement"
+      },
+      {
+        "area": "evidence_identity",
+        "classification": "CORE_CERTIFIED",
+        "patterns": [
+          "src/engcore/adequacy/**/*.py"
+        ],
+        "why": "predictive evidence identity and pairing. Two models may only receive a comparative conclusion if they were assessed against the same canonical evidence, and this is where that is decided"
+      },
+      {
+        "area": "inference_admission",
+        "classification": "CORE_CERTIFIED",
+        "patterns": [
+          "src/engcore/inference/**/*.py"
+        ],
+        "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
+      },
+      {
+        "area": "harness",
+        "classification": "HARNESS",
+        "patterns": [
+          "tests/mutation_guards.py",
+          "tests/test_core_guards.py",
+          "tests/test_repair_guidance.py",
+          "tests/test_offset_unit_declaration.py",
+          "tests/test_core_semantic_invariants.py"
+        ],
+        "why": "the mutation harness and the four suites it runs each mutant against. '79/79 killed' is a statement about these exact bytes: the same sentence over a weakened suite would be worth nothing, so the suites are pinned alongside the runner"
+      }
+    ],
+    "out": [
+      {
+        "area": "src/engcore/domains/** (except __init__.py)",
+        "why": "scientific models and solvers. They produce answers rather than decide what a verdict means, and they carry their own assurance \u2014 three of them are byte-pinned by frozen experiments"
+      },
+      {
+        "area": "src/engcore/mcp/**",
+        "why": "the product boundary: a consumer of the core"
+      },
+      {
+        "area": "src/engcore/design/**, sria/**, systems/**",
+        "why": "applications built on the core"
+      },
+      {
+        "area": "src/engcore/uq/**",
+        "why": "representation only; it computes nothing a verdict rests on"
+      },
+      {
+        "area": "tests/** (except the harness area)",
+        "why": "assurance for everything above, not part of what is certified"
+      },
+      {
+        "area": "benchmarks/**, experiments/**, certification/**",
+        "why": "measurements, frozen artefacts, and the certificate itself \u2014 a certificate whose scope contained its own bytes would need a fixed point"
+      }
+    ]
+  },
+  "v1_continuity": {
+    "note": "V2 area digests use repository-relative paths where V1 used paths relative to src/engcore/scientific, so the two are not comparable by construction. The field above recomputes the core tree the V1 way against this tree, so the continuity between the two certificates is a number rather than a claim",
+    "v1_algorithm_recovered": true,
+    "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
+    "v1_certificate": "certification/current_core_v1.json",
+    "v1_compatible_core_digest_now": "1422c1b9e84159b17887ad4e2ef07df6d0296a60082d60247b31266e920be7f0",
+    "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
+  }
+}

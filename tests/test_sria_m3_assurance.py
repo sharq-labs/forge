@@ -14,9 +14,9 @@ import json
 import sys
 from pathlib import Path
 
-from src.engcore.domains.electrical.dc import DCCircuit, DCVoltageSource
-from src.engcore.domains.electrical.dc import ElectricalNode, Resistor, solve_circuit
-from src.engcore.scientific import (
+from engcore.domains.electrical.dc import DCCircuit, DCVoltageSource
+from engcore.domains.electrical.dc import ElectricalNode, Resistor, solve_circuit
+from engcore.scientific import (
     ConvergenceState,
     SolverIdentity,
     ProvenanceRecord,
@@ -29,7 +29,7 @@ from src.engcore.scientific import (
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.sria import (
+from engcore.sria import (
     AdmissionAuthority,
     AdmissionAuthorityError,
     AdmissionAuthorityRegistry,
@@ -52,7 +52,7 @@ from src.engcore.sria import (
     UncertaintyChannel,
     UncertaintyDeclaration,
 )
-from src.engcore.sria.assurance import (
+from engcore.sria.assurance import (
     Arbiter,
     ArbiterDecision,
     AssuranceVerdict,
@@ -76,11 +76,11 @@ from src.engcore.sria.assurance import (
     model_discrepancy_check,
     obligations_from_charter,
 )
-from src.engcore.sria.calibration import (
+from engcore.sria.calibration import (
     CalibrationReport,
     CalibrationVerdict,
 )
-from src.engcore.sria.provenance import AssessmentProvenance
+from engcore.sria.provenance import AssessmentProvenance
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ASSURANCE_DIR = REPO_ROOT / "src" / "engcore" / "sria" / "assurance"
@@ -927,7 +927,7 @@ def test_non_valid_decision_yields_a_declining_declaration():
 # =====================================================================
 
 def test_no_llm_dependency_in_assurance():
-    from src.engcore.sria.trust import assert_no_llm_dependencies, find_forbidden_imports
+    from engcore.sria.trust import assert_no_llm_dependencies, find_forbidden_imports
 
     assert ASSURANCE_DIR.is_dir()
     assert find_forbidden_imports([ASSURANCE_DIR]) == ()

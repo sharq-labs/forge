@@ -36,8 +36,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from src.engcore.scientific import Quantity
-from src.engcore.sria import (
+from engcore.scientific import Quantity
+from engcore.sria import (
     CampaignCharter,
     ExecutorType,
     FeasibilityVerdict,
@@ -45,8 +45,8 @@ from src.engcore.sria import (
     ResearchAction,
     TerminalDecision,
 )
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.decision import (
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.decision import (
     ActionFamily,
     CostTradeoff,
     ActionProposal,

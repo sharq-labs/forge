@@ -20,14 +20,14 @@ import subprocess
 
 import pytest
 
-from src.engcore.domains.electrical.dc.circuit import DCCircuit
-from src.engcore.domains.electrical.dc.components import (
+from engcore.domains.electrical.dc.circuit import DCCircuit
+from engcore.domains.electrical.dc.components import (
     DCVoltageSource,
     ElectricalNode,
     Resistor,
 )
-from src.engcore.domains.electrical.dc.solver import solve_circuit
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.electrical.dc.solver import solve_circuit
+from engcore.scientific.units.quantity import Quantity
 
 from .oracle_ids import oracle
 

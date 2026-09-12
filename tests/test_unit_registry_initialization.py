@@ -38,8 +38,8 @@ import threading
 
 import pytest
 
-from src.engcore.scientific.units import quantity as unit_module
-from src.engcore.scientific.units.quantity import Quantity, dimension_of
+from engcore.scientific.units import quantity as unit_module
+from engcore.scientific.units.quantity import Quantity, dimension_of
 
 
 THREADS = 8

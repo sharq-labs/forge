@@ -34,21 +34,21 @@ import json
 
 import pytest
 
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     ModelValidityError,
     ScientificCoreError,
 )
-from src.engcore.scientific.ir.constraints import ConstraintCheck
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.ir.constraints import ConstraintCheck
+from engcore.scientific.models.definition import (
     CrossLimitCondition,
     FlagCondition,
     InputSourceKind,
     ModelInputSpec,
     RangeCondition,
 )
-from src.engcore.scientific.serialization import require_bool, to_json
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.serialization import require_bool, to_json
+from engcore.scientific.units.quantity import Quantity
 
 #: Everything a producer emits when it loses the type of a boolean. Each is
 #: refused, and `"false"`/`0` are the ones that would INVERT rather than merely

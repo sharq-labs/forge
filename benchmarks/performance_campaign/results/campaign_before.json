@@ -1,0 +1,44 @@
+{
+  "campaign_loop": {
+    "100": {
+      "cases_per_second": 733.3883862902584,
+      "peak_bytes": 22490,
+      "seconds": 0.13635340001201257
+    },
+    "1000": {
+      "cases_per_second": 746.9963649606765,
+      "peak_bytes": 22491,
+      "seconds": 1.338694600010058
+    },
+    "10000": {
+      "cases_per_second": 738.3533272160581,
+      "peak_bytes": 22491,
+      "seconds": 13.543651299987687
+    }
+  },
+  "campaign_sweep": {},
+  "field": {
+    "128x128": {
+      "assemble_seconds": 0.17975359997944906,
+      "solve_seconds": 0.22160160000203177
+    },
+    "32x32": {
+      "assemble_seconds": 0.01052529999287799,
+      "solve_seconds": 0.012947899987921119
+    },
+    "64x64": {
+      "assemble_seconds": 0.04961879999609664,
+      "solve_seconds": 0.05119939998257905
+    }
+  },
+  "has_sweep": false,
+  "label": "before",
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python": "3.14.2"
+  },
+  "note": "Timing and memory are measured in separate passes: tracemalloc roughly halves throughput, so a figure produced under it describes the profiler. 'before' was measured in a clean worktree at the sprint base with this same script, so what is compared is the work rather than the abstraction.",
+  "recorded_for_commit": "3bffde8f0d96f828d6c7b8972ec6bca7d38fae86",
+  "workers": {}
+}

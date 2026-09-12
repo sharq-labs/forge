@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.engcore.inference import (
+from engcore.inference import (
     AdmittedForwardTable,
     GaussianObservation,
     ObservationSet,
     gaussian_grid_posterior,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 
 def _observations() -> ObservationSet:

@@ -30,10 +30,10 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.ir.problem import ModelReference
-from src.engcore.scientific.results.provenance import ExecutionBinding
-from src.engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.ir.problem import ModelReference
+from engcore.scientific.results.provenance import ExecutionBinding
+from engcore.scientific.solvers.protocol import SolverIdentity
 
 
 class _Problem:

@@ -39,21 +39,21 @@ import math
 
 import pytest
 
-from src.engcore.domains import repair as rp
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.electrical.dc import models as dc_models
-from src.engcore.domains.electrical.dc import problem as dc_problem
-from src.engcore.domains.thermal_models import context as tctx
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.mcp import run_electrothermal_case
-from src.engcore.scientific.models.definition import (
+from engcore.domains import repair as rp
+from engcore.domains.electrical import material as mat
+from engcore.domains.electrical.dc import models as dc_models
+from engcore.domains.electrical.dc import problem as dc_problem
+from engcore.domains.thermal_models import context as tctx
+from engcore.domains.thermal_models import lumped as lump
+from engcore.mcp import run_electrothermal_case
+from engcore.scientific.models.definition import (
     InputSourceKind,
     RangeCondition,
     UnknownReason,
     ValidityDomain,
     ValidityStatus,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from tests.mcp.test_problem import BIOT_VIOLATING_PAYLOAD
 

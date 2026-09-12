@@ -27,16 +27,16 @@ for _name in (
 
 import numpy as np
 
-from src.engcore.domains.kinetics.cstr.inference import CSTRInferenceForwardAdapter
-from src.engcore.domains.kinetics.cstr.problem import CA_FINAL_METRIC, T_FINAL_METRIC
-from src.engcore.inference import (
+from engcore.domains.kinetics.cstr.inference import CSTRInferenceForwardAdapter
+from engcore.domains.kinetics.cstr.problem import CA_FINAL_METRIC, T_FINAL_METRIC
+from engcore.inference import (
     AdmittedForwardRow,
     AdmittedForwardTable,
     GaussianObservation,
     InferenceAdmissibilityError,
     ObservationSet,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from .k2_config import (
     CONDITION_BY_ID,

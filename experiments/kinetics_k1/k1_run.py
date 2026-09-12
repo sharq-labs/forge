@@ -21,7 +21,7 @@ from typing import Any
 import numpy
 import scipy
 
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import (
     CSTRSolver,
     ReactorChemistry,
     ReactorConfigurationError,
@@ -331,7 +331,7 @@ def _chemistry_kwargs() -> dict[str, Any]:
 
 
 def _operation_kwargs() -> dict[str, Any]:
-    from src.engcore.scientific.units.quantity import Quantity
+    from engcore.scientific.units.quantity import Quantity
 
     return {
         "volume": Quantity(VOLUME_M3, "m**3"),
@@ -348,7 +348,7 @@ def _operation_kwargs() -> dict[str, Any]:
 
 def run_invalid_declaration(declaration) -> dict[str, Any]:
     """Attempt the refused declaration and record exactly how it was refused."""
-    from src.engcore.scientific.units.quantity import Quantity
+    from engcore.scientific.units.quantity import Quantity
 
     row: dict[str, Any] = {
         "label": declaration.label,
@@ -433,8 +433,8 @@ def probe_step_size_collapse() -> dict[str, Any]:
     the evaluation budget ran out, which the adapter correctly reported as
     MAX_ITERATIONS. See this package's version history.
     """
-    from src.engcore.domains.kinetics.cstr.problem import build_cstr_problem
-    from src.engcore.domains.kinetics.cstr.solver import CSTRSolver as Solver
+    from engcore.domains.kinetics.cstr.problem import build_cstr_problem
+    from engcore.domains.kinetics.cstr.solver import CSTRSolver as Solver
 
     import numpy as np
 

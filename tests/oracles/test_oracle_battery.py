@@ -22,9 +22,9 @@ import pathlib
 
 import pytest
 
-from src.engcore.domains.battery import context as battery
-from src.engcore.mcp.battery import run_battery_case
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.battery import context as battery
+from engcore.mcp.battery import run_battery_case
+from engcore.scientific.units.quantity import Quantity
 
 from .oracle_ids import oracle
 
@@ -164,7 +164,7 @@ def test_a_zero_resistance_cell_is_refused_rather_than_answered():
     The same shape as `alpha > 0` in conduction-1D: a bound that removes a
     model's entire content is enforced rather than evaluated.
     """
-    from src.engcore.scientific.errors import InvalidScientificProblem
+    from engcore.scientific.errors import InvalidScientificProblem
 
     with pytest.raises(InvalidScientificProblem, match="strictly positive"):
         battery.terminal_voltage(

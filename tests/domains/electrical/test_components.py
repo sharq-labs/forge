@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import sys
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     DCCurrentSource,
     DCVoltageSource,
     ElectricalNode,
     Resistor,
 )
-from src.engcore.scientific import (
+from engcore.scientific import (
     InvalidScientificProblem,
     Quantity,
     UnitCompatibilityError,

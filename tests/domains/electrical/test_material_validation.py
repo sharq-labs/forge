@@ -23,13 +23,13 @@ import dataclasses
 
 import pytest
 
-from src.engcore.domains.electrical import material as mat
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.results.validation import (
+from engcore.domains.electrical import material as mat
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 K = "kelvin"
 

@@ -37,30 +37,30 @@ import time
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
     SharedComponent,
     SolveRoute,
 )
-from src.engcore.scientific.models import definition as definition_module
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.models import definition as definition_module
+from engcore.scientific.models.definition import (
     RangeCondition,
     UnknownCondition,
     UnknownReason,
     ValidityAssessment,
     ValidityStatus,
 )
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationCheck,
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.scientific.solvers.protocol import SolverIdentity
-from src.engcore.scientific.units import quantity as quantity_module
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.units import quantity as quantity_module
+from engcore.scientific.units.quantity import Quantity
 
 BOUNDS = dict(
     minimum=Quantity(0.0, "dimensionless"),

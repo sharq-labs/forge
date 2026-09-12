@@ -58,18 +58,18 @@ from experiments.kinetics_k3.k3_run import (  # noqa: E402
     _specs,
     _variance_decomposition,
 )
-from src.engcore.domains.kinetics.cstr.problem import (  # noqa: E402
+from engcore.domains.kinetics.cstr.problem import (  # noqa: E402
     CA_FINAL_METRIC,
     CSTR_MODEL,
     T_FINAL_METRIC,
 )
-from src.engcore.inference import (  # noqa: E402
+from engcore.inference import (  # noqa: E402
     AdmittedForwardTable,
     PosteriorGrid,
     gaussian_grid_posterior,
 )
-from src.engcore.scientific import ModelReference  # noqa: E402
-from src.engcore.uq import (  # noqa: E402
+from engcore.scientific import ModelReference  # noqa: E402
+from engcore.uq import (  # noqa: E402
     PredictiveAdmissionAudit,
     PredictiveObservableSpec,
     QuantifiedPredictiveResult,
@@ -155,7 +155,7 @@ def _canonical_bundle(
 
 def _policy_selfcheck() -> bool:
     """Scored pure-logic check matching K3.1 S3."""
-    from src.engcore.inference import AdmittedForwardTable
+    from engcore.inference import AdmittedForwardTable
 
     points = np.asarray([[0.0], [1.0]], dtype=np.float64)
     table = AdmittedForwardTable(

@@ -40,25 +40,32 @@ import math
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     ComponentKind,
     CrossSolverConsensus,
     IndependenceVerdict,
     SharedComponent,
     SolveRoute,
 )
-from src.engcore.scientific.errors import (
+from engcore.scientific.errors import (
     ScientificCoreError,
     ScientificValidationError,
 )
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.serialization import to_json
-from src.engcore.scientific.solvers.admission import require_agreement
-from src.engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
+from engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
+from engcore.scientific.serialization import to_json
+from engcore.scientific.solvers.admission import require_agreement
+from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 
 NON_FINITE = (float("nan"), float("inf"), float("-inf"))
 
@@ -73,13 +80,16 @@ def _thresholds(**values: float) -> VerificationThresholds:
 
 
 def _route(route_id: str, component: str) -> SolveRoute:
-    return SolveRoute(
-        route_id=route_id,
-        solver=SolverIdentity(solver_id=route_id, version="1"),
-        components=frozenset(
-            {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=component)}
-        ),
-    )
+    return declare(
+        SolveRoute(
+            route_id=route_id,
+            solver=SolverIdentity(solver_id=route_id, version="1"),
+            components=frozenset(
+                {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=component)}
+            ),
+            dependencies=dependencies(route_id, implementation=f"ext:test:{component}"),
+        )
+    )[0]
 
 
 def _consensus(values, *, tolerance: float = 1e-6) -> CrossSolverConsensus:
@@ -99,8 +109,10 @@ def _consensus(values, *, tolerance: float = 1e-6) -> CrossSolverConsensus:
         consensus_id="test-consensus",
         routes=routes,
         values=values,
-        thresholds=_thresholds(rel_tol=tolerance),
-        tolerance_key="rel_tol",
+        # A declared gate at its own number, and a marked override at any
+        # other: what is on trial here is finiteness, not authority.
+        thresholds=CSTR_GATE_THRESHOLDS.derive(tolerance_rel_tol=tolerance),
+        tolerance_key="tolerance_rel_tol",
         required_outputs=tuple(sorted(common or ())),
     )
 
@@ -145,16 +157,16 @@ def test_a_mutated_threshold_cannot_move_the_fingerprint_or_keep_the_award():
     are FOR: the identity a report cites, and the claim a gate is allowed to
     make.
     """
-    thresholds = _thresholds(rel_tol=1e-9)
+    thresholds = DC_CONSENSUS_THRESHOLDS
     before_fingerprint = thresholds.fingerprint
     before_evidence = thresholds.evidence()
 
     with pytest.raises(TypeError):
-        thresholds.values["rel_tol"] = 1e9
+        thresholds.values["agreement_rel_tol"] = 1e9
 
     assert thresholds.fingerprint == before_fingerprint
     assert thresholds.evidence() == before_evidence
-    assert thresholds["rel_tol"] == 1e-9
+    assert thresholds["agreement_rel_tol"] == 1e-9
     assert thresholds.is_declared is True
     assert (
         thresholds.award(ValidationLevel.CROSS_SOLVER_VALIDATED, earned=True)
@@ -314,7 +326,7 @@ def test_finite_routes_that_agree_still_earn_the_level():
     consensus = _consensus({"A": {"t": 300.0}, "B": {"t": 300.0 * (1 + 1e-9)}})
     assert consensus.comparison.compared_anything is True
     assert consensus.comparison.agreed is True
-    assert consensus.independence is IndependenceVerdict.INDEPENDENT
+    assert consensus.independence is IndependenceVerdict.PARTIALLY_INDEPENDENT
     assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
     assert consensus.to_check().outcome is ValidationOutcome.PASS
 

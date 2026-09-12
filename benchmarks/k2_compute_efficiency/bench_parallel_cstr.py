@@ -61,8 +61,8 @@ for _name in (
     os.environ.setdefault(_name, "1")
 
 from experiments.kinetics_k1.k1_config import REGIMES  # noqa: E402
-from src.engcore.domains.kinetics.cstr import solve_reactor  # noqa: E402
-from src.engcore.scientific.solvers.protocol import ConvergenceState  # noqa: E402
+from engcore.domains.kinetics.cstr import solve_reactor  # noqa: E402
+from engcore.scientific.solvers.protocol import ConvergenceState  # noqa: E402
 
 
 @dataclass(frozen=True)

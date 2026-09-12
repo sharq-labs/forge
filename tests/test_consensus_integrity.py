@@ -33,7 +33,7 @@ import json
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     CONSENSUS_SCHEMA,
     CONSENSUS_SCHEMA_V1,
     ComponentKind,
@@ -43,21 +43,25 @@ from src.engcore.scientific.consensus import (
     SharedComponent,
     SolveRoute,
 )
-from src.engcore.scientific.errors import ScientificValidationError
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
+from engcore.scientific.errors import ScientificValidationError
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.scientific.solvers.protocol import SolverIdentity
-
-THRESHOLDS = VerificationThresholds(
-    gate_id="test.consensus",
-    version="1",
-    values={"rel_tol": 1e-9},
-    basis="a test fixture",
+from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
 )
+
+#: A declared gate's own set. This fixture used to invent a gate, and earned
+#: levels with it until threshold authority was verified against the domain
+#: layer's pins; a test of the awarding half now uses a real declaration.
+THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 
 #: The three quantities the question is about, wherever a contract is needed.
 CONTRACT = ("pressure", "stress", "temperature")
@@ -67,14 +71,24 @@ PARTIAL = {"temperature": 350.0}
 
 
 def _route(route_id: str, *components: str, solver: SolverIdentity | None = None):
-    return SolveRoute(
+    """Declared and pinned, as the domain layer pins its own routes. A component
+    name is an implementation: two routes naming one share it."""
+    built = SolveRoute(
         route_id=route_id,
         solver=solver or SolverIdentity(f"solver.{route_id}", "1.0", backend=route_id),
         components=frozenset(
             SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=name)
             for name in components
         ),
+        dependencies=(
+            dependencies(
+                route_id, implementation={f"ext:test:{name}" for name in components}
+            )
+            if components
+            else None
+        ),
     )
+    return declare(built)[0] if components else built
 
 
 def _consensus(values, *, required=CONTRACT, routes=None, thresholds=THRESHOLDS):
@@ -86,7 +100,7 @@ def _consensus(values, *, required=CONTRACT, routes=None, thresholds=THRESHOLDS)
         routes=routes,
         values=values,
         thresholds=thresholds,
-        tolerance_key="rel_tol",
+        tolerance_key="agreement_rel_tol",
         required_outputs=required,
     )
 
@@ -212,7 +226,7 @@ def test_independence_still_rests_on_the_declaration_and_nothing_else():
         {"A": dict(FULL), "B": dict(FULL)},
         routes=(_route("A", "common-rhs"), _route("B", "common-rhs")),
     )
-    assert shared.independence is IndependenceVerdict.SHARES_COMPONENTS
+    assert shared.independence is IndependenceVerdict.NOT_INDEPENDENT
     assert shared.establishes is None
 
     silent = _consensus(
@@ -398,7 +412,7 @@ def test_the_declared_conditions_are_exactly_five_and_each_one_is_load_bearing()
     ).establishes is None
     assert _consensus(
         {"A": FULL, "B": dict(FULL)},
-        thresholds=THRESHOLDS.derive(rel_tol=1e-3),
+        thresholds=THRESHOLDS.derive(agreement_rel_tol=1e-3),
     ).establishes is None
     # ...and independence, which the E2 block covers.
     assert _consensus(

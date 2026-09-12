@@ -19,12 +19,12 @@ import json
 
 import pytest
 
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.electrical import dc_applicability as dc_app
-from src.engcore.domains.electrical.dc import models as dc_models
-from src.engcore.domains.thermal_models import context as ctx
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.mcp import (
+from engcore.domains.electrical import material as mat
+from engcore.domains.electrical import dc_applicability as dc_app
+from engcore.domains.electrical.dc import models as dc_models
+from engcore.domains.thermal_models import context as ctx
+from engcore.domains.thermal_models import lumped as lump
+from engcore.mcp import (
     COUPLING_SUPPLIED_INPUTS,
     CredibilityVerdict,
     MalformedPayloadError,
@@ -40,22 +40,22 @@ from src.engcore.mcp import (
     example_over_rating_payload,
     run_electrothermal_case,
 )
-from src.engcore.mcp import evidence
+from engcore.mcp import evidence
 # Not re-exported from the package: the check name and the
 # level-withholding rule are this boundary's internals, and the tests
 # that pin them import them where they live.
-from src.engcore.mcp.problem import (
+from engcore.mcp.problem import (
     CROSS_SOLVER_CHECK_NAME,
     _withhold_level,
 )
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.units.quantity import Quantity, dimensionality
-from src.engcore.systems.electrothermal import coupled as cp
+from engcore.scientific.units.quantity import Quantity, dimensionality
+from engcore.systems.electrothermal import coupled as cp
 
 K = "kelvin"
 
@@ -1867,7 +1867,7 @@ def test_an_unreachable_provider_is_not_run_rather_than_a_pass(monkeypatch):
     it is installed on this machine, and a test that depended on its *absence*
     would pass for the wrong reason wherever it is missing.
     """
-    from src.engcore.domains.electrical import ngspice as dc_ng
+    from engcore.domains.electrical import ngspice as dc_ng
 
     def unavailable(*_args, **_kwargs):
         raise dc_ng.NgspiceUnavailable("no provider on this machine")
@@ -1917,7 +1917,7 @@ def test_the_second_route_actually_runs_and_the_level_is_withheld():
     )
     assert report.verdict is CredibilityVerdict.SUPPORTED
     # the routes' own independence argument survives into the record
-    assert "sharing no declared component" in check.detail
+    assert "independent in every dimension the level requires" in check.detail
     assert check.evidence
 
 
@@ -1939,14 +1939,14 @@ def test_a_reached_consensus_reports_its_agreement_and_withholds_the_level():
     be readable off this test, and it is not: the assertion is that the level is
     gone and the reason is present.
     """
-    from src.engcore.domains.electrical import dc_consensus as dc_con
+    from engcore.domains.electrical import dc_consensus as dc_con
 
     payload = example_electrothermal_payload()
     case = run_electrothermal_case(payload, run_id="cross-wiring")
     problems = build_electrothermal_problems(payload)
     electrical = case.run.final.result_for(problems[0].problem_id)
 
-    from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
+    from engcore.domains.electrical.dc.solver import ElectricalDCSolver
 
     identity = ElectricalDCSolver().identity
     consensus = dc_con.dc_consensus(

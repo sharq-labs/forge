@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.sria.campaign import (
+from engcore.sria.campaign import (
     RESEARCH_MODE_VOCABULARY,
     BudgetExhausted,
     BudgetLedger,
@@ -33,8 +33,8 @@ from src.engcore.sria.campaign import (
     PauseReason,
     ResumeViolation,
 )
-from src.engcore.sria.campaign.events import CampaignEvent
-from src.engcore.sria.decision import ActionFamily
+from engcore.sria.campaign.events import CampaignEvent
+from engcore.sria.decision import ActionFamily
 
 
 def _raises(exc_type, fn, *args, **kwargs):

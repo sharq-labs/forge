@@ -5,9 +5,9 @@ import math
 import numpy as np
 import pytest
 
-from src.engcore.inference import AdmittedForwardTable, PosteriorGrid
-from src.engcore.scientific import ModelReference, Quantity, TwinReference
-from src.engcore.uq import (
+from engcore.inference import AdmittedForwardTable, PosteriorGrid
+from engcore.scientific import ModelReference, Quantity, TwinReference
+from engcore.uq import (
     PredictiveObservableSpec,
     UQProblemError,
     posterior_predictive_uq,

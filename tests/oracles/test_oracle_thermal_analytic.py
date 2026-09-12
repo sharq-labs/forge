@@ -15,8 +15,8 @@ import math
 
 import pytest
 
-from src.engcore.domains.thermal_models import context as thermal
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.domains.thermal_models import context as thermal
+from engcore.scientific.units.quantity import Quantity
 
 from .oracle_ids import oracle
 

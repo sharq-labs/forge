@@ -40,18 +40,18 @@ import dataclasses
 
 import pytest
 
-from src.engcore.scientific.errors import ScientificCoreError
-from src.engcore.scientific.results.provenance import ProvenanceRecord
-from src.engcore.scientific.results.result import ScientificResult
-from src.engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
-from src.engcore.scientific.results.validation import (
+from engcore.scientific.errors import ScientificCoreError
+from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from engcore.scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
     ValidationOutcome,
     ValidationReport,
 )
-from src.engcore.scientific.solvers.protocol import ConvergenceState, SolverIdentity
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.solvers.protocol import ConvergenceState, SolverIdentity
+from engcore.scientific.units.quantity import Quantity
 
 
 def _provenance() -> ProvenanceRecord:

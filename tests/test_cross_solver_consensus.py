@@ -18,9 +18,10 @@ import pathlib
 
 import pytest
 
-from src.engcore.scientific.consensus import (
+from engcore.scientific.consensus import (
     CONSENSUS_SCHEMA,
     ComponentKind,
+    IndependenceDimension,
     CrossSolverConsensus,
     IndependenceVerdict,
     OutputCompleteness,
@@ -29,22 +30,26 @@ from src.engcore.scientific.consensus import (
     SolveRoute,
     relative_difference,
 )
-from src.engcore.scientific.errors import ScientificValidationError
-from src.engcore.scientific.results.thresholds import VerificationThresholds
-from src.engcore.scientific.results.validation import (
+from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
+from engcore.scientific.errors import ScientificValidationError
+from engcore.scientific.results.thresholds import VerificationThresholds
+from engcore.scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from src.engcore.scientific.solvers.protocol import SolverIdentity
+from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    declare,
+    dependencies,
+    route_declarations_for_tests,
+)
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-THRESHOLDS = VerificationThresholds(
-    gate_id="test.consensus",
-    version="0.1.0",
-    values={"agreement_rel_tol": 1e-9},
-    basis="a test fixture, not a scientific declaration",
-)
+#: A declared gate's own set. This fixture used to invent a gate, and earned
+#: levels with it until threshold authority was verified against the domain
+#: layer's pins; a test of the awarding half now uses a real declaration.
+THRESHOLDS = DC_CONSENSUS_THRESHOLDS
 
 ALPHA = SolverIdentity("solver.alpha", "1.0", backend="alpha")
 BETA = SolverIdentity("solver.beta", "1.0", backend="beta")
@@ -55,11 +60,21 @@ def _component(name: str, kind: ComponentKind = ComponentKind.RESIDUAL):
 
 
 def _route(route_id: str, solver: SolverIdentity, *names: str) -> SolveRoute:
-    return SolveRoute(
+    """A route that declares what it is made of, and is pinned as the domain
+    layer would pin it. Each ``name`` is an implementation the route is made
+    of, so two routes named alike share one; a route given no name declares
+    nothing, which is still the cheapest way to earn nothing."""
+    built = SolveRoute(
         route_id=route_id,
         solver=solver,
         components=frozenset(_component(n) for n in names),
+        dependencies=(
+            dependencies(route_id, implementation={f"ext:test:{n}" for n in names})
+            if names
+            else None
+        ),
     )
+    return declare(built)[0] if names else built
 
 
 def _consensus(
@@ -99,7 +114,8 @@ def test_independent_routes_that_agree_earn_the_level():
         (_route("a", ALPHA, "a:rhs"), _route("b", BETA, "b:rhs")),
         {"a": {"x": 1.0, "y": 2.0}, "b": {"x": 1.0, "y": 2.0}},
     )
-    assert consensus.independence is IndependenceVerdict.INDEPENDENT
+    assert consensus.independence is IndependenceVerdict.PARTIALLY_INDEPENDENT
+    assert consensus.shared_dimensions == (IndependenceDimension.PROBLEM_DECLARATION,)
     assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
     check = consensus.to_check()
     assert check.outcome is ValidationOutcome.PASS
@@ -119,9 +135,13 @@ def test_one_shared_component_defeats_the_whole_consensus():
         {"a": {"x": 1.0}, "b": {"x": 1.0}},
     )
     assert consensus.comparison.agreed
-    assert consensus.independence is IndependenceVerdict.SHARES_COMPONENTS
+    assert consensus.independence is IndependenceVerdict.NOT_INDEPENDENT
     assert consensus.establishes is None
     assert [c.label for c in consensus.shared_components] == ["residual:shared:rhs"]
+    assert consensus.shared_dependencies == (
+        (IndependenceDimension.IMPLEMENTATION, "ext:test:shared:rhs"),
+        (IndependenceDimension.PROBLEM_DECLARATION, "ext:test:one-problem"),
+    )
     # PASS and no level: the sentence the platform previously could not write.
     check = consensus.to_check()
     assert check.outcome is ValidationOutcome.PASS
@@ -140,7 +160,7 @@ def test_a_route_that_declares_nothing_earns_nothing():
     assert not consensus.shared_components
     assert consensus.independence is IndependenceVerdict.UNDECLARED
     assert consensus.establishes is None
-    assert "declare no components" in consensus.reason
+    assert "declare no dependencies" in consensus.reason
 
 
 def test_independence_is_never_inferred_from_the_solver_identity():
@@ -158,28 +178,37 @@ def test_independence_is_never_inferred_from_the_solver_identity():
     assert consensus.establishes is None
 
 
-def test_the_same_component_described_differently_is_still_shared():
-    """Prose cannot buy independence."""
-    a = SolveRoute("a", ALPHA, frozenset({
-        SharedComponent(ComponentKind.JACOBIAN, "j", "our analytic Jacobian"),
-    }))
-    b = SolveRoute("b", BETA, frozenset({
-        SharedComponent(ComponentKind.JACOBIAN, "j", "the derivative matrix"),
-    }))
+def test_the_same_dependency_described_differently_is_still_shared():
+    """Prose cannot buy independence, and neither can a second wording of one
+    identity: what the routes are made of is compared, not how they describe it."""
+    a = declare(SolveRoute(
+        "a", ALPHA,
+        frozenset({SharedComponent(ComponentKind.JACOBIAN, "j", "our analytic Jacobian")}),
+        dependencies=dependencies("a", implementation="ext:one-jacobian"),
+    ))[0]
+    b = declare(SolveRoute(
+        "b", BETA,
+        frozenset({SharedComponent(ComponentKind.JACOBIAN, "j", "the derivative matrix")}),
+        dependencies=dependencies("b", implementation="ext:one-jacobian"),
+    ))[0]
     consensus = _consensus((a, b), {"a": {"x": 1.0}, "b": {"x": 1.0}})
-    assert consensus.independence is IndependenceVerdict.SHARES_COMPONENTS
+    assert consensus.independence is IndependenceVerdict.NOT_INDEPENDENT
 
 
-def test_the_same_name_under_a_different_kind_is_not_shared():
-    """Identity is the pair, so a kind is part of what is being named."""
-    a = SolveRoute("a", ALPHA, frozenset({
-        SharedComponent(ComponentKind.RESIDUAL, "f"),
-    }))
-    b = SolveRoute("b", BETA, frozenset({
-        SharedComponent(ComponentKind.JACOBIAN, "f"),
-    }))
+def test_one_identity_under_two_dimensions_is_not_shared():
+    """A dependency is named by its dimension and its identity together: one
+    library reached for its assembly by one route and its method by the other
+    is not shared arithmetic, and the dimensions are what say so."""
+    a = declare(SolveRoute(
+        "a", ALPHA, dependencies=dependencies("a", preprocessing="ext:one-library"),
+    ))[0]
+    b = declare(SolveRoute(
+        "b", BETA, dependencies=dependencies("b", numerical_method="ext:one-library"),
+    ))[0]
     consensus = _consensus((a, b), {"a": {"x": 1.0}, "b": {"x": 1.0}})
-    assert consensus.independence is IndependenceVerdict.INDEPENDENT
+    assert consensus.independence is IndependenceVerdict.PARTIALLY_INDEPENDENT
+    assert consensus.shared_dimensions == (IndependenceDimension.PROBLEM_DECLARATION,)
+    assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
 
 
 def test_independent_routes_that_disagree_fail_rather_than_warn():
@@ -311,7 +340,7 @@ def test_the_record_round_trips_and_carries_its_declaration():
     )
     payload = json.loads(json.dumps(consensus.to_dict()))
     assert payload["schema"] == CONSENSUS_SCHEMA
-    assert payload["independence"] == "independent"
+    assert payload["independence"] == "partially_independent"
     assert payload["establishes"] == "cross_solver_validated"
     # the declaration itself, not only its conclusion
     declared = {c["name"] for r in payload["routes"] for c in r["components"]}
@@ -332,14 +361,24 @@ def test_a_hand_edited_payload_cannot_smuggle_in_a_level():
         CrossSolverConsensus.from_dict(payload)
 
 
-def test_deleting_a_shared_component_from_a_payload_is_visible():
-    """Editing the declaration changes the level, and the level is rechecked."""
+def test_deleting_a_routes_dependencies_from_a_payload_is_visible():
+    """Editing the declaration changes the verdict, and the verdict is rechecked.
+
+    Deleting the *description* changes nothing, which is the point of the two
+    living side by side: the components describe, the dependencies decide."""
     consensus = _consensus(
         (_route("a", ALPHA, "shared"), _route("b", BETA, "shared")),
         {"a": {"x": 1.0}, "b": {"x": 1.0}},
     )
     payload = json.loads(json.dumps(consensus.to_dict()))
     payload["routes"][0]["components"] = []
+    assert (
+        CrossSolverConsensus.from_dict(payload).independence
+        is IndependenceVerdict.NOT_INDEPENDENT
+    )
+
+    payload = json.loads(json.dumps(consensus.to_dict()))
+    payload["routes"][0]["dependencies"] = None
     # Not silently promoted to independent: an empty declaration is UNDECLARED.
     restored = CrossSolverConsensus.from_dict(payload)
     assert restored.independence is IndependenceVerdict.UNDECLARED
@@ -382,7 +421,7 @@ def test_the_consensus_module_names_no_domain_and_no_backend():
 # =====================================================================
 
 def test_the_two_integrator_routes_declare_the_same_machinery():
-    from src.engcore.domains.kinetics.cstr.validation import integration_route
+    from engcore.domains.kinetics.cstr.validation import integration_route
 
     solver = SolverIdentity("kinetics.cstr.scipy_implicit_ivp", "0.1.0")
     bdf = integration_route("BDF", solver)
@@ -399,8 +438,14 @@ def test_the_two_integrator_routes_declare_the_same_machinery():
         tolerance_key="tolerance_rel_tol",
     )
     assert consensus.comparison.agreed
-    assert consensus.independence is IndependenceVerdict.SHARES_COMPONENTS
+    assert consensus.independence is IndependenceVerdict.NOT_INDEPENDENT
     assert consensus.establishes is None
+    assert {d for d, _ in consensus.shared_dependencies} == {
+        IndependenceDimension.PROBLEM_DECLARATION,
+        IndependenceDimension.PREPROCESSING,
+        IndependenceDimension.IMPLEMENTATION,
+        IndependenceDimension.BACKEND,
+    }, "the two methods differ in the numerical method and in nothing else"
     shared = {c.kind for c in consensus.shared_components}
     assert shared == {
         ComponentKind.RESIDUAL,
@@ -414,12 +459,12 @@ def test_the_two_integrator_routes_declare_the_same_machinery():
 def test_the_kinetics_gate_still_refuses_to_award_for_the_cross_method_arm():
     """End to end, on a real regime: the arm agrees and establishes nothing."""
     from experiments.kinetics_k1.k1_config import regime
-    from src.engcore.domains.kinetics.cstr.validation import run_verification_gate
+    from engcore.domains.kinetics.cstr.validation import run_verification_gate
 
     report = run_verification_gate(regime("R1").build(), run_id_prefix="consensus")
     consensus = report.cross_method_consensus
     assert consensus is not None
-    assert consensus.independence is IndependenceVerdict.SHARES_COMPONENTS
+    assert consensus.independence is IndependenceVerdict.NOT_INDEPENDENT
     assert consensus.establishes is None
 
     check = next(
@@ -447,7 +492,7 @@ def test_the_kinetics_gate_still_refuses_to_award_for_the_cross_method_arm():
 # =====================================================================
 
 def test_the_two_dc_routes_declare_no_component_in_common():
-    from src.engcore.domains.electrical.dc_consensus import (
+    from engcore.domains.electrical.dc_consensus import (
         external_route,
         native_route,
     )
@@ -463,10 +508,10 @@ def test_the_two_dc_routes_declare_no_component_in_common():
 
 @pytest.mark.expensive
 def test_the_dc_routes_earn_the_level_on_a_real_circuit():
-    from src.engcore.domains.electrical import ngspice as ng
-    from src.engcore.domains.electrical.dc import solve_circuit
-    from src.engcore.domains.electrical.dc.solver import ElectricalDCSolver
-    from src.engcore.domains.electrical.dc_consensus import dc_consensus
+    from engcore.domains.electrical import ngspice as ng
+    from engcore.domains.electrical.dc import solve_circuit
+    from engcore.domains.electrical.dc.solver import ElectricalDCSolver
+    from engcore.domains.electrical.dc_consensus import dc_consensus
     from tests.test_heterogeneous_ngspice import divider
 
     circuit = divider()
@@ -476,7 +521,10 @@ def test_the_dc_routes_earn_the_level_on_a_real_circuit():
         external=ng.solve_circuit_with_ngspice(circuit, run_id="consensus-ext"),
         external_solver=ng.NgspiceDCSolver().identity,
     )
-    assert consensus.independence is IndependenceVerdict.INDEPENDENT
+    assert consensus.independence is IndependenceVerdict.PARTIALLY_INDEPENDENT
+    assert consensus.shared_dimensions == (IndependenceDimension.PROBLEM_DECLARATION,), (
+        "one circuit, computed two ways: the declaration is shared and nothing else is"
+    )
     assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
     # Every metric both routes produced, not a chosen one.
     assert len(consensus.comparison.quantities) >= 13

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCCurrentSource,
     DCVoltageSource,
@@ -23,7 +23,7 @@ from src.engcore.domains.electrical.dc import (
     build_dc_problem,
     solve_circuit,
 )
-from src.engcore.domains.electrical.dc.models import (
+from engcore.domains.electrical.dc.models import (
     COMPLIANCE_VOLTAGE_UTILIZATION,
     DISSIPATED_POWER_UTILIZATION,
     IDEAL_CURRENT_SOURCE_MODEL,
@@ -43,21 +43,21 @@ from src.engcore.domains.electrical.dc.models import (
     assess_resistor_validity,
     assess_voltage_source_validity,
 )
-from src.engcore.domains.electrical.dc.problem import (
+from engcore.domains.electrical.dc.problem import (
     current_source_relation_problem,
     resistor_relation_problem,
     voltage_source_relation_problem,
 )
-from src.engcore.domains.electrical import material as mat
-from src.engcore.domains.thermal_models import lumped as lump
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.ir.problem import ScientificProblem
-from src.engcore.scientific.ir.variables import ScientificParameter
-from src.engcore.scientific.models.definition import ValidityStatus
-from src.engcore.scientific.results.validation import ValidationOutcome
-from src.engcore.scientific.solvers.protocol import ConvergenceState
-from src.engcore.scientific.units.quantity import Quantity
-from src.engcore.systems.electrothermal import coupled as cp
+from engcore.domains.electrical import material as mat
+from engcore.domains.thermal_models import lumped as lump
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.ir.problem import ScientificProblem
+from engcore.scientific.ir.variables import ScientificParameter
+from engcore.scientific.models.definition import ValidityStatus
+from engcore.scientific.results.validation import ValidationOutcome
+from engcore.scientific.solvers.protocol import ConvergenceState
+from engcore.scientific.units.quantity import Quantity
+from engcore.systems.electrothermal import coupled as cp
 
 GND = ElectricalNode("gnd", is_reference=True)
 
@@ -337,7 +337,7 @@ def test_omitting_the_operating_point_cannot_produce_a_valid_verdict():
 
 
 def test_the_rating_context_omits_every_key_it_could_not_derive():
-    from src.engcore.domains.electrical.dc.models import resistor_rating_context
+    from engcore.domains.electrical.dc.models import resistor_rating_context
 
     assert resistor_rating_context() == {}
     assert resistor_rating_context(rating=QUARTER_WATT) == {}

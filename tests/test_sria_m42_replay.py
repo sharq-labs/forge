@@ -19,8 +19,8 @@ from __future__ import annotations
 import json
 import sys
 
-from src.engcore.sria import Disposition
-from src.engcore.sria.calibration import (
+from engcore.sria import Disposition
+from engcore.sria.calibration import (
     CalibrationMemory,
     CalibrationMemoryEntry,
     ComputationalLearningRecord,
@@ -29,9 +29,9 @@ from src.engcore.sria.calibration import (
     MemoryKind,
     structure_for,
 )
-from src.engcore.sria.calibration.critic import CalibrationVerdict
-from src.engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
-from src.engcore.sria.decision import (
+from engcore.sria.calibration.critic import CalibrationVerdict
+from engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
+from engcore.sria.decision import (
     ActionFamily,
     CalibrationCostSupplier,
     CandidateEvaluator,
@@ -127,7 +127,7 @@ def basis(evaluator, snapshot=None, *, charter_version="1"):
     start from one â€” which is also what makes the replay comparisons meaningful
     rather than comparing two refusals.
     """
-    from src.engcore.sria.decision import pin_decision_basis
+    from engcore.sria.decision import pin_decision_basis
 
     snapshot = snapshot if snapshot is not None else toy_snapshot()
     return pin_decision_basis(
@@ -403,7 +403,7 @@ def test_G_stored_and_recomputed_scores_are_distinguishable():
     assert executed.recomputed is not None
 
     # A refusal must never carry a recomputed result.
-    from src.engcore.sria.decision import ReplayResult
+    from engcore.sria.decision import ReplayResult
 
     _raises(
         ValueError,
@@ -457,7 +457,7 @@ def test_manifest_pins_snapshot_charter_and_candidates():
 
 
 def test_candidate_set_digest_is_order_independent():
-    from src.engcore.sria.decision import candidate_set_digest
+    from engcore.sria.decision import candidate_set_digest
 
     assert candidate_set_digest((GOOD, POOR)) == candidate_set_digest((POOR, GOOD))
     assert candidate_set_digest((GOOD,)) != candidate_set_digest((GOOD, POOR))
@@ -485,7 +485,7 @@ def test_terminal_utility_is_marked_unrestorable_when_absent():
     ``TerminalObjective.from_dict`` deliberately cannot rebuild the callable,
     and nothing here pickles a function to make replay "work".
     """
-    from src.engcore.sria.decision import TerminalObjective
+    from engcore.sria.decision import TerminalObjective
 
     model = CostModel().fit(training(4.0), dataset_id="corpus-v1")
     evaluator = build_stack(model)

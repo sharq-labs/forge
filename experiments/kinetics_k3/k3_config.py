@@ -17,8 +17,8 @@ from experiments.kinetics_k2.k2_config import (
     SIGMA_CONCENTRATION,
     SIGMA_TEMPERATURE,
 )
-from src.engcore.domains.kinetics.cstr.problem import CSTR_MODEL
-from src.engcore.scientific import (
+from engcore.domains.kinetics.cstr.problem import CSTR_MODEL
+from engcore.scientific import (
     ModelReference,
     Quantity,
     ScientificTwin,
@@ -99,7 +99,7 @@ def k3_reference_twin() -> ScientificTwin:
 
 
 def sigma_for_observable(observable_name: str) -> Quantity:
-    from src.engcore.domains.kinetics.cstr.problem import CA_FINAL_METRIC, T_FINAL_METRIC
+    from engcore.domains.kinetics.cstr.problem import CA_FINAL_METRIC, T_FINAL_METRIC
 
     if observable_name == CA_FINAL_METRIC:
         return SIGMA_CONCENTRATION

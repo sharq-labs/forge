@@ -29,7 +29,7 @@ from typing import Any
 
 import numpy as np
 
-from src.engcore.domains.thermal.conduction1d import exact_midpoint
+from engcore.domains.thermal.conduction1d import exact_midpoint
 
 from .t3_config import (
     ALPHA_TRUE_MAX,

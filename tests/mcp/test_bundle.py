@@ -21,16 +21,16 @@ import pathlib
 
 import pytest
 
-from src.engcore.mcp.bundle import (
+from engcore.mcp.bundle import (
     BUNDLE_MANIFEST_SCHEMA,
     BundleVerification,
     verify_bundle,
     write_bundle,
 )
-from src.engcore.mcp.errors import CredibilityEvidenceError
-from src.engcore.mcp.problem import example_electrothermal_payload
+from engcore.mcp.errors import CredibilityEvidenceError
+from engcore.mcp.problem import example_electrothermal_payload
 
-# `src.engcore.mcp.server` is imported IN THE FIXTURE, not here. It is the one
+# `engcore.mcp.server` is imported IN THE FIXTURE, not here. It is the one
 # module in `src/` that imports the optional `[mcp]` SDK, and importing it at
 # module level made this whole file a COLLECTION ERROR on
 # `pip install -e ".[dev]"` -- the command the README opens with.
@@ -62,7 +62,7 @@ def response():
     pytest.importorskip(
         "mcp.types", reason="install the optional [mcp] dependency group"
     )
-    from src.engcore.mcp.server import _response
+    from engcore.mcp.server import _response
 
     return _response(example_electrothermal_payload())
 
@@ -400,7 +400,7 @@ def test_findings_accumulate_rather_than_stopping_at_the_first(bundle):
 def test_the_command_exits_zero_on_a_clean_bundle_and_non_zero_otherwise(
     bundle, capsys
 ):
-    from src.engcore.mcp.bundle import main
+    from engcore.mcp.bundle import main
 
     assert main(["verify", str(bundle)]) == 0
     assert "VERIFIED" in capsys.readouterr().out
@@ -411,7 +411,7 @@ def test_the_command_exits_zero_on_a_clean_bundle_and_non_zero_otherwise(
 
 
 def test_the_command_can_emit_json(bundle, capsys):
-    from src.engcore.mcp.bundle import main
+    from engcore.mcp.bundle import main
 
     main(["verify", str(bundle), "--json"])
     payload = json.loads(capsys.readouterr().out)

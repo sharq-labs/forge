@@ -47,7 +47,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.engcore.domains.kinetics.cstr import (
+from engcore.domains.kinetics.cstr import (
     INVARIANT_REL_TOL,
     STATIONARITY_REL_TOL,
     STEADY_STATE_REL_TOL,
@@ -58,7 +58,7 @@ from src.engcore.domains.kinetics.cstr import (
     ReactorOperation,
     ReactorRun,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from . import BASE_COMMIT, K1_VERSION
 

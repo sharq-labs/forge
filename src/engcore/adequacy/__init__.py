@@ -2,7 +2,7 @@
 
 STATUS: NOT ON THE VERIFICATION PATH, AND IMPORTED BY NOTHING IN ``src/``.
 =============================================================================
-The same condition as ``src/engcore/sria/``, at 281 lines across two modules
+The same condition as ``src/engcore/sria/``, at 579 lines across two modules
 instead of 19,887 across 53, and stated here for the same reason: a reader
 meeting this package has no other way to find out.
 
@@ -28,8 +28,10 @@ rather than moved on one round's initiative.
 """
 
 from .predictive import (
+    EVIDENCE_IDENTITY_FIELDS,
     ModelAdequacyError,
     ModelScoreComparison,
+    PredictiveEvidenceIdentity,
     PredictiveObservationAssessment,
     StudyAdequacyStatus,
     assess_predictive_observation,
@@ -37,8 +39,10 @@ from .predictive import (
 )
 
 __all__ = [
+    "EVIDENCE_IDENTITY_FIELDS",
     "ModelAdequacyError",
     "ModelScoreComparison",
+    "PredictiveEvidenceIdentity",
     "PredictiveObservationAssessment",
     "StudyAdequacyStatus",
     "assess_predictive_observation",

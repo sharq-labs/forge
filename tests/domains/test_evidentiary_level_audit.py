@@ -54,7 +54,7 @@ LEVELLED = {
     "cross_method_agreement": None,
 }
 
-#: The sixteen. Every check that passes today and establishes nothing, with the
+#: The seventeen. Every check that passes today and establishes nothing, with the
 #: audit's category for it. Changing this set means the document's counts are
 #: wrong, which is the point of asserting it here.
 ESTABLISHES_NOTHING = {
@@ -81,6 +81,10 @@ ESTABLISHES_NOTHING = {
     "boundary_conditions_held": "never",
     # thermal_models/lumped.py
     "lumped_balance_residual": "never",
+    # thermal_models/conduction2d.py — the third pass. The other two checks
+    # this model emits reuse `field_finite` and `boundary_conditions_held`
+    # above, whose verdicts apply to them unchanged.
+    "field_linear_system_residual": "never",
 }
 
 #: Emitted only on an unsuccessful path, so it never passes and is not one of
@@ -186,7 +190,7 @@ def test_every_check_in_the_domains_is_accounted_for_by_the_audit():
     )
 
 
-def test_the_sixteen_still_establish_nothing():
+def test_the_audited_checks_still_establish_nothing():
     """The claim the audit makes, asserted against the source that makes it.
 
     Every construction of each of these names passes ``establishes=None``. Not
@@ -250,5 +254,5 @@ def test_the_document_carries_a_row_for_every_audited_check():
     text = AUDIT.read_text(encoding="utf-8")
     for name in ESTABLISHES_NOTHING:
         assert f"`{name}`" in text, f"{name} has no row in {AUDIT.name}"
-    assert "Checks that pass today while establishing nothing: 16" in text
-    assert str(len(ESTABLISHES_NOTHING)) == "16"
+    assert "Checks that pass today while establishing nothing: 17" in text
+    assert str(len(ESTABLISHES_NOTHING)) == "17"

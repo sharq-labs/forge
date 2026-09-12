@@ -74,8 +74,8 @@ from experiments.electrical_e3.e3_run import (
     EXECUTION_REASON_OBLIGATION,
     run_e3,
 )
-from src.engcore.sria.campaign.stopping import StopReview, StopReviewOutcome
-from src.engcore.sria.decision.actions import ActionFamily
+from engcore.sria.campaign.stopping import StopReview, StopReviewOutcome
+from engcore.sria.decision.actions import ActionFamily
 
 #: The scored E3 run, executed once and shared (fully deterministic).
 _RESULT = None

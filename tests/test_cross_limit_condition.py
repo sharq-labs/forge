@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.scientific.errors import ModelValidityError
-from src.engcore.scientific.models.definition import (
+from engcore.scientific.errors import ModelValidityError
+from engcore.scientific.models.definition import (
     CategoryCondition,
     CrossLimitCondition,
     FlagCondition,
@@ -28,7 +28,7 @@ from src.engcore.scientific.models.definition import (
     ValidityDomain,
     ValidityStatus,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 Q = Quantity
 ONE = "dimensionless"

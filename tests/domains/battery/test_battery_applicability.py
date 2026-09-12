@@ -18,19 +18,19 @@ from __future__ import annotations
 
 import pytest
 
-from src.engcore.domains.battery import cell as bat
-from src.engcore.domains.battery import context as ctx
-from src.engcore.domains.battery import models as mdl
-from src.engcore.scientific.models.definition import (
+from engcore.domains.battery import cell as bat
+from engcore.domains.battery import context as ctx
+from engcore.domains.battery import models as mdl
+from engcore.scientific.models.definition import (
     RangeCondition,
     ScientificModelDefinition,
     ValidityDomain,
     ValidityStatus,
 )
-from src.engcore.scientific.errors import InvalidScientificProblem
-from src.engcore.scientific.ir.problem import ScientificProblem
-from src.engcore.scientific.ir.variables import ScientificParameter
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.ir.problem import ScientificProblem
+from engcore.scientific.ir.variables import ScientificParameter
+from engcore.scientific.units.quantity import Quantity
 
 from battery_cases import assess, build_cell, build_limits, build_load
 
@@ -890,7 +890,7 @@ def test_an_unknown_category_is_refused_rather_than_ignored():
     Silently accepting it would make the record's own claim — that these are
     validated declarations — untrue, even though nothing reads them.
     """
-    from src.engcore.scientific.errors import InvalidScientificProblem
+    from engcore.scientific.errors import InvalidScientificProblem
 
     with pytest.raises(InvalidScientificProblem, match="chemistry"):
         make_cell(chemistry="unobtainium")

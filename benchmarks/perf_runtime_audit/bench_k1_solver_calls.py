@@ -29,16 +29,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.engcore.domains.kinetics.cstr import solver as cstr_solver  # noqa: E402
-from src.engcore.domains.kinetics.cstr.problem import (  # noqa: E402
+from engcore.domains.kinetics.cstr import solver as cstr_solver  # noqa: E402
+from engcore.domains.kinetics.cstr.problem import (  # noqa: E402
     build_cstr_problem,
 )
-from src.engcore.domains.kinetics.cstr.validation import (  # noqa: E402
+from engcore.domains.kinetics.cstr.validation import (  # noqa: E402
     measure_stiffness,
     run_verification_gate,
     steady_states,
 )
-from src.engcore.domains.kinetics.cstr.validation import (  # noqa: E402
+from engcore.domains.kinetics.cstr.validation import (  # noqa: E402
     MAX_VALID_TEMPERATURE_K,
     MIN_VALID_TEMPERATURE_K,
 )

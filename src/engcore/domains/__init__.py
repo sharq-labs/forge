@@ -5,8 +5,16 @@ adds domain-specific fields to the universal IR: everything here is a
 *consumer* of ``engcore.scientific``, never a modifier of it.
 """
 
+from types import MappingProxyType
+
 from ..scientific.results.result import (
     UNASSESSED_DECLARATIONS_ATTRIBUTE as _UNASSESSED_ATTRIBUTE,
+)
+from ..scientific.consensus import (
+    ROUTE_DECLARATIONS_ATTRIBUTE as _ROUTE_ATTRIBUTE,
+)
+from ..scientific.results.thresholds import (
+    THRESHOLD_DECLARATIONS_ATTRIBUTE as _THRESHOLD_ATTRIBUTE,
 )
 
 #: Positions this package states on behalf of modules that cannot state their
@@ -21,9 +29,12 @@ from ..scientific.results.result import (
 #: checkable claim. So the position is stated here, one package above the
 #: freeze, in the domain layer's own words rather than in the core's.
 #:
-#: Both spellings, because this repository is importable as ``engcore`` and as
-#: ``src.engcore``, and a result constructed through one must not be judged by
-#: whether the reader happened to use the other.
+#: One spelling. The frozen experiments' ``src.engcore`` is an alias for these
+#: same module objects (see ``src/__init__.py``), so a constructing module's
+#: name is always its ``engcore`` name. This table used to carry both, because
+#: the two spellings were two module trees and a result constructed through one
+#: must not be judged by which the reader used; an entry under the alias could
+#: no longer be read by anything.
 #:
 #: This is not a place to be excused from answering. A guard in
 #: ``tests/test_core_guards.py`` reads the frozen experiment configs and
@@ -64,14 +75,10 @@ _THERMAL_T1_FREEZE_EXCLUSIONS = (
 
 SCIENTIFIC_UNDECLARED_EXCLUSIONS: dict[str, str] = {
     "engcore.domains.thermal.conduction1d.problem": _THERMAL_T1_FREEZE_EXCLUSIONS,
-    "src.engcore.domains.thermal.conduction1d.problem": (
-        _THERMAL_T1_FREEZE_EXCLUSIONS
-    ),
 }
 
 SCIENTIFIC_UNASSESSED_DECLARATIONS: dict[str, str] = {
     "engcore.domains.thermal.conduction1d.solver": _THERMAL_T1_FREEZE,
-    "src.engcore.domains.thermal.conduction1d.solver": _THERMAL_T1_FREEZE,
 }
 
 # The core reads this by name. If the name it reads and the name defined here
@@ -81,4 +88,109 @@ SCIENTIFIC_UNASSESSED_DECLARATIONS: dict[str, str] = {
 assert _UNASSESSED_ATTRIBUTE == "SCIENTIFIC_UNASSESSED_DECLARATIONS", (
     f"the core looks for {_UNASSESSED_ATTRIBUTE!r}; this package defines "
     f"SCIENTIFIC_UNASSESSED_DECLARATIONS"
+)
+
+#: The threshold sets this layer's gates declare, pinned by gate.
+#:
+#: ``VerificationThresholds.is_declared`` is decided against this table and
+#: nothing else. A gate's name is public, so a caller can build a set under it
+#: with numbers of their own; the core awards a level only to a set whose gate
+#: is registered here, whose version is the registered one, and whose values
+#: hash to the registered digest. Any other set still runs every comparison and
+#: awards nothing.
+#:
+#: Each digest is SHA-256 over the values exactly as
+#: ``VerificationThresholds.threshold_digest`` serializes them. Changing a
+#: declared number therefore means changing it in two places, on purpose: a
+#: threshold that gates a level is a declaration, and a declaration that moves
+#: should say so here. ``tests/test_trust_boundary_threshold_authority.py``
+#: checks every entry against the constant it names, so a pin and its
+#: declaration cannot drift apart silently.
+#:
+#: The conduction entry names a constant in a module byte-pinned by the frozen
+#: thermal_t1 experiment. It is pinned from here, one package above the freeze,
+#: for the reason the two tables above are.
+SCIENTIFIC_THRESHOLD_DECLARATIONS = MappingProxyType({
+    "electrical.dc.cross_solver": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc_consensus.DC_CONSENSUS_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "d2180283b327e990e93d8b5eeffa4d7e05c65f46c1040012dd463ac7409193ce",
+    }),
+    "electrical.dc.linear_residual": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc.validation.DC_CONVERGENCE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "3f5290aba1f08882446beba6cb794512ee335c408a0e4cb6ed07d1ac0a41e9f5",
+    }),
+    "kinetics.cstr.verification_gate": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.CSTR_GATE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "eec365d1bfa9271f2e590c13dd845fae7c2948e1ae67a624b2becd2c98c8c1e3",
+    }),
+    "thermal.conduction1d.refinement": MappingProxyType({
+        "declared_by": "engcore.domains.thermal.conduction1d.validation.CONDUCTION_GATE_THRESHOLDS",
+        "version": "0.1.0",
+        "threshold_digest": "88b2ce9f040139bf34e827904917dbe0ea534445b81b74a525800a877f83291e",
+    }),
+})
+
+#: ``thermal_models.conduction2d`` is deliberately absent. Its gate declares
+#: thresholds and reports every residual against them, and awards no level at
+#: all — so registering it would grant an authority it does not exercise. See
+#: that module's ``CONDUCTION2D_GATE_THRESHOLDS`` for the argument.
+
+assert _THRESHOLD_ATTRIBUTE == "SCIENTIFIC_THRESHOLD_DECLARATIONS", (
+    f"the core looks for {_THRESHOLD_ATTRIBUTE!r}; this package defines "
+    f"SCIENTIFIC_THRESHOLD_DECLARATIONS"
+)
+
+#: What each solve route this layer declares is made of, pinned by route id.
+#:
+#: ``CrossSolverConsensus`` reads independence from these and from nothing a
+#: caller supplies. A route counts only when its id is registered here, the
+#: solver that ran is the implementation the entry is for, and its dependencies
+#: hash to the pinned digest -- so a route named after a declared one, or a
+#: declaration edited after it was pinned, earns nothing.
+#:
+#: Each digest is SHA-256 over the canonical identities exactly as
+#: ``RouteDependencies.digest`` serializes them, which resolves every
+#: importable identity to its defining module and qualified name. Changing a
+#: route's dependencies therefore means changing them in two places, on
+#: purpose: what a route is made of is a declaration, and a declaration that
+#: moves should say so here.
+SCIENTIFIC_ROUTE_DECLARATIONS = MappingProxyType({
+    "electrical.dc.native_mna": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc_consensus.NATIVE_ROUTE_DEPENDENCIES",
+        "solver_id": "electrical.dc.mna",
+        "backend": "scipy.linalg.solve",
+        "dependency_digest": "c23fff6bdbda0b6038ffcf4ee78bc994bad03aee511191445efec1a55329fd70",
+    }),
+    "electrical.dc.external_simulator": MappingProxyType({
+        "declared_by": "engcore.domains.electrical.dc_consensus.EXTERNAL_ROUTE_DEPENDENCIES",
+        "solver_id": "engcore.electrical.dc.ngspice",
+        "backend": "ngspice",
+        "dependency_digest": "81156a57562add4c56a9a470c6039c0e0a52c9e2fbcf0fef3fc8ab0be8b39d43",
+    }),
+    # The two integration entries pin no backend, and the DC entries above do.
+    # This solver names its backend with the library version it ran against
+    # (solve_ivp/scipy-<version>), which is execution provenance: pinning it
+    # would pin one environment and refuse the same route on the next upgrade.
+    # What independence reads is the backend *dependency* the declaration names,
+    # and the digest pins that.
+    "kinetics.cstr.integration:BDF": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.INTEGRATION_ROUTE_DEPENDENCIES",
+        "declared_key": "BDF",
+        "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+        "dependency_digest": "00f2410046eeb60a7fe3f6532da938b50493e0d3c49c20c2c124b727fc6e9288",
+    }),
+    "kinetics.cstr.integration:Radau": MappingProxyType({
+        "declared_by": "engcore.domains.kinetics.cstr.validation.INTEGRATION_ROUTE_DEPENDENCIES",
+        "declared_key": "Radau",
+        "solver_id": "kinetics.cstr.scipy_implicit_ivp",
+        "dependency_digest": "496c729764e156accba69ef31ec13556eb861e4b343a829a53d52a9c2d702c93",
+    }),
+})
+
+assert _ROUTE_ATTRIBUTE == "SCIENTIFIC_ROUTE_DECLARATIONS", (
+    f"the core looks for {_ROUTE_ATTRIBUTE!r}; this package defines "
+    f"SCIENTIFIC_ROUTE_DECLARATIONS"
 )

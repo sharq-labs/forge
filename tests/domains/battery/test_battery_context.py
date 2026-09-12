@@ -19,12 +19,12 @@ import math
 
 import pytest
 
-from src.engcore.domains.battery import context as ctx
-from src.engcore.scientific.errors import (
+from engcore.domains.battery import context as ctx
+from engcore.scientific.errors import (
     InvalidScientificProblem,
     UnitCompatibilityError,
 )
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.units.quantity import Quantity
 
 from battery_cases import assess, build_cell, build_limits, build_load
 

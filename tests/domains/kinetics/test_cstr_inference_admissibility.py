@@ -8,20 +8,20 @@ from experiments.kinetics_k15.k15_config import (
     UNUSABLE_ENVELOPE_EXIT,
     USABLE_BUT_SEQUENCE_INVALID,
 )
-from src.engcore.domains.kinetics.cstr.inference import CSTRInferenceForwardAdapter
-from src.engcore.domains.kinetics.cstr.problem import (
+from engcore.domains.kinetics.cstr.inference import CSTRInferenceForwardAdapter
+from engcore.domains.kinetics.cstr.problem import (
     CA_FINAL_METRIC,
     METRIC_UNITS,
     T_FINAL_METRIC,
 )
-from src.engcore.domains.kinetics.cstr.solver import solve_reactor
-from src.engcore.inference import (
+from engcore.domains.kinetics.cstr.solver import solve_reactor
+from engcore.inference import (
     AdmissibleNumericalPrediction,
     InferenceAdmissibilityError,
     require_admissible_numerical_prediction,
 )
-from src.engcore.scientific.results.validation import ValidationLevel
-from src.engcore.scientific.units.quantity import Quantity
+from engcore.scientific.results.validation import ValidationLevel
+from engcore.scientific.units.quantity import Quantity
 
 
 def test_shared_guard_refuses_unadmitted_values_and_bare_scientific_result():

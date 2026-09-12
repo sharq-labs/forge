@@ -29,10 +29,10 @@ import numpy as np
 from experiments.kinetics_k2.k2_config import CONDITION_BY_ID, OBSERVABLE_NAMES
 from experiments.kinetics_k2.k2_forward import ForwardBuildStats, resolve_worker_count
 from experiments.kinetics_k3.k3_config import HOLDOUT_BY_ID
-from src.engcore.domains.kinetics.cstr.alternative_inference import (
+from engcore.domains.kinetics.cstr.alternative_inference import (
     ConstantRateCSTRInferenceForwardAdapter,
 )
-from src.engcore.inference import (
+from engcore.inference import (
     AdmittedForwardRow,
     AdmittedForwardTable,
     InferenceAdmissibilityError,

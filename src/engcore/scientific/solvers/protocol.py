@@ -18,6 +18,7 @@ implemented here — only the contract they will satisfy.
 from __future__ import annotations
 
 import math
+import numbers
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping, Protocol, runtime_checkable
@@ -115,6 +116,17 @@ class SolverSettings:
                     f"solver tolerance {str(key)!r} must be finite, got "
                     f"{tolerance!r}"
                 )
+            # Here and not in each adapter, for the reason finiteness is: the
+            # next adapter written would not remember. A tolerance bounds a
+            # magnitude, so a negative one is a bound no residual can meet, and
+            # a reader who takes its absolute value is reading a number the run
+            # never recorded. Zero is a legitimate request, as it is for
+            # `RouteComparison.tolerance`, and is accepted.
+            if tolerance < 0.0:
+                raise ScientificCoreError(
+                    f"solver tolerance {str(key)!r} must be non-negative, got "
+                    f"{tolerance!r}"
+                )
             tolerances[str(key)] = tolerance
         # `freeze`, not `dict`. `frozen=True` protects the BINDING, never the
         # container behind it: `settings.tolerances["rtol"] = 1e-3` was
@@ -189,6 +201,42 @@ class PreparedSolve:
         object.__setattr__(self, "notes", tuple(self.notes))
 
 
+def _iteration_count(value: Any) -> int | None:
+    """A recorded iteration count: a non-negative whole number, or unrecorded."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, numbers.Integral):
+        raise ScientificCoreError(
+            f"raw solver output iteration count must be a whole number, got "
+            f"{value!r} ({type(value).__name__})"
+        )
+    count = int(value)
+    if count < 0:
+        raise ScientificCoreError(
+            f"raw solver output iteration count must be non-negative, got "
+            f"{count}; no solve takes fewer than zero iterations"
+        )
+    return count
+
+
+def _wall_seconds(value: Any) -> float | None:
+    """A recorded wall time: finite, non-negative seconds, or unrecorded."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, numbers.Real):
+        raise ScientificCoreError(
+            f"raw solver output wall time must be a number of seconds, got "
+            f"{value!r} ({type(value).__name__})"
+        )
+    seconds = float(value)
+    if not math.isfinite(seconds) or seconds < 0.0:
+        raise ScientificCoreError(
+            f"raw solver output wall time must be finite and non-negative, "
+            f"got {seconds!r}"
+        )
+    return seconds
+
+
 @dataclass(frozen=True)
 class RawSolverOutput:
     """Unintepreted backend output plus its self-reported convergence.
@@ -246,8 +294,25 @@ class RawSolverOutput:
             freeze({str(k): float(v) for k, v in self.residuals.items()}),
         )
         self._require_finite_on_success()
+        # Bookkeeping a solve cannot have produced, refused whatever the solve
+        # says about its convergence: a failed solve may return NaN values, but
+        # it did not take -3 iterations or run for -1 seconds.
+        object.__setattr__(self, "iterations", _iteration_count(self.iterations))
+        object.__setattr__(self, "wall_seconds", _wall_seconds(self.wall_seconds))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
+        # The refusal `SolverSettings.options` makes, for the same reason:
+        # `to_dict` serializes diagnostics with the rest of this record, so a
+        # diagnostic that cannot be written down is a solve whose account of
+        # itself does not survive being recorded. Bulk arrays belong in
+        # `data_references`.
+        unrecordable = unwritable(self.diagnostics, path="diagnostics")
+        if unrecordable is not None:
+            where, kind = unrecordable
+            raise ScientificCoreError(
+                f"raw solver output cannot be recorded: {where} is a {kind}, "
+                f"which no scientific record can carry"
+            )
         object.__setattr__(self, "diagnostics", freeze(dict(self.diagnostics)))
         references = tuple(self.data_references)
         for reference in references:

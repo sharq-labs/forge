@@ -2,25 +2,25 @@
 
 from __future__ import annotations
 
-from src.engcore.sria.actions import ExecutorType, ResearchAction
-from src.engcore.sria.campaign.budget import BudgetLedger
-from src.engcore.sria.campaign.checkpoint import (
+from engcore.sria.actions import ExecutorType, ResearchAction
+from engcore.sria.campaign.budget import BudgetLedger
+from engcore.sria.campaign.checkpoint import (
     CampaignCheckpoint,
     CheckpointStore,
     EffectLedger,
     IterationPlan,
 )
-from src.engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
-from src.engcore.sria.campaign.persistence import IncrementalCheckpointStore
-from src.engcore.sria.campaign.persistence_runner import IncrementalCampaignRunner
-from src.engcore.sria.campaign.state import CampaignRun, ExecutionState, PauseReason
-from src.engcore.sria.decision.actions import ActionFamily, ActionProposal, AtomicAction
-from src.engcore.sria.decision.belief_snapshot import BeliefSnapshot
-from src.engcore.sria.decision.recommendation import (
+from engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
+from engcore.sria.campaign.persistence import IncrementalCheckpointStore
+from engcore.sria.campaign.persistence_runner import IncrementalCampaignRunner
+from engcore.sria.campaign.state import CampaignRun, ExecutionState, PauseReason
+from engcore.sria.decision.actions import ActionFamily, ActionProposal, AtomicAction
+from engcore.sria.decision.belief_snapshot import BeliefSnapshot
+from engcore.sria.decision.recommendation import (
     DecisionRecommendation,
     RecommendationOutcome,
 )
-from src.engcore.sria.decision.replay import ExecutionDependencyManifest
+from engcore.sria.decision.replay import ExecutionDependencyManifest
 
 RUN_ID = "v03-compat"
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 
-from src.engcore.domains.electrical.dc import (
+from engcore.domains.electrical.dc import (
     DCCircuit,
     DCCurrentSource,
     DCVoltageSource,
@@ -18,7 +18,7 @@ from src.engcore.domains.electrical.dc import (
     Resistor,
     solve_circuit,
 )
-from src.engcore.scientific import ConvergenceState, Quantity, ValidationOutcome
+from engcore.scientific import ConvergenceState, Quantity, ValidationOutcome
 
 GND = ElectricalNode("gnd", is_reference=True)
 TOL = 1e-9
@@ -365,8 +365,8 @@ def test_identical_parallel_voltage_sources_are_still_singular():
 
 
 def test_prepare_requires_a_bound_circuit():
-    from src.engcore.domains.electrical.dc import build_dc_problem
-    from src.engcore.domains.electrical.dc.solver import ElectricalDCError
+    from engcore.domains.electrical.dc import build_dc_problem
+    from engcore.domains.electrical.dc.solver import ElectricalDCError
 
     circuit = DCCircuit(
         circuit_id="unbound",

@@ -67,33 +67,33 @@ from experiments.kinetics_k4.k4_forward import (  # noqa: E402
     ConstantRateForwardBuildResult,
     build_constant_rate_forward_table_with_stats,
 )
-from src.engcore.adequacy import (  # noqa: E402
+from engcore.adequacy import (  # noqa: E402
     PredictiveObservationAssessment,
     assess_predictive_observation,
     compare_log_predictive_scores,
 )
-from src.engcore.domains.kinetics.cstr.alternative_inference import (  # noqa: E402
+from engcore.domains.kinetics.cstr.alternative_inference import (  # noqa: E402
     CONSTANT_RATE_INFERENCE_ADAPTER_ID,
 )
-from src.engcore.domains.kinetics.cstr.alternatives import (  # noqa: E402
+from engcore.domains.kinetics.cstr.alternatives import (  # noqa: E402
     CONSTANT_RATE_CSTR_MODEL,
 )
-from src.engcore.domains.kinetics.cstr.problem import (  # noqa: E402
+from engcore.domains.kinetics.cstr.problem import (  # noqa: E402
     CSTR_MODEL,
 )
-from src.engcore.inference import (  # noqa: E402
+from engcore.inference import (  # noqa: E402
     AdmittedForwardTable,
     ObservationSet,
     PosteriorGrid,
     gaussian_grid_posterior,
 )
-from src.engcore.scientific import (  # noqa: E402
+from engcore.scientific import (  # noqa: E402
     ModelType,
     ModelValidationStatus,
     Quantity,
     TwinReference,
 )
-from src.engcore.uq import (  # noqa: E402
+from engcore.uq import (  # noqa: E402
     PredictiveAdmissionAudit,
     PredictiveObservableSpec,
     condition_posterior_on_predictive_admission,
@@ -299,6 +299,7 @@ def _assess_model(
                     f"{source_prefix}|k4-prereg:{PREREG_COMMIT}|"
                     f"source:{source_commit}|heldout:{observations.dataset_id}"
                 ),
+                heldout_dataset_id=observations.dataset_id,
                 credible_mass=CREDIBLE_MASS,
             )
         )
@@ -359,6 +360,7 @@ def _adequacy_math_selfcheck() -> bool:
         twin=TwinReference("k4-selfcheck", "1"),
         model=ARRHENIUS_MODEL_REF,
         source_ref="k4-selfcheck",
+        heldout_dataset_id="k4-selfcheck-heldout",
     )
     expected_log_density = -math.log(2.0 * math.sqrt(2.0 * math.pi))
     return bool(
