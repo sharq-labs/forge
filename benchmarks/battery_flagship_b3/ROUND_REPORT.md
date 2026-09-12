@@ -671,11 +671,12 @@ This updates B1's §25 contract; still **no integration is built**. B3 adds step
 | `8a5a8a4` | prereg: voltage meaning, audit, uncertainty, split, gate, selection, verdict mapping |
 | `f1c0220` | harness + synthetic controls, before the measured round |
 | `4f3ebd9` | measured result + round tests |
-| *(this commit)* | round report |
+| `d08051e` | round report |
+| *(follow-up)* | record the push |
 
 ## 43. PUSH RESULT
 
-PUSH_PLACEHOLDER
+`git push -u origin claude/battery-flagship-b3` → **new branch created** on `github.com:sharq-labs/forge.git`; remote head `d08051e` (the report commit). `main` was not touched. This line is recorded in a follow-up commit.
 
 ## 44. EXACT NEW BATTERY CLAIM
 
