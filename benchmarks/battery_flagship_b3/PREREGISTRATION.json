@@ -1,0 +1,556 @@
+{
+ "schema": "battery_flagship_b3_preregistration/1",
+ "written_before_any_b3_calibration_on_measured_data": true,
+ "b3_baseline_commit": "ae9d79458846e3d1bdb314a57132bf538b14ff84",
+ "selection_commit": "467b706 (DATA_SELECTION.json)",
+ "raw_freeze_commit": "f0f1b09 (evidence/PROVENANCE.json)",
+ "pinned_inputs": {
+  "raw_incrOCV_sha256": "25c318255e1f4203842ec6780b9adbcbbc12a23461c0fb618be2da51480b9704",
+  "DATA_QUALITY.json_sha256": "3eba3a10c9a502a8b80f37c413f8dd9a01ad698175c5cf6b50eecc461a155a6f",
+  "OBSERVATIONS.json_sha256": "dd8f5e23f7ff8aa745f07474b2caddf8d3faa7a845c3cb771465f8815c3707fb",
+  "regenerate_with": "python -X utf8 benchmarks/battery_flagship_b3/audit/prepare_b3.py (deterministic; must reproduce both digests)"
+ },
+ "what_was_already_known_when_this_was_written": [
+  "B1: affine chord RMSE 215.27 mV on BATT_001 {0, 0.4, 0.6}, inadequate",
+  "B2: degree-2 curve RMSE 212.62 mV, 0/3 coverage, inadequate; POLY2 0 residual dof; TAB5 rank 3/5",
+  "the whole Jahn discharge and charge branches were inspected as numbers for the Phase 7 audit (values, monotonicity, hysteresis sign, quantisation). No model has been fitted to them.",
+  "the region boundaries and the T5/T6 knot positions below were chosen by the author after that inspection; they are declarations, not fits, and CV (not held-out error) selects among models"
+ ],
+ "phase6_voltage_meaning": {
+  "primary_branch": "discharge-conditioned (Q falling), rows 102..201",
+  "meaning": "interrupt-relaxed voltage after a rest of UNDOCUMENTED duration: pseudo-OCV. Never called equilibrium OCV. Not loaded terminal voltage (record: 'current interrupts'; Phase 7: the branch lies on the relaxed side of the C/20 loaded discharge curve at 90/90 compared points).",
+  "charge_branch": "kept distinct; outside battery.cell.rint_ocv's claim (discharge only, no hysteresis); used ONLY for the Phase 21 hysteresis measurement; never calibrated, never pooled",
+  "shared_top_row": "row 101 duplicates row 100 (charge top); it belongs to the charge branch and is not a discharge observation",
+  "state_of_charge": "z = Q / Q_top, Q_top = 1.00621822243387 Ah (row 100). Used as the declared target SOC of each discharge condition"
+ },
+ "fixed_declarations_for_the_battery_adapter": {
+  "cell_id": "JAHN2024.A123_01",
+  "chemistry": "lithium_ion (context.LITHIUM_ION)",
+  "nominal_capacity_ah": 1.1,
+  "internal_resistance_ohm": 0.0126,
+  "coulombic_efficiency": 1.0,
+  "cell_temperature_k": 298.15,
+  "conditioning_current_a": 0.11,
+  "conditioning_start_state_of_charge": 1.0,
+  "why_these_do_not_matter_and_how_that_is_checked": "the scored observable is open_circuit_voltage at the conditioned z, which the Rint closed form does not take from capacity, resistance, current or temperature. Capacity 1.1 Ah is the 18650M1A nominal; resistance is BATT_001's declared 12.6 mOhm (same cell model); the current is a placeholder because the step current is undocumented. A test asserts the OCV prediction is bit-identical when each is changed."
+ },
+ "phase8_uncertainty_model": {
+  "fixed_before_any_fit_and_never_widened_after": true,
+  "combination": "root-sum-square of independent standard uncertainties, per observation",
+  "terms": {
+   "acquisition": "BaSyTec CTS voltage accuracy 1 mV, rectangular half-width: 1/sqrt(3) = 0.577 mV",
+   "quantisation": "measured 190.88 uV code step, uniform: step/sqrt(12) = 0.055 mV",
+   "temperature": "0.2 mV/K x 2 K = 0.4 mV (B1's generous entropic figure; chamber stability undocumented, band declared)",
+   "state_of_charge": "|dV/dz| x 0.0033/sqrt(3); |dV/dz| from the nearest CALIBRATION observations bracketing the point (never the point itself, never a held-out voltage), one-sided from the two nearest calibration points at the ends",
+   "residual_relaxation_allowance": "10.3 mV uniform: the median of BATT_001's measured V(24 h) - V(10 min) over its five interior discharge-conditioned levels {19.2, 12.1, 8.0, 8.4, 10.3} mV (same cell model, independent lab); 10 min is the only rest length documented in this record's time series"
+  },
+  "resulting_range": "10.3 mV on the plateau to 28.0 mV at the steepest held-out knee point (OBSERVATIONS.json carries every term)",
+  "not_used": [
+   "held-out voltages in any term",
+   "B1/B2's NI USB-6251 or ACS724 figures (different instruments)",
+   "any residual"
+  ],
+  "known_limits": [
+   "relaxation incompleteness is a smooth systematic bias in reality, modelled as independent noise",
+   "the knee-interior relaxation is unknown; the uniform allowance may understate it there",
+   "no replicate spread exists"
+  ],
+  "sensitivity_ladder_preregistered": {
+   "relaxation_allowance_mv": [
+    0.0,
+    2.0,
+    5.0,
+    10.3,
+    20.0,
+    50.0
+   ],
+   "what_is_rerun_per_rung": "all sigmas recomputed with that allowance; every gate-passing model re-calibrated through the frozen calibrate; held-out scored with the exact linear-Gaussian predictive (route DOMAIN_LINEAR_GAUSSIAN, see phase12). Core grids run at the primary rung only.",
+   "reported": "per model and region, the verdict at each rung and the smallest rung at which it is adequate",
+   "verdict_bearing": "no; only the primary rung (10.3 mV) carries the verdict. The ladder states how robust it is."
+  }
+ },
+ "phase9_split": {
+  "rule": "order the 100 discharge observations by ascending z; index i = 0..99; held out iff i % 3 == 1",
+  "counts": {
+   "total": 100,
+   "calibration": 67,
+   "held_out": 33,
+   "regions": {
+    "KNEE": {
+     "bounds_z": [
+      0.0,
+      0.1
+     ],
+     "calibration": 7,
+     "held_out": 3
+    },
+    "LOW_SOC_TRANSITION": {
+     "bounds_z": [
+      0.1,
+      0.4
+     ],
+     "calibration": 20,
+     "held_out": 10
+    },
+    "PLATEAU": {
+     "bounds_z": [
+      0.4,
+      0.7
+     ],
+     "calibration": 20,
+     "held_out": 10
+    },
+    "HIGH_SOC_TRANSITION": {
+     "bounds_z": [
+      0.7,
+      1.0
+     ],
+     "calibration": 20,
+     "held_out": 10
+    }
+   }
+  },
+  "requirement_check": {
+   "calibration_fraction": 0.67,
+   "held_out_knee_or_low_soc": "3 in KNEE (z = 0.0117, 0.0416, 0.0716) >= 2",
+   "held_out_plateau": "10 >= 2",
+   "held_out_transition": "10 low-SOC + 10 high-SOC >= 1",
+   "calibration_covers_every_region": "KNEE 7, LOW 20, PLATEAU 20, HIGH 20"
+  },
+  "why_interleaved": "a deterministic SOC-structured split that puts held-out points in every region while leaving calibration able to see every region. It tests interpolation at 1 % resolution, which is what a declared OCV curve is used for; it does not test extrapolation beyond the measured range.",
+  "not_random": true
+ },
+ "phase10_leakage_controls": {
+  "split_machinery": "engcore.inference.ObservationSplit.partition (frozen), by condition identity; disjointness also proven by observation_content_digest",
+  "held_out_values_never_enter": [
+   "knot or node POSITIONS (declared constants below)",
+   "knot or node voltages (fitted to calibration only)",
+   "initial point (declared constant: linspace(3.0, 3.4, p) V)",
+   "grid centre and span (calibration-only weighted least squares)",
+   "any sigma (phase8)",
+   "region boundaries (declared constants)",
+   "CV folds (calibration only)",
+   "model selection (CV on calibration only)"
+  ],
+  "representation_that_needs_held_out_values_to_exist": "T-CAL (knots at every calibration z, plus 0 and 1) is included ONLY to show the gate refusing it (p = 69 >= n_cal = 67). A table whose knots are the measurements themselves including held-out points is HONEST_HELD_OUT_NOT_POSSIBLE_FOR_THIS_REPRESENTATION and is not built."
+ },
+ "phase11_models": {
+  "existing_forms_only": "PolynomialNodeParameterization and TabulatedKnotParameterization, both already in engcore.domains.battery.calibration; no new form, interpolation or physics",
+  "routes": {
+   "CORE_GRID": "frozen gaussian_grid_posterior + assess_identifiability + posterior_predictive_uq + assess_predictive_observation over an AdmittedForwardTable of production-solver predictions; axis-aligned tensor grid centred on the calibration-only WLS estimate",
+   "DOMAIN_LINEAR_GAUSSIAN": "for p too large for any feasible grid. Both forms are exactly affine in their voltages through the production solver (checked by test to 1e-12 V). With a flat prior and Gaussian noise the posterior is then exactly N(theta_WLS, (J^T W J)^-1), J taken by finite differences through the adapter; identifiability applies the frozen assess_identifiability THRESHOLDS (width 1.0, correlation 0.95, condition 1e6) to that covariance; predictive total variance = J_h Sigma J_h^T + sigma^2. Labelled NOT Core-certified wherever it appears.",
+   "route_cross_check": "every CORE_GRID model is also run through DOMAIN_LINEAR_GAUSSIAN. The domain route may carry a claim only if, on every CORE_GRID model, posterior means agree within 0.1 posterior sd, posterior sds within a ratio 0.85..1.15, and held-out total predictive sds within 5 %. Otherwise every DOMAIN_LINEAR_GAUSSIAN result is reported as UNVALIDATED and cannot carry the verdict."
+  },
+  "grid_rule": {
+   "p=2": {
+    "per_axis": 41,
+    "span_marginal_standard_errors": 6
+   },
+   "p=3": {
+    "per_axis": 25,
+    "span_marginal_standard_errors": 6
+   },
+   "p=4": {
+    "per_axis": 13,
+    "span_marginal_standard_errors": 4
+   },
+   "p=5": {
+    "per_axis": 9,
+    "span_marginal_standard_errors": 4
+   },
+   "on_GridResolutionError": "reported as GRID_TOO_COARSE_FOR_INFERENCE; the model's Core identifiability is then unknown and it cannot pass the gate on the CORE_GRID route",
+   "execution": "forward rows may be computed in worker processes; rows are merged in grid order before the frozen table constructor; parallelism has no statistical effect"
+  },
+  "models": [
+   {
+    "id": "P1",
+    "form": "PolynomialForm degree 1 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     1.0
+    ],
+    "free_parameters": 2,
+    "route": "CORE_GRID",
+    "grid": {
+     "per_axis": 41,
+     "span_marginal_standard_errors": 6
+    }
+   },
+   {
+    "id": "P2",
+    "form": "PolynomialForm degree 2 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     0.5,
+     1.0
+    ],
+    "free_parameters": 3,
+    "route": "CORE_GRID",
+    "grid": {
+     "per_axis": 25,
+     "span_marginal_standard_errors": 6
+    }
+   },
+   {
+    "id": "P3",
+    "form": "PolynomialForm degree 3 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     0.3333333333333333,
+     0.6666666666666666,
+     1.0
+    ],
+    "free_parameters": 4,
+    "route": "CORE_GRID",
+    "grid": {
+     "per_axis": 13,
+     "span_marginal_standard_errors": 4
+    }
+   },
+   {
+    "id": "P4",
+    "form": "PolynomialForm degree 4 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     0.25,
+     0.5,
+     0.75,
+     1.0
+    ],
+    "free_parameters": 5,
+    "route": "CORE_GRID",
+    "grid": {
+     "per_axis": 9,
+     "span_marginal_standard_errors": 4
+    }
+   },
+   {
+    "id": "P5",
+    "form": "PolynomialForm degree 5 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     0.2,
+     0.4,
+     0.6,
+     0.8,
+     1.0
+    ],
+    "free_parameters": 6,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "P7",
+    "form": "PolynomialForm degree 7 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     0.1428571429,
+     0.2857142857,
+     0.4285714286,
+     0.5714285714,
+     0.7142857143,
+     0.8571428571,
+     1.0
+    ],
+    "free_parameters": 8,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "P9",
+    "form": "PolynomialForm degree 9 parameterized by voltages at declared nodes (PolynomialNodeParameterization)",
+    "positions": [
+     0.0,
+     0.1111111111,
+     0.2222222222,
+     0.3333333333,
+     0.4444444444,
+     0.5555555556,
+     0.6666666667,
+     0.7777777778,
+     0.8888888889,
+     1.0
+    ],
+    "free_parameters": 10,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "T3",
+    "form": "TabulatedForm LINEAR (engcore.domains.battery.calibration.TabulatedKnotParameterization)",
+    "positions": [
+     0.0,
+     0.5,
+     1.0
+    ],
+    "free_parameters": 3,
+    "route": "CORE_GRID",
+    "grid": {
+     "per_axis": 25,
+     "span_marginal_standard_errors": 6
+    }
+   },
+   {
+    "id": "T5",
+    "form": "TabulatedForm LINEAR (engcore.domains.battery.calibration.TabulatedKnotParameterization)",
+    "positions": [
+     0.0,
+     0.1,
+     0.4,
+     0.7,
+     1.0
+    ],
+    "free_parameters": 5,
+    "route": "CORE_GRID",
+    "grid": {
+     "per_axis": 9,
+     "span_marginal_standard_errors": 4
+    }
+   },
+   {
+    "id": "T6",
+    "form": "TabulatedForm LINEAR (engcore.domains.battery.calibration.TabulatedKnotParameterization)",
+    "positions": [
+     0.0,
+     0.05,
+     0.1,
+     0.4,
+     0.7,
+     1.0
+    ],
+    "free_parameters": 6,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "T11",
+    "form": "TabulatedForm LINEAR (engcore.domains.battery.calibration.TabulatedKnotParameterization)",
+    "positions": [
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8,
+     0.9,
+     1.0
+    ],
+    "free_parameters": 11,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "T21",
+    "form": "TabulatedForm LINEAR (engcore.domains.battery.calibration.TabulatedKnotParameterization)",
+    "positions": [
+     0.0,
+     0.05,
+     0.1,
+     0.15,
+     0.2,
+     0.25,
+     0.3,
+     0.35,
+     0.4,
+     0.45,
+     0.5,
+     0.55,
+     0.6,
+     0.65,
+     0.7,
+     0.75,
+     0.8,
+     0.85,
+     0.9,
+     0.95,
+     1.0
+    ],
+    "free_parameters": 21,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "T41",
+    "form": "TabulatedForm LINEAR (engcore.domains.battery.calibration.TabulatedKnotParameterization)",
+    "positions": [
+     0.0,
+     0.025,
+     0.05,
+     0.075,
+     0.1,
+     0.125,
+     0.15,
+     0.175,
+     0.2,
+     0.225,
+     0.25,
+     0.275,
+     0.3,
+     0.325,
+     0.35,
+     0.375,
+     0.4,
+     0.425,
+     0.45,
+     0.475,
+     0.5,
+     0.525,
+     0.55,
+     0.575,
+     0.6,
+     0.625,
+     0.65,
+     0.675,
+     0.7,
+     0.725,
+     0.75,
+     0.775,
+     0.8,
+     0.825,
+     0.85,
+     0.875,
+     0.9,
+     0.925,
+     0.95,
+     0.975,
+     1.0
+    ],
+    "free_parameters": 41,
+    "route": "DOMAIN_LINEAR_GAUSSIAN"
+   },
+   {
+    "id": "T-CAL",
+    "form": "TabulatedForm LINEAR with knots {0} U {calibration z} U {1}",
+    "free_parameters": 69,
+    "route": "GATE_DEMONSTRATION_ONLY"
+   }
+  ],
+  "controls_of_b1_b2": "P1 is the affine chord form of B1 (a degree-1 curve through nodes 0 and 1 is the chord, B2 proved to 1e-12); P2 and T3 are B2's POLY2 and TAB3 forms",
+  "calibration": {
+   "engine": "engcore.inference.calibrate (frozen)",
+   "bounds_v": [
+    2.0,
+    3.6
+   ],
+   "initial_point_v": "linspace(3.0, 3.4, p)",
+   "max_evaluations": 4000,
+   "seed": 20260913,
+   "noise_model": "NoiseModel() default"
+  }
+ },
+ "phase12_gate": {
+  "structural": "p < n_cal AND rank(J_cal) == p, rank by numpy.linalg.matrix_rank default tolerance on the sigma-weighted calibration Jacobian",
+  "statistical": "identifiability status IDENTIFIABLE (CORE_GRID: frozen assess_identifiability; DOMAIN_LINEAR_GAUSSIAN: the same thresholds on the exact covariance)",
+  "reported_for_every_model": [
+   "n_cal",
+   "p",
+   "residual dof",
+   "rank",
+   "singular values",
+   "Jacobian condition number",
+   "posterior covariance condition number",
+   "max |correlation|",
+   "95 % relative widths",
+   "ESS and spacing/sd (CORE_GRID)"
+  ],
+  "only_gate_passing_models_get_scientific_scores": true,
+  "convergence_is_not_identifiability": true
+ },
+ "phase13_parameterization_sensitivity": {
+  "polynomials": "node voltages (primary) versus ascending monomial coefficients about 0 (linear map through the Vandermonde matrix)",
+  "tables": "knot voltages (primary) versus anchor + increments (v0, v1 - v0, ..., vk - v(k-1))",
+  "method": "the same posterior mapped linearly; CORE_GRID models by transforming grid points and re-running the frozen assess_identifiability (its spacing check is then uninformative and says so); the width/correlation/condition rule applied in both parameterizations",
+  "reported": "status in each parameterization for every gate-passing model, and whether it changes"
+ },
+ "phase15_held_out": {
+  "metrics": [
+   "RMSE",
+   "MAE",
+   "max |error|",
+   "standardized residuals",
+   "95 % predictive intervals",
+   "coverage",
+   "mean log predictive density",
+   "chi-square"
+  ],
+  "adequacy_rule": "chi-square of standardized held-out residuals (total predictive sd) on n_held = 33 dof; p < 0.01 => MODEL_INADEQUATE. B1's rule, reused.",
+  "empirical_adequacy_beside_it": "engcore.domains.battery.empirical.assess_ocv_empirical_adequacy on the held-out points with the calibrated estimate as the declared curve and measurement u only; reported, never merged with the rule above",
+  "model_discrepancy": "MODEL_DISCREPANCY_NOT_MODELLED"
+ },
+ "phase16_regions": {
+  "boundaries_z": {
+   "KNEE": [
+    0.0,
+    0.1
+   ],
+   "LOW_SOC_TRANSITION": [
+    0.1,
+    0.4
+   ],
+   "PLATEAU": [
+    0.4,
+    0.7
+   ],
+   "HIGH_SOC_TRANSITION": [
+    0.7,
+    1.0
+   ]
+  },
+  "per_region": "n, RMSE, MAE, worst error, standardized residuals, coverage, region chi-square on n_region dof, p < 0.01 => region inadequate"
+ },
+ "phase17_complexity_and_selection": {
+  "families": {
+   "polynomial": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P7",
+    "P9"
+   ],
+   "tabulated": [
+    "T3",
+    "T5",
+    "T6",
+    "T11",
+    "T21",
+    "T41"
+   ]
+  },
+  "cross_validation": "5 folds over the 67 calibration observations: fold k = calibration observations whose rank in ascending z is congruent to k mod 5. Each fold: frozen calibrate on the other four folds, predict the fold through the adapter, score = mean squared standardized residual (calibration sigmas).",
+  "eligibility": "gate-passing on the full calibration set AND structurally identifiable (p < n_train, rank == p) in every fold",
+  "selection": "BEST HONEST MODEL = the eligible model with the lowest mean CV score; if another eligible model is within 1 % of it, the one with fewer parameters",
+  "never_used_for_selection": [
+   "held-out error",
+   "calibration fit alone"
+  ],
+  "reported": "complexity vs calibration RMSE vs CV score vs held-out RMSE for every gate-passing model, and the held-out-best model labelled as post hoc"
+ },
+ "phase23_verdict_mapping_fixed_now": {
+  "A_EXISTING_CURVE_ADEQUATE": "the best honest model is ADEQUATE at the primary rung globally AND in every region",
+  "C_RICHER_CURVE_OVERFITS": "not A, and the best honest model's held-out RMSE exceeds that of a LESS complex gate-passing model of the same family by >= 20 %, or a less complex gate-passing model is adequate where it is not",
+  "B_EXISTING_CURVE_IDENTIFIABLE_BUT_INADEQUATE": "not A and not C, and the best honest model is gate-passing. If some MORE complex gate-passing model is adequate globally and in every region, this is recorded as ADEQUATE_ONLY_AT_A_COMPLEXITY_CV_DID_NOT_SELECT beside B",
+  "D_DATA_STILL_INSUFFICIENT": "no model is CV-eligible, or the split cannot be built as preregistered",
+  "domain_route_condition": "if the best honest model is on the DOMAIN_LINEAR_GAUSSIAN route and the route cross-check failed, the verdict is D",
+  "final_verdict_strings": {
+   "A": "BATTERY B3 COMPLETE — EXISTING OCV CURVE EMPIRICALLY ADEQUATE",
+   "B": "BATTERY B3 COMPLETE — EXISTING OCV CURVE STILL INADEQUATE",
+   "C": "BATTERY B3 COMPLETE — CURVE COMPLEXITY OVERFITS HELD-OUT DATA",
+   "D": "BATTERY B3 BLOCKED — REAL DATA INSUFFICIENT"
+  },
+  "scope_of_any_verdict": "an interrupt-relaxed pseudo-OCV of one A123 18650M1A cell at 25 degC, discharge-conditioned, at the primary relaxation allowance; never the cell's equilibrium OCV"
+ },
+ "secondary_not_verdict_bearing": {
+  "phase21_hysteresis": "charge branch linearly interpolated at each discharge z; charge - discharge per region; compared with the best honest model's held-out residual magnitude per region",
+  "phase22_cross_cell": "the best honest model's calibrated curve, unchanged, scored on BATT_001's 24 h discharge OCV {0, 0.2, 0.4, 0.5, 0.6, 0.8} with B1's sheet-wide sigma rule via assess_ocv_empirical_adequacy => PARAMETERS_GENERALIZE or not. Refit of the same form on BATT_001 only if p < 6 and then with no held-out left, so REPRESENTATION_GENERALIZES is recorded as untestable on six points unless p <= 3 allows a 3/3 split. Disclosed confounds: different labs, rests (24 h vs undocumented), SOC definitions (nominal-capacity coulomb count vs Q/Q_top)",
+  "phase24_next_physics": "only under verdict B: rank candidates by measured magnitude relative to the best honest model's held-out residuals per region; hysteresis from the charge branch; relaxation from the ladder; temperature and rate cannot be assessed (one temperature, undocumented current) and are recorded as NO_EVIDENCE"
+ },
+ "synthetic_controls_before_measured_data": {
+  "in_model": "truth = T5 at declared voltages, observed at the real z grid with Gaussian noise at the real sigmas (seed 20260913): expect gate pass, chi-square adequate",
+  "knee_misfit": "truth = a declared analytic knee-plus-plateau V(z) = 3.30 - 0.62 exp(-z/0.018) + 0.06 (z - 0.5) V with the same noise: P2 must be inadequate with its worst held-out error in KNEE",
+  "route_agreement": "on the in-model control, CORE_GRID and DOMAIN_LINEAR_GAUSSIAN agree within the route_cross_check tolerances"
+ },
+ "core_boundary": {
+  "frozen_core_paths_changed": 0,
+  "core_gap_watch": "if a claim genuinely requires a generic Core capability that is missing, it is reported as CORE_GAP_CANDIDATE and the Core is not modified"
+ },
+ "amendments": []
+}
