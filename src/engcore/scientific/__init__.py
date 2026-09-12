@@ -23,7 +23,23 @@ Scientific Core would remain fully usable.
 Status: **V0 foundation.** Contracts only; no physical domain is implemented.
 """
 
-from __future__ import annotations
+# NO `from __future__ import annotations` HERE, deliberately.
+#
+# This file contains no annotations -- checked, not assumed: an AST walk finds
+# zero AnnAssign nodes, zero annotated arguments and zero return annotations
+# across its 17 statements -- so the directive changed nothing about how the
+# module compiled. What it DID do was bind the name `annotations` at package
+# scope, which made
+#
+#     from engcore.scientific import annotations
+#
+# a working import returning a `__future__._Feature`. That is accidental public
+# surface, and the Sprint 10 inventory found it as the only non-submodule leak
+# in the whole Core.
+#
+# Any module under this package that DOES carry annotations keeps its own
+# future import; this is about the package's `__init__` namespace, not about
+# the codebase's style.
 
 from .errors import (
     AmbiguousSolverError,
