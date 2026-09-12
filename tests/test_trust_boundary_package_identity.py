@@ -57,6 +57,12 @@ PINNED_FROZEN_SPELLERS: dict[str, str] = {
     "experiments/thermal_t1/t1_run.py": "experiments/thermal_t2/t2_config.py",
     "experiments/thermal_t1/t1_truth.py": "experiments/thermal_t2/t2_config.py",
     "experiments/thermal_t2/t2_run.py": "experiments/thermal_t3/t3_config.py",
+    # Names the frozen spelling in order to FORBID it: the string sits in this
+    # file's own FORBIDDEN_MODULES list, which is what the blind-v2 challenge
+    # may not import. Exempt on the same terms as every entry above -- the file
+    # is frozen, and the test below reads the pin rather than trusting this
+    # line.
+    "benchmarks/blind_v2/challenge/audit.py": "benchmarks/blind_v2/FREEZE.json",
 }
 
 _ESCAPED = re.escape(FROZEN)
@@ -181,9 +187,20 @@ def test_every_remaining_frozen_spelling_is_pinned_by_a_freeze():
         )
         actual = hashlib.sha256(data).hexdigest()
         lines = (REPO / config).read_bytes().decode("utf-8").splitlines()
+        # A freeze may key its entries by repository-relative path or by a path
+        # relative to its own directory -- `benchmarks/blind_v2/FREEZE.json`
+        # writes `"challenge/audit.py"`. Both spellings name the same file, so
+        # both are looked for; what is verified either way is the digest, which
+        # is the whole point of reading the pin instead of remembering it.
+        config_root = (REPO / config).parent
+        spellings = {rel}
+        try:
+            spellings.add((REPO / rel).relative_to(config_root).as_posix())
+        except ValueError:
+            pass
         pinned = None
         for index, line in enumerate(lines):
-            if f'"{rel}"' in line:
+            if any(f'"{spelling}"' in line for spelling in spellings):
                 for candidate in lines[index : index + 4]:
                     match = _DIGEST.search(candidate)
                     if match:
