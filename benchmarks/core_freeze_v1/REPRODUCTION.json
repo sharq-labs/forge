@@ -1,0 +1,82 @@
+{
+  "checks": {
+    "checkout_cannot_satisfy_missing_module": true,
+    "determinism_all_identical": true,
+    "engcore_from_install_target": true,
+    "experimental_count_11": true,
+    "frozen_count_194": true,
+    "src_alias_absent": true,
+    "tree_clean": true,
+    "wheel_reproducible": true,
+    "wheel_tests_green": true
+  },
+  "commit": "48009651c5063eb22b873ea7300b69faab8f16c1",
+  "determinism": {
+    "all_identical": true,
+    "reproduction_sha256": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+    "runs": {
+      "source|seed=0|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "source|seed=1|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "source|seed=4242|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "source|seed=random|cwd=elsewhere": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "source|seed=random|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "wheel|seed=0|cwd=elsewhere": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "wheel|seed=0|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "wheel|seed=random|cwd=elsewhere": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "wheel|seed=random|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b"
+    }
+  },
+  "install": {
+    "top_level": [
+      "crafty-0.4.0.dist-info",
+      "engcore"
+    ]
+  },
+  "missing_module_falsification": {
+    "PYTHONPATH": "repository src/",
+    "cwd": "repository root",
+    "final_error_line": "ModuleNotFoundError: No module named 'engcore.inference.split'",
+    "import_exit": 1,
+    "import_failed_on_the_deleted_module": true,
+    "removed": "engcore/inference/split.py"
+  },
+  "provenance": {
+    "engcore_file": "D:\\ffreeze\\wheelroot\\src\\engcore\\__init__.py",
+    "exit": 0,
+    "src_top_level_importable": false,
+    "stderr_tail": ""
+  },
+  "source_date_epoch": "1789236839",
+  "tree_clean": true,
+  "verdict": "REPRODUCED",
+  "wheel": {
+    "filename": "crafty-0.4.0-py3-none-any.whl",
+    "name": "crafty",
+    "rebuild_record_content_sha256": "93aca82b6ae69a750673e0fd77e6f7f14b88806ddc366a7ab36c1427ad29b9ff",
+    "rebuild_sha256": "456484d093b95a683ee784e5540834a710522686e96b9957269725fe798545a6",
+    "record_content_sha256": "93aca82b6ae69a750673e0fd77e6f7f14b88806ddc366a7ab36c1427ad29b9ff",
+    "record_entries": 213,
+    "reproducible": true,
+    "requires_python": ">=3.11",
+    "root_is_purelib": "true",
+    "sha256": "456484d093b95a683ee784e5540834a710522686e96b9957269725fe798545a6",
+    "version": "0.4.0",
+    "wheel_tag": "py3-none-any"
+  },
+  "wheel_tests": {
+    "deselected": [
+      "tests/test_core_api_snapshot.py::test_the_snapshot_is_byte_identical_across_fresh_processes",
+      "tests/test_core_api_serialization.py::test_scientific_digests_are_identical_across_fresh_processes"
+    ],
+    "deselected_because": "they spawn sys.executable, the venv interpreter WITH site.py, which imports the checkout; fresh-process determinism is covered under -S -E by the determinism matrix instead",
+    "exit": 0,
+    "files": [
+      "tests/test_core_api_snapshot.py",
+      "tests/test_core_api_serialization.py",
+      "tests/test_core_api_deprecation.py",
+      "tests/test_core_semantic_invariants.py"
+    ],
+    "provenance_failure": false,
+    "summary": "190 passed, 2 deselected in 1.97s"
+  }
+}

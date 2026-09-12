@@ -1,0 +1,228 @@
+{
+  "blocked_candidates": [
+    {
+      "commit": "af43c896f79a37ac10c0c4e981836b85b24e5a5b",
+      "defect": "tests/test_core_api_serialization.py stated the serialization policy as `SUPPORTED_LEGACY: none. No legacy format is supported` and `62 records`. Eight FROZEN readers (ScientificResult, ProvenanceRecord, CrossSolverConsensus, RawSolverOutput, ScientificModelDefinition, ValidityAssessment, QuantityDependency, QuantityTransfer) accept older schema versions, and the frozen round-trippable count is 61. Behaviour was correct and tested; the written contract contradicted it.",
+      "defect_class": "broken compatibility claim",
+      "fix": "module docstring corrected to state the eight readers and their accepted versions, and 61. Proved docstring-only by comparing the AST of every non-docstring statement before and after.",
+      "verdict": "FREEZE_BLOCKED"
+    }
+  ],
+  "candidate_commit": "48009651c5063eb22b873ea7300b69faab8f16c1",
+  "certificate": {
+    "aggregate_digest": "619f43f7d1625f19c9a6bb98b401d79f4f9907695836a3dd2f4b72cc48927ca5",
+    "certified_commit": "b32f67d7ad16c1e535da4997c6db3858ed62fc4e",
+    "file_sha256": "769461a1b8e2dd09c2ea4b45c374969058a425432208e25d8638696271b0f49b",
+    "path": "certification/current_core_v2.json",
+    "reissued_during_freeze": false,
+    "why_not": "no file inside certified scope changed between the Sprint 10 certificate and the candidate; the freeze adds tooling, tests, documentation and evidence, all outside scope"
+  },
+  "environment_informational": {
+    "implementation": "CPython",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.2"
+  },
+  "evidence": {
+    "certified_79_log": "75b95229fed5eb58b7b99626486e7e48fe49ad41e4b1547d4d6f5f0fdcd9b31c",
+    "domain_boundary": "e20523c4b1aabb0c60950c9429e5e95788fb5a16fa00b123a5b546c2c15944c1",
+    "reproduction": "35c93802d36fb0162d5d35785e8471f66bee09fb6fc44da841f726b2ebd35646",
+    "reproduction_output": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+    "sprint10_mutations": "e1eb86aa0dab980b3e6632238843c58e171d70a962740477898a28ad73203ac2",
+    "suites": "480cff744c0ec7293dbbae4623a94eb43bbd0b0ebb79258c3e1ef6f9cc6c51eb"
+  },
+  "freeze": "Core Freeze V1",
+  "manifest_sha256": "eb7643007ca8ced81e80b0403fcf953c2d2f9855b92e2b1242255339f9220aee",
+  "results": {
+    "certified_79": {
+      "control": "GREEN",
+      "killed": 79,
+      "log_bytes": 34876,
+      "log_sha256": "75b95229fed5eb58b7b99626486e7e48fe49ad41e4b1547d4d6f5f0fdcd9b31c",
+      "survivors": 0,
+      "total": 79
+    },
+    "determinism": {
+      "all_identical": true,
+      "reproduction_sha256": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+      "runs": {
+        "source|seed=0|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "source|seed=1|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "source|seed=4242|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "source|seed=random|cwd=elsewhere": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "source|seed=random|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "wheel|seed=0|cwd=elsewhere": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "wheel|seed=0|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "wheel|seed=random|cwd=elsewhere": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
+        "wheel|seed=random|cwd=repo": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b"
+      }
+    },
+    "domain": {
+      "all_suites_green": true,
+      "boundary_intact": true,
+      "digests_identical": true,
+      "domain_end_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+      "domain_start_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+      "git_diff_empty": true
+    },
+    "ei_ri_fm_sp": {
+      "figures": "EI 10/10, RI 11/12 (RI2b known equivalent), FM 8/8, SP 10/10",
+      "justification": "src/ is byte-identical between the Sprint 10 close and this candidate (git diff --name-only af43c896f79a 48009651c506 -- src is EMPTY), so Sprint 10's justification holds a fortiori: nothing these families mutate could have moved. The harness that measured them was kept outside the repository and cannot be re-run from tracked files; Core Freeze V1 therefore rests on nothing from these families.",
+      "last_measured": "Sprint 7, benchmarks/core_v2_recertification",
+      "src_diff_since_sprint10_empty": true,
+      "status": "CARRIED_FORWARD"
+    },
+    "missing_module_falsification": {
+      "PYTHONPATH": "repository src/",
+      "cwd": "repository root",
+      "final_error_line": "ModuleNotFoundError: No module named 'engcore.inference.split'",
+      "import_exit": 1,
+      "import_failed_on_the_deleted_module": true,
+      "removed": "engcore/inference/split.py"
+    },
+    "reproduction": {
+      "checks": {
+        "checkout_cannot_satisfy_missing_module": true,
+        "determinism_all_identical": true,
+        "engcore_from_install_target": true,
+        "experimental_count_11": true,
+        "frozen_count_194": true,
+        "src_alias_absent": true,
+        "tree_clean": true,
+        "wheel_reproducible": true,
+        "wheel_tests_green": true
+      },
+      "verdict": "REPRODUCED"
+    },
+    "sprint10_mutations": {
+      "control": "GREEN",
+      "invalid_mutations": [
+        "PKG-1",
+        "PKG-2"
+      ],
+      "killed": 21,
+      "requested_total": 23,
+      "stale": [],
+      "survivors": [],
+      "written": 21
+    },
+    "suites": {
+      "FAST": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 4904,
+        "skipped": 4,
+        "summary": "4904 passed, 4 skipped, 42 warnings"
+      },
+      "FULL": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 5450,
+        "skipped": 4,
+        "summary": "5450 passed, 4 skipped, 42 warnings"
+      },
+      "api_snapshot": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 51,
+        "skipped": 0,
+        "summary": "51 passed"
+      },
+      "capability_boundary": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 306,
+        "skipped": 0,
+        "summary": "306 passed, 675 deselected"
+      },
+      "certificate": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 28,
+        "skipped": 1,
+        "summary": "28 passed, 1 skipped"
+      },
+      "contract_guard": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 305,
+        "skipped": 0,
+        "summary": "305 passed, 7 warnings"
+      },
+      "dependency_layering": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 41,
+        "skipped": 0,
+        "summary": "41 passed, 14 warnings"
+      },
+      "field_profile_suites": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 147,
+        "skipped": 0,
+        "summary": "147 passed"
+      },
+      "field_suites": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 124,
+        "skipped": 0,
+        "summary": "124 passed"
+      },
+      "freeze_manifest": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 23,
+        "skipped": 0,
+        "summary": "23 passed"
+      },
+      "scientific_truth": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 293,
+        "skipped": 3,
+        "summary": "293 passed, 3 skipped"
+      },
+      "serialization": {
+        "exit": 0,
+        "failed": 0,
+        "passed": 218,
+        "skipped": 0,
+        "summary": "218 passed"
+      }
+    },
+    "wheel": {
+      "filename": "crafty-0.4.0-py3-none-any.whl",
+      "name": "crafty",
+      "rebuild_record_content_sha256": "93aca82b6ae69a750673e0fd77e6f7f14b88806ddc366a7ab36c1427ad29b9ff",
+      "rebuild_sha256": "456484d093b95a683ee784e5540834a710522686e96b9957269725fe798545a6",
+      "record_content_sha256": "93aca82b6ae69a750673e0fd77e6f7f14b88806ddc366a7ab36c1427ad29b9ff",
+      "record_entries": 213,
+      "reproducible": true,
+      "requires_python": ">=3.11",
+      "root_is_purelib": "true",
+      "sha256": "456484d093b95a683ee784e5540834a710522686e96b9957269725fe798545a6",
+      "version": "0.4.0",
+      "wheel_tag": "py3-none-any"
+    },
+    "wheel_tests": {
+      "deselected": [
+        "tests/test_core_api_snapshot.py::test_the_snapshot_is_byte_identical_across_fresh_processes",
+        "tests/test_core_api_serialization.py::test_scientific_digests_are_identical_across_fresh_processes"
+      ],
+      "deselected_because": "they spawn sys.executable, the venv interpreter WITH site.py, which imports the checkout; fresh-process determinism is covered under -S -E by the determinism matrix instead",
+      "exit": 0,
+      "files": [
+        "tests/test_core_api_snapshot.py",
+        "tests/test_core_api_serialization.py",
+        "tests/test_core_api_deprecation.py",
+        "tests/test_core_semantic_invariants.py"
+      ],
+      "provenance_failure": false,
+      "summary": "190 passed, 2 deselected in 1.97s"
+    }
+  },
+  "schema": "engcore.core_freeze_assurance/1",
+  "tag": "v1.0-core-freeze",
+  "version": "1.0"
+}
