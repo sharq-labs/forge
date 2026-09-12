@@ -35,7 +35,7 @@ from .evidence import ROOT
 #: re-pinning whenever the Core does. Recorded here so the next reader treats a
 #: mismatch as "the Core moved" rather than as evidence about this round.
 EXPECTED_SCIENTIFIC_DIGEST = (
-    "de6fa8ba5295df4d97f69e8a24c6ed85089abad584851a65b8d90ffbf04450e6"
+    "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092"
 )
 
 #: Discrepancies the round has adjudicated in writing. The split check reports
