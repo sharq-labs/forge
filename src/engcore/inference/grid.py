@@ -21,9 +21,11 @@ import numpy as np
 
 from ..scientific.units.quantity import Quantity
 from .admissibility import (
+    AdmissibleAnalyticPrediction,
     AdmissibleNumericalPrediction,
     InferenceAdmissibilityError,
     require_admissible_numerical_prediction,
+    require_admitted_prediction,
 )
 
 
@@ -162,7 +164,9 @@ class AdmittedForwardRow:
         self,
         coordinates: Sequence[float],
         observations: ObservationSet,
-        predictions_by_condition: Mapping[str, AdmissibleNumericalPrediction],
+        predictions_by_condition: Mapping[
+            str, "AdmissibleNumericalPrediction | AdmissibleAnalyticPrediction"
+        ],
     ) -> None:
         _require_observation_set(observations)
         numeric: list[float] = []
@@ -172,7 +176,12 @@ class AdmittedForwardRow:
                 raise InferenceAdmissibilityError(
                     f"missing admitted prediction for condition {observation.condition_id!r}"
                 )
-            prediction = require_admissible_numerical_prediction(
+            # Either boundary, dispatched on the type the caller built rather
+            # than on which bar the candidate happens to clear. The route is
+            # recorded in the admission ref because the two are not equally
+            # strong evidence: sequence-level convergence on one, the declared
+            # applicability of a closed form on the other.
+            prediction = require_admitted_prediction(
                 predictions_by_condition[observation.condition_id]
             )
             value = prediction.value(observation.observable_name)
@@ -181,8 +190,8 @@ class AdmittedForwardRow:
             )
             numeric.append(value.magnitude_in(observation.value.units))
             refs.append(
-                f"{prediction.prediction_id}|{prediction.verification_ref}|"
-                f"{prediction.binding_ref}"
+                f"{prediction.admission_route}|{prediction.prediction_id}|"
+                f"{prediction.verification_ref}|{prediction.binding_ref}"
             )
         self._assign(coordinates, observations.keys, tuple(numeric), tuple(refs), True, "")
 

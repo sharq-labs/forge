@@ -1,0 +1,105 @@
+{
+  "control": "GREEN",
+  "killed": 12,
+  "total": 12,
+  "survivors": [],
+  "stale": [],
+  "results": [
+    {
+      "id": "CAL-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/split.py",
+      "target": "tests/inference/test_observation_split.py::test_an_observation_in_both_halves_is_refused",
+      "description": "calibration/held-out overlap stops being refused",
+      "summary": "1 failed in 0.50s"
+    },
+    {
+      "id": "CAL-2",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/parameters.py",
+      "target": "tests/inference/test_parameter_identity.py::test_same_label_different_unit_is_not_the_same_parameter",
+      "description": "a parameter's unit stops being part of its identity",
+      "summary": "1 failed in 0.52s"
+    },
+    {
+      "id": "CAL-3",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/parameters.py",
+      "target": "tests/inference/test_parameter_identity.py::test_a_value_outside_physical_bounds_is_refused_not_downweighted",
+      "description": "a value outside the declared physical bounds is accepted",
+      "summary": "1 failed in 0.58s"
+    },
+    {
+      "id": "CAL-4",
+      "verdict": "KILLED",
+      "file": "src/engcore/studies/calibration_study.py",
+      "target": "tests/inference/test_tcr_heldout_uq.py::test_a_misspecified_model_converges_and_is_rejected",
+      "description": "held-out validation always passes, so convergence becomes adequacy",
+      "summary": "1 failed in 1.67s"
+    },
+    {
+      "id": "CAL-5",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/split.py",
+      "target": "tests/inference/test_observation_split.py::test_a_posterior_conditioned_on_the_heldout_set_is_refused",
+      "description": "the posterior's dataset identity stops being checked",
+      "summary": "1 failed in 0.52s"
+    },
+    {
+      "id": "UQ-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/studies/calibration_study.py",
+      "target": "tests/inference/test_tcr_heldout_uq.py::test_parameter_and_measurement_uncertainty_are_separately_reported",
+      "description": "the declared observation sigma is dropped from the predictive interval",
+      "summary": "1 failed in 1.23s"
+    },
+    {
+      "id": "UQ-2",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/grid.py",
+      "target": "tests/inference/test_tcr_calibration.py::test_parameter_covariance_and_intervals_are_available",
+      "description": "the posterior reports zero parameter covariance",
+      "summary": "1 failed in 2.24s"
+    },
+    {
+      "id": "UQ-3",
+      "verdict": "KILLED",
+      "file": "src/engcore/studies/calibration_study.py",
+      "target": "tests/inference/test_tcr_heldout_uq.py::test_model_discrepancy_is_recorded_as_not_modelled",
+      "description": "one uncertainty source stops being named",
+      "summary": "1 failed in 1.19s"
+    },
+    {
+      "id": "UQ-4",
+      "verdict": "KILLED",
+      "file": "src/engcore/studies/calibration_study.py",
+      "target": "tests/inference/test_tcr_heldout_uq.py::test_coverage_classification_uses_the_interval_not_the_point",
+      "description": "nominal coverage is reported as though it were measured",
+      "summary": "1 failed in 0.71s"
+    },
+    {
+      "id": "UQ-5",
+      "verdict": "KILLED",
+      "file": "src/engcore/inference/calibration.py",
+      "target": "tests/inference/test_tcr_heldout_uq.py::test_case_b_a_collapsed_posterior_is_a_grid_refusal",
+      "description": "a collapsed grid is allowed to claim precise parameters",
+      "summary": "1 failed in 2.05s"
+    },
+    {
+      "id": "VAL-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/studies/calibration_study.py",
+      "target": "tests/inference/test_tcr_heldout_uq.py::test_the_well_specified_model_passes_held_out_validation",
+      "description": "the calibration half is scored as though it were held out",
+      "summary": "1 failed in 1.72s"
+    },
+    {
+      "id": "VAL-2",
+      "verdict": "KILLED",
+      "file": "src/engcore/adequacy/predictive.py",
+      "target": "tests/inference/test_reproducibility_and_evidence.py::test_two_assessments_of_different_evidence_cannot_be_compared",
+      "description": "evidence identity stops distinguishing two bodies of evidence",
+      "summary": "1 failed in 0.70s"
+    }
+  ]
+}

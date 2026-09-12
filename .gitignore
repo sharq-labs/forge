@@ -23,3 +23,11 @@ Thumbs.db
 
 # Scoring output written to the repo root by score_hard.py
 /results_hard.json
+
+# A pytest basetemp some tooling points at the repository root. Nothing here
+# creates it -- no conftest, no setting, no hook names it -- but when it is
+# present it holds one directory per test, and the certification suite's
+# fixtures build throwaway GIT REPOSITORIES inside it. A `git add -A` then
+# commits those as gitlinks, which no clone can resolve. Ignored so an
+# unrelated tool's scratch cannot enter a commit.
+/.pytest-review-temp/
