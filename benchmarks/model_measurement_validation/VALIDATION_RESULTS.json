@@ -20385,10 +20385,10 @@
       "case_id": "MV-D",
       "summary": {
         "n_curves": 30,
-        "min_rms_departure_v": 0.06503200612334113,
+        "min_rms_departure_v": 0.06503200612334115,
         "median_rms_departure_v": 0.09808472417017905,
         "max_rms_departure_v": 0.17163472450187026,
-        "max_of_max_departure_v": 1.177334350462164,
+        "max_of_max_departure_v": 1.1773343504621476,
         "all_exceed_measurement_uncertainty": true
       },
       "what_this_bounds": "The least-squares line is the best any affine-chord configuration could achieve on this curve, for ANY declared endpoints, capacity, efficiency or resistance, because the model forces the terminal voltage to be affine in time under a constant current. The RMS departure is therefore a parameter-free lower bound on that configuration's error, and it needs no knowledge of the discharge current, which this dataset does not record.",
@@ -20408,11 +20408,11 @@
             "duration_h": 1.045578
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.5419319503755295,
-            "intercept_v": 3.3966544205207096
+            "slope_v_per_h": -0.5419319503755294,
+            "intercept_v": 3.3966544205207105
           },
-          "rms_departure_v": 0.16131062611642433,
-          "max_departure_v": 0.8160222957109644,
+          "rms_departure_v": 0.16131062611642438,
+          "max_departure_v": 0.8160222957109657,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20432,11 +20432,11 @@
             "duration_h": 4.341988
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.07392058854880841,
-            "intercept_v": 3.379491717041426
+            "slope_v_per_h": -0.07392058854880837,
+            "intercept_v": 3.379491717041436
           },
-          "rms_departure_v": 0.11262630823429329,
-          "max_departure_v": 1.0545294086095627,
+          "rms_departure_v": 0.11262630823429327,
+          "max_departure_v": 1.0545294086095724,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20456,11 +20456,11 @@
             "duration_h": 8.482606
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.03432158571544099,
-            "intercept_v": 3.3735245341237303
+            "slope_v_per_h": -0.034321585715440986,
+            "intercept_v": 3.3735245341237143
           },
           "rms_departure_v": 0.09824730209268877,
-          "max_departure_v": 1.0783880452044161,
+          "max_departure_v": 1.0783880452044001,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20480,11 +20480,11 @@
             "duration_h": 1.045578
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.5419319503755295,
-            "intercept_v": 3.3966544205207096
+            "slope_v_per_h": -0.5419319503755294,
+            "intercept_v": 3.3966544205207105
           },
-          "rms_departure_v": 0.16131062611642433,
-          "max_departure_v": 0.8160222957109644,
+          "rms_departure_v": 0.16131062611642438,
+          "max_departure_v": 0.8160222957109657,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20504,11 +20504,11 @@
             "duration_h": 3.779837
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.08413313813891053,
-            "intercept_v": 3.3676638344298833
+            "slope_v_per_h": -0.08413313813891062,
+            "intercept_v": 3.367663834429885
           },
-          "rms_departure_v": 0.11466375120444414,
-          "max_departure_v": 1.045654285966318,
+          "rms_departure_v": 0.11466375120444412,
+          "max_departure_v": 1.0456542859663194,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20528,11 +20528,11 @@
             "duration_h": 9.567281
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.030930634646712887,
-            "intercept_v": 3.382475869413383
+            "slope_v_per_h": -0.030930634646712907,
+            "intercept_v": 3.382475869413366
           },
           "rms_departure_v": 0.09863851351531595,
-          "max_departure_v": 1.082553796239945,
+          "max_departure_v": 1.082553796239928,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20552,11 +20552,11 @@
             "duration_h": 1.045578
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.5419319503755295,
-            "intercept_v": 3.3966544205207096
+            "slope_v_per_h": -0.5419319503755294,
+            "intercept_v": 3.3966544205207105
           },
-          "rms_departure_v": 0.16131062611642433,
-          "max_departure_v": 0.8160222957109644,
+          "rms_departure_v": 0.16131062611642438,
+          "max_departure_v": 0.8160222957109657,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20577,10 +20577,10 @@
           },
           "best_case_straight_line": {
             "slope_v_per_h": -0.07684787299113184,
-            "intercept_v": 3.3839869086370684
+            "intercept_v": 3.3839869086370773
           },
           "rms_departure_v": 0.11165522656293461,
-          "max_departure_v": 1.0610674072285515,
+          "max_departure_v": 1.0610674072285604,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20600,11 +20600,11 @@
             "duration_h": 9.11881
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.032524139819486104,
-            "intercept_v": 3.3796596737825007
+            "slope_v_per_h": -0.03252413981948611,
+            "intercept_v": 3.379659673782484
           },
-          "rms_departure_v": 0.0988405945395137,
-          "max_departure_v": 1.0990782223551725,
+          "rms_departure_v": 0.09884059453951372,
+          "max_departure_v": 1.099078222355156,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20624,11 +20624,11 @@
             "duration_h": 1.037237
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.54071634921513,
-            "intercept_v": 3.4024923287767934
+            "slope_v_per_h": -0.5407163492151297,
+            "intercept_v": 3.402492328776794
           },
           "rms_departure_v": 0.17163472450187026,
-          "max_departure_v": 0.7456413248659395,
+          "max_departure_v": 0.7456413248659404,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20649,10 +20649,10 @@
           },
           "best_case_straight_line": {
             "slope_v_per_h": -0.0785769743339297,
-            "intercept_v": 3.376852657389313
+            "intercept_v": 3.376852657389319
           },
           "rms_departure_v": 0.10984346386433844,
-          "max_departure_v": 1.061959773873488,
+          "max_departure_v": 1.0619597738734938,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20672,11 +20672,11 @@
             "duration_h": 9.146093
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.03180294303738349,
-            "intercept_v": 3.381207025155776
+            "slope_v_per_h": -0.031802943037383465,
+            "intercept_v": 3.381207025155759
           },
           "rms_departure_v": 0.09808472417017905,
-          "max_departure_v": 1.177334350462164,
+          "max_departure_v": 1.1773343504621476,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20696,11 +20696,11 @@
             "duration_h": 1.07007
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.47701422252464304,
-            "intercept_v": 3.402430958150752
+            "slope_v_per_h": -0.4770142225246431,
+            "intercept_v": 3.4024309581507532
           },
-          "rms_departure_v": 0.17016244150768098,
-          "max_departure_v": 0.8584501045178423,
+          "rms_departure_v": 0.17016244150768095,
+          "max_departure_v": 0.8584501045178436,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20720,11 +20720,11 @@
             "duration_h": 4.170562
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.08089363897930212,
-            "intercept_v": 3.3841872519822043
+            "slope_v_per_h": -0.08089363897930206,
+            "intercept_v": 3.384187251982211
           },
-          "rms_departure_v": 0.12243989455154318,
-          "max_departure_v": 1.0428153152134079,
+          "rms_departure_v": 0.12243989455154314,
+          "max_departure_v": 1.042815315213415,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20745,10 +20745,10 @@
           },
           "best_case_straight_line": {
             "slope_v_per_h": -0.03087025417091293,
-            "intercept_v": 3.3833319349035538
+            "intercept_v": 3.383331934903536
           },
           "rms_departure_v": 0.10333781908978469,
-          "max_departure_v": 1.052129283902548,
+          "max_departure_v": 1.0521292839025302,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20768,11 +20768,11 @@
             "duration_h": 1.025073
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.3885513207161508,
-            "intercept_v": 3.2724405261142206
+            "slope_v_per_h": -0.38855132071615084,
+            "intercept_v": 3.272440526114221
           },
           "rms_departure_v": 0.08348207702720573,
-          "max_departure_v": 0.3645470581337542,
+          "max_departure_v": 0.36454705813375465,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20792,11 +20792,11 @@
             "duration_h": 3.990031
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.07022366575925487,
-            "intercept_v": 3.3352152719337704
+            "slope_v_per_h": -0.07022366575925493,
+            "intercept_v": 3.3352152719337678
           },
           "rms_departure_v": 0.07631002935353355,
-          "max_departure_v": 0.5510206686207049,
+          "max_departure_v": 0.5510206686207022,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20816,11 +20816,11 @@
             "duration_h": 8.824375
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.02944079282588149,
-            "intercept_v": 3.353491653229814
+            "slope_v_per_h": -0.029440792825881464,
+            "intercept_v": 3.3534916532297983
           },
-          "rms_departure_v": 0.0728486125921951,
-          "max_departure_v": 0.5698341059014425,
+          "rms_departure_v": 0.07284861259219509,
+          "max_departure_v": 0.5698341059014274,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20840,11 +20840,11 @@
             "duration_h": 0.960877
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.3590637112337118,
-            "intercept_v": 3.2481610033689456
+            "slope_v_per_h": -0.35906371123371167,
+            "intercept_v": 3.2481610033689448
           },
-          "rms_departure_v": 0.07692695807682234,
-          "max_departure_v": 0.35914494170983025,
+          "rms_departure_v": 0.07692695807682233,
+          "max_departure_v": 0.35914494170982936,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20864,11 +20864,11 @@
             "duration_h": 4.074514
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.07336420638495135,
-            "intercept_v": 3.331300535594098
+            "slope_v_per_h": -0.07336420638495136,
+            "intercept_v": 3.3313005355940954
           },
-          "rms_departure_v": 0.08205239345709746,
-          "max_departure_v": 0.5094255249733557,
+          "rms_departure_v": 0.08205239345709747,
+          "max_departure_v": 0.509425524973353,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20888,11 +20888,11 @@
             "duration_h": 9.09735
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.0279079759088011,
-            "intercept_v": 3.3534526607256034
+            "slope_v_per_h": -0.027907975908801085,
+            "intercept_v": 3.353452660725583
           },
-          "rms_departure_v": 0.07101438268511381,
-          "max_departure_v": 0.565564036091672,
+          "rms_departure_v": 0.07101438268511383,
+          "max_departure_v": 0.5655640360916516,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20913,10 +20913,10 @@
           },
           "best_case_straight_line": {
             "slope_v_per_h": -0.3346662942234695,
-            "intercept_v": 3.244594525637003
+            "intercept_v": 3.2445945256370026
           },
-          "rms_departure_v": 0.06503200612334113,
-          "max_departure_v": 0.25935633046437534,
+          "rms_departure_v": 0.06503200612334115,
+          "max_departure_v": 0.2593563304643749,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20936,11 +20936,11 @@
             "duration_h": 4.023519
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.06897137183370998,
-            "intercept_v": 3.3335810490444677
+            "slope_v_per_h": -0.06897137183371,
+            "intercept_v": 3.3335810490444633
           },
           "rms_departure_v": 0.07583611282912935,
-          "max_departure_v": 0.4913800707346434,
+          "max_departure_v": 0.49138007073463896,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20960,11 +20960,11 @@
             "duration_h": 8.37274
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.0317993609989687,
-            "intercept_v": 3.3509205936192177
+            "slope_v_per_h": -0.03179936099896871,
+            "intercept_v": 3.3509205936192097
           },
           "rms_departure_v": 0.07749204608066676,
-          "max_departure_v": 0.55130905342358,
+          "max_departure_v": 0.5513090534235721,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -20984,11 +20984,11 @@
             "duration_h": 0.977006
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.3731152262267948,
-            "intercept_v": 3.2524704515130103
+            "slope_v_per_h": -0.37311522622679494,
+            "intercept_v": 3.25247045151301
           },
-          "rms_departure_v": 0.08016531894675426,
-          "max_departure_v": 0.35393463679807446,
+          "rms_departure_v": 0.08016531894675427,
+          "max_departure_v": 0.353934636798074,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -21008,11 +21008,11 @@
             "duration_h": 3.921065
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.0743735532711276,
-            "intercept_v": 3.3274360615197836
+            "slope_v_per_h": -0.0743735532711275,
+            "intercept_v": 3.3274360615197853
           },
-          "rms_departure_v": 0.07859050171142355,
-          "max_departure_v": 0.5218125248627299,
+          "rms_departure_v": 0.07859050171142352,
+          "max_departure_v": 0.5218125248627321,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -21032,11 +21032,11 @@
             "duration_h": 8.51587
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.030609251084092612,
-            "intercept_v": 3.3483077152815515
+            "slope_v_per_h": -0.030609251084092615,
+            "intercept_v": 3.348307715281547
           },
-          "rms_departure_v": 0.07061509541084009,
-          "max_departure_v": 0.5836433122520597,
+          "rms_departure_v": 0.0706150954108401,
+          "max_departure_v": 0.5836433122520552,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -21056,11 +21056,11 @@
             "duration_h": 0.967545
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.39629101663695643,
-            "intercept_v": 3.2637859618052225
+            "slope_v_per_h": -0.3962910166369563,
+            "intercept_v": 3.263785961805222
           },
-          "rms_departure_v": 0.08938289576398957,
-          "max_departure_v": 0.35657690791846886,
+          "rms_departure_v": 0.0893828957639896,
+          "max_departure_v": 0.3565769079184684,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -21080,11 +21080,11 @@
             "duration_h": 3.995004
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.07416846792528692,
-            "intercept_v": 3.326553736553421
+            "slope_v_per_h": -0.07416846792528695,
+            "intercept_v": 3.3265537365534232
           },
-          "rms_departure_v": 0.07615198616175306,
-          "max_departure_v": 0.5162504105180283,
+          "rms_departure_v": 0.07615198616175305,
+          "max_departure_v": 0.5162504105180306,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
@@ -21104,11 +21104,11 @@
             "duration_h": 9.103432
           },
           "best_case_straight_line": {
-            "slope_v_per_h": -0.029447105864765236,
-            "intercept_v": 3.3511539839390445
+            "slope_v_per_h": -0.029447105864765268,
+            "intercept_v": 3.351153983939036
           },
-          "rms_departure_v": 0.0731965057117951,
-          "max_departure_v": 0.5790924443977832,
+          "rms_departure_v": 0.07319650571179513,
+          "max_departure_v": 0.5790924443977747,
           "measurement_uncertainty_v": 2.8e-05,
           "finding_exceeds_measurement_uncertainty": true,
           "applicability": "PARTIALLY_IN_SCOPE"
