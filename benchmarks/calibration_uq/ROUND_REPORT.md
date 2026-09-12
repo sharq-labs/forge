@@ -473,3 +473,159 @@ The only pre-existing behaviour this round changed is inside `inference/`: the
 admission-ref format now leads with the route, and
 `AdmissibleNumericalPrediction.to_dict()` gained an `admission_route` key.
 Neither is on any domain output path.
+
+---
+
+## 15. Final assurance
+
+Run in the order the round required: source, tests and mutations frozen first,
+then the long harnesses, then **one** certificate reissue.
+
+| # | check | result |
+|---|---|---|
+| 1 | focused calibration tests | **20 passed** |
+| 2 | UQ / held-out tests | **16 passed** |
+| 3 | parameter identity | **33 passed** |
+| 4 | evidence / leakage (split) | **22 passed** |
+| 5 | reproducibility & evidence | **12 passed** |
+| 6 | field observation spike | **15 passed** |
+| 7 | **FAST** | **4921 passed**, 7 skipped, **0 failed** |
+| 8 | **FULL** | **5466 passed**, 7 skipped, **0 failed** |
+| 9 | Contract Guard | 305 passed |
+| 10 | Capability Boundary | 306 passed, 675 deselected |
+| 11 | Scientific Truth | 293 passed, 3 skipped |
+| 12 | field suites | 124 passed |
+| 13 | field profile suites | 147 passed |
+| 14 | certification suite | 28 passed, 1 skipped |
+| 15 | mutation harness self-guard | 6 passed |
+| 16 | **CAL/UQ/VAL mutations** | **12/12 killed**, CONTROL GREEN, 0 survivors |
+| 17 | **certified 79-mutant harness** | **79/79 killed**, CONTROL GREEN (470 passed), 0 survivors |
+| 18 | installed wheel smoke | **313 passed** |
+| 19 | certificate | **`certificate matches the tree` · OK** |
+| 20 | working tree | clean |
+
+### The 79 were re-run, and why that was not optional
+
+The four TARGET suites are byte-identical to the previously certified commit,
+so it was tempting to carry the previous result forward. That would have been
+wrong: `tests/test_core_guards.py` walks `src/` and `tests/`, so the **new
+modules under `src/engcore/inference/` are seen by the guards the harness runs
+each mutant against**. The population changed even though the suite text did
+not.
+
+Result: CONTROL GREEN at 470 passed, 79 RED, the only `GREEN` line in the
+319-line log being the control itself. Both readings of the log agree — the
+per-mutation verdict column and the runner's own closing tally — and `G1d` and
+`G14a` are recorded as killed *before any test ran*, their mutated trees not
+surviving import.
+
+### EI / RI / FM / SP — carried forward, on stronger grounds than last round
+
+| family | total | killed | survivors |
+|---|---|---|---|
+| EI — evidence pairing integrity | 10 | 10 | 0 |
+| RI — route independence authority | 12 | 11 | **1 (RI2b, known equivalent)** |
+| FM — field and mesh records | 8 | 8 | 0 |
+| SP — spatial profiles | 10 | 10 | 0 |
+
+Recorded with `re_run_this_round: false`. These four families mutate code under
+`src/engcore/scientific/**`, and that tree — along with `adequacy/`, `data/`
+and the trust registry — is **byte-identical** to the previously certified
+commit. The only certified area that changed is `inference_admission`, which
+none of these families touches. Last round the same carry-forward had to
+account for five changed domain files; this round nothing outside `inference/`
+changed at all.
+
+### Certificate
+
+Left **RED for the whole sprint**, deliberately, and reissued **once** on the
+final tree.
+
+| | |
+|---|---|
+| files | 72 → **76** |
+| aggregate | `a8c1f9ca44c5eb5c…` → **`ecce1165d41ce27d…`** |
+| `inference_admission` | 3 → 7 files, **CHANGED** |
+| `core` (55), `evidence_identity` (2), `runtime_data` (6), `trust_registry` (1), `harness` (5) | **all byte-identical** |
+| `diagnostic` | `false` |
+| verification | **`certificate matches the tree` · OK** |
+
+Four modules entered certified scope — `parameters.py`, `split.py`,
+`calibration.py`, `field_observation.py` — because `inference/` is where they
+belong, not the uncertified `uq/` or `studies/`. No digest was hand-edited.
+
+One practical note, unchanged from last round: the assurance JSON must be
+passed from **outside** the repository, or copying it in makes the tree dirty
+and the build correctly refuses it.
+
+---
+
+## 16. Exact new capability claim, and what Forge still cannot claim
+
+### 16.1 What this round earns
+
+Forge can now take a declared parameter set and a declared body of
+observations, fit the parameters through a reusable calibration layer, quantify
+what the data does and does not determine, predict observations it was never
+fitted to with an uncertainty whose sources are named separately, and **reject
+the model on that evidence while the fit itself succeeded**.
+
+Concretely, and no wider:
+
+- a calibrated parameter has an identity — name, unit, model, physical bounds,
+  transform — and two parameters sharing a label are not thereby the same
+  parameter;
+- calibration and held-out evidence are distinct first-class objects, and the
+  relabelling attack that defeats label comparison is refused by content;
+- identifiability is measured and **classified**, and an unresolved grid is
+  refused rather than reported as certainty;
+- predictive uncertainty separates parameter uncertainty from measurement
+  noise, and says in the record that model discrepancy is not modelled;
+- `CALIBRATION_CONVERGED` and `HELD_OUT_VALIDATION_PASS` are independent
+  verdicts, demonstrated by one model that earns the first and fails the
+  second.
+
+### 16.2 What it does NOT claim
+
+- **Not a validated calibration capability for any real system.** Every number
+  here comes from synthetic truth generated by the production forward model.
+  No physical measurement was calibrated against.
+
+- **One model, one likelihood, one method.** Bounded least squares on a
+  two-parameter closed-form law with independent Gaussian noise. Nothing here
+  establishes behaviour for correlated noise, non-Gaussian likelihoods,
+  many-parameter problems, or any model with a discretisation.
+
+- **Model discrepancy is NOT modelled.** Stated in every predictive record, and
+  it is a real limitation: a model wrong in a way that happens to be small on
+  the held-out design would pass. The misspecification case passes because its
+  error is large, not because the machinery bounds model form error.
+
+- **Coverage is slightly below nominal and the study says so.** Measured 0.930
+  against nominal 0.95, Wilson 95 % [0.9067, 0.9478] — an interval that does
+  **not** contain 0.95. The verdict is `UNCERTAINTY_CALIBRATED` only because
+  the pre-declared acceptance band is ±0.05. Forge cannot claim its 95 %
+  predictive intervals cover at 95 %; it can claim they cover at
+  93 % ± 2 on this problem, and that the shortfall survives grid refinement so
+  it is the method's, not the discretisation's.
+
+- **The grid posterior is a grid.** A uniform prior truncated at ±6 standard
+  errors, resolved at a step of 0.6 σ. It is exact on that support and says
+  nothing outside it. The `GRID_TOO_COARSE_FOR_INFERENCE` refusal makes the
+  failure loud; it does not make the method mesh-free.
+
+- **The field spike is a spike.** It proves the inference stack can consume a
+  declared scalar derived from a field and that an array index is not an
+  identity. **No field model was calibrated**, and nothing here shows the
+  approach scales to a field-valued likelihood.
+
+- **EI/RI/FM/SP were not re-measured this round** — carried forward, with the
+  grounds recorded in §15.
+
+- **The 12 CAL/UQ/VAL mutations are not part of the certified 79** and are
+  never added to that count.
+
+- **Identifiability thresholds are declared, not derived.** |r| = 0.95,
+  condition number 1e6, relative width 1.0, ESS 8. They are defensible choices
+  stated in the record and visible in every report; they are not properties of
+  the science.
