@@ -193,6 +193,20 @@ class SpatialProfile:
         """
         return None
 
+    def require_covers_box(
+        self, x_span: tuple[float, float], y_span: tuple[float, float], *, context: str
+    ) -> None:
+        """The same question over a two-dimensional extent.
+
+        Each axis the law actually reads is checked against that axis's span,
+        so a law of x is not accidentally judged against the extent in y. A law
+        reading no coordinate is defined everywhere and is checked against
+        nothing.
+        """
+        for axis in self.axes:
+            span = x_span if axis is ProfileAxis.X else y_span
+            self.require_covers(*span, context=context)
+
 
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
