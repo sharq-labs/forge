@@ -1,0 +1,85 @@
+{
+  "control": "GREEN",
+  "killed": 9,
+  "total": 9,
+  "survivors": [],
+  "stale": [],
+  "not_applicable": {
+    "PAR-5": "'reuse stale cached scientific input across different identities' in a PROCESS path. No process backend exists -- parallel execution is deferred this round. The same defect SHAPE is exercised against the code that does exist, as PERF-RT-1, which mutates the compatibility memo to answer from the wrong identity.",
+    "PAR-6": "'return different provenance in the process path'. There is no process path to return different provenance from. Nothing was weakened to make this inapplicable: the backend was measured (2.58x with a persistent pool, 0.12x with a pool per sweep) and deliberately not built."
+  },
+  "results": [
+    {
+      "id": "PERF-RT-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/scientific/units/quantity.py",
+      "target": "tests/test_core_runtime_caches.py::test_the_memo_agrees_with_the_unmemoized_computation",
+      "description": "the compatibility memo ignores one identity and answers from the other -- a stale cached scientific input reused across different identities",
+      "summary": "2 failed, 6 passed in 0.53s"
+    },
+    {
+      "id": "PERF-RT-2",
+      "verdict": "KILLED",
+      "file": "src/engcore/scientific/units/quantity.py",
+      "target": "tests/test_core_runtime_caches.py::test_clear_unit_caches_clears_every_memo_in_the_module",
+      "description": "cache invalidation skips two memos -- the Sprint 7 defect, restored",
+      "summary": "1 failed in 0.59s"
+    },
+    {
+      "id": "PERF-RT-3",
+      "verdict": "KILLED",
+      "file": "src/engcore/scientific/serialization.py",
+      "target": "tests/test_core_runtime_fast_paths.py::test_encode_sorts_keys_whatever_order_they_were_inserted",
+      "description": "the fast path for dict drops canonical key ordering, so the same record serializes differently depending on insertion order",
+      "summary": "1 failed in 0.55s"
+    },
+    {
+      "id": "PERF-RT-4",
+      "verdict": "KILLED",
+      "file": "src/engcore/scientific/serialization.py",
+      "target": "tests/test_core_runtime_fast_paths.py::test_the_float_fast_path_still_refuses_non_finite_values",
+      "description": "the float fast path stops refusing NaN, so a record serializes to a token no conforming JSON reader accepts",
+      "summary": "1 failed in 0.50s"
+    },
+    {
+      "id": "PAR-1",
+      "verdict": "KILLED",
+      "file": "src/engcore/execution/sweep.py",
+      "target": "tests/test_execution_sweep.py::test_a_solver_may_not_be_shared",
+      "description": "a solver may be shared across cases through SharedContext",
+      "summary": "1 failed in 0.55s"
+    },
+    {
+      "id": "PAR-2",
+      "verdict": "KILLED",
+      "file": "src/engcore/execution/sweep.py",
+      "target": "tests/test_core_runtime_execution.py::test_the_summary_record_names_each_failed_case_identity",
+      "description": "a failed case loses its content identity in the summary record",
+      "summary": "3 failed in 0.59s"
+    },
+    {
+      "id": "PAR-3",
+      "verdict": "KILLED",
+      "file": "src/engcore/execution/sweep.py",
+      "target": "tests/test_core_runtime_execution.py::test_output_order_is_declaration_order_whatever_finished_first",
+      "description": "outputs come back in an order the summary does not promise",
+      "summary": "1 failed, 2 passed in 0.55s"
+    },
+    {
+      "id": "PAR-4",
+      "verdict": "KILLED",
+      "file": "src/engcore/execution/sweep.py",
+      "target": "tests/test_core_runtime_execution.py::test_failures_are_isolated_and_siblings_survive",
+      "description": "a worker exception is swallowed and reported as success",
+      "summary": "3 failed in 0.54s"
+    },
+    {
+      "id": "PAR-7",
+      "verdict": "KILLED",
+      "file": "src/engcore/execution/sweep.py",
+      "target": "tests/test_core_runtime_api_surface.py::test_the_experimental_parameters_exist_and_default_to_sequential",
+      "description": "the worker default stops being sequential, so every caller silently gets the slower path without asking",
+      "summary": "1 failed in 0.53s"
+    }
+  ]
+}
