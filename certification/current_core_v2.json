@@ -11,6 +11,21 @@
       "note": "'79/79 killed' is a statement about these exact bytes. The same sentence over a weakened suite would be worth nothing, so the runner and the four suites it runs each mutant against are pinned here and in the manifest's harness area."
     },
     "mutation": {
+      "calibration_uq_families": {
+        "control": "GREEN",
+        "families": {
+          "CAL": 5,
+          "UQ": 5,
+          "VAL": 2
+        },
+        "in_the_formal_certificate": false,
+        "killed": 12,
+        "note": "Sprint 8 CAL/UQ/VAL mutations, run through a targeted apply/revert script because tests/mutation_guards.py is itself certified and cannot gain MUTATIONS entries without invalidating this snapshot. NOT part of the certified 79 above and never added to it.",
+        "runner": "benchmarks/calibration_uq/audit/mutations.py",
+        "stale": [],
+        "survivors": [],
+        "total": 12
+      },
       "certified_harness": {
         "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
         "control": "GREEN",
@@ -23,7 +38,7 @@
           "G14a"
         ],
         "log_bytes": 34876,
-        "log_sha256": "4986be3d92bf85ca66cb9b4038d07aafc4de0f848313eb78de039bc233dd89be",
+        "log_sha256": "f37c381b85d7ba5378b20a4dd25a15a70da650584c309c6a2a037d38c1a7722d",
         "per_mutation_matches_runner_tally": true,
         "runner": "tests/mutation_guards.py",
         "survivors": 0,
@@ -64,7 +79,7 @@
         },
         "in_the_formal_certificate": false,
         "measured_in": "core_v2_recertification round",
-        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families.",
+        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families. Sprint 8 grounds are stronger than Sprint 7s: src/engcore/scientific is byte-identical to the previous certified commit, and so are adequacy, data and the trust registry. The ONLY certified area that changed this round is inference_admission.",
         "re_run_this_round": false
       }
     },
@@ -75,10 +90,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 306,
-        "seconds": 9.1,
+        "seconds": 10.0,
         "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
         "skipped": 0,
-        "summary_line": "306 passed, 675 deselected in 8.26s"
+        "summary_line": "306 passed, 675 deselected in 9.12s"
       },
       "certification_suite": {
         "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
@@ -86,10 +101,10 @@
         "exit_code": 1,
         "failed": 1,
         "passed": 27,
-        "seconds": 5.5,
+        "seconds": 5.7,
         "selection": "tests/test_core_certificate.py",
         "skipped": 1,
-        "summary_line": "1 failed, 27 passed, 1 skipped in 5.05s"
+        "summary_line": "1 failed, 27 passed, 1 skipped in 5.22s"
       },
       "contract_guard": {
         "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
@@ -97,10 +112,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 305,
-        "seconds": 18.5,
+        "seconds": 20.3,
         "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
         "skipped": 0,
-        "summary_line": "305 passed, 5 warnings in 17.83s"
+        "summary_line": "305 passed, 5 warnings in 19.55s"
       },
       "field_profile_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
@@ -108,10 +123,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 147,
-        "seconds": 1.9,
+        "seconds": 2.2,
         "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
         "skipped": 0,
-        "summary_line": "147 passed in 1.42s"
+        "summary_line": "147 passed in 1.68s"
       },
       "field_suites": {
         "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
@@ -119,10 +134,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 124,
-        "seconds": 1.3,
+        "seconds": 1.5,
         "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
         "skipped": 0,
-        "summary_line": "124 passed in 0.88s"
+        "summary_line": "124 passed in 1.02s"
       },
       "mutation_harness_self_guard": {
         "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
@@ -130,10 +145,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 6,
-        "seconds": 1.1,
+        "seconds": 1.2,
         "selection": "tests/test_mutation_harness.py",
         "skipped": 0,
-        "summary_line": "6 passed in 0.73s"
+        "summary_line": "6 passed in 0.84s"
       },
       "scientific_truth": {
         "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
@@ -141,10 +156,10 @@
         "exit_code": 0,
         "failed": 0,
         "passed": 293,
-        "seconds": 2.8,
+        "seconds": 3.3,
         "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
         "skipped": 3,
-        "summary_line": "293 passed, 3 skipped in 2.13s"
+        "summary_line": "293 passed, 3 skipped in 2.54s"
       }
     }
   },
@@ -181,7 +196,7 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "a8c1f9ca44c5eb5c4c56643a63a860c19d0ca0b424bade2c91bf418f728e30fc",
+    "aggregate_digest": "ecce1165d41ce27da2cce200d8a590950c19ffc4051b1a0762038f52e1be639f",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
@@ -284,12 +299,16 @@
       },
       "inference_admission": {
         "classification": "CORE_CERTIFIED",
-        "digest": "f02ad3ddc1b00feb4d35c95c473780b5be3c545a10d50f03b3e19ed7ab6ddfcd",
-        "file_count": 3,
+        "digest": "4d5b4146e550ea89c917c898b7e3a7108c472ac2615b572bb1f913aa461f05e9",
+        "file_count": 7,
         "files": {
-          "src/engcore/inference/__init__.py": "8df015827c8fd5efa6e923daffb17e70b7b28c224f8731d075a1f0b4ce34f81f",
-          "src/engcore/inference/admissibility.py": "8ae357491804637036769f1e44e6b1fc189d390afe0e902261fe2c3945d040ad",
-          "src/engcore/inference/grid.py": "83d1b37103f84f629092137938b3f75da5ef7bc12fcb3c946308a66b1002bdd0"
+          "src/engcore/inference/__init__.py": "60453cf9178dc9b0bbe661aad77441b4254ffb67680b69b8fd2c35318ef805e3",
+          "src/engcore/inference/admissibility.py": "59259b42d6baa227c3948f405cd4a09ecd8611854ab4e341a2587ae479454e69",
+          "src/engcore/inference/calibration.py": "74c9748bb1786b517fac6d14133a6bf675a23d736334cf15203309a3e63c0ca7",
+          "src/engcore/inference/field_observation.py": "559f01cbbb3f15b0acee82712520a94e370ad52fee913232f99ba7fcaa051b02",
+          "src/engcore/inference/grid.py": "5ee07bcfe9c91d78c81d4a0034b7b23bf0136cb571b32a9da1f2f6771ad33a96",
+          "src/engcore/inference/parameters.py": "5c78d48518d0b737cb23098018533444f1bedf305ac7ef8a28aa27b86745001f",
+          "src/engcore/inference/split.py": "468993b696a45f7be5e7e3b22a977479c52733a6f85163780d87952049f60dde"
         },
         "patterns": [
           "src/engcore/inference/**/*.py"
@@ -326,13 +345,13 @@
         "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
       }
     },
-    "file_count": 72
+    "file_count": 76
   },
   "notes": {},
   "repository": {
-    "branch": "claude/integrate-sprints-1-7",
+    "branch": "claude/calibration-uq-sprint-8",
     "clean": true,
-    "commit": "61300036b69eb7396783799f6c5570d26b66f491",
+    "commit": "e090d29e21283f12b1f641e3e1f3975ef30d3a7b",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
