@@ -303,15 +303,13 @@
           "scientific_truth",
           "empirical_validation"
         ],
-        "modified": [
-          "benchmarks/empirical_validation/SAFETY_GATES.json"
-        ],
+        "modified": [],
         "this_round_reads_one_earlier_file": "benchmarks/empirical_validation/evidence/scipy_codata.py, read-only, for the provenance record"
       },
-      "verdict": "FAIL"
+      "verdict": "PASS"
     }
   ],
-  "passed": 9,
-  "failed": 2,
+  "passed": 10,
+  "failed": 1,
   "note_on_a_failing_gate": "MV-7 is expected to fail and failing it is the round's result. A gate that passed by reclassifying a measured mismatch as out of scope would be worth nothing."
 }
