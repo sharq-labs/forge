@@ -65,6 +65,12 @@ from ...inference.parameters import (
     ParameterIdentity,
 )
 from ...scientific.errors import InvalidScientificProblem
+from ...scientific.models.curves import (
+    DeclaredCurve,
+    Interpolation,
+    PolynomialForm,
+    TabulatedForm,
+)
 from ...scientific.ir.problem import ModelReference
 from ...scientific.results.provenance import ProvenanceRecord
 from ...scientific.results.result import ScientificResult
@@ -212,15 +218,21 @@ def build_ocv_chord_parameter_set(
     )
 
 
-def ocv_prediction(
+def _solve_and_admit(
     fixed: FixedCellDeclaration,
     condition: RestedOcvCondition,
+    cell: CellSpecification,
     *,
-    ocv_at_empty: Quantity,
-    ocv_at_full: Quantity,
+    run_key: str,
+    parameter_inputs: Mapping[str, Quantity],
+    extra_metadata: Mapping[str, str] | None = None,
 ) -> AdmissibleAnalyticPrediction:
-    """One chord candidate at one condition, through the production solver, admitted."""
-    cell = fixed.cell(ocv_at_empty=ocv_at_empty, ocv_at_full=ocv_at_full)
+    """The one admission path every OCV prediction takes, chord or curve.
+
+    Prepare, solve, extract, validate, a ScientificResult with provenance, and
+    analytic admission. ``run_key`` is what makes two predictions the same run;
+    ``parameter_inputs`` are the candidate values the caller is sweeping.
+    """
     load = condition.load(fixed)
     problem = build_battery_problem(cell, load)
     solver = BatteryCellSolver()
@@ -240,22 +252,13 @@ def ocv_prediction(
             f"the voltage at some other state of charge"
         )
 
-    empty_v = ocv_at_empty.magnitude_in(ctx.VOLTAGE_UNIT)
-    full_v = ocv_at_full.magnitude_in(ctx.VOLTAGE_UNIT)
-    run_id = "battery-ocv-" + hashlib.sha256(
-        (
-            f"{fixed.cell_id}|{condition.condition_id}|{target!r}|"
-            f"{empty_v!r}|{full_v!r}|"
-            f"{condition.conditioning_current.magnitude_in(ctx.CURRENT_UNIT)!r}"
-        ).encode("utf-8")
-    ).hexdigest()[:16]
+    run_id = "battery-ocv-" + hashlib.sha256(run_key.encode("utf-8")).hexdigest()[:16]
     provenance = ProvenanceRecord(
         run_id=run_id,
         models=((RINT_MODEL_REF.model_id, RINT_MODEL_REF.version),),
         solvers=((SOLVER_ID, SOLVER_VERSION),),
         inputs={
-            ctx.OCV_AT_EMPTY: ocv_at_empty,
-            ctx.OCV_AT_FULL: ocv_at_full,
+            **parameter_inputs,
             ctx.NOMINAL_CAPACITY: fixed.nominal_capacity,
             ctx.INTERNAL_RESISTANCE: fixed.internal_resistance,
             ctx.COULOMBIC_EFFICIENCY: fixed.coulombic_efficiency,
@@ -271,6 +274,7 @@ def ocv_prediction(
                 "cell to its target state of charge; the compared quantity is "
                 "the model's open-circuit voltage at the end of it"
             ),
+            **(extra_metadata or {}),
         },
     )
     result = ScientificResult(
@@ -285,7 +289,7 @@ def ocv_prediction(
         validity_not_assessed={
             RINT_MODEL_REF.model_id: (
                 "not assessed by this forward evaluation: a calibration sweeps "
-                "chord candidates, and an applicability verdict about a "
+                "OCV candidates, and an applicability verdict about a "
                 "candidate is a statement about a declaration the study is "
                 "still choosing. Applicability is assessed once, against the "
                 "calibrated cell, where it means something"
@@ -303,6 +307,31 @@ def ocv_prediction(
         analytic_basis=ANALYTIC_BASIS,
         verification_ref=f"solver:{SOLVER_ID}@{SOLVER_VERSION}",
         metadata={"condition_id": condition.condition_id},
+    )
+
+
+def ocv_prediction(
+    fixed: FixedCellDeclaration,
+    condition: RestedOcvCondition,
+    *,
+    ocv_at_empty: Quantity,
+    ocv_at_full: Quantity,
+) -> AdmissibleAnalyticPrediction:
+    """One chord candidate at one condition, through the production solver, admitted."""
+    cell = fixed.cell(ocv_at_empty=ocv_at_empty, ocv_at_full=ocv_at_full)
+    target = condition.target_state_of_charge.magnitude_in(ctx.DIMENSIONLESS)
+    empty_v = ocv_at_empty.magnitude_in(ctx.VOLTAGE_UNIT)
+    full_v = ocv_at_full.magnitude_in(ctx.VOLTAGE_UNIT)
+    return _solve_and_admit(
+        fixed,
+        condition,
+        cell,
+        run_key=(
+            f"{fixed.cell_id}|{condition.condition_id}|{target!r}|"
+            f"{empty_v!r}|{full_v!r}|"
+            f"{condition.conditioning_current.magnitude_in(ctx.CURRENT_UNIT)!r}"
+        ),
+        parameter_inputs={ctx.OCV_AT_EMPTY: ocv_at_empty, ctx.OCV_AT_FULL: ocv_at_full},
     )
 
 
@@ -430,6 +459,281 @@ def ocv_forward_evaluator(
                 ocv_at_full=Quantity(full_v, ctx.VOLTAGE_UNIT),
             )
             out.append(prediction.value(OCV_OBSERVABLE))
+        return out
+
+    return evaluate
+
+
+# =====================================================================
+# SOC-dependent OCV: the existing DeclaredCurve, parameterized
+# =====================================================================
+#
+# The frozen curve module offers a TabulatedForm (measured samples) and a
+# PolynomialForm (fitted correlations). Either can be CALIBRATED by holding its
+# shape declaration fixed -- the knot or node positions, the interpolation, the
+# interval -- and estimating only the voltages. The positions are declared by
+# the caller and never read from data: a parameterization whose nodes sat at
+# the measured states of charge would be one free parameter per measurement,
+# which is memorizing the data rather than fitting a curve to it.
+#
+# Nothing here is dataset-specific. The Lagrange step below is the textbook map
+# from a polynomial's values at n + 1 distinct nodes to its n + 1 coefficients.
+
+
+def _node_name(node: float) -> str:
+    return f"{ctx.OCV_CURVE}@z={node:g}"
+
+
+@dataclass(frozen=True)
+class PolynomialNodeParameterization:
+    """A degree ``len(nodes) - 1`` polynomial OCV, parameterized by its voltages at ``nodes``.
+
+    Voltages rather than coefficients, so every parameter is an open-circuit
+    voltage in volts with a physical bound, and an identifiability judgement
+    that compares an interval with its own estimate is not handed a curvature
+    coefficient that happens to sit near zero.
+    """
+
+    nodes: tuple[float, ...]
+    lower: float = 0.0
+    upper: float = 1.0
+    source: str = ""
+
+    def __post_init__(self) -> None:
+        nodes = tuple(float(n) for n in self.nodes)
+        if len(nodes) < 2 or len(set(nodes)) != len(nodes):
+            raise InvalidScientificProblem(
+                "a polynomial OCV needs at least two distinct nodes"
+            )
+        if any(not self.lower <= n <= self.upper for n in nodes):
+            raise InvalidScientificProblem(
+                f"polynomial nodes {nodes} must lie in the declared interval "
+                f"[{self.lower}, {self.upper}]"
+            )
+        object.__setattr__(self, "nodes", tuple(sorted(nodes)))
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        return tuple(_node_name(n) for n in self.nodes)
+
+    @property
+    def degree(self) -> int:
+        return len(self.nodes) - 1
+
+    def coefficients(self, voltages: Sequence[float]) -> tuple[float, ...]:
+        """Ascending monomial coefficients about 0 through ``(node, voltage)``."""
+        import numpy as np
+
+        if len(voltages) != len(self.nodes):
+            raise InvalidScientificProblem(
+                f"{len(self.nodes)} node voltages expected, got {len(voltages)}"
+            )
+        vandermonde = np.vander(np.asarray(self.nodes, dtype=np.float64), increasing=True)
+        solved = np.linalg.solve(vandermonde, np.asarray(voltages, dtype=np.float64))
+        return tuple(float(c) for c in solved)
+
+    def curve(self, voltages: Sequence[float]) -> DeclaredCurve:
+        return DeclaredCurve(
+            quantity=ctx.OCV_CURVE,
+            against=ctx.STATE_OF_CHARGE,
+            against_unit=ctx.DIMENSIONLESS,
+            unit=ctx.VOLTAGE_UNIT,
+            lower=self.lower,
+            upper=self.upper,
+            form=PolynomialForm(coefficients=self.coefficients(voltages), reference=0.0),
+            source=self.source,
+            description=(
+                f"degree-{self.degree} polynomial OCV through declared nodes "
+                f"{list(self.nodes)}"
+            ),
+        )
+
+
+@dataclass(frozen=True)
+class TabulatedKnotParameterization:
+    """A tabulated OCV with declared knot positions whose voltages are estimated."""
+
+    knots: tuple[float, ...]
+    interpolation: Interpolation = Interpolation.LINEAR
+    source: str = ""
+
+    def __post_init__(self) -> None:
+        knots = tuple(float(k) for k in self.knots)
+        if len(knots) < 2 or any(b <= a for a, b in zip(knots, knots[1:])):
+            raise InvalidScientificProblem(
+                "tabulated knots must be at least two and strictly ascending"
+            )
+        object.__setattr__(self, "knots", knots)
+        object.__setattr__(self, "interpolation", Interpolation(self.interpolation))
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        return tuple(_node_name(k) for k in self.knots)
+
+    @property
+    def lower(self) -> float:
+        return self.knots[0]
+
+    @property
+    def upper(self) -> float:
+        return self.knots[-1]
+
+    def curve(self, voltages: Sequence[float]) -> DeclaredCurve:
+        if len(voltages) != len(self.knots):
+            raise InvalidScientificProblem(
+                f"{len(self.knots)} knot voltages expected, got {len(voltages)}"
+            )
+        return DeclaredCurve(
+            quantity=ctx.OCV_CURVE,
+            against=ctx.STATE_OF_CHARGE,
+            against_unit=ctx.DIMENSIONLESS,
+            unit=ctx.VOLTAGE_UNIT,
+            lower=self.lower,
+            upper=self.upper,
+            form=TabulatedForm(
+                samples=tuple(zip(self.knots, (float(v) for v in voltages))),
+                interpolation=self.interpolation,
+            ),
+            source=self.source,
+            description=f"tabulated OCV with declared knots {list(self.knots)}",
+        )
+
+
+CurveParameterization = PolynomialNodeParameterization | TabulatedKnotParameterization
+
+
+def build_curve_parameter_set(
+    parameterization: CurveParameterization, *, lower: Quantity, upper: Quantity
+) -> CalibrationParameterSet:
+    bounds = ParameterBounds(lower, upper)
+    return CalibrationParameterSet(
+        tuple(
+            ParameterIdentity(
+                name=name, unit=ctx.VOLTAGE_UNIT, model=RINT_MODEL_REF, bounds=bounds
+            )
+            for name in parameterization.names
+        )
+    )
+
+
+def _curve_cell(
+    fixed: FixedCellDeclaration, curve: DeclaredCurve
+) -> CellSpecification:
+    return CellSpecification(
+        cell_id=fixed.cell_id,
+        nominal_capacity=fixed.nominal_capacity,
+        internal_resistance=fixed.internal_resistance,
+        coulombic_efficiency=fixed.coulombic_efficiency,
+        chemistry=fixed.chemistry,
+        open_circuit_voltage_curve=curve,
+    )
+
+
+def curve_ocv_prediction(
+    fixed: FixedCellDeclaration,
+    condition: RestedOcvCondition,
+    *,
+    parameterization: CurveParameterization,
+    voltages: Sequence[float],
+) -> AdmissibleAnalyticPrediction:
+    """One curve candidate at one condition, through the production solver, admitted."""
+    curve = parameterization.curve(voltages)
+    cell = _curve_cell(fixed, curve)
+    target = condition.target_state_of_charge.magnitude_in(ctx.DIMENSIONLESS)
+    return _solve_and_admit(
+        fixed,
+        condition,
+        cell,
+        run_key=(
+            f"{fixed.cell_id}|{condition.condition_id}|{target!r}|curve:"
+            f"{curve.fingerprint}|"
+            f"{condition.conditioning_current.magnitude_in(ctx.CURRENT_UNIT)!r}"
+        ),
+        parameter_inputs={
+            name: Quantity(float(v), ctx.VOLTAGE_UNIT)
+            for name, v in zip(parameterization.names, voltages)
+        },
+        extra_metadata={"ocv_curve_fingerprint": curve.fingerprint},
+    )
+
+
+def curve_candidate_refusal(
+    fixed: FixedCellDeclaration,
+    *,
+    parameterization: CurveParameterization,
+    voltages: Sequence[float],
+) -> str | None:
+    """Why this curve candidate is not a cell the domain can declare, or ``None``.
+
+    Same contract as :func:`candidate_refusal`: only the DECLARATION is judged,
+    and a refused candidate is refused, never scored.
+    """
+    try:
+        _curve_cell(fixed, parameterization.curve(voltages))
+    except InvalidScientificProblem as exc:
+        return str(exc)
+    return None
+
+
+def curve_forward_table(
+    observations: ObservationSet,
+    grid_points: Sequence[Sequence[float]],
+    *,
+    fixed: FixedCellDeclaration,
+    conditions: Mapping[str, RestedOcvCondition],
+    parameterization: CurveParameterization,
+    counter: dict[str, int] | None = None,
+) -> AdmittedForwardTable:
+    _require_ocv_observations(observations)
+    selected = _conditions_for(observations, conditions)
+    rows = []
+    for point in grid_points:
+        voltages = tuple(float(v) for v in point)
+        refusal = curve_candidate_refusal(
+            fixed, parameterization=parameterization, voltages=voltages
+        )
+        if refusal is not None:
+            rows.append(AdmittedForwardRow.rejected(voltages, observations, refusal))
+            continue
+        predictions = {}
+        for condition in selected:
+            if counter is not None:
+                counter["n"] = counter.get("n", 0) + 1
+            predictions[condition.condition_id] = curve_ocv_prediction(
+                fixed, condition, parameterization=parameterization, voltages=voltages
+            )
+        rows.append(AdmittedForwardRow(voltages, observations, predictions))
+    return AdmittedForwardTable.from_rows(
+        parameter_names=parameterization.names, observations=observations, rows=rows
+    )
+
+
+def curve_forward_evaluator(
+    observations: ObservationSet,
+    *,
+    fixed: FixedCellDeclaration,
+    conditions: Mapping[str, RestedOcvCondition],
+    parameterization: CurveParameterization,
+    counter: dict[str, int] | None = None,
+):
+    _require_ocv_observations(observations)
+    selected = _conditions_for(observations, conditions)
+
+    def evaluate(vector: Sequence[float]):
+        voltages = tuple(float(v) for v in vector)
+        if curve_candidate_refusal(
+            fixed, parameterization=parameterization, voltages=voltages
+        ) is not None:
+            return None
+        out: list[Quantity] = []
+        for condition in selected:
+            if counter is not None:
+                counter["n"] = counter.get("n", 0) + 1
+            out.append(
+                curve_ocv_prediction(
+                    fixed, condition, parameterization=parameterization, voltages=voltages
+                ).value(OCV_OBSERVABLE)
+            )
         return out
 
     return evaluate
