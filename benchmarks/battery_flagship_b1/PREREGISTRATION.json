@@ -1,0 +1,135 @@
+{
+  "schema": "battery_flagship_b1_preregistration/1",
+  "written_before_any_calibration_on_measured_data": true,
+  "b1_baseline_commit": "f89a32ada21cfaa036db908adf739761b8e90c2f",
+  "what_was_already_known_when_this_was_written": [
+    "benchmarks/model_measurement_validation (committed 2026-09-11) had already compared battery.cell.rint_ocv's AFFINE CHORD against the same S-OCV cells with both endpoints PINNED to measured values, and reported a single-signed, monotone miss of up to 293 mV for BATT_001. It used no Core calibration, no posterior, no identifiability, no predictive UQ and no adequacy scoring.",
+    "The model's own record states that the chord is a linearisation of a curve with a knee near empty and a plateau near full.",
+    "Consequence, stated rather than hidden: the choice to hold out the 0 % state of charge was made knowing a knee exists there. It is held out because that is the region the model's own SOC-window condition names as where the chord fails, which is exactly the applicability question Phase 14 asks. It is not held out to manufacture a failure, and the interpolation points 0.4 and 0.6 are held out alongside it so a pass on the plateau is possible and would be reported."
+  ],
+  "experiment": {
+    "source_id": "S-OCV",
+    "dataset_doi": "10.21227/651q-8v82",
+    "file": "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+    "file_sha256": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+    "cell": "BATT_001, Lithium Werks APR 18650, LiFePO4, nominal 1100 mAh, nominal 3.3 V, declared internal resistance 12.6 mOhm",
+    "sheet": "24h_Discharge_APR",
+    "procedure_as_published": "Cells were discharged from 100% SOC to target SOC levels of 80%, 60%, 50%, 40%, 20%, and 0%, followed by 24 h raw OCV measurement. Standard discharge 0.2C to 2.0 V. Ambient 23 +/- 2 degC. 60 s sampling.",
+    "why_this_experiment_and_only_this_one": "It is the only in-repository measured battery experiment whose every model input is stated: the state of charge is the experiment's controlled variable, the current is not needed for the compared quantity, and the cell is the only one of eight with interior states of charge on the discharge branch. S-DCHG (the constant-current discharge curves) was rejected for this purpose because it never records the discharge current, and its rate labels contradict its durations by more than 2x.",
+    "why_the_discharge_branch": "battery.cell.rint_ocv declares 'discharge only' and excludes hysteresis. The discharge-conditioned branch is the in-claim case. The charge-conditioned branch is analysed only as the magnitude of an excluded effect and never enters calibration or the verdict."
+  },
+  "observable": {
+    "model": "battery.cell.rint_ocv@0.1.0",
+    "model_output": "open_circuit_voltage",
+    "measured_quantity": "the relaxed open-circuit voltage: the trace sample at t = 24 h, as published, no smoothing, no fitting, no resampling",
+    "mapping": "The model's open_circuit_voltage output at the END of the conditioning discharge interval is its claim about the equilibrium OCV at that state of charge. The 24 h relaxed voltage is the dataset's measurement of that equilibrium quantity. Terminal voltage under load is NOT measured by this dataset and is not compared.",
+    "representation_through_the_production_solver": "Each observation is represented as the conditioning discharge the dataset describes: a DischargeLoad starting at state of charge 1.0, at a constant current of 0.2C (the dataset's standard discharge; the conditioning current itself is not stated numerically), for exactly the duration that brings the coulomb counter to the target state of charge. The compared quantity OCV(z_end) does not depend on the current; this is proved by evaluation at a second current, not asserted.",
+    "measurement_standard_uncertainty": "combined_standard_uncertainty_v from benchmarks/model_measurement_validation/audit/evidence.py::ocv_uncertainty, UNCHANGED: voltage acquisition 28 uV, state-of-charge 1.5 % relative times the local measured dOCV/dSOC, entropic term 0.2 mV/K over a 2 K band, and the measured final-hour relaxation drift. That budget was committed before B1 existed, so it cannot have been tuned to this result.",
+    "noise_inflation": "FORBIDDEN. No observation sigma is widened for any reason."
+  },
+  "fixed_declarations": {
+    "nominal_capacity": "1.1 ampere_hour (dataset)",
+    "internal_resistance": "0.0126 ohm (dataset). NOT calibrated: at open circuit it has no effect on the compared quantity, so it is not identifiable from this experiment, and calibrating it would be spending parameter freedom on nothing.",
+    "coulombic_efficiency": "1.0 (Plett's discharge convention, and the value under which the dataset's charge-integrated state of charge is defined)",
+    "cell_temperature": "296.15 kelvin (the chamber setpoint, 23 degC)",
+    "conditioning_initial_state_of_charge": "1.0",
+    "conditioning_current": "0.22 ampere (0.2C of 1.1 Ah)"
+  },
+  "parameters": [
+    {
+      "canonical_name": "open_circuit_voltage_at_empty",
+      "physical_meaning": "the chord's open-circuit voltage at a state of charge of 0",
+      "unit": "volt",
+      "bounds": [
+        2.0,
+        3.6
+      ],
+      "bounds_basis": "the cell's published discharge cutoff (2.0 V) and charge voltage (3.6 V)",
+      "initial_estimate": 3.2,
+      "initial_basis": "AMENDED (A1): nominal 3.3 V minus 0.1 V; the original equal-start value was not a declarable cell",
+      "status": "CALIBRATED"
+    },
+    {
+      "canonical_name": "open_circuit_voltage_at_full",
+      "physical_meaning": "the chord's open-circuit voltage at a state of charge of 1",
+      "unit": "volt",
+      "bounds": [
+        2.0,
+        3.6
+      ],
+      "bounds_basis": "as above",
+      "initial_estimate": 3.4,
+      "initial_basis": "AMENDED (A1): nominal 3.3 V plus 0.1 V",
+      "status": "CALIBRATED"
+    }
+  ],
+  "parameter_semantics_warning": "Fitted over a window that does not include both ends of the charge axis, these two numbers are the chord's intercepts at z = 0 and z = 1, which is what the model record defines them as. They are NOT claims about the cell's measured OCV at 0 % or 100 %.",
+  "split": {
+    "unit_of_splitting": "one relaxation trace = one conditioned state of charge = one independent experiment. Adjacent time samples are never split across partitions because time samples are never observations: only the t = 24 h value of each trace is.",
+    "calibration_state_of_charge": [
+      0.2,
+      0.5,
+      0.8
+    ],
+    "held_out_state_of_charge": [
+      0.0,
+      0.4,
+      0.6
+    ],
+    "rationale": "Calibration spans the plateau at its ends and centre. Held out: two interpolations on the plateau (0.4, 0.6) and one extrapolation into the low-SOC knee (0.0). Each held-out point is scored separately so an adequate plateau and an inadequate knee can both be seen.",
+    "leakage_proof_required": "calibration and held-out sets disjoint by condition identity AND by material observation content, through the frozen ObservationSplit"
+  },
+  "calibration": {
+    "engine": "engcore.inference.calibrate (frozen): bounded trust-region least squares on standardized residuals",
+    "max_evaluations": 2000,
+    "seed": 20260912
+  },
+  "posterior": {
+    "engine": "engcore.inference.gaussian_grid_posterior (frozen), over an AdmittedForwardTable whose every value is an admitted production-solver prediction",
+    "grid": "41 x 41 points, each axis centred on an independent closed-form weighted least-squares estimate of the chord and spanning +/- 6 of its standard errors",
+    "grid_resolution_rule": "if assess_identifiability raises GridResolutionError the grid is refined and the refusal is REPORTED; a collapsed grid is never read as an identifiability verdict"
+  },
+  "identifiability": {
+    "engine": "engcore.inference.assess_identifiability (frozen), default thresholds, unmodified"
+  },
+  "uncertainty": {
+    "engine": "engcore.uq.posterior_predictive_uq (frozen)",
+    "credible_mass": 0.95,
+    "sources": [
+      "PARAMETER_UNCERTAINTY",
+      "MEASUREMENT_UNCERTAINTY",
+      "MODEL_DISCREPANCY_NOT_MODELLED"
+    ]
+  },
+  "adequacy_rule": {
+    "per_observation_engine": "engcore.adequacy.assess_predictive_observation (frozen)",
+    "study_rule": "chi-square = sum over held-out observations of the frozen standardized residuals squared, on n = 3 degrees of freedom. p < 0.01 => MODEL_INADEQUATE (inadequate_for_declared_study). Otherwise adequate_for_declared_study. Any held-out observation that cannot be scored => inconclusive.",
+    "why_this_rule": "It is the rule Sprint 8 declared for its own flagship (HELD_OUT_CHI_SQUARE_ALPHA = 0.01), reused rather than chosen here. The frozen Core scores observations one at a time and declares no study-level decision function; the rule is study policy and is stated here before it is applied.",
+    "threshold_tuning": "FORBIDDEN"
+  },
+  "secondary_analyses_not_verdict_bearing": [
+    "S1 applicability boundary: calibrate on the plateau core {0.4, 0.5, 0.6} and score 0.8, 0.2 and 0.0 one at a time, each at a two-sided predictive tail probability of 0.01.",
+    "S2 residual structure against state of charge: sign pattern and monotonicity of held-out and calibration residuals.",
+    "S3 relaxation time axis: for each discharge-branch trace, the earliest time after which the voltage stays within that point's expanded measurement uncertainty of its 24 h value. This measures where the model's equilibrium-OCV assumption becomes comparable to a measurement; it is not scored against the model.",
+    "S4 hysteresis: charge-branch minus discharge-branch relaxed OCV at each shared state of charge. An excluded effect, reported as a magnitude only.",
+    "S5 conditioning-current invariance: every held-out prediction re-evaluated at 1C instead of 0.2C must be identical."
+  ],
+  "amendments": [
+    {
+      "amendment": "A1",
+      "made_before_any_calibration_on_measured_data": true,
+      "found_by": "the synthetic control in tests/domains/battery/test_battery_ocv_calibration.py, the first time calibrate() was run through the battery adapter",
+      "what_was_wrong": "Both parameters were preregistered with an initial estimate of 3.3 V. The battery domain refuses a cell whose open_circuit_voltage_at_full does not exceed open_circuit_voltage_at_empty ('a cell whose open-circuit voltage does not rise with charge has no invertible relation between the two'), so the preregistered starting point is not a cell and calibrate() returned FAILED after one evaluation. The error is in this protocol, not in the domain.",
+      "change": "initial estimates become open_circuit_voltage_at_empty = 3.2 V and open_circuit_voltage_at_full = 3.4 V: the published nominal voltage 3.3 V, moved 0.1 V each way, the smallest symmetric step that makes the starting point a cell the domain can declare. Neither the split, the bounds, the noise, the grid, nor the decision rule changes.",
+      "consequence_for_the_adapter": "The same control showed that a search or grid can propose a non-cell. The adapter now returns None from the calibration evaluator and a rejected (zero-mass) row from the forward table for such a candidate, which is the frozen Core's stated contract for inadmissible points, instead of raising."
+    },
+    {
+      "amendment": "A2",
+      "made_before_any_calibration_on_measured_data": true,
+      "found_by": "reading ocv_uncertainty() while writing the harness, before it was run",
+      "what_was_wrong": "The preregistered measurement budget takes each point's state-of-charge term from the local slope between that point's MEASURED NEIGHBOURS on the sheet. Applied to the whole sheet, the calibration point at 0.2 would take its slope from the measured voltages at 0.0 and 0.4, and the point at 0.5 from 0.4 and 0.6 -- all three held out. The held-out measured values would then set the weights of the calibration likelihood. That is leakage of held-out content into calibration, however indirect, and it would survive every identity check because no held-out observation would appear in the calibration set.",
+      "change": "The function ocv_uncertainty() is used unchanged; only the set of traces it is handed changes. CALIBRATION observations take their sigma from the calibration traces alone ({0.2, 0.5, 0.8}, and in S1 {0.4, 0.5, 0.6}). HELD-OUT observations take their sigma from the whole discharge sheet: that is a property of the held-out measurement, calibration never sees it, and it only enters the scoring of the held-out point itself.",
+      "what_it_does_not_change": "No sigma is inflated. The split, bounds, initial point, grid and decision rule are unchanged."
+    }
+  ]
+}

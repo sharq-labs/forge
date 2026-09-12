@@ -1,0 +1,79 @@
+{
+  "file": "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+  "sheets": {
+    "24h_Discharge_APR": {
+      "columns": [
+        "BATT_001_OCV_V_00-SOC",
+        "BATT_001_OCV_V_20-SOC",
+        "BATT_001_OCV_V_40-SOC",
+        "BATT_001_OCV_V_50-SOC",
+        "BATT_001_OCV_V_60-SOC",
+        "BATT_001_OCV_V_80-SOC"
+      ],
+      "labels_match_published_inventory": true,
+      "duplicate_labels": [],
+      "rows": 1441,
+      "timestamps_finite": true,
+      "timestamps_strictly_increasing": true,
+      "duplicate_timestamps": 0,
+      "first_timestamp_h": 0.0,
+      "last_timestamp_h": 24.0,
+      "sampling_step_s_min_max": [
+        59.99999999999659,
+        60.00000000000938
+      ],
+      "missing_cells": 0,
+      "all_values_finite": true,
+      "physically_impossible_values": 0,
+      "values_outside_published_window": 0,
+      "voltage_range_v": [
+        2.0123,
+        3.331
+      ]
+    },
+    "24h_Charge_APR": {
+      "columns": [
+        "BATT_001_OCV_V_20-SOC",
+        "BATT_001_OCV_V_40-SOC",
+        "BATT_001_OCV_V_50-SOC",
+        "BATT_001_OCV_V_60-SOC",
+        "BATT_001_OCV_V_80-SOC",
+        "BATT_001_OCV_V_100-SOC"
+      ],
+      "labels_match_published_inventory": true,
+      "duplicate_labels": [],
+      "rows": 1441,
+      "timestamps_finite": true,
+      "timestamps_strictly_increasing": true,
+      "duplicate_timestamps": 0,
+      "first_timestamp_h": 0.0,
+      "last_timestamp_h": 24.0,
+      "sampling_step_s_min_max": [
+        59.99999999999659,
+        60.00000000000938
+      ],
+      "missing_cells": 0,
+      "all_values_finite": true,
+      "physically_impossible_values": 0,
+      "values_outside_published_window": 0,
+      "voltage_range_v": [
+        3.248,
+        3.594
+      ]
+    }
+  },
+  "metadata": {
+    "chemistry": "LiFePO4",
+    "nominal_capacity_mAh": "1100",
+    "nominal_voltage_v": "3.3",
+    "internal_resistance_mohm": "12.6",
+    "relaxation_duration_h": "24"
+  },
+  "metadata_consistent_with_fixed_declarations": true,
+  "transformations": [
+    "none to the raw file; it is opened read-only",
+    "the relaxed value of each trace is its sample at t = 24 h, as published"
+  ],
+  "problems": [],
+  "passed": true
+}
