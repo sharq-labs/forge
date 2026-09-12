@@ -43,7 +43,15 @@ from tools.certification.core_certificate import (
     write_certificate,
 )
 
-ROOT = repo_root(pathlib.Path(__file__))
+try:
+    ROOT = repo_root(pathlib.Path(__file__))
+except CertificationError:  # pragma: no cover - a tree without .git
+    # The mutation harness copies `tests/` into a scratch directory that is not
+    # a repository. This module is not among the suites it runs there, but a
+    # module-level raise would be a collection error for anything that did
+    # collect the directory, so it skips instead.
+    pytest.skip("not inside a repository checkout", allow_module_level=True)
+
 CERTIFICATE_PATH = ROOT / "certification" / "current_core_v2.json"
 V1_PATH = ROOT / "certification" / "current_core_v1.json"
 
