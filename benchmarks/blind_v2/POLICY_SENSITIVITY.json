@@ -1,0 +1,77 @@
+{
+  "condition_verdicts_policy_boundary_dependent": 14,
+  "condition_verdicts_robust": 377,
+  "frozen_truth_changed": false,
+  "per_bound": {
+    "convection_conductance_agreement_ratio": {
+      "cases_where_this_bound_was_computable": 95,
+      "cases_whose_condition_verdict_moves_under_an_alternative": 5,
+      "class": "INTERNAL_POLICY",
+      "per_variant_moves": {
+        "loose (factor 3)": 4,
+        "tight (factor 1.5)": 1
+      },
+      "shipped_bounds": [
+        0.5,
+        2.0
+      ],
+      "why_it_is_a_convention": "the record itself says no source prints a factor for this comparison. Correlation scatter, shape idealisation and film property evaluation are real; where they stop is a judgement."
+    },
+    "geometry_route_ratio": {
+      "cases_where_this_bound_was_computable": 100,
+      "cases_whose_condition_verdict_moves_under_an_alternative": 2,
+      "class": "INTERNAL_POLICY",
+      "per_variant_moves": {
+        "generous (factor 4)": 2
+      },
+      "shipped_bounds": [
+        0.3333333333333333,
+        3.0
+      ],
+      "why_it_is_a_convention": "the shape factor between L_c and V/A_s is 1 for a plane wall, 2 for a long cylinder and 3 for a sphere. Admitting the whole range to the sphere is a choice; stopping at the cylinder is another."
+    },
+    "polarization_unmodelled_fraction": {
+      "cases_where_this_bound_was_computable": 103,
+      "cases_whose_condition_verdict_moves_under_an_alternative": 0,
+      "class": "INTERNAL_POLICY",
+      "per_variant_moves": {},
+      "shipped_bounds": [
+        null,
+        0.05
+      ],
+      "why_it_is_a_convention": "the relaxation form is standard; the 5% budget is a repository choice."
+    },
+    "reference_reduced_debye_temperature": {
+      "cases_where_this_bound_was_computable": 93,
+      "cases_whose_condition_verdict_moves_under_an_alternative": 7,
+      "class": "INTERNAL_POLICY",
+      "per_variant_moves": {
+        "stricter (1/4)": 7
+      },
+      "shipped_bounds": [
+        0.2,
+        null
+      ],
+      "why_it_is_a_convention": "chosen to admit beryllium, which clears theta_D/5 by 2%. A threshold picked to accept one real datasheet is defensible and is still a choice."
+    }
+  },
+  "policy_boundary_dependent_cases": [
+    "V2-ELECTRICAL_MATERIAL-00035",
+    "V2-ELECTRICAL_MATERIAL-00039",
+    "V2-ELECTRICAL_MATERIAL-00048",
+    "V2-ELECTRICAL_MATERIAL-00058",
+    "V2-ELECTRICAL_MATERIAL-00100",
+    "V2-ELECTRICAL_MATERIAL-00111",
+    "V2-ELECTRICAL_MATERIAL-00115",
+    "V2-THERMAL_LUMPED-00002",
+    "V2-THERMAL_LUMPED-00031",
+    "V2-THERMAL_LUMPED-00034",
+    "V2-THERMAL_LUMPED-00040",
+    "V2-THERMAL_LUMPED-00047",
+    "V2-THERMAL_LUMPED-00052",
+    "V2-THERMAL_LUMPED-00055"
+  ],
+  "production_thresholds_changed": false,
+  "schema": "blind_v2_policy_sensitivity/1",
+  "what_this_measures": "scientific defensibility, not correctness. A condition verdict that survives every reasonable alternative value rests on the physics; one that moves rests on the convention."
+}

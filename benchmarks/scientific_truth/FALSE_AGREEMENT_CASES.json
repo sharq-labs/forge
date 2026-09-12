@@ -1,0 +1,13 @@
+{
+  "cases": [],
+  "count": 0,
+  "how_it_was_searched": [
+    "every reference case above is a search: an independent oracle against a runtime the tests already accept",
+    "randomized property testing over the declared domain of five model families, 660 admissible draws",
+    "an external simulator (ngspice) on 66 circuits",
+    "an exact conservation invariant on every applicable model",
+    "a 50-digit arithmetic on the one closed-form model"
+  ],
+  "schema": "scientific_truth_false_agreement/1",
+  "what_this_is": "Cases where the implementation, the existing tests and the published record all agree while an INDEPENDENT oracle disagrees. This is the highest-value class in the round and the hardest to find, because every previous round has already removed the cases where the three disagree with each other."
+}

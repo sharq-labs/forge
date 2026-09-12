@@ -917,6 +917,7 @@ def test_every_derived_name_is_actually_produced_by_the_assembler():
             ctx.SOC_STEP_RESOLUTION_RATIO,
             ctx.CAPACITY_TEMPERATURE_DRIFT_RATIO,
             ctx.CUTOFF_CONSISTENCY_MARGIN,
+            ctx.CUTOFF_REACHABILITY_MARGIN,
             ctx.PEUKERT_EXTRAPOLATION_RATIO,
             ctx.PEUKERT_CAPACITY_RATIO,
             ctx.PEUKERT_TEMPERATURE_DRIFT_RATIO,

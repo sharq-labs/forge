@@ -1,0 +1,366 @@
+{
+  "schema": "error_shape/1",
+  "slab": {
+    "time_refinement": [
+      {
+        "n_steps": 500,
+        "dt_s": 3.6,
+        "observed_relative_error": 0.025761764297634084,
+        "predicted_relative_error": 0.02560698556195618,
+        "predicted_time_term": 0.02496488462008165,
+        "predicted_space_term": 0.0006421009418745279,
+        "ratio": 1.0060443950071132
+      },
+      {
+        "n_steps": 1000,
+        "dt_s": 1.8,
+        "observed_relative_error": 0.01316581060096092,
+        "predicted_relative_error": 0.013124543251915352,
+        "predicted_time_term": 0.012482442310040824,
+        "predicted_space_term": 0.0006421009418745279,
+        "ratio": 1.0031442883956778
+      },
+      {
+        "n_steps": 2000,
+        "dt_s": 0.9,
+        "observed_relative_error": 0.006894975500558244,
+        "predicted_relative_error": 0.00688332209689494,
+        "predicted_time_term": 0.006241221155020412,
+        "predicted_space_term": 0.0006421009418745279,
+        "ratio": 1.0016929911893213
+      },
+      {
+        "n_steps": 4000,
+        "dt_s": 0.45,
+        "observed_relative_error": 0.0037663562557139923,
+        "predicted_relative_error": 0.003762711519384734,
+        "predicted_time_term": 0.003120610577510206,
+        "predicted_space_term": 0.0006421009418745279,
+        "ratio": 1.0009686462303797
+      },
+      {
+        "n_steps": 8000,
+        "dt_s": 0.225,
+        "observed_relative_error": 0.0022037478147630117,
+        "predicted_relative_error": 0.002202406230629631,
+        "predicted_time_term": 0.001560305288755103,
+        "predicted_space_term": 0.0006421009418745279,
+        "ratio": 1.000609144723041
+      }
+    ],
+    "space_refinement": [
+      {
+        "n_cells": 10,
+        "dx_m": 0.012,
+        "observed_relative_error": 0.045010179871666424,
+        "predicted_relative_error": 0.04421507085747999,
+        "predicted_time_term": 0.003120610577510206,
+        "predicted_space_term": 0.04109446027996978,
+        "ratio": 1.0179827601486682
+      },
+      {
+        "n_cells": 20,
+        "dx_m": 0.006,
+        "observed_relative_error": 0.013460173465006152,
+        "predicted_relative_error": 0.013394225647502651,
+        "predicted_time_term": 0.003120610577510206,
+        "predicted_space_term": 0.010273615069992446,
+        "ratio": 1.0049236006051456
+      },
+      {
+        "n_cells": 40,
+        "dx_m": 0.003,
+        "observed_relative_error": 0.005698864376751185,
+        "predicted_relative_error": 0.005689014345008318,
+        "predicted_time_term": 0.003120610577510206,
+        "predicted_space_term": 0.0025684037674981114,
+        "ratio": 1.0017314127097445
+      },
+      {
+        "n_cells": 80,
+        "dx_m": 0.0015,
+        "observed_relative_error": 0.0037663562557139923,
+        "predicted_relative_error": 0.003762711519384734,
+        "predicted_time_term": 0.003120610577510206,
+        "predicted_space_term": 0.0006421009418745279,
+        "ratio": 1.0009686462303797
+      },
+      {
+        "n_cells": 160,
+        "dx_m": 0.00075,
+        "observed_relative_error": 0.00328371686541185,
+        "predicted_relative_error": 0.003281135812978838,
+        "predicted_time_term": 0.003120610577510206,
+        "predicted_space_term": 0.00016052523546863196,
+        "ratio": 1.0007866338305176
+      }
+    ],
+    "observed_spatial_orders_with_the_time_floor_removed": [
+      2.0184158546184747,
+      2.0037090035361467,
+      1.9973562993846872,
+      1.9851536824389353
+    ],
+    "observed_temporal_orders_with_the_space_floor_removed": [
+      1.0041551623595775,
+      1.0020704873524011,
+      1.0010072198850382,
+      1.0004440939872443
+    ],
+    "expected_spatial_order": 2.0,
+    "expected_temporal_order": 1.0,
+    "worst_ratio": 1.0179827601486682,
+    "best_ratio": 1.000609144723041,
+    "verdict": "ERROR_HAS_THE_PREDICTED_SHAPE"
+  },
+  "platinum": {
+    "rows": [
+      {
+        "temperature_degC": 50.0,
+        "observed_deviation": 0.0012091999702672621,
+        "predicted_omitted_term": 0.0012077395716132053,
+        "residual": 0.0012091999702437128,
+        "next_order_prediction": 0.0012077395716132053,
+        "residual_over_next_order": 1.001209199950745
+      },
+      {
+        "temperature_degC": 100.0,
+        "observed_deviation": 0.004169509514062726,
+        "predicted_omitted_term": 0.004152196889627057,
+        "residual": 0.004169509514088343,
+        "next_order_prediction": 0.004152196889627057,
+        "residual_over_next_order": 1.004169509520258
+      },
+      {
+        "temperature_degC": 150.0,
+        "observed_deviation": 0.008259170300992914,
+        "predicted_omitted_term": 0.008191515182080951,
+        "residual": 0.008259170300991325,
+        "next_order_prediction": 0.008191515182080951,
+        "residual_over_next_order": 1.0082591703007975
+      },
+      {
+        "temperature_degC": 200.0,
+        "observed_deviation": 0.01313574742971507,
+        "predicted_omitted_term": 0.01296543672754622,
+        "residual": 0.013135747429703581,
+        "next_order_prediction": 0.01296543672754622,
+        "residual_over_next_order": 1.0131357474288176
+      },
+      {
+        "temperature_degC": 250.0,
+        "observed_deviation": 0.018595620127706023,
+        "predicted_omitted_term": 0.018256135958423427,
+        "residual": 0.018595620127705992,
+        "next_order_prediction": 0.018256135958423427,
+        "residual_over_next_order": 1.0185956201277042
+      },
+      {
+        "temperature_degC": 300.0,
+        "observed_deviation": 0.024510555218897258,
+        "predicted_omitted_term": 0.023924160755630634,
+        "residual": 0.02451055521889578,
+        "next_order_prediction": 0.023924160755630634,
+        "residual_over_next_order": 1.024510555218834
+      },
+      {
+        "temperature_degC": 350.0,
+        "observed_deviation": 0.03079616200212329,
+        "predicted_omitted_term": 0.029876093002041887,
+        "residual": 0.030796162002123983,
+        "next_order_prediction": 0.029876093002041887,
+        "residual_over_next_order": 1.030796162002147
+      },
+      {
+        "temperature_degC": 400.0,
+        "observed_deviation": 0.03739497838861631,
+        "predicted_omitted_term": 0.03604700154487149,
+        "residual": 0.037394978388614275,
+        "next_order_prediction": 0.03604700154487149,
+        "residual_over_next_order": 1.0373949783885579
+      }
+    ],
+    "residual_scaled_by_the_next_order_term": [
+      1.001209199950745,
+      1.004169509520258,
+      1.0082591703007975,
+      1.0131357474288176,
+      1.0185956201277042,
+      1.024510555218834,
+      1.030796162002147,
+      1.0373949783885579
+    ],
+    "relative_spread_of_the_scaled_residual": 0.03557184860298074,
+    "verdict": "RESIDUAL_IS_THE_NEXT_TERM_OF_THE_EXPANSION",
+    "what_this_rules_out": "A deviation that matched at one temperature by coincidence. The residual is not flat and not linear in t: once divided by the next term of the same expansion it is constant to within the spread reported above, across a range where the deviation itself grows by a factor of thirty."
+  },
+  "dc_conditioning": {
+    "rows": [
+      {
+        "circuit": "divider",
+        "condition_number": 1499.5073820536538,
+        "worst_relative_disagreement": 0.0,
+        "round_off_expectation": 3.3295752423027155e-13,
+        "disagreement_in_units_of_the_expectation": 0.0
+      },
+      {
+        "circuit": "current_injection",
+        "condition_number": 10.722577122577125,
+        "worst_relative_disagreement": 0.0,
+        "round_off_expectation": 2.3808904009608167e-15,
+        "disagreement_in_units_of_the_expectation": 0.0
+      },
+      {
+        "circuit": "bridge",
+        "condition_number": 2086.140272856546,
+        "worst_relative_disagreement": 2.5989561633150707e-16,
+        "round_off_expectation": 4.632161927046287e-13,
+        "disagreement_in_units_of_the_expectation": 0.0005610676406064896
+      },
+      {
+        "circuit": "two_source_ladder",
+        "condition_number": 1264.5587856199895,
+        "worst_relative_disagreement": 0.0,
+        "round_off_expectation": 2.8078845595746794e-13,
+        "disagreement_in_units_of_the_expectation": 0.0
+      },
+      {
+        "circuit": "floating_reference",
+        "condition_number": 5289.457627118643,
+        "worst_relative_disagreement": 7.706253935633446e-16,
+        "round_off_expectation": 1.1744955290812527e-12,
+        "disagreement_in_units_of_the_expectation": 0.0006561331009630705
+      }
+    ],
+    "verdict": "DISAGREEMENT_IS_ROUND_OFF",
+    "note": "The bound is ten times kappa * eps rather than kappa * eps itself: the classical backward-error result carries a modest dimension-dependent factor, and stating it as exactly kappa * eps would be claiming a sharper theorem than the one being used."
+  },
+  "ngspice_precision": {
+    "available": true,
+    "rows": [
+      {
+        "circuit": "divider",
+        "node": "n1",
+        "core_v": 12.0,
+        "ngspice_default_format_v": 12.0,
+        "ngspice_twelve_figures_v": 12.0,
+        "relative_difference_default_format": 0.0,
+        "relative_difference_twelve_figures": 0.0
+      },
+      {
+        "circuit": "divider",
+        "node": "n2",
+        "core_v": 3.826086956521739,
+        "ngspice_default_format_v": 3.826087,
+        "ngspice_twelve_figures_v": 3.826086956522,
+        "relative_difference_default_format": 1.1363636395502784e-08,
+        "relative_difference_twelve_figures": 6.824843720467997e-14
+      },
+      {
+        "circuit": "current_injection",
+        "node": "n1",
+        "core_v": 5.797297297297297,
+        "ngspice_default_format_v": 5.797297,
+        "ngspice_twelve_figures_v": 5.797297297297,
+        "relative_difference_default_format": 5.1282051231252325e-08,
+        "relative_difference_twelve_figures": 5.1323876513676534e-14
+      },
+      {
+        "circuit": "current_injection",
+        "node": "n2",
+        "core_v": 5.054054054054054,
+        "ngspice_default_format_v": 5.054054,
+        "ngspice_twelve_figures_v": 5.054054054054,
+        "relative_difference_default_format": 1.0695187267012429e-08,
+        "relative_difference_twelve_figures": 1.0719886060231037e-14
+      },
+      {
+        "circuit": "bridge",
+        "node": "n1",
+        "core_v": 5.0,
+        "ngspice_default_format_v": 5.0,
+        "ngspice_twelve_figures_v": 5.0,
+        "relative_difference_default_format": 0.0,
+        "relative_difference_twelve_figures": 0.0
+      },
+      {
+        "circuit": "bridge",
+        "node": "n2",
+        "core_v": 3.4340418732912785,
+        "ngspice_default_format_v": 3.434042,
+        "ngspice_twelve_figures_v": 3.434041873291,
+        "relative_difference_default_format": 3.689783816515476e-08,
+        "relative_difference_twelve_figures": 8.108344185947379e-14
+      },
+      {
+        "circuit": "bridge",
+        "node": "n3",
+        "core_v": 3.4174428650894155,
+        "ngspice_default_format_v": 3.417443,
+        "ngspice_twelve_figures_v": 3.417442865089,
+        "relative_difference_default_format": 3.947705632765858e-08,
+        "relative_difference_twelve_figures": 1.2163114844316012e-13
+      },
+      {
+        "circuit": "two_source_ladder",
+        "node": "n1",
+        "core_v": 9.0,
+        "ngspice_default_format_v": 9.0,
+        "ngspice_twelve_figures_v": 9.0,
+        "relative_difference_default_format": 0.0,
+        "relative_difference_twelve_figures": 0.0
+      },
+      {
+        "circuit": "two_source_ladder",
+        "node": "n2",
+        "core_v": 8.382583343896563,
+        "ngspice_default_format_v": 8.382583,
+        "ngspice_twelve_figures_v": 8.382583343897,
+        "relative_difference_default_format": 4.102512896965066e-08,
+        "relative_difference_twelve_figures": 5.212996573551646e-14
+      },
+      {
+        "circuit": "two_source_ladder",
+        "node": "n3",
+        "core_v": 4.031233362910381,
+        "ngspice_default_format_v": 4.031233,
+        "ngspice_twelve_figures_v": 4.03123336291,
+        "relative_difference_default_format": 9.002465205730786e-08,
+        "relative_difference_twelve_figures": 9.451909818892328e-14
+      },
+      {
+        "circuit": "two_source_ladder",
+        "node": "n4",
+        "core_v": 3.3000000000000003,
+        "ngspice_default_format_v": 3.3,
+        "ngspice_twelve_figures_v": 3.3,
+        "relative_difference_default_format": 1.345724878333523e-16,
+        "relative_difference_twelve_figures": 1.345724878333523e-16
+      },
+      {
+        "circuit": "floating_reference",
+        "node": "a",
+        "core_v": 2.305084745762712,
+        "ngspice_default_format_v": 2.305085,
+        "ngspice_twelve_figures_v": 2.305084745763,
+        "relative_difference_default_format": 1.1029411763633882e-07,
+        "relative_difference_twelve_figures": 1.250339701056369e-13
+      },
+      {
+        "circuit": "floating_reference",
+        "node": "c",
+        "core_v": -4.494915254237288,
+        "ngspice_default_format_v": -4.49492,
+        "ngspice_twelve_figures_v": -4.49491525424,
+        "relative_difference_default_format": 1.0558069381226208e-06,
+        "relative_difference_twelve_figures": 6.034589620361621e-13
+      }
+    ],
+    "worst_relative_difference_default_format": 1.0558069381226208e-06,
+    "worst_relative_difference_twelve_figures": 6.034589620361621e-13,
+    "improvement_factor": 1749591.9433529796,
+    "newton_tolerance_tightening_changed_anything": false,
+    "verdict": "THE_DEFAULT_DISAGREEMENT_WAS_THE_OUTPUT_FORMAT",
+    "correction_to_the_preregistered_justification": "The plan justified 2e-6 as ngspice's seven significant figures. The default format is six decimal places, so the floor on a two-volt node is 1e-6 relative rather than 1e-7. The number in the plan is unchanged and was met before this was noticed; the justification printed alongside it was wrong and is corrected here rather than quietly restated."
+  }
+}

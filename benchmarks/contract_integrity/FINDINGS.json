@@ -1,0 +1,113 @@
+{
+  "audit_defects": [
+    {
+      "counted_as_core_defect": false,
+      "effect": "one false RECORD_TOO_BROAD",
+      "fixed_by": "an explicit all_of / one_of claim map, read by hand from each clause",
+      "id": "AUD-1",
+      "what": "the clause parser read `body_volume` in the biot_number precondition as a third requirement; the clause says '(declared, or derived from body_volume/surface_area)', an ALTERNATIVE route."
+    },
+    {
+      "counted_as_core_defect": false,
+      "effect": "two false RECORD_TOO_NARROW",
+      "fixed_by": "one isolated context per assembler",
+      "id": "AUD-2",
+      "what": "the DC contexts were merged into one namespace, so a refusal in resistor_rating_context emptied the others and made every DC condition look dependent on rated_power."
+    },
+    {
+      "counted_as_core_defect": false,
+      "effect": "one candidate defect withdrawn before it was recorded",
+      "fixed_by": "reading the claim's scope, then testing the derivations directly",
+      "id": "AUD-3",
+      "what": "the battery exclusion 'no condition here would catch a charge' was read as false because construction refuses a negative current. The claim is scoped to CONDITIONS and is literally true: continuous_c_rate_utilization takes |C|, so a -1C charge reads as a +1C discharge and no condition catches it. The refusal is a separate declaration guard."
+    },
+    {
+      "counted_as_core_defect": false,
+      "effect": "one false SURVIVOR",
+      "fixed_by": "strengthening SC3 into a genuine revert of the CI-1 claim",
+      "id": "AUD-4",
+      "what": "semantic mutation SC3 changed one word rather than the claim, so it survived for a reason that had nothing to do with guard coverage."
+    }
+  ],
+  "confirmed_defects": [
+    {
+      "actual_guarded_runtime_behavior": "On the FORCED route the condition is Re/5e5 with Re = u L / nu, which carries no Prandtl number. The condition is answered without one, and its value is bit-identical whether or not one is supplied. On the NATURAL route it is Ra/1e9 with Ra = Gr Pr, and there the Prandtl number genuinely is required.",
+      "condition": "convection_flow_range_utilization",
+      "defect_class": "SHIPPED_CONTRACT_INTEGRITY",
+      "existing_test_evidence": [
+        "tests/oracles/test_independent_reason_truth.py::test_one_missing_fluid_property_does_not_blank_the_others -- withholding fluid_prandtl_number must NOT blank the forced flow range; docstring: 'A Reynolds number never needed the conductivity ... Over-reporting a gap looks like the safe direction and is not.'",
+        "tests/oracles/test_independent_reason_truth.py::test_withholding_prandtl_on_the_natural_route_does_take_the_flow_range -- the mirror image, pinned so the first test cannot be satisfied by a module that never marks a flow range undecidable",
+        "tests/domains/thermal_models/test_convection_correlations.py::test_the_prandtl_floor_binds_only_the_forced_route",
+        "tests/domains/thermal_models/test_convection_correlations.py::test_the_natural_route_needs_the_operating_point_and_the_forced_one_does_not -- docstring: 'A real asymmetry, not an oversight.'"
+      ],
+      "false_confidence_impact": "NONE at the verdict level. A forced declaration missing a Prandtl number still assesses UNKNOWN overall, through convection_property_range_utilization (0.6/Pr) and convection_conductance_agreement_ratio. The misdescription is confined to one condition's precondition list; the condition itself was correctly evaluated. That is why this is LOW and CORE-1 was not.",
+      "fix": "record only. The precondition list now states the route asymmetry, names which sibling conditions do go UNKNOWN on a forced declaration without a Prandtl number, and cites the two tests that pin it. No executable code changed: the file's code digest is unchanged at bea9ff6f6d880eca.",
+      "id": "CI-1",
+      "minimal_reproducer": "derived_lumped_quantities({surface_area, fluid_conductivity, fluid_kinematic_viscosity, fluid_velocity, convection_length, ambient_conductance, heat_capacity, duration}, initial_temperature=, ambient_temperature=, heat_input=) with NO fluid_prandtl_number returns convection_flow_range_utilization = 0.0333..., identical to the value with a Prandtl number supplied.",
+      "model": "thermal.lumped.first_order_capacity",
+      "old_published_claim": "UNKNOWN unless the convection_length, kinematic viscosity, Prandtl number, the operating point and one of the two route declarations are all supplied.",
+      "regression_test": "tests/test_core_semantic_invariants.py::test_the_flow_range_record_states_which_route_needs_a_prandtl_number -- asserts the published text names the asymmetry AND that the runtime still exhibits it on both routes, including that a Prandtl number does not move a Reynolds-based flow range at all. Verified to FAIL against the pre-fix record.",
+      "severity": "LOW",
+      "source_of_truth": "the RUNTIME. Re = u L / nu is the record's own printed formula and carries no Prandtl number; the route asymmetry is pinned by four named tests, two of which exist specifically to stop the gap being over-reported. The record's precondition list was written as a flat conjunction and did not survive the split into two routes.",
+      "system": "thermal.lumped"
+    }
+  ],
+  "defect_counts": {
+    "ambiguous_product_semantics": 0,
+    "audit_defect": 4,
+    "needs_product_decision": 0,
+    "runtime_implementation_defect": 0,
+    "shipped_contract_integrity": 1,
+    "test_defect": 0
+  },
+  "guard_coverage": {
+    "count_with": 1,
+    "count_without": 15,
+    "models_with_executable_contract_guards": [
+      "thermal.lumped.first_order_capacity"
+    ],
+    "models_without": [
+      "battery.cell.constant_current_runtime",
+      "battery.cell.coulomb_counting",
+      "battery.cell.peukert_capacity_derating",
+      "battery.cell.rint_ocv",
+      "electrical.dc.ideal_current_source",
+      "electrical.dc.ideal_voltage_source",
+      "electrical.dc.kcl",
+      "electrical.dc.regulated_voltage_source",
+      "electrical.dc.resistor_ohm",
+      "electrical.dc.self_heated_resistor",
+      "electrical.material.linear_tcr_resistance",
+      "electrical.material.rated_linear_tcr_resistance",
+      "kinetics.cstr.nonisothermal_first_order",
+      "kinetics.cstr.nonisothermal_first_order_constant_rate",
+      "thermal.conduction1d.linear_diffusion"
+    ],
+    "note": "a guard here means an executable test that asserts the PUBLISHED RECORD and the RUNTIME SEMANTICS together, so neither can drift from the other. Both live on thermal.lumped because both defects found so far are there."
+  },
+  "near_misses_resolved_by_looking": [
+    "battery:cell_discharge_step appeared unprovided until battery_solver_capabilities() was found; every model's required capability is provided by its domain.",
+    "CellSpecification defaults open_circuit_voltage_at_full to None, but the constructor refuses without it, so the record's required=True is honoured."
+  ],
+  "schema": "contract_integrity_findings/1",
+  "semantic_contract_mutation": {
+    "caught": 4,
+    "survivor_meaning": "SC5 widens an applicability claim in a record's prose past what the condition enforces, and nothing notices. That is a real coverage gap in the new layer, reported rather than closed: no shipped record currently carries that defect, so closing it is a future round's work, not a minimal fix in this one.",
+    "survivors": [
+      "SC5"
+    ],
+    "total": 5
+  },
+  "totals": {
+    "applicability_and_crosscheck_probes": 4,
+    "claims_reviewed": 457,
+    "condition_instances": 64,
+    "distinct_conditions_reviewed": 56,
+    "exact_matches": 146,
+    "models_reviewed": 16,
+    "required_input_checks": 36,
+    "systems_reviewed": 6,
+    "total_checks": 150,
+    "unknown_promise_checks": 110
+  }
+}

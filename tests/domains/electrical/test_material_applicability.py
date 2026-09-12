@@ -5,10 +5,21 @@ with three tests — inside, outside, and with the material declaration that
 would settle it withheld. Withholding must never buy a verdict: a conductor
 whose datasheet nobody supplied is UNKNOWN, not fine.
 
-The unrated ``electrical.material.linear_tcr_resistance`` is left exactly as it
-was, and one test here holds it to that: it is a published record that existing
-results were assessed against, and silently narrowing its domain would re-judge
-them without their inputs, their solver or their numbers having changed.
+The unrated ``electrical.material.linear_tcr_resistance`` is a published record
+that existing results were assessed against, and narrowing its domain would
+re-judge them without their inputs, their solver or their numbers having
+changed. One test here holds it to that -- in behavioural terms rather than by
+counting conditions, because the capability-boundary round added one.
+
+That addition is stated here rather than buried. ``linear_resistance_ratio``
+refuses a declaration whose own expression, 1 + alpha (T - T_ref), has crossed
+zero -- where the record was reporting IN_DOMAIN about a NEGATIVE resistance.
+It is UNKNOWN unless a temperature is supplied, so no assessment made without
+one changes at all, and no declaration whose resistance is positive changes
+either. The version was deliberately not bumped: the record is not claiming
+less physics, it stopped claiming applicability where its own output had
+stopped being a conductor resistance. Hard DEV (1400 cases) and the Battery DEV
+split (280) were re-scored bit-identical across the change, rows included.
 """
 
 from __future__ import annotations
@@ -78,23 +89,73 @@ def condition(name):
 # The unrated claim is unchanged
 # =====================================================================
 
-def test_the_unrated_model_still_declares_exactly_the_two_conditions_it_had():
-    """A published record is not narrowed underneath the results that cite it."""
-    assert {c.name for c in mat.LINEAR_TCR_MODEL.validity.conditions} == {
-        mat.TEMPERATURE,
-        mat.REFERENCE_RESISTANCE,
+def test_the_unrated_model_is_not_narrowed_underneath_the_results_that_cite_it():
+    """Everything it accepted whose resistance is positive, it still accepts.
+
+    Stated behaviourally rather than by counting condition names, because the
+    promise is about verdicts and not about the size of a tuple. The record
+    keeps its two original conditions, keeps its version, and keeps answering
+    IN_DOMAIN across the whole temperature range it declares -- for every
+    conductor whose line has not crossed zero, which is every conductor the
+    claim was ever meaningful for.
+    """
+    assert {mat.TEMPERATURE, mat.REFERENCE_RESISTANCE} <= {
+        c.name for c in mat.LINEAR_TCR_MODEL.validity.conditions
     }
     assert mat.LINEAR_TCR_MODEL.version == "0.1.0"
+
     problem = mat.build_resistance_problem(conductor(mat.MaterialLimits()))
+    for kelvin in (200.0, 250.0, 293.15, 300.0, 340.0, 400.0, 450.0):
+        assessment = mat.assess_resistance_validity(problem, Quantity(kelvin, K))
+        assert assessment.status is ValidityStatus.IN_DOMAIN, (kelvin, assessment)
+
+
+def test_the_unrated_model_stops_short_of_calling_a_negative_resistance_a_conductor():
+    """The one case the addition removes, and the reason it is not a narrowing.
+
+    A negative alpha is a case the coefficient's own description invites -- "a
+    semiconductor or an alloy read off a local tangent" -- and it justifies the
+    case by "the band is how far that tangent is claimed to carry". This record
+    declares no band, so before this condition the line was carried until it
+    crossed zero and the model went on calling itself applicable.
+    """
+    steep = mat.TemperatureDependentConductor(
+        component_id="S1",
+        reference_resistance=Quantity(1000.0, "ohm"),
+        temperature_coefficient=Quantity(-0.01, "1 / kelvin"),
+        reference_temperature=Quantity(300.0, K),
+        limits=mat.MaterialLimits(),
+    )
+    problem = mat.build_resistance_problem(steep)
+
+    # Still on the positive side of the crossing: unchanged.
     assert (
-        mat.assess_resistance_validity(problem, Quantity(300.0, K)).status
+        mat.assess_resistance_validity(problem, Quantity(380.0, K)).status
         is ValidityStatus.IN_DOMAIN
     )
+    # At the crossing and past it: R <= 0, which is not a conductor resistance.
+    for kelvin in (400.0, 420.0):
+        assessment = mat.assess_resistance_validity(problem, Quantity(kelvin, K))
+        assert assessment.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+        assert mat.LINEAR_RESISTANCE_RATIO in assessment.violated
+
+
+def test_the_unrated_positivity_bound_is_unknown_without_a_temperature():
+    """Withholding must not buy a verdict here either."""
+    assessment = mat.LINEAR_TCR_MODEL.assess_validity(
+        declared={mat.REFERENCE_RESISTANCE: Quantity(100.0, "ohm")},
+        assembled={},
+    )
+    assert mat.LINEAR_RESISTANCE_RATIO in assessment.unknown
 
 
 def test_the_rated_model_is_a_separate_record_with_a_strictly_smaller_domain():
     unrated = {c.name for c in mat.LINEAR_TCR_MODEL.validity.conditions}
     rated = {c.name for c in mat.RATED_LINEAR_TCR_MODEL.validity.conditions}
+    # Still strict: the rated record keeps the three limits that need a
+    # material declaration the unrated one does not take, which is what makes
+    # it the stronger claim. Sharing the positivity bound does not close the
+    # gap, because that bound asks the material for nothing.
     assert unrated < rated
     assert mat.RATED_LINEAR_TCR_MODEL.model_id != mat.LINEAR_TCR_MODEL.model_id
     # Same arithmetic, different claim: the realization says so explicitly.

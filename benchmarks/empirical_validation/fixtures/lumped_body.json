@@ -1,0 +1,21 @@
+{
+  "fixture_id": "EVF-LUMPED-1",
+  "what_this_is": "A machined aluminium block sitting in still air with a resistive heater bonded to it.",
+  "why_these_numbers": "A 250 g billet, a realistic natural-convection film coefficient for a small block in still air, and a heater in the watt range. Nothing here was chosen by running the Core; the block was specified first and solved afterwards.",
+  "evidence_level": "LEVEL 5 - independent analytical. The material properties are ordinary handbook values for 6061 and are not treated as a measurement of anything.",
+  "quantities": {
+    "mass_g": 250.0,
+    "specific_heat_J_per_g_K": 0.896,
+    "surface_area_cm2": 190.0,
+    "convection_coefficient_W_per_m2_K": 12.5,
+    "ambient_degC": 22.0,
+    "initial_degC": 85.0,
+    "heat_input_mW": 4500.0,
+    "duration_min": 4.0
+  },
+  "derivations_left_to_the_adapters": [
+    "heat capacity C = mass * specific heat",
+    "ambient conductance hA = convection coefficient * surface area",
+    "absolute temperatures from degC"
+  ]
+}

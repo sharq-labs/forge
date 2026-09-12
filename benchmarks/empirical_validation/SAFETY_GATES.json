@@ -1,0 +1,409 @@
+{
+  "schema": "empirical_validation_gates/1",
+  "gates": [
+    {
+      "id": "EV-1",
+      "name": "INDEPENDENT PROBLEM CONSTRUCTION",
+      "question": "Is every shipped model reachable from a problem stated without any engcore type, and was it actually reached that way here?",
+      "would_fail_if": "any shipped model could only be reached by handing the Core an object it had itself defined",
+      "evidence": {
+        "models": 16,
+        "models_with_at_least_one_independent_construction_case": 16,
+        "models_without": [],
+        "fixtures": [
+          "battery_cell.json",
+          "circuits.json",
+          "conductor.json",
+          "holdout.json",
+          "lumped_body.json",
+          "platinum_iec60751.json",
+          "reactor.json",
+          "slab.json"
+        ]
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-2",
+      "name": "NO SHARED PROBLEM DEFINITION",
+      "question": "Does the reference branch reach engcore, or the other adapter, by any import path at all?",
+      "would_fail_if": "the reference branch imported engcore, imported adapter A, or shared a conversion helper -- or the tracer could not be shown to see a dependency when one exists",
+      "evidence": {
+        "tracer_self_check": {
+          "branch_A_closure_size": 71,
+          "branch_A_engcore_modules": 62,
+          "branch_A_reaches_engcore_through_function_level_imports": true,
+          "branch_B_closure_size": 2,
+          "verdict": "TRACER_SEES_DEPENDENCIES"
+        },
+        "reference_branch_verdicts": {
+          "branch_B_reference": "FULLY_INDEPENDENT_AFTER_RAW_FIXTURE",
+          "reference_numerics": "FULLY_INDEPENDENT_AFTER_RAW_FIXTURE",
+          "reference_linear_algebra": "FULLY_INDEPENDENT_AFTER_RAW_FIXTURE",
+          "external_solver_problem_statement": "FULLY_INDEPENDENT_AFTER_RAW_FIXTURE"
+        },
+        "engcore_modules_reached_by_the_reference_branch": 0,
+        "what_is_shared_and_why": [
+          {
+            "shared": "the raw fixture JSON files",
+            "unavoidable": true,
+            "reason": "The two branches must be given the same physical problem or they are not comparable. The fixtures carry no derived quantity and no engcore type, so what is shared is a statement of the physics and not a construction of it."
+          },
+          {
+            "shared": "the modified nodal analysis FORMULATION for DC",
+            "unavoidable": true,
+            "reason": "It is the formulation the field uses, and ngspice uses it too. What is not shared is the assembly, the ordering of unknowns, the linear solver and the unit conversion. This is recorded as a real limit on the DC independence claim rather than left out."
+          },
+          {
+            "shared": "the Python standard library's math module",
+            "unavoidable": true,
+            "reason": "exp and sin encode nobody's physics."
+          }
+        ]
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-3",
+      "name": "EXTERNAL SOLVER PROBLEM INDEPENDENCE",
+      "question": "Was ngspice given a problem built from the raw fixture rather than from the Core's declaration, and does that distinction demonstrably matter?",
+      "would_fail_if": "the netlist had been generated from an engcore circuit object, in which case ngspice could only ever have confirmed the Core's own construction faults",
+      "evidence": {
+        "netlist_source": "fixtures/circuits.json, via reference/spice.py",
+        "spice_module_imports_engcore": false,
+        "IPM_7": {
+          "core_node_voltage_v": 0.005054054054054056,
+          "ngspice_from_raw_fixture_v": 5.054054054054,
+          "ngspice_from_engcore_declaration_v": 0.005054054,
+          "fixture_netlist_detected_the_fault": true,
+          "derived_netlist_detected_the_fault": false
+        }
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-4",
+      "name": "UNIT AND SCALE INTEGRITY",
+      "question": "Did every quantity survive the journey from a fixture written in mAh, L/min, g/cm3, kJ/mol and degC into the Core's own units?",
+      "would_fail_if": "any field had arrived ALTERED, LOST or AMBIGUOUS -- a factor of 60, 1000 or 273.15 is orders of magnitude outside the round-off band",
+      "evidence": {
+        "fields_compared": 153,
+        "counts": {
+          "TRANSFORMED_CORRECTLY": 24,
+          "EXACT": 129
+        },
+        "round_off_band": 1e-12,
+        "not_exact_or_transformed": [],
+        "non_si_units_exercised": [
+          "mAh",
+          "mV",
+          "mOhm",
+          "mA",
+          "kohm",
+          "mW",
+          "minute",
+          "L",
+          "L/min",
+          "mol/L",
+          "g/cm3",
+          "J/g/K",
+          "kJ/mol",
+          "kJ/min/K",
+          "nOhm.m",
+          "mm",
+          "mm2",
+          "cm2",
+          "ppm/K",
+          "degC",
+          "K/W"
+        ]
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-5",
+      "name": "EVIDENCE PROVENANCE",
+      "question": "Does every number used as external evidence name where it came from?",
+      "would_fail_if": "any number had been presented as reference data with no source, or a recitation had been presented as a retrieved document",
+      "evidence": {
+        "sources": [
+          "CODATA-2022-R",
+          "IEC-60751-PT100",
+          "NGSPICE-42"
+        ],
+        "hashed_files": [
+          {
+            "file": "evidence/scipy_codata.py",
+            "sha256": "005317bcd5e11a7cf5c51420a0027399a5c6e39149f3a124e22382dc384cd102"
+          }
+        ],
+        "recited_rather_than_retrieved": [
+          "IEC-60751-PT100"
+        ],
+        "sources_without_provenance": [],
+        "levels_absent": [
+          "LEVEL 1 empirical measurement",
+          "LEVEL 2 published benchmark dataset"
+        ]
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-6",
+      "name": "CALIBRATION AND VALIDATION KEPT SEPARATE",
+      "question": "Was any model parameter fitted to any comparison in this round?",
+      "would_fail_if": "any fixture value had been chosen to make a comparison pass, which would make it calibration and disqualify it as evidence",
+      "evidence": {
+        "parameters_fitted": 0,
+        "consequence": "Every comparison is VALIDATION. There is no train/test leakage to check for because nothing was trained.",
+        "fixture_values_are": "either independently chosen physical quantities or published reference coefficients recorded in EVIDENCE_PROVENANCE.json",
+        "holdout_exists_anyway": "to catch a harness shaped by the case it was developed against, which is a different failure from overfitting a model",
+        "one_fixture_edit_disclosed": "fixtures/holdout.json had its battery duration corrected from 6 to 15 minutes before any holdout result was produced, because the case did not do what its own note said. The edit is recorded in the file itself."
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-7",
+      "name": "TOLERANCE JUSTIFICATION",
+      "question": "Is every tolerance traceable to a source's precision, a derived error term, or exact algebra -- rather than to what the implementation happens to achieve?",
+      "would_fail_if": "any tolerance existed only because it was large enough for the current implementation to pass",
+      "evidence": {
+        "tolerances": {
+          "dc_vs_ngspice": {
+            "value": 2e-06,
+            "basis": "ngspice prints seven significant figures",
+            "added_after_preregistration": false
+          },
+          "dc_vs_hand_solve": {
+            "value": 1e-09,
+            "basis": "double-precision direct solve of a well-conditioned system",
+            "added_after_preregistration": false
+          },
+          "dc_conservation": {
+            "value": 1e-09,
+            "basis": "charge conservation is exact for a lumped network",
+            "added_after_preregistration": false
+          },
+          "geometry_resistance": {
+            "value": 1e-12,
+            "basis": "exact algebra on both sides",
+            "added_after_preregistration": false
+          },
+          "tcr_vs_iec60751": {
+            "value": 0.05,
+            "basis": "the observed deviation must equal the analytically predicted omitted quadratic term to within 5 percent of the prediction",
+            "added_after_preregistration": false
+          },
+          "iec60751_recitation": {
+            "value": 3.6e-05,
+            "basis": "half of the last printed digit of the published figure, 0.00005/1.3851 = 3.61e-5 -- the same printed-precision rule the plan preregistered for ngspice",
+            "added_after_preregistration": true
+          },
+          "lumped_vs_rk4": {
+            "value": 1e-09,
+            "basis": "RK4 at 200k steps on a linear scalar ODE reaches round-off",
+            "added_after_preregistration": false
+          },
+          "lumped_energy_balance": {
+            "value": 1e-10,
+            "basis": "the first law admits no tolerance beyond round-off",
+            "added_after_preregistration": false
+          },
+          "diffusion_error_ratio": {
+            "value": 1.5,
+            "basis": "observed error divided by the error the declared scheme itself predicts",
+            "added_after_preregistration": false
+          },
+          "battery_algebra": {
+            "value": 1e-12,
+            "basis": "exact algebra through a chain of milli-prefixed units",
+            "added_after_preregistration": false
+          },
+          "battery_charge_conservation": {
+            "value": 1e-12,
+            "basis": "relative, or below the cancellation floor 4 ulp(z0) eta Q when little charge moved",
+            "added_after_preregistration": false
+          },
+          "cstr_trajectory": {
+            "value": 1e-06,
+            "basis": "the oracle's own resolution, evidenced by a refinement ladder",
+            "added_after_preregistration": false
+          },
+          "cstr_steady_state_k": {
+            "value": 1e-05,
+            "basis": "an algebraic route with no time integration",
+            "added_after_preregistration": false
+          },
+          "gas_constant": {
+            "value": 1e-09,
+            "basis": "admits the stored truncation of 1.8e-11 and refuses more",
+            "added_after_preregistration": false
+          },
+          "applicability_utilization": {
+            "value": 1e-12,
+            "basis": "exact algebra on both sides",
+            "added_after_preregistration": true
+          },
+          "peukert": {
+            "value": 1e-12,
+            "basis": "exact algebra on both sides",
+            "added_after_preregistration": false
+          }
+        },
+        "added_after_preregistration": [
+          "iec60751_recitation",
+          "applicability_utilization"
+        ],
+        "widened_after_seeing_a_result": [],
+        "one_justification_corrected": "The ngspice tolerance's stated basis -- seven significant figures -- was wrong: the default print format is six decimal places. The NUMBER was not changed and was met before this was noticed. See ERROR_SHAPE.json."
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-8",
+      "name": "EMPIRICAL COVERAGE REPORTED HONESTLY",
+      "question": "Does any model claim empirical validation without an external source behind it, and is the absence of evidence reported as absence?",
+      "would_fail_if": "a model with no external dataset had been reported as empirically validated, or an agreement with mathematics written in this round had been counted as empirical coverage",
+      "evidence": {
+        "models": 16,
+        "external_evidence_YES": 5,
+        "external_evidence_PARTIAL": 2,
+        "external_evidence_NO": 9,
+        "models_marked_EMPIRICAL_EVIDENCE_NOT_ESTABLISHED": [
+          "thermal.lumped.first_order_capacity",
+          "thermal.conduction1d.linear_diffusion",
+          "battery.cell.coulomb_counting",
+          "battery.cell.rint_ocv",
+          "battery.cell.constant_current_runtime",
+          "electrical.dc.regulated_voltage_source",
+          "electrical.dc.self_heated_resistor",
+          "electrical.material.rated_linear_tcr_resistance",
+          "kinetics.cstr.nonisothermal_first_order_constant_rate"
+        ],
+        "claims_without_a_source": [],
+        "LEVEL_1_or_2_coverage": 0
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-9",
+      "name": "CONSTRUCTION MUTATION DETECTION",
+      "question": "When the problem statement is corrupted on one branch, does the comparison see it?",
+      "would_fail_if": "a corruption of the problem statement had passed unnoticed on a route this round claims is independent",
+      "evidence": {
+        "detected": [
+          "IPM-1",
+          "IPM-2",
+          "IPM-3",
+          "IPM-4",
+          "IPM-5"
+        ],
+        "blind_as_expected": [
+          "IPM-6",
+          "IPM-7"
+        ],
+        "unexpected": [],
+        "what_the_two_blind_ones_show": {
+          "IPM-6": "a conductance pre-computed once, wrongly, and consumed by both branches: they agreed to round-off about a body whose hA was wrong by a factor of 10000",
+          "IPM-7": "ngspice fed a netlist built from the Core's declaration: it reproduced a thousandfold resistance fault and reported agreement to 1e-8"
+        }
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-10",
+      "name": "HARNESS FALSIFIABILITY",
+      "question": "Has the comparison been shown to report a disagreement when one exists, over the same metrics and the same tolerances?",
+      "would_fail_if": "the control had shown a spurious disagreement, or any injected fault had passed the same tolerances the real comparisons use",
+      "evidence": {
+        "control": {
+          "id": "F-0",
+          "injection": "none; the control",
+          "rows": 136,
+          "disagreements": 0,
+          "verdict": "GREEN"
+        },
+        "injections": [
+          {
+            "id": "F-1",
+            "injection": "every returned temperature biased by +5 percent",
+            "rows": 5,
+            "disagreements": 5,
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "F-2",
+            "injection": "the resistance-temperature slope 2 percent too steep",
+            "rows": 9,
+            "disagreements": 8,
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "F-3",
+            "injection": "one circuit out of five shifted by one part per million, the rest untouched",
+            "rows": 103,
+            "disagreements": 4,
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "F-4",
+            "injection": "every returned battery value multiplied by 1000",
+            "rows": 9,
+            "disagreements": 9,
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "F-5",
+            "injection": "the reactor integrated one percent past the declared end time",
+            "rows": 5,
+            "disagreements": 3,
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "F-6",
+            "injection": "every resistor current's sign inverted",
+            "rows": 103,
+            "disagreements": 17,
+            "verdict": "CAUGHT"
+          }
+        ],
+        "note": "F-5 leaves two rows agreeing: the invariant-ceiling inequality and the gas-constant comparison, neither of which depends on the end time. That is correct behaviour, not a blind spot, and is stated rather than hidden by reporting only the totals."
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "EV-11",
+      "name": "OUT OF SAMPLE",
+      "question": "Do operating points that were never looked at during development pass without any tolerance or fixture being touched?",
+      "would_fail_if": "a held-out point had disagreed, or had been made to agree by widening something",
+      "evidence": {
+        "holdout_rows": 47,
+        "disagreements": 0,
+        "detail": [],
+        "regimes_reached_only_by_the_holdout": [
+          "a body heated from below ambient through several time constants",
+          "a slab on a grid an order of magnitude coarser",
+          "a 1C discharge carried past the voltage cutoff",
+          "a conductor below its reference temperature, negative correction",
+          "a network whose only source is a voltage source with a shunt current source at the far node",
+          "a reactor started hot and lean with a colder jacket",
+          "platinum temperatures between the tabulated points"
+        ],
+        "tolerances_changed_for_the_holdout": 0
+      },
+      "verdict": "PASS"
+    }
+  ],
+  "passed": 11,
+  "failed": 0,
+  "core_unchanged": {
+    "certified_digest": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+    "recomputed_digest": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+    "matches": true,
+    "files_touched_under_src_or_tests": []
+  },
+  "primary_rows": 140,
+  "primary_disagreements": 0,
+  "holdout_rows": 47,
+  "holdout_disagreements": 0
+}

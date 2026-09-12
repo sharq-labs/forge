@@ -1,0 +1,108 @@
+{
+  "schema": "calibration_splits/1",
+  "written_before_any_core_run": true,
+  "principle": "A point used to set a parameter can never also be a point that validates it. Every parameter this round supplies to the Core is listed below with where its value came from, and every measurement is labelled CALIBRATION, VALIDATION or HELD_OUT exactly once.",
+  "models": [
+    {
+      "model_id": "battery.cell.rint_ocv",
+      "configuration": "affine chord (case MV-A)",
+      "parameters": [
+        {
+          "name": "open_circuit_voltage_at_full",
+          "kind": "B - taken from data",
+          "value_source": "S-OCV, APR/BATT_001, charge-conditioned, 100% SOC, relaxed value at t = 24 h",
+          "label": "CALIBRATION"
+        },
+        {
+          "name": "open_circuit_voltage_at_empty",
+          "kind": "B - taken from data",
+          "value_source": "S-OCV, APR/BATT_001, discharge-conditioned, 0% SOC, relaxed value at t = 24 h",
+          "label": "CALIBRATION"
+        },
+        {
+          "name": "internal_resistance",
+          "kind": "A - independently known",
+          "value_source": "S-OCV Header sheet, battery metadata, 12.6 mOhm for the APR cell. Not fitted, and not used by this case at all: an open-circuit measurement carries no current, so the IR term is identically zero here.",
+          "label": "not used"
+        },
+        {
+          "name": "nominal_capacity",
+          "kind": "A - independently known",
+          "value_source": "S-OCV Header sheet, 1100 mAh for the APR cell",
+          "label": "not used by this case"
+        }
+      ],
+      "calibration_rows": 2,
+      "validation_rows": 0,
+      "held_out_rows": 9,
+      "held_out_definition": "the five interior states of charge from the charge-conditioned sheet (0.2, 0.4, 0.5, 0.6, 0.8) and four from the discharge-conditioned sheet (0.2, 0.4, 0.5, 0.6); the discharge-conditioned 0.8 point is held out too, giving ten, minus the one the endpoints already consumed",
+      "free_parameters_after_calibration": 0,
+      "why_this_is_not_leakage": "The chord has exactly two degrees of freedom and both are consumed by the two endpoint measurements. Nothing is fitted, nothing is least-squares, and no interior point influences the prediction at any other interior point. Every interior state of charge is therefore a genuine out-of-sample prediction of a model with zero remaining freedom."
+    },
+    {
+      "model_id": "battery.cell.rint_ocv",
+      "configuration": "declared measured open-circuit-voltage curve (case MV-B)",
+      "parameters": [
+        {
+          "name": "open_circuit_voltage_curve",
+          "kind": "B - taken from data",
+          "value_source": "S-OCV, APR/BATT_001, relaxed values at SOC 0.0, 0.2, 0.5, 0.8, 1.0, declared as a TabulatedForm with linear interpolation",
+          "label": "CALIBRATION"
+        }
+      ],
+      "calibration_rows": 5,
+      "validation_rows": 0,
+      "held_out_rows": 2,
+      "held_out_definition": "SOC 0.4 and 0.6, which are not among the curve's samples and were chosen before the curve was built, by the rule 'hold out the two interior levels that the remaining samples bracket most widely'",
+      "free_parameters_after_calibration": 0,
+      "why_this_is_not_leakage": "The two held-out states of charge contribute nothing to the curve. They were named in this file before the curve was constructed, and the construction rule is stated so that it can be checked."
+    },
+    {
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "configuration": "linear law against the platinum reference table (case MV-C)",
+      "parameters": [
+        {
+          "name": "reference_resistance",
+          "kind": "A - independently known",
+          "value_source": "the standard's nominal R0 = 100 ohm, which is also the table's own value at 0 degC",
+          "label": "CALIBRATION (one point, 0 degC)"
+        },
+        {
+          "name": "temperature_coefficient",
+          "kind": "A - independently known",
+          "value_source": "the standard's coefficient A = 3.9083e-3 per degC, recited in the previous round and corroborated here against all 1051 table entries before use",
+          "label": "not fitted"
+        },
+        {
+          "name": "reference_temperature",
+          "kind": "A - independently known",
+          "value_source": "0 degC, the ice point the standard refers R0 to",
+          "label": "not fitted"
+        }
+      ],
+      "calibration_rows": 1,
+      "validation_rows": 401,
+      "held_out_rows": 650,
+      "held_out_definition": "VALIDATION is the 0 to 400 degC branch where the pass rule applies (401 table entries, one per degree, minus nothing). HELD_OUT is the remainder of the table, -200 to -1 degC and 401 to 850 degC, which is measured and reported but not scored, for the reasons in APPLICABILITY_SCREEN.json.",
+      "free_parameters_after_calibration": 0,
+      "why_this_is_not_leakage": "The coefficient is not fitted to the table. It is the standard's own published coefficient, obtained from a different source than the table, and the table is then predicted with zero remaining freedom."
+    }
+  ],
+  "models_with_no_split_because_they_have_no_evidence": [
+    "thermal.lumped.first_order_capacity",
+    "thermal.conduction1d.linear_diffusion",
+    "battery.cell.coulomb_counting",
+    "battery.cell.constant_current_runtime",
+    "battery.cell.peukert_capacity_derating",
+    "electrical.dc.kcl",
+    "electrical.dc.resistor_ohm",
+    "electrical.dc.ideal_voltage_source",
+    "electrical.dc.ideal_current_source",
+    "electrical.dc.regulated_voltage_source",
+    "electrical.dc.self_heated_resistor",
+    "electrical.material.rated_linear_tcr_resistance",
+    "kinetics.cstr.nonisothermal_first_order",
+    "kinetics.cstr.nonisothermal_first_order_constant_rate"
+  ],
+  "note_on_the_rated_material_model": "Its constitutive law is the same one case MV-C validates, but the claim that distinguishes it is about RATINGS, and no measured rating is available. It is listed above as having no split of its own rather than inheriting the unrated model's."
+}

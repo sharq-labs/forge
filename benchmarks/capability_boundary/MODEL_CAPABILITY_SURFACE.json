@@ -1,0 +1,2178 @@
+{
+  "classification_counts": {
+    "EXACT": 13,
+    "VALIDITY_LIMIT_MISSING": 3
+  },
+  "model_count": 16,
+  "models": [
+    {
+      "capability_classification": "VALIDITY_LIMIT_MISSING",
+      "declared_assumptions": [
+        "one cell, or a series string treated as one lumped cell with no cell-to-cell variation and no balancing",
+        "discharge only; charging is not modelled and no condition here would catch it",
+        "one uniform cell temperature, supplied from outside and never inferred",
+        "no diffusion or double-layer dynamics: no RC branch, no hysteresis",
+        "no ageing, no cycle life, no capacity fade, no resistance growth",
+        "no thermal runaway, no abuse response, no gas generation",
+        "no reversible (entropic) heat; the irreversible Joule term only",
+        "the current is held constant for the whole run, not merely for one step",
+        "the run stops at the first cutoff reached and nothing beyond it is claimed",
+        "the runtime inherits every assumption of the Rint and coulomb-counting models, which is why those are separate records that a caller may reject independently"
+      ],
+      "declared_exclusions": [
+        "cell-to-cell variation and balancing; a series string is treated as one lumped cell",
+        "charging; discharge only, and no condition here would catch a charge",
+        "diffusion and double-layer dynamics: no RC branch, no hysteresis",
+        "ageing: no cycle life, no capacity fade, no resistance growth",
+        "thermal runaway, abuse response and gas generation",
+        "reversible (entropic) heat; the irreversible Joule term only",
+        "any inference of the cell temperature, which is supplied from outside",
+        "a varying load; the current is held constant for the whole run, not merely for one step",
+        "anything beyond the first cutoff reached"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "cutoff_consistency_margin"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "cutoff_reachability_margin"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "continuous_c_rate_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "soc_window_margin"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": "CB-3",
+      "governing_equations": "t = (z_0 - z_stop) eta Q_nom / I, z_stop the higher of the declared SOC cutoff and the SOC at the declared terminal-voltage cutoff",
+      "implementation_entry_point": "engcore.domains.battery.solver.evaluate_step",
+      "model_id": "battery.cell.constant_current_runtime",
+      "model_type": "approximation",
+      "note": "The solver comment states the intent explicitly: a negative runtime is 'reported rather than clipped: the runtime model's own conditions are where that is judged'. They do not judge it.",
+      "published_capability_claim": "Time to the first of a declared state-of-charge cutoff and a declared terminal-voltage cutoff, under a constant discharge current: t = (z_0 - z_stop) eta Q_nom / I, with z_stop the higher of the two cutoffs expressed as a state of charge.",
+      "published_name": "Runtime to a declared cutoff under a constant current",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a discharge from a full cell to a declared cutoff",
+          "represents": "YES",
+          "why": "the intended case"
+        },
+        {
+          "case": "two cutoffs that disagree about which bites first",
+          "represents": "BOUNDED",
+          "why": "cutoff_consistency_margin compares the two"
+        },
+        {
+          "case": "a run beyond the declared SOC window",
+          "represents": "BOUNDED",
+          "why": "soc_window_margin"
+        },
+        {
+          "case": "a current above the continuous rating",
+          "represents": "BOUNDED",
+          "why": "continuous_c_rate_utilization"
+        },
+        {
+          "case": "a cutoff declared ABOVE the starting state of charge",
+          "represents": "NO",
+          "why": "t = (z_0 - z_stop) eta Q_nom / I is negative. No condition compares z_stop against z_0: cutoff_consistency_margin compares the two cutoffs with each other, not either with the start. The model reports IN_DOMAIN and the solver emits the negative time."
+        },
+        {
+          "case": "charging",
+          "represents": "DISCLOSED",
+          "why": "excluded, and the record says no condition here would catch it"
+        }
+      ],
+      "references": [
+        "Plett, G. L., Battery Management Systems, Volume I: Battery Modeling, Artech House (2015), Ch. 2 and Ch. 3"
+      ],
+      "required_physical_regime": {
+        "dependent_variables": [
+          "t_run"
+        ],
+        "independent_variables": [
+          "z_0",
+          "z_stop",
+          "I"
+        ],
+        "linearity": "linear",
+        "monotonicity": "a discharge at constant I walks z monotonically DOWN; a cutoff above z_0 is never reached",
+        "steady_or_transient": "an elapsed time to a first-crossing event"
+      },
+      "reserved_derived_quantities": [
+        "continuous_c_rate_utilization",
+        "cutoff_consistency_margin",
+        "cutoff_reachability_margin",
+        "soc_window_margin"
+      ],
+      "resolution": "FIXED. A cutoff_reachability_margin >= 0 condition now compares the binding cutoff against the starting state of charge, so the case reads BOUNDED rather than NO. Guarded by test_the_runtime_model_refuses_a_cutoff_above_where_the_discharge_starts.",
+      "status": "REVIEWED",
+      "system": "battery.cell",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "one cell, or a series string treated as one lumped cell with no cell-to-cell variation and no balancing",
+        "discharge only; charging is not modelled and no condition here would catch it",
+        "one uniform cell temperature, supplied from outside and never inferred",
+        "no diffusion or double-layer dynamics: no RC branch, no hysteresis",
+        "no ageing, no cycle life, no capacity fade, no resistance growth",
+        "no thermal runaway, no abuse response, no gas generation",
+        "no reversible (entropic) heat; the irreversible Joule term only",
+        "the current is constant over the interval, which makes the integral exact rather than approximated",
+        "the nominal capacity is the charge actually available at this temperature and rate; no rate derating is applied here, and any is a separate model with its own validity domain",
+        "no self-discharge and no coulombic loss beyond the declared efficiency",
+        "the counter has no feedback: an error in z_0 persists undiminished, and no voltage-based correction is applied"
+      ],
+      "declared_exclusions": [
+        "cell-to-cell variation and balancing; a series string is treated as one lumped cell",
+        "charging; discharge only, and no condition here would catch a charge",
+        "diffusion and double-layer dynamics: no RC branch, no hysteresis",
+        "ageing: no cycle life, no capacity fade, no resistance growth",
+        "thermal runaway, abuse response and gas generation",
+        "reversible (entropic) heat; the irreversible Joule term only",
+        "any inference of the cell temperature, which is supplied from outside",
+        "self-discharge, and coulombic loss beyond the declared efficiency",
+        "any feedback: no voltage-based correction, so an error in the starting state of charge persists undiminished",
+        "rate derating; the nominal capacity is taken as the charge available at this temperature and rate"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "ampere_hour"
+          },
+          "name": "nominal_capacity"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "coulombic_efficiency"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "soc_step_resolution_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "capacity_temperature_drift_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "soc_window_margin"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "z(t) = z_0 - I t / (eta Q_nom); exact integration of dz/dt = -I/(eta Q_nom) for constant I",
+      "implementation_entry_point": "engcore.domains.battery.solver.evaluate_step",
+      "model_id": "battery.cell.coulomb_counting",
+      "model_type": "fundamental_relation",
+      "note": "Verified: with no window declared the model returns UNKNOWN rather than IN_DOMAIN, and with one declared it refuses a trajectory that leaves it.",
+      "published_capability_claim": "Charge balance on the cell: z(t) = z_0 - I t / (eta Q_nom) for a current constant over the interval. Exact integration of dz/dt = -I / (eta Q_nom).",
+      "published_name": "State of charge by coulomb counting",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a constant-current discharge inside a declared window",
+          "represents": "YES",
+          "why": "the integral is exact"
+        },
+        {
+          "case": "a discharge that walks past empty",
+          "represents": "BOUNDED",
+          "why": "soc_window_margin refuses with a declared window, and is UNKNOWN without one"
+        },
+        {
+          "case": "a load that varies within the step",
+          "represents": "BOUNDED",
+          "why": "soc_step_resolution_ratio bounds how far one step may walk"
+        },
+        {
+          "case": "a cell far from the temperature Q_nom was rated at",
+          "represents": "BOUNDED",
+          "why": "capacity_temperature_drift_ratio, citing IEC 61960-3"
+        },
+        {
+          "case": "rate derating of the available capacity",
+          "represents": "DISCLOSED",
+          "why": "excluded here and offered as a separate model the caller may refuse"
+        },
+        {
+          "case": "self-discharge",
+          "represents": "DISCLOSED",
+          "why": "excluded beyond the declared coulombic efficiency"
+        }
+      ],
+      "references": [
+        "Plett, G. L., Battery Management Systems, Volume I: Battery Modeling, Artech House (2015), Ch. 2 (state of charge, capacity and the coulomb-counting integral)",
+        "IEC 61960-3:2017, Secondary cells and batteries containing alkaline or other non-acid electrolytes - Secondary lithium cells and batteries for portable applications, Clause 7 (discharge performance and the conditions rated capacity is measured under)"
+      ],
+      "required_physical_regime": {
+        "coefficients": "eta and Q_nom frozen",
+        "dependent_variables": [
+          "z"
+        ],
+        "feedback": "none; an error in z_0 persists undiminished",
+        "independent_variables": [
+          "t"
+        ],
+        "linearity": "linear",
+        "steady_or_transient": "transient, exact for a current constant over the interval"
+      },
+      "reserved_derived_quantities": [
+        "capacity_temperature_drift_ratio",
+        "soc_step_resolution_ratio",
+        "soc_window_margin"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "battery.cell",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "one cell, or a series string treated as one lumped cell with no cell-to-cell variation and no balancing",
+        "discharge only; charging is not modelled and no condition here would catch it",
+        "one uniform cell temperature, supplied from outside and never inferred",
+        "no diffusion or double-layer dynamics: no RC branch, no hysteresis",
+        "no ageing, no cycle life, no capacity fade, no resistance growth",
+        "no thermal runaway, no abuse response, no gas generation",
+        "no reversible (entropic) heat; the irreversible Joule term only",
+        "the exponent is a fit, not a derivation, and is treated as constant over the declared current and temperature range only",
+        "the law was established for lead-acid cells and its applicability to lithium-ion is contested in the source cited below",
+        "constant current: the law is defined over a constant-current discharge and says nothing about a varying load",
+        "this is a separate claim from coulomb counting and is never applied to it automatically; a caller may run the counter and refuse this"
+      ],
+      "declared_exclusions": [
+        "cell-to-cell variation and balancing; a series string is treated as one lumped cell",
+        "charging; discharge only, and no condition here would catch a charge",
+        "diffusion and double-layer dynamics: no RC branch, no hysteresis",
+        "ageing: no cycle life, no capacity fade, no resistance growth",
+        "thermal runaway, abuse response and gas generation",
+        "reversible (entropic) heat; the irreversible Joule term only",
+        "any inference of the cell temperature, which is supplied from outside",
+        "a varying load; the law is defined over a constant-current discharge and says nothing about one that varies",
+        "any derivation of the exponent, which is a fit and is treated as constant over the declared current and temperature range only"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "peukert_extrapolation_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "peukert_capacity_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "peukert_temperature_drift_ratio"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "Q_eff = Q_nom (I_ref / I)^(k-1), the rearrangement of Peukert's I^k t = constant",
+      "implementation_entry_point": "engcore.domains.battery.solver.evaluate_step",
+      "model_id": "battery.cell.peukert_capacity_derating",
+      "model_type": "empirical_correlation",
+      "note": "The most honest record in the repository about its own weakness: EMPIRICAL_CORRELATION, UNVALIDATED, and it cites the paper that disputes it.",
+      "published_capability_claim": "Deliverable charge as a fitted power law of discharge current: Q_eff = Q_nom (I_ref / I)^(k-1), the rearrangement of Peukert's I^k t = constant referred to the current the nominal capacity was measured at.",
+      "published_name": "Peukert rate-capacity derating",
+      "real_cases_under_the_claim": [
+        {
+          "case": "lead-acid near the fitted current",
+          "represents": "YES",
+          "why": "the law's own domain"
+        },
+        {
+          "case": "a current decades away from the fit",
+          "represents": "BOUNDED",
+          "why": "peukert_extrapolation_ratio bounds |log10(I/I_ref)| against the declared fit width"
+        },
+        {
+          "case": "lithium-ion",
+          "represents": "DISCLOSED",
+          "why": "the record cites Doerffel & Sharkh on the contest and ships the model UNVALIDATED"
+        },
+        {
+          "case": "a current below I_ref, which would raise the capacity",
+          "represents": "BOUNDED",
+          "why": "peukert_capacity_ratio <= 1 refuses a derating that increases capacity"
+        },
+        {
+          "case": "a temperature away from the fit",
+          "represents": "BOUNDED",
+          "why": "peukert_temperature_drift_ratio"
+        },
+        {
+          "case": "a varying load",
+          "represents": "DISCLOSED",
+          "why": "excluded; the law is defined over a constant-current discharge"
+        }
+      ],
+      "references": [
+        "Peukert, W., 'Ueber die Abhaengigkeit der Kapacitaet von der Entladestromstaerke bei Bleiakkumulatoren', Elektrotechnische Zeitschrift 20 (1897), 287-288",
+        "Doerffel, D. & Sharkh, S. A., 'A critical review of using the Peukert equation for determining the remaining capacity of lead-acid and lithium-ion batteries', Journal of Power Sources 155 (2006), 395-400"
+      ],
+      "required_physical_regime": {
+        "chemistry": "established for lead-acid; applicability to lithium-ion is contested in the cited source",
+        "coefficients": "k constant over the declared current and temperature range only",
+        "dependent_variables": [
+          "Q_eff"
+        ],
+        "independent_variables": [
+          "I"
+        ],
+        "linearity": "power law; a fit, not a derivation"
+      },
+      "reserved_derived_quantities": [
+        "peukert_capacity_ratio",
+        "peukert_extrapolation_ratio",
+        "peukert_temperature_drift_ratio"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "battery.cell",
+      "validation_status": "unvalidated"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "one cell, or a series string treated as one lumped cell with no cell-to-cell variation and no balancing",
+        "discharge only; charging is not modelled and no condition here would catch it",
+        "one uniform cell temperature, supplied from outside and never inferred",
+        "no diffusion or double-layer dynamics: no RC branch, no hysteresis",
+        "no ageing, no cycle life, no capacity fade, no resistance growth",
+        "no thermal runaway, no abuse response, no gas generation",
+        "no reversible (entropic) heat; the irreversible Joule term only",
+        "one constant series resistance stands for the whole overpotential",
+        "the open-circuit voltage is an affine chord between two declared endpoints unless the cell declares a curve for it, in which case the curve governs and is evidence only over its declared interval",
+        "the heat generated is I^2 R_int; the reversible term -I T dU/dT is omitted, is of the same order at low rate, and changes sign with current direction and state of charge"
+      ],
+      "declared_exclusions": [
+        "cell-to-cell variation and balancing; a series string is treated as one lumped cell",
+        "charging; discharge only, and no condition here would catch a charge",
+        "diffusion and double-layer dynamics: no RC branch, no hysteresis",
+        "ageing: no cycle life, no capacity fade, no resistance growth",
+        "thermal runaway, abuse response and gas generation",
+        "reversible (entropic) heat; the irreversible Joule term only",
+        "any inference of the cell temperature, which is supplied from outside",
+        "the overpotential beyond one constant series resistance",
+        "the reversible term -I T dU/dT in the heat, which is of the same order at low rate and changes sign with current direction and state of charge",
+        "any dependence of the internal resistance on temperature or state of charge; one measured value stands for the whole run"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "ampere_hour"
+          },
+          "name": "nominal_capacity"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "ohm"
+          },
+          "name": "internal_resistance"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "continuous_c_rate_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "pulse_c_rate_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "pulse_duration_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "soc_window_margin"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "discharge_temperature_position"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "internal_resistance_drift_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "self_heating_rise_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 0.05,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "polarization_unmodelled_fraction"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "terminal_voltage_ratio"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "V = OCV(z) - I R_int, OCV(z) = V_empty + (V_full - V_empty) z, Q_gen = I^2 R_int",
+      "implementation_entry_point": "engcore.domains.battery.solver.evaluate_step",
+      "model_id": "battery.cell.rint_ocv",
+      "model_type": "constitutive_model",
+      "note": "The chord's weakness is not hidden: the condition that bounds it cites Plett on why OCV is tabulated rather than chorded.",
+      "published_capability_claim": "Terminal voltage and irreversible heat of a cell represented as one ideal source at OCV(z) in series with one constant resistance: V = OCV(z) - I R_int, OCV(z) = V_empty + (V_full - V_empty) z, Q = I^2 R_int.",
+      "published_name": "Rint equivalent-circuit cell with affine open-circuit voltage",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a constant-OCV source with series resistance",
+          "represents": "YES",
+          "why": "the chord is exact when V_full = V_empty"
+        },
+        {
+          "case": "lead-acid over a mid-SOC window",
+          "represents": "YES",
+          "why": "OCV is close to affine there"
+        },
+        {
+          "case": "Li-ion NMC over a declared mid-SOC window",
+          "represents": "BOUNDED",
+          "why": "soc_window_margin makes the caller state where the chord holds, and names the knee and plateau it fails at"
+        },
+        {
+          "case": "LFP across its flat plateau",
+          "represents": "BOUNDED",
+          "why": "same window condition; a measured curve may be declared instead of the chord"
+        },
+        {
+          "case": "a cell near empty where charge-transfer resistance rises",
+          "represents": "BOUNDED",
+          "why": "soc_window_margin refuses outside the declared window"
+        },
+        {
+          "case": "a cell whose R_int moves with temperature",
+          "represents": "BOUNDED",
+          "why": "internal_resistance_drift_ratio refuses beyond the declared span"
+        },
+        {
+          "case": "a pulse load",
+          "represents": "BOUNDED",
+          "why": "pulse_c_rate_utilization and pulse_duration_utilization"
+        },
+        {
+          "case": "polarization dynamics within the step",
+          "represents": "BOUNDED",
+          "why": "polarization_unmodelled_fraction bounds the unmodelled fraction"
+        },
+        {
+          "case": "charging",
+          "represents": "DISCLOSED",
+          "why": "the record states in both assumptions and exclusions that charging is not modelled and that no condition here would catch it"
+        },
+        {
+          "case": "reversible entropic heat",
+          "represents": "DISCLOSED",
+          "why": "excluded, and the record says it is of the same order at low rate"
+        }
+      ],
+      "references": [
+        "Plett, G. L., Battery Management Systems, Volume I: Battery Modeling, Artech House (2015), Ch. 3 (equivalent-circuit cell models: the Rint model, the OCV relationship, and the RC diffusion branches it omits)",
+        "Incropera, F. P., DeWitt, D. P., Bergman, T. L. & Lavine, A. S., Fundamentals of Heat and Mass Transfer, 6th ed., Wiley (2007), Sec. 5.3, Eq. 5.25 (lumped body with internal generation)"
+      ],
+      "required_physical_regime": {
+        "chemistry": "chemistry-agnostic in form; the chord is a caller declaration, not a chemistry claim",
+        "coefficients": "one constant R_int for the whole run; OCV an affine chord unless a curve is declared",
+        "dependent_variables": [
+          "V_terminal",
+          "OCV",
+          "Q_gen"
+        ],
+        "equilibrium": "no diffusion or double-layer relaxation; no hysteresis",
+        "independent_variables": [
+          "z (state of charge)"
+        ],
+        "linearity": "affine in z, linear in I",
+        "steady_or_transient": "quasi-static: one algebraic evaluation per step"
+      },
+      "reserved_derived_quantities": [
+        "continuous_c_rate_utilization",
+        "discharge_temperature_position",
+        "internal_resistance_drift_ratio",
+        "polarization_unmodelled_fraction",
+        "pulse_c_rate_utilization",
+        "pulse_duration_utilization",
+        "self_heating_rise_ratio",
+        "soc_window_margin",
+        "terminal_voltage_ratio"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "battery.cell",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped-element circuit (no distributed or field effects)",
+        "steady-state DC operation (no transients, no reactive elements)",
+        "linear, time-invariant elements",
+        "ideal independent sources (no internal impedance unless modelled explicitly)",
+        "temperature-independent resistance",
+        "no parasitics",
+        "infinite output impedance",
+        "unlimited compliance voltage"
+      ],
+      "declared_exclusions": [
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "temperature dependence of resistance",
+        "parasitics",
+        "finite output impedance; the source is ideal",
+        "any compliance voltage limit"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "compliance_voltage_utilization"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "I from_node -> to_node fixed, irrespective of terminal voltage",
+      "implementation_entry_point": "engcore.domains.electrical.dc.solver.ElectricalDCSolver (MNA)",
+      "model_id": "electrical.dc.ideal_current_source",
+      "model_type": "approximation",
+      "note": "",
+      "published_capability_claim": "Imposes a fixed current from_node -> to_node inside the source, irrespective of the terminal voltage that develops across it. An idealisation: real sources have finite output impedance and a limited compliance voltage.",
+      "published_name": "Ideal independent DC current source relation",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a current source well inside its compliance",
+          "represents": "YES",
+          "why": "the idealisation holds"
+        },
+        {
+          "case": "a load that drives the source past its compliance voltage",
+          "represents": "BOUNDED",
+          "why": "compliance_voltage_utilization refuses when a compliance_voltage is declared"
+        },
+        {
+          "case": "finite output impedance",
+          "represents": "DISCLOSED",
+          "why": "excluded"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "ideality": "infinite output impedance, unlimited compliance voltage",
+        "steady_or_transient": "steady-state DC"
+      },
+      "reserved_derived_quantities": [
+        "compliance_voltage_utilization"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.dc",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped-element circuit (no distributed or field effects)",
+        "steady-state DC operation (no transients, no reactive elements)",
+        "linear, time-invariant elements",
+        "ideal independent sources (no internal impedance unless modelled explicitly)",
+        "temperature-independent resistance",
+        "no parasitics",
+        "zero internal impedance",
+        "unlimited current compliance"
+      ],
+      "declared_exclusions": [
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "temperature dependence of resistance",
+        "parasitics",
+        "internal impedance; the source is ideal",
+        "any current compliance limit"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "source_current_utilization"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "V(+) - V(-) = source_voltage, irrespective of current",
+      "implementation_entry_point": "engcore.domains.electrical.dc.solver.ElectricalDCSolver (MNA)",
+      "model_id": "electrical.dc.ideal_voltage_source",
+      "model_type": "approximation",
+      "note": "",
+      "published_capability_claim": "Imposes V(positive_node) - V(negative_node) = source_voltage irrespective of the current drawn. An idealisation: real sources have internal impedance and finite compliance.",
+      "published_name": "Ideal independent DC voltage source relation",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a stiff supply well inside its current rating",
+          "represents": "YES",
+          "why": "the idealisation holds"
+        },
+        {
+          "case": "a supply driven past its current rating",
+          "represents": "BOUNDED",
+          "why": "source_current_utilization refuses when a maximum_current is declared"
+        },
+        {
+          "case": "a supply with a real output impedance",
+          "represents": "DISCLOSED",
+          "why": "excluded here; electrical.dc.regulated_voltage_source is the companion record for it"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "ideality": "zero internal impedance, unlimited current compliance",
+        "steady_or_transient": "steady-state DC"
+      },
+      "reserved_derived_quantities": [
+        "source_current_utilization"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.dc",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped-element circuit (no distributed or field effects)",
+        "steady-state DC operation (no transients, no reactive elements)",
+        "linear, time-invariant elements",
+        "ideal independent sources (no internal impedance unless modelled explicitly)",
+        "temperature-independent resistance",
+        "no parasitics",
+        "no charge accumulation at nodes (lumped assumption)"
+      ],
+      "declared_exclusions": [
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "temperature dependence of resistance",
+        "parasitics",
+        "charge accumulation at nodes"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 0.1,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "lumped_electrical_length"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "sum of signed currents leaving a node = 0",
+      "implementation_entry_point": "engcore.domains.electrical.dc.solver.ElectricalDCSolver (MNA)",
+      "model_id": "electrical.dc.kcl",
+      "model_type": "fundamental_relation",
+      "note": "",
+      "published_capability_claim": "Algebraic current balance at a node: the signed sum of currents leaving a node through all connected elements is zero. Expresses charge conservation for a lumped circuit.",
+      "published_name": "Kirchhoff current law (nodal charge balance)",
+      "real_cases_under_the_claim": [
+        {
+          "case": "any lumped DC network",
+          "represents": "YES",
+          "why": "charge conservation is exact here"
+        },
+        {
+          "case": "a circuit at non-zero frequency comparable with its size",
+          "represents": "BOUNDED",
+          "why": "lumped_electrical_length is stated and would bite; at DC it is identically zero"
+        },
+        {
+          "case": "transmission-line and field effects",
+          "represents": "DISCLOSED",
+          "why": "excluded"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "dimensionless_ranges": "L/lambda <= 0.1, satisfied by this model's own scope because a DC model has f = 0",
+        "linearity": "exact conservation law, no approximation",
+        "spatial": "lumped; no charge accumulation at nodes",
+        "steady_or_transient": "steady-state DC"
+      },
+      "reserved_derived_quantities": [
+        "lumped_electrical_length"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.dc",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped-element circuit (no distributed or field effects)",
+        "steady-state DC operation (no transients, no reactive elements)",
+        "linear, time-invariant elements",
+        "the source is a Thevenin equivalent: one constant open-circuit voltage in series with one constant resistance",
+        "the internal drop is small enough that the imposed terminal voltage is still the terminal voltage"
+      ],
+      "declared_exclusions": [
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "the supply's behaviour outside the regulation band it was declared to hold",
+        "any internal dynamics; the source is a Thevenin equivalent with one constant open-circuit voltage and one constant resistance"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "source_regulation_utilization"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "V(+) - V(-) = source_voltage, asserted where (|I| R_out / |V_src|) / regulation_band <= 1",
+      "implementation_entry_point": "engcore.domains.electrical.dc.solver.ElectricalDCSolver (MNA)",
+      "model_id": "electrical.dc.regulated_voltage_source",
+      "model_type": "approximation",
+      "note": "",
+      "published_capability_claim": "The same relation electrical.dc.ideal_voltage_source imposes \u2014 V(positive_node) - V(negative_node) = source_voltage irrespective of the current drawn \u2014 asserted only where the source's own internal drop stays inside the regulation band it was declared to hold. The companion record, not a replacement: the ideal model stays exactly as applicable as it was, and this one says where its zero-impedance assumption stops describing the supply.",
+      "published_name": "Ideal voltage source relation, inside a declared regulation band",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a regulated supply inside its published regulation band",
+          "represents": "YES",
+          "why": "the intended case"
+        },
+        {
+          "case": "a supply loaded past its regulation band",
+          "represents": "BOUNDED",
+          "why": "source_regulation_utilization refuses"
+        },
+        {
+          "case": "a supply with internal dynamics or foldback",
+          "represents": "DISCLOSED",
+          "why": "excluded; the source is a static Thevenin equivalent"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "ideality": "Thevenin equivalent: one constant open-circuit voltage, one constant output resistance",
+        "steady_or_transient": "steady-state DC"
+      },
+      "reserved_derived_quantities": [
+        "source_regulation_utilization"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.dc",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped-element circuit (no distributed or field effects)",
+        "steady-state DC operation (no transients, no reactive elements)",
+        "linear, time-invariant elements",
+        "ideal independent sources (no internal impedance unless modelled explicitly)",
+        "temperature-independent resistance",
+        "no parasitics"
+      ],
+      "declared_exclusions": [
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "temperature dependence of resistance",
+        "parasitics"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "ohm"
+          },
+          "name": "resistance"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "dissipated_power_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "working_voltage_utilization"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "V = I R; P = V I = I^2 R >= 0",
+      "implementation_entry_point": "engcore.domains.electrical.dc.solver.ElectricalDCSolver (MNA)",
+      "model_id": "electrical.dc.resistor_ohm",
+      "model_type": "constitutive_model",
+      "note": "",
+      "published_capability_claim": "Relates the voltage across an ideal linear resistor to the current through it: V = I R, with V measured node_a -> node_b and I positive in the same direction.",
+      "published_name": "Resistor constitutive relation (Ohm's law)",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a metal-film resistor inside its ratings",
+          "represents": "YES",
+          "why": "the intended case"
+        },
+        {
+          "case": "zero or negative resistance",
+          "represents": "BOUNDED",
+          "why": "refused at construction: a short is an ideal 0 V source and a negative resistance is an active device"
+        },
+        {
+          "case": "dissipation above the element's rating",
+          "represents": "BOUNDED",
+          "why": "dissipated_power_utilization, with a derating line per IEC 60115-1 when declared"
+        },
+        {
+          "case": "voltage above the element's working-voltage rating",
+          "represents": "BOUNDED",
+          "why": "working_voltage_utilization"
+        },
+        {
+          "case": "a resistance that moves as the element heats",
+          "represents": "DISCLOSED",
+          "why": "'temperature-independent resistance' is an assumption and an exclusion; electrical.dc.self_heated_resistor is where that assumption is checked"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "coefficients": "R constant and temperature-independent",
+        "linearity": "linear, time-invariant",
+        "steady_or_transient": "steady-state DC"
+      },
+      "reserved_derived_quantities": [
+        "dissipated_power_utilization",
+        "working_voltage_utilization"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.dc",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped-element circuit (no distributed or field effects)",
+        "steady-state DC operation (no transients, no reactive elements)",
+        "linear, time-invariant elements",
+        "the element's temperature is uniform over it, apart from the single element-to-body drop this record's own condition computes",
+        "one resistance describes the element over the whole run"
+      ],
+      "declared_exclusions": [
+        "distributed and field effects; the circuit is lumped",
+        "transients and reactive elements; steady-state DC only",
+        "non-linear and time-varying elements",
+        "temperature non-uniformity over the element, apart from the single element-to-body drop this record's own condition computes",
+        "any change of resistance over the run; one resistance describes the element throughout"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "element_hot_spot_utilization"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "V = I R, with (T_body + |P| R_th,element-to-body) / T_permissible <= 1",
+      "implementation_entry_point": "engcore.domains.electrical.dc.solver.ElectricalDCSolver (MNA)",
+      "model_id": "electrical.dc.self_heated_resistor",
+      "model_type": "constitutive_model",
+      "note": "The constant-resistance approximation is disclosed rather than bounded. Bounding it would require a TCR declaration this record does not take, which is a different model (electrical.material) rather than a missing condition here.",
+      "published_capability_claim": "V = I R for a real element, asserted only where the heat the element dissipates has not moved it out of the description the circuit was solved against. electrical.dc.resistor_ohm declares 'temperature-independent resistance' among its assumptions; this record is where that assumption is checked against the temperature an electro-thermal run actually computes, and against the element's own temperature limit rather than its body's.",
+      "published_name": "Resistor constitutive relation for an element the run heats",
+      "real_cases_under_the_claim": [
+        {
+          "case": "an element whose hot spot stays below its permissible temperature",
+          "represents": "YES",
+          "why": "the intended case"
+        },
+        {
+          "case": "an element driven past its own temperature limit",
+          "represents": "BOUNDED",
+          "why": "element_hot_spot_utilization refuses"
+        },
+        {
+          "case": "an element whose resistance changes as it heats",
+          "represents": "DISCLOSED",
+          "why": "excluded explicitly: 'any change of resistance over the run; one resistance describes the element throughout'"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "coefficients": "one resistance describes the element over the whole run",
+        "spatial": "element uniform apart from the single element-to-body drop this record computes",
+        "steady_or_transient": "steady-state DC with an imposed body temperature"
+      },
+      "reserved_derived_quantities": [
+        "element_hot_spot_utilization"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.dc",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "VALIDITY_LIMIT_MISSING",
+      "declared_assumptions": [
+        "linear first-order temperature coefficient about a reference state",
+        "no self-heating term: T is supplied, never inferred from the resistance",
+        "isotropic scalar resistance; no tensor conductivity",
+        "no strain, ageing, frequency or magnetic-field dependence",
+        "temperature is uniform over the conductor (consistent with a lumped body)"
+      ],
+      "declared_exclusions": [
+        "higher-order temperature dependence; the coefficient is first order about a reference state",
+        "thermistors of either sign; an NTC is exponential in 1/T and a PTC switches over a few kelvin, and neither is the straight line this record evaluates, whatever the sign of the coefficient",
+        "self-heating; the temperature is supplied and never inferred from the resistance",
+        "tensor conductivity; the resistance is an isotropic scalar",
+        "strain, ageing, frequency and magnetic-field dependence",
+        "temperature non-uniformity over the conductor"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 450.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "minimum": {
+            "magnitude": 200.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "name": "temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "ohm"
+          },
+          "name": "reference_resistance"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "linear_resistance_ratio"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": "CB-1",
+      "governing_equations": "R(T) = R_ref (1 + alpha (T - T_ref))",
+      "implementation_entry_point": "engcore.domains.electrical.material.ResistancePropertySolver",
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "model_type": "constitutive_model",
+      "note": "Of the four conditions the rated sibling adds, three need a material declaration this record does not take and their absence is justified. linear_resistance_ratio needs nothing but the three inputs this record already requires.",
+      "published_capability_claim": "Resistance of a conductor as a linear function of its temperature: R(T) = R_ref (1 + alpha (T - T_ref)).",
+      "published_name": "Linear temperature-coefficient conductor resistance",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a copper or platinum conductor near its reference temperature",
+          "represents": "YES",
+          "why": "the linear tangent is accurate there"
+        },
+        {
+          "case": "a thermistor of either sign",
+          "represents": "DISCLOSED",
+          "why": "excluded explicitly; an NTC is exponential in 1/T and a PTC switches over a few kelvin"
+        },
+        {
+          "case": "a semiconductor or alloy read off a local tangent (negative alpha)",
+          "represents": "NO",
+          "why": "the input record explicitly admits this case and justifies it by 'the band is how far that tangent is claimed to carry' -- but this record declares no band. Any (alpha, T_ref) whose line crosses zero inside 200-450 K yields R <= 0 with every condition SATISFIED."
+        },
+        {
+          "case": "a conductor evaluated far from its reference temperature",
+          "represents": "DISCLOSED",
+          "why": "the 200-450 K condition is a fixed window; the material-specific band is the rated sibling's claim, and requiring it here would need a declaration this record does not take"
+        },
+        {
+          "case": "a conductor above its maximum operating temperature",
+          "represents": "DISCLOSED",
+          "why": "the rated sibling's claim; needs a material declaration"
+        },
+        {
+          "case": "a conductor below the Bloch-Grueneisen linear floor",
+          "represents": "DISCLOSED",
+          "why": "the rated sibling's claim; needs a Debye temperature"
+        },
+        {
+          "case": "self-heating",
+          "represents": "DISCLOSED",
+          "why": "excluded; T is supplied and never inferred"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "coefficients": "one alpha for the whole declared range",
+        "dependent_variables": [
+          "R"
+        ],
+        "dimensionless_ranges": "none declared; the sibling record declares three",
+        "independent_variables": [
+          "T"
+        ],
+        "linearity": "first-order Taylor expansion of rho(T) about T_ref",
+        "material": "isotropic scalar; no strain, ageing, frequency or field dependence",
+        "steady_or_transient": "a single algebraic evaluation at a supplied temperature"
+      },
+      "reserved_derived_quantities": [
+        "linear_resistance_ratio",
+        "temperature"
+      ],
+      "resolution": "FIXED. A linear_resistance_ratio > 0 condition now refuses a line that has crossed zero, so the case reads BOUNDED rather than NO. Guarded by test_the_linear_tcr_model_refuses_a_line_that_has_crossed_zero.",
+      "status": "REVIEWED",
+      "system": "electrical.material",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "linear first-order temperature coefficient about a reference state",
+        "no self-heating term: T is supplied, never inferred from the resistance",
+        "isotropic scalar resistance; no tensor conductivity",
+        "no strain, ageing, frequency or magnetic-field dependence",
+        "temperature is uniform over the conductor (consistent with a lumped body)",
+        "the material's own declared limits bound the claim, and an undeclared limit leaves its condition UNKNOWN rather than satisfied"
+      ],
+      "declared_exclusions": [
+        "higher-order temperature dependence; the coefficient is first order about a reference state",
+        "thermistors of either sign; an NTC is exponential in 1/T and a PTC switches over a few kelvin, and neither is the straight line this record evaluates, whatever the sign of the coefficient",
+        "self-heating; the temperature is supplied and never inferred from the resistance",
+        "tensor conductivity; the resistance is an isotropic scalar",
+        "strain, ageing, frequency and magnetic-field dependence",
+        "temperature non-uniformity over the conductor"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 450.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "minimum": {
+            "magnitude": 200.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "name": "temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "ohm"
+          },
+          "name": "reference_resistance"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "linearization_excursion_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "operating_temperature_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.3333333333333333,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "reduced_debye_temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "CrossLimitCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "reference_temperature_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "CrossLimitCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.2,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "reference_reduced_debye_temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "CrossLimitCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.3333333333333333,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "ceiling_reduced_debye_temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "linear_resistance_ratio"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "the same R(T) = R_ref (1 + alpha (T - T_ref)), claimed only inside the material's own declared limits",
+      "implementation_entry_point": "engcore.domains.electrical.material.ResistancePropertySolver",
+      "model_id": "electrical.material.rated_linear_tcr_resistance",
+      "model_type": "constitutive_model",
+      "note": "This record is the source of truth for CB-1: it declares the positivity bound and calls it 'the physics of the quantity, not a tolerance'.",
+      "published_capability_claim": "The same relation as electrical.material.linear_tcr_resistance, R(T) = R_ref (1 + alpha (T - T_ref)), claimed only inside the linearization band, the maximum operating temperature and the low-temperature floor the material itself declares. A strictly stronger claim with a strictly smaller validity domain.",
+      "published_name": "Linear-TCR conductor resistance within its material limits",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a conductor with a full material datasheet",
+          "represents": "YES",
+          "why": "the intended case"
+        },
+        {
+          "case": "a conductor read outside its linearization band",
+          "represents": "BOUNDED",
+          "why": "linearization_excursion_ratio, evaluated at the furthest state the run occupies"
+        },
+        {
+          "case": "a conductor above its maximum operating temperature",
+          "represents": "BOUNDED",
+          "why": "operating_temperature_utilization"
+        },
+        {
+          "case": "a conductor below the linear-resistivity regime",
+          "represents": "BOUNDED",
+          "why": "reduced_debye_temperature floors T/theta_D at 1/3"
+        },
+        {
+          "case": "a line that crosses zero",
+          "represents": "BOUNDED",
+          "why": "linear_resistance_ratio > 0"
+        },
+        {
+          "case": "a material that declares no limits",
+          "represents": "BOUNDED",
+          "why": "each condition is UNKNOWN unless its limit is declared; the claim is not awarded by default"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "dimensionless_ranges": "|T - T_ref|/band <= 1; T/T_max <= 1; T/theta_D >= 1/3 (Bloch-Grueneisen linear regime); 1 + alpha (T - T_ref) > 0",
+        "linearity": "first-order Taylor, with the excursion bounded by the material's declared band"
+      },
+      "reserved_derived_quantities": [
+        "linear_resistance_ratio",
+        "linearization_excursion_ratio",
+        "operating_temperature_utilization",
+        "reduced_debye_temperature",
+        "temperature"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "electrical.material",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "perfectly mixed tank: no spatial gradients in concentration or temperature",
+        "constant liquid volume; inflow and outflow volumetric rates are equal",
+        "single liquid phase, constant density and constant heat capacity",
+        "one irreversible reaction A -> B, first order in A, no reverse reaction and no side reactions",
+        "Arrhenius temperature dependence with a temperature-independent pre-exponential factor and activation energy",
+        "heat of reaction independent of temperature",
+        "jacket at a prescribed, constant temperature with a constant overall heat-transfer coefficient-area product; the jacket's own dynamics are not modelled",
+        "no heat loss other than through the jacket; no viscous dissipation",
+        "no phase change, no boiling, no vapour space"
+      ],
+      "declared_exclusions": [
+        "spatial gradients in concentration or temperature; the tank is perfectly mixed",
+        "volume change; inflow and outflow volumetric rates are equal",
+        "a second phase, boiling and a vapour space",
+        "reverse and side reactions; one irreversible A -> B, first order in A",
+        "temperature dependence of the density and the heat capacity",
+        "jacket dynamics; a prescribed constant jacket temperature and a constant UA",
+        "temperature dependence of the pre-exponential factor and the activation energy",
+        "temperature dependence of the heat of reaction",
+        "heat loss other than through the jacket, and viscous dissipation",
+        "any change of reactor volume with time; the volume is constant"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1000.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "minimum": {
+            "magnitude": 250.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "name": "temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "mole / meter ** 3"
+          },
+          "name": "concentration"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "1 / second"
+          },
+          "name": "k0"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "joule / mole"
+          },
+          "name": "activation_energy"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "second"
+          },
+          "name": "residence_time"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1000.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "minimum": null,
+          "name": "adiabatic_ceiling_temperature"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "dC_A/dt = (C_Af - C_A)/tau - k(T) C_A ; dT/dt = (T_f - T)/tau + beta k(T) C_A - gamma (T - T_c) ; k(T) = k0 exp(-E/RT)",
+      "implementation_entry_point": "engcore.domains.kinetics.cstr.solver (shared CSTR kernel)",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "model_type": "fundamental_relation",
+      "note": "The adiabatic ceiling is an exact upper bound, not an estimate, and is decidable from the declaration alone.",
+      "published_capability_claim": "Coupled species and energy balances for a perfectly mixed constant-volume liquid-phase CSTR carrying one irreversible exothermic first-order reaction with Arrhenius kinetics and jacket cooling.",
+      "published_name": "Non-isothermal CSTR, first-order exothermic reaction",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a cooled exothermic liquid-phase reactor inside its envelope",
+          "represents": "YES",
+          "why": "the intended case"
+        },
+        {
+          "case": "a declaration whose adiabatic ceiling leaves the single-phase envelope",
+          "represents": "BOUNDED",
+          "why": "adiabatic_ceiling_temperature refuses on the exact invariant, before any solve"
+        },
+        {
+          "case": "ignition and multiple steady states",
+          "represents": "YES",
+          "why": "the equations carry this; it is why the model exists"
+        },
+        {
+          "case": "a solvent that would boil well below 1000 K",
+          "represents": "DISCLOSED",
+          "why": "assumptions and exclusions both name boiling and a vapour space; no boiling point is declarable, so the envelope is a fixed conservative band rather than a solvent-specific one"
+        },
+        {
+          "case": "reverse or side reactions",
+          "represents": "DISCLOSED",
+          "why": "excluded"
+        },
+        {
+          "case": "jacket dynamics",
+          "represents": "DISCLOSED",
+          "why": "excluded; prescribed constant jacket temperature and constant UA"
+        }
+      ],
+      "references": [
+        "Aris, R. and Amundson, N.R. (1958) An analysis of chemical reactor stability and control. Chemical Engineering Science 7(3), 121-155.",
+        "Uppal, A., Ray, W.H. and Poore, A.B. (1974) On the dynamic behaviour of continuous stirred tank reactors. Chemical Engineering Science 29(4), 967-985.",
+        "Seborg, D.E., Edgar, T.F., Mellichamp, D.A. and Doyle, F.J. Process Dynamics and Control. The tabulated CSTR example parameterization."
+      ],
+      "required_physical_regime": {
+        "coefficients": "constant density, heat capacity, heat of reaction, UA; jacket at a prescribed constant temperature",
+        "dependent_variables": [
+          "C_A",
+          "T"
+        ],
+        "independent_variables": [
+          "t"
+        ],
+        "invariants": "Z = T + beta C_A obeys dZ/dt = (Z_f - Z)/tau - gamma (T - T_c), so T <= max(T_0,T_f,T_c) + beta max(C_A0,C_Af) with or without cooling",
+        "linearity": "nonlinear: Arrhenius coupling between the two balances",
+        "phases": "single liquid phase, no boiling, no vapour space",
+        "spatial": "perfectly mixed, zero-dimensional",
+        "steady_or_transient": "transient, and stiff near ignition"
+      },
+      "reserved_derived_quantities": [
+        "adiabatic_ceiling_temperature",
+        "concentration",
+        "temperature"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "kinetics.cstr",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "VALIDITY_LIMIT_MISSING",
+      "declared_assumptions": [
+        "perfectly mixed constant-volume liquid-phase CSTR",
+        "one irreversible first-order exothermic reaction A -> B",
+        "reaction rate constant is approximated as temperature independent",
+        "constant liquid density and heat capacity",
+        "prescribed constant jacket temperature and constant UA",
+        "single liquid phase with no boiling or phase change",
+        "this restricted model is a K4 comparison approximation, not a claim that Arrhenius temperature dependence is absent in the physical system"
+      ],
+      "declared_exclusions": [
+        "spatial gradients in concentration or temperature; the tank is perfectly mixed",
+        "volume change; inflow and outflow volumetric rates are equal",
+        "a second phase, boiling and a vapour space",
+        "reverse and side reactions; one irreversible A -> B, first order in A",
+        "temperature dependence of the density and the heat capacity",
+        "jacket dynamics; a prescribed constant jacket temperature and a constant UA",
+        "Arrhenius temperature dependence of the rate constant, which is approximated as temperature independent -- a comparison approximation, not a claim that it is absent in the physical system",
+        "any change of reactor volume with time; the volume is constant"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1000.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "minimum": {
+            "magnitude": 250.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "name": "temperature"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "mole / meter ** 3"
+          },
+          "name": "concentration"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "1 / second"
+          },
+          "name": "k_const"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "second"
+          },
+          "name": "residence_time"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1000.0,
+            "schema": "quantity/1",
+            "units": "kelvin"
+          },
+          "minimum": null,
+          "name": "adiabatic_ceiling_temperature"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": "CB-2",
+      "governing_equations": "the same two balances with k held constant: dC_A/dt = (C_Af - C_A)/tau - k_const C_A ; dT/dt = (T_f - T)/tau + beta k_const C_A - gamma (T - T_c)",
+      "implementation_entry_point": "engcore.domains.kinetics.cstr.solver (shared CSTR kernel)",
+      "model_id": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+      "model_type": "approximation",
+      "note": "The invariant derivation is rate-law-independent: adding beta times the species balance to the energy balance cancels the reaction term whatever k is. The primary model's own record states the derivation.",
+      "published_capability_claim": "The same well-mixed species and energy balances as the primary CSTR model, but with a single temperature-independent first-order rate constant k_const instead of Arrhenius temperature dependence.",
+      "published_name": "Non-isothermal CSTR with temperature-independent first-order rate",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a controlled comparison against the Arrhenius model",
+          "represents": "YES",
+          "why": "what the model exists for"
+        },
+        {
+          "case": "a reactor whose temperature swing is small enough that k barely moves",
+          "represents": "YES",
+          "why": "the approximation is defensible there and is disclosed as an approximation"
+        },
+        {
+          "case": "a declaration whose adiabatic ceiling leaves the single-phase envelope",
+          "represents": "NO",
+          "why": "the record claims the 'Same single-phase CSTR envelope as the primary model' and states a 250-1000 K temperature condition, but does not reserve or state a condition over adiabatic_ceiling_temperature. The quantity is computed and present in the very context this model is assessed against; the model simply does not look at it, and reports IN_DOMAIN."
+        },
+        {
+          "case": "a real system with Arrhenius dependence",
+          "represents": "DISCLOSED",
+          "why": "the record says plainly that this is a comparison approximation, not a claim that the dependence is absent"
+        }
+      ],
+      "references": [
+        "K4 controlled comparison model: temperature-independent first-order rate approximation."
+      ],
+      "required_physical_regime": {
+        "dependent_variables": [
+          "C_A",
+          "T"
+        ],
+        "invariants": "the SAME Z = T + beta C_A invariant: the reaction rate cancels exactly out of dZ/dt, so the bound is independent of the rate law",
+        "linearity": "linear in (C_A, T): the Arrhenius coupling is removed",
+        "phases": "single liquid phase, no boiling -- the record claims the SAME envelope as the primary model",
+        "spatial": "perfectly mixed, zero-dimensional",
+        "steady_or_transient": "transient"
+      },
+      "reserved_derived_quantities": [
+        "adiabatic_ceiling_temperature",
+        "concentration",
+        "temperature"
+      ],
+      "resolution": "FIXED. An adiabatic_ceiling_temperature <= 1000 K condition now bounds the constant-rate record on the same invariant as its sibling, so the case reads BOUNDED rather than NO. Guarded by test_both_cstr_models_refuse_a_declaration_whose_ceiling_leaves_the_envelope.",
+      "status": "REVIEWED",
+      "system": "kinetics.cstr",
+      "validation_status": "unvalidated"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "one spatial dimension; no lateral or multidimensional transport",
+        "linear diffusion with a constant, field-independent diffusivity",
+        "no source or sink term",
+        "homogeneous Dirichlet boundaries held exactly at zero for all time",
+        "single-mode sinusoidal initial condition",
+        "normalized dimensionless field; no absolute temperature scale, no material properties and no thermodynamic state are claimed",
+        "no convection, no radiation, no phase change"
+      ],
+      "declared_exclusions": [],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "meter ** 2 / second"
+          },
+          "name": "alpha"
+        }
+      ],
+      "exclusions_declared": false,
+      "finding": null,
+      "governing_equations": "du/dt = alpha d2u/dx2 on (0,L), u(0,t)=u(L,t)=0, u(x,0)=sin(pi x/L); exact solution u = sin(pi x/L) exp(-alpha pi^2 t/L^2)",
+      "implementation_entry_point": "engcore.domains.thermal.conduction1d.solver.solve_slab",
+      "model_id": "thermal.conduction1d.linear_diffusion",
+      "model_type": "fundamental_relation",
+      "note": "A coarse solve returns a badly inaccurate number, but the result contract refuses to dress it up: the strongest level attained is DIMENSIONALLY_VALID and the two checks that would establish accuracy are explicitly NOT_RUN.",
+      "published_capability_claim": "The 1D diffusion equation du/dt = alpha d2u/dx2 on a finite slab with homogeneous Dirichlet boundaries, for a normalized dimensionless field.",
+      "published_name": "1D linear transient diffusion",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a slab relaxing from a single-mode profile",
+          "represents": "YES",
+          "why": "this is exactly the declared problem"
+        },
+        {
+          "case": "an arbitrary initial temperature profile",
+          "represents": "DISCLOSED",
+          "why": "'single-mode sinusoidal initial condition' is an assumption on the record; the IC is not a caller field"
+        },
+        {
+          "case": "internal heat generation",
+          "represents": "DISCLOSED",
+          "why": "'no source or sink term' is an assumption on the record"
+        },
+        {
+          "case": "temperature-dependent diffusivity",
+          "represents": "DISCLOSED",
+          "why": "'linear diffusion with a constant, field-independent diffusivity'"
+        },
+        {
+          "case": "a coarse mesh or long time step",
+          "represents": "BOUNDED",
+          "why": "the result attains only DIMENSIONALLY_VALID; discretization_convergence and analytic_reference_agreement are reported NOT_RUN and every uncertainty is UNKNOWN with the reason stated"
+        },
+        {
+          "case": "an explicit scheme past its stability limit",
+          "represents": "BOUNDED",
+          "why": "the explicit FTCS realization carries its own von Neumann fourier_number condition"
+        },
+        {
+          "case": "convection, radiation or phase change",
+          "represents": "DISCLOSED",
+          "why": "excluded in the assumptions"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "boundary_conditions": "homogeneous Dirichlet, held exactly at zero",
+        "dependent_variables": [
+          "u (normalized, dimensionless)"
+        ],
+        "independent_variables": [
+          "x",
+          "t"
+        ],
+        "initial_condition": "fixed by the benchmark: the first Laplacian eigenfunction",
+        "linearity": "linear, field-independent diffusivity",
+        "solver": "backward Euler in time, second-order central differences in space; unconditionally stable, first-order accurate in dt",
+        "spatial": "one dimension, finite slab",
+        "steady_or_transient": "transient"
+      },
+      "reserved_derived_quantities": [],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "thermal.conduction1d",
+      "validation_status": "self_consistent"
+    },
+    {
+      "capability_classification": "EXACT",
+      "declared_assumptions": [
+        "lumped body: one uniform temperature, no internal spatial gradient",
+        "Biot number small enough that internal conduction is not limiting",
+        "constant heat capacity over the temperature range considered",
+        "constant ambient conductance; one exchange path to one ambient",
+        "no radiation, no phase change, no mass transport",
+        "the heat input is externally imposed and its origin is not claimed here"
+      ],
+      "declared_exclusions": [
+        "internal spatial gradients; the body is one uniform temperature",
+        "radiation",
+        "phase change",
+        "mass transport",
+        "temperature dependence of the heat capacity, which is taken as constant over the range considered",
+        "temperature dependence of the ambient conductance; one constant exchange path to one ambient",
+        "the origin of the heat input, which is externally imposed and not claimed here"
+      ],
+      "declared_validity_limits": [
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "joule / kelvin"
+          },
+          "name": "heat_capacity"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": false,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.0,
+            "schema": "quantity/1",
+            "units": "watt / kelvin"
+          },
+          "name": "ambient_conductance"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 0.1,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "biot_number"
+        },
+        {
+          "conservative_screen": true,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": null,
+          "minimum": {
+            "magnitude": 0.2,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "internal_fourier_number"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "conductance_excursion_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "capacity_excursion_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 0.1,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "radiation_to_convection_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "convection_flow_range_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "convection_property_range_utilization"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 2.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": {
+            "magnitude": 0.5,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "convection_conductance_agreement_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 3.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": {
+            "magnitude": 0.3333333333333333,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "name": "geometry_route_ratio"
+        },
+        {
+          "conservative_screen": false,
+          "is_reserved_derived": true,
+          "kind": "RangeCondition",
+          "maximum": {
+            "magnitude": 1.0,
+            "schema": "quantity/1",
+            "units": "dimensionless"
+          },
+          "minimum": null,
+          "name": "melting_temperature_utilization"
+        }
+      ],
+      "exclusions_declared": true,
+      "finding": null,
+      "governing_equations": "C dT/dt = Q_in - hA (T - T_amb); T(t) = T_ss + (T_0 - T_ss) exp(-t hA/C), T_ss = T_amb + Q_in/hA",
+      "implementation_entry_point": "engcore.domains.thermal_models.lumped (ThermalBody -> LumpedCapacitySolver)",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "model_type": "fundamental_relation",
+      "note": "Twelve conditions, ten of them UNKNOWN on a bare declaration. Fail-closed: the model cannot reach IN_DOMAIN without the caller stating the regime.",
+      "published_capability_claim": "Energy balance on a lumped body: C dT/dt = Q_in - hA (T - T_amb). One temperature, one imposed heat input, one ambient exchange path.",
+      "published_name": "Lumped first-order thermal capacity",
+      "real_cases_under_the_claim": [
+        {
+          "case": "a small PCB component on a heatsink, forced air",
+          "represents": "YES",
+          "why": "thin, high conductance, Bi well below 0.1"
+        },
+        {
+          "case": "a thick steel billet quenched in water",
+          "represents": "BOUNDED",
+          "why": "Bi >> 0.1; biot_number refuses"
+        },
+        {
+          "case": "a body cooling mainly by radiation in vacuum",
+          "represents": "BOUNDED",
+          "why": "radiation_to_convection_ratio refuses above 0.1"
+        },
+        {
+          "case": "a component that reaches its melting point",
+          "represents": "BOUNDED",
+          "why": "melting_temperature_utilization refuses"
+        },
+        {
+          "case": "a horizon shorter than the internal diffusion time",
+          "represents": "BOUNDED",
+          "why": "internal_fourier_number is a conservative screen and returns UNKNOWN"
+        },
+        {
+          "case": "a body whose hA is read off a correlation outside its fitted range",
+          "represents": "BOUNDED",
+          "why": "convection_flow_range_utilization and convection_property_range_utilization refuse"
+        },
+        {
+          "case": "a temperature swing large enough to move C or hA",
+          "represents": "BOUNDED",
+          "why": "capacity_excursion_ratio and conductance_excursion_ratio bound the caller's own declared budget"
+        },
+        {
+          "case": "mass transport or a second exchange path",
+          "represents": "DISCLOSED",
+          "why": "excluded in the record; one exchange path only"
+        }
+      ],
+      "references": [],
+      "required_physical_regime": {
+        "boundary_conditions": "one convective path to one prescribed ambient",
+        "coefficients": "C and hA frozen for the whole interval",
+        "dependent_variables": [
+          "T"
+        ],
+        "dimensionless_ranges": "Bi <= 0.1; Fo >= 0.2 (conservative screen); h_r/h <= 0.1",
+        "empirical_correlations": "Nu correlations enter only through the optional hA cross-check, each carrying its own Ra/Re/Pr range",
+        "independent_variables": [
+          "t"
+        ],
+        "linearity": "linear ODE, constant coefficients",
+        "spatial": "lumped (zero-dimensional); one uniform temperature",
+        "steady_or_transient": "transient"
+      },
+      "reserved_derived_quantities": [
+        "biot_number",
+        "capacity_excursion_ratio",
+        "conductance_excursion_ratio",
+        "convection_conductance_agreement_ratio",
+        "convection_flow_range_utilization",
+        "convection_property_range_utilization",
+        "geometry_route_ratio",
+        "internal_fourier_number",
+        "melting_temperature_utilization",
+        "radiation_to_convection_ratio"
+      ],
+      "resolution": "",
+      "status": "REVIEWED",
+      "system": "thermal.lumped",
+      "validation_status": "self_consistent"
+    }
+  ],
+  "models_with_findings": [
+    "battery.cell.constant_current_runtime",
+    "electrical.material.linear_tcr_resistance",
+    "kinetics.cstr.nonisothermal_first_order_constant_rate"
+  ],
+  "not_what_this_is": "Not a record-versus-runtime check. That question was settled by the Contract Guard round and its agreement is assumed here, not re-derived, and is not evidence of scientific validity.",
+  "real_case_counts": {
+    "BOUNDED": 37,
+    "DISCLOSED": 27,
+    "NO": 3,
+    "YES": 19
+  },
+  "real_cases_reviewed": 86,
+  "represents_legend": {
+    "BOUNDED": "the equations do not carry it and a declared validity condition refuses or UNKNOWNs it",
+    "DISCLOSED": "the equations do not carry it, nothing refuses it, and the record says so",
+    "NO": "the equations do not carry it, nothing refuses it, and the record does not say so",
+    "YES": "the equations carry this case"
+  },
+  "schema": "capability_boundary_surface/1",
+  "system_count": 6,
+  "unresolved_no_cases": [],
+  "verdicts_are_as_found": "Every 'represents' verdict below is what the audit FOUND. The three NO cases were repaired in this round and each carries a 'resolution' on its model saying so; 'unresolved_no_cases' is the count that would still be open, and it is the one to read.",
+  "what_this_is": "Every shipped model's published capability claim beside the regime its equations actually define, and the real physical cases a competent caller would read into the claim. The published half is read from the live records; the derived half is this audit's scientific reading, kept as reviewable data."
+}

@@ -1,0 +1,136 @@
+{
+  "schema": "falsification/1",
+  "what_this_is": "Eight controlled failures planted in what the Core returns or in the result set's own bookkeeping. Five are numerical; three are structural and leave every residual looking healthy, which is why the integrity checks exist.",
+  "control": {
+    "id": "MVM-0",
+    "plant": "none; the control",
+    "rows_failing_tolerance": 20,
+    "integrity_checks_failing": 1,
+    "note": "The control is NOT expected to be clean. MV-A fails its preregistered tolerance at every held-out point and MV-C fails at six of 371, both for reasons adjudicated in the findings, and the split check reports the one-row discrepancy recorded as MVA-1. What the control establishes is the BASELINE each plant is measured against, so a plant only counts if it makes things worse."
+  },
+  "plants": [
+    {
+      "id": "MVM-1",
+      "plant": "+5 percent systematic bias on every Core open-circuit voltage",
+      "cases_exercised": [
+        "MV-B"
+      ],
+      "rows_failing_tolerance": 2,
+      "baseline_rows_failing_tolerance": 0,
+      "integrity_offences": 0,
+      "baseline_integrity_offences": 0,
+      "how_it_is_caught": "a 165 mV bias on a 3.3 V cell leaves the millivolt-scale tolerance",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-2",
+      "plant": "resistance-temperature slope 2 percent too steep, exact at the reference point",
+      "cases_exercised": [
+        "MV-C"
+      ],
+      "rows_failing_tolerance": 371,
+      "baseline_rows_failing_tolerance": 6,
+      "integrity_offences": 1,
+      "baseline_integrity_offences": 1,
+      "how_it_is_caught": "the deviation stops being the omitted quadratic term, so the ratio metric leaves its band",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-3",
+      "plant": "every Core open-circuit voltage multiplied by 1000",
+      "cases_exercised": [
+        "MV-B"
+      ],
+      "rows_failing_tolerance": 2,
+      "baseline_rows_failing_tolerance": 0,
+      "integrity_offences": 0,
+      "baseline_integrity_offences": 0,
+      "how_it_is_caught": "a kilovolt where a volt was measured",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-4",
+      "plant": "the relaxed open-circuit voltage read at 1 h instead of 24 h",
+      "cases_exercised": [
+        "MV-A",
+        "MV-B"
+      ],
+      "rows_failing_tolerance": 10,
+      "baseline_rows_failing_tolerance": 10,
+      "integrity_offences": 19,
+      "baseline_integrity_offences": 0,
+      "how_it_is_caught": "the cell has not finished relaxing at 1 h, so every declared endpoint and every held-out value moves",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-5",
+      "plant": "a calibration point duplicated into the held-out set",
+      "cases_exercised": [
+        "MV-A",
+        "MV-A-replicate",
+        "MV-B",
+        "MV-C",
+        "MV-D"
+      ],
+      "rows_failing_tolerance": 20,
+      "baseline_rows_failing_tolerance": 20,
+      "integrity_offences": 3,
+      "baseline_integrity_offences": 1,
+      "how_it_is_caught": "the leakage check finds one set of inputs carrying two splits",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-6",
+      "plant": "measurement uncertainty set to zero on a passing case",
+      "cases_exercised": [
+        "MV-A",
+        "MV-A-replicate",
+        "MV-B",
+        "MV-C",
+        "MV-D"
+      ],
+      "rows_failing_tolerance": 20,
+      "baseline_rows_failing_tolerance": 20,
+      "integrity_offences": 3,
+      "baseline_integrity_offences": 1,
+      "how_it_is_caught": "a comparison scored against a zero uncertainty is refused outright",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-7",
+      "plant": "a row screened OUT_OF_SCOPE relabelled as validation",
+      "cases_exercised": [
+        "MV-A",
+        "MV-A-replicate",
+        "MV-B",
+        "MV-C",
+        "MV-D"
+      ],
+      "rows_failing_tolerance": 21,
+      "baseline_rows_failing_tolerance": 20,
+      "integrity_offences": 3,
+      "baseline_integrity_offences": 1,
+      "how_it_is_caught": "the applicability check refuses an out-of-scope row carrying a validation verdict",
+      "verdict": "CAUGHT"
+    },
+    {
+      "id": "MVM-8",
+      "plant": "one failing held-out point relabelled as calibration",
+      "cases_exercised": [
+        "MV-A",
+        "MV-A-replicate",
+        "MV-B",
+        "MV-C",
+        "MV-D"
+      ],
+      "rows_failing_tolerance": 20,
+      "baseline_rows_failing_tolerance": 20,
+      "integrity_offences": 2,
+      "baseline_integrity_offences": 1,
+      "how_it_is_caught": "the split check counts the rows that actually ran against the counts the plan fixed",
+      "verdict": "CAUGHT"
+    }
+  ],
+  "caught": 8,
+  "missed": 0
+}

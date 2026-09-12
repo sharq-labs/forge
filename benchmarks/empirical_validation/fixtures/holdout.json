@@ -1,0 +1,57 @@
+{
+  "fixture_id": "EVF-HOLDOUT-1",
+  "what_this_is": "Operating points declared at the same time as the primary fixtures and deliberately not looked at until the fixtures, both adapters, every metric and every tolerance were frozen and the primary comparisons had been run.",
+  "why_a_holdout_exists_when_nothing_was_fitted": "Nothing in this round is calibrated, so there is no train/test split to protect. The holdout guards a different failure: an adapter, a tolerance or a netlist writer quietly shaped by the one case it was developed against. These points were never run during development, so agreement on them is out-of-sample for the HARNESS even though it is not out-of-sample for any model.",
+  "rule_this_set_is_under": "If a holdout point disagrees, the disagreement is reported. It is not permitted to widen a tolerance, drop a point, or edit a primary fixture in response.",
+  "lumped_body": {
+    "note": "Same block, driven the other way: starting below ambient with a larger heater, and run for long enough to pass several time constants.",
+    "initial_degC": 5.0,
+    "heat_input_mW": 20000.0,
+    "duration_min": 60.0
+  },
+  "slab": {
+    "note": "A coarser grid on a shorter run, so the discretization error is roughly an order of magnitude larger and the predicted-error ratio is tested somewhere else on its range.",
+    "end_time_min": 10.0,
+    "n_cells": 20,
+    "n_steps": 300
+  },
+  "battery_cell": {
+    "note": "A 1C discharge from a lower start, run long enough to pass the voltage cutoff inside the requested window instead of well after it.",
+    "corrected_once_before_it_was_run": "The duration first written here was 6 minutes, which does not reach the cutoff at all: the note and the numbers disagreed. The numbers were corrected to match the note while the file was still unread, and the correction is recorded here and in the round report rather than left silent. No holdout result had been produced at that point.",
+    "discharge_current_mA": 2600.0,
+    "initial_state_of_charge": 0.55,
+    "duration_min": 15.0
+  },
+  "conductor": {
+    "note": "Below the reference temperature, so the linear correction is negative.",
+    "operating_temperature_degC": -25.0
+  },
+  "circuit": {
+    "circuit_id": "holdout_pi",
+    "nodes": ["gnd", "x", "y"],
+    "reference_node": "gnd",
+    "resistors": [
+      {"id": "Ra", "node_a": "x", "node_b": "gnd", "resistance_kohm": 12.0},
+      {"id": "Rb", "node_a": "x", "node_b": "y", "resistance_kohm": 0.47},
+      {"id": "Rc", "node_a": "y", "node_b": "gnd", "resistance_kohm": 15.0}
+    ],
+    "voltage_sources": [
+      {"id": "Vs", "positive_node": "x", "negative_node": "gnd", "voltage_mV": 2500.0}
+    ],
+    "current_sources": [
+      {"id": "Is", "from_node": "y", "to_node": "gnd", "current_mA": 0.33}
+    ],
+    "applicability_declarations": {}
+  },
+  "reactor": {
+    "note": "Hotter and leaner than the primary point, with a colder jacket, which drives the trajectory the opposite way.",
+    "initial_concentration_mol_per_L": 0.2,
+    "initial_temperature_degC": 106.85,
+    "coolant_temperature_degC": 16.85,
+    "end_time_min": 3.0
+  },
+  "platinum": {
+    "note": "A temperature between the tabulated comparison points.",
+    "comparison_temperatures_degC": [75.0, 225.0, 375.0]
+  }
+}

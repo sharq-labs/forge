@@ -1,0 +1,341 @@
+{
+  "baseline_construction": {
+    "battery.cell": "ACCEPTED",
+    "electrical.material": "ACCEPTED",
+    "kinetics.cstr": "ACCEPTED",
+    "thermal.conduction1d": "ACCEPTED",
+    "thermal.lumped": "ACCEPTED"
+  },
+  "checks_run": 36,
+  "result_counts": {
+    "MATCH": 32,
+    "NOT_CONSTRUCTOR_ADDRESSABLE": 4
+  },
+  "rows": [
+    {
+      "input": "nominal_capacity",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "internal_resistance",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "open_circuit_voltage_at_full",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "open_circuit_voltage_at_empty",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "coulombic_efficiency",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "state_of_charge",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "discharge_current",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "cell_temperature",
+      "model_id": "battery.cell.constant_current_runtime",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "duration",
+      "model_id": "battery.cell.coulomb_counting",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "battery.cell"
+    },
+    {
+      "input": "reference_resistance",
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "electrical.material"
+    },
+    {
+      "input": "temperature_coefficient",
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "electrical.material"
+    },
+    {
+      "input": "reference_temperature",
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "electrical.material"
+    },
+    {
+      "input": "temperature",
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "note": "the record marks this required, and it reaches the model through a route the public constructor does not expose as an omittable field",
+      "record_says": "required",
+      "result": "NOT_CONSTRUCTOR_ADDRESSABLE",
+      "runtime": "NOT_A_CONSTRUCTOR_FIELD",
+      "system": "electrical.material"
+    },
+    {
+      "input": "k0",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "activation_energy",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "heat_of_reaction",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "feed_concentration",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "feed_temperature",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "coolant_temperature",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "density",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "heat_capacity",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "ua",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "end_time",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "initial_concentration",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "initial_temperature",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the constructor refuses without it (REFUSED:ReactorConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:ReactorConfigurationError",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "residence_time",
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "note": "the record marks this required, and it reaches the model through a route the public constructor does not expose as an omittable field",
+      "record_says": "required",
+      "result": "NOT_CONSTRUCTOR_ADDRESSABLE",
+      "runtime": "NOT_A_CONSTRUCTOR_FIELD",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "k_const",
+      "model_id": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+      "note": "the record marks this required, and it reaches the model through a route the public constructor does not expose as an omittable field",
+      "record_says": "required",
+      "result": "NOT_CONSTRUCTOR_ADDRESSABLE",
+      "runtime": "NOT_A_CONSTRUCTOR_FIELD",
+      "system": "kinetics.cstr"
+    },
+    {
+      "input": "alpha",
+      "model_id": "thermal.conduction1d.linear_diffusion",
+      "note": "the constructor refuses without it (REFUSED:SlabConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:SlabConfigurationError",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "input": "length",
+      "model_id": "thermal.conduction1d.linear_diffusion",
+      "note": "the constructor refuses without it (REFUSED:SlabConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:SlabConfigurationError",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "input": "end_time",
+      "model_id": "thermal.conduction1d.linear_diffusion",
+      "note": "the constructor refuses without it (REFUSED:SlabConfigurationError)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:SlabConfigurationError",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "input": "heat_capacity",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "thermal.lumped"
+    },
+    {
+      "input": "ambient_conductance",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "thermal.lumped"
+    },
+    {
+      "input": "duration",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "thermal.lumped"
+    },
+    {
+      "input": "temperature",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "thermal.lumped"
+    },
+    {
+      "input": "heat_input",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "note": "the record marks this required, and it reaches the model through a route the public constructor does not expose as an omittable field",
+      "record_says": "required",
+      "result": "NOT_CONSTRUCTOR_ADDRESSABLE",
+      "runtime": "NOT_A_CONSTRUCTOR_FIELD",
+      "system": "thermal.lumped"
+    },
+    {
+      "input": "ambient_temperature",
+      "model_id": "thermal.lumped.first_order_capacity",
+      "note": "the constructor refuses without it (REFUSED:InvalidScientificProblem)",
+      "record_says": "required",
+      "result": "MATCH",
+      "runtime": "REFUSED:InvalidScientificProblem",
+      "system": "thermal.lumped"
+    }
+  ],
+  "schema": "contract_integrity_required_inputs/1"
+}

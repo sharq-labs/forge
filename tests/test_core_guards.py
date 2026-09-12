@@ -196,8 +196,14 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 #: the pattern: derive the population, then assert its size.
 EXPECTED_MODELS = 16
 EXPECTED_RESERVING_MODELS = 15
-EXPECTED_CONDITION_NAMES = 64
-EXPECTED_RESERVED_NAMES = 46
+# 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
+# condition to each of three records: linear_resistance_ratio on the
+# unrated TCR model, adiabatic_ceiling_temperature on the constant-rate
+# CSTR, and cutoff_reachability_margin on the battery runtime. Each was a
+# regime the model reported IN_DOMAIN and its own equation could not
+# represent. Looked at deliberately, which is what the exact count is for.
+EXPECTED_CONDITION_NAMES = 67
+EXPECTED_RESERVED_NAMES = 49
 
 
 def test_the_only_modules_the_walk_lost_are_declared_optional_ones():

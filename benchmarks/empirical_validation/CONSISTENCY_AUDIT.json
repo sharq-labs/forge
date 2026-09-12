@@ -1,0 +1,46 @@
+{
+  "schema": "consistency_audit/1",
+  "checker_self_falsification": {
+    "a_digit_was_changed": true,
+    "the_checker_noticed": true,
+    "verdict": "CHECKER_CAN_FAIL"
+  },
+  "numbers_checked": 19,
+  "numbers_missing_from_the_report": [],
+  "claim_checks": [
+    {
+      "check": "the report does not claim empirical validation passed",
+      "ok": true,
+      "why": "No LEVEL 1 or LEVEL 2 evidence exists in this environment, so that verdict is unavailable. The phrase may appear only where the report is refusing it."
+    },
+    {
+      "check": "the count of models with no empirical evidence is stated",
+      "ok": true,
+      "value": 9
+    },
+    {
+      "check": "the report states that the Core was not modified",
+      "ok": true
+    },
+    {
+      "check": "the report does not report a disagreement count it does not have",
+      "ok": true
+    },
+    {
+      "check": "every audit defect found in this round is listed",
+      "ok": true
+    },
+    {
+      "check": "the two blind mutations are reported as blind, not as passes",
+      "ok": true
+    },
+    {
+      "check": "the limits section exists and names what was not established",
+      "ok": true
+    }
+  ],
+  "failed_claim_checks": [],
+  "forbidden_reasoning_found": [],
+  "inconsistencies": 0,
+  "verdict": "CONSISTENT"
+}

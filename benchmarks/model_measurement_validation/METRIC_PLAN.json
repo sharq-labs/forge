@@ -1,0 +1,77 @@
+{
+  "schema": "metric_plan/1",
+  "written_before_any_core_run": true,
+  "rule_this_file_is_under": "Thresholds are fixed here and are not moved afterwards. If a rule turns out to be badly posed, the old rule stays in the results and the correction is logged as an AUDIT_DEFECT rather than edited away.",
+  "how_uncertainty_enters_every_rule": "Each measured value carries a combined standard uncertainty assembled in audit/evidence.py from the instrument specifications the dataset's own Header sheet publishes, plus one term measured from the data. Pass rules are stated against the expanded uncertainty at k = 2, which is the conventional 95 percent coverage. A residual inside that band is not evidence of a model defect; a residual an order of magnitude outside it is not explainable as measurement noise.",
+  "cases": [
+    {
+      "case_id": "MV-A",
+      "model": "battery.cell.rint_ocv",
+      "configuration": "affine chord between two declared endpoints",
+      "source": "S-OCV",
+      "evidence_level": "LEVEL 2",
+      "quantity": "relaxed open-circuit voltage at held-out states of charge",
+      "metrics": ["mean absolute error", "root mean square error", "maximum absolute error", "mean signed residual (bias)", "fraction of held-out points inside the expanded measurement uncertainty"],
+      "units": "volts",
+      "pass_rule": "Every held-out point must satisfy |V_core - V_measured| <= U_k2 for that point.",
+      "scientific_justification": "The model evaluates one exact algebraic expression with no discretization and no iteration, so it contributes no numerical error of its own. The only disagreement admissible between an exact prediction and a measurement is the measurement's own uncertainty. Any wider tolerance would be a tolerance chosen to accommodate the model rather than to represent the experiment.",
+      "uncertainty_handling": "Per-point U_k2, dominated on a LiFePO4 plateau by the current-sensor term multiplied by the LOCAL dOCV/dSOC, which the budget takes from the neighbouring measured points rather than assuming one slope everywhere.",
+      "what_a_failure_would_mean": "That the affine chord does not describe this cell, inside a regime none of the model's eleven validity conditions excludes. That is a statement about the chord configuration, not about the model family, because the record offers a declared curve as its alternative and case MV-B exercises it."
+    },
+    {
+      "case_id": "MV-B",
+      "model": "battery.cell.rint_ocv",
+      "configuration": "declared measured open-circuit-voltage curve, TabulatedForm, linear interpolation",
+      "source": "S-OCV",
+      "evidence_level": "LEVEL 2",
+      "quantity": "relaxed open-circuit voltage at the two held-out states of charge, 0.4 and 0.6",
+      "metrics": ["absolute error at each held-out point", "mean absolute error"],
+      "units": "volts",
+      "pass_rule": "|V_core - V_measured| <= U_k2 + E_interp at each held-out point, where E_interp = (1/8) h^2 max|d2OCV/dSOC2| is the classical piecewise-linear interpolation bound, h is the width of the bracketing calibration interval, and the curvature is estimated by second divided differences OF THE CALIBRATION SAMPLES ONLY.",
+      "scientific_justification": "A tabulated curve with a declared interpolation is not claimed to be exact between its samples. The error it is permitted is the interpolation error of the scheme it declares, and that has a textbook bound. Adding the measurement uncertainty to it gives the total a correct implementation is entitled to.",
+      "uncertainty_handling": "Same per-point U_k2 as MV-A. The curve mixes one discharge-conditioned sample (0% SOC, the only direction in which that level exists) with four charge-conditioned ones; the measured hysteresis between directions is reported, and it does not enter the two held-out points' tolerance because both they and the samples bracketing them come from the same conditioning direction.",
+      "declared_weakness_of_this_rule": "E_interp is only a bound if the calibration samples are dense enough to reveal the curvature between them. With samples at 0.0, 0.2, 0.5, 0.8 and 1.0 the widest gaps are 0.3 wide, and a LiFePO4 open-circuit curve is known to turn sharply just above the bottom of its plateau. If the true curvature inside a gap exceeds what its endpoints reveal, this rule will reject a correct implementation. That possibility is stated here, before the case is run, so that if it happens it is a predicted limitation and not a rationalisation.",
+      "diagnostic_reported_either_way": "the curvature implied by the observed residual, 8 * residual / h^2, against the curvature the calibration samples revealed. This is a diagnostic, not a pass rule."
+    },
+    {
+      "case_id": "MV-C",
+      "model": "electrical.material.linear_tcr_resistance",
+      "configuration": "R(T) = R0 (1 + A (T - T_ref)) with the standard's own R0, A and ice-point reference",
+      "source": "S-PT100",
+      "evidence_level": "LEVEL 3",
+      "quantity": "resistance of a nominal 100 ohm platinum thermometer, against the reference table, 1 degC steps",
+      "metrics": ["absolute resistance error in ohms", "the equivalent temperature error", "observed deviation divided by the analytically predicted omitted term", "the temperature interval over which the model stays inside a stated resistance band"],
+      "units": "ohms and degrees Celsius",
+      "pass_rule": "Over 30 to 400 degC inclusive: |observed_relative_deviation / predicted_omitted_term - 1| <= 0.05 at every table entry, where the predicted omitted term is |B| t^2 / (1 + A t).",
+      "scientific_justification": "A first-order model compared against a second-order reference must differ, and requiring it not to would be testing a claim it does not make. Requiring its deviation to be EXACTLY the term it drops tests what it does claim, and fails if the coefficient, the sign or the reference temperature is wrong.",
+      "why_the_interval_starts_at_30_degC": "The table is rounded to 0.01 ohm. The predicted omitted term is |B| t^2 R0, which reaches ten times that quantisation only at t = 29.4 degC. Below that the criterion would be measuring the table's rounding rather than the model. The bound comes from the source's stated precision, and is fixed before any Core value was computed.",
+      "why_the_interval_stops_at_400_degC": "The predicted term is itself the leading part of the exact truncation error, and the two diverge by more than 5 percent past roughly 400 degC. At 850 degC the prediction is about 11 percent light. Fixed by that arithmetic, not by any result.",
+      "uncertainty_handling": "The reference is a standardised relation rather than a specimen measurement, so it has no experimental uncertainty; its quantisation of +/-0.005 ohm is the only tolerance it carries and is what sets the lower end of the scored interval.",
+      "unscored_reporting": "The deviation over -200 to +29 degC and 401 to 850 degC is measured and reported without a pass rule, because below 0 degC the standard's relation carries a third coefficient this round could not obtain from any retrievable source."
+    },
+    {
+      "case_id": "MV-D",
+      "model": "battery.cell.rint_ocv",
+      "configuration": "affine chord, structural consequence under constant current",
+      "source": "S-DCHG",
+      "evidence_level": "LEVEL 2",
+      "quantity": "departure of a measured constant-current discharge curve from any straight line in time",
+      "metrics": ["root mean square deviation from the least-squares straight line, per curve", "maximum deviation, per curve"],
+      "units": "volts",
+      "pass_rule": "This case reports a BOUND and scores one thing only: the bound must exceed the measurement uncertainty, otherwise the finding is noise and is withdrawn. It does not score the Core.",
+      "scientific_justification": "Under a constant current the affine-chord model forces the terminal voltage to be an affine function of time, because the state of charge falls linearly, the chord is affine in it, and the IR drop is constant. The least-squares straight line is therefore the best any affine-chord parameterisation could possibly do, whatever endpoints, capacity, efficiency or resistance are declared. Its residual is a parameter-free LOWER BOUND on the error of the whole configuration - and, usefully, it needs no knowledge of the discharge current, which this dataset does not record.",
+      "uncertainty_handling": "Compared against the acquisition uncertainty of the same instrument as S-OCV.",
+      "why_this_is_a_second_source_and_not_a_repeat": "MV-A measures the chord against open-circuit voltages of ONE cell at rest. MV-D measures it against ten different cells under load. Agreement between the two is corroboration by a separate experiment on separate hardware, which is what MV-20 asks for before a significant finding is confirmed."
+    }
+  ],
+  "metrics_deliberately_not_used": [
+    {
+      "metric": "relative error",
+      "why_not": "Every quantity here either sits near a nonzero value where absolute error is the physically meaningful one (volts on a 3.3 V cell) or passes through zero (the resistance deviation at the reference temperature). Relative error near zero manufactures large numbers out of nothing."
+    },
+    {
+      "metric": "R-squared on the discharge curves",
+      "why_not": "A flat plateau with a knee gives a high R-squared against a straight line while departing from it by hundreds of millivolts. The residual in volts is reported instead, which is the quantity a user of the model would feel."
+    }
+  ]
+}

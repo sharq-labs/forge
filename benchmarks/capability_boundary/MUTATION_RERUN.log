@@ -1,0 +1,319 @@
+CONTROL GREEN                unmutated copy, 23s -- a red result below is the mutation's doing
+                           470 passed in 22.72s
+
+G1a   RED                  validity_context stops refusing a parameter that occupies a reserved name
+                           code 6c3a130ce0c9f817 -> 7d8f868cfe0f7e33   CONTRACT_REFUSAL   24s
+                           15 failed, 455 passed in 23.35s
+                           test_a_caller_parameter_named_after_a_derived_quantity_is_refused[battery.cell.constant_current_runtime@0.1.0], test_a_caller_parameter_named_after_a_derived_quantity_is_refused[battery.cell.coulomb_counting@0.1.0], test_a_caller_parameter_named_after_a_derived_quantity_is_refused[battery.cell.peukert_capacity_derating@0.1.0] (+12 more)
+G1b   RED                  assess stops refusing a reserved name in the caller's half
+                           code 35cae0735a78ae4f -> 9cfe942775c4a5db   CONTRACT_REFUSAL   24s
+                           15 failed, 455 passed in 23.40s
+                           test_a_reserved_name_is_refused_in_the_declared_half_of_an_assessment[battery.cell.constant_current_runtime@0.1.0], test_a_reserved_name_is_refused_in_the_declared_half_of_an_assessment[battery.cell.coulomb_counting@0.1.0], test_a_reserved_name_is_refused_in_the_declared_half_of_an_assessment[battery.cell.peukert_capacity_derating@0.1.0] (+12 more)
+G1c   RED                  assess stops refusing an assembled name the model does not reserve
+                           code 35cae0735a78ae4f -> fa304c9028cec0b3   CONTRACT_REFUSAL   24s
+                           16 failed, 454 passed in 23.01s
+                           test_a_domain_cannot_assemble_a_name_it_did_not_reserve[battery.cell.constant_current_runtime@0.1.0], test_a_domain_cannot_assemble_a_name_it_did_not_reserve[battery.cell.coulomb_counting@0.1.0], test_a_domain_cannot_assemble_a_name_it_did_not_reserve[battery.cell.peukert_capacity_derating@0.1.0] (+13 more)
+G1e   RED                  assess goes back to silently dropping a derived quantity a model reads and does not reserve (the sixth-domain door)
+                           code e5ed3ffbe779e43b -> 6e2e896fb00df1dc   CONTRACT_REFUSAL   24s
+                           1 failed, 469 passed in 22.89s
+                           test_a_derived_quantity_declared_as_an_input_is_refused_at_assessment
+G1f   RED                  the same refusal stops distinguishing another model's business from this model's forgery
+                           code e5ed3ffbe779e43b -> c1f879f089a5607c   CONTRACT_REFUSAL   25s
+                           6 failed, 409 passed, 1 error in 24.16s
+                           test_a_declared_conversion_reaches_the_credibility_report, test_every_marched_step_carries_its_own_cell_report, test_recording_the_crossing_moved_no_electro_thermal_number (+3 more)
+G8a   RED                  a domain module stops importing and the model sweep silently shrinks (the floor that could not see it)
+                           code 9e30ee3026efb96c -> a95f20040d58f5f2   LAYERING_INVARIANT   24s
+                           10 failed, 336 passed, 2 errors in 23.46s
+                           test_a_declared_conversion_reaches_the_credibility_report, test_every_dependency_the_tree_reaches_for_is_declared, test_every_marched_step_carries_its_own_cell_report (+7 more)
+G8b   RED                  a domain quietly stops emitting one validation check (the live-solve count that was a floor)
+                           code 71ebaccad023c66f -> f0bf1f08de2b7cf1   VALIDATION_INVARIANT   23s
+                           1 failed, 469 passed in 22.54s
+                           test_every_check_a_live_solve_produces_earns_its_level
+G8c   RED                  the power utilization inverts against the PRINTED rating when a derating line is declared -- a hint that leaves the design refused
+                           code 0ec417867a60e1a4 -> f7d2cf804013f3a9   SCIENTIFIC_ASSERTION   25s
+                           2 failed, 468 passed in 24.00s
+                           test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest, test_the_declared_crossing_is_what_lets_repair_invert_the_condition
+G1d   RED (refused at import) a domain forgets to reserve its derived quantities (the import lock)
+                           code 0ec417867a60e1a4 -> 9f34002498576639   CONTRACT_REFUSAL   4s
+                           111 passed, 3 errors in 3.18s
+G2a   RED                  level_is_earned stops distinguishing anything
+                           code ae811a0bd0b6fe2e -> 2f63831eef339267   VALIDATION_INVARIANT   24s
+                           4 failed, 466 passed in 23.82s
+                           test_a_check_altered_after_it_was_built_cannot_carry_a_level, test_a_subclass_does_not_get_to_answer_the_question_about_itself, test_the_construction_axis_is_still_closed_on_every_route_to_it (+1 more)
+G2e   RED                  a report takes back anything with a `passed` and an `establishes`
+                           code ae811a0bd0b6fe2e -> a1b710557e0066c7   TYPE_INVARIANT   23s
+                           1 failed, 469 passed in 22.83s
+                           test_a_report_refuses_anything_that_is_not_a_validation_check
+G2f   RED                  a report stops re-applying the rule to what it was handed
+                           code ae811a0bd0b6fe2e -> 191ec434b2e20f7e   VALIDATION_INVARIANT   24s
+                           2 failed, 468 passed in 23.09s
+                           test_a_check_altered_after_it_was_built_cannot_carry_a_level, test_a_subclass_does_not_get_to_answer_the_question_about_itself
+G2g   RED                  attained_levels trusts a check that may have been altered since
+                           code ae811a0bd0b6fe2e -> b38681477f0ff929   VALIDATION_INVARIANT   24s
+                           1 failed, 469 passed in 23.00s
+                           test_a_check_altered_after_it_was_built_cannot_carry_a_level
+G2b   RED                  a PASS goes back to claiming a level with no evidence (static audit)
+                           code 71ebaccad023c66f -> b6fd4686f627d18f   VALIDATION_INVARIANT   24s
+                           13 failed, 457 passed in 23.72s
+                           test_a_declared_conversion_reaches_the_credibility_report, test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest, test_every_check_a_live_solve_produces_earns_its_level (+10 more)
+G2c   RED                  the repaired CSTR check loses its evidence (runtime half)
+                           code 8dd2766fe83b90f9 -> f4b70e1edbf98c73   VALIDATION_INVARIANT   24s
+                           2 failed, 468 passed in 23.04s
+                           test_every_check_a_live_solve_produces_earns_its_level, test_the_cstr_dimension_check_compares_against_the_model_record
+G2d   RED                  the constructor stops refusing a claimed level (GUARD 2 back to opt-in)
+                           code ae811a0bd0b6fe2e -> 47aed263a533c09a   CONTRACT_REFUSAL   24s
+                           2 failed, 468 passed in 22.87s
+                           test_the_construction_axis_is_still_closed_on_every_route_to_it, test_the_rule_itself_is_what_that_audit_applied
+G3a   RED                  award stops withholding a level from a caller-supplied threshold
+                           code bbb76d9c7850b4cc -> 60949818c8842d97   VALIDATION_INVARIANT   25s
+                           2 failed, 468 passed in 23.98s
+                           test_a_derived_threshold_set_awards_nothing, test_widening_the_dc_residual_bound_buys_no_level
+G3b   RED                  a gate takes a bare float threshold again (parameter sweep)
+                           code 8dd2766fe83b90f9 -> 4b8556eba97b271b   VALIDATION_INVARIANT   25s
+                           1 failed, 469 passed in 24.50s
+                           test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against
+G4a   RED                  the registry stops refusing a solver that decides its own support
+                           code 50c521a8014db38b -> 4f8f905b52dabff6   CONTRACT_REFUSAL   24s
+                           1 failed, 469 passed in 22.92s
+                           test_the_registry_refuses_a_solver_that_decides_its_own_support
+G4b   RED                  support_gap stops checking that capabilities cover the request
+                           code 268cd3d1d4bed758 -> a163dc59a513a89c   CONTRACT_REFUSAL   24s
+                           9 failed, 461 passed in 22.99s
+                           test_a_problem_requesting_a_superset_is_refused[src.engcore.domains.battery.solver.BatteryCellSolver], test_a_problem_requesting_a_superset_is_refused[src.engcore.domains.electrical.dc.solver.ElectricalDCSolver], test_a_problem_requesting_a_superset_is_refused[src.engcore.domains.electrical.material.ResistancePropertySolver] (+6 more)
+G5a   RED                  provenance stops refusing a solver no binding covers
+                           code 11b8d78982bb85a8 -> 713df141fba2ea5d   PROVENANCE_INVARIANT   24s
+                           1 failed, 469 passed in 23.02s
+                           test_provenance_refuses_a_solver_no_binding_covers
+G6a   RED                  the fingerprint check goes back to passing on absence
+                           code 56226d26f0a1da1f -> 5adf70d490ba79bc   CONTRACT_REFUSAL   24s
+                           3 failed, 467 passed in 23.07s
+                           test_the_conduction_slab_verifier_refuses_an_unfingerprinted_problem, test_the_core_refuses_a_problem_that_declares_no_fingerprint, test_the_cstr_domain_refuses_an_unfingerprinted_problem
+G6b   RED                  a domain reintroduces the permissive compare (source sweep)
+                           code d42a15d971849b79 -> bcc9d53586feb13f   CONTRACT_REFUSAL   25s
+                           1 failed, 469 passed in 24.52s
+                           test_the_cstr_domain_refuses_an_unfingerprinted_problem
+G7a   RED                  RawSolverOutput stops refusing a non-finite value on a succeeded solve
+                           code 268cd3d1d4bed758 -> e3cfe16202594fa8   CONTRACT_REFUSAL   24s
+                           2 failed, 468 passed in 23.62s
+                           test_a_succeeded_solve_cannot_return_a_number_that_is_not_a_number, test_an_adapter_that_skips_the_admission_layer_produces_nothing
+G9a   RED                  a result may again declare a model and say nothing about it
+                           code c641d81d03d8e3a0 -> aaacfc41c72ae1de   CONTRACT_REFUSAL   24s
+                           2 failed, 468 passed in 22.88s
+                           test_a_result_that_declares_a_model_and_says_nothing_is_refused, test_the_frozen_module_s_results_carry_the_stated_reason
+G9b   RED                  the package exemption becomes universal (every caller excused)
+                           code c641d81d03d8e3a0 -> 99dd5ce4827ca88d   CONTRACT_REFUSAL   23s
+                           2 failed, 468 passed in 22.87s
+                           test_a_result_that_declares_a_model_and_says_nothing_is_refused, test_the_frozen_module_s_results_carry_the_stated_reason
+G9c   RED                  the CSTR goes back to computing its assessment and discarding it
+                           code c367dc04ba8fc9e4 -> bde27ed4402ecd80   VALIDITY_INVARIANT   25s
+                           2 failed, 468 passed in 23.96s
+                           test_every_check_a_live_solve_produces_earns_its_level, test_every_result_construction_in_the_repository_states_a_position
+G12a  RED                  a crossed quantity may arrive undeclared again (bare Quantity)
+                           code 0ec417867a60e1a4 -> 58e5df3e1124526c   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.74s
+                           test_a_crossed_quantity_arriving_undeclared_is_refused
+G12b  RED                  a transfer stops checking that both sides mean the same thing
+                           code 9fff70c3d76883c2 -> 80af806d884a0879   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.11s
+                           test_a_transfer_states_a_source_an_instant_and_an_agreeing_dimension
+G12c  RED                  two contradicting values for one crossing are resolved by order
+                           code 9fff70c3d76883c2 -> 9b19f2d34b369a2a   CONTRACT_REFUSAL   22s
+                           1 failed, 469 passed in 21.41s
+                           test_two_values_crossing_one_declaration_at_one_instant_are_refused
+G12d  RED                  the offset stops being formable, and repair loses the inversion again
+                           code 0ec417867a60e1a4 -> 8895b31a8711f97d   SCIENTIFIC_ASSERTION   23s
+                           2 failed, 468 passed in 22.19s
+                           test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest, test_the_declared_crossing_is_what_lets_repair_invert_the_condition
+G11a  RED                  provenance takes back a lineage name with no record behind it
+                           code 11b8d78982bb85a8 -> 13e7a998604fa51b   PROVENANCE_INVARIANT   25s
+                           1 failed, 469 passed in 24.22s
+                           test_a_lineage_claim_without_the_record_it_names_is_refused
+G11b  RED                  a typed parent name silently outranks the record that exists
+                           code 11b8d78982bb85a8 -> fc9fa812c5537d26   PROVENANCE_INVARIANT   24s
+                           1 failed, 469 passed in 23.13s
+                           test_a_typed_name_cannot_outrank_the_record_that_exists
+G11c  RED                  a provenance record may name itself as its own source
+                           code 11b8d78982bb85a8 -> 06afd24029eeb0c7   PROVENANCE_INVARIANT   23s
+                           1 failed, 469 passed in 22.11s
+                           test_a_record_cannot_be_its_own_source
+G10a  RED                  a result may again hold a value it could never record
+                           code c641d81d03d8e3a0 -> b2424a130ded2ef9   SERIALIZATION_INVARIANT   24s
+                           17 failed, 453 passed in 23.12s
+                           test_a_result_refuses_at_construction_what_it_could_not_record[a, test_a_result_refuses_at_construction_what_it_could_not_record[an, test_a_result_refuses_at_construction_what_it_could_not_record[bytes] (+4 more)
+G10b  RED                  the writability rule stops refusing anything it does not recognise
+                           code 6a6c9503619006e8 -> 2e12d5308cee8e0d   SERIALIZATION_INVARIANT   24s
+                           12 failed, 458 passed in 23.32s
+                           test_a_result_refuses_at_construction_what_it_could_not_record[a, test_a_result_refuses_at_construction_what_it_could_not_record[an, test_a_result_refuses_at_construction_what_it_could_not_record[bytes] (+5 more)
+G10c  RED                  a NaN travels into a record and out as a token no reader accepts
+                           code 6a6c9503619006e8 -> 688e03daccff802c   SERIALIZATION_INVARIANT   23s
+                           2 failed, 468 passed in 21.92s
+                           test_a_result_refuses_at_construction_what_it_could_not_record[a, test_every_refusal_over_this_value_space_gives_the_same_answer[a
+G8d   RED                  the unit registry is never sealed (every refusal becomes a no-op)
+                           code daf4abe92478fb10 -> 54ed1a3542e43e7f   CONTRACT_REFUSAL   23s
+                           3 failed, 467 passed in 22.28s
+                           test_every_route_pint_offers_for_changing_the_registry_is_refused, test_one_run_cannot_change_another_run_s_arithmetic, test_the_fingerprint_detects_what_the_refusal_cannot_prevent
+G8e   RED                  a name appearing after the seal is taken on trust as pint's own prefixing
+                           code daf4abe92478fb10 -> 05f282dd27346856   CONTRACT_REFUSAL   22s
+                           1 failed, 469 passed in 21.50s
+                           test_the_fingerprint_detects_what_the_refusal_cannot_prevent
+G7b   RED                  the provider adapter stops admitting its parsed values
+                           code a668527e0a67b79b -> 737ecbe0df964a8e   CONTRACT_REFUSAL   24s
+                           1 failed, 469 passed in 23.36s
+                           test_the_admission_layer_is_still_the_route_that_says_what_went_wrong
+G13a  RED                  an input declared as a constant stops refusing a declared curve -- the fail-closed edge of the curve mechanism
+                           code 35cae0735a78ae4f -> a6117dc6c23b5920   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.59s
+                           test_an_input_declared_as_a_constant_refuses_a_curve
+G13b  RED                  a curve extrapolates past the interval it was declared over instead of answering OUTSIDE_VALIDATED_DOMAIN
+                           code d6535aeb2feebb7b -> 0e79ae245541a06d   VALIDITY_INVARIANT   23s
+                           2 failed, 468 passed in 22.78s
+                           test_one_quantity_may_not_be_declared_twice_at_two_depths, test_outside_a_declared_interval_there_is_no_number_only_a_status
+G13c  RED                  a declared interval may reach past the samples, claiming evidence that was never measured
+                           code d6535aeb2feebb7b -> 151a887a0b79ea0e   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.28s
+                           test_a_declared_interval_may_not_reach_past_the_samples
+G13d  RED                  a declared curve stops entering the cell's physical identity, so two cells with different OCV curves are cached as one
+                           code 92e1abf2c90f34c7 -> 1ed7242049a552ee   PROVENANCE_INVARIANT   24s
+                           1 failed, 469 passed in 23.45s
+                           test_a_cell_declaring_a_curve_is_a_different_cell_and_says_so_everywhere
+G14a  RED (refused at import) a shipped model stops declaring what it does not represent, and the constructor refuses it before the tree sweep can be reached
+                           code 0ec417867a60e1a4 -> 0010cb86eefcfc5b   CONTRACT_REFUSAL   3s
+                           111 passed, 3 errors in 3.12s
+G14b  RED                  the credibility report stops carrying exclusions beside validity, so a reader sees only the checkable half
+                           code 2a2d3f5be2c62826 -> 7dca3032567ee6ec   SERIALIZATION_INVARIANT   23s
+                           1 failed, 469 passed in 22.52s
+                           test_the_credibility_report_carries_exclusions_beside_validity
+G14c  RED                  a blank exclusion is admitted -- a statement-shaped thing that states nothing
+                           code 35cae0735a78ae4f -> 34d9258868aa0a2d   CONTRACT_REFUSAL   22s
+                           1 failed, 469 passed in 21.91s
+                           test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident
+G14d  RED                  exclusions go back to being optional, so omitting them is accepted at construction instead of refused
+                           code 35cae0735a78ae4f -> 248e08d410e35305   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.23s
+                           test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident
+G14e  RED                  an empty exclusion list stops having to justify itself -- the strongest claim the field can carry, made for free
+                           code 35cae0735a78ae4f -> c7cb95be52c95960   CONTRACT_REFUSAL   22s
+                           1 failed, 469 passed in 21.72s
+                           test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident
+G15a  RED                  a crossing may carry energy again without saying how much of it arrives -- the fail-closed edge of the conversion record
+                           code c78243158994eaa6 -> 000097cd4d2a4bc8   CONTRACT_REFUSAL   24s
+                           1 failed, 469 passed in 22.88s
+                           test_a_crossing_that_carries_energy_must_say_how_much_arrives
+G15b  RED                  conservation stops being checked, so a conversion that loses energy to nowhere constructs
+                           code b50a35022efdbb79 -> ed0b366f62fb8a54   SCIENTIFIC_ASSERTION   23s
+                           1 failed, 469 passed in 21.92s
+                           test_conservation_is_checked_and_a_conversion_that_does_not_balance_fails
+G15c  RED                  an undeclared efficiency stops reporting UNKNOWN
+                           code b50a35022efdbb79 -> 34fbd14d88bd9f3c   VALIDITY_INVARIANT   22s
+                           1 failed, 469 passed in 21.83s
+                           test_an_undeclared_efficiency_is_unknown_and_never_one
+G16a  RED                  a transfer may carry more than its conversion budgets -- declared 0.5 while transporting all of it
+                           code 9fff70c3d76883c2 -> 0dd83eb661296306   SCIENTIFIC_ASSERTION   24s
+                           1 failed, 469 passed in 22.82s
+                           test_a_transfer_may_not_carry_more_than_its_conversion_budgets
+G16b  RED                  a conversion transfer stops having to say what entered it, so the declared ratio has nothing to be checked against
+                           code 9fff70c3d76883c2 -> caac1566483bf459   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.18s
+                           test_a_conversion_transfer_must_say_what_entered_and_a_transport_may_not
+G16c  RED                  the coupling loop stops spending the budget at the transport boundary, so a declared efficiency decorates a crossing that ignores it
+                           code eae565849e31902d -> 676a664f456282ca   SCIENTIFIC_ASSERTION   24s
+                           1 failed, 469 passed in 22.78s
+                           test_the_coupling_loop_spends_the_budget_where_the_value_crosses
+G17a  RED                  the core branches on a domain by name and GUARD 17's derived reach is what notices -- the leak a sixth domain arrives through
+                           code c641d81d03d8e3a0 -> 32f90170ac77f363   LAYERING_INVARIANT   23s
+                           1 failed, 469 passed in 22.84s
+                           test_the_scientific_core_knows_shapes_and_not_things
+G17b  RED                  the core learns the name of a thing -- a relation between two quantities is stated as a fact about thrust
+                           code 484b2ef08f198425 -> 7bd4f9c43cad20c3   LAYERING_INVARIANT   23s
+                           1 failed, 469 passed in 22.41s
+                           test_the_scientific_core_knows_shapes_and_not_things
+G18a  RED                  SRIA reaches into a domain through a relative import -- the syntax it uses for all 50 of its real imports, and the one the existing scanner is blind to
+                           code 163deb4f76059c44 -> 8c580220ef38d15d   LAYERING_INVARIANT   23s
+                           2 failed, 468 passed in 22.08s
+                           test_nothing_under_sria_imports_a_domain_or_a_system, test_the_sria_dependency_table_in_the_docs_matches_the_tree
+G19a  RED                  a module acquires an undeclared dependency by import statement, and a clean install stops working -- the `mcp` half of 8107745
+                           code 2a2d3f5be2c62826 -> f9366a22aebf7adb   LAYERING_INVARIANT   23s
+                           1 failed, 469 passed in 22.28s
+                           test_every_dependency_the_tree_reaches_for_is_declared
+G19b  RED                  the same, reached as a STRING rather than a statement -- the `anyio` half, which a scan of ast.Import alone would miss
+                           code daf4abe92478fb10 -> 1c0002b373080f34   LAYERING_INVARIANT   23s
+                           1 failed, 469 passed in 21.90s
+                           test_every_dependency_the_tree_reaches_for_is_declared
+G20a  RED                  the coupled run goes back to dropping every converting crossing from its provenance, so a declared efficiency is spent and recorded nowhere
+                           code eae565849e31902d -> afafdb083b902d32   PROVENANCE_INVARIANT   23s
+                           3 failed, 467 passed in 22.15s
+                           test_a_declared_conversion_reaches_the_credibility_report, test_recording_the_crossing_moved_no_electro_thermal_number, test_the_crossing_is_recorded_in_the_provenance_of_the_run_that_made_it
+G20b  RED                  the credibility report stops rendering the conversions its provenance carries, so the record exists and no reader sees it
+                           code 2a2d3f5be2c62826 -> 4ca31c522fbffc0c   SERIALIZATION_INVARIANT   22s
+                           2 failed, 468 passed in 21.26s
+                           test_a_declared_conversion_reaches_the_credibility_report, test_the_report_shows_where_the_energy_that_did_not_arrive_went
+G21a  RED                  every range condition becomes a screen, so no bound in the repository can find against a design again
+                           code 35cae0735a78ae4f -> 7a2b686ae19ee268   VALIDITY_INVARIANT   24s
+                           30 failed, 440 passed in 23.78s
+                           test_a_blocked_dependent_is_a_gap_and_never_a_finding, test_a_blocked_dependent_is_never_a_violated_condition, test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest (+27 more)
+G21b  RED                  a declared screen stops being one, so the two records that say a value past their bound is not shown to be wrong go back to reporting it as evidence against
+                           code 35cae0735a78ae4f -> 249596e2de8daebf   VALIDITY_INVARIANT   23s
+                           4 failed, 466 passed in 22.70s
+                           test_a_conservative_screen_emits_no_repair_because_it_finds_nothing, test_a_conservative_screen_reports_a_gap_and_not_a_finding, test_every_screen_still_refuses_and_none_of_them_can_certify (+1 more)
+G21c  RED                  the screen stops crossing the record boundary, so a consumer reading a condition cannot tell a screen from a bound that certifies
+                           code 35cae0735a78ae4f -> da8dd28beaea6d49   SERIALIZATION_INVARIANT   24s
+                           2 failed, 468 passed in 23.49s
+                           test_the_reserved_namespace_survives_serialization[thermal.lumped.first_order_capacity@0.1.0], test_the_screen_survives_the_record_a_consumer_reads
+G22a  RED                  the gate stops gating: a dependent condition is evaluated even when what it depends on was violated or never established, which is the whole defect and moves no benchmark number while it happens
+                           code 35cae0735a78ae4f -> 4251794b0afe5c22   VALIDITY_INVARIANT   24s
+                           4 failed, 466 passed in 23.00s
+                           test_a_blocked_dependent_gets_guidance_pointing_at_its_prerequisite, test_a_blocked_dependent_is_a_gap_and_never_a_finding, test_a_blocked_dependent_is_never_a_violated_condition (+1 more)
+G22b  RED                  a blocked dependent is reported SATISFIED instead of unknown -- an untested bound entering the list that reads as evidence
+                           code 35cae0735a78ae4f -> 93017a001dce95ed   VALIDITY_INVARIANT   23s
+                           4 failed, 466 passed in 22.29s
+                           test_a_blocked_dependent_gets_guidance_pointing_at_its_prerequisite, test_a_blocked_dependent_is_a_gap_and_never_a_finding, test_a_blocked_dependent_is_never_a_violated_condition (+1 more)
+G22c  RED                  a requires naming a condition the domain does not have stops being refused, so the condition is permanently UNKNOWN and nothing says why
+                           code 35cae0735a78ae4f -> 1b765b3822f36998   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.12s
+                           test_a_dependency_that_cannot_be_satisfied_is_refused_at_construction
+G22d  RED                  the dependency stops crossing the record boundary, so a consumer reading a condition cannot tell a gated bound from an independent one
+                           code 35cae0735a78ae4f -> d4960d91abae0e7b   SERIALIZATION_INVARIANT   22s
+                           1 failed, 469 passed in 21.39s
+                           test_the_dependency_survives_the_record_a_consumer_reads
+G24a  RED                  a declaration may no longer state a temperature in degrees Celsius: the payload boundary hands '20 degC' to the backend's string parser again, which reads it as a multiplication and refuses
+                           code daf4abe92478fb10 -> 7facffcdb2b0a2fd   SCIENTIFIC_ASSERTION   24s
+                           13 failed, 457 passed in 23.05s
+                           test_a_celsius_declaration_parses_to_the_kelvin_it_means[-12.3330494309767, test_a_celsius_declaration_parses_to_the_kelvin_it_means[-273.15, test_a_celsius_declaration_parses_to_the_kelvin_it_means[-40 (+10 more)
+G24b  RED                  a ratio of two temperatures is taken on an interval scale again, so the answer depends on which unit the caller wrote and a satisfied condition reports as violated
+                           code 35cae0735a78ae4f -> bd195ca87112904c   SCIENTIFIC_ASSERTION   22s
+                           3 failed, 467 passed in 21.73s
+                           test_a_ratio_of_two_temperatures_does_not_depend_on_the_scale_written, test_the_reduced_temperature_is_the_absolute_ratio[-12.33-407.67], test_the_reduced_temperature_is_the_absolute_ratio[0.0-273.15]
+G25a  RED                  a result may again declare one model at two versions, so a single validity verdict answers for two different claims
+                           code c641d81d03d8e3a0 -> 79dbe1ad3b0b6a73   CONTRACT_REFUSAL   22s
+                           1 failed, 469 passed in 21.40s
+                           test_a_result_cannot_declare_one_model_at_two_versions
+G25b  RED                  a semantic flag takes a non-boolean again -- 'false' is truthy, so the declaration is stored as its own opposite
+                           code 35cae0735a78ae4f -> 8a065f59becb94c1   CONTRACT_REFUSAL   25s
+                           57 failed, 413 passed in 24.22s
+                           test_a_semantic_flag_refuses_anything_that_is_not_a_boolean[empty_list-CrossLimitCondition.maximum_inclusive], test_a_semantic_flag_refuses_anything_that_is_not_a_boolean[empty_list-CrossLimitCondition.minimum_inclusive], test_a_semantic_flag_refuses_anything_that_is_not_a_boolean[empty_list-FlagCondition.expected] (+54 more)
+G25c  RED                  a registry writes a versioned schema and reads any payload at all, including a future version of its own family
+                           code f46fccdbc428c5fe -> 3c8e0732bde100e3   SERIALIZATION_INVARIANT   23s
+                           2 failed, 468 passed in 22.19s
+                           test_a_registry_refuses_a_schema_it_did_not_write[ModelRegistry], test_every_reader_that_writes_a_schema_also_checks_one
+G25d  RED                  a declared count is silently truncated again, so a reference naming 1.9 values compares equal to one naming 1
+                           code d527f496f2120cff -> afd72a3385789244   TYPE_INVARIANT   22s
+                           11 failed, 459 passed in 21.76s
+                           test_a_declared_count_is_never_silently_coerced[1.0], test_a_declared_count_is_never_silently_coerced[1.2_0], test_a_declared_count_is_never_silently_coerced[1.2_1] (+8 more)
+G24c  RED                  a difference -- a coupling tolerance -- is admitted on a scale whose zero is a convention, which is the refusal the degC fix had to leave standing
+                           code eae565849e31902d -> 947103de1d666c8a   CONTRACT_REFUSAL   23s
+                           2 failed, 468 passed in 22.73s
+                           test_an_affine_coupling_tolerance_is_still_refused[20
+G26a  RED                  an uncertainty that says nothing was evaluated carries a coverage probability again, so a reader sizes an interval off a record that computed none
+                           code 1b9012f1bc7706f2 -> 75b51bc882bf3ce9   CONTRACT_REFUSAL   23s
+                           1 failed, 469 passed in 22.61s
+                           test_an_unknown_uncertainty_cannot_carry_a_confidence_level
+G26b  RED                  provenance records the bound a run was judged against as an infinity again, so a run solved to no bound reads as one that was
+                           code 11b8d78982bb85a8 -> 0377624291172b1c   PROVENANCE_INVARIANT   23s
+                           4 failed, 466 passed in 22.01s
+                           test_a_non_finite_tolerance_cannot_return_through_the_wire_either, test_a_provenance_tolerance_must_be_finite[-inf], test_a_provenance_tolerance_must_be_finite[inf] (+1 more)
+G26c  RED                  the settings a run says it used stop being held to what a record can carry, so a NaN or a non-string key survives into provenance
+                           code 268cd3d1d4bed758 -> bf2cdf53b3034674   CONTRACT_REFUSAL   23s
+                           3 failed, 467 passed in 22.04s
+                           test_solver_options_are_held_to_the_free_form_rule[non-finite-bad0], test_solver_options_are_held_to_the_free_form_rule[non-string, test_solver_options_are_held_to_the_free_form_rule[unserializable-bad2]
+
+79/79 mutations were killed by the guard they name.

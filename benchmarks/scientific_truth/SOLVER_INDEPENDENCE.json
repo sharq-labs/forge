@@ -1,0 +1,661 @@
+{
+  "counts": {
+    "NO": 0,
+    "PARTIAL": 5,
+    "YES": 0
+  },
+  "method": "the module import closure of each route, parsed from the AST. A claim of independence in a comment is not evidence; what a module can reach is.",
+  "pairs": [
+    {
+      "a": "engcore.domains.thermal.conduction1d.solver",
+      "a_reaches": 33,
+      "b": "engcore.domains.thermal.conduction1d.reference",
+      "b_reaches": 3,
+      "check_route_imports_route_under_test": false,
+      "claim": "the module docstring says the reference 'never imports solver, and a test asserts that'",
+      "direction_that_matters": "the ORACLE must not depend on the code it judges",
+      "independent": "PARTIAL",
+      "matters_because": "this closed form is what the repository verifies its PDE solve against; a shared discretization would make that verification circular",
+      "name_kinds": {},
+      "names_taken_from_route_under_test": [],
+      "pair": "conduction1d solver vs its closed-form reference",
+      "reading": "shares only the problem statement and platform machinery (declarations, exception types, result contract). The numbers are produced independently, but both routes would agree about a mis-declared problem",
+      "route_under_test_imports_check_route": true,
+      "shared_modules": [
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.domains.thermal.conduction1d.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.scientific.errors",
+          "role": "EXCEPTION_TYPES"
+        }
+      ],
+      "shared_modules_carrying_equations": [],
+      "those_names_are_all_plain_values": true
+    },
+    {
+      "a": "engcore.domains.thermal.conduction1d.solver",
+      "a_reaches": 33,
+      "b": "engcore.domains.thermal_models.conduction1d_schemes",
+      "b_reaches": 31,
+      "check_route_imports_route_under_test": false,
+      "claim": "two schemes over the same physics, offered as a fidelity ladder",
+      "direction_that_matters": "neither may compute the other's answer",
+      "independent": "PARTIAL",
+      "matters_because": "agreement between two discretizations is evidence only insofar as the discretizations differ",
+      "name_kinds": {},
+      "names_taken_from_route_under_test": [],
+      "pair": "conduction1d solver vs the explicit-scheme realization",
+      "reading": "shares only the problem statement and platform machinery (declarations, exception types, result contract). The numbers are produced independently, but both routes would agree about a mis-declared problem",
+      "route_under_test_imports_check_route": false,
+      "shared_modules": [
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.domains.thermal.conduction1d.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "the declaration and the model record: the same question, not the same answer",
+          "module": "engcore.domains.thermal.conduction1d.problem",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.capabilities",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition.conversion",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition.dependency",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition.transfer",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.scientific.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.conditions",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.constraints",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.fingerprints",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.objectives",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "the declaration and the model record: the same question, not the same answer",
+          "module": "engcore.scientific.ir.problem",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.values",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.variables",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.curves",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.definition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.realizations.definition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.data_reference",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.immutable",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.provenance",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.result",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.uncertainty",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.scientific.results.validation",
+          "role": "POST_SOLVE_CHECKS"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.sequences",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.serialization",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.solvers.capability",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.solvers.protocol",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.units.quantity",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.scientific.units.validation",
+          "role": "POST_SOLVE_CHECKS"
+        }
+      ],
+      "shared_modules_carrying_equations": [],
+      "those_names_are_all_plain_values": true
+    },
+    {
+      "a": "engcore.domains.electrical.dc.solver",
+      "a_reaches": 41,
+      "b": "engcore.domains.electrical.ngspice",
+      "b_reaches": 46,
+      "check_route_imports_route_under_test": true,
+      "claim": "ngspice is an external simulator used as an independent check",
+      "direction_that_matters": "the NUMBERS must come from ngspice, not from the MNA stamp",
+      "independent": "PARTIAL",
+      "matters_because": "the external tool is genuinely independent, but the BRIDGE that builds its netlist may share the circuit preprocessing under test",
+      "name_kinds": {
+        "NODE_VOLTAGE_METRIC": "value",
+        "SOURCE_CURRENT_METRIC": "value"
+      },
+      "names_taken_from_route_under_test": [
+        "NODE_VOLTAGE_METRIC",
+        "SOURCE_CURRENT_METRIC"
+      ],
+      "pair": "electrical DC solver vs the repository's ngspice bridge",
+      "reading": "the check route imports the route under test, but takes only NODE_VOLTAGE_METRIC, SOURCE_CURRENT_METRIC -- module-level values, not callables. It borrows names, not numbers, so its answers still come from elsewhere",
+      "route_under_test_imports_check_route": false,
+      "shared_modules": [
+        {
+          "carries": "reserved-name bookkeeping; carries no equation",
+          "module": "engcore.domains.derived_context",
+          "role": "NAMESPACE_MACHINERY"
+        },
+        {
+          "carries": "the circuit declaration and its structural validation",
+          "module": "engcore.domains.electrical.dc.circuit",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "element declarations and their admissibility rules",
+          "module": "engcore.domains.electrical.dc.components",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.domains.electrical.dc.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "the modified-nodal-analysis stamp -- CARRIES THE ANSWER",
+          "module": "engcore.domains.electrical.dc.mna",
+          "role": "NUMERICAL_KERNEL"
+        },
+        {
+          "carries": "published model records",
+          "module": "engcore.domains.electrical.dc.models",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "the declaration and the model record: the same question, not the same answer",
+          "module": "engcore.domains.electrical.dc.problem",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.domains.electrical.dc.validation",
+          "role": "POST_SOLVE_CHECKS"
+        },
+        {
+          "carries": "repair-hint inversion tables; carries no equation",
+          "module": "engcore.domains.repair",
+          "role": "HINT_MACHINERY"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.capabilities",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition.conversion",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition.dependency",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.composition.transfer",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.scientific.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.conditions",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.constraints",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.fingerprints",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.objectives",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "the declaration and the model record: the same question, not the same answer",
+          "module": "engcore.scientific.ir.problem",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.values",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.variables",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.curves",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.definition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.registry",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.realizations.definition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.data_reference",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.immutable",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.provenance",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.result",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.thresholds",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.uncertainty",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.scientific.results.validation",
+          "role": "POST_SOLVE_CHECKS"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.sequences",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.serialization",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.solvers.capability",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.solvers.protocol",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.units",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.units.quantity",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.scientific.units.validation",
+          "role": "POST_SOLVE_CHECKS"
+        }
+      ],
+      "shared_modules_carrying_equations": [
+        {
+          "carries": "the modified-nodal-analysis stamp -- CARRIES THE ANSWER",
+          "module": "engcore.domains.electrical.dc.mna",
+          "role": "NUMERICAL_KERNEL"
+        }
+      ],
+      "those_names_are_all_plain_values": true
+    },
+    {
+      "a": "engcore.domains.thermal_models.lumped",
+      "a_reaches": 28,
+      "b": "engcore.domains.electrical.material",
+      "b_reaches": 26,
+      "check_route_imports_route_under_test": false,
+      "claim": "two domains coupled in the electro-thermal system",
+      "direction_that_matters": "neither domain may compute the other's state",
+      "independent": "PARTIAL",
+      "matters_because": "a coupled run's two halves must not be resting on one shared temperature derivation",
+      "name_kinds": {},
+      "names_taken_from_route_under_test": [],
+      "pair": "lumped thermal vs the material TCR evaluator",
+      "reading": "shares only the problem statement and platform machinery (declarations, exception types, result contract). The numbers are produced independently, but both routes would agree about a mis-declared problem",
+      "route_under_test_imports_check_route": false,
+      "shared_modules": [
+        {
+          "carries": "reserved-name bookkeeping; carries no equation",
+          "module": "engcore.domains.derived_context",
+          "role": "NAMESPACE_MACHINERY"
+        },
+        {
+          "carries": "repair-hint inversion tables; carries no equation",
+          "module": "engcore.domains.repair",
+          "role": "HINT_MACHINERY"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.capabilities",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.scientific.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.conditions",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.constraints",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.objectives",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "the declaration and the model record: the same question, not the same answer",
+          "module": "engcore.scientific.ir.problem",
+          "role": "PROBLEM_STATEMENT"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.values",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.ir.variables",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.curves",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.definition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.models.registry",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.realizations.definition",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.realizations.registry",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.data_reference",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.results.immutable",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.scientific.results.validation",
+          "role": "POST_SOLVE_CHECKS"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.sequences",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.serialization",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.solvers.capability",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.solvers.protocol",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.units",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.units.quantity",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "checks run on a result; does not produce the result",
+          "module": "engcore.scientific.units.validation",
+          "role": "POST_SOLVE_CHECKS"
+        }
+      ],
+      "shared_modules_carrying_equations": [],
+      "those_names_are_all_plain_values": true
+    },
+    {
+      "a": "engcore.domains.kinetics.cstr.solver",
+      "a_reaches": 36,
+      "b": "engcore.domains.kinetics.cstr.context",
+      "b_reaches": 5,
+      "check_route_imports_route_under_test": false,
+      "claim": "the validity envelope is decided before a solve, from the declaration alone",
+      "direction_that_matters": "the envelope must not be computed by the kernel it bounds",
+      "independent": "PARTIAL",
+      "matters_because": "if the envelope were computed by the same kernel it bounds, a kernel error would move the bound with it",
+      "name_kinds": {},
+      "names_taken_from_route_under_test": [],
+      "pair": "CSTR solver vs the CSTR validity context",
+      "reading": "shares only the problem statement and platform machinery (declarations, exception types, result contract). The numbers are produced independently, but both routes would agree about a mis-declared problem",
+      "route_under_test_imports_check_route": true,
+      "shared_modules": [
+        {
+          "carries": "reserved-name bookkeeping; carries no equation",
+          "module": "engcore.domains.derived_context",
+          "role": "NAMESPACE_MACHINERY"
+        },
+        {
+          "carries": "raises the same exception classes; carries no equation",
+          "module": "engcore.scientific.errors",
+          "role": "EXCEPTION_TYPES"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.serialization",
+          "role": "UNCLASSIFIED"
+        },
+        {
+          "carries": "not classified by this audit",
+          "module": "engcore.scientific.units.quantity",
+          "role": "UNCLASSIFIED"
+        }
+      ],
+      "shared_modules_carrying_equations": [],
+      "those_names_are_all_plain_values": true
+    }
+  ],
+  "schema": "scientific_truth_solver_independence/1",
+  "this_audits_oracles": [
+    {
+      "imports_engcore": false,
+      "oracle_module": "benchmarks.scientific_truth.oracles.lumped",
+      "verdict": "INDEPENDENT_OF_CORE",
+      "what_it_is": "RK4 written in this audit"
+    },
+    {
+      "imports_engcore": false,
+      "oracle_module": "benchmarks.scientific_truth.oracles.diffusion",
+      "verdict": "INDEPENDENT_OF_CORE",
+      "what_it_is": "closed form + explicit FTCS written in this audit"
+    },
+    {
+      "imports_engcore": false,
+      "oracle_module": "benchmarks.scientific_truth.oracles.battery",
+      "verdict": "INDEPENDENT_OF_CORE",
+      "what_it_is": "charge conservation and KVL written in this audit"
+    },
+    {
+      "imports_engcore": false,
+      "oracle_module": "benchmarks.scientific_truth.oracles.cstr",
+      "verdict": "INDEPENDENT_OF_CORE",
+      "what_it_is": "RK4 + root finding written in this audit"
+    },
+    {
+      "imports_engcore": false,
+      "oracle_module": "benchmarks.scientific_truth.oracles.dc",
+      "verdict": "INDEPENDENT_OF_CORE",
+      "what_it_is": "incidence-matrix nodal solve + ngspice"
+    },
+    {
+      "imports_engcore": false,
+      "oracle_module": "benchmarks.scientific_truth.oracles.material",
+      "verdict": "INDEPENDENT_OF_CORE",
+      "what_it_is": "mpmath at 50 digits"
+    }
+  ]
+}

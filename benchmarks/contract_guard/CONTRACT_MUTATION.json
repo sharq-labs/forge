@@ -1,0 +1,208 @@
+{
+  "by_class": {
+    "CAPABILITY_UNSERVED": {
+      "caught": 1,
+      "total": 1
+    },
+    "INPUT_OBLIGATION_DRIFT": {
+      "caught": 1,
+      "total": 1
+    },
+    "PREREQUISITE_DISSOLVED": {
+      "caught": 1,
+      "total": 1
+    },
+    "RECORD_TOO_BROAD": {
+      "caught": 3,
+      "total": 3
+    },
+    "RECORD_TOO_NARROW": {
+      "caught": 3,
+      "total": 3
+    },
+    "REFUSAL_SEMANTICS_DRIFT": {
+      "caught": 1,
+      "total": 1
+    },
+    "RUNTIME_ENFORCEMENT_DRIFT": {
+      "caught": 1,
+      "total": 1
+    },
+    "STRUCTURED_BOUND_DRIFT": {
+      "caught": 1,
+      "total": 1
+    },
+    "UNKNOWN_PROMISE_INVERSION": {
+      "caught": 2,
+      "total": 2
+    },
+    "UNMAPPED_CONDITION": {
+      "caught": 1,
+      "total": 1
+    }
+  },
+  "caught": 15,
+  "control": {
+    "green": true,
+    "id": "CONTROL",
+    "status": "GREEN",
+    "tail": "18 passed in 1.39s"
+  },
+  "relationship_to_certified_suite": "additive and independent. The certified 79-mutant code suite is not modified, extended or renumbered, and its digest is unchanged. These counts are never merged with it.",
+  "results": [
+    {
+      "caught": true,
+      "class": "RECORD_TOO_BROAD",
+      "drift": "the SC5 survivor itself: the heat-capacity record advertises a zero the bound still refuses",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_advertises_applicability_the_runtime_refuses",
+      "id": "CGM-1",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.06s"
+    },
+    {
+      "caught": true,
+      "class": "RECORD_TOO_BROAD",
+      "drift": "the same lie in a different system: the resistance record advertises a zero the bound refuses",
+      "file": "src/engcore/domains/electrical/dc/models.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_advertises_applicability_the_runtime_refuses",
+      "id": "CGM-2",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.06s"
+    },
+    {
+      "caught": true,
+      "class": "RECORD_TOO_BROAD",
+      "drift": "the same lie in a third system: the pre-exponential record advertises a zero the bound refuses",
+      "file": "src/engcore/domains/kinetics/cstr/problem.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_advertises_applicability_the_runtime_refuses",
+      "id": "CGM-3",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.12s"
+    },
+    {
+      "caught": true,
+      "class": "RECORD_TOO_NARROW",
+      "drift": "the Biot record disclaims an operating point the runtime accepts: prose tightened to 0.05 while the bound stays at 0.1",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_disclaims_applicability_the_runtime_grants",
+      "id": "CGM-4",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.06s"
+    },
+    {
+      "caught": true,
+      "class": "RECORD_TOO_NARROW",
+      "drift": "the same lie on a lower edge, and on the one conservatively screened condition: prose demands 0.5 where the runtime admits 0.2",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_disclaims_applicability_the_runtime_grants",
+      "id": "CGM-5",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.07s"
+    },
+    {
+      "caught": true,
+      "class": "RECORD_TOO_NARROW",
+      "drift": "an endpoint quietly reopened in prose: the record now excludes the two limits the runtime includes",
+      "file": "src/engcore/domains/battery/models.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_record_disclaims_applicability_the_runtime_grants",
+      "id": "CGM-6",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.14s"
+    },
+    {
+      "caught": true,
+      "class": "STRUCTURED_BOUND_DRIFT",
+      "drift": "the other direction of the same drift: a developer moves the structured bound and leaves the published sentence behind",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_a_record_that_restates_its_bound_in_prose_restates_the_right_number",
+      "id": "CGM-7",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.04s"
+    },
+    {
+      "caught": true,
+      "class": "RUNTIME_ENFORCEMENT_DRIFT",
+      "drift": "an endpoint defect in the shared range evaluator with no record change at all: every inclusive minimum silently becomes exclusive",
+      "file": "src/engcore/scientific/models/definition.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_every_structured_bound_is_enforced_by_the_runtime",
+      "id": "CGM-8",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.06s"
+    },
+    {
+      "caught": true,
+      "class": "UNKNOWN_PROMISE_INVERSION",
+      "drift": "a published UNKNOWN promise inverted: the record claims the condition holds without the declaration the runtime needs (the SC1 shape)",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it",
+      "id": "CGM-9",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.79s"
+    },
+    {
+      "caught": true,
+      "class": "UNKNOWN_PROMISE_INVERSION",
+      "drift": "the geometry record goes back to promising a cross-check the derivation does not perform (the CORE-1 shape)",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "tests/test_core_semantic_invariants.py::test_a_condition_that_says_unknown_unless_must_mean_it",
+      "id": "CGM-10",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.76s"
+    },
+    {
+      "caught": true,
+      "class": "INPUT_OBLIGATION_DRIFT",
+      "drift": "the record downgrades a required input to optional while the constructor still refuses without it: a caller told they may leave it out cannot build the problem",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_required_means_required_and_optional_means_optional",
+      "id": "CGM-11",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.89s"
+    },
+    {
+      "caught": true,
+      "class": "PREREQUISITE_DISSOLVED",
+      "drift": "a published UNKNOWN prerequisite quietly dissolves: the assembler starts inventing a Fourier number for a caller who declared none of what it is derived from, with the record unchanged",
+      "file": "src/engcore/domains/thermal_models/context.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_nothing_declared_derives_nothing_unless_the_record_says_so",
+      "id": "CGM-12",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.90s"
+    },
+    {
+      "caught": true,
+      "class": "UNMAPPED_CONDITION",
+      "drift": "a new condition ships with no entry in the claim map, which is how a model would otherwise join the surface with nothing checking it",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_shipped_condition_is_missing_from_the_claim_map",
+      "id": "CGM-13",
+      "status": "RED (caught)",
+      "tail": "1 failed in 0.68s"
+    },
+    {
+      "caught": true,
+      "class": "REFUSAL_SEMANTICS_DRIFT",
+      "drift": "an absent declaration starts reading as a satisfied condition: every record's UNKNOWN becomes a silent IN_DOMAIN with no record changed",
+      "file": "src/engcore/scientific/models/definition.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_condition_is_satisfied_before_anything_is_declared",
+      "id": "CGM-14",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.09s"
+    },
+    {
+      "caught": true,
+      "class": "CAPABILITY_UNSERVED",
+      "drift": "the only solver serving a published capability is renamed, leaving the record advertising something nothing in the repository executes",
+      "file": "src/engcore/domains/thermal_models/lumped.py",
+      "guard": "benchmarks/contract_guard/tests/test_contract_guard.py::test_no_model_requires_a_capability_nothing_serves",
+      "id": "CGM-15",
+      "status": "RED (caught)",
+      "tail": "1 failed in 1.16s"
+    }
+  ],
+  "schema": "contract_mutation/1",
+  "survivors": [],
+  "total": 15,
+  "what_this_is": "Falsification for the record<->runtime contract guards added in this round. Each mutation plants one semantic drift in a copy of the repository and demands that a named guard go RED."
+}

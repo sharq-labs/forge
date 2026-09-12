@@ -1,0 +1,19 @@
+{
+  "fixture_id": "EVF-SLAB-1",
+  "what_this_is": "A 304 stainless plate held at a fixed temperature on both faces, starting from a single half-sine temperature profile.",
+  "why_these_numbers": "The initial profile is the first Fourier mode, for which the series solution collapses to one exact term, so the closed form is exact rather than truncated. The thickness, conductivity, density and specific heat are handbook 304 values. The grid is stated as cell and step counts, which is what the caller controls.",
+  "evidence_level": "LEVEL 5 - independent analytical.",
+  "quantities": {
+    "length_mm": 120.0,
+    "thermal_conductivity_W_per_m_K": 16.2,
+    "density_g_per_cm3": 8.0,
+    "specific_heat_J_per_g_K": 0.5,
+    "end_time_min": 30.0,
+    "n_cells": 80,
+    "n_steps": 4000
+  },
+  "derivations_left_to_the_adapters": [
+    "thermal diffusivity alpha = k / (density * specific heat)",
+    "dx = length / n_cells and dt = end_time / n_steps"
+  ]
+}

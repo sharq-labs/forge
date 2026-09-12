@@ -1,0 +1,979 @@
+{
+  "condition_count": 64,
+  "dimensions": {
+    "A": "required/optional inputs",
+    "B": "UNKNOWN/refusal prerequisites",
+    "C": "applicability",
+    "D": "route selection",
+    "E": "cross-check/evidence claims",
+    "F": "reason/result agreement",
+    "G": "capability declarations",
+    "H": "state/control requirements"
+  },
+  "evidence": {
+    "bound_enforcement_disagreements": 0,
+    "bound_enforcement_probes": 353,
+    "capabilities_unserved": 0,
+    "capability_models": 16,
+    "conditions_without_executable_prose_claim": 16,
+    "constructor_input_checks": 91,
+    "constructor_input_counts": {
+      "MATCH": 41,
+      "NOT_CONSTRUCTOR_ADDRESSABLE": 50
+    },
+    "empty_context_derivations": 1,
+    "empty_context_undeclared": 0,
+    "prose_claims_executed": 156,
+    "prose_disagreements": 0,
+    "unknown_prerequisite_checks": 110,
+    "unknown_prerequisite_disagreements": 0
+  },
+  "fully_guarded_models": [
+    "battery.cell.constant_current_runtime",
+    "battery.cell.coulomb_counting",
+    "battery.cell.peukert_capacity_derating",
+    "battery.cell.rint_ocv",
+    "electrical.dc.ideal_current_source",
+    "electrical.dc.ideal_voltage_source",
+    "electrical.dc.kcl",
+    "electrical.dc.regulated_voltage_source",
+    "electrical.dc.resistor_ohm",
+    "electrical.dc.self_heated_resistor",
+    "electrical.material.linear_tcr_resistance",
+    "electrical.material.rated_linear_tcr_resistance",
+    "kinetics.cstr.nonisothermal_first_order",
+    "kinetics.cstr.nonisothermal_first_order_constant_rate",
+    "thermal.conduction1d.linear_diffusion",
+    "thermal.lumped.first_order_capacity"
+  ],
+  "model_count": 16,
+  "models": [
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 3,
+      "dimensions": {
+        "A": {
+          "note": "8 of 13 declarable inputs probed by omission at the public constructor; 5 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "5 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "15 bound-enforcement probes across 3 conditions, and 0 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability battery:cell_discharge_step must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: cell_temperature (refused at construction); discharge_current (refused at construction); state_of_charge (refused at construction)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "battery.cell.constant_current_runtime",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "battery.cell.constant_current_runtime.assess_validity + the domain constructor and assembler for battery.cell",
+      "system": "battery.cell"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 5,
+      "dimensions": {
+        "A": {
+          "note": "6 of 11 declarable inputs probed by omission at the public constructor; 5 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "7 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "29 bound-enforcement probes across 5 conditions, and 15 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability battery:cell_discharge_step must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: cell_temperature (refused at construction); discharge_current (refused at construction); state_of_charge (refused at construction)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "battery.cell.coulomb_counting",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "battery.cell.coulomb_counting.assess_validity + the domain constructor and assembler for battery.cell",
+      "system": "battery.cell"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 3,
+      "dimensions": {
+        "A": {
+          "note": "3 of 8 declarable inputs probed by omission at the public constructor; 5 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "6 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "15 bound-enforcement probes across 3 conditions, and 9 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability battery:cell_discharge_step must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: cell_temperature (refused at construction); discharge_current (refused at construction)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "battery.cell.peukert_capacity_derating",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "battery.cell.peukert_capacity_derating.assess_validity + the domain constructor and assembler for battery.cell",
+      "system": "battery.cell"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 11,
+      "dimensions": {
+        "A": {
+          "note": "9 of 24 declarable inputs probed by omission at the public constructor; 14 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 1 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "18 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "60 bound-enforcement probes across 11 conditions, and 36 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability battery:cell_discharge_step must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: cell_temperature (refused at construction); discharge_current (refused at construction); state_of_charge (refused at construction)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "battery.cell.rint_ocv",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "battery.cell.rint_ocv.assess_validity + the domain constructor and assembler for battery.cell",
+      "system": "battery.cell"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 1,
+      "dimensions": {
+        "A": {
+          "note": "1 of 1 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "1 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "5 bound-enforcement probes across 1 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability electrical:dc_linear must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "electrical.dc.ideal_current_source",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.dc.ideal_current_source.assess_validity + the domain constructor and assembler for electrical.dc",
+      "system": "electrical.dc"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 1,
+      "dimensions": {
+        "A": {
+          "note": "3 of 3 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 1 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "1 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "5 bound-enforcement probes across 1 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability electrical:dc_linear must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "electrical.dc.ideal_voltage_source",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.dc.ideal_voltage_source.assess_validity + the domain constructor and assembler for electrical.dc",
+      "system": "electrical.dc"
+    },
+    {
+      "applicable_dimensions": [
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 1,
+      "dimensions": {
+        "A": {
+          "note": "this record declares no caller-supplied input: all 1 are solved unknowns",
+          "status": "NOT_APPLICABLE"
+        },
+        "B": {
+          "note": "1 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "5 bound-enforcement probes across 1 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability electrical:dc_linear must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "electrical.dc.kcl",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.dc.kcl.assess_validity + the domain constructor and assembler for electrical.dc",
+      "system": "electrical.dc"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 1,
+      "dimensions": {
+        "A": {
+          "note": "2 of 4 declarable inputs probed by omission at the public constructor; 2 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 1 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "3 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "5 bound-enforcement probes across 1 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability electrical:dc_linear must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "electrical.dc.regulated_voltage_source",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.dc.regulated_voltage_source.assess_validity + the domain constructor and assembler for electrical.dc",
+      "system": "electrical.dc"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 3,
+      "dimensions": {
+        "A": {
+          "note": "6 of 6 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 1 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "4 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "15 bound-enforcement probes across 3 conditions, and 6 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability electrical:dc_linear must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "electrical.dc.resistor_ohm",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.dc.resistor_ohm.assess_validity + the domain constructor and assembler for electrical.dc",
+      "system": "electrical.dc"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 1,
+      "dimensions": {
+        "A": {
+          "note": "0 of 2 declarable inputs probed by omission at the public constructor; 2 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 2 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "4 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "5 bound-enforcement probes across 1 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability electrical:dc_linear must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "electrical.dc.self_heated_resistor",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.dc.self_heated_resistor.assess_validity + the domain constructor and assembler for electrical.dc",
+      "system": "electrical.dc"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 2,
+      "dimensions": {
+        "A": {
+          "note": "3 of 4 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 1 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "2 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "14 bound-enforcement probes across 2 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability core:algebraic must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: temperature (a condition of its own, probed under C)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "electrical.material.linear_tcr_resistance",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.material.linear_tcr_resistance.assess_validity + the domain constructor and assembler for electrical.material",
+      "system": "electrical.material"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 9,
+      "dimensions": {
+        "A": {
+          "note": "3 of 7 declarable inputs probed by omission at the public constructor; 4 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "9 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "49 bound-enforcement probes across 9 conditions, and 24 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability core:algebraic must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: temperature (a condition of its own, probed under C)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "electrical.material.rated_linear_tcr_resistance",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "electrical.material.rated_linear_tcr_resistance.assess_validity + the domain constructor and assembler for electrical.material",
+      "system": "electrical.material"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 6,
+      "dimensions": {
+        "A": {
+          "note": "12 of 13 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 1 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "13 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "34 bound-enforcement probes across 6 conditions, and 15 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability kinetics:cstr_nonisothermal_transient must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "kinetics.cstr.nonisothermal_first_order",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "kinetics.cstr.nonisothermal_first_order.assess_validity + the domain constructor and assembler for kinetics.cstr",
+      "system": "kinetics.cstr"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 4,
+      "dimensions": {
+        "A": {
+          "note": "4 of 6 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 2 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "4 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "24 bound-enforcement probes across 4 conditions, and 0 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability kinetics:cstr_nonisothermal_transient must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "kinetics.cstr.nonisothermal_first_order_constant_rate",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "kinetics.cstr.nonisothermal_first_order_constant_rate.assess_validity + the domain constructor and assembler for kinetics.cstr",
+      "system": "kinetics.cstr"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "condition_count": 1,
+      "dimensions": {
+        "A": {
+          "note": "3 of 3 declarable inputs probed by omission at the public constructor; 0 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "1 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "5 bound-enforcement probes across 1 conditions, and 3 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "no condition on this record offers a caller alternative routes to the same quantity",
+          "status": "NOT_APPLICABLE"
+        },
+        "E": {
+          "note": "this record claims no cross-check between two routes",
+          "status": "NOT_APPLICABLE"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability thermal:conduction_1d_transient must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "this record declares no evolving state or control input",
+          "status": "NOT_APPLICABLE"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "F",
+        "G"
+      ],
+      "model_id": "thermal.conduction1d.linear_diffusion",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "thermal.conduction1d.linear_diffusion.assess_validity + the domain constructor and assembler for thermal.conduction1d",
+      "system": "thermal.conduction1d"
+    },
+    {
+      "applicable_dimensions": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "condition_count": 12,
+      "dimensions": {
+        "A": {
+          "note": "5 of 20 declarable inputs probed by omission at the public constructor; 15 reach the model through the validity context and are probed by omission there instead, where 'optional' means the condition goes UNKNOWN rather than the model refusing; 0 unchecked; 0 are solved unknowns, not caller inputs",
+          "status": "GUARDED"
+        },
+        "B": {
+          "note": "31 withhold-and-demand-UNKNOWN checks re-run live from the claim map, plus the empty-context derivation check",
+          "status": "GUARDED"
+        },
+        "C": {
+          "note": "68 bound-enforcement probes across 12 conditions, and 30 prose applicability claims put through the same runtime",
+          "status": "GUARDED"
+        },
+        "D": {
+          "note": "alternative routes are declared in the claim map and each is checked to serve alone: biot_number, convection_conductance_agreement_ratio, convection_flow_range_utilization, convection_property_range_utilization, geometry_route_ratio",
+          "status": "GUARDED"
+        },
+        "E": {
+          "note": "8 cross-check clauses, each on a condition whose routes are checked individually, and the one-route reading is pinned by a named invariant test",
+          "status": "GUARDED"
+        },
+        "F": {
+          "note": "every UNKNOWN condition must carry a reason and the assessment status must agree with its own condition sets",
+          "status": "GUARDED"
+        },
+        "G": {
+          "note": "declared capability thermal:lumped_capacity_transient must be served by a registered solver",
+          "status": "GUARDED"
+        },
+        "H": {
+          "note": "every declared state or control input is probed by omission: ambient_temperature (refused at construction); heat_input (withheld at the declaration boundary); temperature (refused at construction)",
+          "status": "GUARDED"
+        }
+      },
+      "fully_guarded": true,
+      "guarded_dimensions": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "model_id": "thermal.lumped.first_order_capacity",
+      "record_source": "engcore.scientific.models.definition",
+      "runtime_entry_point": "thermal.lumped.first_order_capacity.assess_validity + the domain constructor and assembler for thermal.lumped",
+      "system": "thermal.lumped"
+    }
+  ],
+  "partially_guarded_models": [],
+  "schema": "contract_guard_matrix/1",
+  "totals": {
+    "applicable_dimensions": 88,
+    "blocked_dimensions": 0,
+    "cells": 128,
+    "fully_guarded_models": 16,
+    "guarded_dimensions": 88,
+    "not_applicable_dimensions": 40,
+    "not_guarded_dimensions": 0,
+    "partially_guarded_models": 0,
+    "unguarded_models": 0
+  },
+  "unguarded_models": [],
+  "what_counts_as_guarded": "A model counts as GUARDED on a dimension only when an executable test connects its PUBLISHED RECORD to the ACTUAL GUARDED RUNTIME SEMANTICS, such that the test fails if either side drifts. Unit tests of the implementation, the existence of a record, a snapshot containing its text, and passing a benchmark do not count: none of them fails when the record and the runtime stop agreeing."
+}

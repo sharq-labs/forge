@@ -1,0 +1,34 @@
+{
+  "fixture_id": "EVF-CSTR-1",
+  "what_this_is": "A jacketed constant-volume stirred tank running one irreversible exothermic first-order liquid-phase reaction, written the way a process notebook writes it.",
+  "why_these_numbers": "The plant is the textbook 100 L / 100 L-per-min propylene-glycol-style reactor: an aqueous feed, a 50 kJ/mol exotherm and a jacket 50 K below the feed. The initial state is deliberately away from any steady state - colder and richer than the feed - so the comparison is a genuine transient and not a marginal drift about an equilibrium.",
+  "evidence_level": "LEVEL 5 - independent analytical, with the molar gas constant at LEVEL 3.",
+  "quantities": {
+    "volume_L": 100.0,
+    "feed_flow_L_per_min": 100.0,
+    "feed_concentration_mol_per_L": 1.0,
+    "feed_temperature_degC": 76.85,
+    "coolant_temperature_degC": 26.85,
+    "ua_kJ_per_min_per_K": 50.0,
+    "k0_per_min": 7.2e10,
+    "activation_energy_kJ_per_mol": 72.75,
+    "heat_of_reaction_kJ_per_mol": -50.0,
+    "density_g_per_cm3": 1.0,
+    "specific_heat_J_per_g_K": 0.239,
+    "end_time_min": 5.0,
+    "initial_concentration_mol_per_L": 0.9,
+    "initial_temperature_degC": 66.85
+  },
+  "constant_rate_variant": {
+    "what_this_is": "The same plant read by the temperature-independent rate model. It is a different model family, not a different solver setting.",
+    "activation_energy_kJ_per_mol": 0.0,
+    "k_const_per_min": 0.5
+  },
+  "derivations_left_to_the_adapters": [
+    "dilution rate a = flow / volume",
+    "beta = -heat_of_reaction / (density * specific heat)",
+    "gamma = UA / (volume * density * specific heat)",
+    "concentrations from mol/L to mol/m3, volumes from L to m3, energies from kJ to J, rates from per-minute to per-second",
+    "absolute temperatures from degC"
+  ]
+}

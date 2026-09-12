@@ -30,7 +30,7 @@ def test_constant_rate_competitor_validity_is_not_unbounded() -> None:
     point of the reservation, and is why this test states the split explicitly
     rather than passing one merged mapping.
     """
-    def assess(k_const: Quantity):
+    def assess(k_const: Quantity, ceiling_k: float = 500.0):
         return CONSTANT_RATE_CSTR_MODEL.assess_validity(
             declared={
                 "k_const": k_const,
@@ -39,6 +39,11 @@ def test_constant_rate_competitor_validity_is_not_unbounded() -> None:
             assembled={
                 "temperature": Quantity(320.0, "kelvin"),
                 "concentration": Quantity(1000.0, "mol/m**3"),
+                # The envelope ceiling this record reserves since the
+                # capability-boundary round. It is assembled like the other two
+                # state coordinates, and withholding it leaves the condition
+                # UNKNOWN rather than satisfied.
+                "adiabatic_ceiling_temperature": Quantity(ceiling_k, "kelvin"),
             },
         )
 
@@ -47,6 +52,26 @@ def test_constant_rate_competitor_validity_is_not_unbounded() -> None:
         assess(Quantity(0.0, "1/s")).status
         is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
     )
+    # The reason this test is named for boundedness: a declaration whose exact
+    # invariant ceiling leaves the single-phase envelope is refused here too,
+    # on the same bound and for the same reason as on the Arrhenius model. The
+    # reaction term cancels out of dZ/dt for Z = T + beta C_A, so holding k
+    # constant does not weaken the bound by one step.
+    over = assess(Quantity(0.01, "1/s"), ceiling_k=2442.0)
+    assert over.status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+    assert "adiabatic_ceiling_temperature" in over.violated
+    # Withholding it buys nothing.
+    withheld = CONSTANT_RATE_CSTR_MODEL.assess_validity(
+        declared={
+            "k_const": Quantity(0.01, "1/s"),
+            "residence_time": Quantity(100.0, "second"),
+        },
+        assembled={
+            "temperature": Quantity(320.0, "kelvin"),
+            "concentration": Quantity(1000.0, "mol/m**3"),
+        },
+    )
+    assert "adiabatic_ceiling_temperature" in withheld.unknown
 
 
 def test_constant_rate_competitor_refuses_a_declared_state_coordinate() -> None:

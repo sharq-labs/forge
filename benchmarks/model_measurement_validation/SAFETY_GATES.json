@@ -1,0 +1,314 @@
+{
+  "schema": "model_measurement_gates/1",
+  "gates": [
+    {
+      "id": "MV-1",
+      "name": "MODEL SURFACE COMPLETE",
+      "question": "Does every shipped model appear on the surface and in the final accounting?",
+      "would_fail_if": "a model had been dropped because no data was found for it",
+      "evidence": {
+        "models_on_the_surface": 16,
+        "models_accounted": 16,
+        "missing_from_accounting": [],
+        "extra_in_accounting": []
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-2",
+      "name": "SOURCE PROVENANCE",
+      "question": "Does every evidence row trace to a source with a recorded origin and hash, and does every hash still resolve?",
+      "would_fail_if": "a measurement had entered the suite without an entry in EVIDENCE_PROVENANCE.json, or a file had changed since it was hashed",
+      "evidence": {
+        "sources_declared": [
+          "S-CODATA",
+          "S-DCHG",
+          "S-OCV",
+          "S-PT100"
+        ],
+        "sources_actually_used": [
+          "S-DCHG",
+          "S-OCV",
+          "S-PT100"
+        ],
+        "local_files_hashed": {
+          "discharge_curves_1min.json": "71e035894b836e2f11f874653bbf95640cec2fb2eec5b76aac9bfd926690562e",
+          "ocv_relaxation_24h.xlsx": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+          "pt100rtd_table.h": "d09fc50e9cbe04742273b1b6c023fb23863d72fde63d4bdbab0ae2757a0be693"
+        },
+        "every_local_hash_matches_the_provenance_record": true,
+        "sources_rejected_with_reasons": 7
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-3",
+      "name": "APPLICABILITY",
+      "question": "Was anything screened out of scope counted as model validation?",
+      "would_fail_if": "a half-cell potential, an example table or a simulator output had been counted as evidence for a shipped model",
+      "evidence": {
+        "offenders": [],
+        "screens_recorded": 6,
+        "out_of_scope_exclusions_reported_as_findings": [
+          "MVF-6"
+        ]
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-4",
+      "name": "CALIBRATION INDEPENDENCE",
+      "question": "Did any point set a parameter and then score it, and do the counts that ran match the counts that were fixed?",
+      "would_fail_if": "a held-out point had been used as calibration, or a count had drifted from the plan without a finding naming it",
+      "evidence": {
+        "leakage_offenders": [],
+        "points_examined": 1104,
+        "split_comparison": [
+          {
+            "case": "MV-A",
+            "expected": {
+              "calibration_rows": 2,
+              "validation_rows": 0,
+              "held_out_rows": 10
+            },
+            "observed": {
+              "calibration_rows": 2,
+              "validation_rows": 0,
+              "held_out_rows": 10
+            },
+            "matches": true
+          },
+          {
+            "case": "MV-B",
+            "expected": {
+              "calibration_rows": 5,
+              "validation_rows": 0,
+              "held_out_rows": 2
+            },
+            "observed": {
+              "calibration_rows": 5,
+              "validation_rows": 0,
+              "held_out_rows": 2
+            },
+            "matches": true
+          },
+          {
+            "case": "MV-C",
+            "expected": {
+              "calibration_rows": 1,
+              "validation_rows": 371,
+              "held_out_rows": 680
+            },
+            "observed": {
+              "calibration_rows": 1,
+              "validation_rows": 371,
+              "held_out_rows": 679
+            },
+            "matches": false
+          },
+          {
+            "case": "MV-D",
+            "expected": {
+              "calibration_rows": 0,
+              "validation_rows": 0,
+              "held_out_rows": 30
+            },
+            "observed": {
+              "calibration_rows": 0,
+              "validation_rows": 0,
+              "held_out_rows": 30
+            },
+            "matches": true
+          }
+        ],
+        "undeclared_discrepancies": [],
+        "declared_discrepancies": {
+          "MV-C": "MVF-7 - VALIDATION_SPLIT.json counts the 0 degC entry twice"
+        }
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-5",
+      "name": "METRIC VALIDITY",
+      "question": "Was every metric and tolerance fixed before the comparison ran, and justified by something other than what the Core achieves?",
+      "would_fail_if": "a threshold had been moved after seeing a result",
+      "evidence": {
+        "cases_preregistered": 4,
+        "every_case_has_a_pass_rule_and_a_justification": true,
+        "tolerances_changed_after_a_result": 0,
+        "rules_found_to_be_badly_posed": [
+          "MVF-3",
+          "MVF-7",
+          "MVF-8"
+        ],
+        "how_those_were_handled": "the rule and its result stand unedited; the correction is a labelled secondary analysis and a finding"
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-6",
+      "name": "UNCERTAINTY HONESTY",
+      "question": "Is measurement uncertainty represented where it is known, and is it never silently zero?",
+      "would_fail_if": "any comparison had been scored against an uncertainty of zero, or a relaxed value had been read off the wrong end of its trace",
+      "evidence": {
+        "rows_scored_against_a_zero_uncertainty": 0,
+        "relaxed_values_read_at_the_declared_end": true,
+        "budget_terms": [
+          "voltage acquisition",
+          "state of charge through the local dOCV/dSOC",
+          "ambient temperature band",
+          "residual relaxation measured from the data"
+        ],
+        "quantities_with_no_published_uncertainty": [
+          "the S-DCHG discharge current, recorded as UNCERTAINTY_NOT_REPORTED and worse - the value itself is absent"
+        ]
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-7",
+      "name": "EMPIRICAL AGREEMENT",
+      "question": "Is there an unresolved material mismatch inside the empirically covered subset?",
+      "would_fail_if": "a measured mismatch inside a model's own declared regime had been left standing",
+      "evidence": {
+        "material_mismatches": [
+          "MVF-1"
+        ],
+        "detail": [
+          {
+            "id": "MVF-1",
+            "model": "battery.cell.rint_ocv",
+            "configuration": "affine chord between two declared endpoints",
+            "statement": "Against measured relaxed open-circuit voltage on a LiFePO4 cell, the affine chord misses every held-out state of charge. Mean absolute error 175 mV, worst 293 mV, against a measurement uncertainty of a few millivolts. The worst residual is 217 times its own expanded uncertainty."
+          }
+        ],
+        "why_this_gate_fails": "MVF-1 stands. The affine-chord configuration misses measured open-circuit voltage by up to 293 mV inside a regime none of the model's validity conditions excludes, replicated on a second cell and corroborated by a second experiment on ten more. The gate is reported FAIL rather than argued away, and MVF-2 records what would resolve it."
+      },
+      "verdict": "FAIL"
+    },
+    {
+      "id": "MV-8",
+      "name": "RESIDUAL SHAPE",
+      "question": "Is any systematic bias hidden behind a summary number?",
+      "would_fail_if": "a case had shown systematic structure that no finding accounted for",
+      "evidence": {
+        "cases_with_systematic_structure": [
+          "MV-A",
+          "MV-A-replicate",
+          "MV-C",
+          "MV-D"
+        ],
+        "each_one_explained": {
+          "MV-A": "the finding itself; the chord's error is structural and MVF-1 says so",
+          "MV-A-replicate": "the same finding on a second cell",
+          "MV-C": "expected and required: the linear law drops exactly -B t^2, so the residual MUST be quadratic. Its fitted curvature is 5.77647e-05 against the |B| R0 = 5.775e-05 the algebra predicts",
+          "MV-D": "departures from a straight line are magnitudes and cannot change sign; the drift with duration is reported"
+        }
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-9",
+      "name": "AUDITOR FALSIFICATION",
+      "question": "Does the machinery notice when a failure is planted in it?",
+      "would_fail_if": "any planted failure had passed unnoticed",
+      "evidence": {
+        "planted": 8,
+        "caught": 8,
+        "missed": 0,
+        "plants": [
+          {
+            "id": "MVM-1",
+            "plant": "+5 percent systematic bias on every Core open-circuit voltage",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-2",
+            "plant": "resistance-temperature slope 2 percent too steep, exact at the reference point",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-3",
+            "plant": "every Core open-circuit voltage multiplied by 1000",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-4",
+            "plant": "the relaxed open-circuit voltage read at 1 h instead of 24 h",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-5",
+            "plant": "a calibration point duplicated into the held-out set",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-6",
+            "plant": "measurement uncertainty set to zero on a passing case",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-7",
+            "plant": "a row screened OUT_OF_SCOPE relabelled as validation",
+            "verdict": "CAUGHT"
+          },
+          {
+            "id": "MVM-8",
+            "plant": "one failing held-out point relabelled as calibration",
+            "verdict": "CAUGHT"
+          }
+        ],
+        "three_of_them_leave_every_residual_healthy": [
+          "MVM-5",
+          "MVM-7",
+          "MVM-8"
+        ],
+        "control": {
+          "id": "MVM-0",
+          "plant": "none; the control",
+          "rows_failing_tolerance": 20,
+          "integrity_checks_failing": 1,
+          "note": "The control is NOT expected to be clean. MV-A fails its preregistered tolerance at every held-out point and MV-C fails at six of 371, both for reasons adjudicated in the findings, and the split check reports the one-row discrepancy recorded as MVA-1. What the control establishes is the BASELINE each plant is measured against, so a plant only counts if it makes things worse."
+        }
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-10",
+      "name": "PREVIOUS ASSURANCE PRESERVED",
+      "question": "Did this round change anything the earlier rounds certified?",
+      "would_fail_if": "a production file had been edited, which would have required every earlier assurance layer to be re-run",
+      "evidence": {
+        "certified_digest": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "recomputed_digest": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507",
+        "matches": true,
+        "files_touched_under_src_or_tests": [],
+        "production_changes_made": 0
+      },
+      "verdict": "PASS"
+    },
+    {
+      "id": "MV-11",
+      "name": "FROZEN EVIDENCE PRESERVED",
+      "question": "Are the earlier rounds' artifacts, Blind V2's frozen set included, untouched?",
+      "would_fail_if": "any earlier round's artifact had been rewritten",
+      "evidence": {
+        "earlier_round_directories": [
+          "blind_v2",
+          "contract_integrity",
+          "contract_guard",
+          "capability_boundary",
+          "scientific_truth",
+          "empirical_validation"
+        ],
+        "modified": [],
+        "this_round_reads_one_earlier_file": "benchmarks/empirical_validation/evidence/scipy_codata.py, read-only, for the provenance record"
+      },
+      "verdict": "PASS"
+    }
+  ],
+  "passed": 10,
+  "failed": 1,
+  "note_on_a_failing_gate": "MV-7 is expected to fail and failing it is the round's result. A gate that passed by reclassifying a measured mismatch as out of scope would be worth nothing."
+}
