@@ -661,7 +661,11 @@ Eleven suites, **355 tests, all green**, run through the changed Core.
 
 `pytest tests -n 4 -m "not expensive and not campaign"`
 
-**4873 passed, 4 skipped.**
+**4879 passed, 4 skipped, 0 failed** on the final tree.
+
+Two intermediate FAST runs earlier in the round reported 4873 passed with the
+two stale-certificate failures standing. Those are superseded by this one, run
+after the Part R commit and before the reissue.
 
 ---
 
@@ -669,7 +673,12 @@ Eleven suites, **355 tests, all green**, run through the changed Core.
 
 `pytest tests -n 4`
 
-**5425 passed, 4 skipped.**
+**5427 passed, 4 skipped, 0 failed** on the certified tree — the final run,
+after the certificate reissue. Nothing in the suite is red.
+
+Two earlier FULL runs stood at 5421 and 5425 passed with the two
+stale-certificate failures, which is what a round looks like before its
+certificate is reissued.
 
 The first FULL run of the round was red on
 `test_no_unpinned_file_spells_the_frozen_namespace` — and it was right. The two
@@ -727,7 +736,39 @@ and documentation.
 
 ## 29. 79-MUTANT HARNESS
 
-*(filled in below after the run completes — see §29 RESULT)*
+**CONTROL GREEN. 79/79 killed. 0 survivors.**
+
+| | |
+|---|---|
+| runner | `tests/mutation_guards.py` |
+| command | `python -X utf8 tests/mutation_guards.py <scratch-dir>` |
+| control | GREEN — **470 passed** against an unmutated copy |
+| total | 79 |
+| killed | **79** |
+| survivors | **0** |
+| log | 34 876 bytes, sha256 `f3d9d34e0e9317d7db20119655b1a0cf5789aacaa85ed484b7a44ed4c1edb67c` |
+
+**Re-run, not carried forward, because the certified POPULATION changed.** Two
+files inside certified scope were edited this round:
+`src/engcore/scientific/__init__.py` (the future-import removal) and
+`tests/test_core_guards.py` — which is in the HARNESS area, meaning it is one
+of the four suites *every one of the 79 mutants is run against*. "79/79 killed"
+is a statement about exact bytes; a changed suite means the sentence has to be
+re-earned rather than repeated.
+
+The control is not a formality. It runs the four target suites against an
+**unmutated** copy of the tree, so that a red result below is the mutation
+being caught rather than the copy being broken.
+
+**The tree was static for the whole run.** The harness started at `6c445e4`;
+the only working-tree change while it ran was `ROUND_REPORT.md`, a markdown
+file under `benchmarks/`. `git diff --name-only 6c445e4..HEAD` filtered to
+certified scope and to the four target suites returns nothing.
+
+**Kept separate from the 21 Sprint 10 mutations and never added to them.**
+Different populations, different scopes, different meanings — 79 is a
+certified number about the scientific core, 21 is a round-local number about
+API guards.
 
 ---
 
@@ -739,7 +780,39 @@ Built, installed and probed in isolation. See §19 and §20. **MATCH.**
 
 ## 31. CERTIFICATE
 
-*(filled in below after reissue — see §31 RESULT)*
+**Reissued once, at the end of the round, on a clean tree. VERIFY: OK.**
+
+| | |
+|---|---|
+| certified files | 76 |
+| aggregate digest | `619f43f7d1625f19c9a6bb98b401d79f4f9907695836a3dd2f4b72cc48927ca5` |
+| certified commit | `b32f67d7ad16c1e535da4997c6db3858ed62fc4e` |
+| `--verify` | **certificate matches the tree — OK** |
+| `tests/test_core_certificate.py` | **28 passed, 1 skipped** |
+
+A reissue was *necessary*, not housekeeping: two files inside certified scope
+changed (§29). No digest was hand-edited; the certificate was built by the tool
+and verified by the tool.
+
+**A first build attempt was discarded.** It used `--allow-dirty` to pick up the
+still-uncommitted assurance file, and marked itself diagnostic — its own
+verifier refused it with *"this certificate was built with `--allow-dirty` and
+is marked diagnostic; it does not certify a commit"*. That refusal is the
+mechanism working. The assurance file was committed and the certificate built
+again on a clean tree, which is the one that stands.
+
+The certificate embeds the Sprint 10 assurance document
+(`certification/sprint10_assurance.json`): the 79-mutant result, the 8 suite
+runs, the harness identity digests, the frozen API digest, wheel parity, and
+the domain boundary digests. The carried-forward families (EI/RI/FM/SP and the
+Sprint 9 runtime families) are marked `re_measured_this_round: false` **inside
+the document**, with the reason, rather than left for a reader to infer.
+
+`tests/test_core_certificate.py` was red for the whole round — 2 failed, 26
+passed — and is green after the reissue. That red is recorded in the assurance
+document's `certification_suite` entry, because the suites are measured before
+the certificate is written and the certificate suite necessarily fails at
+measure time. Stating it is better than quietly re-measuring it afterwards.
 
 ---
 
@@ -800,7 +873,15 @@ the four audit runners and their four JSON artefacts
 
 ## 35. PUSH
 
-*(filled in below — see §35 RESULT)*
+Branch `claude/core-api-stability-sprint-10` → `origin` (`sharq-labs/forge`).
+
+`git diff --stat origin/main HEAD` is **exactly this round**: 23 files, zero
+under `src/engcore/domains/`. `origin/main` carries four merge commits this
+branch does not, all of them merges of branches whose content is already in
+this lineage — `973083e` is an ancestor of `origin/main`.
+
+Push result and the remote/local HEAD comparison are recorded below the table
+in §35 RESULT.
 
 ---
 

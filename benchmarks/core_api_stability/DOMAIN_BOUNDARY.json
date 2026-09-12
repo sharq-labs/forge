@@ -9,57 +9,57 @@
     {
       "suite": "tests/test_electrical_v01_demo.py",
       "passed": true,
-      "summary": "17 passed in 3.35s"
+      "summary": "17 passed"
     },
     {
       "suite": "tests/test_kinetics_k1.py",
       "passed": true,
-      "summary": "30 passed in 0.77s"
+      "summary": "30 passed"
     },
     {
       "suite": "tests/test_conduction2d.py",
       "passed": true,
-      "summary": "30 passed in 0.73s"
+      "summary": "30 passed"
     },
     {
       "suite": "tests/test_conduction2d_assembly.py",
       "passed": true,
-      "summary": "33 passed in 0.99s"
+      "summary": "33 passed"
     },
     {
       "suite": "tests/test_conduction2d_convergence.py",
       "passed": true,
-      "summary": "9 passed in 0.79s"
+      "summary": "9 passed"
     },
     {
       "suite": "tests/test_thermal_t1_fidelity_inference.py",
       "passed": true,
-      "summary": "33 passed in 7.24s"
+      "summary": "33 passed"
     },
     {
       "suite": "tests/test_thermal_t2_repeated_draw_calibration.py",
       "passed": true,
-      "summary": "34 passed in 21.52s"
+      "summary": "34 passed"
     },
     {
       "suite": "tests/test_thermal_t3_decision_aware_fidelity.py",
       "passed": true,
-      "summary": "37 passed in 21.83s"
+      "summary": "37 passed"
     },
     {
       "suite": "tests/test_min_foundation_electrothermal.py",
       "passed": true,
-      "summary": "47 passed in 0.52s"
+      "summary": "47 passed"
     },
     {
       "suite": "tests/test_electrothermal_vertical.py",
       "passed": true,
-      "summary": "62 passed in 0.90s"
+      "summary": "62 passed"
     },
     {
       "suite": "tests/test_sria_e1_electrical.py",
       "passed": true,
-      "summary": "23 passed in 0.68s"
+      "summary": "23 passed"
     }
   ],
   "all_suites_green": true,

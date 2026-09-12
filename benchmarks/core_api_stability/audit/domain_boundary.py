@@ -30,6 +30,7 @@ from __future__ import annotations
 import hashlib
 import json
 import pathlib
+import re
 import subprocess
 import sys
 
@@ -133,6 +134,11 @@ def main() -> int:
         )
         lines = (proc.stdout + proc.stderr).strip().splitlines()
         summary = lines[-1] if lines else "(no output)"
+        # Strip pytest's elapsed time. A proof artefact that changes on
+        # every run cannot be compared with the last one, and the wall clock
+        # is the only part of this line that is not a fact about the tree.
+        # Past one minute pytest also appends "(0:01:09)", so both forms go.
+        summary = re.sub(r" in [0-9.]+s( [(][0-9:]+[)])?$", "", summary.strip())
         green = proc.returncode == 0
         all_green &= green
         print(f"  {'PASS' if green else 'FAIL'}  {suite}")
