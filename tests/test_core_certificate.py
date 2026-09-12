@@ -228,6 +228,23 @@ def _verify(root, certificate):
     return verify_certificate(root, certificate, require_commit=True)
 
 
+def test_building_twice_from_one_tree_produces_identical_bytes(synthetic, tmp_path):
+    """A certificate carries no timestamp, so a rebuild is a comparison.
+
+    V1 recorded when it was written, with a note that the timestamp was not
+    identity. True, and it also meant two engineers certifying the same commit
+    produced two different files and had to take on trust that the difference
+    was only the clock. Leaving it out makes that checkable: on one machine,
+    the same commit gives the same bytes.
+    """
+    root, _ = synthetic
+    first, second = tmp_path / "one.json", tmp_path / "two.json"
+    write_certificate(first, build_certificate(root, certification_id="SYNTHETIC"))
+    write_certificate(second, build_certificate(root, certification_id="SYNTHETIC"))
+    assert first.read_bytes() == second.read_bytes()
+    assert b"generated" not in first.read_bytes()
+
+
 def test_a_synthetic_tree_verifies_against_its_own_certificate(synthetic):
     root, certificate = synthetic
     result = _verify(root, certificate)
