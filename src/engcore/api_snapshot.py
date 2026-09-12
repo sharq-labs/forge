@@ -284,18 +284,46 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
 
 
 def build() -> dict[str, Any]:
-    """The whole frozen public surface, canonically ordered."""
+    """The whole public surface -- frozen AND experimental -- canonically ordered.
+
+    Both populations are described, because a change to an experimental symbol
+    should still be VISIBLE. They are kept in separate digests so that
+    visibility never turns into a promise: see :func:`frozen_digest`.
+    """
     symbols = []
     for module_name in CANONICAL_MODULES:
         module = importlib.import_module(module_name)
         for name in sorted(getattr(module, "__all__", ()) or ()):
             symbols.append(describe(module_name, name, getattr(module, name)))
     symbols.sort(key=lambda entry: (entry["module"], entry["name"]))
+    frozen = [e for e in symbols if e["classification"] == "FREEZE"]
+    experimental = [e for e in symbols if e["classification"] != "FREEZE"]
     return {
         "schema": SCHEMA,
         "modules": list(CANONICAL_MODULES),
         "symbol_count": len(symbols),
+        "frozen_count": len(frozen),
+        "experimental_count": len(experimental),
         "symbols": symbols,
+    }
+
+
+def frozen_only(snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The FROZEN surface alone -- the compatibility contract.
+
+    Experimental symbols are excluded rather than merely labelled, so that
+    adding, changing or removing one cannot move the frozen digest. If they
+    shared a digest, every edit to the `engcore.studies` example would look
+    like a compatibility event, and the day somebody stopped believing the
+    alarm is the day a real one goes unnoticed.
+    """
+    payload = build() if snapshot is None else snapshot
+    frozen = [e for e in payload["symbols"] if e["classification"] == "FREEZE"]
+    return {
+        "schema": SCHEMA,
+        "contract": "frozen",
+        "symbol_count": len(frozen),
+        "symbols": frozen,
     }
 
 
@@ -315,13 +343,23 @@ def canonical_bytes(snapshot: dict[str, Any] | None = None) -> bytes:
 
 
 def digest(snapshot: dict[str, Any] | None = None) -> str:
+    """Digest of the WHOLE surface, frozen and experimental together."""
     return hashlib.sha256(canonical_bytes(snapshot)).hexdigest()
+
+
+def frozen_digest(snapshot: dict[str, Any] | None = None) -> str:
+    """Digest of the frozen contract alone. This is the compatibility number."""
+    return hashlib.sha256(canonical_bytes(frozen_only(snapshot))).hexdigest()
 
 
 if __name__ == "__main__":  # pragma: no cover - a tool entry point
     import sys
 
-    if "--digest" in sys.argv:
+    if "--frozen-digest" in sys.argv:
+        print(frozen_digest())
+    elif "--digest" in sys.argv:
         print(digest())
+    elif "--frozen" in sys.argv:
+        sys.stdout.buffer.write(canonical_bytes(frozen_only()))
     else:
         sys.stdout.buffer.write(canonical_bytes())

@@ -1,7 +1,17 @@
 {
-  "contract": "frozen",
+  "experimental_count": 8,
+  "frozen_count": 197,
+  "modules": [
+    "engcore.scientific",
+    "engcore.data",
+    "engcore.inference",
+    "engcore.uq",
+    "engcore.adequacy",
+    "engcore.execution",
+    "engcore.studies"
+  ],
   "schema": "engcore.api_snapshot/1",
-  "symbol_count": 197,
+  "symbol_count": 205,
   "symbols": [
     {
       "classification": "FREEZE",
@@ -13245,6 +13255,407 @@
         ],
         "required": [
           "value"
+        ]
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.scientific.ir.problem",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "ModelReference",
+      "module": "engcore.studies",
+      "name": "TCR_MODEL_REF"
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "dataclass_fields": [
+        {
+          "default": {
+            "kind": "none"
+          },
+          "has_default": false,
+          "has_default_factory": false,
+          "init": true,
+          "name": "reference_resistance"
+        },
+        {
+          "default": {
+            "kind": "none"
+          },
+          "has_default": false,
+          "has_default_factory": false,
+          "init": true,
+          "name": "temperature_coefficient"
+        },
+        {
+          "default": {
+            "kind": "none"
+          },
+          "has_default": false,
+          "has_default_factory": false,
+          "init": true,
+          "name": "reference_temperature"
+        }
+      ],
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "dataclass",
+      "module": "engcore.studies",
+      "name": "TcrTruth",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "reference_resistance"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "temperature_coefficient"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "reference_temperature"
+          }
+        ],
+        "required": [
+          "reference_resistance",
+          "temperature_coefficient",
+          "reference_temperature"
+        ]
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "function",
+      "module": "engcore.studies",
+      "name": "build_tcr_parameter_set",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "immutable_container",
+              "size": 2,
+              "type": "tuple"
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "resistance_bounds"
+          },
+          {
+            "default": {
+              "kind": "immutable_container",
+              "size": 2,
+              "type": "tuple"
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "alpha_bounds"
+          }
+        ],
+        "required": []
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "function",
+      "module": "engcore.studies",
+      "name": "ols_reference_estimate",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "observations"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "temperatures_by_condition"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "reference_temperature"
+          }
+        ],
+        "required": [
+          "observations",
+          "temperatures_by_condition",
+          "reference_temperature"
+        ]
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "function",
+      "module": "engcore.studies",
+      "name": "synthesize_tcr_observations",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "truth"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "temperatures_k"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "sigma"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "dataset_id"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "seed"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "float",
+              "value": 0.0
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "curvature_per_k2"
+          }
+        ],
+        "required": [
+          "truth",
+          "temperatures_k",
+          "sigma",
+          "dataset_id",
+          "seed"
+        ]
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "function",
+      "module": "engcore.studies",
+      "name": "tcr_forward_evaluator",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "observations"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "reference_temperature"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "temperatures_by_condition"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "NoneType",
+              "value": null
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "counter"
+          }
+        ],
+        "required": [
+          "observations",
+          "reference_temperature",
+          "temperatures_by_condition"
+        ]
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "function",
+      "module": "engcore.studies",
+      "name": "tcr_forward_table",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "observations"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "positional_or_keyword",
+            "name": "grid_points"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "reference_temperature"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "temperatures_by_condition"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "NoneType",
+              "value": null
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "counter"
+          }
+        ],
+        "required": [
+          "observations",
+          "grid_points",
+          "reference_temperature",
+          "temperatures_by_condition"
+        ]
+      }
+    },
+    {
+      "classification": "EXPERIMENTAL",
+      "defined_in": "engcore.studies.tcr",
+      "experimental_because": "one flagship study's scaffolding (linear-TCR calibration), not a Core contract; freezing it would commit the Core to a demonstration's API",
+      "kind": "function",
+      "module": "engcore.studies",
+      "name": "tcr_prediction",
+      "signature": {
+        "parameters": [
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "reference_resistance"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "temperature_coefficient"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "reference_temperature"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "temperature"
+          },
+          {
+            "default": {
+              "kind": "none"
+            },
+            "has_default": false,
+            "kind": "keyword_only",
+            "name": "condition_id"
+          },
+          {
+            "default": {
+              "kind": "literal",
+              "type": "str",
+              "value": "R1"
+            },
+            "has_default": true,
+            "kind": "keyword_only",
+            "name": "component_id"
+          }
+        ],
+        "required": [
+          "reference_resistance",
+          "temperature_coefficient",
+          "reference_temperature",
+          "temperature",
+          "condition_id"
         ]
       }
     },

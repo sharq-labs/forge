@@ -28,10 +28,17 @@ import pytest
 from engcore import api_snapshot
 
 PINNED = pathlib.Path(__file__).resolve().parent / "api" / "frozen_api_snapshot.json"
+FULL = pathlib.Path(__file__).resolve().parent / "api" / "full_api_snapshot.json"
 
 
 def pinned() -> dict:
+    """The FROZEN contract. Experimental symbols are not in this file."""
     return json.loads(PINNED.read_text(encoding="utf-8"))
+
+
+def pinned_full() -> dict:
+    """Frozen AND experimental, so a change to either is visible."""
+    return json.loads(FULL.read_text(encoding="utf-8"))
 
 
 def by_key(snapshot: dict) -> dict[tuple[str, str], dict]:
@@ -51,7 +58,7 @@ def test_the_public_api_matches_the_pinned_snapshot():
     AND record it as a compatibility event -- that is what the freeze policy
     makes it.
     """
-    current, expected = api_snapshot.build(), pinned()
+    current, expected = api_snapshot.frozen_only(), pinned()
     if api_snapshot.canonical_bytes(current) == api_snapshot.canonical_bytes(expected):
         return
 
@@ -89,7 +96,7 @@ def test_every_frozen_symbol_still_imports_from_its_canonical_module():
 
 
 def test_no_frozen_symbol_lost_its_kind():
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         assert now[key]["kind"] == entry["kind"], key
 
@@ -97,7 +104,7 @@ def test_no_frozen_symbol_lost_its_kind():
 def test_required_arguments_are_unchanged():
     """Adding a required argument breaks every existing call; removing one is
     a silent behaviour change for callers that were passing it."""
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         if "signature" not in entry:
             continue
@@ -108,7 +115,7 @@ def test_parameter_kinds_and_defaults_are_unchanged():
     """Keyword-only becoming positional-or-keyword still compiles every call,
     and is still a compatibility event: it freezes argument ORDER that was
     never part of the contract."""
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         if "signature" not in entry:
             continue
@@ -122,7 +129,7 @@ def test_parameter_kinds_and_defaults_are_unchanged():
 
 
 def test_enum_members_and_values_are_unchanged():
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         if "enum_members" not in entry:
             continue
@@ -132,7 +139,7 @@ def test_enum_members_and_values_are_unchanged():
 def test_public_dataclass_fields_keep_their_order():
     """Order is the positional-construction contract, so a reorder is a break
     even when every field survives."""
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         if "dataclass_fields" not in entry:
             continue
@@ -141,7 +148,7 @@ def test_public_dataclass_fields_keep_their_order():
 
 def test_exception_inheritance_is_unchanged():
     """`except SomeBase` is a contract callers write against."""
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         if "exception_mro" not in entry:
             continue
@@ -149,7 +156,7 @@ def test_exception_inheritance_is_unchanged():
 
 
 def test_union_aliases_keep_their_members():
-    now = by_key(api_snapshot.build())
+    now = by_key(api_snapshot.frozen_only())
     for key, entry in by_key(pinned()).items():
         if "union_members" not in entry:
             continue
