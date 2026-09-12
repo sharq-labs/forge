@@ -98,17 +98,41 @@ APPLICABILITY = (
 )
 
 
-#: Relative residual of the assembled linear system, below which the direct
-#: solve is taken to have solved the system it was handed. A direct sparse
-#: factorisation on a well-conditioned Laplacian lands many orders below this;
-#: the number is here to catch a system that was *not* solved, not to grade one
-#: that was.
-RESIDUAL_REL_TOL = 1e-10
+#: Backward error of the assembled linear system, below which the direct solve
+#: is taken to have solved the system it was handed:
+#:
+#:     max|A T - b| / (max|A| * max|T| + max|b|)
+#:
+#: **Not** ``max|A T - b| / max|b|``, which is what this was until Sprint 5 and
+#: which is not a criterion at all. That ratio has the residual over the
+#: right-hand side alone, so it grows with the conditioning of A and explodes
+#: when b is small — a plate with no source has a right-hand side made only of
+#: its boundary values, while A carries entries of order k/h^2. Measured across
+#: five manufactured cases it spanned 4.7e-14 to 1.4e-09, five orders, none of
+#: which was about whether the system had been solved.
+#:
+#: The backward error is the standard scale-free form and sits at machine
+#: epsilon for a stable solve whatever the resolution: the same five cases
+#: measured 4.3e-16 to 2.7e-15, flat. This bound is roughly four hundred times
+#: the worst of those, so it still separates a system that was solved from one
+#: that was not, and no longer separates a fine mesh from a coarse one.
+RESIDUAL_BACKWARD_TOL = 1e-12
 
-#: How far a node on a Dirichlet edge may sit from the value that was
-#: prescribed there. Those rows are pinned by an identity row, so anything
-#: above round-off means the boundary data did not reach the matrix.
-BOUNDARY_ABS_TOL = 1e-9
+#: How far a node on a Dirichlet edge may sit from the value prescribed there,
+#: **relative to the largest value prescribed on any such edge**.
+#:
+#: Also a Sprint 5 correction. This was an absolute bound of 1e-9, which asked
+#: for twelve significant digits of a field whose magnitudes are in the
+#: hundreds — below what a sparse LU delivers — and which meant the same plate
+#: passed or failed depending on whether it was declared in kelvin or in
+#: millikelvin. Every manufactured case in the repository was failing this
+#: check at every resolution, including at Sprint 4's head, and nothing
+#: noticed: the convergence study reads the error arrays and never the
+#: validation report, and the one test that does read it uses a uniform plate.
+#:
+#: A boundary value that never reached the matrix is wrong by order one
+#: relative, so this bound discriminates with seven orders to spare.
+BOUNDARY_REL_TOL = 1e-7
 
 #: The numbers this model judges against, as a record rather than as arguments.
 #:
@@ -136,8 +160,8 @@ CONDUCTION2D_GATE_THRESHOLDS = VerificationThresholds(
     gate_id="thermal_models.conduction2d.verification_gate",
     version="0.1.0",
     values={
-        "residual_rel_tol": RESIDUAL_REL_TOL,
-        "boundary_abs_tol": BOUNDARY_ABS_TOL,
+        "residual_backward_tol": RESIDUAL_BACKWARD_TOL,
+        "boundary_rel_tol": BOUNDARY_REL_TOL,
     },
     basis=(
         "declared for this architecture spike against the behaviour of a direct "
@@ -527,8 +551,8 @@ def solve_steady_conduction(
     ``thresholds`` is a record, not two numbers: a set derived from the declared
     one is still compared against, reported in full, and awards no level.
     """
-    residual_rel_tol = thresholds["residual_rel_tol"]
-    boundary_abs_tol = thresholds["boundary_abs_tol"]
+    residual_backward_tol = thresholds["residual_backward_tol"]
+    boundary_rel_tol = thresholds["boundary_rel_tol"]
     store = store if store is not None else InMemoryBulkStore()
     started = time.perf_counter()
     matrix, rhs = assemble(problem)
@@ -560,8 +584,13 @@ def solve_steady_conduction(
     record, reference = solved.store(store, name=f"{field.field_id}:field")
 
     residual = float(np.max(np.abs(matrix @ solution - rhs)))
-    scale = float(np.max(np.abs(rhs))) or 1.0
-    relative_residual = residual / scale
+    # The scale the residual is judged against is the size of the arithmetic
+    # that produced it, not the right-hand side alone. See RESIDUAL_BACKWARD_TOL.
+    scale = (
+        float(abs(matrix).max()) * float(np.max(np.abs(solution)))
+        + float(np.max(np.abs(rhs)))
+    ) or 1.0
+    backward_error = residual / scale
     checks.append(
         ValidationCheck(
             name="field_finite",
@@ -569,7 +598,7 @@ def solve_steady_conduction(
             detail=f"all {solved.count} node values are finite",
         )
     )
-    system_solved = relative_residual <= residual_rel_tol
+    system_solved = backward_error <= residual_backward_tol
     checks.append(
         ValidationCheck(
             name="field_linear_system_residual",
@@ -577,9 +606,10 @@ def solve_steady_conduction(
                 ValidationOutcome.PASS if system_solved else ValidationOutcome.FAIL
             ),
             detail=(
-                f"max|A T - b| / max|b| = {relative_residual:.3e} against "
-                f"{residual_rel_tol:.3e}; the factorisation solved the system "
-                f"it was handed, which is not a statement about the equation"
+                f"backward error max|A T - b| / (max|A| max|T| + max|b|) = "
+                f"{backward_error:.3e} against {residual_backward_tol:.3e}; the "
+                f"factorisation solved the system it was handed, which is not a "
+                f"statement about the equation"
             ),
             # Establishes nothing, on purpose. A direct sparse factorisation
             # sits at round-off whatever the resolution, so a level awarded
@@ -587,13 +617,14 @@ def solve_steady_conduction(
             # confidently as the finest. Convergence is a claim about a
             # sequence of solves; see CONDUCTION2D_GATE_THRESHOLDS.
             establishes=None,
-            residual=relative_residual,
-            tolerance=residual_rel_tol,
+            residual=backward_error,
+            tolerance=residual_backward_tol,
             evidence=thresholds.evidence(),
         )
     )
 
-    worst_boundary = _worst_dirichlet_error(problem, solved)
+    worst_boundary, boundary_scale = _worst_dirichlet_error(problem, solved)
+    relative_boundary = worst_boundary / boundary_scale
     checks.append(
         ValidationCheck(
             # The name the scheme-carrying 1-D solver beside this one already
@@ -603,16 +634,18 @@ def solve_steady_conduction(
             name="boundary_conditions_held",
             outcome=(
                 ValidationOutcome.PASS
-                if worst_boundary <= boundary_abs_tol
+                if relative_boundary <= boundary_rel_tol
                 else ValidationOutcome.FAIL
             ),
             detail=(
                 f"worst prescribed-value error on a dirichlet edge is "
-                f"{worst_boundary:.3e} {field.unit}"
+                f"{worst_boundary:.3e} {field.unit}, which is "
+                f"{relative_boundary:.3e} of the largest prescribed value "
+                f"({boundary_scale:.4g} {field.unit})"
             ),
             establishes=None,
-            residual=worst_boundary,
-            tolerance=boundary_abs_tol,
+            residual=relative_boundary,
+            tolerance=boundary_rel_tol,
             evidence=thresholds.evidence(),
         )
     )
@@ -674,9 +707,16 @@ def solve_steady_conduction(
 
 def _worst_dirichlet_error(
     problem: SteadyConductionProblem, solved: FieldValue
-) -> float:
+) -> tuple[float, float]:
+    """``(worst absolute error, largest prescribed magnitude)`` over every
+    prescribed node.
+
+    Both, because the criterion is relative and a reader still wants to see the
+    error in the field's own unit rather than only as a ratio.
+    """
     flat = solved.values.reshape(-1)
     worst = 0.0
+    scale = 1.0
     for edge, condition in problem.edges.items():
         if condition.kind is not BoundaryKind.DIRICHLET:
             continue
@@ -686,7 +726,8 @@ def _worst_dirichlet_error(
         )
         for node, expected in prescribed.items():
             worst = max(worst, abs(float(flat[node]) - expected))
-    return worst
+            scale = max(scale, abs(expected))
+    return worst, scale
 
 
 # ---------------------------------------------------------------------------
