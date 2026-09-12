@@ -34,12 +34,15 @@ QUANTITY = "src/engcore/scientific/units/quantity.py"
 ERRORS = "src/engcore/scientific/errors.py"
 GRID = "src/engcore/inference/grid.py"
 PYPROJECT = "pyproject.toml"
+POLICY = "docs/CORE_FREEZE_POLICY.md"
 
 T_SNAP = "tests/test_core_api_snapshot.py"
 T_CONTRACT = "tests/test_core_api_contracts.py"
 T_SER = "tests/test_core_api_serialization.py"
 T_LAYER = "tests/test_core_api_layering.py"
 T_GUARDS = "tests/test_core_guards.py"
+T_DEPR = "tests/test_core_api_deprecation.py"
+T_POLICY = "tests/test_core_freeze_policy.py"
 
 MUTATIONS = (
     # ---- API ----------------------------------------------------------
@@ -132,6 +135,29 @@ MUTATIONS = (
      T_SNAP + '::test_the_public_api_matches_the_pinned_snapshot',
      'the Part M symbol-level classification is emptied, so a module that is a '
      'genuine contract silently drags its spike back into the frozen surface'),
+
+    # ---- PARTS S AND T: deprecation policy and the executable document ---
+    ("S-1", SNAPSHOT,
+     [("DEPRECATED_SYMBOLS: dict[tuple[str, str], dict[str, Any]] = {}",
+       "DEPRECATED_SYMBOLS: dict[tuple[str, str], dict[str, Any]] = {\n"
+       '    ("engcore.execution", "run_sweep"): {"reason": "S-1", '
+       '"category": DeprecationWarning, "since": "1.0", "removal": "2.0"},\n'
+       "}")],
+     f"{T_DEPR}::test_every_registry_entry_carries_all_five_fields",
+     "a deprecation is registered without naming a replacement, so a caller is "
+     "told a symbol is going away and not what to use instead"),
+
+    ("T-1", POLICY,
+     [("| frozen digest | `a8468936",
+       "| frozen digest | `08468936")],
+     f"{T_POLICY}::test_the_policy_states_the_real_frozen_digest",
+     "the freeze policy states a frozen digest that is not the real one, so "
+     "the document describes a Core that does not exist"),
+
+    ("T-2", POLICY,
+     [("| frozen symbols | `194` |", "| frozen symbols | `193` |")],
+     f"{T_POLICY}::test_the_stated_counts_add_up",
+     "the policy's FROZEN-STATE table is half-updated and no longer adds up"),
 
     # ---- DETERMINISM / EXCEPTIONS -------------------------------------
     ("DET-1", SNAPSHOT,

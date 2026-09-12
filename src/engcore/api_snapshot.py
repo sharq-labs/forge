@@ -63,6 +63,38 @@ EXPERIMENTAL_PARAMETERS = {
     "engcore.execution:rerun_failed:workers",
 }
 
+#: PART S -- the deprecation registry. Currently EMPTY, and that emptiness is
+#: the claim: nothing in the frozen Core API is on its way out.
+#:
+#: An empty registry still needs the mechanism, because the first deprecation
+#: is exactly when nobody will want to design one. Each entry is keyed by
+#: ``(module, name)`` and MUST carry all five fields:
+#:
+#: ``reason``        why it is going away, in terms of what it got wrong;
+#: ``replacement``   the symbol to use instead, or ``None`` said explicitly --
+#:                   "there is no replacement" is a legitimate answer and a
+#:                   very different one from having forgotten to write it;
+#: ``category``      the warning class the symbol raises when used. Must be
+#:                   ``DeprecationWarning`` (or a subclass), never
+#:                   ``UserWarning``: Python silences DeprecationWarning by
+#:                   default outside ``__main__``, which is the behaviour a
+#:                   library WANTS -- an application author sees it when they
+#:                   go looking, and an end user is not spammed by a library
+#:                   they did not write;
+#: ``since``         the freeze-policy version that deprecated it;
+#: ``removal``       the version it may be removed in, which under the freeze
+#:                   policy is never earlier than the next MAJOR.
+#:
+#: A DEPRECATED symbol stays in the FROZEN snapshot. Deprecation is a statement
+#: about the future; the contract is still in force until it is removed, and a
+#: symbol that vanished from the frozen surface the moment it was deprecated
+#: would let a removal happen without ever being a compatibility event.
+DEPRECATED_SYMBOLS: dict[tuple[str, str], dict[str, Any]] = {}
+
+#: The fields every registry entry must carry. Named here rather than in the
+#: test so the rule ships with the package a consumer actually installs.
+DEPRECATION_FIELDS = ("reason", "replacement", "category", "since", "removal")
+
 #: Individual symbols that are public but NOT frozen, keyed by
 #: ``(module, name)``, with the reason. Module granularity is not enough: a
 #: package can be a genuine Core contract and still carry one spike, and the
@@ -276,6 +308,20 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
         entry["classification"] = "EXPERIMENTAL"
         entry["experimental_because"] = why
 
+    # DEPRECATED overrides FREEZE but never EXPERIMENTAL: deprecating something
+    # that was never promised is not a compatibility event, and saying so would
+    # imply the Core had made a promise it is now withdrawing.
+    record = DEPRECATED_SYMBOLS.get((module_name, name))
+    if record is not None and entry["classification"] == "FREEZE":
+        entry["classification"] = "DEPRECATED"
+        entry["deprecation"] = {
+            "reason": record["reason"],
+            "replacement": record["replacement"],
+            "category": record["category"].__name__,
+            "since": record["since"],
+            "removal": record["removal"],
+        }
+
     # A type alias is a contract too: `ScientificValue` naming a different set
     # of types is a change every annotation against it inherits. Recorded by
     # MEMBER NAME rather than by repr, which would otherwise carry module paths
@@ -348,7 +394,14 @@ def frozen_only(snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
     alarm is the day a real one goes unnoticed.
     """
     payload = build() if snapshot is None else snapshot
-    frozen = [e for e in payload["symbols"] if e["classification"] == "FREEZE"]
+    # DEPRECATED is IN. Deprecation says a contract will end, not that it has
+    # ended -- and a symbol that left the frozen surface on being deprecated
+    # could then be REMOVED without moving the frozen digest, which is the one
+    # event this digest exists to catch.
+    frozen = [
+        e for e in payload["symbols"]
+        if e["classification"] in ("FREEZE", "DEPRECATED")
+    ]
     return {
         "schema": SCHEMA,
         "contract": "frozen",
