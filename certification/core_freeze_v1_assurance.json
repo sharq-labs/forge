@@ -23,7 +23,7 @@
     "python": "3.14.2"
   },
   "evidence": {
-    "certified_79_log": "75b95229fed5eb58b7b99626486e7e48fe49ad41e4b1547d4d6f5f0fdcd9b31c",
+    "certified_79_log": "c4bcaeaf3d8c86b350db5b35f1fd3ea5019cdb1fe6e3466557e0b803c77757f0",
     "domain_boundary": "e20523c4b1aabb0c60950c9429e5e95788fb5a16fa00b123a5b546c2c15944c1",
     "reproduction": "35c93802d36fb0162d5d35785e8471f66bee09fb6fc44da841f726b2ebd35646",
     "reproduction_output": "4f8b4223eb2824aafe5fd2f41ed72b5ceedbd1ab6d1f44dcc0ca8539e3b6173b",
@@ -36,8 +36,8 @@
     "certified_79": {
       "control": "GREEN",
       "killed": 79,
-      "log_bytes": 34876,
-      "log_sha256": "75b95229fed5eb58b7b99626486e7e48fe49ad41e4b1547d4d6f5f0fdcd9b31c",
+      "log_bytes": 34557,
+      "log_sha256": "c4bcaeaf3d8c86b350db5b35f1fd3ea5019cdb1fe6e3466557e0b803c77757f0",
       "survivors": 0,
       "total": 79
     },
