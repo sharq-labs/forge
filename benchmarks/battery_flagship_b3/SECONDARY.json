@@ -1,0 +1,238 @@
+{
+ "route_cross_check": {
+  "per_model": {
+   "P1": {
+    "max_mean_deviation_in_grid_sd": 3.0972123090749807e-12,
+    "sd_ratio_domain_over_grid_range": [
+     1.000000016856986,
+     1.0000000168569927
+    ],
+    "max_relative_total_predictive_sd_deviation": 8.705371978834364e-10,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 366.37859578322144,
+    "held_out_chi_square_domain": 366.3785955547454
+   },
+   "P2": {
+    "max_mean_deviation_in_grid_sd": 8.784303006445606e-12,
+    "sd_ratio_domain_over_grid_range": [
+     1.0000000071958073,
+     1.00000000726765
+    ],
+    "max_relative_total_predictive_sd_deviation": 6.543356967370073e-10,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 258.64012874151257,
+    "held_out_chi_square_domain": 258.64012862070996
+   },
+   "P3": {
+    "max_mean_deviation_in_grid_sd": 5.521833258923627e-12,
+    "sd_ratio_domain_over_grid_range": [
+     1.0001265880728236,
+     1.0001370566580787
+    ],
+    "max_relative_total_predictive_sd_deviation": 1.588832679599861e-05,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 149.57574071807426,
+    "held_out_chi_square_domain": 149.57392364806935
+   },
+   "P4": {
+    "max_mean_deviation_in_grid_sd": 2.4021527283172734e-11,
+    "sd_ratio_domain_over_grid_range": [
+     1.0000396422395057,
+     1.0000456478735478
+    ],
+    "max_relative_total_predictive_sd_deviation": 5.688019805161204e-06,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 112.14135927669234,
+    "held_out_chi_square_domain": 112.14088277921559
+   },
+   "T3": {
+    "max_mean_deviation_in_grid_sd": 7.2553697617279964e-12,
+    "sd_ratio_domain_over_grid_range": [
+     1.0000000067191566,
+     1.000000007539027
+    ],
+    "max_relative_total_predictive_sd_deviation": 5.303093519870572e-10,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 278.7181793718405,
+    "held_out_chi_square_domain": 278.7181792599293
+   },
+   "T5": {
+    "max_mean_deviation_in_grid_sd": 1.3945731530246273e-11,
+    "sd_ratio_domain_over_grid_range": [
+     1.0000384183678217,
+     1.0000441292888471
+    ],
+    "max_relative_total_predictive_sd_deviation": 5.3358256559832284e-06,
+    "passed": true,
+    "identifiability_core": "PARAMETERS_IDENTIFIABLE",
+    "identifiability_domain": "PARAMETERS_IDENTIFIABLE",
+    "held_out_chi_square_core": 47.00551295672102,
+    "held_out_chi_square_domain": 47.0051573109571
+   }
+  },
+  "domain_route_may_carry_a_claim": true
+ },
+ "leakage_proof": {
+  "calibration_n": 67,
+  "held_out_n": 33,
+  "intersection_by_identity": [],
+  "intersection_by_content_digest": [],
+  "held_out_observations_used_in_any_sigma": [],
+  "disjoint": true
+ },
+ "t_cal_gate_demonstration": {
+  "model": {
+   "id": "T-CAL",
+   "form": "TabulatedForm LINEAR with knots {0} U {calibration z} U {1}",
+   "free_parameters": 69,
+   "route": "GATE_DEMONSTRATION_ONLY"
+  },
+  "p": 69,
+  "n_cal": 67,
+  "gate": {
+   "passed": false,
+   "why": "p = 69 >= n_cal = 67: every calibration point is a knot and two knots have no data; not calibrated, not scored"
+  }
+ },
+ "hysteresis": {
+  "method": "charge-conditioned branch linearly interpolated at each discharge z (DATA_QUALITY.json); data only, no model",
+  "by_region": {
+   "KNEE": {
+    "n_discharge_points": 10,
+    "hysteresis_median_mv": 42.4148816193013,
+    "hysteresis_min_mv": 32.22025661915229,
+    "hysteresis_max_mv": 70.28507858548672,
+    "best_model_held_out_rms_error_mv": 24.838342303244804,
+    "hysteresis_median_over_rms_error": 1.7076373737614667
+   },
+   "LOW_SOC_TRANSITION": {
+    "n_discharge_points": 30,
+    "hysteresis_median_mv": 40.310873285590795,
+    "hysteresis_min_mv": 29.454784000733536,
+    "hysteresis_max_mv": 45.889754250347806,
+    "best_model_held_out_rms_error_mv": 1.480516910477128,
+    "hysteresis_median_over_rms_error": 27.227566939846543
+   },
+   "PLATEAU": {
+    "n_discharge_points": 30,
+    "hysteresis_median_mv": 24.656811755340733,
+    "hysteresis_min_mv": 24.43234308559017,
+    "hysteresis_max_mv": 27.31505955882252,
+    "best_model_held_out_rms_error_mv": 0.27404404449528835,
+    "hysteresis_median_over_rms_error": 89.97390109590452
+   },
+   "HIGH_SOC_TRANSITION": {
+    "n_discharge_points": 30,
+    "hysteresis_median_mv": 18.836849070012374,
+    "hysteresis_min_mv": 15.110546680800585,
+    "hysteresis_max_mv": 29.02578416260626,
+    "best_model_held_out_rms_error_mv": 0.7849608353623649,
+    "hysteresis_median_over_rms_error": 23.99718332611669
+   }
+  }
+ },
+ "cross_cell": {
+  "cell_A": "JAHN2024 A123_01 (fit)",
+  "cell_B": "S-OCV BATT_001, Lithium Werks APR18650M1A, 24 h relaxed discharge OCV (no refit)",
+  "model": "T41",
+  "parameters_transfer": {
+   "status": "MODEL_EMPIRICALLY_INADEQUATE",
+   "model_applicable_status": null,
+   "alpha": 0.01,
+   "chi_square": 9656.94900619151,
+   "degrees_of_freedom": 6,
+   "p_value": 0.0,
+   "scored": [
+    {
+     "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_00-SOC@24h",
+     "state_of_charge": 0.0,
+     "measured_v": 2.8473,
+     "declared_v": 2.621513978441798,
+     "residual_v": 0.22578602155820215,
+     "standard_uncertainty_v": 0.0023033207006407327,
+     "standardized_residual": 98.02630675589096
+    },
+    {
+     "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_20-SOC@24h",
+     "state_of_charge": 0.2,
+     "measured_v": 3.2477,
+     "declared_v": 3.228722467384316,
+     "residual_v": 0.018977532615684023,
+     "standard_uncertainty_v": 0.0033458903243382,
+     "standardized_residual": 5.67189321109552
+    },
+    {
+     "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_40-SOC@24h",
+     "state_of_charge": 0.4,
+     "measured_v": 3.2894,
+     "declared_v": 3.2887283761509716,
+     "residual_v": 0.0006716238490285242,
+     "standard_uncertainty_v": 0.0009725122107202524,
+     "standardized_residual": 0.6906071117925736
+    },
+    {
+     "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_50-SOC@24h",
+     "state_of_charge": 0.5,
+     "measured_v": 3.292,
+     "declared_v": 3.2932846603482955,
+     "residual_v": -0.0012846603482956631,
+     "standard_uncertainty_v": 0.00042191297977189375,
+     "standardized_residual": -3.0448467098362597
+    },
+    {
+     "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_60-SOC@24h",
+     "state_of_charge": 0.6,
+     "measured_v": 3.2929,
+     "declared_v": 3.295637332870675,
+     "residual_v": -0.0027373328706752353,
+     "standard_uncertainty_v": 0.0012339663690717126,
+     "standardized_residual": -2.2183204820520954
+    },
+    {
+     "source_ref": "S-OCV:24h_Discharge_APR:BATT_001_OCV_V_80-SOC@24h",
+     "state_of_charge": 0.8,
+     "measured_v": 3.3309,
+     "declared_v": 3.33315974675637,
+     "residual_v": -0.0022597467563696405,
+     "standard_uncertainty_v": 0.002314991144691501,
+     "standardized_residual": -0.9761362420549463
+    }
+   ],
+   "excluded": [],
+   "why": "chi-square 9657 on 6 degrees of freedom, p = 0 against alpha 0.01; worst point SOC 0.0 misses by +225.8 mV (+98.0 sigma)",
+   "independence_note": "evidence used to declare this cell must not be supplied; the scored source references are listed so that can be checked"
+  },
+  "verdict_parameters": "PARAMETERS_DO_NOT_GENERALIZE",
+  "representation_generalization": "REPRESENTATION_GENERALIZATION_UNTESTABLE: BATT_001 has 6 discharge levels; refitting 41 free parameters leaves -35 for held-out, below the preregistered 3/3 split",
+  "confounds": [
+   "different laboratories and instruments",
+   "24 h rest versus an undocumented rest",
+   "SOC definitions: nominal-capacity coulomb count (ACS724) versus Q / Q_top (BaSyTec)"
+  ]
+ },
+ "cutoff_regression_on_best_curve": {
+  "model": "T41",
+  "dataset_cutoff_2.0V_at_0.11A": {
+   "status": "outside_validated_domain",
+   "state_of_charge": null,
+   "reason": "OCV(z) - I R_int reaches the cutoff at OCV = 2.001386 V, outside the 2.621513978441798..3.412633385930611 V this curve spans on its declared interval [0.0, 1.0]; the curve is not extrapolated"
+  },
+  "inside_knee_3.0V_at_0.11A": {
+   "status": "in_domain",
+   "state_of_charge": 0.034801193106901454,
+   "reason": ""
+  }
+ },
+ "raw_unchanged": true,
+ "run_wall_seconds_informational": 867.3
+}
