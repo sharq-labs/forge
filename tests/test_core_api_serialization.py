@@ -5,9 +5,11 @@ SERIALIZATION POLICY, stated rather than invented
 This round does NOT add backward compatibility. It classifies what exists:
 
 ``SUPPORTED_CURRENT``
-    62 records with both ``to_dict`` and ``from_dict``. The current canonical
-    format round-trips: ``from_dict(to_dict(x))`` produces a record whose
-    ``to_dict`` is byte-identical to the first.
+    61 FROZEN records with both ``to_dict`` and ``from_dict``. The current
+    canonical format round-trips: ``from_dict(to_dict(x))`` produces a record
+    whose ``to_dict`` is byte-identical to the first. (62 before Sprint 10's
+    Part M reclassified ``FieldObservationOperator`` as EXPERIMENTAL; it still
+    round-trips, the Core just no longer promises it.)
 
 ``SUPPORTED_CURRENT_EXPORT_ONLY``
     16 records with ``to_dict`` and no ``from_dict``. They are transport OUT --
@@ -16,12 +18,37 @@ This round does NOT add backward compatibility. It classifies what exists:
     reader exists because a writer does.
 
 ``SUPPORTED_LEGACY``
-    none. No legacy format is supported, and none is invented here to answer a
-    question.
+    EIGHT frozen readers accept older schema versions, each through
+    ``require_schema_any`` with an explicit tuple of exact version strings --
+    never a range, never a migration framework:
+
+    ==========================  ===========================================
+    ``ScientificResult``        ``scientific_result/1`` .. ``/4``
+    ``ProvenanceRecord``        ``provenance_record/1`` .. ``/4``
+    ``CrossSolverConsensus``    ``cross_solver_consensus/1`` .. ``/3``
+    ``RawSolverOutput``         ``raw_solver_output/1``, ``/2``
+    ``ScientificModelDefinition`` ``scientific_model_definition/1``, ``/2``
+    ``ValidityAssessment``      ``validity_assessment/1``, ``/2``
+    ``QuantityDependency``      ``quantity_dependency/1``, ``/2``
+    ``QuantityTransfer``        ``quantity_transfer/1``, ``/2``
+    ==========================  ===========================================
+
+    Loading real legacy payloads is exercised by the suites that own those
+    records (``test_result_validity``, ``test_provenance_integrity``,
+    ``test_consensus_integrity`` and others), not re-invented here. The table
+    itself is pinned by the Core Freeze V1 manifest, which derives it from the
+    ``from_dict`` source rather than from anyone's memory of it.
+
+    CORRECTED IN SPRINT 11. This paragraph used to read "none. No legacy format
+    is supported", which was false when it was written: every reader above
+    already accepted its older versions. The behaviour was right and tested;
+    the written policy was wrong, and a freeze cannot certify a contract whose
+    own statement of itself is contradicted by the code. Found by the freeze
+    procedure, recorded as FREEZE_BLOCKED on ``af43c89``, fixed here.
 
 ``UNSUPPORTED_LEGACY``
-    any schema string this build does not recognise. Refused explicitly, which
-    the tests below demonstrate rather than assert.
+    any schema string a reader does not list. Refused explicitly, which the
+    tests below demonstrate rather than assert.
 """
 
 from __future__ import annotations

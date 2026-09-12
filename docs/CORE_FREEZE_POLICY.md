@@ -141,6 +141,16 @@ Two separate freezes, deliberately not one:
 checked on the way back in, so an unknown version is a refusal rather than a
 silently mis-parsed record.
 
+**Legacy formats.** Eight frozen readers accept older schema versions, each
+through an explicit tuple of exact version strings — never a range:
+`ScientificResult` (`/1`–`/4`), `ProvenanceRecord` (`/1`–`/4`),
+`CrossSolverConsensus` (`/1`–`/3`), and `RawSolverOutput`,
+`ScientificModelDefinition`, `ValidityAssessment`, `QuantityDependency`,
+`QuantityTransfer` (`/1`, `/2`). Every other reader accepts exactly its current
+version. The table is part of Core Freeze V1: the freeze manifest derives it
+from each reader's source and the verifier fails if a declared version is
+dropped. Adding a new accepted version is not a break; removing one is.
+
 **Scientific identity.** A digest is computed over a canonical field set with
 `sort_keys=True, separators=(",", ":"), allow_nan=False`. MATERIAL fields enter
 the digest; NON-MATERIAL ones (display labels, descriptions) must not. Both
@@ -185,3 +195,70 @@ becoming a description of a version of the Core that no longer exists.
 - That non-Core packages (`domains`, `systems`, `sria`, `design`, `mcp`) have
   any stability guarantee at all.
 - Anything about behaviour, numerical results, or performance.
+
+## 10. Core Freeze V1
+
+The contract described above is frozen as **Core Freeze V1**, tagged
+`v1.0-core-freeze`. It is executable, not prose:
+
+```
+python -m tools.certification.core_freeze --verify
+```
+
+The manifest is `certification/core_freeze_v1.json`; the assurance that
+certified it, and the commit it was run on, are in
+`certification/core_freeze_v1_assurance.json`. The verifier reads both and
+compares them with the tree; it never regenerates what it expects.
+
+On the freeze commit every check binds, down to the bytes of `src/`. On a
+**later** commit the byte-level checks become informational and the CONTRACT
+checks still bind: the frozen API digest, the experimental set, the
+serialization inventory and legacy table, the identity reference digests, the
+declared ordering of results and failures, and the exception families. A later
+commit that fails a contract check is not a descendant of Core Freeze V1.
+
+**Allowed without breaking the freeze**
+
+- bug fixes that preserve frozen behaviour
+- internal refactors that preserve frozen contracts
+- performance improvements that preserve exact semantics
+- new tests
+- documentation
+- new Domain work
+- new optional internal implementations
+
+**Requires a Core compatibility review**
+
+- removing or renaming a frozen symbol
+- changing a signature, including required or default arguments
+- changing enum members or values
+- breaking a supported serialization format, current or legacy
+- changing material digest semantics or evidence identity semantics
+- changing trust or admission semantics
+- removing public result fields
+- changing stable exception classes or their family roots
+
+**Requires a new Core Freeze version**
+
+Any *intentional* incompatible change to the frozen contract. A review that
+concludes a change is incompatible does not make it compatible; it makes it
+Core Freeze V2.
+
+## 11. Experimental surfaces under the freeze
+
+Experimental public surfaces are **excluded** from Core Freeze V1. They stay
+importable, and they stay visibly classified EXPERIMENTAL in the API snapshot.
+**EXPERIMENTAL != FROZEN**: an experimental symbol may change without violating
+the frozen API.
+
+Promotion of an experimental symbol requires, in order:
+
+1. an explicit API review;
+2. a compatibility review;
+3. tests;
+4. inclusion in a later freeze manifest.
+
+What is forbidden is the silent version: removing a symbol from
+`EXPERIMENTAL_SYMBOLS` or `EXPERIMENTAL_MODULES` so that it lands in the frozen
+digest. The frozen digest then no longer matches Core Freeze V1, and the
+verifier fails — which is the intended outcome, not an obstacle to route around.
