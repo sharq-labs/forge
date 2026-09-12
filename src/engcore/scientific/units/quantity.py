@@ -505,16 +505,37 @@ def clear_unit_caches() -> None:
     """
     _canonical_unit.cache_clear()
     _canonical_dimensionality.cache_clear()
+    # Every memo in this module, not only the first two. `_normalized` and
+    # `_conversion_rule` sit in FRONT of `_canonical_unit`, so leaving them
+    # populated meant a caller who cleared the caches still got an answer
+    # without a parse — and `test_a_repeated_unit_string_is_canonicalised_once`
+    # measured zero parses where it expected one. A clear that does not clear
+    # everything is worse than none, because what it leaves behind is invisible.
+    _normalized.cache_clear()
+    _conversion_rule.cache_clear()
 
 
 def unit_cache_stats() -> dict[str, Any]:
-    """Hit/miss counts for the memo, for diagnostics and performance guards."""
+    """Hit/miss counts for the memo, for diagnostics and performance guards.
+
+    The headline numbers stay those of ``_canonical_unit`` — the parse, which
+    is what "how often did this cost a parse" means and what the existing
+    guards measure. The memos in front of it are reported alongside rather
+    than folded in, because adding their hits to the parse count would change
+    what the number means.
+    """
     info = _canonical_unit.cache_info()
+    normalized = _normalized.cache_info()
+    conversions = _conversion_rule.cache_info()
     return {
         "hits": info.hits,
         "misses": info.misses,
         "currsize": info.currsize,
         "maxsize": info.maxsize,
+        "normalized_hits": normalized.hits,
+        "normalized_misses": normalized.misses,
+        "conversion_rule_hits": conversions.hits,
+        "conversion_rule_misses": conversions.misses,
     }
 
 
