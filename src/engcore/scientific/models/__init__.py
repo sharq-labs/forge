@@ -20,6 +20,12 @@ from .definition import (
     ValidityStatus,
 )
 from .registry import ModelRegistry
+from .structured_validity import (
+    FieldFiniteCondition,
+    FieldRangeCondition,
+    FieldStructureCondition,
+    MeshResolutionCondition,
+)
 
 __all__ = [
     "BindingIssue",
@@ -40,4 +46,8 @@ __all__ = [
     "ValidityDomain",
     "ValidityStatus",
     "ModelRegistry",
+    "FieldFiniteCondition",
+    "FieldRangeCondition",
+    "FieldStructureCondition",
+    "MeshResolutionCondition",
 ]
