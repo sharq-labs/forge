@@ -19,15 +19,18 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
+      # Freeze/certificate checks ask whether historical candidate commits are
+      # ancestors of HEAD. A depth-1 checkout makes every older candidate look
+      # UNRELATED even when the repository relation is valid.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      # `.[dev,mcp]`, not `.[dev]`: without the MCP group the boundary tests
-      # skip, and a skipped test proves nothing. The guard in
-      # tests/mcp/test_battery_boundary.py is the safety net for a bare
-      # install; CI is not a bare install and should exercise the transport.
-      - run: pip install -e ".[dev,mcp]"
+      # FAST collects MCP and scientific-truth tests, so both optional groups
+      # must be present. The latter hard-imports mpmath during collection.
+      - run: pip install -e ".[dev,mcp,oracles]"
       # -n 4, not -n auto: the worker count must not track runner hardware.
       - run: python -m pytest -m "not expensive" -q -n 4 --dist loadfile
 
@@ -38,10 +41,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev,mcp]"
+      - run: pip install -e ".[dev,mcp,oracles]"
       - run: python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/mutations"
 
   # This is intentionally a PR gate now. A scientific regression found only
@@ -52,11 +57,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: sudo apt-get install -y -qq ngspice
-      - run: pip install -e ".[dev,mcp]"
+      - run: pip install -e ".[dev,mcp,oracles]"
       - env:
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >
