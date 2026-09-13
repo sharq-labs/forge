@@ -15,10 +15,10 @@ a mutant could pass its pre-flight import check and then pytest could prepend
 the checkout's original ``src`` again.  Every mutation therefore runs through
 a small same-process wrapper which imports the mutated module *before* pytest,
 overrides pytest's ``pythonpath`` option to the mutant source tree, and audits
-all loaded ``engcore``/``src.engcore`` modules after the run.  The repository
-root is present only so test-support modules under ``tests`` remain importable.
-Any project module loaded from outside the mutant source tree makes the mutation
-INVALID.
+all loaded canonical and checkout-alias project modules after the run.  The
+repository root is present only so test-support modules under ``tests`` remain
+importable. Any project module loaded from outside the mutant source tree makes
+the mutation INVALID.
 
 Pytest exit status is also interpreted conservatively: exit 0 means SURVIVED,
 exit 1 (actual test failures) means KILLED, and collection/usage/internal-error
@@ -222,12 +222,13 @@ import pytest
 returncode = pytest.main(pytest_args)
 
 outside = []
+alias_name = "src" + ".engcore"
 for name, loaded in tuple(sys.modules.items()):
     if not (
         name == "engcore"
         or name.startswith("engcore.")
-        or name == "src.engcore"
-        or name.startswith("src.engcore.")
+        or name == alias_name
+        or name.startswith(alias_name + ".")
     ):
         continue
     filename = getattr(loaded, "__file__", None)
