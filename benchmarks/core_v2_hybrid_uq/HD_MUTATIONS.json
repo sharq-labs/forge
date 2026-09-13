@@ -1,0 +1,95 @@
+{
+ "schema": "core_v2_hd_mutations/1",
+ "tree_head": "3d4cabfc5f4f2921c53be4f52d4728bc7fe94368",
+ "targets": [
+  "tests/hybrid_uq",
+  "tests/test_core_v2_compatibility.py"
+ ],
+ "results": {
+  "HD-1": {
+   "mutation": "bypass the local-route validity check",
+   "file": "src/engcore/hybrid_uq/local_gaussian.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py::test_a_refused_local_route_has_no_identifiability\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[F4_mirror]\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[bimodal]\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_rebuild_over_budget_is_passed_over\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_downgraded_local_route_is_reported_downgraded\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[F1_nonlinear]\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[F2_at_bound]\n20 failed, 73 passed in 5.38s",
+   "seconds": 5.7
+  },
+  "HD-2": {
+   "mutation": "ignore the bound-active refusal",
+   "file": "src/engcore/hybrid_uq/local_gaussian.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_local_route.py::test_a_parameter_at_its_bound_is_refused\n1 failed, 92 passed in 8.02s",
+   "seconds": 8.5
+  },
+  "HD-3": {
+   "mutation": "ignore a singular Jacobian",
+   "file": "src/engcore/hybrid_uq/local_gaussian.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_local_route.py::test_a_nearly_singular_jacobian_is_refused\n1 failed, 92 passed, 1 warning in 7.56s",
+   "seconds": 7.9
+  },
+  "HD-4": {
+   "mutation": "remove the multistart",
+   "file": "src/engcore/hybrid_uq/local_gaussian.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_local_route.py::test_a_mirror_mode_is_refused_with_multistart_and_downgraded_without\nFAILED tests/hybrid_uq/test_hybrid_uq_local_route.py::test_a_two_parameter_multimodal_posterior_is_refused\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_supported_local_route_is_used_when_no_grid_is_supplied\nFAILED tests/hybrid_uq/test_hybrid_uq_local_route.py::test_an_affine_model_far_from_its_bounds_gives_the_exact_gaussian\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[bimodal]\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_rebuild_over_budget_is_passed_over\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[F4_mirror]\n10 failed, 83 passed in 4.97s",
+   "seconds": 5.3
+  },
+  "HD-5": {
+   "mutation": "mislabel an approximation as exact",
+   "file": "src/engcore/hybrid_uq/vocabulary.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_records.py::test_no_approximation_class_is_an_exact_posterior\n1 failed, 92 passed in 6.92s",
+   "seconds": 7.3
+  },
+  "HD-6": {
+   "mutation": "drop parameter uncertainty from the prediction",
+   "file": "src/engcore/hybrid_uq/predictive.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py::test_a_merged_total_is_rejected_by_the_record\nFAILED tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py::test_grid_predictive_wraps_the_frozen_result_and_its_refusal\nFAILED tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py::test_linearized_predictive_is_exact_for_an_affine_model_and_keeps_its_sources_apart\n3 failed, 90 passed in 6.93s",
+   "seconds": 7.3
+  },
+  "HD-7": {
+   "mutation": "merge measurement and parameter uncertainty incorrectly (linear sum)",
+   "file": "src/engcore/hybrid_uq/predictive.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "ERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_material_diagnostics_move_the_diagnostics_digest\nERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_predictive_material_fields_move_its_digest\nERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_digests_are_stable_in_a_fresh_process_with_another_hash_seed\nERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_refused_records_round_trip_and_still_carry_no_numbers[refused_posterior]\nERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_refused_records_round_trip_and_still_carry_no_numbers[refused_route]\nERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_every_v2_reader_refuses_an_unknown_schema[LocalSensitivity]\nERROR tests/hybrid_uq/test_hybrid_uq_records.py::test_every_v2_reader_refuses_an_unknown_schema[MultistartPolicy]\n6 failed, 58 passed, 29 errors in 6.79s",
+   "seconds": 7.1
+  },
+  "HD-8": {
+   "mutation": "route an unresolved grid as trusted",
+   "file": "src/engcore/hybrid_uq/router.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_an_unresolved_grid_is_never_trusted\nFAILED tests/hybrid_uq/test_hybrid_uq_router.py::test_an_unresolved_grid_alone_is_a_refusal_with_no_numbers\n2 failed, 91 passed in 6.62s",
+   "seconds": 7.0
+  },
+  "HD-9": {
+   "mutation": "ignore parameterization identity",
+   "file": "src/engcore/hybrid_uq/local_gaussian.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_records.py::test_two_parameterizations_of_one_posterior_never_share_an_identity\nFAILED tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py::test_identifiability_depends_on_parameterization_and_says_which\n2 failed, 91 passed in 6.98s",
+   "seconds": 7.3
+  },
+  "HD-10": {
+   "mutation": "predictive UQ accepts a refused local route",
+   "file": "src/engcore/hybrid_uq/predictive.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py::test_predictive_uq_refuses_a_refused_local_route\n1 failed, 92 passed in 6.73s",
+   "seconds": 7.1
+  }
+ },
+ "control": {
+  "exit_code": 0,
+  "summary": "93 passed in 7.77s",
+  "seconds": 8.1
+ }
+}
