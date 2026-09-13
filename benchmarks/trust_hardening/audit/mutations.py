@@ -15,8 +15,15 @@ a mutant could pass its pre-flight import check and then pytest could prepend
 the checkout's original ``src`` again.  Every mutation therefore runs through
 a small same-process wrapper which imports the mutated module *before* pytest,
 overrides pytest's ``pythonpath`` option to the mutant source tree, and audits
-all loaded ``engcore`` modules after the run.  Any module loaded from outside
-the mutant source tree makes the mutation INVALID, never KILLED or SURVIVED.
+all loaded ``engcore``/``src.engcore`` modules after the run.  The repository
+root is present only so test-support modules under ``tests`` remain importable.
+Any project module loaded from outside the mutant source tree makes the mutation
+INVALID.
+
+Pytest exit status is also interpreted conservatively: exit 0 means SURVIVED,
+exit 1 (actual test failures) means KILLED, and collection/usage/internal-error
+statuses are INVALID.  Infrastructure failures are never credited as mutation
+kills.
 """
 
 from __future__ import annotations
@@ -187,7 +194,9 @@ def _module_name_for_path(path: str) -> str:
 
 def _mutant_environment(src_copy: pathlib.Path) -> dict[str, str]:
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(src_copy)
+    # mutant source must win; repository root is second only so tests.* helper
+    # modules remain importable. ROOT/src is intentionally absent.
+    env["PYTHONPATH"] = os.pathsep.join((str(src_copy), str(ROOT)))
     env["PYTHONNOUSERSITE"] = "1"
     return env
 
@@ -214,7 +223,12 @@ returncode = pytest.main(pytest_args)
 
 outside = []
 for name, loaded in tuple(sys.modules.items()):
-    if not (name == "engcore" or name.startswith("engcore.")):
+    if not (
+        name == "engcore"
+        or name.startswith("engcore.")
+        or name == "src.engcore"
+        or name.startswith("src.engcore.")
+    ):
         continue
     filename = getattr(loaded, "__file__", None)
     if not filename:
@@ -262,6 +276,9 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
         *(str(ROOT / test) for test in TESTS),
         "--rootdir",
         str(ROOT),
+        # Override pyproject.toml's ["src", "."] so ROOT/src cannot overtake
+        # the mutant source. ROOT itself arrives via the process PYTHONPATH for
+        # tests.route_declarations_for_tests and other test helpers.
         "-o",
         f"pythonpath={src_copy}",
         "-q",
@@ -287,10 +304,15 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
             detail=f"test timeout after {exc.timeout}s",
         )
 
-    if completed.returncode in {86, 87}:
-        status = "INVALID"
+    if completed.returncode == 0:
+        status = "SURVIVED"
+    elif completed.returncode == 1:
+        status = "KILLED"
     else:
-        status = "SURVIVED" if completed.returncode == 0 else "KILLED"
+        # pytest: 2 interrupted/collection, 3 internal error, 4 usage error,
+        # 5 no tests. 86/87 are our origin/contamination guards. None of these
+        # prove that a behavioural assertion detected the mutation.
+        status = "INVALID"
     tail = "\n".join(completed.stdout.splitlines()[-30:])
     return Result(
         mutation.mutation_id,
