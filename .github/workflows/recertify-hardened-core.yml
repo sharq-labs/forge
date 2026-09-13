@@ -21,41 +21,69 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Checkout exact integration branch
+      - name: Checkout exact pull-request head
         uses: actions/checkout@v4
         with:
-          ref: core/hardening-integration-v1
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Decide whether this is already the certificate child
+      - name: Classify source commit versus certificate child
         id: gate
         shell: bash
         run: |
+          set -euo pipefail
           subject="$(git log -1 --format=%s)"
+          head_sha="$(git rev-parse HEAD)"
+
           if [ "$subject" = "certification: recertify hardened core" ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "certificate child commit detected; no recursive recertification"
+            parent_count="$(git rev-list --parents -n 1 HEAD | awk '{print NF-1}')"
+            if [ "$parent_count" -ne 1 ]; then
+              echo "A certificate child must have exactly one parent; found $parent_count."
+              exit 1
+            fi
+            parent_sha="$(git rev-parse HEAD^)"
+            mapfile -t changed < <(git diff --name-only "$parent_sha" HEAD)
+            if [ "${#changed[@]}" -ne 1 ] || [ "${changed[0]}" != "certification/current_core_v2.json" ]; then
+              echo "The recertification subject is reserved for a certificate-only child commit."
+              printf 'Changed path: %s\n' "${changed[@]:-<none>}"
+              exit 1
+            fi
+            echo "mode=certificate_child" >> "$GITHUB_OUTPUT"
+            echo "source_sha=$parent_sha" >> "$GITHUB_OUTPUT"
+            echo "certificate_sha=$head_sha" >> "$GITHUB_OUTPUT"
+            echo "Verified certificate-only child shape for source $parent_sha."
           else
-            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "mode=source" >> "$GITHUB_OUTPUT"
+            echo "source_sha=$head_sha" >> "$GITHUB_OUTPUT"
+            echo "certificate_sha=" >> "$GITHUB_OUTPUT"
+            echo "Source commit selected for full recertification: $head_sha"
           fi
 
       - name: Set up Python 3.12
-        if: steps.gate.outputs.run == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install scientific runtime and test dependencies
-        if: steps.gate.outputs.run == 'true'
+      - name: Install verification dependencies
+        run: python -m pip install -e ".[dev,mcp,oracles]"
+
+      - name: Verify certificate child against its source bytes
+        if: steps.gate.outputs.mode == 'certificate_child'
+        run: python -m tools.certification.core_certificate --verify
+
+      - name: Install scientific provider runtime
+        if: steps.gate.outputs.mode == 'source'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ngspice
-          python -m pip install -e ".[dev,mcp,oracles]"
+          python --version > "${RUNNER_TEMP}/python-3.12.txt"
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.12.txt"
+          ngspice --version 2>&1 | head -n 1 > "${RUNNER_TEMP}/ngspice-version.txt"
 
       # These four checks can only become green after the fresh certificate is
       # generated. Everything else in FAST remains load-bearing here.
       - name: FAST functional gate — Python 3.12
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m pytest -m "not expensive" -q -n 4 --dist loadfile
           --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
@@ -64,7 +92,7 @@ jobs:
           --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
 
       - name: Scientific functional gate — Python 3.12
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         env:
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >-
@@ -80,27 +108,34 @@ jobs:
           --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
 
       - name: Formal certified guard mutation population
-        if: steps.gate.outputs.run == 'true'
-        run: python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/formal-mutations"
+        if: steps.gate.outputs.mode == 'source'
+        shell: bash
+        run: |
+          set -o pipefail
+          python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/formal-mutations" 2>&1 \
+            | tee "${RUNNER_TEMP}/formal-mutations.log"
 
       - name: New trust-boundary mutation population
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         run: >-
           python benchmarks/trust_hardening/audit/mutations.py
           --json "${RUNNER_TEMP}/trust-mutations.json"
 
       - name: Set up Python 3.11
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install Python 3.11 test dependencies
-        if: steps.gate.outputs.run == 'true'
-        run: python -m pip install -e ".[dev,mcp,oracles]"
+        if: steps.gate.outputs.mode == 'source'
+        run: |
+          python -m pip install -e ".[dev,mcp,oracles]"
+          python --version > "${RUNNER_TEMP}/python-3.11.txt"
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.11.txt"
 
       - name: FAST functional gate — Python 3.11
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m pytest -m "not expensive" -q -n 4 --dist loadfile
           --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
@@ -109,7 +144,7 @@ jobs:
           --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
 
       - name: Require a clean source tree before certification
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         shell: bash
         run: |
           if [ -n "$(git status --porcelain)" ]; then
@@ -118,61 +153,153 @@ jobs:
             exit 1
           fi
 
-      - name: Build fresh assurance record
-        if: steps.gate.outputs.run == 'true'
-        shell: bash
-        run: |
-          SOURCE_SHA="$(git rev-parse HEAD)"
-          cat > "${RUNNER_TEMP}/core-hardening-assurance.json" <<EOF
-          {
-            "schema": "forge.core_hardening_assurance/1",
-            "source_commit": "${SOURCE_SHA}",
-            "functional": {
-              "fast_python_3_11": {"passed": true},
-              "fast_python_3_12": {"passed": true},
-              "scientific_python_3_12": {"passed": true},
-              "note": "The four certificate/freeze self-checks were deferred until the generated certificate child commit; no other FAST checks were removed for recertification."
-            },
-            "formal_guard_mutations": {
-              "passed": true,
-              "population": 79,
-              "claim": "Fresh execution of tests/mutation_guards.py on this source commit; this remains the formal historical mutation family."
-            },
-            "trust_hardening_mutations": {
-              "passed": true,
-              "population": 13,
-              "survived": 0,
-              "invalid": 0,
-              "claim": "Separate fresh trust-boundary mutation family; intentionally not added to the formal 79 count."
-            },
-            "policy": "Certificate generated only after all gates above returned success in this workflow."
-          }
-          EOF
-
       - name: Restore Python 3.12 for deterministic certificate tooling
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - name: Build environment and assurance records
+        if: steps.gate.outputs.mode == 'source'
+        env:
+          SOURCE_SHA: ${{ steps.gate.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          import os
+          import platform
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          source_sha = os.environ["SOURCE_SHA"]
+
+          def text(name: str) -> str:
+              return (temp / name).read_text(encoding="utf-8").strip()
+
+          def digest(name: str) -> str:
+              return hashlib.sha256((temp / name).read_bytes()).hexdigest()
+
+          environment = {
+              "schema": "forge.certification_environment/1",
+              "source_commit": source_sha,
+              "runner_os": os.environ.get("RUNNER_OS", ""),
+              "platform": platform.platform(),
+              "python_3_11": text("python-3.11.txt"),
+              "python_3_12": text("python-3.12.txt"),
+              "ngspice": text("ngspice-version.txt"),
+              "pip_freeze_3_11_sha256": digest("pip-freeze-3.11.txt"),
+              "pip_freeze_3_12_sha256": digest("pip-freeze-3.12.txt"),
+              "workflow": ".github/workflows/recertify-hardened-core.yml",
+          }
+          (temp / "certification-environment.json").write_text(
+              json.dumps(environment, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+
+          assurance = {
+              "schema": "forge.core_hardening_assurance/1",
+              "source_commit": source_sha,
+              "functional": {
+                  "fast_python_3_11": {"passed": True},
+                  "fast_python_3_12": {"passed": True},
+                  "scientific_python_3_12": {"passed": True},
+                  "note": (
+                      "The four certificate/freeze self-checks were deferred until "
+                      "the generated certificate child commit; no other FAST checks "
+                      "were removed for recertification."
+                  ),
+              },
+              "formal_guard_mutations": {
+                  "passed": True,
+                  "population": 79,
+                  "log_sha256": digest("formal-mutations.log"),
+                  "claim": (
+                      "Fresh execution of tests/mutation_guards.py on this source "
+                      "commit; this remains the formal historical mutation family."
+                  ),
+              },
+              "trust_hardening_mutations": {
+                  "passed": True,
+                  "population": 13,
+                  "survived": 0,
+                  "invalid": 0,
+                  "result_sha256": digest("trust-mutations.json"),
+                  "claim": (
+                      "Separate fresh trust-boundary mutation family; intentionally "
+                      "not added to the formal 79 count."
+                  ),
+              },
+              "environment": environment,
+              "policy": (
+                  "Certificate generated only after all gates above returned success "
+                  "in this workflow."
+              ),
+          }
+          (temp / "core-hardening-assurance.json").write_text(
+              json.dumps(assurance, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Ensure measured source is still the pull-request head
+        if: steps.gate.outputs.mode == 'source'
+        env:
+          MEASURED_SHA: ${{ steps.gate.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${GITHUB_HEAD_REF}"
+          remote_sha="$(git rev-parse "origin/${GITHUB_HEAD_REF}")"
+          if [ "$remote_sha" != "$MEASURED_SHA" ]; then
+            echo "Pull-request head moved while assurance was running."
+            echo "Measured: $MEASURED_SHA"
+            echo "Current:  $remote_sha"
+            echo "Refusing to certify stale bytes."
+            exit 1
+          fi
+
       - name: Generate Core V2 certificate with official builder
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m tools.certification.core_certificate
           --build
           --assurance "${RUNNER_TEMP}/core-hardening-assurance.json"
 
       - name: Verify generated certificate against source bytes
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m tools.certification.core_certificate
           --verify
           --allow-dirty
 
+      - name: Upload recertification evidence
+        if: steps.gate.outputs.mode == 'source'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardened-core-assurance-${{ steps.gate.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/core-hardening-assurance.json
+            ${{ runner.temp }}/certification-environment.json
+            ${{ runner.temp }}/formal-mutations.log
+            ${{ runner.temp }}/trust-mutations.json
+            ${{ runner.temp }}/pip-freeze-3.11.txt
+            ${{ runner.temp }}/pip-freeze-3.12.txt
+            certification/current_core_v2.json
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Commit certificate as child of the measured source commit
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'source'
+        env:
+          MEASURED_SHA: ${{ steps.gate.outputs.source_sha }}
         shell: bash
         run: |
+          set -euo pipefail
           changed="$(git status --porcelain)"
           unexpected="$(git status --porcelain | grep -v '^ M certification/current_core_v2.json$' || true)"
           if [ -n "$unexpected" ]; then
@@ -184,8 +311,16 @@ jobs:
             echo "Certificate did not change; refusing an empty recertification commit."
             exit 1
           fi
+
+          git fetch origin "${GITHUB_HEAD_REF}"
+          remote_sha="$(git rev-parse "origin/${GITHUB_HEAD_REF}")"
+          if [ "$remote_sha" != "$MEASURED_SHA" ]; then
+            echo "Pull-request head moved after certificate generation; refusing push."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add certification/current_core_v2.json
           git commit -m "certification: recertify hardened core"
-          git push origin HEAD:core/hardening-integration-v1
+          git push origin HEAD:"${GITHUB_HEAD_REF}"
