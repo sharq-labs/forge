@@ -113,7 +113,7 @@ def test_the_policy_names_no_module_that_is_not_canonical(text):
         name for name in re.findall(r"\bengcore\.[a-z_]+\b", text)
         if not name.split(".")[1].startswith("_")
     }
-    known = set(api_snapshot.CANONICAL_MODULES) | {
+    known = set(api_snapshot.V2_CANONICAL_MODULES) | {
         f"engcore.{name}" for name in ("domains", "systems", "sria", "design", "mcp")
     } | {"engcore.api_snapshot", "engcore.execution.run_sweep"}
     assert listed <= known, listed - known

@@ -55,6 +55,15 @@ CANONICAL_MODULES = (
 
 SCHEMA = "engcore.api_snapshot/1"
 
+#: Core V2 is ADDITIVE: it adds canonical modules and changes none of the seven
+#: above. The V1 contract is the snapshot of `CANONICAL_MODULES` alone, and
+#: `build()` with no argument keeps producing it byte-for-byte -- the V1 freeze
+#: verifier, its reproduction probe and the V1 wheel parity script all call it
+#: that way, so a V2 name can never move the V1 frozen digest. The V2 contract
+#: is the snapshot of `V2_CANONICAL_MODULES`; see docs/CORE_V2_API_DESIGN.md.
+V2_ADDED_MODULES = ("engcore.hybrid_uq",)
+V2_CANONICAL_MODULES = CANONICAL_MODULES + V2_ADDED_MODULES
+
 #: Parameters whose stability classification is not FREEZE, keyed by
 #: ``"module:symbol:parameter"``. Recorded here rather than inferred, so an
 #: experimental surface is a written decision.
@@ -383,15 +392,22 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
     return entry
 
 
-def build() -> dict[str, Any]:
+def build(*, modules: tuple[str, ...] = CANONICAL_MODULES) -> dict[str, Any]:
     """The whole public surface -- frozen AND experimental -- canonically ordered.
 
     Both populations are described, because a change to an experimental symbol
     should still be VISIBLE. They are kept in separate digests so that
     visibility never turns into a promise: see :func:`frozen_digest`.
+
+    ``modules`` defaults to the V1 canonical modules, so the V1 snapshot is
+    unchanged; pass :data:`V2_CANONICAL_MODULES` for the Core V2 surface.
     """
+    modules = tuple(modules)
+    unknown = [m for m in modules if m not in V2_CANONICAL_MODULES]
+    if unknown:
+        raise ValueError(f"not a canonical Core module: {unknown}")
     symbols = []
-    for module_name in CANONICAL_MODULES:
+    for module_name in modules:
         module = importlib.import_module(module_name)
         for name in sorted(getattr(module, "__all__", ()) or ()):
             symbols.append(describe(module_name, name, getattr(module, name)))
@@ -400,7 +416,7 @@ def build() -> dict[str, Any]:
     experimental = [e for e in symbols if e["classification"] != "FREEZE"]
     return {
         "schema": SCHEMA,
-        "modules": list(CANONICAL_MODULES),
+        "modules": list(modules),
         "symbol_count": len(symbols),
         "frozen_count": len(frozen),
         "experimental_count": len(experimental),
@@ -462,10 +478,11 @@ def frozen_digest(snapshot: dict[str, Any] | None = None) -> str:
 if __name__ == "__main__":  # pragma: no cover - a tool entry point
     import sys
 
+    surface = V2_CANONICAL_MODULES if "--v2" in sys.argv else CANONICAL_MODULES
     if "--frozen-digest" in sys.argv:
-        print(frozen_digest())
+        print(frozen_digest(build(modules=surface)))
     elif "--digest" in sys.argv:
-        print(digest())
+        print(digest(build(modules=surface)))
     else:
         # PRETTY, not canonical. The pinned files exist to be READ in review --
         # a one-line 345 kB blob is not reviewable, and a contract nobody can
@@ -473,7 +490,8 @@ if __name__ == "__main__":  # pragma: no cover - a tool entry point
         # suite runs through `canonical_bytes`, so the on-disk formatting
         # cannot drift a check and cannot fake a pass either. The two --digest
         # flags above stay canonical, because those ARE the bytes.
-        payload = frozen_only() if "--frozen" in sys.argv else build()
+        full = build(modules=surface)
+        payload = frozen_only(full) if "--frozen" in sys.argv else full
         text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True,
                           allow_nan=False)
         # Written as bytes with explicit LF: on Windows a text-mode write turns
