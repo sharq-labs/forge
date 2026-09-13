@@ -5,12 +5,14 @@ is orchestration *above* the Scientific Core, not a new scientific primitive:
 which extensions are loaded is an explicit runtime decision and no plugin state
 is process-global.
 
-The contract binds four things that were previously conventions:
+The contract binds five things that were previously conventions:
 
 * an extension has stable identity/version and a namespace;
 * every model it owns declares a domain inside that namespace;
 * every realization points either at an owned model or at an explicitly
   declared external model dependency;
+* an optional SRIA ``DomainPack`` is validated and identity-bound to the exact
+  runtime extension before any registry mutation;
 * installing models, realizations and solver factories is transactional. A
   later failure rolls earlier contributions back instead of leaving a
   half-installed runtime.
@@ -24,6 +26,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import Any
 
 from .scientific.errors import ScientificCoreError
 from .scientific.ir.problem import ModelReference
@@ -32,6 +35,7 @@ from .scientific.models.registry import ModelRegistry
 from .scientific.realizations.definition import ModelRealizationDefinition
 from .scientific.realizations.registry import RealizationRegistry
 from .scientific.solvers.registry import SolverFactory, SolverRegistry
+from .sria.domain_pack import validate_domain_pack
 
 _NAMESPACE = re.compile(r"^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$")
 
@@ -57,6 +61,12 @@ def _inside_namespace(model_domain: str, namespace: str) -> bool:
     return namespace == model_domain or model_domain.startswith(namespace + ".")
 
 
+def _pack_key(pack: Any | None) -> tuple[str, str] | None:
+    if pack is None:
+        return None
+    return str(pack.pack_id).strip(), str(pack.pack_version).strip()
+
+
 @dataclass(frozen=True)
 class DomainExtension:
     """One explicit package of model, realization and solver declarations.
@@ -65,6 +75,12 @@ class DomainExtension:
     a model defined elsewhere, but that dependency must be written down. A
     realization that merely happens to point outside the extension's own model
     set is otherwise indistinguishable from a typo.
+
+    ``domain_pack`` is optional for compatibility with low-level extensions,
+    but when present it is a load-bearing semantic declaration, not metadata.
+    It must satisfy SRIA's DomainPack contract and its ``pack_id``/version must
+    equal this runtime package's extension identity. That gives an installed
+    plugin one identity from semantic scope through registry contributions.
     """
 
     extension_id: str
@@ -74,6 +90,7 @@ class DomainExtension:
     realizations: tuple[ModelRealizationDefinition, ...] = ()
     solver_factories: tuple[SolverFactory, ...] = ()
     external_models: tuple[ModelReference, ...] = ()
+    domain_pack: Any | None = None
     description: str = ""
 
     def __post_init__(self) -> None:
@@ -89,6 +106,18 @@ class DomainExtension:
         object.__setattr__(self, "solver_factories", tuple(self.solver_factories))
         object.__setattr__(self, "external_models", tuple(self.external_models))
         object.__setattr__(self, "description", str(self.description))
+
+        if self.domain_pack is not None:
+            # Structural/semantic validation happens during construction, long
+            # before DomainRuntime.install has any registries to mutate.
+            validate_domain_pack(self.domain_pack)
+            pack_key = _pack_key(self.domain_pack)
+            if pack_key != self.key:
+                raise ScientificCoreError(
+                    f"domain extension {self.extension_id!r}@{self.version} carries "
+                    f"DomainPack {pack_key[0]!r}@{pack_key[1]}; semantic pack and "
+                    "runtime extension must have the same identity/version"
+                )
 
         if not (self.models or self.realizations or self.solver_factories):
             raise ScientificCoreError(
@@ -166,6 +195,10 @@ class DomainExtension:
         return self.extension_id, self.version
 
     @property
+    def domain_pack_key(self) -> tuple[str, str] | None:
+        return _pack_key(self.domain_pack)
+
+    @property
     def model_keys(self) -> tuple[tuple[str, str], ...]:
         return tuple(sorted(model.key for model in self.models))
 
@@ -183,6 +216,7 @@ class InstalledExtension:
     model_keys: tuple[tuple[str, str], ...] = ()
     realization_keys: tuple[tuple[str, str], ...] = ()
     solver_keys: tuple[tuple[str, str], ...] = ()
+    domain_pack_key: tuple[str, str] | None = None
 
     @property
     def key(self) -> tuple[str, str]:
@@ -213,6 +247,17 @@ class DomainRuntime:
             raise ScientificCoreError(
                 f"extension {extension.extension_id!r}@{extension.version} is already installed"
             )
+
+        # A DomainExtension validates its pack at construction. Revalidate at
+        # the mutation boundary as defense against deliberately mutable pack
+        # objects changing after the extension was created.
+        if extension.domain_pack is not None:
+            validate_domain_pack(extension.domain_pack)
+            if extension.domain_pack_key != extension.key:
+                raise ScientificCoreError(
+                    "domain pack identity changed after extension construction; "
+                    "refusing installation before registry mutation"
+                )
 
         missing_external = [
             reference.key
@@ -268,6 +313,7 @@ class DomainRuntime:
             model_keys=tuple(added_models),
             realization_keys=tuple(added_realizations),
             solver_keys=tuple(added_solvers),
+            domain_pack_key=extension.domain_pack_key,
         )
         self._installed[extension.key] = receipt
         return receipt
