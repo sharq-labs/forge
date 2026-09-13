@@ -2,11 +2,26 @@ name: Trust Mutations
 
 on:
   pull_request:
+    paths:
+      - ".github/workflows/trust-mutations.yml"
+      - "benchmarks/trust_hardening/**"
+      - "src/engcore/execution/**"
+      - "src/engcore/scientific/**"
+      - "tests/test_execution_admission.py"
+      - "tests/test_execution_manifest.py"
+      - "tests/test_independence_evidence.py"
+      - "tests/test_trusted_consensus_gate.py"
+      - "tests/test_trusted_execution_runtime.py"
   workflow_dispatch:
+
+concurrency:
+  group: trust-mutations-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   trust-mutations:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +45,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trust-mutation-assurance
+          name: trust-mutation-assurance-${{ github.sha }}
           path: trust_mutation_results.json
           if-no-files-found: warn
+          retention-days: 90
