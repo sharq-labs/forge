@@ -348,14 +348,14 @@ No domain is P0. OCV validation is already done (B3), and every other claim need
 ## 21. CORE CERTIFICATE
 
 - **Start (at `10291d2`, clean worktree, `-S -E`):** `certificate matches the tree` / `OK`, exit 0.
-- **End:** recorded in §25–27 against the final content commit.
+- **End (at `41b1f4c`, the final content commit, clean worktree, `-S -E`):** `certificate matches the tree` / `commit: certified commit b32f67d7ad16, HEAD 41b1f4c454a8` / `OK`, exit 0.
 - **Shared checkout:** in the shared checkout, the same command reported `FAILED` only because another session's untracked files made the tree dirty. That is the reason the isolated clean worktree was used.
 
 ## 22. CORE FREEZE VERIFY
 
 - **Start (at `10291d2`, clean worktree, `-S -E`):** mode `DESCENDANT`, 29 PASS, 0 FAIL, `OK`, exit 0.
 - **Informational lines, unchanged from the base:** `domain.digest` differs (a descendant may add domains), and post-candidate changes outside the evidence paths are the B1 files.
-- **End:** recorded in §25–27.
+- **End (at `41b1f4c`, clean worktree, `-S -E`):** mode `DESCENDANT`, 29 PASS, 0 FAIL, `OK`, exit 0. The informational lines are identical to the start.
 
 ## 23. FILES ADDED
 
@@ -384,7 +384,8 @@ None outside the added directory. No existing B1/B2/B3 or `model_measurement_val
 |---|---|
 | `22a4383` | evidence(domains): vendor LG HG2 25 degC cycler exports byte-for-byte; external record manifests |
 | `1ba08ee` | data(domains): repository-wide real-data inventory, dataset registry, readiness screens |
-| (this file) | docs(domains): the domain real-data round report |
+| `41b1f4c` | docs(domains): the domain real-data round report |
+| (this commit) | docs(domains): record the push in the round report; edits this file only |
 
 ### Operational note: a shared checkout
 
@@ -398,11 +399,17 @@ None outside the added directory. No existing B1/B2/B3 or `model_measurement_val
 
 ## 26. PUSH RESULT
 
-Recorded in the follow-up commit.
+- **Command:** `git push -u origin claude/domain-real-data`, run after the three content commits.
+- **Result:** `* [new branch] claude/domain-real-data -> claude/domain-real-data` on `github.com:sharq-labs/forge.git`.
+- **Checks on that commit:**
+  - 57 tests passed: this round's 13, B3's, and the trust-boundary package-identity suite;
+  - `inventory_scan.py --check` reported `REPOSITORY_SCAN.json current`;
+  - `quality_screen.py --check` reported `DATA_QUALITY.json current hashes OK`.
 
 ## 27. REMOTE HEAD
 
-Recorded in the follow-up commit.
+- **After the first push:** `git ls-remote origin refs/heads/claude/domain-real-data` returned `41b1f4c454a8af92ff1d973dd7110c0f60b2c8f3`, equal to local HEAD.
+- **This record commit:** pushed the same way. Its remote-equals-local check is reported where it was made, in the session's final message, because a commit cannot contain its own hash.
 
 ## 28. EXACT NEXT DOMAIN VALIDATION ROUNDS
 
@@ -444,8 +451,8 @@ Recorded in the follow-up commit.
 - [x] no calibration or UQ executed
 - [x] no models changed
 - [x] frozen Core files changed = 0
-- [x] Core certificate OK (start; end in §25–27)
-- [x] Core freeze verifier OK (start; end in §25–27)
+- [x] Core certificate OK (start `10291d2`, end `41b1f4c`)
+- [x] Core freeze verifier OK (start `10291d2`, end `41b1f4c`)
 - [x] branch committed
-- [ ] branch pushed (follow-up commit)
-- [ ] remote HEAD == local HEAD (follow-up commit)
+- [x] branch pushed
+- [x] remote HEAD == local HEAD (`41b1f4c`; this record commit re-checked after its push)
