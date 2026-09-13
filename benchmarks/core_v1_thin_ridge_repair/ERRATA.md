@@ -128,3 +128,31 @@ The following were checked and found unaffected:
 - **Battery B3 primary grids P1, P2, P3, P4, T3, T5:** all correctly kept against their exact linear-Gaussian posteriors.
 - **TCR wide-span results.**
 - **The toy discrete posteriors** in the K3/K3.1/K4 unit tests. Exact discrete-mixture semantics are preserved for posteriors with too few nodes to fit a curvature.
+
+---
+
+## Addendum (Core V2 round): E4 restated with measured values
+
+The E4 table above gave **estimates** against a local Gaussian proxy. They have now been **measured** with a converged reference and the Core V2 route (`benchmarks/core_v2_hybrid_uq/KINETICS_K2.json`).
+
+**Method.**
+
+- **Reference grids:** built in decorrelated coordinates (ln k(T*), E/R) with the frozen K2 forward model. Each grid was contained, accepted by the repaired V1 checks, and converged under nested refinement (moments moved < 0.05 sd).
+- **V2 route:** `route_uncertainty` for MULTI, with a 6-start multistart.
+
+| K2 quantity | committed (k2_report.md) | corrected: V2 route | corrected: converged reference grid |
+|---|---|---|---|
+| MULTI covariance | [[0.02311, 7.528], [7.528, 2452.0]] | [[0.02609, 8.515], [8.515, 2782.7]] | [[0.02618, 8.545], [8.545, 2792.6]] |
+| MULTI determinant | 0.001812 | 0.10223 | **0.10253** |
+| MULTI correlation | 0.999984 | 0.999296 | **0.999299** |
+| C2 C_A epistemic predictive sd (mol/m³) | ≈0.27 (aliased grid) | 1.649 | **1.648** |
+| C2 C_A total predictive sd (σ = 2.0) | ≈2.02 | 2.592 | **2.592** |
+| C2 T epistemic predictive sd (K) | — | 0.1116 | **0.1115** |
+| WEAK_C2 determinant | 3.891 | REFUSED (no residual dof) | **7.469** |
+| A5 ratio multi/weak (criterion ≤ 0.5) | 4.66 × 10⁻⁴ | — | **0.0137 — PASS stands** |
+| A5 gain weak/multi | "2147×" | — | **72.8×** |
+
+**Two refinements to E4:**
+
+1. The gain was overstated **29.5×**, not the ~56× the proxy suggested. The committed weak determinant was **also** too small (3.89 against 7.47), which partly offset the MULTI error.
+2. The weak-C2 posterior is exactly a ridge. Both C2 observables depend on k only at the reactor temperature, T* = 324.37 K, so the data identify ln k(324.37 K) and the prior box bounds the rest.

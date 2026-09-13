@@ -72,3 +72,20 @@ def test_the_wheel_matches_both_frozen_surfaces_and_runs_the_route_isolated():
     assert wheel["v1_frozen_api_parity"] == "MATCH" and wheel["v2_frozen_api_parity"] == "MATCH"
     assert wheel["isolated_wheel_smoke"]["passed"] is True
     assert "engcore/hybrid_uq/router.py" in wheel["hybrid_uq_files_in_wheel"]
+
+
+def test_k2_is_routed_and_its_errata_quantities_are_restated_against_converged_references():
+    k2 = _load("KINETICS_K2.json")
+    multi = k2["MULTI_v2"]
+    assert multi["route"]["decision"] == "LOCAL_GAUSSIAN" and multi["route"]["claim"] == "SUPPORTED"
+    assert multi["route"]["uniqueness"] == "MULTISTART_NO_SECOND_MODE"
+    corrected = k2["CORRECTED"]
+    assert corrected["reference_grids_converged"] is True
+    assert abs(corrected["MULTI_determinant_v2"] / corrected["MULTI_determinant_reference"] - 1.0) < 0.01
+    assert corrected["MULTI_determinant_reference"] > 50 * corrected["MULTI_determinant_committed"]
+    for key, sd in corrected["C2_predictive_parameter_sd_v2"].items():
+        assert abs(sd / corrected["C2_predictive_reference"][key]["parameter_sd"] - 1.0) < 0.01, key
+    assert corrected["A5_passes_reference"] is True
+    assert 50.0 < corrected["A5_gain_weak_over_multi_reference"] < 100.0
+    assert k2["WEAK_C2_v2"]["decision"] == "REFUSED" and "NO_RESIDUAL_DEGREES_OF_FREEDOM" in k2["WEAK_C2_v2"]["reasons"]
+    assert k2["parameterizations"]["natural_k0_identity"]["claim"] == "REFUSED"

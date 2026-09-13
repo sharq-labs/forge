@@ -356,7 +356,10 @@ def main():
         trace = []
         for v in np.linspace(C.E_OVER_R_BOUNDS_K[0], C.E_OVER_R_BOUNDS_K[1], 9):
             def residual(l, v=v):
-                values = wforward((float(l[0]), float(v)))
+                try:
+                    values = wforward((float(l[0]), float(v)))
+                except InferenceAdmissibilityError:
+                    values = None  # the adapter's own refusal of the point
                 return np.full(len(observed), 1e3) if values is None else (magnitudes(values, weak) - observed) / sigma
             l_guess = float(np.clip(wfit.estimate_vector[0] + (v - wfit.estimate_vector[1]) / T_weak, C.LOG_K0_BOUNDS[0], C.LOG_K0_BOUNDS[1]))
             sol = least_squares(residual, x0=[l_guess], bounds=([C.LOG_K0_BOUNDS[0]], [C.LOG_K0_BOUNDS[1]]), method="trf", max_nfev=60)

@@ -1,0 +1,701 @@
+{
+ "schema": "core_v2_hybrid_uq_kinetics/1",
+ "committed_k2_report_values": {
+  "MULTI": {
+   "mean": [
+    20.979314794931746,
+    8775.076414950117
+   ],
+   "sd": [
+    0.15202805349527396,
+    49.51789691706498
+   ],
+   "covariance": [
+    [
+     0.02311252904956188,
+     7.527989120383729
+    ],
+    [
+     7.527989120383729,
+     2452.022115089074
+    ]
+   ],
+   "determinant": 0.001812168548599421,
+   "correlation": 0.9999840117764515
+  },
+  "WEAK_C2": {
+   "mean": [
+    21.07347982427268,
+    8806.143839722085
+   ],
+   "sd": [
+    1.1959411184598971,
+    388.8372838352901
+   ],
+   "covariance": [
+    [
+     1.4302751588231097,
+     465.0223121929614
+    ],
+    [
+     465.02231219296146,
+     151194.43330040597
+    ]
+   ],
+   "determinant": 3.891264620109364,
+   "correlation": 0.9999910028010043
+  },
+  "A5_det_ratio_multi_over_weak": 0.000466,
+  "A5_gain_weak_over_multi": 2147.3,
+  "A5_threshold_ratio": 0.5
+ },
+ "convergence_sd": 0.05,
+ "stage_cache": "D:\\v2_k2_cache",
+ "MULTI_v2": {
+  "calibration": {
+   "status": "CALIBRATION_CONVERGED",
+   "evaluations": 21,
+   "condition_solves": 63,
+   "wall_seconds": 44.88429020001786,
+   "estimate": [
+    20.947665827719252,
+    8765.41445784357
+   ],
+   "chi_square": 5.444574092935181
+  },
+  "route": {
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "considered": [
+    {
+     "route": "GRID_AS_SUPPLIED",
+     "outcome": "SKIPPED",
+     "reason": "GRID_NOT_SUPPLIED"
+    },
+    {
+     "route": "LOCAL_GAUSSIAN",
+     "outcome": "USED",
+     "reason": ""
+    }
+   ],
+   "evaluations": 607,
+   "condition_solves": 1821,
+   "wall_seconds": 4558.266704000009,
+   "reasons": [],
+   "uniqueness": "MULTISTART_NO_SECOND_MODE",
+   "multistart": [
+    {
+     "retractions": 0,
+     "status": "CALIBRATION_FAILED"
+    },
+    {
+     "retractions": 0,
+     "status": "CALIBRATION_CONVERGED",
+     "estimate": [
+      20.947665638158604,
+      8765.414395973052
+     ],
+     "chi_square": 5.444574092940488,
+     "mahalanobis_sq": 1.3771578927734656e-12,
+     "classification": "SAME_OPTIMUM"
+    },
+    {
+     "retractions": 0,
+     "status": "CALIBRATION_CONVERGED",
+     "estimate": [
+      20.94766563628245,
+      8765.41439491523
+     ],
+     "chi_square": 5.444574092940039,
+     "mahalanobis_sq": 1.457457688166348e-12,
+     "classification": "SAME_OPTIMUM"
+    },
+    {
+     "retractions": 0,
+     "status": "CALIBRATION_FAILED"
+    },
+    {
+     "retractions": 0,
+     "status": "CALIBRATION_CONVERGED",
+     "estimate": [
+      20.947665680095046,
+      8765.414409528988
+     ],
+     "chi_square": 5.444574092938273,
+     "mahalanobis_sq": 8.401611741292648e-13,
+     "classification": "SAME_OPTIMUM"
+    },
+    {
+     "retractions": 0,
+     "status": "CALIBRATION_CONVERGED",
+     "estimate": [
+      18.960393667813207,
+      8336.372189821213
+     ],
+     "chi_square": 2699.7237793152003,
+     "mahalanobis_sq": 12446.631716229074,
+     "classification": "WORSE_LOCAL_OPTIMUM"
+    }
+   ],
+   "nonlinearity_index": 0.07150467229495039,
+   "jacobian_condition": 53.28275260900567,
+   "raw_jacobian_condition": 8703.346711391812,
+   "record_digest": "b354e53d8acede18f1cbd7e0b50210ede9f0fff6452ffdff486eb22a7935e43c"
+  },
+  "mean": [
+   20.947665827719252,
+   8765.41445784357
+  ],
+  "sd": [
+   0.1615326037091032,
+   52.75125664658216
+  ],
+  "covariance": [
+   [
+    0.02609278206104218,
+    8.515047206428417
+   ],
+   [
+    8.515047206428417,
+    2782.6950777935785
+   ]
+  ],
+  "determinant": 0.10222727949828361,
+  "correlation": 0.9992957874738769,
+  "intervals_95": [
+   [
+    20.63106774212043,
+    21.264263913318075
+   ],
+   [
+    8662.02389467704,
+    8868.8050210101
+   ]
+  ],
+  "T_star_k": 326.79737532080725,
+  "identifiability": {
+   "declared_ln_k0_e_over_r": "PARAMETERS_NOT_IDENTIFIABLE",
+   "ln_k_at_T_star_e_over_r": "PARAMETERS_WEAKLY_IDENTIFIABLE"
+  },
+  "identifiability_why": {
+   "declared": "posterior covariance condition number 7.57e+07 exceeds 1e+06; parameters are correlated at 0.9993, above 0.95 [LOCAL_GAUSSIAN_APPROXIMATION in parameterization 'declared']",
+   "aligned": "posterior covariance condition number 7.57e+07 exceeds 1e+06, but every marginal interval is still narrower than its own parameter (widest 0.0236): the posterior is a ridge, and the data constrain along it but weakly across it [LOCAL_GAUSSIAN_APPROXIMATION in parameterization 'linear_map:ln_k_at_326.797K']"
+  },
+  "aligned_covariance": [
+   [
+    3.6736788128196645e-05,
+    1.7032021025109377e-16
+   ],
+   [
+    1.7032021025109377e-16,
+    2782.6950777935785
+   ]
+  ],
+  "C2_predictive": {
+   "C2:C_A:final": {
+    "mean": 878.719710011221,
+    "parameter_sd": 1.649231729223459,
+    "measurement_sd": 2.0,
+    "total_sd": 2.5922895858058377,
+    "unit": "mole / meter ** 3",
+    "claim": "SUPPORTED",
+    "nonlinearity": 0.03599659735190902,
+    "record": {
+     "schema": "hybrid_uq.routed_predictive_uncertainty/1",
+     "observation_key": "C2:C_A:final",
+     "unit": "mole / meter ** 3",
+     "approximation_class": "LINEARIZED_PREDICTIVE_UQ",
+     "exact": false,
+     "mean": 878.719710011221,
+     "parameter_standard_uncertainty": 1.649231729223459,
+     "measurement_standard_uncertainty": 2.0,
+     "total_standard_uncertainty": 2.5922895858058377,
+     "parameter_interval": [
+      875.4872752197823,
+      881.9521448026596
+     ],
+     "total_interval": [
+      873.6389157855433,
+      883.8005042368986
+     ],
+     "confidence_level": 0.95,
+     "sources": [
+      "PARAMETER_UNCERTAINTY",
+      "MEASUREMENT_UNCERTAINTY",
+      "MODEL_DISCREPANCY_NOT_MODELLED"
+     ],
+     "model_discrepancy": "MODEL_DISCREPANCY_NOT_MODELLED",
+     "posterior_digest": "805e0e3a3a0e805e48945564a03f149f295b382852797f93b00ab19ba4d31b08",
+     "route_claim": "SUPPORTED",
+     "reasons": [],
+     "predictive_nonlinearity": 0.03599659735190902
+    }
+   },
+   "C2:T:final": {
+    "mean": 324.3762037602424,
+    "parameter_sd": 0.11158541187463496,
+    "measurement_sd": 0.2,
+    "total_sd": 0.22902249702427038,
+    "unit": "kelvin",
+    "claim": "SUPPORTED",
+    "nonlinearity": 0.03599659735190902,
+    "record": {
+     "schema": "hybrid_uq.routed_predictive_uncertainty/1",
+     "observation_key": "C2:T:final",
+     "unit": "kelvin",
+     "approximation_class": "LINEARIZED_PREDICTIVE_UQ",
+     "exact": false,
+     "mean": 324.3762037602424,
+     "parameter_standard_uncertainty": 0.11158541187463496,
+     "measurement_standard_uncertainty": 0.2,
+     "total_standard_uncertainty": 0.22902249702427038,
+     "parameter_interval": [
+      324.15750037176804,
+      324.59490714871674
+     ],
+     "total_interval": [
+      323.9273279144254,
+      324.8250796060594
+     ],
+     "confidence_level": 0.95,
+     "sources": [
+      "PARAMETER_UNCERTAINTY",
+      "MEASUREMENT_UNCERTAINTY",
+      "MODEL_DISCREPANCY_NOT_MODELLED"
+     ],
+     "model_discrepancy": "MODEL_DISCREPANCY_NOT_MODELLED",
+     "posterior_digest": "805e0e3a3a0e805e48945564a03f149f295b382852797f93b00ab19ba4d31b08",
+     "route_claim": "SUPPORTED",
+     "reasons": [],
+     "predictive_nonlinearity": 0.03599659735190902
+    }
+   }
+  },
+  "vs_reference": {
+   "mean_shift_reference_sd": [
+    0.050339805710146956,
+    0.05137792814019096
+   ],
+   "sd_ratio": [
+    0.998282858094195,
+    0.9982222317767039
+   ],
+   "determinant_ratio": 0.9970408293792538,
+   "C2_parameter_sd_ratio": {
+    "C2:C_A:final": 1.0006373028548017,
+    "C2:T:final": 1.000637457232685
+   }
+  }
+ },
+ "MULTI_reference_grid": {
+  "T_star_k": 326.79737532080725,
+  "converged": true,
+  "history": [
+   {
+    "attempt": 0,
+    "u_range": [
+     -5.922991962925761,
+     -5.826014554418324
+    ],
+    "v_range": [
+     8343.404404670913,
+     9187.424511016226
+    ],
+    "nodes": [
+     33,
+     33
+    ],
+    "inside_prior_box": 1089,
+    "admitted": 1089,
+    "condition_solves": 3267,
+    "wall_seconds": 251.10043639998185,
+    "workers": 20,
+    "edge_log_likelihood_drop": {
+     "u_low": 26.501504555485425,
+     "u_high": 40.52884553362932,
+     "v_low": 41.83016445125809,
+     "v_high": 24.69024413543991
+    },
+    "v1": {
+     "accepted": true,
+     "status": "PARAMETERS_WEAKLY_IDENTIFIABLE"
+    },
+    "mean_lv": [
+     20.955811333870976,
+     8768.129534658983
+    ],
+    "sd_lv": [
+     0.16181045516837836,
+     52.845203135975794
+    ],
+    "determinant": 0.10253068497494772
+   },
+   {
+    "attempt": 1,
+    "u_range": [
+     -5.922991962925761,
+     -5.826014554418324
+    ],
+    "v_range": [
+     8343.404404670913,
+     9187.424511016226
+    ],
+    "nodes": [
+     65,
+     65
+    ],
+    "inside_prior_box": 4225,
+    "admitted": 4225,
+    "condition_solves": 12675,
+    "wall_seconds": 959.2836614999687,
+    "workers": 20,
+    "edge_log_likelihood_drop": {
+     "u_low": 26.486143951487456,
+     "u_high": 40.52884553362932,
+     "v_low": 41.83016445125809,
+     "v_high": 24.68674659598117
+    },
+    "v1": {
+     "accepted": true,
+     "status": "PARAMETERS_WEAKLY_IDENTIFIABLE"
+    },
+    "mean_lv": [
+     20.955811334597026,
+     8768.129534894568
+    ],
+    "sd_lv": [
+     0.16181045522256324,
+     52.845203169530585
+    ],
+    "determinant": 0.10253068528991852,
+    "moved_since_previous_sd": 4.48704213809555e-09
+   }
+  ],
+  "mean": [
+   20.955811334597026,
+   8768.129534894568
+  ],
+  "sd": [
+   0.16181045522256324,
+   52.845203169530585
+  ],
+  "covariance": [
+   [
+    0.02618262341933314,
+    8.544908967016323
+   ],
+   [
+    8.544908967016323,
+    2792.6154980289657
+   ]
+  ],
+  "determinant": 0.10253068528991852,
+  "correlation": 0.9992986224024794,
+  "identifiability_in_grid_coordinates": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+  "C2_predictive": {
+   "C2:C_A:final": {
+    "mean": 878.7592660569085,
+    "parameter_sd": 1.6481813385511694,
+    "total_sd": 2.5916214470381904
+   },
+   "C2:T:final": {
+    "mean": 324.37352741160544,
+    "parameter_sd": 0.11151432626081201,
+    "total_sd": 0.22898787077354738
+   }
+  }
+ },
+ "WEAK_C2_v2": {
+  "calibration": {
+   "status": "CALIBRATION_CONVERGED",
+   "estimate": [
+    20.94726572704319,
+    8765.466120134744
+   ],
+   "chi_square": 0.645974985702719
+  },
+  "decision": "REFUSED",
+  "claim": "REFUSED",
+  "reasons": [
+   "NO_RESIDUAL_DEGREES_OF_FREEDOM"
+  ]
+ },
+ "WEAK_C2_reference_grid": {
+  "T_star_k": 324.3661083127761,
+  "singular_values": [
+   160.7033405834202,
+   7.346827093792341e-10
+  ],
+  "ridge_direction": [
+   0.0030829214956760217,
+   0.999995247786234
+  ],
+  "sd_u_local": 0.006222675574794619,
+  "ridge_trace": [
+   {
+    "e_over_r_k": 7500.0,
+    "log_k0": 18.42068074395237,
+    "chi_square": 244988.0613657636,
+    "u": -4.701340354404753
+   },
+   {
+    "e_over_r_k": 7812.5,
+    "log_k0": 18.420680745794435,
+    "chi_square": 2000000.0,
+    "u": -5.664757898327569
+   },
+   {
+    "e_over_r_k": 8125.0,
+    "log_k0": 18.97274962041119,
+    "chi_square": 0.6459742283573047,
+    "u": -6.076106569475694
+   },
+   {
+    "e_over_r_k": 8437.5,
+    "log_k0": 19.93616714315562,
+    "chi_square": 0.6459742823756034,
+    "u": -6.076106592496142
+   },
+   {
+    "e_over_r_k": 8750.0,
+    "log_k0": 20.899584666234485,
+    "chi_square": 0.6459749666265169,
+    "u": -6.076106615182159
+   },
+   {
+    "e_over_r_k": 9062.5,
+    "log_k0": 21.863002191665704,
+    "chi_square": 0.6459749600507605,
+    "u": -6.076106635515821
+   },
+   {
+    "e_over_r_k": 9375.0,
+    "log_k0": 22.826419708756806,
+    "chi_square": 0.6459739560449093,
+    "u": -6.076106664189599
+   },
+   {
+    "e_over_r_k": 9687.5,
+    "log_k0": 23.025850929940454,
+    "chi_square": 2636.617512965399,
+    "u": -6.840092988770831
+   },
+   {
+    "e_over_r_k": 10000.0,
+    "log_k0": 23.025850929940454,
+    "chi_square": 4357.81691160547,
+    "u": -7.803510534535711
+   }
+  ],
+  "converged": true,
+  "history": [
+   {
+    "attempt": 0,
+    "u_range": [
+     -6.1383334199375446,
+     -6.0138798137277485
+    ],
+    "v_range": [
+     7500.0,
+     10000.0
+    ],
+    "nodes": [
+     65,
+     129
+    ],
+    "inside_prior_box": 4973,
+    "admitted": 4973,
+    "condition_solves": 4973,
+    "wall_seconds": 172.92966170003638,
+    "workers": 20,
+    "edge_log_likelihood_drop": {
+     "u_low": 31.537409475038217,
+     "u_high": 48.58001231578393,
+     "v_low": "inf",
+     "v_high": "inf"
+    },
+    "v1": {
+     "accepted": true,
+     "status": "PARAMETERS_WEAKLY_IDENTIFIABLE"
+    },
+    "mean_lv": [
+     20.62283513398615,
+     8660.313331482314
+    ],
+    "sd_lv": [
+     1.3335018822714406,
+     432.5455746887164
+    ],
+    "determinant": 7.538869858901562
+   },
+   {
+    "attempt": 1,
+    "u_range": [
+     -6.1383334199375446,
+     -6.0138798137277485
+    ],
+    "v_range": [
+     7500.0,
+     10000.0
+    ],
+    "nodes": [
+     129,
+     257
+    ],
+    "inside_prior_box": 19733,
+    "admitted": 19733,
+    "condition_solves": 19733,
+    "wall_seconds": 699.0857466000016,
+    "workers": 20,
+    "edge_log_likelihood_drop": {
+     "u_low": 31.537409475038217,
+     "u_high": 48.58001231578393,
+     "v_low": "inf",
+     "v_high": "inf"
+    },
+    "v1": {
+     "accepted": true,
+     "status": "PARAMETERS_WEAKLY_IDENTIFIABLE"
+    },
+    "mean_lv": [
+     20.623434680531567,
+     8660.510462862496
+    ],
+    "sd_lv": [
+     1.32571763319116,
+     430.0184404483439
+    ],
+    "determinant": 7.469101473063793,
+    "moved_since_previous_sd": 0.0058768043475941984
+   }
+  ],
+  "mean": [
+   20.623434680531567,
+   8660.510462862496
+  ],
+  "sd": [
+   1.32571763319116,
+   430.0184404483439
+  ],
+  "covariance": [
+   [
+    1.7575272429539712,
+    570.0764781729317
+   ],
+   [
+    570.0764781729317,
+    184915.85912562587
+   ]
+  ],
+  "determinant": 7.469101473063793,
+  "correlation": 0.9999885088198278
+ },
+ "CORRECTED": {
+  "MULTI_covariance_v2": [
+   [
+    0.02609278206104218,
+    8.515047206428417
+   ],
+   [
+    8.515047206428417,
+    2782.6950777935785
+   ]
+  ],
+  "MULTI_covariance_reference": [
+   [
+    0.02618262341933314,
+    8.544908967016323
+   ],
+   [
+    8.544908967016323,
+    2792.6154980289657
+   ]
+  ],
+  "MULTI_covariance_committed": [
+   [
+    0.02311252904956188,
+    7.527989120383729
+   ],
+   [
+    7.527989120383729,
+    2452.022115089074
+   ]
+  ],
+  "MULTI_determinant_v2": 0.10222727949828361,
+  "MULTI_determinant_reference": 0.10253068528991852,
+  "MULTI_determinant_committed": 0.001812168548599421,
+  "MULTI_correlation_v2": 0.9992957874738769,
+  "MULTI_correlation_reference": 0.9992986224024794,
+  "MULTI_correlation_committed": 0.9999840117764515,
+  "C2_predictive_parameter_sd_v2": {
+   "C2:C_A:final": 1.649231729223459,
+   "C2:T:final": 0.11158541187463496
+  },
+  "C2_predictive_total_sd_v2": {
+   "C2:C_A:final": 2.5922895858058377,
+   "C2:T:final": 0.22902249702427038
+  },
+  "C2_predictive_reference": {
+   "C2:C_A:final": {
+    "mean": 878.7592660569085,
+    "parameter_sd": 1.6481813385511694,
+    "total_sd": 2.5916214470381904
+   },
+   "C2:T:final": {
+    "mean": 324.37352741160544,
+    "parameter_sd": 0.11151432626081201,
+    "total_sd": 0.22898787077354738
+   }
+  },
+  "WEAK_determinant_reference": 7.469101473063793,
+  "WEAK_determinant_committed": 3.891264620109364,
+  "WEAK_reference_converged": true,
+  "A5_det_ratio_multi_over_weak_reference": 0.013727311867388632,
+  "A5_gain_weak_over_multi_reference": 72.84747441162575,
+  "A5_det_ratio_v2_multi_over_reference_weak": 0.013686690409408835,
+  "A5_passes_reference": true,
+  "A5_committed_ratio": 0.000466,
+  "A5_committed_gain": 2147.3,
+  "reference_grids_converged": true
+ },
+ "parameterizations": {
+  "natural_k0_identity": {
+   "calibration": "CALIBRATION_CONVERGED",
+   "claim": "REFUSED",
+   "reasons": [
+    "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+    "GLOBAL_UNIQUENESS_NOT_ASSESSED",
+    "POORLY_SCALED_PARAMETERIZATION"
+   ],
+   "raw_jacobian_condition": 102139256.84677029,
+   "jacobian_condition": 53.2827559316136,
+   "nonlinearity_index": 24.89668261697283,
+   "sd_inference": null,
+   "identifiability": null
+  },
+  "k0_declared_log": {
+   "calibration": "CALIBRATION_CONVERGED",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+   ],
+   "raw_jacobian_condition": 8703.346796826181,
+   "jacobian_condition": 53.282753135131806,
+   "nonlinearity_index": 0.07150452061880808,
+   "sd_inference": [
+    0.16153260474574654,
+    52.75125698242509
+   ],
+   "identifiability": "PARAMETERS_NOT_IDENTIFIABLE"
+  },
+  "declared_ln_k0_e_over_r": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_NOT_IDENTIFIABLE"
+  },
+  "ln_k_at_T_star_e_over_r": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+   "T_star_k": 326.79737532080725
+  }
+ }
+}
