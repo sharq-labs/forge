@@ -281,7 +281,7 @@ class Verification:
         return "\n".join(lines)
 
 
-def verify(root: pathlib.Path, *, require_clean: bool = True) -> Verification:
+def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance: bool = True) -> Verification:
     from tools.certification import core_freeze as v1
 
     manifest_file = root / MANIFEST_PATH
@@ -346,7 +346,7 @@ def verify(root: pathlib.Path, *, require_clean: bool = True) -> Verification:
         v.add("assurance.wheel_parity", assurance.get("wheel", {}).get("v2_frozen_api_parity") == "MATCH"
               and assurance.get("wheel", {}).get("v1_frozen_api_parity") == "MATCH")
     else:
-        v.add("assurance.present", False, "no assurance record yet: a CANDIDATE, not a completed freeze")
+        v.add("assurance.present", False, "no assurance record yet: a CANDIDATE, not a completed freeze", binding=require_assurance)
     return v
 
 
