@@ -26,6 +26,7 @@ from scipy.stats import chi2, norm
 from ..inference.calibration import CalibrationResult, CalibrationSpec, CalibrationStatus, ForwardEvaluator, calibrate
 from ..inference.grid import ObservationSet
 from ..inference.parameters import CalibrationParameterSet
+from ..scientific.results.immutable import freeze
 from ..scientific.units.quantity import Quantity
 from ._records import (
     decode_float, decode_matrix, decode_vector, digest_of, encode_float, encode_matrix, encode_vector, material,
@@ -197,8 +198,8 @@ class RouteDiagnostics:
         object.__setattr__(self, "newton_step_in_sd", tuple(float(v) for v in self.newton_step_in_sd))
         object.__setattr__(self, "at_bound", tuple(self.at_bound))
         object.__setattr__(self, "near_bound", tuple(self.near_bound))
-        object.__setattr__(self, "multistart", tuple(dict(m) for m in self.multistart))
-        object.__setattr__(self, "thresholds", dict(self.thresholds))
+        object.__setattr__(self, "multistart", tuple(freeze(dict(m)) for m in self.multistart))
+        object.__setattr__(self, "thresholds", freeze(dict(self.thresholds)))
 
     @property
     def reasons(self) -> tuple[RouteReason, ...]:

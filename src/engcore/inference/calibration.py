@@ -42,6 +42,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
+from ..scientific.results.immutable import freeze
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.units.quantity import Quantity
 from .grid import InferenceProblemError, ObservationSet, PosteriorGrid
@@ -173,8 +174,8 @@ class CalibrationSpec:
         # refusal to pose the problem rather than an optimizer failure that
         # looks like a scientific finding.
         self.parameters.require_all_in_bounds(initial)
-        object.__setattr__(self, "fixed", dict(fixed))
-        object.__setattr__(self, "initial_point", dict(initial))
+        object.__setattr__(self, "fixed", freeze(dict(fixed)))
+        object.__setattr__(self, "initial_point", freeze(dict(initial)))
 
     @property
     def initial_vector(self) -> tuple[float, ...]:
@@ -294,6 +295,10 @@ class CalibrationResult:
                 raise CalibrationError(
                     "a converged calibration cannot report a non-finite objective"
                 )
+        residuals = tuple(float(value) for value in self.residuals)
+        if self.status is CalibrationStatus.CONVERGED and any(not math.isfinite(value) for value in residuals):
+            raise CalibrationError("a converged calibration cannot report non-finite residuals")
+        object.__setattr__(self, "residuals", residuals)
         if not str(self.termination_reason).strip():
             raise CalibrationError("a calibration must say why it stopped")
 
@@ -317,6 +322,7 @@ class CalibrationResult:
             "termination_reason": self.termination_reason,
             "evaluation_count": self.evaluation_count,
             "provenance": self.provenance.to_dict(),
+            "residuals": list(self.residuals),
         }
 
 

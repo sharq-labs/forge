@@ -20,6 +20,7 @@ from ..inference.calibration import (
 )
 from ..inference.grid import AdmittedForwardTable, ObservationSet, PosteriorGrid, gaussian_grid_posterior
 from ..scientific.ir.problem import ModelReference
+from ..scientific.results.immutable import freeze
 from ..scientific.twins import TwinReference
 from ..uq.predictive import PredictiveObservableSpec
 from ._records import decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema
@@ -106,7 +107,11 @@ class HybridUQResult:
         if self.coordinates not in ("natural", "inference", "none"):
             raise HybridUQError("coordinates is natural, inference or none")
         object.__setattr__(self, "parameter_names", tuple(self.parameter_names))
-        object.__setattr__(self, "considered", tuple(dict(c) for c in self.considered))
+        object.__setattr__(
+            self, "grid_summary",
+            None if self.grid_summary is None else freeze(dict(self.grid_summary)),
+        )
+        object.__setattr__(self, "considered", tuple(freeze(dict(c)) for c in self.considered))
 
     @property
     def exact_posterior(self) -> bool:
