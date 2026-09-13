@@ -1,5 +1,20 @@
 {
   "assurance": {
+    "core_v2": {
+      "added_module": [
+        "engcore.hybrid_uq"
+      ],
+      "api_design": "docs/CORE_V2_API_DESIGN.md",
+      "isolated_wheel_smoke": true,
+      "round": "Core V2 -- Scalable Hybrid Uncertainty Quantification (additive)",
+      "v1_frozen_api_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+      "v1_frozen_symbol_count": 194,
+      "v2_baseline": "7519aee559750f51bfc58aea12ab29ec199743f4",
+      "v2_frozen_api_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb",
+      "v2_frozen_symbol_count": 221,
+      "wheel_v1_parity": "MATCH",
+      "wheel_v2_parity": "MATCH"
+    },
     "harness_identity": {
       "files": {
         "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
@@ -12,20 +27,29 @@
     },
     "mutation": {
       "certified_harness": {
+        "candidate_run_at": "3ca1c82 (src and the pinned harness files byte-identical to the V2 candidate)",
         "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
         "control": "GREEN",
         "control_means": "the four TARGET suites run against an UNMUTATED copy of the tree. Without it a red result below could be the copy being broken rather than the mutation being caught",
         "control_suites_passed": 470,
         "in_the_formal_certificate": true,
         "killed": 79,
-        "log": "benchmarks/core_v1_thin_ridge_repair/MUTATION_HARNESS_79.log",
+        "log": "benchmarks/core_v2_hybrid_uq/MUTATION_HARNESS_79.log",
         "log_bytes": 34557,
-        "log_sha256": "283f576729f64f4e86cbae5ab5722eae961dd6833c336bcc29a662f200ea84bb",
+        "log_sha256": "72cf5ab8c597fcf792861ed03a0a872c5e6ffe80a70d4bd06988856e9244a1e8",
         "runner": "tests/mutation_guards.py",
         "survivor_ids": [],
         "survivors": 0,
         "total": 79,
-        "why_it_was_re_run": "The certified POPULATION changed this round: src/engcore/inference/calibration.py (inference_admission area) gained the private thin-ridge resolution guard. '79/79 killed' is a statement about exact bytes, so it was re-earned on the repair candidate (harness run from a scratch worktree at bccbbf7, whose src and tests are identical to the certified commit's) rather than carried forward."
+        "why_it_was_re_run": "The certified POPULATION changed: Core V2 adds src/engcore/hybrid_uq/** as the certified area routed_uncertainty, and src/engcore/api_snapshot.py gained the V2 surface. '79/79 killed' is re-earned on the V2 candidate rather than carried forward."
+      },
+      "core_v2_hd_matrix": {
+        "control": "GREEN",
+        "in_the_formal_certificate": false,
+        "killed": 10,
+        "runner": "benchmarks/core_v2_hybrid_uq/audit/hd_mutations.py",
+        "total": 10,
+        "why_not": "the certified 79 are pinned; V2 mutations are recorded beside them, never added"
       },
       "sprint10_api_stability_matrix": {
         "command": "python -X utf8 benchmarks/core_api_stability/audit/mutations.py",
@@ -125,166 +149,173 @@
       "wheel_source_frozen_api_parity": "MATCH"
     },
     "test_suites": {
+      "FAST": {
+        "command": "python -X utf8 -m pytest tests -n 4 -m not expensive and not campaign -q -p no:cacheprovider",
+        "errors": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "green": true,
+        "passed": 5117,
+        "seconds": 98.9,
+        "skipped": 5,
+        "summary_line": "5117 passed, 5 skipped, 42 warnings in 98.42s (0:01:38)"
+      },
+      "FULL": {
+        "command": "python -X utf8 -m pytest tests -n 4 -q -p no:cacheprovider",
+        "errors": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "green": true,
+        "passed": 5663,
+        "seconds": 142.4,
+        "skipped": 5,
+        "summary_line": "5663 passed, 5 skipped, 42 warnings in 141.90s (0:02:21)"
+      },
+      "api_snapshot_v1": {
+        "command": "python -X utf8 -m pytest tests/test_core_api_snapshot.py tests/test_core_freeze_policy.py tests/test_core_api_deprecation.py -q -p no:cacheprovider",
+        "errors": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "green": true,
+        "passed": 51,
+        "seconds": 5.4,
+        "skipped": 0,
+        "summary_line": "51 passed in 4.80s"
+      },
+      "api_snapshot_v2": {
+        "command": "python -X utf8 -m pytest tests/test_core_v2_api_snapshot.py tests/test_core_v2_compatibility.py -q -p no:cacheprovider",
+        "errors": 0,
+        "exit_code": 0,
+        "failed": 0,
+        "green": true,
+        "passed": 12,
+        "seconds": 2.1,
+        "skipped": 0,
+        "summary_line": "12 passed in 1.48s"
+      },
       "battery_regressions": {
         "command": "python -X utf8 -m pytest tests/domains/battery -q -p no:cacheprovider",
-        "deselected": 0,
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
+        "green": true,
         "passed": 265,
-        "seconds": 13.1,
-        "selection": "tests/domains/battery",
+        "seconds": 15.2,
         "skipped": 0,
-        "summary_line": "265 passed in 12.52s"
+        "summary_line": "265 passed in 14.49s"
       },
-      "capability_boundary": {
-        "command": "python -X utf8 -m pytest tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py -q -p no:cacheprovider",
-        "deselected": 746,
+      "certificate": {
+        "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 308,
-        "seconds": 11.1,
-        "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
-        "skipped": 0,
-        "summary_line": "308 passed, 746 deselected in 10.24s"
-      },
-      "certification_suite": {
-        "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
-        "deselected": 0,
-        "exit_code": 1,
-        "failed": 1,
-        "note": "measured BEFORE this reissue: test_the_certificate_describes_this_tree fails because the inference area changed and the certificate has not yet been rebuilt. Re-run after the reissue is recorded in REPAIR_REPORT.md",
-        "passed": 27,
-        "seconds": 6.1,
-        "selection": "tests/test_core_certificate.py",
+        "green": true,
+        "passed": 28,
+        "seconds": 6.4,
         "skipped": 1,
-        "summary_line": "1 failed, 27 passed, 1 skipped in 5.63s"
+        "summary_line": "28 passed, 1 skipped in 5.86s"
       },
       "contract_guard": {
         "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
-        "deselected": 0,
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
+        "green": true,
         "passed": 305,
-        "seconds": 26.4,
-        "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
+        "seconds": 30.8,
         "skipped": 0,
-        "summary_line": "305 passed, 7 warnings in 25.50s"
+        "summary_line": "305 passed, 7 warnings in 29.85s"
       },
-      "core_api_stability": {
-        "command": "python -X utf8 -m pytest tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_core_api_serialization.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py tests/test_trust_boundary_package_identity.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "dependency_layering": {
+        "command": "python -X utf8 -m pytest tests/test_core_api_layering.py tests/test_core_api_contracts.py tests/test_core_v2_compatibility.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 138,
-        "seconds": 24.0,
-        "selection": "tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_core_api_serialization.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py tests/test_trust_boundary_package_identity.py",
+        "green": true,
+        "passed": 39,
+        "seconds": 17.1,
         "skipped": 0,
-        "summary_line": "138 passed, 14 warnings in 23.15s"
+        "summary_line": "39 passed, 14 warnings in 16.10s"
       },
-      "fast": {
-        "command": "python -X utf8 -m pytest tests -n 4 -m \"not expensive and not campaign\" -q -p no:cacheprovider",
-        "failed": 3,
-        "failed_tests": [
-          "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
-          "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
-          "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
-        ],
-        "note": "all three fail on certificate.verifies before the reissue",
-        "passed": 5005,
-        "skipped": 5,
-        "summary_line": "3 failed, 5005 passed, 5 skipped, 42 warnings in 74.59s"
-      },
-      "field_profile_suites": {
-        "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "freeze_manifest_v1": {
+        "command": "python -X utf8 -m pytest tests/test_core_freeze_manifest.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 147,
-        "seconds": 2.3,
-        "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
-        "skipped": 0,
-        "summary_line": "147 passed in 1.74s"
+        "green": true,
+        "passed": 22,
+        "seconds": 3.7,
+        "skipped": 1,
+        "summary_line": "22 passed, 1 skipped in 3.15s"
       },
-      "field_suites": {
-        "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "hybrid_uq_focused": {
+        "command": "python -X utf8 -m pytest tests/hybrid_uq -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 124,
-        "seconds": 1.8,
-        "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
+        "green": true,
+        "passed": 97,
+        "seconds": 18.7,
         "skipped": 0,
-        "summary_line": "124 passed in 1.18s"
+        "summary_line": "97 passed in 18.11s"
       },
-      "full": {
-        "command": "python -X utf8 -m pytest tests -n 4 -q -p no:cacheprovider",
-        "failed": 3,
-        "failed_tests": [
-          "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
-          "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
-          "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
-        ],
-        "note": "all three fail on certificate.verifies before the reissue",
-        "passed": 5551,
-        "skipped": 5,
-        "summary_line": "3 failed, 5551 passed, 5 skipped, 42 warnings in 152.12s"
-      },
-      "grid_resolution_repair": {
-        "command": "python -X utf8 -m pytest tests/inference/test_grid_resolution_repair.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "identity": {
+        "command": "python -X utf8 -m pytest tests/test_evidence_pairing_integrity.py tests/hybrid_uq/test_hybrid_uq_records.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 32,
-        "seconds": 45.6,
-        "selection": "tests/inference/test_grid_resolution_repair.py",
+        "green": true,
+        "passed": 58,
+        "seconds": 3.5,
         "skipped": 0,
-        "summary_line": "32 passed in 44.99s"
+        "summary_line": "58 passed in 2.76s"
       },
-      "mutation_harness_self_guard": {
-        "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "kinetics_regressions": {
+        "command": "python -X utf8 -m pytest tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 6,
-        "seconds": 1.2,
-        "selection": "tests/test_mutation_harness.py",
+        "green": true,
+        "passed": 19,
+        "seconds": 1.4,
         "skipped": 0,
-        "summary_line": "6 passed in 0.83s"
+        "summary_line": "19 passed in 0.80s"
       },
-      "predictive_uq_and_adequacy": {
-        "command": "python -X utf8 -m pytest tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py tests/test_evidence_pairing_integrity.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "serialization": {
+        "command": "python -X utf8 -m pytest tests/test_core_api_serialization.py tests/hybrid_uq/test_hybrid_uq_records.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 47,
-        "seconds": 1.3,
-        "selection": "tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py tests/test_evidence_pairing_integrity.py",
+        "green": true,
+        "passed": 76,
+        "seconds": 6.9,
         "skipped": 0,
-        "summary_line": "47 passed in 0.78s"
+        "summary_line": "76 passed in 6.21s"
       },
-      "scientific_truth": {
-        "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
-        "deselected": 0,
+      "tcr_regressions": {
+        "command": "python -X utf8 -m pytest tests/inference tests/hybrid_uq/test_hybrid_uq_tcr.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 293,
-        "seconds": 4.2,
-        "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
-        "skipped": 3,
-        "summary_line": "293 passed, 3 skipped in 3.30s"
+        "green": true,
+        "passed": 156,
+        "seconds": 112.9,
+        "skipped": 0,
+        "summary_line": "156 passed in 112.20s (0:01:52)"
       },
-      "tcr_calibration_and_uq": {
-        "command": "python -X utf8 -m pytest tests/inference -q -p no:cacheprovider",
-        "deselected": 0,
+      "v1_thin_ridge_regressions": {
+        "command": "python -X utf8 -m pytest tests/inference/test_grid_resolution_repair.py tests/inference/test_tcr_calibration.py tests/inference/test_tcr_heldout_uq.py tests/inference/test_reproducibility_and_evidence.py -q -p no:cacheprovider",
+        "errors": 0,
         "exit_code": 0,
         "failed": 0,
-        "passed": 153,
-        "seconds": 92.5,
-        "selection": "tests/inference",
+        "green": true,
+        "passed": 80,
+        "seconds": 90.4,
         "skipped": 0,
-        "summary_line": "153 passed in 91.85s (0:01:31)"
+        "summary_line": "80 passed in 89.79s (0:01:29)"
       }
     },
+    "test_suites_commit": "7876bd9f3e22db67c26f510b820719477a9c655d",
     "v1_thin_ridge_repair": {
       "baseline": "273bfff7d3d685d9e0bb62519795aeb47c05b027",
       "errata": "benchmarks/core_v1_thin_ridge_repair/ERRATA.md",
@@ -335,7 +366,7 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "ddd86ca2e023bd15764413e071a0644524cc7c8a80776edf364941e002e5a026",
+    "aggregate_digest": "090b37d95ee13190231657ba0871354451a6639febf6e70e7797a75586044256",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
@@ -454,6 +485,25 @@
         ],
         "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
       },
+      "routed_uncertainty": {
+        "classification": "CORE_CERTIFIED",
+        "digest": "4bec998f51567a70f220ce2defe1bbbdcc2a3874a7c104db8c60d00b37014973",
+        "file_count": 8,
+        "files": {
+          "src/engcore/hybrid_uq/__init__.py": "a3232caceb207cb8533d1b6cbe62c2c3c925f8ad22c486b8228dc87a4c658744",
+          "src/engcore/hybrid_uq/_records.py": "931a90f38f6e5db60d1a3c07fe6aba96fbec8d0e6ce29781c46af1ec27671102",
+          "src/engcore/hybrid_uq/identifiability.py": "ecb3f711e8f3fad2c1a8e42657d36889fa94d8de344fd0660ec87ff64fc46906",
+          "src/engcore/hybrid_uq/local_gaussian.py": "7a47b82e685ab3f3ae1343bb57d66ff3a687768aae0f06b503a7b6f3f6b5af05",
+          "src/engcore/hybrid_uq/predictive.py": "1aa744f310f48ba570022d954f96645d6e0a0c5786bbebe52107472f335f5fcd",
+          "src/engcore/hybrid_uq/router.py": "c23367388c7d5677e6bd25ba48e07dabf9056945f50bc4d825f65cc6bd3d1522",
+          "src/engcore/hybrid_uq/sensitivity.py": "9fcf32ca58c2a84a558d632961ea2c9167b4c7950a8851481d31d8b1b6e3c43b",
+          "src/engcore/hybrid_uq/vocabulary.py": "db98aed460a83ea95701157ff177fd8ea1294697a6e80f605fbd20ba4a30a769"
+        },
+        "patterns": [
+          "src/engcore/hybrid_uq/**/*.py"
+        ],
+        "why": "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a silent edit here turns a refusal into a precise-looking number"
+      },
       "runtime_data": {
         "classification": "RUNTIME_SUPPORT",
         "digest": "3efad22caee14a8a597fc471663a90657c142bbc7365605d1996f1e20ac323db",
@@ -484,13 +534,13 @@
         "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
       }
     },
-    "file_count": 76
+    "file_count": 84
   },
   "notes": {},
   "repository": {
-    "branch": "claude/core-v1-thin-ridge-repair",
+    "branch": "claude/core-v2-hybrid-uq",
     "clean": true,
-    "commit": "ad52a907a9c3a60e25afc5524db01939b1206f3b",
+    "commit": "624b7cf691fda1e384315f3b70e4cf266ff238c9",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -535,6 +585,14 @@
           "src/engcore/inference/**/*.py"
         ],
         "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
+      },
+      {
+        "area": "routed_uncertainty",
+        "classification": "CORE_CERTIFIED",
+        "patterns": [
+          "src/engcore/hybrid_uq/**/*.py"
+        ],
+        "why": "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a silent edit here turns a refusal into a precise-looking number"
       },
       {
         "area": "harness",
