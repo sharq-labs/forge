@@ -36,10 +36,13 @@ import time
 
 import numpy as np
 
-from common import dump
+import json
+import pathlib
+
+from common import dump, jsonable
 
 from engcore.hybrid_uq import (
-    MultistartPolicy, RouteDecision, assess_routed_identifiability, grid_predictive_uncertainty, linearized_predictive_uq,
+    HybridUQResult, MultistartPolicy, RouteDecision, assess_routed_identifiability, grid_predictive_uncertainty, linearized_predictive_uq,
     local_gaussian_posterior, reconstruct_local_sensitivity, route_uncertainty,
 )
 from engcore.inference import (
@@ -206,39 +209,67 @@ def converged_reference(C, F, observations, T_star, u_range, v_range, nu, nv, wo
     return posterior, c2, history, False
 
 
+CACHE = pathlib.Path("D:/v2_k2_cache")
+
+
+def cached(name, compute):
+    """Stage checkpoint: a stage that finished is never recomputed (the MULTI multistart alone is ~80 min of CSTR solves)."""
+    CACHE.mkdir(parents=True, exist_ok=True)
+    path = CACHE / f"{name}.json"
+    if path.exists():
+        print(f"[cache] {name} from {path}", flush=True)
+        return json.loads(path.read_text(encoding="utf-8"))
+    value = jsonable(compute())
+    path.write_bytes((json.dumps(value, indent=1, allow_nan=False) + "\n").encode("utf-8"))
+    return value
+
+
+def magnitudes(values, observations):
+    return np.asarray([q.magnitude_in(o.value.units) for q, o in zip(values, observations.observations)])
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--starts", type=int, default=6)
     args = ap.parse_args()
     C, F, Adapter, model = setup()
     means = F.truth_means()
     primary = F.observation_set_from_truth_means(means, seed=C.PRIMARY_SEED, condition_ids=C.MULTI_CONDITION_IDS)
     weak = primary.subset(C.WEAK_CONDITION_IDS, dataset_id="K2-primary-weak-C2")
-    out = {"schema": "core_v2_hybrid_uq_kinetics/1", "committed_k2_report_values": COMMITTED, "convergence_sd": CONVERGENCE_SD}
+    out = {"schema": "core_v2_hybrid_uq_kinetics/1", "committed_k2_report_values": COMMITTED, "convergence_sd": CONVERGENCE_SD,
+           "stage_cache": str(CACHE)}
     params = parameter_set(C, model)
     twin = TwinReference("k2-v2-reference", "1")
+    start = (0.5 * sum(C.LOG_K0_BOUNDS), 0.5 * sum(C.E_OVER_R_BOUNDS_K))
 
     # 1. MULTI through V2
-    counter = {"n": 0}
-    forward = evaluator_for(C, Adapter, primary, counter=counter)
-    start = (0.5 * sum(C.LOG_K0_BOUNDS), 0.5 * sum(C.E_OVER_R_BOUNDS_K))
-    t0 = time.perf_counter()
-    fit = calibrate(spec_for(C, params, start), primary, forward, heldout_dataset_id="K2.v2.multi.heldout", max_evaluations=400, seed=C.PRIMARY_SEED)
-    cal = {"status": fit.status.value, "evaluations": counter["n"], "condition_solves": 3 * counter["n"], "wall_seconds": time.perf_counter() - t0,
-           "estimate": list(fit.estimate_vector), "chi_square": fit.objective_value}
-    print("MULTI calibration", cal, flush=True)
-    t0, c0 = time.perf_counter(), counter["n"]
-    routed = route_uncertainty(calibration=fit, observations=primary, forward=forward, multistart=MultistartPolicy(starts=args.starts, max_evaluations=400))
-    route = {"decision": routed.decision.value, "claim": routed.claim.value, "considered": routed.considered,
-             "evaluations": counter["n"] - c0, "condition_solves": 3 * (counter["n"] - c0), "wall_seconds": time.perf_counter() - t0}
+    def stage_multi():
+        counter = {"n": 0}
+        forward = evaluator_for(C, Adapter, primary, counter=counter)
+        t0 = time.perf_counter()
+        fit = calibrate(spec_for(C, params, start), primary, forward, heldout_dataset_id="K2.v2.multi.heldout", max_evaluations=400, seed=C.PRIMARY_SEED)
+        cal = {"status": fit.status.value, "evaluations": counter["n"], "condition_solves": 3 * counter["n"],
+               "wall_seconds": time.perf_counter() - t0, "estimate": list(fit.estimate_vector), "chi_square": fit.objective_value}
+        print("MULTI calibration", cal, flush=True)
+        t0, c0 = time.perf_counter(), counter["n"]
+        routed = route_uncertainty(calibration=fit, observations=primary, forward=forward,
+                                   multistart=MultistartPolicy(starts=args.starts, max_evaluations=400))
+        route = {"decision": routed.decision.value, "claim": routed.claim.value, "considered": routed.considered,
+                 "evaluations": counter["n"] - c0, "condition_solves": 3 * (counter["n"] - c0), "wall_seconds": time.perf_counter() - t0}
+        print("MULTI route", route["decision"], route["claim"], f"{route['wall_seconds']:.0f}s", flush=True)
+        return {"calibration": cal, "route": route, "routed_record": routed.to_dict()}
+
+    multi = cached("stage1_multi_route", stage_multi)
+    routed = HybridUQResult.from_dict(multi["routed_record"])
     post = routed.local_posterior
+    route = dict(multi["route"])
     route.update({"reasons": [r.value for r in post.reasons], "uniqueness": post.diagnostics.uniqueness,
                   "multistart": [{k: v for k, v in m.items() if k in ("status", "classification", "retractions", "estimate", "chi_square", "mahalanobis_sq")}
                                  for m in post.diagnostics.multistart],
-                  "nonlinearity_index": post.diagnostics.nonlinearity_index, "jacobian_condition": post.diagnostics.jacobian_condition})
-    print("MULTI route", route["decision"], route["claim"], route["reasons"], route["uniqueness"], f"{route['wall_seconds']:.0f}s", flush=True)
-    out["MULTI_v2"] = {"calibration": cal, "route": route}
+                  "nonlinearity_index": post.diagnostics.nonlinearity_index, "jacobian_condition": post.diagnostics.jacobian_condition,
+                  "raw_jacobian_condition": post.diagnostics.raw_jacobian_condition, "record_digest": routed.digest})
+    out["MULTI_v2"] = {"calibration": multi["calibration"], "route": route}
     if routed.decision is RouteDecision.REFUSED:
         dump("KINETICS_K2.json", out)
         raise SystemExit("MULTI refused by the V2 route")
@@ -253,110 +284,145 @@ def main():
         "mean": list(post.inference_point), "sd": sd.tolist(), "covariance": cov.tolist(), "determinant": float(np.linalg.det(cov)),
         "correlation": float(cov[0, 1] / (sd[0] * sd[1])), "intervals_95": [[i.lower, i.upper] for i in post.intervals()],
         "T_star_k": T_star, "identifiability": {"declared_ln_k0_e_over_r": ident_declared.status.value,
-                                               f"ln_k_at_T_star_e_over_r": ident_aligned.status.value},
+                                               "ln_k_at_T_star_e_over_r": ident_aligned.status.value},
+        "identifiability_why": {"declared": ident_declared.report.why, "aligned": ident_aligned.report.why},
         "aligned_covariance": np.asarray(aligned.covariance).tolist(),
     })
 
     # 2. C2 predictive from the MULTI posterior
     c2_obs = [o for o in primary.observations if o.condition_id == "C2"]
     c2_keys = tuple(o.key for o in c2_obs)
-    predict = evaluator_for(C, Adapter, weak)
-    specs = [PredictiveObservableSpec(o.key, o.value.units, o.sigma) for o in weak.observations]
-    predictive = linearized_predictive_uq(post, predict, specs)
-    out["MULTI_v2"]["C2_predictive"] = {r.observation_key: {"mean": r.mean, "parameter_sd": r.parameter_standard_uncertainty,
-                                                           "measurement_sd": r.measurement_standard_uncertainty, "total_sd": r.total_standard_uncertainty,
-                                                           "unit": r.unit, "claim": r.route_claim.value, "nonlinearity": r.predictive_nonlinearity}
-                                        for r in predictive}
-    print("C2 predictive", out["MULTI_v2"]["C2_predictive"], flush=True)
+
+    def stage_c2():
+        predict = evaluator_for(C, Adapter, weak)
+        specs = [PredictiveObservableSpec(o.key, o.value.units, o.sigma) for o in weak.observations]
+        return {r.observation_key: {"mean": r.mean, "parameter_sd": r.parameter_standard_uncertainty, "measurement_sd": r.measurement_standard_uncertainty,
+                                    "total_sd": r.total_standard_uncertainty, "unit": r.unit, "claim": r.route_claim.value,
+                                    "nonlinearity": r.predictive_nonlinearity, "record": r.to_dict()}
+                for r in linearized_predictive_uq(post, predict, specs)}
+
+    out["MULTI_v2"]["C2_predictive"] = cached("stage2_c2_predictive", stage_c2)
 
     # 3a. MULTI reference grid, decorrelated
-    aligned_sd = np.sqrt(np.diag(np.asarray(aligned.covariance)))
-    u0 = float(aligned.inference_point[0])
-    v0 = float(aligned.inference_point[1])
-    ref_post, ref_c2, history, converged = converged_reference(
-        C, F, primary, T_star, (u0 - 8 * aligned_sd[0], u0 + 8 * aligned_sd[0]), (v0 - 8 * aligned_sd[1], v0 + 8 * aligned_sd[1]),
-        33, 33, args.workers, c2_keys, "MULTI reference")
-    m, c = moments_lv(ref_post, T_star)
-    rs = np.sqrt(np.diag(c))
-    ref = {"T_star_k": T_star, "converged": converged, "history": history, "mean": m.tolist(), "sd": rs.tolist(), "covariance": c.tolist(),
-           "determinant": float(np.linalg.det(c)), "correlation": float(c[0, 1] / (rs[0] * rs[1]))}
-    try:
+    def stage_multi_reference():
+        aligned_sd = np.sqrt(np.diag(np.asarray(aligned.covariance)))
+        u0, v0 = float(aligned.inference_point[0]), float(aligned.inference_point[1])
+        ref_post, ref_c2, history, converged = converged_reference(
+            C, F, primary, T_star, (u0 - 8 * aligned_sd[0], u0 + 8 * aligned_sd[0]), (v0 - 8 * aligned_sd[1], v0 + 8 * aligned_sd[1]),
+            33, 33, args.workers, c2_keys, "MULTI reference")
+        m, c = moments_lv(ref_post, T_star)
+        rs = np.sqrt(np.diag(c))
+        ref = {"T_star_k": T_star, "converged": converged, "history": history, "mean": m.tolist(), "sd": rs.tolist(), "covariance": c.tolist(),
+               "determinant": float(np.linalg.det(c)), "correlation": float(c[0, 1] / (rs[0] * rs[1]))}
         ref["identifiability_in_grid_coordinates"] = assess_identifiability(ref_post).status.value
         ref["C2_predictive"] = {}
         for o in c2_obs:
             r = grid_predictive_uncertainty(ref_post, ref_c2, PredictiveObservableSpec(o.key, o.value.units, o.sigma), twin=twin, model=model,
                                             source_ref="k2-v2-reference")
             ref["C2_predictive"][o.key] = {"mean": r.mean, "parameter_sd": r.parameter_standard_uncertainty, "total_sd": r.total_standard_uncertainty}
-    except GridResolutionError as exc:
-        ref["refusal"] = str(exc)[:300]
+        return ref
+
+    ref = cached("stage3a_multi_reference", stage_multi_reference)
+    m, c = np.asarray(ref["mean"]), np.asarray(ref["covariance"])
+    rs = np.sqrt(np.diag(c))
     out["MULTI_reference_grid"] = ref
     out["MULTI_v2"]["vs_reference"] = {"mean_shift_reference_sd": (np.abs(np.asarray(post.inference_point) - m) / rs).tolist(),
-                                       "sd_ratio": (sd / rs).tolist(), "determinant_ratio": float(np.linalg.det(cov) / np.linalg.det(c))}
-    print("MULTI reference", ref["mean"], ref["sd"], ref["determinant"], ref["correlation"], out["MULTI_v2"]["vs_reference"], flush=True)
+                                       "sd_ratio": (sd / rs).tolist(), "determinant_ratio": float(np.linalg.det(cov) / np.linalg.det(c)),
+                                       "C2_parameter_sd_ratio": {k: out["MULTI_v2"]["C2_predictive"][k]["parameter_sd"] / ref["C2_predictive"][k]["parameter_sd"]
+                                                                 for k in ref["C2_predictive"]}}
+    print("MULTI vs reference", out["MULTI_v2"]["vs_reference"], flush=True)
 
-    # 3b. WEAK_C2 through V2 (expected refusal) and its reference grid
-    wcounter = {"n": 0}
-    wforward = evaluator_for(C, Adapter, weak, counter=wcounter)
-    wfit = calibrate(spec_for(C, params, fit.estimate_vector), weak, wforward, heldout_dataset_id="K2.v2.weak.heldout", max_evaluations=400, seed=C.PRIMARY_SEED)
-    wrouted = route_uncertainty(calibration=wfit, observations=weak, forward=wforward, multistart=None)
-    out["WEAK_C2_v2"] = {"calibration": {"status": wfit.status.value, "estimate": list(wfit.estimate_vector) if wfit.estimates else None},
-                         "decision": wrouted.decision.value, "claim": wrouted.claim.value,
-                         "reasons": [r.value for r in wrouted.local_posterior.reasons] if wrouted.local_posterior else []}
-    print("WEAK route", out["WEAK_C2_v2"], flush=True)
-    sens = reconstruct_local_sensitivity(wfit, weak, wforward)
-    Aw = sens.weighted_jacobian
-    wcov = np.linalg.inv(Aw.T @ Aw)
-    T_weak = float(wcov[1, 1] / wcov[0, 1])
-    u_w = float(wfit.estimate_vector[0] - wfit.estimate_vector[1] / T_weak)
-    Tw = np.asarray([[1.0, -1.0 / T_weak], [0.0, 1.0]])
-    su = float(math.sqrt((Tw @ wcov @ Tw.T)[0, 0]))
-    wpost, _, whistory, wconverged = converged_reference(C, F, weak, T_weak, (u_w - 10 * su, u_w + 10 * su), C.E_OVER_R_BOUNDS_K,
-                                                         33, 129, args.workers, (), "WEAK reference")
-    wm, wc = moments_lv(wpost, T_weak)
-    ws = np.sqrt(np.diag(wc))
-    out["WEAK_C2_reference_grid"] = {"T_star_k": T_weak, "local_jacobian_design_covariance": wcov.tolist(), "converged": wconverged, "history": whistory,
-                                     "mean": wm.tolist(), "sd": ws.tolist(), "covariance": wc.tolist(), "determinant": float(np.linalg.det(wc)),
-                                     "correlation": float(wc[0, 1] / (ws[0] * ws[1]))}
+    # 3b. WEAK_C2: the V2 route refuses it; its reference grid is designed from the ridge itself
+    def stage_weak():
+        from scipy.optimize import least_squares
+
+        wcounter = {"n": 0}
+        wforward = evaluator_for(C, Adapter, weak, counter=wcounter)
+        wfit = calibrate(spec_for(C, params, multi["calibration"]["estimate"]), weak, wforward, heldout_dataset_id="K2.v2.weak.heldout",
+                         max_evaluations=400, seed=C.PRIMARY_SEED)
+        wrouted = route_uncertainty(calibration=wfit, observations=weak, forward=wforward, multistart=None)
+        record = {"calibration": {"status": wfit.status.value, "estimate": list(wfit.estimate_vector) if wfit.estimates else None,
+                                  "chi_square": wfit.objective_value},
+                  "decision": wrouted.decision.value, "claim": wrouted.claim.value,
+                  "reasons": [r.value for r in wrouted.local_posterior.reasons] if wrouted.local_posterior else []}
+        print("WEAK route", record, flush=True)
+        sens = reconstruct_local_sensitivity(wfit, weak, wforward)
+        U, S, Vt = np.linalg.svd(sens.weighted_jacobian, full_matrices=False)
+        ridge = Vt[-1]
+        T_weak = float(ridge[1] / ridge[0])
+        a = np.asarray([1.0, -1.0 / T_weak])
+        sd_u = float(np.linalg.norm(a) / S[0])
+        observed, sigma = weak.numeric_vectors()
+        trace = []
+        for v in np.linspace(C.E_OVER_R_BOUNDS_K[0], C.E_OVER_R_BOUNDS_K[1], 9):
+            def residual(l, v=v):
+                values = wforward((float(l[0]), float(v)))
+                return np.full(len(observed), 1e3) if values is None else (magnitudes(values, weak) - observed) / sigma
+            l_guess = float(np.clip(wfit.estimate_vector[0] + (v - wfit.estimate_vector[1]) / T_weak, C.LOG_K0_BOUNDS[0], C.LOG_K0_BOUNDS[1]))
+            sol = least_squares(residual, x0=[l_guess], bounds=([C.LOG_K0_BOUNDS[0]], [C.LOG_K0_BOUNDS[1]]), method="trf", max_nfev=60)
+            trace.append({"e_over_r_k": float(v), "log_k0": float(sol.x[0]), "chi_square": float(2 * sol.cost), "u": float(sol.x[0] - v / T_weak)})
+        print("WEAK ridge trace", [(round(t["e_over_r_k"]), round(t["u"], 5), round(t["chi_square"], 4)) for t in trace], "sd_u", sd_u, flush=True)
+        on_ridge = [t["u"] for t in trace if t["chi_square"] < 25.0]
+        u_lo, u_hi = min(on_ridge) - 10 * sd_u, max(on_ridge) + 10 * sd_u
+        nu = int(min(257, max(33, 2 ** math.ceil(math.log2((u_hi - u_lo) / (0.5 * sd_u))) + 1)))
+        print(f"WEAK design: T* {T_weak:.3f} K, u in [{u_lo:.5f}, {u_hi:.5f}], sd_u {sd_u:.3g}, nodes {nu} x 129", flush=True)
+        wpost, _, whistory, wconverged = converged_reference(C, F, weak, T_weak, (u_lo, u_hi), C.E_OVER_R_BOUNDS_K, nu, 129, args.workers, (),
+                                                             "WEAK reference", max_attempts=3)
+        wm, wc = moments_lv(wpost, T_weak)
+        ws = np.sqrt(np.diag(wc))
+        record["reference_grid"] = {"T_star_k": T_weak, "singular_values": S.tolist(), "ridge_direction": ridge.tolist(), "sd_u_local": sd_u,
+                                    "ridge_trace": trace, "converged": wconverged, "history": whistory, "mean": wm.tolist(), "sd": ws.tolist(),
+                                    "covariance": wc.tolist(), "determinant": float(np.linalg.det(wc)), "correlation": float(wc[0, 1] / (ws[0] * ws[1]))}
+        return record
+
+    weak_record = cached("stage3b_weak", stage_weak)
+    out["WEAK_C2_v2"] = {k: v for k, v in weak_record.items() if k != "reference_grid"}
+    out["WEAK_C2_reference_grid"] = weak_record["reference_grid"]
+    wc = np.asarray(weak_record["reference_grid"]["covariance"])
 
     # 4. corrected values
-    det_multi_v2 = float(np.linalg.det(cov))
-    det_multi_ref = float(np.linalg.det(c))
-    det_weak_ref = float(np.linalg.det(wc))
+    det_multi_v2, det_multi_ref, det_weak_ref = float(np.linalg.det(cov)), float(np.linalg.det(c)), float(np.linalg.det(wc))
     out["CORRECTED"] = {
-        "MULTI_covariance_v2": cov.tolist(), "MULTI_covariance_reference": c.tolist(),
+        "MULTI_covariance_v2": cov.tolist(), "MULTI_covariance_reference": c.tolist(), "MULTI_covariance_committed": COMMITTED["MULTI"]["covariance"],
         "MULTI_determinant_v2": det_multi_v2, "MULTI_determinant_reference": det_multi_ref, "MULTI_determinant_committed": COMMITTED["MULTI"]["determinant"],
         "MULTI_correlation_v2": out["MULTI_v2"]["correlation"], "MULTI_correlation_reference": ref["correlation"],
         "MULTI_correlation_committed": COMMITTED["MULTI"]["correlation"],
-        "C2_predictive_v2": out["MULTI_v2"]["C2_predictive"], "C2_predictive_reference": ref.get("C2_predictive"),
+        "C2_predictive_parameter_sd_v2": {k: v["parameter_sd"] for k, v in out["MULTI_v2"]["C2_predictive"].items()},
+        "C2_predictive_total_sd_v2": {k: v["total_sd"] for k, v in out["MULTI_v2"]["C2_predictive"].items()},
+        "C2_predictive_reference": ref.get("C2_predictive"),
         "WEAK_determinant_reference": det_weak_ref, "WEAK_determinant_committed": COMMITTED["WEAK_C2"]["determinant"],
-        "A5_det_ratio_multi_over_weak_v2_multi_reference_weak": det_multi_v2 / det_weak_ref,
+        "WEAK_reference_converged": weak_record["reference_grid"]["converged"],
         "A5_det_ratio_multi_over_weak_reference": det_multi_ref / det_weak_ref,
         "A5_gain_weak_over_multi_reference": det_weak_ref / det_multi_ref,
+        "A5_det_ratio_v2_multi_over_reference_weak": det_multi_v2 / det_weak_ref,
         "A5_passes_reference": det_multi_ref / det_weak_ref <= COMMITTED["A5_threshold_ratio"],
         "A5_committed_ratio": COMMITTED["A5_det_ratio_multi_over_weak"], "A5_committed_gain": COMMITTED["A5_gain_weak_over_multi"],
-        "reference_grids_converged": bool(converged and wconverged),
+        "reference_grids_converged": bool(ref["converged"] and weak_record["reference_grid"]["converged"]),
     }
-    print("CORRECTED", out["CORRECTED"], flush=True)
+    print("CORRECTED", {k: v for k, v in out["CORRECTED"].items() if "covariance" not in k}, flush=True)
 
-    # 5. natural k0 parameterization, no multistart (cost)
-    nparams = parameter_set(C, model, natural_k0=True)
-    ncounter = {"n": 0}
-    nforward = evaluator_for(C, Adapter, primary, natural_k0=True, counter=ncounter)
-    nfit = calibrate(spec_for(C, nparams, (math.exp(fit.estimate_vector[0]), fit.estimate_vector[1])), primary, nforward,
-                     heldout_dataset_id="K2.v2.natural.heldout", max_evaluations=400, seed=C.PRIMARY_SEED)
-    npost = local_gaussian_posterior(nfit, primary, nforward, multistart=None)
-    out["natural_k0_parameterization"] = {"calibration": nfit.status.value, "claim": npost.claim.value, "reasons": [r.value for r in npost.reasons],
-                                          "raw_jacobian_condition": npost.diagnostics.raw_jacobian_condition,
-                                          "jacobian_condition": npost.diagnostics.jacobian_condition, "nonlinearity_index": npost.diagnostics.nonlinearity_index,
-                                          "identifiability": None if npost.covariance is None else assess_routed_identifiability(npost).status.value}
-    lparams = parameter_set(C, model, natural_k0=True, transform="log")
-    lpost = local_gaussian_posterior(calibrate(spec_for(C, lparams, (math.exp(fit.estimate_vector[0]), fit.estimate_vector[1])), primary, nforward,
-                                               heldout_dataset_id="K2.v2.logdeclared.heldout", max_evaluations=400, seed=C.PRIMARY_SEED),
-                                     primary, nforward, multistart=None)
-    out["k0_declared_LOG_parameterization"] = {"claim": lpost.claim.value, "reasons": [r.value for r in lpost.reasons],
-                                               "sd_inference": list(lpost.standard_deviations) if lpost.covariance is not None else None,
-                                               "identifiability": None if lpost.covariance is None else assess_routed_identifiability(lpost).status.value}
-    print("natural k0", out["natural_k0_parameterization"], "LOG-declared k0", out["k0_declared_LOG_parameterization"], flush=True)
+    # 5. parameterization: natural k0 (IDENTITY) and k0 declared LOG, no multistart (cost)
+    def stage_parameterizations():
+        est = multi["calibration"]["estimate"]
+        nforward = evaluator_for(C, Adapter, primary, natural_k0=True)
+        result = {}
+        for label, transform in (("natural_k0_identity", "identity"), ("k0_declared_log", "log")):
+            nparams = parameter_set(C, model, natural_k0=True, transform=transform)
+            nfit = calibrate(spec_for(C, nparams, (math.exp(est[0]), est[1])), primary, nforward, heldout_dataset_id=f"K2.v2.{label}.heldout",
+                             max_evaluations=400, seed=C.PRIMARY_SEED)
+            npost = local_gaussian_posterior(nfit, primary, nforward, multistart=None)
+            result[label] = {"calibration": nfit.status.value, "claim": npost.claim.value, "reasons": [r.value for r in npost.reasons],
+                             "raw_jacobian_condition": npost.diagnostics.raw_jacobian_condition,
+                             "jacobian_condition": npost.diagnostics.jacobian_condition, "nonlinearity_index": npost.diagnostics.nonlinearity_index,
+                             "sd_inference": list(npost.standard_deviations) if npost.covariance is not None else None,
+                             "identifiability": None if npost.covariance is None else assess_routed_identifiability(npost).status.value}
+            print(label, result[label], flush=True)
+        return result
+
+    out["parameterizations"] = cached("stage5_parameterizations", stage_parameterizations)
+    out["parameterizations"]["declared_ln_k0_e_over_r"] = {"claim": post.claim.value, "identifiability": ident_declared.status.value}
+    out["parameterizations"]["ln_k_at_T_star_e_over_r"] = {"claim": post.claim.value, "identifiability": ident_aligned.status.value,
+                                                           "T_star_k": T_star}
     dump("KINETICS_K2.json", out)
 
 

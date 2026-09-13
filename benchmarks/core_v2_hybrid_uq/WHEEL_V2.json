@@ -1,0 +1,57 @@
+{
+ "shipped_files": 446,
+ "hybrid_uq_files_in_wheel": [
+  "engcore/hybrid_uq/__init__.py",
+  "engcore/hybrid_uq/__pycache__/__init__.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/_records.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/identifiability.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/local_gaussian.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/predictive.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/router.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/sensitivity.cpython-314.pyc",
+  "engcore/hybrid_uq/__pycache__/vocabulary.cpython-314.pyc",
+  "engcore/hybrid_uq/_records.py",
+  "engcore/hybrid_uq/identifiability.py",
+  "engcore/hybrid_uq/local_gaussian.py",
+  "engcore/hybrid_uq/predictive.py",
+  "engcore/hybrid_uq/router.py",
+  "engcore/hybrid_uq/sensitivity.py",
+  "engcore/hybrid_uq/vocabulary.py"
+ ],
+ "engcore_imported_from": "D:\\v2_wheel\\install\\engcore\\__init__.py",
+ "source": {
+  "v1_frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+  "v1_frozen_count": 194,
+  "v2_frozen_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb",
+  "v2_frozen_count": 221
+ },
+ "wheel": {
+  "v1_frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+  "v1_frozen_count": 194,
+  "v2_frozen_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb",
+  "v2_frozen_count": 221
+ },
+ "v1_frozen_api_parity": "MATCH",
+ "v2_frozen_api_parity": "MATCH",
+ "isolated_wheel_smoke": {
+  "affine": {
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "digest": "200729aa47d2958a020d082765653d6202d2493997f00064abbdf11a7d577e94",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "parameter_sd": 0.014433756729740649,
+   "total_sd": 0.052041649986653324,
+   "sources": [
+    "PARAMETER_UNCERTAINTY",
+    "MEASUREMENT_UNCERTAINTY",
+    "MODEL_DISCREPANCY_NOT_MODELLED"
+   ]
+  },
+  "singular": {
+   "decision": "REFUSED",
+   "claim": "REFUSED",
+   "digest": "c5a6fa3fc80561c3583c9fbf47fc6af0b57a42b578c35ae8f3c4732c81c9195b"
+  },
+  "passed": true
+ }
+}
