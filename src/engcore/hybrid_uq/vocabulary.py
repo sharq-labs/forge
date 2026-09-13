@@ -1,0 +1,117 @@
+"""The words a routed uncertainty result is written in.
+
+Three approximation classes, never merged; three claims; one closed list of reasons. A result that could
+not say which class produced it, or why a route was refused, would be a number without a meaning.
+"""
+
+from __future__ import annotations
+
+from enum import Enum
+
+from ..uq.predictive import UQProblemError
+
+#: The three sources every predictive record names. Model discrepancy is never estimated here: it is
+#: named as not modelled, so a reader cannot mistake "no discrepancy term" for "no discrepancy".
+PARAMETER_UNCERTAINTY = "PARAMETER_UNCERTAINTY"
+MEASUREMENT_UNCERTAINTY = "MEASUREMENT_UNCERTAINTY"
+MODEL_DISCREPANCY_NOT_MODELLED = "MODEL_DISCREPANCY_NOT_MODELLED"
+UNCERTAINTY_SOURCES = (PARAMETER_UNCERTAINTY, MEASUREMENT_UNCERTAINTY, MODEL_DISCREPANCY_NOT_MODELLED)
+
+#: The dimension the repaired V1 grid route was validated at (Battery B3 P4 and T5, p = 5). A grid of
+#: more parameters is not routed, however it was built.
+GRID_ROUTE_MAXIMUM_PARAMETERS = 5
+
+
+class HybridUQError(UQProblemError):
+    """A routed-UQ request that cannot be posed, or a V2 record that cannot be read."""
+
+
+class RouteRefusedError(HybridUQError):
+    """Numbers were asked of a route that refused. A refused route has none to give."""
+
+
+class ApproximationClass(str, Enum):
+    """Which approximation produced a number. No member is an exact posterior."""
+
+    POSTERIOR_GRID = "POSTERIOR_GRID"
+    LOCAL_GAUSSIAN_APPROXIMATION = "LOCAL_GAUSSIAN_APPROXIMATION"
+    LINEARIZED_PREDICTIVE_UQ = "LINEARIZED_PREDICTIVE_UQ"
+
+    @property
+    def exact_posterior(self) -> bool:
+        # A resolved grid is a discretization of the posterior on its support and the local route is a
+        # Gaussian approximation of it. Neither is the continuous posterior, and no member may say so.
+        return False
+
+    @property
+    def describes(self) -> str:
+        return "predictions" if self is ApproximationClass.LINEARIZED_PREDICTIVE_UQ else "parameters"
+
+
+class RouteClaim(str, Enum):
+    """What a route is prepared to stand behind."""
+
+    SUPPORTED = "SUPPORTED"
+    DOWNGRADED = "DOWNGRADED"
+    REFUSED = "REFUSED"
+
+
+class RouteDecision(str, Enum):
+    """Which route produced a :class:`HybridUQResult`."""
+
+    GRID_AS_SUPPLIED = "GRID_AS_SUPPLIED"
+    LOCAL_GAUSSIAN = "LOCAL_GAUSSIAN"
+    GRID_REBUILT_FROM_LOCAL_COVARIANCE = "GRID_REBUILT_FROM_LOCAL_COVARIANCE"
+    REFUSED = "REFUSED"
+
+
+class RouteReason(str, Enum):
+    """Every reason a route is refused, downgraded or passed over. See docs/CORE_V2_API_DESIGN.md section 4."""
+
+    # local route: refusals
+    CALIBRATION_NOT_CONVERGED = "CALIBRATION_NOT_CONVERGED"
+    FORWARD_INADMISSIBLE_NEAR_ESTIMATE = "FORWARD_INADMISSIBLE_NEAR_ESTIMATE"
+    NO_RESIDUAL_DEGREES_OF_FREEDOM = "NO_RESIDUAL_DEGREES_OF_FREEDOM"
+    STRUCTURALLY_UNIDENTIFIABLE = "STRUCTURALLY_UNIDENTIFIABLE"
+    NUMERICALLY_SINGULAR_JACOBIAN = "NUMERICALLY_SINGULAR_JACOBIAN"
+    PARAMETER_AT_BOUND = "PARAMETER_AT_BOUND"
+    NOT_STATIONARY = "NOT_STATIONARY"
+    NOT_A_LOCAL_MINIMUM = "NOT_A_LOCAL_MINIMUM"
+    NONLINEAR_BEYOND_LOCAL_GAUSSIAN = "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+    SECOND_MODE_FOUND = "SECOND_MODE_FOUND"
+    BETTER_OPTIMUM_FOUND = "BETTER_OPTIMUM_FOUND"
+    # local route: downgrades
+    BOUND_WITHIN_3_SD = "BOUND_WITHIN_3_SD"
+    NONLINEAR_WITHIN_2_SD = "NONLINEAR_WITHIN_2_SD"
+    NONLINEARITY_PROBE_INCOMPLETE = "NONLINEARITY_PROBE_INCOMPLETE"
+    POORLY_SCALED_PARAMETERIZATION = "POORLY_SCALED_PARAMETERIZATION"
+    GLOBAL_UNIQUENESS_NOT_ASSESSED = "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+    MULTISTART_INCOMPLETE = "MULTISTART_INCOMPLETE"
+    PREDICTIVE_NONLINEAR = "PREDICTIVE_NONLINEAR"
+    # router: why a route was passed over
+    GRID_NOT_SUPPLIED = "GRID_NOT_SUPPLIED"
+    GRID_BEYOND_VALIDATED_DIMENSION = "GRID_BEYOND_VALIDATED_DIMENSION"
+    GRID_UNRESOLVED = "GRID_UNRESOLVED"
+    LOCAL_INPUTS_NOT_SUPPLIED = "LOCAL_INPUTS_NOT_SUPPLIED"
+    GRID_REBUILD_OVER_BUDGET = "GRID_REBUILD_OVER_BUDGET"
+    GRID_REBUILD_UNRESOLVED = "GRID_REBUILD_UNRESOLVED"
+
+    @property
+    def severity(self) -> RouteClaim:
+        return RouteClaim.DOWNGRADED if self.value in _DOWNGRADES else RouteClaim.REFUSED
+
+
+_DOWNGRADES = frozenset({
+    "BOUND_WITHIN_3_SD", "NONLINEAR_WITHIN_2_SD", "NONLINEARITY_PROBE_INCOMPLETE", "POORLY_SCALED_PARAMETERIZATION",
+    "GLOBAL_UNIQUENESS_NOT_ASSESSED", "MULTISTART_INCOMPLETE", "PREDICTIVE_NONLINEAR",
+})
+
+
+def claim_for(reasons) -> RouteClaim:
+    """The claim a set of reasons allows: any refusal refuses, any downgrade downgrades."""
+    severities = {RouteReason(r).severity for r in reasons}
+    if RouteClaim.REFUSED in severities:
+        return RouteClaim.REFUSED
+    if RouteClaim.DOWNGRADED in severities:
+        return RouteClaim.DOWNGRADED
+    return RouteClaim.SUPPORTED

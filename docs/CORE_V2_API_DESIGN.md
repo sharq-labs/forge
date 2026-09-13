@@ -276,6 +276,7 @@ class HybridUQResult:
     approximation_class: ApproximationClass | None
     claim: RouteClaim
     parameter_names: tuple[str, ...]
+    coordinates: str                           # "natural" (grid routes), "inference" (local route), "none" (refused)
     mean: tuple[float, ...] | None
     covariance: tuple[tuple[float, ...], ...] | None
     local_posterior: LocalGaussianPosterior | None
@@ -312,9 +313,18 @@ def routed_predictive_uncertainty(
 3. **Verified regrid.** `rebuild` is supplied, p ≤ `maximum_grid_parameters`, and the local posterior has a covariance (not refused for a structural reason). The router then:
    - designs an axis-aligned tensor grid whose box covers ±`sigma_span` sd around the estimate and every mode multistart found, clipped to bounds;
    - picks per-axis node counts so the aliasing number predicted from the local covariance is ≥ `aliasing_margin` × 2 ln 100, within `maximum_points`;
-   - builds the table with the caller's builder and runs the **frozen** V1 checks on the result.
+   - builds the table with the caller's builder;
+   - **checks containment:** on every face that is not a declared bound, the largest log-likelihood must sit at least ln 10⁶ below the peak. Otherwise the box grows by half its width on that side, at most 6 times. The frozen V1 checks verify resolution, not containment;
+   - **checks truncation convergence:** where a declared bound cuts the posterior off, the density is not smooth at the edge and the Poisson-aliasing argument behind the V1 check does not bound the error there. The step on each such axis is halved, nested, until means and sds move by less than 0.05 posterior sd, at most 5 halvings within `maximum_points`;
+   - runs the **frozen** V1 checks on the result. If V1 refuses, the aliasing target is raised 4× (steps halved) and the grid rebuilt, at most 3 times.
 
-   If they pass → `GRID_REBUILT_FROM_LOCAL_COVARIANCE`, class `POSTERIOR_GRID`. If they fail, the refusal is recorded and routing continues.
+   If V1 accepts → `GRID_REBUILT_FROM_LOCAL_COVARIANCE`, class `POSTERIOR_GRID`. If not, every refusal is recorded and routing continues.
+
+   *Amendment, made before the tests were written.* Containment and truncation convergence were added after a smoke run showed two failures:
+   - a Gaussian-sized box truncated F1's heavy tail: θ₁ mean 3.31 against the dense reference 3.43;
+   - a grid at a declared bound was accepted by V1 with θ₂ biased by 0.27 sd.
+
+   With both checks, the rebuilt grids match dense references to ≤ 0.01 sd on F1, F2, F4 and a bimodal case.
 4. **Local Gaussian, downgraded.** The local posterior is DOWNGRADED → `LOCAL_GAUSSIAN`, claim DOWNGRADED, with its reasons attached.
 5. Otherwise → `REFUSED`: no mean, no covariance, every reason recorded.
 
