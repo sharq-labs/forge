@@ -1,0 +1,201 @@
+"""Quantified uncertainty follows the same declared path as transferred values."""
+
+from __future__ import annotations
+
+import pytest
+
+from engcore.scientific.composition.conversion import EnergyConversion, LossPath
+from engcore.scientific.composition.dependency import QuantityDependency
+from engcore.scientific.composition.transfer import QuantityTransfer
+from engcore.scientific.composition.uncertainty import (
+    UncertaintyTransfer,
+    make_uncertainty_transfer,
+    propagate_transfer_uncertainty,
+    propagate_uncertainty_chain,
+)
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from engcore.scientific.units.quantity import Quantity
+
+
+def _transport(
+    source_problem: str = "thermal.a",
+    source_quantity: str = "temperature",
+    target_problem: str = "thermal.b",
+    target_quantity: str = "temperature_in",
+    *,
+    value: Quantity | None = None,
+    instant: str = "iteration:4",
+) -> QuantityTransfer:
+    dependency = QuantityDependency(
+        source_problem_id=source_problem,
+        source_quantity=source_quantity,
+        target_problem_id=target_problem,
+        target_quantity=target_quantity,
+        unit_exemplar="kelvin",
+    )
+    return QuantityTransfer(
+        dependency=dependency,
+        value=value or Quantity(300.0, "kelvin"),
+        source_record_id=f"result:{source_problem}",
+        instant=instant,
+    )
+
+
+def _standard(value: float = 2.0, unit: str = "kelvin") -> Uncertainty:
+    return Uncertainty(
+        kind=UncertaintyKind.STANDARD,
+        standard_uncertainty=Quantity(value, unit),
+        source="calibration:temperature",
+        method="posterior_std",
+    )
+
+
+def test_standard_uncertainty_crosses_plain_domain_transport():
+    transfer = _transport()
+    propagated = propagate_transfer_uncertainty(transfer, _standard())
+    assert propagated.kind is UncertaintyKind.STANDARD
+    assert propagated.standard_uncertainty is not None
+    assert propagated.standard_uncertainty.magnitude_in("kelvin") == pytest.approx(2.0)
+    assert propagated.source == "transfer:result:thermal.a"
+    assert propagated.method == "cross_domain_transport"
+
+
+def test_standard_uncertainty_uses_delta_conversion_for_offset_units():
+    # 2 K of uncertainty is a 2 degree-Celsius WIDTH. Treating it as an
+    # absolute value would produce roughly -271.15 degree_Celsius, which is the
+    # exact category error this test prevents.
+    transfer = _transport(value=Quantity(26.85, "degree_Celsius"))
+    propagated = propagate_transfer_uncertainty(transfer, _standard(2.0, "kelvin"))
+    assert propagated.standard_uncertainty is not None
+    assert propagated.standard_uncertainty.magnitude == pytest.approx(2.0)
+    assert propagated.standard_uncertainty.units == "degree_Celsius"
+
+
+def test_interval_bounds_are_absolute_values_and_keep_offset_semantics():
+    transfer = _transport(value=Quantity(26.85, "degree_Celsius"))
+    source = Uncertainty(
+        kind=UncertaintyKind.INTERVAL,
+        lower=Quantity(298.0, "kelvin"),
+        upper=Quantity(302.0, "kelvin"),
+        confidence_level=0.95,
+        source="posterior",
+        method="credible_interval",
+    )
+    propagated = propagate_transfer_uncertainty(transfer, source)
+    assert propagated.lower is not None and propagated.upper is not None
+    assert propagated.lower.magnitude_in("degree_Celsius") == pytest.approx(24.85)
+    assert propagated.upper.magnitude_in("degree_Celsius") == pytest.approx(28.85)
+    assert propagated.confidence_level == 0.95
+
+
+def test_deterministic_energy_conversion_scales_standard_uncertainty():
+    conversion = EnergyConversion(
+        name="electrical_to_mechanical",
+        input_form="electrical",
+        output_form="mechanical",
+        unit_exemplar="watt",
+        efficiency=0.8,
+        losses=(LossPath("heat", 0.2),),
+    )
+    dependency = QuantityDependency(
+        source_problem_id="electrical",
+        source_quantity="input_power",
+        target_problem_id="mechanical",
+        target_quantity="shaft_power",
+        unit_exemplar="watt",
+        conversion=conversion,
+    )
+    transfer = QuantityTransfer(
+        dependency=dependency,
+        source_value=Quantity(100.0, "watt"),
+        value=Quantity(80.0, "watt"),
+        source_record_id="electrical:r1",
+        instant="stage:1",
+    )
+    propagated = propagate_transfer_uncertainty(transfer, _standard(5.0, "watt"))
+    assert propagated.standard_uncertainty is not None
+    assert propagated.standard_uncertainty.magnitude_in("watt") == pytest.approx(4.0)
+    assert propagated.method == "cross_domain_conversion:electrical_to_mechanical"
+
+
+def test_unknown_uncertainty_stays_unknown_instead_of_becoming_zero():
+    source = Uncertainty.unknown("not measured")
+    propagated = propagate_transfer_uncertainty(_transport(), source)
+    assert propagated.kind is UncertaintyKind.UNKNOWN
+    assert propagated.standard_uncertainty is None
+    assert "not measured" in propagated.notes
+
+
+def test_connected_chain_propagates_the_same_uncertainty_across_domains():
+    first = _transport(
+        source_problem="domain.a",
+        source_quantity="x",
+        target_problem="domain.b",
+        target_quantity="y",
+    )
+    second = _transport(
+        source_problem="domain.b",
+        source_quantity="y",
+        target_problem="domain.c",
+        target_quantity="z",
+    )
+    chain = propagate_uncertainty_chain((first, second), _standard(1.5))
+    assert len(chain) == 2
+    assert chain[-1].uncertainty.standard_uncertainty is not None
+    assert chain[-1].uncertainty.standard_uncertainty.magnitude_in("kelvin") == pytest.approx(1.5)
+
+
+def test_disconnected_chain_is_refused_instead_of_matching_similar_units():
+    first = _transport(
+        source_problem="domain.a",
+        source_quantity="x",
+        target_problem="domain.b",
+        target_quantity="y",
+    )
+    second = _transport(
+        source_problem="domain.b",
+        source_quantity="different_name",
+        target_problem="domain.c",
+        target_quantity="z",
+    )
+    with pytest.raises(InvalidScientificProblem, match="disconnected"):
+        propagate_uncertainty_chain((first, second), _standard())
+
+
+def test_chain_cannot_jump_between_instants_without_a_temporal_model():
+    first = _transport(
+        source_problem="domain.a",
+        source_quantity="x",
+        target_problem="domain.b",
+        target_quantity="y",
+        instant="step:1",
+    )
+    second = _transport(
+        source_problem="domain.b",
+        source_quantity="y",
+        target_problem="domain.c",
+        target_quantity="z",
+        instant="step:2",
+    )
+    with pytest.raises(InvalidScientificProblem, match="temporal evolution"):
+        propagate_uncertainty_chain((first, second), _standard())
+
+
+def test_uncertainty_transfer_round_trip_recomputes_the_propagation():
+    item = make_uncertainty_transfer(_transport(), _standard(0.5))
+    restored = UncertaintyTransfer.from_dict(item.to_dict())
+    assert restored == item
+
+
+def test_hand_forged_propagated_uncertainty_is_refused():
+    transfer = _transport()
+    source = _standard(1.0)
+    wrong = Uncertainty(
+        kind=UncertaintyKind.STANDARD,
+        standard_uncertainty=Quantity(99.0, "kelvin"),
+        source="forged",
+        method="forged",
+    )
+    with pytest.raises(InvalidScientificProblem, match="does not follow"):
+        UncertaintyTransfer(transfer, source, wrong)
