@@ -116,36 +116,13 @@ class SolverSettings:
                     f"solver tolerance {str(key)!r} must be finite, got "
                     f"{tolerance!r}"
                 )
-            # Here and not in each adapter, for the reason finiteness is: the
-            # next adapter written would not remember. A tolerance bounds a
-            # magnitude, so a negative one is a bound no residual can meet, and
-            # a reader who takes its absolute value is reading a number the run
-            # never recorded. Zero is a legitimate request, as it is for
-            # `RouteComparison.tolerance`, and is accepted.
             if tolerance < 0.0:
                 raise ScientificCoreError(
                     f"solver tolerance {str(key)!r} must be non-negative, got "
                     f"{tolerance!r}"
                 )
             tolerances[str(key)] = tolerance
-        # `freeze`, not `dict`. `frozen=True` protects the BINDING, never the
-        # container behind it: `settings.tolerances["rtol"] = 1e-3` was
-        # refused and `settings.tolerances["rtol"] = 1e-3` through the mapping
-        # itself was not. These two mappings are recorded for provenance and
-        # travel into `PreparedSolve`, so a tolerance edited after the record
-        # was built changes what a stored claim means -- the run says it was
-        # solved to a bound nobody solved it to.
         object.__setattr__(self, "tolerances", freeze(tolerances))
-        # The same refusal `ProvenanceRecord.metadata` and
-        # `ScientificResult.metadata` make, in the same words, because this is
-        # the same kind of field: a free-form mapping that is recorded for
-        # provenance and travels into `PreparedSolve`.
-        #
-        # It was the last one in the core that did not make it. `tolerances`
-        # above is checked and `options` was not, so the mapping beside it
-        # accepted a NaN, an infinity, a non-string key or an object that no
-        # record can carry -- and settings that cannot be written down are
-        # settings the run cannot say it used.
         unrecordable = unwritable(self.options, path="options")
         if unrecordable is not None:
             where, kind = unrecordable
@@ -159,18 +136,11 @@ class SolverSettings:
         object.__setattr__(self, "options", freeze(dict(self.options)))
 
     def to_dict(self) -> dict[str, Any]:
-        # `detach`, not a shallow copy, and for the reason `results.immutable`
-        # gives: a payload is a message and a caller may edit it. Every other
-        # free-form branch in this core is detached on the way out; this one
-        # handed back the record's own frozen containers, so a caller editing
-        # the payload got a refusal from a container it had every reason to
-        # think was its own.
         return {
             "tolerances": dict(sorted(self.tolerances.items())),
             "options": {
                 key: detach(value)
-                for key, value in sorted(self.options.items(),
-                                         key=lambda kv: kv[0])
+                for key, value in sorted(self.options.items(), key=lambda kv: kv[0])
             },
         }
 
@@ -184,12 +154,7 @@ class SolverSettings:
 
 @dataclass(frozen=True)
 class PreparedSolve:
-    """Solver-specific state produced from a problem, before execution.
-
-    ``payload`` is opaque to the core: an assembled matrix, a mesh handle, a
-    compiled netlist. The core only guarantees it travels with the problem
-    and the settings that produced it.
-    """
+    """Solver-specific state produced from a problem, before execution."""
 
     problem: Any
     solver: SolverIdentity
@@ -239,27 +204,7 @@ def _wall_seconds(value: Any) -> float | None:
 
 @dataclass(frozen=True)
 class RawSolverOutput:
-    """Unintepreted backend output plus its self-reported convergence.
-
-    Values may be plain numbers here — this is the one place where numeric
-    kernels are allowed to speak numbers. They become unit-carrying
-    quantities in ``extract_metrics``.
-
-    **This is the sanctioned home for non-finite values, and only for a solve
-    that says it failed.** A diverged solve genuinely produces NaN or ±Inf, and
-    forcing an adapter to hide that would make it lie about what happened. A
-    solve reporting CONVERGED or NOT_APPLICABLE and returning a number that is
-    not a number is telling two stories at once, and this record refuses to
-    carry both -- see :meth:`_require_finite_on_success`.
-
-    That refusal is the floor under
-    :mod:`engcore.scientific.solvers.admission`. An adapter that reaches an
-    external provider should admit its numbers there, where the refusal names
-    the provider, the channel and the reason, and arrives in the adapter's own
-    failure category. An adapter that does not still cannot construct this
-    record -- so a provider value cannot enter a result unchecked, whether or
-    not the adapter that fetched it remembered the rule.
-    """
+    """Unintepreted backend output plus its self-reported convergence."""
 
     convergence: ConvergenceState
     values: Mapping[str, float] = field(default_factory=dict)
@@ -269,20 +214,10 @@ class RawSolverOutput:
     warnings: tuple[str, ...] = ()
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
     artifacts: tuple[str, ...] = ()
-    #: Identities of bulk arrays this solve produced and handed to a store.
-    #: The arrays themselves are not here and never were: ``diagnostics`` is
-    #: an untyped dict that gets serialized, so an O(mesh) array parked in it
-    #: makes every stored raw record unreadable. A reference is O(1) and says
-    #: precisely which data was produced without carrying it.
     data_references: tuple[ScientificDataReference, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "convergence", ConvergenceState(self.convergence))
-        # Frozen, for the reason `SolverSettings` above is: this is the record
-        # a solver's numbers arrive in, and it is the first thing on the trust
-        # boundary. A value injected here after `_require_finite_on_success`
-        # ran would be a number that never passed admission, sitting in the
-        # record that exists to say numbers did.
         object.__setattr__(
             self,
             "values",
@@ -294,18 +229,10 @@ class RawSolverOutput:
             freeze({str(k): float(v) for k, v in self.residuals.items()}),
         )
         self._require_finite_on_success()
-        # Bookkeeping a solve cannot have produced, refused whatever the solve
-        # says about its convergence: a failed solve may return NaN values, but
-        # it did not take -3 iterations or run for -1 seconds.
         object.__setattr__(self, "iterations", _iteration_count(self.iterations))
         object.__setattr__(self, "wall_seconds", _wall_seconds(self.wall_seconds))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
-        # The refusal `SolverSettings.options` makes, for the same reason:
-        # `to_dict` serializes diagnostics with the rest of this record, so a
-        # diagnostic that cannot be written down is a solve whose account of
-        # itself does not survive being recorded. Bulk arrays belong in
-        # `data_references`.
         unrecordable = unwritable(self.diagnostics, path="diagnostics")
         if unrecordable is not None:
             where, kind = unrecordable
@@ -318,8 +245,8 @@ class RawSolverOutput:
         for reference in references:
             if not isinstance(reference, ScientificDataReference):
                 raise ScientificCoreError(
-                    f"raw output data reference must be a "
-                    f"ScientificDataReference, got {type(reference).__name__}"
+                    f"raw output data reference must be a ScientificDataReference, "
+                    f"got {type(reference).__name__}"
                 )
         object.__setattr__(
             self,
@@ -328,35 +255,6 @@ class RawSolverOutput:
         )
 
     def _require_finite_on_success(self) -> None:
-        """A solve that says it succeeded may not return a non-number.
-
-        **Why this is here and not left to each adapter.** Every admission gate
-        an adapter writes is a tolerance comparison, and ``abs(nan - x) > tol``
-        is False -- so a gate written to catch a provider whose numbers are
-        wrong cannot catch a provider whose numbers are not numbers. That is a
-        property of the shape, which means the next adapter written will have
-        the same hole, and a rule living in the last adapter's private method
-        will not be there when it is.
-
-        So the refusal is on the object every adapter must return. There is no
-        route from a backend into a ``ScientificResult`` that does not pass
-        through this constructor: ``extract_metrics`` reads this record, and a
-        value invented after it is not a value the backend produced. An adapter
-        that skips :mod:`engcore.scientific.solvers.admission` therefore
-        produces **nothing** rather than something unchecked.
-
-        **Scoped to a succeeded solve, and that scope is the whole design.**
-        NOT_CONVERGED, MAX_ITERATIONS, DIVERGED and FAILED keep the sanctioned
-        home: a diverged solve genuinely produces NaN, and a record that could
-        not say so would force every adapter to launder its own failure.
-        CONVERGED and NOT_APPLICABLE cannot, because a solve claiming to have
-        completed and returning a number that is not a number is telling two
-        stories, and the platform has no reading under which both are true.
-
-        Residuals are held to the same rule for the same reason: a residual is
-        what a validation check compares against a tolerance, and a NaN
-        residual passes every tolerance ever written for it.
-        """
         if not self.succeeded:
             return
         offenders = sorted(
@@ -371,12 +269,7 @@ class RawSolverOutput:
             raise ScientificCoreError(
                 f"a solve reporting {self.convergence.value} returned "
                 f"non-finite value(s) {offenders}. A NaN or an infinity "
-                f"satisfies every tolerance comparison written against it -- "
-                f"abs(nan - x) > tol is False -- so it cannot be admitted and "
-                f"then checked. Either the solve did not succeed, and this "
-                f"record should say which of NOT_CONVERGED, DIVERGED or FAILED "
-                f"it was, or the number came from outside and belongs in "
-                f"engcore.scientific.solvers.admission before it reaches here"
+                f"cannot be admitted by a successful solve"
             )
 
     @property
@@ -412,9 +305,6 @@ class RawSolverOutput:
             warnings=tuple(payload.get("warnings", ())),
             diagnostics=dict(payload.get("diagnostics", {})),
             artifacts=tuple(payload.get("artifacts", ())),
-            # Same compatibility branch as ``ScientificResult.from_dict``: a
-            # ``raw_solver_output/1`` record predates bulk references and loads
-            # with none.
             data_references=()
             if version == RAW_OUTPUT_SCHEMA_V1
             else tuple(
@@ -434,28 +324,17 @@ class ScientificSolver(Protocol):
     @property
     def capabilities(self) -> frozenset[SolverCapability]: ...
 
-    def supports(self, problem) -> bool:
-        """True when this solver can legitimately handle the problem.
-
-        Implementations must answer on declared capabilities and problem
-        structure — never by attempting a solve.
-        """
-        ...
+    def supports(self, problem) -> bool: ...
 
     def prepare(self, problem) -> PreparedSolve: ...
 
     def solve(self, prepared: PreparedSolve) -> RawSolverOutput: ...
 
-    def validate(self, prepared: PreparedSolve, raw: RawSolverOutput):
-        """Return a ``ValidationReport`` for this solve."""
-        ...
+    def validate(self, prepared: PreparedSolve, raw: RawSolverOutput): ...
 
     def extract_metrics(
         self, prepared: PreparedSolve, raw: RawSolverOutput
-    ) -> Mapping[str, Quantity]:
-        """Attach units to raw numbers. This is the boundary where numeric
-        output re-enters the unit-aware scientific world."""
-        ...
+    ) -> Mapping[str, Quantity]: ...
 
 
 def capability_gap(solver: ScientificSolver, problem) -> frozenset[str]:
@@ -465,78 +344,13 @@ def capability_gap(solver: ScientificSolver, problem) -> frozenset[str]:
 
 
 class DeclaredSupport:
-    """``supports`` implemented once, from what a solver declares.
+    """``supports`` implemented once, from what a solver declares."""
 
-    The defect
-    ----------
-    Two adapters answered the support question by checking a single
-    capability::
-
-        def supports(self, problem):
-            return LUMPED_CAPACITY_TRANSIENT.name in problem.required_capabilities
-
-    A problem asking for that capability **and one more** got ``True`` from a
-    solver that cannot serve the second. The registry then resolved to it, and
-    the failure arrived later as an exception from ``prepare`` or, worse, as a
-    result computed by a solver the problem never asked for. A third adapter
-    matched on the model reference alone and never looked at capabilities at
-    all.
-
-    The five adapters that *did* get it right had five separate
-    implementations of the same three comparisons, which is the same defect one
-    step from happening: the next domain writes a sixth, and the sixth is where
-    the next review finds this.
-
-    The contract
-    ------------
-    An adapter **declares** and does not compare. Three declarations:
-
-    ``capabilities``
-        Everything this solver can do. The request must be a subset — that is
-        the check the two broken adapters were missing.
-
-    ``serves_capabilities``
-        The capability (or capabilities) that identify this solver's work. The
-        request must *include* them. This is the other direction, and it is
-        what stops a solver claiming a problem that declares nothing at all:
-        the empty set is a subset of everything, so the subset test alone
-        answers ``True`` for a problem that asked for nothing.
-
-    ``served_models``
-        The model records this solver implements. The request must name one.
-        A capability says what kind of computation is wanted;
-        ``core:algebraic`` is true of countless unrelated relations, and only
-        the model says *which*.
-
-    ``additional_support_gap``
-        The hook for a domain fact none of the three can express -- one
-        adapter's "every named model must have a declared realization in this
-        domain", for instance. It returns reasons, not a boolean, so a refusal
-        explains itself. Deliberately a hook and not a fourth declaration: the
-        core cannot know what those facts are, and pretending otherwise is how
-        a universal contract acquires domain knowledge.
-
-    The core does the comparing, in :meth:`support_gap`. An adapter that
-    overrides ``supports`` is refused by ``SolverRegistry.register``: a solver
-    that hand-rolls the comparison is the thing this class exists to stop, and
-    a registry that accepted one would resolve to it.
-    """
-
-    #: The capability names that identify this solver's work. A problem that
-    #: does not ask for all of them is not this solver's problem.
     serves_capabilities: frozenset[str] = frozenset()
-
-    #: Model records this solver implements. Empty means "any model", which is
-    #: almost never right and is why every adapter here declares some.
     served_models: tuple = ()
 
     def support_gap(self, problem) -> tuple[str, ...]:
-        """Every reason this solver cannot serve this problem, in order.
-
-        Empty means it can. A tuple rather than a boolean because a solver that
-        says only "no" makes the caller guess, and the registry's
-        "no solver supports this problem" message is where the guess happens.
-        """
+        """Every reason this solver cannot serve this problem, in order."""
         from ..ir.problem import ScientificProblem
 
         if not isinstance(problem, ScientificProblem):
@@ -561,26 +375,21 @@ class DeclaredSupport:
             )
 
         if self.served_models:
-            served = {model.model_id for model in self.served_models}
-            referenced = {reference.model_id for reference in problem.models}
+            served = {(model.model_id, model.version) for model in self.served_models}
+            referenced = {reference.key for reference in problem.models}
             if not referenced & served:
+                render = lambda keys: [f"{model_id}@{version}" for model_id, version in sorted(keys)]
                 reasons.append(
-                    f"the problem names no model this solver implements; it "
-                    f"names {sorted(referenced) or 'none'} and this solver "
-                    f"implements {sorted(served)}"
+                    f"the problem names no model version this solver implements; it "
+                    f"names {render(referenced) or 'none'} and this solver "
+                    f"implements {render(served)}"
                 )
 
         reasons.extend(self.additional_support_gap(problem))
         return tuple(reasons)
 
     def additional_support_gap(self, problem) -> tuple[str, ...]:
-        """Domain facts the three declarations cannot express. Usually none."""
         return ()
 
     def supports(self, problem) -> bool:
-        """True when this solver can legitimately handle the whole request.
-
-        Not overridable by an adapter: ``SolverRegistry.register`` refuses a
-        solver that redefines it. Declare, do not compare.
-        """
         return not self.support_gap(problem)
