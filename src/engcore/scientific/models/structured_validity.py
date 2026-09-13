@@ -1,17 +1,13 @@
 """Validity predicates for typed field and structured-mesh records.
 
-The scalar validity layer deliberately accepts scalar declarations only.  This
-module extends the *validity vocabulary* without weakening that boundary: raw
-arrays are still not scientific values and are never scanned here.  A field is
-assessed through :class:`~engcore.scientific.fields.result.FieldRecord`, the
-O(1) control-plane record that binds a declaration, support identity, shape,
-summary and content-addressed value reference.
+Raw arrays remain outside the control-plane validity contract.  Field checks
+consume :class:`FieldRecord`, and mesh checks consume :class:`StructuredMesh`.
+That preserves the typed scientific boundary while letting model applicability
+reason about non-scalar results in O(1) from their records.
 
-The first slice is intentionally honest about the field IR that exists today:
-``StructuredMesh`` is two-dimensional rectilinear and ``FieldDefinition``
-represents vector/tensor-like values as a flat component count.  These
-conditions verify exactly those facts; they do not claim unstructured-mesh or
-full tensor-topology semantics that the underlying records cannot express.
+The field IR currently represents vector/tensor-like values as a flat component
+count.  The conditions below verify exactly that representation; they do not
+claim tensor topology or unstructured-mesh semantics the records cannot state.
 """
 
 from __future__ import annotations
@@ -37,37 +33,37 @@ FIELD_STRUCTURE_CONDITION_SCHEMA = schema_string("validity_field_structure_condi
 MESH_RESOLUTION_CONDITION_SCHEMA = schema_string("validity_mesh_resolution_condition")
 
 
-def _clean_name(value: Any, *, label: str = "condition") -> str:
+def _name(value: Any, *, label: str = "condition") -> str:
     text = str(value).strip()
     if not text:
         raise ModelValidityError(f"structured validity {label} requires a name")
     return text
 
 
-def _clean_requires(name: str, values: Sequence[str]) -> tuple[str, ...]:
+def _source(value: Any | None, *, fallback: str, label: str) -> str:
+    return fallback if value is None else _name(value, label=label)
+
+
+def _requires(name: str, values: Sequence[str]) -> tuple[str, ...]:
     if isinstance(values, (str, bytes)):
         raise ModelValidityError(
-            f"condition {name!r}: requires must be a sequence of condition names, "
-            "not a bare string"
+            f"condition {name!r}: requires must be a sequence, not a bare string"
         )
-    required = tuple(str(item).strip() for item in values if str(item).strip())
-    if name in required:
-        raise ModelValidityError(
-            f"condition {name!r} requires itself, which can never be established first"
-        )
-    repeated = duplicates(required)
+    result = tuple(str(v).strip() for v in values if str(v).strip())
+    if name in result:
+        raise ModelValidityError(f"condition {name!r} cannot require itself")
+    repeated = duplicates(result)
     if repeated:
         raise ModelValidityError(
             f"condition {name!r} names {repeated} more than once in requires"
         )
-    return required
+    return result
 
 
-def _typed_reason(context: Mapping[str, Any], name: str) -> UnknownReason:
-    """Use the existing closed reason vocabulary at the typed boundary."""
+def _unknown_reason(context: Mapping[str, Any], key: str) -> UnknownReason:
     return (
         UnknownReason.NOT_SUPPLIED
-        if context.get(name) is None
+        if context.get(key) is None
         else UnknownReason.UNREADABLE_SHAPE
     )
 
@@ -79,9 +75,7 @@ def _positive_int(value: Any, *, label: str) -> int:
 
 
 def _optional_positive_int(value: Any, *, label: str) -> int | None:
-    if value is None:
-        return None
-    return _positive_int(value, label=label)
+    return None if value is None else _positive_int(value, label=label)
 
 
 def _strict_bool(payload: Mapping[str, Any], key: str, default: bool) -> bool:
@@ -90,17 +84,15 @@ def _strict_bool(payload: Mapping[str, Any], key: str, default: bool) -> bool:
 
 @dataclass(frozen=True)
 class FieldRangeCondition:
-    """Require every represented field value to lie inside declared bounds.
+    """Require the whole represented field envelope to lie within bounds.
 
-    The check is O(1): the lower bound is tested against ``summary.minimum``
-    and the upper bound against ``summary.maximum``.  The field bytes are not
-    resolved or scanned.  A record containing non-finite values cannot prove a
-    range claim, so it remains UNKNOWN; domains that need to distinguish that
-    fact should also declare :class:`FieldFiniteCondition` and make this range
-    depend on it with ``requires``.
+    ``name`` identifies the condition; ``field`` identifies the context value.
+    Keeping those separate allows finite/range/structure checks to target the
+    same field without duplicating it under several context keys.
     """
 
     name: str
+    field: str | None = None
     minimum: Quantity | None = None
     maximum: Quantity | None = None
     minimum_inclusive: bool = True
@@ -109,13 +101,12 @@ class FieldRangeCondition:
     description: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _clean_name(self.name))
-        object.__setattr__(self, "requires", _clean_requires(self.name, self.requires))
-        for label in ("minimum_inclusive", "maximum_inclusive"):
-            if not isinstance(getattr(self, label), bool):
-                raise ModelValidityError(
-                    f"condition {self.name!r}: {label} must be a boolean"
-                )
+        object.__setattr__(self, "name", _name(self.name))
+        object.__setattr__(self, "field", _source(self.field, fallback=self.name, label="field"))
+        object.__setattr__(self, "requires", _requires(self.name, self.requires))
+        for flag in ("minimum_inclusive", "maximum_inclusive"):
+            if not isinstance(getattr(self, flag), bool):
+                raise ModelValidityError(f"condition {self.name!r}: {flag} must be boolean")
         if self.minimum is None and self.maximum is None:
             raise ModelValidityError(
                 f"field range condition {self.name!r} needs a minimum or maximum"
@@ -140,7 +131,7 @@ class FieldRangeCondition:
         if not value.is_finite:
             return ValidityStatus.UNKNOWN
         if self.minimum is not None:
-            outcome = _base._within(
+            result = _base._within(
                 value.summary.minimum,
                 minimum=self.minimum,
                 maximum=None,
@@ -148,10 +139,10 @@ class FieldRangeCondition:
                 maximum_inclusive=True,
                 name=self.name,
             )
-            if outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
-                return outcome
+            if result is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
+                return result
         if self.maximum is not None:
-            outcome = _base._within(
+            result = _base._within(
                 value.summary.maximum,
                 minimum=None,
                 maximum=self.maximum,
@@ -159,30 +150,29 @@ class FieldRangeCondition:
                 maximum_inclusive=self.maximum_inclusive,
                 name=self.name,
             )
-            if outcome is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
-                return outcome
+            if result is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
+                return result
         return ValidityStatus.IN_DOMAIN
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
-        return self.evaluate(context.get(self.name))
+        return self.evaluate(context.get(self.field))
 
     def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
-        value = context.get(self.name)
-        # The v2 UNKNOWN vocabulary predates typed fields.  Until the reason
-        # schema is widened, a non-finite typed record is conservatively kept
-        # in the non-actionable bucket rather than misreported as NOT_SUPPLIED.
+        value = context.get(self.field)
         if isinstance(value, FieldRecord) and not value.is_finite:
+            # Kept non-actionable until the UNKNOWN reason schema is widened.
             return UnknownReason.UNREADABLE_SHAPE
-        return _typed_reason(context, self.name)
+        return _unknown_reason(context, self.field)
 
     @property
     def context_keys(self) -> frozenset[str]:
-        return frozenset({self.name})
+        return frozenset({self.field})
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": FIELD_RANGE_CONDITION_SCHEMA,
             "name": self.name,
+            "field": self.field,
             "minimum": self.minimum.to_dict() if self.minimum else None,
             "maximum": self.maximum.to_dict() if self.maximum else None,
             "minimum_inclusive": self.minimum_inclusive,
@@ -197,6 +187,7 @@ class FieldRangeCondition:
         minimum, maximum = payload.get("minimum"), payload.get("maximum")
         return cls(
             name=payload["name"],
+            field=payload.get("field"),
             minimum=Quantity.from_dict(minimum) if minimum else None,
             maximum=Quantity.from_dict(maximum) if maximum else None,
             minimum_inclusive=_strict_bool(payload, "minimum_inclusive", True),
@@ -211,12 +202,14 @@ class FieldFiniteCondition:
     """Require a typed field record to report zero non-finite values."""
 
     name: str
+    field: str | None = None
     requires: tuple[str, ...] = ()
     description: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _clean_name(self.name))
-        object.__setattr__(self, "requires", _clean_requires(self.name, self.requires))
+        object.__setattr__(self, "name", _name(self.name))
+        object.__setattr__(self, "field", _source(self.field, fallback=self.name, label="field"))
+        object.__setattr__(self, "requires", _requires(self.name, self.requires))
 
     def evaluate(self, value: Any) -> ValidityStatus:
         if not isinstance(value, FieldRecord):
@@ -228,19 +221,20 @@ class FieldFiniteCondition:
         )
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
-        return self.evaluate(context.get(self.name))
+        return self.evaluate(context.get(self.field))
 
     def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
-        return _typed_reason(context, self.name)
+        return _unknown_reason(context, self.field)
 
     @property
     def context_keys(self) -> frozenset[str]:
-        return frozenset({self.name})
+        return frozenset({self.field})
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": FIELD_FINITE_CONDITION_SCHEMA,
             "name": self.name,
+            "field": self.field,
             "requires": list(self.requires),
             "description": self.description,
         }
@@ -250,6 +244,7 @@ class FieldFiniteCondition:
         require_schema(payload, FIELD_FINITE_CONDITION_SCHEMA)
         return cls(
             name=payload["name"],
+            field=payload.get("field"),
             requires=tuple(payload.get("requires", ())),
             description=payload.get("description", ""),
         )
@@ -257,16 +252,16 @@ class FieldFiniteCondition:
 
 @dataclass(frozen=True)
 class FieldStructureCondition:
-    """Verify the structural facts the current field IR can actually express.
+    """Verify shape facts the current field IR can state without guessing.
 
-    ``components`` is the flat component count declared by ``FieldDefinition``.
-    It covers scalar/vector/tensor-like component cardinality without pretending
-    that the current IR knows whether nine components mean a 9-vector or a 3x3
-    tensor.  ``spatial_rank`` is derived from the record shape after removing
-    that component axis when components > 1.
+    ``components`` is a flat component count.  It can distinguish scalar from
+    3-component vector or 9-component tensor-like fields, but cannot prove that
+    nine components have a 3x3 tensor topology because ``FieldDefinition`` does
+    not yet carry component-axis shape.  That limitation is explicit here.
     """
 
     name: str
+    field: str | None = None
     components: int | None = None
     spatial_rank: int | None = None
     location: FieldLocation | None = None
@@ -276,24 +271,18 @@ class FieldStructureCondition:
     description: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _clean_name(self.name))
-        object.__setattr__(self, "requires", _clean_requires(self.name, self.requires))
+        object.__setattr__(self, "name", _name(self.name))
+        object.__setattr__(self, "field", _source(self.field, fallback=self.name, label="field"))
+        object.__setattr__(self, "requires", _requires(self.name, self.requires))
         if self.components is not None:
-            object.__setattr__(
-                self, "components", _positive_int(self.components, label="components")
-            )
+            object.__setattr__(self, "components", _positive_int(self.components, label="components"))
         if self.spatial_rank is not None:
-            if isinstance(self.spatial_rank, bool) or not isinstance(self.spatial_rank, int):
-                raise ModelValidityError("spatial_rank must be a non-negative int")
-            if self.spatial_rank < 0:
+            if isinstance(self.spatial_rank, bool) or not isinstance(self.spatial_rank, int) or self.spatial_rank < 0:
                 raise ModelValidityError("spatial_rank must be a non-negative int")
         if self.location is not None:
             object.__setattr__(self, "location", FieldLocation(self.location))
         if self.mesh_id is not None:
-            mesh_id = str(self.mesh_id).strip()
-            if not mesh_id:
-                raise ModelValidityError("mesh_id must be non-empty when declared")
-            object.__setattr__(self, "mesh_id", mesh_id)
+            object.__setattr__(self, "mesh_id", _name(self.mesh_id, label="mesh_id"))
         if self.exact_shape is not None:
             shape = tuple(self.exact_shape)
             if not shape or any(
@@ -304,14 +293,8 @@ class FieldStructureCondition:
                 )
             object.__setattr__(self, "exact_shape", shape)
         if all(
-            value is None
-            for value in (
-                self.components,
-                self.spatial_rank,
-                self.location,
-                self.mesh_id,
-                self.exact_shape,
-            )
+            v is None
+            for v in (self.components, self.spatial_rank, self.location, self.mesh_id, self.exact_shape)
         ):
             raise ModelValidityError(
                 f"field structure condition {self.name!r} must constrain at least one fact"
@@ -336,19 +319,20 @@ class FieldStructureCondition:
         return ValidityStatus.IN_DOMAIN
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
-        return self.evaluate(context.get(self.name))
+        return self.evaluate(context.get(self.field))
 
     def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
-        return _typed_reason(context, self.name)
+        return _unknown_reason(context, self.field)
 
     @property
     def context_keys(self) -> frozenset[str]:
-        return frozenset({self.name})
+        return frozenset({self.field})
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": FIELD_STRUCTURE_CONDITION_SCHEMA,
             "name": self.name,
+            "field": self.field,
             "components": self.components,
             "spatial_rank": self.spatial_rank,
             "location": self.location.value if self.location is not None else None,
@@ -361,10 +345,10 @@ class FieldStructureCondition:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "FieldStructureCondition":
         require_schema(payload, FIELD_STRUCTURE_CONDITION_SCHEMA)
-        shape = payload.get("exact_shape")
-        location = payload.get("location")
+        shape, location = payload.get("exact_shape"), payload.get("location")
         return cls(
             name=payload["name"],
+            field=payload.get("field"),
             components=payload.get("components"),
             spatial_rank=payload.get("spatial_rank"),
             location=FieldLocation(location) if location is not None else None,
@@ -377,9 +361,10 @@ class FieldStructureCondition:
 
 @dataclass(frozen=True)
 class MeshResolutionCondition:
-    """Validity limits over the structured 2-D mesh supported by the core today."""
+    """Validity limits over the structured 2-D mesh represented by the core."""
 
     name: str
+    mesh: str | None = None
     min_nodes_x: int | None = None
     min_nodes_y: int | None = None
     max_spacing_x: Quantity | None = None
@@ -388,18 +373,11 @@ class MeshResolutionCondition:
     description: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _clean_name(self.name))
-        object.__setattr__(self, "requires", _clean_requires(self.name, self.requires))
-        object.__setattr__(
-            self,
-            "min_nodes_x",
-            _optional_positive_int(self.min_nodes_x, label="min_nodes_x"),
-        )
-        object.__setattr__(
-            self,
-            "min_nodes_y",
-            _optional_positive_int(self.min_nodes_y, label="min_nodes_y"),
-        )
+        object.__setattr__(self, "name", _name(self.name))
+        object.__setattr__(self, "mesh", _source(self.mesh, fallback=self.name, label="mesh"))
+        object.__setattr__(self, "requires", _requires(self.name, self.requires))
+        object.__setattr__(self, "min_nodes_x", _optional_positive_int(self.min_nodes_x, label="min_nodes_x"))
+        object.__setattr__(self, "min_nodes_y", _optional_positive_int(self.min_nodes_y, label="min_nodes_y"))
         for label in ("max_spacing_x", "max_spacing_y"):
             value = getattr(self, label)
             if value is None:
@@ -411,13 +389,8 @@ class MeshResolutionCondition:
             if not math.isfinite(magnitude) or magnitude <= 0.0:
                 raise ModelValidityError(f"{label} must be finite and positive")
         if all(
-            value is None
-            for value in (
-                self.min_nodes_x,
-                self.min_nodes_y,
-                self.max_spacing_x,
-                self.max_spacing_y,
-            )
+            v is None
+            for v in (self.min_nodes_x, self.min_nodes_y, self.max_spacing_x, self.max_spacing_y)
         ):
             raise ModelValidityError(
                 f"mesh resolution condition {self.name!r} must constrain something"
@@ -430,28 +403,27 @@ class MeshResolutionCondition:
             return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
         if self.min_nodes_y is not None and value.nodes_y < self.min_nodes_y:
             return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        if self.max_spacing_x is not None:
-            if value.spacing_x.compare(self.max_spacing_x) > 0:
-                return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-        if self.max_spacing_y is not None:
-            if value.spacing_y.compare(self.max_spacing_y) > 0:
-                return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+        if self.max_spacing_x is not None and value.spacing_x.compare(self.max_spacing_x) > 0:
+            return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
+        if self.max_spacing_y is not None and value.spacing_y.compare(self.max_spacing_y) > 0:
+            return ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
         return ValidityStatus.IN_DOMAIN
 
     def evaluate_in(self, context: Mapping[str, Any]) -> ValidityStatus:
-        return self.evaluate(context.get(self.name))
+        return self.evaluate(context.get(self.mesh))
 
     def explain_in(self, context: Mapping[str, Any]) -> UnknownReason:
-        return _typed_reason(context, self.name)
+        return _unknown_reason(context, self.mesh)
 
     @property
     def context_keys(self) -> frozenset[str]:
-        return frozenset({self.name})
+        return frozenset({self.mesh})
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": MESH_RESOLUTION_CONDITION_SCHEMA,
             "name": self.name,
+            "mesh": self.mesh,
             "min_nodes_x": self.min_nodes_x,
             "min_nodes_y": self.min_nodes_y,
             "max_spacing_x": self.max_spacing_x.to_dict() if self.max_spacing_x else None,
@@ -466,6 +438,7 @@ class MeshResolutionCondition:
         sx, sy = payload.get("max_spacing_x"), payload.get("max_spacing_y")
         return cls(
             name=payload["name"],
+            mesh=payload.get("mesh"),
             min_nodes_x=payload.get("min_nodes_x"),
             min_nodes_y=payload.get("min_nodes_y"),
             max_spacing_x=Quantity.from_dict(sx) if sx else None,
@@ -476,7 +449,6 @@ class MeshResolutionCondition:
 
 
 def _register() -> None:
-    """Extend the existing wire decoder without changing scalar semantics."""
     additions = {
         FIELD_RANGE_CONDITION_SCHEMA: FieldRangeCondition,
         FIELD_FINITE_CONDITION_SCHEMA: FieldFiniteCondition,
