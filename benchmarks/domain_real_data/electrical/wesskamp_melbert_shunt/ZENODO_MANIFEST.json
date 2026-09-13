@@ -1,0 +1,27 @@
+{
+ "schema": "domain_real_data_zenodo_manifest/1",
+ "record_id": "164820",
+ "doi": "10.5281/zenodo.164820",
+ "title": "Supplementary dataset for journal article \"High-accuracy current measurement with low-cost shunts by means of dynamic error correction\"",
+ "licence": "cc-by-nc-nd-4.0",
+ "creators": [
+  {
+   "name": "Weßkamp, Patrick",
+   "affiliation": "Ruhr-Universität Bochum"
+  },
+  {
+   "name": "Melbert, Joachim",
+   "affiliation": "Ruhr-Universität Bochum"
+  }
+ ],
+ "publication_date": "2016-11-04",
+ "retrieved_on": "2026-09-13",
+ "files": [
+  {
+   "filename": "JSSS-2016-48-DataSet.mat",
+   "bytes": 26137575,
+   "checksum_published_by_zenodo": "md5:1cb9400f75d324b11b2d1387829c5ac8",
+   "download_url": "https://zenodo.org/records/164820/files/JSSS-2016-48-DataSet.mat?download=1"
+  }
+ ]
+}

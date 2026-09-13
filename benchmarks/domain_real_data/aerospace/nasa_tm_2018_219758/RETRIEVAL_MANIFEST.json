@@ -1,0 +1,8 @@
+{
+ "schema": "domain_real_data_retrieval_manifest/1",
+ "url": "https://rotorcraft.arc.nasa.gov/Publications/files/Russell_1180_Final_TM_022218.pdf",
+ "retrieved_on": "2026-09-13",
+ "bytes": 24384624,
+ "sha256_of_copy_retrieved": "eb6182b47c58b4109bfd3890c93ada902defcbd2bf46e29d25e41a932831493b",
+ "checksum_note": "NASA publishes no checksum for this PDF"
+}

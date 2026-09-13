@@ -1,0 +1,4 @@
+# Raw third-party evidence: bytes are pinned by SHA-256 and must never be
+# normalised. The cycler CSV files are CRLF with an embedded NUL byte; the
+# repository-wide "* text=auto eol=lf" would rewrite them and break every digest.
+* -text

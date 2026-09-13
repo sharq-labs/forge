@@ -1,0 +1,3393 @@
+{
+ "schema": "domain_real_data_mendeley_manifest/1",
+ "dataset_id": "cp3473x7xv",
+ "doi": "10.17632/cp3473x7xv.3",
+ "title": "LG 18650HG2 Li-ion Battery Data and Example Deep Neural Network xEV SOC Estimator Script",
+ "licence": "CC BY 4.0",
+ "licence_url": "http://creativecommons.org/licenses/by/4.0",
+ "institutions": [
+  "McMaster University"
+ ],
+ "contributors": [
+  "Philip Kollmeyer",
+  "Carlos Vidal",
+  "Mina Naguib",
+  "Michael Skells"
+ ],
+ "publish_date": "2020-03-05T20:13:37.422Z",
+ "retrieved_on": "2026-09-13",
+ "download_endpoint": "https://data.mendeley.com/public-files/datasets/{dataset_id}/files/{file_id}/file_downloaded",
+ "temperature_label_rule": "token like 25degC / n10degC in the names of .mat files sharing the folder id; UNKNOWN when absent or ambiguous",
+ "file_count": 421,
+ "total_bytes": 817756272,
+ "files": [
+  {
+   "filename": "11-13-18_18.38 567_US06_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1037092,
+   "sha256_published_by_mendeley": "9f630d0109938c6f92a3bea49f35f41eca1f0e6355e27c2b3962cd682803d121",
+   "file_id": "35af0c4d-3a33-489d-bfcd-608f2a0d1f0d"
+  },
+  {
+   "filename": "11-13-18_19.44 567_Charge6.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5763,
+   "sha256_published_by_mendeley": "3014c66c7aa2470b981a39f2c665762aed3bdd562312ebeb0c41002f471f8e6b",
+   "file_id": "627cb363-46ec-4ba5-a3c7-5e7743108b4c"
+  },
+  {
+   "filename": "11-13-18_23.07 567_Mixed1_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1814078,
+   "sha256_published_by_mendeley": "b6fd13c5c0281e6558344d1b2666167b626357e9eab7ca068c31237ea7f8122e",
+   "file_id": "d019944e-94e1-4570-b32a-ac533135ae9f"
+  },
+  {
+   "filename": "11-14-18_01.08 567_Charge7.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5777,
+   "sha256_published_by_mendeley": "b3b69f09d21785c31520b709319049cb85c183a7f09936431b3ea2fc377f287c",
+   "file_id": "1ecb2805-6fd7-4538-a8b6-ce7b857cf351"
+  },
+  {
+   "filename": "11-14-18_04.32 567_Mixed2_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1947150,
+   "sha256_published_by_mendeley": "fa4d5e3a9787d66b9193a0cdf44383b8d325be0e9aaa6629da8a983c422833bf",
+   "file_id": "b7d27122-cff2-4872-990e-14c71591a69f"
+  },
+  {
+   "filename": "11-14-18_06.42 567_Charge8.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5776,
+   "sha256_published_by_mendeley": "7b7a4212f80dd98ff27b852c45b0cf2922633c17b7a473aa36104618e5e364f4",
+   "file_id": "368f5897-4919-416f-a277-c342fe9ac3d6"
+  },
+  {
+   "filename": "11-14-18_10.06 571_Cap_1C.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 11361,
+   "sha256_published_by_mendeley": "f65990f558d9e91a9e93ab5c8e2d4ee36d146dc6cfaef1e1ea1b27fedfd3ad2a",
+   "file_id": "4adf96b8-4d99-407f-b52b-f03d18a0b32c"
+  },
+  {
+   "filename": "11-14-18_11.07 571_Charge10.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5794,
+   "sha256_published_by_mendeley": "6ad76a5b5578e44baa2a63cd47b7c9ddebf37d0dd11769d56b044e0de00dd55d",
+   "file_id": "6815447f-bb2c-4f56-a710-3e3f87d1dbd2"
+  },
+  {
+   "filename": "11-14-18_14.31 571_Mixed4_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1851018,
+   "sha256_published_by_mendeley": "b7b171b04807544616436537efe9e055ffdee271a8cddb43aa7cc9f17337b449",
+   "file_id": "ef59190f-c040-4782-84a3-01c304401f37"
+  },
+  {
+   "filename": "11-14-18_16.35 571_Charge11.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5599,
+   "sha256_published_by_mendeley": "11a30152fa874c97daf7d1fb1fd03d14eb4d6c374a92cfb3c59bb66c1e8dbee0",
+   "file_id": "d4543b6b-9e42-49c8-a25a-4574ccad97d1"
+  },
+  {
+   "filename": "11-14-18_19.56 571_Mixed5_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1691013,
+   "sha256_published_by_mendeley": "bb94e8de042fb72d3a8f50edac86922241e7cc4de6855150886d90fe592a4c1b",
+   "file_id": "5d4d2a04-65c9-43c5-9647-c55d3492b802"
+  },
+  {
+   "filename": "11-14-18_21.49 571_Charge12.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5591,
+   "sha256_published_by_mendeley": "9e52920c368606d8ca041414f76c5d988a1659d91552192ef386180b9a1e5a56",
+   "file_id": "552e5f2c-c868-4442-9cc8-324655bc3f21"
+  },
+  {
+   "filename": "11-15-18_01.10 571_Mixed6_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1844947,
+   "sha256_published_by_mendeley": "01f945512ab08316f7938b899f62622daea3949e0ef5171497b3d720c17489d6",
+   "file_id": "574ed7d3-30b6-4bed-b735-3e4831661780"
+  },
+  {
+   "filename": "11-15-18_13.39 571_Charge13.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5660,
+   "sha256_published_by_mendeley": "96808ba65b12b69373adc9402248bd9780ce562846a7e195f532d9d1b8b11be9",
+   "file_id": "5e349e64-39dd-4e49-a03b-fe92edd594ae"
+  },
+  {
+   "filename": "11-15-18_17.01 571_Mixed7_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1749299,
+   "sha256_published_by_mendeley": "09c18fe30900e428f47f5d43288a3ccc593deab79e58d4490c92d093d0cdc9be",
+   "file_id": "9f27875b-d3ac-453b-8a94-da5a807547f5"
+  },
+  {
+   "filename": "11-15-18_18.57 571_Charge14.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5660,
+   "sha256_published_by_mendeley": "1915f20a59908e048a9cf7fbdb88145c85215875fe1d24fbe9edd440cad3d252",
+   "file_id": "8861aed8-754d-49e6-ba80-4aa4c905d98b"
+  },
+  {
+   "filename": "11-15-18_22.19 571_Mixed8_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 2044496,
+   "sha256_published_by_mendeley": "4c107027efe5218b27bcbbd1c6c791d5cb9a85f18eb0d89fcf8bd8612548e3dd",
+   "file_id": "deeee4bd-76dc-40fa-bd9d-2bba226958e7"
+  },
+  {
+   "filename": "11-16-18_00.35 571_Charge15.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5629,
+   "sha256_published_by_mendeley": "dfe3389349e04b4211a9b1968c104a40f4e4ad942d925f0a0b2f43da26814921",
+   "file_id": "da5263d1-251b-435a-ba19-d917fbbc9d8a"
+  },
+  {
+   "filename": "11-16-18_03.56 571_PausCycl_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 615802,
+   "sha256_published_by_mendeley": "4bfeb9bf01ab1f8e3d7966420d534fea08452f56bc6cc04b7e52e82fa922cfc7",
+   "file_id": "059979da-3ddf-477a-aef5-3b8e638e5aca"
+  },
+  {
+   "filename": "11-16-18_04.44 571_Charge16.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 3527,
+   "sha256_published_by_mendeley": "72930a5552e90a945c0f8fa73b7cc1f4955a33a0a91ba89ba3fda2d31cdd7361",
+   "file_id": "3054fbeb-5c52-4677-8fb6-85808fb664c2"
+  },
+  {
+   "filename": "11-16-18_20.44 575_HPPC_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 704545,
+   "sha256_published_by_mendeley": "25fac068eb5176a1c15220dbfeb1b6f7a6f99245d3fdb240b882b09a9edcde34",
+   "file_id": "30774513-a1e9-47a5-b3ce-6cafbd04bee9"
+  },
+  {
+   "filename": "11-17-18_20.39 575_C20DisCh_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 70753,
+   "sha256_published_by_mendeley": "f1292ba8d73812b37b5e467aaaf5b9cd91e750516062ccca992118aa51c7b675",
+   "file_id": "d0b8729b-1d08-4809-96d1-fa2136391a8e"
+  },
+  {
+   "filename": "11-19-18_11.33 575_Dis_0p5C_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 9553,
+   "sha256_published_by_mendeley": "9067c9d15b284686222c8e16930abe84796ec36c12b209ce736eb88cc36c662e",
+   "file_id": "cc4c3ffd-e9bc-4e0f-ab4c-815f372d15a3"
+  },
+  {
+   "filename": "11-19-18_16.47 575_Dis_2C_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 6811,
+   "sha256_published_by_mendeley": "0d223402b547c4a2a54b365d7cb5788dc3d7416de400e364f620114481a65e83",
+   "file_id": "f91e207f-0629-4fa3-a8ea-ff91b66adda2"
+  },
+  {
+   "filename": "11-19-18_20.38 576_Charge1.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 2724,
+   "sha256_published_by_mendeley": "9711d2ed3f024086a5a0462e4d9b5a2209aa20893fe6c6cb9a596cb72a6b24cc",
+   "file_id": "8ca362b7-25d7-4bf1-9e73-9762a8b96314"
+  },
+  {
+   "filename": "11-19-18_22.43 576_Cap_1C_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 10968,
+   "sha256_published_by_mendeley": "e0cd87699626cfe4a88e3a2f62c15372b352e87541a4ce79a3d20866ec241e10",
+   "file_id": "6c237d76-fcfb-49c0-8ed8-9c698f50545d"
+  },
+  {
+   "filename": "11-19-18_23.46 576_Charge2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5772,
+   "sha256_published_by_mendeley": "39be5076e4262772fb9882a575bf933fafe1fce9df2b20e3367bc533d91c3a84",
+   "file_id": "dc86c846-a327-49f3-9e19-a84577951ec0"
+  },
+  {
+   "filename": "11-20-18_03.10 576_UDDS_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 3616667,
+   "sha256_published_by_mendeley": "f01c711df9063c5a7b844b8dc7d1fe908aeb0fde1d2f5f3b8a7893af697da391",
+   "file_id": "a614cc12-4472-4c2f-b1cb-42262de880c8"
+  },
+  {
+   "filename": "11-20-18_07.19 576_Charge3.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5709,
+   "sha256_published_by_mendeley": "afcda69706dec7535bacdd000aa3ee94635001d446b9fc185aeddacdf83335d3",
+   "file_id": "e28d1ece-e37a-4065-9237-2c54bfab52b8"
+  },
+  {
+   "filename": "11-20-18_10.41 576_HWFET_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 1309282,
+   "sha256_published_by_mendeley": "87150b6131ed21880416f1739daf9f9d95467beb81f123d3a21b192ebf0d8f24",
+   "file_id": "86d83543-91be-4155-9c8c-f2dde30b2019"
+  },
+  {
+   "filename": "11-20-18_12.10 576_Charge4.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5690,
+   "sha256_published_by_mendeley": "0000b2cebe95a41f466be8da5c782c265109730a4921d80aee24355cd837d257",
+   "file_id": "45e44a60-55e3-439c-8bd4-bf4810806266"
+  },
+  {
+   "filename": "11-25-18_20.59 582_LA92_10degC_LGHG2.mat",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 2298053,
+   "sha256_published_by_mendeley": "74606c4ffdec3ae5d324a437cda004192ac161bace4a6f63103af2ddecdd8df8",
+   "file_id": "95f9b8b9-ed62-42d3-8d3b-99b99c015718"
+  },
+  {
+   "filename": "567_Charge6.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26382,
+   "sha256_published_by_mendeley": "9826fb14017a9056ca06cedf32f85af32300cb6b687cd82e2554d4baf374f4a1",
+   "file_id": "c97fcd48-4583-4bba-ad9c-d7c25085bf83"
+  },
+  {
+   "filename": "567_Charge7.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26437,
+   "sha256_published_by_mendeley": "62d19e51300e4462a1dd513163b1a2df3e1ff74d613bb021f41c470dd7074ef3",
+   "file_id": "054b80c5-3a89-4ef5-9984-aab350cab56b"
+  },
+  {
+   "filename": "567_Charge8.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26447,
+   "sha256_published_by_mendeley": "5100b347bbb17b3df57a9d4092b54213f57fd2178e88a0424f30874d4bf954b9",
+   "file_id": "86cac8f4-5b24-41ed-94ec-e20a1716e950"
+  },
+  {
+   "filename": "567_Mixed1.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 9382046,
+   "sha256_published_by_mendeley": "89eb0f6c7f7cf4b5896c63136fe78a2652a51f9435a396eaa5b59987c760806d",
+   "file_id": "62a830be-fa99-44be-be87-767bf14805de"
+  },
+  {
+   "filename": "567_Mixed2.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 10014124,
+   "sha256_published_by_mendeley": "0ead5c7bb97aafb932f4ad4f3ee67eb004297dc6df9fd09e69836865cc7add3d",
+   "file_id": "bbe9aebf-da20-4d4b-a6b4-e843175c20d9"
+  },
+  {
+   "filename": "567_US06.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5006357,
+   "sha256_published_by_mendeley": "5f7000176770e529d1dce909b74b83a8be32c86ae5c79fe95f00c3a2aebec940",
+   "file_id": "37d7fe05-474e-47cf-92f2-493484b2ec3c"
+  },
+  {
+   "filename": "571_Cap_1C.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 47744,
+   "sha256_published_by_mendeley": "e8ca7fbccd4a45c90e1018e64dec397a4de7570453b7df3b35f08fd460f426f5",
+   "file_id": "46362554-e9ed-429a-a941-f91dd5a23fc7"
+  },
+  {
+   "filename": "571_Charge10.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26549,
+   "sha256_published_by_mendeley": "83cb202db7af3a24505ba04a6359afe75153bdcb6724524243d2effc8db304cd",
+   "file_id": "e74897bd-4d0f-4012-a106-a1831d867185"
+  },
+  {
+   "filename": "571_Charge11.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26190,
+   "sha256_published_by_mendeley": "f96425bfa352f824d4e79b5400a3ff64272fb8841e4e87b7e755182f8f8e37fb",
+   "file_id": "a30f8fc0-f75e-4e8f-b6b1-ce84414be67d"
+  },
+  {
+   "filename": "571_Charge12.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26248,
+   "sha256_published_by_mendeley": "e41e7b98d66bb15c06e3eac62a31775de13a43004bdcfe7333e47a0a3e9700b8",
+   "file_id": "45b5926e-143e-4831-9cb3-454726ee4c81"
+  },
+  {
+   "filename": "571_Charge13.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26191,
+   "sha256_published_by_mendeley": "c6c847f9705d5110806768a22c243c9ac5423cc4f69fd1a3ac35a43fbe0c3d34",
+   "file_id": "2563b3bf-c46c-4228-9b83-86cc07cba847"
+  },
+  {
+   "filename": "571_Charge14.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26211,
+   "sha256_published_by_mendeley": "9faf6145b10f2c990e070e6bfe3299c2893f384465b708333cb549c22b5cc9b1",
+   "file_id": "1c7394f7-a516-460a-b81c-8de1153c2a63"
+  },
+  {
+   "filename": "571_Charge15.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26215,
+   "sha256_published_by_mendeley": "6047baa15b76e73ad7650245a2e2c1b56fe30196b287e62ec81a05c02052622a",
+   "file_id": "69340b7f-d919-4531-ba71-cf7c9e63f0fc"
+  },
+  {
+   "filename": "571_Charge16.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 19496,
+   "sha256_published_by_mendeley": "b6e16361b51fbb38077ab895d1b75f0925f3842ec2ec8286b06ee5fe8795bec7",
+   "file_id": "f50ad360-6b3c-44a8-90e5-6c682eeb9902"
+  },
+  {
+   "filename": "571_Mixed4.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 9520197,
+   "sha256_published_by_mendeley": "f9e596681dced183cc5663d1aebfb17d8971f3ab4024754fbf0900f5c7a1e3d4",
+   "file_id": "da0389f1-c509-433b-96f0-87c8c3bb6844"
+  },
+  {
+   "filename": "571_Mixed5.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 8650674,
+   "sha256_published_by_mendeley": "56274c4f088d81c2a1bfd1f4531aee2b8a94dd6b405adbb8fa0da1a24d1af02b",
+   "file_id": "893c0cd1-5402-4391-820d-4e305ea35d25"
+  },
+  {
+   "filename": "571_Mixed6.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 9569346,
+   "sha256_published_by_mendeley": "586cd6d3f147daf53b307318ba429590aff4dd4cde90ffdf8eee61a4dfaadd56",
+   "file_id": "60809bc3-9ec1-4fd1-8c1c-64a3792d6c84"
+  },
+  {
+   "filename": "571_Mixed7.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 8927386,
+   "sha256_published_by_mendeley": "e4f086dc43bd04aaecae76f5041d20a0b07f0810efe5fd0ab746c0094c7d6221",
+   "file_id": "a1b75a71-d40e-4e56-aaee-a6a9d181a1f9"
+  },
+  {
+   "filename": "571_Mixed8.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 10562318,
+   "sha256_published_by_mendeley": "848511c2b47735410aa7c5e198cf5c64141e7e2ba29a547a70a95558033072c9",
+   "file_id": "eb89ca67-9bcf-4f0e-9485-05edf0188898"
+  },
+  {
+   "filename": "571_PausCycl.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 3567907,
+   "sha256_published_by_mendeley": "a4ac203eefee1ed9e3a893eff45c9c11aafe4a0e21f1fa13a344c4c0bcb10e37",
+   "file_id": "a999575f-af9f-4a88-9f33-90b337295271"
+  },
+  {
+   "filename": "575_C20DisCh.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 299036,
+   "sha256_published_by_mendeley": "fbd691995601bf5919b9d083ce13fcd889c62b272aa5a99969a192d4e64e1db7",
+   "file_id": "19bcd7e5-16d5-4c5c-ace8-f210653c115d"
+  },
+  {
+   "filename": "575_Dis_0p5C.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 40892,
+   "sha256_published_by_mendeley": "f7b92d03ce6c458abf605f80298823428f81f2015690c73030b0514fd54d259b",
+   "file_id": "7a243453-3b8d-400b-872a-56f1a6b811ec"
+  },
+  {
+   "filename": "575_Dis_2C.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 30261,
+   "sha256_published_by_mendeley": "e4d2bda4dea312c6dee883e8188642268272c2ec0bee062c1af7dec24a0d6b58",
+   "file_id": "6fa4baae-b332-477e-a09e-a7497c487978"
+  },
+  {
+   "filename": "575_HPPC.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 5515595,
+   "sha256_published_by_mendeley": "d448b9f25fbb1f9f48d59237297eead9ed7d2a82d02f03fdb5d11cfc50d57d69",
+   "file_id": "5cff4ee4-7992-49dc-a2ea-ac5ab85dd1cf"
+  },
+  {
+   "filename": "576_Cap_1C.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 48815,
+   "sha256_published_by_mendeley": "c5f630e5c0e835b923593235712095291efd2175b9f8972498af37dc6b6fbbc0",
+   "file_id": "3f9f2889-bf5e-4afc-a8ec-0f5aa4be1f61"
+  },
+  {
+   "filename": "576_Charge1.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 16809,
+   "sha256_published_by_mendeley": "42cc7a7cbb361ba23fa4a7bdd62491fc11c1a8410d5740e6f11d7eabd3efc300",
+   "file_id": "6faee27d-1c0e-4a06-9d8a-f238eb17938c"
+  },
+  {
+   "filename": "576_Charge2.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26635,
+   "sha256_published_by_mendeley": "fce0e0be216fc2e053b9d10044383cf31eab8c8bc0b372a84e2f4e07423ba377",
+   "file_id": "0b344d32-f18c-4668-a278-d99b42eb3dff"
+  },
+  {
+   "filename": "576_Charge3.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26231,
+   "sha256_published_by_mendeley": "07022fb652291824c237949a27460aa2c4cbadf4974b291340b7e9e1bfa56fec",
+   "file_id": "0e535bcd-a34c-410b-b33b-23a2400260e0"
+  },
+  {
+   "filename": "576_Charge4.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 26237,
+   "sha256_published_by_mendeley": "0eb136ceda7693cde85a90fbc8919e6b4dc0debfdf04683c623ae3f8015ef8e3",
+   "file_id": "0f7a8609-302e-4c4d-b8ae-d1eb639d8632"
+  },
+  {
+   "filename": "576_HWFET.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 6856941,
+   "sha256_published_by_mendeley": "2f445c8f315e22fb0f8b5cffe5e01263eaae402b20a476e2732cba6fc73275d3",
+   "file_id": "8d5611f9-dea9-4c9a-96d8-9e6f9abe63f3"
+  },
+  {
+   "filename": "576_UDDS.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 19156952,
+   "sha256_published_by_mendeley": "56fc99c76b1891bd01d946ff635ef3254dc50384819567c4a25a49fa6599f4dc",
+   "file_id": "f2a9efa3-38bd-4d49-831e-73c099199815"
+  },
+  {
+   "filename": "582_LA92.csv",
+   "folder_id": "d2f50564-0e37-44c1-9df1-67f190a44bf6",
+   "folder_ambient_temperature_label": "10degC",
+   "bytes": 11763882,
+   "sha256_published_by_mendeley": "2c9a0a6ebe14f4e9c6ad167c59c9f0119d25a3945927bac2ea3db20c676743f1",
+   "file_id": "d6713009-0266-4a55-8d23-63cab50645b2"
+  },
+  {
+   "filename": "10-25-18_04.09 549_Charge.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 18987,
+   "sha256_published_by_mendeley": "9e06c5d474a0a14fac1f9bf685389e446b6d34406a640c84922c18bd8b688d5c",
+   "file_id": "35069915-35c4-4555-bd56-d15b4facc443"
+  },
+  {
+   "filename": "10-25-18_07.39 549_HPPC_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 629646,
+   "sha256_published_by_mendeley": "eb3fdfa111a9761d825ce164d8108c09be3129e039eb1fd1c95ba1f3520fcc75",
+   "file_id": "f7542bd4-73ee-4fff-a3a8-e6f2ff0489ed"
+  },
+  {
+   "filename": "10-26-18_09.29 549_C20DisCh_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 71421,
+   "sha256_published_by_mendeley": "570746af29365dbe2aa7850a8b095bf4f131a6692a1c47dc065141dfc789260d",
+   "file_id": "cf4a2ca6-b724-4e55-ad28-bc0fea30456c"
+  },
+  {
+   "filename": "10-28-18_01.48 549_Dis_0p5C_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 4291,
+   "sha256_published_by_mendeley": "6c343cd72008bfcec298e0837f5fcfc04de3abd7659a59adf250cb17f1694585",
+   "file_id": "74fb65ad-8b16-4a31-b5dc-895a1b1f9fc5"
+  },
+  {
+   "filename": "10-28-18_07.09 549_Dis_2C_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1464,
+   "sha256_published_by_mendeley": "3f5fc538d1886b3ef77d34fc489a5ee5be100743ffb8061e225b23f266fe2d72",
+   "file_id": "920d05d0-d212-4537-9d7b-266d59bf957e"
+  },
+  {
+   "filename": "10-28-18_11.04 551_Charge1.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 2300,
+   "sha256_published_by_mendeley": "ce6b5cfc736cbc5197f09373cea1ba5032cc32c4f0d84c0d7dd548815791c7cf",
+   "file_id": "b5d7c0f2-d5fd-4bb6-b7a8-0c648d22df04"
+  },
+  {
+   "filename": "10-28-18_13.10 551_Cap_1C_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 11384,
+   "sha256_published_by_mendeley": "0846effa0812b2a1a04e845e220a07ba3653387744bbd8a9a366902adbed2177",
+   "file_id": "45a10363-90f3-433a-b54b-cda5989ee70f"
+  },
+  {
+   "filename": "10-28-18_14.16 551_Charge2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5504,
+   "sha256_published_by_mendeley": "62b11888092949f3e8fec10888d8cab9334f1eebbb3b6ddec6f2e03cac97bdfa",
+   "file_id": "72a0f9a2-aafd-4b0b-b322-a5292e11f8b5"
+  },
+  {
+   "filename": "10-28-18_17.44 551_UDDS_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 3363520,
+   "sha256_published_by_mendeley": "2beafcb42b5eec07ffa465b95abce1746d90504c440113276dc07f8b8a958b77",
+   "file_id": "0ad5ba15-4d84-4368-953a-40537e7b0243"
+  },
+  {
+   "filename": "10-28-18_22.11 551_Charge3.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5443,
+   "sha256_published_by_mendeley": "bcf689e62845027d87f782b44b623060f174f53a7d46e8fa1ae7bca109960a02",
+   "file_id": "97272296-39b8-4e58-855a-435f68b68f90"
+  },
+  {
+   "filename": "10-29-18_01.36 551_HWFET_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 37478,
+   "sha256_published_by_mendeley": "28660bc4de7348ba296a855ea778a2078c2764ac78323d2525e2490f571f1f94",
+   "file_id": "ca3d73e5-33a6-4bbb-9006-b82cef95241a"
+  },
+  {
+   "filename": "10-29-18_01.47 551_Charge4.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 2315,
+   "sha256_published_by_mendeley": "7241f3c08ca16730e53141daf61e616faa2bda256f55906a59feba533ec19ffc",
+   "file_id": "0f89ebfe-b2f9-4bb7-b39b-69a0077ceed9"
+  },
+  {
+   "filename": "10-29-18_03.53 551_LA92_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 2208573,
+   "sha256_published_by_mendeley": "43b9803b858e44ad29e7dcfa59fb395ebb06560732fac86b5fc0c1dc5bb62dcf",
+   "file_id": "dec0b398-41c0-451b-ba0f-614b2059452b"
+  },
+  {
+   "filename": "10-29-18_06.42 551_Charge5.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5476,
+   "sha256_published_by_mendeley": "77baa564542e7c7b242027f64781edbb84dcc5ebe8dac13dd545161964f57f30",
+   "file_id": "c09e9208-335b-4208-a837-305204d0386c"
+  },
+  {
+   "filename": "10-29-18_10.08 551_US06_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 938646,
+   "sha256_published_by_mendeley": "87eb8d7a735e6b54c582f663c21bcc06037390feb773770b9901163878c50485",
+   "file_id": "5c8e6b67-974e-41f9-a898-1c8da4b85193"
+  },
+  {
+   "filename": "10-29-18_11.15 551_Charge6.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5416,
+   "sha256_published_by_mendeley": "3d69303d040b85c5bd3d19ecd560a3ec354c7f35c16e1b771cec45c9f02059d5",
+   "file_id": "9e89a908-92fe-4d85-aa41-77b46d5b51a9"
+  },
+  {
+   "filename": "10-29-18_14.41 551_Mixed1_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1675500,
+   "sha256_published_by_mendeley": "8e05da70b31c3f8b10d34592cce193daae0478ccabf9112bef59c778cdc3b74d",
+   "file_id": "105b96e7-39f9-4bf2-8eac-40b6f8b13784"
+  },
+  {
+   "filename": "10-29-18_16.50 551_Charge7.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5451,
+   "sha256_published_by_mendeley": "1a61d1f5ac0cbc68c2497df41dfb5d92bb3361fd5f41a0a019369900b8071e03",
+   "file_id": "38f1c960-101d-4932-b37d-cbcff6bd2019"
+  },
+  {
+   "filename": "10-29-18_20.16 551_Mixed2_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1718302,
+   "sha256_published_by_mendeley": "9608ed630bf4cac74f6204dff3e6cfad04e70446f4fcf2d447f92291572d49fb",
+   "file_id": "c7eae4fc-a482-4927-b468-9ec0cb1c42e8"
+  },
+  {
+   "filename": "10-29-18_22.29 551_Charge8.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5396,
+   "sha256_published_by_mendeley": "9afd7005add121e336b8e05507f8375ce67b376dd8e8acb3dadf96feaa724542",
+   "file_id": "4afcc7ab-6e74-46ae-80b1-f6ebb93abe47"
+  },
+  {
+   "filename": "10-30-18_01.54 552_Cap_1C_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 11704,
+   "sha256_published_by_mendeley": "eac84ce59f8f7af7cb1199947a6f515ad7a42aae5352b993738ecebcb0ee05c4",
+   "file_id": "cf2e7849-18dd-4c82-8bb2-e27f3ebbae6a"
+  },
+  {
+   "filename": "10-30-18_03.00 552_Charge9.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5541,
+   "sha256_published_by_mendeley": "4400cc79168ee98df4eb0d71ced767bb8d46845a4fd69cd5580b1693f90dd064",
+   "file_id": "c9672d71-0d6b-4a9f-b0c6-30266cc8a27f"
+  },
+  {
+   "filename": "10-30-18_06.27 552_Mixed3_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1611016,
+   "sha256_published_by_mendeley": "07f9cdf938fc9f705ad68d30ba881f12cec91eeb43ac5a61a17a21436d065944",
+   "file_id": "b52fbc1b-a352-4a1c-9a14-f9a4cdc2affc"
+  },
+  {
+   "filename": "10-30-18_08.31 552_Charge10.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5458,
+   "sha256_published_by_mendeley": "60bbd419ef7dfe7d7cbfa98c2fe017e0957487ee7804c726991bd25c8ff393eb",
+   "file_id": "f38ed43d-a7d8-4267-bf3e-416f77906f04"
+  },
+  {
+   "filename": "10-30-18_11.56 552_Mixed4_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1760414,
+   "sha256_published_by_mendeley": "ddd908addee5212c7dd231a2d388b5b2d07e6c1fecf04c0c42107bc58c55ffdf",
+   "file_id": "5a8db732-28f4-46a3-99db-702f5da43e70"
+  },
+  {
+   "filename": "10-30-18_14.12 552_Charge11.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5430,
+   "sha256_published_by_mendeley": "a6b826ffaa1b81b136a99391f74e9e4aadc7dbe9c3a1eb48d8b22b9050c98371",
+   "file_id": "a250479c-c32d-46dd-8f22-7abc88fbd50f"
+  },
+  {
+   "filename": "10-30-18_17.36 552_Mixed5_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1571507,
+   "sha256_published_by_mendeley": "9ff7675181f2e93106a0a4513e3f5fa23ce8ea8ca9c841ae55e789ddc52b597c",
+   "file_id": "043a4fc1-25b6-489c-8106-2ef2b4db85c6"
+  },
+  {
+   "filename": "10-30-18_19.38 552_Charge12.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5463,
+   "sha256_published_by_mendeley": "1a8ebcf3f30c985792c081ed11d76788eb1254762d910f8e41356301be277c93",
+   "file_id": "64909032-43fb-4d30-8ed7-4c8629325b75"
+  },
+  {
+   "filename": "10-30-18_23.02 552_Mixed6_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1691404,
+   "sha256_published_by_mendeley": "453606081f7a821bf5c8149de085ed57d0a2f8a61ce51da9be087e3a52bb341a",
+   "file_id": "e9f86d65-6f23-470a-9e1e-a770cdfac875"
+  },
+  {
+   "filename": "10-31-18_01.13 552_Charge13.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5396,
+   "sha256_published_by_mendeley": "f9cb8902d9362c865eece12a33b9ff8c2d7255f092ac17bdf773a06a85c3bd22",
+   "file_id": "2d970659-2095-4146-92f6-ecb45210206a"
+  },
+  {
+   "filename": "10-31-18_04.38 552_Mixed7_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1593659,
+   "sha256_published_by_mendeley": "a76eb3f148d5655d3e07b442ad6c48a8d6229b98e71b20feb50de44ae9e5037a",
+   "file_id": "d1b10bea-3773-4112-8849-68257417cf28"
+  },
+  {
+   "filename": "10-31-18_06.41 552_Charge14.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5432,
+   "sha256_published_by_mendeley": "2ef38827e2c3121757b431bf8c9e9adeabb0ccd48dc7da4a4b30cfcd1dc427e6",
+   "file_id": "470b2fc2-5ea8-4327-90c2-464aa07e6277"
+  },
+  {
+   "filename": "10-31-18_10.05 552_Mixed8_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 1857516,
+   "sha256_published_by_mendeley": "fcda7ecd11afa526fb15743bf6aaeb7474917ac8a47606c025a2c231288d0298",
+   "file_id": "350e1d0e-ebc8-4517-be67-44ff791b2e53"
+  },
+  {
+   "filename": "10-31-18_12.30 552_Charge15.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5424,
+   "sha256_published_by_mendeley": "d693a693dab97fb73dbd3c229467b43530744af6f7168c4ea2090a8b8647ac47",
+   "file_id": "a291dea5-5b75-4ebb-8aa9-9e7add790bf6"
+  },
+  {
+   "filename": "10-31-18_15.54 552_PausCycl_25degC_LGHG2.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 378256,
+   "sha256_published_by_mendeley": "4c624097ab6901754cb4d5f336b3144fdfc2d453f50b991f7ed0c19cca88e348",
+   "file_id": "1b3535be-1bfb-43b1-a27d-aef529a80d1d"
+  },
+  {
+   "filename": "10-31-18_17.41 552_Charge16.mat",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 2150,
+   "sha256_published_by_mendeley": "46415517c12762e6db512e2ed304ef7d856114430913d7ceadaaf3820f3a1f69",
+   "file_id": "22391753-74c9-4526-a1f5-be8d56c71419"
+  },
+  {
+   "filename": "549_C20DisCh.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 312505,
+   "sha256_published_by_mendeley": "52eff1a8d273f353d557af8172139c2f23709499d36130ac24ffbbb820e8f232",
+   "file_id": "452b3bf6-6382-4c3a-95ba-a34b7c7427bc"
+  },
+  {
+   "filename": "549_Charge.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 108521,
+   "sha256_published_by_mendeley": "30d22f056402c19747481d5fff96cc43092866ea0ee83e6f265f28967c3b7073",
+   "file_id": "647b6826-d1bf-4b5d-a175-0806e093676f"
+  },
+  {
+   "filename": "549_Dis_0p5C.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 15001,
+   "sha256_published_by_mendeley": "85f6147f9bc21157e777a547229af5f252360c308a753672ef3eb1144b57fa75",
+   "file_id": "7fa23199-3e05-4d74-8a2c-229e35702bdd"
+  },
+  {
+   "filename": "549_Dis_2C.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 4178,
+   "sha256_published_by_mendeley": "87b77c00e18242b177bd7a2eac8faa46ad2139c15aa94c146388ae13eba92a06",
+   "file_id": "a4b48a95-7bf1-4eb8-8da7-59c8a7a5332f"
+  },
+  {
+   "filename": "549_HPPC.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 6033634,
+   "sha256_published_by_mendeley": "70ffb357511dd77e7c6bc14c642a095ddd51d6918b547987247100a3bd2ea29d",
+   "file_id": "48884fa9-3d4b-4af2-8ff0-0be869df3c56"
+  },
+  {
+   "filename": "551_Cap_1C.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 51428,
+   "sha256_published_by_mendeley": "d9b9dd9b9b842ee6ba91f79a85512d2306527103d2f1cef5ecec4f962a75d83e",
+   "file_id": "47f2b5b4-e56f-49b6-a65a-e7bc2f15d424"
+  },
+  {
+   "filename": "551_Charge1.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 16935,
+   "sha256_published_by_mendeley": "84af44b28f95cf57bd0106653e3b1082d693d8786674b57c791dc2cc46ff6b39",
+   "file_id": "7c4f37b7-277a-4123-b534-896b096b66e0"
+  },
+  {
+   "filename": "551_Charge2.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 27203,
+   "sha256_published_by_mendeley": "8e1afe7d9bd3fa1dd6be75b3d17e4459bd5042ebf6ab582f8cd69c5a623afd52",
+   "file_id": "4d5b603f-092c-4b28-bb7a-ee624994cd5c"
+  },
+  {
+   "filename": "551_Charge3.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26995,
+   "sha256_published_by_mendeley": "d09b73a37b6b95e4926b157b0452d599d5e79f81704fa41a9862be98fba3795c",
+   "file_id": "404a77f4-d861-4697-9b2b-a91b11fd5368"
+  },
+  {
+   "filename": "551_Charge4.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 16816,
+   "sha256_published_by_mendeley": "3658f338ff525b6ee708e878ab6a357adb373228843b5569bf94aa091b8cad15",
+   "file_id": "4f1a72ea-772b-4598-b1e3-eeb427f4729a"
+  },
+  {
+   "filename": "551_Charge5.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26831,
+   "sha256_published_by_mendeley": "c5f6e298a120d101304d391ea29d6f2253394032d898c0a3fb7c4354f5025d3d",
+   "file_id": "6198626a-2f17-4cfd-bcec-c47244ea1986"
+  },
+  {
+   "filename": "551_Charge6.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26927,
+   "sha256_published_by_mendeley": "9e619143d9724076ec08c6a8907f4b0e2632006105c93a19bb4508638b3440f3",
+   "file_id": "c548684b-bee3-4e48-9926-15c1511446bd"
+  },
+  {
+   "filename": "551_Charge7.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26822,
+   "sha256_published_by_mendeley": "76c02a6e54b3a5a6953f13f7282fc1fe4ef589a9d42e0a72e514a381176ae138",
+   "file_id": "695e3414-8fc4-47ad-9192-70d2a30495c7"
+  },
+  {
+   "filename": "551_Charge8.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 27103,
+   "sha256_published_by_mendeley": "618cadd9abcb8cad5e630603dcad1b26aa3159820f3616c25bbb1eecd04c5cf5",
+   "file_id": "73429541-d2f7-4557-8c98-5bb30be1e61f"
+  },
+  {
+   "filename": "551_HWFET.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 750946,
+   "sha256_published_by_mendeley": "5b774a7673d4e624758f59adc6d94efa981390ee728125cccca68846efd77eae",
+   "file_id": "a54cbc8d-29f3-4af7-82a0-97ccb0879108"
+  },
+  {
+   "filename": "551_LA92.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 13057561,
+   "sha256_published_by_mendeley": "baa7c87f649bdc247614b4b22ee590107e407e2bd45aedebb7ec3dd1022420e2",
+   "file_id": "daeabc82-2ed4-4ec0-b3a5-bf2ff92934c3"
+  },
+  {
+   "filename": "551_Mixed1.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 10008045,
+   "sha256_published_by_mendeley": "59bf0ca287d0e43de95164254b28bad0be5c346eefb08010f1153b5b60b0b88c",
+   "file_id": "db560388-04b8-4211-ba2d-3fa70fe8d7f2"
+  },
+  {
+   "filename": "551_Mixed2.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 10276386,
+   "sha256_published_by_mendeley": "89355b5e6e34aa1df531cb56b3de6c2166a2f08a9345a5161f48b4831e46ab94",
+   "file_id": "1b98d7b8-7ce5-414f-891b-b55f863c5a09"
+  },
+  {
+   "filename": "551_UDDS.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 20706582,
+   "sha256_published_by_mendeley": "1d6433fa388be9d411f8554bcfd3410e64ea605a2545ccf94ce362809b4b688c",
+   "file_id": "58f73e68-6748-4232-a26a-176b3dab0c1f"
+  },
+  {
+   "filename": "551_US06.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 5237346,
+   "sha256_published_by_mendeley": "4e43498d29ee21da6d6dcd7ef47bbedcd2cd3ed92100a0e8094976dbd0fa2d96",
+   "file_id": "54f471c3-86a7-4234-b4f6-e61a24980348"
+  },
+  {
+   "filename": "552_Cap_1C.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 50915,
+   "sha256_published_by_mendeley": "8fb71c599b4b94e8875a768be2b1e72224203681b185d75193619709103a22ad",
+   "file_id": "e2d97a63-6529-46df-a296-cfd80d980b8b"
+  },
+  {
+   "filename": "552_Charge10.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26812,
+   "sha256_published_by_mendeley": "9187791b75e6374244ad4cf8e3185d313ee506c7fb4fde58943c903ead553e45",
+   "file_id": "4d170fcd-0049-485a-aadf-b65476f29867"
+  },
+  {
+   "filename": "552_Charge11.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26692,
+   "sha256_published_by_mendeley": "265aca7b34cf4812aabf278b3d17c4e6efa61a9dc26acd0ca6bc5765e3954971",
+   "file_id": "e4a68768-72ce-4ec9-8d3d-c9d9a63a9be0"
+  },
+  {
+   "filename": "552_Charge12.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26758,
+   "sha256_published_by_mendeley": "3e409c16f25e964ab75ad02f96125536fd8fe7a86eb61bf989755cde07777093",
+   "file_id": "dd2b5249-08f7-4b4c-abc6-08b17af7245a"
+  },
+  {
+   "filename": "552_Charge13.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26692,
+   "sha256_published_by_mendeley": "5529b11c81f503644060852e24075e752ec98389ccea435c50ee57c9eedcf14a",
+   "file_id": "a29489c9-ba2b-4258-a4e8-25b0fa0c9689"
+  },
+  {
+   "filename": "552_Charge14.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26699,
+   "sha256_published_by_mendeley": "bfd56384bf493aa1ece6990c4b328e78c36cf78670dc0646440beb892ea9f9bb",
+   "file_id": "599d38a6-e9f8-469f-b63c-966c93aa19c0"
+  },
+  {
+   "filename": "552_Charge15.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 26723,
+   "sha256_published_by_mendeley": "14feaa46de87ecd48099de0cdcc162b5a5d2fe42f9a012d53344d788b8f4617d",
+   "file_id": "7de8086e-b747-4909-9e14-8ee3c0c9be36"
+  },
+  {
+   "filename": "552_Charge16.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 16571,
+   "sha256_published_by_mendeley": "00f4dda3266f4a69bad5854d531be2aedb75266a33778e5a062509f6df4787bd",
+   "file_id": "56099508-a4cb-41d2-a342-f56f1090bc25"
+  },
+  {
+   "filename": "552_Charge9.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 27201,
+   "sha256_published_by_mendeley": "22fedbc6ffe6f0aab52b898bddb1951d8113b7e00477904a1b4ad49b4e263e69",
+   "file_id": "06146700-dd05-43c6-b88d-322892d65e9e"
+  },
+  {
+   "filename": "552_Mixed3.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 9565908,
+   "sha256_published_by_mendeley": "9e0796fd62922781d7686da8befebd9ce643f81d4c9bcb650687a459e125b327",
+   "file_id": "0755a824-5473-4f90-988a-4f38760be177"
+  },
+  {
+   "filename": "552_Mixed4.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 10515254,
+   "sha256_published_by_mendeley": "98abdaeedf309773578885636e74f9d5dfbc4fe410a55872e7824622f2ee57ba",
+   "file_id": "373eb066-c068-459d-8925-5db20295e8c1"
+  },
+  {
+   "filename": "552_Mixed5.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 9353155,
+   "sha256_published_by_mendeley": "17bd7e6d1c72b72f61de10fe82f81d0577c314a57e6a922d2da253e4244236ac",
+   "file_id": "8f4ea3f4-8021-491f-b4bc-eae2e6c07919"
+  },
+  {
+   "filename": "552_Mixed6.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 10191845,
+   "sha256_published_by_mendeley": "e978384a54b01418697041698ef080a2ed8a654a144b8329116bf9ccb12b596b",
+   "file_id": "25dea0ca-f249-4741-b458-ff5db77b1525"
+  },
+  {
+   "filename": "552_Mixed7.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 9489559,
+   "sha256_published_by_mendeley": "ea676e6d1f5eacdcf84836de6de950a4fd38bf4b19a71b7140c54fb5b2daf2d4",
+   "file_id": "1a70af4c-61c5-4341-b746-426eb10c308a"
+  },
+  {
+   "filename": "552_Mixed8.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 11220381,
+   "sha256_published_by_mendeley": "495af3150051def440ceadd425dbb145fabda32c096e4b8fc2edbc063e7b89cc",
+   "file_id": "00e26bc0-1d0b-4317-b4a1-02677dc91d73"
+  },
+  {
+   "filename": "552_PausCycl.csv",
+   "folder_id": "8b988119-7c3e-4d08-8341-bf1b3ec01353",
+   "folder_ambient_temperature_label": "25degC",
+   "bytes": 7878098,
+   "sha256_published_by_mendeley": "3f8a910ce2709cf4421aadbc7be4add677e62692103b204b9c7c368f765c8f36",
+   "file_id": "865aa14c-67d5-44ca-b14c-29750519151f"
+  },
+  {
+   "filename": "11-02-18_18.30 555_HPPC_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 682797,
+   "sha256_published_by_mendeley": "3d9108971b6909db18723a55dea7831ee78bcc6f3a63bc7523fcd09d53c795e8",
+   "file_id": "c7c165c8-830c-44c9-b8aa-3c6fea001993"
+  },
+  {
+   "filename": "11-03-18_18.25 555_C20DisCh_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 71002,
+   "sha256_published_by_mendeley": "82c1a13b05cf9c8eb742a48c01e2dd75d19ec35525772aab54c49ef088de3d5b",
+   "file_id": "27011b53-8ae9-4c97-ade7-dcb0da5b7f10"
+  },
+  {
+   "filename": "11-05-18_09.24 555_Dis_0p5C_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 9632,
+   "sha256_published_by_mendeley": "ee673db97f9256e9a5b2dc533a0953c50772ca638ae376e1bb9eb8cc2c1e0f64",
+   "file_id": "40548a43-4484-488c-84d9-a38408288a00"
+  },
+  {
+   "filename": "11-05-18_14.39 555_Dis_2C_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 6992,
+   "sha256_published_by_mendeley": "f36b9f675b8df0b917558731ceb655be863ef456fed4f5197bb4fa6403ca3c71",
+   "file_id": "03356fbc-faa4-4e69-b679-53182c748af3"
+  },
+  {
+   "filename": "11-05-18_17.32 556_Charge1.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2734,
+   "sha256_published_by_mendeley": "b6c084641815f43a592d21dd8ea7702d78c18977c31d95b8d4fff47aa91e95ab",
+   "file_id": "aa2d8ca0-96f8-46be-bd2a-7b2f0c8debba"
+  },
+  {
+   "filename": "11-05-18_20.44 556_Charge2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5959,
+   "sha256_published_by_mendeley": "b5585e245d5a9e2d8c7ce665d81309035d273cc9cc16ea334c3dc30286f2776f",
+   "file_id": "881d79e3-f8c1-4ec2-84e0-907e01c58a6c"
+  },
+  {
+   "filename": "11-06-18_00.10 556_UDDS_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 3749704,
+   "sha256_published_by_mendeley": "a38de6d1db2976f96b3b276da91655e5a2dfd71c10f26c78ca370f0f0629bc64",
+   "file_id": "f0ecf074-bada-48c3-a26c-8b6e93f335ea"
+  },
+  {
+   "filename": "11-06-18_04.36 556_Charge3.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5807,
+   "sha256_published_by_mendeley": "3f7b432c5b34b3425cf34fa0ab591903255a44ad2f1009fef73b9357257ad21a",
+   "file_id": "f80a5b77-89a9-4178-b20c-9b42750093ee"
+  },
+  {
+   "filename": "11-06-18_08.01 556_HWFET_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1325931,
+   "sha256_published_by_mendeley": "274df0939f8222335872446c9e82a5f2f1e283a6cc9a617544cc4e0e1fb55b31",
+   "file_id": "ff739a28-ffdc-4e4b-b56e-e00ce9081903"
+  },
+  {
+   "filename": "11-06-18_09.35 556_Charge4.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5795,
+   "sha256_published_by_mendeley": "ccd89b305172d18d8790085cb4435c249cd7684fd77c83b1b6970e2713698ba8",
+   "file_id": "ba01baa4-0202-4a6f-8de0-e537cff2757d"
+  },
+  {
+   "filename": "11-06-18_12.59 556_LA92_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2400952,
+   "sha256_published_by_mendeley": "43f51b51d5f8de34f24a1c55cb93e6f5535052bc68bb9bab37a2cfc8ca7a442a",
+   "file_id": "72291ead-516a-4ee1-9286-cda1780ddfce"
+  },
+  {
+   "filename": "11-06-18_15.45 556_Charge5.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5817,
+   "sha256_published_by_mendeley": "89188607c7cc69c2b805855533705647ca654d28a236a4cb24c831a32a0a60d6",
+   "file_id": "57021b3b-1827-43c3-89c9-ed626b3ee182"
+  },
+  {
+   "filename": "11-06-18_19.09 556_US06_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1037860,
+   "sha256_published_by_mendeley": "7eddd1dd28ee9f208ba4ed9314d731d5b1f16cb004de707f6145c6f47aba315d",
+   "file_id": "2ea7fbe5-37ed-4dfd-9063-8421aee3f96b"
+  },
+  {
+   "filename": "11-06-18_20.17 556_Charge6.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5799,
+   "sha256_published_by_mendeley": "a0fad8eb2c598e1a1715a4146fd3b6a78c54d09635253bcf5187b124fc11328b",
+   "file_id": "fe880571-e939-42d1-8cbf-3bfa4451cbad"
+  },
+  {
+   "filename": "11-06-18_23.41 556_Mixed1_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1815074,
+   "sha256_published_by_mendeley": "329e99a96ced01eb6ea229679131cc09ce6ac75b69925b00badacd7109d8a0ba",
+   "file_id": "fde83d76-fa40-446d-acd5-4ff7d939f147"
+  },
+  {
+   "filename": "11-07-18_01.47 556_Charge7.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5863,
+   "sha256_published_by_mendeley": "b43482ac262192d2d03780638b7a6a6f904360abef73c02f691c1d209fcdb4aa",
+   "file_id": "e73ef063-144a-4969-80a0-1a751bc7952d"
+  },
+  {
+   "filename": "11-07-18_05.12 556_Mixed2_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1911098,
+   "sha256_published_by_mendeley": "0f05b64bd8e80d46130d12cebb0ae0b37ed4b2a4890516e0849c1492f98c5001",
+   "file_id": "40ba3e14-9f0e-47f2-95b7-781991126e42"
+  },
+  {
+   "filename": "11-07-18_07.24 556_Charge8.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5829,
+   "sha256_published_by_mendeley": "e2bbde909b528b986eefc273b90b8e985a70d0a638b55ac4c20539481341ec23",
+   "file_id": "de7638f7-816f-4029-afcf-c5f506387d0e"
+  },
+  {
+   "filename": "11-07-18_10.49 557_Cap_1C_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 12029,
+   "sha256_published_by_mendeley": "d06bbd1e56c028fb572cb1dd3696d11bb46d1314d4aebdf758911ca5d80b266c",
+   "file_id": "fa6ebc74-3b08-4041-9541-dec332fcc0f6"
+  },
+  {
+   "filename": "11-07-18_11.51 557_Charge9.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5804,
+   "sha256_published_by_mendeley": "c42982405a2b8e2d19419bd6307d1e9a82ebb1b35b654a574edbc07a6a633b73",
+   "file_id": "05f85577-429f-486c-afa8-a0b07e4e2b9b"
+  },
+  {
+   "filename": "11-07-18_15.14 557_Mixed3_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1626289,
+   "sha256_published_by_mendeley": "860dcb76988e65b071b803ace6382b517421cfad6fdda9bc60d703d3d2116146",
+   "file_id": "5118ef9d-b3a8-4e74-b516-31ec6527b1d5"
+  },
+  {
+   "filename": "11-07-18_17.08 557_Charge10.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1071,
+   "sha256_published_by_mendeley": "c7b5b928e8f1794540e34ef9bb1064bd7f6ac7b7e5721aacd16da1e7bfd9c71e",
+   "file_id": "27d47403-9cef-43a6-b14e-60d10f61311e"
+  },
+  {
+   "filename": "11-08-18_04.31 562_Mixed4_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 195701,
+   "sha256_published_by_mendeley": "262255ff868224fb3d07c8c8063363dd5b095000b39ba043e54fd3640eeb8696",
+   "file_id": "07356ec6-e33d-4b79-8b0c-9bbd63c39f23"
+  },
+  {
+   "filename": "11-08-18_04.51 562_Charge11.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2904,
+   "sha256_published_by_mendeley": "9073f8d348fbe79ba944180d4223f430e9aa57850092dbef8a4a4b5b37c7413b",
+   "file_id": "0349f0bb-7d7f-479e-94b1-c78951904bdb"
+  },
+  {
+   "filename": "11-08-18_07.11 562_Mixed5_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 241633,
+   "sha256_published_by_mendeley": "23b8b0e1b1dab2180f5e75ad851b2c25195cbf62232271b30bbd4a51ebe836c9",
+   "file_id": "d86b6a31-c43e-4fef-94df-beb9f59b5953"
+  },
+  {
+   "filename": "11-08-18_07.34 562_Charge12.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2937,
+   "sha256_published_by_mendeley": "1039ae7135854f37e573fbb3c67646160d57d2ce27a25f5dcf7c6d4c2326834c",
+   "file_id": "b4def677-d1ac-4bdf-b99c-e54b086be10b"
+  },
+  {
+   "filename": "11-08-18_09.53 562_Mixed6_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 210844,
+   "sha256_published_by_mendeley": "9791a0ef4cf43aa747f5ac710010e4af282b247ba128260b3e390848bfca9751",
+   "file_id": "125c6935-88ba-4f5b-b382-ab04989a3d5a"
+  },
+  {
+   "filename": "11-08-18_10.13 562_Charge13.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2898,
+   "sha256_published_by_mendeley": "7e3c44feea4719ad22c7fc059c285a9ce849763cb03c66a98d3ed71cf8a30d05",
+   "file_id": "37995ba4-3adc-411a-a8b2-ecfb48d4a65d"
+  },
+  {
+   "filename": "11-08-18_12.33 562_Mixed7_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 113982,
+   "sha256_published_by_mendeley": "aba6fb44852079f6db593f56fba35ae312fb5862932a01fbf1afdbfb8c78df36",
+   "file_id": "a8d375aa-e600-4691-b9d7-f7dea9bc6b76"
+  },
+  {
+   "filename": "11-08-18_12.47 562_Charge14.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2847,
+   "sha256_published_by_mendeley": "a37a5b9a0406e9e7435c4629b075968e4c216bed6250bffaa956e7e40c9c7d99",
+   "file_id": "b2915e9d-5882-4884-a4fe-2f1503756de9"
+  },
+  {
+   "filename": "11-08-18_15.06 562_Mixed8_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 270855,
+   "sha256_published_by_mendeley": "dcaa9e8d075592a60b76f1fce57a3ec08f06e6ea40da7f79f7b57bbd92f44931",
+   "file_id": "1b767ffc-6ae4-47aa-ac37-7a49d4f5fddc"
+  },
+  {
+   "filename": "11-08-18_15.31 562_Charge15.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2905,
+   "sha256_published_by_mendeley": "4926289dc89a8b1e05f9d1783e930a6babf4f85efbf55d346c213a310140f720",
+   "file_id": "9de70b9f-008e-4556-bdac-192084053cc5"
+  },
+  {
+   "filename": "11-08-18_17.50 562_PausCycl_40degC_LGHG2.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 100477,
+   "sha256_published_by_mendeley": "79465f8e131704728a31a7ca251168324fb9468cb6dcac44fef651a839b235f3",
+   "file_id": "901edaca-f76d-4262-8f25-bd0372a8bd87"
+  },
+  {
+   "filename": "11-08-18_18.04 562_Charge16.mat",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 2432,
+   "sha256_published_by_mendeley": "55afdd69c683a73a4703f0e967c77a14118efca3edf983aa16700abd81fcfb1d",
+   "file_id": "471dbec7-131b-4425-997e-4b9f2dba6c12"
+  },
+  {
+   "filename": "555_C20DisCh.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 299516,
+   "sha256_published_by_mendeley": "284764b92a255b4cf7efc775178ab986e1526db6b622bfcadbd8dfb6f0506c8d",
+   "file_id": "edf90d36-1268-4e03-99fe-4ef1a6847e77"
+  },
+  {
+   "filename": "555_Dis_0p5C.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 40812,
+   "sha256_published_by_mendeley": "92ac6eac40fa31ec0ab47ec3c3536eb044002a39b333071a44d98760fcbc8319",
+   "file_id": "311d3869-1ccd-4a27-bd09-cd3227cad10e"
+  },
+  {
+   "filename": "555_Dis_2C.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 30402,
+   "sha256_published_by_mendeley": "596967e981bea35c51d58ad1dd92d52c2b4bca17681944e4b18de5d71ad4301b",
+   "file_id": "a095bb1e-da4a-4519-8e42-85f4fd2b14ac"
+  },
+  {
+   "filename": "555_HPPC.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5552795,
+   "sha256_published_by_mendeley": "ffaa6441582544024ff4678b2f392a3eb8ab5ed624fdabcb37d573d2cc7c3dcf",
+   "file_id": "d9283720-58c7-439c-a562-8c9c3d12145d"
+  },
+  {
+   "filename": "556_Charge1.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 16807,
+   "sha256_published_by_mendeley": "08d8bd4ed151e6aa73e8e0a6f494bd4c7ca358652150ab32878aab88b1ce0743",
+   "file_id": "475d06f7-12c0-405d-969a-94c03768219e"
+  },
+  {
+   "filename": "556_Charge2.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26996,
+   "sha256_published_by_mendeley": "c4b4e7cf71a8670dcd52569f85420ba4e41afabc653b0a31d4421f84198afb1a",
+   "file_id": "1070c4eb-92fb-42c9-9c24-617c35b2c4ce"
+  },
+  {
+   "filename": "556_Charge3.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26476,
+   "sha256_published_by_mendeley": "106e0fb30f645b4c64801f832af777544e1a69fc0723cc5745b8c2f650bf8ce1",
+   "file_id": "20b55e7f-2439-4a48-8c37-6ba634503d05"
+  },
+  {
+   "filename": "556_Charge4.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26585,
+   "sha256_published_by_mendeley": "d950ec93e500c838931458ae97f113a223efc340d9566618e1cee431508a851b",
+   "file_id": "3b95eca7-4a05-41b1-80db-27b19f2729ce"
+  },
+  {
+   "filename": "556_Charge5.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26469,
+   "sha256_published_by_mendeley": "be5a151008b04acabe18fcd140f78595ce04a20ac41fcdc01abc1e859780d841",
+   "file_id": "72fbee03-994a-4ea0-874b-71298090682f"
+  },
+  {
+   "filename": "556_Charge6.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26506,
+   "sha256_published_by_mendeley": "8b4f8e42deee347e7c4ca4351f36010f8258755d55e206d6604ed5d0e9644a08",
+   "file_id": "aa65c2d8-2f26-421d-967d-e48332d8d2d5"
+  },
+  {
+   "filename": "556_Charge7.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26467,
+   "sha256_published_by_mendeley": "d773bc4105ad3b430997584900d76f1eb5e0cf4eff28d40aaf848735aac18d8e",
+   "file_id": "0874f568-1e3d-4302-828c-cfe708c9be19"
+  },
+  {
+   "filename": "556_Charge8.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26579,
+   "sha256_published_by_mendeley": "6892b78121f4d43ece65aea1a3a0a92126ba85cba07b15ad0c1e6c7909d2558f",
+   "file_id": "675d80de-2617-4661-92b5-d0974cdac3b3"
+  },
+  {
+   "filename": "556_HWFET.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 7190255,
+   "sha256_published_by_mendeley": "86c45744ba133fed513b653359f3fdd9295255af2454965f9cb651e9a4fc01e0",
+   "file_id": "3d253890-509b-43af-8695-82e02b034bc1"
+  },
+  {
+   "filename": "556_LA92.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 12683253,
+   "sha256_published_by_mendeley": "2131a823e1db0af1fba0a8c4b67979ce9cbe76ba473a29fd00e434be20783ec4",
+   "file_id": "fea93153-d6d0-4f17-80cc-faef2d75b815"
+  },
+  {
+   "filename": "556_Mixed1.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 9735110,
+   "sha256_published_by_mendeley": "6c13c23414846e6b70e387bff5172dafd296b2c126128749325f38db1e14d105",
+   "file_id": "40f91ca9-0389-46b6-bacd-507ba94ad404"
+  },
+  {
+   "filename": "556_Mixed2.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 10152383,
+   "sha256_published_by_mendeley": "1bb9b7253fb8d811167d86ce2ad91fdf7615f60c551ad4ac596f3e2cd4d41ed5",
+   "file_id": "be6e786c-8d36-4d6b-a696-983e8efe5407"
+  },
+  {
+   "filename": "556_UDDS.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 20481615,
+   "sha256_published_by_mendeley": "1193904f7a4e1197667449c5c3a50ef02c1768d9ae27284b2f2f947427d43c84",
+   "file_id": "00bca9a4-2e97-4a08-8715-c49fe5370d16"
+  },
+  {
+   "filename": "556_US06.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 5131940,
+   "sha256_published_by_mendeley": "c80068d34aacec1e79888aa0b1196914e4de032322156bcc26d69cfb2ea881ac",
+   "file_id": "61107324-ea15-47b3-a15c-6f1d40822e8f"
+  },
+  {
+   "filename": "557_Cap_1C.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 47556,
+   "sha256_published_by_mendeley": "2ee1ecc2d75462b79d2192066a03c131dd87412661ef56358fa949741188f69c",
+   "file_id": "c057f05c-ac07-412e-b4ad-da65b6aa7f2a"
+  },
+  {
+   "filename": "557_Charge10.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 4760,
+   "sha256_published_by_mendeley": "e8e59418cfe8c365b276a546baaab89bace648bd8fdb64dccc89c1a5db701af8",
+   "file_id": "6aa2ce3a-50f8-4691-be1a-5493f893fa62"
+  },
+  {
+   "filename": "557_Charge9.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 26346,
+   "sha256_published_by_mendeley": "00cccd066262984cead20b26376c5cd67454ca53ee6a91b5cc3c8a43c256045a",
+   "file_id": "e8739046-55d5-4dec-bf9b-f5e02ec67fda"
+  },
+  {
+   "filename": "557_Mixed3.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 8693774,
+   "sha256_published_by_mendeley": "b2716b46b376c67cd8f6b489d7cee1c8f8de109fbcd78cebceeaaff4af880c7b",
+   "file_id": "15b5d535-7b8e-4050-b69b-de687f7d2529"
+  },
+  {
+   "filename": "562_Charge10.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 54097,
+   "sha256_published_by_mendeley": "3413ee514bc052e59bfd190db131f31d5546cbe42bfd247db9b3bfcd6107da75",
+   "file_id": "4cebc87f-00ef-4329-9d7b-9100534047dd"
+  },
+  {
+   "filename": "562_Charge11.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 18406,
+   "sha256_published_by_mendeley": "944c6fa9e31421e7449a94c4a560f7bd207eee0d126696dd49fc183f0c6f1e96",
+   "file_id": "9d77f84a-cb0b-49a5-92c0-ee1d1cafcb63"
+  },
+  {
+   "filename": "562_Charge12.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 18283,
+   "sha256_published_by_mendeley": "a98652315b85e5bb4f6dddecbe9a28f65871eb264006fc871acb30e18de95cf6",
+   "file_id": "75074676-006a-4aea-9dd4-4172f22850df"
+  },
+  {
+   "filename": "562_Charge13.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 18550,
+   "sha256_published_by_mendeley": "43cda409db812af8df1357629e57b7818e8cda5fa1a9434b168424592dbec6a9",
+   "file_id": "8ea4fb56-0718-4035-9912-15bcff5555de"
+  },
+  {
+   "filename": "562_Charge14.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 18296,
+   "sha256_published_by_mendeley": "9161905fb6a9fe231a3206cb933840517c7408343ca1160d1cd247ad431af7ee",
+   "file_id": "a74e83e2-9576-4a56-9312-763dfffecd7d"
+  },
+  {
+   "filename": "562_Charge15.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 18406,
+   "sha256_published_by_mendeley": "73153fe56d947c0a8a6596a30406cb11107af32c1155f8730fb32f485b513c8a",
+   "file_id": "cb5edbf0-bda5-4a01-bb28-8115c850d8fe"
+  },
+  {
+   "filename": "562_Charge16.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 17302,
+   "sha256_published_by_mendeley": "6219a22db0f405b7ddf5861dbee5eb1d73e91fcfdfbbc72e8f587355d79a78fa",
+   "file_id": "e1ce13d0-e587-4ecd-9d15-8e57e1abb5f8"
+  },
+  {
+   "filename": "562_Mixed4.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1443099,
+   "sha256_published_by_mendeley": "91f1d9e5048cd754c47b6c5669a861c2765e9272f14251ef9c148d0bfe3f96e8",
+   "file_id": "76a9fb95-99f8-4435-8faa-a055c17dc2f2"
+  },
+  {
+   "filename": "562_Mixed5.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1668991,
+   "sha256_published_by_mendeley": "044415453619f7a0dad17c5f64605548acc72ad6eb6ef8fb2c5cf61460f46f8a",
+   "file_id": "90741f8e-1d51-4ef8-88bd-963cdfc958f2"
+  },
+  {
+   "filename": "562_Mixed6.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1505950,
+   "sha256_published_by_mendeley": "0a137c6d4434af5234ee4f191325ca872e64f9f9d6fad05936414b2f70477e66",
+   "file_id": "f4313b85-3a5e-4bc3-b1da-5e4d4d8a3c37"
+  },
+  {
+   "filename": "562_Mixed7.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1002891,
+   "sha256_published_by_mendeley": "5300a5ec9bace9c4a19c0f7b216c5ad685c3849a0c299aed503159485f03dfca",
+   "file_id": "f377a754-7f4e-43c9-a951-5d489ff361f7"
+  },
+  {
+   "filename": "562_Mixed8.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1836388,
+   "sha256_published_by_mendeley": "0c13819a71e5802621dd86fe00dadcf8d7d2ae94389bf8d0735bcffabce5f142",
+   "file_id": "50066c25-af68-4626-8dd9-4820764d8836"
+  },
+  {
+   "filename": "562_PausCycl.csv",
+   "folder_id": "db61d2f4-8da1-4689-9fb1-420ed55b9266",
+   "folder_ambient_temperature_label": "40degC",
+   "bytes": 1004636,
+   "sha256_published_by_mendeley": "289ce2ee98ed1752aee831c39896f5c2e428439d41a87b448da86e7953048df1",
+   "file_id": "76556086-8015-40ea-a24c-dcc014be2f12"
+  },
+  {
+   "filename": "01-12-18_01.14 589_Charge7.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5638,
+   "sha256_published_by_mendeley": "71132a9529ae06682578e0a52698b9a46cfee096d92d6f884b5449a80375dca9",
+   "file_id": "239a9991-595e-49d3-928d-ff4d854fb99f"
+  },
+  {
+   "filename": "01-12-18_04.35 589_Mixed2_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1844620,
+   "sha256_published_by_mendeley": "ba24a8ab55b2856afcf8c047773e41fb6e9bdfd8399fc705a619a12e7a41d88c",
+   "file_id": "1bdd1988-1894-4157-973d-53d40424452d"
+  },
+  {
+   "filename": "01-12-18_06.36 589_Charge8.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5653,
+   "sha256_published_by_mendeley": "d541ec8912ae1bf2f26643dbbc5be5ac08f840259cfc98d36e3918f0577809f5",
+   "file_id": "5e050741-d024-4c5a-a63a-5152297892f5"
+  },
+  {
+   "filename": "01-12-18_14.21 590_Mixed4_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1716981,
+   "sha256_published_by_mendeley": "fb0b76f55fc414efc2f20b25c2d1d92cedf2ecc907fd488a0f55316c472c2880",
+   "file_id": "f80e3cfe-9593-4a2d-9a51-93217dd00710"
+  },
+  {
+   "filename": "01-12-18_16.16 590_Charge11.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5423,
+   "sha256_published_by_mendeley": "5e8ba93a4a08863fbabd19e8eecafa11a3285c059e3ae4e602183040c5cf9106",
+   "file_id": "f53add8b-41c8-451d-ab4e-96c5c216e1dd"
+  },
+  {
+   "filename": "01-12-18_19.37 590_Mixed5_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1650777,
+   "sha256_published_by_mendeley": "bfb0074b49fae4ba2f97c85fe7462f5df2633be9dd4d0bf4adefffe1b17d0321",
+   "file_id": "69fb7320-3e29-4a9c-8050-7b08fd0a0377"
+  },
+  {
+   "filename": "01-12-18_21.26 590_Charge12.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5633,
+   "sha256_published_by_mendeley": "4ade563cb9b09de4c4bd003317008739c4ec9c8133c6d03791425438a65562d2",
+   "file_id": "bb1dad3a-ae87-43c8-8aa5-1337a02ae69d"
+  },
+  {
+   "filename": "02-12-18_00.47 590_Mixed6_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1582733,
+   "sha256_published_by_mendeley": "5de9e42d75acc04cc8c150deca528de5cd6d0958c638123c3b7f529096756fcc",
+   "file_id": "35c78115-11ec-4be7-8e4f-b53c7092f157"
+  },
+  {
+   "filename": "02-12-18_02.32 590_Charge13.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5623,
+   "sha256_published_by_mendeley": "e9860583599b658bd8603dd211c4d11b40bbc70579a88a1a65479786d47549d7",
+   "file_id": "69b14cd8-a35b-4868-a159-43ba5e1543c8"
+  },
+  {
+   "filename": "02-12-18_05.53 590_Mixed7_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1558803,
+   "sha256_published_by_mendeley": "a8d349b0348a62e49858f8f3f739b20082256c1d9456fc92b4f4a31daf4797be",
+   "file_id": "f9298a44-1e62-4e8d-9b3a-bc28b2dfcf73"
+  },
+  {
+   "filename": "02-12-18_07.36 590_Charge14.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5593,
+   "sha256_published_by_mendeley": "a0b0e42613521f61e13109925fca499c1188aa6b9ba54e33e3f531740785e495",
+   "file_id": "ecc29cd4-81b5-4450-9959-74a03045785f"
+  },
+  {
+   "filename": "02-12-18_10.57 590_Mixed8_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1912443,
+   "sha256_published_by_mendeley": "d3f8f5ec81b193d0b6e8113bd8bf80381180ecabb07c7ab916482c6986cfe1af",
+   "file_id": "5f21ca70-f50c-4ceb-b35a-ab35d9806e81"
+  },
+  {
+   "filename": "02-12-18_13.05 590_Charge15.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5613,
+   "sha256_published_by_mendeley": "1c07455f6f8848dc6df67a6726f993842b8f74205065c5282d4e7ab30443d842",
+   "file_id": "ff9b271a-918b-4e7a-9419-61b36d8cfd74"
+  },
+  {
+   "filename": "02-12-18_16.25 590_PausCycl_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 587132,
+   "sha256_published_by_mendeley": "8324bf050fc05e08bb6ba24cb9b3d67258e0d062a5d3e33a1a48a7d11f544fe2",
+   "file_id": "022c1305-ad90-4622-bc16-e12379d504bb"
+  },
+  {
+   "filename": "02-12-18_17.10 590_Charge16.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 3675,
+   "sha256_published_by_mendeley": "3415cb33fb79f04854c7d5b29e49f1d23dfe1db2e6d93ca7febfdbb73bfaf965",
+   "file_id": "e484bfa5-1949-4072-a2db-86fa39dfaa09"
+  },
+  {
+   "filename": "11-26-18_22.46 585_HPPC_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 641052,
+   "sha256_published_by_mendeley": "308bb12a50311ca18bab3df23eb1f81166a6d299df7016e76e726e93c103b389",
+   "file_id": "2b15077f-d965-4e79-9b20-91a389bcaaa3"
+  },
+  {
+   "filename": "11-27-18_20.41 585_C20DisCh_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 69105,
+   "sha256_published_by_mendeley": "1ab57d4107193a2802c0d1cce695a5bead00289d676e714d26fe63b6cb402da4",
+   "file_id": "48f12f07-afc9-4035-9e31-8bdffc808751"
+  },
+  {
+   "filename": "11-29-18_10.02 585_Dis_0p5C_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 9404,
+   "sha256_published_by_mendeley": "00fce0f15b9c52f3cdd6ccf09af7ca036ca58ac3a0c84662b882ba79e402f117",
+   "file_id": "8eb3d0af-8bc1-4e44-95c1-bcc6d8baba5b"
+  },
+  {
+   "filename": "11-29-18_15.07 585_Dis_2C_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 6515,
+   "sha256_published_by_mendeley": "08771bf0078632b8068d40ce3da9c2d038b02923185f730726ee80066c81290b",
+   "file_id": "ca12ad82-53b7-4bf8-bf63-06bf2b7d6dd8"
+  },
+  {
+   "filename": "11-29-18_18.53 589_Charge1.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 2822,
+   "sha256_published_by_mendeley": "06c138e2ef4f6e8aaa3d3921929dccca00fa1cd32cf2faa4d2ad06313b5c99bf",
+   "file_id": "b2ecba33-498f-4e40-9744-7b5d0722e907"
+  },
+  {
+   "filename": "11-29-18_20.59 589_Cap_1C_10degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 11119,
+   "sha256_published_by_mendeley": "259a1d7d3d6bfa41f23b42b0572cfa9d82f2d35f504116e1c78c458cc4ad9f43",
+   "file_id": "9d691b9a-714e-4b57-b2ca-9cbc2fba93e8"
+  },
+  {
+   "filename": "11-29-18_22.00 589_Charge2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5725,
+   "sha256_published_by_mendeley": "c38ad40434d2dcd253240e332270ba2ec0ba33e054c7587e140fb740000765ef",
+   "file_id": "9dfb0296-36ab-4c73-b6be-8f5f5b95416c"
+  },
+  {
+   "filename": "11-30-18_01.23 589_UDDS_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 3491286,
+   "sha256_published_by_mendeley": "a3e4fe8d27d99d5bf12ec60e5016e1145a6b814cfcf2fd591e9ee43c9e7a2568",
+   "file_id": "b7ffaccd-cdaf-466d-8a99-c26715d3bdb8"
+  },
+  {
+   "filename": "11-30-18_05.18 589_Charge3.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5619,
+   "sha256_published_by_mendeley": "ce8e5d1548318ef3514224b505617f0f5b50b3873f53f0303c1705be0e221c38",
+   "file_id": "c2a0f335-592d-47f3-8d20-0e7d8119299e"
+  },
+  {
+   "filename": "11-30-18_08.39 589_HWFET_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1263900,
+   "sha256_published_by_mendeley": "bdc353382ac07e337c92d111face6e6e26c084b6e819166d6ac5b4b3b8627b3d",
+   "file_id": "798acdaf-6697-4f04-a688-3da2bcdf7fb5"
+  },
+  {
+   "filename": "11-30-18_10.03 589_Charge4.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5603,
+   "sha256_published_by_mendeley": "cc7dd89ec076c315dbc34c564437e1dbd72417944ac61f09e074e8b78c833d72",
+   "file_id": "4025c4db-a922-4151-8c78-82425a32d3ca"
+  },
+  {
+   "filename": "11-30-18_13.24 589_LA92_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 2073993,
+   "sha256_published_by_mendeley": "a8ac9a841636396047a31f42b5530285132a9e87364bd23b3f308c4e95b82330",
+   "file_id": "3c1e2b87-4f30-41a1-a99f-9bd8e489b4fe"
+  },
+  {
+   "filename": "11-30-18_15.41 589_Charge5.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5705,
+   "sha256_published_by_mendeley": "9c4ce9e750a2b967ca23e970c0ca0011b27c1a33b64425d927a9183a4832a131",
+   "file_id": "6c603a69-9383-4fa0-be00-746864d3f1ba"
+  },
+  {
+   "filename": "11-30-18_19.02 589_US06_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 894226,
+   "sha256_published_by_mendeley": "390867012617455b692787e1b59f829b4784387277efa3fc83ade0084d92c78b",
+   "file_id": "9fb277c9-af45-43dd-a327-a0fe7b890369"
+  },
+  {
+   "filename": "11-30-18_20.00 589_Charge6.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5538,
+   "sha256_published_by_mendeley": "1bb95e96d83f4124e299e50379b757b0a7c76a4752174128a1a84df47e2dab8f",
+   "file_id": "88583040-b2f6-4a5e-9712-b01fada8a84a"
+  },
+  {
+   "filename": "11-30-18_23.20 589_Mixed1_0degC_LGHG2.mat",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1718732,
+   "sha256_published_by_mendeley": "d6e08388f9ab4c7a0b6d2fde4336fe2759f8141f2c6ebae7015cce2026f87416",
+   "file_id": "3039379b-9cad-4651-855a-ff4b8ebe7d6b"
+  },
+  {
+   "filename": "585_C20DisCh.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 289247,
+   "sha256_published_by_mendeley": "1b5a67d1399f50062f067f06043e30b8919331c168b8c3516306ff64fe9b0fe3",
+   "file_id": "2eda2e7f-3f6b-487d-a8f6-51bdd02e524e"
+  },
+  {
+   "filename": "585_Dis_0p5C.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 39975,
+   "sha256_published_by_mendeley": "5c6eacbf504e4f082146ed30d3cd5ee5a49e2c0a9113f8f3ae7b68f6787af8d2",
+   "file_id": "3ff34da9-55fa-4d0a-a341-10a39ac99aab"
+  },
+  {
+   "filename": "585_Dis_2C.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 29502,
+   "sha256_published_by_mendeley": "3ad40b9ad0b5f2f875bbabaf76434ba330d78b675d5ecaadb4ff9319cb4e1e33",
+   "file_id": "8528a611-78fd-43b3-8d54-8bf5c8a4235c"
+  },
+  {
+   "filename": "585_HPPC.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 5049748,
+   "sha256_published_by_mendeley": "bdb4aee01f909c77451602a6292932a00fa8d552409ff1233a6aff572f7a04f5",
+   "file_id": "df64d152-4ad7-4411-a48b-2fd367b6804f"
+  },
+  {
+   "filename": "589_Cap_1C.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 47131,
+   "sha256_published_by_mendeley": "b449febaede0f5b7d6dd5e5b7db6bc5c22054924d7a91663fdf71b79ed4bcd05",
+   "file_id": "88eacab6-585b-444d-b91d-89f82f6fc4db"
+  },
+  {
+   "filename": "589_Charge1.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 16928,
+   "sha256_published_by_mendeley": "9d1c5e7387ba8610bbee58540e14b3658cc866bf872f7fd50eec90474affec0e",
+   "file_id": "dd8272a8-1c6d-4d94-8b9a-386769f19953"
+  },
+  {
+   "filename": "589_Charge2.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26524,
+   "sha256_published_by_mendeley": "53527c29bbe9e985f725a1cebb68ccf48e9dfd64da9d839b1b0355f60a72fe12",
+   "file_id": "e697bb1a-c277-4932-b520-86f60d3b41ca"
+  },
+  {
+   "filename": "589_Charge3.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26219,
+   "sha256_published_by_mendeley": "ea6e5d0a957aab307c0a435d4fc41be8dcf4af89fc17b3f5478b37f252011043",
+   "file_id": "c93fa2c1-d6f3-4a0e-b56e-89fa35f2f1aa"
+  },
+  {
+   "filename": "589_Charge4.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26276,
+   "sha256_published_by_mendeley": "30b43aa3cad882df67efe1524da119ae83a7e9b1d2b45e0021506172f7c16f44",
+   "file_id": "ab544412-4c7a-41df-a8ee-ca8e46d8139f"
+  },
+  {
+   "filename": "589_Charge5.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26219,
+   "sha256_published_by_mendeley": "a572e16fa1068a4a08d9113e566b1d8cdeabbf9727273780f0c8b3a41615d07f",
+   "file_id": "a6bd609f-6591-41dc-b518-3daa8ba37185"
+  },
+  {
+   "filename": "589_Charge6.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26179,
+   "sha256_published_by_mendeley": "43aff699bbd6aa27b57147b184161e805b1c510d2f82c6a764e6b052f129c494",
+   "file_id": "2b0b8d00-da40-4616-8971-6cab9fde5fd6"
+  },
+  {
+   "filename": "589_Charge7.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26013,
+   "sha256_published_by_mendeley": "04be83e3732e151e5e721679ba24b211e674f71fd27a009c435990ffeab4d86f",
+   "file_id": "61f4a2d7-5d57-44da-8486-7d65a1bee5da"
+  },
+  {
+   "filename": "589_Charge8.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26016,
+   "sha256_published_by_mendeley": "a1a05d0cef04062d3a883c05b68884a048f0eb0a7af0777795be1d4a409d48ba",
+   "file_id": "bfedac74-69a0-4cd5-aa8e-f5b9756a7006"
+  },
+  {
+   "filename": "589_HWFET.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 6395542,
+   "sha256_published_by_mendeley": "20ff8c6ac9474724bc913afb53e1e20897758e7bf5cb25d37f0fab3f758f8659",
+   "file_id": "d1e1a8db-1d65-4868-90ac-ff59de205de2"
+  },
+  {
+   "filename": "589_LA92.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 10510382,
+   "sha256_published_by_mendeley": "309250cb85704e8f528957d899eeedb3ba4b8e0a85d76a524bb975925cee9af1",
+   "file_id": "e1ad56b2-4bb2-4585-90e4-2b8f459b0065"
+  },
+  {
+   "filename": "589_Mixed1.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 8696227,
+   "sha256_published_by_mendeley": "2795c7d9f393822debea6cbe213dc4a179d892d5a326d1cc5da2558594fc2f60",
+   "file_id": "4bcf05f9-6b1e-46c4-8fb9-352cb8ff0bf9"
+  },
+  {
+   "filename": "589_Mixed2.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 9253180,
+   "sha256_published_by_mendeley": "9fcd9e1200098dc87f3567f43794fa07063ec91b2939c2184a845579cfb92601",
+   "file_id": "3260cb7c-775d-44f8-87e1-937872a5fa28"
+  },
+  {
+   "filename": "589_UDDS.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 18191300,
+   "sha256_published_by_mendeley": "7dfe6f7116ed8c553b1b5063019ff7e6febbbf1ce565ec8fa044f49cac2cbf5c",
+   "file_id": "8d91b994-250b-4050-a622-3b31e1ba764f"
+  },
+  {
+   "filename": "589_US06.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 4340788,
+   "sha256_published_by_mendeley": "d3b52e7c538fdee4451158526e5b83eab92c9698b22f6d88f551d009207b08a9",
+   "file_id": "93dbacc5-54df-4cb1-840f-e2a2faf65565"
+  },
+  {
+   "filename": "590_Charge10.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26379,
+   "sha256_published_by_mendeley": "3e64f8c73596d8152ddafba663edda6cd32876b6f13dc182f49ff4db310a25ad",
+   "file_id": "1f9d4f3a-b647-47f6-87cc-365d20163833"
+  },
+  {
+   "filename": "590_Charge11.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 25891,
+   "sha256_published_by_mendeley": "f5ae6caa30e2f9b3823288ecbd8afe3cfb65bb6ef1b388cc211d4af6136244c7",
+   "file_id": "8ad0c9fa-2514-4543-a4f2-82bbf8bc6cb0"
+  },
+  {
+   "filename": "590_Charge12.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 26059,
+   "sha256_published_by_mendeley": "753026298ce41b60aaa38bddeb6dd4627b6bb2c22fa2427928d5ed1728d6226d",
+   "file_id": "7ef0350a-b0dc-45c9-885b-13fec9e82b0c"
+  },
+  {
+   "filename": "590_Charge13.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 25889,
+   "sha256_published_by_mendeley": "fa99b1c1c30b3737bc97c7553135b3535bb3632e0c6f8c0a48cf9ba72718bc45",
+   "file_id": "ef72d5f6-5d4b-4eb1-86a0-3bd1a3e6014d"
+  },
+  {
+   "filename": "590_Charge14.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 25948,
+   "sha256_published_by_mendeley": "f0029582930df0297d7effa2adfc68b26b2aba383bf411d3d41e5675af18e0fa",
+   "file_id": "6cde5423-5dc2-447a-adfe-436d7b8a2724"
+  },
+  {
+   "filename": "590_Charge15.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 25889,
+   "sha256_published_by_mendeley": "32f35ddade9fc24b6ab4daff676b8857c87dbeaf5aa923dd5e9cfd4f0cd3c677",
+   "file_id": "e5957aee-3fb3-4453-ad7b-5d87d661b7c4"
+  },
+  {
+   "filename": "590_Charge16.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 19497,
+   "sha256_published_by_mendeley": "030058aef0b83c33401f179b5036879fcfcf5301d9372c86cb33c03baf73176d",
+   "file_id": "61d46925-0474-41fd-b66f-dec7a93dd7b0"
+  },
+  {
+   "filename": "590_Mixed4.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 8697540,
+   "sha256_published_by_mendeley": "fcc3f2515cd189d0ff86edb34a007b8245820b13b4c14f1eb626d9b6baa84e3a",
+   "file_id": "dff1f50a-6917-48f6-8cd7-e92fdb9a4fe4"
+  },
+  {
+   "filename": "590_Mixed5.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 8310744,
+   "sha256_published_by_mendeley": "c37c6302180dc99f76bc56a4dc55c419c32b707b07bfba3b600e4dfb61747c4a",
+   "file_id": "e72d7ad0-d1d3-4402-8784-a7f64c078ef6"
+  },
+  {
+   "filename": "590_Mixed6.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 7997477,
+   "sha256_published_by_mendeley": "277fcf564f2b76f4b3d4dbb77596cde6c44e3b4a61d71a9e10b4627380e919f3",
+   "file_id": "06860fdf-58ae-4f7b-8234-b7739c94c7c1"
+  },
+  {
+   "filename": "590_Mixed7.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 7863886,
+   "sha256_published_by_mendeley": "4076f71204690b256bf2781bf656952db0b7f6642d5138396422015d991218b0",
+   "file_id": "803412dd-92ab-4465-b205-31cacd959ab0"
+  },
+  {
+   "filename": "590_Mixed8.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 9775160,
+   "sha256_published_by_mendeley": "b8c43a61c52c996c3e60343d539af7096fbe85f071fd46a7bd3b13f72890152e",
+   "file_id": "a59e2c65-afa1-4deb-81b8-bc0840c2c190"
+  },
+  {
+   "filename": "590_PausCycl.csv",
+   "folder_id": "366f9b27-0b4b-41a7-9010-c1bc0b7e5147",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 3365332,
+   "sha256_published_by_mendeley": "a09adf7c56f50ada4c4004c515604d8e19647d9845ef202dc6a477a343b8207d",
+   "file_id": "5a7ced85-7d91-4bae-b389-7c7acc0aaaa8"
+  },
+  {
+   "filename": "Data Preparation Steps for FNN Based SOC Estimator.pptx",
+   "folder_id": "715c80a1-56b5-44be-9ec0-baee92a3f363",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 471827,
+   "sha256_published_by_mendeley": "c7932b53eb84d9c662d1574221e95ac5e56591346e9278e365bdec7e4283c8e9",
+   "file_id": "b9ceafbf-503f-4194-b7cc-94a7d9fca7ad"
+  },
+  {
+   "filename": "FNN_xEV_Li_ion_SOC_EstimatorScript_March_2020.mlx",
+   "folder_id": null,
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1212059,
+   "sha256_published_by_mendeley": "a1d9a360a89f4e323121b4e4f238747b4cda6d8bd9916411519f10f645356dee",
+   "file_id": "def91d45-d54b-4a3a-947d-dc6712121c20"
+  },
+  {
+   "filename": "Instructions for Downloading and Running the Script.txt",
+   "folder_id": null,
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 1449,
+   "sha256_published_by_mendeley": "48898e68888e75d670c67330b39cac52d1d8872d3ad29b88ae93a252490c3a63",
+   "file_id": "fed952a2-9660-401b-8852-f81dc502fafb"
+  },
+  {
+   "filename": "LGHG2@n10C_to_25degC.zip",
+   "folder_id": "715c80a1-56b5-44be-9ec0-baee92a3f363",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 58482855,
+   "sha256_published_by_mendeley": "2d55ebae5cedd70b18f3cde6c3d3165cc56d2aae40a8ad9b139cf2fc3ee146fc",
+   "file_id": "ad7ac5c9-2b9e-458a-a91f-6f3da449bdfb"
+  },
+  {
+   "filename": "Plot_results.m",
+   "folder_id": "337ff5af-9640-43a4-9658-464a4478b02d",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 642,
+   "sha256_published_by_mendeley": "036aa647e3995e6dd4d5986576884373a5aaf56c0453ebb3bf6396db65f54533",
+   "file_id": "c18818d6-6121-4b82-be6f-0fd0f32b1d11"
+  },
+  {
+   "filename": "Readme file - Description of Experimental Tests.txt",
+   "folder_id": "337ff5af-9640-43a4-9658-464a4478b02d",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 4052,
+   "sha256_published_by_mendeley": "809c0045eabcf4913a380ad520e4016f52a9c4186e6d15958992df3baf0e1427",
+   "file_id": "0e6a667b-d84f-4274-a4a3-f793c92a7a80"
+  },
+  {
+   "filename": "Technical Information and Experimental Test Results for LG 18650HG2.pdf",
+   "folder_id": "337ff5af-9640-43a4-9658-464a4478b02d",
+   "folder_ambient_temperature_label": "UNKNOWN",
+   "bytes": 699394,
+   "sha256_published_by_mendeley": "7af5bfc6156a968316e57d8340005d7403c35d2da0eee3bbd47d8a3d41c347a5",
+   "file_id": "bd3fe382-5e95-487e-aac6-c758c738d1ed"
+  },
+  {
+   "filename": "12-04-18_22.00 593_HPPC_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 643941,
+   "sha256_published_by_mendeley": "4459c01a348288d65437a62ec3b77539946c084a214759213066ffb29713ce35",
+   "file_id": "df69a99a-0027-42de-b55e-115a3cc8d0f7"
+  },
+  {
+   "filename": "12-05-18_20.13 593_C20DisCh_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 68408,
+   "sha256_published_by_mendeley": "23fa8f5b3dbd923f42353389e26db3adc0d8c5808713c24b3d9758607d79fc73",
+   "file_id": "d7785138-7826-4b16-b49f-3ba9f006ab0d"
+  },
+  {
+   "filename": "12-07-18_08.55 593_Dis_0p5C_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 9594,
+   "sha256_published_by_mendeley": "a740c7eca2970a7e558b310d1c407f4cbabdad7b21086d0cdd7c7778721d985d",
+   "file_id": "9f9f1e92-b636-409c-955b-dbf29163e9c0"
+  },
+  {
+   "filename": "12-07-18_13.54 593_Dis_2C_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 6355,
+   "sha256_published_by_mendeley": "74c8bf5a91569932fd3a87118c41c0099199c14caab5b52a184aee948477d909",
+   "file_id": "06021ff2-5b56-4e8b-8584-d8b16a51a05d"
+  },
+  {
+   "filename": "12-07-18_17.27 596_Charge1.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 2985,
+   "sha256_published_by_mendeley": "c9dbea64ff2b33ceea3326acbdd92a891c82dd334faf6bd611c2e27e23d1d401",
+   "file_id": "80ab6396-6611-4ef7-a6cf-4328c273518d"
+  },
+  {
+   "filename": "12-07-18_19.33 596_Cap_1C_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 10365,
+   "sha256_published_by_mendeley": "29499e57ec2de033ea40bd2b4184715e44866e99b51335cb1bcc3066adf00699",
+   "file_id": "3218a32a-b089-4fb5-b2f5-995d06fefa52"
+  },
+  {
+   "filename": "12-07-18_20.30 596_Charge2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5587,
+   "sha256_published_by_mendeley": "828067a088a0b88c5592b9d154bc9376f8ef54405b42c6c9614da0d2f3e9df9c",
+   "file_id": "5b7057ca-919d-47f5-98a6-4a0014a86554"
+  },
+  {
+   "filename": "12-07-18_23.49 596_UDDS_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 3175623,
+   "sha256_published_by_mendeley": "b9119d610690118aef0558db76005422ce07f65426f1eb7a114bf1cdb7f3afe3",
+   "file_id": "d842a810-3055-4c0b-86cf-dadadc720ecd"
+  },
+  {
+   "filename": "12-08-18_03.16 596_Charge3.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5505,
+   "sha256_published_by_mendeley": "d966f9d29455ec13ae0cfea240c99414a741d8eae3f5abf7527cab571bc855b3",
+   "file_id": "5ce49785-67da-437e-868f-78c741dc0af6"
+  },
+  {
+   "filename": "12-08-18_06.34 596_HWFET_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1172435,
+   "sha256_published_by_mendeley": "9d40d790480d8933c4874f09dd5751519e150f461fce66e8ebf5ac175c7a5275",
+   "file_id": "a8ed95de-d808-47e0-9ebe-1e4279a96708"
+  },
+  {
+   "filename": "12-08-18_07.49 596_Charge4.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5508,
+   "sha256_published_by_mendeley": "edfc307c0dc23311a1193b6e6012899de2d824e19b2c9d3a1f6d03502b0d3c50",
+   "file_id": "79b3f90c-8982-4b07-b000-237bcff0cb9c"
+  },
+  {
+   "filename": "12-08-18_11.07 596_LA92_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1864069,
+   "sha256_published_by_mendeley": "c518e5041f2b070d34b45b3af6fd5d6ed377e8cabd23d6a280e556f55164bdf9",
+   "file_id": "b330890a-62ca-4d49-aaa5-3e61974cca79"
+  },
+  {
+   "filename": "12-08-18_13.08 596_Charge5.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5439,
+   "sha256_published_by_mendeley": "c91786022c1d56a6c7209cb905a5ee34e98aaf1a1b7f247f8648de8e7e452ad4",
+   "file_id": "7c2f9673-52c5-4cd6-a21f-4592ee468a45"
+  },
+  {
+   "filename": "12-15-18_03.03 601_US06_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 845896,
+   "sha256_published_by_mendeley": "cc3a0998370c7a27daf55dbd7a64d2be30493a22d9a9fd9ec8d08ae2fea83de6",
+   "file_id": "07f34858-af27-48d6-b36f-a9b4ea12e604"
+  },
+  {
+   "filename": "12-15-18_03.57 601_Charge6.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5441,
+   "sha256_published_by_mendeley": "067c1c35972e9063702263067bb46057b2545aa5971942a974ecad5309f8bf8d",
+   "file_id": "dc6c80b6-be22-4653-b46e-84ebedcebd46"
+  },
+  {
+   "filename": "12-15-18_07.14 601_Mixed1_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1629740,
+   "sha256_published_by_mendeley": "46f44d313eea163db719f28b9205cfc51af7e2166bf37e5705b3fbc8316907c7",
+   "file_id": "a5e752b7-f348-418a-9ed9-31877d4d0e2c"
+  },
+  {
+   "filename": "12-15-18_08.59 601_Charge7.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5453,
+   "sha256_published_by_mendeley": "830270e4a3fb429423c409558546f30fd5a42e3a08aeb06df46f7e7ba77d1745",
+   "file_id": "a1952d2a-4f96-4ffb-9dbb-d197f121a79b"
+  },
+  {
+   "filename": "12-15-18_12.16 601_Mixed2_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1644789,
+   "sha256_published_by_mendeley": "2bf9abee855bf62ac1fc45804e162c320068bda8244f288a45d21bd289d3d51b",
+   "file_id": "cbb714e8-27d8-4ff4-ab85-615665853570"
+  },
+  {
+   "filename": "12-15-18_14.06 601_Charge8.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5489,
+   "sha256_published_by_mendeley": "564935caf67d3ee2328c282caf4a56820ff004c31515781557ee74a05cda7ae5",
+   "file_id": "135ffdaa-c342-400d-9703-4ef70c364952"
+  },
+  {
+   "filename": "12-15-18_17.24 602_Charge17.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 2849,
+   "sha256_published_by_mendeley": "0de0ab1436b0ae1b0bdc9d34ac4dadaf96ec83817e07b385cda5cf5bcc52c71f",
+   "file_id": "df995d7d-ec0a-4ca5-b270-c3d248120ebf"
+  },
+  {
+   "filename": "12-15-18_19.30 602_Cap_1C_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 10036,
+   "sha256_published_by_mendeley": "a92af2ab1e795e00ff43dc1bef38691a81969e585cd0768e7f64212e8a50aee3",
+   "file_id": "a92337d2-ca3a-4605-90ee-1b3261ecad47"
+  },
+  {
+   "filename": "12-15-18_20.26 602_Charge10.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5539,
+   "sha256_published_by_mendeley": "85b17e443ab6df6b9373cc8f323f7ea07423640a6b2808ad1a8d70d387311aae",
+   "file_id": "591c5987-45f8-4922-b2dc-9a36eff0a900"
+  },
+  {
+   "filename": "12-15-18_23.45 602_Mixed4_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1600079,
+   "sha256_published_by_mendeley": "91516617c715ad60c3f9d60138d49f5022680f9dd179d4b5ab243598cbf7e765",
+   "file_id": "e89edd2e-bae9-4cf5-b2f9-c2c9c385fac3"
+  },
+  {
+   "filename": "12-16-18_01.35 602_Charge11.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5496,
+   "sha256_published_by_mendeley": "23147a26a61e0d4f194137cfeff7c53c3a381481c36b1274cb2738db7f653c3e",
+   "file_id": "b04ac4d5-e5c5-4d64-b190-7c1a467f7e80"
+  },
+  {
+   "filename": "12-16-18_04.52 602_Mixed5_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1519393,
+   "sha256_published_by_mendeley": "d82aedae4b014716581bfe3e883bc2db398da3be099ff0a4c7217601481901fd",
+   "file_id": "f5af9909-2e7f-4945-9415-3a63e02f47a8"
+  },
+  {
+   "filename": "12-16-18_06.34 602_Charge12.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5457,
+   "sha256_published_by_mendeley": "2d38eaa91024562950971aa671ea0dc695d0aaab4e1666d87608ed51ce769111",
+   "file_id": "28d7e58b-9b53-4114-a251-16771c9bc464"
+  },
+  {
+   "filename": "12-17-18_19.32 604_Charge17.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 3294,
+   "sha256_published_by_mendeley": "10a8dbf77c195be61f5807def7be0e4e66963d5250651a21f28a41572ad3e56e",
+   "file_id": "e79ddf71-70cb-4a8c-af1f-e51a58f60305"
+  },
+  {
+   "filename": "12-17-18_22.42 604_Charge9.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5637,
+   "sha256_published_by_mendeley": "d06a95fddbe1892698ceedb72cdbca6306e1922c70e7c566d8b5898c01a96d8c",
+   "file_id": "380f4e92-631a-4f35-9437-587fa4849ff8"
+  },
+  {
+   "filename": "12-18-18_02.00 604_Mixed3_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1426771,
+   "sha256_published_by_mendeley": "4fa9709872ec44e06ca509d36321a8de674453d2477091ede524802cb57cf800",
+   "file_id": "b11cc74b-0025-4024-9573-adf9607cd619"
+  },
+  {
+   "filename": "12-18-18_03.33 604_Charge10.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5461,
+   "sha256_published_by_mendeley": "d3f0d2d84f94334f3bf38f230cf0cbafd0985480c29a0fbcd96676e552fb9514",
+   "file_id": "b9c271eb-b59f-47be-a3b1-e807b86d65d5"
+  },
+  {
+   "filename": "12-18-18_06.50 604_Mixed6_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1454218,
+   "sha256_published_by_mendeley": "344263c1b1824fdc86fb1eaf70ab306ce6d85ae76f2e678f53d313504e1e7392",
+   "file_id": "cd95a877-58bd-4ad3-8c37-995318659440"
+  },
+  {
+   "filename": "12-18-18_08.25 604_Charge13.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5394,
+   "sha256_published_by_mendeley": "22923447fba15939e721f2a7aebec655e5912e1c35acbfe3314c6b92348af694",
+   "file_id": "2b6b3893-5728-4f89-9494-3880fc105895"
+  },
+  {
+   "filename": "12-18-18_11.41 604_Mixed7_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1446896,
+   "sha256_published_by_mendeley": "22f453999aec62b28de61d7a4794417ddb015f447594a527ade10855f2ef1fd6",
+   "file_id": "77b8adfa-d351-4f3f-9fa9-331fab52a7ac"
+  },
+  {
+   "filename": "12-18-18_13.16 604_Charge14.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5381,
+   "sha256_published_by_mendeley": "38ae4d820dbb300e1597851b954e0f1ae6219507d676c07eb11ae04575686350",
+   "file_id": "68d5a321-9769-46f6-8e5c-0f52811e485e"
+  },
+  {
+   "filename": "12-18-18_16.32 604_Mixed8_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 1756530,
+   "sha256_published_by_mendeley": "276efe0f73ed81dd0653c062bca3e8a24371f2d99a7382d92ffb24ece99e759c",
+   "file_id": "e1d98594-4d07-4ba7-a74f-af08339ebf55"
+  },
+  {
+   "filename": "12-18-18_18.26 604_Charge15.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5437,
+   "sha256_published_by_mendeley": "cfdd829ecb188b688f3d0460f2cdb39e5f408a07e66c1ae406f2e4d1c868b7b9",
+   "file_id": "580c8f34-e47a-4920-a75c-db8d1a16b4cc"
+  },
+  {
+   "filename": "12-18-18_21.42 604_PausCycl_n10degC_LGHG2.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 504297,
+   "sha256_published_by_mendeley": "def20b5df6e21c48e933ab55c3af6c4060e699eca6e3f0acf5242b78679cff06",
+   "file_id": "2af6a4d6-2818-4774-bf29-af36c477abaa"
+  },
+  {
+   "filename": "12-18-18_22.20 604_Charge16.mat",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 3745,
+   "sha256_published_by_mendeley": "7f2438fc7084bfdad3f5a20b9ffa9120ce7770b7ee73e112be57c5fb965a5672",
+   "file_id": "bb3aaf5b-ca57-4231-9239-7fe955541a1c"
+  },
+  {
+   "filename": "593_C20DisCh.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 283257,
+   "sha256_published_by_mendeley": "8b77621d02c610a1b2a2550e9bcb86672de793bc00d6ff1e276a3372f5388143",
+   "file_id": "7bc5c3dc-6313-4a14-8621-7e718c44a26a"
+  },
+  {
+   "filename": "593_Dis_0p5C.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 38718,
+   "sha256_published_by_mendeley": "3b737cc69a4f0bbbb67cb0f04778dab86f3f4882631294acc9b010e395805299",
+   "file_id": "bd88100d-96c1-4329-b450-b9292d04ab90"
+  },
+  {
+   "filename": "593_Dis_2C.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 27922,
+   "sha256_published_by_mendeley": "c127bfbbc7dc02a3cd1354d88c22f21897110e74627d355e11a436615972b55a",
+   "file_id": "c9a018c6-0bcd-4fce-a392-4942579bb804"
+  },
+  {
+   "filename": "593_HPPC.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5020509,
+   "sha256_published_by_mendeley": "5d8aa2998608ec2ac515650a8abd39fb634a4b38b1732ed1ad130d717999201b",
+   "file_id": "d059d13f-85c6-410a-bdd1-8631bf2e71b1"
+  },
+  {
+   "filename": "596_Cap_1C.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 43922,
+   "sha256_published_by_mendeley": "c93f7c98f9c2b0ca7e4bbcb65a7dd26c9cfb95102bdcf804f30d2ea9bdc2e13b",
+   "file_id": "4a851bac-76ea-44b6-a4f4-15cbcb7356ef"
+  },
+  {
+   "filename": "596_Charge1.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 16804,
+   "sha256_published_by_mendeley": "8fc3582049a9e5fb026e9c920c81c4d88f0b7063aac560234e84ba48e46e37ee",
+   "file_id": "95104331-ed62-4ece-9188-6dec224c8634"
+  },
+  {
+   "filename": "596_Charge2.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25898,
+   "sha256_published_by_mendeley": "f2f5cb3baf6869f0a65dca335e488a8fbba2acf4290ac229125dcf9f3afc5747",
+   "file_id": "95651e9a-5fd6-40e1-9910-b29872f1ae0a"
+  },
+  {
+   "filename": "596_Charge3.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25541,
+   "sha256_published_by_mendeley": "e04a8ee868b6e711d5f07b06e23b777ef4428632cc220eff6fcb5d4d23acaeba",
+   "file_id": "ef4650c5-ef04-4018-a798-91ae048c974c"
+  },
+  {
+   "filename": "596_Charge4.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25625,
+   "sha256_published_by_mendeley": "a1c49797a23e1eab45f4fa2a72a7067986fc1823e152859fdc3efb57ebc8dc12",
+   "file_id": "dd4714b4-6c86-4183-a0aa-a91b9b85daaa"
+  },
+  {
+   "filename": "596_Charge5.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25536,
+   "sha256_published_by_mendeley": "e611b3b2b439ae26ca72d93cc433b53c4da9c3e008a77684b0a9f3a405f9a88c",
+   "file_id": "1f575f76-668e-4fc5-9295-a3fed95eb48e"
+  },
+  {
+   "filename": "596_HWFET.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 5771432,
+   "sha256_published_by_mendeley": "c2e5e070c403021845484c2e247bb6bc26e5d07c4947003afe750ae3efc5595a",
+   "file_id": "6becad3e-352f-4cb6-8e9f-c19da0b24b61"
+  },
+  {
+   "filename": "596_LA92.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 9335163,
+   "sha256_published_by_mendeley": "5ccf3241e37a2f9299c8d11c39c9bc9ee5059955e654004b9beb7522923c812f",
+   "file_id": "76b78212-b9df-470c-a79a-3edc67e937c0"
+  },
+  {
+   "filename": "596_UDDS.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 15943077,
+   "sha256_published_by_mendeley": "7a89548ffa041eefef5579b1d15f017fb5346beda600b8520cc9cbfb712b990e",
+   "file_id": "a75043d3-1a4d-423a-b949-680c2c85cd6c"
+  },
+  {
+   "filename": "601_Charge6.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25618,
+   "sha256_published_by_mendeley": "02c4222ce2691a03e62ec03c566452797bdc833d3c21daafda731aa6fd93d541",
+   "file_id": "986715bf-1fef-445b-95d6-0b6b7a7d99b9"
+  },
+  {
+   "filename": "601_Charge7.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25753,
+   "sha256_published_by_mendeley": "7f97165adf3bd008ae90875e64a4ba9f87908b95c1f70ba358afbbb8cece72ff",
+   "file_id": "742d2db8-b321-4835-b472-bf33b09e513f"
+  },
+  {
+   "filename": "601_Charge8.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25748,
+   "sha256_published_by_mendeley": "bf0242d5ece85c31940c0aeb9231786e47df571c09960420bd29ac590ee30bb9",
+   "file_id": "637cde9c-f1f8-4433-b631-84460014ad24"
+  },
+  {
+   "filename": "601_Mixed1.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 8112293,
+   "sha256_published_by_mendeley": "a0eef8578433409e0ddf5122b8dc30ba0db0d1681b8be949387eddc106ce03b0",
+   "file_id": "f35b38fe-9c9b-4244-97fc-cfc25ce952e0"
+  },
+  {
+   "filename": "601_Mixed2.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 8478417,
+   "sha256_published_by_mendeley": "5511e164bb6ba31fe3ae2879b9350627ed8f975ded428cb1018f43d738ca681c",
+   "file_id": "4012d577-4ed2-4f35-94c6-6cadc7560815"
+  },
+  {
+   "filename": "601_US06.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 4126922,
+   "sha256_published_by_mendeley": "8299442584b7dc87f0bb6b5ec3d3b2475e501dca910168cc7f20ad402f6b4c62",
+   "file_id": "467d39fc-0dbf-45dc-bf0a-3d3321296487"
+  },
+  {
+   "filename": "602_Cap_1C.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 43749,
+   "sha256_published_by_mendeley": "153585ad3150bc3d5be9c9280946d431d17d8e86a4f8ddb955c7cab3d5f99857",
+   "file_id": "c68bb2d9-56cb-41bc-a2ed-9817d203e68c"
+  },
+  {
+   "filename": "602_Charge10.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25972,
+   "sha256_published_by_mendeley": "04bb7094c023f13d27cf9f90ccb7e15af44a8315d9d3b06cbce65f9a1e94f177",
+   "file_id": "9650ce0d-eacd-4e73-be6d-b392607e26b9"
+  },
+  {
+   "filename": "602_Charge11.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25739,
+   "sha256_published_by_mendeley": "2dbc54995680081a685c743d7b9faf2506a65ac3123abfdde3382873eb83eff7",
+   "file_id": "a4acf944-3816-41a5-bb02-706dccb30f93"
+  },
+  {
+   "filename": "602_Charge12.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25620,
+   "sha256_published_by_mendeley": "76ebe31b18c6fbd403d4faf242d2e2095ce6f9ec2d8d371c76a89ce8d1b7a622",
+   "file_id": "479b55b1-65e0-4218-aa09-7dea7a45aa76"
+  },
+  {
+   "filename": "602_Charge17.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 16958,
+   "sha256_published_by_mendeley": "69780be7e66b90eb86542c18000c5a8c5985b20a985d190a0e12816645047839",
+   "file_id": "16fc648e-beb8-4d4a-8d6b-cc14b35b5ca3"
+  },
+  {
+   "filename": "602_Mixed4.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 8549413,
+   "sha256_published_by_mendeley": "abe9beb798a2b36808dac28bfe637d979534ff6b15d80ce65adf3e0230b4cd41",
+   "file_id": "e94ce404-549b-4806-8926-599b5b237315"
+  },
+  {
+   "filename": "602_Mixed5.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 7782444,
+   "sha256_published_by_mendeley": "54e63c6d4ba8843986d80394c8021fc365f5352749aa2ffe7613cfa9d20ce997",
+   "file_id": "73e7beb6-07d5-4704-ada2-b8042a51c36c"
+  },
+  {
+   "filename": "604_Charge10.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25741,
+   "sha256_published_by_mendeley": "78076794f38dafcf151cf0f417347a654db21bacf82ca45ad992b7fd238b6a4f",
+   "file_id": "899a3672-afa7-4d2b-a336-30bd53313ed6"
+  },
+  {
+   "filename": "604_Charge13.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25717,
+   "sha256_published_by_mendeley": "9667ba0ddb7f5e189ce666c9c25f7253bee8f2be9dc86aa7dab447dd00c05885",
+   "file_id": "2923d54a-87a0-4387-a991-054540968593"
+  },
+  {
+   "filename": "604_Charge14.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25621,
+   "sha256_published_by_mendeley": "d9d7668f5deb3fe12acff9c41e700a04e45581c6e6f40b5076aa6ac9c8b7ee6d",
+   "file_id": "c4d1de24-d594-4826-90f3-815c6e0292a7"
+  },
+  {
+   "filename": "604_Charge15.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 25613,
+   "sha256_published_by_mendeley": "de20cf1de8c2893fd2629a52848a9a26049a8cf52d6e506c50f473a9ff8f982a",
+   "file_id": "83073867-71df-4a3b-9b37-01aefb3d0031"
+  },
+  {
+   "filename": "604_Charge16.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 19820,
+   "sha256_published_by_mendeley": "3c8470b92e3ca46bb193c045e8e4e3c762e8e42a4fcc7c7bed048e4fec30f612",
+   "file_id": "f8fc13a5-75bc-443e-ae6f-540625115e72"
+  },
+  {
+   "filename": "604_Charge17.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 18052,
+   "sha256_published_by_mendeley": "9aafb10beb245552d91d7d2df4b1bd2b41b4e0eca4f7939f731c9c44d2fd4004",
+   "file_id": "d812e886-d63f-47e8-8c75-7cd51cf4e80e"
+  },
+  {
+   "filename": "604_Charge9.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 26126,
+   "sha256_published_by_mendeley": "c41b09758dd7c8670fe54685337009ebd7ec8c559042947bb9405e276fdec506",
+   "file_id": "f30c94e8-51a8-47d8-bd71-132e5e8fc50b"
+  },
+  {
+   "filename": "604_Mixed3.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 7150793,
+   "sha256_published_by_mendeley": "d62095fe1cb5be6972ec6f087d4a3c9b8d5c6fbf44e08f4cc6ff2ffeb54ad40c",
+   "file_id": "744274f8-ce87-4f73-b3ac-ebffb3f0fd26"
+  },
+  {
+   "filename": "604_Mixed6.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 7248020,
+   "sha256_published_by_mendeley": "de20816aea632fa7169e00d0bebd2ac6d58f47053140d966028de6f5b293f7eb",
+   "file_id": "2caf8198-314c-4623-a03e-2ff6e82ae398"
+  },
+  {
+   "filename": "604_Mixed7.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 7291619,
+   "sha256_published_by_mendeley": "cb931db4be5773b29bc07142101a5f14c9c70d275f94f9fdb9f90c742b4be4d0",
+   "file_id": "0a480fe9-80a7-4e88-b71e-23929fdb3183"
+  },
+  {
+   "filename": "604_Mixed8.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 8721648,
+   "sha256_published_by_mendeley": "1ad0de9e48dfa5513110b77614bf52ad0903b89cf0591e13386fcc09290f5a75",
+   "file_id": "84255d67-f3d1-4633-be4a-6d46a5c1333a"
+  },
+  {
+   "filename": "604_PausCycl.csv",
+   "folder_id": "a55d1625-4a76-4d48-bb12-b42758f0ffe1",
+   "folder_ambient_temperature_label": "n10degC",
+   "bytes": 2870502,
+   "sha256_published_by_mendeley": "dc0f8be8917476e28eee086d1e9f26a74edb721823da327d694617cfe220ae1b",
+   "file_id": "e2aa9b03-f2f3-485c-beb6-9d09a1b97229"
+  },
+  {
+   "filename": "12-21-18_13.25 607_HPPC_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 567578,
+   "sha256_published_by_mendeley": "64206d3a4c7afe61c8ab82a537609d9d240a1700af3ffc0ab9091529b35cdab1",
+   "file_id": "071cb29b-2f6c-4125-9ec7-b217c51a151f"
+  },
+  {
+   "filename": "12-22-18_09.52 607_C20DisCh_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 64892,
+   "sha256_published_by_mendeley": "7bd2e746c8b52b11d840e8ae8c489f023d3cb06e3eab03f0b7d16ee2b83600f8",
+   "file_id": "6c4783c1-691a-47fb-a0eb-c797ec56b2b5"
+  },
+  {
+   "filename": "12-22-18_21.39 607_Dis_0p5C_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 8602,
+   "sha256_published_by_mendeley": "25b25059b0143153ac2fc3cfeb00eb6c219bebaa3bcd54f55ecfd5b3036e5dad",
+   "file_id": "cd222b7b-79ce-4d86-b2f5-1c3571efaa58"
+  },
+  {
+   "filename": "12-24-1822.25 610_Charge5.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5316,
+   "sha256_published_by_mendeley": "4562f7453eb865793c1e978d40307e484be50de1b02cec368b8fc944a44b4584",
+   "file_id": "3b986a58-cfb8-4bb8-95f3-690284c9dc88"
+  },
+  {
+   "filename": "12-24-18_02.18 607_Dis_2C_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5633,
+   "sha256_published_by_mendeley": "2e087344f2dcdb20c44f03876a7a77d8368a0364ea291c96fc9694799aecb020",
+   "file_id": "a3162b32-5a87-4388-9a6c-730ce19832fc"
+  },
+  {
+   "filename": "12-24-18_05.33 610_Charge1.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 3017,
+   "sha256_published_by_mendeley": "b6748d3d1ca91dc84e528aeb657d9ab6a550f503f5256657cf5ccf36cc918d29",
+   "file_id": "c56b7d77-e975-45f1-ba8c-31099fd5d6fb"
+  },
+  {
+   "filename": "12-24-18_07.38 610_Cap_1C_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 8318,
+   "sha256_published_by_mendeley": "d1343f0ff6b563e0862ffa81113abe43cfdedf34b59f040d5838380c74197aea",
+   "file_id": "744215be-f552-475d-ac70-91762247490e"
+  },
+  {
+   "filename": "12-24-18_08.23 610_Charge2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5384,
+   "sha256_published_by_mendeley": "8e8bd74d55270848790dbdbe4ab3089d0b1392cd95c1c2c0fc69462a876a5771",
+   "file_id": "0af12f3a-1e19-402c-ab03-7cfaa682f3f6"
+  },
+  {
+   "filename": "12-24-18_11.30 610_UDDS_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 2129603,
+   "sha256_published_by_mendeley": "30bd81b4ced80a042697f880d634ccf5863731d8fee67cfb17dd78c342abcd76",
+   "file_id": "8f396689-be72-4096-a748-68d34329363b"
+  },
+  {
+   "filename": "12-24-18_13.48 610_Charge3.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5356,
+   "sha256_published_by_mendeley": "b2f6e457fe4b5fdccce781c353a8d6cafaa90de3487e452c17ec58c3ef8898b4",
+   "file_id": "96000ef5-bd07-4697-8375-12bd956c6aa9"
+  },
+  {
+   "filename": "12-24-18_16.54 610_HWFET_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 876991,
+   "sha256_published_by_mendeley": "692e14092a7eae34e2ff89b615e9f1822c47e2cd318fb69f2701f2dc9efedf0d",
+   "file_id": "40ac3e88-84ec-43c3-8186-98b5352fda18"
+  },
+  {
+   "filename": "12-24-18_17.51 610_Charge4.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5180,
+   "sha256_published_by_mendeley": "db8e14c586536f4f4e74a57f1ef852601f460486daa2e5e47ab6a08ffda8be0c",
+   "file_id": "cbecf914-4f58-452c-a2e9-7fef04fda42e"
+  },
+  {
+   "filename": "12-24-18_20.56 610_LA92_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1350448,
+   "sha256_published_by_mendeley": "3f064ce417368f72c9809fba0c97582e91616486f7b481f1b75bc877b000820e",
+   "file_id": "229ec5cd-0e68-410c-8080-7de95aa0cdf3"
+  },
+  {
+   "filename": "12-25-18_01.31 610_US06_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 703909,
+   "sha256_published_by_mendeley": "f57a49fa17188e9e6de0322ef3ed32f4f1ac5f95994e9daec39841c147f14ef1",
+   "file_id": "413b7b63-32a3-454d-b427-f74f6fa55a40"
+  },
+  {
+   "filename": "12-25-18_02.18 610_Charge6.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5212,
+   "sha256_published_by_mendeley": "51c3c0ef662544974d252a4f03cb03de644631ef606e766e813c70e8cee3c928",
+   "file_id": "70a4a1a1-fa10-4e41-ba8e-7b92fc7d088a"
+  },
+  {
+   "filename": "12-25-18_05.24 610_Mixed1_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1188649,
+   "sha256_published_by_mendeley": "15fd73c2dbbb10ae6376134def99d395ba9d7e945c96bfb4950bda751d399927",
+   "file_id": "3cdc09b4-b2b8-415d-b981-9ec6fb5daf1c"
+  },
+  {
+   "filename": "12-25-18_06.41 610_Charge7.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5362,
+   "sha256_published_by_mendeley": "a5bde128adfa211fa18d2db1d1466dc90241c88c4ccce77d2b986888b31f65cf",
+   "file_id": "3fff143c-da01-4d9a-a8bc-d513c0efd189"
+  },
+  {
+   "filename": "12-25-18_09.47 610_Mixed2_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1127159,
+   "sha256_published_by_mendeley": "28fbbf20f1cf1cf4a52f1fcdc9b19cdc4585cf80d9eda0da67238b1a56831bad",
+   "file_id": "bcb28c4f-c175-44af-9822-fd565f5acb62"
+  },
+  {
+   "filename": "12-25-18_11.00 610_Charge8.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5301,
+   "sha256_published_by_mendeley": "95e37d201123b0e8f94396f067fb161947fd47900c9b71c12c57d89dcb5784e8",
+   "file_id": "27367d07-9d4a-4f62-a1a2-1e169073f8f6"
+  },
+  {
+   "filename": "12-25-18_14.07 611_Charge17.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 2999,
+   "sha256_published_by_mendeley": "7282bb8e1341367947d309f9f7b8f3fd1907e4a62bee6c810267b3794a5155b3",
+   "file_id": "1f86b787-97bd-4329-92ca-22e911830880"
+  },
+  {
+   "filename": "12-25-18_16.13 611_Cap_1C_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 8151,
+   "sha256_published_by_mendeley": "8bb84ab275c39da0c670d1ff3332e8a9418e2d57c04c44cef362ee5a6cc8c4f9",
+   "file_id": "86f392b1-2558-4a9e-9088-feacf72fcf12"
+  },
+  {
+   "filename": "12-25-18_16.57 611_Charge9.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5323,
+   "sha256_published_by_mendeley": "14d3a42bf8b4d744c76bd2806c516e443682441b2c749b5abc6f4ef35eb0fedb",
+   "file_id": "df135b64-6200-4f87-bc39-e71c387c6751"
+  },
+  {
+   "filename": "12-25-18_20.04 611_Mixed3_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1165238,
+   "sha256_published_by_mendeley": "980df6311acedae624de9d3e8fcd97c72c3f2fbbc812951ec46560394666aca9",
+   "file_id": "3e2f3401-d628-4ec4-8d06-1c97775c9fbe"
+  },
+  {
+   "filename": "12-25-18_21.20 611_Charge10.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5245,
+   "sha256_published_by_mendeley": "be43ef5d7d203bda5a11bde8c9666a8f864bdc88fd688951c99ad8bd9870e233",
+   "file_id": "7a328204-6c16-403e-bb53-4e07dc513fe9"
+  },
+  {
+   "filename": "12-26-18_00.25 611_Mixed4_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1210387,
+   "sha256_published_by_mendeley": "47461c2a2d8a048abeced1ecefb11c9581b6a4ddd00f016239b3fe8c6da9e489",
+   "file_id": "958a480d-ef4c-44e4-8199-45c62a274084"
+  },
+  {
+   "filename": "12-26-18_01.43 611_Charge11.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5277,
+   "sha256_published_by_mendeley": "b4eb7b1c0a6415e60d0ed1e787eefacb499a2a18a180bb88610d58c1aae509be",
+   "file_id": "101b7a94-46d6-4533-acba-accca723e9f9"
+  },
+  {
+   "filename": "12-26-18_04.48 611_Mixed5_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1183522,
+   "sha256_published_by_mendeley": "a77afdde0009cf9d9424deb2ce4ea65b8380fc77d492375293536b354d140885",
+   "file_id": "21caa1a6-30c9-4ac8-89f4-f6ebe7435ea3"
+  },
+  {
+   "filename": "12-26-18_06.05 611_Charge12.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5258,
+   "sha256_published_by_mendeley": "ea4a8ef24311e0c5937b31928e8d03fddd7738e8f838a4155db6d78fd8e9fb79",
+   "file_id": "23a12fed-ad52-4782-9d29-f6d28a6c1c6f"
+  },
+  {
+   "filename": "12-26-18_09.11 611_Mixed6_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1149576,
+   "sha256_published_by_mendeley": "1efb10218e6bc7aa1fc59733f895f56b6ed0307f28fc7a255d91ae485e21ed80",
+   "file_id": "2c2e3aa9-a42e-4b42-968e-48945c01b937"
+  },
+  {
+   "filename": "12-26-18_10.25 611_Charge13.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5244,
+   "sha256_published_by_mendeley": "2001f110bcceabb71653caa10294740b50e9042b7d933047fc2f09c2ac6270ac",
+   "file_id": "df239c47-53c0-4516-8c59-a5dd8e24223f"
+  },
+  {
+   "filename": "12-26-18_13.31 611_Mixed7_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1055420,
+   "sha256_published_by_mendeley": "45d52c168ec9fbef82ef22907e1c26f40d5c2529f068b8a6e08bcb31efb7b3aa",
+   "file_id": "8e14d9f8-42ff-4ff7-aafa-aed4019c4545"
+  },
+  {
+   "filename": "12-26-18_14.40 611_Charge14.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5183,
+   "sha256_published_by_mendeley": "63d24fed7e89a31d74d5cf14f06da6f2dfd11a78959a471e081dbca662898ca0",
+   "file_id": "da98fb33-238c-4d1f-84a1-61e514c68229"
+  },
+  {
+   "filename": "12-26-18_17.45 611_Mixed8_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 1224175,
+   "sha256_published_by_mendeley": "9ab696362a9abaa7eefce0eba8384715dcf9a4486d874214b241d957a73e4047",
+   "file_id": "d30f8839-0652-44fb-b6f3-c3e0b2a217e8"
+  },
+  {
+   "filename": "12-26-18_19.04 611_Charge15.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5237,
+   "sha256_published_by_mendeley": "ebc155c5c123be0ba9c9c40f733f646db44256611a93f480a5a52a7a2cc035c7",
+   "file_id": "e04711e0-4d89-40ca-a0b4-5980bcb844b1"
+  },
+  {
+   "filename": "12-26-18_22.10 611_PausCycl_n20degC_LGHG2.mat",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 360846,
+   "sha256_published_by_mendeley": "7a2bd9e4e1d43e080c9bfba36e2b81bed2625848ec8bf894fa6bf936032781aa",
+   "file_id": "ff3c1be5-7bf5-4177-999c-d06a6ba331db"
+  },
+  {
+   "filename": "607_C20DisCh.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 279451,
+   "sha256_published_by_mendeley": "449ee60c7a7da6bed01b3eb2a49b434175b5da11d48073f6bd2d678277055fcd",
+   "file_id": "0dbbc51b-055d-4f3e-b243-43a31c45da87"
+  },
+  {
+   "filename": "607_Dis_0p5C.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 36693,
+   "sha256_published_by_mendeley": "796460273d3889cc51a2874b90a5609bdcaf1894ca69ab30c4b8617c267b1799",
+   "file_id": "05cb8aba-8d85-4f58-861e-9e4ac59d7421"
+  },
+  {
+   "filename": "607_Dis_2C.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 25803,
+   "sha256_published_by_mendeley": "ddef3e7383c367d1bc3a610a71ca6c21752b734fbe0406d3de343cccf992717c",
+   "file_id": "a4628670-b6a6-4e08-8b6e-7a97c46bcd4f"
+  },
+  {
+   "filename": "607_HPPC.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 4561549,
+   "sha256_published_by_mendeley": "899c6d4de0c90bc887a86b7dcab4ab9c7bb9833c10fb3df0fdc4151e0dc593ca",
+   "file_id": "e2f15201-ee34-4dad-b5ed-ae34d2c73ce3"
+  },
+  {
+   "filename": "610_Cap_1C.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 35441,
+   "sha256_published_by_mendeley": "7a7415bf5256ca7b9c36349d553c26d249ec14d56b17970df0c6055723b3819d",
+   "file_id": "2aded9e5-df3a-48a8-9b03-842c91ce63ca"
+  },
+  {
+   "filename": "610_Charge1.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 16859,
+   "sha256_published_by_mendeley": "6bef4417492901d1bf2a0c90ff70a8b28e8cf6a7b41dfcd78b1992cc8867f9c9",
+   "file_id": "ea8e77b6-c112-46f3-98a4-eab22be59091"
+  },
+  {
+   "filename": "610_Charge2.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24765,
+   "sha256_published_by_mendeley": "024650816e2ce2f5d7dde5ef614d96cc81c19215c161a6bc2ef57439c25e623e",
+   "file_id": "e3806fd8-3da6-4aa5-9d15-429a303ec0f7"
+  },
+  {
+   "filename": "610_Charge3.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24295,
+   "sha256_published_by_mendeley": "dc006211cc10fe5a9c19740bad10424ebe36265d43014adcb6d8eedf99d412aa",
+   "file_id": "106f9ded-6504-46b1-92c7-2bf79e91fbee"
+  },
+  {
+   "filename": "610_Charge4.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24297,
+   "sha256_published_by_mendeley": "1a502cece9d73924513eef61c99e9e57e9ca9ea214cbf56fb8d93ddf7f620cbf",
+   "file_id": "04ca433d-636c-4e23-b71e-c60d30d26cd0"
+  },
+  {
+   "filename": "610_Charge5.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24452,
+   "sha256_published_by_mendeley": "a0b3313e4aa57b6e78f8da6b6a9ee6020f350d12c3aaa8260ddc2c7ff68d37c0",
+   "file_id": "20d3d80f-f1b6-4532-9676-7b9005da0f24"
+  },
+  {
+   "filename": "610_Charge6.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24421,
+   "sha256_published_by_mendeley": "686c7ff0f204a816c02fd9aa7bc18349fec83b36ceff3315b013c24934ffb19f",
+   "file_id": "314976a3-6af1-4bd8-a830-5da01f27cf96"
+  },
+  {
+   "filename": "610_Charge7.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24420,
+   "sha256_published_by_mendeley": "208683a78d0a03fa9527d4e94cd99fd925a007a0bdc5a2132a26a3eb57a824ed",
+   "file_id": "b6237e82-d027-40b6-a0d9-d2d57950e579"
+  },
+  {
+   "filename": "610_Charge8.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24670,
+   "sha256_published_by_mendeley": "4996cafb8bb93ddfa29df60081da075a3b65c4cb725bcb4d50d8e9797e946a43",
+   "file_id": "b8fa91c9-b9f8-4f69-b110-151333e44264"
+  },
+  {
+   "filename": "610_HWFET.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 4348286,
+   "sha256_published_by_mendeley": "3bfef9d95de19e115fea1f044eaa916b5c1a07c4c8c6a4deeb389b22e62594b1",
+   "file_id": "2a70b6e6-97e6-4e04-bfdb-3b4d2b0b7d1c"
+  },
+  {
+   "filename": "610_LA92.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 6860938,
+   "sha256_published_by_mendeley": "1609ad899683ec140d05072124fe85e4e976052d3c4cc170fdd21fb29a5b9213",
+   "file_id": "1a07c029-277a-4259-b795-86c9d02202e2"
+  },
+  {
+   "filename": "610_Mixed1.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5914106,
+   "sha256_published_by_mendeley": "6d853314bddecb30fea021b52826125e979f51008494c65d769183071098286f",
+   "file_id": "5d6d2573-334a-406a-bba4-40fac5b9b9f3"
+  },
+  {
+   "filename": "610_Mixed2.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5649014,
+   "sha256_published_by_mendeley": "f972a47db5d777e85d810c867bfcbe1ff1fcfdaa4d62bf0a2ba17662e1bbe6e4",
+   "file_id": "91c38a79-6c60-48ad-92b6-fe902e8965c8"
+  },
+  {
+   "filename": "610_UDDS.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 10748630,
+   "sha256_published_by_mendeley": "98309233a021a73d1f9000d1374cb7c4873a704047cdb05e76f4ac2a3279c184",
+   "file_id": "1a330959-c9a9-4a91-83d4-93b13a3c5703"
+  },
+  {
+   "filename": "610_US06.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 3594255,
+   "sha256_published_by_mendeley": "75210c02b6ed9c8ccb3187b3055e5be6e0bbe5170b1d3813a4c476eaab5d540b",
+   "file_id": "54d96773-f8b9-4948-a0c4-5c74d9cf8f7b"
+  },
+  {
+   "filename": "611_Cap_1C.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 34667,
+   "sha256_published_by_mendeley": "15d5ec3beb78536f65d4ba37d1989731755fe835a2884b8888496c22d2200603",
+   "file_id": "5addb779-2cd0-46b0-b6d1-9d95d39edacd"
+  },
+  {
+   "filename": "611_Charge10.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24574,
+   "sha256_published_by_mendeley": "a115862cd4534e2910a91d2477583d8559077914dc08217ead43c231dcc22bad",
+   "file_id": "6ca9ad33-04c6-4b69-ace6-1f9c39f607b8"
+  },
+  {
+   "filename": "611_Charge11.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24298,
+   "sha256_published_by_mendeley": "9fcf8fd9fc34679a497051f7076e108d10e9a0e9bab4719bb5245a50a56e0927",
+   "file_id": "26b4d463-d02d-4f76-8325-0fd91a6f1af7"
+  },
+  {
+   "filename": "611_Charge12.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24298,
+   "sha256_published_by_mendeley": "ca407d7967297d8b0cbd54708e5e9905ce1d648c3c9bb149d0eb29c0e6b3ff08",
+   "file_id": "0eae3f8d-b61f-4b6a-a18f-672797e2bf2c"
+  },
+  {
+   "filename": "611_Charge13.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24455,
+   "sha256_published_by_mendeley": "72eea19c19eaa474fcb29b8a621b04daa0c2286f6019f83560b34558aea0d2d2",
+   "file_id": "f47e16b6-5f32-4a2c-af94-28fc6e3483dd"
+  },
+  {
+   "filename": "611_Charge14.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24298,
+   "sha256_published_by_mendeley": "d140f9e9541a4171e65ad450b39149906f2fd749342ed3cfa3308508c3e271a6",
+   "file_id": "90c057ce-1487-4d9a-91b1-27913b48b8a4"
+  },
+  {
+   "filename": "611_Charge15.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24310,
+   "sha256_published_by_mendeley": "ee066c30f2cf7ade284faf995c0cc256e609f4cbbe3b8c8ec93402183c19e507",
+   "file_id": "2fc6e6c1-c0d2-4574-be0b-2a37f4841463"
+  },
+  {
+   "filename": "611_Charge17.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 16986,
+   "sha256_published_by_mendeley": "77c9e8376eaafe7a099b6f34a460149afa2a618ac28d59577d678bb9a53e78f1",
+   "file_id": "14f9195d-afa8-4faa-b7d2-8dcdae2477c6"
+  },
+  {
+   "filename": "611_Charge9.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 24546,
+   "sha256_published_by_mendeley": "1fccddc0abd0f402f079514c394ae7f09e8dfbf5c65eb97e5fe8b6c31c0c36f2",
+   "file_id": "87e7bff0-2a11-4678-b9cf-99e6f62ae63b"
+  },
+  {
+   "filename": "611_Mixed3.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5890112,
+   "sha256_published_by_mendeley": "2643934f94c88e5d2013e1ef1cc2626cb6d68c7f31a558f4baa385cc1c550375",
+   "file_id": "f8e32c60-db2b-4e92-85a5-2348ccc8d8ee"
+  },
+  {
+   "filename": "611_Mixed4.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 6027146,
+   "sha256_published_by_mendeley": "f9adae0eee57cd8f0d82bd115ca5c3bea84afa57f79fb059bf580f217c352122",
+   "file_id": "a78562a7-ec3e-4435-b44b-bb810545bc68"
+  },
+  {
+   "filename": "611_Mixed5.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5929119,
+   "sha256_published_by_mendeley": "2f37525b875c58c7d0ec01ae7479631c4c52239d5c01ca670d43e17dbc5a13cd",
+   "file_id": "6cb6ce4c-43a4-43ce-80f9-8fd72e4dd2d8"
+  },
+  {
+   "filename": "611_Mixed6.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5779273,
+   "sha256_published_by_mendeley": "e953e57ef4322440c202780bddcf87f4df34cb33478ff0542bf7dc90bfa6c3d8",
+   "file_id": "a4facc17-0379-4aca-a04c-c8439e867216"
+  },
+  {
+   "filename": "611_Mixed7.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 5305000,
+   "sha256_published_by_mendeley": "5872f3f7459f17836bd2b76978c4e54aa226f4851cae5d9575d4a0f25c6b7aff",
+   "file_id": "9f67a2a8-bb9f-4795-94c6-e33f2c788567"
+  },
+  {
+   "filename": "611_Mixed8.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 6099618,
+   "sha256_published_by_mendeley": "f9c46c8a0553609bdb613fe25868789bea39f6ff7a5e804382e5d1762ed4339a",
+   "file_id": "ea95692d-8c5a-45c1-851f-7ae57c6dfc53"
+  },
+  {
+   "filename": "611_PausCycl.csv",
+   "folder_id": "a2965231-cccb-4c7c-a821-219d453b513e",
+   "folder_ambient_temperature_label": "n20degC",
+   "bytes": 2173762,
+   "sha256_published_by_mendeley": "2a18767faa85efce2293099242b60eaa96051fac96d7ad7f0e0146cc02a793e3",
+   "file_id": "63f8cc6e-1731-4c99-b9ad-c99e44f32d7b"
+  }
+ ]
+}

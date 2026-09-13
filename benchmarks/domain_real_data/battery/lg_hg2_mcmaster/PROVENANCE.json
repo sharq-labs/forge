@@ -1,0 +1,120 @@
+{
+ "schema": "domain_real_data_provenance/1",
+ "rule": "Raw bytes are immutable. Nothing in raw/ is ever edited, re-encoded or line-ending normalised (raw/.gitattributes sets -text). Any normalisation in a later round is a separate derived artifact that names the raw file and SHA-256 it was computed from.",
+ "dataset": {
+  "title": "LG 18650HG2 Li-ion Battery Data and Example Deep Neural Network xEV SOC Estimator Script",
+  "creators_as_listed_by_the_repository": ["Philip Kollmeyer", "Carlos Vidal", "Mina Naguib", "Michael Skells"],
+  "creator_name_note": "The Mendeley API lists 'Philip Kollmeyer'; the dataset's own readme writes 'Dr. Phillip Kollmeyer'. Both spellings are recorded as found.",
+  "institution": "McMaster University, Hamilton, Ontario, Canada (readme; Mendeley institutions field, ROR https://ror.org/02fa3aq29)",
+  "persistent_identifier": "doi:10.17632/cp3473x7xv.3 (Mendeley Data, version 3)",
+  "published": "2020-03-05 (Mendeley publish_date)",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0), http://creativecommons.org/licenses/by/4.0, read from the repository's data_licence field",
+  "licence_third_party_caveat_verbatim_from_repository": "Note that further permission may be required for any content within the dataset that is identified as belonging to a third party.",
+  "attribution_required": "Cite doi:10.17632/cp3473x7xv.3. The readme asks that any use be appropriately referenced. Changes made: none to the vendored bytes.",
+  "publications_named_by_the_dataset": [
+   "C. Vidal, P. Kollmeyer, M. Naguib, P. Malysz, O. Gross, A. Emadi, 'Robust xEV Battery State-of-Charge Estimator Design using Deep Neural Networks', WCX SAE World Congress Experience, Detroit, Apr 2020",
+   "C. Vidal, P. Kollmeyer, E. Chemali, A. Emadi, 'Li-ion Battery State of Charge Estimation Using Long Short-Term Memory Recurrent Neural Network with Transfer Learning', IEEE ITEC 2019, pp. 1-6"
+  ]
+ },
+ "experiment_as_documented": {
+  "cell": "one brand new 3 Ah LG HG2 18650 cell; cycler header 'Battery Name,LG HG2 18650_SN62A4'",
+  "chemistry": "Li[NiMnCo]O2 (H-NMC) / Graphite + SiO, from the dataset's own PDF 'Technical Information and Experimental Test Results for LG 18650HG2' (not vendored; see licence_notes)",
+  "equipment": "Digatron Firing Circuits Universal Battery Tester channel, 75 A / 5 V, voltage and current accuracy 0.1 % of full scale (readme); 8 cu.ft. thermal chamber (readme)",
+  "accuracy_arithmetic_from_the_stated_spec": "0.1 % of 75 A is 75 mA; 0.1 % of 5 V is 5 mV. This is arithmetic on the readme's statement, not a separately documented figure.",
+  "temperature_sensor": "battery case temperature at the middle of the cell, AD592, +/-1 degC accuracy (readme)",
+  "voltage_sense": "sense leads welded directly to the battery terminal (readme); cycler header comment 'HG2 cell with 10AWG wire soldered to cell'",
+  "protocol_verbatim_summary": [
+   "Four-pulse discharge HPPC (1, 2, 4 and 6C discharge; 0.5, 1, 1.5 and 2C charge; reduced at lower temperatures) at 100, 95, 90, 80, 70, ..., 20, 15, 10, 5, 2.5, 0 % SOC",
+   "C/20 discharge and charge",
+   "0.5C, 2C and two 1C discharges",
+   "UDDS, HWFET, LA92, US06 drive cycles, then Mixed 1-8",
+   "repeated at ambient 40, 25, 10, 0, -10, -20 degC in that order",
+   "charged after each test at 1C to 4.2 V, 50 mA cut-off, battery temperature 22 degC or greater"
+  ],
+  "pressure": "UNKNOWN (not stated)",
+  "sampling": "readme: drive cycles at 0.1 s; charges and pauses at lower, variable rates. Measured in this round's screen: HPPC median 0.101 s; C/20, 0.5C and 2C discharges at 60 s; Cap_1C at 10 s (DATA_QUALITY.json).",
+  "channels_in_the_csv_exports": {
+   "Time Stamp": "MM/DD/YYYY HH:MM:SS AM",
+   "Step": "cycler step number",
+   "Status": "PAU / CHA / DCH",
+   "Prog Time": "h:mm:ss.fff from program start",
+   "Step Time": "h:mm:ss.fff from step start",
+   "Cycle": "cycler counter",
+   "Cycle Level": "cycler counter",
+   "Procedure": "cycler procedure name",
+   "Voltage": "[V]",
+   "Current": "[A], negative on discharge",
+   "Temperature": "[C] (the readme names this Battery_Temp_degC in the .mat files)",
+   "Capacity": "[Ah], counter reset per test",
+   "WhAccu": "[Wh]",
+   "Cnt": "[Cnt]"
+  },
+  "uncertainty": {
+   "voltage": "0.1 % of full scale (readme)",
+   "current": "0.1 % of full scale (readme)",
+   "temperature": "+/-1 degC, AD592 (readme)",
+   "capacity_counter": "UNKNOWN (not stated)",
+   "time": "UNKNOWN (not stated)"
+  },
+  "raw_or_processed": "raw cycler CSV exports; the readme states the CSV files are the original files saved by the cycler and hold data identical to the .mat files"
+ },
+ "why_this_subset": "The 25 degC characterisation block of test 549 (HPPC, C/20, 0.5C, 2C) and the 1C capacity test 551 that follows it: synchronized time, current, terminal voltage, charge counter and case temperature under documented load, at one ambient temperature, 6.4 MB. The other five temperatures and the drive cycles (817 MB in total) are EXTERNAL fetches recorded file by file in MENDELEY_MANIFEST.json with Mendeley's SHA-256.",
+ "folder_temperature_evidence": "The Mendeley API returns folder ids without folder names. These CSVs share folder 8b988119-7c3e-4d08-8341-bf1b3ec01353 with '10-25-18_07.39 549_HPPC_25degC_LGHG2.mat'; that co-located name, the test number 549, and the cycler header dates are the evidence the files are the 25 degC block. The dataset does not state the folder name in the API.",
+ "acquisition": {
+  "method": "HTTPS GET of the Mendeley public-files endpoint with curl, then SHA-256 of the received bytes compared with the sha256_hash the Mendeley public API publishes for that file",
+  "api": "https://data.mendeley.com/public-api/datasets/cp3473x7xv",
+  "date": "2026-09-13",
+  "by": "Domain Real-Data Acquisition Sprint, branch claude/domain-real-data"
+ },
+ "licence_notes": "The readme .txt is the dataset's own documentation and is vendored under the same CC BY 4.0 grant. The PDF 'Technical Information and Experimental Test Results for LG 18650HG2.pdf' (699394 bytes, Mendeley SHA-256 in MENDELEY_MANIFEST.json) contains a cell specification table that may originate with the cell manufacturer; under the repository's third-party caveat it is NOT vendored and was only read.",
+ "files": [
+  {
+   "raw_filename": "549_HPPC.csv",
+   "vendored_path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_HPPC.csv",
+   "bytes": 6033634,
+   "sha256": "70ffb357511dd77e7c6bc14c642a095ddd51d6918b547987247100a3bd2ea29d",
+   "sha256_published_by_mendeley_matches": true,
+   "content": "25 degC four-pulse HPPC plus a multi-pulse section; 0.1 s logging during pulses"
+  },
+  {
+   "raw_filename": "549_C20DisCh.csv",
+   "vendored_path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_C20DisCh.csv",
+   "bytes": 312505,
+   "sha256": "52eff1a8d273f353d557af8172139c2f23709499d36130ac24ffbbb820e8f232",
+   "sha256_published_by_mendeley_matches": true,
+   "content": "25 degC C/20 discharge, pause, C/20 charge, pause; 60 s logging"
+  },
+  {
+   "raw_filename": "549_Dis_0p5C.csv",
+   "vendored_path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_0p5C.csv",
+   "bytes": 15001,
+   "sha256": "85f6147f9bc21157e777a547229af5f252360c308a753672ef3eb1144b57fa75",
+   "sha256_published_by_mendeley_matches": true,
+   "content": "25 degC 0.5C constant-current discharge; 60 s logging"
+  },
+  {
+   "raw_filename": "549_Dis_2C.csv",
+   "vendored_path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_2C.csv",
+   "bytes": 4178,
+   "sha256": "87b77c00e18242b177bd7a2eac8faa46ad2139c15aa94c146388ae13eba92a06",
+   "sha256_published_by_mendeley_matches": true,
+   "content": "25 degC 2C constant-current discharge; 60 s logging; the first logged row is 60 s into the step"
+  },
+  {
+   "raw_filename": "551_Cap_1C.csv",
+   "vendored_path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/551_Cap_1C.csv",
+   "bytes": 51428,
+   "sha256": "d9b9dd9b9b842ee6ba91f79a85512d2306527103d2f1cef5ecec4f962a75d83e",
+   "sha256_published_by_mendeley_matches": true,
+   "content": "1C capacity discharge that follows the 25 degC characterisation block (test 551, program LG_HG2_CyclesA); 10 s logging"
+  },
+  {
+   "raw_filename": "Readme file - Description of Experimental Tests.txt",
+   "vendored_path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/Readme file - Description of Experimental Tests.txt",
+   "bytes": 4052,
+   "sha256": "809c0045eabcf4913a380ad520e4016f52a9c4186e6d15958992df3baf0e1427",
+   "sha256_published_by_mendeley_matches": true,
+   "content": "the dataset's own description of equipment, protocol, channels and sampling"
+  }
+ ]
+}

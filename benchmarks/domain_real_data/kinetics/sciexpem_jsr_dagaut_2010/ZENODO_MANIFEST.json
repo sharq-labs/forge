@@ -1,0 +1,23 @@
+{
+ "schema": "domain_real_data_zenodo_manifest/1",
+ "record_id": "4881855",
+ "doi": "10.5281/zenodo.4881855",
+ "title": "SciExpeM - 10.5281/zenodo.4881855",
+ "licence": "cc-by-4.0",
+ "creators": [
+  {
+   "name": "SciExpeM",
+   "affiliation": "Politecnico di Milano"
+  }
+ ],
+ "publication_date": "2021-05-31",
+ "retrieved_on": "2026-09-13",
+ "files": [
+  {
+   "filename": "10.5281/zenodo.4881855.xml",
+   "bytes": 9781,
+   "checksum_published_by_zenodo": "md5:b1a353b2e8fa7cdb3efc7692f0305e73",
+   "download_url": "https://zenodo.org/records/4881855/files/10.5281/zenodo.4881855.xml?download=1"
+  }
+ ]
+}
