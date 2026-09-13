@@ -658,6 +658,12 @@ _ALIASING_NUMBER_MINIMUM: float | None = 2.0 * math.log(100.0)  # 9.21: aliasing
 #: cannot fix the cross-ridge curvature and a wider one is needed.
 _CURVATURE_FIT_WINDOWS = (50.0, 500.0, 5000.0, math.inf)
 
+#: Fitted precisions (lattice units) at or below these count as flat: a
+#: posterior sd above 10**6 lattice steps, or 10**-9 of the sharpest direction's
+#: precision, which is below what a least-squares quadratic fit can resolve.
+_FLAT_DIRECTION_PRECISION = 1.0e-12
+_FLAT_DIRECTION_RELATIVE_PRECISION = 1.0e-9
+
 #: Exact enumeration stops here and the grid counts as unresolved: a search this
 #: large means the fitted curvature is so ill-conditioned in lattice units that
 #: resolution cannot be established.
@@ -724,12 +730,17 @@ def _fitted_lattice_covariance(
                 else:
                     hessian[i, j] = hessian[j, i] = solution[k]
                 k += 1
-        if not np.all(np.isfinite(hessian)) or float(np.max(np.linalg.eigvalsh(hessian))) >= 0.0:
-            return None, (
-                f"the log-likelihood near its maximum is not locally concave "
-                f"(window {window:g})"
-            )
-        return np.linalg.inv(-hessian), f"window {window:g}, {index.size} nodes"
+        if not np.all(np.isfinite(hessian)):
+            continue
+        # A direction in which the fitted log-likelihood is flat or convex --
+        # a non-identified combination, a posterior cut off by the grid's
+        # bounds, the saddle between two modes -- is not narrow, so nothing
+        # aliases along it: it gets a width of a million lattice steps
+        # rather than a refusal. Only the concave directions can be thin.
+        precision, vectors = np.linalg.eigh(-0.5 * (hessian + hessian.T))
+        floor = max(_FLAT_DIRECTION_RELATIVE_PRECISION * float(np.max(precision)), _FLAT_DIRECTION_PRECISION)
+        precision = np.maximum(precision, floor)
+        return (vectors / precision) @ vectors.T, f"window {window:g}, {index.size} nodes"
     return None, "the nodes near the maximum are too few or collinear to fix a local curvature"
 
 

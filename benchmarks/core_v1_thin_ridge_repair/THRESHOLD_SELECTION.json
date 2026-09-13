@@ -192,7 +192,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 30.95107940181613,
+   "aliasing_number": 30.95107940181609,
    "ess": 14.7781725866631,
    "fit": "window 50, 187 nodes"
   },
@@ -211,7 +211,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 30.951079401816177,
+   "aliasing_number": 30.951079401816173,
    "ess": 14.771017806366565,
    "fit": "window 50, 184 nodes"
   },
@@ -230,7 +230,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 30.95107940181613,
+   "aliasing_number": 30.95107940181609,
    "ess": 14.765545149468586,
    "fit": "window 50, 183 nodes"
   },
@@ -249,7 +249,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 142.12230337568616,
+   "aliasing_number": 142.1223033756863,
    "ess": 67.85834405843055,
    "fit": "window 50, 815 nodes"
   },
@@ -268,7 +268,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 142.12230337568633,
+   "aliasing_number": 142.12230337568616,
    "ess": 67.85834175954587,
    "fit": "window 50, 808 nodes"
   },
@@ -287,7 +287,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 142.12230337568613,
+   "aliasing_number": 142.12230337568616,
    "ess": 67.85834407681824,
    "fit": "window 50, 814 nodes"
   },
@@ -325,7 +325,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 568.4892135027393,
+   "aliasing_number": 568.4892135027396,
    "ess": 271.4332286036619,
    "fit": "window 50, 3172 nodes"
   },
@@ -363,7 +363,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2273.956854010933,
+   "aliasing_number": 2273.9568540109326,
    "ess": 1085.7325125907691,
    "fit": "window 50, 12549 nodes"
   },
@@ -382,7 +382,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2273.9568540109567,
+   "aliasing_number": 2273.956854010953,
    "ess": 1085.7325063342098,
    "fit": "window 50, 12549 nodes"
   },
@@ -420,7 +420,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 12.090265391334434,
+   "aliasing_number": 12.090265391334432,
    "ess": 5.991800850109301,
    "fit": "window 50, 128 nodes"
   },
@@ -439,7 +439,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 12.090265391334427,
+   "aliasing_number": 12.090265391334432,
    "ess": 6.0664805557933565,
    "fit": "window 50, 128 nodes"
   },
@@ -458,7 +458,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 12.090265391334428,
+   "aliasing_number": 12.090265391334423,
    "ess": 6.143518778700531,
    "fit": "window 50, 129 nodes"
   },
@@ -496,7 +496,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 55.516524756127296,
+   "aliasing_number": 55.516524756127254,
    "ess": 26.50716241207668,
    "fit": "window 50, 567 nodes"
   },
@@ -515,7 +515,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 55.51652475612727,
+   "aliasing_number": 55.516524756127254,
    "ess": 26.507178515998376,
    "fit": "window 50, 568 nodes"
   },
@@ -534,7 +534,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 222.06609902450904,
+   "aliasing_number": 222.06609902450907,
    "ess": 106.02875205865533,
    "fit": "window 50, 2233 nodes"
   },
@@ -553,7 +553,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 222.06609902450907,
+   "aliasing_number": 222.0660990245093,
    "ess": 106.0287520586552,
    "fit": "window 50, 2226 nodes"
   },
@@ -572,7 +572,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 222.06609902450924,
+   "aliasing_number": 222.06609902450944,
    "ess": 106.02875205865527,
    "fit": "window 50, 2228 nodes"
   },
@@ -591,7 +591,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 888.2643960980262,
+   "aliasing_number": 888.2643960980257,
    "ess": 424.1150082346208,
    "fit": "window 50, 8841 nodes"
   },
@@ -610,7 +610,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 888.2643960980229,
+   "aliasing_number": 888.2643960980236,
    "ess": 424.1150082346208,
    "fit": "window 50, 8850 nodes"
   },
@@ -629,7 +629,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 888.2643960980254,
+   "aliasing_number": 888.2643960980257,
    "ess": 424.11500823462086,
    "fit": "window 50, 8847 nodes"
   },
@@ -686,7 +686,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 5.3734512850375395,
+   "aliasing_number": 5.373451285037538,
    "ess": 3.0641010735764564,
    "fit": "window 50, 65 nodes"
   },
@@ -705,7 +705,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 24.67401100272333,
+   "aliasing_number": 24.674011002723326,
    "ess": 11.816766271379995,
    "fit": "window 50, 295 nodes"
   },
@@ -724,7 +724,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 24.674011002723336,
+   "aliasing_number": 24.67401100272333,
    "ess": 11.732577771678681,
    "fit": "window 50, 291 nodes"
   },
@@ -762,7 +762,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.69604401089249,
+   "aliasing_number": 98.69604401089254,
    "ess": 47.12388980565918,
    "fit": "window 50, 1182 nodes"
   },
@@ -781,7 +781,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.69604401089245,
+   "aliasing_number": 98.69604401089259,
    "ess": 47.123889805623314,
    "fit": "window 50, 1182 nodes"
   },
@@ -800,7 +800,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.69604401089241,
+   "aliasing_number": 98.6960440108924,
    "ess": 47.12388980536001,
    "fit": "window 50, 1179 nodes"
   },
@@ -857,7 +857,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 394.7841760435632,
+   "aliasing_number": 394.7841760435635,
    "ess": 188.49555921538754,
    "fit": "window 50, 4718 nodes"
   },
@@ -876,7 +876,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 7.737769850454031,
+   "aliasing_number": 7.737769850454033,
    "ess": 7.05519758796887,
    "fit": "window 50, 113 nodes"
   },
@@ -895,7 +895,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 7.737769850454049,
+   "aliasing_number": 7.737769850454032,
    "ess": 7.304641001403326,
    "fit": "window 50, 113 nodes"
   },
@@ -914,7 +914,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 7.737769850454064,
+   "aliasing_number": 7.737769850454048,
    "ess": 6.484195233025511,
    "fit": "window 50, 115 nodes"
   },
@@ -952,7 +952,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 35.530575843921596,
+   "aliasing_number": 35.53057584392147,
    "ess": 35.324274908069526,
    "fit": "window 50, 481 nodes"
   },
@@ -971,7 +971,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 35.53057584392156,
+   "aliasing_number": 35.53057584392168,
    "ess": 35.31419053575385,
    "fit": "window 50, 490 nodes"
   },
@@ -990,7 +990,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 142.1223033756844,
+   "aliasing_number": 142.12230337568462,
    "ess": 141.25835892144906,
    "fit": "window 50, 1925 nodes"
   },
@@ -1009,7 +1009,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 142.122303375685,
+   "aliasing_number": 142.12230337568403,
    "ess": 141.25835577465432,
    "fit": "window 50, 1925 nodes"
   },
@@ -1028,7 +1028,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 142.12230337568445,
+   "aliasing_number": 142.12230337568423,
    "ess": 141.25836491489778,
    "fit": "window 50, 1911 nodes"
   },
@@ -1066,7 +1066,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 568.4892135027399,
+   "aliasing_number": 568.48921350274,
    "ess": 565.0332780176777,
    "fit": "window 50, 7614 nodes"
   },
@@ -1085,7 +1085,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 568.48921350274,
+   "aliasing_number": 568.4892135027451,
    "ess": 565.0332816133489,
    "fit": "window 50, 7598 nodes"
   },
@@ -1104,7 +1104,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 3.022566347833613,
+   "aliasing_number": 3.0225663478336204,
    "ess": 3.093466570408055,
    "fit": "window 50, 67 nodes"
   },
@@ -1123,7 +1123,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 3.0225663478335965,
+   "aliasing_number": 3.022566347833597,
    "ess": 3.11007003307489,
    "fit": "window 50, 66 nodes"
   },
@@ -1142,7 +1142,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 3.0225663478336053,
+   "aliasing_number": 3.0225663478336093,
    "ess": 3.079887841130948,
    "fit": "window 50, 67 nodes"
   },
@@ -1180,7 +1180,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 13.879131189031815,
+   "aliasing_number": 13.879131189031755,
    "ess": 13.06524121687113,
    "fit": "window 50, 299 nodes"
   },
@@ -1199,7 +1199,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 13.879131189031833,
+   "aliasing_number": 13.879131189031845,
    "ess": 13.651924733835175,
    "fit": "window 50, 305 nodes"
   },
@@ -1218,7 +1218,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 55.516524756127154,
+   "aliasing_number": 55.516524756127225,
    "ess": 55.179141607585585,
    "fit": "window 50, 1208 nodes"
   },
@@ -1256,7 +1256,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 55.51652475612743,
+   "aliasing_number": 55.51652475612725,
    "ess": 55.179031442937514,
    "fit": "window 50, 1196 nodes"
   },
@@ -1275,7 +1275,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 222.06609902450523,
+   "aliasing_number": 222.0660990245069,
    "ess": 220.71644812632735,
    "fit": "window 50, 4778 nodes"
   },
@@ -1294,7 +1294,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 222.066099024506,
+   "aliasing_number": 222.06609902450703,
    "ess": 220.7164481263274,
    "fit": "window 50, 4778 nodes"
   },
@@ -1313,7 +1313,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 222.0660990245067,
+   "aliasing_number": 222.06609902450597,
    "ess": 220.7164481263275,
    "fit": "window 50, 4775 nodes"
   },
@@ -1389,7 +1389,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 6.168502750680807,
+   "aliasing_number": 6.168502750680793,
    "ess": 6.6712214883522165,
    "fit": "window 50, 158 nodes"
   },
@@ -1408,7 +1408,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 6.168502750680844,
+   "aliasing_number": 6.168502750680845,
    "ess": 8.552550129676755,
    "fit": "window 50, 158 nodes"
   },
@@ -1427,7 +1427,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 6.168502750680837,
+   "aliasing_number": 6.168502750680843,
    "ess": 7.827998025853864,
    "fit": "window 50, 158 nodes"
   },
@@ -1446,7 +1446,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 24.674011002723173,
+   "aliasing_number": 24.674011002723084,
    "ess": 24.453922938009452,
    "fit": "window 50, 610 nodes"
   },
@@ -1465,7 +1465,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 24.674011002723073,
+   "aliasing_number": 24.67401100272313,
    "ess": 24.49169530220528,
    "fit": "window 50, 615 nodes"
   },
@@ -1484,7 +1484,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 24.674011002723137,
+   "aliasing_number": 24.674011002723017,
    "ess": 24.445600265635015,
    "fit": "window 50, 609 nodes"
   },
@@ -1503,7 +1503,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.69604401089076,
+   "aliasing_number": 98.69604401089074,
    "ess": 98.0961991693709,
    "fit": "window 50, 2458 nodes"
   },
@@ -1522,7 +1522,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.69604401089076,
+   "aliasing_number": 98.69604401089055,
    "ess": 98.09619916727384,
    "fit": "window 50, 2454 nodes"
   },
@@ -1541,7 +1541,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.69604401089114,
+   "aliasing_number": 98.69604401089113,
    "ess": 98.0961991680732,
    "fit": "window 50, 2459 nodes"
   },
@@ -1560,7 +1560,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.7737769850454023,
+   "aliasing_number": 0.7737769850454024,
    "ess": 4.983666241634577,
    "fit": "window 50, 38 nodes"
   },
@@ -1579,7 +1579,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.7737769850453736,
+   "aliasing_number": 0.7737769850453593,
    "ess": 4.956665000529631,
    "fit": "window 50, 43 nodes"
   },
@@ -1598,7 +1598,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.7737769850453735,
+   "aliasing_number": 0.7737769850453593,
    "ess": 4.956671656111567,
    "fit": "window 50, 42 nodes"
   },
@@ -1617,7 +1617,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3.5530575843920857,
+   "aliasing_number": 3.553057584391972,
    "ess": 20.96881187872691,
    "fit": "window 50, 177 nodes"
   },
@@ -1636,7 +1636,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3.553057584392198,
+   "aliasing_number": 3.553057584392084,
    "ess": 14.438782081116207,
    "fit": "window 50, 177 nodes"
   },
@@ -1655,7 +1655,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3.5530575843922003,
+   "aliasing_number": 3.5530575843919148,
    "ess": 10.940179073597022,
    "fit": "window 50, 166 nodes"
   },
@@ -1674,7 +1674,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 14.21223033756765,
+   "aliasing_number": 14.212230337568108,
    "ess": 44.74293096350613,
    "fit": "window 50, 673 nodes"
   },
@@ -1693,7 +1693,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 14.21223033756881,
+   "aliasing_number": 14.212230337568123,
    "ess": 44.11624920341189,
    "fit": "window 50, 670 nodes"
   },
@@ -1712,7 +1712,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 14.212230337568341,
+   "aliasing_number": 14.212230337567883,
    "ess": 45.35857060067103,
    "fit": "window 50, 676 nodes"
   },
@@ -1731,7 +1731,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 56.84892135027151,
+   "aliasing_number": 56.84892135027426,
    "ess": 180.7294373424164,
    "fit": "window 50, 2680 nodes"
   },
@@ -1750,7 +1750,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 56.8489213502752,
+   "aliasing_number": 56.848921350276115,
    "ess": 180.7292968678629,
    "fit": "window 50, 2675 nodes"
   },
@@ -1788,7 +1788,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.3022566347833536,
+   "aliasing_number": 0.30225663478336434,
    "ess": 3.099855267764493,
    "fit": "window 500, 69 nodes"
   },
@@ -1807,7 +1807,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.30225663478334985,
+   "aliasing_number": 0.3022566347833749,
    "ess": 3.0955894645118867,
    "fit": "window 500, 77 nodes"
   },
@@ -1826,7 +1826,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.3022566347833536,
+   "aliasing_number": 0.30225663478336434,
    "ess": 3.1006977195277705,
    "fit": "window 500, 69 nodes"
   },
@@ -1845,7 +1845,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.3879131189031895,
+   "aliasing_number": 1.3879131189032186,
    "ess": 9.880734244900884,
    "fit": "window 50, 109 nodes"
   },
@@ -1864,7 +1864,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.3879131189031615,
+   "aliasing_number": 1.3879131189032183,
    "ess": 6.638796910130097,
    "fit": "window 50, 96 nodes"
   },
@@ -1883,7 +1883,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.3879131189031333,
+   "aliasing_number": 1.3879131189032186,
    "ess": 6.638433393725695,
    "fit": "window 50, 91 nodes"
   },
@@ -1902,7 +1902,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 5.551652475612756,
+   "aliasing_number": 5.55165247561253,
    "ess": 16.37947423535745,
    "fit": "window 50, 388 nodes"
   },
@@ -1921,7 +1921,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 5.551652475612759,
+   "aliasing_number": 5.551652475612988,
    "ess": 14.814690536525276,
    "fit": "window 50, 389 nodes"
   },
@@ -1940,7 +1940,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 5.5516524756126415,
+   "aliasing_number": 5.551652475612756,
    "ess": 15.227185909218603,
    "fit": "window 50, 389 nodes"
   },
@@ -1959,7 +1959,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 22.206609902451042,
+   "aliasing_number": 22.20660990245104,
    "ess": 70.91636589664556,
    "fit": "window 50, 1570 nodes"
   },
@@ -1978,7 +1978,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 22.206609902450133,
+   "aliasing_number": 22.20660990245058,
    "ess": 70.14864965053735,
    "fit": "window 50, 1579 nodes"
   },
@@ -1997,7 +1997,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 22.206609902451035,
+   "aliasing_number": 22.20660990245103,
    "ess": 71.086345176119,
    "fit": "window 50, 1563 nodes"
   },
@@ -2073,7 +2073,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.61685027506806,
+   "aliasing_number": 0.6168502750680958,
    "ess": 4.425593920527949,
    "fit": "window 50, 55 nodes"
   },
@@ -2092,7 +2092,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.616850275068074,
+   "aliasing_number": 0.6168502750680809,
    "ess": 4.4255931154794235,
    "fit": "window 50, 54 nodes"
   },
@@ -2111,7 +2111,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.6168502750680877,
+   "aliasing_number": 0.6168502750680733,
    "ess": 4.4255935816401974,
    "fit": "window 50, 51 nodes"
   },
@@ -2130,7 +2130,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.467401100272354,
+   "aliasing_number": 2.4674011002723537,
    "ess": 9.500237209218225,
    "fit": "window 50, 200 nodes"
   },
@@ -2149,7 +2149,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.4674011002722134,
+   "aliasing_number": 2.467401100272356,
    "ess": 12.041844061445747,
    "fit": "window 50, 196 nodes"
   },
@@ -2168,7 +2168,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.467401100272295,
+   "aliasing_number": 2.4674011002723226,
    "ess": 11.32095242572522,
    "fit": "window 50, 197 nodes"
   },
@@ -2187,7 +2187,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 9.86960440108895,
+   "aliasing_number": 9.869604401088719,
    "ess": 28.231989318173678,
    "fit": "window 50, 780 nodes"
   },
@@ -2206,7 +2206,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 9.869604401088836,
+   "aliasing_number": 9.869604401088266,
    "ess": 27.60404388345154,
    "fit": "window 50, 764 nodes"
   },
@@ -2225,7 +2225,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 9.869604401088731,
+   "aliasing_number": 9.869604401088848,
    "ess": 30.944223138309773,
    "fit": "window 50, 785 nodes"
   },
@@ -2244,7 +2244,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.07737769850455975,
+   "aliasing_number": 0.07737769850448867,
    "ess": 4.962252696169468,
    "fit": "window 500, 38 nodes"
   },
@@ -2263,7 +2263,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.07737769850453136,
+   "aliasing_number": 0.07737769850450289,
    "ess": 4.962249878046726,
    "fit": "window 500, 43 nodes"
   },
@@ -2282,7 +2282,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.07737769850448864,
+   "aliasing_number": 0.07737769850450286,
    "ess": 4.962247056509105,
    "fit": "window 500, 42 nodes"
   },
@@ -2301,7 +2301,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.3553057584390603,
+   "aliasing_number": 0.3553057584392309,
    "ess": 10.633389229413327,
    "fit": "window 500, 177 nodes"
   },
@@ -2320,7 +2320,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.3553057584392308,
+   "aliasing_number": 0.355305758439174,
    "ess": 10.633389063504687,
    "fit": "window 500, 175 nodes"
   },
@@ -2339,7 +2339,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.35530575843917406,
+   "aliasing_number": 0.3553057584393446,
    "ess": 10.633389112668834,
    "fit": "window 500, 175 nodes"
   },
@@ -2358,7 +2358,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.4212230337564677,
+   "aliasing_number": 1.4212230337576057,
    "ess": 21.273281634498993,
    "fit": "window 50, 218 nodes"
   },
@@ -2396,7 +2396,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.4212230337569236,
+   "aliasing_number": 1.4212230337571512,
    "ess": 21.267195433222238,
    "fit": "window 50, 181 nodes"
   },
@@ -2434,7 +2434,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 5.684892135026783,
+   "aliasing_number": 5.684892135026785,
    "ess": 49.57115084007993,
    "fit": "window 50, 835 nodes"
   },
@@ -2453,7 +2453,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 5.6848921350276855,
+   "aliasing_number": 5.684892135029505,
    "ess": 85.2302055180838,
    "fit": "window 50, 914 nodes"
   },
@@ -2472,7 +2472,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.03022566347833655,
+   "aliasing_number": 0.03022566347834011,
    "ess": 3.098165288914315,
    "fit": "window 5000, 81 nodes"
   },
@@ -2491,7 +2491,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.030225663478329414,
+   "aliasing_number": 0.030225663478340083,
    "ess": 3.1045349028768876,
    "fit": "window 5000, 68 nodes"
   },
@@ -2510,7 +2510,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.030225663478332995,
+   "aliasing_number": 0.03022566347833656,
    "ess": 3.1008760290078365,
    "fit": "window 5000, 69 nodes"
   },
@@ -2529,7 +2529,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.1387913118904028,
+   "aliasing_number": 0.1387913118903744,
    "ess": 6.645871051219215,
    "fit": "window 500, 91 nodes"
   },
@@ -2548,7 +2548,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.13879131189031751,
+   "aliasing_number": 0.13879131189040284,
    "ess": 6.645871051219228,
    "fit": "window 500, 91 nodes"
   },
@@ -2567,7 +2567,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.13879131189034577,
+   "aliasing_number": 0.13879131189031735,
    "ess": 6.645871051219212,
    "fit": "window 500, 120 nodes"
   },
@@ -2586,7 +2586,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.5551652475611558,
+   "aliasing_number": 0.5551652475610422,
    "ess": 14.383776987845613,
    "fit": "window 500, 472 nodes"
   },
@@ -2605,7 +2605,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.5551652475610422,
+   "aliasing_number": 0.5551652475614972,
    "ess": 13.332539630164456,
    "fit": "window 500, 472 nodes"
   },
@@ -2624,7 +2624,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.5551652475612698,
+   "aliasing_number": 0.5551652475613834,
    "ess": 13.291742138430385,
    "fit": "window 500, 415 nodes"
   },
@@ -2643,7 +2643,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.220660990244624,
+   "aliasing_number": 2.22066099024417,
    "ess": 26.712352890446233,
    "fit": "window 50, 519 nodes"
   },
@@ -2662,7 +2662,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.2206609902446233,
+   "aliasing_number": 2.2206609902446237,
    "ess": 26.607270269065747,
    "fit": "window 50, 521 nodes"
   },
@@ -2681,7 +2681,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.220660990244636,
+   "aliasing_number": 2.220660990244181,
    "ess": 27.887528948006857,
    "fit": "window 50, 510 nodes"
   },
@@ -2757,7 +2757,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.061685027506791085,
+   "aliasing_number": 0.06168502750677686,
    "ess": 4.430582337525305,
    "fit": "window 500, 91 nodes"
   },
@@ -2776,7 +2776,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.0616850275067982,
+   "aliasing_number": 0.061685027506762635,
    "ess": 4.430580207368659,
    "fit": "window 500, 91 nodes"
   },
@@ -2795,7 +2795,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.06168502750677694,
+   "aliasing_number": 0.06168502750679829,
    "ess": 4.46081832299456,
    "fit": "window 5000, 232 nodes"
   },
@@ -2814,7 +2814,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.24674011002719207,
+   "aliasing_number": 0.24674011002713522,
    "ess": 8.861161401625631,
    "fit": "window 500, 299 nodes"
   },
@@ -2852,7 +2852,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.2467401100271921,
+   "aliasing_number": 0.2467401100272489,
    "ess": 8.861161401625639,
    "fit": "window 500, 299 nodes"
   },
@@ -2890,7 +2890,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.9869604401087724,
+   "aliasing_number": 0.986960440108431,
    "ess": 18.649098980597604,
    "fit": "window 50, 271 nodes"
   },
@@ -2909,7 +2909,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.9869604401085459,
+   "aliasing_number": 0.9869604401087735,
    "ess": 17.848517960814934,
    "fit": "window 50, 250 nodes"
   },
@@ -2947,7 +2947,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.007737769850431813,
+   "aliasing_number": 0.007737769850446023,
    "ess": 4.962808203288608,
    "fit": "window 5000, 43 nodes"
   },
@@ -2966,7 +2966,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.007737769850474448,
+   "aliasing_number": 0.007737769850446024,
    "ess": 4.962808178369139,
    "fit": "window 5000, 43 nodes"
   },
@@ -2985,7 +2985,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.035530575843808546,
+   "aliasing_number": 0.035530575844035926,
    "ess": 10.63457932719758,
    "fit": "window 5000, 177 nodes"
   },
@@ -3023,7 +3023,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.03553057584392222,
+   "aliasing_number": 0.03553057584386537,
    "ess": 10.63458525939108,
    "fit": "window 5000, 177 nodes"
   },
@@ -3042,7 +3042,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.14212230337546142,
+   "aliasing_number": 0.1421223033756888,
    "ess": 21.269164950851472,
    "fit": "window 500, 240 nodes"
   },
@@ -3061,7 +3061,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.14212230337546158,
+   "aliasing_number": 0.14212230337568893,
    "ess": 21.269165019434876,
    "fit": "window 500, 240 nodes"
   },
@@ -3080,7 +3080,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.14212230337591636,
+   "aliasing_number": 0.1421223033759164,
    "ess": 21.269156635863563,
    "fit": "window 500, 240 nodes"
   },
@@ -3099,7 +3099,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.568489213500938,
+   "aliasing_number": 0.5684892135027569,
    "ess": 42.53832170682702,
    "fit": "window 50, 307 nodes"
   },
@@ -3118,7 +3118,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.5684892135054839,
+   "aliasing_number": 0.568489213505484,
    "ess": 42.538322064923456,
    "fit": "window 500, 923 nodes"
   },
@@ -3137,7 +3137,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.5684892135036648,
+   "aliasing_number": 0.5684892135027555,
    "ess": 44.72045646234021,
    "fit": "window 500, 952 nodes"
   },
@@ -3156,7 +3156,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.00302256634782626,
+   "aliasing_number": 0.003022566347822706,
    "ess": 3.1023196939938065,
    "fit": "window inf, 225 nodes"
   },
@@ -3175,7 +3175,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.0030225663478369177,
+   "aliasing_number": 0.0030225663478191537,
    "ess": 3.0995226872960644,
    "fit": "window inf, 225 nodes"
   },
@@ -3194,7 +3194,7 @@
    },
    "old_guard_refuses": true,
    "companion_refusal": null,
-   "aliasing_number": 0.0030225663478404704,
+   "aliasing_number": 0.0030225663478262595,
    "ess": 3.098825468337177,
    "fit": "window inf, 225 nodes"
   },
@@ -3213,7 +3213,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.013879131189096951,
+   "aliasing_number": 0.01387913118906853,
    "ess": 6.646618856602139,
    "fit": "window 5000, 120 nodes"
   },
@@ -3232,7 +3232,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.013879131189096953,
+   "aliasing_number": 0.01387913118901168,
    "ess": 6.6466188566014335,
    "fit": "window 5000, 120 nodes"
   },
@@ -3251,7 +3251,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.013879131188983271,
+   "aliasing_number": 0.013879131189011696,
    "ess": 6.646630627219456,
    "fit": "window 5000, 120 nodes"
   },
@@ -3270,7 +3270,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.055516524756160444,
+   "aliasing_number": 0.05551652475593306,
    "ess": 13.293237713204299,
    "fit": "window 5000, 463 nodes"
   },
@@ -3289,7 +3289,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.05551652475616045,
+   "aliasing_number": 0.05551652475604675,
    "ess": 13.293237713203899,
    "fit": "window 5000, 472 nodes"
   },
@@ -3308,7 +3308,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.05551652475616046,
+   "aliasing_number": 0.05551652475638783,
    "ess": 13.293237713203938,
    "fit": "window 5000, 472 nodes"
   },
@@ -3327,7 +3327,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.22206609902509664,
+   "aliasing_number": 0.22206609902464183,
    "ess": 26.586475426408583,
    "fit": "window 500, 599 nodes"
   },
@@ -3346,7 +3346,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.22206609902509658,
+   "aliasing_number": 0.22206609902600605,
    "ess": 28.395431500323326,
    "fit": "window 500, 480 nodes"
   },
@@ -3365,7 +3365,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.22206609902418706,
+   "aliasing_number": 0.22206609902509664,
    "ess": 26.586475426408583,
    "fit": "window 500, 599 nodes"
   },
@@ -3441,7 +3441,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.006168502750679751,
+   "aliasing_number": 0.006168502750679752,
    "ess": 4.431080332408007,
    "fit": "window 5000, 91 nodes"
   },
@@ -3460,7 +3460,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.00616850275067264,
+   "aliasing_number": 0.006168502750658428,
    "ess": 4.431080922337311,
    "fit": "window inf, 961 nodes"
   },
@@ -3479,7 +3479,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.006168502750679755,
+   "aliasing_number": 0.0061685027506797555,
    "ess": 4.4310774697783435,
    "fit": "window inf, 961 nodes"
   },
@@ -3498,7 +3498,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.024674011002690507,
+   "aliasing_number": 0.024674011002718932,
    "ess": 8.862158475469625,
    "fit": "window 5000, 299 nodes"
   },
@@ -3517,7 +3517,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.024674011002832622,
+   "aliasing_number": 0.024674011002718932,
    "ess": 8.862158475469531,
    "fit": "window 5000, 299 nodes"
   },
@@ -3536,7 +3536,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.024674011002747347,
+   "aliasing_number": 0.024674011002718932,
    "ess": 8.862158475469453,
    "fit": "window 5000, 299 nodes"
   },
@@ -3574,7 +3574,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.09869604401087612,
+   "aliasing_number": 0.09869604401064871,
    "ess": 17.724316950939095,
    "fit": "window 500, 361 nodes"
   },
@@ -3593,7 +3593,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.0986960440108761,
+   "aliasing_number": 0.09869604401064873,
    "ess": 17.7243169509391,
    "fit": "window 500, 361 nodes"
   },
@@ -3612,7 +3612,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 246.74011002723233,
+   "aliasing_number": 246.7401100272324,
    "ess": 75.94995742335718,
    "fit": "window 50, 961 nodes"
   },
@@ -3631,7 +3631,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 246.74011002723216,
+   "aliasing_number": 246.74011002723222,
    "ess": 75.94995740107922,
    "fit": "window 50, 961 nodes"
   },
@@ -3669,7 +3669,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3947.8417604357337,
+   "aliasing_number": 3947.8417604357346,
    "ess": 1215.199314374362,
    "fit": "window 50, 14641 nodes"
   },
@@ -3688,7 +3688,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3947.841760435734,
+   "aliasing_number": 3947.841760435733,
    "ess": 1215.1993145562376,
    "fit": "window 50, 14641 nodes"
   },
@@ -3745,7 +3745,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 149.00071531332367,
+   "aliasing_number": 149.00071531332358,
    "ess": 56.237483680113684,
    "fit": "window 50, 824 nodes"
   },
@@ -3764,7 +3764,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 149.00071531332384,
+   "aliasing_number": 149.00071531332372,
    "ess": 56.237483696748725,
    "fit": "window 50, 824 nodes"
   },
@@ -3783,7 +3783,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2384.011445013145,
+   "aliasing_number": 2384.011445013146,
    "ess": 899.7997355981056,
    "fit": "window 50, 12698 nodes"
   },
@@ -3802,7 +3802,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2384.0114450131455,
+   "aliasing_number": 2384.0114450131446,
    "ess": 899.7997356064614,
    "fit": "window 50, 12702 nodes"
   },
@@ -3840,7 +3840,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 100.84372051196891,
+   "aliasing_number": 100.84372051196885,
    "ess": 47.5762301503351,
    "fit": "window 50, 728 nodes"
   },
@@ -3859,7 +3859,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 100.84372051196877,
+   "aliasing_number": 100.84372051196867,
    "ess": 47.57623013237646,
    "fit": "window 50, 728 nodes"
   },
@@ -3878,7 +3878,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 100.84372051196866,
+   "aliasing_number": 100.84372051196867,
    "ess": 47.576230115273674,
    "fit": "window 50, 725 nodes"
   },
@@ -3897,7 +3897,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1613.499528191468,
+   "aliasing_number": 1613.4995281914685,
    "ess": 761.2196795332835,
    "fit": "window 50, 11268 nodes"
   },
@@ -3935,7 +3935,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1613.4995281914678,
+   "aliasing_number": 1613.4995281914687,
    "ess": 761.2196795115036,
    "fit": "window 50, 11270 nodes"
   },
@@ -3973,7 +3973,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 246.74011002723216,
+   "aliasing_number": 246.74011002723222,
    "ess": 75.94995744185508,
    "fit": "window 50, 961 nodes"
   },
@@ -4068,7 +4068,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 27.1026948998547,
+   "aliasing_number": 27.102694899854672,
    "ess": 25.647604322747274,
    "fit": "window 50, 433 nodes"
   },
@@ -4087,7 +4087,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 27.102694899854672,
+   "aliasing_number": 27.102694899854644,
    "ess": 25.728693112787713,
    "fit": "window 50, 428 nodes"
   },
@@ -4106,7 +4106,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 27.10269489985472,
+   "aliasing_number": 27.102694899854633,
    "ess": 25.727449023510637,
    "fit": "window 50, 428 nodes"
   },
@@ -4125,7 +4125,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 433.64311839766987,
+   "aliasing_number": 433.64311839767134,
    "ess": 410.7237220453544,
    "fit": "window 50, 6711 nodes"
   },
@@ -4144,7 +4144,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 433.6431183976708,
+   "aliasing_number": 433.6431183976693,
    "ess": 410.7237221112448,
    "fit": "window 50, 6710 nodes"
   },
@@ -4163,7 +4163,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 433.64311839766873,
+   "aliasing_number": 433.64311839766975,
    "ess": 410.7237221128708,
    "fit": "window 50, 6709 nodes"
   },
@@ -4182,7 +4182,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.1397229022168265,
+   "aliasing_number": 2.139722902216711,
    "ess": 15.164392800593879,
    "fit": "window 50, 120 nodes"
   },
@@ -4201,7 +4201,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.1397229022168833,
+   "aliasing_number": 2.1397229022167976,
    "ess": 8.87202962962019,
    "fit": "window 50, 140 nodes"
   },
@@ -4220,7 +4220,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.1397229022168833,
+   "aliasing_number": 2.1397229022168265,
    "ess": 17.146497091628916,
    "fit": "window 50, 120 nodes"
   },
@@ -4239,7 +4239,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 34.23556643546878,
+   "aliasing_number": 34.23556643546879,
    "ess": 116.88628647674886,
    "fit": "window 50, 2058 nodes"
   },
@@ -4258,7 +4258,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 34.23556643546873,
+   "aliasing_number": 34.235566435468286,
    "ess": 116.85114565655265,
    "fit": "window 50, 2066 nodes"
   },
@@ -4277,7 +4277,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 34.23556643546878,
+   "aliasing_number": 34.235566435468336,
    "ess": 116.86813233379745,
    "fit": "window 50, 2063 nodes"
   },
@@ -4296,7 +4296,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.1822252664333137,
+   "aliasing_number": 1.1822252664332853,
    "ess": 17.244521337866118,
    "fit": "window 50, 118 nodes"
   },
@@ -4315,7 +4315,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.182225266433399,
+   "aliasing_number": 1.1822252664333137,
    "ess": 8.865756073894918,
    "fit": "window 50, 99 nodes"
   },
@@ -4334,7 +4334,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 1.1822252664333135,
+   "aliasing_number": 1.1822252664332278,
    "ess": 8.856962744571383,
    "fit": "window 50, 91 nodes"
   },
@@ -4353,7 +4353,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 18.915604262932657,
+   "aliasing_number": 18.915604262930827,
    "ess": 85.44932895647212,
    "fit": "window 50, 1499 nodes"
   },
@@ -4372,7 +4372,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 18.91560426293264,
+   "aliasing_number": 18.915604262931268,
    "ess": 88.42711661624419,
    "fit": "window 50, 1556 nodes"
   },
@@ -4391,7 +4391,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 18.915604262932177,
+   "aliasing_number": 18.91560426293081,
    "ess": 85.45178109798506,
    "fit": "window 50, 1500 nodes"
   },
@@ -4410,7 +4410,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 27.102694899854555,
+   "aliasing_number": 27.102694899854548,
    "ess": 25.621993580382114,
    "fit": "window 50, 434 nodes"
   },
@@ -4429,7 +4429,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 27.102694899854583,
+   "aliasing_number": 27.10269489985455,
    "ess": 25.728820953612846,
    "fit": "window 50, 427 nodes"
   },
@@ -4448,7 +4448,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 27.102694899854594,
+   "aliasing_number": 27.10269489985469,
    "ess": 25.679124540483972,
    "fit": "window 50, 430 nodes"
   },
@@ -4467,7 +4467,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 433.64311839766924,
+   "aliasing_number": 433.64311839767015,
    "ess": 410.7237220818691,
    "fit": "window 50, 6710 nodes"
   },
@@ -4486,7 +4486,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 433.64311839766833,
+   "aliasing_number": 433.6431183976697,
    "ess": 410.72372212261314,
    "fit": "window 50, 6713 nodes"
   },
@@ -4505,7 +4505,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 433.64311839766975,
+   "aliasing_number": 433.64311839766987,
    "ess": 410.72372210223244,
    "fit": "window 50, 6712 nodes"
   },
@@ -4524,7 +4524,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.2943207929810561,
+   "aliasing_number": 0.2943207929811415,
    "ess": 8.860947742510385,
    "fit": "window 500, 149 nodes"
   },
@@ -4600,7 +4600,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 4.709132687696899,
+   "aliasing_number": 4.709132687696444,
    "ess": 37.70548026976402,
    "fit": "window 50, 797 nodes"
   },
@@ -4619,7 +4619,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 4.709132687697807,
+   "aliasing_number": 4.709132687699628,
    "ess": 47.70717312790152,
    "fit": "window 50, 780 nodes"
   },
@@ -4638,7 +4638,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.021497437710207918,
+   "aliasing_number": 0.0214974377101795,
    "ess": 8.862172727532581,
    "fit": "window 5000, 149 nodes"
   },
@@ -4657,7 +4657,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.02149743771015107,
+   "aliasing_number": 0.021497437710122653,
    "ess": 8.862172727568737,
    "fit": "window 5000, 149 nodes"
   },
@@ -4676,7 +4676,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.021497437710236343,
+   "aliasing_number": 0.021497437710037384,
    "ess": 8.862172727658892,
    "fit": "window 5000, 149 nodes"
   },
@@ -4695,7 +4695,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.3439590033624166,
+   "aliasing_number": 0.3439590033615071,
    "ess": 35.448690848218504,
    "fit": "window 500, 717 nodes"
   },
@@ -4714,7 +4714,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.34395900336150775,
+   "aliasing_number": 0.34395900336241725,
    "ess": 44.124626730329915,
    "fit": "window 500, 717 nodes"
   },
@@ -4733,7 +4733,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.3439590033619619,
+   "aliasing_number": 0.34395900336059754,
    "ess": 35.44869084723127,
    "fit": "window 500, 717 nodes"
   },
@@ -4752,7 +4752,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.011843312102456384,
+   "aliasing_number": 0.011843312102484809,
    "ess": 8.862216070783711,
    "fit": "window 5000, 91 nodes"
   },
@@ -4771,7 +4771,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.011843312102484809,
+   "aliasing_number": 0.011843312102427964,
    "ess": 8.862216053960903,
    "fit": "window 5000, 120 nodes"
   },
@@ -4790,7 +4790,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.011843312102456389,
+   "aliasing_number": 0.011843312102427965,
    "ess": 8.862216073781513,
    "fit": "window 5000, 120 nodes"
   },
@@ -4809,7 +4809,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.18949299364066652,
+   "aliasing_number": 0.1894929936374832,
    "ess": 35.44886455184481,
    "fit": "window 500, 480 nodes"
   },
@@ -4828,7 +4828,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.18949299363930255,
+   "aliasing_number": 0.18949299363930253,
    "ess": 35.44886422572466,
    "fit": "window 500, 480 nodes"
   },
@@ -4847,7 +4847,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.189492993639757,
+   "aliasing_number": 0.18949299363975702,
    "ess": 35.44886422264014,
    "fit": "window 500, 599 nodes"
   },
@@ -4866,7 +4866,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.2943207929811412,
+   "aliasing_number": 0.29432079298116964,
    "ess": 8.861034689765319,
    "fit": "window 500, 177 nodes"
   },
@@ -4885,7 +4885,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.29432079298108427,
+   "aliasing_number": 0.2943207929811412,
    "ess": 8.860947740940226,
    "fit": "window 500, 149 nodes"
   },
@@ -4904,7 +4904,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.29432079298102737,
+   "aliasing_number": 0.29432079298114117,
    "ess": 8.860947742679082,
    "fit": "window 500, 149 nodes"
   },
@@ -4923,7 +4923,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 4.709132687696893,
+   "aliasing_number": 4.709132687696437,
    "ess": 66.38966415414099,
    "fit": "window 50, 750 nodes"
   },
@@ -4942,7 +4942,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 4.70913268769735,
+   "aliasing_number": 4.70913268769644,
    "ess": 41.05422094929398,
    "fit": "window 50, 793 nodes"
   },
@@ -4961,7 +4961,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 4.709132687696893,
+   "aliasing_number": 4.709132687696437,
    "ess": 66.45385716895213,
    "fit": "window 50, 750 nodes"
   },
@@ -4980,7 +4980,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.467401100272327,
+   "aliasing_number": 2.4674011002723564,
    "ess": 8.87019344534287,
    "fit": "window 50, 148 nodes"
   },
@@ -4999,7 +4999,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.467401100272272,
+   "aliasing_number": 2.467401100272358,
    "ess": 9.304350764669902,
    "fit": "window 50, 141 nodes"
   },
@@ -5018,7 +5018,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.467401100272356,
+   "aliasing_number": 2.467401100272327,
    "ess": 11.855326636374082,
    "fit": "window 50, 137 nodes"
   },
@@ -5037,7 +5037,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 39.47841760435767,
+   "aliasing_number": 39.4784176043563,
    "ess": 125.49356174315177,
    "fit": "window 50, 2166 nodes"
   },
@@ -5056,7 +5056,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 39.47841760435626,
+   "aliasing_number": 39.478417604358086,
    "ess": 125.49789129575629,
    "fit": "window 50, 2191 nodes"
   },
@@ -5075,7 +5075,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 39.47841760435627,
+   "aliasing_number": 39.47841760435717,
    "ess": 125.50327003216827,
    "fit": "window 50, 2200 nodes"
   },
@@ -5094,7 +5094,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.4674011002723795,
+   "aliasing_number": 2.467401100272437,
    "ess": 12.091601648997646,
    "fit": "window 50, 136 nodes"
   },
@@ -5113,7 +5113,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.467401100272294,
+   "aliasing_number": 2.4674011002723506,
    "ess": 8.868977930344661,
    "fit": "window 50, 148 nodes"
   },
@@ -5132,7 +5132,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 2.4674011002724083,
+   "aliasing_number": 2.467401100272266,
    "ess": 8.927982665846644,
    "fit": "window 50, 145 nodes"
   },
@@ -5151,7 +5151,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 39.47841760435662,
+   "aliasing_number": 39.478417604358,
    "ess": 125.5192259802637,
    "fit": "window 50, 2210 nodes"
   },
@@ -5170,7 +5170,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 39.478417604356174,
+   "aliasing_number": 39.47841760435571,
    "ess": 125.51083665055744,
    "fit": "window 50, 2206 nodes"
   },
@@ -5189,7 +5189,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 39.47841760435798,
+   "aliasing_number": 39.47841760435706,
    "ess": 125.5009708784207,
    "fit": "window 50, 2196 nodes"
   },
@@ -5209,7 +5209,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 11.414207763144212,
+   "aliasing_number": 11.414207763144216,
    "ess": 9.681354350507085,
    "fit": "window 50, 593 nodes"
   },
@@ -5229,7 +5229,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 11.414207763144251,
+   "aliasing_number": 11.414207763144276,
    "ess": 10.932817617599994,
    "fit": "window 50, 605 nodes"
   },
@@ -5249,7 +5249,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 11.41420776314413,
+   "aliasing_number": 11.414207763144153,
    "ess": 11.88970581955042,
    "fit": "window 50, 599 nodes"
   },
@@ -5269,7 +5269,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 45.656831052577246,
+   "aliasing_number": 45.65683105257722,
    "ess": 81.08089211974986,
    "fit": "window 50, 4406 nodes"
   },
@@ -5289,7 +5289,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 45.65683105257721,
+   "aliasing_number": 45.65683105257717,
    "ess": 81.07972962758548,
    "fit": "window 50, 4401 nodes"
   },
@@ -5309,7 +5309,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 45.65683105257705,
+   "aliasing_number": 45.65683105257698,
    "ess": 81.0797587133279,
    "fit": "window 50, 4405 nodes"
   },
@@ -5389,7 +5389,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3.1705698520639096,
+   "aliasing_number": 3.1705698520666354,
    "ess": 9.482290171578265,
    "fit": "window 50, 477 nodes"
   },
@@ -5409,7 +5409,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3.1705698520597476,
+   "aliasing_number": 3.1705698520668664,
    "ess": 12.257405359996055,
    "fit": "window 50, 482 nodes"
   },
@@ -5429,7 +5429,7 @@
    },
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 3.1705698520630263,
+   "aliasing_number": 3.17056985206601,
    "ess": 14.75339094331724,
    "fit": "window 50, 482 nodes"
   },
@@ -5656,7 +5656,7 @@
    "role": "known_materially_wrong",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.008271668452925443,
+   "aliasing_number": 0.008271668453347984,
    "ess": 9.559905140022288,
    "fit": "window 5000, 229 nodes",
    "materially_wrong": true,
@@ -5675,7 +5675,7 @@
    "role": "known_materially_wrong",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.033086673809119366,
+   "aliasing_number": 0.03308667381035276,
    "ess": 19.119810280046494,
    "fit": "window 5000, 1227 nodes",
    "materially_wrong": true,
@@ -5694,7 +5694,7 @@
    "role": "known_materially_wrong",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 0.13234669519175885,
+   "aliasing_number": 0.1323466951838112,
    "ess": 38.239620560093066,
    "fit": "window 500, 1476 nodes",
    "materially_wrong": true,
@@ -5713,7 +5713,7 @@
    "role": "required_healthy_if_truth_confirms",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 69.47245647368742,
+   "aliasing_number": 69.47245647368726,
    "ess": 54.45316916644882,
    "fit": "window 50, 891 nodes",
    "materially_wrong": false,
@@ -5732,7 +5732,7 @@
    "role": "known_materially_wrong",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 6.13416104094563,
+   "aliasing_number": 6.134161040945744,
    "ess": 13.553449500662072,
    "fit": "window 50, 269 nodes",
    "materially_wrong": true,
@@ -5751,7 +5751,7 @@
    "role": "required_healthy_if_truth_confirms",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 98.65590464149525,
+   "aliasing_number": 98.6559046414971,
    "ess": 260.75100685022335,
    "fit": "window 50, 4535 nodes",
    "materially_wrong": false,
@@ -5770,7 +5770,7 @@
    "role": "required_healthy_if_truth_confirms",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 157.913670417361,
+   "aliasing_number": 157.91367041736103,
    "ess": 298.6430169008354,
    "fit": "window 50, 14631 nodes",
    "materially_wrong": false,
@@ -5790,7 +5790,7 @@
    "role": "required_healthy_if_truth_confirms",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 88.82643960976903,
+   "aliasing_number": 88.82643960976908,
    "ess": 643.6338009976373,
    "fit": "window 50, 28551 nodes",
    "materially_wrong": false,
@@ -5825,7 +5825,7 @@
    "role": "reported_not_threshold_bearing",
    "old_guard_refuses": false,
    "companion_refusal": null,
-   "aliasing_number": 4.473101907654427,
+   "aliasing_number": 4.473101907661565,
    "ess": 11.568296208275397,
    "fit": "window 50, 62 nodes"
   }

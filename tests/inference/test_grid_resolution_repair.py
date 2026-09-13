@@ -299,6 +299,51 @@ def test_a_discrete_posterior_too_small_to_carry_curvature_keeps_its_exact_mixtu
         assess_identifiability(posterior)
 
 
+def _log_likelihood_posterior(log_like, mask=None, per_axis=41):
+    axes = [np.linspace(-3.0, 3.0, per_axis)] * 2
+    points = np.array(np.meshgrid(*axes, indexing="ij")).reshape(2, -1).T
+    mask = np.ones(len(points), dtype=bool) if mask is None else mask(points)
+    ll = np.where(mask, log_like(points), -np.inf)
+    weights = np.where(mask, np.exp(ll - ll[mask].max()), 0.0)
+    return PosteriorGrid(parameter_names=("a", "b"), points=points, weights=weights / weights.sum(), log_likelihood=ll,
+                         admissible_mask=mask, dataset_id="shape")
+
+
+_NOT_NARROW = {
+    # a non-identified axis: the likelihood is exactly flat along b
+    "flat_axis": lambda p: -0.5 * (p[:, 0] / 0.3) ** 2 + 0.0 * p[:, 1],
+    # a posterior cut off by the grid's bounds: still rising at the edge
+    "bounded": lambda p: -0.5 * (p[:, 0] / 0.5) ** 2 + 0.3 * p[:, 1],
+    # two broad modes: the fitted curvature between them is convex
+    "bimodal": lambda p: np.logaddexp(-0.5 * ((p[:, 0] - 1.5) ** 2 + (p[:, 1] - 1.5) ** 2) / 0.25,
+                                      -0.5 * ((p[:, 0] + 1.5) ** 2 + (p[:, 1] + 1.5) ** 2) / 0.25),
+}
+
+
+@pytest.mark.parametrize("shape", sorted(_NOT_NARROW))
+def test_a_flat_or_convex_direction_is_not_mistaken_for_an_unresolved_one(shape):
+    """Only a concave direction can be thin; a flat or convex one cannot alias and is answered."""
+    posterior = _log_likelihood_posterior(_NOT_NARROW[shape])
+    assert isinstance(assess_identifiability(posterior).status.value, str)
+    assert _epistemic_sd(posterior, posterior.points[:, 0] + posterior.points[:, 1]) > 0.0
+
+
+def test_two_thin_tilted_modes_are_refused():
+    ridge = lambda p, c: -0.5 * (((p[:, 0] - p[:, 1]) / 0.02) ** 2 + ((p[:, 0] + p[:, 1] - c) / 2.0) ** 2)
+    posterior = _log_likelihood_posterior(lambda p: np.logaddexp(ridge(p, 2.0), ridge(p, -2.0)))
+    with pytest.raises(GridResolutionError, match="lattice aliasing number"):
+        assess_identifiability(posterior)
+
+
+def test_a_grid_whose_curvature_cannot_be_fitted_is_refused_not_passed():
+    """Admissible nodes on one line: ESS 23.5 and axis spacing 0.15 sd pass the frozen rule."""
+    posterior = _log_likelihood_posterior(lambda p: -0.5 * p[:, 0] ** 2, mask=lambda p: np.isclose(p[:, 0], p[:, 1]))
+    with pytest.raises(GridResolutionError, match="cannot be verified"):
+        assess_identifiability(posterior)
+    with pytest.raises(GridResolutionError, match="cannot be verified"):
+        _epistemic_sd(posterior, posterior.points[:, 0])
+
+
 # =====================================================================
 # units and parameterization
 # =====================================================================
