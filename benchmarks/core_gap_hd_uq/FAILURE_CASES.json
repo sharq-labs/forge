@@ -1,0 +1,1423 @@
+{
+ "schema": "core_gap_hd_uq_failure_cases/1",
+ "seed": 20260913,
+ "declared_thresholds": {
+  "nonlinearity_downgrade": 0.1,
+  "nonlinearity_refuse": 0.5,
+  "bound_downgrade_sd": 3.0,
+  "numerical_condition_limit": 67108864.0,
+  "identifiability": {
+   "correlation": 0.95,
+   "condition_number": 1000000.0,
+   "relative_width": 1.0
+  }
+ },
+ "cases": {
+  "F1_strong_nonlinearity": {
+   "expectation": "DOWNGRADED or REFUSED for nonlinearity; grid differs from Gaussian",
+   "truth": [
+    3.0,
+    2.0
+   ],
+   "estimate": [
+    2.5844859305708714,
+    1.3591509622206093
+   ],
+   "observed": [
+    1.275202272567633,
+    1.0080736496874363,
+    0.6460360736350614,
+    0.8994645117647293,
+    0.05587444028709576,
+    -0.0832342274342659,
+    0.009157448117742745,
+    0.2315048672406273
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 2,
+    "n": 8,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 2,
+     "singular_values": [
+      4.011208288285218,
+      0.9480429319977322
+     ],
+     "jacobian_condition": 4.231040760815263
+    },
+    "posterior": {
+     "mean": [
+      2.5844859305708714,
+      1.3591509622206093
+     ],
+     "sd": [
+      1.0383566283039178,
+      0.310772203875953
+     ],
+     "covariance": [
+      [
+       1.0781844875426805,
+       0.18702981382558467
+      ],
+      [
+       0.1870298138255847,
+       0.0965793627019169
+      ]
+     ],
+     "interval_95": [
+      [
+       0.5493443359867487,
+       4.6196275251549945
+      ],
+      [
+       0.7500486352276023,
+       1.9682532892136162
+      ]
+     ],
+     "chi_square_at_estimate": 3.299068971374136
+    },
+    "identifiability": {
+     "status": "PARAMETERS_NOT_IDENTIFIABLE",
+     "condition_number": 17.9017059196802,
+     "max_abs_correlation": 0.5795916690319679,
+     "relative_widths": [
+      1.5748908287804784,
+      0.8962982684393539
+     ],
+     "over_wide": [
+      "theta1"
+     ],
+     "reasons": [],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 2.4793850786854534,
+     "at_bound": [],
+     "within_3_sd": [
+      "theta1"
+     ]
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 1.6456000583608104,
+     "probes_outside_bounds_or_inadmissible": 0,
+     "min_rise": 3.0393532813462913,
+     "max_rise": 10.582400233443241,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "global_uniqueness": "NOT_ASSESSED",
+    "claim": "REFUSED",
+    "refusals": [
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+    ],
+    "downgrades": [
+     "BOUND_WITHIN_3_SD",
+     "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+    ],
+    "forward_calls": {
+     "forward": 9,
+     "predict": 0
+    },
+    "wall_seconds": 0.0004192999913357198
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 58081,
+    "mean": [
+     3.431781808094689,
+     1.3935733935673273
+    ],
+    "sd": [
+     1.7521449769404756,
+     0.30515616012445407
+    ],
+    "marginal_95": [
+     [
+      1.3426666666666667,
+      7.672833333333333
+     ],
+     [
+      0.800875,
+      2.008
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 1134.8532681772153,
+     "occupied_support_fraction": 0.11265301905958919,
+     "spacing_to_std": [
+      0.04753697197597463,
+      0.13640557012849935
+     ],
+     "grid_points": 58081
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.2136492621928419,
+    "outside_bounds_or_inadmissible": 26,
+    "mean": [
+     3.175182935001856,
+     1.4036776839048197
+    ],
+    "sd": [
+     1.1629330944267986,
+     0.3060846979594065
+    ],
+    "max_mean_shift_in_gaussian_sd": 0.5688768081500537
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     0.9492409299774327,
+     0.30213232517857114
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     0.9141762127795636,
+     0.9721986761054392
+    ],
+    "chi_square_calls": 12,
+    "chi_square_at_estimate": 3.299068971374136
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     0.4835763527989169,
+     0.11280267562902653
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     0.5926202694237402,
+     1.018403835430386
+    ]
+   }
+  },
+  "F2_parameter_at_bound": {
+   "expectation": "REFUSED: PARAMETER_AT_BOUND",
+   "truth": [
+    1.0,
+    -0.05
+   ],
+   "estimate": [
+    0.9674815343769831,
+    1.7466490165567872e-13
+   ],
+   "observed": [
+    0.9838786707231353,
+    0.9885002542651343,
+    0.9703561095289793,
+    0.9878629260914387,
+    0.9702717752315619,
+    0.9545076780341112,
+    0.97902711450513,
+    0.9553898225804609,
+    0.9439326203768028,
+    0.9410883724339492
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 2,
+    "n": 10,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 2,
+     "singular_values": [
+      178.30905998663624,
+      44.74567490797042
+     ],
+     "jacobian_condition": 3.984945145052993
+    },
+    "posterior": {
+     "mean": [
+      0.9674815343769831,
+      1.7466490165567872e-13
+     ],
+     "sd": [
+      0.011755076272895685,
+      0.01981734777225988
+     ],
+     "covariance": [
+      [
+       0.0001381818181815951,
+       -0.00019636363636325968
+      ],
+      [
+       -0.00019636363636325966,
+       0.0003927272727266936
+      ]
+     ],
+     "interval_95": [
+      [
+       0.9444420082465863,
+       0.99052106050738
+      ],
+      [
+       -0.03884128790255977,
+       0.038841287902909104
+      ]
+     ],
+     "chi_square_at_estimate": 7.10270907916494
+    },
+    "identifiability": {
+     "status": "PARAMETERS_NOT_IDENTIFIABLE",
+     "condition_number": 15.879787809081419,
+     "max_abs_correlation": 0.8429272304232095,
+     "relative_widths": [
+      0.04762783642218732,
+      444752065635.98267
+     ],
+     "over_wide": [
+      "theta2"
+     ],
+     "reasons": [],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 8.813737522443485e-12,
+     "at_bound": [
+      "theta2"
+     ],
+     "within_3_sd": []
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 2.220422731660751,
+     "probes_outside_bounds_or_inadmissible": 2,
+     "min_rise": 5.211425091563672,
+     "max_rise": 12.881690926643005,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "global_uniqueness": "NOT_ASSESSED",
+    "claim": "REFUSED",
+    "refusals": [
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+     "PARAMETER_AT_BOUND"
+    ],
+    "downgrades": [
+     "GLOBAL_UNIQUENESS_NOT_ASSESSED",
+     "NONLINEARITY_PROBE_INCOMPLETE"
+    ],
+    "forward_calls": {
+     "forward": 6,
+     "predict": 0
+    },
+    "wall_seconds": 0.00020840001525357366
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 40401,
+    "mean": [
+     0.9643661591229132,
+     0.006230750508314236
+    ],
+    "sd": [
+     0.007075848967456163,
+     0.006345908480351862
+    ],
+    "marginal_95": [
+     [
+      0.95,
+      0.978
+     ],
+     [
+      0.0,
+      0.0225
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 109.10867083184415,
+     "occupied_support_fraction": 0.011707630999232692,
+     "spacing_to_std": [
+      0.28265159547615376,
+      0.23637277541020812
+     ],
+     "grid_points": 40401
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.2870318151730555,
+    "outside_bounds_or_inadmissible": 1997,
+    "mean": [
+     0.9643545239319816,
+     0.006757839299959766
+    ],
+    "sd": [
+     0.007080391433575077,
+     0.006143873015200072
+    ],
+    "max_mean_shift_in_gaussian_sd": 0.34100624248238987
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     0.011755076272905686,
+     0.0198173477722733
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     1.0000000000008507,
+     1.0000000000006772
+    ],
+    "chi_square_calls": 12,
+    "chi_square_at_estimate": 7.10270907916494
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     0.4402828930349421,
+     0.9818531936650454
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     1.6612955317391052,
+     3.1228543294656945
+    ]
+   }
+  },
+  "F3_nearly_singular_jacobian": {
+   "expectation": "REFUSED: NUMERICALLY_SINGULAR_JACOBIAN or not identifiable",
+   "truth": [
+    1.0,
+    1.0
+   ],
+   "estimate": [
+    1.0651297547639988,
+    0.9369926773769269
+   ],
+   "observed": [
+    1.9977195784723714,
+    2.2342440830515073,
+    2.437869649375115,
+    2.673448527837187,
+    2.8902409219553764,
+    3.121829364429456,
+    3.3361036077384765,
+    3.559377536054066,
+    3.7781771586478476,
+    4.00352037801183
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 2,
+    "n": 10,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 2,
+     "singular_values": [
+      685.8355277593275,
+      1.0200752194545927e-07
+     ],
+     "jacobian_condition": 6723381910.267614
+    },
+    "claim": "REFUSED",
+    "refusals": [
+     "NUMERICALLY_SINGULAR_JACOBIAN"
+    ],
+    "wall_seconds": 8.179998258128762e-05,
+    "forward_calls": {
+     "forward": 5,
+     "predict": 0
+    }
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 40401,
+    "mean": [
+     0.9999784783715822,
+     1.0000215216284194
+    ],
+    "sd": [
+     5.224940191000272,
+     5.224940191000272
+    ],
+    "marginal_95": [
+     [
+      -7.6,
+      9.600000000000001
+     ],
+     [
+      -7.6,
+      9.600000000000001
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 180.99999999692906,
+     "occupied_support_fraction": 0.004480087126556273,
+     "spacing_to_std": [
+      0.019138975058938176,
+      0.019138975058938176
+     ],
+     "grid_points": 40401
+    }
+   }
+  },
+  "F4_multimodal_no_multistart": {
+   "expectation": "DOWNGRADED: GLOBAL_UNIQUENESS_NOT_ASSESSED (it cannot see the mirror mode)",
+   "truth": [
+    1.0
+   ],
+   "estimate": [
+    1.0055923738409172
+   ],
+   "observed": [
+    1.0354864685496936,
+    1.21647386719134,
+    1.442153389213966,
+    1.549327786784864,
+    1.8141842429612967,
+    2.050270783185803
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 1,
+    "n": 6,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 1,
+     "singular_values": [
+      151.57449662548808
+     ],
+     "jacobian_condition": 1.0
+    },
+    "posterior": {
+     "mean": [
+      1.0055923738409172
+     ],
+     "sd": [
+      0.0065974159391128375
+     ],
+     "covariance": [
+      [
+       4.352589707366012e-05
+      ]
+     ],
+     "interval_95": [
+      [
+       0.9926616762092255,
+       1.0185230714726088
+      ]
+     ],
+     "chi_square_at_estimate": 2.726902214884397
+    },
+    "identifiability": {
+     "status": "PARAMETERS_IDENTIFIABLE",
+     "condition_number": 1.0,
+     "max_abs_correlation": 0.0,
+     "relative_widths": [
+      0.02571757298099254
+     ],
+     "over_wide": [],
+     "reasons": [],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 302.3013320010976,
+     "at_bound": [],
+     "within_3_sd": []
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 0.013164497112930995,
+     "probes_outside_bounds_or_inadmissible": 0,
+     "min_rise": 3.947686356656907,
+     "max_rise": 4.052657988451724,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "global_uniqueness": "NOT_ASSESSED",
+    "claim": "DOWNGRADED",
+    "refusals": [],
+    "downgrades": [
+     "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+    ],
+    "forward_calls": {
+     "forward": 5,
+     "predict": 0
+    },
+    "wall_seconds": 0.0001509999856352806
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 6001,
+    "mean": [
+     4.440892098500626e-16
+    ],
+    "sd": [
+     1.0055490778707987
+    ],
+    "marginal_95": [
+     [
+      -1.016,
+      1.016
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 46.77899315830512,
+     "occupied_support_fraction": 0.01633061156473921,
+     "spacing_to_std": [
+      0.00099448154446812
+     ],
+     "grid_points": 6001
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.9998282391038564,
+    "outside_bounds_or_inadmissible": 0,
+    "mean": [
+     1.005624188590875
+    ],
+    "sd": [
+     0.006517876041585163
+    ],
+    "max_mean_shift_in_gaussian_sd": 0.004822304710124904
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     0.006597415584101072
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     0.9999999461892704
+    ],
+    "chi_square_calls": 4,
+    "chi_square_at_estimate": 2.726902214884397
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     1.0000430570432322
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     0.006561008392631163
+    ]
+   }
+  },
+  "F4_multimodal_with_multistart": {
+   "expectation": "REFUSED: SECOND_MODE_FOUND",
+   "truth": [
+    1.0
+   ],
+   "estimate": [
+    1.0055852955832552
+   ],
+   "observed": [
+    0.9890265108456445,
+    1.2231152329357624,
+    1.3576237292429099,
+    1.6194759487581873,
+    1.8170392257730568,
+    2.0698976175871384
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 1,
+    "n": 6,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 1,
+     "singular_values": [
+      151.57342970864545
+     ],
+     "jacobian_condition": 1.0
+    },
+    "posterior": {
+     "mean": [
+      1.0055852955832552
+     ],
+     "sd": [
+      0.0065974623779523935
+     ],
+     "covariance": [
+      [
+       4.352650982849725e-05
+      ]
+     ],
+     "interval_95": [
+      [
+       0.9926545069331105,
+       1.0185160842333998
+      ]
+     ],
+     "chi_square_at_estimate": 2.4895952669192427
+    },
+    "identifiability": {
+     "status": "PARAMETERS_IDENTIFIABLE",
+     "condition_number": 1.0,
+     "max_abs_correlation": 0.0,
+     "relative_widths": [
+      0.025717935031348314
+     ],
+     "over_wide": [],
+     "reasons": [],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 302.30027700980037,
+     "at_bound": [],
+     "within_3_sd": []
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 0.01316468171273577,
+     "probes_outside_bounds_or_inadmissible": 0,
+     "min_rise": 3.947685627893848,
+     "max_rise": 4.052658726850943,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "multistart": [
+     {
+      "start": [
+       -2.0
+      ],
+      "estimate": [
+       -1.0055852955984914
+      ],
+      "chi_square": 2.4895952669192503,
+      "mahalanobis_sq": 92927.44037534016
+     },
+     {
+      "start": [
+       -0.5
+      ],
+      "estimate": [
+       -1.0055852955832552
+      ],
+      "chi_square": 2.4895952669192427,
+      "mahalanobis_sq": 92927.44037393216
+     },
+     {
+      "start": [
+       0.5
+      ],
+      "estimate": [
+       1.0055852955832552
+      ],
+      "chi_square": 2.4895952669192427,
+      "mahalanobis_sq": 0.0
+     },
+     {
+      "start": [
+       2.0
+      ],
+      "estimate": [
+       1.0055852955984914
+      ],
+      "chi_square": 2.4895952669192503,
+      "mahalanobis_sq": 5.33338232644223e-18
+     }
+    ],
+    "global_uniqueness": "SECOND_MODE_FOUND",
+    "claim": "REFUSED",
+    "refusals": [
+     "SECOND_MODE_FOUND"
+    ],
+    "downgrades": [],
+    "forward_calls": {
+     "forward": 5,
+     "predict": 0
+    },
+    "wall_seconds": 0.0035451999865472317
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 6001,
+    "mean": [
+     5.551115123125783e-16
+    ],
+    "sd": [
+     1.0055419987072762
+    ],
+    "marginal_95": [
+     [
+      -1.016,
+      1.016
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 46.77932256022978,
+     "occupied_support_fraction": 0.01633061156473921,
+     "spacing_to_std": [
+      0.0009944885457644184
+     ],
+     "grid_points": 6001
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.9998282342457192,
+    "outside_bounds_or_inadmissible": 0,
+    "mean": [
+     1.0056171096523456
+    ],
+    "sd": [
+     0.006517921990453355
+    ],
+    "max_mean_shift_in_gaussian_sd": 0.004822167565031021
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     0.006597462022948457
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     0.9999999461908358
+    ],
+    "chi_square_calls": 4,
+    "chi_square_at_estimate": 2.4895952669192427
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     1.000043058247228
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     0.006561100765988974
+    ]
+   }
+  },
+  "F5_weak_identifiability": {
+   "expectation": "route SUPPORTED (affine), identifiability NOT IDENTIFIABLE: two verdicts, never merged",
+   "truth": [
+    1.0,
+    0.3
+   ],
+   "estimate": [
+    3.0552740325257925,
+    0.09544136548209359
+   ],
+   "observed": [
+    4.012109370682078,
+    3.993802969724079,
+    4.028708261476341,
+    4.01713738737486,
+    4.008245240318426,
+    4.012439099280156
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 2,
+    "n": 6,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 2,
+     "singular_values": [
+      2467.8036444557015,
+      0.41522553010035346
+     ],
+     "jacobian_condition": 5943.284951335416
+    },
+    "posterior": {
+     "mean": [
+      3.0552740325257925,
+      0.09544136548209359
+     ],
+     "sd": [
+      2.3964368394381563,
+      0.23904572190027207
+     ],
+     "covariance": [
+      [
+       5.742909525416341,
+       -0.5728571430173083
+      ],
+      [
+       -0.5728571430173083,
+       0.05714285715882222
+      ]
+     ],
+     "interval_95": [
+      [
+       -1.6416558639979897,
+       7.752203929049575
+      ],
+      [
+       -0.3730796401008173,
+       0.5639623710650045
+      ]
+     ],
+     "chi_square_at_estimate": 6.350200997201402
+    },
+    "identifiability": {
+     "status": "PARAMETERS_NOT_IDENTIFIABLE",
+     "condition_number": 35322636.01079388,
+     "max_abs_correlation": 0.9999985489342393,
+     "relative_widths": [
+      3.0746373952197237,
+      9.817986220467755
+     ],
+     "over_wide": [
+      "theta1",
+      "theta2"
+     ],
+     "reasons": [
+      "condition",
+      "correlation"
+     ],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 19.589385872769498,
+     "at_bound": [],
+     "within_3_sd": []
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 1.228417187304487e-06,
+     "probes_outside_bounds_or_inadmissible": 0,
+     "min_rise": 3.99999508856986,
+     "max_rise": 4.000004913668749,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "global_uniqueness": "NOT_ASSESSED",
+    "claim": "DOWNGRADED",
+    "refusals": [],
+    "downgrades": [
+     "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+    ],
+    "forward_calls": {
+     "forward": 9,
+     "predict": 0
+    },
+    "wall_seconds": 0.00020190002396702766
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 641601,
+    "mean": [
+     0.40348886407693085,
+     0.3596511135923073
+    ],
+    "sd": [
+     1.3483997249264497,
+     0.13483997249264495
+    ],
+    "marginal_95": [
+     [
+      -2.25,
+      3.0
+     ],
+     [
+      0.10000000000000053,
+      0.625
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 38.239620560093066,
+     "occupied_support_fraction": 0.00012468808496246108,
+     "spacing_to_std": [
+      0.09270248108869816,
+      0.0927024810886929
+     ],
+     "grid_points": 641601
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.9999999999985294,
+    "outside_bounds_or_inadmissible": 0,
+    "mean": [
+     3.0903404761295126,
+     0.09194499856478083
+    ],
+    "sd": [
+     2.3662420600149687,
+     0.23602482333437777
+    ],
+    "max_mean_shift_in_gaussian_sd": 0.01463274267305177
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     2.396436839124826,
+     0.23904572186906517
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     0.9999999998692516,
+     0.9999999998694522
+    ],
+    "chi_square_calls": 12,
+    "chi_square_at_estimate": 6.350200997201402
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     1.966616515435367,
+     1.9594319342109432
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     1.7772451263062021,
+     1.7728105211035339
+    ]
+   },
+   "grid_resolution_study": {
+    "finding": "the frozen grid over the declared bounds gives resolution-STABLE but WRONG moments for a thin correlated ridge: its theta1 step exceeds the ridge's conditional width by ~30-120x, ESS stays above 8 and spacing/marginal-sd stays below 1, so GridResolutionError is not raised. A window of +/-6 Gaussian sd reproduces the exact answer.",
+    "exactness_evidence": "model affine in theta, box bounds >19 sd away: the Gaussian is the exact posterior; importance ESS 1.0 and Laplace = Gauss-Newton confirm",
+    "theta1_conditional_sd": 0.00408248290460274,
+    "study": [
+     {
+      "per_axis": 201,
+      "window": "declared_bounds",
+      "step": [
+       0.5,
+       0.04999999999999982
+      ],
+      "mean": [
+       0.40348886407691836,
+       0.35965111359230856
+      ],
+      "sd": [
+       1.3483997249264215,
+       0.13483997249264215
+      ],
+      "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+      "effective_sample_size": 9.559905140022288,
+      "spacing_to_std": [
+       0.37080992435480037,
+       0.3708099243547925
+      ]
+     },
+     {
+      "per_axis": 201,
+      "window": "estimate_pm_6_gaussian_sd",
+      "step": [
+       0.14378621036629013,
+       0.014342743314016415
+      ],
+      "mean": [
+       3.055271089374168,
+       0.09544165906287708
+      ],
+      "sd": [
+       2.3964358968193107,
+       0.23904562787359088
+      ],
+      "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+      "effective_sample_size": 59.08177339636945,
+      "spacing_to_std": [
+       0.06000002360051776,
+       0.060000023600518405
+      ]
+     },
+     {
+      "per_axis": 401,
+      "window": "declared_bounds",
+      "step": [
+       0.25,
+       0.025000000000000355
+      ],
+      "mean": [
+       0.4034888640769299,
+       0.3596511135923074
+      ],
+      "sd": [
+       1.3483997249264486,
+       0.13483997249264487
+      ],
+      "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+      "effective_sample_size": 19.119810280046494,
+      "spacing_to_std": [
+       0.18540496217739647,
+       0.18540496217738592
+      ]
+     },
+     {
+      "per_axis": 401,
+      "window": "estimate_pm_6_gaussian_sd",
+      "step": [
+       0.07189310518314507,
+       0.0071713716570080965
+      ],
+      "mean": [
+       3.0552710893741906,
+       0.09544165906287477
+      ],
+      "sd": [
+       2.39643588982242,
+       0.23904562717564773
+      ],
+      "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+      "effective_sample_size": 118.16354675352974,
+      "spacing_to_std": [
+       0.03000001188784938,
+       0.030000011887849513
+      ]
+     },
+     {
+      "per_axis": 801,
+      "window": "declared_bounds",
+      "step": [
+       0.125,
+       0.012500000000000178
+      ],
+      "mean": [
+       0.40348886407693085,
+       0.3596511135923073
+      ],
+      "sd": [
+       1.3483997249264497,
+       0.13483997249264495
+      ],
+      "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+      "effective_sample_size": 38.239620560093066,
+      "spacing_to_std": [
+       0.09270248108869816,
+       0.0927024810886929
+      ]
+     },
+     {
+      "per_axis": 801,
+      "window": "estimate_pm_6_gaussian_sd",
+      "step": [
+       0.035946552591571646,
+       0.0035856858285041593
+      ],
+      "mean": [
+       3.055271089374199,
+       0.095441659062874
+      ],
+      "sd": [
+       2.39643588616242,
+       0.2390456268105611
+      ],
+      "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+      "effective_sample_size": 236.32709346592014,
+      "spacing_to_std": [
+       0.015000005966832609,
+       0.015000005966833778
+      ]
+     }
+    ]
+   }
+  },
+  "F6_linear_parameter_k": {
+   "expectation": "affine in k: SUPPORTED; relative-width identifiability may fail near k~0",
+   "truth": [
+    0.2
+   ],
+   "estimate": [
+    0.2192495984908305
+   ],
+   "observed": [
+    0.11558647481884775,
+    0.15359273950494687,
+    0.18178708457208853,
+    0.008741625737847994,
+    0.2787486210949184,
+    0.09328079367949386,
+    0.13292334264647454,
+    0.21061164329923496
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 1,
+    "n": 8,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 1,
+     "singular_values": [
+      17.647338933348344
+     ],
+     "jacobian_condition": 1.0
+    },
+    "posterior": {
+     "mean": [
+      0.2192495984908305
+     ],
+     "sd": [
+      0.056665767217191625
+     ],
+     "covariance": [
+      [
+       0.003211009174312949
+      ]
+     ],
+     "interval_95": [
+      [
+       0.10818673558880444,
+       0.3303124613928566
+      ]
+     ],
+     "chi_square_at_estimate": 6.879698480147228
+    },
+    "identifiability": {
+     "status": "PARAMETERS_NOT_IDENTIFIABLE",
+     "condition_number": 1.0,
+     "max_abs_correlation": 0.0,
+     "relative_widths": [
+      1.013118050537009
+     ],
+     "over_wide": [
+      "theta1"
+     ],
+     "reasons": [],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 3.869154328229292,
+     "at_bound": [],
+     "within_3_sd": []
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 1.2149379280401718e-09,
+     "probes_outside_bounds_or_inadmissible": 0,
+     "min_rise": 3.9999999951427956,
+     "max_rise": 4.000000004859752,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "global_uniqueness": "DECLARED_AFFINE_AND_VERIFIED_ALONG_PRINCIPAL_AXES",
+    "claim": "SUPPORTED",
+    "refusals": [],
+    "downgrades": [],
+    "forward_calls": {
+     "forward": 5,
+     "predict": 0
+    },
+    "wall_seconds": 0.000166199984960258
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 20001,
+    "mean": [
+     0.21926218101969655
+    ],
+    "sd": [
+     0.05664140465931035
+    ],
+    "marginal_95": [
+     [
+      0.10825097835,
+      0.33025093394999994
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 803.4128777561226,
+     "occupied_support_fraction": 0.08424578771061447,
+     "spacing_to_std": [
+      0.004413731465579391
+     ],
+     "grid_points": 20001
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.9997499999999999,
+    "outside_bounds_or_inadmissible": 1,
+    "mean": [
+     0.22013891005489625
+    ],
+    "sd": [
+     0.055829672599169905
+    ],
+    "max_mean_shift_in_gaussian_sd": 0.015693982588414285
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     0.05666576721718343
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     0.9999999999998553
+    ],
+    "chi_square_calls": 4,
+    "chi_square_at_estimate": 6.879698480147228
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     0.00022214365871975312
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     1.0004301192392353
+    ]
+   }
+  },
+  "F6_log_parameter_logk": {
+   "expectation": "the same model in log k is nonlinear: the probe must see it",
+   "truth": [
+    -1.6094379124341003
+   ],
+   "estimate": [
+    -2.041515165417581
+   ],
+   "observed": [
+    0.03575756525307282,
+    0.10419124807314945,
+    0.23992860261344362,
+    0.1490574473044438,
+    -0.10301081320420315,
+    0.04091377050431881,
+    0.30325083329486824,
+    -0.012522011769222768
+   ],
+   "probe": {
+    "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+    "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+    "p": 1,
+    "n": 8,
+    "exact_posterior_claimed": false,
+    "structural": {
+     "rank": 1,
+     "singular_values": [
+      2.2911865830607354
+     ],
+     "jacobian_condition": 1.0
+    },
+    "posterior": {
+     "mean": [
+      -2.041515165417581
+     ],
+     "sd": [
+      0.43645506978490006
+     ],
+     "covariance": [
+      [
+       0.19049302794094197
+      ]
+     ],
+     "interval_95": [
+      [
+       -2.8969513830659013,
+       -1.1860789477692608
+      ]
+     ],
+     "chi_square_at_estimate": 14.38259500447002
+    },
+    "identifiability": {
+     "status": "PARAMETERS_IDENTIFIABLE",
+     "condition_number": 1.0,
+     "max_abs_correlation": 0.0,
+     "relative_widths": [
+      0.8380405221955285
+     ],
+     "over_wide": [],
+     "reasons": [],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    },
+    "bounds": {
+     "min_distance_in_sd": 8.365014707358068,
+     "at_bound": [],
+     "within_3_sd": []
+    },
+    "nonlinearity": {
+     "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+     "max_relative_deviation": 1.5497859534868796,
+     "probes_outside_bounds_or_inadmissible": 0,
+     "min_rise": 1.7797688783355028,
+     "max_rise": 10.199143813947519,
+     "predictive_max_deviation_in_total_sd": null
+    },
+    "global_uniqueness": "NOT_ASSESSED",
+    "claim": "REFUSED",
+    "refusals": [
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+    ],
+    "downgrades": [
+     "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+    ],
+    "forward_calls": {
+     "forward": 5,
+     "predict": 0
+    },
+    "wall_seconds": 0.0001707999617792666
+   },
+   "grid_reference": {
+    "route": "POSTERIOR_GRID (frozen), analytic synthetic rows",
+    "points": 20001,
+    "mean": [
+     -4.698737577600378
+    ],
+    "sd": [
+     3.5156677091913027
+    ],
+    "marginal_95": [
+     [
+      -13.096707959243709,
+      -1.5719577095855648
+     ]
+    ],
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+    "diagnostics": {
+     "effective_sample_size": 6027.996313626115,
+     "occupied_support_fraction": 0.8258087095645218,
+     "spacing_to_std": [
+      0.00021937437986590175
+     ],
+     "grid_points": 20001
+    }
+   },
+   "importance_check": {
+    "samples": 4000,
+    "ess_fraction": 0.005806856677302405,
+    "outside_bounds_or_inadmissible": 0,
+    "mean": [
+     -2.6354911237993113
+    ],
+    "sd": [
+     0.7833081767608363
+    ],
+    "max_mean_shift_in_gaussian_sd": 1.3609097465048623
+   },
+   "laplace_vs_gauss_newton": {
+    "hessian_positive_definite": true,
+    "sd_laplace": [
+     0.43621270951098756
+    ],
+    "sd_ratio_laplace_over_gauss_newton": [
+     0.9994447073921447
+    ],
+    "chi_square_calls": 4,
+    "chi_square_at_estimate": 14.38259500447002
+   },
+   "gaussian_vs_grid": {
+    "mean_shift_in_grid_sd": [
+     0.755822970764785
+    ],
+    "sd_ratio_gaussian_over_grid": [
+     0.1241457116791326
+    ]
+   }
+  }
+ }
+}
