@@ -6,14 +6,17 @@ population; silently adding these mutations to that number would make the old
 claim mean something it never measured.
 
 Each mutant gets a private copy of ``src/``.  The repository tests themselves
-stay untouched and are executed from the mutant workspace with ``PYTHONPATH``
-containing *only* the mutant source tree.  Before pytest runs, a fresh Python
-process imports the mutated module and proves that ``module.__file__`` is the
-exact mutated file.  Import-origin failures are INVALID, never counted as
-killed or survived.
+stay untouched.  A replacement must match exactly once and the mutated file
+must compile before the test result is classified.
 
-A replacement must match exactly once and the mutated file must compile before
-the test result is classified.  Syntax/targeting/timeouts are INVALID too.
+Import isolation is load-bearing.  This repository's pytest configuration adds
+``src`` and ``.`` to ``sys.path``; if ordinary ``python -m pytest`` were used,
+a mutant could pass its pre-flight import check and then pytest could prepend
+the checkout's original ``src`` again.  Every mutation therefore runs through
+a small same-process wrapper which imports the mutated module *before* pytest,
+overrides pytest's ``pythonpath`` option to the mutant source tree, and audits
+all loaded ``engcore`` modules after the run.  Any module loaded from outside
+the mutant source tree makes the mutation INVALID, never KILLED or SURVIVED.
 """
 
 from __future__ import annotations
@@ -184,44 +187,52 @@ def _module_name_for_path(path: str) -> str:
 
 def _mutant_environment(src_copy: pathlib.Path) -> dict[str, str]:
     env = os.environ.copy()
-    # Do not inherit the repository root or another editable source path.  The
-    # mutant tree is the sole project source allowed on PYTHONPATH.
     env["PYTHONPATH"] = str(src_copy)
     env["PYTHONNOUSERSITE"] = "1"
     return env
 
 
-def _verify_mutant_import(
-    mutation: Mutation,
-    mutated_path: pathlib.Path,
-    mutant: pathlib.Path,
-    env: dict[str, str],
-) -> str | None:
-    module_name = _module_name_for_path(mutation.path)
-    probe = (
-        "import importlib, pathlib, sys\n"
-        "module = importlib.import_module(sys.argv[1])\n"
-        "actual = pathlib.Path(module.__file__).resolve()\n"
-        "expected = pathlib.Path(sys.argv[2]).resolve()\n"
-        "print(actual)\n"
-        "if actual != expected:\n"
-        "    raise SystemExit(f'import origin mismatch: expected {expected}, got {actual}')\n"
-    )
-    completed = subprocess.run(
-        [sys.executable, "-c", probe, module_name, str(mutated_path)],
-        cwd=mutant,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        timeout=30,
-        check=False,
-    )
-    if completed.returncode == 0:
-        return None
-    return completed.stdout.strip() or (
-        f"import-origin probe failed with exit code {completed.returncode}"
-    )
+_PYTEST_WRAPPER = r'''
+import importlib
+import pathlib
+import sys
+
+module_name = sys.argv[1]
+expected_path = pathlib.Path(sys.argv[2]).resolve()
+mutant_src = pathlib.Path(sys.argv[3]).resolve()
+pytest_args = sys.argv[4:]
+
+module = importlib.import_module(module_name)
+actual_path = pathlib.Path(module.__file__).resolve()
+print(f"MUTANT_IMPORT {module_name} -> {actual_path}")
+if actual_path != expected_path:
+    print(f"IMPORT_ORIGIN_MISMATCH expected={expected_path} actual={actual_path}")
+    raise SystemExit(86)
+
+import pytest
+returncode = pytest.main(pytest_args)
+
+outside = []
+for name, loaded in tuple(sys.modules.items()):
+    if not (name == "engcore" or name.startswith("engcore.")):
+        continue
+    filename = getattr(loaded, "__file__", None)
+    if not filename:
+        continue
+    path = pathlib.Path(filename).resolve()
+    try:
+        path.relative_to(mutant_src)
+    except ValueError:
+        outside.append((name, str(path)))
+
+if outside:
+    print("MUTANT_SOURCE_CONTAMINATION")
+    for name, path in sorted(outside):
+        print(f"  {name}: {path}")
+    raise SystemExit(87)
+
+raise SystemExit(returncode)
+'''
 
 
 def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
@@ -231,6 +242,7 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
     try:
         mutated_path = _apply(mutant, mutation)
         py_compile.compile(str(mutated_path), doraise=True)
+        module_name = _module_name_for_path(mutation.path)
     except Exception as exc:
         return Result(
             mutation.mutation_id,
@@ -240,39 +252,18 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
         )
 
     env = _mutant_environment(src_copy)
-    try:
-        origin_error = _verify_mutant_import(
-            mutation, mutated_path, mutant, env
-        )
-    except subprocess.TimeoutExpired as exc:
-        return Result(
-            mutation.mutation_id,
-            "INVALID",
-            mutation.property,
-            detail=f"import-origin probe timeout after {exc.timeout}s",
-        )
-    except Exception as exc:
-        return Result(
-            mutation.mutation_id,
-            "INVALID",
-            mutation.property,
-            detail=f"import-origin probe error: {type(exc).__name__}: {exc}",
-        )
-    if origin_error is not None:
-        return Result(
-            mutation.mutation_id,
-            "INVALID",
-            mutation.property,
-            detail=origin_error,
-        )
-
     command = [
         sys.executable,
-        "-m",
-        "pytest",
+        "-c",
+        _PYTEST_WRAPPER,
+        module_name,
+        str(mutated_path),
+        str(src_copy),
         *(str(ROOT / test) for test in TESTS),
         "--rootdir",
         str(ROOT),
+        "-o",
+        f"pythonpath={src_copy}",
         "-q",
         "-p",
         "no:cacheprovider",
@@ -296,8 +287,11 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
             detail=f"test timeout after {exc.timeout}s",
         )
 
-    status = "SURVIVED" if completed.returncode == 0 else "KILLED"
-    tail = "\n".join(completed.stdout.splitlines()[-20:])
+    if completed.returncode in {86, 87}:
+        status = "INVALID"
+    else:
+        status = "SURVIVED" if completed.returncode == 0 else "KILLED"
+    tail = "\n".join(completed.stdout.splitlines()[-30:])
     return Result(
         mutation.mutation_id,
         status,
