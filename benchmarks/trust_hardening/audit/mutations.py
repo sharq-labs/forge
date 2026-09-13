@@ -6,10 +6,14 @@ population; silently adding these mutations to that number would make the old
 claim mean something it never measured.
 
 Each mutant gets a private copy of ``src/``.  The repository tests themselves
-stay untouched and are executed with ``PYTHONPATH`` pointing at the mutant
-source tree.  A replacement must match exactly once and the mutated file must
-compile before the test result is classified.  Syntax/targeting failures are
-INVALID, never counted as killed.
+stay untouched and are executed from the mutant workspace with ``PYTHONPATH``
+containing *only* the mutant source tree.  Before pytest runs, a fresh Python
+process imports the mutated module and proves that ``module.__file__`` is the
+exact mutated file.  Import-origin failures are INVALID, never counted as
+killed or survived.
+
+A replacement must match exactly once and the mutated file must compile before
+the test result is classified.  Syntax/targeting/timeouts are INVALID too.
 """
 
 from __future__ import annotations
@@ -161,6 +165,65 @@ def _apply(root: pathlib.Path, mutation: Mutation) -> pathlib.Path:
     return path
 
 
+def _module_name_for_path(path: str) -> str:
+    relative = pathlib.PurePosixPath(path)
+    parts = list(relative.parts)
+    if not parts or parts[0] != "src" or len(parts) < 3:
+        raise RuntimeError(f"mutation path is not a src Python module: {path}")
+    module_parts = parts[1:]
+    filename = module_parts[-1]
+    if not filename.endswith(".py"):
+        raise RuntimeError(f"mutation path is not a Python module: {path}")
+    stem = filename[:-3]
+    if stem == "__init__":
+        module_parts = module_parts[:-1]
+    else:
+        module_parts[-1] = stem
+    return ".".join(module_parts)
+
+
+def _mutant_environment(src_copy: pathlib.Path) -> dict[str, str]:
+    env = os.environ.copy()
+    # Do not inherit the repository root or another editable source path.  The
+    # mutant tree is the sole project source allowed on PYTHONPATH.
+    env["PYTHONPATH"] = str(src_copy)
+    env["PYTHONNOUSERSITE"] = "1"
+    return env
+
+
+def _verify_mutant_import(
+    mutation: Mutation,
+    mutated_path: pathlib.Path,
+    mutant: pathlib.Path,
+    env: dict[str, str],
+) -> str | None:
+    module_name = _module_name_for_path(mutation.path)
+    probe = (
+        "import importlib, pathlib, sys\n"
+        "module = importlib.import_module(sys.argv[1])\n"
+        "actual = pathlib.Path(module.__file__).resolve()\n"
+        "expected = pathlib.Path(sys.argv[2]).resolve()\n"
+        "print(actual)\n"
+        "if actual != expected:\n"
+        "    raise SystemExit(f'import origin mismatch: expected {expected}, got {actual}')\n"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", probe, module_name, str(mutated_path)],
+        cwd=mutant,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    if completed.returncode == 0:
+        return None
+    return completed.stdout.strip() or (
+        f"import-origin probe failed with exit code {completed.returncode}"
+    )
+
+
 def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
     mutant = scratch / mutation.mutation_id
     src_copy = mutant / "src"
@@ -176,16 +239,40 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
             detail=f"{type(exc).__name__}: {exc}",
         )
 
-    env = os.environ.copy()
-    inherited = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = os.pathsep.join(
-        part for part in (str(src_copy), str(ROOT), inherited) if part
-    )
+    env = _mutant_environment(src_copy)
+    try:
+        origin_error = _verify_mutant_import(
+            mutation, mutated_path, mutant, env
+        )
+    except subprocess.TimeoutExpired as exc:
+        return Result(
+            mutation.mutation_id,
+            "INVALID",
+            mutation.property,
+            detail=f"import-origin probe timeout after {exc.timeout}s",
+        )
+    except Exception as exc:
+        return Result(
+            mutation.mutation_id,
+            "INVALID",
+            mutation.property,
+            detail=f"import-origin probe error: {type(exc).__name__}: {exc}",
+        )
+    if origin_error is not None:
+        return Result(
+            mutation.mutation_id,
+            "INVALID",
+            mutation.property,
+            detail=origin_error,
+        )
+
     command = [
         sys.executable,
         "-m",
         "pytest",
-        *TESTS,
+        *(str(ROOT / test) for test in TESTS),
+        "--rootdir",
+        str(ROOT),
         "-q",
         "-p",
         "no:cacheprovider",
@@ -193,7 +280,7 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
     try:
         completed = subprocess.run(
             command,
-            cwd=ROOT,
+            cwd=mutant,
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
