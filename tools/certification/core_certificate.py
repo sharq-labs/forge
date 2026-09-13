@@ -163,6 +163,17 @@ SCOPE: tuple[ScopeArea, ...] = (
         ),
     ),
     ScopeArea(
+        name="routed_uncertainty",
+        classification="CORE_CERTIFIED",
+        patterns=("src/engcore/hybrid_uq/**/*.py",),
+        why=(
+            "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The "
+            "local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, "
+            "and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a "
+            "silent edit here turns a refusal into a precise-looking number"
+        ),
+    ),
+    ScopeArea(
         name="harness",
         classification="HARNESS",
         patterns=(

@@ -48,6 +48,7 @@ than change an answer.
 | `trust_registry` | CORE_CERTIFIED | `src/engcore/domains/__init__.py` — the declarations the core verifies against |
 | `evidence_identity` | CORE_CERTIFIED | `src/engcore/adequacy/**` — evidence pairing |
 | `inference_admission` | CORE_CERTIFIED | `src/engcore/inference/**` — the admission invariant |
+| `routed_uncertainty` | CORE_CERTIFIED | `src/engcore/hybrid_uq/**` — Core V2 route validity, multistart, refusal (added at Core Freeze V2) |
 | `runtime_data` | RUNTIME_SUPPORT | `src/engcore/data/**` — what a data reference resolves through |
 | `harness` | HARNESS | the mutation runner and the four suites it runs |
 

@@ -262,3 +262,28 @@ What is forbidden is the silent version: removing a symbol from
 `EXPERIMENTAL_SYMBOLS` or `EXPERIMENTAL_MODULES` so that it lands in the frozen
 digest. The frozen digest then no longer matches Core Freeze V1, and the
 verifier fails — which is the intended outcome, not an obstacle to route around.
+
+## 12. Core Freeze V2 (additive)
+
+Core Freeze V2, tagged `v2.0-core-freeze`, ADDS one canonical module and changes nothing above. Every number in
+the FROZEN-STATE table at the top of this document is still the V1 contract and still binds: the V1 frozen
+digest does not move, the V1 verifier still passes, and V1 history is not rewritten.
+
+| key | value |
+| --- | --- |
+| added canonical module | `engcore.hybrid_uq` |
+| V2 frozen snapshot | `tests/api/v2_frozen_api_snapshot.json` |
+| V2 manifest | `certification/core_freeze_v2.json` |
+| V2 verifier | `python -m tools.certification.core_freeze_v2 --verify` |
+| API design | `docs/CORE_V2_API_DESIGN.md` |
+
+The V2 surface is `api_snapshot.build(modules=api_snapshot.V2_CANONICAL_MODULES)`. The V2 verifier binds on:
+
+- Core Freeze V1 still verifying;
+- every V1 frozen entry being byte-identical inside V2;
+- the V2 frozen digest and pinned snapshot;
+- the V2 serialization inventory and identity reference digests;
+- the route vocabulary;
+- the thin-ridge repair still being in force.
+
+A later commit that fails any of these is not a descendant of Core Freeze V2.
