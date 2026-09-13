@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Mapping, Union
 
 from ..errors import InvalidScientificProblem, ScientificCoreError
 from ..serialization import require_schema, schema_string
@@ -54,8 +54,6 @@ class IntegerValue:
 
     def __post_init__(self) -> None:
         if isinstance(self.value, bool):
-            # bool is an int subclass in Python; silently accepting it would
-            # erase the distinction this union exists to preserve.
             raise InvalidScientificProblem(
                 "IntegerValue rejects bool; use BooleanValue"
             )
@@ -161,7 +159,12 @@ class CategoricalValue:
         )
 
 
-ScientificValue = Quantity | IntegerValue | BooleanValue | CategoricalValue
+# Keep the runtime object a ``typing.Union``.  The frozen public API records the
+# alias kind and historical consumers see it through ``engcore.scientific``;
+# replacing this with PEP 604 ``A | B`` is runtime-equivalent for annotations
+# but changes the public object to ``types.UnionType`` and therefore changes the
+# frozen contract without changing the represented scientific values.
+ScientificValue = Union[Quantity, IntegerValue, BooleanValue, CategoricalValue]
 
 _VALUE_KINDS: dict[type, ValueKind] = {
     Quantity: ValueKind.QUANTITY,
