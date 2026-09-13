@@ -1,0 +1,560 @@
+{
+ "schema": "core_v2_hybrid_uq_failure_cases/1",
+ "cases": {
+  "strong_nonlinearity": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+    "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    2.5844859305708714,
+    1.3591509622206093
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+    ],
+    "downgrades": [
+     "BOUND_WITHIN_3_SD"
+    ],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 1.645600058360813,
+    "jacobian_condition": 1.9383703608179716,
+    "raw_jacobian_condition": 4.231040760815263,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "dense_reference": {
+    "mean": [
+     3.43167564870298,
+     1.3935810394659547
+    ],
+    "sd": [
+     1.751501376129549,
+     0.305146219021418
+    ],
+    "nodes": [
+     481,
+     481
+    ]
+   },
+   "router_with_rebuild": {
+    "decision": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+    "claim": "SUPPORTED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "SKIPPED",
+      "reason": "GRID_NOT_SUPPLIED"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "REFUSED",
+      "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN,BOUND_WITHIN_3_SD"
+     },
+     {
+      "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "outcome": "USED",
+      "reason": "",
+      "detail": "861 points, nodes [41, 21], 3 box expansion(s), 1 truncation halving(s) on axes [0], 0 refinement(s)"
+     }
+    ],
+    "mean": [
+     3.432935531694749,
+     1.3935221738990573
+    ],
+    "sd": [
+     1.7585098297797475,
+     0.3052249267698167
+    ],
+    "mean_shift_reference_sd": [
+     0.0007193160159275661,
+     0.00019290937664624873
+    ],
+    "sd_ratio_reference": [
+     1.0040013977412257,
+     1.0002579345359452
+    ]
+   },
+   "router_without_rebuild": {
+    "decision": "REFUSED",
+    "emits_numbers": false
+   },
+   "met": true
+  },
+  "parameter_at_bound": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "PARAMETER_AT_BOUND",
+    "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    0.96416658787548,
+    3.396371814784188e-12
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+     "PARAMETER_AT_BOUND"
+    ],
+    "downgrades": [
+     "NONLINEARITY_PROBE_INCOMPLETE"
+    ],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 1.5859673528193428,
+    "jacobian_condition": 3.425339658175581,
+    "raw_jacobian_condition": 3.9849451450628472,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "dense_reference": {
+    "mean": [
+     0.9601237948364355,
+     0.008085586081485662
+    ],
+    "sd": [
+     0.007350032690030742,
+     0.007489454064087864
+    ],
+    "nodes": [
+     401,
+     401
+    ]
+   },
+   "router_with_rebuild": {
+    "decision": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+    "claim": "SUPPORTED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "SKIPPED",
+      "reason": "GRID_NOT_SUPPLIED"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "REFUSED",
+      "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN,PARAMETER_AT_BOUND,NONLINEARITY_PROBE_INCOMPLETE"
+     },
+     {
+      "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "outcome": "USED",
+      "reason": "",
+      "detail": "2926 points, nodes [14, 209], 0 box expansion(s), 4 truncation halving(s) on axes [1], 0 refinement(s)"
+     }
+    ],
+    "mean": [
+     0.9600655986321287,
+     0.00816526849680187
+    ],
+    "sd": [
+     0.007351056267956367,
+     0.007479662924052737
+    ],
+    "mean_shift_reference_sd": [
+     0.007917815710634702,
+     0.010639282200592855
+    ],
+    "sd_ratio_reference": [
+     1.0001392616834226,
+     0.9986926764018654
+    ]
+   },
+   "router_without_rebuild": {
+    "decision": "REFUSED",
+    "emits_numbers": false
+   },
+   "met": true
+  },
+  "nearly_singular_jacobian": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "NUMERICALLY_SINGULAR_JACOBIAN",
+    "rebuild": "REFUSED"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    0.9984703942807431,
+    0.9984706683537176
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "NUMERICALLY_SINGULAR_JACOBIAN"
+    ],
+    "downgrades": [],
+    "uniqueness": "NOT_ASSESSED",
+    "nonlinearity_index": "nan",
+    "jacobian_condition": 6720656258.853912,
+    "raw_jacobian_condition": 6720655257.654972,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "router_with_rebuild": {
+    "decision": "REFUSED",
+    "claim": "REFUSED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "SKIPPED",
+      "reason": "GRID_NOT_SUPPLIED"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "REFUSED",
+      "reason": "NUMERICALLY_SINGULAR_JACOBIAN"
+     },
+     {
+      "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "outcome": "PASSED_OVER",
+      "reason": "no usable local covariance to design a grid from"
+     }
+    ],
+    "mean": null,
+    "sd": null
+   },
+   "router_without_rebuild": {
+    "decision": "REFUSED",
+    "emits_numbers": false
+   },
+   "met": true
+  },
+  "mirror_mode": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "SECOND_MODE_FOUND",
+    "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    0.9899323873231076
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "SECOND_MODE_FOUND"
+    ],
+    "downgrades": [],
+    "uniqueness": "SECOND_MODE_FOUND",
+    "nonlinearity_index": 0.013585710367211679,
+    "jacobian_condition": 1.0,
+    "raw_jacobian_condition": 1.0,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "dense_reference": {
+    "mean": [
+     -6.106226635438361e-16
+    ],
+    "sd": [
+     0.9898870031405894
+    ],
+    "nodes": [
+     6001
+    ]
+   },
+   "router_with_rebuild": {
+    "decision": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+    "claim": "SUPPORTED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "SKIPPED",
+      "reason": "GRID_NOT_SUPPLIED"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "REFUSED",
+      "reason": "SECOND_MODE_FOUND"
+     },
+     {
+      "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "outcome": "USED",
+      "reason": "",
+      "detail": "313 points, nodes [313], 0 box expansion(s), 0 truncation halving(s) on axes [], 0 refinement(s)"
+     }
+    ],
+    "mean": [
+     7.827072323607354e-15
+    ],
+    "sd": [
+     0.989887003113433
+    ],
+    "mean_shift_reference_sd": [
+     8.523897132077831e-15
+    ],
+    "sd_ratio_reference": [
+     0.9999999999725662
+    ]
+   },
+   "router_without_rebuild": {
+    "decision": "REFUSED",
+    "emits_numbers": false
+   },
+   "met": true
+  },
+  "multimodal_two_parameter": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "SECOND_MODE_FOUND",
+    "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    1.0225939137672058,
+    0.4043690009862078
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "SECOND_MODE_FOUND"
+    ],
+    "downgrades": [],
+    "uniqueness": "SECOND_MODE_FOUND",
+    "nonlinearity_index": 0.01619695113985764,
+    "jacobian_condition": 9.505396814951084,
+    "raw_jacobian_condition": 16.54321235752065,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "dense_reference": {
+    "mean": [
+     -1.1102230246251565e-16,
+     0.40613544182921846
+    ],
+    "sd": [
+     1.0220179476127047,
+     0.07601966371930763
+    ],
+    "nodes": [
+     1201,
+     801
+    ]
+   },
+   "router_with_rebuild": {
+    "decision": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+    "claim": "SUPPORTED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "SKIPPED",
+      "reason": "GRID_NOT_SUPPLIED"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "REFUSED",
+      "reason": "SECOND_MODE_FOUND"
+     },
+     {
+      "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "outcome": "USED",
+      "reason": "",
+      "detail": "9801 points, nodes [99, 99], 0 box expansion(s), 0 truncation halving(s) on axes [], 0 refinement(s)"
+     }
+    ],
+    "mean": [
+     -3.970668500154878e-15,
+     0.4061354441880872
+    ],
+    "sd": [
+     1.0220179468409059,
+     0.0760196630487315
+    ],
+    "mean_shift_reference_sd": [
+     3.7764955172342834e-15,
+     3.1029718517207407e-08
+    ],
+    "sd_ratio_reference": [
+     0.9999999992448285,
+     0.9999999911789123
+    ]
+   },
+   "router_without_rebuild": {
+    "decision": "REFUSED",
+    "emits_numbers": false
+   },
+   "met": true
+  },
+  "log_parameterization_of_a_linear_model": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    0.1577717270128525
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+    ],
+    "downgrades": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 1.1407194286840792,
+    "jacobian_condition": 1.0,
+    "raw_jacobian_condition": 1.0,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "met": true
+  },
+  "poorly_scaled_parameterization": {
+   "expect": {
+    "local": "DOWNGRADED",
+    "reason": "POORLY_SCALED_PARAMETERIZATION",
+    "multistart": null
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    1953608267.2600763,
+    0.00010418095871760168
+   ],
+   "local": {
+    "claim": "DOWNGRADED",
+    "refusals": [],
+    "downgrades": [
+     "GLOBAL_UNIQUENESS_NOT_ASSESSED",
+     "POORLY_SCALED_PARAMETERIZATION"
+    ],
+    "uniqueness": "NOT_ASSESSED",
+    "nonlinearity_index": 2.6902124972139063e-09,
+    "jacobian_condition": 3.474334899883916,
+    "raw_jacobian_condition": 11104504640448.625,
+    "emits_covariance": true
+   },
+   "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+   "met": true
+  },
+  "weak_identification": {
+   "expect": {
+    "local": "SUPPORTED",
+    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    -1.09836989415343,
+    0.5086021810410664
+   ],
+   "local": {
+    "claim": "SUPPORTED",
+    "refusals": [],
+    "downgrades": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 7.30251192848641e-10,
+    "jacobian_condition": 1174.0086394350649,
+    "raw_jacobian_condition": 5943.284949975456,
+    "emits_covariance": true
+   },
+   "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+   "met": true
+  },
+  "thin_correlated_ridge_with_aliased_bounds_grid": {
+   "expect": {
+    "local": "SUPPORTED",
+    "grid_as_supplied": "REFUSED_BY_V1",
+    "router": "LOCAL_GAUSSIAN"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    -1.09836989415343,
+    0.5086021810410664
+   ],
+   "local": {
+    "claim": "SUPPORTED",
+    "refusals": [],
+    "downgrades": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 7.30251192848641e-10,
+    "jacobian_condition": 1174.0086394350649,
+    "raw_jacobian_condition": 5943.284949975456,
+    "emits_covariance": true
+   },
+   "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
+   "dense_reference": {
+    "mean": [
+     2.2816373919201434,
+     0.17183626080798606
+    ],
+    "sd": [
+     1.34839972492645,
+     0.13483997249264498
+    ],
+    "nodes": [
+     401,
+     401
+    ]
+   },
+   "router_with_aliased_grid": {
+    "decision": "LOCAL_GAUSSIAN",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "REFUSED_BY_V1",
+      "reason": "GRID_UNRESOLVED",
+      "detail": "GRID_TOO_COARSE_FOR_INFERENCE: lattice aliasing number 0.0331 is below 9.21. Along an off-axis lattice direction the posterior is narrower than the grid can sample -- a thin, tilted ridge falling between nodes -- so its moments are aliased even though every axis step looks small against its marginal standard deviation. Refine the grid, or align it with the posterior, and ask again"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "USED",
+      "reason": ""
+     }
+    ],
+    "aliased_grid_mean": [
+     2.2816373919201434,
+     0.17183626080798606
+    ],
+    "route_mean": [
+     -1.09836989415343,
+     0.5086021810410664
+    ]
+   },
+   "met": true
+  },
+  "mapped_non_tensor_point_set": {
+   "expect": {
+    "router_grid_only": "REFUSED",
+    "router_with_local": "LOCAL_GAUSSIAN"
+   },
+   "v1": "GRID_TOO_COARSE_FOR_INFERENCE: the posterior's points are not an axis-aligned tensor lattice, so no lattice step exists to check its resolution against",
+   "router_grid_only": {
+    "decision": "REFUSED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "REFUSED_BY_V1",
+      "reason": "GRID_UNRESOLVED",
+      "detail": "GRID_TOO_COARSE_FOR_INFERENCE: the posterior's points are not an axis-aligned tensor lattice, so no lattice step exists to check its resolution against"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "SKIPPED",
+      "reason": "LOCAL_INPUTS_NOT_SUPPLIED"
+     }
+    ]
+   },
+   "router_with_local": {
+    "decision": "LOCAL_GAUSSIAN",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "REFUSED_BY_V1",
+      "reason": "GRID_UNRESOLVED",
+      "detail": "GRID_TOO_COARSE_FOR_INFERENCE: the posterior's points are not an axis-aligned tensor lattice, so no lattice step exists to check its resolution against"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "USED",
+      "reason": ""
+     }
+    ]
+   },
+   "met": true
+  }
+ },
+ "all_met": true
+}

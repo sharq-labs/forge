@@ -246,3 +246,42 @@ def test_the_claim_must_follow_from_the_reasons():
     with pytest.raises(HybridUQError, match="does not follow"):
         dataclasses.replace(post.diagnostics, claim=RouteClaim.SUPPORTED, downgrades=(RouteReason.BOUND_WITHIN_3_SD,))
     assert math.isfinite(post.diagnostics.minimum_bound_distance_sd)
+
+
+def test_an_inadmissible_multistart_start_is_retracted_toward_the_estimate_and_recorded():
+    """A bounds box is not an admissible region: here only theta1 > theta2 is admissible."""
+    P = S.affine()
+    base = P.forward
+
+    def ordered(theta):
+        return None if theta[0] >= theta[1] else base(theta)
+
+    calibration = P.calibrate()
+    post = local_gaussian_posterior(calibration, P.observations, ordered, multistart=MultistartPolicy())
+    retracted = [m for m in post.diagnostics.multistart if m.get("retractions", 0) > 0]
+    assert retracted, "the Halton starts include inadmissible points; at least one must be retracted"
+    assert all(m["status"] == "CALIBRATION_CONVERGED" for m in post.diagnostics.multistart)
+    assert post.diagnostics.uniqueness == "MULTISTART_NO_SECOND_MODE"
+    assert post.claim is RouteClaim.SUPPORTED
+
+
+def test_the_admission_boundary_error_is_a_refusal_of_the_point_not_a_crash():
+    from engcore.inference import InferenceAdmissibilityError
+
+    P = S.affine()
+    calibration = P.calibrate()
+    estimate = calibration.estimate_vector
+
+    def raising(theta):
+        if abs(theta[1] - estimate[1]) > 0.0:
+            raise InferenceAdmissibilityError("not admissible here")
+        return P.forward(theta)
+
+    post = local_gaussian_posterior(calibration, P.observations, raising, multistart=None)
+    assert post.diagnostics.refusals == (RouteReason.FORWARD_INADMISSIBLE_NEAR_ESTIMATE,)
+
+    def broken(theta):
+        raise RuntimeError("a defect, not a refusal")
+
+    with pytest.raises(RuntimeError):
+        local_gaussian_posterior(calibration, P.observations, broken, multistart=None)

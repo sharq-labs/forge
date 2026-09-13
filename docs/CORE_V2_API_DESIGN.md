@@ -127,6 +127,7 @@ class MultistartPolicy:
     max_evaluations: int = 2000
     mode_separation_quantile: float = 0.999   # Mahalanobis^2 beyond chi2(p) quantile = a different optimum
     comparable_fit_quantile: float = 0.99     # chi-square within chi2(p) quantile of the best = comparable
+    maximum_retractions: int = 12             # an inadmissible start is halved toward the estimate until admitted
     # start_points(parameter_set) -> tuple[tuple[float, ...], ...]  (deterministic, natural units)
     # to_dict / from_dict / digest
 
@@ -193,6 +194,8 @@ def local_gaussian_posterior(
     *, multistart: MultistartPolicy | None, sensitivity: LocalSensitivity | None = None,
 ) -> LocalGaussianPosterior
 ```
+
+*Amendment.* `maximum_retractions` was added when the Battery B3 run showed a failure: every box-filling Halton start produced non-monotone knot voltages. The production adapter refuses those, so no restart could run, and each model was capped at MULTISTART_INCOMPLETE. A bounds box does not describe a model's admissible region; retracting toward the (admissible) estimate does. Every retraction is recorded per start.
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 

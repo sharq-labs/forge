@@ -1,0 +1,200 @@
+{
+ "schema": "core_v2_hybrid_uq_tcr/1",
+ "declared_tolerance": {
+  "mean_shift_exact_sd": 0.05,
+  "sd_ratio": [
+   0.95,
+   1.05
+  ]
+ },
+ "designs": {
+  "WIDE": {
+   "temperatures_k": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0,
+    420.0,
+    440.0
+   ],
+   "calibration_status": "CALIBRATION_CONVERGED",
+   "v2_local": {
+    "decision": "LOCAL_GAUSSIAN",
+    "claim": "SUPPORTED",
+    "reasons": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 2.7321749328734768e-05,
+    "mean": [
+     1.2591462177267174,
+     0.00391589367711874
+    ],
+    "sd": [
+     0.0013806418883279307,
+     1.609341079929174e-05
+    ],
+    "correlation": -0.9208184917941975,
+    "identifiability": "PARAMETERS_IDENTIFIABLE",
+    "forward_evaluations": 174,
+    "wall_seconds": 0.21609140001237392
+   },
+   "v1_resolved_grid": {
+    "nodes_per_axis": 41,
+    "decision": "GRID_AS_SUPPLIED",
+    "mean": [
+     1.2591447038570387,
+     0.003915926175403195
+    ],
+    "sd": [
+     0.0013806426883029397,
+     1.6093524446565528e-05
+    ],
+    "identifiability": "PARAMETERS_IDENTIFIABLE",
+    "forward_evaluations": 1681,
+    "wall_seconds": 1.7069229999906383
+   },
+   "exact_quadrature": {
+    "mean": [
+     1.2591447038558292,
+     0.0039159261754191646
+    ],
+    "sd": [
+     0.0013806427183020184,
+     1.6093524797688592e-05
+    ],
+    "correlation": -0.9208180582166107
+   },
+   "router_given_the_41_node_grid": {
+    "decision": "GRID_AS_SUPPLIED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "USED",
+      "reason": ""
+     }
+    ]
+   },
+   "agreement": {
+    "v2_mean_shift_exact_sd": [
+     0.0010964972096946704,
+     0.0020193401279955726
+    ],
+    "v2_sd_ratio_exact": [
+     0.9999993988494802,
+     0.9999929165053469
+    ],
+    "grid_mean_shift_exact_sd": [
+     8.760245840532293e-10,
+     9.923161346317454e-10
+    ],
+    "grid_sd_ratio_exact": [
+     0.9999999782716569,
+     0.9999999781823392
+    ],
+    "v2_sd_ratio_grid": [
+     0.9999994205778108,
+     0.9999929383228536
+    ],
+    "identifiability_equal": true,
+    "within_declared_tolerance": true
+   }
+  },
+  "NARROW": {
+   "temperatures_k": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "calibration_status": "CALIBRATION_CONVERGED",
+   "v2_local": {
+    "decision": "LOCAL_GAUSSIAN",
+    "claim": "SUPPORTED",
+    "reasons": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 0.00874449243410802,
+    "mean": [
+     1.2643400451880453,
+     0.0032526222525304273
+    ],
+    "sd": [
+     0.006837821987997175,
+     0.000773738219055557
+    ],
+    "correlation": -0.9931656721357156,
+    "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+    "forward_evaluations": 234,
+    "wall_seconds": 0.23100949998479337
+   },
+   "v1_resolved_grid": {
+    "nodes_per_axis": 81,
+    "decision": "GRID_AS_SUPPLIED",
+    "mean": [
+     1.2643030579321701,
+     0.0032609346975867874
+    ],
+    "sd": [
+     0.0068379084574761925,
+     0.0007738825692034689
+    ],
+    "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+    "forward_evaluations": 6561,
+    "wall_seconds": 5.116624300018884
+   },
+   "exact_quadrature": {
+    "mean": [
+     1.2643030627565823,
+     0.0032609353399778484
+    ],
+    "sd": [
+     0.006837922002653202,
+     0.000773884126789759
+    ],
+    "correlation": -0.9931381972261871
+   },
+   "router_given_the_41_node_grid": {
+    "decision": "LOCAL_GAUSSIAN",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "REFUSED_BY_V1",
+      "reason": "GRID_UNRESOLVED",
+      "detail": "GRID_TOO_COARSE_FOR_INFERENCE: lattice aliasing number 6.13 is below 9.21. Along an off-axis lattice direction the posterior is narrower than the grid can sample -- a thin, tilted ridge falling between nodes -- so its moments are aliased even though every axis step looks small against its marginal standard deviation. Refine the grid, or align it with the posterior, and ask again"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "USED",
+      "reason": ""
+     }
+    ]
+   },
+   "agreement": {
+    "v2_mean_shift_exact_sd": [
+     0.005408431311244194,
+     0.010742031215843106
+    ],
+    "v2_sd_ratio_exact": [
+     0.9999853735307324,
+     0.9998114604898186
+    ],
+    "grid_mean_shift_exact_sd": [
+     7.0553776442491e-07,
+     8.300868808139954e-07
+    ],
+    "grid_sd_ratio_exact": [
+     0.9999980191091673,
+     0.999997987313299
+    ],
+    "v2_sd_ratio_grid": [
+     0.9999873543965154,
+     0.9998134728010989
+    ],
+    "identifiability_equal": true,
+    "within_declared_tolerance": true
+   }
+  }
+ }
+}

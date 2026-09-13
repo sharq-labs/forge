@@ -19,6 +19,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from ..inference.calibration import CalibrationResult, CalibrationStatus, ForwardEvaluator
+from ..inference.admissibility import InferenceAdmissibilityError
 from ..inference.grid import ObservationSet
 from ..inference.parameters import CalibrationParameterSet, ParameterTransform
 from ..scientific.units.quantity import Quantity
@@ -56,7 +57,12 @@ def inference_bounds(parameter_set: CalibrationParameterSet) -> tuple[np.ndarray
 def evaluate(forward: ForwardEvaluator, natural: Sequence[float], keys: Sequence[str],
              units: Sequence[str], references: Sequence[Quantity]) -> np.ndarray | None:
     """One forward call, held to the same rules as ``calibrate``: Quantities, compatible units, or a refusal."""
-    predicted = forward(tuple(float(v) for v in natural))
+    try:
+        predicted = forward(tuple(float(v) for v in natural))
+    except InferenceAdmissibilityError:
+        # The admission boundary's own refusal is a refusal of the point, the same as returning None. Any
+        # other exception is a defect and propagates.
+        return None
     if predicted is None:
         return None
     if len(predicted) != len(keys):

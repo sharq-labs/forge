@@ -91,7 +91,13 @@ def _thresholds() -> dict[str, float]:
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class MultistartPolicy:
-    """A deterministic multistart. Halton points in the central part of the inference-space bounds box."""
+    """A deterministic multistart. Halton points in the central part of the inference-space bounds box.
+
+    A start the forward model refuses (outside its admissible region, which a bounds box does not describe) is
+    retracted toward the calibrated estimate, halving the distance each time, until the model admits it -- at
+    most ``maximum_retractions`` times. The retraction is recorded per start; a start that never becomes
+    admissible is recorded as such and does not count as converged.
+    """
 
     starts: int = 6
     scheme: str = "halton_in_inference_bounds"
@@ -99,6 +105,7 @@ class MultistartPolicy:
     max_evaluations: int = 2000
     mode_separation_quantile: float = 0.999
     comparable_fit_quantile: float = 0.99
+    maximum_retractions: int = 12
 
     def __post_init__(self) -> None:
         if int(self.starts) < 1:
@@ -109,6 +116,8 @@ class MultistartPolicy:
             raise HybridUQError("interior_fraction must lie in (0, 1]")
         if int(self.max_evaluations) < 1:
             raise HybridUQError("max_evaluations must be positive")
+        if int(self.maximum_retractions) < 0:
+            raise HybridUQError("maximum_retractions must be non-negative")
         for label in ("mode_separation_quantile", "comparable_fit_quantile"):
             if not 0.0 < float(getattr(self, label)) < 1.0:
                 raise HybridUQError(f"{label} must lie in (0, 1)")
@@ -129,7 +138,8 @@ class MultistartPolicy:
         return {"schema": MULTISTART_POLICY_SCHEMA, "starts": int(self.starts), "scheme": self.scheme,
                 "interior_fraction": float(self.interior_fraction), "max_evaluations": int(self.max_evaluations),
                 "mode_separation_quantile": float(self.mode_separation_quantile),
-                "comparable_fit_quantile": float(self.comparable_fit_quantile)}
+                "comparable_fit_quantile": float(self.comparable_fit_quantile),
+                "maximum_retractions": int(self.maximum_retractions)}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "MultistartPolicy":
@@ -137,7 +147,8 @@ class MultistartPolicy:
         return cls(starts=int(payload["starts"]), scheme=payload["scheme"], interior_fraction=float(payload["interior_fraction"]),
                    max_evaluations=int(payload["max_evaluations"]),
                    mode_separation_quantile=float(payload["mode_separation_quantile"]),
-                   comparable_fit_quantile=float(payload["comparable_fit_quantile"]))
+                   comparable_fit_quantile=float(payload["comparable_fit_quantile"]),
+                   maximum_retractions=int(payload["maximum_retractions"]))
 
     @property
     def digest(self) -> str:
@@ -654,13 +665,27 @@ def local_gaussian_posterior(
         converged = 0
         found_second = found_better = False
         for start in multistart.start_points(parameters):
+            proposed = tuple(start)
+            zs = to_inference(start, transforms)
+            retractions = 0
+            admissible = evaluate(forward, start, keys, units, references) is not None
+            evaluations += 1
+            while not admissible and retractions < int(multistart.maximum_retractions):
+                retractions += 1
+                start = tuple(float(v) for v in to_natural(z0 + (zs - z0) / 2.0 ** retractions, transforms))
+                admissible = evaluate(forward, start, keys, units, references) is not None
+                evaluations += 1
+            if not admissible:
+                starts_record.append({"start": proposed, "status": "NO_ADMISSIBLE_START", "retractions": retractions})
+                continue
             restart = CalibrationSpec(parameters=spec.parameters, fixed=spec.fixed,
                                       initial_point={nm: Quantity(v, u) for nm, v, u in zip(names, start, parameters.units)},
                                       noise_model=spec.noise_model, objective=spec.objective, method=spec.method)
             refit = calibrate(restart, observations, forward, heldout_dataset_id=calibration.provenance.heldout_dataset_id,
                               max_evaluations=int(multistart.max_evaluations), seed=calibration.provenance.seed)
             evaluations += int(refit.evaluation_count)
-            entry: dict[str, Any] = {"start": tuple(start), "status": refit.status.value}
+            entry: dict[str, Any] = {"start": tuple(start), "proposed_start": proposed, "retractions": retractions,
+                                     "status": refit.status.value}
             if refit.status is CalibrationStatus.CONVERGED:
                 converged += 1
                 other = to_inference(refit.estimate_vector, transforms)
