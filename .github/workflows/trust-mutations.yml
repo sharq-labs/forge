@@ -1,0 +1,35 @@
+name: Trust Mutations
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  trust-mutations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,mcp,oracles]"
+      - name: Run trust-boundary mutations
+        run: >
+          python -X utf8 benchmarks/trust_hardening/audit/mutations.py
+          --json trust_mutation_results.json
+      - name: Show assurance result
+        if: always()
+        run: |
+          if [ -f trust_mutation_results.json ]; then
+            cat trust_mutation_results.json
+          else
+            echo "trust_mutation_results.json was not produced"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trust-mutation-assurance
+          path: trust_mutation_results.json
+          if-no-files-found: warn
