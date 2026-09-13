@@ -71,6 +71,16 @@ jobs:
           --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
           --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
+          --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+          --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+      # The two benchmark rebuild nodes above are historical campaign
+      # reproduction tests: each rebuilds/writes its round's committed artifacts
+      # and explicitly asks whether *that old round* changed no production code.
+      # Any real source-changing PR must fail that historical premise and the
+      # write makes the checkout dirty, cascading into certificate failures.
+      # Their non-mutating provenance, independence, falsification and committed
+      # gate checks still run here; the full rebuilds remain available in the
+      # campaign/manual workflow where their historical baseline is meaningful.
 
   # Bare-image reproducibility is still a post-merge/manual check. It is not a
   # scientific-code gate and is substantially more expensive than FAST.
