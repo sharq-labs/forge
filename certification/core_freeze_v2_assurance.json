@@ -1,0 +1,134 @@
+{
+  "candidate_commit": "7876bd9f3e22db67c26f510b820719477a9c655d",
+  "evidence": {
+    "BATTERY_T41.json": "a6844a94bef7c370dc285af90cbbc27073f3a914319d31005e26da728ffb0b9e",
+    "FAILURE_CASES.json": "b2053ab695f7a3dc1250bc63a41fdc77a0c45e4f0bdcb46dce392affb8bfc580",
+    "HD_MUTATIONS.json": "142a3f7f5b8e90b08f6bc9aa05807282f8ed4a214c2632a05951e17527c72a1f",
+    "KINETICS_K2.json": "2864ed96b841584457ad01f7334ece57c8da3bab3a97bee9f740e1138222f786",
+    "MUTATION_HARNESS_79.log": "72cf5ab8c597fcf792861ed03a0a872c5e6ffe80a70d4bd06988856e9244a1e8",
+    "PERFORMANCE.json": "5e8070dbae14a393df03cb986a4e5bda9283868365298d8681a10f50f430ac89",
+    "SUITES.json": "f24be4175c73a3b05127290a0845da4159405341f87fba0d0cd26cf8c1f47bd9",
+    "TCR.json": "a76d58e662e563ddb69b6ffb101827aa54e56298e83f1076a8fb7416e85b1022",
+    "WHEEL_V2.json": "e9d8cd804887b8918106248e826fc3d4e6355c689d51122a5c28e3809cb8128c"
+  },
+  "manifest_sha256": "e0c2fe20e805d1162c3849765647838b4a101be6da5db67628ecd7dab273919f",
+  "mutations": {
+    "certified_79": {
+      "candidate_run_at": "3ca1c82 (src and the pinned harness files byte-identical to the V2 candidate)",
+      "control": "GREEN",
+      "control_suites_passed": 470,
+      "killed": 79,
+      "log": "benchmarks/core_v2_hybrid_uq/MUTATION_HARNESS_79.log",
+      "log_bytes": 34557,
+      "log_sha256": "72cf5ab8c597fcf792861ed03a0a872c5e6ffe80a70d4bd06988856e9244a1e8",
+      "survivors": 0,
+      "total": 79
+    },
+    "hd_matrix": {
+      "control": "GREEN",
+      "killed": 10,
+      "results": {
+        "HD-1": "KILLED",
+        "HD-10": "KILLED",
+        "HD-2": "KILLED",
+        "HD-3": "KILLED",
+        "HD-4": "KILLED",
+        "HD-5": "KILLED",
+        "HD-6": "KILLED",
+        "HD-7": "KILLED",
+        "HD-8": "KILLED",
+        "HD-9": "KILLED"
+      },
+      "total": 10
+    }
+  },
+  "schema": "engcore.core_freeze_assurance/2",
+  "suites": {
+    "FAST": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "5117 passed, 5 skipped, 42 warnings in 98.42s (0:01:38)"
+    },
+    "FULL": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "5663 passed, 5 skipped, 42 warnings in 141.90s (0:02:21)"
+    },
+    "api_snapshot_v1": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "51 passed in 4.80s"
+    },
+    "api_snapshot_v2": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "12 passed in 1.48s"
+    },
+    "battery_regressions": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "265 passed in 14.49s"
+    },
+    "certificate": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "28 passed, 1 skipped in 5.86s"
+    },
+    "contract_guard": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "305 passed, 7 warnings in 29.85s"
+    },
+    "dependency_layering": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "39 passed, 14 warnings in 16.10s"
+    },
+    "freeze_manifest_v1": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "22 passed, 1 skipped in 3.15s"
+    },
+    "freeze_manifest_v2": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "6 passed, 1 skipped in 5.54s"
+    },
+    "hybrid_uq_focused": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "97 passed in 18.11s"
+    },
+    "identity": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "58 passed in 2.76s"
+    },
+    "kinetics_regressions": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "19 passed in 0.80s"
+    },
+    "serialization": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "76 passed in 6.21s"
+    },
+    "tcr_regressions": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "156 passed in 112.20s (0:01:52)"
+    },
+    "v1_thin_ridge_regressions": {
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "80 passed in 89.79s (0:01:29)"
+    }
+  },
+  "tag": "v2.0-core-freeze",
+  "wheel": {
+    "isolated_wheel_smoke": true,
+    "v1_frozen_api_parity": "MATCH",
+    "v2_frozen_api_parity": "MATCH"
+  }
+}
