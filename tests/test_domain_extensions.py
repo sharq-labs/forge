@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from engcore.extensions import DomainExtension, DomainRuntime
 from engcore.scientific.capabilities import ScientificCapability
 from engcore.scientific.errors import ScientificCoreError, SolverNotFoundError
-from engcore.scientific.extensions import DomainExtension, DomainRuntime
 from engcore.scientific.ir.problem import ModelReference
 from engcore.scientific.models.definition import ScientificModelDefinition
 from engcore.scientific.realizations.definition import (
@@ -131,10 +131,11 @@ def test_realization_of_external_model_requires_explicit_dependency():
         domain="base.physics",
         exclusions=("secondary effects",),
     )
+    external_ref = ModelReference("base.model", "1")
     realization = ModelRealizationDefinition(
         realization_id="demo.base.realization",
         version="1",
-        model=ModelReference("base.model", "1"),
+        model=external_ref,
         formulation=ModelFormulation.ALGEBRAIC,
         provided_capabilities=frozenset({ScientificCapability.parse("demo:evaluate")}),
     )
@@ -153,7 +154,7 @@ def test_realization_of_external_model_requires_explicit_dependency():
         version="1",
         namespace="demo",
         realizations=(realization,),
-        external_models=(external_model and ModelReference("base.model", "1"),),
+        external_models=(external_ref,),
     )
     receipt = runtime.install(extension)
     assert receipt.model_keys == ()
