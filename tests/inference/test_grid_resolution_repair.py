@@ -253,6 +253,20 @@ def test_k2_effective_sample_size_near_one_is_refused_even_with_small_axis_spaci
         assess_identifiability(posterior)
 
 
+def test_mass_on_one_node_is_refused_even_when_the_fitted_curvature_looks_resolved():
+    """ESS 1.56 with 0.22 sd axis spacing and aliasing number ~6900: only the ESS floor sees it."""
+    axes = [np.linspace(-3.0, 3.0, 41)] * 2
+    points = np.array(np.meshgrid(*axes, indexing="ij")).reshape(2, -1).T
+    broad = np.exp(-0.125 * np.sum(points ** 2, axis=1))
+    weights = 0.2 * broad / broad.sum() + 0.8 * np.all(points == 0.0, axis=1)
+    posterior = PosteriorGrid(parameter_names=("a", "b"), points=points, weights=weights, log_likelihood=np.log(weights),
+                              admissible_mask=np.ones(len(weights), dtype=bool), dataset_id="spike")
+    with pytest.raises(GridResolutionError, match="effective sample size 1.56 is below 3"):
+        assess_identifiability(posterior)
+    with pytest.raises(GridResolutionError, match="effective sample size 1.56 is below 3"):
+        _epistemic_sd(posterior, points[:, 0])
+
+
 # =====================================================================
 # predictive UQ must not emit uncertainty the grid cannot resolve
 # =====================================================================
