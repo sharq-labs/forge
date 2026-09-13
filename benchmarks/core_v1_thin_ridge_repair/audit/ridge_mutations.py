@@ -72,7 +72,7 @@ def sha(path: pathlib.Path) -> str:
 def pytest(tree: pathlib.Path, basetemp: str) -> tuple[int, str, float]:
     env = dict(os.environ, PYTHONPATH=str(tree / "src"), PYTHONDONTWRITEBYTECODE="1")
     started = time.monotonic()
-    proc = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", *TARGETS, "-q", "-x", "-n", "4", "-p", "no:cacheprovider",
+    proc = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", *TARGETS, "-q", "-n", "4", "-p", "no:cacheprovider",
                            f"--basetemp={basetemp}"], cwd=tree, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
     tail = [line for line in proc.stdout.splitlines() if line.startswith(("FAILED", "ERROR")) or " passed" in line or " failed" in line]
     return proc.returncode, "\n".join(tail[-6:]), round(time.monotonic() - started, 1)
