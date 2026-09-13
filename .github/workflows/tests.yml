@@ -10,7 +10,45 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  repo-layout:
+    name: repository layout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce documentation layout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root_markdown = sorted(path.name for path in Path('.').glob('*.md'))
+          allowed_root = {'README.md'}
+          unexpected_root = [name for name in root_markdown if name not in allowed_root]
+          source_markdown = sorted(str(path) for path in Path('src').rglob('*.md'))
+
+          problems = []
+          if unexpected_root:
+              problems.append(
+                  'long-form Markdown belongs under docs/; unexpected root files: '
+                  + ', '.join(unexpected_root)
+              )
+          if source_markdown:
+              problems.append(
+                  'src/ is code/docstrings only; move Markdown documentation out of src/: '
+                  + ', '.join(source_markdown)
+              )
+
+          if problems:
+              raise SystemExit('\n'.join(problems))
+
+          print('documentation layout OK: root entry point is README.md and src/ has no Markdown')
+          PY
+
   fast:
     name: fast (py ${{ matrix.python-version }})
     runs-on: ubuntu-latest
