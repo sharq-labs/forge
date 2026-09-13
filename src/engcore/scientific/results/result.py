@@ -264,10 +264,6 @@ class ScientificResult:
                     f"result value {name!r} must be a Quantity — a bare number "
                     f"is not a scientific result"
                 )
-        # Frozen, so the check above cannot be defeated after it has run: a
-        # bare number the constructor refuses could be written straight into
-        # ``values`` a line later, and `to_dict` then died on it. See
-        # ``results.immutable``.
         object.__setattr__(self, "values", freeze(values))
 
         if not isinstance(self.provenance, ProvenanceRecord):
@@ -278,16 +274,10 @@ class ScientificResult:
 
         object.__setattr__(self, "convergence", ConvergenceState(self.convergence))
         object.__setattr__(self, "models", tuple(tuple(m) for m in self.models))
+        self._require_provenance_consistency()
         object.__setattr__(self, "assumptions", tuple(self.assumptions))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
-        # Refused HERE, not at `to_dict`. A result holding a value that
-        # cannot be written down is a result whose provenance does not exist:
-        # it is in memory, it looks like every other result, and the only
-        # thing that will ever say otherwise is a TypeError from json,
-        # somewhere else, later, in whatever was trying to record it. The one
-        # free-form field is checked before it is frozen, so the error names
-        # the type the caller passed rather than the frozen form of it.
         unrecordable = unwritable(self.metadata, path="metadata")
         if unrecordable is not None:
             where, kind = unrecordable
@@ -338,23 +328,6 @@ class ScientificResult:
                 raise ScientificCoreError(
                     f"uncertainty declared for unknown value {name!r}"
                 )
-            # DIMENSION, not merely type. `Uncertainty` checks that an interval's
-            # two endpoints agree with EACH OTHER, and nothing checked either of
-            # them against the value they qualify -- so `350 K +/- 5 V` and
-            # `350 K in [1 V, 9 V]` both constructed, serialized and round-tripped.
-            #
-            # This is the one place the check can be made: an `Uncertainty` does
-            # not know which value it belongs to, and the record that pairs them
-            # is this one. A downstream consumer combining the two would either
-            # raise deep inside an arithmetic it did not choose, or -- worse --
-            # compare magnitudes and produce a bound in the wrong physical
-            # dimension without noticing.
-            #
-            # There is no relative or dimensionless uncertainty FORM in this
-            # vocabulary: STANDARD and INTERVAL are both absolute and carry
-            # Quantities. So the rule is unconditional, and a dimensionless
-            # result needs no special case -- its uncertainty is dimensionless
-            # by the same rule.
             for label, quantity in (
                 ("standard_uncertainty", record.standard_uncertainty),
                 ("lower", record.lower),
@@ -373,6 +346,52 @@ class ScientificResult:
                 )
         object.__setattr__(self, "uncertainty", freeze(uncertainty))
 
+    def _require_provenance_consistency(self) -> None:
+        """A result may narrow provenance, but it may never contradict it.
+
+        ``ProvenanceRecord`` validates its own participant sets and execution
+        bindings. This check closes the other half of the boundary: the
+        result's public ``models`` and ``solver`` declarations must be
+        attributable to that record. Extra provenance participants remain
+        legitimate for coupled or supporting work; equality is intentionally
+        not required.
+        """
+        result_models = set(self.models)
+        provenance_models = set(self.provenance.models)
+        missing_models = sorted(result_models - provenance_models)
+        if missing_models:
+            raise ScientificCoreError(
+                f"result {self.result_id!r} declares model(s) {missing_models} "
+                f"that its provenance does not name. A result cannot attribute "
+                f"itself to a model its execution record does not contain"
+            )
+
+        if self.solver is None:
+            return
+        if not isinstance(self.solver, SolverIdentity):
+            raise ScientificCoreError("result solver must be a SolverIdentity")
+        solver_key = self.solver.key
+        provenance_solvers = set(self.provenance.solvers)
+        if solver_key not in provenance_solvers:
+            raise ScientificCoreError(
+                f"result {self.result_id!r} declares solver "
+                f"{self.solver.solver_id}@{self.solver.version}, but its "
+                f"provenance does not name that solver"
+            )
+
+        if self.provenance.bindings and result_models:
+            attributable = any(
+                binding.solver.key == solver_key and binding.model.key in result_models
+                for binding in self.provenance.bindings
+            )
+            if not attributable:
+                raise ScientificCoreError(
+                    f"result {self.result_id!r} declares solver "
+                    f"{self.solver.solver_id}@{self.solver.version}, but no "
+                    f"provenance execution binding connects that solver to any "
+                    f"model the result declares"
+                )
+
     def _checked_validity(self) -> tuple[dict, dict]:
         """Normalise both validity mappings, refusing every way to blur a gap.
 
@@ -380,30 +399,6 @@ class ScientificResult:
         honest: between them they must cover every declared model, so there is
         no longer a way for a result to say nothing about one.
         """
-        # ONE VERSION OF A MODEL PER RESULT, refused here because this is
-        # where the assumption lives. Every accessor below is keyed by model
-        # id alone -- `validity`, `validity_not_assessed`, `validity_of`,
-        # `non_assessment_reason`, `unassessed_models` -- while `models`
-        # carries (id, version) pairs and `ProvenanceRecord` compares them
-        # against binding keys with the version intact. A result could
-        # therefore declare `m@1` and `m@2`, have its provenance distinguish
-        # them correctly, and carry a SINGLE validity verdict that answered
-        # for both: `validity_of("m")` returned one status for two different
-        # claims, `unassessed_models` reported no gap, and the qualified key
-        # `"m@1"` was refused as naming a model the result does not declare.
-        #
-        # Two versions of one model are not the same claim, so one verdict
-        # cannot stand for both. The alternative -- keying validity by
-        # (id, version) -- was rejected on the evidence rather than on size:
-        # it would change the serialized shape of every result ever written
-        # and the signature of four public accessors, to express a state no
-        # producer in this tree emits and no consumer reads. `ModelRegistry`
-        # keys on (id, version) because a registry HOLDS versions; a result
-        # RUNS one, and a run whose system is described by two versions of
-        # one model is not a coherent scientific claim to begin with.
-        #
-        # So it is refused at construction, where an ambiguous declaration
-        # can still be a refusal instead of becoming evidence.
         versions: dict[str, str] = {}
         for model_id, version in self.models:
             if model_id in versions and versions[model_id] != version:
@@ -447,11 +442,6 @@ class ScientificResult:
                     f"validity for {key!r} must be a ValidityAssessment, got "
                     f"{type(assessment).__name__}"
                 )
-            # Normalised through the enum for the reason NEEDS.md 1.9 records:
-            # ValidityAssessment has no __post_init__, so it may hold a bare
-            # string, and an unrecognised one must not travel inside a result
-            # as though it were a verdict. This guards the field this record
-            # owns; the general fix is still 1.9's.
             try:
                 status = ValidityStatus(assessment.status)
             except ValueError as exc:
@@ -534,22 +524,11 @@ class ScientificResult:
 
     # ---- accessors ------------------------------------------------------
     def is_assessed(self, model_id: str) -> bool:
-        """Whether anybody asked the applicability question about this model.
-
-        The total counterpart to :meth:`validity_of`. A caller that wants to
-        branch rather than handle an exception asks this first, and asking it
-        is the point at which "not assessed" becomes visible as its own case.
-        """
+        """Whether anybody asked the applicability question about this model."""
         return str(model_id).strip() in self.validity
 
     def validity_of(self, model_id: str) -> ValidityAssessment:
-        """The assessment for one model. **Raises when there is none.**
-
-        Deliberately not total, and deliberately not returning ``None``. Either
-        alternative would put the caller one ``or`` away from treating an
-        unasked question as an unanswerable one, and those recommend opposite
-        work: make the assessment, versus gather the input it needed.
-        """
+        """The assessment for one model. **Raises when there is none.**"""
         key = str(model_id).strip()
         try:
             return self.validity[key]
@@ -563,13 +542,7 @@ class ScientificResult:
             ) from None
 
     def non_assessment_reason(self, model_id: str) -> str:
-        """Why this model was not assessed. **Raises when it was.**
-
-        The counterpart to :meth:`validity_of`, and deliberately as partial as
-        it is: asking a model that carries a real assessment for its reason is
-        a caller confusing the two positions, and it gets an error rather than
-        an empty string that would read like "no reason given".
-        """
+        """Why this model was not assessed. **Raises when it was.**"""
         key = str(model_id).strip()
         try:
             return self.validity_not_assessed[key]
@@ -588,17 +561,7 @@ class ScientificResult:
 
     @property
     def unassessed_models(self) -> tuple[str, ...]:
-        """Declared models carrying no assessment, so the gap is countable.
-
-        Equal to the keys of ``validity_not_assessed`` by construction now,
-        rather than by inference: the constructor refuses a declared model that
-        is on neither mapping, so the difference this once computed can no
-        longer be non-empty for a reason nobody stated.
-
-        Empty when every declared model was assessed -- including when the
-        result declares no models at all, which is a result that names nothing
-        to assess rather than one that assessed nothing.
-        """
+        """Declared models carrying no assessment, so the gap is countable."""
         return tuple(
             sorted(
                 {model_id for model_id, _version in self.models}
@@ -616,7 +579,7 @@ class ScientificResult:
 
     def uncertainty_of(self, name: str) -> Uncertainty:
         """Uncertainty for a value; explicitly UNKNOWN when none was computed."""
-        self.value(name)  # existence check
+        self.value(name)
         return self.uncertainty.get(name, Uncertainty.unknown())
 
     @property
@@ -629,15 +592,27 @@ class ScientificResult:
 
     @property
     def is_usable(self) -> bool:
-        """Converged (or not applicable) and no failed validation check.
+        """Whether this result is scientifically admissible for downstream use.
 
-        Deliberately conservative and deliberately *not* called ``is_valid``:
-        it reports the absence of known problems, not the presence of proof.
+        Numerical success is necessary but not sufficient. Every declared
+        model must also have been assessed and found ``IN_DOMAIN``. UNKNOWN,
+        OUTSIDE_VALIDATED_DOMAIN and explicit non-assessment all fail closed;
+        inference must not promote a numerically clean result into scientific
+        evidence when applicability was not established.
         """
-        return (
+        numerically_usable = (
             self.convergence
             in (ConvergenceState.CONVERGED, ConvergenceState.NOT_APPLICABLE)
             and self.validation.status is not ValidationOutcome.FAIL
+        )
+        if not numerically_usable:
+            return False
+        if not self.models:
+            return True
+        return all(
+            model_id in self.validity
+            and self.validity[model_id].status is ValidityStatus.IN_DOMAIN
+            for model_id, _version in self.models
         )
 
     def check_units_against(self, expected_units: Mapping[str, str]) -> None:
@@ -671,10 +646,6 @@ class ScientificResult:
             "artifacts": list(self.artifacts),
             "data_references": [r.to_dict() for r in self.data_references],
             "provenance": self.provenance.to_dict(),
-            # Detached at every depth, in one pass: a payload is a message
-            # and a caller may edit it, but editing it must not reach back into
-            # the record. Every other branch of this payload is built out of
-            # freshly created dicts already, so this is the only one.
             "metadata": {
                 key: detach(value)
                 for key, value in sorted(self.metadata.items(), key=lambda kv: kv[0])
@@ -698,22 +669,12 @@ class ScientificResult:
             validation=ValidationReport.from_dict(payload["validation"])
             if payload.get("validation")
             else ValidationReport(),
-            # A /1 or /2 payload predates this field and cannot carry one, so
-            # it loads as not-assessed -- which is the truth about it. A /3
-            # payload with the key absent, or explicitly null, loads the same
-            # way for the same reason: there is one representation of "nobody
-            # asked", and it is the empty mapping.
             validity={}
             if version in (RESULT_SCHEMA_V1, RESULT_SCHEMA_V2)
             else {
                 k: ValidityAssessment.from_dict(v)
                 for k, v in (payload.get("validity") or {}).items()
             },
-            # A payload older than /4 cannot carry a reason, and a /4 payload
-            # that declares a model without one was never constructible. So the
-            # gap in an old payload is filled with the truth about it -- the
-            # record predates the field -- rather than with silence, which the
-            # constructor would refuse, or with an invented reason.
             validity_not_assessed=_declarations_for(payload, version),
             uncertainty={
                 k: Uncertainty.from_dict(v)
@@ -722,16 +683,6 @@ class ScientificResult:
             assumptions=tuple(payload.get("assumptions", ())),
             warnings=tuple(payload.get("warnings", ())),
             artifacts=tuple(payload.get("artifacts", ())),
-            # The one compatibility branch. A ``scientific_result/1`` payload
-            # predates bulk references and cannot carry one, so it loads with
-            # none rather than having a key it never had read out of it.
-            #
-            # Why /2 exists at all: `data_references` is part of the scientific
-            # content of a result. An older reader that accepted a /2 payload
-            # would return a result that silently understates what was
-            # computed, which is worse than refusing to read it. So a new
-            # payload fails loudly on an old reader, and an old payload still
-            # loads on the new one. See docs/milestones/data-boundary0-evidence.md.
             data_references=()
             if version == RESULT_SCHEMA_V1
             else tuple(
