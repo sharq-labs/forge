@@ -1,7 +1,7 @@
 """Domain-neutral conservation/balance verification.
 
 A conservation check asks whether two explicitly declared sides of a balance
-close within a dimensional tolerance.  The core does not know whether the
+close within a dimensional tolerance. The core does not know whether the
 quantity is mass, energy, charge, momentum, species amount or something a
 future domain introduces; units decide whether the terms are commensurate.
 
@@ -71,7 +71,7 @@ class ConservationBalance:
 
     The equation form is more general and less error-prone than embedding a
     sign convention (inflow positive, outflow negative, storage positive, ...)
-    in the universal core.  A domain decides which physical terms belong on
+    in the universal core. A domain decides which physical terms belong on
     which side, and this record checks only what is universal: dimensions,
     deterministic summation and closure against the declared tolerance.
     """
@@ -104,7 +104,9 @@ class ConservationBalance:
             raise ScientificValidationError("conservation tolerance must be a Quantity")
         exemplar = terms[0].value if terms else self.tolerance
         require_same_dimension(
-            exemplar, self.tolerance, context=f"conservation balance {balance_id!r} tolerance"
+            exemplar,
+            self.tolerance,
+            context=f"conservation balance {balance_id!r} tolerance",
         )
         for term in terms[1:]:
             require_same_dimension(
@@ -132,7 +134,10 @@ class ConservationBalance:
     def _sum(terms: Sequence[BalanceTerm], unit: str) -> float:
         # Stable ordering means the same record has the same floating summation
         # order whatever order a caller's mapping happened to have upstream.
-        return sum(term.value.magnitude_in(unit) for term in sorted(terms, key=lambda t: t.name))
+        return sum(
+            term.value.magnitude_in(unit)
+            for term in sorted(terms, key=lambda item: item.name)
+        )
 
     @property
     def left_total(self) -> float:
@@ -166,16 +171,16 @@ class ConservationBalance:
         """Return a non-level-awarding check for this balance."""
         ratio = self.normalized_residual
         finite_ratio = ratio if ratio != float("inf") else 2.0
-        sources = [
+        evidence_items = [
+            f"balance:{self.balance_id}",
+            "equation:sum(left)==sum(right)",
+        ]
+        if self.reference:
+            evidence_items.append(f"reference:{self.reference}")
+        evidence_items.extend(
             f"term:{term.name}:{term.evidence}"
             for term in self.left + self.right
             if term.evidence
-        ]
-        evidence = (
-            f"balance:{self.balance_id}",
-            f"equation:sum(left)==sum(right)",
-            *(f"reference:{self.reference}",) if self.reference else (),
-            *sources,
         )
         detail = (
             f"{self.balance_id}: left={self.left_total:g} {self.unit}, "
@@ -190,7 +195,7 @@ class ConservationBalance:
             establishes=None,
             residual=finite_ratio,
             tolerance=1.0,
-            evidence=evidence,
+            evidence=tuple(evidence_items),
         )
 
     def to_dict(self) -> dict[str, Any]:
