@@ -183,6 +183,24 @@ def _render_default(value: Any) -> Any:
 
 
 def _signature_of(value: Any) -> dict[str, Any] | None:
+    # Enum construction is public as ``EnumClass(value)``/member lookup, but
+    # ``inspect.signature(EnumClass)`` exposes the private EnumType.__call__
+    # implementation. CPython 3.11 reports the metaclass factory signature
+    # (value, names, module, qualname, ...), while 3.12 reports ``*values`` for
+    # an already-created Enum subclass. That interpreter detail is not a Forge
+    # compatibility event. Preserve the historical frozen semantic shape.
+    if inspect.isclass(value) and issubclass(value, enum.Enum):
+        return {
+            "parameters": [
+                {
+                    "name": "values",
+                    "kind": "var_positional",
+                    "has_default": False,
+                    "default": {"kind": "none"},
+                }
+            ],
+            "required": [],
+        }
     try:
         signature = inspect.signature(value)
     except (TypeError, ValueError):
