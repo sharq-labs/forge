@@ -1,0 +1,696 @@
+{
+ "schema": "domain_real_data_quality_screen/1",
+ "scope": "readiness only: counts, ranges, finiteness, duplicates, time-axis monotonicity, byte facts; no fitting, no derived physical quantity",
+ "all_hashes_match_registry": true,
+ "files": [
+  {
+   "dataset_id": "DS-BAT-LGHG2-25C",
+   "path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_HPPC.csv",
+   "sha256": "70ffb357511dd77e7c6bc14c642a095ddd51d6918b547987247100a3bd2ea29d",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "Digatron cycler CSV export",
+    "bytes": 6033634,
+    "crlf_line_endings": true,
+    "nul_bytes": 1,
+    "header_metadata": {
+     "Measurement ID": "549",
+     "Battery Name": "LG HG2 18650_SN62A4",
+     "Program": "1744 - LG_HG2_NN_Char",
+     "Test section": "HPPC",
+     "Start Time": "10/25/2018 4:08:59 AM",
+     "End Time": "10/28/2018 11:02:52 AM",
+     "Nominal Voltage": "3.7",
+     "Nominal Capacity": "3",
+     "Maximum Voltage": "4.2",
+     "Impedance": "0.02",
+     "Comment": "HG2 cell with 10AWG wire soldered  to cell"
+    },
+    "columns": [
+     "Time Stamp",
+     "Step",
+     "Status",
+     "Prog Time",
+     "Step Time",
+     "Cycle",
+     "Cycle Level",
+     "Procedure",
+     "Voltage",
+     "Current",
+     "Temperature",
+     "Capacity",
+     "WhAccu",
+     "Cnt"
+    ],
+    "units_row": {
+     "Time Stamp": "",
+     "Step": "",
+     "Status": "",
+     "Prog Time": "",
+     "Step Time": "",
+     "Cycle": "",
+     "Cycle Level": "",
+     "Procedure": "",
+     "Voltage": "[V]",
+     "Current": "[A]",
+     "Temperature": "[C]",
+     "Capacity": "[Ah]",
+     "WhAccu": "[Wh]",
+     "Cnt": "[Cnt]"
+    },
+    "units_present_for": [
+     "Capacity",
+     "Cnt",
+     "Current",
+     "Temperature",
+     "Voltage",
+     "WhAccu"
+    ],
+    "rows": 48048,
+    "malformed_rows": 0,
+    "exact_duplicate_rows": 233,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "Prog Time",
+     "non_increasing_steps": 247,
+     "duplicate_time_stamps": 247,
+     "interval_s_min_median_max": [
+      0.002,
+      0.101,
+      10.005
+     ],
+     "span_s": 80202.541
+    },
+    "ranges": {
+     "Voltage": [
+      2.79453,
+      4.20012
+     ],
+     "Current": [
+      -18.00122,
+      5.99961
+     ],
+     "Temperature": [
+      23.34519,
+      24.71226
+     ],
+     "Capacity": [
+      -2.77441,
+      0.0
+     ],
+     "WhAccu": [
+      -9.83516,
+      0.0
+     ],
+     "Cnt": [
+      12.0,
+      12.0
+     ]
+    },
+    "step_status_procedure_row_counts": {
+     "1:PAU:HPPC_4pulse": 1212,
+     "2:DCH:HPPC_4pulse": 1212,
+     "3:PAU:HPPC_4pulse": 4812,
+     "4:CHA:HPPC_4pulse": 1185,
+     "5:PAU:HPPC_4pulse": 1212,
+     "6:DCH:HPPC_Multi_Pulse": 57,
+     "6:PAU:HPPC_4pulse": 612,
+     "7:PAU:HPPC_4pulse": 660,
+     "7:PAU:HPPC_Multi_Pulse": 722,
+     "8:PAU:HPPC_4pulse": 1212,
+     "9:DCH:HPPC_4pulse": 1174,
+     "10:PAU:HPPC_4pulse": 4812,
+     "11:CHA:HPPC_4pulse": 1183,
+     "12:DCH:HPPC_Multi_Pulse": 658,
+     "12:PAU:HPPC_4pulse": 1212,
+     "13:PAU:HPPC_4pulse": 612,
+     "13:PAU:HPPC_Multi_Pulse": 2527,
+     "14:PAU:HPPC_4pulse": 660,
+     "15:PAU:HPPC_4pulse": 1212,
+     "16:DCH:HPPC_4pulse": 1077,
+     "17:PAU:HPPC_4pulse": 4812,
+     "18:CHA:HPPC_4pulse": 1212,
+     "18:DCH:HPPC_Multi_Pulse": 139,
+     "19:PAU:HPPC_4pulse": 1212,
+     "19:PAU:HPPC_Multi_Pulse": 722,
+     "20:PAU:HPPC_4pulse": 612,
+     "21:PAU:HPPC_4pulse": 660,
+     "21:PAU:HPPC_Multi_Pulse": 1,
+     "22:PAU:HPPC_4pulse": 1212,
+     "23:DCH:HPPC_4pulse": 981,
+     "24:PAU:HPPC_4pulse": 4812,
+     "25:CHA:HPPC_4pulse": 1166,
+     "26:PAU:HPPC_4pulse": 1212,
+     "27:PAU:HPPC_4pulse": 612,
+     "28:PAU:HPPC_4pulse": 660
+    }
+   }
+  },
+  {
+   "dataset_id": "DS-BAT-LGHG2-25C",
+   "path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_C20DisCh.csv",
+   "sha256": "52eff1a8d273f353d557af8172139c2f23709499d36130ac24ffbbb820e8f232",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "Digatron cycler CSV export",
+    "bytes": 312505,
+    "crlf_line_endings": true,
+    "nul_bytes": 1,
+    "header_metadata": {
+     "Measurement ID": "549",
+     "Battery Name": "LG HG2 18650_SN62A4",
+     "Program": "1744 - LG_HG2_NN_Char",
+     "Test section": "C20DisCh",
+     "Start Time": "10/25/2018 4:08:59 AM",
+     "End Time": "10/28/2018 11:02:52 AM",
+     "Nominal Voltage": "3.7",
+     "Nominal Capacity": "3",
+     "Maximum Voltage": "4.2",
+     "Impedance": "0.02",
+     "Comment": "HG2 cell with 10AWG wire soldered  to cell"
+    },
+    "columns": [
+     "Time Stamp",
+     "Step",
+     "Status",
+     "Prog Time",
+     "Step Time",
+     "Cycle",
+     "Cycle Level",
+     "Procedure",
+     "Voltage",
+     "Current",
+     "Temperature",
+     "Capacity",
+     "WhAccu",
+     "Cnt"
+    ],
+    "units_row": {
+     "Time Stamp": "",
+     "Step": "",
+     "Status": "",
+     "Prog Time": "",
+     "Step Time": "",
+     "Cycle": "",
+     "Cycle Level": "",
+     "Procedure": "",
+     "Voltage": "[V]",
+     "Current": "[A]",
+     "Temperature": "[C]",
+     "Capacity": "[Ah]",
+     "WhAccu": "[Wh]",
+     "Cnt": "[Cnt]"
+    },
+    "units_present_for": [
+     "Capacity",
+     "Cnt",
+     "Current",
+     "Temperature",
+     "Voltage",
+     "WhAccu"
+    ],
+    "rows": 2423,
+    "malformed_rows": 0,
+    "exact_duplicate_rows": 2,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "Prog Time",
+     "non_increasing_steps": 2,
+     "duplicate_time_stamps": 2,
+     "interval_s_min_median_max": [
+      3.124,
+      60.0,
+      60.005
+     ],
+     "span_s": 145116.99
+    },
+    "ranges": {
+     "Voltage": [
+      2.79993,
+      4.20012
+     ],
+     "Current": [
+      -0.15325,
+      0.15069
+     ],
+     "Temperature": [
+      23.55551,
+      24.29162
+     ],
+     "Capacity": [
+      -2.78074,
+      0.1902
+     ],
+     "WhAccu": [
+      -10.3028,
+      0.89233
+     ],
+     "Cnt": [
+      13.0,
+      13.0
+     ]
+    },
+    "step_status_procedure_row_counts": {
+     "22:DCH:LG_HG2_NN_Char": 1097,
+     "23:PAU:LG_HG2_NN_Char": 61,
+     "24:CHA:LG_HG2_NN_Char": 1204,
+     "25:PAU:LG_HG2_NN_Char": 61
+    }
+   }
+  },
+  {
+   "dataset_id": "DS-BAT-LGHG2-25C",
+   "path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_0p5C.csv",
+   "sha256": "85f6147f9bc21157e777a547229af5f252360c308a753672ef3eb1144b57fa75",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "Digatron cycler CSV export",
+    "bytes": 15001,
+    "crlf_line_endings": true,
+    "nul_bytes": 1,
+    "header_metadata": {
+     "Measurement ID": "549",
+     "Battery Name": "LG HG2 18650_SN62A4",
+     "Program": "1744 - LG_HG2_NN_Char",
+     "Test section": "Dis_0p5C",
+     "Start Time": "10/25/2018 4:08:59 AM",
+     "End Time": "10/28/2018 11:02:52 AM",
+     "Nominal Voltage": "3.7",
+     "Nominal Capacity": "3",
+     "Maximum Voltage": "4.2",
+     "Impedance": "0.02",
+     "Comment": "HG2 cell with 10AWG wire soldered  to cell"
+    },
+    "columns": [
+     "Time Stamp",
+     "Step",
+     "Status",
+     "Prog Time",
+     "Step Time",
+     "Cycle",
+     "Cycle Level",
+     "Procedure",
+     "Voltage",
+     "Current",
+     "Temperature",
+     "Capacity",
+     "WhAccu",
+     "Cnt"
+    ],
+    "units_row": {
+     "Time Stamp": "",
+     "Step": "",
+     "Status": "",
+     "Prog Time": "",
+     "Step Time": "",
+     "Cycle": "",
+     "Cycle Level": "",
+     "Procedure": "",
+     "Voltage": "[V]",
+     "Current": "[A]",
+     "Temperature": "[C]",
+     "Capacity": "[Ah]",
+     "WhAccu": "[Wh]",
+     "Cnt": "[Cnt]"
+    },
+    "units_present_for": [
+     "Capacity",
+     "Cnt",
+     "Current",
+     "Temperature",
+     "Voltage",
+     "WhAccu"
+    ],
+    "rows": 111,
+    "malformed_rows": 0,
+    "exact_duplicate_rows": 0,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "Prog Time",
+     "non_increasing_steps": 0,
+     "duplicate_time_stamps": 0,
+     "interval_s_min_median_max": [
+      9.303,
+      60.0,
+      60.004
+     ],
+     "span_s": 6549.302
+    },
+    "ranges": {
+     "Voltage": [
+      2.79993,
+      4.10828
+     ],
+     "Current": [
+      -1.49925,
+      -1.4967
+     ],
+     "Temperature": [
+      23.87099,
+      25.02773
+     ],
+     "Capacity": [
+      -2.56049,
+      0.16524
+     ],
+     "WhAccu": [
+      -9.15949,
+      0.78937
+     ],
+     "Cnt": [
+      14.0,
+      14.0
+     ]
+    },
+    "step_status_procedure_row_counts": {
+     "28:DCH:LG_HG2_NN_Char": 111
+    }
+   }
+  },
+  {
+   "dataset_id": "DS-BAT-LGHG2-25C",
+   "path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_2C.csv",
+   "sha256": "87b77c00e18242b177bd7a2eac8faa46ad2139c15aa94c146388ae13eba92a06",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "Digatron cycler CSV export",
+    "bytes": 4178,
+    "crlf_line_endings": true,
+    "nul_bytes": 1,
+    "header_metadata": {
+     "Measurement ID": "549",
+     "Battery Name": "LG HG2 18650_SN62A4",
+     "Program": "1744 - LG_HG2_NN_Char",
+     "Test section": "Dis_2C",
+     "Start Time": "10/25/2018 4:08:59 AM",
+     "End Time": "10/28/2018 11:02:52 AM",
+     "Nominal Voltage": "3.7",
+     "Nominal Capacity": "3",
+     "Maximum Voltage": "4.2",
+     "Impedance": "0.02",
+     "Comment": "HG2 cell with 10AWG wire soldered  to cell"
+    },
+    "columns": [
+     "Time Stamp",
+     "Step",
+     "Status",
+     "Prog Time",
+     "Step Time",
+     "Cycle",
+     "Cycle Level",
+     "Procedure",
+     "Voltage",
+     "Current",
+     "Temperature",
+     "Capacity",
+     "WhAccu",
+     "Cnt"
+    ],
+    "units_row": {
+     "Time Stamp": "",
+     "Step": "",
+     "Status": "",
+     "Prog Time": "",
+     "Step Time": "",
+     "Cycle": "",
+     "Cycle Level": "",
+     "Procedure": "",
+     "Voltage": "[V]",
+     "Current": "[A]",
+     "Temperature": "[C]",
+     "Capacity": "[Ah]",
+     "WhAccu": "[Wh]",
+     "Cnt": "[Cnt]"
+    },
+    "units_present_for": [
+     "Capacity",
+     "Cnt",
+     "Current",
+     "Temperature",
+     "Voltage",
+     "WhAccu"
+    ],
+    "rows": 27,
+    "malformed_rows": 0,
+    "exact_duplicate_rows": 0,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "Prog Time",
+     "non_increasing_steps": 0,
+     "duplicate_time_stamps": 0,
+     "interval_s_min_median_max": [
+      48.84,
+      60.0,
+      60.003
+     ],
+     "span_s": 1548.841
+    },
+    "ranges": {
+     "Voltage": [
+      2.79993,
+      3.92674
+     ],
+     "Current": [
+      -5.99956,
+      -5.997
+     ],
+     "Temperature": [
+      24.18646,
+      27.86701
+     ],
+     "Capacity": [
+      -2.68077,
+      -0.09997
+     ],
+     "WhAccu": [
+      -9.39094,
+      -0.39635
+     ],
+     "Cnt": [
+      16.0,
+      16.0
+     ]
+    },
+    "step_status_procedure_row_counts": {
+     "34:DCH:LG_HG2_NN_Char": 27
+    }
+   }
+  },
+  {
+   "dataset_id": "DS-BAT-LGHG2-25C",
+   "path": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/551_Cap_1C.csv",
+   "sha256": "d9b9dd9b9b842ee6ba91f79a85512d2306527103d2f1cef5ecec4f962a75d83e",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "Digatron cycler CSV export",
+    "bytes": 51428,
+    "crlf_line_endings": true,
+    "nul_bytes": 1,
+    "header_metadata": {
+     "Measurement ID": "551",
+     "Battery Name": "LG HG2 18650_SN62A4",
+     "Program": "1747 - LG_HG2_CyclesA",
+     "Test section": "Cap_1C",
+     "Start Time": "10/28/2018 11:03:04 AM",
+     "End Time": "10/30/2018 1:54:30 AM",
+     "Nominal Voltage": "3.7",
+     "Nominal Capacity": "3",
+     "Maximum Voltage": "4.2",
+     "Impedance": "0.02",
+     "Comment": "HG2 cell with 10AWG wire soldered  to cell"
+    },
+    "columns": [
+     "Time Stamp",
+     "Step",
+     "Status",
+     "Prog Time",
+     "Step Time",
+     "Cycle",
+     "Cycle Level",
+     "Procedure",
+     "Voltage",
+     "Current",
+     "Temperature",
+     "Capacity",
+     "WhAccu",
+     "Cnt"
+    ],
+    "units_row": {
+     "Time Stamp": "",
+     "Step": "",
+     "Status": "",
+     "Prog Time": "",
+     "Step Time": "",
+     "Cycle": "",
+     "Cycle Level": "",
+     "Procedure": "",
+     "Voltage": "[V]",
+     "Current": "[A]",
+     "Temperature": "[C]",
+     "Capacity": "[Ah]",
+     "WhAccu": "[Wh]",
+     "Cnt": "[Cnt]"
+    },
+    "units_present_for": [
+     "Capacity",
+     "Cnt",
+     "Current",
+     "Temperature",
+     "Voltage",
+     "WhAccu"
+    ],
+    "rows": 397,
+    "malformed_rows": 0,
+    "exact_duplicate_rows": 2,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "Prog Time",
+     "non_increasing_steps": 2,
+     "duplicate_time_stamps": 2,
+     "interval_s_min_median_max": [
+      0.004,
+      10.0,
+      10.005
+     ],
+     "span_s": 3921.469
+    },
+    "ranges": {
+     "Voltage": [
+      2.79993,
+      4.19271
+     ],
+     "Current": [
+      -3.00106,
+      0.0
+     ],
+     "Temperature": [
+      23.76583,
+      25.44836
+     ],
+     "Capacity": [
+      -2.72639,
+      0.0
+     ],
+     "WhAccu": [
+      -9.81497,
+      0.0
+     ],
+     "Cnt": [
+      2.0,
+      2.0
+     ]
+    },
+    "step_status_procedure_row_counts": {
+     "16:PAU:LG_HG2_CyclesA": 7,
+     "17:DCH:LG_HG2_CyclesA": 328,
+     "18:PAU:LG_HG2_CyclesA": 1,
+     "19:PAU:LG_HG2_CyclesA": 61
+    }
+   }
+  },
+  {
+   "dataset_id": "DS-BAT-JAHN-A123",
+   "path": "benchmarks/battery_flagship_b3/evidence/raw/20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "sha256": "d6e8b4b7ea4f832a67a859604ab8d507d2a1fdd7541cb37a485ac933dec92fd3",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "numeric CSV, one header row, no unit row",
+    "bytes": 20988,
+    "crlf_line_endings": true,
+    "nul_bytes": 0,
+    "columns": [
+     "t_ch_power",
+     "Q_ch_power",
+     "I_ch_power",
+     "U_ch_power"
+    ],
+    "units_present_for": [],
+    "units_source": "not in the file; the Zenodo record description names [t Q I U] without units",
+    "rows": 336,
+    "exact_duplicate_rows": 0,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "t_ch_power",
+     "non_increasing_steps": 0,
+     "duplicate_time_stamps": 0,
+     "interval_s_min_median_max": [
+      0.002006,
+      10.0,
+      10.000471
+     ],
+     "span_s": 3255.218031
+    },
+    "ranges": {
+     "t_ch_power": [
+      0.0,
+      3255.2180313333
+     ],
+     "Q_ch_power": [
+      -0.151670958067612,
+      0.351469598189783
+     ],
+     "I_ch_power": [
+      -4.4000985430889,
+      1.10004044119275
+     ],
+     "U_ch_power": [
+      1.98417348730238,
+      3.38044371910776
+     ]
+    }
+   }
+  },
+  {
+   "dataset_id": "DS-BAT-JAHN-A123",
+   "path": "benchmarks/battery_flagship_b3/evidence/raw/20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "sha256": "009c2fb085e219c7b20afaa050ac9e69d848cf04fc6e9165ce2bbd1282357feb",
+   "sha256_matches_registry": true,
+   "screen": {
+    "format": "numeric CSV, one header row, no unit row",
+    "bytes": 47380,
+    "crlf_line_endings": true,
+    "nul_bytes": 0,
+    "columns": [
+     "t_dc_power",
+     "Q_dc_power",
+     "I_dc_power",
+     "U_dc_power"
+    ],
+    "units_present_for": [],
+    "units_source": "not in the file; the Zenodo record description names [t Q I U] without units",
+    "rows": 723,
+    "exact_duplicate_rows": 0,
+    "missing_or_non_finite": {},
+    "time_axis": {
+     "column": "t_dc_power",
+     "non_increasing_steps": 0,
+     "duplicate_time_stamps": 0,
+     "interval_s_min_median_max": [
+      0.002006,
+      10.0,
+      10.000504
+     ],
+     "span_s": 7085.71098
+    },
+    "ranges": {
+     "t_dc_power": [
+      0.0,
+      7085.7109796667
+     ],
+     "Q_dc_power": [
+      -0.147361666824245,
+      0.855076844645905
+     ],
+     "I_dc_power": [
+      -4.40005329970058,
+      1.10004948987041
+     ],
+     "U_dc_power": [
+      1.99276298291841,
+      3.60014392919771
+     ]
+    }
+   }
+  }
+ ]
+}
