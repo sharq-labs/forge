@@ -1,0 +1,246 @@
+{
+ "schema": "thin_ridge_parameterization/1",
+ "posterior": "F5 physical posterior, flat prior on the declared box, 801 points per axis over the box's bounding window in each coordinate system",
+ "systems": {
+  "original": {
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 38.239620560093066,
+    "spacing_to_std": [
+     0.09270248108869816,
+     0.0927024810886929
+    ],
+    "grid_points": 641601
+   },
+   "comparison_in_physical_coordinates": {
+    "max_mean_error_in_true_sd": 1.1065521036164176,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390158,
+     0.5640760748125923
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999999,
+    "post_hoc_thin_direction": {
+     "sd_ratio_grid_over_true": 0.8266731214622861,
+     "mean_error_in_thin_sd": 0.7531760047677998,
+     "material_including_thin_direction": true
+    }
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "classification_post_hoc_thin": "C_FALSE_ACCEPT",
+   "steps_in_this_coordinate_system": [
+    0.125,
+    0.01249999999999929
+   ],
+   "candidates": {
+    "A": {
+     "value": 6677581.547274238,
+     "flag": true
+    },
+    "B": {
+     "value": 2.6464789083019453e+17,
+     "flag": true
+    },
+    "fit": "ok (delta 500.0, 1476 nodes)",
+    "C": {
+     "value": 43.355431332865344,
+     "flag": true
+    },
+    "D": {
+     "value": 0.13234669521831677,
+     "flag": true,
+     "aliasing_amplitude": 0.9359686023087043
+    },
+    "E": {
+     "value": 4.872124592229322,
+     "flag": true,
+     "ess": 38.239620560093066,
+     "ess_expected": 7.8486540802101885
+    }
+   }
+  },
+  "principal_axes_rotated": {
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 67.9595034648046,
+    "spacing_to_std": [
+     "inf",
+     0.052162060066351754
+    ],
+    "grid_points": 641601
+   },
+   "comparison_in_physical_coordinates": {
+    "max_mean_error_in_true_sd": 0.002921436468682492,
+    "sd_ratio_grid_over_true": [
+     0.9999999998499818,
+     0.9999985773763309
+    ],
+    "false_precision": false,
+    "material": false,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -1.0,
+    "post_hoc_thin_direction": {
+     "sd_ratio_grid_over_true": 0.0,
+     "mean_error_in_thin_sd": 1.7319605741622728,
+     "material_including_thin_direction": true
+    }
+   },
+   "classification": "A_CORRECT_ACCEPT",
+   "classification_post_hoc_thin": "C_FALSE_ACCEPT",
+   "steps_in_this_coordinate_system": [
+    0.02484549013441395,
+    0.12562344142578752
+   ],
+   "candidates": {
+    "A": {
+     "value": "inf",
+     "flag": true
+    },
+    "B": {
+     "value": "inf",
+     "flag": true
+    },
+    "fit": "ok (delta 5000.0, 2307 nodes)",
+    "C": {
+     "value": 61.31379110198872,
+     "flag": true
+    },
+    "D": {
+     "value": 0.010501308013673594,
+     "flag": true,
+     "aliasing_amplitude": 0.9947631065823477
+    },
+    "E": {
+     "value": 17.296301133784187,
+     "flag": true,
+     "ess": 67.9595034648046,
+     "ess_expected": 3.929135075710607
+    }
+   }
+  },
+  "whitened": {
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 67.95950346480433,
+    "spacing_to_std": [
+     "inf",
+     0.05216206006635354
+    ],
+    "grid_points": 641601
+   },
+   "comparison_in_physical_coordinates": {
+    "max_mean_error_in_true_sd": 0.002921436469005974,
+    "sd_ratio_grid_over_true": [
+     0.9999999998499791,
+     0.999998577376328
+    ],
+    "false_precision": false,
+    "material": false,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -1.0,
+    "post_hoc_thin_direction": {
+     "sd_ratio_grid_over_true": 0.0,
+     "mean_error_in_thin_sd": 1.7319605741585318,
+     "material_including_thin_direction": true
+    }
+   },
+   "classification": "A_CORRECT_ACCEPT",
+   "classification_post_hoc_thin": "C_FALSE_ACCEPT",
+   "steps_in_this_coordinate_system": [
+    61.31379110158014,
+    0.05216206006587498
+   ],
+   "candidates": {
+    "A": {
+     "value": "inf",
+     "flag": true
+    },
+    "B": {
+     "value": "inf",
+     "flag": true
+    },
+    "fit": "ok (delta 5000.0, 2307 nodes)",
+    "C": {
+     "value": 3.3244363365048337,
+     "flag": true
+    },
+    "D": {
+     "value": 0.010501308013671733,
+     "flag": true,
+     "aliasing_amplitude": 0.9947631065823486
+    },
+    "E": {
+     "value": 17.29630113378565,
+     "flag": true,
+     "ess": 67.95950346480433,
+     "ess_expected": 3.929135075710259
+    }
+   }
+  },
+  "scaled_t2_x100": {
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 38.2396205600931,
+    "spacing_to_std": [
+     0.09270248108869811,
+     0.09270248108869808
+    ],
+    "grid_points": 641601
+   },
+   "comparison_in_physical_coordinates": {
+    "max_mean_error_in_true_sd": 1.1065521036168169,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390162,
+     0.5640760748125928
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999992,
+    "post_hoc_thin_direction": {
+     "sd_ratio_grid_over_true": 0.826673121558882,
+     "mean_error_in_thin_sd": 0.7531760047679368,
+     "material_including_thin_direction": true
+    }
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "classification_post_hoc_thin": "C_FALSE_ACCEPT",
+   "steps_in_this_coordinate_system": [
+    0.125,
+    1.25
+   ],
+   "candidates": {
+    "A": {
+     "value": 2862989.468828222,
+     "flag": true
+    },
+    "B": {
+     "value": 4.864850934378583e+16,
+     "flag": true
+    },
+    "fit": "ok (delta 500.0, 1476 nodes)",
+    "C": {
+     "value": 43.355431185667314,
+     "flag": true
+    },
+    "D": {
+     "value": 0.13234669522593379,
+     "flag": true,
+     "aliasing_amplitude": 0.9359686023051396
+    },
+    "E": {
+     "value": 4.872124592207451,
+     "flag": true,
+     "ess": 38.2396205600931,
+     "ess_expected": 7.848654080245427
+    }
+   }
+  }
+ }
+}
