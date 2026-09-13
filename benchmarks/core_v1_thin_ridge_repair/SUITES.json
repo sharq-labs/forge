@@ -1,0 +1,134 @@
+{
+ "battery_regressions": {
+  "command": "python -X utf8 -m pytest tests/domains/battery -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 265,
+  "seconds": 13.1,
+  "selection": "tests/domains/battery",
+  "skipped": 0,
+  "summary_line": "265 passed in 12.52s"
+ },
+ "capability_boundary": {
+  "command": "python -X utf8 -m pytest tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py -q -p no:cacheprovider",
+  "deselected": 746,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 308,
+  "seconds": 11.1,
+  "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
+  "skipped": 0,
+  "summary_line": "308 passed, 746 deselected in 10.24s"
+ },
+ "certification_suite": {
+  "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 1,
+  "failed": 1,
+  "passed": 27,
+  "seconds": 6.1,
+  "selection": "tests/test_core_certificate.py",
+  "skipped": 1,
+  "summary_line": "1 failed, 27 passed, 1 skipped in 5.63s"
+ },
+ "contract_guard": {
+  "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 305,
+  "seconds": 26.4,
+  "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
+  "skipped": 0,
+  "summary_line": "305 passed, 7 warnings in 25.50s"
+ },
+ "core_api_stability": {
+  "command": "python -X utf8 -m pytest tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_core_api_serialization.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py tests/test_trust_boundary_package_identity.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 138,
+  "seconds": 24.0,
+  "selection": "tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_core_api_serialization.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py tests/test_trust_boundary_package_identity.py",
+  "skipped": 0,
+  "summary_line": "138 passed, 14 warnings in 23.15s"
+ },
+ "field_profile_suites": {
+  "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 147,
+  "seconds": 2.3,
+  "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
+  "skipped": 0,
+  "summary_line": "147 passed in 1.74s"
+ },
+ "field_suites": {
+  "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 124,
+  "seconds": 1.8,
+  "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
+  "skipped": 0,
+  "summary_line": "124 passed in 1.18s"
+ },
+ "grid_resolution_repair": {
+  "command": "python -X utf8 -m pytest tests/inference/test_grid_resolution_repair.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 32,
+  "seconds": 45.6,
+  "selection": "tests/inference/test_grid_resolution_repair.py",
+  "skipped": 0,
+  "summary_line": "32 passed in 44.99s"
+ },
+ "mutation_harness_self_guard": {
+  "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 6,
+  "seconds": 1.2,
+  "selection": "tests/test_mutation_harness.py",
+  "skipped": 0,
+  "summary_line": "6 passed in 0.83s"
+ },
+ "predictive_uq_and_adequacy": {
+  "command": "python -X utf8 -m pytest tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py tests/test_evidence_pairing_integrity.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 47,
+  "seconds": 1.3,
+  "selection": "tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py tests/test_evidence_pairing_integrity.py",
+  "skipped": 0,
+  "summary_line": "47 passed in 0.78s"
+ },
+ "scientific_truth": {
+  "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 293,
+  "seconds": 4.2,
+  "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
+  "skipped": 3,
+  "summary_line": "293 passed, 3 skipped in 3.30s"
+ },
+ "tcr_calibration_and_uq": {
+  "command": "python -X utf8 -m pytest tests/inference -q -p no:cacheprovider",
+  "deselected": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "passed": 153,
+  "seconds": 92.5,
+  "selection": "tests/inference",
+  "skipped": 0,
+  "summary_line": "153 passed in 91.85s (0:01:31)"
+ }
+}
