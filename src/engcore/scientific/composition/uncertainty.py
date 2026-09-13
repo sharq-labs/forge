@@ -2,19 +2,19 @@
 
 ``QuantityTransfer`` already makes a cross-domain value explicit: which
 quantity moved, from which result, at which instant, under which declared
-conversion.  Uncertainty must follow that exact record rather than being copied
+conversion. Uncertainty must follow that exact record rather than being copied
 through a parallel dictionary keyed by a coincidentally matching name.
 
 This module propagates the uncertainty representations the core already knows:
 
 * UNKNOWN stays UNKNOWN and records why no number can be propagated;
-* STANDARD uncertainty is converted with units and scaled by a declared,
-  deterministic conversion efficiency;
-* INTERVAL uncertainty has both bounds converted/scaled monotonically.
+* STANDARD uncertainty is converted as a *delta* (scale only, never an offset)
+  and scaled by a declared deterministic conversion efficiency;
+* INTERVAL uncertainty has both absolute bounds converted/scaled monotonically.
 
 No distribution is invented from an interval, no correlation is invented
 between sources, and no uncertainty is assigned to an undeclared conversion
-efficiency.  Those require evidence the transfer record does not carry.
+efficiency. Those require evidence the transfer record does not carry.
 """
 
 from __future__ import annotations
@@ -32,15 +32,23 @@ from .transfer import QuantityTransfer
 UNCERTAINTY_TRANSFER_SCHEMA = schema_string("uncertainty_transfer")
 
 
-def _scaled_quantity(value: Quantity, *, factor: float, unit: str) -> Quantity:
-    return Quantity(value.magnitude_in(unit) * factor, unit)
+def _delta_magnitude_in(value: Quantity, unit: str) -> float:
+    """Convert an uncertainty width using scale only, not an absolute offset.
+
+    ``Quantity.to`` correctly converts *values*, so 273.15 K becomes 0 °C. A
+    standard uncertainty is a width: 1 K is a 1 °C width, not -272.15 °C. The
+    scale is therefore the difference between converted one and converted zero.
+    This also works for ordinary multiplicative units such as W/kW.
+    """
+    require_same_dimension(value, Quantity(1.0, unit), context="uncertainty delta conversion")
+    one = Quantity(1.0, value.units).magnitude_in(unit)
+    zero = Quantity(0.0, value.units).magnitude_in(unit)
+    return float(value.magnitude) * abs(one - zero)
 
 
 def _source_unit(transfer: QuantityTransfer) -> str:
     if transfer.source_value is not None:
         return transfer.source_value.units
-    # Plain transports have no separate source_value. The dependency exemplar
-    # names the dimensional contract both sides already passed at construction.
     return transfer.dependency.unit_exemplar
 
 
@@ -51,8 +59,8 @@ def _factor(transfer: QuantityTransfer) -> float:
     if conversion.efficiency is None:
         raise InvalidScientificProblem(
             f"cannot propagate uncertainty across conversion {conversion.name!r}: "
-            "its efficiency is undeclared, so even the transferred mean is not "
-            "a deterministic function the core can differentiate"
+            "its efficiency is undeclared, so the transferred quantity is not "
+            "a deterministic mapping the core can propagate through"
         )
     return float(conversion.efficiency)
 
@@ -73,7 +81,6 @@ class UncertaintyTransfer:
         if not isinstance(self.uncertainty, Uncertainty):
             raise InvalidScientificProblem("uncertainty must be Uncertainty")
 
-        # Recompute rather than trusting a caller-supplied propagated record.
         expected = propagate_transfer_uncertainty(self.transfer, self.source_uncertainty)
         if expected != self.uncertainty:
             raise InvalidScientificProblem(
@@ -136,15 +143,16 @@ def propagate_transfer_uncertainty(
 
     if source_uncertainty.kind is UncertaintyKind.STANDARD:
         standard = source_uncertainty.standard_uncertainty
-        assert standard is not None  # guaranteed by Uncertainty
+        assert standard is not None
         require_same_dimension(
             standard,
             Quantity(1.0, source_unit),
             context="cross-domain standard uncertainty",
         )
-        propagated = _scaled_quantity(standard, factor=abs(factor), unit=source_unit).to(
-            target_unit
-        )
+        source_delta = _delta_magnitude_in(standard, source_unit) * abs(factor)
+        as_source = Quantity(source_delta, source_unit)
+        propagated_delta = _delta_magnitude_in(as_source, target_unit)
+        propagated = Quantity(propagated_delta, target_unit)
         return Uncertainty(
             kind=UncertaintyKind.STANDARD,
             standard_uncertainty=propagated,
@@ -152,6 +160,7 @@ def propagate_transfer_uncertainty(
             method=method_prefix,
             notes=(
                 f"propagated from {source_uncertainty.method or 'declared source method'}; "
+                "standard uncertainty was converted as a delta (scale only); "
                 "conversion efficiency treated as deterministic because the "
                 "conversion record carries no uncertainty for it"
             ),
@@ -168,8 +177,6 @@ def propagate_transfer_uncertainty(
         )
         low_mag = lower.magnitude_in(source_unit) * factor
         high_mag = upper.magnitude_in(source_unit) * factor
-        # Efficiencies are positive today, but ordering here keeps the function
-        # correct if a future deterministic signed linear transfer is admitted.
         lo, hi = sorted((low_mag, high_mag))
         return Uncertainty(
             kind=UncertaintyKind.INTERVAL,
@@ -206,13 +213,16 @@ def propagate_uncertainty_chain(
 ) -> tuple[UncertaintyTransfer, ...]:
     """Propagate uncertainty through a connected sequence of domain crossings.
 
-    A chain must be connected by exact problem/quantity identity. The core does
-    not infer that ``heat`` in one problem is ``thermal_power`` in another; the
-    dependency declarations are the authority for those names.
+    The chain is connected by exact problem/quantity identity and one instant.
+    A transition to another instant would require a temporal evolution model,
+    which this transfer record does not declare and this function refuses to
+    invent.
     """
     transfers = tuple(transfers)
     if not transfers:
         return ()
+    if not isinstance(source_uncertainty, Uncertainty):
+        raise InvalidScientificProblem("uncertainty chain requires Uncertainty")
     for transfer in transfers:
         if not isinstance(transfer, QuantityTransfer):
             raise InvalidScientificProblem("uncertainty chain contains non-transfer value")
