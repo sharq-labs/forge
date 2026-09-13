@@ -1,5 +1,6 @@
 name: One-off trust repair 5-8
 
+# Trigger commit after the workflow exists on the branch.
 on:
   push:
     branches: [chatgpt/core-v2-trust-repair-1-4]
