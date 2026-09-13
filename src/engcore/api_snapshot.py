@@ -303,6 +303,16 @@ def _union_members(value: Any) -> list[str] | None:
 
 
 def _kind_of(value: Any) -> str:
+    # Union aliases are one public semantic kind even though CPython has used
+    # several private/runtime classes for them across supported versions:
+    # ``types.UnionType`` for PEP-604 unions on 3.11/3.12, ``typing.Union`` in
+    # newer runtimes, and ``_UnionGenericAlias`` for the legacy spelling.
+    # Recording any of those implementation class names makes an unchanged API
+    # move the frozen digest when only the interpreter changes.  Membership is
+    # already recorded separately by ``_union_members``; the stable kind is
+    # therefore the public concept, ``Union``.
+    if _union_members(value) is not None:
+        return "Union"
     if inspect.isclass(value):
         if issubclass(value, BaseException):
             return "exception"
