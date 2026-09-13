@@ -18,6 +18,7 @@ import sys
 import time
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
+RUN_TEMP = f"D:/rp_suites/run{int(time.time())}"
 
 SUITES = {
     "grid_resolution_repair": "tests/inference/test_grid_resolution_repair.py",
@@ -46,9 +47,10 @@ def main():
         SUITES[name] = current[name]["selection"]
     env = dict(os.environ, TMPDIR="D:/b3tmp", TEMP="D:/b3tmp", TMP="D:/b3tmp")
     out = {}
+    pathlib.Path(RUN_TEMP).mkdir(parents=True, exist_ok=False)
     for name, selection in SUITES.items():
         argv = [sys.executable, "-X", "utf8", "-m", "pytest", *selection_argv(selection), "-q", "-p", "no:cacheprovider",
-                f"--basetemp=D:/rp_suites/{name}"]
+                f"--basetemp={RUN_TEMP}/{name}"]
         started = time.monotonic()
         done = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         lines = [line for line in done.stdout.splitlines() if line.strip()]
