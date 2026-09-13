@@ -630,6 +630,221 @@ def posterior_grid_diagnostics(posterior: PosteriorGrid) -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Resolution beyond the axes (V1 certified repair: thin-ridge posteriors)
+# ---------------------------------------------------------------------------
+#
+# ``posterior_grid_diagnostics`` compares each axis step with that axis's
+# MARGINAL standard deviation. That bounds only part of the error. By Poisson
+# summation, a lattice sum of a Gaussian differs from its integral by one term
+# exp(-k^T Sigma k / 2) for every non-zero reciprocal-lattice vector
+# k = 2 pi n / h, n an integer vector. Along a coordinate axis that exponent is
+# (2 pi sigma_i / h_i)^2 / 2, which the marginal check bounds. Along an
+# OFF-AXIS n pointing into a thin, tilted principal direction it can be far
+# below 1 while every marginal is wide. The grid then reports moments that are
+# stable under refinement and wrong -- a thin ridge that falls between nodes.
+# Reviewed with its evidence in benchmarks/core_gap_thin_ridge.
+#
+# The quantities below read only what a PosteriorGrid already holds and cost no
+# forward evaluation. None of them is exported.
+
+#: Refuse when the lattice aliasing number is below this. Chosen by the
+#: preregistered protocol in benchmarks/core_v1_thin_ridge_repair (see
+#: THRESHOLD_PROTOCOL.json and THRESHOLD_SELECTION.json for its provenance).
+_ALIASING_NUMBER_MINIMUM: float | None = 2.0 * math.log(100.0)  # 9.21: aliasing amplitude exp(-A/2) of 1 %
+
+#: Log-likelihood windows for the curvature fit, tried in order. On a thin
+#: ridge every node near the maximum lies on the ridge line, so a small window
+#: cannot fix the cross-ridge curvature and a wider one is needed.
+_CURVATURE_FIT_WINDOWS = (50.0, 500.0, 5000.0, math.inf)
+
+#: Exact enumeration stops here and the grid counts as unresolved: a search this
+#: large means the fitted curvature is so ill-conditioned in lattice units that
+#: resolution cannot be established.
+_ALIASING_ENUMERATION_NODE_LIMIT = 1_000_000
+
+
+def _tensor_lattice_steps(points: np.ndarray) -> np.ndarray | None:
+    """Per-axis steps of an axis-aligned tensor lattice, or ``None`` if ``points`` is not one.
+
+    A point set that is not the full product of its own axis values -- a grid
+    mapped through a rotation, or scattered points -- has no per-axis step for
+    either this check or the marginal spacing check to read.
+    """
+    n, p = points.shape
+    axes = [np.unique(points[:, i]) for i in range(p)]
+    if any(axis.size < 2 for axis in axes):
+        return None
+    if int(np.prod([axis.size for axis in axes])) != n or np.unique(points, axis=0).shape[0] != n:
+        return None
+    # The largest step on each axis: on a non-uniform axis, the coarsest part of
+    # the lattice is the part that can alias.
+    return np.asarray([float(np.max(np.diff(axis))) for axis in axes])
+
+
+def _fitted_lattice_covariance(
+    posterior: PosteriorGrid, steps: np.ndarray
+) -> tuple[np.ndarray | None, str]:
+    """The local posterior covariance in LATTICE UNITS, from the grid's own log-likelihood.
+
+    A least-squares quadratic in coordinates divided by the lattice steps, about
+    the highest node. Working in lattice units is what makes the result
+    independent of the units each parameter is expressed in.
+    """
+    points = posterior.points
+    log_like = posterior.log_likelihood
+    usable = np.isfinite(log_like) & posterior.admissible_mask
+    p = points.shape[1]
+    coefficients = (p + 1) * (p + 2) // 2
+    top = int(np.argmax(np.where(usable, log_like, -np.inf)))
+    for window in _CURVATURE_FIT_WINDOWS:
+        index = np.flatnonzero(usable & (log_like >= log_like[top] - window))
+        if index.size < 2 * coefficients:
+            continue
+        x = (points[index] - points[top]) / steps
+        columns = [np.ones(index.size)] + [x[:, i] for i in range(p)]
+        columns += [x[:, i] * x[:, j] for i in range(p) for j in range(i, p)]
+        design = np.column_stack(columns)
+        norms = np.linalg.norm(design, axis=0)
+        if not np.all(np.isfinite(design)) or np.any(norms == 0.0):
+            continue
+        try:
+            singular = np.linalg.svd(design / norms, compute_uv=False)
+        except np.linalg.LinAlgError:
+            continue
+        if singular[-1] < 1.0e-8 * singular[0]:
+            continue
+        solution, *_ = np.linalg.lstsq(design, log_like[index], rcond=None)
+        hessian = np.zeros((p, p))
+        k = 1 + p
+        for i in range(p):
+            for j in range(i, p):
+                if i == j:
+                    hessian[i, i] = 2.0 * solution[k]
+                else:
+                    hessian[i, j] = hessian[j, i] = solution[k]
+                k += 1
+        if not np.all(np.isfinite(hessian)) or float(np.max(np.linalg.eigvalsh(hessian))) >= 0.0:
+            return None, (
+                f"the log-likelihood near its maximum is not locally concave "
+                f"(window {window:g})"
+            )
+        return np.linalg.inv(-hessian), f"window {window:g}, {index.size} nodes"
+    return None, "the nodes near the maximum are too few or collinear to fix a local curvature"
+
+
+def _minimum_aliasing_number(lattice_covariance: np.ndarray, bound: float) -> float | None:
+    """The smallest (2 pi)^2 n^T S n over non-zero integer n, if it is below ``bound``; else ``None``.
+
+    Exact: Fincke-Pohst enumeration of the lattice points inside the ellipsoid
+    n^T Q n < bound, with the bound shrinking as smaller values are found.
+    Returns 0.0 -- unresolved -- when Q is numerically singular or the search
+    exceeds :data:`_ALIASING_ENUMERATION_NODE_LIMIT`.
+    """
+    q = (2.0 * math.pi) ** 2 * np.asarray(lattice_covariance, dtype=np.float64)
+    try:
+        upper = np.linalg.cholesky(q).T  # q = upper^T upper
+    except np.linalg.LinAlgError:
+        return 0.0
+    p = q.shape[0]
+    diagonal = np.diag(upper)
+    if not np.all(np.isfinite(upper)) or np.any(diagonal <= 0.0):
+        return 0.0
+    best = float(bound)
+    found = False
+    n = np.zeros(p, dtype=np.int64)
+    visited = 0
+
+    def descend(level: int, partial: float) -> None:
+        nonlocal best, found, visited
+        centre = -float(upper[level, level + 1:] @ n[level + 1:]) / diagonal[level]
+        room = best - partial
+        if room <= 0.0:
+            return
+        reach = math.sqrt(room) / diagonal[level]
+        low, high = math.ceil(centre - reach), math.floor(centre + reach)
+        for value in range(low, high + 1):
+            visited += 1
+            if visited > _ALIASING_ENUMERATION_NODE_LIMIT:
+                raise OverflowError
+            n[level] = value
+            total = partial + (diagonal[level] * (value - centre)) ** 2
+            if total >= best:
+                continue
+            if level == 0:
+                if np.any(n != 0):
+                    best, found = total, True
+            else:
+                descend(level - 1, total)
+        n[level] = 0
+
+    try:
+        descend(p - 1, 0.0)
+    except OverflowError:
+        return 0.0
+    return best if found else None
+
+
+def _grid_resolution_refusal(
+    posterior: PosteriorGrid, *, discrete_posterior_passes: bool = False
+) -> str | None:
+    """Why this grid cannot be trusted to resolve its posterior, or ``None``.
+
+    ``discrete_posterior_passes``: a posterior over fewer admissible nodes than a
+    local quadratic fit needs (twice its coefficients) carries no measurable
+    curvature, so it cannot be checked as the discretisation of a continuous
+    posterior. Predictive UQ
+    keeps its documented exact-discrete meaning for such a posterior; an
+    identifiability claim, which needs resolution, is refused.
+    """
+    if _ALIASING_NUMBER_MINIMUM is None:
+        return None
+    points = posterior.points
+    p = points.shape[1]
+    needed = 2 * ((p + 1) * (p + 2) // 2)
+    usable = int(np.count_nonzero(np.isfinite(posterior.log_likelihood) & posterior.admissible_mask))
+    if usable < needed:
+        if discrete_posterior_passes:
+            return None
+        return (
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: {usable} admissible node(s) for "
+            f"{p} parameter(s), fewer than the {needed} a local quadratic fit "
+            f"needs, so the grid's resolution of the posterior cannot be verified"
+        )
+    steps = _tensor_lattice_steps(points)
+    if steps is None:
+        return (
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: the posterior's points are not an "
+            f"axis-aligned tensor lattice, so no lattice step exists to check its "
+            f"resolution against"
+        )
+    ess = posterior_effective_sample_size(posterior)
+    if ess < p + 1:
+        return (
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: effective sample size {ess:.3g} is "
+            f"below {p + 1}, the fewest effective points that can carry a "
+            f"{p}-parameter covariance, however small the axis spacing looks"
+        )
+    lattice_covariance, why = _fitted_lattice_covariance(posterior, steps)
+    if lattice_covariance is None:
+        return (
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: the grid's resolution cannot be "
+            f"verified because {why}"
+        )
+    aliasing = _minimum_aliasing_number(lattice_covariance, _ALIASING_NUMBER_MINIMUM)
+    if aliasing is not None:
+        return (
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: lattice aliasing number {aliasing:.3g} "
+            f"is below {_ALIASING_NUMBER_MINIMUM:.3g}. Along an off-axis lattice "
+            f"direction the posterior is narrower than the grid can sample -- a "
+            f"thin, tilted ridge falling between nodes -- so its moments are "
+            f"aliased even though every axis step looks small against its "
+            f"marginal standard deviation. Refine the grid, or align it with the "
+            f"posterior, and ask again"
+        )
+    return None
+
+
 def assess_identifiability(
     posterior: PosteriorGrid,
     *,
@@ -685,6 +900,16 @@ def assess_identifiability(
             f"BROAD and would not reach this branch. Refine the grid to a few "
             f"standard errors per axis and ask again"
         )
+
+    # The check above reads each axis against its own MARGINAL width, and its
+    # ESS clause is waived whenever that spacing looks small. Neither sees a
+    # thin posterior ridge tilted across the lattice, and the second let an
+    # effective sample size of 1.4 through (the K2 kinetics grid). A grid that
+    # cannot be shown to resolve its posterior is refused here too, before any
+    # status is returned. See _grid_resolution_refusal.
+    refusal = _grid_resolution_refusal(posterior)
+    if refusal is not None:
+        raise GridResolutionError(refusal)
 
     covariance = posterior.covariance
     correlation = posterior.correlation

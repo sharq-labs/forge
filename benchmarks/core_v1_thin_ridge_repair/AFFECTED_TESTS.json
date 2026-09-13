@@ -1,0 +1,427 @@
+{
+ "schema": "thin_ridge_affected_tests/1",
+ "threshold": 9.210340371976184,
+ "materiality": "marginal mean error > 0.1 sd, marginal sd ratio outside [0.9, 1.1], thin-direction sd ratio outside [0.9, 1.1], or thin-direction mean error > 0.1 sd",
+ "cases": [
+  {
+   "label": "tcr_calibration.narrow.41",
+   "temperatures": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "seed": 20260912,
+   "per_axis": 41,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9968020160043383,
+   "exact_correlation": -0.9931381972261871,
+   "effective_sample_size": 13.553449500662072,
+   "aliasing_number": 6.13416104094563,
+   "fit": "window 50, 269 nodes",
+   "max_marginal_mean_error_sd": 0.001571655883156326,
+   "marginal_sd_ratio": [
+    0.9958805292030866,
+    0.9957944443605528
+   ],
+   "thin_direction_sd_ratio": 0.6810534697067776,
+   "thin_direction_mean_error_sd": 0.024585612959762384,
+   "materially_wrong": true,
+   "refused_by_repair": true
+  },
+  {
+   "label": "tcr_calibration.narrow.81",
+   "temperatures": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "seed": 20260912,
+   "per_axis": 81,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.993140073016111,
+   "exact_correlation": -0.9931381972261871,
+   "effective_sample_size": 64.87233088426754,
+   "aliasing_number": 24.654719305166985,
+   "fit": "window 50, 1118 nodes",
+   "max_marginal_mean_error_sd": 8.300868808139954e-07,
+   "marginal_sd_ratio": [
+    0.9999980191091673,
+    0.999997987313299
+   ],
+   "thin_direction_sd_ratio": 0.9998617425244499,
+   "thin_direction_mean_error_sd": 1.3090608758866817e-05,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "tcr_calibration.narrow.161",
+   "temperatures": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "seed": 20260912,
+   "per_axis": 161,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9931381964923346,
+   "exact_correlation": -0.9931381972261871,
+   "effective_sample_size": 260.75100685022335,
+   "aliasing_number": 98.65590464149525,
+   "fit": "window 50, 4535 nodes",
+   "max_marginal_mean_error_sd": 1.1429344830165196e-08,
+   "marginal_sd_ratio": [
+    0.9999999412907145,
+    0.9999999387710043
+   ],
+   "thin_direction_sd_ratio": 0.9999999921012016,
+   "thin_direction_mean_error_sd": 7.1979131396144775e-09,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "tcr_heldout_uq.case_c.21",
+   "temperatures": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "seed": 5,
+   "per_axis": 21,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.999999455591737,
+   "exact_correlation": -0.9933116655014582,
+   "effective_sample_size": 5.869624825642944,
+   "aliasing_number": 1.4630203457194735,
+   "fit": "window 50, 61 nodes",
+   "max_marginal_mean_error_sd": 0.002975606039791472,
+   "marginal_sd_ratio": [
+    0.9919058964861271,
+    0.9917284078882131
+   ],
+   "thin_direction_sd_ratio": 0.05513009755726505,
+   "thin_direction_mean_error_sd": 0.04674011225947326,
+   "materially_wrong": true,
+   "refused_by_repair": true
+  },
+  {
+   "label": "tcr_heldout_uq.case_c.81",
+   "temperatures": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "seed": 5,
+   "per_axis": 81,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9933140798406811,
+   "exact_correlation": -0.9933116655014582,
+   "effective_sample_size": 63.9919106597865,
+   "aliasing_number": 24.067422096160964,
+   "fit": "window 50, 1113 nodes",
+   "max_marginal_mean_error_sd": 1.1083469309632607e-06,
+   "marginal_sd_ratio": [
+    0.9999973185678904,
+    0.9999972765651393
+   ],
+   "thin_direction_sd_ratio": 0.9998173466186489,
+   "thin_direction_mean_error_sd": 1.768807726368991e-05,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "tcr_heldout_uq.case_c.161",
+   "temperatures": [
+    299.0,
+    299.5,
+    300.0,
+    300.5,
+    301.0,
+    301.5
+   ],
+   "seed": 5,
+   "per_axis": 161,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9933116647815441,
+   "exact_correlation": -0.9933116655014582,
+   "effective_sample_size": 257.4159608433485,
+   "aliasing_number": 96.24070429489473,
+   "fit": "window 50, 4505 nodes",
+   "max_marginal_mean_error_sd": 1.1688189251930635e-08,
+   "marginal_sd_ratio": [
+    0.9999999406332545,
+    0.9999999380332982
+   ],
+   "thin_direction_sd_ratio": 0.999999991715013,
+   "thin_direction_mean_error_sd": 7.42044106918937e-09,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "coverage_study.seed11.11",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 11,
+   "per_axis": 11,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9713834253335967,
+   "exact_correlation": -0.9079775096678616,
+   "effective_sample_size": 3.1092780087573746,
+   "aliasing_number": 5.04573549237022,
+   "fit": "window 50, 65 nodes",
+   "max_marginal_mean_error_sd": 0.0004225076745577258,
+   "marginal_sd_ratio": [
+    0.983724157731949,
+    0.9837183351026598
+   ],
+   "thin_direction_sd_ratio": 0.5771140093509154,
+   "thin_direction_mean_error_sd": 0.001822149986632108,
+   "materially_wrong": true,
+   "refused_by_repair": true
+  },
+  {
+   "label": "coverage_study.seed11.15",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 11,
+   "per_axis": 15,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9202446234181845,
+   "exact_correlation": -0.9079775096678616,
+   "effective_sample_size": 6.3074213019885335,
+   "aliasing_number": 9.901533472965331,
+   "fit": "window 50, 117 nodes",
+   "max_marginal_mean_error_sd": 0.00010303438915368285,
+   "marginal_sd_ratio": [
+    0.9967978289225402,
+    0.9967966129637009
+   ],
+   "thin_direction_sd_ratio": 0.9314149884336049,
+   "thin_direction_mean_error_sd": 0.00045013067698658656,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "coverage_study.seed11.21",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 11,
+   "per_axis": 21,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9081242897767929,
+   "exact_correlation": -0.9079775096678616,
+   "effective_sample_size": 14.443014759651884,
+   "aliasing_number": 20.182791938767327,
+   "fit": "window 50, 243 nodes",
+   "max_marginal_mean_error_sd": 1.7389704376712078e-06,
+   "marginal_sd_ratio": [
+    0.9999614907791335,
+    0.9999614738871453
+   ],
+   "thin_direction_sd_ratio": 0.9992021277603745,
+   "thin_direction_mean_error_sd": 7.691035948285164e-06,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "coverage_study.seed12.11",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 12,
+   "per_axis": 11,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9715247214237981,
+   "exact_correlation": -0.9080986208765481,
+   "effective_sample_size": 3.108175824027706,
+   "aliasing_number": 5.039094688192474,
+   "fit": "window 50, 65 nodes",
+   "max_marginal_mean_error_sd": 0.00042316391242124153,
+   "marginal_sd_ratio": [
+    0.9837200952125351,
+    0.9837142598797979
+   ],
+   "thin_direction_sd_ratio": 0.5761724715840288,
+   "thin_direction_mean_error_sd": 0.001826360260742,
+   "materially_wrong": true,
+   "refused_by_repair": true
+  },
+  {
+   "label": "coverage_study.seed12.15",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 12,
+   "per_axis": 15,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9204133020933175,
+   "exact_correlation": -0.9080986208765481,
+   "effective_sample_size": 6.301652427964157,
+   "aliasing_number": 9.888504704323468,
+   "fit": "window 50, 117 nodes",
+   "max_marginal_mean_error_sd": 0.00010351276268281413,
+   "marginal_sd_ratio": [
+    0.9967856655890626,
+    0.9967844428845315
+   ],
+   "thin_direction_sd_ratio": 0.9310468382341718,
+   "thin_direction_mean_error_sd": 0.0004525461567207087,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "coverage_study.seed12.21",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 12,
+   "per_axis": 21,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9082469815910567,
+   "exact_correlation": -0.9080986208765481,
+   "effective_sample_size": 14.432775074876917,
+   "aliasing_number": 20.156228856814373,
+   "fit": "window 50, 243 nodes",
+   "max_marginal_mean_error_sd": 1.7581114917975965e-06,
+   "marginal_sd_ratio": [
+    0.9999610785344509,
+    0.9999610614399926
+   ],
+   "thin_direction_sd_ratio": 0.9991924698257885,
+   "thin_direction_mean_error_sd": 7.781075027048892e-06,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "coverage_study.seed13.11",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 13,
+   "per_axis": 11,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.97182749407476,
+   "exact_correlation": -0.9083590021856656,
+   "effective_sample_size": 3.1058164645759123,
+   "aliasing_number": 5.024817466366098,
+   "fit": "window 50, 65 nodes",
+   "max_marginal_mean_error_sd": 0.0004250319855472006,
+   "marginal_sd_ratio": [
+    0.9837115845952856,
+    0.983705709286437
+   ],
+   "thin_direction_sd_ratio": 0.5741434094152681,
+   "thin_direction_mean_error_sd": 0.0018374139920436141,
+   "materially_wrong": true,
+   "refused_by_repair": true
+  },
+  {
+   "label": "coverage_study.seed13.15",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 13,
+   "per_axis": 15,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9207764042230627,
+   "exact_correlation": -0.9083590021856656,
+   "effective_sample_size": 6.289245967584312,
+   "aliasing_number": 9.848642125806432,
+   "fit": "window 50, 115 nodes",
+   "max_marginal_mean_error_sd": 0.00010466067346377729,
+   "marginal_sd_ratio": [
+    0.996759397313324,
+    0.996758157323235
+   ],
+   "thin_direction_sd_ratio": 0.9302489498637805,
+   "thin_direction_mean_error_sd": 0.0004582751084635271,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  },
+  {
+   "label": "coverage_study.seed13.21",
+   "temperatures": [
+    300.0,
+    320.0,
+    340.0,
+    360.0,
+    380.0,
+    400.0
+   ],
+   "seed": 13,
+   "per_axis": 21,
+   "sigma_span": 6.0,
+   "grid_correlation": -0.9085108170747076,
+   "exact_correlation": -0.9083590021856656,
+   "effective_sample_size": 14.410716698638405,
+   "aliasing_number": 20.099119937464536,
+   "fit": "window 50, 243 nodes",
+   "max_marginal_mean_error_sd": 1.8019041063079769e-06,
+   "marginal_sd_ratio": [
+    0.99996017763303,
+    0.9999601600573377
+   ],
+   "thin_direction_sd_ratio": 0.9991713133421711,
+   "thin_direction_mean_error_sd": 7.986807118932398e-06,
+   "materially_wrong": false,
+   "refused_by_repair": false
+  }
+ ]
+}

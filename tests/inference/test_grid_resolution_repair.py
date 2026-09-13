@@ -45,7 +45,6 @@ from engcore.uq import PredictiveObservableSpec, posterior_predictive_uq
 FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures" / "grid_resolution"
 TWIN = TwinReference("grid-resolution-regression", "1")
 MODEL = ModelReference("grid-resolution-regression.model", "1")
-DEFECT = "V1 thin-ridge defect: the frozen guard certifies an aliased grid (benchmarks/core_gap_thin_ridge)"
 
 #: The committed F5 observations (benchmarks/core_gap_hd_uq/FAILURE_CASES.json, seed 20260913).
 F5_Y = (4.012109370682078, 3.993802969724079, 4.028708261476341, 4.01713738737486, 4.008245240318426, 4.012439099280156)
@@ -215,19 +214,16 @@ def test_healthy_controls_are_right_including_their_thin_direction(tcr_wide):
 # the guard: refuse what it cannot resolve, keep what it can
 # =====================================================================
 
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_the_f5_thin_ridge_is_refused(f5_bounds):
     with pytest.raises(GridResolutionError):
         assess_identifiability(f5_bounds)
 
 
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_the_tcr_narrow_design_grid_is_refused(tcr_narrow):
     with pytest.raises(GridResolutionError):
         assess_identifiability(tcr_narrow[0])
 
 
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_the_k2_multi_grid_is_refused(k2_multi):
     with pytest.raises(GridResolutionError):
         assess_identifiability(k2_multi[0])
@@ -249,7 +245,6 @@ def test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right():
 # ESS: effectively one point is never a certified covariance
 # =====================================================================
 
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_k2_effective_sample_size_near_one_is_refused_even_with_small_axis_spacing(k2_multi):
     posterior, _ = k2_multi
     weights = posterior.weights
@@ -262,13 +257,11 @@ def test_k2_effective_sample_size_near_one_is_refused_even_with_small_axis_spaci
 # predictive UQ must not emit uncertainty the grid cannot resolve
 # =====================================================================
 
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_predictive_uq_refuses_the_f5_thin_ridge(f5_bounds):
     with pytest.raises(GridResolutionError):
         _epistemic_sd(f5_bounds, f5_bounds.points @ np.asarray([1.0, 10.025]))
 
 
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_predictive_uq_refuses_k2_c2_predictions(k2_multi):
     posterior, z = k2_multi
     with pytest.raises(GridResolutionError):
@@ -291,10 +284,19 @@ def test_predictive_uq_is_right_on_a_weak_but_resolved_grid():
     assert _epistemic_sd(posterior, values) == pytest.approx(math.sqrt(g @ C @ g), rel=0.05)
 
 
-def test_a_discrete_posterior_too_small_to_carry_curvature_keeps_its_exact_mixture():
-    posterior = PosteriorGrid(parameter_names=("p",), points=np.asarray([[0.0], [1.0]]), weights=np.asarray([0.25, 0.75]),
-                              log_likelihood=np.log(np.asarray([0.25, 0.75])), admissible_mask=np.asarray([True, True]), dataset_id="discrete")
-    assert _epistemic_sd(posterior, [10.0, 14.0]) == pytest.approx(math.sqrt(0.25 * 9 + 0.75 * 1))
+# Two nodes (the frozen ESS-and-spacing rule refuses its identifiability), and
+# five broad ones that the frozen rule passes and only the node-count check sees.
+@pytest.mark.parametrize("weights", [(0.25, 0.75), (0.1, 0.2, 0.4, 0.2, 0.1)])
+def test_a_discrete_posterior_too_small_to_carry_curvature_keeps_its_exact_mixture(weights):
+    w = np.asarray(weights)
+    values = 10.0 + 4.0 * np.arange(w.size)
+    log_like = np.log(w)
+    posterior = PosteriorGrid(parameter_names=("p",), points=np.arange(w.size, dtype=float)[:, None], weights=w,
+                              log_likelihood=log_like, admissible_mask=np.ones(w.size, dtype=bool), dataset_id="discrete")
+    mean = float(w @ values)
+    assert _epistemic_sd(posterior, values) == pytest.approx(math.sqrt(float(w @ (values - mean) ** 2)))
+    with pytest.raises(GridResolutionError, match="GRID_TOO_COARSE_FOR_INFERENCE" if w.size < 5 else "fewer than the 6 a local quadratic fit needs"):
+        assess_identifiability(posterior)
 
 
 # =====================================================================
@@ -307,7 +309,6 @@ def _scaled_f5(c):
 
 
 @pytest.mark.parametrize("c", [1.0, 10.0, 100.0])
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_rescaling_a_parameter_does_not_rescue_the_thin_ridge(c):
     with pytest.raises(GridResolutionError):
         assess_identifiability(_scaled_f5(c))
@@ -322,7 +323,6 @@ def test_rescaling_a_parameter_does_not_break_a_healthy_grid(c):
 
 
 @pytest.mark.parametrize("frame", ["principal_axes", "whitened"])
-@pytest.mark.xfail(strict=True, reason=DEFECT)
 def test_a_rotated_frame_with_an_unresolved_thin_axis_is_refused(frame):
     """Rotating the F5 posterior onto its principal axes gives a different LATTICE, not merely new units:
     the thin axis now has its own step, and a step far wider than the thin width collapses it onto a node."""
