@@ -7,7 +7,13 @@ import math
 import pytest
 
 import hybrid_synthetic as S
-from engcore.hybrid_uq import (HybridUQResult, MultistartPolicy, RouteClaim, RouteDecision, local_gaussian_posterior)
+from engcore.hybrid_uq import (
+    HybridUQResult,
+    MultistartPolicy,
+    RouteClaim,
+    RouteDecision,
+    local_gaussian_posterior,
+)
 from engcore.scientific.solvers.protocol import SolverIdentity
 from engcore.scientific.solvers.registry import SolverDefinition
 from engcore.scientific.units.quantity import Quantity
@@ -15,7 +21,12 @@ from engcore.scientific.units.quantity import Quantity
 
 def test_route_diagnostics_are_transitively_immutable() -> None:
     problem = S.affine()
-    posterior = local_gaussian_posterior(problem.calibrate(), problem.observations, problem.forward, multistart=MultistartPolicy())
+    posterior = local_gaussian_posterior(
+        problem.calibrate(),
+        problem.observations,
+        problem.forward,
+        multistart=MultistartPolicy(),
+    )
     diagnostics = posterior.diagnostics
     before = diagnostics.to_dict()
     digest = diagnostics.digest
@@ -72,7 +83,10 @@ def test_calibration_residuals_survive_serialization_and_spec_is_immutable() -> 
         calibration.spec.fixed["tamper"] = Quantity(1.0, "dimensionless")
     name = next(iter(calibration.spec.initial_point))
     with pytest.raises(TypeError, match="immutable"):
-        calibration.spec.initial_point[name] = Quantity(999.0, calibration.spec.initial_point[name].units)
+        calibration.spec.initial_point[name] = Quantity(
+            999.0,
+            calibration.spec.initial_point[name].units,
+        )
 
 
 def test_registry_refuses_a_session_whose_freshness_cannot_be_tracked() -> None:
