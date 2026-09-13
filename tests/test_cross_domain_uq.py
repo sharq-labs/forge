@@ -7,15 +7,15 @@ import pytest
 from engcore.scientific.composition.conversion import EnergyConversion, LossPath
 from engcore.scientific.composition.dependency import QuantityDependency
 from engcore.scientific.composition.transfer import QuantityTransfer
-from engcore.scientific.composition.uncertainty import (
+from engcore.scientific.errors import InvalidScientificProblem
+from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from engcore.scientific.units.quantity import Quantity
+from engcore.uq.cross_domain import (
     UncertaintyTransfer,
     make_uncertainty_transfer,
     propagate_transfer_uncertainty,
     propagate_uncertainty_chain,
 )
-from engcore.scientific.errors import InvalidScientificProblem
-from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
-from engcore.scientific.units.quantity import Quantity
 
 
 def _transport(
