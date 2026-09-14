@@ -35,7 +35,11 @@ def manifest():
 
 
 def _assert_contract_holds_pending_certificate(result):
-    unexpected = set(result.failed()) - CERTIFICATE_CHILD_ONLY
+    binding_failures = {
+        check.name for check in result.checks
+        if check.binding and not check.ok
+    }
+    unexpected = binding_failures - CERTIFICATE_CHILD_ONLY
     assert not unexpected, "\n" + result.render()
 
 

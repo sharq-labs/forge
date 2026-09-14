@@ -14,9 +14,9 @@ Five checks, each catching something the others do not:
 5. **Path audit** -- every string literal that looks like a path is checked
    against the corpora this round is forbidden to open.
 
-The audit is only worth what its own falsification test says it is: 
-``prove_audit_catches_a_peeker`` writes a module that deliberately peeks and
-requires every applicable check to fail on it.
+The audit is only worth what its own falsification test says it is:
+``prove_audit_catches_a_peeker`` writes an isolated module that deliberately
+peeks and requires every applicable check to fail on it.
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import tempfile
 import textwrap
 
 PACKAGE = pathlib.Path(__file__).resolve().parent
@@ -130,12 +131,12 @@ def audit_attribute_chains(paths: list[pathlib.Path] | None = None) -> list[str]
     return findings
 
 
-def audit_runtime(module: str = "challenge") -> list[str]:
-    """Import the package in a fresh interpreter and see what loaded."""
+def audit_runtime(module: str = "challenge", *, search_root: pathlib.Path = BLIND_V2) -> list[str]:
+    """Import a package in a fresh interpreter and see what loaded."""
     script = textwrap.dedent(
         f"""
         import json, sys
-        sys.path.insert(0, {str(BLIND_V2)!r})
+        sys.path.insert(0, {str(search_root)!r})
         import importlib, pkgutil
         package = importlib.import_module({module!r})
         for info in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
@@ -157,11 +158,11 @@ def audit_runtime(module: str = "challenge") -> list[str]:
     return [f"runtime: {name} was loaded" for name in loaded]
 
 
-def audit_transitive() -> list[str]:
-    """Follow first-party imports out of the package and audit those too."""
+def audit_transitive(paths: list[pathlib.Path] | None = None) -> list[str]:
+    """Follow first-party imports out of the supplied modules or challenge package."""
     findings: list[str] = []
     seen: set[pathlib.Path] = set()
-    queue = list(_modules())
+    queue = list(paths) if paths is not None else list(_modules())
     while queue:
         path = queue.pop()
         if path in seen:
@@ -204,26 +205,28 @@ def cheat():
 
 
 def prove_audit_catches_a_peeker() -> dict:
-    """Write a deliberately peeking module and require the audit to fail.
+    """Create an isolated peeking package and require every audit to catch it.
 
-    An audit that has never been shown to fail is a decoration. This writes a
-    real one into the package, runs every check against it, removes it, and
-    reports what each check saw. A check that stayed silent is a check that
-    would have stayed silent for a real leak.
+    The old falsification wrote ``_falsification_peeker.py`` inside the checked
+    out repository. Under xdist a repo-wide scanner could enumerate that
+    temporary file just before this test removed it, producing an unrelated
+    FileNotFoundError. The proof now lives in a temporary directory outside the
+    repository: the exact same forbidden imports are exercised without mutating
+    the shared checkout.
     """
-    decoy = PACKAGE / "_falsification_peeker.py"
-    decoy.write_text(PEEKER, encoding="utf-8")
-    try:
+    with tempfile.TemporaryDirectory(prefix="forge-blind-v2-peeker-") as scratch:
+        root = pathlib.Path(scratch)
+        package = root / "falsification_challenge"
+        package.mkdir()
+        (package / "__init__.py").write_text("", encoding="utf-8")
+        decoy = package / "peeker.py"
+        decoy.write_text(PEEKER, encoding="utf-8")
         caught = {
             "ast_imports": audit_imports([decoy]),
             "name_and_string_scan": audit_strings([decoy]) + audit_attribute_chains([decoy]),
-            "transitive_imports": audit_transitive(),
-            "runtime_sys_modules": audit_runtime(),
+            "transitive_imports": audit_transitive([decoy]),
+            "runtime_sys_modules": audit_runtime("falsification_challenge", search_root=root),
         }
-    finally:
-        decoy.unlink(missing_ok=True)
-        for cached in (PACKAGE / "__pycache__").glob("_falsification_peeker*"):
-            cached.unlink(missing_ok=True)
     return {
         "caught_by": {name: bool(found) for name, found in caught.items()},
         "detail": caught,
