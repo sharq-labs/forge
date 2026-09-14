@@ -561,13 +561,16 @@ class DeclaredSupport:
             )
 
         if self.served_models:
-            served = {model.model_id for model in self.served_models}
-            referenced = {reference.model_id for reference in problem.models}
+            served = {model.key for model in self.served_models}
+            referenced = {reference.key for reference in problem.models}
             if not referenced & served:
+                format_keys = lambda keys: [
+                    f"{model_id}@{version}" for model_id, version in sorted(keys)
+                ]
                 reasons.append(
-                    f"the problem names no model this solver implements; it "
-                    f"names {sorted(referenced) or 'none'} and this solver "
-                    f"implements {sorted(served)}"
+                    f"the problem names no model version this solver implements; it "
+                    f"names {format_keys(referenced) or 'none'} and this solver "
+                    f"implements {format_keys(served)}"
                 )
 
         reasons.extend(self.additional_support_gap(problem))
