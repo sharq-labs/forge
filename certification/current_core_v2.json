@@ -2,19 +2,19 @@
   "assurance": {
     "environment": {
       "ngspice": "******",
-      "pip_freeze_3_11_sha256": "f74b640fee166565c3d4358286a3b6221c34b02c68eda3a0a0836fe84de34d06",
-      "pip_freeze_3_12_sha256": "f6a5f4c75cdb681b722c7d6fcb4be878aadb9a3d3e815c0a6873196028ccb205",
+      "pip_freeze_3_11_sha256": "11ceb0ff99fa5d002e8be2b092e4dab315a196958fc06e9b435dc467668732a9",
+      "pip_freeze_3_12_sha256": "f863ac33b651dd99b20cb72f614e0ac11d71ea349aa9564d613d6e694ed87703",
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
       "schema": "forge.certification_environment/1",
-      "source_commit": "4f94b0f8d38509550108562285e7afc0a272f7f1",
+      "source_commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "formal_guard_mutations": {
       "claim": "Fresh execution of tests/mutation_guards.py on this source commit; this remains the formal historical mutation family.",
-      "log_sha256": "2968b287803064bd35714353811ab8b170bcceed36aa106042ab3cf047a74022",
+      "log_sha256": "ffa5000d508fcfc2f0d015f1a7c3e04774b02cd2d970b990d84e3d9079fe4c12",
       "passed": true,
       "population": 79
     },
@@ -25,20 +25,20 @@
       "fast_python_3_12": {
         "passed": true
       },
-      "note": "The four certificate/freeze self-checks were deferred until the generated certificate child commit; no other FAST checks were removed for recertification.",
+      "note": "The four certificate/freeze self-checks were deferred until the generated certificate child commit. Guard 19 was not removed: it ran serially on Python 3.11 and 3.12 before the parallel suites to avoid racing the blind-v2 falsification module writer.",
       "scientific_python_3_12": {
         "passed": true
       }
     },
     "policy": "Certificate generated only after all gates above returned success in this workflow.",
     "schema": "forge.core_hardening_assurance/1",
-    "source_commit": "4f94b0f8d38509550108562285e7afc0a272f7f1",
+    "source_commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
     "trust_hardening_mutations": {
       "claim": "Separate fresh trust-boundary mutation family; intentionally not added to the formal 79 count.",
       "invalid": 0,
       "passed": true,
       "population": 13,
-      "result_sha256": "1fbc9dfa02968868ebc0fc149a46398ef5d827edb34790a75037313ea798d09a",
+      "result_sha256": "c9edd923dec41a8436e8e87fb69de48adb529fc595c091bad3fbe1afe435b6f2",
       "survived": 0
     }
   },
@@ -237,7 +237,7 @@
   "repository": {
     "branch": "core/hardening-integration-v1",
     "clean": true,
-    "commit": "4f94b0f8d38509550108562285e7afc0a272f7f1",
+    "commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
