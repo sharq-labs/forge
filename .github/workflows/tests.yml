@@ -67,7 +67,8 @@ jobs:
       # A core-changing PR source commit necessarily carries the previous
       # certificate until Recertify Hardened Core finishes its measured gates
       # and pushes a certificate-only child. Defer only the four self-checks on
-      # that source commit; the exact certificate child must run them normally.
+      # such a source commit; ordinary PRs and the exact certificate child must
+      # run them normally.
       - name: Classify certificate-check phase
         id: certificate_phase
         shell: bash
@@ -77,6 +78,7 @@ jobs:
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             head_sha="${{ github.event.pull_request.head.sha }}"
+            base_sha="${{ github.event.pull_request.base.sha }}"
             subject="$(git log -1 --format=%s "$head_sha")"
 
             if [ "$subject" = "certification: recertify hardened core" ]; then
@@ -94,8 +96,22 @@ jobs:
               fi
               echo "Certificate-only child detected: full certificate/freeze checks stay enabled."
             else
-              run_checks=false
-              echo "Source PR commit detected: deferring four certificate/freeze self-checks to the certificate child."
+              recertification_needed=false
+              while IFS= read -r path; do
+                case "$path" in
+                  .github/workflows/recertify-hardened-core.yml|src/engcore/scientific/*|src/engcore/execution/*|src/engcore/extensions.py|src/engcore/uq/cross_domain.py|tests/*|benchmarks/trust_hardening/*)
+                    recertification_needed=true
+                    break
+                    ;;
+                esac
+              done < <(git diff --name-only "$base_sha" "$head_sha")
+
+              if [ "$recertification_needed" = "true" ]; then
+                run_checks=false
+                echo "Recertified-core PR source detected: deferring four certificate/freeze self-checks to the certificate child."
+              else
+                echo "Ordinary PR detected: full certificate/freeze checks stay enabled."
+              fi
             fi
           else
             echo "Non-PR run: full certificate/freeze checks stay enabled."
@@ -172,6 +188,7 @@ jobs:
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             head_sha="${{ github.event.pull_request.head.sha }}"
+            base_sha="${{ github.event.pull_request.base.sha }}"
             subject="$(git log -1 --format=%s "$head_sha")"
 
             if [ "$subject" = "certification: recertify hardened core" ]; then
@@ -189,8 +206,22 @@ jobs:
               fi
               echo "Certificate-only child detected: full certificate/freeze checks stay enabled."
             else
-              run_checks=false
-              echo "Source PR commit detected: deferring four certificate/freeze self-checks to the certificate child."
+              recertification_needed=false
+              while IFS= read -r path; do
+                case "$path" in
+                  .github/workflows/recertify-hardened-core.yml|src/engcore/scientific/*|src/engcore/execution/*|src/engcore/extensions.py|src/engcore/uq/cross_domain.py|tests/*|benchmarks/trust_hardening/*)
+                    recertification_needed=true
+                    break
+                    ;;
+                esac
+              done < <(git diff --name-only "$base_sha" "$head_sha")
+
+              if [ "$recertification_needed" = "true" ]; then
+                run_checks=false
+                echo "Recertified-core PR source detected: deferring four certificate/freeze self-checks to the certificate child."
+              else
+                echo "Ordinary PR detected: full certificate/freeze checks stay enabled."
+              fi
             fi
           else
             echo "Non-PR run: full certificate/freeze checks stay enabled."
