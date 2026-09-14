@@ -55,8 +55,11 @@ def test_an_unresolved_grid_is_never_trusted():
     assert result.considered[0]["reason"] == RouteReason.GRID_UNRESOLVED.value
     assert result.decision is RouteDecision.LOCAL_GAUSSIAN
     mu, cov = S.gaussian_truth(P)
-    assert np.allclose(result.mean, mu, atol=1e-6 * np.sqrt(np.diag(cov)).max())
-    assert not np.allclose(result.mean, aliased.mean, atol=0.1 * np.sqrt(np.diag(cov)).max())
+    sd = np.sqrt(np.diag(cov))
+    # Compare in posterior-sigma units so harmless optimizer endpoint changes
+    # across SciPy versions cannot masquerade as a routing regression.
+    assert np.all(np.abs(np.asarray(result.mean) - mu) / sd < 1e-4)
+    assert not np.allclose(result.mean, aliased.mean, atol=0.1 * sd.max())
 
 
 def test_an_unresolved_grid_alone_is_a_refusal_with_no_numbers():

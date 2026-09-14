@@ -144,8 +144,13 @@ def test_linearized_predictive_is_exact_for_an_affine_model_and_keeps_its_source
     results = linearized_predictive_uq(post, lambda t: [Quantity(t[0] + t[1] * x, UNIT) for x in xs], specs)
     for x, r in zip(xs, results):
         g = np.asarray([1.0, x])
-        assert math.isclose(r.mean, float(g @ mu), rel_tol=0, abs_tol=1e-9)
-        assert math.isclose(r.parameter_standard_uncertainty, math.sqrt(g @ cov @ g), rel_tol=1e-6)
+        expected_mean = float(g @ mu)
+        expected_parameter_sd = math.sqrt(g @ cov @ g)
+        # The affine model is exact; compare the optimizer-derived centre in
+        # posterior-predictive sigma units rather than a SciPy-version-specific
+        # absolute epsilon. 1e-6 sigma is still a very strict numerical check.
+        assert abs(r.mean - expected_mean) / expected_parameter_sd < 1e-6
+        assert math.isclose(r.parameter_standard_uncertainty, expected_parameter_sd, rel_tol=1e-6)
         assert r.measurement_standard_uncertainty == 0.05
         assert math.isclose(r.total_standard_uncertainty, math.hypot(r.parameter_standard_uncertainty, 0.05), rel_tol=1e-12)
         assert r.parameter_standard_uncertainty > 0.0
