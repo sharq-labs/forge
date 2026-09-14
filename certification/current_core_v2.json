@@ -2,19 +2,19 @@
   "assurance": {
     "environment": {
       "ngspice": "******",
-      "pip_freeze_3_11_sha256": "11ceb0ff99fa5d002e8be2b092e4dab315a196958fc06e9b435dc467668732a9",
-      "pip_freeze_3_12_sha256": "f863ac33b651dd99b20cb72f614e0ac11d71ea349aa9564d613d6e694ed87703",
+      "pip_freeze_3_11_sha256": "164ef2296a44f1bf2312b607d3eb425db02d77d0883d3e75a46881f0941f1559",
+      "pip_freeze_3_12_sha256": "c1284471c21f47edb49a20b919d2e093eefe124a582096ded1984403748f45a6",
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
       "schema": "forge.certification_environment/1",
-      "source_commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
+      "source_commit": "dbdd52743f275ae0b760693e448d1fe50f90e9c5",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "formal_guard_mutations": {
       "claim": "Fresh execution of tests/mutation_guards.py on this source commit; this remains the formal historical mutation family.",
-      "log_sha256": "ffa5000d508fcfc2f0d015f1a7c3e04774b02cd2d970b990d84e3d9079fe4c12",
+      "log_sha256": "8242237ff028fb113fb583bb42e14cd0c464bbccbaf7ed2941b92b53db28f399",
       "passed": true,
       "population": 79
     },
@@ -32,13 +32,13 @@
     },
     "policy": "Certificate generated only after all gates above returned success in this workflow.",
     "schema": "forge.core_hardening_assurance/1",
-    "source_commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
+    "source_commit": "dbdd52743f275ae0b760693e448d1fe50f90e9c5",
     "trust_hardening_mutations": {
       "claim": "Separate fresh trust-boundary mutation family; intentionally not added to the formal 79 count.",
       "invalid": 0,
       "passed": true,
       "population": 13,
-      "result_sha256": "c9edd923dec41a8436e8e87fb69de48adb529fc595c091bad3fbe1afe435b6f2",
+      "result_sha256": "6ec02344229e41692146abc0f8ae1824f4060723fb10fb1c2d9ad7cbbb8c4953",
       "survived": 0
     }
   },
@@ -75,11 +75,11 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "c167d7b5d9d1a2a31622aa80e5e2fe9a04ca6990c41f626648050853b66b8c9c",
+    "aggregate_digest": "4ab6401a8b7b91962add15ae8b92084c8b36dad8c55c3929dbab676fdb2722ed",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "6cd25aff5583eec2da07be97f8392f7029321a79702bc414c0ee369be9221a88",
+        "digest": "93d67765183f5b80360bbf45ac7879e20147a0622a150cc59c07d860f27aa9b3",
         "file_count": 62,
         "files": {
           "src/engcore/scientific/__init__.py": "f79cc0ab53915788875d632fcbc6a75a2f2822d5e3b01269e1a78e7b24367b1e",
@@ -103,7 +103,7 @@
           "src/engcore/scientific/fields/regions.py": "c7f88f9f552a839b4cab76608b47c2cad3e38edae5b2bc642f270a5418fd1af5",
           "src/engcore/scientific/fields/result.py": "b8bc595e5fa8ea4ce78684cd2c5ac62d6c474cdc7f31cdfbf4dc5071d913fe4c",
           "src/engcore/scientific/fields/transfer.py": "e4411c5927ba8d60bfe9d895c9f260f608833bcda0d7fb692babf84ef12407e6",
-          "src/engcore/scientific/independence_evidence.py": "f7fe26f23e369c63b9a98af648f1262c1d97879999b7ac6107d9268dfeb27761",
+          "src/engcore/scientific/independence_evidence.py": "e18851ec47ef0b0aa0f132b0a8e1f8bd0ba77dfa2b63f731299da6ae7883139f",
           "src/engcore/scientific/ir/__init__.py": "824b29e4eb8075ddf92c540c072c590bbee3097f7e7bb149f9c61e4373882fe0",
           "src/engcore/scientific/ir/conditions.py": "8090d33605902ad628cc24bd8c098f71ff29193bc318941506abb8d003f11aa9",
           "src/engcore/scientific/ir/constraints.py": "43917bc80d47f9eb6fa1f2792431fa281e134285984be158a5b969dcd44a90c2",
@@ -118,7 +118,7 @@
           "src/engcore/scientific/models/registry.py": "732f02e498308c9573bce6f4f941127187bb39ea26c2a9dd5e41b746a6e72141",
           "src/engcore/scientific/models/structured_validity.py": "e85c5aa3121f15a5459cb4d08cd7c9b9358d0157e10e8628739414c122cbe067",
           "src/engcore/scientific/models/unknown_diagnostics.py": "64122beabb59ed33361c44ad30a99ce01f1b90bc1b43067b36578c2d57b757a2",
-          "src/engcore/scientific/oracles.py": "dc95347f1d12ed3ba61845a8e8ceb92c36d6e04338b5aed0a99b0a4ae453a2c4",
+          "src/engcore/scientific/oracles.py": "ad1ec265f91d8e386dcef771b4eafc1790f5f4750ca087b8716e0a43e8f3955b",
           "src/engcore/scientific/realizations/__init__.py": "11d2ce420e3d89d1692a3dc9084ea0debe6b400b9db43857de6f59d2150358dc",
           "src/engcore/scientific/realizations/admission.py": "4d4a2386f1518b00b78b5d448da00443e32b4a2aedcb1330e48e8b80b167b674",
           "src/engcore/scientific/realizations/definition.py": "0b6e2239cd863120637aa284061a03741e2548a368b9472d0462bfd5cebdd277",
@@ -235,9 +235,9 @@
   },
   "notes": {},
   "repository": {
-    "branch": "core/hardening-integration-v1",
+    "branch": "fix/p0-trust-boundaries",
     "clean": true,
-    "commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
+    "commit": "dbdd52743f275ae0b760693e448d1fe50f90e9c5",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -328,7 +328,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "cc86b3953432617153c56befe1afa55dddfe4ebc2446a58618197040d8587be9",
+    "v1_compatible_core_digest_now": "ae04d32f166814fb8f45963b212f0af3124c8bae048eab9a94f50d89384dd18c",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }
