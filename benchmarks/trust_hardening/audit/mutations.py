@@ -46,6 +46,10 @@ TESTS = (
     "tests/test_execution_manifest.py",
     "tests/test_trusted_execution_runtime.py",
     "tests/test_independence_evidence.py",
+    # Round 1A: the dependency-evidence integrity matrix. TRUST-D* mutants are
+    # killed by behavioural assertions in this file, so a runner without it
+    # would credit nothing to the per-dependency property.
+    "tests/test_independence_dependency_binding.py",
     "tests/test_trusted_consensus_gate.py",
 )
 
@@ -143,6 +147,59 @@ MUTATIONS = (
         "return self.all_routes_verified and self.artifact_disjoint and len(self.route_findings) >= 2",
         "return self.artifact_disjoint and len(self.route_findings) >= 2",
         "missing or mismatched route evidence cannot be treated as strong independence",
+    ),
+    # ---- Round 1A: dependency evidence integrity -------------------------
+    # Each targets the per-dependency mechanism in
+    # RouteIndependenceEvidence.assess, not the older dimension-level gate.
+    Mutation(
+        "TRUST-D1",
+        "src/engcore/scientific/independence_evidence.py",
+        "for identity in sorted(declared_identities - covered_identities):",
+        "for identity in sorted(frozenset()):",
+        "every declared dependency identity must be covered by verified evidence of its own",
+    ),
+    Mutation(
+        "TRUST-D2",
+        "src/engcore/scientific/independence_evidence.py",
+        "    if identity not in declared_identities:\n",
+        "    if False:\n",
+        "an artifact bound to an undeclared dependency identity is refused, never counted",
+    ),
+    Mutation(
+        "TRUST-D3",
+        "src/engcore/scientific/independence_evidence.py",
+        "        if len(by_identity) > 1:\n",
+        "        if False:\n",
+        "one verified artifact cannot establish more than one declared dependency in a route",
+    ),
+    Mutation(
+        "TRUST-D4",
+        "src/engcore/scientific/independence_evidence.py",
+        "                    if not _verified_against_bytes(artifact, dimension, dimension_bytes, reasons):\n"
+        "                        continue\n",
+        "                    _verified_against_bytes(artifact, dimension, dimension_bytes, reasons)\n",
+        "a dependency is covered only after its artifact bytes re-hash to the fingerprint",
+    ),
+    Mutation(
+        "TRUST-D5",
+        "src/engcore/scientific/independence_evidence.py",
+        '    dependency_identity: str = field(default="")\n',
+        '    dependency_identity: str = field(default="", compare=False)\n',
+        "the dependency binding is part of fingerprint identity, so a double use stays visible",
+    ),
+    Mutation(
+        "TRUST-D6",
+        "src/engcore/scientific/independence_evidence.py",
+        "        identity = canonical_component_identity(artifact.dependency_identity)\n",
+        "        identity = artifact.dependency_identity\n",
+        "bindings are compared as canonical identities, not as raw spellings",
+    ),
+    Mutation(
+        "TRUST-D7",
+        "src/engcore/execution/consensus.py",
+        '                    f"{_binding_label(artifact, dimension)}"\n',
+        '                    ""\n',
+        "the trusted check records which dependency every artifact evidences",
     ),
     Mutation(
         "TRUST-C1",

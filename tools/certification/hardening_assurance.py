@@ -74,7 +74,13 @@ INSTALL_COMMAND = 'python -m pip install -e ".[dev,mcp,oracles]"'
 
 TRUST_SCRIPT = "benchmarks/trust_hardening/audit/mutations.py"
 TRUST_RESULT_SCHEMA = "forge.trust_mutation_assurance/1"
-EXPECTED_TRUST_POPULATION = 13
+#: The trust-hardening population a certificate claims, read off the runner's own
+#: ``MUTATIONS`` rather than asserted: 13 through PR #43, 20 from Round 1A, which
+#: added TRUST-D1..D7 against per-dependency evidence integrity (coverage only
+#: after byte verification, one verified artifact per dependency, canonical
+#: bindings, the recorded binding). ``tests/test_hardening_assurance.py`` fails
+#: if this and the runner ever disagree.
+EXPECTED_TRUST_POPULATION = 20
 
 #: Where each gate's evidence lands when certify downloads every artifact whose
 #: name ends in the source commit: ``<evidence-dir>/<prefix>-<source>/<file>``.
