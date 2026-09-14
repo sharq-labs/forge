@@ -55,15 +55,6 @@ CANONICAL_MODULES = (
 
 SCHEMA = "engcore.api_snapshot/1"
 
-#: Core V2 is ADDITIVE: it adds canonical modules and changes none of the seven
-#: above. The V1 contract is the snapshot of `CANONICAL_MODULES` alone, and
-#: `build()` with no argument keeps producing it byte-for-byte -- the V1 freeze
-#: verifier, its reproduction probe and the V1 wheel parity script all call it
-#: that way, so a V2 name can never move the V1 frozen digest. The V2 contract
-#: is the snapshot of `V2_CANONICAL_MODULES`; see docs/CORE_V2_API_DESIGN.md.
-V2_ADDED_MODULES = ("engcore.hybrid_uq",)
-V2_CANONICAL_MODULES = CANONICAL_MODULES + V2_ADDED_MODULES
-
 #: Parameters whose stability classification is not FREEZE, keyed by
 #: ``"module:symbol:parameter"``. Recorded here rather than inferred, so an
 #: experimental surface is a written decision.
@@ -174,22 +165,9 @@ def _render_default(value: Any) -> Any:
     if value is inspect.Parameter.empty:
         return {"kind": "none"}
     if isinstance(value, float) and (value != value or value in (_INF, -_INF)):
-        # A NON-FINITE DEFAULT, rendered as a name rather than as a number.
-        #
-        # Two reasons, and the first is the one the repository already enforces
-        # everywhere else: `json.dumps` emits NaN and Infinity as the bare
-        # tokens `NaN` and `Infinity`, which no conforming JSON reader accepts
-        # -- `serialization.unwritable` refuses exactly this in a scientific
-        # record, and a snapshot claiming to be canonical JSON must not do what
-        # the records are forbidden from doing.
-        #
-        # The second is that `nan != nan`, so a raw NaN in the snapshot makes
-        # the pinned-vs-current comparison fail against an IDENTICAL API. That
-        # is how this was found.
         name = "nan" if value != value else ("inf" if value > 0 else "-inf")
         return {"kind": "literal", "type": "float", "non_finite": name}
     if value is None or isinstance(value, (bool, int, float, str)):
-        # bool before int matters for the type name, and json handles the rest.
         return {"kind": "literal", "type": type(value).__name__, "value": value}
     if isinstance(value, enum.Enum):
         return {"kind": "enum", "type": type(value).__name__, "member": value.name}
@@ -197,9 +175,6 @@ def _render_default(value: Any) -> Any:
         return {"kind": "immutable_container", "type": type(value).__name__,
                 "size": len(value)}
     if isinstance(value, (list, dict, set)):
-        # A MUTABLE default is worth flagging in the snapshot itself, not only
-        # in a review: it is the classic shared-state bug, and freezing one
-        # would freeze the bug.
         return {"kind": "MUTABLE_DEFAULT", "type": type(value).__name__,
                 "size": len(value)}
     if value is dataclasses.MISSING:
@@ -208,6 +183,24 @@ def _render_default(value: Any) -> Any:
 
 
 def _signature_of(value: Any) -> dict[str, Any] | None:
+    # Enum construction is public as ``EnumClass(value)``/member lookup, but
+    # ``inspect.signature(EnumClass)`` exposes the private EnumType.__call__
+    # implementation. CPython 3.11 reports the metaclass factory signature
+    # (value, names, module, qualname, ...), while 3.12 reports ``*values`` for
+    # an already-created Enum subclass. That interpreter detail is not a Forge
+    # compatibility event. Preserve the historical frozen semantic shape.
+    if inspect.isclass(value) and issubclass(value, enum.Enum):
+        return {
+            "parameters": [
+                {
+                    "name": "values",
+                    "kind": "var_positional",
+                    "has_default": False,
+                    "default": {"kind": "none"},
+                }
+            ],
+            "required": [],
+        }
     try:
         signature = inspect.signature(value)
     except (TypeError, ValueError):
@@ -230,12 +223,7 @@ def _signature_of(value: Any) -> dict[str, Any] | None:
 
 
 def _factory_name(factory: Any) -> str | None:
-    """A dataclass default factory, identified without running it.
-
-    ``module:qualname`` rather than ``repr``, which for a class embeds a memory
-    address and would make the snapshot non-deterministic. Returns None when
-    there is no factory, which is the common case.
-    """
+    """A dataclass default factory, identified without running it."""
     if factory is dataclasses.MISSING:
         return None
     module = getattr(factory, "__module__", "?")
@@ -248,8 +236,6 @@ def _factory_name(factory: Any) -> str | None:
 def _dataclass_fields(value: Any) -> list[dict[str, Any]] | None:
     if not (inspect.isclass(value) and dataclasses.is_dataclass(value)):
         return None
-    # Declaration order, NOT sorted: for a dataclass the order IS the
-    # positional-construction contract, so sorting here would hide a reorder.
     return [
         {
             "name": field.name,
@@ -257,13 +243,6 @@ def _dataclass_fields(value: Any) -> list[dict[str, Any]] | None:
             or field.default_factory is not dataclasses.MISSING,  # type: ignore[misc]
             "default": _render_default(field.default),
             "has_default_factory": field.default_factory is not dataclasses.MISSING,  # type: ignore[misc]
-            # WHICH factory, not merely that there is one. `has_default_factory`
-            # alone is a hole: changing `default_factory=tuple` to
-            # `default_factory=list` changes what every caller who omits the
-            # argument receives -- mutable instead of immutable, a different
-            # type in an isinstance check -- and would not move the frozen
-            # digest. Recorded STATICALLY by name rather than by calling the
-            # factory: taking a snapshot must not execute package code.
             "default_factory": _factory_name(field.default_factory),
             "init": field.init,
         }
@@ -274,16 +253,12 @@ def _dataclass_fields(value: Any) -> list[dict[str, Any]] | None:
 def _enum_members(value: Any) -> list[dict[str, Any]] | None:
     if not (inspect.isclass(value) and issubclass(value, enum.Enum)):
         return None
-    # Definition order: an enum's member order is part of its contract for
-    # iteration, and a reorder is a change worth failing on.
     return [{"name": member.name, "value": member.value} for member in value]
 
 
 def _exception_bases(value: Any) -> list[str] | None:
     if not (inspect.isclass(value) and issubclass(value, BaseException)):
         return None
-    # The full MRO by qualified name, so a base swapped anywhere in the chain
-    # is visible -- `except SomeBase` is a contract a caller writes against.
     return [
         f"{klass.__module__}.{klass.__qualname__}"
         for klass in value.__mro__
@@ -292,17 +267,11 @@ def _exception_bases(value: Any) -> list[str] | None:
 
 
 def _union_members(value: Any) -> list[str] | None:
-    """Member type names of a union alias, sorted, or ``None``.
-
-    Sorted because ``A | B`` and ``B | A`` are the same type and must produce
-    the same snapshot; qualified so two same-named classes from different
-    modules do not collapse.
-    """
+    """Member type names of a union alias, sorted, or ``None``."""
     import typing
-
-    origin = typing.get_origin(value)
     import types as _types
 
+    origin = typing.get_origin(value)
     if origin is not typing.Union and not isinstance(value, _types.UnionType):
         return None
     return sorted(
@@ -312,6 +281,12 @@ def _union_members(value: Any) -> list[str] | None:
 
 
 def _kind_of(value: Any) -> str:
+    # A union is one public semantic kind even though CPython represents it as
+    # UnionType, _UnionGenericAlias, or another private runtime class depending
+    # on interpreter version and spelling. Recording that private type would
+    # make an unchanged API move its frozen digest on a Python upgrade.
+    if _union_members(value) is not None:
+        return "Union"
     if inspect.isclass(value):
         if issubclass(value, BaseException):
             return "exception"
@@ -341,9 +316,6 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
         entry["classification"] = "EXPERIMENTAL"
         entry["experimental_because"] = why
 
-    # DEPRECATED overrides FREEZE but never EXPERIMENTAL: deprecating something
-    # that was never promised is not a compatibility event, and saying so would
-    # imply the Core had made a promise it is now withdrawing.
     record = DEPRECATED_SYMBOLS.get((module_name, name))
     if record is not None and entry["classification"] == "FREEZE":
         entry["classification"] = "DEPRECATED"
@@ -355,20 +327,18 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
             "removal": record["removal"],
         }
 
-    # A type alias is a contract too: `ScientificValue` naming a different set
-    # of types is a change every annotation against it inherits. Recorded by
-    # MEMBER NAME rather than by repr, which would otherwise carry module paths
-    # and vary with how the union was spelled.
+    # Union membership is the contract. Its CPython implementation module is
+    # not: PEP-604 unions report ``types`` on 3.11/3.12 while legacy typing
+    # aliases report ``typing``. Canonicalize both to the historical public
+    # spelling so an interpreter upgrade cannot look like an API change.
     alias_members = _union_members(value)
     if alias_members is not None:
         entry["union_members"] = alias_members
-    # `__module__` is where the object is DEFINED; `module` above is where it is
-    # exported from. Both are recorded: a symbol that starts being re-exported
-    # from somewhere else keeps its canonical path, and one whose definition
-    # moves is visible here.
-    defined_in = getattr(value, "__module__", None)
-    if defined_in:
-        entry["defined_in"] = defined_in
+        entry["defined_in"] = "typing"
+    else:
+        defined_in = getattr(value, "__module__", None)
+        if defined_in:
+            entry["defined_in"] = defined_in
 
     signature = _signature_of(value)
     if signature is not None:
@@ -392,22 +362,9 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
     return entry
 
 
-def build(*, modules: tuple[str, ...] = CANONICAL_MODULES) -> dict[str, Any]:
-    """The whole public surface -- frozen AND experimental -- canonically ordered.
-
-    Both populations are described, because a change to an experimental symbol
-    should still be VISIBLE. They are kept in separate digests so that
-    visibility never turns into a promise: see :func:`frozen_digest`.
-
-    ``modules`` defaults to the V1 canonical modules, so the V1 snapshot is
-    unchanged; pass :data:`V2_CANONICAL_MODULES` for the Core V2 surface.
-    """
-    modules = tuple(modules)
-    unknown = [m for m in modules if m not in V2_CANONICAL_MODULES]
-    if unknown:
-        raise ValueError(f"not a canonical Core module: {unknown}")
+def build() -> dict[str, Any]:
     symbols = []
-    for module_name in modules:
+    for module_name in CANONICAL_MODULES:
         module = importlib.import_module(module_name)
         for name in sorted(getattr(module, "__all__", ()) or ()):
             symbols.append(describe(module_name, name, getattr(module, name)))
@@ -416,7 +373,7 @@ def build(*, modules: tuple[str, ...] = CANONICAL_MODULES) -> dict[str, Any]:
     experimental = [e for e in symbols if e["classification"] != "FREEZE"]
     return {
         "schema": SCHEMA,
-        "modules": list(modules),
+        "modules": list(CANONICAL_MODULES),
         "symbol_count": len(symbols),
         "frozen_count": len(frozen),
         "experimental_count": len(experimental),
@@ -425,19 +382,7 @@ def build(*, modules: tuple[str, ...] = CANONICAL_MODULES) -> dict[str, Any]:
 
 
 def frozen_only(snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
-    """The FROZEN surface alone -- the compatibility contract.
-
-    Experimental symbols are excluded rather than merely labelled, so that
-    adding, changing or removing one cannot move the frozen digest. If they
-    shared a digest, every edit to the `engcore.studies` example would look
-    like a compatibility event, and the day somebody stopped believing the
-    alarm is the day a real one goes unnoticed.
-    """
     payload = build() if snapshot is None else snapshot
-    # DEPRECATED is IN. Deprecation says a contract will end, not that it has
-    # ended -- and a symbol that left the frozen surface on being deprecated
-    # could then be REMOVED without moving the frozen digest, which is the one
-    # event this digest exists to catch.
     frozen = [
         e for e in payload["symbols"]
         if e["classification"] in ("FREEZE", "DEPRECATED")
@@ -451,14 +396,7 @@ def frozen_only(snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
 
 
 def canonical_bytes(snapshot: dict[str, Any] | None = None) -> bytes:
-    """The snapshot as bytes two processes must agree on exactly."""
     payload = build() if snapshot is None else snapshot
-    # `allow_nan=False` is the guard, not a formality: without it a non-finite
-    # default anywhere in the API would silently emit the tokens `NaN` or
-    # `Infinity`, and the "canonical JSON" this function promises would be
-    # unreadable by a conforming parser. `_render_default` converts non-finite
-    # floats to names before they reach here; this raises if one ever slips
-    # past, rather than writing a file nobody can read back.
     return json.dumps(
         payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True,
         allow_nan=False,
@@ -466,34 +404,22 @@ def canonical_bytes(snapshot: dict[str, Any] | None = None) -> bytes:
 
 
 def digest(snapshot: dict[str, Any] | None = None) -> str:
-    """Digest of the WHOLE surface, frozen and experimental together."""
     return hashlib.sha256(canonical_bytes(snapshot)).hexdigest()
 
 
 def frozen_digest(snapshot: dict[str, Any] | None = None) -> str:
-    """Digest of the frozen contract alone. This is the compatibility number."""
     return hashlib.sha256(canonical_bytes(frozen_only(snapshot))).hexdigest()
 
 
 if __name__ == "__main__":  # pragma: no cover - a tool entry point
     import sys
 
-    surface = V2_CANONICAL_MODULES if "--v2" in sys.argv else CANONICAL_MODULES
     if "--frozen-digest" in sys.argv:
-        print(frozen_digest(build(modules=surface)))
+        print(frozen_digest())
     elif "--digest" in sys.argv:
-        print(digest(build(modules=surface)))
+        print(digest())
     else:
-        # PRETTY, not canonical. The pinned files exist to be READ in review --
-        # a one-line 345 kB blob is not reviewable, and a contract nobody can
-        # read is not a contract. Nothing is lost: every comparison in the test
-        # suite runs through `canonical_bytes`, so the on-disk formatting
-        # cannot drift a check and cannot fake a pass either. The two --digest
-        # flags above stay canonical, because those ARE the bytes.
-        full = build(modules=surface)
-        payload = frozen_only(full) if "--frozen" in sys.argv else full
+        payload = frozen_only() if "--frozen" in sys.argv else build()
         text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True,
                           allow_nan=False)
-        # Written as bytes with explicit LF: on Windows a text-mode write turns
-        # every newline into CRLF, and these files are byte-pinned elsewhere.
         sys.stdout.buffer.write((text + chr(10)).encode("utf-8"))

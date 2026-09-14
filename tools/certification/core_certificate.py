@@ -82,7 +82,7 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.0.0"
+TOOL_VERSION = "2.1.0"
 
 EXCLUDED_DIR_PARTS = frozenset({"__pycache__"})
 EXCLUDED_SUFFIXES = frozenset({".pyc", ".pyo"})
@@ -90,12 +90,94 @@ EXCLUDED_SUFFIXES = frozenset({".pyc", ".pyo"})
 
 @dataclass(frozen=True)
 class ScopeArea:
-    """One named part of what is certified, and the argument for including it."""
+    """One named part of what is certified, and the argument for including it.
+
+    ``file_reasons`` is for an area where one sentence for the whole area is not
+    enough, because each file is in for its own reason. When it is non-empty the
+    builder requires the files the patterns enumerate and the files given a
+    reason to be **the same set**: a file that appears under a glob without a
+    reason is refused rather than certified silently, and a reason for a file
+    that no longer exists is refused rather than left describing nothing.
+    """
 
     name: str
     classification: str
     patterns: tuple[str, ...]
     why: str
+    file_reasons: tuple[tuple[str, str], ...] = ()
+
+
+#: The certification control plane: the code that decides what "certificate
+#: valid" MEANS, as distinct from the code a certificate is about.
+#:
+#: Without this area a change to the verifier changed the meaning of PASS while
+#: the certified manifest stayed byte-identical, so a certificate could keep
+#: verifying under a verifier it was never produced by. With it, the verifier,
+#: the workflows that run it, the self-checks the certificate child runs, and
+#: every helper they load are pinned by the certificate they validate.
+#:
+#: The boundary is narrow on purpose. It is not ``tools/**`` or ``.github/**``:
+#: a file is in only when an edit to it can turn a failing certificate, a
+#: skipped gate or an incomplete mutation population into a PASS. Each file
+#: carries its own reason, and ``tools/certification/*.py`` is matched by glob
+#: so a new certification module cannot be added outside the plane: the
+#: builder refuses it until it has a reason here.
+#:
+#: Not self-referential: ``certification/current_core_v2.json`` is the output
+#: of this plane and is never matched by it, so no fixed point is needed.
+CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
+    (".github/workflows/recertify-hardened-core.yml",
+     "defines the source gates, the evidence the certify job consumes, the "
+     "official-builder invocation and the certificate-child checks. Removing "
+     "a gate from certify's needs, or a step from a gate, changes what a "
+     "certificate attests without touching any Python"),
+    (".github/workflows/tests.yml",
+     "decides which pull requests delegate assurance to recertification and "
+     "what the certificate-child job runs. A narrower classifier call or a "
+     "dropped child check lets a core change merge on the ordinary suite"),
+    ("benchmarks/core_freeze_v1/audit/reproduce.py",
+     "loaded by core_freeze.py through importlib to compute the live contract "
+     "facts the freeze self-check compares against the stored manifest; it is "
+     "a helper of the verifier, not a benchmark"),
+    ("tests/test_core_certificate.py",
+     "holds the certificate self-checks the certificate child executes. A "
+     "self-check that no longer asserts would still be reported as passed"),
+    ("tests/test_core_freeze_manifest.py",
+     "holds the freeze self-checks the certificate child executes, for the "
+     "same reason as the certificate self-checks"),
+    ("tools/__init__.py",
+     "executed on every import of tools.certification, before any verifier "
+     "code runs; an import-time side effect here could replace a verifier"),
+    ("tools/certification/__init__.py",
+     "package initialisation executed before every certification module"),
+    ("tools/certification/assert_clean_tree.py",
+     "the per-gate proof that a source gate did not modify, add or delete a "
+     "repository file; a weaker check lets a gate pass on a mutated checkout "
+     "while certify reads a fresh one"),
+    ("tools/certification/branch_policy.py",
+     "states the merge policy the certificate child's checks rely on and "
+     "reports whether the repository enforces it"),
+    ("tools/certification/certificate_lineage.py",
+     "binds a certificate child to its exact parent and to the certify run "
+     "that produced it; without it a stale or hand-assembled certificate with "
+     "matching bytes verifies"),
+    ("tools/certification/core_certificate.py",
+     "the builder and verifier: the digest algorithm, this scope table and "
+     "the definition of a verifying certificate"),
+    ("tools/certification/core_freeze.py",
+     "the Core Freeze V1 verifier the freeze self-checks call, which itself "
+     "calls verify_certificate"),
+    ("tools/certification/hardening_assurance.py",
+     "builds the assurance record from the gates' downloaded evidence and "
+     "re-validates it on the child; it is what turns job results into claims"),
+    ("tools/certification/mutation_population.py",
+     "the canonical formal mutation population, the shard rule and the "
+     "coverage proof; a wrong union with the right count would certify a "
+     "mutation family that never ran"),
+    ("tools/certification/recertification_scope.py",
+     "the single classifier deciding which changes require recertification "
+     "and which self-checks are deferred to the certificate child"),
+)
 
 
 #: What V2 certifies, and why each part is in.
@@ -163,17 +245,6 @@ SCOPE: tuple[ScopeArea, ...] = (
         ),
     ),
     ScopeArea(
-        name="routed_uncertainty",
-        classification="CORE_CERTIFIED",
-        patterns=("src/engcore/hybrid_uq/**/*.py",),
-        why=(
-            "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The "
-            "local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, "
-            "and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a "
-            "silent edit here turns a refusal into a precise-looking number"
-        ),
-    ),
-    ScopeArea(
         name="harness",
         classification="HARNESS",
         patterns=(
@@ -190,6 +261,40 @@ SCOPE: tuple[ScopeArea, ...] = (
             "so the suites are pinned alongside the runner"
         ),
     ),
+    ScopeArea(
+        name="certification_control",
+        classification="CERTIFICATION_CONTROL",
+        patterns=(
+            ".github/workflows/recertify-hardened-core.yml",
+            ".github/workflows/tests.yml",
+            "benchmarks/core_freeze_v1/audit/reproduce.py",
+            "tests/test_core_certificate.py",
+            "tests/test_core_freeze_manifest.py",
+            "tools/__init__.py",
+            "tools/certification/*.py",
+        ),
+        why=(
+            "the certification control plane: the verifier, the workflows that "
+            "run it, the self-checks the certificate child executes and the "
+            "helpers they load. A certificate is only as meaningful as the "
+            "code that says it verifies, so that code is pinned by the "
+            "certificate it validates. Each file states its own reason"
+        ),
+        file_reasons=CERTIFICATION_CONTROL_FILES,
+    ),
+    ScopeArea(
+        name="runtime_dependencies",
+        classification="RUNTIME_ENVIRONMENT",
+        patterns=("pyproject.toml",),
+        why=(
+            "the dependency declaration every source gate installs from "
+            "(pip install -e .[dev,mcp,oracles]) and the pytest configuration "
+            "every suite runs under. The assurance record's pip-freeze digests "
+            "say what was resolved; this pins what was asked for, so a "
+            "dependency or test-configuration edit cannot ride on a "
+            "certificate measured under the previous one"
+        ),
+    ),
 )
 
 #: Named here rather than left implicit, because a reader's first question about
@@ -202,11 +307,27 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
     ("src/engcore/mcp/**", "the product boundary: a consumer of the core"),
     ("src/engcore/design/**, sria/**, systems/**", "applications built on the core"),
     ("src/engcore/uq/**", "representation only; it computes nothing a verdict rests on"),
-    ("tests/** (except the harness area)",
-     "assurance for everything above, not part of what is certified"),
-    ("benchmarks/**, experiments/**, certification/**",
+    ("tests/** (except the harness area and the two self-check modules)",
+     "assurance for everything above, not part of what is certified. They "
+     "still trigger recertification (tools/certification/recertification_scope.py), "
+     "because the gates' results are claims about them"),
+    ("tests/conftest.py",
+     "labels execution tiers only. The certificate child does not trust it to "
+     "run the self-checks: it requires every deferred self-check to be "
+     "reported PASSED in JUnit, so a hook that skipped one fails the child"),
+    ("benchmarks/** (except the freeze probe), experiments/**, certification/**",
      "measurements, frozen artefacts, and the certificate itself — a "
      "certificate whose scope contained its own bytes would need a fixed point"),
+    (".github/** (except the two certification workflows), tools/** (except "
+     "tools/__init__.py and tools/certification/*.py)",
+     "repository automation that does not decide whether a certificate "
+     "verifies. .github/workflows/trust-mutations.yml in particular is an "
+     "advisory run of a population the recertify workflow re-executes itself"),
+    ("requirements.txt, Dockerfile",
+     "not what the gates install from: every gate runs pip install -e on "
+     "pyproject.toml, and the Dockerfile copies requirements.txt without "
+     "installing it. The reproduce image runs on pushes to main, never in "
+     "certification"),
 )
 
 
@@ -300,6 +421,7 @@ def build_manifest(
                 f"scope area {area.name!r} matched no files under {root}; an "
                 f"area that certifies nothing is a silent hole in the scope"
             )
+        _require_file_reasons(area, relatives)
         files = {rel: file_digest(root / rel) for rel in relatives}
         areas[area.name] = {
             "classification": area.classification,
@@ -309,6 +431,8 @@ def build_manifest(
             "digest": area_digest(files),
             "files": files,
         }
+        if area.file_reasons:
+            areas[area.name]["file_reasons"] = dict(area.file_reasons)
     return {
         "areas": areas,
         "file_count": sum(a["file_count"] for a in areas.values()),
@@ -316,6 +440,87 @@ def build_manifest(
             {name: a["digest"] for name, a in areas.items()}
         ),
     }
+
+
+def _require_file_reasons(area: ScopeArea, relatives: Sequence[str]) -> None:
+    """Refuse an area whose per-file reasons and enumerated files disagree."""
+    if not area.file_reasons:
+        return
+    reasons = dict(area.file_reasons)
+    if len(reasons) != len(area.file_reasons):
+        raise CertificationError(
+            f"scope area {area.name!r} gives two reasons for one file"
+        )
+    unexplained = sorted(set(relatives) - set(reasons))
+    stale = sorted(set(reasons) - set(relatives))
+    empty = sorted(path for path, why in reasons.items() if not why.strip())
+    if unexplained or stale or empty:
+        raise CertificationError(
+            f"scope area {area.name!r} requires a reason for every file it "
+            f"certifies: unexplained {unexplained}, reasons for files it does "
+            f"not enumerate {stale}, empty reasons {empty}. A file in the "
+            f"control plane without a reason is a file nobody decided to trust"
+        )
+
+
+def scope_table(scope: Sequence[ScopeArea] | None = None) -> dict[str, dict[str, Any]]:
+    """What decides coverage, per area: its classification and its patterns.
+
+    Reasons are deliberately not part of it. A reason is prose about coverage;
+    the patterns ARE the coverage.
+    """
+    return {
+        area.name: {
+            "classification": area.classification,
+            "patterns": list(area.patterns),
+        }
+        for area in (SCOPE if scope is None else scope)
+    }
+
+
+def scope_problems(
+    certificate: Mapping[str, Any], scope: Sequence[ScopeArea] | None = None
+) -> list[str]:
+    """Why a stored certificate was not written under ``scope`` (default :data:`SCOPE`).
+
+    A certificate is verified against the patterns it recorded, which is right
+    for reading an old certificate and wrong for trusting one: a certificate
+    written before an area existed verifies byte-for-byte while saying nothing
+    about that area. This names the difference so a verifier can refuse it.
+    Both the manifest and ``scope.in`` are compared, because either alone can
+    be edited to agree with the table while the other does not.
+    """
+    expected = scope_table(scope)
+    problems: list[str] = []
+    manifest_areas = (certificate.get("manifest") or {}).get("areas") or {}
+    recorded = {
+        name: {
+            "classification": stored.get("classification"),
+            "patterns": list(stored.get("patterns") or ()),
+        }
+        for name, stored in manifest_areas.items()
+    }
+    declared = {
+        str(entry.get("area")): {
+            "classification": entry.get("classification"),
+            "patterns": list(entry.get("patterns") or ()),
+        }
+        for entry in ((certificate.get("scope") or {}).get("in") or ())
+    }
+    for label, actual in (("manifest.areas", recorded), ("scope.in", declared)):
+        missing = sorted(set(expected) - set(actual))
+        extra = sorted(set(actual) - set(expected))
+        changed = sorted(
+            name for name in set(expected) & set(actual)
+            if expected[name] != actual[name]
+        )
+        if missing or extra or changed:
+            problems.append(
+                f"certificate {label} was not written under the current scope: "
+                f"missing areas {missing}, areas no longer in scope {extra}, "
+                f"areas whose classification or patterns differ {changed}"
+            )
+    return problems
 
 
 def v1_compatible_core_digest(root: pathlib.Path) -> str:
@@ -449,6 +654,11 @@ def build_certificate(
                     "classification": area.classification,
                     "patterns": list(area.patterns),
                     "why": area.why,
+                    **(
+                        {"file_reasons": dict(area.file_reasons)}
+                        if area.file_reasons
+                        else {}
+                    ),
                 }
                 for area in SCOPE
             ],
@@ -558,6 +768,7 @@ def verify_certificate(
     *,
     require_clean: bool = True,
     require_commit: bool = True,
+    require_current_scope: bool = True,
 ) -> VerificationResult:
     """Compare the tree at ``root`` against a **stored** certificate.
 
@@ -568,7 +779,11 @@ def verify_certificate(
 
     Files are enumerated from the certificate's recorded patterns rather than
     from :data:`SCOPE`, so a certificate written under an older scope is checked
-    against the scope it was written under.
+    against the scope it was written under -- and, unless
+    ``require_current_scope`` is false, then REFUSED for not being written under
+    the current one. Byte agreement over an old scope is agreement about less
+    than the verifier now certifies; that is a diagnosis, not a verification.
+    The comparison is against the :data:`SCOPE` table, never against the tree.
     """
     problems: list[str] = []
     schema = str(certificate.get("schema", ""))
@@ -588,6 +803,8 @@ def verify_certificate(
     stored_areas: Mapping[str, Any] = manifest.get("areas") or {}
     if not stored_areas:
         problems.append("certificate carries no manifest areas")
+    if require_current_scope:
+        problems.extend(scope_problems(certificate))
 
     drifts: list[AreaDrift] = []
     actual_area_digests: dict[str, str] = {}
@@ -719,6 +936,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             "is outside certified scope"
         ),
     )
+    parser.add_argument(
+        "--any-scope",
+        action="store_true",
+        help=(
+            "diagnose a certificate written under an older scope table without "
+            "refusing it for that reason. Never used by CI: a certificate that "
+            "only verifies with this flag does not certify the current scope"
+        ),
+    )
     args = parser.parse_args(argv)
 
     root = repo_root(pathlib.Path.cwd() / "x")
@@ -753,6 +979,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             load_certificate(certificate_path),
             require_clean=not args.allow_dirty,
             require_commit=args.require_commit,
+            require_current_scope=not args.any_scope,
         )
         print(result.render())
         if not args.require_commit:

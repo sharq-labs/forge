@@ -1,336 +1,369 @@
 {
   "assurance": {
-    "core_v2": {
-      "added_module": [
-        "engcore.hybrid_uq"
+    "control_plane": {
+      "area": "certification_control",
+      "digest": "1f2f416b31d53e816005f7d3d1017f129f76ca0742d33e4db9b17df66ad7729d",
+      "executed_certified_bytes_match_source": true,
+      "executed_merge_preview_commit": "39657ae6b9e9674ff812170686adde6a513d96de",
+      "file_count": 15
+    },
+    "environment": {
+      "certificate_builder_platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "dependency_manifest": {
+        "path": "pyproject.toml",
+        "sha256": "957fff8ca0ec8d312d91d58d2364b1567629eb6daaae37aae2cbeb340fbc2386"
+      },
+      "execution_model": "parallel_github_actions_jobs",
+      "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
+      "ngspice": "ngspice-42 : Circuit level simulation program",
+      "pip_freeze_3_11_sha256": "2f6e2ef92f18990306b54cff9beba9dc4e747525f0041697896ac4238d31724c",
+      "pip_freeze_3_12_sha256": "5b82e88bf5c971c693c01fd8fe51ac2bddc8e422d342c6684da2ac73287af7d5",
+      "python_3_11": "Python 3.11.16",
+      "python_3_12": "Python 3.12.14",
+      "runner_os": "Linux",
+      "schema": "forge.certification_environment/3",
+      "source_commit": "7025852e09857c0eee9fbafc4648160520343953",
+      "workflow": ".github/workflows/recertify-hardened-core.yml"
+    },
+    "execution_model": "parallel_gates_then_certificate",
+    "formal_guard_mutations": {
+      "claim": "Fresh execution of tests/mutation_guards.py on the source commit, partitioned by the sharding rule. Each shard re-ran the unmutated control before its mutations. The certify job re-derived every shard's verdicts from its downloaded transcript and proved the shards cover the canonical population exactly once",
+      "coverage": {
+        "every_selected_mutation_killed": true,
+        "pairwise_disjoint": true,
+        "union_equals_population": true,
+        "unknown_ids": []
+      },
+      "definitions_sha256": "c607347e9d87e834cd23552908bff6e2dd34665a9c63fa0d627b084f2f21438f",
+      "expected_population": 79,
+      "harness": "tests/mutation_guards.py",
+      "identity_rule": "population_sha256 = sha256('\\n'.join(ids) + '\\n') over MUTATIONS ids in declaration order. Order is bound because shard membership is position % shard_count",
+      "ids": [
+        "G1a",
+        "G1b",
+        "G1c",
+        "G1e",
+        "G1f",
+        "G8a",
+        "G8b",
+        "G8c",
+        "G1d",
+        "G2a",
+        "G2e",
+        "G2f",
+        "G2g",
+        "G2b",
+        "G2c",
+        "G2d",
+        "G3a",
+        "G3b",
+        "G4a",
+        "G4b",
+        "G5a",
+        "G6a",
+        "G6b",
+        "G7a",
+        "G9a",
+        "G9b",
+        "G9c",
+        "G12a",
+        "G12b",
+        "G12c",
+        "G12d",
+        "G11a",
+        "G11b",
+        "G11c",
+        "G10a",
+        "G10b",
+        "G10c",
+        "G8d",
+        "G8e",
+        "G7b",
+        "G13a",
+        "G13b",
+        "G13c",
+        "G13d",
+        "G14a",
+        "G14b",
+        "G14c",
+        "G14d",
+        "G14e",
+        "G15a",
+        "G15b",
+        "G15c",
+        "G16a",
+        "G16b",
+        "G16c",
+        "G17a",
+        "G17b",
+        "G18a",
+        "G19a",
+        "G19b",
+        "G20a",
+        "G20b",
+        "G21a",
+        "G21b",
+        "G21c",
+        "G22a",
+        "G22b",
+        "G22c",
+        "G22d",
+        "G24a",
+        "G24b",
+        "G25a",
+        "G25b",
+        "G25c",
+        "G25d",
+        "G24c",
+        "G26a",
+        "G26b",
+        "G26c"
       ],
-      "api_design": "docs/CORE_V2_API_DESIGN.md",
-      "isolated_wheel_smoke": true,
-      "round": "Core V2 -- Scalable Hybrid Uncertainty Quantification (additive)",
-      "v1_frozen_api_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
-      "v1_frozen_symbol_count": 194,
-      "v2_baseline": "7519aee559750f51bfc58aea12ab29ec199743f4",
-      "v2_frozen_api_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb",
-      "v2_frozen_symbol_count": 221,
-      "wheel_v1_parity": "MATCH",
-      "wheel_v2_parity": "MATCH"
-    },
-    "harness_identity": {
-      "files": {
-        "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
-        "tests/test_core_guards.py": "658db9ee95115d83e470b4ff4a41c9ae55be1c773e0f8f1ede0487d4eddac342",
-        "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
-        "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
-        "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
-      },
-      "note": "'79/79 killed' is a statement about these exact bytes. The same sentence over a weakened suite would be worth nothing, so the runner and the four suites it runs each mutant against are pinned here and in the manifest's harness area."
-    },
-    "mutation": {
-      "certified_harness": {
-        "candidate_run_at": "3ca1c82 (src and the pinned harness files byte-identical to the V2 candidate)",
-        "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
-        "control": "GREEN",
-        "control_means": "the four TARGET suites run against an UNMUTATED copy of the tree. Without it a red result below could be the copy being broken rather than the mutation being caught",
-        "control_suites_passed": 470,
-        "in_the_formal_certificate": true,
-        "killed": 79,
-        "log": "benchmarks/core_v2_hybrid_uq/MUTATION_HARNESS_79.log",
-        "log_bytes": 34557,
-        "log_sha256": "72cf5ab8c597fcf792861ed03a0a872c5e6ffe80a70d4bd06988856e9244a1e8",
-        "runner": "tests/mutation_guards.py",
-        "survivor_ids": [],
-        "survivors": 0,
-        "total": 79,
-        "why_it_was_re_run": "The certified POPULATION changed: Core V2 adds src/engcore/hybrid_uq/** as the certified area routed_uncertainty, and src/engcore/api_snapshot.py gained the V2 surface. '79/79 killed' is re-earned on the V2 candidate rather than carried forward."
-      },
-      "core_v2_hd_matrix": {
-        "control": "GREEN",
-        "in_the_formal_certificate": false,
-        "killed": 10,
-        "runner": "benchmarks/core_v2_hybrid_uq/audit/hd_mutations.py",
-        "total": 10,
-        "why_not": "the certified 79 are pinned; V2 mutations are recorded beside them, never added"
-      },
-      "sprint10_api_stability_matrix": {
-        "command": "python -X utf8 benchmarks/core_api_stability/audit/mutations.py",
-        "control": "GREEN",
-        "in_the_formal_certificate": false,
-        "invalid_mutations": [
-          "PKG-1",
-          "PKG-2"
-        ],
-        "killed": 21,
-        "requested_total": 23,
-        "runner": "benchmarks/core_api_stability/audit/mutations.py",
-        "survivors": 0,
-        "two_were_mis_aimed": "SER-3 SURVIVED correctly on its first form -- it dropped a field from IDENTITY_FIELDS, which drives differences(), while the digest hashes _canonical(), so it did not do what its own description said. EXC-1 was STALE against a moved raise site and its property is about the exception ROOT anyway. Both retargeted; both now kill. Recorded rather than deleted.",
-        "why_not": "tests/mutation_guards.py is INSIDE certified scope and pinned, so a guard written this round cannot join MUTATIONS without invalidating the snapshot. Recorded separately and never added to the certified 79.",
-        "written": 21
-      },
-      "sprint9_runtime_families": {
-        "carried_forward_because": "NOT re-measured this round, and labelled rather than presented as fresh. The only Core SOURCE changes in Sprint 10 were removing a no-op `from __future__ import annotations` from engcore/scientific/__init__.py and adding src/engcore/api_snapshot.py, a new module nothing else imports. Neither touches the evidence, route, field/mesh, spatial-profile or runtime surfaces these families mutate; everything else this round is tests, benchmarks and documentation.",
-        "control": "GREEN",
-        "families": {
-          "PAR": 5,
-          "PERF-RT": 4
+      "population": 79,
+      "population_sha256": "082c42ded078ec5f54cc12be805fbfa4f6f893f36a693286d7f4c91113b26297",
+      "shard_count": 4,
+      "sharding_rule": "shard i runs ids at positions p where p % shard_count == i",
+      "shards": {
+        "0": {
+          "control": "GREEN",
+          "execution_log_sha256": "25be32aeb9fd55697dae40cb1230d850006a1e03f217380d9685f4fdbccaa492",
+          "killed_count": 20,
+          "selected_count": 20,
+          "selected_ids": [
+            "G1a",
+            "G1f",
+            "G1d",
+            "G2g",
+            "G3a",
+            "G5a",
+            "G9a",
+            "G12b",
+            "G11b",
+            "G10c",
+            "G13a",
+            "G14a",
+            "G14e",
+            "G16a",
+            "G17b",
+            "G20a",
+            "G21c",
+            "G22d",
+            "G25b",
+            "G26a"
+          ],
+          "selected_ids_sha256": "1e2c5806d2bdb73d0c2aca518f3db5f3b309ecb2dd205375c146a763593f29d1"
         },
-        "in_the_formal_certificate": false,
-        "killed": 9,
-        "not_applicable": [
-          "PAR-5",
-          "PAR-6"
-        ],
-        "note": "Sprint 9 runtime mutations. NOT part of the certified 79 and never added to it. PAR-5 and PAR-6 are recorded NOT APPLICABLE with their reasons rather than dropped: both target a process backend this round deliberately did not build.",
-        "re_measured_this_round": false,
-        "runner": "benchmarks/core_runtime_finalization/audit/mutations.py",
-        "stale": [],
-        "survivors": [],
-        "total": 9
-      },
-      "targeted_families": {
-        "carried_forward_because": "NOT re-measured this round, and labelled rather than presented as fresh. The only Core SOURCE changes in Sprint 10 were removing a no-op `from __future__ import annotations` from engcore/scientific/__init__.py and adding src/engcore/api_snapshot.py, a new module nothing else imports. Neither touches the evidence, route, field/mesh, spatial-profile or runtime surfaces these families mutate; everything else this round is tests, benchmarks and documentation.",
-        "control": "GREEN",
-        "families": {
-          "EI": {
-            "killed": 10,
-            "survivors": 0,
-            "total": 10,
-            "what": "evidence pairing integrity (Sprint 3)"
+        "1": {
+          "control": "GREEN",
+          "execution_log_sha256": "046e0cde758d7b274d48992150165e2af0da7dc4cfe26a69515d9ffae148e939",
+          "killed_count": 20,
+          "selected_count": 20,
+          "selected_ids": [
+            "G1b",
+            "G8a",
+            "G2a",
+            "G2b",
+            "G3b",
+            "G6a",
+            "G9b",
+            "G12c",
+            "G11c",
+            "G8d",
+            "G13b",
+            "G14b",
+            "G15a",
+            "G16b",
+            "G18a",
+            "G20b",
+            "G22a",
+            "G24a",
+            "G25c",
+            "G26b"
+          ],
+          "selected_ids_sha256": "c4e0f4728d76109cbfec0f370b383a1e91d1b52fb66b30d874186a44011d2834"
+        },
+        "2": {
+          "control": "GREEN",
+          "execution_log_sha256": "000c772ff8230e10834f477201de1cace8f94f8d4713763331db125d1356d2ce",
+          "killed_count": 20,
+          "selected_count": 20,
+          "selected_ids": [
+            "G1c",
+            "G8b",
+            "G2e",
+            "G2c",
+            "G4a",
+            "G6b",
+            "G9c",
+            "G12d",
+            "G10a",
+            "G8e",
+            "G13c",
+            "G14c",
+            "G15b",
+            "G16c",
+            "G19a",
+            "G21a",
+            "G22b",
+            "G24b",
+            "G25d",
+            "G26c"
+          ],
+          "selected_ids_sha256": "372e338f4d2d8a85af31d1311b71532292eaf24ca25933a792bdd0dcba69a645"
+        },
+        "3": {
+          "control": "GREEN",
+          "execution_log_sha256": "e0847de9d7945740950cf3e882aedc828fa35f418dc918939e59cfaa9a08a29f",
+          "killed_count": 19,
+          "selected_count": 19,
+          "selected_ids": [
+            "G1e",
+            "G8c",
+            "G2f",
+            "G2d",
+            "G4b",
+            "G7a",
+            "G12a",
+            "G11a",
+            "G10b",
+            "G7b",
+            "G13d",
+            "G14d",
+            "G15c",
+            "G17a",
+            "G19b",
+            "G21b",
+            "G22c",
+            "G25a",
+            "G24c"
+          ],
+          "selected_ids_sha256": "28353ed085b9b1f864d8e0d87c7744a4301a25aabda134526425b5d1dce78b6a"
+        }
+      }
+    },
+    "functional": {
+      "deferred_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "fast_python_3_11": {
+        "clean_tree_after_gate": true,
+        "gate": "fast311",
+        "gate_record_sha256": "cd5853d7caf1c3dfc8da9ec25bc8a1b5636188fb4bb91c776ccffddd969e6bb0",
+        "head_commit": "7025852e09857c0eee9fbafc4648160520343953",
+        "result": "success",
+        "suites": {
+          "dependency_guard": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "d5695f5732a4bfcba802dc2d0beb9afdf68bc38b871b47cbb82ed9065e3ccb44",
+            "skipped": 0,
+            "tests": 1
           },
-          "FM": {
-            "killed": 8,
-            "survivors": 0,
-            "total": 8,
-            "what": "field and mesh records (Sprint 4)"
-          },
-          "RI": {
-            "killed": 11,
-            "survivor_ids": [
-              "RI2b"
-            ],
-            "survivor_status": "KNOWN EQUIVALENT MUTANT. Proven equivalent in Sprint 3 by running the mutation in memory: the verdict gate already excludes a shared implementation, so removing the second check changes no reachable behaviour. Recorded as a survivor rather than excluded from the count",
-            "survivors": 1,
-            "total": 12,
-            "what": "route independence authority (Sprint 3)"
-          },
-          "SP": {
-            "killed": 10,
-            "survivors": 0,
-            "total": 10,
-            "what": "spatial profiles (Sprint 5)"
+          "fast": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "cda2d17690ae67af8281da713efc214466c22e69bad47fdfa4b97b8ff2fa7b80",
+            "skipped": 19,
+            "tests": 5548
           }
-        },
-        "in_the_formal_certificate": false,
-        "measured_in": "core_v2_recertification round",
-        "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families. Sprint 9 changed src/engcore/scientific (5 files) and src/engcore/execution is unchanged; none of the EI/RI/FM/SP families mutates a line this round touched, and all four were measured against code whose behaviour is unchanged -- every optimization is a same-answer transformation tested against the path it replaced.",
-        "re_measured_this_round": false,
-        "re_run_this_round": false
+        }
       },
-      "v1_thin_ridge_repair_matrix": {
-        "command": "python -X utf8 benchmarks/core_v1_thin_ridge_repair/audit/ridge_mutations.py --tree <scratch worktree>",
-        "control": "GREEN",
-        "in_the_formal_certificate": false,
-        "killed": 8,
-        "runner": "benchmarks/core_v1_thin_ridge_repair/audit/ridge_mutations.py",
-        "survivors": [],
-        "total": 8,
-        "why_not": "tests/mutation_guards.py is inside certified scope and pinned; RIDGE-1..8 are recorded separately and never added to the certified 79."
+      "fast_python_3_12": {
+        "clean_tree_after_gate": true,
+        "gate": "fast312",
+        "gate_record_sha256": "ec96da4b864ecd8ae69cd50d855222afa23fafd00152a71ebdb0e8cd2209f26c",
+        "head_commit": "7025852e09857c0eee9fbafc4648160520343953",
+        "result": "success",
+        "suites": {
+          "dependency_guard": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "86b0bcdfd738e039121b53d21fcbbf9ea88219ad6ca8b01b1e2abbe91b6c7907",
+            "skipped": 0,
+            "tests": 1
+          },
+          "fast": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "6261c2aff5ac608bad65e174668c526e3dbcff6598c28eafd50a91359c80828d",
+            "skipped": 19,
+            "tests": 5548
+          }
+        }
+      },
+      "note": "Each functional gate ran on the source commit in its own job and proved its checkout byte-identical to that commit afterwards. The listed self-checks read the previous certificate on a source commit, so they are deselected there and run -- and must each be reported PASSED -- on the certificate-only child.",
+      "scientific_python_3_12": {
+        "clean_tree_after_gate": true,
+        "gate": "scientific312",
+        "gate_record_sha256": "367998d566db960952ac41d704ddb92913c505979122d5413d64a0d889145dcb",
+        "head_commit": "7025852e09857c0eee9fbafc4648160520343953",
+        "result": "success",
+        "suites": {
+          "scientific": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "eceddafccc80f417c68eff8203b2845aacb97f2c791f2f35497cd4777eabaa84",
+            "skipped": 5,
+            "tests": 6087
+          }
+        }
       }
     },
-    "sprint10": {
-      "deprecated_symbol_count": 0,
-      "domain_boundary": "INTACT",
-      "domain_end_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
-      "domain_start_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
-      "experimental_symbol_count": 11,
-      "frozen_api_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
-      "frozen_symbol_count": 194,
-      "round": "Core Hygiene & API Stability",
-      "wheel_source_frozen_api_parity": "MATCH"
+    "lineage": {
+      "certificate_artifact": "hardened-core-assurance-7025852e09857c0eee9fbafc4648160520343953",
+      "certificate_parent": "7025852e09857c0eee9fbafc4648160520343953",
+      "certify_job": "certify",
+      "pull_request": 43,
+      "repository": "sharq-labs/forge",
+      "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
+      "source_commit": "7025852e09857c0eee9fbafc4648160520343953",
+      "source_gates": [
+        "fast311",
+        "fast312",
+        "scientific312",
+        "formal_mutations_0",
+        "formal_mutations_1",
+        "formal_mutations_2",
+        "formal_mutations_3",
+        "trust_mutations"
+      ],
+      "workflow": ".github/workflows/recertify-hardened-core.yml",
+      "workflow_run_attempt": 1,
+      "workflow_run_id": 34872324489
     },
-    "test_suites": {
-      "FAST": {
-        "command": "python -X utf8 -m pytest tests -n 4 -m not expensive and not campaign -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 5117,
-        "seconds": 98.9,
-        "skipped": 5,
-        "summary_line": "5117 passed, 5 skipped, 42 warnings in 98.42s (0:01:38)"
-      },
-      "FULL": {
-        "command": "python -X utf8 -m pytest tests -n 4 -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 5663,
-        "seconds": 142.4,
-        "skipped": 5,
-        "summary_line": "5663 passed, 5 skipped, 42 warnings in 141.90s (0:02:21)"
-      },
-      "api_snapshot_v1": {
-        "command": "python -X utf8 -m pytest tests/test_core_api_snapshot.py tests/test_core_freeze_policy.py tests/test_core_api_deprecation.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 51,
-        "seconds": 5.4,
-        "skipped": 0,
-        "summary_line": "51 passed in 4.80s"
-      },
-      "api_snapshot_v2": {
-        "command": "python -X utf8 -m pytest tests/test_core_v2_api_snapshot.py tests/test_core_v2_compatibility.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 12,
-        "seconds": 2.1,
-        "skipped": 0,
-        "summary_line": "12 passed in 1.48s"
-      },
-      "battery_regressions": {
-        "command": "python -X utf8 -m pytest tests/domains/battery -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 265,
-        "seconds": 15.2,
-        "skipped": 0,
-        "summary_line": "265 passed in 14.49s"
-      },
-      "certificate": {
-        "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 28,
-        "seconds": 6.4,
-        "skipped": 1,
-        "summary_line": "28 passed, 1 skipped in 5.86s"
-      },
-      "contract_guard": {
-        "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 305,
-        "seconds": 30.8,
-        "skipped": 0,
-        "summary_line": "305 passed, 7 warnings in 29.85s"
-      },
-      "dependency_layering": {
-        "command": "python -X utf8 -m pytest tests/test_core_api_layering.py tests/test_core_api_contracts.py tests/test_core_v2_compatibility.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 39,
-        "seconds": 17.1,
-        "skipped": 0,
-        "summary_line": "39 passed, 14 warnings in 16.10s"
-      },
-      "freeze_manifest_v1": {
-        "command": "python -X utf8 -m pytest tests/test_core_freeze_manifest.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 22,
-        "seconds": 3.7,
-        "skipped": 1,
-        "summary_line": "22 passed, 1 skipped in 3.15s"
-      },
-      "hybrid_uq_focused": {
-        "command": "python -X utf8 -m pytest tests/hybrid_uq -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 97,
-        "seconds": 18.7,
-        "skipped": 0,
-        "summary_line": "97 passed in 18.11s"
-      },
-      "identity": {
-        "command": "python -X utf8 -m pytest tests/test_evidence_pairing_integrity.py tests/hybrid_uq/test_hybrid_uq_records.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 58,
-        "seconds": 3.5,
-        "skipped": 0,
-        "summary_line": "58 passed in 2.76s"
-      },
-      "kinetics_regressions": {
-        "command": "python -X utf8 -m pytest tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 19,
-        "seconds": 1.4,
-        "skipped": 0,
-        "summary_line": "19 passed in 0.80s"
-      },
-      "serialization": {
-        "command": "python -X utf8 -m pytest tests/test_core_api_serialization.py tests/hybrid_uq/test_hybrid_uq_records.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 76,
-        "seconds": 6.9,
-        "skipped": 0,
-        "summary_line": "76 passed in 6.21s"
-      },
-      "tcr_regressions": {
-        "command": "python -X utf8 -m pytest tests/inference tests/hybrid_uq/test_hybrid_uq_tcr.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 156,
-        "seconds": 112.9,
-        "skipped": 0,
-        "summary_line": "156 passed in 112.20s (0:01:52)"
-      },
-      "v1_thin_ridge_regressions": {
-        "command": "python -X utf8 -m pytest tests/inference/test_grid_resolution_repair.py tests/inference/test_tcr_calibration.py tests/inference/test_tcr_heldout_uq.py tests/inference/test_reproducibility_and_evidence.py -q -p no:cacheprovider",
-        "errors": 0,
-        "exit_code": 0,
-        "failed": 0,
-        "green": true,
-        "passed": 80,
-        "seconds": 90.4,
-        "skipped": 0,
-        "summary_line": "80 passed in 89.79s (0:01:29)"
-      }
-    },
-    "test_suites_commit": "7876bd9f3e22db67c26f510b820719477a9c655d",
-    "v1_thin_ridge_repair": {
-      "baseline": "273bfff7d3d685d9e0bb62519795aeb47c05b027",
-      "errata": "benchmarks/core_v1_thin_ridge_repair/ERRATA.md",
-      "experimental_symbol_count": 11,
-      "frozen_api_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
-      "frozen_symbol_count": 194,
-      "kind": "correctness repair of frozen grid-resolution behaviour; no public API, signature, serialization or identity change",
-      "regression_matrix": "benchmarks/core_v1_thin_ridge_repair/REGRESSION_MATRIX.json",
-      "round": "Core V1 Certified Repair -- Thin-Ridge Posterior Resolution Guard",
-      "threshold": {
-        "protocol": "benchmarks/core_v1_thin_ridge_repair/THRESHOLD_PROTOCOL.json",
-        "selection": "benchmarks/core_v1_thin_ridge_repair/THRESHOLD_SELECTION.json",
-        "value": 9.210340371976184
-      },
-      "wheel_source_frozen_api_parity": "MATCH"
+    "policy": "Built by tools/certification/hardening_assurance.py from the evidence artifacts of every source gate for this source commit, after all of them succeeded, and embedded by the official certificate builder.",
+    "schema": "forge.core_hardening_assurance/3",
+    "source_commit": "7025852e09857c0eee9fbafc4648160520343953",
+    "source_tree": "8f7bdf879305d8c69556e3d82f584ed281099c97",
+    "trust_hardening_mutations": {
+      "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
+      "expected_population": 13,
+      "ids": [
+        "TRUST-A1",
+        "TRUST-A2",
+        "TRUST-A3",
+        "TRUST-A4",
+        "TRUST-A5",
+        "TRUST-M1",
+        "TRUST-M2",
+        "TRUST-R1",
+        "TRUST-R2",
+        "TRUST-R3",
+        "TRUST-I1",
+        "TRUST-I2",
+        "TRUST-C1"
+      ],
+      "invalid": 0,
+      "killed": 13,
+      "population": 13,
+      "population_sha256": "2af4890f3bf803274eb6d44270bf5e38faf4d2607a502a2008d25b364a169135",
+      "result_schema": "forge.trust_mutation_assurance/1",
+      "result_sha256": "b4bd19443a75fba0c800eca64b76982d89b9904db09e4d0bec51f85c07c43e34",
+      "script": "benchmarks/trust_hardening/audit/mutations.py",
+      "survived": 0
     }
   },
   "certification_id": "FORGE-CORE-V2",
@@ -353,25 +386,74 @@
   },
   "environment": {
     "packages": {
-      "numpy": "2.5.2",
-      "pint": "0.25.3",
+      "numpy": "2.5.3",
+      "pint": "0.26.1",
       "pytest": "9.1.1",
       "scipy": "1.18.1"
     },
-    "platform": "Windows-11-10.0.26200-SP0",
-    "python": "3.14.2"
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.14"
   },
   "generator": {
     "tool": "tools/certification/core_certificate.py",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "090b37d95ee13190231657ba0871354451a6639febf6e70e7797a75586044256",
+    "aggregate_digest": "37654bc1db4f4b23aec679b3d15c87a1355a79e9d67175f93761ea4c607bd8d7",
     "areas": {
+      "certification_control": {
+        "classification": "CERTIFICATION_CONTROL",
+        "digest": "1f2f416b31d53e816005f7d3d1017f129f76ca0742d33e4db9b17df66ad7729d",
+        "file_count": 15,
+        "file_reasons": {
+          ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
+          ".github/workflows/tests.yml": "decides which pull requests delegate assurance to recertification and what the certificate-child job runs. A narrower classifier call or a dropped child check lets a core change merge on the ordinary suite",
+          "benchmarks/core_freeze_v1/audit/reproduce.py": "loaded by core_freeze.py through importlib to compute the live contract facts the freeze self-check compares against the stored manifest; it is a helper of the verifier, not a benchmark",
+          "tests/test_core_certificate.py": "holds the certificate self-checks the certificate child executes. A self-check that no longer asserts would still be reported as passed",
+          "tests/test_core_freeze_manifest.py": "holds the freeze self-checks the certificate child executes, for the same reason as the certificate self-checks",
+          "tools/__init__.py": "executed on every import of tools.certification, before any verifier code runs; an import-time side effect here could replace a verifier",
+          "tools/certification/__init__.py": "package initialisation executed before every certification module",
+          "tools/certification/assert_clean_tree.py": "the per-gate proof that a source gate did not modify, add or delete a repository file; a weaker check lets a gate pass on a mutated checkout while certify reads a fresh one",
+          "tools/certification/branch_policy.py": "states the merge policy the certificate child's checks rely on and reports whether the repository enforces it",
+          "tools/certification/certificate_lineage.py": "binds a certificate child to its exact parent and to the certify run that produced it; without it a stale or hand-assembled certificate with matching bytes verifies",
+          "tools/certification/core_certificate.py": "the builder and verifier: the digest algorithm, this scope table and the definition of a verifying certificate",
+          "tools/certification/core_freeze.py": "the Core Freeze V1 verifier the freeze self-checks call, which itself calls verify_certificate",
+          "tools/certification/hardening_assurance.py": "builds the assurance record from the gates' downloaded evidence and re-validates it on the child; it is what turns job results into claims",
+          "tools/certification/mutation_population.py": "the canonical formal mutation population, the shard rule and the coverage proof; a wrong union with the right count would certify a mutation family that never ran",
+          "tools/certification/recertification_scope.py": "the single classifier deciding which changes require recertification and which self-checks are deferred to the certificate child"
+        },
+        "files": {
+          ".github/workflows/recertify-hardened-core.yml": "e3553a7791f0ea125b937a3e5657b6a54cf740d796a9a6d78415f94476ba0c86",
+          ".github/workflows/tests.yml": "8be60362b4977e01cefb925d27ccea2e8a3efd7f1bca5038f0b81d2f2129297b",
+          "benchmarks/core_freeze_v1/audit/reproduce.py": "40823bfb455ca06455b501f39b00fad2190107da08c72e27128ab555155970e2",
+          "tests/test_core_certificate.py": "7059dddd2561da65709b4e3b379b145f5c8a60325545f1bd895daca5c27539ab",
+          "tests/test_core_freeze_manifest.py": "d93add15d9e1a3b21d2b5316d95796d3cfa2937487be277987f9a9a3e33b9eae",
+          "tools/__init__.py": "8861d485b3cc33501966df3dada7c2e980beece7bd920fff7648a28b62e5eb42",
+          "tools/certification/__init__.py": "c67a1b43f0d35e62ff42e47a2ea61ada2047728d0ca223f4673be27429666a4e",
+          "tools/certification/assert_clean_tree.py": "efbb87867b52ee6ce196ee0affc63ba97232e632f358c05514e1e49cb1f2215d",
+          "tools/certification/branch_policy.py": "938441cab1927f5e570ce3cf60c1922f893caf731913cc550cd4192712e204c1",
+          "tools/certification/certificate_lineage.py": "0976d849d2f5ebb63769c11c1133d96ce475cd59557d56c3be7bdf15cf328d27",
+          "tools/certification/core_certificate.py": "9395bbc76c5be7e4c7b9fb4f572c241037ea74f75a589d878729b4f174d8f93b",
+          "tools/certification/core_freeze.py": "b5fb42b4136a6c407689bcd69d7e2223692857b5a99dd5048028d1e416285b9c",
+          "tools/certification/hardening_assurance.py": "969c7661a8c7465c00350ba29a8492646b81dc4163f8c16886f13e3abf0bc6e8",
+          "tools/certification/mutation_population.py": "de87e71a7af92087f2d939df8eea3431104b10c081c664303f90313c05022dad",
+          "tools/certification/recertification_scope.py": "3549a84817bb1cb6d17d4f1372121f34a220fda405a1abb628d23469617f9017"
+        },
+        "patterns": [
+          ".github/workflows/recertify-hardened-core.yml",
+          ".github/workflows/tests.yml",
+          "benchmarks/core_freeze_v1/audit/reproduce.py",
+          "tests/test_core_certificate.py",
+          "tests/test_core_freeze_manifest.py",
+          "tools/__init__.py",
+          "tools/certification/*.py"
+        ],
+        "why": "the certification control plane: the verifier, the workflows that run it, the self-checks the certificate child executes and the helpers they load. A certificate is only as meaningful as the code that says it verifies, so that code is pinned by the certificate it validates. Each file states its own reason"
+      },
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "1e2d6c83c9177b287a0c5dcb11c36af2b86ab495238d3f5e777a4a90ba7fc163",
-        "file_count": 55,
+        "digest": "93d67765183f5b80360bbf45ac7879e20147a0622a150cc59c07d860f27aa9b3",
+        "file_count": 62,
         "files": {
           "src/engcore/scientific/__init__.py": "f79cc0ab53915788875d632fcbc6a75a2f2822d5e3b01269e1a78e7b24367b1e",
           "src/engcore/scientific/capabilities.py": "64e3d4446c4ce4f3ecada93d379e6de5b8137c31a3a12f0c8aea446c19edac88",
@@ -380,6 +462,7 @@
           "src/engcore/scientific/composition/dependency.py": "ca7915ee0eae6df377225122741af8bde66a142ff5c7b86123096f343d1fd415",
           "src/engcore/scientific/composition/transfer.py": "d5769d12e80d269eada9d3a4e95ad75622243907ad5db23acd537ea2b41533bd",
           "src/engcore/scientific/consensus.py": "e5e76108bad39e486e43635db742d7d06e4ff553f0fb8ed8dc9d2aee44a0ba1a",
+          "src/engcore/scientific/conservation.py": "1470cc4cecc7d8e7c0e6b7bb7265668b01f361d47fe672432ee63206c69c3c9b",
           "src/engcore/scientific/errors.py": "9ccee17a7957aa047931373d8f1abfcc6b8cc1cf69e3908053106cc9fb4fc12a",
           "src/engcore/scientific/experiments/__init__.py": "d993fe342fca2fc35487fda4d21300b63dc902c7318d0e570b912cbe33db776e",
           "src/engcore/scientific/experiments/evaluation.py": "4b68561046349097ab7773ec779ad7ac2c54fda1e0a4909df461e5e2071b8da1",
@@ -393,6 +476,7 @@
           "src/engcore/scientific/fields/regions.py": "c7f88f9f552a839b4cab76608b47c2cad3e38edae5b2bc642f270a5418fd1af5",
           "src/engcore/scientific/fields/result.py": "b8bc595e5fa8ea4ce78684cd2c5ac62d6c474cdc7f31cdfbf4dc5071d913fe4c",
           "src/engcore/scientific/fields/transfer.py": "e4411c5927ba8d60bfe9d895c9f260f608833bcda0d7fb692babf84ef12407e6",
+          "src/engcore/scientific/independence_evidence.py": "e18851ec47ef0b0aa0f132b0a8e1f8bd0ba77dfa2b63f731299da6ae7883139f",
           "src/engcore/scientific/ir/__init__.py": "824b29e4eb8075ddf92c540c072c590bbee3097f7e7bb149f9c61e4373882fe0",
           "src/engcore/scientific/ir/conditions.py": "8090d33605902ad628cc24bd8c098f71ff29193bc318941506abb8d003f11aa9",
           "src/engcore/scientific/ir/constraints.py": "43917bc80d47f9eb6fa1f2792431fa281e134285984be158a5b969dcd44a90c2",
@@ -401,15 +485,20 @@
           "src/engcore/scientific/ir/problem.py": "73d867ec290895a54077e1676984a8c90d97ffa76ef5b0ab692a9a4b485d7d7c",
           "src/engcore/scientific/ir/values.py": "e0997d02183c3fdd5b3b075cf272dca8b7454939489e9c64d0742b55ef143751",
           "src/engcore/scientific/ir/variables.py": "813373ac17c62db3c51307b28d7a3d89f8bd20837b5b4cf977122277c342379c",
-          "src/engcore/scientific/models/__init__.py": "a8821bbad3408dd4eac01ac3943d256fb1dcd711320cba72270460259badfda4",
+          "src/engcore/scientific/models/__init__.py": "5560168e39b9006321e7c6d387b3ec864058dd903ed3c789c3348d998ffffdbe",
           "src/engcore/scientific/models/curves.py": "65a627db3f3eb51f0050f4706d2cd79b94e7a17399a5fc76b6daa2c7925a3fcd",
           "src/engcore/scientific/models/definition.py": "769c3f7d4af512570de50c356686fc8359de094a846089e7c370078291833c70",
           "src/engcore/scientific/models/registry.py": "732f02e498308c9573bce6f4f941127187bb39ea26c2a9dd5e41b746a6e72141",
+          "src/engcore/scientific/models/structured_validity.py": "e85c5aa3121f15a5459cb4d08cd7c9b9358d0157e10e8628739414c122cbe067",
+          "src/engcore/scientific/models/unknown_diagnostics.py": "64122beabb59ed33361c44ad30a99ce01f1b90bc1b43067b36578c2d57b757a2",
+          "src/engcore/scientific/oracles.py": "ad1ec265f91d8e386dcef771b4eafc1790f5f4750ca087b8716e0a43e8f3955b",
           "src/engcore/scientific/realizations/__init__.py": "11d2ce420e3d89d1692a3dc9084ea0debe6b400b9db43857de6f59d2150358dc",
+          "src/engcore/scientific/realizations/admission.py": "4d4a2386f1518b00b78b5d448da00443e32b4a2aedcb1330e48e8b80b167b674",
           "src/engcore/scientific/realizations/definition.py": "0b6e2239cd863120637aa284061a03741e2548a368b9472d0462bfd5cebdd277",
           "src/engcore/scientific/realizations/registry.py": "7e155c496bc950b5a554e7536a785b81e1e0fd073f7d2cef61188fb87bdd8e28",
           "src/engcore/scientific/results/__init__.py": "e324982a1aca0754ebe55bc2e29a2f30ca4b4016f85da3a7eb0c5b8420e5dff5",
           "src/engcore/scientific/results/data_reference.py": "225baf2eaaadb1cfbec6513f4645059416e0ba6bb0a7ab573fc8df6b4dff92c5",
+          "src/engcore/scientific/results/execution_manifest.py": "6f76349b1169f461dd9d1b40b648f2e3123143938bedb9a0f6bf144f68c5b8f6",
           "src/engcore/scientific/results/immutable.py": "1335a7870336c7adb4c3ca01ef21fcf4747cca0e0612b3bdb340336b1c4fde08",
           "src/engcore/scientific/results/provenance.py": "bcb3ed882c53e83ca97fc6de610ad03d8ffa51409e3ed976b5c7ed6a31b70ebb",
           "src/engcore/scientific/results/result.py": "77f6bb8c9984e212b5b6eda9e0fc51207313a79459a1fa40b4ebece0c4011726",
@@ -449,13 +538,13 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "0e3b1b503eb4209943871f5f116f15a25d1640b2fc8dadaada1c59f691f83fa1",
+        "digest": "e17985e7e7677f3ff84e572c9ff9b8b9fd0e972389312e261fcb8eecd3320e7d",
         "file_count": 5,
         "files": {
           "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
           "tests/test_core_guards.py": "658db9ee95115d83e470b4ff4a41c9ae55be1c773e0f8f1ede0487d4eddac342",
           "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
-          "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
+          "tests/test_offset_unit_declaration.py": "6ed5a0a65b7bab4ec31b7d45f23fa68e667a93dfa6e647cbed81b1a859a3afde",
           "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
         },
         "patterns": [
@@ -469,12 +558,12 @@
       },
       "inference_admission": {
         "classification": "CORE_CERTIFIED",
-        "digest": "18e8efa77440d090f14b0212c45104fe6cf6b0f3587bee19fca0445887193046",
+        "digest": "4d5b4146e550ea89c917c898b7e3a7108c472ac2615b572bb1f913aa461f05e9",
         "file_count": 7,
         "files": {
           "src/engcore/inference/__init__.py": "60453cf9178dc9b0bbe661aad77441b4254ffb67680b69b8fd2c35318ef805e3",
           "src/engcore/inference/admissibility.py": "59259b42d6baa227c3948f405cd4a09ecd8611854ab4e341a2587ae479454e69",
-          "src/engcore/inference/calibration.py": "4bc7228aad8a21a877601e10fd95e873cb89bb1a5104eef3093913c394a55fd5",
+          "src/engcore/inference/calibration.py": "74c9748bb1786b517fac6d14133a6bf675a23d736334cf15203309a3e63c0ca7",
           "src/engcore/inference/field_observation.py": "559f01cbbb3f15b0acee82712520a94e370ad52fee913232f99ba7fcaa051b02",
           "src/engcore/inference/grid.py": "5ee07bcfe9c91d78c81d4a0034b7b23bf0136cb571b32a9da1f2f6771ad33a96",
           "src/engcore/inference/parameters.py": "5c78d48518d0b737cb23098018533444f1bedf305ac7ef8a28aa27b86745001f",
@@ -484,25 +573,6 @@
           "src/engcore/inference/**/*.py"
         ],
         "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
-      },
-      "routed_uncertainty": {
-        "classification": "CORE_CERTIFIED",
-        "digest": "4bec998f51567a70f220ce2defe1bbbdcc2a3874a7c104db8c60d00b37014973",
-        "file_count": 8,
-        "files": {
-          "src/engcore/hybrid_uq/__init__.py": "a3232caceb207cb8533d1b6cbe62c2c3c925f8ad22c486b8228dc87a4c658744",
-          "src/engcore/hybrid_uq/_records.py": "931a90f38f6e5db60d1a3c07fe6aba96fbec8d0e6ce29781c46af1ec27671102",
-          "src/engcore/hybrid_uq/identifiability.py": "ecb3f711e8f3fad2c1a8e42657d36889fa94d8de344fd0660ec87ff64fc46906",
-          "src/engcore/hybrid_uq/local_gaussian.py": "7a47b82e685ab3f3ae1343bb57d66ff3a687768aae0f06b503a7b6f3f6b5af05",
-          "src/engcore/hybrid_uq/predictive.py": "1aa744f310f48ba570022d954f96645d6e0a0c5786bbebe52107472f335f5fcd",
-          "src/engcore/hybrid_uq/router.py": "c23367388c7d5677e6bd25ba48e07dabf9056945f50bc4d825f65cc6bd3d1522",
-          "src/engcore/hybrid_uq/sensitivity.py": "9fcf32ca58c2a84a558d632961ea2c9167b4c7950a8851481d31d8b1b6e3c43b",
-          "src/engcore/hybrid_uq/vocabulary.py": "db98aed460a83ea95701157ff177fd8ea1294697a6e80f605fbd20ba4a30a769"
-        },
-        "patterns": [
-          "src/engcore/hybrid_uq/**/*.py"
-        ],
-        "why": "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a silent edit here turns a refusal into a precise-looking number"
       },
       "runtime_data": {
         "classification": "RUNTIME_SUPPORT",
@@ -521,6 +591,18 @@
         ],
         "why": "the plane a ScientificDataReference resolves through. The core names bulk data by digest and count and never reads it; the length-then-digest verification that makes that reference worth anything is here, as is the field container's shape, support and finiteness enforcement"
       },
+      "runtime_dependencies": {
+        "classification": "RUNTIME_ENVIRONMENT",
+        "digest": "c5de58ad65d6395f640820319c8f53ef46530a063e186ffc8db29e2f33b27b52",
+        "file_count": 1,
+        "files": {
+          "pyproject.toml": "957fff8ca0ec8d312d91d58d2364b1567629eb6daaae37aae2cbeb340fbc2386"
+        },
+        "patterns": [
+          "pyproject.toml"
+        ],
+        "why": "the dependency declaration every source gate installs from (pip install -e .[dev,mcp,oracles]) and the pytest configuration every suite runs under. The assurance record's pip-freeze digests say what was resolved; this pins what was asked for, so a dependency or test-configuration edit cannot ride on a certificate measured under the previous one"
+      },
       "trust_registry": {
         "classification": "CORE_CERTIFIED",
         "digest": "6d6ab0fe914fa6660e7e25e64119a8833742b43f4ad527d6c3132152fc3f0af3",
@@ -534,13 +616,13 @@
         "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
       }
     },
-    "file_count": 84
+    "file_count": 99
   },
   "notes": {},
   "repository": {
-    "branch": "claude/core-v2-hybrid-uq",
+    "branch": "HEAD",
     "clean": true,
-    "commit": "624b7cf691fda1e384315f3b70e4cf266ff238c9",
+    "commit": "7025852e09857c0eee9fbafc4648160520343953",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -587,14 +669,6 @@
         "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
       },
       {
-        "area": "routed_uncertainty",
-        "classification": "CORE_CERTIFIED",
-        "patterns": [
-          "src/engcore/hybrid_uq/**/*.py"
-        ],
-        "why": "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a silent edit here turns a refusal into a precise-looking number"
-      },
-      {
         "area": "harness",
         "classification": "HARNESS",
         "patterns": [
@@ -605,6 +679,45 @@
           "tests/test_core_semantic_invariants.py"
         ],
         "why": "the mutation harness and the four suites it runs each mutant against. '79/79 killed' is a statement about these exact bytes: the same sentence over a weakened suite would be worth nothing, so the suites are pinned alongside the runner"
+      },
+      {
+        "area": "certification_control",
+        "classification": "CERTIFICATION_CONTROL",
+        "file_reasons": {
+          ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
+          ".github/workflows/tests.yml": "decides which pull requests delegate assurance to recertification and what the certificate-child job runs. A narrower classifier call or a dropped child check lets a core change merge on the ordinary suite",
+          "benchmarks/core_freeze_v1/audit/reproduce.py": "loaded by core_freeze.py through importlib to compute the live contract facts the freeze self-check compares against the stored manifest; it is a helper of the verifier, not a benchmark",
+          "tests/test_core_certificate.py": "holds the certificate self-checks the certificate child executes. A self-check that no longer asserts would still be reported as passed",
+          "tests/test_core_freeze_manifest.py": "holds the freeze self-checks the certificate child executes, for the same reason as the certificate self-checks",
+          "tools/__init__.py": "executed on every import of tools.certification, before any verifier code runs; an import-time side effect here could replace a verifier",
+          "tools/certification/__init__.py": "package initialisation executed before every certification module",
+          "tools/certification/assert_clean_tree.py": "the per-gate proof that a source gate did not modify, add or delete a repository file; a weaker check lets a gate pass on a mutated checkout while certify reads a fresh one",
+          "tools/certification/branch_policy.py": "states the merge policy the certificate child's checks rely on and reports whether the repository enforces it",
+          "tools/certification/certificate_lineage.py": "binds a certificate child to its exact parent and to the certify run that produced it; without it a stale or hand-assembled certificate with matching bytes verifies",
+          "tools/certification/core_certificate.py": "the builder and verifier: the digest algorithm, this scope table and the definition of a verifying certificate",
+          "tools/certification/core_freeze.py": "the Core Freeze V1 verifier the freeze self-checks call, which itself calls verify_certificate",
+          "tools/certification/hardening_assurance.py": "builds the assurance record from the gates' downloaded evidence and re-validates it on the child; it is what turns job results into claims",
+          "tools/certification/mutation_population.py": "the canonical formal mutation population, the shard rule and the coverage proof; a wrong union with the right count would certify a mutation family that never ran",
+          "tools/certification/recertification_scope.py": "the single classifier deciding which changes require recertification and which self-checks are deferred to the certificate child"
+        },
+        "patterns": [
+          ".github/workflows/recertify-hardened-core.yml",
+          ".github/workflows/tests.yml",
+          "benchmarks/core_freeze_v1/audit/reproduce.py",
+          "tests/test_core_certificate.py",
+          "tests/test_core_freeze_manifest.py",
+          "tools/__init__.py",
+          "tools/certification/*.py"
+        ],
+        "why": "the certification control plane: the verifier, the workflows that run it, the self-checks the certificate child executes and the helpers they load. A certificate is only as meaningful as the code that says it verifies, so that code is pinned by the certificate it validates. Each file states its own reason"
+      },
+      {
+        "area": "runtime_dependencies",
+        "classification": "RUNTIME_ENVIRONMENT",
+        "patterns": [
+          "pyproject.toml"
+        ],
+        "why": "the dependency declaration every source gate installs from (pip install -e .[dev,mcp,oracles]) and the pytest configuration every suite runs under. The assurance record's pip-freeze digests say what was resolved; this pins what was asked for, so a dependency or test-configuration edit cannot ride on a certificate measured under the previous one"
       }
     ],
     "out": [
@@ -625,12 +738,24 @@
         "why": "representation only; it computes nothing a verdict rests on"
       },
       {
-        "area": "tests/** (except the harness area)",
-        "why": "assurance for everything above, not part of what is certified"
+        "area": "tests/** (except the harness area and the two self-check modules)",
+        "why": "assurance for everything above, not part of what is certified. They still trigger recertification (tools/certification/recertification_scope.py), because the gates' results are claims about them"
       },
       {
-        "area": "benchmarks/**, experiments/**, certification/**",
+        "area": "tests/conftest.py",
+        "why": "labels execution tiers only. The certificate child does not trust it to run the self-checks: it requires every deferred self-check to be reported PASSED in JUnit, so a hook that skipped one fails the child"
+      },
+      {
+        "area": "benchmarks/** (except the freeze probe), experiments/**, certification/**",
         "why": "measurements, frozen artefacts, and the certificate itself \u2014 a certificate whose scope contained its own bytes would need a fixed point"
+      },
+      {
+        "area": ".github/** (except the two certification workflows), tools/** (except tools/__init__.py and tools/certification/*.py)",
+        "why": "repository automation that does not decide whether a certificate verifies. .github/workflows/trust-mutations.yml in particular is an advisory run of a population the recertify workflow re-executes itself"
+      },
+      {
+        "area": "requirements.txt, Dockerfile",
+        "why": "not what the gates install from: every gate runs pip install -e on pyproject.toml, and the Dockerfile copies requirements.txt without installing it. The reproduce image runs on pushes to main, never in certification"
       }
     ]
   },
@@ -639,7 +764,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "4c98947c3d4a6df56be73a35de53cd7eb8effd6b362445b7289f773fbd0ba887",
+    "v1_compatible_core_digest_now": "ae04d32f166814fb8f45963b212f0af3124c8bae048eab9a94f50d89384dd18c",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }

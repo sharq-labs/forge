@@ -52,7 +52,7 @@ from engcore.scientific.errors import (
     InvalidScientificProblem,
     UnitCompatibilityError,
 )
-
+import engcore.scientific.units.quantity as quantity_module
 from engcore.scientific.units.quantity import Quantity as Q
 
 #: Both are refusals, and the boundary scorer treats both as one. They differ
@@ -80,14 +80,42 @@ ABSOLUTE_ZERO_C = -273.15
         ("-273.15 degC", 0.0),
     ],
 )
-def test_a_celsius_declaration_parses_to_the_kelvin_it_means(text, kelvin):
-    """The conversion is the offset, computed here rather than asked for."""
-    parsed = Q.parse(text)
-    assert parsed.magnitude_in("kelvin") == pytest.approx(kelvin, abs=1e-9)
-    magnitude = float(text.split(" ")[0])
-    assert parsed.magnitude_in("kelvin") == pytest.approx(
-        magnitude - ABSOLUTE_ZERO_C, abs=1e-9
-    )
+def test_a_celsius_declaration_parses_to_the_kelvin_it_means(
+    text, kelvin, monkeypatch
+):
+    """The split path is load-bearing even if the backend parser gets better.
+
+    Pint versions differ on whether the one-argument parser accepts an offset
+    unit string such as ``"20 degC"``.  Forge supports a wider declared Pint
+    range, so this test must prove our two-argument split path rather than
+    accidentally pass because the installed backend learned the same syntax.
+    The proxy disables only the one-string Quantity constructor; every unit
+    parse/conversion used by the intended two-argument path still delegates to
+    the real sealed registry.
+    """
+    backend = quantity_module.registry()
+
+    class _NoOneStringQuantityParser:
+        def __getattr__(self, name):
+            return getattr(backend, name)
+
+        def Quantity(self, *args, **kwargs):  # noqa: N802 - backend API name
+            if len(args) == 1 and isinstance(args[0], str):
+                raise RuntimeError("one-string quantity parser deliberately unavailable")
+            return backend.Quantity(*args, **kwargs)
+
+    proxy = _NoOneStringQuantityParser()
+    quantity_module.clear_unit_caches()
+    monkeypatch.setattr(quantity_module, "registry", lambda: proxy)
+    try:
+        parsed = Q.parse(text)
+        assert parsed.magnitude_in("kelvin") == pytest.approx(kelvin, abs=1e-9)
+        magnitude = float(text.split(" ")[0])
+        assert parsed.magnitude_in("kelvin") == pytest.approx(
+            magnitude - ABSOLUTE_ZERO_C, abs=1e-9
+        )
+    finally:
+        quantity_module.clear_unit_caches()
 
 
 def test_the_two_constructors_now_agree():

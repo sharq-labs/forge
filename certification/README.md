@@ -36,6 +36,48 @@ whose tree it certifies — so HEAD is normally that child. The content
 comparison is unaffected: `certification/` is outside certified scope. Pass
 `--require-commit` to demand HEAD be the certified commit exactly.
 
+`--verify` also refuses a certificate **written under an older scope table**.
+Such a certificate still agrees byte-for-byte over the areas it names, and says
+nothing about an area added since — the certification control plane, for
+instance. `--any-scope` diagnoses one without refusing it for that reason; CI
+never passes it.
+
+## Lineage, provenance, and the certificate child
+
+Byte agreement does not say which commit a certificate is about. The
+certificate-only child that the recertify workflow's certify job pushes is
+verified with:
+
+```bash
+python -m tools.certification.certificate_lineage verify-child [--merge-preview SHA]
+python -m tools.certification.certificate_lineage verify-provenance --repository OWNER/REPO
+```
+
+`verify-child` requires one parent, a change to the certificate and nothing
+else, and `repository.commit`, `assurance.source_commit`,
+`assurance.environment.source_commit`, `assurance.lineage.source_commit` and
+`assurance.lineage.certificate_parent` all present and all equal to `HEAD^`. It
+re-validates the `forge.core_hardening_assurance/3` record against the tree —
+formal mutation population and exact shard coverage, trust-hardening population,
+functional gate evidence, dependency manifest, control-plane digest.
+`verify-provenance` asks GitHub whether the run the certificate names ran the
+recertify workflow for `HEAD^`, finished every source gate and certify
+successfully, and uploaded exactly these certificate bytes. A certificate that
+did not come out of that job cannot pass it.
+
+Which changes need recertification is decided by one classifier, derived from
+the scope table, and called by both workflows:
+
+```bash
+python -m tools.certification.recertification_scope explain <path> ...
+```
+
+Every source gate ends with `python -m tools.certification.assert_clean_tree`,
+which fails on any modified, added or deleted repository file, including a
+line-ending rewrite `git status` does not report. The merge policy these checks
+rely on — and which only a repository administrator can configure — is in
+`docs/assurance/BRANCH_PROTECTION.md`.
+
 ## What is certified
 
 See `scope` in the certificate. The criterion for inclusion is narrow: an area
@@ -48,9 +90,10 @@ than change an answer.
 | `trust_registry` | CORE_CERTIFIED | `src/engcore/domains/__init__.py` — the declarations the core verifies against |
 | `evidence_identity` | CORE_CERTIFIED | `src/engcore/adequacy/**` — evidence pairing |
 | `inference_admission` | CORE_CERTIFIED | `src/engcore/inference/**` — the admission invariant |
-| `routed_uncertainty` | CORE_CERTIFIED | `src/engcore/hybrid_uq/**` — Core V2 route validity, multistart, refusal (added at Core Freeze V2) |
 | `runtime_data` | RUNTIME_SUPPORT | `src/engcore/data/**` — what a data reference resolves through |
 | `harness` | HARNESS | the mutation runner and the four suites it runs |
+| `certification_control` | CERTIFICATION_CONTROL | the verifier and every `tools/certification/*.py` module, the two certification workflows, the self-check test modules, the freeze probe — each file with its own reason |
+| `runtime_dependencies` | RUNTIME_ENVIRONMENT | `pyproject.toml` — what every gate installs and how pytest is configured |
 
 Domain solvers, the MCP boundary, applications, benchmarks and experiments are
 out of scope, and the certificate says so in `scope.out` with a reason for each.

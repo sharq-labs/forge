@@ -81,7 +81,8 @@ def test_the_certificate_records_what_it_covers_and_what_it_does_not():
     for area in certificate["scope"]["in"]:
         assert area["why"].strip(), f"{area['area']} gives no reason for inclusion"
         assert area["classification"] in {
-            "CORE_CERTIFIED", "RUNTIME_SUPPORT", "HARNESS", "DOMAIN_ASSURANCE"
+            "CORE_CERTIFIED", "RUNTIME_SUPPORT", "HARNESS", "DOMAIN_ASSURANCE",
+            "CERTIFICATION_CONTROL", "RUNTIME_ENVIRONMENT",
         }
     assert not certificate["diagnostic"], "a diagnostic certificate certifies nothing"
 
