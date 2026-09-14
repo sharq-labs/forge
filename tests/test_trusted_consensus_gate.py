@@ -47,21 +47,29 @@ def _evidence_for(consensus: CrossSolverConsensus):
     bytes_by_route = {}
     for route_record in consensus.routes:
         assert route_record.dependencies is not None
+        canonical = route_record.dependencies.canonical()
         artifacts = {}
         route_bytes = {}
         for dimension in SOLVER_INDEPENDENCE_DIMENSIONS:
-            name = f"{route_record.route_id}-{dimension.value}"
-            payload = f"artifact:{route_record.route_id}:{dimension.value}".encode()
-            artifacts[dimension] = frozenset(
-                {
+            dimension_artifacts = set()
+            dimension_bytes = {}
+            for index, dependency_identity in enumerate(sorted(canonical[dimension])):
+                name = f"{route_record.route_id}-{dimension.value}-{index}"
+                payload = (
+                    f"artifact:{route_record.route_id}:{dimension.value}:"
+                    f"{dependency_identity}"
+                ).encode()
+                dimension_artifacts.add(
                     ArtifactFingerprint.from_bytes(
                         name,
                         payload,
                         kind="test-artifact",
+                        dependency_identity=dependency_identity,
                     )
-                }
-            )
-            route_bytes[dimension] = {name: payload}
+                )
+                dimension_bytes[name] = payload
+            artifacts[dimension] = frozenset(dimension_artifacts)
+            route_bytes[dimension] = dimension_bytes
         records.append(
             RouteIndependenceEvidence(
                 route_id=route_record.route_id,
@@ -121,6 +129,7 @@ def test_forged_fingerprint_cannot_keep_cross_solver_level():
                 "f" * 64,
                 genuine.name,
                 kind=genuine.kind,
+                dependency_identity=genuine.dependency_identity,
             )
         }
     )
@@ -166,13 +175,36 @@ def test_shared_verified_bytes_defeat_trusted_independence_even_under_different_
     left, right = evidence
     shared_bytes = b"same-runtime-bytes"
 
+    left_route, right_route = consensus.routes
+    assert left_route.dependencies is not None and right_route.dependencies is not None
+    left_identity = next(
+        iter(left_route.dependencies.canonical()[IndependenceDimension.IMPLEMENTATION])
+    )
+    right_identity = next(
+        iter(right_route.dependencies.canonical()[IndependenceDimension.BACKEND])
+    )
+
     left_artifacts = dict(left.artifacts)
     right_artifacts = dict(right.artifacts)
     left_artifacts[IndependenceDimension.IMPLEMENTATION] = frozenset(
-        {ArtifactFingerprint.from_bytes("wrapper-a", shared_bytes, kind="source")}
+        {
+            ArtifactFingerprint.from_bytes(
+                "wrapper-a",
+                shared_bytes,
+                kind="source",
+                dependency_identity=left_identity,
+            )
+        }
     )
     right_artifacts[IndependenceDimension.BACKEND] = frozenset(
-        {ArtifactFingerprint.from_bytes("binary-b", shared_bytes, kind="binary")}
+        {
+            ArtifactFingerprint.from_bytes(
+                "binary-b",
+                shared_bytes,
+                kind="binary",
+                dependency_identity=right_identity,
+            )
+        }
     )
     evidence = (
         RouteIndependenceEvidence(

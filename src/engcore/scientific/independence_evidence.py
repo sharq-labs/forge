@@ -7,16 +7,20 @@ name different implementations while loading the same binary/image/source
 artifact.
 
 Each route therefore binds artifact byte identities to the dependency
-declaration it is evidence for. A strong-independence report is available only
-when every solver-independence dimension has artifact evidence, the evidence
-names the exact dependency digest carried by the route, the declared artifact
+declaration it is evidence for. Strong independence requires evidence for every
+canonical dependency identity in every solver-independence dimension, not just
+one artifact for the dimension as a whole. The evidence must name the exact
+dependency digest carried by the route, every artifact must explicitly bind to
+a dependency identity declared in that dimension, the declared artifact
 digests are freshly recomputed from supplied bytes, and no verified artifact
-digest is shared between two routes.
+digest may be shared between two routes.
 
 A digest string by itself is never evidence here. Serialized fingerprints are
 portable declarations of expected byte identity; callers must present the bytes
 again at the trust boundary before those fingerprints can influence a
-``CROSS_SOLVER_VALIDATED`` claim. Byte hashing reuses
+``CROSS_SOLVER_VALIDATED`` claim. Legacy fingerprints without a dependency
+binding remain readable, but they cannot establish strong independence. Byte
+hashing reuses
 :class:`~engcore.scientific.results.execution_manifest.ArtifactDigest`, so the
 execution manifest and independence gate cannot disagree about artifact byte
 identity.
@@ -36,6 +40,7 @@ from .consensus import (
     IndependenceDimension,
     SOLVER_INDEPENDENCE_DIMENSIONS,
     SolveRoute,
+    canonical_component_identity,
 )
 from .errors import ScientificValidationError
 from .results.execution_manifest import ArtifactDigest
@@ -91,6 +96,11 @@ def _normalise_artifact_bytes(
 class ArtifactFingerprint:
     """Expected byte identity of one implementation/runtime artifact.
 
+    ``dependency_identity`` names the exact canonical route dependency this
+    artifact evidences. It is additive on the wire: an older fingerprint can be
+    deserialized with no binding, but an unbound fingerprint is deliberately
+    insufficient for strong independence.
+
     The direct constructor stays available because fingerprints must deserialize
     without carrying bulk bytes. Construction validates only the declaration;
     trust is established later by re-hashing supplied bytes.
@@ -100,6 +110,7 @@ class ArtifactFingerprint:
     name: str = field(compare=False)
     kind: str = field(default="artifact", compare=False)
     algorithm: str = field(default="sha256", compare=False)
+    dependency_identity: str = field(default="")
 
     def __post_init__(self) -> None:
         name, kind = str(self.name).strip(), str(self.kind).strip()
@@ -109,8 +120,14 @@ class ArtifactFingerprint:
             raise ScientificValidationError(
                 f"unsupported artifact fingerprint algorithm {self.algorithm!r}"
             )
+        raw_identity = str(self.dependency_identity or "").strip()
+        if raw_identity:
+            dependency_identity = canonical_component_identity(raw_identity)
+        else:
+            dependency_identity = ""
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "kind", kind)
+        object.__setattr__(self, "dependency_identity", dependency_identity)
         object.__setattr__(self, "digest", _digest(self.digest, label="artifact fingerprint"))
 
     @classmethod
@@ -120,6 +137,7 @@ class ArtifactFingerprint:
         payload: bytes,
         *,
         kind: str = "artifact",
+        dependency_identity: str | None = None,
     ) -> "ArtifactFingerprint":
         if not isinstance(payload, bytes):
             raise ScientificValidationError(
@@ -129,19 +147,23 @@ class ArtifactFingerprint:
             digest=_artifact_digest(name, payload),
             name=name,
             kind=kind,
+            dependency_identity=dependency_identity or "",
         )
 
     def verifies(self, payload: bytes) -> bool:
         return isinstance(payload, bytes) and _artifact_digest(self.name, payload) == self.digest
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "schema": ARTIFACT_FINGERPRINT_SCHEMA,
             "digest": self.digest,
             "name": self.name,
             "kind": self.kind,
             "algorithm": self.algorithm,
         }
+        if self.dependency_identity:
+            payload["dependency_identity"] = self.dependency_identity
+        return payload
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ArtifactFingerprint":
@@ -151,6 +173,7 @@ class ArtifactFingerprint:
             name=payload["name"],
             kind=payload.get("kind", "artifact"),
             algorithm=payload.get("algorithm", "sha256"),
+            dependency_identity=payload.get("dependency_identity", ""),
         )
 
 
@@ -193,11 +216,16 @@ class RouteIndependenceEvidence:
     ) -> tuple[str, ...]:
         """Return every reason this evidence cannot establish independence.
 
-        The load-bearing rule is that every declared fingerprint is recomputed
-        from bytes during assessment. Different caller-supplied hex strings can
-        no longer manufacture independence.
+        Every declared fingerprint is recomputed from bytes during assessment,
+        and every canonical dependency identity in each solver-independence
+        dimension must be covered by at least one explicitly bound fingerprint.
+        Different caller-supplied hex strings or one artifact standing in for an
+        entire dimension can therefore no longer manufacture independence.
         """
         reasons: list[str] = []
+        canonical_dependencies: dict[
+            IndependenceDimension, frozenset[str]
+        ] | None = None
         if route.route_id != self.route_id:
             reasons.append(
                 f"evidence is for route {self.route_id!r}, not {route.route_id!r}"
@@ -206,6 +234,7 @@ class RouteIndependenceEvidence:
             reasons.append("route declares no dependencies")
         else:
             try:
+                canonical_dependencies = route.dependencies.canonical()
                 actual = route.dependencies.digest
             except ScientificValidationError as exc:
                 reasons.append(f"route dependencies cannot be resolved ({exc})")
@@ -224,6 +253,34 @@ class RouteIndependenceEvidence:
                     f"no artifact evidence for required dimension {dimension.value}"
                 )
                 continue
+
+            declared_identities = (
+                canonical_dependencies.get(dimension, frozenset())
+                if canonical_dependencies is not None
+                else frozenset()
+            )
+            covered_identities: set[str] = set()
+            for artifact in sorted(fingerprints):
+                if not artifact.dependency_identity:
+                    reasons.append(
+                        f"{dimension.value} artifact {artifact.name!r} is not bound to "
+                        "a dependency identity"
+                    )
+                elif declared_identities and artifact.dependency_identity not in declared_identities:
+                    reasons.append(
+                        f"{dimension.value} artifact {artifact.name!r} binds undeclared "
+                        f"dependency identity {artifact.dependency_identity!r}"
+                    )
+                else:
+                    covered_identities.add(artifact.dependency_identity)
+
+            if canonical_dependencies is not None:
+                for identity in sorted(declared_identities - covered_identities):
+                    reasons.append(
+                        f"no artifact evidence bound to dependency identity {identity!r} "
+                        f"in required dimension {dimension.value}"
+                    )
+
             dimension_bytes = supplied.get(dimension)
             if dimension_bytes is None:
                 reasons.append(
@@ -319,8 +376,8 @@ class IndependenceEvidenceReport:
             ]
             return f"routes share implementation/runtime artifacts: {labels}"
         return (
-            "every route binds verified artifact bytes to its declared dependencies and "
-            "no verified artifact digest is shared; this strengthens the declaration-level "
+            "every route binds verified artifact bytes to every declared dependency identity "
+            "and no verified artifact digest is shared; this strengthens the declaration-level "
             "independence claim but does not prove independent development"
         )
 
