@@ -63,6 +63,46 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+
+      # A core-changing PR source commit necessarily carries the previous
+      # certificate until Recertify Hardened Core finishes its measured gates
+      # and pushes a certificate-only child. Defer only the four self-checks on
+      # that source commit; the exact certificate child must run them normally.
+      - name: Classify certificate-check phase
+        id: certificate_phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_checks=true
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            head_sha="${{ github.event.pull_request.head.sha }}"
+            subject="$(git log -1 --format=%s "$head_sha")"
+
+            if [ "$subject" = "certification: recertify hardened core" ]; then
+              parent_count="$(git rev-list --parents -n 1 "$head_sha" | awk '{print NF-1}')"
+              if [ "$parent_count" -ne 1 ]; then
+                echo "A certificate child must have exactly one parent; found $parent_count."
+                exit 1
+              fi
+              parent_sha="$(git rev-parse "$head_sha^")"
+              mapfile -t changed < <(git diff --name-only "$parent_sha" "$head_sha")
+              if [ "${#changed[@]}" -ne 1 ] || [ "${changed[0]}" != "certification/current_core_v2.json" ]; then
+                echo "The recertification subject is reserved for a certificate-only child commit."
+                printf 'Changed path: %s\n' "${changed[@]:-<none>}"
+                exit 1
+              fi
+              echo "Certificate-only child detected: full certificate/freeze checks stay enabled."
+            else
+              run_checks=false
+              echo "Source PR commit detected: deferring four certificate/freeze self-checks to the certificate child."
+            fi
+          else
+            echo "Non-PR run: full certificate/freeze checks stay enabled."
+          fi
+
+          echo "run_checks=$run_checks" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -80,9 +120,22 @@ jobs:
           tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           -q
       # -n 4, not -n auto: the worker count must not track runner hardware.
-      - run: >-
-          python -m pytest -m "not expensive" -q -n 4 --dist loadfile
-          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+      - name: FAST suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          certificate_args=()
+          if [ "${{ steps.certificate_phase.outputs.run_checks }}" != "true" ]; then
+            certificate_args+=(
+              --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+              --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+              --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
+              --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+            )
+          fi
+          python -m pytest -m "not expensive" -q -n 4 --dist loadfile \
+            --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared \
+            "${certificate_args[@]}"
 
   # Mutation guards stay on one interpreter: they verify the guards themselves,
   # not interpreter compatibility. Running the whole mutation campaign twice
@@ -109,21 +162,70 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+
+      - name: Classify certificate-check phase
+        id: certificate_phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_checks=true
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            head_sha="${{ github.event.pull_request.head.sha }}"
+            subject="$(git log -1 --format=%s "$head_sha")"
+
+            if [ "$subject" = "certification: recertify hardened core" ]; then
+              parent_count="$(git rev-list --parents -n 1 "$head_sha" | awk '{print NF-1}')"
+              if [ "$parent_count" -ne 1 ]; then
+                echo "A certificate child must have exactly one parent; found $parent_count."
+                exit 1
+              fi
+              parent_sha="$(git rev-parse "$head_sha^")"
+              mapfile -t changed < <(git diff --name-only "$parent_sha" "$head_sha")
+              if [ "${#changed[@]}" -ne 1 ] || [ "${changed[0]}" != "certification/current_core_v2.json" ]; then
+                echo "The recertification subject is reserved for a certificate-only child commit."
+                printf 'Changed path: %s\n' "${changed[@]:-<none>}"
+                exit 1
+              fi
+              echo "Certificate-only child detected: full certificate/freeze checks stay enabled."
+            else
+              run_checks=false
+              echo "Source PR commit detected: deferring four certificate/freeze self-checks to the certificate child."
+            fi
+          else
+            echo "Non-PR run: full certificate/freeze checks stay enabled."
+          fi
+
+          echo "run_checks=$run_checks" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: sudo apt-get install -y -qq ngspice
       - run: pip install -e ".[dev,mcp,oracles]"
-      - env:
+      - name: Scientific suite
+        shell: bash
+        env:
           CRAFTY_NGSPICE_ARGV: ngspice
-        run: >
-          python -m pytest -m "not campaign" -q -n 4 --dist loadfile
-          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
-          --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
-          --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
-          --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
-          --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
-          --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+        run: |
+          set -euo pipefail
+          certificate_args=()
+          if [ "${{ steps.certificate_phase.outputs.run_checks }}" != "true" ]; then
+            certificate_args+=(
+              --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+              --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+              --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
+              --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+            )
+          fi
+          python -m pytest -m "not campaign" -q -n 4 --dist loadfile \
+            --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared \
+            --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process \
+            --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure \
+            --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical \
+            --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates \
+            --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates \
+            "${certificate_args[@]}"
       # The two benchmark rebuild nodes above are historical campaign
       # reproduction tests: each rebuilds/writes its round's committed artifacts
       # and explicitly asks whether *that old round* changed no production code.
