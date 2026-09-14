@@ -1,58 +1,368 @@
 {
   "assurance": {
+    "control_plane": {
+      "area": "certification_control",
+      "digest": "1f2f416b31d53e816005f7d3d1017f129f76ca0742d33e4db9b17df66ad7729d",
+      "executed_certified_bytes_match_source": true,
+      "executed_merge_preview_commit": "39657ae6b9e9674ff812170686adde6a513d96de",
+      "file_count": 15
+    },
     "environment": {
       "certificate_builder_platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "dependency_manifest": {
+        "path": "pyproject.toml",
+        "sha256": "957fff8ca0ec8d312d91d58d2364b1567629eb6daaae37aae2cbeb340fbc2386"
+      },
       "execution_model": "parallel_github_actions_jobs",
-      "ngspice": "******",
-      "pip_freeze_3_11_sha256": "b324d57f44786839b770d782024eea6d10b646ee8b305b420bf7cccad389551a",
-      "pip_freeze_3_12_sha256": "81f9e68022c1e164d24ec19f09b6dec8d33a5307af6a58ee3f4f76c4d8882a50",
+      "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
+      "ngspice": "ngspice-42 : Circuit level simulation program",
+      "pip_freeze_3_11_sha256": "2f6e2ef92f18990306b54cff9beba9dc4e747525f0041697896ac4238d31724c",
+      "pip_freeze_3_12_sha256": "5b82e88bf5c971c693c01fd8fe51ac2bddc8e422d342c6684da2ac73287af7d5",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
-      "schema": "forge.certification_environment/2",
-      "source_commit": "e6d3859728ee2548d1b90a41738ac8c1c1592ace",
+      "schema": "forge.certification_environment/3",
+      "source_commit": "7025852e09857c0eee9fbafc4648160520343953",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "execution_model": "parallel_gates_then_certificate",
     "formal_guard_mutations": {
-      "claim": "Fresh execution of tests/mutation_guards.py on the exact source commit, partitioned by stable MUTATIONS order modulo four. Every shard reruns the unmutated control before its assigned mutations.",
-      "log_sha256_by_shard": {
-        "0": "b2c512cb172052461c45b36dcc649b7b45a9c2e0ee1d951d6beb79a9e4d6b6ec",
-        "1": "9c7bb5b017fd630d670877cedc400d09aeff1754a19fec998a0edf1e0fac509e",
-        "2": "081d71aa5bde8b422653a395f5850b74b2559eaadc0f00023736d281d25aec41",
-        "3": "aaeec16be1e10cc5e15f469a4891cfffe3c35e148027cbc7c9fcf26b51ac1fb2"
+      "claim": "Fresh execution of tests/mutation_guards.py on the source commit, partitioned by the sharding rule. Each shard re-ran the unmutated control before its mutations. The certify job re-derived every shard's verdicts from its downloaded transcript and proved the shards cover the canonical population exactly once",
+      "coverage": {
+        "every_selected_mutation_killed": true,
+        "pairwise_disjoint": true,
+        "union_equals_population": true,
+        "unknown_ids": []
       },
-      "passed": true,
+      "definitions_sha256": "c607347e9d87e834cd23552908bff6e2dd34665a9c63fa0d627b084f2f21438f",
+      "expected_population": 79,
+      "harness": "tests/mutation_guards.py",
+      "identity_rule": "population_sha256 = sha256('\\n'.join(ids) + '\\n') over MUTATIONS ids in declaration order. Order is bound because shard membership is position % shard_count",
+      "ids": [
+        "G1a",
+        "G1b",
+        "G1c",
+        "G1e",
+        "G1f",
+        "G8a",
+        "G8b",
+        "G8c",
+        "G1d",
+        "G2a",
+        "G2e",
+        "G2f",
+        "G2g",
+        "G2b",
+        "G2c",
+        "G2d",
+        "G3a",
+        "G3b",
+        "G4a",
+        "G4b",
+        "G5a",
+        "G6a",
+        "G6b",
+        "G7a",
+        "G9a",
+        "G9b",
+        "G9c",
+        "G12a",
+        "G12b",
+        "G12c",
+        "G12d",
+        "G11a",
+        "G11b",
+        "G11c",
+        "G10a",
+        "G10b",
+        "G10c",
+        "G8d",
+        "G8e",
+        "G7b",
+        "G13a",
+        "G13b",
+        "G13c",
+        "G13d",
+        "G14a",
+        "G14b",
+        "G14c",
+        "G14d",
+        "G14e",
+        "G15a",
+        "G15b",
+        "G15c",
+        "G16a",
+        "G16b",
+        "G16c",
+        "G17a",
+        "G17b",
+        "G18a",
+        "G19a",
+        "G19b",
+        "G20a",
+        "G20b",
+        "G21a",
+        "G21b",
+        "G21c",
+        "G22a",
+        "G22b",
+        "G22c",
+        "G22d",
+        "G24a",
+        "G24b",
+        "G25a",
+        "G25b",
+        "G25c",
+        "G25d",
+        "G24c",
+        "G26a",
+        "G26b",
+        "G26c"
+      ],
       "population": 79,
-      "shard_counts": {
-        "0": 20,
-        "1": 20,
-        "2": 20,
-        "3": 19
-      },
-      "shards": 4
-    },
-    "functional": {
-      "fast_python_3_11": {
-        "passed": true
-      },
-      "fast_python_3_12": {
-        "passed": true
-      },
-      "note": "Independent functional gates ran in parallel on the exact source commit. The four certificate/freeze self-checks are deferred only until the generated certificate child.",
-      "scientific_python_3_12": {
-        "passed": true
+      "population_sha256": "082c42ded078ec5f54cc12be805fbfa4f6f893f36a693286d7f4c91113b26297",
+      "shard_count": 4,
+      "sharding_rule": "shard i runs ids at positions p where p % shard_count == i",
+      "shards": {
+        "0": {
+          "control": "GREEN",
+          "execution_log_sha256": "25be32aeb9fd55697dae40cb1230d850006a1e03f217380d9685f4fdbccaa492",
+          "killed_count": 20,
+          "selected_count": 20,
+          "selected_ids": [
+            "G1a",
+            "G1f",
+            "G1d",
+            "G2g",
+            "G3a",
+            "G5a",
+            "G9a",
+            "G12b",
+            "G11b",
+            "G10c",
+            "G13a",
+            "G14a",
+            "G14e",
+            "G16a",
+            "G17b",
+            "G20a",
+            "G21c",
+            "G22d",
+            "G25b",
+            "G26a"
+          ],
+          "selected_ids_sha256": "1e2c5806d2bdb73d0c2aca518f3db5f3b309ecb2dd205375c146a763593f29d1"
+        },
+        "1": {
+          "control": "GREEN",
+          "execution_log_sha256": "046e0cde758d7b274d48992150165e2af0da7dc4cfe26a69515d9ffae148e939",
+          "killed_count": 20,
+          "selected_count": 20,
+          "selected_ids": [
+            "G1b",
+            "G8a",
+            "G2a",
+            "G2b",
+            "G3b",
+            "G6a",
+            "G9b",
+            "G12c",
+            "G11c",
+            "G8d",
+            "G13b",
+            "G14b",
+            "G15a",
+            "G16b",
+            "G18a",
+            "G20b",
+            "G22a",
+            "G24a",
+            "G25c",
+            "G26b"
+          ],
+          "selected_ids_sha256": "c4e0f4728d76109cbfec0f370b383a1e91d1b52fb66b30d874186a44011d2834"
+        },
+        "2": {
+          "control": "GREEN",
+          "execution_log_sha256": "000c772ff8230e10834f477201de1cace8f94f8d4713763331db125d1356d2ce",
+          "killed_count": 20,
+          "selected_count": 20,
+          "selected_ids": [
+            "G1c",
+            "G8b",
+            "G2e",
+            "G2c",
+            "G4a",
+            "G6b",
+            "G9c",
+            "G12d",
+            "G10a",
+            "G8e",
+            "G13c",
+            "G14c",
+            "G15b",
+            "G16c",
+            "G19a",
+            "G21a",
+            "G22b",
+            "G24b",
+            "G25d",
+            "G26c"
+          ],
+          "selected_ids_sha256": "372e338f4d2d8a85af31d1311b71532292eaf24ca25933a792bdd0dcba69a645"
+        },
+        "3": {
+          "control": "GREEN",
+          "execution_log_sha256": "e0847de9d7945740950cf3e882aedc828fa35f418dc918939e59cfaa9a08a29f",
+          "killed_count": 19,
+          "selected_count": 19,
+          "selected_ids": [
+            "G1e",
+            "G8c",
+            "G2f",
+            "G2d",
+            "G4b",
+            "G7a",
+            "G12a",
+            "G11a",
+            "G10b",
+            "G7b",
+            "G13d",
+            "G14d",
+            "G15c",
+            "G17a",
+            "G19b",
+            "G21b",
+            "G22c",
+            "G25a",
+            "G24c"
+          ],
+          "selected_ids_sha256": "28353ed085b9b1f864d8e0d87c7744a4301a25aabda134526425b5d1dce78b6a"
+        }
       }
     },
-    "policy": "Certificate generated only after every independent source gate returned success for the same source SHA.",
-    "schema": "forge.core_hardening_assurance/2",
-    "source_commit": "e6d3859728ee2548d1b90a41738ac8c1c1592ace",
+    "functional": {
+      "deferred_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "fast_python_3_11": {
+        "clean_tree_after_gate": true,
+        "gate": "fast311",
+        "gate_record_sha256": "cd5853d7caf1c3dfc8da9ec25bc8a1b5636188fb4bb91c776ccffddd969e6bb0",
+        "head_commit": "7025852e09857c0eee9fbafc4648160520343953",
+        "result": "success",
+        "suites": {
+          "dependency_guard": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "d5695f5732a4bfcba802dc2d0beb9afdf68bc38b871b47cbb82ed9065e3ccb44",
+            "skipped": 0,
+            "tests": 1
+          },
+          "fast": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "cda2d17690ae67af8281da713efc214466c22e69bad47fdfa4b97b8ff2fa7b80",
+            "skipped": 19,
+            "tests": 5548
+          }
+        }
+      },
+      "fast_python_3_12": {
+        "clean_tree_after_gate": true,
+        "gate": "fast312",
+        "gate_record_sha256": "ec96da4b864ecd8ae69cd50d855222afa23fafd00152a71ebdb0e8cd2209f26c",
+        "head_commit": "7025852e09857c0eee9fbafc4648160520343953",
+        "result": "success",
+        "suites": {
+          "dependency_guard": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "86b0bcdfd738e039121b53d21fcbbf9ea88219ad6ca8b01b1e2abbe91b6c7907",
+            "skipped": 0,
+            "tests": 1
+          },
+          "fast": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "6261c2aff5ac608bad65e174668c526e3dbcff6598c28eafd50a91359c80828d",
+            "skipped": 19,
+            "tests": 5548
+          }
+        }
+      },
+      "note": "Each functional gate ran on the source commit in its own job and proved its checkout byte-identical to that commit afterwards. The listed self-checks read the previous certificate on a source commit, so they are deselected there and run -- and must each be reported PASSED -- on the certificate-only child.",
+      "scientific_python_3_12": {
+        "clean_tree_after_gate": true,
+        "gate": "scientific312",
+        "gate_record_sha256": "367998d566db960952ac41d704ddb92913c505979122d5413d64a0d889145dcb",
+        "head_commit": "7025852e09857c0eee9fbafc4648160520343953",
+        "result": "success",
+        "suites": {
+          "scientific": {
+            "errors": 0,
+            "failures": 0,
+            "junit_sha256": "eceddafccc80f417c68eff8203b2845aacb97f2c791f2f35497cd4777eabaa84",
+            "skipped": 5,
+            "tests": 6087
+          }
+        }
+      }
+    },
+    "lineage": {
+      "certificate_artifact": "hardened-core-assurance-7025852e09857c0eee9fbafc4648160520343953",
+      "certificate_parent": "7025852e09857c0eee9fbafc4648160520343953",
+      "certify_job": "certify",
+      "pull_request": 43,
+      "repository": "sharq-labs/forge",
+      "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
+      "source_commit": "7025852e09857c0eee9fbafc4648160520343953",
+      "source_gates": [
+        "fast311",
+        "fast312",
+        "scientific312",
+        "formal_mutations_0",
+        "formal_mutations_1",
+        "formal_mutations_2",
+        "formal_mutations_3",
+        "trust_mutations"
+      ],
+      "workflow": ".github/workflows/recertify-hardened-core.yml",
+      "workflow_run_attempt": 1,
+      "workflow_run_id": 34872324489
+    },
+    "policy": "Built by tools/certification/hardening_assurance.py from the evidence artifacts of every source gate for this source commit, after all of them succeeded, and embedded by the official certificate builder.",
+    "schema": "forge.core_hardening_assurance/3",
+    "source_commit": "7025852e09857c0eee9fbafc4648160520343953",
+    "source_tree": "8f7bdf879305d8c69556e3d82f584ed281099c97",
     "trust_hardening_mutations": {
-      "claim": "Fresh trust-boundary mutation family on the exact source commit in an independent parallel gate.",
+      "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
+      "expected_population": 13,
+      "ids": [
+        "TRUST-A1",
+        "TRUST-A2",
+        "TRUST-A3",
+        "TRUST-A4",
+        "TRUST-A5",
+        "TRUST-M1",
+        "TRUST-M2",
+        "TRUST-R1",
+        "TRUST-R2",
+        "TRUST-R3",
+        "TRUST-I1",
+        "TRUST-I2",
+        "TRUST-C1"
+      ],
       "invalid": 0,
-      "passed": true,
+      "killed": 13,
       "population": 13,
-      "result_sha256": "993fbd5c58f237981a23548e7f56b7a69fb18d50b06b0c329f12c8195b07c3c7",
+      "population_sha256": "2af4890f3bf803274eb6d44270bf5e38faf4d2607a502a2008d25b364a169135",
+      "result_schema": "forge.trust_mutation_assurance/1",
+      "result_sha256": "b4bd19443a75fba0c800eca64b76982d89b9904db09e4d0bec51f85c07c43e34",
+      "script": "benchmarks/trust_hardening/audit/mutations.py",
       "survived": 0
     }
   },
@@ -86,11 +396,60 @@
   },
   "generator": {
     "tool": "tools/certification/core_certificate.py",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "4ab6401a8b7b91962add15ae8b92084c8b36dad8c55c3929dbab676fdb2722ed",
+    "aggregate_digest": "37654bc1db4f4b23aec679b3d15c87a1355a79e9d67175f93761ea4c607bd8d7",
     "areas": {
+      "certification_control": {
+        "classification": "CERTIFICATION_CONTROL",
+        "digest": "1f2f416b31d53e816005f7d3d1017f129f76ca0742d33e4db9b17df66ad7729d",
+        "file_count": 15,
+        "file_reasons": {
+          ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
+          ".github/workflows/tests.yml": "decides which pull requests delegate assurance to recertification and what the certificate-child job runs. A narrower classifier call or a dropped child check lets a core change merge on the ordinary suite",
+          "benchmarks/core_freeze_v1/audit/reproduce.py": "loaded by core_freeze.py through importlib to compute the live contract facts the freeze self-check compares against the stored manifest; it is a helper of the verifier, not a benchmark",
+          "tests/test_core_certificate.py": "holds the certificate self-checks the certificate child executes. A self-check that no longer asserts would still be reported as passed",
+          "tests/test_core_freeze_manifest.py": "holds the freeze self-checks the certificate child executes, for the same reason as the certificate self-checks",
+          "tools/__init__.py": "executed on every import of tools.certification, before any verifier code runs; an import-time side effect here could replace a verifier",
+          "tools/certification/__init__.py": "package initialisation executed before every certification module",
+          "tools/certification/assert_clean_tree.py": "the per-gate proof that a source gate did not modify, add or delete a repository file; a weaker check lets a gate pass on a mutated checkout while certify reads a fresh one",
+          "tools/certification/branch_policy.py": "states the merge policy the certificate child's checks rely on and reports whether the repository enforces it",
+          "tools/certification/certificate_lineage.py": "binds a certificate child to its exact parent and to the certify run that produced it; without it a stale or hand-assembled certificate with matching bytes verifies",
+          "tools/certification/core_certificate.py": "the builder and verifier: the digest algorithm, this scope table and the definition of a verifying certificate",
+          "tools/certification/core_freeze.py": "the Core Freeze V1 verifier the freeze self-checks call, which itself calls verify_certificate",
+          "tools/certification/hardening_assurance.py": "builds the assurance record from the gates' downloaded evidence and re-validates it on the child; it is what turns job results into claims",
+          "tools/certification/mutation_population.py": "the canonical formal mutation population, the shard rule and the coverage proof; a wrong union with the right count would certify a mutation family that never ran",
+          "tools/certification/recertification_scope.py": "the single classifier deciding which changes require recertification and which self-checks are deferred to the certificate child"
+        },
+        "files": {
+          ".github/workflows/recertify-hardened-core.yml": "e3553a7791f0ea125b937a3e5657b6a54cf740d796a9a6d78415f94476ba0c86",
+          ".github/workflows/tests.yml": "8be60362b4977e01cefb925d27ccea2e8a3efd7f1bca5038f0b81d2f2129297b",
+          "benchmarks/core_freeze_v1/audit/reproduce.py": "40823bfb455ca06455b501f39b00fad2190107da08c72e27128ab555155970e2",
+          "tests/test_core_certificate.py": "7059dddd2561da65709b4e3b379b145f5c8a60325545f1bd895daca5c27539ab",
+          "tests/test_core_freeze_manifest.py": "d93add15d9e1a3b21d2b5316d95796d3cfa2937487be277987f9a9a3e33b9eae",
+          "tools/__init__.py": "8861d485b3cc33501966df3dada7c2e980beece7bd920fff7648a28b62e5eb42",
+          "tools/certification/__init__.py": "c67a1b43f0d35e62ff42e47a2ea61ada2047728d0ca223f4673be27429666a4e",
+          "tools/certification/assert_clean_tree.py": "efbb87867b52ee6ce196ee0affc63ba97232e632f358c05514e1e49cb1f2215d",
+          "tools/certification/branch_policy.py": "938441cab1927f5e570ce3cf60c1922f893caf731913cc550cd4192712e204c1",
+          "tools/certification/certificate_lineage.py": "0976d849d2f5ebb63769c11c1133d96ce475cd59557d56c3be7bdf15cf328d27",
+          "tools/certification/core_certificate.py": "9395bbc76c5be7e4c7b9fb4f572c241037ea74f75a589d878729b4f174d8f93b",
+          "tools/certification/core_freeze.py": "b5fb42b4136a6c407689bcd69d7e2223692857b5a99dd5048028d1e416285b9c",
+          "tools/certification/hardening_assurance.py": "969c7661a8c7465c00350ba29a8492646b81dc4163f8c16886f13e3abf0bc6e8",
+          "tools/certification/mutation_population.py": "de87e71a7af92087f2d939df8eea3431104b10c081c664303f90313c05022dad",
+          "tools/certification/recertification_scope.py": "3549a84817bb1cb6d17d4f1372121f34a220fda405a1abb628d23469617f9017"
+        },
+        "patterns": [
+          ".github/workflows/recertify-hardened-core.yml",
+          ".github/workflows/tests.yml",
+          "benchmarks/core_freeze_v1/audit/reproduce.py",
+          "tests/test_core_certificate.py",
+          "tests/test_core_freeze_manifest.py",
+          "tools/__init__.py",
+          "tools/certification/*.py"
+        ],
+        "why": "the certification control plane: the verifier, the workflows that run it, the self-checks the certificate child executes and the helpers they load. A certificate is only as meaningful as the code that says it verifies, so that code is pinned by the certificate it validates. Each file states its own reason"
+      },
       "core": {
         "classification": "CORE_CERTIFIED",
         "digest": "93d67765183f5b80360bbf45ac7879e20147a0622a150cc59c07d860f27aa9b3",
@@ -232,6 +591,18 @@
         ],
         "why": "the plane a ScientificDataReference resolves through. The core names bulk data by digest and count and never reads it; the length-then-digest verification that makes that reference worth anything is here, as is the field container's shape, support and finiteness enforcement"
       },
+      "runtime_dependencies": {
+        "classification": "RUNTIME_ENVIRONMENT",
+        "digest": "c5de58ad65d6395f640820319c8f53ef46530a063e186ffc8db29e2f33b27b52",
+        "file_count": 1,
+        "files": {
+          "pyproject.toml": "957fff8ca0ec8d312d91d58d2364b1567629eb6daaae37aae2cbeb340fbc2386"
+        },
+        "patterns": [
+          "pyproject.toml"
+        ],
+        "why": "the dependency declaration every source gate installs from (pip install -e .[dev,mcp,oracles]) and the pytest configuration every suite runs under. The assurance record's pip-freeze digests say what was resolved; this pins what was asked for, so a dependency or test-configuration edit cannot ride on a certificate measured under the previous one"
+      },
       "trust_registry": {
         "classification": "CORE_CERTIFIED",
         "digest": "6d6ab0fe914fa6660e7e25e64119a8833742b43f4ad527d6c3132152fc3f0af3",
@@ -245,13 +616,13 @@
         "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
       }
     },
-    "file_count": 83
+    "file_count": 99
   },
   "notes": {},
   "repository": {
     "branch": "HEAD",
     "clean": true,
-    "commit": "e6d3859728ee2548d1b90a41738ac8c1c1592ace",
+    "commit": "7025852e09857c0eee9fbafc4648160520343953",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -308,6 +679,45 @@
           "tests/test_core_semantic_invariants.py"
         ],
         "why": "the mutation harness and the four suites it runs each mutant against. '79/79 killed' is a statement about these exact bytes: the same sentence over a weakened suite would be worth nothing, so the suites are pinned alongside the runner"
+      },
+      {
+        "area": "certification_control",
+        "classification": "CERTIFICATION_CONTROL",
+        "file_reasons": {
+          ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
+          ".github/workflows/tests.yml": "decides which pull requests delegate assurance to recertification and what the certificate-child job runs. A narrower classifier call or a dropped child check lets a core change merge on the ordinary suite",
+          "benchmarks/core_freeze_v1/audit/reproduce.py": "loaded by core_freeze.py through importlib to compute the live contract facts the freeze self-check compares against the stored manifest; it is a helper of the verifier, not a benchmark",
+          "tests/test_core_certificate.py": "holds the certificate self-checks the certificate child executes. A self-check that no longer asserts would still be reported as passed",
+          "tests/test_core_freeze_manifest.py": "holds the freeze self-checks the certificate child executes, for the same reason as the certificate self-checks",
+          "tools/__init__.py": "executed on every import of tools.certification, before any verifier code runs; an import-time side effect here could replace a verifier",
+          "tools/certification/__init__.py": "package initialisation executed before every certification module",
+          "tools/certification/assert_clean_tree.py": "the per-gate proof that a source gate did not modify, add or delete a repository file; a weaker check lets a gate pass on a mutated checkout while certify reads a fresh one",
+          "tools/certification/branch_policy.py": "states the merge policy the certificate child's checks rely on and reports whether the repository enforces it",
+          "tools/certification/certificate_lineage.py": "binds a certificate child to its exact parent and to the certify run that produced it; without it a stale or hand-assembled certificate with matching bytes verifies",
+          "tools/certification/core_certificate.py": "the builder and verifier: the digest algorithm, this scope table and the definition of a verifying certificate",
+          "tools/certification/core_freeze.py": "the Core Freeze V1 verifier the freeze self-checks call, which itself calls verify_certificate",
+          "tools/certification/hardening_assurance.py": "builds the assurance record from the gates' downloaded evidence and re-validates it on the child; it is what turns job results into claims",
+          "tools/certification/mutation_population.py": "the canonical formal mutation population, the shard rule and the coverage proof; a wrong union with the right count would certify a mutation family that never ran",
+          "tools/certification/recertification_scope.py": "the single classifier deciding which changes require recertification and which self-checks are deferred to the certificate child"
+        },
+        "patterns": [
+          ".github/workflows/recertify-hardened-core.yml",
+          ".github/workflows/tests.yml",
+          "benchmarks/core_freeze_v1/audit/reproduce.py",
+          "tests/test_core_certificate.py",
+          "tests/test_core_freeze_manifest.py",
+          "tools/__init__.py",
+          "tools/certification/*.py"
+        ],
+        "why": "the certification control plane: the verifier, the workflows that run it, the self-checks the certificate child executes and the helpers they load. A certificate is only as meaningful as the code that says it verifies, so that code is pinned by the certificate it validates. Each file states its own reason"
+      },
+      {
+        "area": "runtime_dependencies",
+        "classification": "RUNTIME_ENVIRONMENT",
+        "patterns": [
+          "pyproject.toml"
+        ],
+        "why": "the dependency declaration every source gate installs from (pip install -e .[dev,mcp,oracles]) and the pytest configuration every suite runs under. The assurance record's pip-freeze digests say what was resolved; this pins what was asked for, so a dependency or test-configuration edit cannot ride on a certificate measured under the previous one"
       }
     ],
     "out": [
@@ -328,12 +738,24 @@
         "why": "representation only; it computes nothing a verdict rests on"
       },
       {
-        "area": "tests/** (except the harness area)",
-        "why": "assurance for everything above, not part of what is certified"
+        "area": "tests/** (except the harness area and the two self-check modules)",
+        "why": "assurance for everything above, not part of what is certified. They still trigger recertification (tools/certification/recertification_scope.py), because the gates' results are claims about them"
       },
       {
-        "area": "benchmarks/**, experiments/**, certification/**",
+        "area": "tests/conftest.py",
+        "why": "labels execution tiers only. The certificate child does not trust it to run the self-checks: it requires every deferred self-check to be reported PASSED in JUnit, so a hook that skipped one fails the child"
+      },
+      {
+        "area": "benchmarks/** (except the freeze probe), experiments/**, certification/**",
         "why": "measurements, frozen artefacts, and the certificate itself \u2014 a certificate whose scope contained its own bytes would need a fixed point"
+      },
+      {
+        "area": ".github/** (except the two certification workflows), tools/** (except tools/__init__.py and tools/certification/*.py)",
+        "why": "repository automation that does not decide whether a certificate verifies. .github/workflows/trust-mutations.yml in particular is an advisory run of a population the recertify workflow re-executes itself"
+      },
+      {
+        "area": "requirements.txt, Dockerfile",
+        "why": "not what the gates install from: every gate runs pip install -e on pyproject.toml, and the Dockerfile copies requirements.txt without installing it. The reproduce image runs on pushes to main, never in certification"
       }
     ]
   },

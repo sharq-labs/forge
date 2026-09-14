@@ -4,6 +4,12 @@ name: Tests
 # Core-changing PRs delegate FAST / scientific / mutation assurance to the
 # hardened-core workflow, which runs those independent gates in parallel and
 # produces a certificate-only child commit. Main pushes still run the full suite.
+#
+# Ownership is decided by tools/certification/recertification_scope.py, the same
+# classifier the recertify workflow calls, so the two workflows cannot disagree
+# about which one owns a change. Branch protection must require `tests-gate`
+# (and the recertify workflow's `recertification-gate`): every other job here is
+# conditional, and GitHub counts a skipped required job as passing.
 
 on:
   push:
@@ -19,62 +25,34 @@ jobs:
   scope:
     runs-on: ubuntu-latest
     outputs:
+      mode: ${{ steps.scope.outputs.mode }}
       delegate_to_recertify: ${{ steps.scope.outputs.delegate_to_recertify }}
       certificate_child: ${{ steps.scope.outputs.certificate_child }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
       - name: Classify workflow ownership
         id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          delegate=false
-          certificate_child=false
-
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            head_sha="${{ github.event.pull_request.head.sha }}"
-            base_sha="${{ github.event.pull_request.base.sha }}"
-            subject="$(git log -1 --format=%s "$head_sha")"
-
-            if [ "$subject" = "certification: recertify hardened core" ]; then
-              parent_count="$(git rev-list --parents -n 1 "$head_sha" | awk '{print NF-1}')"
-              if [ "$parent_count" -ne 1 ]; then
-                echo "A certificate child must have exactly one parent; found $parent_count."
-                exit 1
-              fi
-              parent_sha="$(git rev-parse "$head_sha^")"
-              mapfile -t changed < <(git diff --name-only "$parent_sha" "$head_sha")
-              if [ "${#changed[@]}" -ne 1 ] || [ "${changed[0]}" != "certification/current_core_v2.json" ]; then
-                echo "Reserved recertification subject used by a non-certificate-only commit."
-                printf 'Changed path: %s\n' "${changed[@]:-<none>}"
-                exit 1
-              fi
-              certificate_child=true
-              echo "Certificate-only child: heavy source assurance is not repeated."
-            else
-              while IFS= read -r path; do
-                case "$path" in
-                  .github/workflows/recertify-hardened-core.yml|.github/workflows/tests.yml|certification/current_core_v2.json|src/engcore/scientific/*|src/engcore/execution/*|src/engcore/extensions.py|src/engcore/uq/cross_domain.py|tests/*|benchmarks/trust_hardening/*)
-                    delegate=true
-                    break
-                    ;;
-                esac
-              done < <(git diff --name-only "$base_sha" "$head_sha")
-
-              if [ "$delegate" = "true" ]; then
-                echo "Core-assurance PR: FAST/scientific/mutations are delegated to Recertify Hardened Core."
-              else
-                echo "Ordinary PR: normal Tests workflow owns the test suite."
-              fi
-            fi
+          if [ "$EVENT" = "pull_request" ]; then
+            python -m tools.certification.recertification_scope classify \
+              --event "$EVENT" --base "$BASE_SHA" --head "$HEAD_SHA" \
+              --github-output "$GITHUB_OUTPUT"
           else
-            echo "Non-PR run: normal Tests workflow owns the full suite."
+            python -m tools.certification.recertification_scope classify \
+              --event "$EVENT" --github-output "$GITHUB_OUTPUT"
           fi
-
-          echo "delegate_to_recertify=$delegate" >> "$GITHUB_OUTPUT"
-          echo "certificate_child=$certificate_child" >> "$GITHUB_OUTPUT"
 
   repo-layout:
     name: repository layout
@@ -112,7 +90,7 @@ jobs:
 
   fast:
     needs: scope
-    if: needs.scope.outputs.delegate_to_recertify != 'true' && needs.scope.outputs.certificate_child != 'true'
+    if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     name: fast (py ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
@@ -136,10 +114,12 @@ jobs:
         run: >-
           python -m pytest -m "not expensive" -q -n 4 --dist loadfile
           --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+      - name: Prove the suite left the checkout byte-identical
+        run: python -m tools.certification.assert_clean_tree
 
   mutations:
     needs: scope
-    if: needs.scope.outputs.delegate_to_recertify != 'true' && needs.scope.outputs.certificate_child != 'true'
+    if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -150,10 +130,12 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev,mcp,oracles]"
       - run: python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/mutations"
+      - name: Prove the harness left the checkout byte-identical
+        run: python -m tools.certification.assert_clean_tree
 
   scientific:
     needs: scope
-    if: needs.scope.outputs.delegate_to_recertify != 'true' && needs.scope.outputs.certificate_child != 'true'
+    if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -175,10 +157,12 @@ jobs:
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
           --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
           --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+      - name: Prove the suite left the checkout byte-identical
+        run: python -m tools.certification.assert_clean_tree
 
   certificate-child:
     needs: scope
-    if: needs.scope.outputs.certificate_child == 'true'
+    if: needs.scope.outputs.mode == 'certificate_child'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -189,14 +173,52 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev,mcp,oracles]"
-      - name: Verify certificate child without repeating source assurance
+      - name: Verify lineage, scope, assurance evidence and control plane
+        shell: bash
         run: |
-          python -m tools.certification.core_certificate --verify
-          python -m pytest -q \
-            tests/test_core_certificate.py::test_the_certificate_describes_this_tree \
-            tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully \
-            tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 \
-            tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+          set -euo pipefail
+          git fetch --no-tags origin "${GITHUB_SHA}"
+          python -m tools.certification.certificate_lineage verify-child --merge-preview "${GITHUB_SHA}"
+      - name: Verify stored certificate
+        run: python -m tools.certification.core_certificate --verify
+      - name: Run the deferred certificate/freeze self-checks; every one must pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          nodes_text="$(python -m tools.certification.recertification_scope self-checks --format node-ids)"
+          mapfile -t nodes <<< "$nodes_text"
+          python -m pytest -q -p no:cacheprovider "${nodes[@]}" --junitxml "${RUNNER_TEMP}/self-checks.xml"
+          python -m tools.certification.recertification_scope verify-junit "${RUNNER_TEMP}/self-checks.xml"
+      - name: Prove the checks left the checkout byte-identical to the child
+        run: python -m tools.certification.assert_clean_tree
+
+  tests-gate:
+    name: tests-gate
+    needs:
+      - scope
+      - repo-layout
+      - fast
+      - mutations
+      - scientific
+      - certificate-child
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Require every job this change's ownership mode depends on
+        env:
+          MODE: ${{ needs.scope.outputs.mode }}
+          EVENT: ${{ github.event_name }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: >-
+          python -m tools.certification.recertification_scope gate
+          --workflow tests --mode "${MODE:-unclassified}" --event "$EVENT"
+          --needs-json "$NEEDS"
 
   reproduce:
     if: github.event_name != 'pull_request'

@@ -1,0 +1,31 @@
+name: Branch Policy
+
+# Repository files cannot protect `main`; only GitHub's branch rules can. This
+# workflow reports, from CI and with the default token, whether the merge policy
+# the certification checks rely on is actually in force, and fails when it is
+# not. It deliberately does not run on pull requests: its result is a fact about
+# the repository's settings, not about the change under review.
+# The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Verify main enforces the certification merge policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python -m tools.certification.branch_policy
+          --repository "${GITHUB_REPOSITORY}" --branch main
