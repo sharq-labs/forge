@@ -1,26 +1,34 @@
 """Artifact-backed evidence for cross-solver route independence.
 
 ``consensus.RouteDependencies`` answers *what* each route says it uses and the
-core checks that declaration against domain pins.  That is stronger than route
+core checks that declaration against domain pins. That is stronger than route
 labels, but a declaration can still be wrong about the world: two wrappers may
 name different implementations while loading the same binary/image/source
 artifact.
 
-This module adds a second, deliberately conservative layer.  Each route binds
-artifact byte identities to the dependency declaration it is evidence for.  A
-strong-independence report is available only when every solver-independence
-dimension has artifact evidence, the evidence names the exact dependency digest
-carried by the route, and no artifact digest is shared between two routes.
+Each route therefore binds artifact byte identities to the dependency
+declaration it is evidence for. A strong-independence report is available only
+when every solver-independence dimension has artifact evidence, the evidence
+names the exact dependency digest carried by the route, the declared artifact
+digests are freshly recomputed from supplied bytes, and no verified artifact
+digest is shared between two routes.
 
-A digest proves byte identity, not semantic independence.  Different digests do
-*not* prove two pieces of software were independently developed.  Therefore the
-result is named ``artifact_disjoint``/``strongly_independent`` and is suitable
-as an additional gate, never as a replacement for the declaration-level checks
-already performed by :mod:`engcore.scientific.consensus`.
+A digest string by itself is never evidence here. Serialized fingerprints are
+portable declarations of expected byte identity; callers must present the bytes
+again at the trust boundary before those fingerprints can influence a
+``CROSS_SOLVER_VALIDATED`` claim. Byte hashing reuses
+:class:`~engcore.scientific.results.execution_manifest.ArtifactDigest`, so the
+execution manifest and independence gate cannot disagree about artifact byte
+identity.
+
+A digest proves byte identity, not semantic independence. Different digests do
+not prove independent development, so this remains an additional gate rather
+than a replacement for declaration-level checks.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping as RuntimeMapping
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
@@ -30,6 +38,7 @@ from .consensus import (
     SolveRoute,
 )
 from .errors import ScientificValidationError
+from .results.execution_manifest import ArtifactDigest
 from .results.immutable import freeze
 from .serialization import require_schema, schema_string
 
@@ -47,14 +56,44 @@ def _digest(value: Any, *, label: str) -> str:
     return text
 
 
+def _artifact_digest(name: str, payload: bytes) -> str:
+    """Byte identity under the same contract as execution manifests."""
+    return ArtifactDigest.from_bytes(name, payload, role="independence").digest
+
+
+def _normalise_artifact_bytes(
+    supplied: Mapping[IndependenceDimension, Mapping[str, bytes]] | None,
+) -> dict[IndependenceDimension, Mapping[str, bytes]]:
+    if supplied is None:
+        return {}
+    if not isinstance(supplied, RuntimeMapping):
+        raise ScientificValidationError(
+            "artifact bytes for a route must be a mapping by independence dimension"
+        )
+    normalised: dict[IndependenceDimension, Mapping[str, bytes]] = {}
+    for raw_dimension, raw_items in supplied.items():
+        try:
+            dimension = IndependenceDimension(raw_dimension)
+        except ValueError:
+            raise ScientificValidationError(
+                f"artifact bytes name unknown independence dimension {raw_dimension!r}"
+            ) from None
+        if not isinstance(raw_items, RuntimeMapping):
+            raise ScientificValidationError(
+                f"artifact bytes for {dimension.value} must be a mapping from "
+                "artifact name to bytes"
+            )
+        normalised[dimension] = raw_items
+    return normalised
+
+
 @dataclass(frozen=True, order=True)
 class ArtifactFingerprint:
-    """Byte identity of one implementation/runtime artifact.
+    """Expected byte identity of one implementation/runtime artifact.
 
-    ``name`` is descriptive and never decides equality across routes; ``digest``
-    is the load-bearing identity.  ``kind`` keeps reports readable (source,
-    binary, container, library, generated-code, ...), but is intentionally an
-    open string because the core cannot enumerate every packaging technology.
+    The direct constructor stays available because fingerprints must deserialize
+    without carrying bulk bytes. Construction validates only the declaration;
+    trust is established later by re-hashing supplied bytes.
     """
 
     digest: str
@@ -73,6 +112,27 @@ class ArtifactFingerprint:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "digest", _digest(self.digest, label="artifact fingerprint"))
+
+    @classmethod
+    def from_bytes(
+        cls,
+        name: str,
+        payload: bytes,
+        *,
+        kind: str = "artifact",
+    ) -> "ArtifactFingerprint":
+        if not isinstance(payload, bytes):
+            raise ScientificValidationError(
+                f"artifact {name!r} payload must be bytes; got {type(payload).__name__}"
+            )
+        return cls(
+            digest=_artifact_digest(name, payload),
+            name=name,
+            kind=kind,
+        )
+
+    def verifies(self, payload: bytes) -> bool:
+        return isinstance(payload, bytes) and _artifact_digest(self.name, payload) == self.digest
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -96,7 +156,7 @@ class ArtifactFingerprint:
 
 @dataclass(frozen=True)
 class RouteIndependenceEvidence:
-    """Artifact evidence for one exact ``RouteDependencies`` declaration."""
+    """Artifact declarations for one exact ``RouteDependencies`` declaration."""
 
     route_id: str
     dependency_digest: str
@@ -126,7 +186,17 @@ class RouteIndependenceEvidence:
             normalized[dimension] = values
         object.__setattr__(self, "artifacts", freeze(normalized))
 
-    def evidence_gap(self, route: SolveRoute) -> tuple[str, ...]:
+    def evidence_gap(
+        self,
+        route: SolveRoute,
+        artifact_bytes: Mapping[IndependenceDimension, Mapping[str, bytes]] | None = None,
+    ) -> tuple[str, ...]:
+        """Return every reason this evidence cannot establish independence.
+
+        The load-bearing rule is that every declared fingerprint is recomputed
+        from bytes during assessment. Different caller-supplied hex strings can
+        no longer manufacture independence.
+        """
         reasons: list[str] = []
         if route.route_id != self.route_id:
             reasons.append(
@@ -145,11 +215,41 @@ class RouteIndependenceEvidence:
                         f"evidence binds dependency digest {self.dependency_digest[:12]}…, "
                         f"route declares {actual[:12]}…"
                     )
+
+        supplied = _normalise_artifact_bytes(artifact_bytes)
         for dimension in SOLVER_INDEPENDENCE_DIMENSIONS:
-            if not self.artifacts.get(dimension):
+            fingerprints = self.artifacts.get(dimension)
+            if not fingerprints:
                 reasons.append(
                     f"no artifact evidence for required dimension {dimension.value}"
                 )
+                continue
+            dimension_bytes = supplied.get(dimension)
+            if dimension_bytes is None:
+                reasons.append(
+                    f"no artifact bytes supplied for required dimension {dimension.value}"
+                )
+                continue
+            for artifact in sorted(fingerprints):
+                if artifact.name not in dimension_bytes:
+                    reasons.append(
+                        f"no bytes supplied for {dimension.value} artifact {artifact.name!r}"
+                    )
+                    continue
+                raw = dimension_bytes[artifact.name]
+                if not isinstance(raw, bytes):
+                    reasons.append(
+                        f"bytes for {dimension.value} artifact {artifact.name!r} are "
+                        f"{type(raw).__name__}, not bytes"
+                    )
+                    continue
+                actual_digest = _artifact_digest(artifact.name, raw)
+                if actual_digest != artifact.digest:
+                    reasons.append(
+                        f"{dimension.value} artifact {artifact.name!r} declares "
+                        f"sha256:{artifact.digest[:12]}… but supplied bytes hash to "
+                        f"sha256:{actual_digest[:12]}…"
+                    )
         return tuple(reasons)
 
     def to_dict(self) -> dict[str, Any]:
@@ -211,7 +311,7 @@ class IndependenceEvidenceReport:
             return "at least two routes are required for an independence statement"
         failures = [(route, reasons) for route, reasons in self.route_findings if reasons]
         if failures:
-            return f"artifact evidence is incomplete or mismatched for routes {failures}"
+            return f"artifact evidence is incomplete, unverified or mismatched for routes {failures}"
         if self.shared_artifacts:
             labels = [
                 f"{item.digest[:12]}… shared by {list(item.routes)} as {list(item.names)}"
@@ -219,8 +319,8 @@ class IndependenceEvidenceReport:
             ]
             return f"routes share implementation/runtime artifacts: {labels}"
         return (
-            "every route binds artifact evidence to its declared dependencies and "
-            "no artifact digest is shared; this strengthens the declaration-level "
+            "every route binds verified artifact bytes to its declared dependencies and "
+            "no verified artifact digest is shared; this strengthens the declaration-level "
             "independence claim but does not prove independent development"
         )
 
@@ -228,6 +328,10 @@ class IndependenceEvidenceReport:
 def assess_independence_evidence(
     routes: Sequence[SolveRoute],
     evidence: Sequence[RouteIndependenceEvidence],
+    *,
+    artifact_bytes: Mapping[
+        str, Mapping[IndependenceDimension, Mapping[str, bytes]]
+    ] | None = None,
 ) -> IndependenceEvidenceReport:
     """Evaluate artifact-backed independence for an exact set of routes."""
     routes = tuple(routes)
@@ -246,15 +350,21 @@ def assess_independence_evidence(
             f"independence evidence supplied for routes not being compared: {extra}"
         )
 
+    bytes_by_route = dict(artifact_bytes or {})
+    extra_bytes = sorted(set(bytes_by_route) - set(route_ids))
+    if extra_bytes:
+        raise ScientificValidationError(
+            f"artifact bytes supplied for routes not being compared: {extra_bytes}"
+        )
+
     findings: list[tuple[str, tuple[str, ...]]] = []
-    # digest -> route -> [(dimension, fingerprint)]
     observed: dict[str, dict[str, list[tuple[IndependenceDimension, ArtifactFingerprint]]]] = {}
     for route in routes:
         item = by_id.get(route.route_id)
         if item is None:
             findings.append((route.route_id, ("no artifact evidence supplied",)))
             continue
-        gaps = item.evidence_gap(route)
+        gaps = item.evidence_gap(route, bytes_by_route.get(route.route_id))
         findings.append((route.route_id, gaps))
         if gaps:
             continue
@@ -285,9 +395,18 @@ def assess_independence_evidence(
 
 
 def require_strong_independence(
-    routes: Sequence[SolveRoute], evidence: Sequence[RouteIndependenceEvidence]
+    routes: Sequence[SolveRoute],
+    evidence: Sequence[RouteIndependenceEvidence],
+    *,
+    artifact_bytes: Mapping[
+        str, Mapping[IndependenceDimension, Mapping[str, bytes]]
+    ] | None = None,
 ) -> IndependenceEvidenceReport:
-    report = assess_independence_evidence(routes, evidence)
+    report = assess_independence_evidence(
+        routes,
+        evidence,
+        artifact_bytes=artifact_bytes,
+    )
     if not report.strongly_independent:
         raise ScientificValidationError(
             f"strong solver-independence evidence not established: {report.reason}"
