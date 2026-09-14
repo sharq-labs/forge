@@ -55,6 +55,11 @@ CANONICAL_MODULES = (
 
 SCHEMA = "engcore.api_snapshot/1"
 
+#: Core V2 is additive over V1. Calling ``build()`` with no arguments keeps the
+#: V1 contract byte-for-byte; V2 explicitly asks for this extended module set.
+V2_ADDED_MODULES = ("engcore.hybrid_uq",)
+V2_CANONICAL_MODULES = CANONICAL_MODULES + V2_ADDED_MODULES
+
 #: Parameters whose stability classification is not FREEZE, keyed by
 #: ``"module:symbol:parameter"``. Recorded here rather than inferred, so an
 #: experimental surface is a written decision.
@@ -124,18 +129,6 @@ EXPERIMENTAL_SYMBOLS = {
 }
 
 #: Whole modules whose exports are public but NOT frozen, with the reason.
-#:
-#: ``engcore.studies`` is one flagship study's scaffolding, not a Core
-#: contract. It was created in Sprint 8 to orchestrate the linear-TCR
-#: calibration example, and everything it exports is specific to that example:
-#: ``TcrTruth``, ``tcr_prediction``, ``synthesize_tcr_observations``,
-#: ``ols_reference_estimate``. Freezing those would commit the Core to a
-#: demonstration's API forever, and a later study would either be stuck with
-#: this one's shape or have to break a frozen contract.
-#:
-#: It stays importable -- the tests use it and it is the worked example the
-#: calibration layer is explained through -- but it is marked, so nobody
-#: mistakes "it is in the package" for "it is supported".
 EXPERIMENTAL_MODULES = {
     "engcore.studies": (
         "one flagship study's scaffolding (linear-TCR calibration), not a Core "
@@ -153,15 +146,7 @@ _PARAMETER_KIND = {
 
 
 def _render_default(value: Any) -> Any:
-    """A default rendered so that two processes agree, byte for byte.
-
-    ``repr`` is not usable: for anything without a stable ``__repr__`` it
-    embeds a memory address, so the snapshot would differ between runs of
-    identical code. Values whose identity is structural are rendered
-    structurally; everything else is rendered as its TYPE plus a marker, which
-    records "there is a default of this type here" without pretending to
-    describe a value that cannot be described canonically.
-    """
+    """A default rendered so that two processes agree, byte for byte."""
     if value is inspect.Parameter.empty:
         return {"kind": "none"}
     if isinstance(value, float) and (value != value or value in (_INF, -_INF)):
@@ -183,12 +168,8 @@ def _render_default(value: Any) -> Any:
 
 
 def _signature_of(value: Any) -> dict[str, Any] | None:
-    # Enum construction is public as ``EnumClass(value)``/member lookup, but
-    # ``inspect.signature(EnumClass)`` exposes the private EnumType.__call__
-    # implementation. CPython 3.11 reports the metaclass factory signature
-    # (value, names, module, qualname, ...), while 3.12 reports ``*values`` for
-    # an already-created Enum subclass. That interpreter detail is not a Forge
-    # compatibility event. Preserve the historical frozen semantic shape.
+    # EnumType.__call__ has interpreter-specific private signatures. Preserve
+    # the historical public semantic shape instead of freezing that detail.
     if inspect.isclass(value) and issubclass(value, enum.Enum):
         return {
             "parameters": [
@@ -281,10 +262,7 @@ def _union_members(value: Any) -> list[str] | None:
 
 
 def _kind_of(value: Any) -> str:
-    # A union is one public semantic kind even though CPython represents it as
-    # UnionType, _UnionGenericAlias, or another private runtime class depending
-    # on interpreter version and spelling. Recording that private type would
-    # make an unchanged API move its frozen digest on a Python upgrade.
+    # Canonicalize PEP-604 / typing union representations across interpreters.
     if _union_members(value) is not None:
         return "Union"
     if inspect.isclass(value):
@@ -327,10 +305,8 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
             "removal": record["removal"],
         }
 
-    # Union membership is the contract. Its CPython implementation module is
-    # not: PEP-604 unions report ``types`` on 3.11/3.12 while legacy typing
-    # aliases report ``typing``. Canonicalize both to the historical public
-    # spelling so an interpreter upgrade cannot look like an API change.
+    # Union membership is the contract. Its private CPython representation is
+    # not, so canonicalize the defining module to the historical spelling.
     alias_members = _union_members(value)
     if alias_members is not None:
         entry["union_members"] = alias_members
@@ -362,9 +338,14 @@ def describe(module_name: str, name: str, value: Any) -> dict[str, Any]:
     return entry
 
 
-def build() -> dict[str, Any]:
+def build(*, modules: tuple[str, ...] = CANONICAL_MODULES) -> dict[str, Any]:
+    """Describe a canonical Core surface; no argument preserves Core V1."""
+    modules = tuple(modules)
+    unknown = [module for module in modules if module not in V2_CANONICAL_MODULES]
+    if unknown:
+        raise ValueError(f"not a canonical Core module: {unknown}")
     symbols = []
-    for module_name in CANONICAL_MODULES:
+    for module_name in modules:
         module = importlib.import_module(module_name)
         for name in sorted(getattr(module, "__all__", ()) or ()):
             symbols.append(describe(module_name, name, getattr(module, name)))
@@ -373,7 +354,7 @@ def build() -> dict[str, Any]:
     experimental = [e for e in symbols if e["classification"] != "FREEZE"]
     return {
         "schema": SCHEMA,
-        "modules": list(CANONICAL_MODULES),
+        "modules": list(modules),
         "symbol_count": len(symbols),
         "frozen_count": len(frozen),
         "experimental_count": len(experimental),
