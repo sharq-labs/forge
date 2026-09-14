@@ -1,22 +1,36 @@
 {
   "assurance": {
     "environment": {
+      "certificate_builder_platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "execution_model": "parallel_github_actions_jobs",
       "ngspice": "******",
-      "pip_freeze_3_11_sha256": "11ceb0ff99fa5d002e8be2b092e4dab315a196958fc06e9b435dc467668732a9",
-      "pip_freeze_3_12_sha256": "f863ac33b651dd99b20cb72f614e0ac11d71ea349aa9564d613d6e694ed87703",
-      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "pip_freeze_3_11_sha256": "b324d57f44786839b770d782024eea6d10b646ee8b305b420bf7cccad389551a",
+      "pip_freeze_3_12_sha256": "81f9e68022c1e164d24ec19f09b6dec8d33a5307af6a58ee3f4f76c4d8882a50",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
-      "schema": "forge.certification_environment/1",
-      "source_commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
+      "schema": "forge.certification_environment/2",
+      "source_commit": "e6d3859728ee2548d1b90a41738ac8c1c1592ace",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
+    "execution_model": "parallel_gates_then_certificate",
     "formal_guard_mutations": {
-      "claim": "Fresh execution of tests/mutation_guards.py on this source commit; this remains the formal historical mutation family.",
-      "log_sha256": "ffa5000d508fcfc2f0d015f1a7c3e04774b02cd2d970b990d84e3d9079fe4c12",
+      "claim": "Fresh execution of tests/mutation_guards.py on the exact source commit, partitioned by stable MUTATIONS order modulo four. Every shard reruns the unmutated control before its assigned mutations.",
+      "log_sha256_by_shard": {
+        "0": "b2c512cb172052461c45b36dcc649b7b45a9c2e0ee1d951d6beb79a9e4d6b6ec",
+        "1": "9c7bb5b017fd630d670877cedc400d09aeff1754a19fec998a0edf1e0fac509e",
+        "2": "081d71aa5bde8b422653a395f5850b74b2559eaadc0f00023736d281d25aec41",
+        "3": "aaeec16be1e10cc5e15f469a4891cfffe3c35e148027cbc7c9fcf26b51ac1fb2"
+      },
       "passed": true,
-      "population": 79
+      "population": 79,
+      "shard_counts": {
+        "0": 20,
+        "1": 20,
+        "2": 20,
+        "3": 19
+      },
+      "shards": 4
     },
     "functional": {
       "fast_python_3_11": {
@@ -25,20 +39,20 @@
       "fast_python_3_12": {
         "passed": true
       },
-      "note": "The four certificate/freeze self-checks were deferred until the generated certificate child commit. Guard 19 was not removed: it ran serially on Python 3.11 and 3.12 before the parallel suites to avoid racing the blind-v2 falsification module writer.",
+      "note": "Independent functional gates ran in parallel on the exact source commit. The four certificate/freeze self-checks are deferred only until the generated certificate child.",
       "scientific_python_3_12": {
         "passed": true
       }
     },
-    "policy": "Certificate generated only after all gates above returned success in this workflow.",
-    "schema": "forge.core_hardening_assurance/1",
-    "source_commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
+    "policy": "Certificate generated only after every independent source gate returned success for the same source SHA.",
+    "schema": "forge.core_hardening_assurance/2",
+    "source_commit": "e6d3859728ee2548d1b90a41738ac8c1c1592ace",
     "trust_hardening_mutations": {
-      "claim": "Separate fresh trust-boundary mutation family; intentionally not added to the formal 79 count.",
+      "claim": "Fresh trust-boundary mutation family on the exact source commit in an independent parallel gate.",
       "invalid": 0,
       "passed": true,
       "population": 13,
-      "result_sha256": "c9edd923dec41a8436e8e87fb69de48adb529fc595c091bad3fbe1afe435b6f2",
+      "result_sha256": "993fbd5c58f237981a23548e7f56b7a69fb18d50b06b0c329f12c8195b07c3c7",
       "survived": 0
     }
   },
@@ -75,11 +89,11 @@
     "version": "2.0.0"
   },
   "manifest": {
-    "aggregate_digest": "c167d7b5d9d1a2a31622aa80e5e2fe9a04ca6990c41f626648050853b66b8c9c",
+    "aggregate_digest": "4ab6401a8b7b91962add15ae8b92084c8b36dad8c55c3929dbab676fdb2722ed",
     "areas": {
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "6cd25aff5583eec2da07be97f8392f7029321a79702bc414c0ee369be9221a88",
+        "digest": "93d67765183f5b80360bbf45ac7879e20147a0622a150cc59c07d860f27aa9b3",
         "file_count": 62,
         "files": {
           "src/engcore/scientific/__init__.py": "f79cc0ab53915788875d632fcbc6a75a2f2822d5e3b01269e1a78e7b24367b1e",
@@ -103,7 +117,7 @@
           "src/engcore/scientific/fields/regions.py": "c7f88f9f552a839b4cab76608b47c2cad3e38edae5b2bc642f270a5418fd1af5",
           "src/engcore/scientific/fields/result.py": "b8bc595e5fa8ea4ce78684cd2c5ac62d6c474cdc7f31cdfbf4dc5071d913fe4c",
           "src/engcore/scientific/fields/transfer.py": "e4411c5927ba8d60bfe9d895c9f260f608833bcda0d7fb692babf84ef12407e6",
-          "src/engcore/scientific/independence_evidence.py": "f7fe26f23e369c63b9a98af648f1262c1d97879999b7ac6107d9268dfeb27761",
+          "src/engcore/scientific/independence_evidence.py": "e18851ec47ef0b0aa0f132b0a8e1f8bd0ba77dfa2b63f731299da6ae7883139f",
           "src/engcore/scientific/ir/__init__.py": "824b29e4eb8075ddf92c540c072c590bbee3097f7e7bb149f9c61e4373882fe0",
           "src/engcore/scientific/ir/conditions.py": "8090d33605902ad628cc24bd8c098f71ff29193bc318941506abb8d003f11aa9",
           "src/engcore/scientific/ir/constraints.py": "43917bc80d47f9eb6fa1f2792431fa281e134285984be158a5b969dcd44a90c2",
@@ -118,7 +132,7 @@
           "src/engcore/scientific/models/registry.py": "732f02e498308c9573bce6f4f941127187bb39ea26c2a9dd5e41b746a6e72141",
           "src/engcore/scientific/models/structured_validity.py": "e85c5aa3121f15a5459cb4d08cd7c9b9358d0157e10e8628739414c122cbe067",
           "src/engcore/scientific/models/unknown_diagnostics.py": "64122beabb59ed33361c44ad30a99ce01f1b90bc1b43067b36578c2d57b757a2",
-          "src/engcore/scientific/oracles.py": "dc95347f1d12ed3ba61845a8e8ceb92c36d6e04338b5aed0a99b0a4ae453a2c4",
+          "src/engcore/scientific/oracles.py": "ad1ec265f91d8e386dcef771b4eafc1790f5f4750ca087b8716e0a43e8f3955b",
           "src/engcore/scientific/realizations/__init__.py": "11d2ce420e3d89d1692a3dc9084ea0debe6b400b9db43857de6f59d2150358dc",
           "src/engcore/scientific/realizations/admission.py": "4d4a2386f1518b00b78b5d448da00443e32b4a2aedcb1330e48e8b80b167b674",
           "src/engcore/scientific/realizations/definition.py": "0b6e2239cd863120637aa284061a03741e2548a368b9472d0462bfd5cebdd277",
@@ -235,9 +249,9 @@
   },
   "notes": {},
   "repository": {
-    "branch": "core/hardening-integration-v1",
+    "branch": "HEAD",
     "clean": true,
-    "commit": "5f75f7cc8ec9495b8beb31d130451eebc5daef19",
+    "commit": "e6d3859728ee2548d1b90a41738ac8c1c1592ace",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -328,7 +342,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "cc86b3953432617153c56befe1afa55dddfe4ebc2446a58618197040d8587be9",
+    "v1_compatible_core_digest_now": "ae04d32f166814fb8f45963b212f0af3124c8bae048eab9a94f50d89384dd18c",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }
