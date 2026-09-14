@@ -10,6 +10,7 @@ falsifies one piece; the builder must refuse and say which.
 from __future__ import annotations
 
 import json
+import pathlib
 
 import pytest
 
@@ -18,12 +19,18 @@ from tools.certification import core_certificate
 from tools.certification.hardening_assurance import (
     ASSURANCE_SCHEMA,
     EVIDENCE,
+    EXPECTED_TRUST_POPULATION,
+    TRUST_SCRIPT,
     AssuranceError,
+    Policy,
     RunContext,
     build_assurance,
     ngspice_version,
+    trust_population,
 )
 from tools.certification.recertification_scope import RECERTIFY_SOURCE_GATES
+
+REPO = pathlib.Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -52,6 +59,32 @@ def _refused(root, head, evidence, fragment, **run):
     with pytest.raises(AssuranceError) as caught:
         _build(root, head, evidence, **run)
     assert any(fragment in problem for problem in caught.value.problems), caught.value.problems
+
+
+def test_the_claimed_trust_population_is_the_runners_actual_population():
+    """The certificate states EXPECTED_TRUST_POPULATION; the runner decides what it is.
+
+    Read from ``MUTATIONS`` in the real runner, so adding or removing a trust
+    mutation without changing the certification policy fails here, before a
+    certificate can claim a population nobody ran.
+    """
+    ids = trust_population(REPO)
+    assert len(ids) == EXPECTED_TRUST_POPULATION == Policy().expected_trust_population
+    assert len(set(ids)) == len(ids)
+
+
+def test_the_trust_population_attacks_per_dependency_evidence_integrity():
+    """Round 1A is only certified if mutants aimed at its mechanism are in the run."""
+    import runpy
+
+    runner = runpy.run_path(str(REPO / TRUST_SCRIPT), run_name="_trust_population_probe")
+    by_id = {mutation.mutation_id: mutation for mutation in runner["MUTATIONS"]}
+    round_1a = {mid for mid in by_id if mid.startswith("TRUST-D")}
+    assert round_1a == {f"TRUST-D{index}" for index in range(1, 8)}
+    for mid in sorted(round_1a):
+        target = (REPO / by_id[mid].path).read_bytes().decode("utf-8")
+        assert target.count(by_id[mid].old) == 1, f"{mid} no longer matches its target exactly once"
+    assert "tests/test_independence_dependency_binding.py" in runner["TESTS"]
 
 
 def test_every_source_gate_has_an_evidence_layout():

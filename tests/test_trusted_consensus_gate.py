@@ -303,3 +303,92 @@ def test_unknown_evidence_route_is_refused_instead_of_ignored():
             evidence,
             artifact_bytes=artifact_bytes,
         )
+
+
+def _declared_consensus(*routes) -> CrossSolverConsensus:
+    return CrossSolverConsensus.over(
+        consensus_id="trusted-gate-relabelling",
+        routes=routes,
+        values={item.route_id: {"x": 1.0, "y": 2.0} for item in routes},
+        thresholds=DC_CONSENSUS_THRESHOLDS,
+        tolerance_key="agreement_rel_tol",
+        required_outputs=("x", "y"),
+    )
+
+
+def _backend_evidence(route_record, backend_rows):
+    """Distinct genuine artifacts everywhere except BACKEND, which ``backend_rows`` supplies."""
+    canonical = route_record.dependencies.canonical()
+    artifacts, route_bytes = {}, {}
+    for dimension in SOLVER_INDEPENDENCE_DIMENSIONS:
+        rows = backend_rows if dimension is IndependenceDimension.BACKEND else [
+            (f"{route_record.route_id}-{dimension.value}-{index}",
+             f"artifact:{route_record.route_id}:{identity}".encode(), identity)
+            for index, identity in enumerate(sorted(canonical[dimension]))
+        ]
+        artifacts[dimension] = frozenset(
+            ArtifactFingerprint.from_bytes(name, payload, kind="binary", dependency_identity=identity)
+            for name, payload, identity in rows
+        )
+        route_bytes[dimension] = {name: payload for name, payload, _ in rows}
+    return (
+        RouteIndependenceEvidence(route_record.route_id, route_record.dependencies.digest, artifacts),
+        route_bytes,
+    )
+
+
+def test_relabelling_a_routes_own_backend_as_its_shared_library_cannot_keep_the_level():
+    """The Round 1A bypass, end to end through the trusted gate.
+
+    Both routes really load one linear-algebra library, declared under a
+    different identity in each (``ext:vendor-a:linear-algebra`` and
+    ``ext:vendor-b:linear-algebra``) -- the declaration-level blind spot artifact
+    evidence exists for. Presenting that library's bytes is refused as shared
+    machinery. Before Round 1A, presenting each route's OWN backend bytes a
+    second time, bound to the linear-algebra identity, kept
+    CROSS_SOLVER_VALIDATED: every identity carried a verified label, and the
+    shared-artifact check only compared routes with each other.
+    """
+    a = route("a", backend={"ext:test:a:backend", "ext:vendor-a:linear-algebra"})
+    b = route("b", backend={"ext:test:b:backend", "ext:vendor-b:linear-algebra"})
+    consensus = _declared_consensus(a, b)
+    assert consensus.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
+
+    own = {"a": b"route a's own backend binary", "b": b"route b's own backend binary"}
+    shared_library = b"the one linear-algebra binary both routes load"
+
+    def decide(second_payload):
+        records = [
+            _backend_evidence(item, [
+                (f"{item.route_id}-backend.so", own[item.route_id], f"ext:test:{item.route_id}:backend"),
+                (f"{item.route_id}-linalg.so", second_payload(item.route_id),
+                 f"ext:vendor-{item.route_id}:linear-algebra"),
+            ])
+            for item in (a, b)
+        ]
+        return TrustedConsensusGate().assess(
+            consensus,
+            [record for record, _ in records],
+            artifact_bytes={"a": records[0][1], "b": records[1][1]},
+        )
+
+    relabelled = decide(lambda route_id: own[route_id])
+    assert relabelled.validated is False
+    assert relabelled.check.establishes is not ValidationLevel.CROSS_SOLVER_VALIDATED
+    assert not relabelled.independence.all_routes_verified
+    assert "cannot establish more than one declared dependency" in relabelled.check.detail
+    assert relabelled.check.outcome is ValidationOutcome.PASS  # the agreement itself is not rewritten
+
+    honest_but_shared = decide(lambda route_id: shared_library)
+    assert honest_but_shared.validated is False
+    assert honest_but_shared.independence.all_routes_verified
+    assert honest_but_shared.independence.shared_artifacts
+
+    distinct = decide(lambda route_id: f"route {route_id}'s own linear-algebra binary".encode())
+    assert distinct.validated is True
+    assert distinct.check.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
+    assert distinct.independence.strongly_independent
+    assert any(
+        line.endswith("evidences ext:vendor-a:linear-algebra") for line in distinct.check.evidence
+    )
+    assert "does not show the routes used those artifacts at runtime" in distinct.check.detail

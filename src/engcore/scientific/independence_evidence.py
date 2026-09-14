@@ -6,28 +6,48 @@ labels, but a declaration can still be wrong about the world: two wrappers may
 name different implementations while loading the same binary/image/source
 artifact.
 
-Each route therefore binds artifact byte identities to the dependency
-declaration it is evidence for. Strong independence requires evidence for every
-canonical dependency identity in every solver-independence dimension, not just
-one artifact for the dimension as a whole. The evidence must name the exact
-dependency digest carried by the route, every artifact must explicitly bind to
-a dependency identity declared in that dimension, the declared artifact
-digests are freshly recomputed from supplied bytes, and no verified artifact
-digest may be shared between two routes.
+Each route therefore presents artifact bytes as evidence for the dependency
+declaration it carries. What a route's evidence establishes, and in what order:
+
+1. the evidence names the exact dependency digest the route carries;
+2. every artifact is explicitly bound to one dependency identity, and that
+   binding canonicalises to an identity the route declares in the same
+   solver-independence dimension;
+3. bytes for the artifact were supplied, are ``bytes``, and re-hash to the
+   fingerprint's digest;
+4. ONLY THEN is that canonical dependency identity counted as evidenced;
+5. every canonical dependency identity in every solver-independence dimension is
+   evidenced this way;
+6. within the route, one verified artifact byte identity evidences at most one
+   canonical dependency identity. Dependencies that are one artifact are one
+   dependency, and must be declared as one;
+7. across the compared routes, no verified artifact digest is shared.
+
+Rules 6 and 7 are different rules. Rule 6 stops one genuine artifact, presented
+several times under several labels, from standing in for several dependencies
+of the same route. Rule 7 stops two routes from sharing machinery under
+different labels.
 
 A digest string by itself is never evidence here. Serialized fingerprints are
 portable declarations of expected byte identity; callers must present the bytes
 again at the trust boundary before those fingerprints can influence a
-``CROSS_SOLVER_VALIDATED`` claim. Legacy fingerprints without a dependency
-binding remain readable, but they cannot establish strong independence. Byte
-hashing reuses
+``CROSS_SOLVER_VALIDATED`` claim. A fingerprint stores its dependency binding
+as declared and is canonicalised only at assessment, so reading a record never
+imports anything and stays readable where the named dependency is not
+installed. Legacy fingerprints without a binding remain readable and cannot
+establish independence. Byte hashing reuses
 :class:`~engcore.scientific.results.execution_manifest.ArtifactDigest`, so the
 execution manifest and independence gate cannot disagree about artifact byte
 identity.
 
-A digest proves byte identity, not semantic independence. Different digests do
-not prove independent development, so this remains an additional gate rather
-than a replacement for declaration-level checks.
+What this does NOT establish
+----------------------------
+The bytes are presented by the caller. Nothing here observes the solver loading
+or executing them, so verified artifact identity is not proof of runtime use.
+A digest proves byte identity, not semantic independence: different digests do
+not prove independent development or an independent scientific formulation.
+This remains an additional gate beside the declaration-level checks, not a
+replacement for them. Runtime-use attestation is a separate, later mechanism.
 """
 
 from __future__ import annotations
@@ -96,10 +116,21 @@ def _normalise_artifact_bytes(
 class ArtifactFingerprint:
     """Expected byte identity of one implementation/runtime artifact.
 
-    ``dependency_identity`` names the exact canonical route dependency this
-    artifact evidences. It is additive on the wire: an older fingerprint can be
-    deserialized with no binding, but an unbound fingerprint is deliberately
-    insufficient for strong independence.
+    ``dependency_identity`` names the route dependency this artifact is presented
+    as evidence for. It is stored as declared (trimmed) and is deliberately NOT
+    canonicalised here: canonicalising a ``py:`` identity imports the module it
+    names, and reading a record must neither run import-time code chosen by the
+    record nor fail where that dependency is not installed.
+    :meth:`canonical_dependency_identity` resolves it at the trust boundary.
+
+    ``None`` and a blank string mean unbound, which is what a fingerprint written
+    before bindings existed deserialises to; an unbound fingerprint can never
+    establish independence. Any other non-string value is refused rather than
+    read as unbound.
+
+    The binding participates in equality and hashing: the same bytes bound to
+    two identities are two records, so an assessment can see -- and name -- a
+    single artifact presented as evidence for two dependencies.
 
     The direct constructor stays available because fingerprints must deserialize
     without carrying bulk bytes. Construction validates only the declaration;
@@ -120,14 +151,20 @@ class ArtifactFingerprint:
             raise ScientificValidationError(
                 f"unsupported artifact fingerprint algorithm {self.algorithm!r}"
             )
-        raw_identity = str(self.dependency_identity or "").strip()
-        if raw_identity:
-            dependency_identity = canonical_component_identity(raw_identity)
+        declared = self.dependency_identity
+        if declared is None:
+            binding = ""
+        elif isinstance(declared, str):
+            binding = str(declared).strip()
         else:
-            dependency_identity = ""
+            raise ScientificValidationError(
+                "artifact fingerprint dependency_identity must be a string, or None "
+                f"for an unbound legacy fingerprint; got {type(declared).__name__} "
+                f"{declared!r}"
+            )
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "kind", kind)
-        object.__setattr__(self, "dependency_identity", dependency_identity)
+        object.__setattr__(self, "dependency_identity", binding)
         object.__setattr__(self, "digest", _digest(self.digest, label="artifact fingerprint"))
 
     @classmethod
@@ -147,11 +184,23 @@ class ArtifactFingerprint:
             digest=_artifact_digest(name, payload),
             name=name,
             kind=kind,
-            dependency_identity=dependency_identity or "",
+            dependency_identity=dependency_identity,
         )
 
     def verifies(self, payload: bytes) -> bool:
         return isinstance(payload, bytes) and _artifact_digest(self.name, payload) == self.digest
+
+    def canonical_dependency_identity(self) -> str | None:
+        """The authoritative spelling of the binding, or ``None`` when unbound.
+
+        Resolves ``py:`` identities to the object they name, which imports that
+        module: call this at the trust boundary, never while reading a record.
+        Raises :class:`ScientificValidationError` when the binding cannot be
+        canonicalised.
+        """
+        if not self.dependency_identity:
+            return None
+        return canonical_component_identity(self.dependency_identity)
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
@@ -173,8 +222,97 @@ class ArtifactFingerprint:
             name=payload["name"],
             kind=payload.get("kind", "artifact"),
             algorithm=payload.get("algorithm", "sha256"),
-            dependency_identity=payload.get("dependency_identity", ""),
+            dependency_identity=payload.get("dependency_identity"),
         )
+
+
+@dataclass(frozen=True)
+class RouteEvidenceAssessment:
+    """What one route's artifact evidence established, dependency by dependency.
+
+    ``covered`` holds, per solver-independence dimension, the canonical dependency
+    identities whose bound artifact bytes were re-hashed and matched -- nothing is
+    in it on the strength of a label alone. ``artifact_identities`` maps each
+    verified artifact digest to the canonical identities it was presented as
+    evidence for across the whole route; more than one is a refusal. ``reasons``
+    is every reason the evidence cannot support independence, empty when it can.
+    """
+
+    route_id: str
+    covered: Mapping[IndependenceDimension, frozenset[str]]
+    artifact_identities: Mapping[str, frozenset[str]]
+    reasons: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "covered", freeze(dict(self.covered)))
+        object.__setattr__(self, "artifact_identities", freeze(dict(self.artifact_identities)))
+        object.__setattr__(self, "reasons", tuple(self.reasons))
+
+    @property
+    def verified(self) -> bool:
+        return not self.reasons
+
+
+def _declared_binding(
+    artifact: ArtifactFingerprint,
+    dimension: IndependenceDimension,
+    declared_identities: frozenset[str],
+    reasons: list[str],
+) -> str | None:
+    """The canonical identity ``artifact`` validly binds in ``dimension``, or ``None``."""
+    if not artifact.dependency_identity:
+        reasons.append(
+            f"{dimension.value} artifact {artifact.name!r} is not bound to "
+            "a dependency identity"
+        )
+        return None
+    try:
+        identity = canonical_component_identity(artifact.dependency_identity)
+    except ScientificValidationError as exc:
+        reasons.append(
+            f"{dimension.value} artifact {artifact.name!r} binds dependency identity "
+            f"{artifact.dependency_identity!r}, which cannot be canonicalised ({exc})"
+        )
+        return None
+    if identity not in declared_identities:
+        reasons.append(
+            f"{dimension.value} artifact {artifact.name!r} binds undeclared "
+            f"dependency identity {identity!r}"
+        )
+        return None
+    return identity
+
+
+def _verified_against_bytes(
+    artifact: ArtifactFingerprint,
+    dimension: IndependenceDimension,
+    dimension_bytes: Mapping[str, bytes] | None,
+    reasons: list[str],
+) -> bool:
+    """True only when bytes were supplied, are ``bytes`` and re-hash to the digest."""
+    if dimension_bytes is None:
+        return False  # the dimension-level reason is recorded once by the caller
+    if artifact.name not in dimension_bytes:
+        reasons.append(
+            f"no bytes supplied for {dimension.value} artifact {artifact.name!r}"
+        )
+        return False
+    raw = dimension_bytes[artifact.name]
+    if not isinstance(raw, bytes):
+        reasons.append(
+            f"bytes for {dimension.value} artifact {artifact.name!r} are "
+            f"{type(raw).__name__}, not bytes"
+        )
+        return False
+    actual_digest = _artifact_digest(artifact.name, raw)
+    if actual_digest != artifact.digest:
+        reasons.append(
+            f"{dimension.value} artifact {artifact.name!r} declares "
+            f"sha256:{artifact.digest[:12]}… but supplied bytes hash to "
+            f"sha256:{actual_digest[:12]}…"
+        )
+        return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -209,23 +347,23 @@ class RouteIndependenceEvidence:
             normalized[dimension] = values
         object.__setattr__(self, "artifacts", freeze(normalized))
 
-    def evidence_gap(
+    def assess(
         self,
         route: SolveRoute,
         artifact_bytes: Mapping[IndependenceDimension, Mapping[str, bytes]] | None = None,
-    ) -> tuple[str, ...]:
-        """Return every reason this evidence cannot establish independence.
+    ) -> RouteEvidenceAssessment:
+        """Assess this evidence against ``route`` and freshly supplied bytes.
 
-        Every declared fingerprint is recomputed from bytes during assessment,
-        and every canonical dependency identity in each solver-independence
-        dimension must be covered by at least one explicitly bound fingerprint.
-        Different caller-supplied hex strings or one artifact standing in for an
-        entire dimension can therefore no longer manufacture independence.
+        For each fingerprint, in this order: the binding must canonicalise to an
+        identity the route declares in that dimension; bytes must be supplied, be
+        ``bytes``, and re-hash to the fingerprint's digest. Only a fingerprint that
+        passes every step adds its canonical identity to the coverage, so an
+        unverified artifact contributes nothing. Then every declared identity must
+        be covered, and no verified digest may be presented for two identities
+        anywhere in the route.
         """
         reasons: list[str] = []
-        canonical_dependencies: dict[
-            IndependenceDimension, frozenset[str]
-        ] | None = None
+        declared: dict[IndependenceDimension, frozenset[str]] | None = None
         if route.route_id != self.route_id:
             reasons.append(
                 f"evidence is for route {self.route_id!r}, not {route.route_id!r}"
@@ -234,9 +372,10 @@ class RouteIndependenceEvidence:
             reasons.append("route declares no dependencies")
         else:
             try:
-                canonical_dependencies = route.dependencies.canonical()
+                declared = route.dependencies.canonical()
                 actual = route.dependencies.digest
             except ScientificValidationError as exc:
+                declared = None
                 reasons.append(f"route dependencies cannot be resolved ({exc})")
             else:
                 if actual != self.dependency_digest:
@@ -246,68 +385,77 @@ class RouteIndependenceEvidence:
                     )
 
         supplied = _normalise_artifact_bytes(artifact_bytes)
+        covered: dict[IndependenceDimension, frozenset[str]] = {}
+        # verified digest -> canonical identity -> where it was presented, route-wide
+        presented: dict[str, dict[str, set[str]]] = {}
         for dimension in SOLVER_INDEPENDENCE_DIMENSIONS:
+            declared_identities = (
+                declared.get(dimension, frozenset()) if declared is not None else frozenset()
+            )
+            covered_identities: set[str] = set()
             fingerprints = self.artifacts.get(dimension)
             if not fingerprints:
                 reasons.append(
                     f"no artifact evidence for required dimension {dimension.value}"
                 )
-                continue
-
-            declared_identities = (
-                canonical_dependencies.get(dimension, frozenset())
-                if canonical_dependencies is not None
-                else frozenset()
-            )
-            covered_identities: set[str] = set()
-            for artifact in sorted(fingerprints):
-                if not artifact.dependency_identity:
+            else:
+                dimension_bytes = supplied.get(dimension)
+                if dimension_bytes is None:
                     reasons.append(
-                        f"{dimension.value} artifact {artifact.name!r} is not bound to "
-                        "a dependency identity"
+                        f"no artifact bytes supplied for required dimension {dimension.value}"
                     )
-                elif declared_identities and artifact.dependency_identity not in declared_identities:
-                    reasons.append(
-                        f"{dimension.value} artifact {artifact.name!r} binds undeclared "
-                        f"dependency identity {artifact.dependency_identity!r}"
+                for artifact in sorted(fingerprints):
+                    identity = _declared_binding(artifact, dimension, declared_identities, reasons)
+                    if not _verified_against_bytes(artifact, dimension, dimension_bytes, reasons):
+                        continue
+                    if identity is None:
+                        continue
+                    covered_identities.add(identity)
+                    presented.setdefault(artifact.digest, {}).setdefault(identity, set()).add(
+                        f"{dimension.value}:{artifact.name}"
                     )
-                else:
-                    covered_identities.add(artifact.dependency_identity)
-
-            if canonical_dependencies is not None:
+            if declared is not None:
                 for identity in sorted(declared_identities - covered_identities):
                     reasons.append(
                         f"no artifact evidence bound to dependency identity {identity!r} "
-                        f"in required dimension {dimension.value}"
+                        f"in required dimension {dimension.value} was verified against "
+                        "supplied bytes"
                     )
+            covered[dimension] = frozenset(covered_identities)
 
-            dimension_bytes = supplied.get(dimension)
-            if dimension_bytes is None:
+        for digest, by_identity in sorted(presented.items()):
+            if len(by_identity) > 1:
+                where = sorted(place for places in by_identity.values() for place in places)
                 reasons.append(
-                    f"no artifact bytes supplied for required dimension {dimension.value}"
+                    f"one verified artifact sha256:{digest[:12]}… is presented as evidence "
+                    f"for {len(by_identity)} distinct dependency identities "
+                    f"{sorted(by_identity)} (as {where}); one verified artifact byte "
+                    "identity cannot establish more than one declared dependency. "
+                    "Dependencies that are one artifact must be declared as one "
+                    "dependency identity"
                 )
-                continue
-            for artifact in sorted(fingerprints):
-                if artifact.name not in dimension_bytes:
-                    reasons.append(
-                        f"no bytes supplied for {dimension.value} artifact {artifact.name!r}"
-                    )
-                    continue
-                raw = dimension_bytes[artifact.name]
-                if not isinstance(raw, bytes):
-                    reasons.append(
-                        f"bytes for {dimension.value} artifact {artifact.name!r} are "
-                        f"{type(raw).__name__}, not bytes"
-                    )
-                    continue
-                actual_digest = _artifact_digest(artifact.name, raw)
-                if actual_digest != artifact.digest:
-                    reasons.append(
-                        f"{dimension.value} artifact {artifact.name!r} declares "
-                        f"sha256:{artifact.digest[:12]}… but supplied bytes hash to "
-                        f"sha256:{actual_digest[:12]}…"
-                    )
-        return tuple(reasons)
+
+        return RouteEvidenceAssessment(
+            route_id=self.route_id,
+            covered=covered,
+            artifact_identities={
+                digest: frozenset(by_identity) for digest, by_identity in presented.items()
+            },
+            reasons=tuple(reasons),
+        )
+
+    def evidence_gap(
+        self,
+        route: SolveRoute,
+        artifact_bytes: Mapping[IndependenceDimension, Mapping[str, bytes]] | None = None,
+    ) -> tuple[str, ...]:
+        """Return every reason this evidence cannot establish independence.
+
+        See :meth:`assess`, which this reads: coverage accrues only from
+        re-hashed bytes, every declared identity must be covered, and one verified
+        artifact cannot stand in for several dependencies.
+        """
+        return self.assess(route, artifact_bytes).reasons
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -352,14 +500,28 @@ class IndependenceEvidenceReport:
 
     @property
     def all_routes_verified(self) -> bool:
+        """Every compared route's evidence passed :meth:`RouteIndependenceEvidence.assess`.
+
+        Verified means the caller-presented bytes re-hashed to the declared
+        fingerprints under the binding rules -- not that any route used them.
+        """
         return bool(self.route_findings) and all(not reasons for _, reasons in self.route_findings)
 
     @property
     def artifact_disjoint(self) -> bool:
+        """No verified artifact digest is shared between two compared routes."""
         return not self.shared_artifacts
 
     @property
     def strongly_independent(self) -> bool:
+        """At least two routes, every route verified, and no verified digest shared.
+
+        The name predates this evidence's scope and overstates it. True means the
+        artifact evidence is complete, per-dependency, byte-verified and disjoint:
+        identity evidence about caller-presented artifacts. It does not mean the
+        routes were observed using those artifacts, nor that they are
+        semantically, developmentally or scientifically independent.
+        """
         return self.all_routes_verified and self.artifact_disjoint and len(self.route_findings) >= 2
 
     @property
@@ -376,9 +538,14 @@ class IndependenceEvidenceReport:
             ]
             return f"routes share implementation/runtime artifacts: {labels}"
         return (
-            "every route binds verified artifact bytes to every declared dependency identity "
-            "and no verified artifact digest is shared; this strengthens the declaration-level "
-            "independence claim but does not prove independent development"
+            "every route binds its exact dependency declaration; every declared "
+            "dependency identity is evidenced by its own artifact whose presented "
+            "bytes were re-hashed; no verified artifact evidences two dependency "
+            "identities within a route, and no verified artifact digest is shared "
+            "between routes. This is identity evidence about caller-presented "
+            "artifact bytes: it does not show the routes used those artifacts at "
+            "runtime, and it does not prove semantic independence, independent "
+            "development or an independent scientific formulation"
         )
 
 
@@ -473,6 +640,7 @@ def require_strong_independence(
 
 __all__ = [
     "ArtifactFingerprint",
+    "RouteEvidenceAssessment",
     "RouteIndependenceEvidence",
     "SharedArtifact",
     "IndependenceEvidenceReport",

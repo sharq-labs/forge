@@ -341,16 +341,43 @@ def test_legacy_unbound_fingerprint_round_trips_but_cannot_establish_independenc
     )
 
 
-def test_dependency_binding_is_canonicalized_not_trusted_as_a_label():
+def test_dependency_binding_is_canonicalized_at_assessment_not_trusted_as_a_label():
+    """The record keeps the declared spelling; the trust decision uses the canonical one.
+
+    Canonicalisation moved from construction to assessment so that reading a
+    record imports nothing. What must not move is its effect: a binding written
+    through the package re-export evidences the dependency declared through the
+    defining module, because the two spellings are one object.
+    """
+    reexport = "py:engcore.domains.electrical.dc:ElectricalDCSolver"
+    defining = "py:engcore.domains.electrical.dc.solver:ElectricalDCSolver"
     payload = b"implementation-source"
     artifact = ArtifactFingerprint.from_bytes(
-        "dc-solver",
-        payload,
-        dependency_identity="py:engcore.domains.electrical.dc:ElectricalDCSolver",
+        "dc-solver", payload, dependency_identity=reexport
     )
-    assert artifact.dependency_identity == (
-        "py:engcore.domains.electrical.dc.solver:ElectricalDCSolver"
+    assert artifact.dependency_identity == reexport
+    assert artifact.canonical_dependency_identity() == defining
+
+    route = SolveRoute(
+        route_id="left",
+        solver=SolverIdentity("solver.a", "1", backend="a"),
+        dependencies=RouteDependencies(
+            {
+                **_dependencies("a").identities,
+                IndependenceDimension.IMPLEMENTATION: {defining},
+            }
+        ),
     )
+    evidence, artifact_bytes = _evidence(route, 1)
+    artifacts = dict(evidence.artifacts)
+    artifacts[IndependenceDimension.IMPLEMENTATION] = frozenset({artifact})
+    artifact_bytes[IndependenceDimension.IMPLEMENTATION] = {"dc-solver": payload}
+    assessment = RouteIndependenceEvidence(
+        route.route_id, route.dependencies.digest, artifacts  # type: ignore[union-attr]
+    ).assess(route, artifact_bytes)
+
+    assert assessment.verified, assessment.reasons
+    assert assessment.covered[IndependenceDimension.IMPLEMENTATION] == {defining}
 
 
 def test_missing_route_evidence_is_unverified_not_independent_by_silence():
