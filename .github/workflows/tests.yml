@@ -69,8 +69,20 @@ jobs:
       # FAST collects MCP and scientific-truth tests, so both optional groups
       # must be present. The latter hard-imports mpmath during collection.
       - run: pip install -e ".[dev,mcp,oracles]"
+      # Guard 19 walks live repository Python files. Blind-v2 deliberately
+      # creates then deletes a falsification module inside its frozen package.
+      # Running the guard concurrently with that writer makes the filesystem
+      # population change between rglob() and read_text(). Keep the guard fully
+      # strict, but execute it alone before the parallel suite.
+      - name: Dependency reachability guard (serial)
+        run: >-
+          python -m pytest
+          tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+          -q
       # -n 4, not -n auto: the worker count must not track runner hardware.
-      - run: python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+      - run: >-
+          python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
 
   # Mutation guards stay on one interpreter: they verify the guards themselves,
   # not interpreter compatibility. Running the whole mutation campaign twice
@@ -106,6 +118,7 @@ jobs:
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >
           python -m pytest -m "not campaign" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
           --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
