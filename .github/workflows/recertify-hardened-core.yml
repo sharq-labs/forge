@@ -17,7 +17,6 @@ permissions:
 
 jobs:
   recertify:
-    if: github.head_ref == 'core/hardening-integration-v1'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

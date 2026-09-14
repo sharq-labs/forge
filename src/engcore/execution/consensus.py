@@ -3,18 +3,19 @@
 ``CrossSolverConsensus`` already proves a great deal: route declarations are
 pinned by the domain layer, outputs are complete, the comparison is recomputed
 from recorded numbers, and the declared routes agree inside a domain-owned
-threshold.  Its remaining documented limit is external to that record: a
+threshold. Its remaining documented limit is external to that record: a
 correct declaration can still be wrong about which implementation/runtime
 artifacts were actually used.
 
-This module therefore adds, rather than replaces, a second gate.  A
+This module therefore adds, rather than replaces, a second gate. A
 ``CROSS_SOLVER_VALIDATED`` level survives into the trusted check only when:
 
 1. the ordinary consensus already earned that level; and
 2. artifact evidence is complete, bound to the exact route dependency digests,
-   and byte-disjoint across the compared routes.
+   freshly verified against supplied artifact bytes, and byte-disjoint across
+   the compared routes.
 
-Different artifact hashes are *not* proof of independent development.  The
+Different artifact hashes are *not* proof of independent development. The
 extra gate is tamper-resistant identity evidence for the machinery the routes
 claim to use, not a sociological or cryptographic proof of how it was created.
 """
@@ -22,9 +23,9 @@ claim to use, not a sociological or cryptographic proof of how it was created.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Mapping, Sequence
 
-from ..scientific.consensus import CrossSolverConsensus
+from ..scientific.consensus import CrossSolverConsensus, IndependenceDimension
 from ..scientific.errors import ScientificValidationError
 from ..scientific.independence_evidence import (
     IndependenceEvidenceReport,
@@ -105,20 +106,27 @@ class TrustedConsensusDecision:
 
 
 class TrustedConsensusGate:
-    """Combine declaration-level consensus with artifact-backed independence."""
+    """Combine scientific consensus with byte-verified artifact independence."""
 
     def assess(
         self,
         consensus: CrossSolverConsensus,
         evidence: Sequence[RouteIndependenceEvidence],
         *,
+        artifact_bytes: Mapping[
+            str, Mapping[IndependenceDimension, Mapping[str, bytes]]
+        ] | None = None,
         name: str = "trusted_cross_solver_agreement",
     ) -> TrustedConsensusDecision:
         if not isinstance(consensus, CrossSolverConsensus):
             raise TypeError("consensus must be a CrossSolverConsensus")
 
         evidence = tuple(evidence)
-        independence = assess_independence_evidence(consensus.routes, evidence)
+        independence = assess_independence_evidence(
+            consensus.routes,
+            evidence,
+            artifact_bytes=artifact_bytes,
+        )
         base = consensus.to_check(name=name)
 
         base_earned = (
@@ -138,7 +146,7 @@ class TrustedConsensusGate:
             )
         else:
             # Strong artifact evidence can never promote a consensus that did
-            # not itself earn the scientific level.  Keep the original reason
+            # not itself earn the scientific level. Keep the original reason
             # first because it is the load-bearing scientific refusal.
             detail = (
                 f"{base.detail}. Artifact evidence: {independence.reason}. "
@@ -172,9 +180,17 @@ class TrustedConsensusGate:
         consensus: CrossSolverConsensus,
         evidence: Sequence[RouteIndependenceEvidence],
         *,
+        artifact_bytes: Mapping[
+            str, Mapping[IndependenceDimension, Mapping[str, bytes]]
+        ] | None = None,
         name: str = "trusted_cross_solver_agreement",
     ) -> ValidationCheck:
-        return self.assess(consensus, evidence, name=name).require_validated()
+        return self.assess(
+            consensus,
+            evidence,
+            artifact_bytes=artifact_bytes,
+            name=name,
+        ).require_validated()
 
 
 __all__ = ["TrustedConsensusDecision", "TrustedConsensusGate"]
