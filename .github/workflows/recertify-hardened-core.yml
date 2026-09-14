@@ -80,12 +80,24 @@ jobs:
           python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.12.txt"
           ngspice --version 2>&1 | head -n 1 > "${RUNNER_TEMP}/ngspice-version.txt"
 
+      # Guard 19 walks live repository Python files. Blind-v2 deliberately
+      # creates then deletes a falsification module in its frozen package, so
+      # the guard must not race that writer under xdist. The guard stays strict;
+      # it is executed alone, then deselected from the parallel suites.
+      - name: Dependency reachability guard — Python 3.12 (serial)
+        if: steps.gate.outputs.mode == 'source'
+        run: >-
+          python -m pytest
+          tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+          -q
+
       # These four checks can only become green after the fresh certificate is
       # generated. Everything else in FAST remains load-bearing here.
       - name: FAST functional gate — Python 3.12
         if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
           --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
           --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
@@ -97,6 +109,7 @@ jobs:
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >-
           python -m pytest -m "not campaign" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
           --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
@@ -134,10 +147,18 @@ jobs:
           python --version > "${RUNNER_TEMP}/python-3.11.txt"
           python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.11.txt"
 
+      - name: Dependency reachability guard — Python 3.11 (serial)
+        if: steps.gate.outputs.mode == 'source'
+        run: >-
+          python -m pytest
+          tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+          -q
+
       - name: FAST functional gate — Python 3.11
         if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
           --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
           --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
@@ -210,8 +231,10 @@ jobs:
                   "scientific_python_3_12": {"passed": True},
                   "note": (
                       "The four certificate/freeze self-checks were deferred until "
-                      "the generated certificate child commit; no other FAST checks "
-                      "were removed for recertification."
+                      "the generated certificate child commit. Guard 19 was not "
+                      "removed: it ran serially on Python 3.11 and 3.12 before the "
+                      "parallel suites to avoid racing the blind-v2 falsification "
+                      "module writer."
                   ),
               },
               "formal_guard_mutations": {
