@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/recertify-hardened-core.yml"
+      - ".github/workflows/tests.yml"
+      - "certification/current_core_v2.json"
       - "src/engcore/scientific/**"
       - "src/engcore/execution/**"
       - "src/engcore/extensions.py"
@@ -15,15 +17,22 @@ permissions:
   contents: write
   pull-requests: read
 
+concurrency:
+  group: recertify-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
 jobs:
-  recertify:
+  classify:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    outputs:
+      mode: ${{ steps.gate.outputs.mode }}
+      source_sha: ${{ steps.gate.outputs.source_sha }}
+      certificate_sha: ${{ steps.gate.outputs.certificate_sha }}
     steps:
       - name: Checkout exact pull-request head
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Classify source commit versus certificate child
@@ -55,45 +64,31 @@ jobs:
             echo "mode=source" >> "$GITHUB_OUTPUT"
             echo "source_sha=$head_sha" >> "$GITHUB_OUTPUT"
             echo "certificate_sha=" >> "$GITHUB_OUTPUT"
-            echo "Source commit selected for full recertification: $head_sha"
+            echo "Source commit selected for parallel recertification: $head_sha"
           fi
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+  fast311:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    outputs:
+      python_version: ${{ steps.env.outputs.python_version }}
+      pip_freeze_sha256: ${{ steps.env.outputs.pip_freeze_sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          python-version: "3.12"
-
-      - name: Install verification dependencies
-        run: python -m pip install -e ".[dev,mcp,oracles]"
-
-      - name: Verify certificate child against its source bytes
-        if: steps.gate.outputs.mode == 'certificate_child'
-        run: python -m tools.certification.core_certificate --verify
-
-      - name: Install scientific provider runtime
-        if: steps.gate.outputs.mode == 'source'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ngspice
-          python --version > "${RUNNER_TEMP}/python-3.12.txt"
-          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.12.txt"
-          ngspice --version 2>&1 | head -n 1 > "${RUNNER_TEMP}/ngspice-version.txt"
-
-      # Guard 19 walks live repository Python files. Blind-v2 deliberately
-      # creates then deletes a falsification module in its frozen package, so
-      # the guard must not race that writer under xdist. The guard stays strict;
-      # it is executed alone, then deselected from the parallel suites.
-      - name: Dependency reachability guard — Python 3.12 (serial)
-        if: steps.gate.outputs.mode == 'source'
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Dependency reachability guard — Python 3.11 (serial)
         run: >-
           python -m pytest
           tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           -q
-
-      # These four checks can only become green after the fresh certificate is
-      # generated. Everything else in FAST remains load-bearing here.
-      - name: FAST functional gate — Python 3.12
-        if: steps.gate.outputs.mode == 'source'
+      - name: FAST functional gate — Python 3.11
         run: >-
           python -m pytest -m "not expensive" -q -n 4 --dist loadfile
           --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
@@ -101,9 +96,90 @@ jobs:
           --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
           --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
           --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+      - name: Record Python 3.11 environment
+        id: env
+        shell: bash
+        run: |
+          set -euo pipefail
+          python --version 2>&1 > "${RUNNER_TEMP}/python-3.11.txt"
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.11.txt"
+          echo "python_version=$(cat "${RUNNER_TEMP}/python-3.11.txt")" >> "$GITHUB_OUTPUT"
+          echo "pip_freeze_sha256=$(sha256sum "${RUNNER_TEMP}/pip-freeze-3.11.txt" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Upload Python 3.11 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-fast-311-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/python-3.11.txt
+            ${{ runner.temp }}/pip-freeze-3.11.txt
+          retention-days: 90
 
+  fast312:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    outputs:
+      python_version: ${{ steps.env.outputs.python_version }}
+      pip_freeze_sha256: ${{ steps.env.outputs.pip_freeze_sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Dependency reachability guard — Python 3.12 (serial)
+        run: >-
+          python -m pytest
+          tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+          -q
+      - name: FAST functional gate — Python 3.12
+        run: >-
+          python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+          --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+          --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+          --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
+          --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+      - name: Record Python 3.12 environment
+        id: env
+        shell: bash
+        run: |
+          set -euo pipefail
+          python --version 2>&1 > "${RUNNER_TEMP}/python-3.12.txt"
+          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.12.txt"
+          echo "python_version=$(cat "${RUNNER_TEMP}/python-3.12.txt")" >> "$GITHUB_OUTPUT"
+          echo "pip_freeze_sha256=$(sha256sum "${RUNNER_TEMP}/pip-freeze-3.12.txt" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Upload Python 3.12 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-fast-312-${{ needs.classify.outputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/python-3.12.txt
+            ${{ runner.temp }}/pip-freeze-3.12.txt
+          retention-days: 90
+
+  scientific312:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    outputs:
+      ngspice_version: ${{ steps.env.outputs.ngspice_version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ngspice
+          python -m pip install -e ".[dev,mcp,oracles]"
       - name: Scientific functional gate — Python 3.12
-        if: steps.gate.outputs.mode == 'source'
         env:
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >-
@@ -118,78 +194,136 @@ jobs:
           --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
           --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
           --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
-
-      - name: Formal certified guard mutation population
-        if: steps.gate.outputs.mode == 'source'
+      - name: Record scientific provider environment
+        id: env
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
+          ngspice --version 2>&1 | head -n 1 > "${RUNNER_TEMP}/ngspice-version.txt"
+          echo "ngspice_version=$(cat "${RUNNER_TEMP}/ngspice-version.txt")" >> "$GITHUB_OUTPUT"
+      - name: Upload scientific provider evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-scientific-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/ngspice-version.txt
+          retention-days: 90
+
+  formal_mutations:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    outputs:
+      log_sha256: ${{ steps.digest.outputs.log_sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Formal certified guard mutation population
+        shell: bash
+        run: |
+          set -euo pipefail
           python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/formal-mutations" 2>&1 \
             | tee "${RUNNER_TEMP}/formal-mutations.log"
+      - name: Record formal mutation digest
+        id: digest
+        shell: bash
+        run: |
+          echo "log_sha256=$(sha256sum "${RUNNER_TEMP}/formal-mutations.log" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Upload formal mutation evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-formal-mutations-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/formal-mutations.log
+          retention-days: 90
 
-      - name: New trust-boundary mutation population
-        if: steps.gate.outputs.mode == 'source'
+  trust_mutations:
+    needs: classify
+    if: needs.classify.outputs.mode == 'source'
+    runs-on: ubuntu-latest
+    outputs:
+      result_sha256: ${{ steps.digest.outputs.result_sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Trust-boundary mutation population
         run: >-
           python benchmarks/trust_hardening/audit/mutations.py
           --json "${RUNNER_TEMP}/trust-mutations.json"
-
-      - name: Set up Python 3.11
-        if: steps.gate.outputs.mode == 'source'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Python 3.11 test dependencies
-        if: steps.gate.outputs.mode == 'source'
+      - name: Record trust mutation digest
+        id: digest
+        shell: bash
         run: |
-          python -m pip install -e ".[dev,mcp,oracles]"
-          python --version > "${RUNNER_TEMP}/python-3.11.txt"
-          python -m pip freeze | LC_ALL=C sort > "${RUNNER_TEMP}/pip-freeze-3.11.txt"
+          echo "result_sha256=$(sha256sum "${RUNNER_TEMP}/trust-mutations.json" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Upload trust mutation evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-trust-mutations-${{ needs.classify.outputs.source_sha }}
+          path: ${{ runner.temp }}/trust-mutations.json
+          retention-days: 90
 
-      - name: Dependency reachability guard — Python 3.11 (serial)
-        if: steps.gate.outputs.mode == 'source'
-        run: >-
-          python -m pytest
-          tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
-          -q
+  certify:
+    needs:
+      - classify
+      - fast311
+      - fast312
+      - scientific312
+      - formal_mutations
+      - trust_mutations
+    if: >-
+      always() &&
+      needs.classify.outputs.mode == 'source' &&
+      needs.fast311.result == 'success' &&
+      needs.fast312.result == 'success' &&
+      needs.scientific312.result == 'success' &&
+      needs.formal_mutations.result == 'success' &&
+      needs.trust_mutations.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact measured source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
 
-      - name: FAST functional gate — Python 3.11
-        if: steps.gate.outputs.mode == 'source'
-        run: >-
-          python -m pytest -m "not expensive" -q -n 4 --dist loadfile
-          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
-          --deselect tests/test_core_certificate.py::test_the_certificate_describes_this_tree
-          --deselect tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
-          --deselect tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
-          --deselect tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
-
-      - name: Require a clean source tree before certification
-        if: steps.gate.outputs.mode == 'source'
+      - name: Require a clean measured source tree
         shell: bash
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "Tests changed the checkout; refusing to certify a dirty tree."
+            echo "Refusing to certify a dirty tree."
             git status --short
             exit 1
           fi
 
-      - name: Restore Python 3.12 for deterministic certificate tooling
-        if: steps.gate.outputs.mode == 'source'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.12"
-
-      - name: Build environment and assurance records
-        if: steps.gate.outputs.mode == 'source'
+      - name: Build parallel assurance record
         env:
-          SOURCE_SHA: ${{ steps.gate.outputs.source_sha }}
+          SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
+          PY311: ${{ needs.fast311.outputs.python_version }}
+          PY312: ${{ needs.fast312.outputs.python_version }}
+          PIP311_SHA: ${{ needs.fast311.outputs.pip_freeze_sha256 }}
+          PIP312_SHA: ${{ needs.fast312.outputs.pip_freeze_sha256 }}
+          NGSPICE: ${{ needs.scientific312.outputs.ngspice_version }}
+          FORMAL_SHA: ${{ needs.formal_mutations.outputs.log_sha256 }}
+          TRUST_SHA: ${{ needs.trust_mutations.outputs.result_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from __future__ import annotations
-
-          import hashlib
           import json
           import os
           import platform
@@ -197,52 +331,40 @@ jobs:
 
           temp = Path(os.environ["RUNNER_TEMP"])
           source_sha = os.environ["SOURCE_SHA"]
-
-          def text(name: str) -> str:
-              return (temp / name).read_text(encoding="utf-8").strip()
-
-          def digest(name: str) -> str:
-              return hashlib.sha256((temp / name).read_bytes()).hexdigest()
-
           environment = {
-              "schema": "forge.certification_environment/1",
+              "schema": "forge.certification_environment/2",
               "source_commit": source_sha,
+              "execution_model": "parallel_github_actions_jobs",
               "runner_os": os.environ.get("RUNNER_OS", ""),
-              "platform": platform.platform(),
-              "python_3_11": text("python-3.11.txt"),
-              "python_3_12": text("python-3.12.txt"),
-              "ngspice": text("ngspice-version.txt"),
-              "pip_freeze_3_11_sha256": digest("pip-freeze-3.11.txt"),
-              "pip_freeze_3_12_sha256": digest("pip-freeze-3.12.txt"),
+              "certificate_builder_platform": platform.platform(),
+              "python_3_11": os.environ["PY311"],
+              "python_3_12": os.environ["PY312"],
+              "ngspice": os.environ["NGSPICE"],
+              "pip_freeze_3_11_sha256": os.environ["PIP311_SHA"],
+              "pip_freeze_3_12_sha256": os.environ["PIP312_SHA"],
               "workflow": ".github/workflows/recertify-hardened-core.yml",
           }
-          (temp / "certification-environment.json").write_text(
-              json.dumps(environment, indent=2, sort_keys=True) + "\n",
-              encoding="utf-8",
-          )
-
           assurance = {
-              "schema": "forge.core_hardening_assurance/1",
+              "schema": "forge.core_hardening_assurance/2",
               "source_commit": source_sha,
+              "execution_model": "parallel_gates_then_certificate",
               "functional": {
                   "fast_python_3_11": {"passed": True},
                   "fast_python_3_12": {"passed": True},
                   "scientific_python_3_12": {"passed": True},
                   "note": (
-                      "The four certificate/freeze self-checks were deferred until "
-                      "the generated certificate child commit. Guard 19 was not "
-                      "removed: it ran serially on Python 3.11 and 3.12 before the "
-                      "parallel suites to avoid racing the blind-v2 falsification "
-                      "module writer."
+                      "Independent functional gates ran in parallel on the exact "
+                      "source commit. The four certificate/freeze self-checks are "
+                      "deferred only until the generated certificate child."
                   ),
               },
               "formal_guard_mutations": {
                   "passed": True,
                   "population": 79,
-                  "log_sha256": digest("formal-mutations.log"),
+                  "log_sha256": os.environ["FORMAL_SHA"],
                   "claim": (
-                      "Fresh execution of tests/mutation_guards.py on this source "
-                      "commit; this remains the formal historical mutation family."
+                      "Fresh execution of tests/mutation_guards.py on the exact "
+                      "source commit in an independent parallel gate."
                   ),
               },
               "trust_hardening_mutations": {
@@ -250,16 +372,16 @@ jobs:
                   "population": 13,
                   "survived": 0,
                   "invalid": 0,
-                  "result_sha256": digest("trust-mutations.json"),
+                  "result_sha256": os.environ["TRUST_SHA"],
                   "claim": (
-                      "Separate fresh trust-boundary mutation family; intentionally "
-                      "not added to the formal 79 count."
+                      "Fresh trust-boundary mutation family on the exact source "
+                      "commit in an independent parallel gate."
                   ),
               },
               "environment": environment,
               "policy": (
-                  "Certificate generated only after all gates above returned success "
-                  "in this workflow."
+                  "Certificate generated only after every independent source gate "
+                  "returned success for the same source SHA."
               ),
           }
           (temp / "core-hardening-assurance.json").write_text(
@@ -269,9 +391,8 @@ jobs:
           PY
 
       - name: Ensure measured source is still the pull-request head
-        if: steps.gate.outputs.mode == 'source'
         env:
-          MEASURED_SHA: ${{ steps.gate.outputs.source_sha }}
+          MEASURED_SHA: ${{ needs.classify.outputs.source_sha }}
         shell: bash
         run: |
           set -euo pipefail
@@ -281,56 +402,44 @@ jobs:
             echo "Pull-request head moved while assurance was running."
             echo "Measured: $MEASURED_SHA"
             echo "Current:  $remote_sha"
-            echo "Refusing to certify stale bytes."
             exit 1
           fi
 
       - name: Generate Core V2 certificate with official builder
-        if: steps.gate.outputs.mode == 'source'
         run: >-
           python -m tools.certification.core_certificate
           --build
           --assurance "${RUNNER_TEMP}/core-hardening-assurance.json"
 
-      - name: Verify generated certificate against source bytes
-        if: steps.gate.outputs.mode == 'source'
+      - name: Verify generated certificate against measured source bytes
         run: >-
           python -m tools.certification.core_certificate
           --verify
           --allow-dirty
 
-      - name: Upload recertification evidence
-        if: steps.gate.outputs.mode == 'source'
+      - name: Upload consolidated assurance record
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: hardened-core-assurance-${{ steps.gate.outputs.source_sha }}
+          name: hardened-core-assurance-${{ needs.classify.outputs.source_sha }}
           path: |
             ${{ runner.temp }}/core-hardening-assurance.json
-            ${{ runner.temp }}/certification-environment.json
-            ${{ runner.temp }}/formal-mutations.log
-            ${{ runner.temp }}/trust-mutations.json
-            ${{ runner.temp }}/pip-freeze-3.11.txt
-            ${{ runner.temp }}/pip-freeze-3.12.txt
             certification/current_core_v2.json
-          if-no-files-found: error
           retention-days: 90
 
       - name: Commit certificate as child of the measured source commit
-        if: steps.gate.outputs.mode == 'source'
         env:
-          MEASURED_SHA: ${{ steps.gate.outputs.source_sha }}
+          MEASURED_SHA: ${{ needs.classify.outputs.source_sha }}
         shell: bash
         run: |
           set -euo pipefail
-          changed="$(git status --porcelain)"
           unexpected="$(git status --porcelain | grep -v '^ M certification/current_core_v2.json$' || true)"
           if [ -n "$unexpected" ]; then
             echo "Unexpected files changed during certification:"
             echo "$unexpected"
             exit 1
           fi
-          if [ -z "$changed" ]; then
-            echo "Certificate did not change; refusing an empty recertification commit."
+          if [ ! -s certification/current_core_v2.json ]; then
+            echo "Certificate file is missing or empty."
             exit 1
           fi
 
@@ -346,3 +455,27 @@ jobs:
           git add certification/current_core_v2.json
           git commit -m "certification: recertify hardened core"
           git push origin HEAD:"${GITHUB_HEAD_REF}"
+
+  verify_certificate_child:
+    needs: classify
+    if: needs.classify.outputs.mode == 'certificate_child'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact certificate child
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.classify.outputs.certificate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,mcp,oracles]"
+      - name: Verify stored certificate
+        run: python -m tools.certification.core_certificate --verify
+      - name: Run certificate/freeze self-checks
+        run: >-
+          python -m pytest -q
+          tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+          tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+          tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
+          tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
