@@ -1,8 +1,8 @@
 name: Tests
 
-# One job, one Python, the same command a developer runs locally.
-# FAST tier on every push and PR; SCIENTIFIC tier on main pushes.
-# The FULL tier (campaign tests, ~10 min) is run manually before a freeze.
+# FAST tier on every supported Python for every push and PR.
+# SCIENTIFIC is also a PR gate (Python 3.12) so model/solver regressions are
+# actionable before merge. FULL campaign tests remain a manual freeze check.
 
 on:
   push:
@@ -10,121 +10,148 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  fast:
+  repo-layout:
+    name: repository layout
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      # `.[dev,mcp]`, not `.[dev]`: without the MCP group the boundary tests
-      # skip, and a skipped test proves nothing. The guard in
-      # tests/mcp/test_battery_boundary.py is the safety net for a bare
-      # install; CI is not a bare install and should exercise the transport.
-      - run: pip install -e ".[dev,mcp]"
-      # -n 4, not -n auto: the worker count must not track whatever hardware
-      # the runner happens to have. Memory grows ~200 MB per worker, so a
-      # larger runner silently scales into the exhaustion documented in
-      # docs/TESTING.md ("`-n auto` is not safe here"). --dist loadfile keeps
-      # each memoizing module on one worker; see the same document.
-      - run: python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Enforce documentation layout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
 
-  # A check that depends on being remembered is a check that will be forgotten.
-  # That is the argument tests/mutation_guards.py itself makes about adapters --
-  # an admission layer nobody is forced through is one somebody routes around --
-  # and it applies hardest to the harness. It ran once, by hand, in the round
-  # that wrote it, and it is the only thing in this repository that can tell a
-  # guard from a sentence about a guard. This job is what makes it run again.
-  #
-  # It copies src/, tests/ and pyproject.toml into a throwaway tree, removes one
-  # guard from the copy as if it had never been written, and runs
-  # tests/test_core_guards.py against it -- sixteen times, once per guard. Every
-  # mutation must turn that suite red. The harness exits non-zero if any does
-  # not, and a GREEN names a guard that is decoration. Nothing in the workspace
-  # is written; the mutant trees go under RUNNER_TEMP.
-  #
-  # No `if: github.event_name != 'pull_request'`, unlike the three jobs below.
-  # A guard stops guarding in a pull request, not in a push to main, so the pull
-  # request is the only place this can still be acted on before it is history.
-  # It costs about ninety seconds.
+          root_markdown = sorted(path.name for path in Path('.').glob('*.md'))
+          allowed_root = {'README.md'}
+          unexpected_root = [name for name in root_markdown if name not in allowed_root]
+          source_markdown = sorted(str(path) for path in Path('src').rglob('*.md'))
+
+          problems = []
+          if unexpected_root:
+              problems.append(
+                  'long-form Markdown belongs under docs/; unexpected root files: '
+                  + ', '.join(unexpected_root)
+              )
+          if source_markdown:
+              problems.append(
+                  'src/ is code/docstrings only; move Markdown documentation out of src/: '
+                  + ', '.join(source_markdown)
+              )
+
+          if problems:
+              raise SystemExit('\n'.join(problems))
+
+          print('documentation layout OK: root entry point is README.md and src/ has no Markdown')
+          PY
+
+  fast:
+    name: fast (py ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      # Freeze/certificate checks ask whether historical candidate commits are
+      # ancestors of HEAD. A depth-1 checkout makes every older candidate look
+      # UNRELATED even when the repository relation is valid.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # FAST collects MCP and scientific-truth tests, so both optional groups
+      # must be present. The latter hard-imports mpmath during collection.
+      - run: pip install -e ".[dev,mcp,oracles]"
+      # Guard 19 walks live repository Python files. Blind-v2 deliberately
+      # creates then deletes a falsification module inside its frozen package.
+      # Running the guard concurrently with that writer makes the filesystem
+      # population change between rglob() and read_text(). Keep the guard fully
+      # strict, but execute it alone before the parallel suite.
+      - name: Dependency reachability guard (serial)
+        run: >-
+          python -m pytest
+          tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+          -q
+      # -n 4, not -n auto: the worker count must not track runner hardware.
+      - run: >-
+          python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
+
+  # Mutation guards stay on one interpreter: they verify the guards themselves,
+  # not interpreter compatibility. Running the whole mutation campaign twice
+  # would add cost without testing a different contract.
   mutations:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
-      # `.[dev,mcp]`, not `.[dev]`: the whole of tests/ is copied into each
-      # mutant tree and collected there, so the same reasoning as the FAST job
-      # applies -- a skipped test proves nothing about the guard it covers.
-      - run: pip install -e ".[dev,mcp]"
-      # No ngspice. The one guard test that reaches a provider drives
-      # tests/nonfinite_provider.py through sys.executable, by design: the
-      # thing under test is the admission layer, not the simulator.
+      - run: pip install -e ".[dev,mcp,oracles]"
       - run: python -X utf8 tests/mutation_guards.py "${RUNNER_TEMP}/mutations"
 
+  # This is intentionally a PR gate now. A scientific regression found only
+  # after merge is evidence discovered one boundary too late. Keep it on 3.12
+  # because FAST owns the supported-Python matrix; this job owns the scientific
+  # execution/provider contract.
   scientific:
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: sudo apt-get install -y -qq ngspice
-      # `.[dev,mcp]`, not `.[dev]`: without the MCP group the boundary tests
-      # skip, and a skipped test proves nothing. The guard in
-      # tests/mcp/test_battery_boundary.py is the safety net for a bare
-      # install; CI is not a bare install and should exercise the transport.
-      - run: pip install -e ".[dev,mcp]"
-      # The provider default is `wsl.exe -e ngspice` (the author's Windows
-      # host). On Linux point it at the native binary. Three tests assert the
-      # default WSL invocation itself and are Windows-only; they are deselected
-      # here, not skipped in the suite.
+      - run: pip install -e ".[dev,mcp,oracles]"
       - env:
-          # Name is read by NgspiceInvocation.from_environment in
-          # src/engcore/domains/electrical/ngspice.py; renaming it means
-          # changing that read and tests/test_heterogeneous_ngspice.py::
-          # test_j2_the_invocation_is_configuration_and_reads_the_environment
-          # in the same commit, or CI silently falls back to the WSL default
-          # and every provider test fails on Linux.
           CRAFTY_NGSPICE_ARGV: ngspice
         run: >
           python -m pytest -m "not campaign" -q -n 4 --dist loadfile
+          --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared
           --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process
           --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure
           --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical
+          --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+          --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+      # The two benchmark rebuild nodes above are historical campaign
+      # reproduction tests: each rebuilds/writes its round's committed artifacts
+      # and explicitly asks whether *that old round* changed no production code.
+      # Any real source-changing PR must fail that historical premise and the
+      # write makes the checkout dirty, cascading into certificate failures.
+      # Their non-mutating provenance, independence, falsification and committed
+      # gate checks still run here; the full rebuilds remain available in the
+      # campaign/manual workflow where their historical baseline is meaningful.
 
-  # Does this run anywhere but the author's laptop? The two jobs above answer
-  # "on a GitHub runner with a hand-written apt line". This one answers it from
-  # a bare image with no host state at all, using the same Dockerfile a buyer
-  # would run. See docs/reproduce.md.
-  #
-  # This job failed at the FAST tier for one round, because
-  # src/engcore/mcp/server.py imports `mcp` and pyproject.toml did not declare
-  # it. The `[mcp]` group and the import guard close that, so
-  # `continue-on-error` is gone and this job is now load-bearing: it is the
-  # thing that would catch the next undeclared dependency on the day it lands.
-  # NEEDS.md, evidence round, B.1.
+  # Bare-image reproducibility is still a post-merge/manual check. It is not a
+  # scientific-code gate and is substantially more expensive than FAST.
   reproduce:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: docker build -t crafty-repro .
       - run: docker run --rm crafty-repro
 
   # The benchmark is scored on the DEVELOPMENT split only. The 600-case
   # hold-out stays sealed; score_hard.py exits non-zero if this job ever tries
-  # to score it without --open-holdout, which is the enforcement working rather
-  # than a CI failure. benchmarks/hard/README.md, "The hold-out split".
+  # to score it without --open-holdout.
   benchmark:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
@@ -146,16 +173,5 @@ jobs:
                --cases benchmarks/hard/cases_hard --workers 4 --split all; then
             echo "SEAL BROKEN: --split all succeeded without --open-holdout"; exit 1
           fi
-      # Both case sets were scored here into /tmp and the answer thrown away.
-      # Nothing compared either committed record against the re-score, and the
-      # battery one had already gone stale -- it records 400/400 and the tree
-      # produces 372/400 -- without anything going red. This step re-scores
-      # both through the same scorer and FAILS on disagreement, which is the
-      # whole difference between running a benchmark and checking one.
-      #
-      # It follows the shape of the "split is reproducible" step above:
-      # recompute, compare the declared fields, refuse to continue if they
-      # moved. The comparison lives in the test so it runs locally too;
-      # this step is what makes it run here.
       - name: the committed benchmark records still reproduce
         run: python -m pytest tests/test_benchmark_records.py -q
