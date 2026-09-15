@@ -47,6 +47,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Iterator, Mapping
 
+from ..scientific.results.immutable import detach, freeze
 from ..scientific.serialization import schema_string
 from .admission import (
     AdmissionAttempt,
@@ -95,6 +96,12 @@ class BeliefEntry:
     admitted_by: str
     claim_payload: Mapping[str, Any]
 
+    def __post_init__(self) -> None:
+        # Part of the belief store: a read must not be able to edit stored belief
+        # through a nested dict or list. frozen=True protects only the attribute.
+        object.__setattr__(self, "status", EvidenceStatus(self.status))
+        object.__setattr__(self, "claim_payload", freeze(dict(self.claim_payload)))
+
     @property
     def is_active(self) -> bool:
         return self.status is BELIEF_BEARING_STATUS
@@ -109,7 +116,7 @@ class BeliefEntry:
             "record_hash": self.record_hash,
             "status": self.status.value,
             "admitted_by": self.admitted_by,
-            "claim_payload": dict(self.claim_payload),
+            "claim_payload": detach(self.claim_payload),
         }
 
 
@@ -217,6 +224,7 @@ class BeliefUpdateGateway:
                 f"{type(candidate).__name__}; a raw solver result is not "
                 f"evidence until it has been bound, assessed and admitted"
             )
+        candidate.require_integrity()
         return candidate
 
     def verify_admission(self, evidence: Evidence) -> AdmissionAttempt:
