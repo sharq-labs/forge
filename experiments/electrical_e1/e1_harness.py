@@ -60,7 +60,7 @@ from src.engcore.sria import (
     UncertaintyChannel,
     UncertaintyDeclaration,
 )
-from src.engcore.sria.assurance import Arbiter
+from src.engcore.sria.assurance import Arbiter, trusting_authority
 from src.engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
@@ -799,11 +799,14 @@ def build_e1_campaign(
     *, true_r2_ohm: float | None = None, run_id: str = "e1-run"
 ):
     """Wire the full stack: gateway, arbiter, harness, CampaignRunner."""
-    authority = AdmissionAuthority("e1.authority")
+    # The authority trusts exactly E1's critic registry and E1's obligation set
+    # and serves only this Arbiter (audit sria follow-up, trust root).
+    critics = (E1NumericalCritic(),)
+    obligations = e1_obligations()
+    authority = trusting_authority("e1.authority", critics, policies=(obligations,))
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
-    arbiter = Arbiter(authority, critics=(E1NumericalCritic(),))
-    obligations = e1_obligations()
+    arbiter = Arbiter(authority, critics=critics)
     harness = E1Harness(
         gateway=gateway,
         executor_impl=E1Executor(true_r2_ohm),

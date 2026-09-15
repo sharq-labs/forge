@@ -49,8 +49,10 @@ from engcore.sria.assurance import (
     ObligationSet,
     ObligationKind,
     ValidationObligation,
+    trusting_authority,
 )
 from engcore.sria.provenance import AssessmentProvenance
+from engcore.scientific import ProvenanceRecord
 
 import tests.test_sria_m3_assurance as T
 
@@ -67,7 +69,11 @@ NOT_ADMITTED = (
 # =====================================================================
 
 def _stack(tag: str, *critics):
-    authority = AdmissionAuthority(f"audit.sria.{tag}")
+    """An authority trusting exactly ``critics`` and the standard obligations,
+    its gateway, and the one Arbiter it serves."""
+    authority = trusting_authority(
+        f"audit.sria.{tag}", critics, policies=(T.standard_obligations(),)
+    )
     gateway = BeliefUpdateGateway(
         authorities=AdmissionAuthorityRegistry([authority])
     )
@@ -257,6 +263,24 @@ def test_trust01_e1_registered_critics_on_another_run_are_refused():
     assert set(decision.refused_assessments) == {numerical.assessment_id, domain.assessment_id}
     assert numerical.assessment_id not in decision.assessment_refs
     assert not _admitted(arbiter, gateway, decision, ev_b, [numerical])
+
+
+def test_trust01_a_result_from_another_run_does_not_count_even_when_it_agrees():
+    """The critics really ran, on a result holding exactly the claimed value —
+    but from a different run than the one the evidence came from."""
+    _authority, arbiter, _gateway = _stack("otherrun", NumericalCritic(), _domain_critic())
+    ev = _voltage_evidence("ev-run1")
+    elsewhere = dataclasses.replace(
+        T.good_result("res-run2"),
+        provenance=ProvenanceRecord(run_id="run-2", solvers=(("demo.linear", "1"),)),
+    )
+    numerical, domain = _honest_assessments(arbiter, elsewhere, ev, tag="run2")
+    decision = arbiter.decide(
+        decision_id="d-run2", evidence=ev, assessments=[numerical, domain],
+        obligations=T.standard_obligations(), budget=_budget(),
+    )
+    assert decision.verdict is not AssuranceVerdict.VALID
+    assert set(decision.refused_assessments) == {numerical.assessment_id, domain.assessment_id}
 
 
 def test_trust01_bound_assessments_still_admit():

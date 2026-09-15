@@ -37,12 +37,12 @@ defend. UNKNOWN stays legal and is the common answer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping, Protocol, Sequence, runtime_checkable
 
 from ...scientific.serialization import require_schema, schema_string
-from ..assurance.arbiter import Arbiter, AssuranceVerdict
+from ..assurance.arbiter import Arbiter, ArbiterDecision, AssuranceVerdict
 from ..assurance.assessment import CriticAssessment, CriticVerdict
 from ..assurance.obligations import (
     ObligationKind,
@@ -312,6 +312,14 @@ class ArbiterStoppingReview:
     Every path through :meth:`review` either returns a non-approving outcome or
     delegates to :meth:`Arbiter.decide`. There is no branch that constructs
     ``STOP_APPROVED`` from campaign state.
+
+    Nor does it take the campaign's obligation state on a caller's word (audit
+    follow-up). The obligations counted as assessed and met are derived from
+    ``assurance_decisions`` — Arbiter decisions, or their hashes — keeping only
+    those this reviewer's own Arbiter issued, about evidence, for this campaign,
+    under exactly these obligations; the latest such decision about an
+    obligation governs. ``reported_unmet`` lets a caller report obligations
+    unmet, which can only lower standing.
     """
 
     review_version = STOPPING_REVIEW_VERSION
@@ -330,13 +338,91 @@ class ArbiterStoppingReview:
         *,
         review_id: str,
         obligations: ObligationSet,
-        obligation_state: Mapping[str, bool],
         terminal_objective_available: bool,
+        assurance_decisions: Sequence[ArbiterDecision | str] = (),
+        reported_unmet: Sequence[str] = (),
         criteria: Sequence[StoppingCriterion] = (),
         evaluators: Mapping[str, StoppingCriterionEvaluator] | None = None,
         evaluation_context: Any = None,
         unresolved_assessments: Sequence[str] = (),
         reviewed_at: str | None = None,
+    ) -> StopReview:
+        obligation_state, ignored = self._derive_obligation_state(
+            obligations, assurance_decisions, reported_unmet
+        )
+        review = self._review(
+            proposal,
+            review_id=review_id,
+            obligations=obligations,
+            obligation_state=obligation_state,
+            terminal_objective_available=terminal_objective_available,
+            criteria=criteria,
+            evaluators=evaluators,
+            evaluation_context=evaluation_context,
+            unresolved_assessments=unresolved_assessments,
+            reviewed_at=reviewed_at,
+        )
+        if ignored:
+            review = replace(
+                review,
+                reasons=review.reasons
+                + (
+                    f"ignored {len(ignored)} assurance decision(s) this Arbiter did "
+                    f"not issue about evidence under this campaign's obligations: "
+                    f"{ignored[:4]}",
+                ),
+            )
+        return review
+
+    def _derive_obligation_state(
+        self,
+        obligations: ObligationSet,
+        assurance_decisions: Sequence[ArbiterDecision | str],
+        reported_unmet: Sequence[str],
+    ) -> tuple[dict[str, bool], list[str]]:
+        if isinstance(assurance_decisions, (Mapping, str, bytes)):
+            raise TypeError(
+                "assurance_decisions are Arbiter decisions or their hashes, not "
+                "a mapping asserting obligation state"
+            )
+        declared = {o.obligation_id for o in obligations.obligations}
+        state: dict[str, bool] = {}
+        ignored: list[str] = []
+        for item in assurance_decisions:
+            decision_hash = (
+                item.decision_hash if isinstance(item, ArbiterDecision) else str(item)
+            )
+            # This Arbiter's own copy, never the caller's object.
+            decision = self._arbiter.issued_decision(decision_hash)
+            if (
+                decision is None
+                or not decision.is_about_evidence
+                or decision.campaign_id != obligations.campaign_id
+                or decision.policy_digest != obligations.digest
+            ):
+                ignored.append(decision_hash[:12])
+                continue
+            for result in decision.obligation_results:
+                if result.obligation_id in declared:
+                    state[result.obligation_id] = result.satisfied is True
+        for obligation_id in reported_unmet:
+            if str(obligation_id) in declared:
+                state[str(obligation_id)] = False
+        return state, ignored
+
+    def _review(
+        self,
+        proposal: StopProposal,
+        *,
+        review_id: str,
+        obligations: ObligationSet,
+        obligation_state: Mapping[str, bool],
+        terminal_objective_available: bool,
+        criteria: Sequence[StoppingCriterion],
+        evaluators: Mapping[str, StoppingCriterionEvaluator] | None,
+        evaluation_context: Any,
+        unresolved_assessments: Sequence[str],
+        reviewed_at: str | None,
     ) -> StopReview:
         declared = tuple(o.obligation_id for o in obligations.obligations)
         unmet = tuple(

@@ -43,7 +43,6 @@ from experiments.electrical_e2.e2_harness import (
     E2FaultyExecutor,
     E2Harness,
     E2NumericalCritic,
-    e2_obligations,
 )
 from experiments.electrical_e2.e2_model import (
     E2Observation,
@@ -57,7 +56,6 @@ from experiments.electrical_e2.e2_model import (
 )
 from engcore.scientific import Quantity
 from engcore.sria import (
-    AdmissionAuthority,
     AdmissionAuthorityRegistry,
     BeliefUpdateGateway,
     CampaignCharter,
@@ -65,7 +63,7 @@ from engcore.sria import (
     ResearchAction,
     TerminalDecision,
 )
-from engcore.sria.assurance import Arbiter
+from engcore.sria.assurance import Arbiter, trusting_authority
 from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
@@ -649,15 +647,20 @@ def build_stack(
 ) -> DemoStack:
     """One campaign. ``with_requirement=False`` is the counterfactual used to
     prove the certification requirement changed no parameter-learning score."""
-    authority = AdmissionAuthority(f"v01demo.authority.{label}")
-    gateway = BeliefUpdateGateway(
-        authorities=AdmissionAuthorityRegistry([authority])
-    )
+    registry = AdmissionAuthorityRegistry()
+    gateway = BeliefUpdateGateway(authorities=registry)
     commitments = CommitmentLedger(f"{label}-commitments")
     evaluator = DemoCertificationEvaluator(gateway, commitments)
     # The Arbiter is constructed trusting the critics it will run: E2's
     # numerical critic and the demo's stopping evaluator (audit SRIA-TRUST-01).
-    arbiter = Arbiter(authority, critics=(E2NumericalCritic(), evaluator))
+    # The authority is declared to trust exactly that registry and the demo's
+    # obligation set, and serves only this Arbiter (audit sria follow-up).
+    critics = (E2NumericalCritic(), evaluator)
+    authority = trusting_authority(
+        f"v01demo.authority.{label}", critics, policies=(demo_obligations(),)
+    )
+    registry.register(authority)
+    arbiter = Arbiter(authority, critics=critics)
     e2 = E2Harness(
         run_id=f"{label}-chain",
         gateway=gateway,

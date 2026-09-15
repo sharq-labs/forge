@@ -75,7 +75,7 @@ from src.engcore.sria import (
     UncertaintyChannel,
     UncertaintyDeclaration,
 )
-from src.engcore.sria.assurance import Arbiter
+from src.engcore.sria.assurance import Arbiter, trusting_authority
 from src.engcore.sria.assurance.arbiter import AssuranceVerdict
 from src.engcore.sria.assurance.assessment import (
     CheckRecord,
@@ -741,14 +741,20 @@ def build_e2_harness(
     executor_class: type[E2Executor] = E2Executor,
 ) -> E2Harness:
     """Wire a fresh, independent stack: authority, gateway, arbiter, harness."""
-    authority = AdmissionAuthority(f"e2.authority.{run_id}")
+    # The authority trusts exactly E2's critic registry and E2's obligation set
+    # and serves only this Arbiter (audit sria follow-up, trust root).
+    critics = (E2NumericalCritic(),)
+    obligations = e2_obligations()
+    authority = trusting_authority(
+        f"e2.authority.{run_id}", critics, policies=(obligations,)
+    )
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
     return E2Harness(
         run_id=run_id,
         gateway=gateway,
-        arbiter=Arbiter(authority, critics=(E2NumericalCritic(),)),
+        arbiter=Arbiter(authority, critics=critics),
         executor=executor_class(spec),
-        obligations=e2_obligations(),
+        obligations=obligations,
         events=CampaignEventLog(run_id),
     )

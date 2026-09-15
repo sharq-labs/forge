@@ -55,16 +55,34 @@ here rather than assumed of callers:
 * The obligation set's digest — the policy the decision was made under — is
   part of the decision hash and of the authorization's policy version.
 
+* An assessment made over a scientific result counts for a
+  QOI/parameter claim that states a value and units only if that result holds
+  the claimed quantity at the claimed value (unit-converted; equal up to
+  rounding, or within the claim's own declared ``tolerance``). The budget must
+  carry the evidence's own uncertainty declaration.
+
+**The trust root (audit follow-up).** An :class:`AdmissionAuthority` declares,
+at construction, the critic-registry digest and the policy digests it serves
+(:func:`trusting_authority` computes them from the critics and obligation
+sets). The authorization an Arbiter mints carries its registry digest and the
+decision's policy digest, and the authority verifies neither a foreign
+registry nor an undeclared policy. An authority serves one Arbiter: a second
+Arbiter around it is refused at construction. So building a fresh Arbiter with
+self-registered critics around a trusted authority ends in no admission.
+
 Scope, as elsewhere in SRIA: a same-process architectural boundary. Whoever
-constructs an Arbiter chooses which critics it trusts, exactly as whoever
-constructs an AdmissionAuthority chooses its secret; the registry makes that
-choice explicit and records its digest on every decision.
+constructs the authority chooses which critic registry and policies it trusts,
+exactly as they choose its secret; the registry digest names each critic's
+implementation (module and qualified name), not just its id, but Python cannot
+prove that the object behind a name is the code you reviewed.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import math
+import numbers
 import secrets
 from dataclasses import dataclass, field, replace
 from enum import Enum
@@ -77,7 +95,7 @@ from ..admission import (
     DecisionBinding,
     _issue_registrar_capability,
 )
-from ..evidence import Evidence
+from ..evidence import ClaimType, Evidence
 from ..provenance import DecisionProvenance
 from ..uncertainty import UncertaintyChannel
 from .assessment import (
@@ -134,6 +152,10 @@ class CriticRegistration:
     critic_class: CriticClass
     entry_point: str
     domain_pack_ref: str = ""
+    #: ``module.qualname`` of the critic's class. Part of the registry digest,
+    #: so a look-alike critic with the same id, version and class is a
+    #: different registry.
+    implementation: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -142,6 +164,7 @@ class CriticRegistration:
             "critic_class": self.critic_class.value,
             "entry_point": self.entry_point,
             "domain_pack_ref": self.domain_pack_ref,
+            "implementation": self.implementation,
         }
 
 
@@ -188,7 +211,155 @@ def _registration_for(critic: Any) -> CriticRegistration:
         critic_class=critic_class,
         entry_point=entry,
         domain_pack_ref=pack,
+        implementation=f"{type(critic).__module__}.{type(critic).__qualname__}",
     )
+
+
+def _registrations_for(critics: Iterable[Any]) -> dict[str, CriticRegistration]:
+    registrations: dict[str, CriticRegistration] = {}
+    for critic in critics:
+        registration = _registration_for(critic)
+        if registration.critic_id in registrations:
+            raise ValueError(
+                f"critic id {registration.critic_id!r} is registered twice; "
+                f"an assessment must be attributable to exactly one critic"
+            )
+        registrations[registration.critic_id] = registration
+    return registrations
+
+
+def critic_registry_digest(critics: Iterable[Any]) -> str:
+    """The digest an Arbiter constructed with ``critics`` records and presents."""
+    registrations = _registrations_for(critics)
+    return _canonical_digest(
+        [registrations[k].to_dict() for k in sorted(registrations)]
+    )
+
+
+def trusting_authority(
+    authority_id: str,
+    critics: Iterable[Any],
+    *,
+    policies: Iterable[ObligationSet] = (),
+    secret: str | None = None,
+) -> AdmissionAuthority:
+    """An AdmissionAuthority that trusts exactly these critics and policies.
+
+    Construct it before the Arbiter, with the same critics the Arbiter will be
+    built with and the obligation sets it may admit under.
+    """
+    return AdmissionAuthority(
+        authority_id,
+        secret,
+        critic_registry_digest=critic_registry_digest(critics),
+        policy_digests=tuple(policy.digest for policy in policies),
+    )
+
+
+@dataclass(frozen=True)
+class _AssessedResult:
+    """What the Arbiter saw a critic assess: the result's named quantities.
+
+    The quantity objects are the result's own (immutable) values, kept so a
+    claim can be converted into and compared with them. Recognised
+    structurally — a result id, a provenance with a run id, and a mapping of
+    values — which is the shape of a Scientific Core ``ScientificResult``;
+    SRIA reaches the core only through its existing imports.
+    """
+
+    digest: str
+    quantities: Mapping[str, Any]
+
+
+def _looks_like_result(item: Any) -> bool:
+    return (
+        isinstance(getattr(item, "values", None), Mapping)
+        and bool(str(getattr(item, "result_id", "") or "").strip())
+        and hasattr(getattr(item, "provenance", None), "run_id")
+    )
+
+
+def _assessed_result(inputs: Sequence[Any]) -> _AssessedResult | None:
+    """The scientific result a critic run read, if one was among its inputs."""
+    for item in inputs:
+        result = item if _looks_like_result(item) else getattr(item, "result", None)
+        if not _looks_like_result(result):
+            continue
+        quantities = {str(name): value for name, value in dict(result.values).items()}
+        try:
+            digest = _canonical_digest(result.to_dict())
+        except Exception:  # noqa: BLE001 — the quantities are what is compared
+            digest = _canonical_digest(
+                {
+                    "result_id": result.result_id,
+                    "values": {
+                        name: [getattr(v, "magnitude", None), str(getattr(v, "units", ""))]
+                        for name, v in quantities.items()
+                    },
+                }
+            )
+        return _AssessedResult(digest=digest, quantities=quantities)
+    return None
+
+
+#: Claim types whose payload may state the value of one bound quantity.
+_VALUE_CLAIMS = frozenset({ClaimType.QOI_VALUE, ClaimType.PARAMETER_VALUE})
+
+
+def _real(value: Any) -> bool:
+    return isinstance(value, numbers.Real) and not isinstance(value, bool)
+
+
+def claim_backing_problem(evidence: Evidence, assessed: _AssessedResult) -> str:
+    """Why an assessed result does not back a value claim, or "" if it does.
+
+    Applies to QOI/parameter claims whose payload states ``value`` (a real
+    number) and ``units``. The bound quantity is the claim binding's
+    ``subject_ref``; the result's quantity is converted into the claim's units.
+    Equality is exact up to floating-point rounding, unless the claim declares
+    a non-negative ``tolerance`` in its own units.
+    """
+    if evidence.claim_type not in _VALUE_CLAIMS:
+        return ""
+    payload = evidence.claim_payload
+    if "value" not in payload or "units" not in payload:
+        return ""
+    value = payload["value"]
+    if not _real(value):
+        return ""
+    name = evidence.claim_binding.subject_ref
+    claim_units = str(payload["units"])
+    if name not in assessed.quantities:
+        return f"the assessed result holds no quantity {name!r}"
+    quantity = assessed.quantities[name]
+    if not _real(getattr(quantity, "magnitude", None)) or not callable(
+        getattr(quantity, "to", None)
+    ):
+        return f"the assessed result's {name!r} is not a scalar quantity"
+    try:
+        held = float(quantity.to(claim_units).magnitude)
+    except Exception:  # noqa: BLE001 — incomparable units are a mismatch
+        return (
+            f"the claim's units {claim_units!r} are not comparable with the "
+            f"assessed {name!r} in {getattr(quantity, 'units', '')!r}"
+        )
+    tolerance = payload.get("tolerance")
+    if tolerance is None:
+        backed = math.isclose(float(value), held, rel_tol=1e-9, abs_tol=0.0)
+    else:
+        if not _real(tolerance) or not math.isfinite(float(tolerance)) or tolerance < 0:
+            return f"the claim declares an invalid tolerance {tolerance!r}"
+        backed = abs(float(value) - held) <= float(tolerance)
+    if not backed:
+        return (
+            f"the claim states {name} = {value} {claim_units}, but the assessed "
+            f"result holds {held} {claim_units}"
+        )
+    return ""
+
+
+def _declaration_digest(declaration: Any) -> str:
+    return _canonical_digest(declaration.to_dict())
 
 
 @dataclass(frozen=True)
@@ -373,40 +544,44 @@ class Arbiter:
         # authority, so the verification side holds no key material and
         # cannot mint. No long-lived shared secret exists.
         self._arbiter_id = f"{arbiter_version}:{secrets.token_hex(8)}"
-        # The registration capability. Held privately and never returned,
-        # so possession of the authority alone cannot register commitments.
-        self._registrar = _issue_registrar_capability(self._arbiter_id)
-        # Hashes of decisions this Arbiter actually produced. Without this,
-        # any caller could hand-build an ArbiterDecision(verdict=VALID) and
-        # have it signed — a fabricated-decision bypass.
-        self._issued: set[str] = set()
-        # Decisions that have already authorized once (audit SRIA-TRUST-04).
-        self._authorized: set[str] = set()
         # The critic registry. Fixed at construction: which critics an
         # Arbiter trusts is part of what the Arbiter *is*, and a registry that
         # could grow later would let any holder of the Arbiter add a critic
         # that says whatever it is told to (audit SRIA-TRUST-01).
-        self._critics: dict[str, Any] = {}
-        self._registrations: dict[str, CriticRegistration] = {}
-        for critic in critics:
-            registration = _registration_for(critic)
-            if registration.critic_id in self._registrations:
-                raise ValueError(
-                    f"critic id {registration.critic_id!r} is registered twice; "
-                    f"an assessment must be attributable to exactly one critic"
-                )
-            self._critics[registration.critic_id] = critic
-            self._registrations[registration.critic_id] = registration
-        self._registry_digest = _canonical_digest(
-            [self._registrations[k].to_dict() for k in sorted(self._registrations)]
+        critics = tuple(critics)
+        self._registrations: dict[str, CriticRegistration] = _registrations_for(critics)
+        self._critics: dict[str, Any] = {
+            _registration_for(critic).critic_id: critic for critic in critics
+        }
+        self._registry_digest = critic_registry_digest(critics)
+        # The registration capability. Held privately and never returned, so
+        # possession of the authority alone cannot register commitments. The
+        # authority refuses a second Arbiter once one with its declared
+        # registry holds a capability (audit follow-up, trust root).
+        self._registrar = _issue_registrar_capability(
+            authority, self._arbiter_id, self._registry_digest
         )
+        # Decisions this Arbiter actually produced, by hash. Without this,
+        # any caller could hand-build an ArbiterDecision(verdict=VALID) and
+        # have it signed — a fabricated-decision bypass.
+        self._issued: dict[str, ArbiterDecision] = {}
+        # Decisions that have already authorized once (audit SRIA-TRUST-04).
+        self._authorized: set[str] = set()
         # Digest of each assessment a registered critic produced through
         # run_critic -> the subject keys it was produced for.
         self._recorded: dict[str, set[str]] = {}
+        # Digest of each such assessment -> the ScientificResult it read.
+        self._assessed_results: dict[str, _AssessedResult] = {}
 
     @property
     def authority_id(self) -> str:
         return self._authority.authority_id
+
+    @property
+    def authority(self) -> AdmissionAuthority:
+        """The authority this Arbiter asks to sign. Holding it confers nothing:
+        it registers no commitment and serves no second Arbiter."""
+        return self._authority
 
     # ---- critic registry -------------------------------------------------
     @property
@@ -428,6 +603,10 @@ class Arbiter:
             isinstance(decision, ArbiterDecision)
             and decision.decision_hash in self._issued
         )
+
+    def issued_decision(self, decision_hash: str) -> "ArbiterDecision | None":
+        """This Arbiter's own copy of a decision it issued, by hash."""
+        return self._issued.get(str(decision_hash))
 
     @staticmethod
     def _subject_key(subject: Any) -> str:
@@ -497,7 +676,24 @@ class Arbiter:
             )
         if registration.domain_pack_ref and not produced.domain_pack_ref:
             produced = replace(produced, domain_pack_ref=registration.domain_pack_ref)
-        self._recorded.setdefault(assessment_digest(produced), set()).add(subject_key)
+        assessed = _assessed_result(inputs)
+        if assessed is not None:
+            # The assessment says which result it read; the Arbiter keeps what
+            # that result holds, to check the claim it is offered for.
+            produced = replace(
+                produced,
+                provenance=replace(
+                    produced.provenance,
+                    metadata={
+                        **dict(produced.provenance.metadata),
+                        "assessed_result_digest": assessed.digest,
+                    },
+                ),
+            )
+        digest = assessment_digest(produced)
+        self._recorded.setdefault(digest, set()).add(subject_key)
+        if assessed is not None:
+            self._assessed_results[digest] = assessed
         return produced
 
     # ---- decide ---------------------------------------------------------
@@ -511,7 +707,8 @@ class Arbiter:
     ) -> str:
         """Why an offered assessment may not count, or "" if it may."""
         label = assessment.assessment_id
-        subjects = self._recorded.get(assessment_digest(assessment))
+        digest = assessment_digest(assessment)
+        subjects = self._recorded.get(digest)
         if subjects is None:
             return (
                 f"assessment {label!r} was not produced by a critic registered "
@@ -544,6 +741,14 @@ class Arbiter:
                     f"{evidence.evidence_id!r} belongs to pack "
                     f"{evidence.domain_pack_ref!r}"
                 )
+            assessed = self._assessed_results.get(digest)
+            if assessed is not None:
+                problem = claim_backing_problem(evidence, assessed)
+                if problem:
+                    return (
+                        f"assessment {label!r} does not back evidence "
+                        f"{evidence.evidence_id!r}: {problem}"
+                    )
         elif assessment.subject_ref != subject_ref:
             return (
                 f"assessment {label!r} is about {assessment.subject_ref!r}, not "
@@ -818,6 +1023,25 @@ class Arbiter:
                     f"uncertainty channel {channel.value} required but no budget given"
                 )
                 continue
+            if evidence is not None and budget_describes_claim(budget, evidence) and (
+                _declaration_digest(budget.declaration)
+                != _declaration_digest(evidence.uncertainty)
+            ):
+                results.append(
+                    ObligationResult(
+                        obligation_id=obligation.obligation_id,
+                        satisfied=False,
+                        detail=(
+                            "the uncertainty budget's declaration is not the "
+                            "evidence's own uncertainty declaration"
+                        ),
+                    )
+                )
+                reasons.append(
+                    f"uncertainty channel {channel.value}: the budget's declaration "
+                    f"differs from evidence {evidence.evidence_id!r}'s"
+                )
+                continue
             if evidence is None or not budget_describes_claim(budget, evidence):
                 claimed = evidence.belief_key if evidence is not None else "no claim"
                 results.append(
@@ -931,7 +1155,7 @@ class Arbiter:
             critic_registry_digest=self._registry_digest,
             refused_assessments=tuple(refused),
         )
-        self._issued.add(decision.decision_hash)
+        self._issued[decision.decision_hash] = decision
         return decision
 
     @staticmethod
@@ -1016,6 +1240,8 @@ class Arbiter:
             policy_id="sria.arbiter",
             policy_version=self._policy_version(decision),
             arbiter_id=self._arbiter_id,
+            critic_registry_digest=self._registry_digest,
+            policy_digest=decision.policy_digest,
         )
         code = secrets.token_hex(32)
         self._authority.register_authorization(
@@ -1093,6 +1319,8 @@ class Arbiter:
                 decision=decision,
                 subject_record_hash=record_hash,
             ),
+            critic_registry_digest=self._registry_digest,
+            policy_digest=decision.policy_digest,
         )
         declaration = self._authority.issue(
             admitted=admitted,

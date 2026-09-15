@@ -40,6 +40,9 @@ from .arbiter import (
     ObligationResult,
     assessment_digest,
     budget_describes_claim,
+    claim_backing_problem,
+    critic_registry_digest,
+    trusting_authority,
 )
 from .assessment import (
     CheckRecord,
@@ -121,4 +124,7 @@ __all__ = [
     "SUBJECT_REFERENCE",
     "assessment_digest",
     "budget_describes_claim",
+    "claim_backing_problem",
+    "critic_registry_digest",
+    "trusting_authority",
 ]

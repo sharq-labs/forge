@@ -314,7 +314,7 @@ def test_an_unassessed_obligation_is_not_treated_as_satisfied() -> None:
     the whole assurance layer exists to prevent: silence read as a pass.
     """
     _gateway, arbiter, _admission = build_assurance()
-    review = review_with(arbiter, obligation_state={})
+    review = review_with(arbiter, assurance_decisions=())
     declared = tuple(
         o.obligation_id for o in critic_obligation().obligations
     )
@@ -350,7 +350,7 @@ def test_unassessed_obligations_block_a_stop_an_approving_criterion_would_grant(
     # were never run.
     withheld = review_with(
         arbiter, review_id="unassessed",
-        obligation_state={},
+        assurance_decisions=(),
         criteria=(CRITERION,), evaluators=approving,
     )
     assert withheld.outcome is not StopReviewOutcome.STOP_APPROVED

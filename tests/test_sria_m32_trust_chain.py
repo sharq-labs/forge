@@ -32,6 +32,7 @@ from engcore.sria.assurance import (
     CriticClass,
     NumericalCritic,
     ObligationSet,
+    trusting_authority,
 )
 from engcore.scientific import (
     ConvergenceState,
@@ -66,8 +67,17 @@ def _raises(exc_type, fn, *args, **kwargs):
 
 
 def fresh_authority(tag: str = "m32") -> AdmissionAuthority:
-    """A new authority per test: Arbiters register with it at construction."""
-    return AdmissionAuthority(f"arbiter.{tag}", secret=f"secret-{tag}")
+    """A new authority per test: its one Arbiter registers with it at construction.
+
+    Declared to trust the numerical critic the test Arbiters run and the
+    numerical-critic policy they admit under (audit sria follow-up).
+    """
+    return trusting_authority(
+        f"arbiter.{tag}",
+        (NumericalCritic(),),
+        policies=(charter_obligations(required_critics=(CriticClass.NUMERICAL,)),),
+        secret=f"secret-{tag}",
+    )
 
 
 def gateway_for(authority: AdmissionAuthority) -> BeliefUpdateGateway:

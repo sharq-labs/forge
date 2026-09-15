@@ -96,20 +96,48 @@ _CAPABILITY_KEY = object()
 class _RegistrarCapability:
     """Held by an Arbiter. Required to register a commitment."""
 
-    __slots__ = ("registrar_id",)
+    __slots__ = ("registrar_id", "critic_registry_digest")
 
-    def __init__(self, registrar_id: str, key: Any = None) -> None:
+    def __init__(
+        self, registrar_id: str, key: Any = None, critic_registry_digest: str = ""
+    ) -> None:
         if key is not _CAPABILITY_KEY:
             raise AdmissionAuthorityError(
                 "a registrar capability cannot be constructed directly; only "
                 "the Arbiter authorization path may register commitments"
             )
         object.__setattr__(self, "registrar_id", str(registrar_id))
+        object.__setattr__(self, "critic_registry_digest", str(critic_registry_digest))
 
 
-def _issue_registrar_capability(registrar_id: str) -> _RegistrarCapability:
-    """The single seam through which an Arbiter obtains registration rights."""
-    return _RegistrarCapability(registrar_id, _CAPABILITY_KEY)
+def _issue_registrar_capability(
+    authority: "AdmissionAuthority", registrar_id: str, critic_registry_digest: str
+) -> _RegistrarCapability:
+    """The single seam through which an Arbiter obtains registration rights.
+
+    An authority serves at most ONE Arbiter (audit follow-up, trust root).
+    The first registrar whose critic registry is the one the authority
+    declared binds the authority; afterwards no further registrar is issued
+    for it, so "construct another Arbiter around the same authority with
+    different critics" is refused at construction. A registrar whose registry
+    is not the declared one is issued but binds nothing: every accepting
+    authorization it registers fails verification, because the authorization
+    carries its registry digest.
+    """
+    if not isinstance(authority, AdmissionAuthority):
+        raise AdmissionAuthorityError(
+            "a registrar capability is issued for a real AdmissionAuthority"
+        )
+    if authority._bound_registrar is not None:
+        raise AdmissionAuthorityError(
+            f"authority {authority.authority_id!r} already serves Arbiter "
+            f"{authority._bound_registrar!r}; a second Arbiter around the same "
+            f"authority is refused"
+        )
+    digest = str(critic_registry_digest)
+    if digest and digest == authority.critic_registry_digest:
+        authority._bound_registrar = str(registrar_id)
+    return _RegistrarCapability(registrar_id, _CAPABILITY_KEY, digest)
 
 
 class AdmissionOutcome(str, Enum):
@@ -162,6 +190,11 @@ class DecisionBinding:
     policy_version: str = ""
     arbiter_id: str = ""
     authorization_code: str = ""
+    #: Digest of the deciding Arbiter's critic registry and of the obligation
+    #: set the decision was made under. Both are inside the committed payload,
+    #: and an authority verifies only the registry and policies it declared.
+    critic_registry_digest: str = ""
+    policy_digest: str = ""
 
     def __post_init__(self) -> None:
         for label in ("decision_id", "decision_hash", "verdict"):
@@ -185,6 +218,8 @@ class DecisionBinding:
             "policy_version": self.policy_version,
             "arbiter_id": self.arbiter_id,
             "authorization_code": self.authorization_code,
+            "critic_registry_digest": self.critic_registry_digest,
+            "policy_digest": self.policy_digest,
         }
 
     @classmethod
@@ -198,6 +233,8 @@ class DecisionBinding:
             policy_version=payload.get("policy_version", ""),
             arbiter_id=payload.get("arbiter_id", ""),
             authorization_code=payload.get("authorization_code", ""),
+            critic_registry_digest=payload.get("critic_registry_digest", ""),
+            policy_digest=payload.get("policy_digest", ""),
         )
 
 
@@ -324,9 +361,24 @@ class AdmissionAuthority:
     M1.1 deliberately implements only issuance and verification — no admission
     *policy*. Deciding whether the critics justify admission is the Arbiter's
     job and belongs to a later milestone.
+
+    **What an authority trusts is declared when it is constructed** (audit
+    follow-up, trust root). ``critic_registry_digest`` names the one critic
+    registry whose decisions it will sign for, and ``policy_digests`` the
+    obligation sets it serves. An accepting authorization is verified only if
+    it carries that registry digest and one of those policy digests. An
+    authority that declares neither admits nothing. And an authority serves at
+    most one Arbiter (see ``_issue_registrar_capability``).
     """
 
-    def __init__(self, authority_id: str, secret: str | None = None) -> None:
+    def __init__(
+        self,
+        authority_id: str,
+        secret: str | None = None,
+        *,
+        critic_registry_digest: str = "",
+        policy_digests: Iterable[str] = (),
+    ) -> None:
         authority_id = str(authority_id).strip()
         if not authority_id:
             raise AdmissionAuthorityError("admission authority requires an id")
@@ -336,10 +388,25 @@ class AdmissionAuthority:
         # These are one-way digests. The authority holds NO key material and
         # cannot invert them, so it cannot mint an authorization.
         self._commitments: dict[str, str] = {}
+        self._critic_registry_digest = str(critic_registry_digest).strip()
+        self._policy_digests = frozenset(
+            str(d).strip() for d in policy_digests if str(d).strip()
+        )
+        self._bound_registrar: str | None = None
 
     @property
     def authority_id(self) -> str:
         return self._authority_id
+
+    @property
+    def critic_registry_digest(self) -> str:
+        """The critic registry whose decisions this authority signs for."""
+        return self._critic_registry_digest
+
+    @property
+    def policy_digests(self) -> frozenset[str]:
+        """The obligation-set digests this authority serves."""
+        return self._policy_digests
 
     def _sign(self, payload: Mapping[str, Any]) -> str:
         blob = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -360,12 +427,14 @@ class AdmissionAuthority:
         policy_id: str = "",
         policy_version: str = "",
         arbiter_id: str = "",
+        critic_registry_digest: str = "",
+        policy_digest: str = "",
     ) -> str:
         """Everything an authorization is bound to.
 
         Binding all of these together means an authorization cannot be moved to
         another record, reused for another verdict, or re-attributed to a
-        different decision or policy version.
+        different decision, policy, policy version or critic registry.
         """
         return "|".join(
             [
@@ -376,7 +445,25 @@ class AdmissionAuthority:
                 policy_id,
                 policy_version,
                 arbiter_id,
+                critic_registry_digest,
+                policy_digest,
             ]
+        )
+
+    @classmethod
+    def _binding_payload(
+        cls, binding: "DecisionBinding", subject_record_hash: str
+    ) -> str:
+        return cls.authorization_payload(
+            decision_id=binding.decision_id,
+            decision_hash=binding.decision_hash,
+            subject_record_hash=subject_record_hash,
+            verdict=binding.verdict,
+            policy_id=binding.policy_id,
+            policy_version=binding.policy_version,
+            arbiter_id=binding.arbiter_id,
+            critic_registry_digest=binding.critic_registry_digest,
+            policy_digest=binding.policy_digest,
         )
 
     @staticmethod
@@ -411,26 +498,47 @@ class AdmissionAuthority:
         digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
         self._commitments[digest] = commitment
 
+    def authorization_problem(
+        self, binding: "DecisionBinding", *, subject_record_hash: str
+    ) -> str:
+        """Why this binding does not authorize admission here, or "" if it does."""
+        if binding is None or not binding.authorization_code:
+            return "decision binding carries no authorization code"
+        payload = self._binding_payload(binding, subject_record_hash)
+        digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        committed = self._commitments.get(digest)
+        if committed is None or not hmac.compare_digest(
+            committed, self.commitment_for(binding.authorization_code, payload)
+        ):
+            return (
+                "decision binding carries no authorization code traceable to a "
+                "recognised Arbiter for this record"
+            )
+        # The commitment is genuine, so an Arbiter really made this decision.
+        # Which Arbiter, trusting which critics, under which policy, is what
+        # the authority was constructed to be particular about.
+        if binding.critic_registry_digest != self._critic_registry_digest or not (
+            self._critic_registry_digest
+        ):
+            return (
+                f"decision was made by an Arbiter whose critic registry "
+                f"{binding.critic_registry_digest[:12] or '<none>'} is not the "
+                f"registry this authority trusts "
+                f"({self._critic_registry_digest[:12] or 'none declared'})"
+            )
+        if binding.policy_digest not in self._policy_digests:
+            return (
+                f"decision was made under policy "
+                f"{binding.policy_digest[:12] or '<none>'}, which this authority "
+                f"does not serve"
+            )
+        return ""
+
     def verifies_authorization(
         self, binding: "DecisionBinding", *, subject_record_hash: str
     ) -> bool:
-        if binding is None or not binding.authorization_code:
-            return False
-        payload = self.authorization_payload(
-            decision_id=binding.decision_id,
-            decision_hash=binding.decision_hash,
-            subject_record_hash=subject_record_hash,
-            verdict=binding.verdict,
-            policy_id=binding.policy_id,
-            policy_version=binding.policy_version,
-            arbiter_id=binding.arbiter_id,
-        )
-        digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-        committed = self._commitments.get(digest)
-        if committed is None:
-            return False
-        return hmac.compare_digest(
-            committed, self.commitment_for(binding.authorization_code, payload)
+        return not self.authorization_problem(
+            binding, subject_record_hash=subject_record_hash
         )
 
     def consume_authorization(
@@ -445,15 +553,7 @@ class AdmissionAuthority:
         """
         if binding is None:
             return False
-        payload = self.authorization_payload(
-            decision_id=binding.decision_id,
-            decision_hash=binding.decision_hash,
-            subject_record_hash=subject_record_hash,
-            verdict=binding.verdict,
-            policy_id=binding.policy_id,
-            policy_version=binding.policy_version,
-            arbiter_id=binding.arbiter_id,
-        )
+        payload = self._binding_payload(binding, subject_record_hash)
         digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
         return self._commitments.pop(digest, None) is not None
 
@@ -480,14 +580,16 @@ class AdmissionAuthority:
         # M3.2: refuse to sign an accepting declaration whose authorization
         # cannot be traced to a recognised Arbiter. Signing it would turn
         # possession of this authority into the power to admit.
-        if admitted and not self.verifies_authorization(
-            authorization, subject_record_hash=subject
-        ):
+        problem = (
+            self.authorization_problem(authorization, subject_record_hash=subject)
+            if admitted
+            else ""
+        )
+        if problem:
             raise AdmissionAuthorityError(
-                "refusing to sign an accepting admission: its decision binding "
-                "carries no authorization code traceable to a recognised "
-                "Arbiter. A fabricated binding cannot be laundered through a "
-                "trusted authority."
+                f"refusing to sign an accepting admission: {problem}. A "
+                f"fabricated or foreign binding cannot be laundered through a "
+                f"trusted authority."
             )
         unsigned = AdmissionDeclaration(
             admitted=admitted,
@@ -615,15 +717,13 @@ class AdmissionAuthorityRegistry:
                 )
             # Independent of whether issue() was careful: the Gateway
             # re-verifies the capability itself.
-            if not authority.verifies_authorization(
+            problem = authority.authorization_problem(
                 binding, subject_record_hash=subject_record_hash
-            ):
+            )
+            if problem:
                 return AdmissionAttempt(
                     outcome=AdmissionOutcome.UNAUTHORIZED,
-                    reason=(
-                        "decision binding carries no authorization code "
-                        "traceable to a recognised Arbiter for this record"
-                    ),
+                    reason=problem,
                     **base,
                 )
 

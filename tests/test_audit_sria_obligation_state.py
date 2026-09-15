@@ -153,19 +153,25 @@ def test_sria06_adopting_a_decision_made_under_another_policy_is_refused():
     assert runner._obligation_state.get("critic:numerical") is not True
 
 
-def test_sria06_adoption_requires_every_adopted_decision_to_satisfy():
-    runner, _harness, _gateway = _campaign()
-    arbiter = runner._arbiter
-    decisions = []
-    for tag, verdict in (("ok", CriticVerdict.PASS), ("doubt", CriticVerdict.INCONCLUSIVE)):
-        evidence = toy_evidence(f"ev-{tag}")
-        assessment = arbiter.run_critic(
-            TOY_CRITIC_ID, evidence, subject=evidence, assessment_id=f"{tag}-a",
-            declared_convergence=verdict,
-        )
-        decisions.append(arbiter.decide(
-            decision_id=f"{tag}-d", evidence=evidence, assessments=(assessment,),
-            obligations=runner._obligations,
-        ))
-    runner.adopt_prior_assurance(tuple(decisions))
-    assert runner._obligation_state == {"critic:numerical": False}
+def test_sria06_the_latest_adopted_decision_about_an_obligation_governs():
+    """One rule everywhere — event-log derivation, adoption and stop review:
+    in order, the most recent Arbiter decision about an obligation decides it."""
+    def adopted_state(order):
+        runner, _harness, _gateway = _campaign()
+        arbiter = runner._arbiter
+        decisions = {}
+        for tag, verdict in (("ok", CriticVerdict.PASS), ("doubt", CriticVerdict.INCONCLUSIVE)):
+            evidence = toy_evidence(f"ev-{tag}")
+            assessment = arbiter.run_critic(
+                TOY_CRITIC_ID, evidence, subject=evidence, assessment_id=f"{tag}-a",
+                declared_convergence=verdict,
+            )
+            decisions[tag] = arbiter.decide(
+                decision_id=f"{tag}-d", evidence=evidence, assessments=(assessment,),
+                obligations=runner._obligations,
+            )
+        runner.adopt_prior_assurance(tuple(decisions[t] for t in order))
+        return runner._obligation_state
+
+    assert adopted_state(("ok", "doubt")) == {"critic:numerical": False}
+    assert adopted_state(("doubt", "ok")) == {"critic:numerical": True}

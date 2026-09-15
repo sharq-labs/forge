@@ -54,7 +54,6 @@ from typing import Any, Mapping, Sequence
 
 from engcore.scientific import Quantity
 from engcore.sria import (
-    AdmissionAuthority,
     AdmissionAuthorityRegistry,
     BeliefUpdateGateway,
     CampaignCharter,
@@ -62,7 +61,7 @@ from engcore.sria import (
     ResearchAction,
     TerminalDecision,
 )
-from engcore.sria.assurance import Arbiter
+from engcore.sria.assurance import Arbiter, trusting_authority
 from engcore.sria.assurance.assessment import CriticClass
 from engcore.sria.assurance.obligations import (
     ObligationKind,
@@ -666,15 +665,17 @@ def build_e3_stack(
     """
     from .e3_obligation import ObligationLedger
 
-    authority = AdmissionAuthority(f"e3.authority.{label}")
-    registry = AdmissionAuthorityRegistry([authority])
-    gateway = BeliefUpdateGateway(authorities=registry)
     obligation_state = ObligationState(ledger=ObligationLedger())
     adequacy_evaluator = AdequacyStoppingEvaluator(obligation_state)
-    arbiter = Arbiter(
-        authority,
-        critics=(E2NumericalCritic(), adequacy_evaluator, *critics),
+    trusted = (E2NumericalCritic(), adequacy_evaluator, *critics)
+    # The authority trusts exactly this registry and E3's obligation set and
+    # serves only this Arbiter (audit sria follow-up, trust root).
+    authority = trusting_authority(
+        f"e3.authority.{label}", trusted, policies=(e3_obligations(),)
     )
+    registry = AdmissionAuthorityRegistry([authority])
+    gateway = BeliefUpdateGateway(authorities=registry)
+    arbiter = Arbiter(authority, critics=trusted)
     e2 = E2Harness(
         run_id=f"{label}-chain",
         gateway=gateway,

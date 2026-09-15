@@ -74,7 +74,7 @@ from engcore.sria import (
     UncertaintyChannel,
     UncertaintyDeclaration,
 )
-from engcore.sria.assurance.arbiter import Arbiter
+from engcore.sria.assurance.arbiter import Arbiter, trusting_authority
 from engcore.sria.assurance.assessment import (
     CheckRecord,
     CriticAssessment,
@@ -830,12 +830,17 @@ def build_assurance(campaign_id: str = "m5-campaign", critics=()):
 
     ``critics`` adds critics the Arbiter is constructed to trust as well —
     stopping-criterion evaluators, typically. The registry is fixed at
-    construction (audit SRIA-TRUST-01).
+    construction (audit SRIA-TRUST-01), and the authority is constructed
+    trusting exactly that registry and the toy charter's obligation set, and
+    serves only this Arbiter (audit sria follow-up, trust root).
     """
-    authority = AdmissionAuthority("m5.authority")
+    trusted = (ToyNumericalCritic(), *critics)
+    authority = trusting_authority(
+        "m5.authority", trusted, policies=(critic_obligation(campaign_id),)
+    )
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
-    arbiter = Arbiter(authority, critics=(ToyNumericalCritic(), *critics))
+    arbiter = Arbiter(authority, critics=trusted)
     return gateway, arbiter, authority
 
 

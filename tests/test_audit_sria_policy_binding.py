@@ -179,11 +179,20 @@ def test_trust02_stopping_review_refuses_a_proposal_from_another_campaign():
     proposal = StopProposal(
         proposal_id="p-other", campaign_id="some-other-campaign", run_id="r", iteration=1
     )
+    from tests.sria_m5_benchmark import TOY_CRITIC_ID, toy_evidence
+
+    evidence = toy_evidence("ev-met")
+    met = arbiter.decide(
+        decision_id="d-met", evidence=evidence,
+        assessments=(arbiter.run_critic(
+            TOY_CRITIC_ID, evidence, subject=evidence, assessment_id="a-met"),),
+        obligations=critic_obligation(),
+    )
     review = ArbiterStoppingReview(arbiter).review(
         proposal,
         review_id="rev-other",
         obligations=critic_obligation(),
-        obligation_state={"critic:numerical": True},
+        assurance_decisions=(met,),
         terminal_objective_available=True,
         criteria=(CRITERION,),
         evaluators={CRITERION.criterion_id: evaluator},

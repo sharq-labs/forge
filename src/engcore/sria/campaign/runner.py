@@ -862,8 +862,9 @@ class CampaignRunner:
         runner's Arbiter, about an evidence record, for this campaign, under
         this runner's obligation set. Their obligation results are logged as a
         ``PRIOR_ASSURANCE_ADOPTED`` event, and the obligation state is derived
-        from the log like every other assurance fact. A bare mapping of
-        booleans is refused.
+        from the log like every other assurance fact; the latest adopted
+        decision about an obligation governs. A bare mapping of booleans is
+        refused.
         """
         if isinstance(decisions, (Mapping, str, bytes)):
             raise TypeError(
@@ -896,14 +897,12 @@ class CampaignRunner:
                     f"decision {decision.decision_id!r} cannot back prior "
                     f"assurance: it " + "; it ".join(problems)
                 )
-            # Conservative across decisions: an obligation counts as satisfied
-            # only if every adopted decision that evaluated it satisfied it.
+            # In the order given, the latest decision about an obligation
+            # governs — the same rule the event-log derivation and the stopping
+            # review apply, so all three agree on one set of decisions.
             for result in decision.obligation_results:
                 if result.obligation_id in declared:
-                    results[result.obligation_id] = (
-                        results.get(result.obligation_id, True)
-                        and result.satisfied is True
-                    )
+                    results[result.obligation_id] = result.satisfied is True
         self._events.append(
             CampaignEventType.PRIOR_ASSURANCE_ADOPTED,
             iteration=self._run.iteration,
@@ -919,6 +918,18 @@ class CampaignRunner:
         self._advance(self._run.state)
         self._checkpoint()
         return self._run
+
+    def _assurance_decision_hashes(self) -> tuple[str, ...]:
+        """Hashes of the Arbiter decisions behind this run's obligation state."""
+        hashes: list[str] = []
+        for event in self._events:
+            if event.event_type is CampaignEventType.ARBITER_DECIDED:
+                decision_hash = str(event.payload.get("decision_hash", ""))
+                if decision_hash:
+                    hashes.append(decision_hash)
+            elif event.event_type is CampaignEventType.PRIOR_ASSURANCE_ADOPTED:
+                hashes.extend(str(h) for h in event.payload.get("decision_hashes") or ())
+        return tuple(hashes)
 
     def _handle_no_selection(
         self,
@@ -1011,7 +1022,13 @@ class CampaignRunner:
             proposal,
             review_id=f"{self._run.run_id}-stopreview-{iteration}",
             obligations=self._obligations,
-            obligation_state=dict(self._obligation_state),
+            # The Arbiter's decisions, as the log records them; the reviewer
+            # keeps only those its Arbiter issued. Obligations this run holds
+            # unmet (a harness report) may only lower standing.
+            assurance_decisions=self._assurance_decision_hashes(),
+            reported_unmet=tuple(
+                sorted(k for k, v in self._obligation_state.items() if v is False)
+            ),
             terminal_objective_available=self._harness.objective().is_available,
             criteria=self._stopping_criteria,
             evaluators=self._stopping_evaluators,
@@ -1503,6 +1520,7 @@ class CampaignRunner:
             iteration=iteration,
             payload={
                 "decision_id": decision.decision_id,
+                "decision_hash": decision.decision_hash,
                 "verdict": decision.verdict.value,
                 "unmet_obligations": list(decision.unmet_obligations),
                 "subject_record_hash": decision.subject_ref,

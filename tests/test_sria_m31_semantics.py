@@ -64,6 +64,7 @@ from engcore.sria.assurance import (
     UncertaintyBudget,
     model_discrepancy_check,
     obligations_from_charter,
+    trusting_authority,
 )
 from engcore.sria.assurance.assessment import FindingImpact
 from engcore.sria.calibration import CalibrationReport, CalibrationVerdict
@@ -83,8 +84,8 @@ def _raises(exc_type, fn, *args, **kwargs):
     raise AssertionError(f"expected {exc_type.__name__}, nothing raised")
 
 
-def registry() -> AdmissionAuthorityRegistry:
-    return AdmissionAuthorityRegistry([AUTHORITY])
+def registry(authority=None) -> AdmissionAuthorityRegistry:
+    return AdmissionAuthorityRegistry([authority or AUTHORITY])
 
 
 def quantified(magnitude: float = 1e-12) -> Uncertainty:
@@ -171,7 +172,12 @@ def _raw_evidence(result: ScientificResult, eid: str) -> Evidence:
         source_class=SourceClass.SIMULATION,
         claim_type=ClaimType.QOI_VALUE,
         claim_binding=ClaimBinding(subject_kind="qoi", subject_ref="V"),
-        claim_payload={"value": 9.0, "units": "volt"},
+        # Exactly what the result holds: an assessment of the result counts
+        # for the claim only if the result backs it (audit sria follow-up).
+        claim_payload={
+            "value": result.values["V"].magnitude,
+            "units": str(result.values["V"].units),
+        },
         uncertainty=declaration(),
         provenance_ref=result.provenance.run_id,
         domain_pack_ref="demo",
@@ -201,11 +207,25 @@ def numerical_assessment(result=None, aid="as-n"):
     )
 
 
-def trusted_arbiter(*extra):
-    """An Arbiter constructed to trust the SRIA critics these tests run."""
-    return Arbiter(
-        AUTHORITY, critics=(NumericalCritic(), CalibrationCriticAdapter(), *extra)
+_AUTHORITY_SERIAL = iter(range(1_000_000))
+
+
+def trusted_arbiter(*extra, policies=()):
+    """An Arbiter constructed to trust the SRIA critics these tests run.
+
+    Each gets its own authority, declared to trust exactly these critics and
+    ``policies``: an authority serves one Arbiter and admits only under the
+    registry and policies it declared (audit sria follow-up). A gateway that
+    should accept its admissions is built from ``arbiter.authority``.
+    """
+    critics = (NumericalCritic(), CalibrationCriticAdapter(), *extra)
+    authority = trusting_authority(
+        f"arbiter.m31.{next(_AUTHORITY_SERIAL)}",
+        critics,
+        policies=policies,
+        secret="m31-secret",
     )
+    return Arbiter(authority, critics=critics)
 
 
 def run_numerical(arbiter, evidence, result=None, aid="as-n", **options):
@@ -420,7 +440,7 @@ def valid_flow():
     """Produce a VALID decision plus the Arbiter that issued it."""
     result = good_result()
     evidence = evidence_for(result)
-    arbiter = trusted_arbiter()
+    arbiter = trusted_arbiter(policies=(full_obligations(),))
     decision = arbiter.decide(
         decision_id="d-valid",
         evidence=evidence,
@@ -440,7 +460,7 @@ def test_valid_decision_reaches_the_gateway():
     assert declaration_.authorization.decision_hash == decision.decision_hash
     assert declaration_.authorization.verdict == "valid"
 
-    gateway = BeliefUpdateGateway(authorities=registry())
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
     admitted = evidence.admit(declaration_)
     entry = gateway.submit(admitted)
     assert entry.evidence_id == evidence.evidence_id
@@ -555,7 +575,7 @@ def test_tampered_decision_binding_is_rejected_by_the_gateway():
         issuer_id=genuine.issuer_id,
         issued_signature=genuine.issued_signature,
     )
-    gateway = BeliefUpdateGateway(authorities=registry())
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
     _raises(AdmissionAuthorityError, gateway.submit, evidence.admit(tampered))
     assert len(gateway.belief) == 0
 

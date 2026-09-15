@@ -77,14 +77,41 @@ PROPOSAL = StopProposal(
 )
 
 
+def satisfying_decision(arbiter, tag="met"):
+    """A genuine decision from ``arbiter`` that satisfies critic:numerical.
+
+    The stopping review derives obligation state from decisions its Arbiter
+    issued; a caller-supplied mapping is no longer accepted (audit sria
+    follow-up).
+    """
+    from tests.sria_m5_benchmark import TOY_CRITIC_ID, toy_evidence
+
+    evidence = toy_evidence(f"ev-{tag}-{id(arbiter)}")
+    return arbiter.decide(
+        decision_id=f"d-{tag}",
+        evidence=evidence,
+        assessments=(
+            arbiter.run_critic(
+                TOY_CRITIC_ID, evidence, subject=evidence, assessment_id=f"a-{tag}"
+            ),
+        ),
+        obligations=critic_obligation(),
+    )
+
+
 def review_with(arbiter, **kwargs):
+    """Review PROPOSAL; obligations are met unless ``assurance_decisions`` says
+    otherwise (pass ``()`` for "never assessed")."""
     base = dict(
         review_id="rev1",
         obligations=critic_obligation(),
-        obligation_state={"critic:numerical": True},
         terminal_objective_available=True,
     )
     base.update(kwargs)
+    if "assurance_decisions" not in base:
+        base["assurance_decisions"] = (
+            satisfying_decision(arbiter, f"met-{base['review_id']}"),
+        )
     return ArbiterStoppingReview(arbiter).review(PROPOSAL, **base)
 
 
@@ -165,7 +192,7 @@ CRITERION = StoppingCriterion(
 def test_A_stop_proposal_alone_cannot_yield_approval():
     """Non-positive VoI is a statement about prices, not about science."""
     _g, arbiter, _a = build_assurance()
-    review = review_with(arbiter, obligation_state={}, obligations=critic_obligation())
+    review = review_with(arbiter, assurance_decisions=(), obligations=critic_obligation())
     assert review.outcome is not StopReviewOutcome.STOP_APPROVED
     assert review.arbiter_decision_id == ""
 

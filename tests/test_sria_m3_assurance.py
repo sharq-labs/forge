@@ -75,6 +75,7 @@ from engcore.sria.assurance import (
     budget_from_declaration,
     model_discrepancy_check,
     obligations_from_charter,
+    trusting_authority,
 )
 from engcore.sria.calibration import (
     CalibrationReport,
@@ -116,8 +117,8 @@ def clean_run() -> RunOutcome:
     )
 
 
-def registry() -> AdmissionAuthorityRegistry:
-    return AdmissionAuthorityRegistry([AUTHORITY])
+def registry(authority=None) -> AdmissionAuthorityRegistry:
+    return AdmissionAuthorityRegistry([authority or AUTHORITY])
 
 
 def declaration(
@@ -170,12 +171,20 @@ def good_result(result_id: str = "res-good") -> ScientificResult:
 
 
 def evidence_for(result: ScientificResult, evidence_id: str = "ev-m3") -> Evidence:
+    """Evidence claiming what ``result`` actually holds.
+
+    The claim is ``V:mid`` when the result has it, otherwise the result's first
+    quantity, at exactly the result's value: an assessment of the result counts
+    for the claim only if the result backs it (audit sria follow-up).
+    """
+    name = "V:mid" if "V:mid" in result.values else next(iter(result.values))
+    quantity = result.values[name]
     return Evidence(
         evidence_id=evidence_id,
         source_class=SourceClass.SIMULATION,
         claim_type=ClaimType.QOI_VALUE,
-        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref="V:mid"),
-        claim_payload={"value": 9.0, "units": "volt"},
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref=name),
+        claim_payload={"value": quantity.magnitude, "units": str(quantity.units)},
         uncertainty=declaration(numerical=quantified()),
         provenance_ref=result.provenance.run_id,
         domain_pack_ref="electrical.dc",
@@ -326,7 +335,16 @@ def run_pipeline(
     critics = [NumericalCritic(), CalibrationCriticAdapter()]
     if domain_critic is not None:
         critics.append(domain_critic)
-    arbiter = Arbiter(AUTHORITY, critics=critics)
+    # A fresh authority per pipeline, trusting exactly these critics and this
+    # policy: an authority serves one Arbiter (audit sria follow-up). Build the
+    # gateway from ``arbiter.authority``.
+    authority = trusting_authority(
+        f"arbiter.m3.{evidence.evidence_id}",
+        critics,
+        policies=(obligations,),
+        secret="m3-test-secret",
+    )
+    arbiter = Arbiter(authority, critics=critics)
     assessments = [
         arbiter.run_critic(
             NumericalCritic.critic_id,
@@ -862,7 +880,6 @@ def test_suspended_evidence_leaves_active_belief():
     """(14) admitted -> suspended -> gone from the active view."""
     result = good_result()
     evidence = evidence_for(result)
-    gateway = BeliefUpdateGateway(authorities=registry())
 
     budget = full_budget(numerical=quantified())
     obligations = standard_obligations()
@@ -874,6 +891,7 @@ def test_suspended_evidence_leaves_active_belief():
         subject_ref=evidence.evidence_id,
     )
     assert decision.verdict is AssuranceVerdict.VALID
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
 
     assessed = evidence
     for assessment in assessments:
@@ -1219,7 +1237,7 @@ def test_end_to_end_electrical_dc_reaches_belief():
         assessed = assessed.with_assessment(assessment.to_evidence_assessment())
     admitted = assessed.admit(arbiter.authorize_admission(decision, assessed))
 
-    gateway = BeliefUpdateGateway(authorities=registry())
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
     entry = gateway.submit(admitted)
     assert entry.evidence_id == "ev-divider"
     assert gateway.belief.supports(admitted.belief_key)
@@ -1255,7 +1273,7 @@ def test_end_to_end_defective_result_does_not_reach_belief():
     refusal = arbiter.authorize_admission(decision, assessed)
     assert refusal.admitted is False
 
-    gateway = BeliefUpdateGateway(authorities=registry())
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
     after = assessed.admit(refusal)
     _raises(BeliefWriteViolation, gateway.submit, after)
     assert len(gateway.belief) == 0

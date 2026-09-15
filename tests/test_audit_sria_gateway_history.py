@@ -8,7 +8,11 @@ the new accepted claim and the invalidation vanished.
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
+
+from engcore.scientific import Quantity
 
 from engcore.sria import AdmissionError, BeliefWriteViolation, EvidenceStatus
 from engcore.sria.assurance import AssuranceVerdict
@@ -25,9 +29,13 @@ from engcore.sria.assurance import NumericalCritic
 
 
 def _accept(arbiter, gateway, evidence, tag):
-    numerical, domain = _honest_assessments(
-        arbiter, T.good_result("res-W"), evidence, tag=tag
+    # The critics assess a result holding exactly the claimed value, so the
+    # assessments back the claim (audit sria follow-up, claim binding).
+    result = dataclasses.replace(
+        T.good_result("res-W"),
+        values={"V:mid": Quantity(float(evidence.claim_payload["value"]), "volt")},
     )
+    numerical, domain = _honest_assessments(arbiter, result, evidence, tag=tag)
     decision = arbiter.decide(
         decision_id=f"dec-{tag}", evidence=evidence, assessments=[numerical, domain],
         obligations=T.standard_obligations(), budget=_budget(),

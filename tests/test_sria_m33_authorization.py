@@ -40,7 +40,13 @@ from engcore.sria.admission import (
     AdmissionDeclaration,
     DecisionBinding,
 )
-from engcore.sria.assurance import Arbiter, AssuranceVerdict, CriticClass, NumericalCritic
+from engcore.sria.assurance import (
+    Arbiter,
+    AssuranceVerdict,
+    CriticClass,
+    NumericalCritic,
+    trusting_authority,
+)
 
 from tests.test_sria_m31_semantics import (  # noqa: E402
     budget,
@@ -66,8 +72,15 @@ def _raises(exc_type, fn, *args, **kwargs):
 
 def setup(tag: str):
     """A trusted authority, a genuine Arbiter, a gateway and evidence."""
-    authority = AdmissionAuthority(f"authority.{tag}", secret=f"sig-{tag}")
-    # The Arbiter trusts the numerical critic it runs (audit SRIA-TRUST-01).
+    # The Arbiter trusts the numerical critic it runs (audit SRIA-TRUST-01);
+    # the authority is declared to trust that registry and the policy the
+    # tests admit under, and serves only this Arbiter (audit sria follow-up).
+    authority = trusting_authority(
+        f"authority.{tag}",
+        (NumericalCritic(),),
+        policies=(charter_obligations(required_critics=(CriticClass.NUMERICAL,)),),
+        secret=f"sig-{tag}",
+    )
     arbiter = Arbiter(authority, critics=(NumericalCritic(),))
     gateway = BeliefUpdateGateway(
         authorities=AdmissionAuthorityRegistry([authority])
@@ -296,7 +309,8 @@ def test_D_modified_verdict_rejected():
     )
 
     # And the reverse: a code minted for a non-VALID decision relabelled VALID.
-    arbiter2 = Arbiter(authority, critics=(NumericalCritic(),))
+    # The same Arbiter: an authority serves exactly one (audit sria follow-up).
+    arbiter2 = arbiter
     inconclusive = arbiter2.decide(
         decision_id="d-inc",
         evidence=evidence,

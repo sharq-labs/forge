@@ -484,15 +484,31 @@ def test_S5_stop_proposal_does_not_self_certify_completion():
 def test_S5_stop_is_rejected_while_an_obligation_is_unsatisfied():
     from engcore.sria.campaign import ArbiterStoppingReview, StopProposal
 
+    from tests.sria_m5_benchmark import TOY_CRITIC_ID, toy_evidence
+
     _g, arbiter, _a = build_assurance()
     proposal = StopProposal(
         proposal_id="p1", campaign_id="m5-campaign", run_id="r1", iteration=1
+    )
+    # The unmet obligation is established by a genuine Arbiter decision; the
+    # review no longer takes obligation state on a caller's word.
+    evidence = toy_evidence("ev-unmet")
+    unmet = arbiter.decide(
+        decision_id="d-unmet",
+        evidence=evidence,
+        assessments=(
+            arbiter.run_critic(
+                TOY_CRITIC_ID, evidence, subject=evidence, assessment_id="a-unmet",
+                declared_convergence=CriticVerdict.INCONCLUSIVE,
+            ),
+        ),
+        obligations=critic_obligation(),
     )
     review = ArbiterStoppingReview(arbiter).review(
         proposal,
         review_id="rev1",
         obligations=critic_obligation(),
-        obligation_state={"critic:numerical": False},
+        assurance_decisions=(unmet,),
         terminal_objective_available=True,
     )
     assert review.outcome is StopReviewOutcome.STOP_REJECTED
