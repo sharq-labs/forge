@@ -627,6 +627,46 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "        unrecordable = None\n",
      "the settings a run says it used stop being held to what a record can "
      "carry, so a NaN or a non-string key survives into provenance"),
+    # GUARD 27 is the Hybrid UQ trust-boundary round (HUQ1-HUQ6): Core V2 is
+    # CORE_CERTIFIED and its fail-closed guards had never been observed to
+    # fail. Each mutation restores the behaviour from before its fix, and
+    # `tests/hybrid_uq/test_hybrid_uq_trust_boundary.py` joins TARGETS for
+    # them -- without it these six would run against suites that cannot see
+    # them and be reported GREEN.
+    ("G27a", "src/engcore/hybrid_uq/sensitivity.py::_bind_supplied_sensitivity",
+     "    mismatches = [label for label, (found, wanted) in expected.items() if found != wanted]\n",
+     "    mismatches = [label for label, (found, wanted) in expected.items() "
+     "if found != wanted and label != \"observation sigmas\"]\n",
+     "HUQ1: a supplied LocalSensitivity is no longer held to the request's "
+     "observation sigmas, so a stale record with the same ids and estimate "
+     "and other sigmas reshapes the covariance"),
+    ("G27b", "src/engcore/hybrid_uq/_records.py::require_valid_covariance",
+     "    if smallest < -tolerance:\n",
+     "    if False:\n",
+     "HUQ2: an indefinite covariance with a positive diagonal is accepted "
+     "again, so a record can carry a negative variance direction as "
+     "uncertainty"),
+    ("G27c", "src/engcore/hybrid_uq/predictive.py::linearized_predictive_uq",
+     "        skipped = 2 * len(z0)\n",
+     "        skipped = 0\n",
+     "HUQ3: a linearized prediction whose nonlinearity check was switched off "
+     "keeps a SUPPORTED claim again"),
+    ("G27d", "src/engcore/hybrid_uq/sensitivity.py::central_difference",
+     "            if error == 0.0:\n                break\n",
+     "            if True:\n                break\n",
+     "HUQ4: the first finite-difference quotient is accepted without showing "
+     "it converged, so a biased or noise-dominated Jacobian becomes a "
+     "covariance"),
+    ("G27e", "src/engcore/hybrid_uq/router.py::HybridUQResult._require_one_truth",
+     "            if self.mean != local.inference_point:\n",
+     "            if False:\n",
+     "HUQ5: a LOCAL_GAUSSIAN routed record may report a mean its own local "
+     "posterior contradicts"),
+    ("G27f", "src/engcore/hybrid_uq/local_gaussian.py::_coefficient_in_output_unit",
+     "    term = Quantity(magnitude, unit) * Quantity(1.0, source)\n",
+     "    term = Quantity(magnitude, output)\n",
+     "HUQ6: a reparameterization combines coordinates of any dimensions under "
+     "any declared unit again, so volt plus ampere reads as a voltage"),
 )
 
 
@@ -853,6 +893,18 @@ EVIDENCE: dict[str, tuple[str, str]] = {
              "test_a_provenance_tolerance_must_be_finite"),
     "G26c": ("CONTRACT_REFUSAL",
              "test_solver_options_are_held_to_the_free_form_rule"),
+    "G27a": ("CONTRACT_REFUSAL",
+             "other_material_state_is_rejected[A_sigma]"),
+    "G27b": ("CONTRACT_REFUSAL",
+             "test_j_an_indefinite_covariance_is_rejected_constructed_or_read_back"),
+    "G27c": ("SCIENTIFIC_ASSERTION",
+             "test_n_an_unchecked_affine_prediction_from_a_supported_posterior_is_downgraded"),
+    "G27d": ("SCIENTIFIC_ASSERTION",
+             "test_q_a_wide_bound_range_no_longer_biases_the_derivative"),
+    "G27e": ("SERIALIZATION_INVARIANT",
+             "test_v_to_x_the_same_contradictions_are_refused_in_memory"),
+    "G27f": ("CONTRACT_REFUSAL",
+             "test_ab_a_voltage_plus_a_current_is_refused"),
 }
 
 #: The five that were dead when this round opened, pinned by name. Deleting or
@@ -909,6 +961,9 @@ TARGETS = (
     # invariants round proved and repaired, and without it those four
     # mutations would run against suites that cannot see them.
     "tests/test_core_semantic_invariants.py",
+    # Added with G27. The Hybrid UQ trust-boundary suite: the only module that
+    # asserts the six Core V2 refusals those mutations remove.
+    "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py",
 )
 #: What the mutated copy needs to be a faithful copy. ``experiments`` is here
 #: because a guard in the target suite reads the frozen experiment configs to

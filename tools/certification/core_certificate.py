@@ -270,9 +270,10 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_repair_guidance.py",
             "tests/test_offset_unit_declaration.py",
             "tests/test_core_semantic_invariants.py",
+            "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py",
         ),
         why=(
-            "the mutation harness and the four suites it runs each mutant "
+            "the mutation harness and the five suites it runs each mutant "
             "against. '79/79 killed' is a statement about these exact bytes: "
             "the same sentence over a weakened suite would be worth nothing, "
             "so the suites are pinned alongside the runner"
