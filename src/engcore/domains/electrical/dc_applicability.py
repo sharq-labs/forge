@@ -532,7 +532,12 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
                     "caller's, because how much rise error is acceptable is "
                     "a property of what the answer is for. UNKNOWN unless the "
                     "budget is declared and the run supplied the coefficient "
-                    "and both body temperatures."
+                    "and both body temperatures. KNOWN LIMITATION (audit "
+                    "CAP-03, left partial by lead decision): this record is "
+                    "attached to a coupled run only when the caller declares "
+                    "element data, so a run that declares none gets no check "
+                    "of the resistance it held constant and can be SUPPORTED "
+                    "on the other models alone."
                 ),
             ),
             RangeCondition(

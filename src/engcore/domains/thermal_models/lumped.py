@@ -352,6 +352,12 @@ LUMPED_CAPACITY_MODEL = ScientificModelDefinition(
         "exchange path to one ambient",
         "the origin of the heat input, which is externally imposed and "
         "not claimed here",
+        # Audit CAP-06, KNOWN LIMITATION left open by lead decision: stated so
+        # the record does not imply a check it does not make.
+        "any consistency check of the declared heat capacity against the "
+        "body it describes: C is not compared with rho c_p V, and no density "
+        "or specific heat is declarable, so a heat capacity that no solid of "
+        "the declared volume could have is not refused",
     ),
 
     model_id="thermal.lumped.first_order_capacity",

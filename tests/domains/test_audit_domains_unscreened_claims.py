@@ -43,3 +43,21 @@ def test_peukert_states_that_chemistry_does_not_shape_its_exponent() -> None:
 def test_conduction2d_states_that_its_conductivity_span_is_unassessed() -> None:
     text = _joined(conduction2d.APPLICABILITY)
     assert "no k(t) span is declarable" in text
+
+
+def test_the_lumped_record_states_that_its_heat_capacity_is_unchecked() -> None:
+    from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
+
+    assert "not compared with rho c_p v" in _joined(LUMPED_CAPACITY_MODEL.exclusions)
+
+
+def test_the_held_resistance_limitation_is_stated_where_a_caller_reads() -> None:
+    from engcore.domains.electrical import dc_applicability as dc_app
+    from engcore.mcp import server
+
+    condition = next(
+        c for c in dc_app.SELF_HEATED_RESISTOR_MODEL.validity.conditions
+        if c.name == dc_app.RESISTANCE_VARIATION_UTILIZATION
+    )
+    assert "known limitation" in condition.description.lower()
+    assert "KNOWN LIMITATION" in server._RUN_DESCRIPTION
