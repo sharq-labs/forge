@@ -387,3 +387,62 @@ def test_z_valid_local_and_grid_records_still_round_trip_identically():
         again = HybridUQResult.from_dict(json.loads(canonical_bytes(result.to_dict())))
         assert canonical_bytes(again.to_dict()) == canonical_bytes(result.to_dict())
         assert again.digest == result.digest
+
+
+# ---------------------------------------------------------------------------
+# a reparameterization keeps unit semantics
+# ---------------------------------------------------------------------------
+def _posterior_in(units, transforms=("identity", "identity")):
+    _P, post = _supported_posterior()
+    return dataclasses.replace(post, parameter_units=units, inference_transforms=transforms)
+
+
+def test_aa_a_difference_of_two_voltages_is_a_voltage():
+    post = _posterior_in(("volt", "volt"))
+    diff = post.reparameterized([[1.0, -1.0], [0.0, 1.0]], ("v1_minus_v2", "v2"), ("volt", "volt"), "difference")
+    assert diff.parameter_units == ("volt", "volt")
+    cov = np.asarray(post.covariance)
+    assert diff.covariance[0][0] == pytest.approx(cov[0, 0] + cov[1, 1] - 2 * cov[0, 1])
+    # the same combination stated in millivolts is the same quantity, scaled consistently
+    milli = post.reparameterized([[1.0, -1.0], [0.0, 1.0]], ("v1_minus_v2", "v2"), ("millivolt", "volt"), "difference_mV")
+    assert milli.covariance[0][0] == pytest.approx(1.0e6 * diff.covariance[0][0])
+    assert milli.inference_point[0] == pytest.approx(1.0e3 * diff.inference_point[0])
+
+
+def test_ab_a_voltage_plus_a_current_is_refused():
+    post = _posterior_in(("volt", "ampere"))
+    with pytest.raises(HybridUQError, match="not compatible"):
+        post.reparameterized([[1.0, 1.0], [0.0, 1.0]], ("v_plus_i", "i"), ("volt", "ampere"), "mixed")
+
+
+def test_ac_the_right_coefficients_under_a_wrong_output_unit_are_refused():
+    post = _posterior_in(("volt", "volt"))
+    with pytest.raises(HybridUQError, match="not compatible"):
+        post.reparameterized([[1.0, -1.0], [0.0, 1.0]], ("difference", "v2"), ("kelvin", "volt"), "mislabelled")
+
+
+def test_a_coefficient_carries_its_unit_when_it_bridges_two_dimensions():
+    """The K2 alignment: ln k(T*) = ln k0 - (E/R) / T*. The coefficient is 1/kelvin, and saying so is required."""
+    post = _posterior_in(("dimensionless", "kelvin"))
+    t_star = 400.0
+    aligned = post.reparameterized([[1.0, Quantity(-1.0 / t_star, "1/kelvin")], [0.0, 1.0]], ("ln_k_at_T_star", "e_over_r"),
+                                   ("dimensionless", "kelvin"), "aligned")
+    T = np.asarray([[1.0, -1.0 / t_star], [0.0, 1.0]])
+    assert np.allclose(np.asarray(aligned.covariance), T @ np.asarray(post.covariance) @ T.T, rtol=1e-12, atol=0.0)
+    with pytest.raises(HybridUQError, match="not compatible"):
+        post.reparameterized([[1.0, -1.0 / t_star], [0.0, 1.0]], ("ln_k_at_T_star", "e_over_r"), ("dimensionless", "kelvin"),
+                             "unit_silently_dropped")
+
+
+def test_a_log_coordinate_is_dimensionless_whatever_its_parameter_is_measured_in():
+    post = _posterior_in(("volt", "volt"), transforms=("log", "identity"))
+    assert post.reparameterized([[1.0, 0.0], [0.0, 1.0]], ("ln_v1", "v2"), ("dimensionless", "volt"), "log_copy") is not None
+    with pytest.raises(HybridUQError, match="not compatible"):
+        post.reparameterized([[1.0, 0.0], [0.0, 1.0]], ("ln_v1", "v2"), ("volt", "volt"), "log_as_volt")
+
+
+def test_an_offset_scale_coordinate_may_be_copied_but_not_combined():
+    post = _posterior_in(("degC", "degC"))
+    assert post.reparameterized([[1.0, 0.0], [0.0, 1.0]], ("t1", "t2"), ("degC", "degC"), "copy") is not None
+    with pytest.raises(HybridUQError, match="offset scale"):
+        post.reparameterized([[1.0, 1.0], [0.0, 1.0]], ("t1_plus_t2", "t2"), ("degC", "degC"), "sum")

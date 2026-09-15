@@ -275,7 +275,9 @@ def main():
         raise SystemExit("MULTI refused by the V2 route")
     cov = np.asarray(post.covariance)
     T_star = float(cov[1, 1] / cov[0, 1])  # decorrelates ln k0 - E/R / T* from E/R
-    T = np.asarray([[1.0, -1.0 / T_star], [0.0, 1.0]])
+    # ln k0 is dimensionless and E/R is in kelvin, so the coefficient that combines them carries 1/kelvin:
+    # reparameterized refuses a dimensionless number there, because ln k0 + (number) x kelvin has no unit.
+    T = [[1.0, Quantity(-1.0 / T_star, "1/kelvin")], [0.0, 1.0]]
     aligned = post.reparameterized(T, ("log_k_at_T_star", "e_over_r_k"), ("dimensionless", "kelvin"), f"ln_k_at_{T_star:.3f}K")
     ident_declared = assess_routed_identifiability(post)
     ident_aligned = assess_routed_identifiability(aligned)

@@ -26,7 +26,7 @@ from scipy.stats import chi2, norm
 from ..inference.calibration import CalibrationResult, CalibrationSpec, CalibrationStatus, ForwardEvaluator, calibrate
 from ..inference.grid import ObservationSet
 from ..inference.parameters import CalibrationParameterSet
-from ..scientific.units.quantity import Quantity
+from ..scientific.units.quantity import Quantity, is_ratio_scale
 from ._records import (
     decode_float, decode_matrix, decode_vector, digest_of, encode_float, encode_matrix, encode_vector, material,
     require_schema, require_valid_covariance,
@@ -310,6 +310,39 @@ class ParameterInterval:
                    approximation_class=ApproximationClass(payload["approximation_class"]))
 
 
+def _magnitude(coefficient) -> float:
+    if isinstance(coefficient, Quantity):
+        return float(coefficient.magnitude)
+    if isinstance(coefficient, bool) or not isinstance(coefficient, (int, float, np.integer, np.floating)):
+        raise HybridUQError(f"a reparameterization coefficient is a number or a Quantity, not {type(coefficient).__name__}")
+    return float(coefficient)
+
+
+def _coefficient_in_output_unit(coefficient, source: str, output: str, row: str, column: str, terms: int) -> float:
+    """The number that multiplies a ``source``-unit coordinate to give ``output`` units, or HybridUQError."""
+    magnitude = _magnitude(coefficient)
+    if not math.isfinite(magnitude):
+        raise HybridUQError("a reparameterization matrix must be finite and of full row rank")
+    if magnitude == 0.0:
+        return 0.0
+    unit = coefficient.units if isinstance(coefficient, Quantity) else "dimensionless"
+    try:
+        Quantity(1.0, output)
+        ratio = is_ratio_scale(source) and is_ratio_scale(output) and is_ratio_scale(unit)
+    except Exception as exc:  # an unknown unit string, reported in this package's terms
+        raise HybridUQError(f"output {row!r}: {exc}") from None
+    if not ratio:
+        if terms == 1 and unit == "dimensionless" and magnitude == 1.0 and source == output:
+            return 1.0
+        raise HybridUQError(f"output {row!r} combines or scales {column!r} on an offset scale ({source} into {output}); "
+                            f"only an unscaled copy of such a coordinate into its own unit has a meaning")
+    term = Quantity(magnitude, unit) * Quantity(1.0, source)
+    if not term.is_compatible_with(output):
+        raise HybridUQError(f"output {row!r} in {output!r} is not compatible with its term in {column!r}: a coefficient in "
+                            f"{unit!r} times a coordinate in {source!r} is {term.units!r}")
+    return float(term.magnitude_in(output))
+
+
 @dataclass(frozen=True)
 class LocalGaussianPosterior:
     """A local Gaussian approximation of a posterior, with the diagnostics that decide whether to use it.
@@ -411,12 +444,27 @@ class LocalGaussianPosterior:
         return tuple(out)
 
     def reparameterized(self, matrix, names: Sequence[str], units: Sequence[str], label: str) -> "LocalGaussianPosterior":
-        """The same Gaussian in linear combinations of the inference coordinates. A new parameterization identity."""
+        """The same Gaussian in linear combinations of the inference coordinates. A new parameterization identity.
+
+        Units are part of the identity, so a linear combination must be dimensionally meaningful. Each inference
+        coordinate has a unit: the declared unit for an ``identity`` parameter, ``dimensionless`` for a ``log``
+        one (the coordinate is ln(value / declared unit), a pure number whose origin depends on that declared
+        unit, which the parent identity records), and its own recorded unit for a ``linear_map`` one. A
+        coefficient is a plain number, meaning dimensionless, or a :class:`Quantity` whose unit it carries. Every
+        term of output row i, coefficient times coordinate, must be compatible with ``units[i]``, and is
+        converted into it, so ``Quantity(1, "millivolt/volt")`` and ``1000`` against ``millivolt`` both scale a
+        volt coordinate the same way. Offset units such as degrees Celsius are refused in any row except an
+        unscaled copy of one coordinate into its own unit, because a sum on an interval scale has no meaning.
+        """
         cov = self._require_numbers()
-        T = np.asarray(matrix, dtype=np.float64)
+        rows = [list(row) for row in matrix]
         p = len(self.parameter_names)
-        if T.ndim != 2 or T.shape[1] != p or T.shape[0] != len(names) or len(units) != len(names):
+        if not rows or any(len(row) != p for row in rows) or len(rows) != len(names) or len(units) != len(names):
             raise HybridUQError(f"a reparameterization of {p} coordinates needs a k x {p} matrix and k names and units")
+        sources = [("dimensionless" if t == "log" else u) for t, u in zip(self.inference_transforms, self.parameter_units)]
+        T = np.asarray([[_coefficient_in_output_unit(c, sources[j], str(units[i]), str(names[i]), self.parameter_names[j],
+                                                     sum(1 for v in row if _magnitude(v) != 0.0))
+                         for j, c in enumerate(row)] for i, row in enumerate(rows)], dtype=np.float64)
         if not np.all(np.isfinite(T)) or np.linalg.matrix_rank(T) != T.shape[0]:
             raise HybridUQError("a reparameterization matrix must be finite and of full row rank")
         text = str(label).strip()

@@ -207,6 +207,13 @@ def local_gaussian_posterior(
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 
+**A reparameterization keeps unit semantics.** `reparameterized(matrix, names, units, label)` forms linear combinations of inference coordinates, so every output row must be dimensionally meaningful.
+
+- **Coordinate units:** an `identity` coordinate is in its declared unit. A `log` coordinate is `dimensionless`: it is ln(value / declared unit), a pure number whose origin depends on that declared unit, which the parent parameterization identity records. A `linear_map` coordinate is in its recorded unit.
+- **Coefficients:** a plain number is dimensionless. A `Quantity` carries its unit, as the K2 alignment's `Quantity(-1/T*, "1/kelvin")` does.
+- **Rows:** every term (coefficient × coordinate) of output row i must be compatible with `units[i]`, and is converted into it, so a volt coordinate reported in millivolts is scaled by 1000. Incompatible terms raise `HybridUQError`, as in volt + ampere, or a correct combination under a wrong output unit.
+- **Offset units:** degrees Celsius and similar are refused, except in an unscaled copy of one coordinate into its own unit. A sum on an interval scale has no meaning.
+
 **A covariance is validated, never repaired.** Every non-refused `LocalGaussianPosterior` and `HybridUQResult` covariance must be finite, with a positive diagonal. It must also be symmetric and positive semidefinite, judged on its correlation matrix. Asymmetry may be at most 1e-10 in correlation units, and the smallest correlation eigenvalue at least −16·p·ε. Correlation units make the test independent of parameter scales: a raw-eigenvalue tolerance would pass a negative direction along a parameter whose variance is many orders smaller. A matrix singular only within roundoff is accepted. A materially indefinite one, such as `[[1, 2], [2, 1]]`, raises `HybridUQError`, whether it is constructed or read back. Eigenvalues are never clipped and variances never replaced. A linearized predictive variance g Σ gᵀ below −64·ε·(|g| |Σ| |g|ᵀ) raises instead of becoming zero uncertainty.
 
 ### 3.4 Identifiability (2)

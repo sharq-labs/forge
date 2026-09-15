@@ -116,7 +116,10 @@ def test_identifiability_depends_on_parameterization_and_says_which():
     post = _local(knots)
     declared = assess_routed_identifiability(post)
     differences = assess_routed_identifiability(
-        post.reparameterized([[1.0, 0.0], [-1.0, 1.0]], ("v0", "v1_minus_v0"), ("volt", "volt"), "successive_differences"))
+        # The synthetic knots are declared dimensionless, so their differences are too. This call used to label
+        # them volts, which the unit-safe reparameterization now refuses.
+        post.reparameterized([[1.0, 0.0], [-1.0, 1.0]], ("v0", "v1_minus_v0"), ("dimensionless", "dimensionless"),
+                             "successive_differences"))
     assert declared.status is IdentifiabilityStatus.IDENTIFIABLE
     assert differences.status is IdentifiabilityStatus.NOT_IDENTIFIABLE
     assert declared.parameterization_digest != differences.parameterization_digest
