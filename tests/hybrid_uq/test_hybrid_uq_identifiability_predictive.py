@@ -230,3 +230,150 @@ def test_grid_predictive_wraps_the_frozen_result_and_its_refusal():
     table, keys = _table(weak, aliased, (10.0,))
     with pytest.raises(GridResolutionError):
         grid_predictive_uncertainty(aliased, table, _spec(keys[0]), twin=twin, model=model, source_ref="test")
+
+
+# --- an unevaluated predictive probe is not evidence of linearity --------------------------------------------------------
+#
+# The +/-2 sd principal-axis probes are what stands behind a SUPPORTED linearized prediction. A probe outside the
+# declared bounds or refused by the predictive model was never compared with the linear extrapolation, so it cannot
+# leave the claim SUPPORTED just because the finite-difference points next to the estimate were admissible. Before
+# this was tracked, every probe could be skipped and the record still said SUPPORTED with a nonlinearity of 0.0.
+
+
+def _probe_points(post):
+    """The 2p probe points linearized_predictive_uq evaluates, in inference coordinates, with their axis and sign."""
+    from engcore.hybrid_uq.local_gaussian import PROBE_SD
+
+    cov = np.asarray(post.covariance)
+    z0 = np.asarray(post.inference_point)
+    lam, vec = np.linalg.eigh(cov)
+    return [(k, sign, z0 + sign * PROBE_SD * math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k])
+            for k in range(len(z0)) for sign in (1.0, -1.0)]
+
+
+def _linear(t):
+    return [Quantity(t[0] + 0.5 * t[1], UNIT)]
+
+
+def _supported_affine_posterior():
+    post = _local(S.affine())
+    assert post.claim is RouteClaim.SUPPORTED and not post.reasons
+    return post
+
+
+def _with_bound_cutting_a_probe(post, side):
+    """The same posterior with one declared bound moved inside the reach of a +/-2 sd probe, clear of the FD steps.
+
+    A posterior's bounds can arrive with a record rather than from the fit that produced its diagnostics, so the
+    predictive check has to judge the probes it actually evaluated, not the posterior's history.
+    """
+    import dataclasses
+
+    z0 = np.asarray(post.inference_point)
+    points = _probe_points(post)
+    j = 1
+    if side == "upper":
+        reach = max(point[j] for _, _, point in points)
+        upper = list(post.upper_bounds)
+        upper[j] = z0[j] + 0.5 * (reach - z0[j])
+        cut = dataclasses.replace(post, upper_bounds=tuple(upper))
+        beyond = [p for p in points if p[2][j] > upper[j]]
+    else:
+        reach = min(point[j] for _, _, point in points)
+        lower = list(post.lower_bounds)
+        lower[j] = z0[j] - 0.5 * (z0[j] - reach)
+        cut = dataclasses.replace(post, lower_bounds=tuple(lower))
+        beyond = [p for p in points if p[2][j] < lower[j]]
+    assert beyond and len(beyond) < len(points), "the bound cuts some probes and leaves others evaluated"
+    h = 1.0e-5 * (np.asarray(cut.upper_bounds) - np.asarray(cut.lower_bounds))
+    assert np.all(z0 + h < np.asarray(cut.upper_bounds)) and np.all(z0 - h > np.asarray(cut.lower_bounds))
+    assert cut.claim is RouteClaim.SUPPORTED
+    return cut
+
+
+@pytest.mark.parametrize("side", ["upper", "lower"])
+def test_a_probe_beyond_a_declared_bound_is_not_linearity_evidence(side):
+    """Tests E (upper, the +2 sd reach) and F (lower, the -2 sd reach)."""
+    complete = _supported_affine_posterior()
+    post = _with_bound_cutting_a_probe(complete, side)
+    (r,) = linearized_predictive_uq(post, _linear, [_spec("y@0.5")])
+    assert r.route_claim is RouteClaim.DOWNGRADED
+    assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
+    assert RouteReason.PREDICTIVE_NONLINEAR not in r.reasons
+    # the model is affine, so the probes that were evaluated agree with the extrapolation; that is not enough
+    assert r.predictive_nonlinearity < 1e-6
+    # an incomplete check changes the claim, not the numbers
+    (full,) = linearized_predictive_uq(complete, _linear, [_spec("y@0.5")])
+    assert full.route_claim is RouteClaim.SUPPORTED
+    assert math.isclose(r.mean, full.mean, rel_tol=1e-9)
+    assert math.isclose(r.parameter_standard_uncertainty, full.parameter_standard_uncertainty, rel_tol=1e-6)
+
+
+@pytest.mark.parametrize("refused", ["every_probe", "one_probe"])
+def test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence(refused):
+    """Test G. The finite-difference points next to the estimate are all admitted; the wider probes are not."""
+    post = _supported_affine_posterior()
+    cov_inv = np.linalg.inv(np.asarray(post.covariance))
+    z0 = np.asarray(post.inference_point)
+    k, sign, target = _probe_points(post)[0]
+    calls = {"refused": 0, "admitted": 0}
+
+    def predict(t):
+        z = np.asarray(t, dtype=float)
+        if refused == "every_probe":
+            refuse = float((z - z0) @ cov_inv @ (z - z0)) > 1.0
+        else:
+            refuse = bool(np.allclose(z, target, rtol=0.0, atol=1e-12))
+        calls["refused" if refuse else "admitted"] += 1
+        return None if refuse else _linear(t)
+
+    (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
+    assert calls["refused"] == (4 if refused == "every_probe" else 1)
+    assert calls["admitted"] == 1 + 2 * 2 + (0 if refused == "every_probe" else 3)
+    assert r.route_claim is RouteClaim.DOWNGRADED
+    assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
+    if refused == "every_probe":
+        # the exact state the unchecked code reported as SUPPORTED: no probe evaluated, nonlinearity 0.0
+        assert r.predictive_nonlinearity == 0.0
+
+
+def test_a_refused_probe_downgrades_the_routed_prediction_too():
+    from engcore.hybrid_uq import RouteDecision, route_uncertainty, routed_predictive_uncertainty
+
+    P = S.affine()
+    result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward,
+                               multistart=MultistartPolicy())
+    assert result.decision is RouteDecision.LOCAL_GAUSSIAN and result.claim is RouteClaim.SUPPORTED
+    z0 = np.asarray(result.local_posterior.inference_point)
+    sd = np.asarray(result.local_posterior.standard_deviations)
+
+    def predict(t):
+        return None if np.max(np.abs(np.asarray(t) - z0) / sd) > 0.5 else _linear(t)
+
+    (r,) = routed_predictive_uncertainty(result, [_spec("y@0.5")], predict=predict)
+    assert r.route_claim is RouteClaim.DOWNGRADED and RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
+
+
+def test_a_complete_linear_check_is_supported():
+    """Test H: every probe evaluated, the model affine, nothing else wrong -- SUPPORTED is still reachable."""
+    post = _supported_affine_posterior()
+    calls = []
+
+    def predict(t):
+        calls.append(tuple(t))
+        return _linear(t)
+
+    (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
+    assert len(calls) == 1 + 2 * 2 + 2 * 2
+    assert r.route_claim is RouteClaim.SUPPORTED and r.reasons == ()
+    assert r.predictive_nonlinearity < 1e-6
+
+
+def test_a_complete_nonlinear_check_still_downgrades_for_nonlinearity_not_incompleteness():
+    """Test I: every probe evaluated and the prediction curves over the posterior."""
+    post = _supported_affine_posterior()
+    (r,) = linearized_predictive_uq(post, lambda t: [Quantity(math.exp(40.0 * t[1]) * 1e-35, UNIT)], [_spec("steep", 1e-9)])
+    assert r.route_claim is RouteClaim.DOWNGRADED
+    assert RouteReason.PREDICTIVE_NONLINEAR in r.reasons
+    assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE not in r.reasons
+    assert r.predictive_nonlinearity > 0.10

@@ -186,7 +186,11 @@ def linearized_predictive_uq(
     total_sd = np.asarray([math.sqrt(parameter_var[i] + (m ** 2 if m is not None else 0.0)) for i, m in enumerate(measurement)])
 
     nonlinearity = None
+    skipped = 0
     if check_nonlinearity:
+        # The largest deviation over the probes that were evaluated. A probe outside the declared bounds or
+        # refused by the predictive model was not evaluated, so it is counted, not read as agreement: the
+        # nonlinearity it would have measured is unknown, and 0.0 over no probes is not evidence of linearity.
         nonlinearity = 0.0
         lam, vec = np.linalg.eigh(cov)
         for k in range(len(z0)):
@@ -194,15 +198,19 @@ def linearized_predictive_uq(
             for sign in (1.0, -1.0):
                 point = z0 + sign * delta
                 if np.any(point < lower) or np.any(point > upper):
+                    skipped += 1
                     continue
                 value = g(point)
                 if value is None:
+                    skipped += 1
                     continue
                 scale = np.where(total_sd > 0.0, total_sd, 1.0)
                 nonlinearity = max(nonlinearity, float(np.max(np.abs(value - (g0 + sign * G @ delta)) / scale)))
     reasons = set(posterior.diagnostics.downgrades)
     if nonlinearity is not None and nonlinearity > PREDICTIVE_NONLINEARITY_DOWNGRADE:
         reasons.add(RouteReason.PREDICTIVE_NONLINEAR)
+    if skipped:
+        reasons.add(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
     claim = claim_for(reasons)
     q = float(norm.ppf(0.5 + level / 2.0))
     out = []

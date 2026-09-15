@@ -257,7 +257,7 @@ def grid_predictive_uncertainty(
 ) -> RoutedPredictiveUncertainty
 ```
 
-- **Linearized:** G by central differences in inference coordinates, 2p + 1 calls. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade.
+- **Linearized:** G by central differences in inference coordinates, 2p + 1 calls. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated.
 - **Refused posterior:** raises `RouteRefusedError`.
 - **Grid:** wraps the frozen `posterior_predictive_uq`, including its grid-resolution refusal. The epistemic part becomes `parameter_standard_uncertainty`, the declared sigma becomes `measurement_standard_uncertainty`, and V1's exact mixture interval is kept as `total_interval`.
 - **Model discrepancy:** never estimated; every record names `MODEL_DISCREPANCY_NOT_MODELLED`.
