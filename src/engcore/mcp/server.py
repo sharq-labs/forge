@@ -625,13 +625,14 @@ says what to declare. NOT_SUPPORTED outranks INSUFFICIENT_EVIDENCE, so a \
 NOT_SUPPORTED report may carry gaps too, under other_findings.
 
 A fully declared nominal case can be SUPPORTED: the example_case in \
-describe_capabilities is. Expect INSUFFICIENT_EVIDENCE when optional \
-declarations are left out -- a resistor's ratings (stages[].conductor.ratings), \
-the source's current limit (source_ratings), the element data \
-(stages[].conductor.element) or the body's applicability fields -- because the \
-conditions that read them are then honestly UNKNOWN and verdict_reasons names \
-them. That is the runtime's real answer, it is transmitted unchanged, and it is \
-neither an error nor a reason to retry.
+describe_capabilities is. Expect INSUFFICIENT_EVIDENCE whenever a condition \
+cannot be decided, and verdict_reasons names it -- a resistor's ratings \
+(stages[].conductor.ratings), the source's current limit (source_ratings), the \
+element data (stages[].conductor.element), the body's applicability fields, or \
+material limits (stages[].conductor.limits) whose Debye-temperature floor is \
+elemental-metal physics and stays UNKNOWN for a film, an alloy or a \
+semiconductor. That is the runtime's real answer, it is transmitted unchanged, \
+and it is neither an error nor a reason to retry.
 
 The verdict is advisory input to an engineer of record. It is not a decision, \
 not a certification, and not a claim of conformance with any standard.

@@ -80,6 +80,9 @@ MODELS = (
 ATTACHED_MODELS = tuple(
     m for m in MODELS
     if m.model_id != dc_app.REGULATED_VOLTAGE_SOURCE_MODEL.model_id
+    # Audit CAP-05: the example is a thick-film part and declares no material
+    # limits, so the rated linear-TCR record is not attached either.
+    and m.model_id != mat.RATED_LINEAR_TCR_MODEL.model_id
 )
 
 
@@ -136,9 +139,13 @@ def violating_payload():
     without erasing it — and that needs a report which has both.
     """
     payload = unrated_payload()
-    payload["stages"][0]["conductor"]["limits"][
-        "maximum_operating_temperature"
-    ] = "301 kelvin"
+    # Audit CAP-05: the shipped example's thick-film part declares no material
+    # limits, so the violated one is declared here outright. The rated record's
+    # Debye conditions are then UNKNOWN beside it, which is one more gap for a
+    # violation to outrank -- the precedence this payload exists to show.
+    payload["stages"][0]["conductor"]["limits"] = {
+        "maximum_operating_temperature": "301 kelvin",
+    }
     return payload
 
 

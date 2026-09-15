@@ -51,6 +51,17 @@ def _nickel(budget=None, volts="8 volt", duration="50 second"):
     }
     if budget is not None:
         conductor["element"]["resistance_variation_budget"] = budget
+    # The body the reviewer measured against (the pre-CAP-05 example body),
+    # pinned here so this test keeps the case its RK4 figures describe.
+    body["heat_capacity"] = "2.5 joule/kelvin"
+    body["ambient_conductance"] = "0.05 watt/kelvin"
+    body["applicability"].update(
+        {
+            "body_conductivity": "200 watt/meter/kelvin",
+            "melting_temperature": "900 kelvin",
+            "convection_length": "0.6 meter",
+        }
+    )
     body["applicability"]["conductance_excursion_bound"] = "200 kelvin"
     body["applicability"]["capacity_excursion_bound"] = "200 kelvin"
     body["duration"] = duration

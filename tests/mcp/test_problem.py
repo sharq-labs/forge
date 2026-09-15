@@ -271,6 +271,30 @@ COLD_START_PAYLOAD["stages"][0]["conductor"]["limits"] = {
 }
 
 
+def limits_payload():
+    """The shipped example with a copper element's material limits declared.
+
+    Audit CAP-05 made the example consistent with the thick-film part it cites,
+    and a thick film declares no material limits (the rated record's Debye
+    floor is elemental-metal physics). The tests below are ABOUT the rated
+    material claim, so they declare it on a conductor that can carry it: the
+    example circuit and body with a copper element, copper's 0.00393/K and
+    copper's 343 K Debye temperature. A test fixture, not a part.
+    """
+    payload = copy.deepcopy(example_electrothermal_payload())
+    conductor = payload["stages"][0]["conductor"]
+    conductor["temperature_coefficient"] = "0.00393 1/kelvin"
+    conductor["limits"] = {
+        "linearization_band": "80 kelvin",
+        "maximum_operating_temperature": "400 kelvin",
+        "debye_temperature": "343 kelvin",
+    }
+    # Copper moves R by 0.076 over this body's rise; the element record's
+    # budget is the caller's and is declared wide enough here.
+    conductor["element"]["resistance_variation_budget"] = "0.2 dimensionless"
+    return payload
+
+
 def test_the_band_is_assessed_over_the_path_not_at_the_converged_endpoint():
     """A run that begins outside its linear band is refused for beginning there.
 
@@ -662,7 +686,7 @@ def test_omitting_one_material_limit_yields_unknown_for_what_it_unlocked(key):
     description = describe_electrothermal_case()
     field = description.field(f"stages[].conductor.limits.{key}")
 
-    payload = copy.deepcopy(example_electrothermal_payload())
+    payload = limits_payload()
     payload["stages"][0]["conductor"]["limits"].pop(key)
     system = build_electrothermal_system(payload)
     problem = mat.build_resistance_problem(system.stages[0].conductor)
@@ -845,8 +869,10 @@ def test_description_to_payload_to_problem_to_report():
     # no field for — see the applicable-payload test above. What matters to
     # *this* test is that the described payload poses and runs, and that
     # nothing in it is violated.
+    # Audit CAP-05: the example's body is now the part on a 50 J/K aluminium
+    # plate convecting 0.1225 W/K, not a 2.5 J/K body off a 0.6 m plate.
     assert report.values["final_temperature"].magnitude_in(K) == pytest.approx(
-        338.577018, abs=1e-6
+        319.278897, abs=1e-6
     )
     # and the report survives the trip out to JSON and back
     restored = type(report).from_dict(report.to_dict())
@@ -1014,9 +1040,10 @@ def test_f02_a_violated_material_limit_reaches_the_report():
     ``maximum_operating_temperature`` is a condition of the *rated* material
     model. The report assessed only the thermal model, so a conductor declared
     good to 301 K and run to 338 K produced a SUPPORTED report in which the
-    limit appeared nowhere.
+    limit appeared nowhere. (Built on :func:`limits_payload`: the shipped
+    example's thick-film part declares no material limits since audit CAP-05.)
     """
-    payload = example_electrothermal_payload()
+    payload = limits_payload()
     limits = payload["stages"][0]["conductor"]["limits"]
     limits["maximum_operating_temperature"] = "301 kelvin"
     report = run_electrothermal_case(payload, run_id="f02-limit").reports[0]
@@ -1031,7 +1058,7 @@ def test_f02_a_violated_material_limit_reaches_the_report():
 
 def test_f02_an_undeclared_material_limit_is_a_gap_and_not_a_pass():
     """Omitting the limit does not buy the verdict the limit refused."""
-    payload = example_electrothermal_payload()
+    payload = limits_payload()
     limits = payload["stages"][0]["conductor"]["limits"]
     del limits["maximum_operating_temperature"]
     report = run_electrothermal_case(payload, run_id="f02-omitted").reports[0]
@@ -1049,8 +1076,11 @@ def test_every_model_in_the_closure_is_named_and_assessed():
     temperature. That closure is the whole composition, and every model in it
     now appears with a verdict rather than the thermal one appearing alone.
     """
+    # The example with material limits declared, so the rated material claim
+    # is in the closure too (audit CAP-05: the shipped thick-film example
+    # makes no rated claim, and without it that record is simply absent).
     report = run_electrothermal_case(
-        example_electrothermal_payload(), run_id="closure"
+        limits_payload(), run_id="closure"
     ).reports[0]
 
     expected = {
@@ -1780,14 +1810,15 @@ def test_a_companion_record_is_absent_until_the_caller_widens_it():
 def test_an_element_hotter_than_it_may_be_is_a_violation():
     """The finding the condition exists for, on a body that is itself fine.
 
-    The permissible element temperature is dropped to 345 K. The **body** at
-    338.6 K is below it and every other condition in the report still passes;
-    the element, 13.8 K further up at 352.4 K, is not.
+    The permissible element temperature is dropped to 330 K. The **body** at
+    319.3 K is below it and every other condition in the report still passes;
+    the element, 16.2 K further up at 335.5 K, is not. (Numbers moved with the
+    audit CAP-05 example body; the finding did not.)
     """
     payload = copy.deepcopy(example_electrothermal_payload())
     payload["stages"][0]["conductor"]["element"][
         "permissible_element_temperature"
-    ] = "345 kelvin"
+    ] = "330 kelvin"
     report = run_electrothermal_case(payload, run_id="hot-element").reports[0]
 
     assert report.violated_conditions == (

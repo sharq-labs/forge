@@ -2721,7 +2721,7 @@ def describe_electrothermal_case() -> CaseDescription:
 # The ratings the example declares, and the parts they were read from
 # =====================================================================
 #
-# EVERY NUMBER BELOW IS FROM A REAL DATASHEET, recorded in
+# EVERY PART NUMBER BELOW IS FROM A REAL DATASHEET, recorded in
 # `benchmarks/ai_designs/components.json` under the provenance rule that file
 # states: "A number without a manufacturer, a part number and a document
 # reference does not appear in this file." Nothing here is a plausible-looking
@@ -2746,10 +2746,10 @@ def describe_electrothermal_case() -> CaseDescription:
 #     while `dissipated_power_utilization` evaluates it at the ambient the body
 #     declares (300 K). That reading is optimistic by the case-to-ambient rise.
 #     It is stated rather than hidden because the margin absorbs it with room
-#     to spare: at the run's own settled 338.6 K -- an upper bound on the case,
-#     since the body is the hotter end of that path -- the utilization is 0.82
-#     rather than 0.73, and the part is dissipating 2.12 W against an effective
-#     rating of 13.8 W. A worked example that quietly used a case-referenced
+#     to spare: at the run's own final 319.3 K -- an upper bound on the case,
+#     since the body is the hotter end of that path -- the utilization is 0.78
+#     rather than 0.74, and the part is dissipating 2.49 W against an effective
+#     rating of 16.8 W. A worked example that quietly used a case-referenced
 #     rating as an ambient-referenced one would be teaching the mistake.
 # (2) `derating.read_from_graph` is true: the 155 C zero-power point was read
 #     off the printed curve's axis, not out of a table. The file flags it so a
@@ -2762,27 +2762,27 @@ def describe_electrothermal_case() -> CaseDescription:
 # this element sqrt(20 W * 10 ohm) = 14.14 V, far below the cap. 14.14 V is the
 # limit that actually applies to a 10 ohm part and it is the one declared. Using
 # 250 V would have declared a rating this element does not have. The 10 ohm is
-# the reference resistance; the element runs hotter and higher, at 11.79 ohm,
-# where the formula would give 15.4 V -- so the declared bound is the
+# the reference resistance; the element runs hotter and higher, at 10.03 ohm,
+# where the formula would give 14.16 V -- so the declared bound is the
 # conservative one.
 #
 # THE SOURCE: Texas Instruments LMR51430, "SIMPLE SWITCHER 4.5-V to 36-V, 3-A
 # Synchronous Buck Converter". components.json id `ti-lmr51430-ddc-sot23-6`;
 # https://www.ti.com/lit/ds/symlink/lmr51430.pdf. The 3 A is the output current
 # printed in the document title recorded there, and 5 V is inside the part's
-# output range. This example draws 0.42 A.
+# output range. This example draws 0.50 A.
 #
 # WHERE THE EXAMPLE SITS, which is comfortably inside all three:
 #
-#   dissipated_power_utilization   0.73   (2.12 W of a 19.7 W effective rating)
+#   dissipated_power_utilization   0.74   (2.49 W of a 19.7 W effective rating)
 #   working_voltage_utilization    0.35   (5 V of 14.14 V)
-#   source_current_utilization     0.14   (0.42 A of 3 A)
+#   source_current_utilization     0.17   (0.50 A of 3 A)
 #
 # The dissipation figure looks the least generous of the three and is not: the
 # temperature form of that condition is (T_ambient + P * R_implied) / T_zero,
 # and the 300 K ambient alone accounts for 0.70 of it before the element
 # dissipates anything. The power the run actually puts into the part is worth
-# three points of the remaining thirty.
+# four points of the remaining thirty.
 _EXAMPLE_RESISTOR_RATINGS = {
     "rated_power": "20 watt",
     "rated_power_temperature": "298.15 kelvin",
@@ -2812,12 +2812,51 @@ _EXAMPLE_RESISTOR_ELEMENT = {
     "permissible_element_temperature": "428.15 kelvin",
     # Audit CAP-03. The caller's statement of how much resistance change across
     # one integrated interval they accept the quasi-static fixed point holding
-    # constant. Not a datasheet value -- a tolerance on the approximation. This
-    # case moves R by |alpha| |T_final - T_0| = 0.00393 * 38.6 K = 0.152 over
-    # its 120 s, and an independent RK4 of the true transient puts the
-    # reported rise 1.8 % low; 0.2 accepts that.
-    "resistance_variation_budget": "0.2 dimensionless",
+    # constant. Not a datasheet value -- a tolerance on the approximation. At
+    # the part's 100 ppm/K this body's 19.3 K rise moves R by about 0.0019 over
+    # the interval; 0.01 accepts that with room and would refuse a copper
+    # element's 0.076 over the same rise.
+    "resistance_variation_budget": "0.01 dimensionless",
 }
+
+#: THE CONDUCTOR AND THE BODY (audit CAP-05). Until that audit this example
+#: declared copper's 0.00393/K and copper's 343 K Debye temperature for a
+#: thick-film part, a 400 K ceiling against the part's 155 C, and a body of
+#: 20 cm^3 of k = 200 material with a heat capacity of 2.5 J/K convecting off a
+#: 0.6 m plate. None of that was the part, and the body was not a body.
+#:
+#: The conductor now carries the part's own coefficient from components.json,
+#: temperature_coefficient_ppm_per_k = 100 (the magnitude bound, declared
+#: positive; the record gives no sign), and DECLARES NO MATERIAL LIMITS. That
+#: is a choice, stated so it cannot read as an omission made to reach a
+#: verdict:
+#:
+#: * The limits section attaches electrical.material.rated_linear_tcr_resistance,
+#:   whose three low-temperature conditions rest on a Debye temperature and
+#:   the Bloch-Grueneisen form of an ELEMENTAL METAL's resistivity. A thick film
+#:   on alumina has neither, so for this part that record cannot be established
+#:   by anything this domain can be told: declaring the section would report
+#:   those three UNKNOWN, and declaring copper's 343 K -- what this example
+#:   used to do -- reports a fact about the wrong material. The rated claim is
+#:   therefore not made for this part, and the report says nothing about it.
+#: * The part's one sourced material limit, 155 C, is NOT lost: it is the
+#:   element's permissible_element_temperature below, where it binds harder,
+#:   because the element sits above the body by P * 6.5 K/W.
+#: * The unrated linear_tcr_resistance record still bounds the temperature the
+#:   straight line is used over, as it does for every conductor.
+#:
+#: NOT FROM THE DATASHEET, and labelled so: the 293.15 K reference temperature
+#: -- components.json does not record the temperature the TCR is referred to.
+#:
+#: THE BODY is the part screwed to a 100 mm x 50 mm x 4 mm aluminium 6061
+#: plate, the "body" the lumped model sees. Handbook figures for 6061-T6, not
+#: a datasheet: rho 2700 kg/m^3, c_p 896 J/(kg K), k 167 W/(m K), solidus
+#: 855 K. Volume 2.0e-5 m^3; the two broad faces 0.01 m^2 (the 1.2e-3 m^2 of
+#: edge is left out and is the conservative side of the conductance); V/A =
+#: 0.002 m. Plate 48.4 J/K plus about 1.6 J/K of TO-220 part: 50 J/K. Forced
+#: air at 1 m/s along the 0.1 m side: Re = 6293, Nu = 0.664 Re^(1/2) Pr^(1/3)
+#: = 46.9, h = 12.25 W/(m^2 K), hA = 0.1225 W/K. The time constant C/hA is
+#: 408 s, so the 1200 s duration is 2.9 of them.
 
 #: **No `source_regulation` block, deliberately.**
 #:
@@ -2851,45 +2890,43 @@ def example_electrothermal_payload() -> dict[str, Any]:
                 "component_id": "R1",
                 "conductor": {
                     "reference_resistance": "10 ohm",
-                    "temperature_coefficient": "0.00393 1/kelvin",
+                    "temperature_coefficient": "0.0001 1/kelvin",
                     "reference_temperature": "293.15 kelvin",
-                    "limits": {
-                        "linearization_band": "80 kelvin",
-                        "maximum_operating_temperature": "400 kelvin",
-                        "debye_temperature": "343 kelvin",
-                    },
+                    # No "limits": see the comment above the element data.
                     "ratings": dict(_EXAMPLE_RESISTOR_RATINGS),
                     "element": dict(_EXAMPLE_RESISTOR_ELEMENT),
                 },
                 "body": {
-                    "heat_capacity": "2.5 joule/kelvin",
-                    "ambient_conductance": "0.05 watt/kelvin",
+                    # The part on its aluminium plate; see "THE CONDUCTOR AND
+                    # THE BODY" above the example for every figure below.
+                    "heat_capacity": "50 joule/kelvin",
+                    "ambient_conductance": "0.1225 watt/kelvin",
                     "ambient_temperature": "300 kelvin",
                     "initial_temperature": "300 kelvin",
-                    "duration": "120 second",
+                    "duration": "1200 second",
                     "applicability": {
                         "characteristic_length": "0.002 meter",
                         "body_volume": "2e-5 meter**3",
                         "surface_area": "0.01 meter**2",
-                        "body_conductivity": "200 watt/meter/kelvin",
+                        "body_conductivity": "167 watt/meter/kelvin",
                         "surface_emissivity": "0.05 dimensionless",
                         "convection_regime": "forced",
                         "conductance_excursion_bound": "60 kelvin",
                         "capacity_excursion_bound": "100 kelvin",
-                        "melting_temperature": "900 kelvin",
+                        "melting_temperature": "855 kelvin",
                         # Where the ambient conductance came from. Air near
-                        # 300 K over a 0.6 m plate at 1 m/s: Re = 3.78e4,
-                        # Nu = 0.664 Re^(1/2) Pr^(1/3) = 114.9, and
-                        # h = Nu k_f / L = 5.00 W/(m^2 K), which is exactly
-                        # the 0.05 W/K over 0.01 m^2 declared above. A worked
-                        # example that did not close that loop would be
-                        # teaching a caller to declare an unsupported
+                        # 300 K along the plate's 0.1 m side at 1 m/s:
+                        # Re = 6293, Nu = 0.664 Re^(1/2) Pr^(1/3) = 46.9, and
+                        # h = Nu k_f / L = 12.25 W/(m^2 K), which over the
+                        # 0.01 m^2 declared above is the 0.1225 W/K declared.
+                        # A worked example that did not close that loop would
+                        # be teaching a caller to declare an unsupported
                         # coefficient.
                         "fluid_conductivity": "0.0261 watt/meter/kelvin",
                         "fluid_kinematic_viscosity": "1.589e-5 meter**2/second",
                         "fluid_prandtl_number": "0.707 dimensionless",
                         "fluid_velocity": "1 meter/second",
-                        "convection_length": "0.6 meter",
+                        "convection_length": "0.1 meter",
                     },
                 },
             }
@@ -2913,14 +2950,16 @@ def example_over_rating_payload() -> dict[str, Any]:
     part was specified as the supply.
 
     The nominal example is powered from an LMR51430, a 3 A buck converter, and
-    draws 0.42 A: ``source_current_utilization`` = 0.14. This one is powered
-    from a **TPS7A02**, and 0.42 A is more than twice what that part can
-    deliver, so the same number becomes 2.12 and the condition is VIOLATED.
+    draws 0.50 A: ``source_current_utilization`` = 0.17. This one is powered
+    from a **TPS7A02**, and 0.50 A is more than twice what that part can
+    deliver, so the same number becomes 2.49 and the condition is VIOLATED.
     Both parts are in ``benchmarks/ai_designs/components.json``.
 
     Why this is the violation to demonstrate rather than an exceeded resistor
-    rating: with this circuit's 2.12 W, every catalogued part small enough to
-    violate the working voltage also violates the dissipation rating, so no
+    rating: with this circuit's 2.49 W, every catalogued part small enough to
+    violate the working voltage also violates the dissipation rating (a part
+    whose sqrt(P_rated R) is below 5 V has P_rated below V^2/R, which the
+    derating line can only lower further), so no
     resistor in that file violates exactly one. The supply does, and it does so
     while changing nothing about the physics of the run -- which makes it the
     cleanest possible demonstration that a violation is a finding about a
