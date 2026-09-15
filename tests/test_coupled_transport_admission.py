@@ -207,7 +207,8 @@ def test_an_honest_run_through_the_same_boundary_is_untouched(system):
     run = cp.run_fixed_point_coupling(system, _plan(system, _problems(system)))
     assert run.outcome is cp.CouplingOutcome.CRITERION_MET
     (temperature,) = run.final_values.values()
-    assert temperature.magnitude_in(K) == pytest.approx(338.577018, abs=1e-6)
+    # The fixed point of the audit CAP-05 example body (50 J/K on 0.1225 W/K).
+    assert temperature.magnitude_in(K) == pytest.approx(319.278897, abs=1e-6)
 
 
 def test_a_warning_still_crosses_the_boundary(system):

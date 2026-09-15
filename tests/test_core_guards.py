@@ -202,8 +202,23 @@ EXPECTED_RESERVING_MODELS = 15
 # CSTR, and cutoff_reachability_margin on the battery runtime. Each was a
 # regime the model reported IN_DOMAIN and its own equation could not
 # represent. Looked at deliberately, which is what the exact count is for.
-EXPECTED_CONDITION_NAMES = 67
-EXPECTED_RESERVED_NAMES = 49
+# 67 -> 73 and 49 -> 55 in the domains audit-fix stream (CAP-01), which added
+# the three single-liquid-phase conditions -- declared_temperature_to_boiling_
+# ratio, reachable_maximum_to_boiling_ratio, reachable_minimum_to_freezing_ratio
+# -- to BOTH CSTR records, each reserved because each is derived. Both records
+# claimed "single liquid phase, no boiling" and checked it against nothing but
+# a fluid-independent 250-1000 K band.
+# 73 -> 76 and 55 -> 58 in the same stream (CAP-02): the declared pulse,
+# screened -- pulse_polarization_unmodelled_fraction and
+# pulse_terminal_voltage_ratio on the Rint model, and
+# pulse_cutoff_state_of_charge_shift on the constant-current runtime. A pulse
+# entered the Rint claim through its ratings and was never evaluated.
+# 76 -> 77 and 58 -> 59 (CAP-03): resistance_variation_utilization on the
+# self-heated resistor record, whose assumption "one resistance describes the
+# element over the whole run" had no condition while the coupled transient held
+# R(T_final) across the interval.
+EXPECTED_CONDITION_NAMES = 77
+EXPECTED_RESERVED_NAMES = 59
 
 
 def test_the_only_modules_the_walk_lost_are_declared_optional_ones():

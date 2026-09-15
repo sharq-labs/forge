@@ -2027,10 +2027,22 @@ def run_fixed_point(
                         if refused.result.problem_id not in produced
                         else ()
                     ),
-                    # Not an iterate change: this sweep produced no new
-                    # iterate. Zero is the only honest number and the outcome
-                    # is what a reader must consult, not this field.
-                    largest_iterate_change=Quantity(0.0, unit),
+                    # This sweep produced no new iterate, so it measured no
+                    # change of its own. It used to store ZERO here, and zero
+                    # is not neutral: every reader that compares this field
+                    # with the tolerance -- the evidence layer's criterion
+                    # among them -- then read a refused run as having MET its
+                    # criterion (audit CAP-06). The last change the loop DID
+                    # measure is carried instead. The loop did not stop on it,
+                    # so it is above the tolerance, and it is a real number
+                    # rather than a stand-in. A refusal on the very first
+                    # sweep has no measured change at all and still stores
+                    # zero; the outcome is what settles that case.
+                    largest_iterate_change=(
+                        iterations[-1].largest_iterate_change
+                        if iterations
+                        else Quantity(0.0, unit)
+                    ),
                 )
             )
             break

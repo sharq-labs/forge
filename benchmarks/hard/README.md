@@ -344,15 +344,25 @@ declaration is UNKNOWN and never IN_DOMAIN.
 
 ### Result
 
-| Metric | battery | as first recorded |
-|---|---|---|
-| Exact verdict match | **389/400 (97.2%)** | 400/400 (100.0%) |
-| Catch rate | **219/219 (100.0%)** | 219/219 (100.0%) |
-| False accept | **0/219 (0.00%)** | 0/219 (0.00%) |
-| False reject | **11/181 (6.1%)** | 0/181 (0.0%) |
+| Metric | battery (current) | before CAP-02 pulse screening | as first recorded |
+|---|---|---|---|
+| Exact verdict match | **219/400 (54.8%)** | 389/400 (97.2%) | 400/400 (100.0%) |
+| Catch rate | **219/219 (100.0%)** | 219/219 (100.0%) | 219/219 (100.0%) |
+| False accept | **0/219 (0.00%)** | 0/219 (0.00%) | 0/219 (0.00%) |
+| False reject | **181/181 (100.0%)** | 11/181 (6.1%) | 0/181 (0.0%) |
 
-**Why the exact-match figure moved, and why false accept did not.** The first
-column is this case set re-scored against the current tree; the second is what
+**Why the current column fell: the code rule changed, the answer key did not.**
+The runtime now screens a declared pulse (CAP-02, `f39b537`); the generator's truth
+never modelled it, and every case carries a 4 A / 10 s pulse that is mid-slew against
+its ~20 s polarization time constant. 170 sound cases move off SUPPORTED (157 to
+INSUFFICIENT_EVIDENCE on the pulse screen, 13 to NOT_SUPPORTED because the pulse also
+reaches the voltage cutoff); with the 11 earlier false rejects that is all 181. No label
+moved, and correcting the
+generator is deferred to a new benchmark version. Full account:
+[`BATTERY_PULSE_RESCORE.md`](BATTERY_PULSE_RESCORE.md).
+
+**Why the middle column moved from the first, and why false accept did not.** The middle
+column is this case set as re-scored before CAP-02; the first-recorded column is what
 `results_battery.json` recorded on 2026-09-07, before two physics corrections
 landed. Both corrections are right and neither is being backed out. The case
 set is unchanged — `case_set_digest` is identical and no `expected` label

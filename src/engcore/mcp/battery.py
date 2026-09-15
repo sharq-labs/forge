@@ -731,6 +731,13 @@ def example_battery_payload() -> dict[str, Any]:
     A 2.5 Ah cell discharged at 1.5 A for ten minutes -- ten steps of sixty
     seconds -- heating itself against a 0.4 W/K path to a 298.15 K ambient.
     Every value carries a unit, including the dimensionless ones.
+
+    The declared pulse is 4 A for ONE second (audit CAP-02). It was ten, and
+    against the 20 s polarization time constant a ten-second pulse is
+    mid-slew: once the pulse is screened, the Rint claim over that duty is
+    unestablished. One second is 0.05 tau_pol, inside the undeveloped regime,
+    and 4 A reaches the 3.0 V cutoff at a state of charge of 0.10, below the
+    0.15 the runtime stops at.
     """
     return {
         "cell": {
@@ -772,7 +779,7 @@ def example_battery_payload() -> dict[str, Any]:
             "cell_temperature": "298.15 kelvin",
             "duration": "60 second",
             "pulse_current": "4 ampere",
-            "pulse_duration": "10 second",
+            "pulse_duration": "1 second",
             "cutoff_voltage": "3.0 volt",
             "cutoff_state_of_charge": "0.15 dimensionless",
             "duty_type": "pulsed",
