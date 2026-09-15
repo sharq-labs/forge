@@ -178,7 +178,7 @@ def test_huq09_a_legacy_route_with_every_probe_skipped_and_nonlinearity_zero_is_
 def _recommit(payload, result):
     summary = payload["grid_summary"]
     arguments = {"route": summary["route"], "parameter_names": payload["parameter_names"], "grid_identity": summary["grid_digest"],
-                 "mean": [float(v) if not isinstance(v, str) else float(v.replace("inf", "inf")) for v in payload["mean"]],
+                 "mean": [float(v) for v in payload["mean"]],
                  "covariance": [[float(v) for v in row] for row in payload["covariance"]],
                  "dataset_id": summary["dataset_id"], "points": summary["points"]}
     accepted = inspect.signature(R._grid_moments_digest).parameters
