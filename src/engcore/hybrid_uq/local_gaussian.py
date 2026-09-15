@@ -7,11 +7,12 @@ single optimum. Every one of those assumptions has a diagnostic. When a diagnost
 * interior, stationary optimum -- the Gauss-Newton step from the estimate, in sd units;
 * usable curvature -- rank and the column-equilibrated condition number of the weighted Jacobian;
 * bounds not dominating -- distance to each bound in sd;
-* locally affine within about +/-2 sd -- chi-square rise along every principal axis against the 4 a
-  Gaussian implies;
+* locally affine within about +/-2 sd -- chi-square rise along every principal axis and every diagonal between
+  two of them, against the 4 a Gaussian implies; fewer evaluated probes than parameters is no measurement;
 * parameterization conditioning -- raw versus equilibrated condition;
-* a single mode -- a deterministic multistart through the frozen ``calibrate``. Without one the claim is
-  capped at DOWNGRADED: no SUPPORTED claim assumes a single mode nobody looked past.
+* a single mode -- a deterministic multistart through the frozen ``calibrate``, of at least a minimum search.
+  Without one, or below that minimum, the claim is capped at DOWNGRADED: no SUPPORTED claim assumes a single
+  mode nobody looked past. A converged refit below the estimate's objective refuses, near or far.
 """
 
 from __future__ import annotations
@@ -85,6 +86,91 @@ def _thresholds() -> dict[str, float]:
         "at_bound_relative": AT_BOUND_RELATIVE, "numerical_condition_limit": NUMERICAL_CONDITION_LIMIT,
         "probe_sd": PROBE_SD,
     }
+
+
+#: The smallest multistart that may stand behind a claim of a single mode (audit HUQ-01). A caller may search more;
+#: a search below ``max(MINIMUM_MULTISTART_STARTS, 2p + 2)`` starts, or over a narrower span or with looser mode
+#: classification than the canonical policy, is recorded as MULTISTART_BELOW_MINIMUM_SEARCH and the claim is capped
+#: at DOWNGRADED (MULTISTART_INCOMPLETE). Without this, ``MultistartPolicy(starts=1)`` switched the check off and still
+#: read SUPPORTED.
+MINIMUM_MULTISTART_STARTS = 6
+
+#: The multistart policy a route actually used, recorded inside ``RouteDiagnostics.thresholds`` (so it is committed
+#: to the diagnostics digest without a new field). Present exactly when a multistart was run.
+_MULTISTART_POLICY_KEYS = (
+    "multistart_comparable_fit_quantile", "multistart_interior_fraction", "multistart_max_evaluations",
+    "multistart_maximum_retractions", "multistart_minimum_starts", "multistart_mode_separation_quantile",
+    "multistart_starts",
+)
+
+#: A converged refit whose objective is below the estimate's by more than the route's own stationarity allowance is
+#: a lower point the estimate did not find: the estimate is not the optimum of its basin (audit HUQ-08). The
+#: allowance is twice the Gauss-Newton predicted decrease from the estimate, and never less than the objective
+#: change of a STATIONARITY_SD step.
+LOWER_OBJECTIVE_FLOOR = STATIONARITY_SD ** 2
+
+
+def _minimum_starts(p: int) -> int:
+    return max(MINIMUM_MULTISTART_STARTS, 2 * int(p) + 2)
+
+
+def _policy_record(policy: "MultistartPolicy", p: int) -> dict[str, float]:
+    return {
+        "multistart_starts": float(int(policy.starts)), "multistart_interior_fraction": float(policy.interior_fraction),
+        "multistart_max_evaluations": float(int(policy.max_evaluations)),
+        "multistart_mode_separation_quantile": float(policy.mode_separation_quantile),
+        "multistart_comparable_fit_quantile": float(policy.comparable_fit_quantile),
+        "multistart_maximum_retractions": float(int(policy.maximum_retractions)),
+        "multistart_minimum_starts": float(_minimum_starts(p)),
+    }
+
+
+def _search_shortfalls(record: Mapping[str, float], p: int) -> list[str]:
+    """Why a recorded multistart policy is below the minimum search, or an empty list."""
+    canonical = MultistartPolicy()
+    shortfalls = []
+    if float(record["multistart_starts"]) < _minimum_starts(p):
+        shortfalls.append(f"{int(record['multistart_starts'])} start(s), below the minimum of {_minimum_starts(p)} for p = {p}")
+    if float(record["multistart_interior_fraction"]) < canonical.interior_fraction:
+        shortfalls.append(f"interior_fraction {record['multistart_interior_fraction']:g} spans less than {canonical.interior_fraction:g}")
+    if float(record["multistart_mode_separation_quantile"]) > canonical.mode_separation_quantile:
+        shortfalls.append("mode_separation_quantile above the canonical value merges separated modes")
+    if float(record["multistart_comparable_fit_quantile"]) != canonical.comparable_fit_quantile:
+        shortfalls.append("comparable_fit_quantile is not the canonical value")
+    return shortfalls
+
+
+def _multistart_verdict(entries: Sequence[Mapping[str, Any]], p: int,
+                        thresholds: Mapping[str, float]) -> tuple[str, set[RouteReason], set[RouteReason]]:
+    """``(uniqueness, refusals, downgrades)`` implied by recorded multistart entries and policy. One rule, two callers.
+
+    The route builds its verdict with this, and a record read back is held to it, so the uniqueness a record states
+    cannot disagree with the starts it lists.
+    """
+    if not entries:
+        return "NOT_ASSESSED", set(), {RouteReason.GLOBAL_UNIQUENESS_NOT_ASSESSED}
+    classes = [entry.get("classification") for entry in entries]
+    converged = sum(1 for entry in entries if entry.get("status") == CalibrationStatus.CONVERGED.value)
+    incomplete = converged * 2 < len(entries)
+    if all(key in thresholds for key in _MULTISTART_POLICY_KEYS):
+        below = bool(_search_shortfalls(thresholds, p))
+    else:
+        # A record written before the policy was recorded: the starts it lists are the search it ran.
+        below = len(entries) < _minimum_starts(p)
+    refusals, downgrades = set(), set()
+    if "BETTER_OPTIMUM" in classes:
+        refusals.add(RouteReason.BETTER_OPTIMUM_FOUND)
+    if "SECOND_MODE" in classes:
+        refusals.add(RouteReason.SECOND_MODE_FOUND)
+    if "LOWER_OBJECTIVE_SAME_BASIN" in classes:
+        refusals.add(RouteReason.NOT_A_LOCAL_MINIMUM)
+    if incomplete or below:
+        downgrades.add(RouteReason.MULTISTART_INCOMPLETE)
+    uniqueness = ("BETTER_OPTIMUM_FOUND" if "BETTER_OPTIMUM" in classes else "SECOND_MODE_FOUND" if "SECOND_MODE" in classes
+                  else "LOWER_OBJECTIVE_SAME_BASIN" if "LOWER_OBJECTIVE_SAME_BASIN" in classes
+                  else "MULTISTART_INCOMPLETE" if incomplete else "MULTISTART_BELOW_MINIMUM_SEARCH" if below
+                  else "MULTISTART_NO_SECOND_MODE")
+    return uniqueness, refusals, downgrades
 
 
 # ---------------------------------------------------------------------------
@@ -525,6 +611,21 @@ class LocalGaussianPosterior:
 # ---------------------------------------------------------------------------
 # the route
 # ---------------------------------------------------------------------------
+def _probe_directions(lam: np.ndarray, vec: np.ndarray) -> list[np.ndarray]:
+    """Unit-Mahalanobis probe directions: every principal axis, then every diagonal between two of them.
+
+    Each direction has Mahalanobis length 1, so a Gaussian predicts the same chi-square rise, PROBE_SD ** 2, along
+    all of them. 2p + 2p(p - 1) probes in all: the diagonals are what see a cross term between two axes.
+    """
+    scaled = [math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k] for k in range(len(lam))]
+    directions = list(scaled)
+    for i in range(len(scaled)):
+        for j in range(i + 1, len(scaled)):
+            directions.append((scaled[i] + scaled[j]) / math.sqrt(2.0))
+            directions.append((scaled[i] - scaled[j]) / math.sqrt(2.0))
+    return directions
+
+
 def _declared_parameterization_digest(parameter_set: CalibrationParameterSet) -> str:
     return digest_of({"parameter_set_digest": parameter_set.digest, "label": "declared"})
 
@@ -663,18 +764,19 @@ def local_gaussian_posterior(
     if near:
         downgrades.append(RouteReason.BOUND_WITHIN_3_SD)
 
-    # locally affine within +/-2 sd: chi-square rise along every principal axis, against the Gaussian's 4
+    # locally affine within +/-2 sd: chi-square rise along every principal axis and every diagonal between two of
+    # them, against the Gaussian's 4. Axis probes alone are blind to a cross term u_i u_j, which vanishes on both
+    # axes, so a saddle whose descent lies between them passed as a minimum (audit HUQ-08).
     def chi_square_at(z):
         values = evaluate(forward, to_natural(z, transforms), keys, units, references)
         return None if values is None else float(np.sum(((values - observed) / sigma) ** 2))
 
     lam, vec = np.linalg.eigh(cov)
-    worst, skipped, min_rise, not_minimum = 0.0, 0, math.inf, False
+    worst, skipped, min_rise, not_minimum, evaluated = 0.0, 0, math.inf, False, 0
     expected = PROBE_SD ** 2
-    for k in range(p):
-        delta = PROBE_SD * math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k]
+    for delta in _probe_directions(lam, vec):
         for sign in (1.0, -1.0):
-            point = z0 + sign * delta
+            point = z0 + sign * PROBE_SD * delta
             if np.any(point < lower) or np.any(point > upper):
                 skipped += 1
                 continue
@@ -683,14 +785,20 @@ def local_gaussian_posterior(
             if value is None:
                 skipped += 1
                 continue
+            evaluated += 1
             rise = value - chi_min
             min_rise = min(min_rise, rise)
             if rise < -1e-9 * max(1.0, chi_min):
                 not_minimum = True
             worst = max(worst, abs(rise / expected - 1.0))
+    if evaluated < p:
+        # Fewer probes than parameters were compared with the model (audit HUQ-10). The nonlinearity was not
+        # measured, and 0.0 is not its value: it is recorded as NaN, and a covariance nobody checked against the
+        # model is not emitted.
+        worst = math.nan
     if not_minimum:
         refusals.append(RouteReason.NOT_A_LOCAL_MINIMUM)
-    if worst > NONLINEARITY_REFUSE:
+    if math.isnan(worst) or worst > NONLINEARITY_REFUSE:
         refusals.append(RouteReason.NONLINEAR_BEYOND_LOCAL_GAUSSIAN)
     elif worst > NONLINEARITY_DOWNGRADE:
         downgrades.append(RouteReason.NONLINEAR_WITHIN_2_SD)
@@ -699,15 +807,17 @@ def local_gaussian_posterior(
 
     # a single mode: deterministic multistart through the frozen calibrate
     starts_record: list[dict[str, Any]] = []
+    thresholds = _thresholds()
     if multistart is None:
         uniqueness = "NOT_ASSESSED"
         downgrades.append(RouteReason.GLOBAL_UNIQUENESS_NOT_ASSESSED)
     else:
+        thresholds.update(_policy_record(multistart, p))
         separation = float(chi2.ppf(multistart.mode_separation_quantile, p))
         comparable = float(chi2.ppf(multistart.comparable_fit_quantile, p))
+        gradient = A.T @ residual
+        lower_tolerance = max(2.0 * float(gradient @ cov @ gradient), LOWER_OBJECTIVE_FLOOR) + 1e-9 * max(1.0, chi_min)
         spec = calibration.spec
-        converged = 0
-        found_second = found_better = False
         for start in multistart.start_points(parameters):
             proposed = tuple(start)
             zs = to_inference(start, transforms)
@@ -731,7 +841,6 @@ def local_gaussian_posterior(
             entry: dict[str, Any] = {"start": tuple(start), "proposed_start": proposed, "retractions": retractions,
                                      "status": refit.status.value}
             if refit.status is CalibrationStatus.CONVERGED:
-                converged += 1
                 other = to_inference(refit.estimate_vector, transforms)
                 m2 = float(np.sum((A @ (other - z0)) ** 2))
                 entry.update({"estimate": tuple(refit.estimate_vector), "chi_square": float(refit.objective_value),
@@ -739,23 +848,19 @@ def local_gaussian_posterior(
                 if m2 > separation:
                     if refit.objective_value < chi_min - comparable:
                         entry["classification"] = "BETTER_OPTIMUM"
-                        found_better = True
                     elif refit.objective_value <= chi_min + comparable:
                         entry["classification"] = "SECOND_MODE"
-                        found_second = True
                     else:
                         entry["classification"] = "WORSE_LOCAL_OPTIMUM"
+                elif refit.objective_value < chi_min - lower_tolerance:
+                    # inside the separation radius, but lower: not the estimate's optimum, whatever the distance
+                    entry["classification"] = "LOWER_OBJECTIVE_SAME_BASIN"
                 else:
                     entry["classification"] = "SAME_OPTIMUM"
             starts_record.append(entry)
-        if found_better:
-            refusals.append(RouteReason.BETTER_OPTIMUM_FOUND)
-        if found_second:
-            refusals.append(RouteReason.SECOND_MODE_FOUND)
-        if converged * 2 < len(starts_record):
-            downgrades.append(RouteReason.MULTISTART_INCOMPLETE)
-        uniqueness = ("BETTER_OPTIMUM_FOUND" if found_better else "SECOND_MODE_FOUND" if found_second
-                      else "MULTISTART_INCOMPLETE" if converged * 2 < len(starts_record) else "MULTISTART_NO_SECOND_MODE")
+        uniqueness, found_refusals, found_downgrades = _multistart_verdict(starts_record, p, thresholds)
+        refusals.extend(sorted(found_refusals, key=lambda r: r.value))
+        downgrades.extend(sorted(found_downgrades, key=lambda r: r.value))
 
     claim = claim_for(refusals + downgrades)
     diagnostics = RouteDiagnostics(
@@ -763,7 +868,7 @@ def local_gaussian_posterior(
         newton_step_in_sd=tuple(step_sd), at_bound=tuple(at_bound), near_bound=near,
         minimum_bound_distance_sd=float(np.min(distance)), nonlinearity_index=float(worst),
         nonlinearity_probes_skipped=skipped, minimum_chi_square_rise=float(min_rise),
-        multistart=tuple(starts_record), uniqueness=uniqueness, thresholds=_thresholds(), evaluation_count=evaluations,
+        multistart=tuple(starts_record), uniqueness=uniqueness, thresholds=thresholds, evaluation_count=evaluations,
         claim=claim, refusals=tuple(r for r in refusals if r.severity is RouteClaim.REFUSED),
         downgrades=tuple(d for d in downgrades if d.severity is RouteClaim.DOWNGRADED),
     )
