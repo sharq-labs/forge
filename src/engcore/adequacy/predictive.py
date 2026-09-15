@@ -377,6 +377,17 @@ def assess_predictive_observation(
         )
     if not isinstance(observed, Quantity):
         raise ModelAdequacyError("held-out observation must be Quantity")
+    # INF-07: an observation from the dataset the posterior was conditioned on
+    # is fitting data, whatever this call names it. This function receives no
+    # calibration observations, so it can refuse only the identity it is given;
+    # the content binding lives where both halves are known
+    # (inference.split._require_posterior_conditioned_on_calibration).
+    if str(heldout_dataset_id).strip() == str(posterior.dataset_id).strip():
+        raise ModelAdequacyError(
+            f"held-out dataset {str(heldout_dataset_id).strip()!r} is the dataset the "
+            f"posterior was conditioned on; a score on the fitting data is not "
+            f"held-out predictive evidence"
+        )
     try:
         observed.require_compatible(Quantity(1.0, spec.unit), context="held-out observation")
         predictive = posterior_predictive_uq(

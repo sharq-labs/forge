@@ -50,7 +50,7 @@ from typing import Any, Mapping, Sequence
 from ..scientific.ir.problem import ModelReference
 from ..scientific.sequences import duplicates
 from ..scientific.serialization import require_schema, schema_string
-from ..scientific.units.quantity import Quantity, normalize_unit
+from ..scientific.units.quantity import Quantity, is_ratio_scale, normalize_unit
 
 PARAMETER_IDENTITY_SCHEMA = schema_string("calibration_parameter_identity")
 PARAMETER_SET_SCHEMA = schema_string("calibration_parameter_set")
@@ -190,6 +190,20 @@ class ParameterIdentity:
                 f"transform must be a ParameterTransform, got {self.transform!r}"
             )
         object.__setattr__(self, "unit", normalize_unit(self.unit))
+        # NUM-04: a calibrated parameter's magnitudes become grid coordinates,
+        # estimates and -- in assess_identifiability -- a 95 % width divided by
+        # |estimate|. On an offset scale that ratio depends on the scale's
+        # conventional zero: the same temperature in kelvin and in degC gets a
+        # different relative width and can get a different verdict. A grid carries
+        # no units, so the refusal is made here, where the unit is declared.
+        if not is_ratio_scale(self.unit):
+            raise ParameterIdentityError(
+                f"parameter {self.name!r} is declared in {self.unit!r}, an offset "
+                f"(interval) scale whose zero is a convention. Its magnitudes feed "
+                f"ratios -- relative credible widths among them -- that would change "
+                f"with the choice of zero; declare it on an absolute scale (e.g. "
+                f"kelvin) or as a difference unit (e.g. delta_degC)"
+            )
         # The bounds are what the parameter's magnitudes are read against, so
         # they must be in the parameter's own dimension. Compatible, not
         # identical: a bound may be stated in millivolts for a parameter in
