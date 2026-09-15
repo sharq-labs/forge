@@ -27,37 +27,56 @@ _REQUIRED = (
 )
 
 
-def _dependencies(prefix: str) -> RouteDependencies:
+def _dependencies(prefix: str, *, extra_backend: bool = False) -> RouteDependencies:
+    backend = {f"ext:{prefix}:backend"}
+    if extra_backend:
+        backend.add(f"ext:{prefix}:runtime")
     return RouteDependencies(
         {
             IndependenceDimension.PROBLEM_DECLARATION: {"ext:shared:problem"},
             IndependenceDimension.PREPROCESSING: {f"ext:{prefix}:pre"},
             IndependenceDimension.NUMERICAL_METHOD: {f"ext:{prefix}:method"},
             IndependenceDimension.IMPLEMENTATION: {f"ext:{prefix}:implementation"},
-            IndependenceDimension.BACKEND: {f"ext:{prefix}:backend"},
+            IndependenceDimension.BACKEND: backend,
         }
     )
 
 
-def _route(route_id: str, prefix: str) -> SolveRoute:
+def _route(route_id: str, prefix: str, *, extra_backend: bool = False) -> SolveRoute:
     return SolveRoute(
         route_id=route_id,
         solver=SolverIdentity(f"solver.{prefix}", "1", backend=prefix),
-        dependencies=_dependencies(prefix),
+        dependencies=_dependencies(prefix, extra_backend=extra_backend),
     )
 
 
 def _evidence(route: SolveRoute, seed: int):
     assert route.dependencies is not None
+    canonical = route.dependencies.canonical()
     artifacts = {}
     artifact_bytes = {}
-    for offset, dimension in enumerate(_REQUIRED):
-        name = f"{route.route_id}:{dimension.value}"
-        payload = f"artifact:{route.route_id}:{dimension.value}:{seed + offset}".encode()
-        artifacts[dimension] = frozenset(
-            {ArtifactFingerprint.from_bytes(name, payload, kind="test-artifact")}
-        )
-        artifact_bytes[dimension] = {name: payload}
+    counter = seed
+    for dimension in _REQUIRED:
+        dimension_artifacts = set()
+        dimension_bytes = {}
+        for index, dependency_identity in enumerate(sorted(canonical[dimension])):
+            name = f"{route.route_id}:{dimension.value}:{index}"
+            payload = (
+                f"artifact:{route.route_id}:{dimension.value}:"
+                f"{dependency_identity}:{counter}"
+            ).encode()
+            dimension_artifacts.add(
+                ArtifactFingerprint.from_bytes(
+                    name,
+                    payload,
+                    kind="test-artifact",
+                    dependency_identity=dependency_identity,
+                )
+            )
+            dimension_bytes[name] = payload
+            counter += 1
+        artifacts[dimension] = frozenset(dimension_artifacts)
+        artifact_bytes[dimension] = dimension_bytes
     return (
         RouteIndependenceEvidence(
             route_id=route.route_id,
@@ -115,6 +134,7 @@ def test_forged_digest_is_recomputed_and_rejected():
                 digest="f" * 64,
                 name=original.name,
                 kind=original.kind,
+                dependency_identity=original.dependency_identity,
             )
         }
     )
@@ -141,19 +161,41 @@ def test_different_labels_on_same_verified_bytes_are_detected_as_shared_machiner
     left_evidence, right_evidence = evidence
     shared_bytes = b"the same runtime artifact bytes"
 
+    assert left.dependencies is not None and right.dependencies is not None
+    left_identity = next(
+        iter(left.dependencies.canonical()[IndependenceDimension.IMPLEMENTATION])
+    )
+    right_identity = next(
+        iter(right.dependencies.canonical()[IndependenceDimension.BACKEND])
+    )
+
     left_map = dict(left_evidence.artifacts)
     right_map = dict(right_evidence.artifacts)
     left_map[IndependenceDimension.IMPLEMENTATION] = frozenset(
-        {ArtifactFingerprint.from_bytes("wrapper-a", shared_bytes, kind="source")}
+        {
+            ArtifactFingerprint.from_bytes(
+                "wrapper-a",
+                shared_bytes,
+                kind="source",
+                dependency_identity=left_identity,
+            )
+        }
     )
     right_map[IndependenceDimension.BACKEND] = frozenset(
-        {ArtifactFingerprint.from_bytes("binary-b", shared_bytes, kind="binary")}
+        {
+            ArtifactFingerprint.from_bytes(
+                "binary-b",
+                shared_bytes,
+                kind="binary",
+                dependency_identity=right_identity,
+            )
+        }
     )
     left_evidence = RouteIndependenceEvidence(
-        left.route_id, left.dependencies.digest, left_map  # type: ignore[union-attr]
+        left.route_id, left.dependencies.digest, left_map
     )
     right_evidence = RouteIndependenceEvidence(
-        right.route_id, right.dependencies.digest, right_map  # type: ignore[union-attr]
+        right.route_id, right.dependencies.digest, right_map
     )
     left_bytes = dict(artifact_bytes["left"])
     right_bytes = dict(artifact_bytes["right"])
@@ -202,6 +244,140 @@ def test_every_solver_independence_dimension_requires_artifact_evidence():
     )
     assert not report.all_routes_verified
     assert any("backend" in reason for reason in report.route_findings[0][1])
+
+
+def test_every_dependency_identity_requires_its_own_bound_artifact_evidence():
+    route = _route("left", "a", extra_backend=True)
+    evidence, artifact_bytes = _evidence(route, 1)
+    assert route.dependencies is not None
+    declared = route.dependencies.canonical()[IndependenceDimension.BACKEND]
+    assert len(declared) == 2
+    missing_identity = sorted(declared)[-1]
+
+    incomplete = dict(evidence.artifacts)
+    incomplete[IndependenceDimension.BACKEND] = frozenset(
+        artifact
+        for artifact in incomplete[IndependenceDimension.BACKEND]
+        if artifact.dependency_identity != missing_identity
+    )
+    item = RouteIndependenceEvidence(
+        route.route_id,
+        route.dependencies.digest,
+        incomplete,
+    )
+    report = assess_independence_evidence(
+        (route,), (item,), artifact_bytes={route.route_id: artifact_bytes}
+    )
+
+    assert not report.all_routes_verified
+    assert not report.strongly_independent
+    assert any(
+        "no artifact evidence bound to dependency identity" in reason
+        and missing_identity in reason
+        for reason in report.route_findings[0][1]
+    )
+
+
+def test_artifact_bound_to_an_undeclared_dependency_identity_is_rejected():
+    route = _route("left", "a")
+    evidence, artifact_bytes = _evidence(route, 1)
+    dimension = IndependenceDimension.IMPLEMENTATION
+    original = next(iter(evidence.artifacts[dimension]))
+    payload = artifact_bytes[dimension][original.name]
+
+    forged_artifacts = dict(evidence.artifacts)
+    forged_artifacts[dimension] = frozenset(
+        {
+            ArtifactFingerprint.from_bytes(
+                original.name,
+                payload,
+                kind=original.kind,
+                dependency_identity="ext:not-declared:anywhere",
+            )
+        }
+    )
+    forged = RouteIndependenceEvidence(
+        route.route_id,
+        route.dependencies.digest,  # type: ignore[union-attr]
+        forged_artifacts,
+    )
+    report = assess_independence_evidence(
+        (route,), (forged,), artifact_bytes={route.route_id: artifact_bytes}
+    )
+
+    assert not report.all_routes_verified
+    assert any(
+        "binds undeclared dependency identity" in reason
+        for reason in report.route_findings[0][1]
+    )
+
+
+def test_legacy_unbound_fingerprint_round_trips_but_cannot_establish_independence():
+    route = _route("left", "a")
+    evidence, artifact_bytes = _evidence(route, 1)
+    dimension = IndependenceDimension.IMPLEMENTATION
+    original = next(iter(evidence.artifacts[dimension]))
+
+    legacy_artifacts = dict(evidence.artifacts)
+    legacy_artifacts[dimension] = frozenset(
+        {ArtifactFingerprint(original.digest, original.name, kind=original.kind)}
+    )
+    legacy = RouteIndependenceEvidence(
+        route.route_id,
+        route.dependencies.digest,  # type: ignore[union-attr]
+        legacy_artifacts,
+    )
+    restored = RouteIndependenceEvidence.from_dict(legacy.to_dict())
+    restored_artifact = next(iter(restored.artifacts[dimension]))
+    assert restored_artifact.dependency_identity == ""
+
+    report = assess_independence_evidence(
+        (route,), (restored,), artifact_bytes={route.route_id: artifact_bytes}
+    )
+    assert not report.all_routes_verified
+    assert any(
+        "is not bound to a dependency identity" in reason
+        for reason in report.route_findings[0][1]
+    )
+
+
+def test_dependency_binding_is_canonicalized_at_assessment_not_trusted_as_a_label():
+    """The record keeps the declared spelling; the trust decision uses the canonical one.
+
+    Canonicalisation moved from construction to assessment so that reading a
+    record imports nothing. What must not move is its effect: a binding written
+    through the package re-export evidences the dependency declared through the
+    defining module, because the two spellings are one object.
+    """
+    reexport = "py:engcore.domains.electrical.dc:ElectricalDCSolver"
+    defining = "py:engcore.domains.electrical.dc.solver:ElectricalDCSolver"
+    payload = b"implementation-source"
+    artifact = ArtifactFingerprint.from_bytes(
+        "dc-solver", payload, dependency_identity=reexport
+    )
+    assert artifact.dependency_identity == reexport
+    assert artifact.canonical_dependency_identity() == defining
+
+    route = SolveRoute(
+        route_id="left",
+        solver=SolverIdentity("solver.a", "1", backend="a"),
+        dependencies=RouteDependencies(
+            {
+                **_dependencies("a").identities,
+                IndependenceDimension.IMPLEMENTATION: {defining},
+            }
+        ),
+    )
+    evidence, artifact_bytes = _evidence(route, 1)
+    artifacts = dict(evidence.artifacts)
+    artifacts[IndependenceDimension.IMPLEMENTATION] = frozenset({artifact})
+    artifact_bytes[IndependenceDimension.IMPLEMENTATION] = {"dc-solver": payload}
+    assessment = RouteIndependenceEvidence(
+        route.route_id, route.dependencies.digest, artifacts  # type: ignore[union-attr]
+    ).assess(route, artifact_bytes)
+
+    assert assessment.verified, assessment.reasons
+    assert assessment.covered[IndependenceDimension.IMPLEMENTATION] == {defining}
 
 
 def test_missing_route_evidence_is_unverified_not_independent_by_silence():

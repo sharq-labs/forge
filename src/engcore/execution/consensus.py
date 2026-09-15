@@ -11,13 +11,17 @@ This module therefore adds, rather than replaces, a second gate. A
 ``CROSS_SOLVER_VALIDATED`` level survives into the trusted check only when:
 
 1. the ordinary consensus already earned that level; and
-2. artifact evidence is complete, bound to the exact route dependency digests,
-   freshly verified against supplied artifact bytes, and byte-disjoint across
-   the compared routes.
+2. artifact evidence is bound to the exact route dependency digests, every
+   declared dependency identity is evidenced by its own artifact whose supplied
+   bytes were re-hashed, no verified artifact evidences two dependency
+   identities within a route, and no verified artifact is shared across the
+   compared routes.
 
 Different artifact hashes are *not* proof of independent development. The
 extra gate is tamper-resistant identity evidence for the machinery the routes
 claim to use, not a sociological or cryptographic proof of how it was created.
+The artifact bytes are presented by the caller: nothing here observes a solver
+loading or executing them, so the gate does not attest runtime use.
 """
 
 from __future__ import annotations
@@ -25,9 +29,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
-from ..scientific.consensus import CrossSolverConsensus, IndependenceDimension
+from ..scientific.consensus import (
+    SOLVER_INDEPENDENCE_DIMENSIONS,
+    CrossSolverConsensus,
+    IndependenceDimension,
+)
 from ..scientific.errors import ScientificValidationError
 from ..scientific.independence_evidence import (
+    ArtifactFingerprint,
     IndependenceEvidenceReport,
     RouteIndependenceEvidence,
     assess_independence_evidence,
@@ -36,6 +45,30 @@ from ..scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
 )
+
+
+def _binding_label(
+    artifact: ArtifactFingerprint, dimension: IndependenceDimension
+) -> str:
+    """What the record says this artifact is evidence for -- never more than that.
+
+    The canonical identity is recorded, because that is what coverage was
+    decided on. An unbound or unresolvable binding says so, so the record never
+    lists an artifact as if it were per-dependency evidence when it was not.
+    """
+    if not artifact.dependency_identity:
+        label = "evidences no dependency identity (unbound; not per-dependency evidence)"
+    else:
+        try:
+            label = f"evidences {artifact.canonical_dependency_identity()}"
+        except ScientificValidationError:
+            label = (
+                f"binds unresolvable dependency identity "
+                f"{artifact.dependency_identity!r} (not per-dependency evidence)"
+            )
+    if dimension not in SOLVER_INDEPENDENCE_DIMENSIONS:
+        label += f" (not assessed: {dimension.value} is not a solver-independence dimension)"
+    return label
 
 
 def _artifact_evidence_lines(
@@ -53,7 +86,8 @@ def _artifact_evidence_lines(
             for artifact in sorted(artifacts):
                 lines.append(
                     f"route {route.route_id} {dimension.value} artifact "
-                    f"{artifact.kind}:{artifact.name} sha256:{artifact.digest}"
+                    f"{artifact.kind}:{artifact.name} sha256:{artifact.digest} "
+                    f"{_binding_label(artifact, dimension)}"
                 )
     return tuple(lines)
 
