@@ -172,24 +172,19 @@ def test_b_a_contradiction_is_refused_on_read_back_too():
 
 def _stored_payload_with_silent_provenance():
     """A /4 payload of the shape every pre-closure producer and fixture wrote: solver and models named, provenance
-    listing no participants. Built by editing a current payload, because the constructor now refuses to make one.
-
-    Labelled /4 explicitly since the results audit (RES-01): the writer emits /5, and /5 is the version whose read
-    is held to its own provenance, so a silent /5 payload is refused (see the test below)."""
+    listing no participants. Built by editing a current payload, because the constructor now refuses to make one."""
     payload = _result().to_dict()
-    payload["schema"] = "scientific_result/4"
     payload["provenance"]["models"] = []
     payload["provenance"]["solvers"] = []
     return payload
 
 
 def test_b_a_stored_record_whose_provenance_is_silent_is_read_as_written():
-    """A legacy (/4 or older) record with silent provenance is read as written, and marked.
+    """A stored record with silent provenance is read as written -- and, since the results audit (RES-01), marked.
 
-    What changed in the results audit (RES-01): this used to hold for EVERY version, the current one included, so a
-    current payload attributing itself to a fabricated model and solver read back usable. It now holds only for
-    versions written before the consistency check, and the record carries the gap: it re-serializes at /4 -- which
-    is still exactly the payload it was read from -- and never as the attributed /5."""
+    Read as written is not read as attributed: the record carries its attribution gap
+    (``stored_attribution_gap``), so a consumer assembling evidence around it cannot present it as attributed.
+    Its bytes do not move."""
     from engcore.scientific.results.result import stored_attribution_gap
 
     payload = _stored_payload_with_silent_provenance()
@@ -198,13 +193,6 @@ def test_b_a_stored_record_whose_provenance_is_silent_is_read_as_written():
     assert result.provenance.solvers == () and result.provenance.models == ()
     assert result.to_dict() == payload
     assert stored_attribution_gap(result)
-
-
-def test_b_a_current_record_whose_provenance_is_silent_is_refused_on_read():
-    payload = _stored_payload_with_silent_provenance()
-    payload["schema"] = "scientific_result/5"
-    with pytest.raises(ScientificCoreError, match="provenance does not name"):
-        ScientificResult.from_dict(payload)
 
 
 def test_b_new_construction_with_silent_provenance_is_still_refused():

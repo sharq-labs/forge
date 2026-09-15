@@ -1740,13 +1740,7 @@ def test_o3_no_existing_schema_version_moved():
     how much of it arrives and where the rest goes. Additive -- a ``/1`` record
     reads back declaring no conversion, which the constructor then refuses if
     it carried energy, so an old record of an energy crossing fails loudly
-    rather than reading back as lossless.
-
-    ``scientific_result`` reads ``/5`` since the results audit (RES-01): same
-    shape as ``/4``, but a ``/5`` record is held to its own provenance on read,
-    where ``/1`` to ``/4`` -- the current version included -- were read with an
-    exemption for a provenance naming no participants. The exemption now stops
-    at ``/4`` and a record read under it re-serializes at ``/4``, never ``/5``."""
+    rather than reading back as lossless."""
     from engcore.scientific.composition.dependency import (
         QUANTITY_DEPENDENCY_SCHEMA,
     )
@@ -1759,7 +1753,7 @@ def test_o3_no_existing_schema_version_moved():
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"
     assert PROVENANCE_SCHEMA == "provenance_record/4"
     assert EXECUTION_BINDING_SCHEMA == "execution_binding/1"
-    assert RESULT_SCHEMA == "scientific_result/5"
+    assert RESULT_SCHEMA == "scientific_result/4"
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"
     # and the four new ones are new
     assert cp.TORN_ENDPOINT_SCHEMA == "electrothermal_torn_endpoint/1"

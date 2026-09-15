@@ -993,18 +993,20 @@ STORED_ATTRIBUTION_CHECK = "stored_result_attribution"
 def _attribution_gap_checks(result: ScientificResult) -> tuple[ValidationCheck, ...]:
     """A NOT_RUN check naming a stored record's attribution gap, or nothing.
 
-    A result read from a payload written before the provenance-consistency
-    check may declare models or a solver its provenance never names; the core
-    reads it as written and marks it (``stored_attribution_gap``). Assembling a
-    report around it must not turn that silence into attribution -- which is
-    exactly what an assembler passing ``contributing_models=result.models``
-    used to do, producing SUPPORTED over a fabricated model and solver.
+    A stored result may declare models or a solver its provenance never names;
+    the core reads it as written (producers wrote that shape before the
+    provenance-consistency check, and the frozen format cannot say which side
+    of the check wrote a payload) and marks it (``stored_attribution_gap``).
+    Assembling a report around it must not turn that silence into attribution
+    -- which is exactly what an assembler passing
+    ``contributing_models=result.models`` used to do, producing SUPPORTED over
+    a fabricated model and solver.
 
     NOT_RUN rather than FAIL: nothing found the attribution false; nobody
-    checked it, because the record predates the check. INSUFFICIENT_EVIDENCE
-    is the verdict that recommends the right work -- re-derive the record --
-    and the check travels inside ``validation``, so the downgrade survives the
-    report's own serialization boundary and a re-derived verdict keeps it.
+    checked it. INSUFFICIENT_EVIDENCE is the verdict that recommends the right
+    work -- re-derive the record -- and the check travels inside
+    ``validation``, so the downgrade survives the report's own serialization
+    boundary and a re-derived verdict keeps it.
     """
     gap = stored_attribution_gap(result)
     if not gap:
@@ -1014,8 +1016,8 @@ def _attribution_gap_checks(result: ScientificResult) -> tuple[ValidationCheck, 
             name=STORED_ATTRIBUTION_CHECK,
             outcome=ValidationOutcome.NOT_RUN,
             detail=(
-                f"result {result.result_id!r} was read from a payload written "
-                f"before results were held to their own provenance, and it "
+                f"result {result.result_id!r} was read from a stored payload "
+                f"whose provenance does not attribute what it declares: it "
                 f"{'; '.join(gap)}. Its attribution was never checked; "
                 f"re-derive the result to obtain an attributed record"
             ),
