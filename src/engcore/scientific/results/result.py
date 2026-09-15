@@ -91,6 +91,7 @@ actually produced.
 from __future__ import annotations
 
 import sys
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from collections.abc import Mapping as _RuntimeMapping
 from typing import Any, Mapping
@@ -121,6 +122,15 @@ from .validation import ValidationLevel, ValidationOutcome, ValidationReport
 #: a result whose model is recorded as OUTSIDE_VALIDATED_DOMAIN read as one
 #: about which nothing was said. A version bump makes that reader fail loudly.
 RESULT_SCHEMA = schema_string("scientific_result", 4)
+
+#: True only while ``ScientificResult.from_dict`` is constructing a stored record.
+#: Every advertised schema (/1 to /4) could carry a result that named its solver or
+#: models while its provenance named no participants at all, and in-tree producers
+#: wrote exactly that shape before the provenance-consistency check existed. Such a
+#: record is read as written: its provenance is silent, not contradictory. A
+#: provenance that names OTHER participants is a contradiction and is refused on
+#: read as on construction.
+_READING_STORED_RESULT: ContextVar[bool] = ContextVar("_reading_stored_result", default=False)
 
 #: The version before ``validity_not_assessed`` existed. Still read, never
 #: written. Bumped for the same reason /3 was: a /3 payload can say nothing
@@ -384,9 +394,18 @@ class ScientificResult:
         ``models`` or ``solver`` would believe it. Extra provenance
         participants stay legitimate (coupled or supporting work), so equality
         is deliberately not required. Ported from PR #39.
+
+        New construction is held to this in full. A record being read back is
+        refused only for contradiction: provenance that names no models, or no
+        solvers, at all is silence written before this check existed, and it is
+        read as written rather than refused or filled in (see
+        ``_READING_STORED_RESULT``).
         """
+        stored = _READING_STORED_RESULT.get()
         result_models = set(self.models)
         missing_models = sorted(result_models - set(self.provenance.models))
+        if stored and not self.provenance.models:
+            missing_models = []
         if missing_models:
             raise ScientificCoreError(
                 f"result {self.result_id!r} declares model(s) {missing_models} "
@@ -398,7 +417,7 @@ class ScientificResult:
         if not isinstance(self.solver, SolverIdentity):
             raise ScientificCoreError("result solver must be a SolverIdentity")
         solver_key = self.solver.key
-        if solver_key not in set(self.provenance.solvers):
+        if solver_key not in set(self.provenance.solvers) and not (stored and not self.provenance.solvers):
             raise ScientificCoreError(
                 f"result {self.result_id!r} declares solver "
                 f"{self.solver.solver_id}@{self.solver.version}, but its "
@@ -729,6 +748,14 @@ class ScientificResult:
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificResult":
         version = require_schema_any(payload, SUPPORTED_RESULT_SCHEMAS)
         solver = payload.get("solver")
+        token = _READING_STORED_RESULT.set(True)
+        try:
+            return cls._from_payload(payload, version, solver)
+        finally:
+            _READING_STORED_RESULT.reset(token)
+
+    @classmethod
+    def _from_payload(cls, payload: Mapping[str, Any], version: str, solver: Any) -> "ScientificResult":
         return cls(
             result_id=payload["result_id"],
             problem_id=payload.get("problem_id", ""),

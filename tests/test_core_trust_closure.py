@@ -170,6 +170,37 @@ def test_b_a_contradiction_is_refused_on_read_back_too():
         ScientificResult.from_dict(payload)
 
 
+def _stored_payload_with_silent_provenance():
+    """A /4 payload of the shape every pre-closure producer and fixture wrote: solver and models named, provenance
+    listing no participants. Built by editing a current payload, because the constructor now refuses to make one."""
+    payload = _result().to_dict()
+    payload["provenance"]["models"] = []
+    payload["provenance"]["solvers"] = []
+    return payload
+
+
+def test_b_a_stored_record_whose_provenance_is_silent_is_read_as_written():
+    payload = _stored_payload_with_silent_provenance()
+    result = ScientificResult.from_dict(payload)
+    assert result.solver == SOLVER and result.models == (MODEL_V1.key,)
+    assert result.provenance.solvers == () and result.provenance.models == ()
+    assert result.to_dict() == payload
+
+
+def test_b_new_construction_with_silent_provenance_is_still_refused():
+    with pytest.raises(ScientificCoreError, match="provenance does not name"):
+        _result(provenance=ProvenanceRecord(run_id="silent"))
+    with pytest.raises(ScientificCoreError, match="provenance does not name that solver"):
+        _result(provenance=ProvenanceRecord(run_id="silent-solvers", models=(MODEL_V1.key,)))
+
+
+def test_b_a_stored_record_whose_provenance_names_another_solver_is_still_refused_on_read():
+    payload = _result().to_dict()
+    payload["provenance"]["solvers"] = [list(OTHER_SOLVER.key)]
+    with pytest.raises(ScientificCoreError, match="provenance does not name that solver"):
+        ScientificResult.from_dict(payload)
+
+
 # ---------------------------------------------------------------------------
 # C. declared solver support matches a model's exact version
 # ---------------------------------------------------------------------------
