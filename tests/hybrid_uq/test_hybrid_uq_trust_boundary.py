@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import dataclasses
 import hashlib
+import json
 import math
 
 import numpy as np
@@ -189,3 +190,67 @@ def test_i_an_honest_supplied_sensitivity_is_still_used_and_gives_the_reconstruc
     # a supplied analytic Jacobian, exact rather than finite-difference, is within the agreement and is the one used
     analytic = dataclasses.replace(supplied, jacobian=tuple((1.0, float(x)) for x in P.x))
     assert _route_with(P, calibration, analytic).sensitivity_digest == analytic.digest
+
+
+# ---------------------------------------------------------------------------
+# a covariance must be a covariance, not a symmetric matrix with a positive diagonal
+# ---------------------------------------------------------------------------
+def _supported_posterior():
+    P = S.affine()
+    post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=None)
+    assert post.covariance is not None
+    return P, post
+
+
+def test_j_an_indefinite_covariance_is_rejected_constructed_or_read_back():
+    _P, post = _supported_posterior()
+    indefinite = ((1.0, 2.0), (2.0, 1.0))
+    assert np.all(np.diag(indefinite) > 0) and np.min(np.linalg.eigvalsh(indefinite)) == pytest.approx(-1.0)
+    with pytest.raises(HybridUQError, match="not positive semidefinite"):
+        dataclasses.replace(post, covariance=indefinite)
+    payload = post.to_dict()
+    payload["covariance"] = [list(row) for row in indefinite]
+    with pytest.raises(HybridUQError, match="not positive semidefinite"):
+        type(post).from_dict(payload)
+
+
+def test_j_an_indefinite_direction_is_found_whatever_the_parameter_scales():
+    """A tolerance on raw eigenvalues relative to the largest would pass this: the negative eigenvalue is -1e-15 of
+    it. In correlation units the two parameters are correlated at 1 + 1e-7, which no covariance can be."""
+    _P, post = _supported_posterior()
+    big, small, rho = 1.0e8, 1.0e-8, 1.0 + 1.0e-7
+    scaled = ((big, rho * math.sqrt(big * small)), (rho * math.sqrt(big * small), small))
+    assert np.min(np.linalg.eigvalsh(scaled)) > -1e-14 * big
+    with pytest.raises(HybridUQError, match="not positive semidefinite"):
+        dataclasses.replace(post, covariance=scaled)
+
+
+def test_k_a_covariance_singular_only_within_roundoff_is_accepted():
+    _P, post = _supported_posterior()
+    rho = 1.0 + 2.0 * np.finfo(float).eps
+    roundoff = ((1.0, rho), (rho, 1.0))
+    assert np.min(np.linalg.eigvalsh(roundoff)) < 0.0
+    assert dataclasses.replace(post, covariance=roundoff).covariance == roundoff
+
+
+def test_l_a_negative_predictive_variance_raises_instead_of_becoming_zero():
+    from engcore.hybrid_uq import linearized_predictive_uq
+    from engcore.uq import PredictiveObservableSpec
+
+    _P, post = _supported_posterior()
+    # A record the constructor would refuse, forced past it, as a corrupted in-memory object would be.
+    object.__setattr__(post, "covariance", ((1.0, 2.0), (2.0, 1.0)))
+    spec = PredictiveObservableSpec("difference", UNIT, Quantity(0.05, UNIT))
+    with pytest.raises(HybridUQError, match="negative beyond roundoff"):
+        linearized_predictive_uq(post, lambda t: [Quantity(t[0] - t[1], UNIT)], [spec])
+
+
+def test_m_a_valid_covariance_still_round_trips_byte_identically():
+    from engcore.hybrid_uq._records import canonical_bytes
+
+    P, post = _supported_posterior()
+    again = type(post).from_dict(json.loads(canonical_bytes(post.to_dict())))
+    assert canonical_bytes(again.to_dict()) == canonical_bytes(post.to_dict()) and again.digest == post.digest
+    result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward)
+    restored = type(result).from_dict(json.loads(canonical_bytes(result.to_dict())))
+    assert canonical_bytes(restored.to_dict()) == canonical_bytes(result.to_dict()) and restored.digest == result.digest

@@ -183,7 +183,15 @@ def linearized_predictive_uq(
     except RouteRefusedError as exc:
         raise RouteRefusedError(f"the predictive derivative could not be established near the estimate: {exc}") from None
     parameter_var = np.einsum("ij,jk,ik->i", G, cov, G)
-    parameter_sd = np.sqrt(np.maximum(parameter_var, 0.0))
+    # g Sigma g^T of a valid covariance is non-negative up to roundoff, which is bounded by |g| |Sigma| |g|^T. A
+    # variance below that bound is a defect in the covariance and raises; it is never turned into zero uncertainty.
+    roundoff = 64.0 * float(np.finfo(float).eps) * np.einsum("ij,jk,ik->i", np.abs(G), np.abs(cov), np.abs(G))
+    if np.any(parameter_var < -roundoff):
+        worst = int(np.argmin(parameter_var + roundoff))
+        raise HybridUQError(f"the parameter variance of {keys[worst]!r} is {float(parameter_var[worst]):.3g}, negative beyond "
+                            f"roundoff ({float(-roundoff[worst]):.3g}): the posterior covariance is not a covariance")
+    parameter_var = np.maximum(parameter_var, 0.0)
+    parameter_sd = np.sqrt(parameter_var)
     total_sd = np.asarray([math.sqrt(parameter_var[i] + (m ** 2 if m is not None else 0.0)) for i, m in enumerate(measurement)])
 
     nonlinearity = None

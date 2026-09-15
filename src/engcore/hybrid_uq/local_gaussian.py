@@ -29,7 +29,7 @@ from ..inference.parameters import CalibrationParameterSet
 from ..scientific.units.quantity import Quantity
 from ._records import (
     decode_float, decode_matrix, decode_vector, digest_of, encode_float, encode_matrix, encode_vector, material,
-    require_schema,
+    require_schema, require_valid_covariance,
 )
 from .sensitivity import (
     LocalSensitivity, _bind_supplied_sensitivity, _DerivativeNotConverged, evaluate, inference_bounds, reconstruct_local_sensitivity, to_inference,
@@ -355,11 +355,7 @@ class LocalGaussianPosterior:
         else:
             if self.covariance is None:
                 raise HybridUQError(f"a {self.diagnostics.claim.value} local route carries its covariance")
-            cov = np.asarray(self.covariance, dtype=np.float64)
-            if cov.shape != (p, p) or not np.all(np.isfinite(cov)) or not np.allclose(cov, cov.T, rtol=1e-10, atol=0.0):
-                raise HybridUQError("covariance must be a finite symmetric p x p matrix")
-            if np.any(np.diag(cov) <= 0.0):
-                raise HybridUQError("covariance must have a positive diagonal")
+            cov = require_valid_covariance(self.covariance, p)
             object.__setattr__(self, "covariance", tuple(tuple(float(v) for v in row) for row in cov))
         if not str(self.parameterization).strip() or not str(self.parameterization_digest).strip():
             raise HybridUQError("a local posterior records its parameterization and its identity")

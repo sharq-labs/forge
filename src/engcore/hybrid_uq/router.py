@@ -22,7 +22,9 @@ from ..inference.grid import AdmittedForwardTable, ObservationSet, PosteriorGrid
 from ..scientific.ir.problem import ModelReference
 from ..scientific.twins import TwinReference
 from ..uq.predictive import PredictiveObservableSpec
-from ._records import decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema
+from ._records import (
+    decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
+)
 from .identifiability import RoutedIdentifiability, assess_routed_identifiability
 from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, local_gaussian_posterior
 from .predictive import RoutedPredictiveUncertainty, grid_digest, grid_predictive_uncertainty, linearized_predictive_uq
@@ -99,6 +101,7 @@ class HybridUQResult:
                 raise HybridUQError(f"decision {decision.value} carries a mean and a covariance and is not REFUSED")
             object.__setattr__(self, "mean", tuple(float(v) for v in self.mean))
             object.__setattr__(self, "covariance", tuple(tuple(float(v) for v in row) for row in self.covariance))
+            require_valid_covariance(self.covariance, len(self.mean))
         if decision is RouteDecision.LOCAL_GAUSSIAN and (self.local_posterior is None or self.local_posterior.claim is not claim):
             raise HybridUQError("a LOCAL_GAUSSIAN decision carries the local posterior whose claim it reports")
         if decision in (RouteDecision.GRID_AS_SUPPLIED, RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE) and claim is not RouteClaim.SUPPORTED:

@@ -207,6 +207,8 @@ def local_gaussian_posterior(
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 
+**A covariance is validated, never repaired.** Every non-refused `LocalGaussianPosterior` and `HybridUQResult` covariance must be finite, with a positive diagonal. It must also be symmetric and positive semidefinite, judged on its correlation matrix. Asymmetry may be at most 1e-10 in correlation units, and the smallest correlation eigenvalue at least −16·p·ε. Correlation units make the test independent of parameter scales: a raw-eigenvalue tolerance would pass a negative direction along a parameter whose variance is many orders smaller. A matrix singular only within roundoff is accepted. A materially indefinite one, such as `[[1, 2], [2, 1]]`, raises `HybridUQError`, whether it is constructed or read back. Eigenvalues are never clipped and variances never replaced. A linearized predictive variance g Σ gᵀ below −64·ε·(|g| |Σ| |g|ᵀ) raises instead of becoming zero uncertainty.
+
 ### 3.4 Identifiability (2)
 
 ```python
