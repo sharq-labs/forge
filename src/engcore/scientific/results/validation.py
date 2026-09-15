@@ -25,7 +25,9 @@ Three deliberate design decisions:
 
 from __future__ import annotations
 
+import json
 import math
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
@@ -200,6 +202,162 @@ def level_is_earned(
     return compared_something(residual, tolerance, evidence)
 
 
+def _issuer_gap(
+    establishes: "ValidationLevel | None",
+    outcome: "ValidationOutcome",
+    residual: float | None,
+    tolerance: float | None,
+    evidence: tuple[str, ...],
+) -> str | None:
+    """Why a check claiming one of the strongest levels names no verifiable issuer, or ``None``.
+
+    VAL-01. ``ValidationCheck(PASS, establishes=CROSS_SOLVER_VALIDATED,
+    evidence=("trust me",))`` was attained, survived ``from_dict`` and carried a
+    hand-authored evidence payload to a verdict: GUARD 2 asks only that
+    *something* was compared, and a sentence is something. Threshold authority
+    protected the gates that award a level and never the record that carries
+    one.
+
+    So the three levels only an external issuer can grant --
+    ``CROSS_SOLVER_VALIDATED``, ``BENCHMARK_VALIDATED`` and
+    ``EXPERIMENTALLY_VALIDATED`` -- are held to the issuer's own record, which
+    the issuer writes into ``evidence`` when it awards the level and which is
+    re-verified here against registries the caller does not hold. Fields, not
+    an object, for :func:`level_is_earned`'s reason. Scoped to the claims:
+    PASS and WARNING only, and only those three levels.
+
+    What this cannot do is tell an issued record from a faithful copy of one: a
+    check copied from a genuine consensus onto another result carries a genuine
+    record. Closing that needs the record to be bound to the result it
+    qualifies, which the frozen shape of this check has no field for.
+    """
+    if establishes is None or outcome not in (
+        ValidationOutcome.PASS,
+        ValidationOutcome.WARNING,
+    ):
+        return None
+    level = ValidationLevel(establishes)
+    if level is ValidationLevel.CROSS_SOLVER_VALIDATED:
+        return _consensus_issuer_gap(residual, tolerance, tuple(evidence))
+    if level in (
+        ValidationLevel.BENCHMARK_VALIDATED,
+        ValidationLevel.EXPERIMENTALLY_VALIDATED,
+    ):
+        return _oracle_issuer_gap(level, residual, tolerance, tuple(evidence))
+    return None
+
+
+_BINDING_LINE = re.compile(
+    r"^route (?P<route>\S+) read from result (?P<result>.+) of run (?P<run>.+) "
+    r"by .+; numbers sha256:[0-9a-f]{64}$"
+)
+
+
+def _consensus_issuer_gap(
+    residual: float | None, tolerance: float | None, evidence: tuple[str, ...]
+) -> str | None:
+    """The record ``CrossSolverConsensus.to_check`` writes, re-verified."""
+    from ..consensus import CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX, _route_declarations
+    from .thresholds import VerificationThresholds
+
+    records = [
+        line[len(CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX):]
+        for line in evidence
+        if isinstance(line, str) and line.startswith(CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX)
+    ]
+    if len(records) != 1:
+        return "it carries no single consensus threshold record"
+    try:
+        record = json.loads(records[0])
+        thresholds = VerificationThresholds(
+            gate_id=record["gate_id"],
+            version=record["version"],
+            values=dict(record["values"]),
+        )
+        key = str(record["tolerance_key"])
+    except (ValueError, KeyError, TypeError, ScientificValidationError):
+        return "its consensus threshold record cannot be read"
+    if not thresholds.is_declared:
+        return f"its threshold record {thresholds.identity} is not a declared set"
+    if key not in thresholds:
+        return f"its threshold record names no {key!r}"
+    if residual is None or tolerance is None or float(tolerance) != thresholds[key]:
+        return (
+            f"its tolerance {tolerance!r} is not {key!r} of {thresholds.identity}"
+        )
+    bindings: dict[str, tuple[str, str]] = {}
+    for line in evidence:
+        match = _BINDING_LINE.match(line) if isinstance(line, str) else None
+        if match:
+            bindings[match.group("route")] = (match.group("result"), match.group("run"))
+    if len(bindings) < 2:
+        return "it is bound to fewer than two executed routes"
+    results = [result for result, _ in bindings.values()]
+    runs = [run for _, run in bindings.values()]
+    if len(set(results)) != len(results) or len(set(runs)) != len(runs):
+        return "its routes are not bound to distinct results and runs"
+    pins = _route_declarations()
+    verified = "dependencies verified against the domain layer's pin"
+    for route_id in sorted(bindings):
+        pin = pins.get(route_id)
+        if not isinstance(pin, Mapping) or (
+            pin.get("threshold_gate_id"), pin.get("tolerance_key")
+        ) != (thresholds.gate_id, key):
+            return (
+                f"route {route_id!r} is not declared for comparison under "
+                f"{thresholds.gate_id!r} at {key!r}"
+            )
+        if not any(
+            isinstance(line, str)
+            and line.startswith(f"route {route_id} = ")
+            and line.endswith(verified)
+            for line in evidence
+        ):
+            return f"route {route_id!r} carries no verified dependency declaration"
+    return None
+
+
+def _oracle_issuer_gap(
+    level: "ValidationLevel",
+    residual: float | None,
+    tolerance: float | None,
+    evidence: tuple[str, ...],
+) -> str | None:
+    """The record ``OracleEvidenceSet.compare`` writes, re-verified against the pin."""
+    from .. import oracles
+
+    def one(prefix: str) -> str | None:
+        found = [
+            line[len(prefix):]
+            for line in evidence
+            if isinstance(line, str) and line.startswith(prefix)
+        ]
+        return found[0] if len(found) == 1 else None
+
+    identity = one("oracle:")
+    digest = one("sha256:")
+    reference = one("reference:")
+    if identity is None or digest is None or reference is None:
+        return "it carries no single oracle identity, content digest and reference"
+    if "oracle-authority:repository-pinned" not in evidence:
+        return "its oracle record does not say it was repository-pinned"
+    oracle_id, _, version = identity.rpartition("@")
+    declaration = oracles._TRUSTED_ORACLE_DECLARATIONS.get((oracle_id, version))
+    if not isinstance(declaration, Mapping):
+        return f"oracle {identity!r} is not pinned by the trusted oracle registry"
+    try:
+        kind = oracles.OracleKind(declaration.get("kind"))
+    except ValueError:
+        return f"the trusted declaration of {identity!r} names no oracle kind"
+    if oracles._LEVEL_BY_KIND.get(kind) is not level:
+        return f"oracle {identity!r} is pinned as {kind.value}, which does not award {level.value}"
+    if declaration.get("evidence_digest") != digest or declaration.get("reference") != reference:
+        return f"oracle {identity!r} does not match its trusted declaration"
+    if residual is None or tolerance is None or float(tolerance) != 1.0:
+        return "its oracle comparison carries no normalised residual against 1.0"
+    return None
+
+
 class ValidationOutcome(str, Enum):
     PASS = "pass"
     FAIL = "fail"
@@ -364,6 +522,20 @@ class ValidationCheck:
                 f"-- if the outcome turns on something these two numbers do "
                 f"not decide -- do not report it as a success"
             )
+        # VAL-01, last: it reads the coerced numbers and the evidence.
+        issuer_gap = _issuer_gap(
+            self.establishes, self.outcome, self.residual, self.tolerance, self.evidence
+        )
+        if issuer_gap is not None:
+            raise ScientificValidationError(
+                f"validation check {self.name!r} reports "
+                f"{self.outcome.value.upper()} and declares "
+                f"establishes={self.establishes.value}, and that level has no "
+                f"verifiable issuer: {issuer_gap}. The strongest levels are "
+                f"granted by a pinned consensus or a pinned oracle, which write "
+                f"their record into the check's evidence; a check built by hand "
+                f"cannot carry one"
+            )
 
     @property
     def passed(self) -> bool:
@@ -499,6 +671,7 @@ class ValidationReport:
                 )
         self._require_every_level_earned()
         self._require_no_check_contradicts_its_numbers()
+        self._require_every_strong_level_issued()
         names = [c.name for c in self.checks]
         duplicated = duplicates(names)
         if duplicated:
@@ -568,6 +741,29 @@ class ValidationReport:
                     f"is a claim and not a finding"
                 )
 
+    def _require_every_strong_level_issued(self) -> None:
+        """Apply VAL-01's rule to the fields of every check held here, now.
+
+        Redundant with the constructor for a check nobody touched, and
+        re-applied for the reason the two guards above are -- and for one more:
+        an issuer's authority lives in registries that can change, so a level
+        is re-verified at the moment it is read as a claim.
+        """
+        for check in self.checks:
+            gap = _issuer_gap(
+                check.establishes,
+                check.outcome,
+                check.residual,
+                check.tolerance,
+                check.evidence,
+            )
+            if gap is not None:
+                raise ScientificValidationError(
+                    f"validation check {check.name!r} in this report declares "
+                    f"{ValidationLevel(check.establishes).value}, and that level "
+                    f"has no verifiable issuer: {gap}"
+                )
+
     # ---- derived state --------------------------------------------------
     @property
     def status(self) -> ValidationOutcome:
@@ -604,6 +800,7 @@ class ValidationReport:
         # at that moment, over fields, whatever the object says about itself.
         self._require_every_level_earned()
         self._require_no_check_contradicts_its_numbers()
+        self._require_every_strong_level_issued()
         return frozenset(
             c.establishes
             for c in self.checks
@@ -656,12 +853,25 @@ class ValidationReport:
         )
         # Derived fields in the payload are advisory; recompute and verify so a
         # hand-edited record cannot smuggle in an unearned validation claim.
-        declared = set(payload.get("attained_levels", ()))
-        recomputed = {l.value for l in report.attained_levels}
-        if declared and declared != recomputed:
+        #
+        # RES-08: compared whenever the key is PRESENT. The list used to be
+        # compared only when non-empty, so `[]` stood over a report that attains
+        # a level -- a record denying its own evidence -- and `status` was never
+        # compared at all, so PASS could be written over a FAIL. A payload
+        # without the keys is read as written; one that states them must state
+        # what its checks produce.
+        if "attained_levels" in payload:
+            declared = set(payload.get("attained_levels") or ())
+            recomputed = {l.value for l in report.attained_levels}
+            if declared != recomputed:
+                raise ScientificValidationError(
+                    f"serialized attained_levels {sorted(declared)} do not match "
+                    f"the levels established by its checks {sorted(recomputed)}"
+                )
+        if "status" in payload and payload.get("status") != report.status.value:
             raise ScientificValidationError(
-                f"serialized attained_levels {sorted(declared)} do not match "
-                f"the levels established by its checks {sorted(recomputed)}"
+                f"serialized status {payload.get('status')!r} does not match the "
+                f"status its checks produce ({report.status.value!r})"
             )
         return report
 
