@@ -87,3 +87,21 @@ def test_the_class_round_trips_and_is_absent_from_bytes_when_undeclared() -> Non
     assert "conductor_class" not in mat.MaterialLimits(
         debye_temperature=Q(343.0, "kelvin")
     ).to_dict()
+
+
+def test_the_public_derivation_withholds_the_floor_without_the_class() -> None:
+    """Not only the rated context: ``derived_material_quantities`` is public and
+    is called directly (the Contract Integrity nominals do), so it gates too."""
+    base = {
+        mat.REFERENCE_TEMPERATURE: Q(293.15, "kelvin"),
+        mat.TEMPERATURE_COEFFICIENT: Q(0.00393, "1/kelvin"),
+        mat.DEBYE_TEMPERATURE: Q(343.0, "kelvin"),
+    }
+    t = Q(320.0, "kelvin")
+    assert mat.REDUCED_DEBYE_TEMPERATURE not in mat.derived_material_quantities(base, temperature=t)
+    assert mat.REDUCED_DEBYE_TEMPERATURE not in mat.derived_material_quantities(
+        {**base, mat.CONDUCTOR_CLASS: "thick_film"}, temperature=t
+    )
+    assert mat.REDUCED_DEBYE_TEMPERATURE in mat.derived_material_quantities(
+        {**base, mat.CONDUCTOR_CLASS: mat.ELEMENTAL_METAL}, temperature=t
+    )
