@@ -3,7 +3,8 @@
 For a grid it IS the frozen ``assess_identifiability``, refusals included. For the local route it applies the
 same rule to the Gaussian: covariance condition number, largest absolute correlation, and each marginal 95%
 width divided by the estimate, with Gaussian marginal intervals in inference coordinates in place of the
-grid's discrete ones. The verdict is therefore stated in a parameterization, and the record says which.
+grid's discrete ones -- except that a log coordinate's width is its natural-scale relative width, which does
+not depend on the unit it was declared in. The verdict is stated in a parameterization, and the record says which.
 
 Route validity is not identifiability. A SUPPORTED route may report NOT_IDENTIFIABLE; a REFUSED route reports
 no identifiability at all.
@@ -148,9 +149,31 @@ class RoutedIdentifiability:
 
     @property
     def digest(self) -> str:
-        payload = self.to_dict()
-        payload["report"].pop("why")
-        return digest_of(payload)
+        # ``why`` is material (audit HUQ-14): two records that explain one verdict in opposite words are not one record.
+        return digest_of(self.to_dict())
+
+
+def _local_marginal_intervals(point: Sequence[float], sd: Sequence[float], transforms: Sequence[str],
+                              q: float) -> tuple[list[float], list[float], list[float]]:
+    """``(scales, lows, highs)`` whose ``(high - low) / |scale|`` is each parameter's relative 95% width.
+
+    For an ``identity`` or ``linear_map`` coordinate that is the Gaussian interval over the estimate. For a ``log``
+    coordinate the inference point is ln(value / declared unit), whose origin moves with the declared unit, so
+    dividing by it made the verdict depend on the unit a parameter was written in (audit HUQ-03). Its width is the
+    natural-scale interval exp(z +/- q sd) relative to exp(z) instead, exp(q sd) - exp(-q sd), which no unit moves.
+    """
+    scales, lows, highs = [], [], []
+    with np.errstate(over="ignore"):
+        for z, s, transform in zip(point, sd, transforms):
+            if transform == "log":
+                scales.append(1.0)
+                lows.append(float(np.exp(-q * float(s))))
+                highs.append(float(np.exp(q * float(s))))
+            else:
+                scales.append(float(z))
+                lows.append(float(z) - q * float(s))
+                highs.append(float(z) + q * float(s))
+    return scales, lows, highs
 
 
 def assess_routed_identifiability(
@@ -178,9 +201,9 @@ def assess_routed_identifiability(
         raise HybridUQError("confidence_level must lie strictly between 0 and 1")
     q = float(norm.ppf(0.5 + level / 2.0))
     sd = np.sqrt(np.diag(cov))
-    point = np.asarray(posterior.inference_point)
+    scales, lows, highs = _local_marginal_intervals(posterior.inference_point, sd, posterior.inference_transforms, q)
     status, condition, max_corr, widths, why = classify(
-        point, cov, point - q * sd, point + q * sd, posterior.parameter_names,
+        scales, cov, lows, highs, posterior.parameter_names,
         correlation_threshold=correlation_threshold, condition_threshold=condition_threshold, width_threshold=width_threshold)
     report = IdentifiabilityReport(
         status=status, condition_number=condition, max_abs_correlation=max_corr, relative_widths=widths,
