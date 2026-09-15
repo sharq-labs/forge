@@ -508,6 +508,7 @@ def derive_verdict(
     required_levels: Sequence[ValidationLevel] = (),
     coupling: "CouplingEvidence | None" = None,
     unattributed_assessments: Sequence[tuple[str, str]] = (),
+    unresolved_models: Sequence[tuple[str, str]] = (),
 ) -> CredibilityVerdict:
     """The one place a verdict is decided. Pure, total, and order-independent.
 
@@ -528,7 +529,9 @@ def derive_verdict(
         ``NOT_RUN``; or a model that took part in the run was never assessed
         (``unassessed_models``); or an assessment names a model nothing
         records as having produced anything (``unattributed_assessments``); or
-        the coupled run that produced these values did not reach its own
+        an assessment is of a model whose declared validity domain this
+        package cannot resolve, so its condition names could not be checked
+        (``unresolved_models``); or the coupled run that produced these values did not reach its own
         criterion (``coupling``); or **no check both passed and established an
         evidentiary level**; or a level the caller declared it needs
         (``required_levels``) was not attained; or there are no validity
@@ -645,6 +648,8 @@ def derive_verdict(
     if unassessed_models:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if unattributed_assessments:
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    if unresolved_models:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if not validity:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
@@ -806,6 +811,68 @@ class ModelValidityRecord:
                 f"unknown={list(assessment.unknown)}); a record may report a "
                 f"status but may not contradict the conditions it carries"
             )
+        self._require_conditions_of_the_declared_model(assessment)
+
+    def _require_conditions_of_the_declared_model(
+        self, assessment: ValidityAssessment
+    ) -> None:
+        """3. The condition names must be the model's own, all of them, once.
+
+        Step 2 checks the status against the assessment's own lists, and that
+        is all it can check: the lists themselves were trusted. So a record for
+        a real model carrying ``satisfied=("a_condition_it_does_not_have",)``
+        was IN_DOMAIN, and one naming a single real condition while omitting
+        the violated ones was IN_DOMAIN the same way -- both SUPPORTED.
+
+        Where the model is resolvable, ``ValidityDomain.assess`` reports every
+        declared condition exactly once, in exactly one list, so an assessment
+        it produced (or a precedence merge of several, which keeps each name in
+        one list) accounts for exactly the declared names. Anything else was
+        not produced by the model's own domain and is refused. Where the model
+        is NOT resolvable, nothing here can check the names: the record says so
+        through :attr:`model_resolved`, and a report carrying it cannot be
+        SUPPORTED (see :attr:`CredibilityEvidenceReport.unresolved_models`).
+        """
+        model = _declared_models().get((self.model_id, self.version))
+        if model is None:
+            return
+        reported = [
+            *assessment.satisfied,
+            *assessment.violated,
+            *assessment.unknown,
+        ]
+        repeated = sorted({name for name in reported if reported.count(name) > 1})
+        if repeated:
+            raise CredibilityEvidenceError(
+                f"model validity record for {self.model_id!r} reports "
+                f"condition(s) {repeated} more than once; the model's validity "
+                f"domain decides each condition exactly once, so an assessment "
+                f"placing one in two lists was not produced by it"
+            )
+        declared = {condition.name for condition in model.validity.conditions}
+        stray = sorted(set(reported) - declared)
+        missing = sorted(declared - set(reported))
+        if stray or missing:
+            raise CredibilityEvidenceError(
+                f"model validity record for "
+                f"{self.model_id!r}@{self.version!r} does not account for "
+                f"exactly the conditions that model declares: names it does "
+                f"not declare {stray}, declared conditions left out "
+                f"{missing}. An assessment is a verdict over the model's own "
+                f"validity domain; one naming other conditions, or omitting "
+                f"some, is not that verdict"
+            )
+
+    @property
+    def model_resolved(self) -> bool:
+        """Whether this record's model is one this package can resolve.
+
+        **Derived, never supplied.** ``False`` means the condition names in the
+        assessment could not be checked against any declared validity domain,
+        so the record is a claim nobody here can verify -- and a report
+        carrying one is INSUFFICIENT_EVIDENCE rather than SUPPORTED.
+        """
+        return (self.model_id, self.version) in _declared_models()
 
     @property
     def key(self) -> tuple[str, str]:
@@ -849,6 +916,9 @@ class ModelValidityRecord:
             "exclusions": (
                 None if self.exclusions is None else list(self.exclusions)
             ),
+            # Derived, and like `exclusions` not read back: a payload claiming
+            # its model resolved does not make it so.
+            "model_resolved": self.model_resolved,
         }
 
     @classmethod
@@ -1285,6 +1355,20 @@ class CredibilityEvidenceReport:
             required_levels=self.required_levels,
             coupling=self.coupling,
             unattributed_assessments=self.unattributed_assessments,
+            unresolved_models=self.unresolved_models,
+        )
+
+    @property
+    def unresolved_models(self) -> tuple[tuple[str, str], ...]:
+        """Assessed models whose declared validity domain nothing here resolves.
+
+        An assessment of a resolvable model is refused unless it accounts for
+        exactly that model's declared conditions. One of an unresolvable model
+        cannot be held to that, so its condition names are a claim nobody here
+        checked -- a gap, reported as INSUFFICIENT_EVIDENCE, never SUPPORTED.
+        """
+        return tuple(
+            sorted(record.key for record in self.validity if not record.model_resolved)
         )
 
     @property
@@ -1638,6 +1722,7 @@ class CredibilityEvidenceReport:
                 "unattributed_assessments": [
                     list(m) for m in self.unattributed_assessments
                 ],
+                "unresolved_models": [list(m) for m in self.unresolved_models],
             },
         }
 

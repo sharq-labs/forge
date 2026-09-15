@@ -3488,6 +3488,7 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
     condition can check, because the model does not represent them -- so a
     reader who sees only a status has been told less than they think.
     """
+    from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
     from engcore.mcp.evidence import ModelValidityRecord
     from engcore.scientific.models.definition import (
         UnknownCondition,
@@ -3496,11 +3497,15 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
         ValidityStatus,
     )
 
+    # Every declared condition, since the results audit (RES-04): an
+    # assessment of a resolvable model must account for exactly the conditions
+    # that model declares, and this fixture used to name one of twelve.
     record = ModelValidityRecord(
         model_id="thermal.lumped.first_order_capacity",
         version="0.1.0",
         assessment=ValidityAssessment(
-            status=ValidityStatus.IN_DOMAIN, satisfied=("biot_number",)
+            status=ValidityStatus.IN_DOMAIN,
+            satisfied=tuple(c.name for c in LUMPED_CAPACITY_MODEL.validity.conditions),
         ),
     )
     payload = record.to_dict()
@@ -3523,10 +3528,11 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
         version="0.1.0",
         assessment=ValidityAssessment(
             status=ValidityStatus.UNKNOWN,
-            unknown=("mesh_resolution",),
+            # The model's one declared condition (RES-04; see above).
+            unknown=("alpha",),
             unknown_reasons=(
                 UnknownCondition(
-                    name="mesh_resolution",
+                    name="alpha",
                     reason=UnknownReason.UNREADABLE_SHAPE,
                 ),
             ),
