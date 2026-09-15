@@ -75,7 +75,7 @@ from src.engcore.sria import (
     UncertaintyChannel,
     UncertaintyDeclaration,
 )
-from src.engcore.sria.assurance import Arbiter
+from src.engcore.sria.assurance import Arbiter, trusting_authority
 from src.engcore.sria.assurance.arbiter import AssuranceVerdict
 from src.engcore.sria.assurance.assessment import (
     CheckRecord,
@@ -322,6 +322,102 @@ class AdmissionOutcomeRecord:
         return payload
 
 
+class E2NumericalCritic:
+    """E2's numerical critic, registered with the Arbiter that runs it.
+
+    Audit SRIA-TRUST-01: these are exactly the checks E2's harness used to
+    build inline. An Arbiter now counts only assessments produced by a critic
+    it was constructed to trust and ran itself.
+    """
+
+    critic_id = "e2.numerical"
+    critic_version = "1"
+    critic_class = CriticClass.NUMERICAL
+
+    def assess(
+        self, execution: ExecutionRecord, evidence: Evidence, *, assessment_id: str
+    ) -> CriticAssessment:
+        """Numerical critic. Computation only — never the predictive.
+
+        There is no ledger, no posterior and no surprise statistic in scope
+        here, and that is a design constraint rather than an oversight.
+        """
+        residual = float(execution.diagnostics["residual_linear_system"])
+        atol = float(execution.diagnostics["residual_atol"])
+        termination = (
+            CriticVerdict.PASS
+            if execution.outcome.disposition is Disposition.SUCCESS
+            else CriticVerdict.FAIL
+        )
+        validation_ok = (
+            CriticVerdict.PASS
+            if execution.diagnostics["validation_status"] == "pass"
+            else CriticVerdict.FAIL
+        )
+        residual_ok = CriticVerdict.PASS if residual <= atol else CriticVerdict.FAIL
+        checks = (
+            CheckRecord(
+                name="solver_termination",
+                outcome=termination,
+                mandatory=True,
+                detail=f"disposition {execution.outcome.disposition.value}",
+            ),
+            CheckRecord(
+                name="residual_evidence",
+                outcome=residual_ok,
+                mandatory=True,
+                observed=residual,
+                threshold=atol,
+                threshold_source="DCValidationSettings.residual_atol",
+                detail="||A x - z|| for the assembled MNA system",
+            ),
+            CheckRecord(
+                name="validation_report_status",
+                outcome=validation_ok,
+                mandatory=True,
+                detail=(
+                    f"domain validation report: "
+                    f"{execution.diagnostics['validation_status']}"
+                ),
+            ),
+        )
+        failed = any(c.outcome is CriticVerdict.FAIL for c in checks)
+        verdict = CriticVerdict.FAIL if failed else CriticVerdict.PASS
+        findings = ()
+        if failed:
+            findings = (
+                Finding(
+                    code="e2.solver_check_failed",
+                    severity=Severity.BLOCKING,
+                    category="numerical",
+                    message="a mandatory solver check did not pass",
+                    impact=FindingImpact.EVIDENCE_INVALIDATING,
+                ),
+            )
+        return CriticAssessment(
+            assessment_id=assessment_id,
+            critic_id="e2.numerical",
+            critic_version="1",
+            critic_class=CriticClass.NUMERICAL,
+            # The record this critic read (audit SRIA-TRUST-01).
+            subject_ref=evidence.record_hash,
+            verdict=verdict,
+            provenance=AssessmentProvenance(
+                assessment_id=assessment_id,
+                critic_id="e2.numerical",
+                critic_version="1",
+                inputs_ref=(execution.execution_id,),
+            ),
+            checks=checks,
+            findings=findings,
+            summary=(
+                f"solver termination/residual/validation checks -> "
+                f"{verdict.value} (computation only; predictive surprise is "
+                f"not an input to this critic)"
+            ),
+        )
+
+
 @dataclass
 class E2Harness:
     """Executor + critic + arbiter + gateway, driven by a frozen schedule."""
@@ -333,6 +429,10 @@ class E2Harness:
     obligations: ObligationSet
     events: CampaignEventLog
     admissions: list[AdmissionOutcomeRecord] = field(default_factory=list)
+    #: The Arbiter decisions behind ``admissions``, in the same order. A later
+    #: campaign adopts prior assurance from these, never from a summary of
+    #: them (audit SRIA-06).
+    decisions: list[Any] = field(default_factory=list)
     _step: int = 0
 
     # -- posterior plumbing (reads the gateway, nothing else) --------------
@@ -459,82 +559,20 @@ class E2Harness:
 
         There is no ledger, no posterior and no surprise statistic in scope
         here, and that is a design constraint rather than an oversight.
+
+        Audit SRIA-TRUST-01 (re-pin): the checks live in
+        :class:`E2NumericalCritic`, registered with this harness's Arbiter and
+        run through it on ``evidence``, so the decision can count the result.
         """
-        residual = float(execution.diagnostics["residual_linear_system"])
-        atol = float(execution.diagnostics["residual_atol"])
-        termination = (
-            CriticVerdict.PASS
-            if execution.outcome.disposition is Disposition.SUCCESS
-            else CriticVerdict.FAIL
-        )
-        validation_ok = (
-            CriticVerdict.PASS
-            if execution.diagnostics["validation_status"] == "pass"
-            else CriticVerdict.FAIL
-        )
-        residual_ok = CriticVerdict.PASS if residual <= atol else CriticVerdict.FAIL
-        checks = (
-            CheckRecord(
-                name="solver_termination",
-                outcome=termination,
-                mandatory=True,
-                detail=f"disposition {execution.outcome.disposition.value}",
-            ),
-            CheckRecord(
-                name="residual_evidence",
-                outcome=residual_ok,
-                mandatory=True,
-                observed=residual,
-                threshold=atol,
-                threshold_source="DCValidationSettings.residual_atol",
-                detail="||A x - z|| for the assembled MNA system",
-            ),
-            CheckRecord(
-                name="validation_report_status",
-                outcome=validation_ok,
-                mandatory=True,
-                detail=(
-                    f"domain validation report: "
-                    f"{execution.diagnostics['validation_status']}"
-                ),
-            ),
-        )
-        failed = any(c.outcome is CriticVerdict.FAIL for c in checks)
-        verdict = CriticVerdict.FAIL if failed else CriticVerdict.PASS
-        findings = ()
-        if failed:
-            findings = (
-                Finding(
-                    code="e2.solver_check_failed",
-                    severity=Severity.BLOCKING,
-                    category="numerical",
-                    message="a mandatory solver check did not pass",
-                    impact=FindingImpact.EVIDENCE_INVALIDATING,
-                ),
-            )
-        assessment = CriticAssessment(
+        assessment = self.arbiter.run_critic(
+            E2NumericalCritic.critic_id,
+            execution,
+            evidence,
+            subject=evidence,
             assessment_id=f"{prefix}-numerical",
-            critic_id="e2.numerical",
-            critic_version="1",
-            critic_class=CriticClass.NUMERICAL,
-            subject_ref=evidence.evidence_id,
-            verdict=verdict,
-            provenance=AssessmentProvenance(
-                assessment_id=f"{prefix}-numerical",
-                critic_id="e2.numerical",
-                critic_version="1",
-                inputs_ref=(execution.execution_id,),
-            ),
-            checks=checks,
-            findings=findings,
-            summary=(
-                f"solver termination/residual/validation checks -> "
-                f"{verdict.value} (computation only; predictive surprise is "
-                f"not an input to this critic)"
-            ),
         )
         state = {
-            o.obligation_id: verdict is CriticVerdict.PASS
+            o.obligation_id: assessment.verdict is CriticVerdict.PASS
             for o in self.obligations.obligations
             if o.kind is ObligationKind.REQUIRED_CRITIC
         }
@@ -587,7 +625,7 @@ class E2Harness:
 
         decision = self.arbiter.decide(
             decision_id=f"{self.run_id}-arb-{step:03d}",
-            subject_ref=evidence.evidence_id,
+            evidence=evidence,
             assessments=(assessment,),
             obligations=self.obligations,
             budget=budget,
@@ -663,6 +701,7 @@ class E2Harness:
             ),
         )
         self.admissions.append(record)
+        self.decisions.append(decision)
         return record
 
     def run_phase(
@@ -702,14 +741,20 @@ def build_e2_harness(
     executor_class: type[E2Executor] = E2Executor,
 ) -> E2Harness:
     """Wire a fresh, independent stack: authority, gateway, arbiter, harness."""
-    authority = AdmissionAuthority(f"e2.authority.{run_id}")
+    # The authority trusts exactly E2's critic registry and E2's obligation set
+    # and serves only this Arbiter (audit sria follow-up, trust root).
+    critics = (E2NumericalCritic(),)
+    obligations = e2_obligations()
+    authority = trusting_authority(
+        f"e2.authority.{run_id}", critics, policies=(obligations,)
+    )
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
     return E2Harness(
         run_id=run_id,
         gateway=gateway,
-        arbiter=Arbiter(authority),
+        arbiter=Arbiter(authority, critics=critics),
         executor=executor_class(spec),
-        obligations=e2_obligations(),
+        obligations=obligations,
         events=CampaignEventLog(run_id),
     )

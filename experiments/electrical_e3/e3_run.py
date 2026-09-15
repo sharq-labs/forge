@@ -596,19 +596,13 @@ def run_obligation_set_placement_probe() -> dict[str, Any]:
     from experiments.electrical_e2.e2_harness import E2Harness
     from engcore.sria.campaign import CampaignEventLog
     from engcore.sria import (
-        AdmissionAuthority,
-        AdmissionAuthorityRegistry,
+            AdmissionAuthorityRegistry,
         BeliefUpdateGateway,
     )
-    from engcore.sria.assurance import Arbiter
-    from experiments.electrical_e2.e2_harness import E2Executor
+    from engcore.sria.assurance import Arbiter, trusting_authority
+    from experiments.electrical_e2.e2_harness import E2Executor, E2NumericalCritic
     from .e3_config import CALIBRATION_ACTION
 
-    authority = AdmissionAuthority("e3.placement.probe")
-    gateway = BeliefUpdateGateway(
-        authorities=AdmissionAuthorityRegistry([authority])
-    )
-    arbiter = Arbiter(authority)
     obligations = ObligationSet(
         campaign_id="e3-placement-probe",
         obligations=(
@@ -620,6 +614,17 @@ def run_obligation_set_placement_probe() -> dict[str, Any]:
             ),
         ),
     )
+    # The authority trusts the critic the Arbiter runs and the placement policy
+    # under test, so the obligation's placement is the only thing that could
+    # block admission (audit SRIA-TRUST-01 / sria follow-up, trust root).
+    critics = (E2NumericalCritic(),)
+    authority = trusting_authority(
+        "e3.placement.probe", critics, policies=(obligations,)
+    )
+    gateway = BeliefUpdateGateway(
+        authorities=AdmissionAuthorityRegistry([authority])
+    )
+    arbiter = Arbiter(authority, critics=critics)
     harness = E2Harness(
         run_id="e3-placement",
         gateway=gateway,

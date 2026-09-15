@@ -13,9 +13,17 @@ happened.
 
 **Hash-chained.** Each event carries the digest of its predecessor, so removing
 or altering an event anywhere in the chain is detectable by
-:meth:`CampaignEventLog.verify_chain`. This is tamper-evidence, not tamper-
-proofing: it catches truncation and edits, and it makes "the log says the action
-executed" a claim someone can check.
+:meth:`CampaignEventLog.verify_chain` — provided the edit does not also
+recompute the digests. The digests are unkeyed SHA-256, so they detect
+accidental corruption (truncation, a partial write, an edit that forgot the
+chain). They are *not* tamper-evidence against someone who rewrites the stored
+bytes deliberately: anyone able to edit the file can recompute every digest.
+Nothing in this package holds a key that could make them so (audit SER-01).
+
+**The log is the source of assurance state.** What a resume may believe about
+obligations and admissions is *derived* from the log —
+:func:`derive_obligation_state` and :func:`derive_iteration_assurance` — and a
+stored copy that disagrees with the derivation is refused rather than adopted.
 
 This is deliberately not an event-sourcing framework. There is no projection
 engine, no bus, no handler registry. It is an ordered, verifiable list of typed
@@ -239,6 +247,9 @@ class CampaignEventType(str, Enum):
     ITERATION_COMPLETED = "iteration_completed"
     STOP_PROPOSED = "stop_proposed"
     STOP_REVIEWED = "stop_reviewed"
+    #: Assurance decisions made before this run, verified as issued by the
+    #: run's own Arbiter under the run's policy, and adopted (audit SRIA-06).
+    PRIOR_ASSURANCE_ADOPTED = "prior_assurance_adopted"
     CAMPAIGN_PAUSED = "campaign_paused"
     CAMPAIGN_COMPLETED = "campaign_completed"
     CAMPAIGN_FAILED = "campaign_failed"
@@ -457,3 +468,103 @@ class CampaignEventLog:
                 "the stored head digest does not match the reloaded events"
             )
         return log
+
+
+# =====================================================================
+# Assurance state derived from the log (audit SRIA-06 / SER-01)
+# =====================================================================
+
+def derive_obligation_state(events: Iterator[CampaignEvent] | Any) -> dict[str, bool]:
+    """Obligation state as the event log establishes it.
+
+    Folded in log order:
+
+    * ``ARBITER_DECIDED`` and ``PRIOR_ASSURANCE_ADOPTED`` carry the Arbiter's
+      own ``obligation_results`` (``{obligation_id: satisfied}``); each result
+      replaces what was known about that obligation.
+    * ``ARBITER_DECIDED`` may also carry ``harness_unmet`` — obligations a
+      harness reported unmet. A harness may lower an obligation, never raise
+      one, so these are applied as ``False`` after the Arbiter's results.
+
+    An event written before this derivation existed carries no
+    ``obligation_results`` and establishes nothing, so a stored state claiming
+    an obligation satisfied on the strength of such a log is not derivable.
+    """
+    state: dict[str, bool] = {}
+    for event in events:
+        if event.event_type not in (
+            CampaignEventType.ARBITER_DECIDED,
+            CampaignEventType.PRIOR_ASSURANCE_ADOPTED,
+        ):
+            continue
+        results = event.payload.get("obligation_results") or {}
+        for obligation_id in sorted(results):
+            state[str(obligation_id)] = results[obligation_id] is True
+        for obligation_id in event.payload.get("harness_unmet") or ():
+            state[str(obligation_id)] = False
+    return state
+
+
+def derive_iteration_assurance(
+    events: Iterator[CampaignEvent] | Any,
+) -> dict[int, tuple[str, str, tuple[str, ...]]]:
+    """Per iteration: (arbiter decision id, verdict, admitted evidence ids).
+
+    The facts an :class:`~engcore.sria.campaign.state.IterationRecord` repeats
+    about assurance, as the log records them. Iterations with no Arbiter
+    decision and no admission are absent.
+    """
+    decided: dict[int, tuple[str, str]] = {}
+    admitted: dict[int, list[str]] = {}
+    for event in events:
+        if event.event_type is CampaignEventType.ARBITER_DECIDED:
+            decided[event.iteration] = (
+                str(event.payload.get("decision_id", "")),
+                str(event.payload.get("verdict", "")),
+            )
+        elif event.event_type is CampaignEventType.EVIDENCE_ADMITTED:
+            admitted.setdefault(event.iteration, []).append(
+                str(event.payload.get("evidence_id", ""))
+            )
+    derived: dict[int, tuple[str, str, tuple[str, ...]]] = {}
+    for iteration in sorted(set(decided) | set(admitted)):
+        decision_id, verdict = decided.get(iteration, ("", ""))
+        derived[iteration] = (decision_id, verdict, tuple(admitted.get(iteration, ())))
+    return derived
+
+
+def assurance_disagreements(
+    events: Any,
+    *,
+    obligation_state: Mapping[str, bool],
+    iterations: Any = (),
+) -> list[str]:
+    """Where stored assurance state says something the log does not.
+
+    Empty when the stored obligation state equals the derived one exactly and
+    every iteration record's decision id, verdict and admitted evidence ids
+    match the log. Callers refuse to resume on any disagreement.
+    """
+    events = tuple(events)
+    problems: list[str] = []
+    derived_state = derive_obligation_state(events)
+    stored_state = {str(k): bool(v) for k, v in dict(obligation_state).items()}
+    if stored_state != derived_state:
+        problems.append(
+            f"obligation_state {dict(sorted(stored_state.items()))} is not what "
+            f"the event log establishes {dict(sorted(derived_state.items()))}"
+        )
+    derived_iterations = derive_iteration_assurance(events)
+    for record in iterations:
+        expected = derived_iterations.get(record.iteration, ("", "", ()))
+        stored = (
+            record.arbiter_decision_id,
+            record.arbiter_verdict,
+            tuple(record.admitted_evidence_ids),
+        )
+        if stored != expected:
+            problems.append(
+                f"iteration {record.iteration} records decision/verdict/admitted "
+                f"{stored}, but the event log records {expected}"
+            )
+    return problems

@@ -17,6 +17,8 @@ from engcore.sria.campaign.events import CampaignEventLog, CampaignEventType
 from engcore.sria.campaign.persistence import IncrementalCheckpointStore
 from engcore.sria.campaign.persistence_runner import IncrementalCampaignRunner
 from engcore.sria.campaign.state import CampaignRun, ExecutionState
+from engcore.sria.assurance.obligations import obligations_from_charter
+from engcore.sria.charter import CampaignCharter, TerminalDecision
 
 
 def _bare_runner() -> IncrementalCampaignRunner:
@@ -44,8 +46,13 @@ def _bare_runner() -> IncrementalCampaignRunner:
 
 def test_real_constructor_retains_an_explicit_empty_incremental_store() -> None:
     external = IncrementalCheckpointStore()
-    charter = MagicMock()
-    charter.campaign_id = "constructor-campaign"
+    # A real charter and the obligation set derived from it: the constructor
+    # now refuses a policy it cannot check against its charter (audit
+    # SRIA-TRUST-02), which a MagicMock charter/obligation pair cannot satisfy.
+    charter = CampaignCharter(
+        campaign_id="constructor-campaign",
+        terminal_decisions=(TerminalDecision(decision_id="d", statement="s"),),
+    )
 
     runner = IncrementalCampaignRunner(
         run_id="constructor-run",
@@ -53,7 +60,7 @@ def test_real_constructor_retains_an_explicit_empty_incremental_store() -> None:
         harness=MagicMock(),
         gateway=MagicMock(),
         arbiter=MagicMock(),
-        obligations=MagicMock(),
+        obligations=obligations_from_charter(charter),
         budget=BudgetLedger(total_budget=10.0),
         max_iterations=2,
         checkpoints=external,
@@ -95,6 +102,13 @@ def test_restore_latest_materializes_existing_runner_state_without_replay() -> N
         CampaignEventType.CAMPAIGN_CREATED,
         iteration=0,
         payload={"campaign_id": "campaign-v03"},
+    )
+    # Obligation state a restore will accept is state the event log backs
+    # (audit SRIA-06 / SER-01), so the fixture logs where it came from.
+    runner._events.append(
+        CampaignEventType.PRIOR_ASSURANCE_ADOPTED,
+        iteration=0,
+        payload={"obligation_results": {"adequacy": True}},
     )
     runner._obligation_state = {"adequacy": True}
     runner._checkpoint()

@@ -148,7 +148,17 @@ def make_assessment(assessment_id: str = "as-1") -> Assessment:
 
 #: Test-only admission authority. Production code obtains one from the Arbiter,
 #: which M1 does not implement; a fixed secret keeps these tests deterministic.
-TEST_AUTHORITY = AdmissionAuthority("arbiter.test", secret="m1-test-secret")
+#: The authority declares the (synthetic) critic registry and policy it serves;
+#: an accepting authorization naming anything else is refused (audit sria
+#: follow-up, trust root).
+TEST_REGISTRY_DIGEST = "m1-synthetic-critic-registry"
+TEST_POLICY_DIGEST = "m1-synthetic-policy"
+TEST_AUTHORITY = AdmissionAuthority(
+    "arbiter.test",
+    secret="m1-test-secret",
+    critic_registry_digest=TEST_REGISTRY_DIGEST,
+    policy_digests=(TEST_POLICY_DIGEST,),
+)
 
 
 def make_registry() -> AdmissionAuthorityRegistry:
@@ -168,7 +178,9 @@ TEST_ARBITER_ID = "arbiter.m1.synthetic"
 #: M3.4: registration needs a registrar capability. These tests play the
 #: Arbiter role, so they hold one — obtaining it is exactly the seam an
 #: ordinary AdmissionAuthority holder does not have.
-TEST_REGISTRAR = _issue_registrar_capability(TEST_ARBITER_ID)
+TEST_REGISTRAR = _issue_registrar_capability(
+    TEST_AUTHORITY, TEST_ARBITER_ID, TEST_REGISTRY_DIGEST
+)
 
 
 def valid_binding(evidence: Evidence, verdict: str = "valid") -> DecisionBinding:
@@ -183,6 +195,8 @@ def valid_binding(evidence: Evidence, verdict: str = "valid") -> DecisionBinding
         policy_id="sria.arbiter",
         policy_version="test",
         arbiter_id=TEST_ARBITER_ID,
+        critic_registry_digest=TEST_REGISTRY_DIGEST,
+        policy_digest=TEST_POLICY_DIGEST,
     )
     code = secrets.token_hex(32)
     TEST_AUTHORITY.register_authorization(
@@ -196,6 +210,8 @@ def valid_binding(evidence: Evidence, verdict: str = "valid") -> DecisionBinding
         policy_version="test",
         arbiter_id=TEST_ARBITER_ID,
         authorization_code=code,
+        critic_registry_digest=TEST_REGISTRY_DIGEST,
+        policy_digest=TEST_POLICY_DIGEST,
     )
 
 
@@ -393,7 +409,12 @@ def test_invalidation_is_an_explicit_scientific_decision():
 
 def test_gateway_rejection_leaves_scientific_standing_unchanged():
     gateway = make_gateway()
-    stranger = AdmissionAuthority("arbiter.rogue", secret="not-registered")
+    stranger = AdmissionAuthority(
+        "arbiter.rogue",
+        secret="not-registered",
+        critic_registry_digest="stranger-registry",
+        policy_digests=("stranger-policy",),
+    )
     evidence = assessed_evidence()
     # An authority that has been told no commitment cannot sign this.
     _raises(
@@ -410,10 +431,12 @@ def test_gateway_rejection_leaves_scientific_standing_unchanged():
         decision_hash="h-stranger",
         subject_record_hash=evidence.record_hash,
         verdict="valid",
+        critic_registry_digest="stranger-registry",
+        policy_digest="stranger-policy",
     )
     stranger_code = secrets.token_hex(32)
     stranger.register_authorization(
-        _issue_registrar_capability("arbiter.stranger"),
+        _issue_registrar_capability(stranger, "arbiter.stranger", "stranger-registry"),
         AdmissionAuthority.commitment_for(stranger_code, stranger_payload),
         stranger_payload,
     )
@@ -425,6 +448,8 @@ def test_gateway_rejection_leaves_scientific_standing_unchanged():
             decision_hash="h-stranger",
             verdict="valid",
             authorization_code=stranger_code,
+            critic_registry_digest="stranger-registry",
+            policy_digest="stranger-policy",
         ),
         rationale="self-granted",
     )

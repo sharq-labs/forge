@@ -32,7 +32,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Protocol, Sequence, runtime_checkable
 
-from ..assurance.arbiter import Arbiter, AssuranceVerdict
+from ..assurance.arbiter import Arbiter, ArbiterDecision, AssuranceVerdict
 from ..assurance.assessment import CriticAssessment
 from ..assurance.obligations import ObligationSet
 from ..charter import CampaignCharter
@@ -62,8 +62,14 @@ from .checkpoint import (
     CheckpointStore,
     EffectLedger,
     IterationPlan,
+    ResumeViolation,
 )
-from .events import CampaignEventLog, CampaignEventType
+from .events import (
+    CampaignEventLog,
+    CampaignEventType,
+    assurance_disagreements,
+    derive_obligation_state,
+)
 from .executor import ExecutionRecord, SimulationExecutor, require_simulation
 from .liveness import (
     LivenessRuling,
@@ -93,16 +99,50 @@ _NON_SELECTING = frozenset(
 
 
 @dataclass(frozen=True)
+class CriticRequest:
+    """A harness asking the Arbiter to run one of its registered critics.
+
+    The harness names the critic and supplies its inputs; the runner has the
+    Arbiter run it on the iteration's evidence, so the assessment is recorded
+    by the Arbiter that decides (audit SRIA-TRUST-01). A harness cannot hand
+    the decision an assessment of its own making.
+    """
+
+    critic_id: str
+    assessment_id: str
+    inputs: tuple[Any, ...] = ()
+    options: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for label in ("critic_id", "assessment_id"):
+            if not str(getattr(self, label)).strip():
+                raise ValueError(f"a critic request requires {label}")
+        object.__setattr__(self, "inputs", tuple(self.inputs))
+        object.__setattr__(self, "options", dict(self.options))
+
+
+@dataclass(frozen=True)
 class AssessmentBundle:
-    """What the critics produced, plus the uncertainty budget they saw."""
+    """What the harness asks the critics for, plus the budget they saw.
+
+    ``critic_requests`` are run by the Arbiter. ``assessments`` may carry
+    assessments a harness already obtained through the same Arbiter; anything
+    else is refused when the Arbiter decides.
+
+    ``obligation_state`` may only *lower* standing: a harness can report an
+    obligation unmet, and that is recorded, but ``True`` is ignored -- only the
+    Arbiter's decision can satisfy an obligation (audit SRIA-06).
+    """
 
     assessments: tuple[CriticAssessment, ...] = ()
     uncertainty_budget: Any | None = None
     obligation_state: Mapping[str, bool] = field(default_factory=dict)
+    critic_requests: tuple[CriticRequest, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "assessments", tuple(self.assessments))
         object.__setattr__(self, "obligation_state", dict(self.obligation_state))
+        object.__setattr__(self, "critic_requests", tuple(self.critic_requests))
 
 
 @runtime_checkable
@@ -194,8 +234,32 @@ class CampaignRunner:
         certification_requirements: Sequence[CertificationRequirement] = (),
         checkpoints: CheckpointStore | None = None,
         clock: Callable[[], str] | None = None,
-        charter_version: str = "1",
+        charter_version: str | None = None,
     ) -> None:
+        # The policy must be the charter's own (audit SRIA-TRUST-02). A set
+        # derived from another campaign, from another version of this charter,
+        # or built by hand names no charter this runner can check it against.
+        if not isinstance(obligations, ObligationSet):
+            raise TypeError("CampaignRunner requires an ObligationSet")
+        if obligations.campaign_id != charter.campaign_id:
+            raise ValueError(
+                f"obligation set belongs to campaign {obligations.campaign_id!r}, "
+                f"not to this charter's campaign {charter.campaign_id!r}"
+            )
+        if obligations.charter_digest != charter.digest:
+            raise ValueError(
+                "obligation set was not derived from this charter: its charter "
+                f"digest {obligations.charter_digest[:12] or '<none>'} is not "
+                f"{charter.digest[:12]}; derive it with obligations_from_charter"
+            )
+        derived_version = charter.version
+        if charter_version is None:
+            charter_version = derived_version
+        elif str(charter_version) != derived_version:
+            raise ValueError(
+                f"charter_version {charter_version!r} does not describe this "
+                f"charter, whose version is {derived_version!r}"
+            )
         self._charter = charter
         self._harness = harness
         self._gateway = gateway
@@ -783,29 +847,89 @@ class CampaignRunner:
         }
 
     def adopt_prior_assurance(
-        self, obligation_state: Mapping[str, bool]
+        self, decisions: Sequence[ArbiterDecision]
     ) -> CampaignRun:
         """Begin from evidence admitted before this run object existed.
 
         The smallest supported entry point for a campaign that continues work
         already assessed elsewhere. Without it the stopping review short-
         circuits at "obligations were never assessed" and never reaches the
-        registered criterion — the state in which a certification question
+        registered criterion -- the state in which a certification question
         actually arises is the one the runner could not be started in.
 
-        This is the existing checkpoint/restore seam with the boilerplate
-        removed; it adds no persistence, no discovery and no replay.
+        What is adopted is the Arbiter's own record, not a caller's summary of
+        it (audit SRIA-06). Each decision must have been issued by this
+        runner's Arbiter, about an evidence record, for this campaign, under
+        this runner's obligation set. Their obligation results are logged as a
+        ``PRIOR_ASSURANCE_ADOPTED`` event, and the obligation state is derived
+        from the log like every other assurance fact; the latest adopted
+        decision about an obligation governs. A bare mapping of booleans is
+        refused.
         """
-        return self.restore(
-            CampaignCheckpoint(
-                run=self._run,
-                events=self._events,
-                budget=self._budget,
-                effects=self._effects,
-                plan=self._plan,
-                obligation_state=dict(obligation_state),
+        if isinstance(decisions, (Mapping, str, bytes)):
+            raise TypeError(
+                "adopt_prior_assurance takes the ArbiterDecisions that "
+                "established the assurance, not a mapping asserting it"
             )
+        decisions = tuple(decisions)
+        if not decisions:
+            raise ValueError("adopt_prior_assurance requires at least one decision")
+        policy = self._obligations.digest
+        declared = {o.obligation_id for o in self._obligations.obligations}
+        results: dict[str, bool] = {}
+        for decision in decisions:
+            if not isinstance(decision, ArbiterDecision):
+                raise TypeError(
+                    f"adopt_prior_assurance received {type(decision).__name__}, "
+                    f"not an ArbiterDecision"
+                )
+            problems = []
+            if not self._arbiter.issued(decision):
+                problems.append("was not issued by this runner's Arbiter")
+            if not decision.is_about_evidence:
+                problems.append("is not about an evidence record")
+            if decision.campaign_id != self._charter.campaign_id:
+                problems.append(f"belongs to campaign {decision.campaign_id!r}")
+            if decision.policy_digest != policy:
+                problems.append("was made under a different obligation set")
+            if problems:
+                raise ValueError(
+                    f"decision {decision.decision_id!r} cannot back prior "
+                    f"assurance: it " + "; it ".join(problems)
+                )
+            # In the order given, the latest decision about an obligation
+            # governs — the same rule the event-log derivation and the stopping
+            # review apply, so all three agree on one set of decisions.
+            for result in decision.obligation_results:
+                if result.obligation_id in declared:
+                    results[result.obligation_id] = result.satisfied is True
+        self._events.append(
+            CampaignEventType.PRIOR_ASSURANCE_ADOPTED,
+            iteration=self._run.iteration,
+            payload={
+                "decision_ids": [d.decision_id for d in decisions],
+                "decision_hashes": [d.decision_hash for d in decisions],
+                "policy_digest": policy,
+                "obligation_results": dict(sorted(results.items())),
+            },
+            at=self._clock(),
         )
+        self._obligation_state = derive_obligation_state(self._events)
+        self._advance(self._run.state)
+        self._checkpoint()
+        return self._run
+
+    def _assurance_decision_hashes(self) -> tuple[str, ...]:
+        """Hashes of the Arbiter decisions behind this run's obligation state."""
+        hashes: list[str] = []
+        for event in self._events:
+            if event.event_type is CampaignEventType.ARBITER_DECIDED:
+                decision_hash = str(event.payload.get("decision_hash", ""))
+                if decision_hash:
+                    hashes.append(decision_hash)
+            elif event.event_type is CampaignEventType.PRIOR_ASSURANCE_ADOPTED:
+                hashes.extend(str(h) for h in event.payload.get("decision_hashes") or ())
+        return tuple(hashes)
 
     def _handle_no_selection(
         self,
@@ -898,7 +1022,13 @@ class CampaignRunner:
             proposal,
             review_id=f"{self._run.run_id}-stopreview-{iteration}",
             obligations=self._obligations,
-            obligation_state=dict(self._obligation_state),
+            # The Arbiter's decisions, as the log records them; the reviewer
+            # keeps only those its Arbiter issued. Obligations this run holds
+            # unmet (a harness report) may only lower standing.
+            assurance_decisions=self._assurance_decision_hashes(),
+            reported_unmet=tuple(
+                sorted(k for k, v in self._obligation_state.items() if v is False)
+            ),
             terminal_objective_available=self._harness.objective().is_available,
             criteria=self._stopping_criteria,
             evaluators=self._stopping_evaluators,
@@ -1344,39 +1474,72 @@ class CampaignRunner:
         bundle = self._harness.assess(
             execution, evidence, assessment_prefix=f"{run_id}-assess-{iteration}"
         )
-        assessment_ids = [a.assessment_id for a in bundle.assessments]
+        # The Arbiter runs the critics the harness asked for, on this evidence,
+        # and records what they produced (audit SRIA-TRUST-01).
+        produced = tuple(
+            self._arbiter.run_critic(
+                request.critic_id,
+                *request.inputs,
+                subject=evidence,
+                assessment_id=request.assessment_id,
+                **dict(request.options),
+            )
+            for request in bundle.critic_requests
+        )
+        assessments = tuple(bundle.assessments) + produced
+        assessment_ids = [a.assessment_id for a in assessments]
+        # A harness may lower an obligation, never raise one (audit SRIA-06).
+        harness_unmet = sorted(
+            str(k) for k, v in bundle.obligation_state.items() if v is not True
+        )
+        ignored_claims = sorted(
+            str(k) for k, v in bundle.obligation_state.items() if v is True
+        )
         self._events.append(
             CampaignEventType.CRITICS_COMPLETED,
             iteration=iteration,
             payload={
                 "assessment_ids": assessment_ids,
-                "verdicts": [a.verdict.value for a in bundle.assessments],
+                "verdicts": [a.verdict.value for a in assessments],
+                "harness_satisfaction_claims_ignored": ignored_claims,
             },
             at=self._clock(),
         )
-        self._obligation_state.update(bundle.obligation_state)
 
         decision = self._arbiter.decide(
             decision_id=f"{run_id}-arb-{iteration}",
-            subject_ref=evidence.evidence_id,
-            assessments=bundle.assessments,
+            evidence=evidence,
+            assessments=assessments,
             obligations=self._obligations,
             budget=bundle.uncertainty_budget,
             decided_at=self._clock(),
         )
+        declared = {o.obligation_id for o in self._obligations.obligations}
         self._events.append(
             CampaignEventType.ARBITER_DECIDED,
             iteration=iteration,
             payload={
                 "decision_id": decision.decision_id,
+                "decision_hash": decision.decision_hash,
                 "verdict": decision.verdict.value,
                 "unmet_obligations": list(decision.unmet_obligations),
+                "subject_record_hash": decision.subject_ref,
+                "policy_digest": decision.policy_digest,
+                "refused_assessments": list(decision.refused_assessments),
+                # The source of obligation state: the Arbiter's own results.
+                "obligation_results": {
+                    r.obligation_id: r.satisfied is True
+                    for r in decision.obligation_results
+                    if r.obligation_id in declared
+                },
+                "harness_unmet": harness_unmet,
             },
             at=self._clock(),
         )
+        self._obligation_state = derive_obligation_state(self._events)
 
         assessed = evidence
-        for assessment in bundle.assessments:
+        for assessment in assessments:
             assessed = assessed.with_assessment(
                 assessment.to_evidence_assessment(),
                 reason=f"critic {assessment.critic_id}",
@@ -1436,8 +1599,29 @@ class CampaignRunner:
         return assessment_ids, admitted, decision.decision_id, decision.verdict.value
 
     # -- resume ------------------------------------------------------------
+    @staticmethod
+    def _require_derivable_assurance(checkpoint: CampaignCheckpoint) -> None:
+        """Refuse a checkpoint whose assurance state the log does not establish.
+
+        A checkpoint is a caller-supplied object -- or bytes someone could
+        edit. Its obligation state and its iteration records' decisions,
+        verdicts and admissions must be what its own event log says (audit
+        SRIA-06 / SER-01).
+        """
+        problems = assurance_disagreements(
+            checkpoint.events.events,
+            obligation_state=checkpoint.obligation_state,
+            iterations=checkpoint.run.iterations,
+        )
+        if problems:
+            raise ResumeViolation(
+                "checkpoint assurance state is not backed by its event log: "
+                + "; ".join(problems)
+            )
+
     def restore(self, checkpoint: CampaignCheckpoint) -> CampaignRun:
-        """Adopt a checkpoint's state. Replays nothing and re-derives nothing."""
+        """Adopt a checkpoint's state. Replays nothing; verifies assurance state."""
+        self._require_derivable_assurance(checkpoint)
         self._run = checkpoint.run
         self._events = CampaignEventLog(
             checkpoint.run.run_id, checkpoint.events.events

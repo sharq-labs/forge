@@ -75,6 +75,7 @@ from engcore.sria.assurance import (
     budget_from_declaration,
     model_discrepancy_check,
     obligations_from_charter,
+    trusting_authority,
 )
 from engcore.sria.calibration import (
     CalibrationReport,
@@ -116,8 +117,8 @@ def clean_run() -> RunOutcome:
     )
 
 
-def registry() -> AdmissionAuthorityRegistry:
-    return AdmissionAuthorityRegistry([AUTHORITY])
+def registry(authority=None) -> AdmissionAuthorityRegistry:
+    return AdmissionAuthorityRegistry([authority or AUTHORITY])
 
 
 def declaration(
@@ -170,12 +171,20 @@ def good_result(result_id: str = "res-good") -> ScientificResult:
 
 
 def evidence_for(result: ScientificResult, evidence_id: str = "ev-m3") -> Evidence:
+    """Evidence claiming what ``result`` actually holds.
+
+    The claim is ``V:mid`` when the result has it, otherwise the result's first
+    quantity, at exactly the result's value: an assessment of the result counts
+    for the claim only if the result backs it (audit sria follow-up).
+    """
+    name = "V:mid" if "V:mid" in result.values else next(iter(result.values))
+    quantity = result.values[name]
     return Evidence(
         evidence_id=evidence_id,
         source_class=SourceClass.SIMULATION,
         claim_type=ClaimType.QOI_VALUE,
-        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref="V:mid"),
-        claim_payload={"value": 9.0, "units": "volt"},
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref=name),
+        claim_payload={"value": quantity.magnitude, "units": str(quantity.units)},
         uncertainty=declaration(numerical=quantified()),
         provenance_ref=result.provenance.run_id,
         domain_pack_ref="electrical.dc",
@@ -268,6 +277,9 @@ class DemoDomainCritic:
                 assessment_id=assessment_id,
                 critic_id=self.critic_id,
                 critic_version=self.critic_version,
+                # Names the run it read, which is what binds this assessment to
+                # evidence derived from that run (audit SRIA-TRUST-01).
+                inputs_ref=(result.result_id, result.provenance.run_id),
             ),
             checks=tuple(checks),
             findings=tuple(findings),
@@ -302,6 +314,7 @@ def run_pipeline(
     mandatory_numerical=("residual_evidence",),
     subject_ref=None,
     run_outcome=None,
+    evidence=None,
 ):
     """Result -> critics -> arbiter. Returns (assessments, decision, arbiter).
 
@@ -309,15 +322,34 @@ def run_pipeline(
     authorize decisions it actually issued; a fresh instance would (rightly)
     refuse.
 
-    ``subject_ref`` is the artifact the *decision* is about. Critics assess a
-    result; admission is about an evidence record, so a flow that ends in
-    admission decides about the evidence id. The Arbiter's binding check then
-    prevents replaying a decision onto a different record.
+    Every decision here is about ONE evidence record (audit SRIA-TRUST-01):
+    ``evidence`` if given, else ``evidence_for(result, subject_ref)``. Before
+    the audit this fixture decided about a caller-chosen string — the result
+    id, or an evidence id — which is exactly the subject substitution the
+    audit exploited. The critics are registered with the Arbiter and run
+    through it on that evidence, so their assessments are recorded and bound.
     """
     run_outcome = clean_run() if run_outcome is None else run_outcome
+    if evidence is None:
+        evidence = evidence_for(result, evidence_id=subject_ref or "ev-m3")
+    critics = [NumericalCritic(), CalibrationCriticAdapter()]
+    if domain_critic is not None:
+        critics.append(domain_critic)
+    # A fresh authority per pipeline, trusting exactly these critics and this
+    # policy: an authority serves one Arbiter (audit sria follow-up). Build the
+    # gateway from ``arbiter.authority``.
+    authority = trusting_authority(
+        f"arbiter.m3.{evidence.evidence_id}",
+        critics,
+        policies=(obligations,),
+        secret="m3-test-secret",
+    )
+    arbiter = Arbiter(authority, critics=critics)
     assessments = [
-        NumericalCritic().assess(
+        arbiter.run_critic(
+            NumericalCritic.critic_id,
             result,
+            subject=evidence,
             assessment_id="as-num",
             budget=budget,
             mandatory_checks=mandatory_numerical,
@@ -326,8 +358,10 @@ def run_pipeline(
     ]
     if domain_critic is not None:
         assessments.append(
-            domain_critic.assess_domain(
+            arbiter.run_critic(
+                domain_critic.critic_id,
                 result,
+                subject=evidence,
                 assessment_id="as-dom",
                 budget=budget,
                 mandatory_checks=obligations.required_domain_checks,
@@ -335,17 +369,18 @@ def run_pipeline(
         )
     if calibration_reports:
         assessments.append(
-            CalibrationCriticAdapter().assess(
+            arbiter.run_critic(
+                CalibrationCriticAdapter.critic_id,
                 calibration_reports,
+                subject=evidence,
                 assessment_id="as-cal",
-                subject_ref=result.result_id,
+                subject_ref=evidence.record_hash,
                 required_verdicts=required_calibration,
             )
         )
-    arbiter = Arbiter(AUTHORITY)
     decision = arbiter.decide(
         decision_id="dec-1",
-        subject_ref=subject_ref or result.result_id,
+        evidence=evidence,
         assessments=assessments,
         obligations=obligations,
         budget=budget,
@@ -781,12 +816,17 @@ def test_unquantified_required_channel_blocks_valid():
 
 def test_empty_obligations_cannot_produce_valid():
     result = good_result()
-    decision = Arbiter(AUTHORITY).decide(
+    arbiter = Arbiter(AUTHORITY, critics=(NumericalCritic(),))
+    decision = arbiter.decide(
         decision_id="d",
         subject_ref=result.result_id,
         assessments=[
-            NumericalCritic().assess(
-                result, assessment_id="a", budget=full_budget(numerical=quantified())
+            arbiter.run_critic(
+                NumericalCritic.critic_id,
+                result,
+                subject=result.result_id,
+                assessment_id="a",
+                budget=full_budget(numerical=quantified()),
             )
         ],
         obligations=ObligationSet(campaign_id="empty"),
@@ -840,7 +880,6 @@ def test_suspended_evidence_leaves_active_belief():
     """(14) admitted -> suspended -> gone from the active view."""
     result = good_result()
     evidence = evidence_for(result)
-    gateway = BeliefUpdateGateway(authorities=registry())
 
     budget = full_budget(numerical=quantified())
     obligations = standard_obligations()
@@ -852,6 +891,7 @@ def test_suspended_evidence_leaves_active_belief():
         subject_ref=evidence.evidence_id,
     )
     assert decision.verdict is AssuranceVerdict.VALID
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
 
     assessed = evidence
     for assessment in assessments:
@@ -1188,16 +1228,16 @@ def test_end_to_end_electrical_dc_reaches_belief():
         domain_critic=DemoDomainCritic(
             discrepancy_supported_by="hand-derived analytical divider values"
         ),
-        subject_ref=evidence.evidence_id,
+        evidence=evidence,
     )
-    assert decision.verdict is AssuranceVerdict.VALID
+    assert decision.verdict is AssuranceVerdict.VALID, decision.reasons
 
     assessed = evidence
     for assessment in assessments:
         assessed = assessed.with_assessment(assessment.to_evidence_assessment())
     admitted = assessed.admit(arbiter.authorize_admission(decision, assessed))
 
-    gateway = BeliefUpdateGateway(authorities=registry())
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
     entry = gateway.submit(admitted)
     assert entry.evidence_id == "ev-divider"
     assert gateway.belief.supports(admitted.belief_key)
@@ -1233,7 +1273,7 @@ def test_end_to_end_defective_result_does_not_reach_belief():
     refusal = arbiter.authorize_admission(decision, assessed)
     assert refusal.admitted is False
 
-    gateway = BeliefUpdateGateway(authorities=registry())
+    gateway = BeliefUpdateGateway(authorities=registry(arbiter.authority))
     after = assessed.admit(refusal)
     _raises(BeliefWriteViolation, gateway.submit, after)
     assert len(gateway.belief) == 0

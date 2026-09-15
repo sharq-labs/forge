@@ -83,10 +83,23 @@ def _build_state(n: int = 8):
     for index in range(n):
         iteration = index + 1
         for slot in range(4):
+            # The last slot carries the Arbiter's obligation results, so the
+            # checkpoint's obligation_state is what the log establishes
+            # (audit SER-01: materialize re-derives it and refuses a mismatch).
             log.append(
-                CampaignEventType.ITERATION_COMPLETED,
+                CampaignEventType.ARBITER_DECIDED
+                if slot == 3
+                else CampaignEventType.ITERATION_COMPLETED,
                 iteration=iteration,
-                payload={"iteration": iteration, "slot": slot},
+                payload=(
+                    {
+                        "iteration": iteration,
+                        "slot": slot,
+                        "obligation_results": {"adequacy": bool(iteration % 2)},
+                    }
+                    if slot == 3
+                    else {"iteration": iteration, "slot": slot}
+                ),
                 at=f"t-{iteration}-{slot}",
             )
         budget.settle(
