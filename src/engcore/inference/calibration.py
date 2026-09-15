@@ -811,11 +811,25 @@ def _grid_resolution_refusal(
     posterior. Predictive UQ
     keeps its documented exact-discrete meaning for such a posterior; an
     identifiability claim, which needs resolution, is refused.
+
+    The waiver never reaches a COLLAPSED posterior. An effective sample size
+    below ``p + 1`` is refused first, whatever the node count (INF-04): a 3x3
+    grid spanning forty standard errors puts all its mass on one node and would
+    otherwise report an epistemic uncertainty of exactly zero -- the grid's
+    ignorance presented as certainty -- while a 4x4 grid of the same span, with
+    enough nodes to reach the checks below, was refused.
     """
     if _ALIASING_NUMBER_MINIMUM is None:
         return None
     points = posterior.points
     p = points.shape[1]
+    ess = posterior_effective_sample_size(posterior)
+    if ess < p + 1:
+        return (
+            f"{GRID_TOO_COARSE_FOR_INFERENCE}: effective sample size {ess:.3g} is "
+            f"below {p + 1}, the fewest effective points that can carry a "
+            f"{p}-parameter covariance, however small the axis spacing looks"
+        )
     needed = 2 * ((p + 1) * (p + 2) // 2)
     usable = int(np.count_nonzero(np.isfinite(posterior.log_likelihood) & posterior.admissible_mask))
     if usable < needed:
@@ -832,13 +846,6 @@ def _grid_resolution_refusal(
             f"{GRID_TOO_COARSE_FOR_INFERENCE}: the posterior's points are not an "
             f"axis-aligned tensor lattice, so no lattice step exists to check its "
             f"resolution against"
-        )
-    ess = posterior_effective_sample_size(posterior)
-    if ess < p + 1:
-        return (
-            f"{GRID_TOO_COARSE_FOR_INFERENCE}: effective sample size {ess:.3g} is "
-            f"below {p + 1}, the fewest effective points that can carry a "
-            f"{p}-parameter covariance, however small the axis spacing looks"
         )
     lattice_covariance, why = _fitted_lattice_covariance(posterior, steps)
     if lattice_covariance is None:
