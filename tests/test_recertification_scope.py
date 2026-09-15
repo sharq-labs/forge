@@ -76,9 +76,36 @@ def test_every_file_the_certificate_enumerates_requires_recertification(area):
     "benchmarks/trust_hardening/audit/mutations.py",
     "tests/test_anything.py",
     "pyproject.toml",
+    # Main audit: uq was out of scope while certified routes called its grid
+    # refusal, and the SRIA admission chain had no certificate at all.
+    "src/engcore/uq/predictive.py",
+    "src/engcore/uq/representation.py",
+    "src/engcore/sria/assurance/arbiter.py",
+    "src/engcore/sria/admission.py",
+    "src/engcore/sria/gateway.py",
+    "src/engcore/sria/campaign/runner.py",
+    "src/engcore/api_snapshot.py",
+    "src/engcore/__init__.py",
+    # A mutation target outside every scope area (GUARD 14b/19a/20b).
+    "src/engcore/mcp/evidence.py",
 ])
 def test_certified_and_trust_sensitive_paths_require_recertification(path):
     assert rs.requires_recertification(path), path
+
+
+def test_every_file_a_certified_mutation_names_requires_recertification():
+    """A kill count is a claim about the mutated lines; their files must be triggers.
+
+    Main audit CERT-03: 26 of 94 formal mutations targeted files that were neither
+    in scope nor a trigger, so an edit to one of those guards merged on the
+    ordinary suite while the certificate still reported every mutant killed.
+    """
+    formal = rs._formal_mutation_targets((REPO / rs.FORMAL_MUTATION_HARNESS).read_text(encoding="utf-8-sig"))
+    trust = rs._trust_mutation_targets((REPO / rs.TRUST_MUTATION_POPULATION).read_text(encoding="utf-8-sig"))
+    assert formal and trust
+    for path in sorted(set(formal) | set(trust)):
+        assert (REPO / path).is_file(), path
+        assert rs.requires_recertification(path), path
 
 
 @pytest.mark.parametrize("path", [
@@ -86,7 +113,7 @@ def test_certified_and_trust_sensitive_paths_require_recertification(path):
     "docs/TESTING.md",
     "src/engcore/domains/thermal/conduction1d/solver.py",
     "src/engcore/mcp/server.py",
-    "src/engcore/uq/representation.py",
+    "src/engcore/sria/decision/utility.py",
     "src/engcore/scientificx/module.py",
     "src/engcore/scientific.py",
     "experiments/thermal_t1/config.py",

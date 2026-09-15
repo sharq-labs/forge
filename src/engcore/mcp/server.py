@@ -627,7 +627,9 @@ check how far R moved against what you accept. Each report carries: the values w
 the satisfied, violated and UNKNOWN condition names), every validation check \
 with its outcome and what it established -- including checks that did NOT run \
 -- the coupling outcome as its own field, full provenance, and anything you \
-asserted, marked caller_asserted and consumed by no verdict.
+asserted, marked caller_asserted. Your applicability declaration is what the \
+thermal validity conditions are computed from, so its values decide the \
+verdict, and the record says so: consumed_by_verdict is true.
 
 Each stage carries a verdict of SUPPORTED, INSUFFICIENT_EVIDENCE or \
 NOT_SUPPORTED, with verdict_reasons naming the specific condition, check or \
@@ -664,8 +666,10 @@ letting its own I^2 R dissipation heat a lumped thermal body and carrying the \
 new temperature into the next step. Returns the values with units, each \
 model's validity (status plus the satisfied, violated and UNKNOWN condition \
 names), every validation check with its outcome including checks that did NOT \
-run, full provenance, and your own declarations marked caller_asserted and \
-consumed by no verdict.
+run, full provenance, and your own declarations marked caller_asserted. The \
+cell limits and the load you declare are what the battery validity conditions \
+are computed from, so their values decide the verdict, and each record says \
+so: consumed_by_verdict is true.
 
 Four battery models are assessed independently and are meant to be able to \
 disagree: a cell whose terminal voltage the Rint circuit describes badly may \

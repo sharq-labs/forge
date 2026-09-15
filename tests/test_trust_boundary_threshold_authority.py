@@ -57,6 +57,7 @@ from engcore.scientific.results.validation import (
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -93,7 +94,7 @@ DISAGREEING = {"a": {"v": 1.0}, "b": {"v": 1.3}}
 
 
 def _over(thresholds, values=DISAGREEING) -> CrossSolverConsensus:
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="threshold-authority",
         routes=ROUTES,
         values=values,
@@ -129,7 +130,8 @@ def _assert_not_authoritative(thresholds: VerificationThresholds) -> None:
 # ---- Step 1: the reproduction ------------------------------------------------
 def test_an_impersonated_gate_earns_no_level_on_any_promotion_path():
     """1-6, verbatim: discover a real gate, copy its identity, loosen a number."""
-    assert DC_CONSENSUS_THRESHOLDS.identity == "electrical.dc.cross_solver@0.1.0"
+    # 0.2.0 since NUM-03 declared absolute floors per quantity kind in this set.
+    assert DC_CONSENSUS_THRESHOLDS.identity == "electrical.dc.cross_solver@0.2.0"
     forged = _copy(DC_CONSENSUS_THRESHOLDS, values={KEY: 0.5})
     assert forged.identity == DC_CONSENSUS_THRESHOLDS.identity
 

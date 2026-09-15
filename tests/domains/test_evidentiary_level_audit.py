@@ -48,7 +48,6 @@ LEVELLED = {
     "tolerance_independence": "NUMERICALLY_CONVERGED",
     "analytic_invariant_agreement": "ANALYTICALLY_VERIFIED",
     "analytic_reference_agreement": "ANALYTICALLY_VERIFIED",
-    "independent_steady_state_agreement": "CROSS_SOLVER_VALIDATED",
     # The consensus decides its own level; the check carries whatever the
     # declaration earned, which is CROSS_SOLVER_VALIDATED or nothing.
     "cross_method_agreement": None,
@@ -75,6 +74,9 @@ ESTABLISHES_NOTHING = {
     "integration_reported_success": "never",
     "trajectory_finite": "never",
     "state_physically_admissible": "never",
+    # Levelled (CROSS_SOLVER_VALIDATED) until IND-04: its reference reads the
+    # solver's own derived parameters, so it is not independent evidence.
+    "independent_steady_state_agreement": "earnable later",
     # thermal_models/conduction1d_schemes.py
     "field_finite": "never",
     "amplitude_decay": "never",
@@ -254,5 +256,6 @@ def test_the_document_carries_a_row_for_every_audited_check():
     text = AUDIT.read_text(encoding="utf-8")
     for name in ESTABLISHES_NOTHING:
         assert f"`{name}`" in text, f"{name} has no row in {AUDIT.name}"
-    assert "Checks that pass today while establishing nothing: 17" in text
-    assert str(len(ESTABLISHES_NOTHING)) == "17"
+    # 18 since IND-04 moved `independent_steady_state_agreement` here.
+    assert "Checks that pass today while establishing nothing: 18" in text
+    assert str(len(ESTABLISHES_NOTHING)) == "18"

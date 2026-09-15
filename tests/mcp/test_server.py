@@ -436,7 +436,9 @@ def test_a_report_carries_validity_validation_provenance_and_the_claim():
     # The caller's own claim, fenced by markings that survive the wire.
     claim = report["declarations"][0]
     assert claim["caller_asserted"] is True
-    assert claim["consumed_by_verdict"] is False
+    # True since the results audit (CAP-04): the declared values are what the
+    # validity conditions are computed from. It used to be a literal False.
+    assert claim["consumed_by_verdict"] is True
 
 
 # =====================================================================

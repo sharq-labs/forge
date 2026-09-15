@@ -544,16 +544,22 @@ def run_battery_case(
         contributing_models=tuple(
             sorted((m.model_id, m.version) for m in (*_MODELS, _LUMPED))
         ),
+        # `consumed_by_verdict=True`, stated rather than defaulted: the four
+        # battery models' validity assessments above are computed from these
+        # limits and this load (a continuous C-rate of 3 -> 0.5 1/h moves the
+        # verdict), so the values a reader sees here decided it.
         declarations=(
             AssertedContext(
                 source="CellLimits",
                 payload=cell.limits.to_dict(),
                 description="caller-declared cell limits",
+                consumed_by_verdict=True,
             ),
             AssertedContext(
                 source="DischargeLoad",
                 payload=load.to_dict(),
                 description="caller-declared duty and stopping rule",
+                consumed_by_verdict=True,
             ),
         ),
     )

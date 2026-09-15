@@ -331,9 +331,12 @@ def test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence(refused)
         return None if refuse else _linear(t)
 
     (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
-    assert calls["refused"] == (4 if refused == "every_probe" else 1)
+    # 2p principal-axis probes, 2p(p - 1) diagonal probes and 2 along Sigma grad g for the one prediction: 10 for p = 2.
+    # Before audit HUQ-07 only the 2p = 4 axis probes existed, and these counts pinned that.
+    probes = 2 * 2 + 2 * 2 * 1 + 2
+    assert calls["refused"] == (probes if refused == "every_probe" else 1)
     # 1 + 4p finite-difference calls (a step and its half, per column), then whichever probes were admitted
-    assert calls["admitted"] == 1 + 4 * 2 + (0 if refused == "every_probe" else 3)
+    assert calls["admitted"] == 1 + 4 * 2 + (0 if refused == "every_probe" else probes - 1)
     assert r.route_claim is RouteClaim.DOWNGRADED
     assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
     if refused == "every_probe":
@@ -368,7 +371,9 @@ def test_a_complete_linear_check_is_supported():
         return _linear(t)
 
     (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
-    assert len(calls) == 1 + 4 * 2 + 2 * 2
+    # 1 + 4p finite-difference calls, 2p axis probes, 2p(p - 1) diagonal probes and 2 along Sigma grad g (audit HUQ-07;
+    # this pinned the 2p axis probes alone before)
+    assert len(calls) == 1 + 4 * 2 + 2 * 2 + 2 * 2 * 1 + 2
     assert r.route_claim is RouteClaim.SUPPORTED and r.reasons == ()
     assert r.predictive_nonlinearity < 1e-6
 

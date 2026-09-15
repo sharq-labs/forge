@@ -64,6 +64,18 @@ class DCValidationSettings:
     means an exact check; NaN would make every comparison silently false
     (turning validation into a rubber stamp) and infinity would make every
     comparison silently true, so both are refused.
+
+    **Scale, not unit (NUM-01).** Each check's bound is relative to the
+    quantity it judges -- ``residual_rtol`` times the gross current at a node,
+    the terms of a matrix row, the voltages in a source relation, the total
+    power magnitude -- plus an absolute FLOOR that is this setting's value
+    scaled by the circuit's own current, voltage or power: ``kcl_atol_ampere``
+    is the floor for a circuit whose largest current is one ampere, and a
+    circuit carrying nanoamperes gets a floor nine orders smaller. These used to
+    be absolute: a 1 V divider of two 1 GOhm resistors with its midpoint
+    corrupted from 0.5 V to 0.6 V left a 2e-10 A charge imbalance, inside
+    1e-9 A, and the report read PASS with NUMERICALLY_CONVERGED while the same
+    corruption at 1 kOhm FAILed.
     """
 
     residual_atol: float = 1e-9
@@ -135,16 +147,75 @@ class DCValidationSettings:
 #: Named and versioned so a report says which set produced its level. A
 #: ``DCValidationSettings`` carrying anything else yields a derived set, which
 #: awards nothing -- see ``DCValidationSettings.convergence_thresholds``.
+#:
+#: **0.2.0 (NUM-01): the same numbers, a different and stated meaning.** 0.1.0
+#: bounded ``||A x - z||`` by ``atol + rtol * ||z||`` in whatever units the rows
+#: carry, so a gigaohm circuit's whole residual sat under the absolute term. The
+#: bound is now per row -- ``rtol`` times that row's own terms
+#: ``sum_j |A_ij x_j| + |z_i|``, plus ``atol`` times the largest such scale among
+#: rows of the same kind (nodal current rows, source voltage rows) as a floor --
+#: and the worst row is reported. The version moves because what the numbers
+#: gate moved; the pin in ``engcore.domains`` moves with it.
 DC_CONVERGENCE_THRESHOLDS = VerificationThresholds(
     gate_id="electrical.dc.linear_residual",
-    version="0.1.0",
+    version="0.2.0",
     values={"residual_atol": 1e-9, "residual_rtol": 1e-9},
     basis=(
         "round-off-scale bounds on a direct factorization of a small dense "
-        "system; the residual this gates is ||A x - z|| for a solve the "
-        "backend claims to have completed"
+        "system, applied per row of A x - z relative to that row's own terms, "
+        "with the absolute part a floor scaled by the largest row of its kind"
     ),
 )
+
+
+def _circuit_scales(
+    prepared: PreparedDCSystem, solution: np.ndarray
+) -> tuple[float, float, float]:
+    """``(current in A, voltage in V, power in W)``: the size of this circuit.
+
+    Read from the declared sources and from the solution being judged, and used
+    only to scale the absolute floors (NUM-01), never as the relative part of a
+    bound. A corrupted solution cannot buy itself a loose bound by inflating
+    these: every relative term is taken against the very quantity the check
+    measures, so an error of the order of the quantity fails whatever the
+    floor.
+    """
+    circuit = prepared.circuit
+    voltages = _voltages(prepared, solution)
+    voltage = max(
+        [abs(v) for v in voltages.values()]
+        + [abs(s.voltage_volt) for s in circuit.voltage_sources]
+        + [0.0]
+    )
+    current = max(
+        [
+            abs(voltages[r.node_a] - voltages[r.node_b]) / r.resistance_ohm
+            for r in circuit.resistors
+        ]
+        + [
+            abs(prepared.source_current(solution, s.component_id))
+            for s in circuit.voltage_sources
+        ]
+        + [abs(s.current_ampere) for s in circuit.current_sources]
+        + [0.0]
+    )
+    return current, voltage, current * voltage
+
+
+def _worst_against(pairs: list[tuple[str, float, float]]) -> tuple[str, float, float]:
+    """``(label, residual, tolerance)`` of the entry furthest outside its own bound."""
+    worst = ("", 0.0, 0.0)
+    worst_ratio = -1.0
+    for label, residual, tolerance in pairs:
+        magnitude = abs(residual)
+        if tolerance > 0.0:
+            ratio = magnitude / tolerance
+        else:
+            ratio = 0.0 if magnitude == 0.0 else float("inf")
+        if ratio > worst_ratio:
+            worst_ratio = ratio
+            worst = (label, magnitude, tolerance)
+    return worst
 
 
 def _voltages(prepared: PreparedDCSystem, solution: np.ndarray) -> dict[str, float]:
@@ -207,16 +278,35 @@ def check_linear_residual(
     """``r = A x - z``: did the backend actually solve the system it was given?"""
     residual = prepared.matrix @ solution - prepared.rhs
     norm = float(np.linalg.norm(residual))
-    scale = float(np.linalg.norm(prepared.rhs))
     thresholds = settings.convergence_thresholds
-    tolerance = (
-        thresholds["residual_atol"] + thresholds["residual_rtol"] * scale
-    )
-    passed = norm <= tolerance
+    # Per row, against that row's own terms (NUM-01). Nodal rows are currents
+    # and source rows are voltages, so each kind gets its own floor, scaled by
+    # the largest row of that kind rather than by one unit of either.
+    row_scale = np.abs(prepared.matrix) @ np.abs(solution) + np.abs(prepared.rhs)
+    rows: list[tuple[str, float, float]] = []
+    for kind, start, stop in (
+        ("node", 0, prepared.n_nodes),
+        ("source", prepared.n_nodes, prepared.size),
+    ):
+        if stop <= start:
+            continue
+        floor = thresholds["residual_atol"] * float(np.max(row_scale[start:stop]))
+        for index in range(start, stop):
+            rows.append((
+                f"{kind} row {index}",
+                float(residual[index]),
+                thresholds["residual_rtol"] * float(row_scale[index]) + floor,
+            ))
+    worst_row, worst, tolerance = _worst_against(rows)
+    passed = worst <= tolerance
     return ValidationCheck(
         name="linear_system_residual",
         outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
-        detail=f"||A x - z|| = {norm:.3e} (||z|| = {scale:.3e})",
+        detail=(
+            f"worst {worst_row or 'row'}: |A x - z| = {worst:.3e} against "
+            f"{tolerance:.3e}, relative to that row's own terms "
+            f"(||A x - z|| = {norm:.3e})"
+        ),
         # `award`, not a conditional. The check still runs and still reports
         # its residual against whatever bound it was given; what a caller who
         # widened the bound does not get is the level, because the level is a
@@ -224,7 +314,7 @@ def check_linear_residual(
         establishes=thresholds.award(
             ValidationLevel.NUMERICALLY_CONVERGED, earned=passed
         ),
-        residual=norm,
+        residual=worst,
         tolerance=tolerance,
         evidence=thresholds.evidence(),
     )
@@ -238,11 +328,13 @@ def check_kcl(
     """Charge balance at every non-reference node, rebuilt from components."""
     circuit = prepared.circuit
     voltages = _voltages(prepared, solution)
+    current_scale, _, _ = _circuit_scales(prepared, solution)
+    floor = settings.kcl_atol_ampere * current_scale
 
-    worst_node = ""
-    worst_residual = 0.0
+    nodes: list[tuple[str, float, float]] = []
     for node_id in circuit.non_reference_node_ids:
         net_out = 0.0
+        gross = 0.0
         for resistor in circuit.resistors:
             if node_id == resistor.node_a:
                 other = resistor.node_b
@@ -250,35 +342,44 @@ def check_kcl(
                 other = resistor.node_a
             else:
                 continue
-            net_out += (voltages[node_id] - voltages[other]) / resistor.resistance_ohm
+            branch = (voltages[node_id] - voltages[other]) / resistor.resistance_ohm
+            net_out += branch
+            gross += abs(branch)
         for source in circuit.voltage_sources:
             current = prepared.source_current(solution, source.component_id)
             if node_id == source.positive_node:
                 net_out += current       # defined as leaving the positive node
+                gross += abs(current)
             elif node_id == source.negative_node:
                 net_out -= current
+                gross += abs(current)
         for source in circuit.current_sources:
             value = source.current_ampere
             if node_id == source.from_node:
                 net_out += value         # extracted here, flows into the source
+                gross += abs(value)
             elif node_id == source.to_node:
                 net_out -= value         # injected here
-        if abs(net_out) > abs(worst_residual):
-            worst_residual = net_out
-            worst_node = node_id
+                gross += abs(value)
+        # Relative to the current actually flowing through this node, with a
+        # floor scaled by the circuit's largest current (NUM-01).
+        nodes.append((node_id, net_out, settings.residual_rtol * gross + floor))
 
-    passed = abs(worst_residual) <= settings.kcl_atol_ampere
+    worst_node, worst_residual, tolerance = _worst_against(nodes)
+    passed = worst_residual <= tolerance
     detail = (
-        f"worst node {worst_node!r}: net current out = {worst_residual:.3e} A"
-        if worst_node
+        f"worst node {worst_node!r}: net current out = {worst_residual:.3e} A "
+        f"against {tolerance:.3e} A (relative to the current through the node, "
+        f"floor scaled by the circuit's largest current {current_scale:.3e} A)"
+        if nodes
         else "no non-reference nodes to check"
     )
     return ValidationCheck(
         name="kirchhoff_current_law",
         outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
         detail=detail,
-        residual=abs(worst_residual),
-        tolerance=settings.kcl_atol_ampere,
+        residual=worst_residual,
+        tolerance=tolerance,
     )
 
 
@@ -308,26 +409,29 @@ def check_resistor_relation(
             detail="circuit contains no resistors",
         )
 
-    worst_id = ""
-    worst_residual = 0.0
+    _, voltage_scale, _ = _circuit_scales(prepared, solution)
+    floor = settings.ohm_atol_volt * voltage_scale
+    relations: list[tuple[str, float, float]] = []
     for resistor in circuit.resistors:
         v_ab = voltages[resistor.node_a] - voltages[resistor.node_b]
         i_ab = v_ab / resistor.resistance_ohm
         residual = v_ab - i_ab * resistor.resistance_ohm
-        if abs(residual) > abs(worst_residual):
-            worst_residual = residual
-            worst_id = resistor.component_id
+        relations.append(
+            (resistor.component_id, residual, settings.residual_rtol * abs(v_ab) + floor)
+        )
 
-    passed = abs(worst_residual) <= settings.ohm_atol_volt
+    worst_id, worst_residual, tolerance = _worst_against(relations)
+    passed = worst_residual <= tolerance
     return ValidationCheck(
         name="resistor_metric_consistency",
         outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
         detail=(
             f"worst resistor {worst_id!r}: V - I R = {worst_residual:.3e} V "
+            f"against {tolerance:.3e} V "
             f"(internal metric consistency, not independent evidence)"
         ),
-        residual=abs(worst_residual),
-        tolerance=settings.ohm_atol_volt,
+        residual=worst_residual,
+        tolerance=tolerance,
     )
 
 
@@ -346,25 +450,29 @@ def check_voltage_sources(
             detail="circuit contains no voltage sources",
         )
 
-    worst_id = ""
-    worst_residual = 0.0
+    _, voltage_scale, _ = _circuit_scales(prepared, solution)
+    floor = settings.source_atol_volt * voltage_scale
+    relations: list[tuple[str, float, float]] = []
     for source in circuit.voltage_sources:
-        residual = (
-            voltages[source.positive_node]
-            - voltages[source.negative_node]
-            - source.voltage_volt
+        positive = voltages[source.positive_node]
+        negative = voltages[source.negative_node]
+        residual = positive - negative - source.voltage_volt
+        local = max(abs(positive), abs(negative), abs(source.voltage_volt))
+        relations.append(
+            (source.component_id, residual, settings.residual_rtol * local + floor)
         )
-        if abs(residual) > abs(worst_residual):
-            worst_residual = residual
-            worst_id = source.component_id
 
-    passed = abs(worst_residual) <= settings.source_atol_volt
+    worst_id, worst_residual, tolerance = _worst_against(relations)
+    passed = worst_residual <= tolerance
     return ValidationCheck(
         name="voltage_source_relation",
         outcome=ValidationOutcome.PASS if passed else ValidationOutcome.FAIL,
-        detail=f"worst source {worst_id!r}: (V+ - V-) - Vs = {worst_residual:.3e} V",
-        residual=abs(worst_residual),
-        tolerance=settings.source_atol_volt,
+        detail=(
+            f"worst source {worst_id!r}: (V+ - V-) - Vs = {worst_residual:.3e} V "
+            f"against {tolerance:.3e} V"
+        ),
+        residual=worst_residual,
+        tolerance=tolerance,
     )
 
 
@@ -398,7 +506,13 @@ def check_power_balance(
         absorbed += power
         magnitude += abs(power)
 
-    tolerance = settings.power_atol_watt + settings.residual_rtol * magnitude
+    # Relative to the power actually flowing, with a floor scaled by the
+    # circuit's own power (NUM-01): `power_atol_watt` is the floor for a
+    # circuit of one volt and one ampere, not a watt-sized hole at every scale.
+    _, _, power_scale = _circuit_scales(prepared, solution)
+    tolerance = (
+        settings.power_atol_watt * power_scale + settings.residual_rtol * magnitude
+    )
     passed = abs(absorbed) <= tolerance
     return ValidationCheck(
         name="power_balance",

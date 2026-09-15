@@ -145,6 +145,46 @@ ONE_MODEL_PROVENANCE = dataclasses.replace(
 
 VALUES = {"final_temperature": Quantity(338.577018, K)}
 
+#: The fictional models the fixtures above assess, and the conditions each
+#: declares. Since the results audit (RES-04) a report is SUPPORTED only over
+#: assessments of models whose declared validity domain the boundary resolves
+#: -- an unresolvable model's condition names are a claim nothing checked -- and
+#: an assessment of a resolvable model must account for exactly its declared
+#: conditions. These tests exercise the verdict RULES over small hand-made
+#: records, so the models those records name are declared here, explicitly,
+#: rather than the rules being tested against models nothing declares. The
+#: resolution rule itself is tested in ``test_audit_results_validity_binding``.
+FIXTURE_MODELS = {
+    ("thermal.lumped", "0.1.0"): ("biot_number",),
+    ("electrical.material", "0.1.0"): ("biot_number",),
+}
+
+
+class _FixtureModel:
+    """Exactly what the boundary reads off a declared model: its conditions."""
+
+    def __init__(self, names):
+        from engcore.scientific.models.definition import NOT_DECLARED
+
+        self.validity = ValidityDomain(
+            conditions=tuple(
+                RangeCondition(name=name, minimum=Quantity(0.0, "dimensionless"))
+                for name in names
+            )
+        )
+        self.exclusions = NOT_DECLARED
+
+
+@pytest.fixture(autouse=True)
+def _fixture_models_are_declared(monkeypatch):
+    from engcore.mcp import evidence
+
+    index = dict(evidence._declared_models())
+    for key, names in FIXTURE_MODELS.items():
+        assert key not in index, f"{key} became a real model; use its real conditions"
+        index[key] = _FixtureModel(names)
+    monkeypatch.setattr(evidence, "_MODEL_INDEX", index)
+
 DECLARATION = AssertedContext(
     source="LumpedApplicabilityDeclaration",
     payload={"convection_regime": "forced", "melting_temperature": None},
@@ -412,7 +452,10 @@ def test_the_declaration_is_marked_as_caller_asserted_in_the_serialized_form():
     """The marking must survive to_dict, or a JSON reader never sees it."""
     entry = package(declarations=(DECLARATION,)).to_dict()["declarations"][0]
     assert entry["caller_asserted"] is True
-    assert entry["consumed_by_verdict"] is False
+    # Not stated by this hand-built declaration, so null -- never the literal
+    # false every record used to carry (results audit, CAP-04): in both shipped
+    # assemblers the declared values decide the verdict, and they now say so.
+    assert entry["consumed_by_verdict"] is None
     assert entry["source"] == "LumpedApplicabilityDeclaration"
     # carried verbatim, not summarised
     assert entry["payload"]["convection_regime"] == "forced"
@@ -466,10 +509,16 @@ def test_a_serialized_verdict_inconsistent_with_the_contents_is_rejected():
     assert "does not match" in str(caught.value)
 
 
-def test_a_payload_with_no_verdict_key_is_accepted_and_derives_its_own():
+def test_a_payload_with_no_verdict_key_is_refused():
+    """Refused since the results audit (RES-08); this test used to pin acceptance.
+
+    Checking the verdict only when the key was present made deleting it a way
+    past the check, and every writer of the schema emits it.
+    """
     payload = package().to_dict()
     del payload["verdict"]
-    assert CredibilityEvidenceReport.from_dict(payload).verdict is CredibilityVerdict.SUPPORTED
+    with pytest.raises(CredibilityEvidenceError, match="no verdict"):
+        CredibilityEvidenceReport.from_dict(payload)
 
 
 def test_poisoning_the_instance_dict_does_not_shadow_the_property():
@@ -695,7 +744,7 @@ def test_a_status_given_as_a_bare_string_is_normalised_not_merely_probed():
     record = ModelValidityRecord(
         model_id="thermal.lumped",
         version="0.1.0",
-        assessment=ValidityAssessment(status="in_domain", satisfied=("a",)),
+        assessment=ValidityAssessment(status="in_domain", satisfied=("biot_number",)),
     )
     assert record.status is ValidityStatus.IN_DOMAIN
     assert isinstance(record.assessment.status, ValidityStatus)
@@ -1107,10 +1156,10 @@ def test_a_carried_unknown_is_a_gap_and_a_missing_key_is_a_different_gap():
             {
                 only_model(): ValidityAssessment(
                     status=ValidityStatus.UNKNOWN,
-                    unknown=("emissivity",),
+                    unknown=("biot_number",),
                     unknown_reasons=(
                         UnknownCondition(
-                            name="emissivity",
+                            name="biot_number",
                             reason=UnknownReason.NOT_SUPPLIED,
                         ),
                     ),
@@ -1122,7 +1171,7 @@ def test_a_carried_unknown_is_a_gap_and_a_missing_key_is_a_different_gap():
 
     assert unknown.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
     assert absent.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
-    assert unknown.unknown_conditions == ((only_model(), "emissivity"),)
+    assert unknown.unknown_conditions == ((only_model(), "biot_number"),)
     assert unknown.unassessed_models == ()
     assert absent.unknown_conditions == ()
     assert absent.unassessed_models == tuple(ONE_MODEL_PROVENANCE.models)
@@ -1376,16 +1425,23 @@ def test_f09_the_empty_domain_assessment_the_core_emits_crosses_the_boundary():
     core says so: absence of declared limits is not evidence of unlimited
     validity. The wrapper used to re-derive the status from the condition lists
     alone — empty violated and empty unknown read as IN_DOMAIN — and so refused
-    the very assessment the core produced. ``electrical.dc.kcl`` is a real
-    model in this repository with exactly that domain.
+    the very assessment the core produced.
+
+    ``electrical.dc.kcl`` was named here as the real model with that domain; it
+    has since declared ``lumped_electrical_length``, and since the results
+    audit (RES-04) an assessment of a resolvable model must account for exactly
+    its declared conditions, so the empty assessment is no longer that model's.
+    The record is therefore of an undeclared model: it still crosses with its
+    UNKNOWN status intact, and it says its model did not resolve.
     """
     empty = ValidityDomain().assess({})
     assert empty.status is ValidityStatus.UNKNOWN
 
     record = ModelValidityRecord(
-        model_id="electrical.dc.kcl", version="0.1.0", assessment=empty
+        model_id="fixture.empty_domain", version="0.1.0", assessment=empty
     )
     assert record.status is ValidityStatus.UNKNOWN
+    assert record.model_resolved is False
 
 
 def test_f09_the_wrapper_agrees_with_the_core_on_every_assessment_it_emits():
@@ -1553,7 +1609,7 @@ def test_a_contributing_model_nobody_assessed_blocks_supported():
                 ValidityStatus.IN_DOMAIN,
                 model_id=contributor[0],
                 version=contributor[1],
-                satisfied=("lumped_regime",),
+                satisfied=("lumped_electrical_length",),
             ),
         ),
     )

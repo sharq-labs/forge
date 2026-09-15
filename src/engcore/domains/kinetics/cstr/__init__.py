@@ -39,8 +39,9 @@ Module roles:
     solver.py      CSTRSolver (the five-stage lifecycle) and the solve_reactor
                    wrapper
     validation.py  per-solve checks, and separately the verification gate that
-                   is the only thing allowed to award NUMERICALLY_CONVERGED,
-                   ANALYTICALLY_VERIFIED or CROSS_SOLVER_VALIDATED
+                   is the only thing allowed to award NUMERICALLY_CONVERGED or
+                   ANALYTICALLY_VERIFIED (its steady-state and cross-method
+                   comparisons are reported and establish no level)
 
 THE PUBLIC SURFACE IS DELIBERATELY SMALL
 -----------------------------------------

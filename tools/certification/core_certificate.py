@@ -145,6 +145,17 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tests/test_core_freeze_manifest.py",
      "holds the freeze self-checks the certificate child executes, for the "
      "same reason as the certificate self-checks"),
+    ("src/__init__.py",
+     "the src.engcore alias package; executed before any certified module when "
+     "the core is imported through that path, so an import-time side effect here "
+     "runs ahead of every certified byte"),
+    ("src/engcore/__init__.py",
+     "package initialisation executed before every certified module is imported; "
+     "an import-time side effect here could replace a certified symbol"),
+    ("src/engcore/api_snapshot.py",
+     "both freeze verifiers compute the live frozen-API facts through it; a "
+     "change to how it enumerates symbols would let the frozen digest keep "
+     "matching while the contract drifts"),
     ("tools/__init__.py",
      "executed on every import of tools.certification, before any verifier "
      "code runs; an import-time side effect here could replace a verifier"),
@@ -262,6 +273,55 @@ SCOPE: tuple[ScopeArea, ...] = (
         ),
     ),
     ScopeArea(
+        name="predictive_representation",
+        classification="CORE_CERTIFIED",
+        patterns=("src/engcore/uq/**/*.py",),
+        why=(
+            "not representation only: posterior_predictive_uq is where the grid "
+            "predictive route refuses an under-resolved posterior and refuses to "
+            "renormalise mass away from rejected rows, and the certified "
+            "routed_uncertainty and evidence_identity areas call it. The main "
+            "audit found a collapsed 3x3 grid reported as SUPPORTED with zero "
+            "parameter uncertainty through exactly this call, so a silent edit "
+            "here changes what a certified interval means"
+        ),
+    ),
+    ScopeArea(
+        name="execution_trust",
+        classification="CORE_CERTIFIED",
+        patterns=("src/engcore/execution/**/*.py",),
+        why=(
+            "the trusted-execution record and the trusted consensus gate decide "
+            "whether an execution is reported trusted and whether an artifact-"
+            "backed independence claim holds. They were a recertification "
+            "trigger without being pinned, so a certificate could verify over "
+            "bytes it never measured"
+        ),
+    ),
+    ScopeArea(
+        name="assurance_admission",
+        classification="CORE_CERTIFIED",
+        patterns=(
+            "src/engcore/sria/admission.py",
+            "src/engcore/sria/assurance/*.py",
+            "src/engcore/sria/charter.py",
+            "src/engcore/sria/evidence.py",
+            "src/engcore/sria/gateway.py",
+            "src/engcore/sria/campaign/runner.py",
+            "src/engcore/sria/campaign/stopping.py",
+        ),
+        why=(
+            "the only path by which evidence becomes scientific belief: critics, "
+            "the Arbiter's verdict, the obligations it evaluates, the admission "
+            "authority and the belief gateway. The main audit found assessments "
+            "of one subject admitting another, a caller-built obligation set "
+            "replacing the charter's, and one critic's check satisfying another "
+            "critic's obligation, all green and none mutated. Whatever sria is as "
+            "an application, the decision that turns evidence into belief is a "
+            "trust boundary of the core"
+        ),
+    ),
+    ScopeArea(
         name="harness",
         classification="HARNESS",
         patterns=(
@@ -287,6 +347,9 @@ SCOPE: tuple[ScopeArea, ...] = (
             ".github/workflows/recertify-hardened-core.yml",
             ".github/workflows/tests.yml",
             "benchmarks/core_freeze_v1/audit/reproduce.py",
+            "src/__init__.py",
+            "src/engcore/__init__.py",
+            "src/engcore/api_snapshot.py",
             "tests/test_core_certificate.py",
             "tests/test_core_freeze_manifest.py",
             "tools/__init__.py",
@@ -324,8 +387,8 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "what a verdict means, and they carry their own assurance — three of them "
      "are byte-pinned by frozen experiments"),
     ("src/engcore/mcp/**", "the product boundary: a consumer of the core"),
-    ("src/engcore/design/**, sria/**, systems/**", "applications built on the core"),
-    ("src/engcore/uq/**", "representation only; it computes nothing a verdict rests on"),
+    ("src/engcore/design/**, sria/** (except the assurance/admission chain), systems/**",
+     "applications built on the core"),
     ("tests/** (except the harness area and the two self-check modules)",
      "assurance for everything above, not part of what is certified. They "
      "still trigger recertification (tools/certification/recertification_scope.py), "

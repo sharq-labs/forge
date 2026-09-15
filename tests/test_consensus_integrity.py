@@ -53,6 +53,7 @@ from engcore.scientific.results.validation import (
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -95,7 +96,7 @@ def _consensus(values, *, required=CONTRACT, routes=None, thresholds=THRESHOLDS)
     routes = routes or tuple(
         _route(route_id, f"impl-{route_id}") for route_id in sorted(values)
     )
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="test",
         routes=routes,
         values=values,

@@ -3,7 +3,8 @@
 For a grid it IS the frozen ``assess_identifiability``, refusals included. For the local route it applies the
 same rule to the Gaussian: covariance condition number, largest absolute correlation, and each marginal 95%
 width divided by the estimate, with Gaussian marginal intervals in inference coordinates in place of the
-grid's discrete ones. The verdict is therefore stated in a parameterization, and the record says which.
+grid's discrete ones -- except that a log coordinate's width is its natural-scale relative width, which does
+not depend on the unit it was declared in. The verdict is stated in a parameterization, and the record says which.
 
 Route validity is not identifiability. A SUPPORTED route may report NOT_IDENTIFIABLE; a REFUSED route reports
 no identifiability at all.
@@ -54,6 +55,15 @@ def classify(mean: Sequence[float], covariance, lows: Sequence[float], highs: Se
     for i in range(n):
         scale = abs(float(mean[i]))
         widths.append((highs[i] - lows[i]) / scale if scale > 0.0 else math.inf)
+    status, why = _rule(condition, max_correlation, widths, names, correlation_threshold=correlation_threshold,
+                        condition_threshold=condition_threshold, width_threshold=width_threshold)
+    return status, condition, max_correlation, tuple(widths), why
+
+
+def _rule(condition: float, max_correlation: float, widths: Sequence[float], names: Sequence[str], *,
+          correlation_threshold: float, condition_threshold: float, width_threshold: float) -> tuple[IdentifiabilityStatus, str]:
+    """The frozen V1 classification rule over its three numbers: ``(status, why)``. One rule for writing and reading."""
+    widths = [float(w) for w in widths]
     reasons = []
     if not math.isfinite(condition) or condition > condition_threshold:
         reasons.append(f"posterior covariance condition number {condition:.3g} exceeds {condition_threshold:.3g}")
@@ -82,7 +92,85 @@ def classify(mean: Sequence[float], covariance, lows: Sequence[float], highs: Se
         why += (f". The parameters are strongly correlated ({max_correlation:.4f}) and this is still IDENTIFIABLE on purpose: "
                 f"correlation says a ridge exists, not that it is long, and both marginal intervals here are within "
                 f"{widest:.3g} of their own values")
-    return status, condition, max_correlation, tuple(widths), why
+    return status, why
+
+
+#: The thresholds the router classifies under: the frozen ``assess_identifiability`` defaults.
+CANONICAL_IDENTIFIABILITY_THRESHOLDS = {"correlation_threshold": 0.95, "condition_threshold": 1.0e6, "width_threshold": 1.0}
+
+
+def _same_number(a: float, b: float) -> bool:
+    a, b = float(a), float(b)
+    return (math.isnan(a) and math.isnan(b)) or a == b or math.isclose(a, b, rel_tol=1e-12, abs_tol=0.0)
+
+
+def _report_differences(found: IdentifiabilityReport, expected: IdentifiabilityReport) -> list[str]:
+    """Where a carried report differs from the one its numbers produce, field by field (NaN equals NaN)."""
+    problems = []
+    if found.status is not expected.status:
+        problems.append(f"identifiability status {found.status.value} is not the {expected.status.value} its covariance gives")
+    for label in ("condition_number", "max_abs_correlation", "correlation_threshold", "condition_threshold", "width_threshold",
+                  "effective_sample_size", "occupied_support_fraction"):
+        if not _same_number(getattr(found, label), getattr(expected, label)):
+            problems.append(f"identifiability {label} {getattr(found, label)!r} is not {getattr(expected, label)!r}")
+    for label in ("relative_widths", "spacing_to_std"):
+        a, b = tuple(getattr(found, label)), tuple(getattr(expected, label))
+        if len(a) != len(b) or not all(_same_number(x, y) for x, y in zip(a, b)):
+            problems.append(f"identifiability {label} {list(a)} is not {list(b)}")
+    if tuple(found.parameter_names) != tuple(expected.parameter_names):
+        problems.append("identifiability names other parameters")
+    if found.why != expected.why:
+        problems.append("identifiability explains a verdict its numbers do not give")
+    return problems
+
+
+def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], covariance) -> list[str]:
+    """What a serialized grid result's identifiability can be held to without its grid (audit HUQ-09).
+
+    The grid is data-plane and is not serialized, so the marginal intervals cannot be recomputed. What can: the
+    thresholds are the router's; the condition number and correlation are the carried covariance's, by the frozen
+    formulas; the status and ``why`` follow from the carried numbers by the frozen rule; and each relative width,
+    times its mean, is a central 95% interval of a distribution with the carried mean and standard deviation, which
+    Cantelli's inequality confines to mean +/- sqrt(0.975 / 0.025) sd. A covariance shrunk under a recomputed
+    commitment breaks that bound. A small shift of the mean does not, which is why the digests are integrity-only.
+    """
+    problems = []
+    for key, value in CANONICAL_IDENTIFIABILITY_THRESHOLDS.items():
+        if not _same_number(getattr(report, key), value):
+            problems.append(f"identifiability {key} {getattr(report, key)!r} is not the router's {value!r}")
+    cov = np.asarray(covariance, dtype=np.float64)
+    n = cov.shape[0]
+    eigenvalues = np.linalg.eigvalsh(cov)
+    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
+    condition = math.inf if smallest <= 0.0 else largest / smallest
+    std = np.sqrt(np.maximum(np.diag(cov), 0.0))
+    denominator = np.outer(std, std)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        correlation = np.divide(cov, denominator, out=np.zeros_like(cov), where=denominator > 0.0)
+    off = [abs(float(correlation[i, j])) for i in range(n) for j in range(n) if i != j]
+    max_correlation = max(off) if off else 0.0
+    if not _same_number(report.condition_number, condition):
+        problems.append(f"identifiability condition number {report.condition_number!r} is not the covariance's {condition!r}")
+    if not _same_number(report.max_abs_correlation, max_correlation):
+        problems.append(f"identifiability correlation {report.max_abs_correlation!r} is not the covariance's {max_correlation!r}")
+    widths = tuple(float(w) for w in report.relative_widths)
+    if len(widths) != n:
+        problems.append(f"{len(widths)} relative widths for {n} parameter(s)")
+        return problems
+    status, why = _rule(report.condition_number, report.max_abs_correlation, widths, report.parameter_names,
+                        correlation_threshold=report.correlation_threshold, condition_threshold=report.condition_threshold,
+                        width_threshold=report.width_threshold)
+    if status is not report.status or why != report.why:
+        problems.append(f"identifiability says {report.status.value} where its own numbers give {status.value}")
+    k = math.sqrt(0.975 / 0.025)
+    for i in range(n):
+        scale = abs(float(mean[i]))
+        if not math.isfinite(widths[i]) or scale == 0.0:
+            continue
+        if widths[i] < 0.0 or widths[i] * scale > 2.0 * k * float(std[i]) * (1.0 + 1e-6) + 1e-12 * scale:
+            problems.append(f"a 95% interval {widths[i] * scale:.6g} wide for {report.parameter_names[i]!r} cannot belong to a "
+                            f"distribution with standard deviation {float(std[i]):.6g}")
+    return problems
 
 
 def _report_to_dict(report: IdentifiabilityReport) -> dict[str, Any]:
@@ -129,6 +217,17 @@ class RoutedIdentifiability:
         object.__setattr__(self, "route_claim", claim)
         if not isinstance(self.report, IdentifiabilityReport):
             raise HybridUQError("RoutedIdentifiability carries an IdentifiabilityReport")
+        # The verdict follows from its own numbers under its own thresholds (audit HUQ-09): a status or an explanation
+        # the frozen rule does not give from them is not a verdict. A local report's explanation also names its
+        # parameterization after the rule's text.
+        r = self.report
+        status, why = _rule(r.condition_number, r.max_abs_correlation, r.relative_widths, r.parameter_names,
+                            correlation_threshold=r.correlation_threshold, condition_threshold=r.condition_threshold,
+                            width_threshold=r.width_threshold)
+        explained = r.why == why or (cls is ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION and r.why.startswith(why + " ["))
+        if status is not r.status or not explained:
+            raise HybridUQError(f"the identifiability verdict {r.status.value} and its explanation do not follow from its own "
+                                f"numbers, which give {status.value} and {why!r} under its thresholds")
 
     @property
     def status(self) -> IdentifiabilityStatus:
@@ -148,9 +247,31 @@ class RoutedIdentifiability:
 
     @property
     def digest(self) -> str:
-        payload = self.to_dict()
-        payload["report"].pop("why")
-        return digest_of(payload)
+        # ``why`` is material (audit HUQ-14): two records that explain one verdict in opposite words are not one record.
+        return digest_of(self.to_dict())
+
+
+def _local_marginal_intervals(point: Sequence[float], sd: Sequence[float], transforms: Sequence[str],
+                              q: float) -> tuple[list[float], list[float], list[float]]:
+    """``(scales, lows, highs)`` whose ``(high - low) / |scale|`` is each parameter's relative 95% width.
+
+    For an ``identity`` or ``linear_map`` coordinate that is the Gaussian interval over the estimate. For a ``log``
+    coordinate the inference point is ln(value / declared unit), whose origin moves with the declared unit, so
+    dividing by it made the verdict depend on the unit a parameter was written in (audit HUQ-03). Its width is the
+    natural-scale interval exp(z +/- q sd) relative to exp(z) instead, exp(q sd) - exp(-q sd), which no unit moves.
+    """
+    scales, lows, highs = [], [], []
+    with np.errstate(over="ignore"):
+        for z, s, transform in zip(point, sd, transforms):
+            if transform == "log":
+                scales.append(1.0)
+                lows.append(float(np.exp(-q * float(s))))
+                highs.append(float(np.exp(q * float(s))))
+            else:
+                scales.append(float(z))
+                lows.append(float(z) - q * float(s))
+                highs.append(float(z) + q * float(s))
+    return scales, lows, highs
 
 
 def assess_routed_identifiability(
@@ -178,9 +299,9 @@ def assess_routed_identifiability(
         raise HybridUQError("confidence_level must lie strictly between 0 and 1")
     q = float(norm.ppf(0.5 + level / 2.0))
     sd = np.sqrt(np.diag(cov))
-    point = np.asarray(posterior.inference_point)
+    scales, lows, highs = _local_marginal_intervals(posterior.inference_point, sd, posterior.inference_transforms, q)
     status, condition, max_corr, widths, why = classify(
-        point, cov, point - q * sd, point + q * sd, posterior.parameter_names,
+        scales, cov, lows, highs, posterior.parameter_names,
         correlation_threshold=correlation_threshold, condition_threshold=condition_threshold, width_threshold=width_threshold)
     report = IdentifiabilityReport(
         status=status, condition_number=condition, max_abs_correlation=max_corr, relative_widths=widths,

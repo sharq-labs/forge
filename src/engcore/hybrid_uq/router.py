@@ -25,10 +25,16 @@ from ..uq.predictive import PredictiveObservableSpec
 from ._records import (
     decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
 )
-from .identifiability import RoutedIdentifiability, _grid_axes_digest, assess_routed_identifiability
-from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, local_gaussian_posterior
-from .predictive import RoutedPredictiveUncertainty, grid_digest, grid_predictive_uncertainty, linearized_predictive_uq
-from .sensitivity import to_natural
+from ..scientific.results.immutable import freeze
+from .identifiability import (
+    RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
+)
+from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior
+from .predictive import (
+    RoutedPredictiveUncertainty, _require_weights_follow_likelihood, grid_digest, grid_predictive_uncertainty,
+    linearized_predictive_uq,
+)
+from .sensitivity import SUPPLIED_PREDICTION_AGREEMENT_SD, evaluate, to_natural
 from .vocabulary import (
     GRID_ROUTE_MAXIMUM_PARAMETERS, ApproximationClass, HybridUQError, RouteClaim, RouteDecision, RouteReason, RouteRefusedError,
 )
@@ -100,6 +106,8 @@ class HybridUQResult:
             if claim is RouteClaim.REFUSED or self.mean is None or self.covariance is None:
                 raise HybridUQError(f"decision {decision.value} carries a mean and a covariance and is not REFUSED")
             object.__setattr__(self, "mean", tuple(float(v) for v in self.mean))
+            if not all(math.isfinite(v) for v in self.mean):
+                raise HybridUQError(f"decision {decision.value} reports a mean with a non-finite entry: {list(self.mean)}")
             object.__setattr__(self, "covariance", tuple(tuple(float(v) for v in row) for row in self.covariance))
             require_valid_covariance(self.covariance, len(self.mean))
         if decision is RouteDecision.LOCAL_GAUSSIAN and (self.local_posterior is None or self.local_posterior.claim is not claim):
@@ -109,7 +117,10 @@ class HybridUQResult:
         if self.coordinates not in ("natural", "inference", "none"):
             raise HybridUQError("coordinates is natural, inference or none")
         object.__setattr__(self, "parameter_names", tuple(self.parameter_names))
-        object.__setattr__(self, "considered", tuple(dict(c) for c in self.considered))
+        # Frozen at construction (audit HUQ-13): a validated record's nested mappings cannot be edited in place.
+        object.__setattr__(self, "considered", tuple(freeze(dict(c)) for c in self.considered))
+        if self.grid_summary is not None:
+            object.__setattr__(self, "grid_summary", freeze(dict(self.grid_summary)))
         self._require_one_truth()
 
     def _require_one_truth(self) -> None:
@@ -118,6 +129,12 @@ class HybridUQResult:
         A serialized result holds its parameter names, mean, covariance and claim twice: at the top level, and in
         the local posterior and identifiability records it carries. If they could disagree, a reader would have
         two scientific answers in one record and no way to know which one the router produced.
+
+        The digests a record carries are integrity-only: anyone can recompute them. So the claims are also re-derived
+        from the numbers (audit HUQ-09): a local result's identifiability is recomputed from its covariance under the
+        router's thresholds; a grid result's identifiability is held to its covariance and to the frozen rule; the
+        route diagnostics re-derive their own reasons; the local posterior's point, bounds and covariance reproduce
+        its recorded bound distances. What no field carries -- the Jacobian, the grid itself -- cannot be re-derived.
         """
         decision, names, local, ident = self.decision, self.parameter_names, self.local_posterior, self.identifiability
         if local is not None and not isinstance(local, LocalGaussianPosterior):
@@ -125,6 +142,8 @@ class HybridUQResult:
         if ident is not None and not isinstance(ident, RoutedIdentifiability):
             raise HybridUQError("identifiability must be a RoutedIdentifiability")
         problems = []
+        if local is not None:
+            problems.extend(_posterior_record_problems(local))
         if decision is RouteDecision.LOCAL_GAUSSIAN:
             if self.coordinates != "inference":
                 problems.append("coordinates are not 'inference'")
@@ -143,6 +162,9 @@ class HybridUQResult:
                     problems.append("identifiability names another parameterization")
                 if ident.route_claim is not self.claim:
                     problems.append("identifiability carries another claim")
+                if local.covariance is not None and not problems:
+                    # re-derived from the carried covariance under the router's thresholds (audit HUQ-09)
+                    problems.extend(_report_differences(ident.report, assess_routed_identifiability(local).report))
         elif decision is RouteDecision.REFUSED:
             if self.coordinates != "none":
                 problems.append("a refused routing has no coordinates")
@@ -152,9 +174,16 @@ class HybridUQResult:
             if self.coordinates != "natural":
                 problems.append("grid coordinates are not 'natural'")
             summary = self.grid_summary or {}
+            if set(summary) != _GRID_SUMMARY_KEYS:
+                problems.append(f"grid_summary holds {sorted(summary)}, not exactly {sorted(_GRID_SUMMARY_KEYS)}")
             if summary.get("route") != decision.value:
                 problems.append("grid_summary names another route")
-            moments = _grid_moments_digest(decision.value, names, summary.get("grid_digest"), self.mean, self.covariance)
+            points, dataset = summary.get("points"), summary.get("dataset_id")
+            if isinstance(points, bool) or not isinstance(points, int) or points < 1 or not isinstance(dataset, str):
+                problems.append("grid_summary commits to a positive integer point count and a dataset id")
+                points, dataset = None, None
+            moments = _grid_moments_digest(decision.value, names, summary.get("grid_digest"), self.mean, self.covariance,
+                                           dataset, points)
             if summary.get("moments_digest") != moments:
                 problems.append("mean and covariance are not the moments grid_summary commits to for its grid")
             if ident is None:
@@ -166,6 +195,8 @@ class HybridUQResult:
                     problems.append("identifiability names another parameterization")
                 if ident.route_claim is not RouteClaim.SUPPORTED:
                     problems.append("identifiability carries another claim")
+                if tuple(ident.report.parameter_names) == names:
+                    problems.extend(_grid_report_problems(ident.report, self.mean, self.covariance))
             if decision is RouteDecision.GRID_AS_SUPPLIED and local is not None:
                 problems.append("a supplied grid was used, so no local posterior was built")
             if decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and (local is None or names != local.parameter_names):
@@ -180,6 +211,8 @@ class HybridUQResult:
                     problems.append("covariance differs from the grid's")
                 if summary.get("grid_digest") != grid_digest(grid):
                     problems.append("grid_summary names another grid")
+                if summary.get("dataset_id") != grid.dataset_id or summary.get("points") != int(len(grid.weights)):
+                    problems.append("grid_summary names another dataset or point count than its grid")
         if ident is not None and tuple(ident.report.parameter_names) != names:
             problems.append("identifiability describes other parameters")
         if problems:
@@ -227,22 +260,30 @@ class HybridUQResult:
         return digest_of(payload)
 
 
-def _grid_moments_digest(route: str, parameter_names, grid_identity, mean, covariance) -> str:
-    """The commitment binding a grid result's reported moments to the grid its summary names.
+#: The closed key set of a grid result's summary (audit HUQ-12): nothing uncommitted can ride along in it.
+_GRID_SUMMARY_KEYS = frozenset({"route", "dataset_id", "points", "grid_digest", "moments_digest"})
+
+
+def _grid_moments_digest(route: str, parameter_names, grid_identity, mean, covariance, dataset_id, points) -> str:
+    """The commitment binding a grid result's reported moments, dataset and size to the grid its summary names.
 
     ``from_dict`` cannot restore the grid itself (it is data-plane), so without this a serialized grid record could
     keep its ``grid_digest`` and carry any other mean and valid covariance. The digest is over the canonical route,
-    names, grid digest, mean and covariance, exactly as the record serializes them.
+    names, grid digest, dataset id, point count, mean and covariance, exactly as the record serializes them. It is
+    integrity-only -- anyone can recompute it -- so the record's numbers are also re-derived where they can be.
     """
     return digest_of({"route": str(route), "parameter_names": [str(n) for n in parameter_names],
-                      "grid_digest": grid_identity, "mean": encode_vector(float(v) for v in mean),
+                      "grid_digest": grid_identity, "dataset_id": dataset_id, "points": points,
+                      "mean": encode_vector(float(v) for v in mean),
                       "covariance": encode_matrix(tuple(tuple(float(v) for v in row) for row in covariance))})
 
 
 def _grid_summary(grid: PosteriorGrid, how: str) -> dict[str, Any]:
     identity = grid_digest(grid)
-    return {"route": how, "dataset_id": grid.dataset_id, "points": int(len(grid.weights)), "grid_digest": identity,
-            "moments_digest": _grid_moments_digest(how, grid.parameter_names, identity, grid.mean, grid.covariance)}
+    points = int(len(grid.weights))
+    return {"route": how, "dataset_id": grid.dataset_id, "points": points, "grid_digest": identity,
+            "moments_digest": _grid_moments_digest(how, grid.parameter_names, identity, grid.mean, grid.covariance,
+                                                   grid.dataset_id, points)}
 
 
 #: A rebuilt grid must contain its posterior: on every face that is not a declared bound, the largest
@@ -303,7 +344,58 @@ def _require_requested_grid(table, names, natural):
                             f"({table.points[first].tolist()} returned, {requested[first].tolist()} requested)")
 
 
-def _build(local, policy, observations, lo, hi, nodes):
+#: Interior rows of a rebuilt table re-evaluated through the forward model, chosen from a digest of the table itself,
+#: on top of its two extreme corners, the node nearest the estimate and the table's own best-fitting node.
+_SPOT_CHECK_INTERIOR_ROWS = 4
+
+
+def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, forward):
+    """Refuse a rebuilt table whose values are not the forward model's at the nodes it is spot-checked on (HUQ-05).
+
+    ``_require_requested_grid`` binds a table's coordinates to the request; nothing bound its VALUES, so a builder
+    answering with another model's predictions at the requested coordinates was certified. Deterministic nodes are
+    re-evaluated through the forward evaluator the route was given: the two extreme corners, the node nearest the
+    estimate, the table's best-fitting node, and interior nodes chosen from a digest of the table's own bytes. An
+    admitted node must be admitted by the forward evaluator and agree with it to ``SUPPLIED_PREDICTION_AGREEMENT_SD``
+    observation sigmas; a node the forward evaluator admits must not be refused by the table.
+    """
+    import hashlib
+
+    if forward is None:
+        raise HybridUQError("a rebuilt grid is verified against the forward evaluator; none was supplied")
+    predictions, _columns = table.select_observations(observations)
+    observed, sigma = observations.numeric_vectors()
+    keys = observations.keys
+    units = tuple(o.value.units for o in observations.observations)
+    references = tuple(o.value for o in observations.observations)
+    mask = np.asarray(table.admissible_mask, dtype=bool)
+    n = len(natural)
+    span = np.where(np.ptp(mesh, axis=0) > 0.0, np.ptp(mesh, axis=0), 1.0)
+    rows = {0, n - 1, int(np.argmin(np.sum(((mesh - z0) / span) ** 2, axis=1)))}
+    if np.any(mask):
+        chi = np.sum(((predictions - observed[None, :]) / sigma[None, :]) ** 2, axis=1)
+        rows.add(int(np.argmin(np.where(mask, chi, np.inf))))
+    seed = hashlib.sha256(np.ascontiguousarray(table.values, dtype="<f8").tobytes()
+                          + np.ascontiguousarray(mask, dtype=np.uint8).tobytes()).digest()
+    rows.update(int.from_bytes(seed[4 * k:4 * k + 4], "little") % n for k in range(_SPOT_CHECK_INTERIOR_ROWS))
+    for row in sorted(rows):
+        value = evaluate(forward, natural[row], keys, units, references)
+        if value is None:
+            if mask[row]:
+                raise HybridUQError(f"the rebuilt table admits row {row} ({list(natural[row])}), which the forward evaluator "
+                                    f"refuses: the table is not this forward model's")
+            continue
+        if not mask[row]:
+            raise HybridUQError(f"the rebuilt table refuses row {row} ({list(natural[row])}), which the forward evaluator "
+                                f"admits: the table is not this forward model's")
+        gap = float(np.max(np.abs(predictions[row] - value) / sigma))
+        if not gap <= SUPPLIED_PREDICTION_AGREEMENT_SD:
+            raise HybridUQError(f"the rebuilt table's values differ from the forward evaluator's by {gap:.3g} sigma at row {row} "
+                                f"({list(natural[row])}; at most {SUPPLIED_PREDICTION_AGREEMENT_SD:g}): a table from another "
+                                f"model is not certified as this posterior")
+
+
+def _build(local, policy, observations, forward, lo, hi, nodes):
     p = len(lo)
     axes = [np.linspace(lo[i], hi[i], int(nodes[i])) for i in range(p)]
     mesh = np.array(np.meshgrid(*axes, indexing="ij")).reshape(p, -1).T
@@ -312,13 +404,14 @@ def _build(local, policy, observations, lo, hi, nodes):
     if not isinstance(table, AdmittedForwardTable):
         raise HybridUQError("table_builder must return an AdmittedForwardTable")
     _require_requested_grid(table, local.parameter_names, natural)
+    _require_table_agrees_with_forward(table, natural, mesh, np.asarray(local.inference_point), observations, forward)
     rebuilt = gaussian_grid_posterior(table, observations)
     usable = rebuilt.admissible_mask & np.isfinite(rebuilt.log_likelihood)
     ll = np.where(usable, rebuilt.log_likelihood, -np.inf).reshape(tuple(int(n) for n in nodes))
     return rebuilt, ll
 
 
-def _rebuild_grid(local, policy, observations, refinement=0):
+def _rebuild_grid(local, policy, observations, forward, refinement=0):
     """Design, build, check containment and truncation convergence. ``(posterior, detail)`` or ``(None, (reason, detail))``.
 
     The design is the local Gaussian in inference coordinates. The box covers +/-sigma_span sd around the
@@ -347,7 +440,7 @@ def _rebuild_grid(local, policy, observations, refinement=0):
         nodes, problem = _node_counts(cov, lo, hi, target, budget)
         if nodes is None:
             return None, (RouteReason.GRID_REBUILD_OVER_BUDGET, problem)
-        rebuilt, ll = _build(local, policy, observations, lo, hi, nodes)
+        rebuilt, ll = _build(local, policy, observations, forward, lo, hi, nodes)
         peak = float(np.max(ll))
         grew = False
         truncated = []
@@ -383,7 +476,7 @@ def _rebuild_grid(local, policy, observations, refinement=0):
             return None, (RouteReason.GRID_REBUILD_OVER_BUDGET,
                           f"a declared bound truncates the posterior and the moments had not converged within the budget "
                           f"of {budget} points after {halvings} halving(s)")
-        candidate, _ = _build(local, policy, observations, lo, hi, finer)
+        candidate, _ = _build(local, policy, observations, forward, lo, hi, finer)
         scale = np.sqrt(np.maximum(np.diag(candidate.covariance), 1e-300))
         moved = max(float(np.max(np.abs(candidate.mean - rebuilt.mean) / scale)),
                     float(np.max(np.abs(np.sqrt(np.diag(candidate.covariance)) - np.sqrt(np.diag(rebuilt.covariance))) / scale)))
@@ -397,6 +490,23 @@ def _rebuild_grid(local, policy, observations, refinement=0):
                           f"after {halvings} halving(s)")
     return rebuilt, (f"{int(np.prod(nodes.astype(float)))} points, nodes {[int(n) for n in nodes]}, {attempt} box expansion(s), "
                      f"{halvings} truncation halving(s) on axes {truncated}, {int(refinement)} refinement(s)")
+
+
+def _require_grid_bound_to_request(grid: PosteriorGrid, calibration, observations) -> None:
+    """Refuse a supplied grid that is not a posterior for the request it is routed with (audit HUQ-06).
+
+    A grid over other parameters, or computed from other data, would otherwise be certified GRID_AS_SUPPLIED for a
+    calibration and observations it never saw. Where the request names its parameters (a calibration) or its data
+    (observations), the grid must be over exactly those parameters, in that order, and from that dataset.
+    """
+    if isinstance(calibration, CalibrationResult):
+        requested = tuple(calibration.spec.parameters.names)
+        if tuple(grid.parameter_names) != requested:
+            raise HybridUQError(f"the supplied grid is over parameters {list(grid.parameter_names)}; the request calibrates "
+                                f"{list(requested)}: a grid for other parameters is not this request's posterior")
+    if isinstance(observations, ObservationSet) and str(grid.dataset_id) != str(observations.dataset_id):
+        raise HybridUQError(f"the supplied grid was computed from dataset {grid.dataset_id!r}; the request's observations are "
+                            f"{observations.dataset_id!r}: a grid from other data is not this request's posterior")
 
 
 def route_uncertainty(
@@ -415,6 +525,8 @@ def route_uncertainty(
     if rebuild is not None and not isinstance(rebuild, GridRebuildPolicy):
         raise HybridUQError("rebuild must be a GridRebuildPolicy")
     considered: list[dict[str, str]] = []
+    if isinstance(grid, PosteriorGrid):
+        _require_grid_bound_to_request(grid, calibration, observations)
 
     # 1. the grid as supplied
     if grid is None:
@@ -425,6 +537,7 @@ def route_uncertainty(
         considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "PASSED_OVER",
                            "reason": RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value})
     else:
+        _require_weights_follow_likelihood(grid)
         try:
             identifiability = assess_routed_identifiability(grid)
         except GridResolutionError as exc:
@@ -469,7 +582,7 @@ def route_uncertainty(
                                "reason": "no usable local covariance to design a grid from"})
         else:
             for refinement in range(_MAXIMUM_REFINEMENTS + 1):
-                rebuilt, detail = _rebuild_grid(local, rebuild, observations, refinement)
+                rebuilt, detail = _rebuild_grid(local, rebuild, observations, forward, refinement)
                 if rebuilt is None:
                     reason, why = detail
                     considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",

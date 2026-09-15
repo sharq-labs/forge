@@ -513,12 +513,17 @@ def test_f4_old_provenance_payloads_still_load_and_declare_no_relation():
     *looks* determined. It is not: the record never stated that this solver
     computed that model, and inventing the association here would put a claim
     into the record its author never made.
+
+    The fixture also drops ``transfers``: a ``/1`` writer never emitted it, and
+    since the results audit (RES-02) a ``/1`` payload carrying it is refused as
+    a relabelled newer record rather than read with the key ignored.
     """
     payload = ProvenanceRecord(
         run_id="legacy", models=(("m", "1"),), solvers=(("s", "1"),)
     ).to_dict()
     payload["schema"] = PROVENANCE_SCHEMA_V1
     payload.pop("bindings")
+    payload.pop("transfers")
     restored = ProvenanceRecord.from_dict(payload)
     assert restored.bindings == ()
     assert restored.realizations == ()

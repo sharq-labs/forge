@@ -47,9 +47,11 @@ def test_an_affine_model_far_from_its_bounds_gives_the_exact_gaussian():
 def test_the_cost_is_order_p_plus_multistart():
     P = S.affine()
     calibration, post = _route(P, multistart=None)
-    # 4p + 1 Jacobian calls (a step and its half per column, to show the derivative converged) and 2p
-    # principal-axis probes: 6p + 1
-    assert post.diagnostics.evaluation_count == 6 * 2 + 1
+    # 4p + 1 Jacobian calls (a step and its half per column, to show the derivative converged), 2p principal-axis
+    # probes and 2p(p - 1) diagonal probes between two axes: 4p + 1 + 2p^2. This pinned 6p + 1 before audit HUQ-08,
+    # when the probes looked along the principal axes only and a cross term between two of them went unseen.
+    p = 2
+    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p
 
 
 def test_intervals_are_labelled_and_mapped_back_through_a_log_transform():

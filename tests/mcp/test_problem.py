@@ -374,7 +374,10 @@ def test_the_declaration_is_carried_as_the_callers_claim():
     (declaration,) = outcome.reports[0].declarations
     assert declaration.source == "LumpedApplicabilityDeclaration"
     assert declaration.to_dict()["caller_asserted"] is True
-    assert declaration.to_dict()["consumed_by_verdict"] is False
+    # True since the results audit (CAP-04): the lumped assessment is computed
+    # from this declaration, so its values decide the verdict. It used to be a
+    # literal False, which was false.
+    assert declaration.to_dict()["consumed_by_verdict"] is True
 
 
 # =====================================================================
