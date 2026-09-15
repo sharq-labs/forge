@@ -2,9 +2,9 @@
   "assurance": {
     "control_plane": {
       "area": "certification_control",
-      "digest": "af85f93abbc24a65680329e5143e64c91f4ca5812ff9dd0bc6a2003a8f700286",
+      "digest": "fa061afe45e59eb63f09954e1e3d28ca163b34b4f5387e1d89a9c005d24ce38f",
       "executed_certified_bytes_match_source": true,
-      "executed_merge_preview_commit": "0e7e4a8246c21963547078f20886e3962432316b",
+      "executed_merge_preview_commit": "d0c92ea65ed6d95c31cc6721e03903e1d20b15f6",
       "file_count": 16
     },
     "environment": {
@@ -16,13 +16,13 @@
       "execution_model": "parallel_github_actions_jobs",
       "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
       "ngspice": "ngspice-42 : Circuit level simulation program",
-      "pip_freeze_3_11_sha256": "ef7f826306ab0ae591c96d4749e1f9bed157512db00520ea70746b939fa7f07f",
-      "pip_freeze_3_12_sha256": "a1fac6f1b8820f451c16c3c59f6079ec67fcff44cabc23ba9e1c02583876f341",
+      "pip_freeze_3_11_sha256": "44689f576a2bf69a7d0487a86018824274a1f1c059e5bca066a7721828f333c3",
+      "pip_freeze_3_12_sha256": "a3b05f2f73b4e8a3339249820b90ffe5e3087b47692b81f850c9be84090c92e5",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
       "schema": "forge.certification_environment/3",
-      "source_commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+      "source_commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "execution_model": "parallel_gates_then_certificate",
@@ -34,8 +34,8 @@
         "union_equals_population": true,
         "unknown_ids": []
       },
-      "definitions_sha256": "6e973091432cd389327b4ed92913e532cf11b3de50ec501a598a02fb942988c0",
-      "expected_population": 85,
+      "definitions_sha256": "91101ab6c90e9990cb0a59b301bb829f8df3e5c77a9ede412baefdf854ab8ff4",
+      "expected_population": 86,
       "harness": "tests/mutation_guards.py",
       "identity_rule": "population_sha256 = sha256('\\n'.join(ids) + '\\n') over MUTATIONS ids in declaration order. Order is bound because shard membership is position % shard_count",
       "ids": [
@@ -123,16 +123,17 @@
         "G27c",
         "G27d",
         "G27e",
-        "G27f"
+        "G27f",
+        "G27g"
       ],
-      "population": 85,
-      "population_sha256": "2bda16cf9d976cd59d31bf7ec5322c9c6fd568d7625ffa11885968f5de6ff01e",
+      "population": 86,
+      "population_sha256": "72817e5ea2e6f085e0968b44a455ec699930fe9dca0512e62b01389447e5e0d9",
       "shard_count": 4,
       "sharding_rule": "shard i runs ids at positions p where p % shard_count == i",
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "5fc30e88335153de5cf619f3d795dcf55f2054eac5dbb4a01b7513489670cfab",
+          "execution_log_sha256": "8b515a856f47ba08ca16476342cdf61d95ee7e404fdba85348275784b5c1376a",
           "killed_count": 22,
           "selected_count": 22,
           "selected_ids": [
@@ -163,9 +164,9 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "0d47e845d6a24901171a255582b8a148492e79a8ec18b4406902baceed59bc4f",
-          "killed_count": 21,
-          "selected_count": 21,
+          "execution_log_sha256": "3b88a749f8f499b2f46a1eda2f1334bb913b89c0c648fde7928cfb74a3ded67f",
+          "killed_count": 22,
+          "selected_count": 22,
           "selected_ids": [
             "G1b",
             "G8a",
@@ -187,13 +188,14 @@
             "G24a",
             "G25c",
             "G26b",
-            "G27c"
+            "G27c",
+            "G27g"
           ],
-          "selected_ids_sha256": "e5973f1388be9b298e5bb19b91ee35bbd318f05b04f875fb273d72f18e249209"
+          "selected_ids_sha256": "a65c8c917eb0217044a542e995cee1c466848cc506805efbfe1d5e72a6be1433"
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "c489744b0cf9fd412763a3309570af76f51fa47e7ac6c6ee559ccb108aaacd9a",
+          "execution_log_sha256": "bb2cf53e7a7b0f66d9b9d3c636ee58f135ea80ec3b4faed2ea04536982d834e0",
           "killed_count": 21,
           "selected_count": 21,
           "selected_ids": [
@@ -223,7 +225,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "f7e0ad48d226a8a6c2eec8593cfc6d6fdee2cd58877c29faf72422ce9e065dea",
+          "execution_log_sha256": "c87e0f88a5b14de809acc8e695d1490312fe8014e94b54b3ee262901350c63fb",
           "killed_count": 21,
           "selected_count": 21,
           "selected_ids": [
@@ -263,46 +265,46 @@
       "fast_python_3_11": {
         "clean_tree_after_gate": true,
         "gate": "fast311",
-        "gate_record_sha256": "f619f1a5a8afca5ce25e39a1409fd36aacecb83389341f6a0854815e079b8f53",
-        "head_commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+        "gate_record_sha256": "cc5c3f87b3a19dc99f5c6a62b6e2acb9e2ce461c3d1bf4472c47dd6cdf96968b",
+        "head_commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "3f38f3a86a8ceb3f5c4472cf1900ea4388cd9be10f52fcd570564d8bb6813398",
+            "junit_sha256": "45e58654bb82cf7d1aa8a7950f731e877cee9fd2739dc0c9515ecd303dd6833c",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "9e447a17bdd54bdd955bb7c65048600fbf8a6c43f5dfad1f2c7f39f3764b61d0",
+            "junit_sha256": "a54799a609245f2b5c813ce67c2fbce493a2d614dd76c8588b54536b645b1ff0",
             "skipped": 19,
-            "tests": 5873
+            "tests": 5878
           }
         }
       },
       "fast_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "fast312",
-        "gate_record_sha256": "82dc7dabfe81dcef774d875ff467b17e74e5152795239645778ec7c15e3f0ecf",
-        "head_commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+        "gate_record_sha256": "b7cef17bed12baa1220b012a5a44f7039a37e77264879ea48d5ba6165ec5b951",
+        "head_commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "f27f1a94988296f3e47f922b2facad2e94e1768c3770f58f8498b6fbe3c3a013",
+            "junit_sha256": "94c6f5b7925510291ab538ef1125c64ada2fffc876c962b6d6e2b1f8eee4a825",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "9c11cea64fee8371f127c1383d9466e1f44cebd04eab5dbe8825e066d4c35d30",
+            "junit_sha256": "03b241b0ad95984e3e9adec37c2b6c57989624017691f627a807f3257ce549b1",
             "skipped": 19,
-            "tests": 5873
+            "tests": 5878
           }
         }
       },
@@ -310,28 +312,28 @@
       "scientific_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "scientific312",
-        "gate_record_sha256": "812e87fbb2346c6d2c0b79618fc1eccdd7413ec35da43c6980b3eec055f89a6c",
-        "head_commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+        "gate_record_sha256": "aab5f645d44b92d560a7df44445e97f9796cc8bb50df7423b97da795de4f15c1",
+        "head_commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
         "result": "success",
         "suites": {
           "scientific": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "23f97aef1a3f716065480c24fc8bfe7070b7a3bb9bf369a07fd9bc6681903a75",
+            "junit_sha256": "701f2f40ca274ebdb0e514ccd1e050c98ad108c9a62acb7b9df130d50967a1d0",
             "skipped": 5,
-            "tests": 6412
+            "tests": 6417
           }
         }
       }
     },
     "lineage": {
-      "certificate_artifact": "hardened-core-assurance-f9b2fb69cddcc88ecfee6b45179595b5a212774f",
-      "certificate_parent": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+      "certificate_artifact": "hardened-core-assurance-cb497536d1fb931f9e07491ea254e9da41a39f82",
+      "certificate_parent": "cb497536d1fb931f9e07491ea254e9da41a39f82",
       "certify_job": "certify",
       "pull_request": 45,
       "repository": "sharq-labs/forge",
       "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
-      "source_commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+      "source_commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
       "source_gates": [
         "fast311",
         "fast312",
@@ -344,12 +346,12 @@
       ],
       "workflow": ".github/workflows/recertify-hardened-core.yml",
       "workflow_run_attempt": 1,
-      "workflow_run_id": 34957975663
+      "workflow_run_id": 34963083801
     },
     "policy": "Built by tools/certification/hardening_assurance.py from the evidence artifacts of every source gate for this source commit, after all of them succeeded, and embedded by the official certificate builder.",
     "schema": "forge.core_hardening_assurance/3",
-    "source_commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
-    "source_tree": "c44f81017bcd20094afcb570ac1d42795d99287a",
+    "source_commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
+    "source_tree": "ee7014cfee67b6a4e2f5f8a8f475cd294778fdeb",
     "trust_hardening_mutations": {
       "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
       "expected_population": 20,
@@ -380,7 +382,7 @@
       "population": 20,
       "population_sha256": "2f2a4d233851ae7ca0ac36b58d400da3c692f6cf44a3626fb553b062a91d0bad",
       "result_schema": "forge.trust_mutation_assurance/1",
-      "result_sha256": "a623f24b13e47d06ad51af3cc3f332ee2f790afcd7639ba0656014d2473dcd7b",
+      "result_sha256": "9a878fd5453bb5a2652842d47df8765cbcea41ded8b6ede8b9a805880777ec9d",
       "script": "benchmarks/trust_hardening/audit/mutations.py",
       "survived": 0
     }
@@ -418,11 +420,11 @@
     "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "e2f414c32b34c6cce104b0d86653d95c52216a02d921abf63e035c5aea279c62",
+    "aggregate_digest": "642f2a8cfbaaff968a15972dff074fedc62d19ca2ddee08874e3cb6defcaf1a3",
     "areas": {
       "certification_control": {
         "classification": "CERTIFICATION_CONTROL",
-        "digest": "af85f93abbc24a65680329e5143e64c91f4ca5812ff9dd0bc6a2003a8f700286",
+        "digest": "fa061afe45e59eb63f09954e1e3d28ca163b34b4f5387e1d89a9c005d24ce38f",
         "file_count": 16,
         "file_reasons": {
           ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
@@ -457,7 +459,7 @@
           "tools/certification/core_freeze.py": "b5fb42b4136a6c407689bcd69d7e2223692857b5a99dd5048028d1e416285b9c",
           "tools/certification/core_freeze_v2.py": "8dad9752b1d4bd710c98d2deb9670ed2831609e71944037600f995bb0e77fed6",
           "tools/certification/hardening_assurance.py": "a06f9891fb36cfd670702c6842a76556a7719d5ef4b72b27837a7875ba6da8a7",
-          "tools/certification/mutation_population.py": "601c7d4b247fa683723a1c322afabc6658243feb9d7d39853b5026793caa0ad8",
+          "tools/certification/mutation_population.py": "d2573ff215554b8d4ece21f4c1224ba0301f10aac271d88840c9f27c8727f136",
           "tools/certification/recertification_scope.py": "3549a84817bb1cb6d17d4f1372121f34a220fda405a1abb628d23469617f9017"
         },
         "patterns": [
@@ -559,11 +561,11 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "f27629002bd01648c87662e4138cf690a1f782a7527f6f46b58dac6767e1b82b",
+        "digest": "0c8e6b20bcb280d8f2e7062027d756eec27dc644f536cb68653af94fb8f56431",
         "file_count": 6,
         "files": {
-          "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py": "7acae5d7a0eed9d867b49675c433d7949e4f9a35efa5fde6e10d7a029fdbae71",
-          "tests/mutation_guards.py": "48b744a6caef2ef5d6c94997d03784a350264755223aa72a17a5ec62caf8570f",
+          "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py": "3a92b8427b2094cf79095fc45f5081485ae438ea33a3f2786212f09f0f6d8994",
+          "tests/mutation_guards.py": "4ea44e905bc13ecbb0cccd5b7b147ba7400900f6319ad97e633eae44af213373",
           "tests/test_core_guards.py": "658db9ee95115d83e470b4ff4a41c9ae55be1c773e0f8f1ede0487d4eddac342",
           "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
           "tests/test_offset_unit_declaration.py": "6ed5a0a65b7bab4ec31b7d45f23fa68e667a93dfa6e647cbed81b1a859a3afde",
@@ -599,7 +601,7 @@
       },
       "routed_uncertainty": {
         "classification": "CORE_CERTIFIED",
-        "digest": "ce0c5d26e6e63f8921d32ecfa0b0965528c7535e1a3d135339633d5ea6131b8d",
+        "digest": "984ecfa6d5413394c078d1e2bb8cb76361c2095efb856bdc23ea1de7f5a85788",
         "file_count": 8,
         "files": {
           "src/engcore/hybrid_uq/__init__.py": "a3232caceb207cb8533d1b6cbe62c2c3c925f8ad22c486b8228dc87a4c658744",
@@ -607,7 +609,7 @@
           "src/engcore/hybrid_uq/identifiability.py": "f7e811a78ebf84f9f7372fc8a125722a73e0bb4f31175405c5bccaba83f183c0",
           "src/engcore/hybrid_uq/local_gaussian.py": "cd5254be82297182487f7d364bb3243004402f545cf7f87b6c70e8e56c21cfd0",
           "src/engcore/hybrid_uq/predictive.py": "fc780f79f1c50dbb31cde98300366b7bd4ee30f4fc924fcb28d95b7a55e8796c",
-          "src/engcore/hybrid_uq/router.py": "bb296da4d465e3c2bd59e07197c6877c8dec4defb761dfcd016e4ea986339195",
+          "src/engcore/hybrid_uq/router.py": "8c3ec37ffae45d7ee06da6b6eab7d11fe2295cf4839e9b7863044a64491d58d7",
           "src/engcore/hybrid_uq/sensitivity.py": "31a9b6138e1b9d44a96c93d6557b3d5a925123a8fd080c9a545382d5cfcdcbae",
           "src/engcore/hybrid_uq/vocabulary.py": "db98aed460a83ea95701157ff177fd8ea1294697a6e80f605fbd20ba4a30a769"
         },
@@ -664,7 +666,7 @@
   "repository": {
     "branch": "HEAD",
     "clean": true,
-    "commit": "f9b2fb69cddcc88ecfee6b45179595b5a212774f",
+    "commit": "cb497536d1fb931f9e07491ea254e9da41a39f82",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
