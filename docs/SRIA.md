@@ -122,10 +122,10 @@ import references:
 
 | SRIA imports | import statements |
 |---|---|
-| `scientific/` | 50 |
+| `scientific/` | 53 |
 | everything else under `engcore/` | **0** |
 
-`scientific.serialization` alone accounts for 39 of the 50 — schema strings for
+`scientific.serialization` alone accounts for 39 of the 53 — schema strings for
 the records SRIA writes. That is the shape of a consumer, and it is why the
 tree can be read as a layer rather than as a fork.
 
@@ -191,7 +191,7 @@ becomes a dependency of the new repository rather than a sibling package.
    This point used to name four subsystems, on the strength of the table above
    before it was corrected. It is **one**, which makes this the cheapest of the
    five rather than a second hard one: the interface to version is a single
-   package, and 39 of the 50 references into it are schema strings.
+   package, and 39 of the 53 references into it are schema strings.
 
 5. **The test suite splits 630/2,465**, and the tiering in `docs/TESTING.md`
    splits with it. (Was 630/2,325: the SRIA half is unchanged and the rest of

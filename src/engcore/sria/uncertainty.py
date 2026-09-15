@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
+from ..scientific.results.immutable import freeze
 from ..scientific.results.uncertainty import Uncertainty
 from ..scientific.serialization import require_schema, schema_string
 from .errors import UncertaintyContractError
@@ -115,7 +116,9 @@ class UncertaintyDeclaration:
                     f"channel {channel.value!r} must carry an Uncertainty record"
                 )
             channels[channel] = value
-        object.__setattr__(self, "channels", channels)
+        # Part of Evidence content identity: a channel must not change through a
+        # caller alias after the evidence hash and admission were issued.
+        object.__setattr__(self, "channels", freeze(channels))
 
     def channel(self, channel: UncertaintyChannel) -> Uncertainty:
         """Uncertainty for a channel; explicitly UNKNOWN when undeclared."""

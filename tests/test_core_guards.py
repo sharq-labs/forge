@@ -4300,10 +4300,10 @@ def test_the_sria_dependency_table_in_the_docs_matches_the_tree():
     A published number with nothing checking it goes stale silently, which is
     why the corrected table is checked here rather than only corrected.
     """
-    assert _sria_outbound_counts() == {"scientific": 50}
+    assert _sria_outbound_counts() == {"scientific": 53}
 
     doc = (REPO_ROOT / "docs" / "SRIA.md").read_text(encoding="utf-8")
-    assert "| `scientific/` | 50 |" in doc
+    assert "| `scientific/` | 53 |" in doc
     for stale in ("| `data/` | 15 |", "| `inference/` | 3 |",
                   "| `domains/` | 2 |", "| `scientific/` | 55 |"):
         assert stale not in doc, f"docs/SRIA.md still claims {stale}"

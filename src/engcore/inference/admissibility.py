@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from ..scientific.models.definition import ValidityStatus
 from ..scientific.results.result import ScientificResult
 from ..scientific.results.validation import ValidationLevel, ValidationReport
 from ..scientific.units.quantity import Quantity
@@ -82,6 +83,7 @@ class AdmissibleNumericalPrediction:
                 f"source result {self.source_result.result_id!r} is not "
                 "scientifically usable according to its domain validation"
             )
+        _require_applicability_not_refuted(self.source_result, "numerical")
         # ScientificResult already makes provenance mandatory, but retain this
         # explicit invariant here so the inference boundary documents what it
         # relies on rather than relying on an incidental implementation detail.
@@ -247,6 +249,7 @@ class AdmissibleAnalyticPrediction:
                 f"source result {self.source_result.result_id!r} is not "
                 "scientifically usable according to its domain validation"
             )
+        _require_applicability_not_refuted(self.source_result, "analytic")
         if self.source_result.provenance is None:  # pragma: no cover - Core forbids it
             raise InferenceAdmissibilityError(
                 "analytic inference refuses a source without provenance"
@@ -402,3 +405,38 @@ def require_admissible_numerical_prediction(
             "admitted prediction lost its NUMERICALLY_CONVERGED evidence"
         )
     return candidate
+
+
+def _require_applicability_not_refuted(result: ScientificResult, route: str) -> None:
+    """Refuse a source whose applicability was assessed and not established.
+
+    ``ScientificResult.is_usable`` answers *converged, and no check failed* and
+    deliberately not *is this model in its validated domain*; that distinction
+    is pinned in ``tests/test_core_semantic_invariants.py``, and a caller who
+    wants validity must ask for it. This boundary is that caller. Without the
+    question, a numerically clean result whose model was assessed
+    ``OUTSIDE_VALIDATED_DOMAIN`` -- or ``UNKNOWN``, because the context the
+    assessment needed was missing -- was admitted, and entered a posterior as
+    evidence about parameters of a model not shown to apply.
+
+    An explicit, reasoned non-assessment stays admissible. A calibration sweep
+    evaluates candidate declarations the study is still choosing, and records
+    each forward result as not assessed with that reason; an applicability
+    verdict about a candidate would be a statement about a declaration nobody
+    has made. That record says what it did not do, which is the honest state,
+    and it is not a verdict this boundary can overrule. Asserting applicability
+    of the calibrated result itself is the calibrating domain's job.
+    """
+    refuted = sorted(
+        (model_id, result.validity[model_id].status.value)
+        for model_id, _version in result.models
+        if model_id in result.validity
+        and result.validity[model_id].status is not ValidityStatus.IN_DOMAIN
+    )
+    if refuted:
+        raise InferenceAdmissibilityError(
+            f"{route} inference refuses source result {result.result_id!r}: "
+            f"applicability was assessed and not established for {refuted}. A "
+            f"prediction from a model not shown to apply where it ran is not "
+            f"evidence about that model's parameters"
+        )

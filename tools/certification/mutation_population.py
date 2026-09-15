@@ -66,7 +66,11 @@ HARNESS_PATH = "tests/mutation_guards.py"
 #: Hybrid UQ trust boundaries (supplied-sensitivity binding, covariance validity,
 #: unchecked predictive linearity, derivative convergence, routed-record
 #: consistency, dimensional reparameterization, serialized grid-moment binding).
-EXPECTED_FORMAL_POPULATION = 86
+#: 94 from GUARD 28, which added G28a-G28h for the core trust closure (admission
+#: applicability, result/provenance attribution, exact model versions, SRIA
+#: evidence integrity, belief and uncertainty isolation, solver session
+#: freshness, calibration spec immutability).
+EXPECTED_FORMAL_POPULATION = 94
 SHARD_COUNT = 4
 
 SHARD_RECORD_SCHEMA = "forge.formal_mutation_shard/1"
