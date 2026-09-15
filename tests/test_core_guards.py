@@ -202,8 +202,14 @@ EXPECTED_RESERVING_MODELS = 15
 # CSTR, and cutoff_reachability_margin on the battery runtime. Each was a
 # regime the model reported IN_DOMAIN and its own equation could not
 # represent. Looked at deliberately, which is what the exact count is for.
-EXPECTED_CONDITION_NAMES = 67
-EXPECTED_RESERVED_NAMES = 49
+# 67 -> 73 and 49 -> 55 in the domains audit-fix stream (CAP-01), which added
+# the three single-liquid-phase conditions -- declared_temperature_to_boiling_
+# ratio, adiabatic_ceiling_to_boiling_ratio, adiabatic_floor_to_freezing_ratio
+# -- to BOTH CSTR records, each reserved because each is derived. Both records
+# claimed "single liquid phase, no boiling" and checked it against nothing but
+# a fluid-independent 250-1000 K band.
+EXPECTED_CONDITION_NAMES = 73
+EXPECTED_RESERVED_NAMES = 55
 
 
 def test_the_only_modules_the_walk_lost_are_declared_optional_ones():

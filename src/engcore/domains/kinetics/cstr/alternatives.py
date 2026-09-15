@@ -27,6 +27,7 @@ from .problem import (
     CONCENTRATION_UNIT,
     DIMENSIONLESS,
     KINETICS_CSTR_NONISOTHERMAL,
+    LIQUID_PHASE_CONDITIONS,
     MAX_VALID_TEMPERATURE_K,
     MIN_VALID_TEMPERATURE_K,
     MOLAR_ENERGY_UNIT,
@@ -147,6 +148,11 @@ CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
             # whose contents can reach 2442 K came back IN_DOMAIN, on all four
             # of the conditions above, from a record whose own temperature
             # condition stops at 1000 K.
+            # The same liquid this record's assumptions claim, checked against
+            # the same declared fluid as the primary model (audit CAP-01):
+            # the phase bounds follow from Z = T + beta C_A, which the rate
+            # law cancels out of, so they hold unchanged for a constant k.
+            *LIQUID_PHASE_CONDITIONS,
             RangeCondition(
                 ADIABATIC_CEILING_TEMPERATURE,
                 maximum=Quantity(MAX_VALID_TEMPERATURE_K, TEMPERATURE_UNIT),
@@ -175,6 +181,7 @@ CONSTANT_RATE_CSTR_MODEL = ScientificModelDefinition(
         # backwards for a model whose job is to lose a comparison honestly.
         derived_quantities=frozenset(
             {"temperature", "concentration", ADIABATIC_CEILING_TEMPERATURE}
+            | {condition.name for condition in LIQUID_PHASE_CONDITIONS}
         ),
     ),
     required_capabilities=frozenset({KINETICS_CSTR_NONISOTHERMAL.name}),

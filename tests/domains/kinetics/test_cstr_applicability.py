@@ -208,6 +208,12 @@ def test_a_reactor_that_barely_reacts_is_still_in_domain() -> None:
         heat_of_reaction=CHEMISTRY.heat_of_reaction,
         density=CHEMISTRY.density,
         heat_capacity=CHEMISTRY.heat_capacity,
+        # Audit CAP-01: IN_DOMAIN now also needs the fluid to say where it is
+        # liquid. A hypothetical liquid declared by this test, wide enough to
+        # hold the 559 K ceiling -- the phase conditions are not this test's
+        # subject, the absent Damkohler floor is.
+        boiling_temperature=Q(650.0, "kelvin"),
+        freezing_temperature=Q(260.0, "kelvin"),
     )
     run = reactor(chemistry=inert, op=operation(ua=0.0, end=600.0), ca0=0.0)
     assert run.damkohler_at_feed_temperature < 1e-30
@@ -376,7 +382,16 @@ def test_a_caller_cannot_assert_either_group() -> None:
 
 
 def test_the_assembler_refuses_a_group_it_did_not_reserve() -> None:
-    assert ASSEMBLED_QUANTITIES == frozenset({ADIABATIC_CEILING_TEMPERATURE})
+    # Audit CAP-01 added the three liquid-phase ratios, each derived from the
+    # fluid's declared boiling or freezing temperature.
+    assert ASSEMBLED_QUANTITIES == frozenset(
+        {
+            ADIABATIC_CEILING_TEMPERATURE,
+            ctx.CEILING_TO_BOILING_RATIO,
+            ctx.DECLARED_TEMPERATURE_TO_BOILING_RATIO,
+            ctx.FLOOR_TO_FREEZING_RATIO,
+        }
+    )
     assert set(
         derived_cstr_quantities(reactor().validity_context())
     ) <= ASSEMBLED_QUANTITIES

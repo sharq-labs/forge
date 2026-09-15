@@ -68,15 +68,20 @@ __all__ = [
     "ACTIVATION_ENERGY",
     "ADIABATIC_CEILING_TEMPERATURE",
     "ASSEMBLED_QUANTITIES",
+    "BOILING_TEMPERATURE",
+    "CEILING_TO_BOILING_RATIO",
     "CONCENTRATION_UNIT",
     "COOLANT_TEMPERATURE",
     "DAMKOHLER_NUMBER",
+    "DECLARED_TEMPERATURE_TO_BOILING_RATIO",
     "DENSITY",
     "DENSITY_UNIT",
     "DIMENSIONLESS",
     "FEED_CONCENTRATION",
     "FEED_TEMPERATURE",
+    "FLOOR_TO_FREEZING_RATIO",
     "FLOW_UNIT",
+    "FREEZING_TEMPERATURE",
     "GAS_CONSTANT_UNIT",
     "HEAT_CAPACITY",
     "HEAT_CAPACITY_UNIT",
@@ -93,9 +98,13 @@ __all__ = [
     "UA_UNIT",
     "VOLUME_UNIT",
     "adiabatic_ceiling_temperature",
+    "adiabatic_floor_temperature",
+    "ceiling_to_boiling_ratio",
     "cstr_validity_context",
     "damkohler_number",
+    "declared_temperature_to_boiling_ratio",
     "derived_cstr_quantities",
+    "floor_to_freezing_ratio",
 ]
 
 # =====================================================================
@@ -143,10 +152,20 @@ COOLANT_TEMPERATURE = "coolant_temperature"
 RESIDENCE_TIME = "residence_time"
 INITIAL_TEMPERATURE = "temperature"
 INITIAL_CONCENTRATION = "concentration"
+#: The fluid's own phase boundaries. Both are properties of the declared liquid
+#: AT THE OPERATING PRESSURE -- a boiling temperature is a saturation
+#: temperature, and water's is 373.15 K at one atmosphere and about 453 K at
+#: ten. No default exists for either: the model claims a single liquid phase,
+#: and only the fluid can say where that phase ends.
+BOILING_TEMPERATURE = "boiling_temperature"
+FREEZING_TEMPERATURE = "freezing_temperature"
 
 # --- names of the quantities this module derives ------------------------------
 DAMKOHLER_NUMBER = "damkohler_number"
 ADIABATIC_CEILING_TEMPERATURE = "adiabatic_ceiling_temperature"
+DECLARED_TEMPERATURE_TO_BOILING_RATIO = "declared_temperature_to_boiling_ratio"
+CEILING_TO_BOILING_RATIO = "adiabatic_ceiling_to_boiling_ratio"
+FLOOR_TO_FREEZING_RATIO = "adiabatic_floor_to_freezing_ratio"
 
 
 # =====================================================================
@@ -304,10 +323,12 @@ def adiabatic_ceiling_temperature(
     ``C_A <= C_max = max(C_A0, C_Af)`` comes from the species balance directly,
     since ``dC/dt <= a (C_Af - C)``.
 
-    **What it is for.** The model declares a 250-1000 K single-phase
-    constant-property envelope, and the ``temperature`` condition asks whether
-    the *declared initial state* sits inside it. This asks whether any state the
-    declaration can reach does. It is the same question the electrical material
+    **What it is for.** The model declares a fluid-independent 250-1000 K outer
+    envelope, and the ``temperature`` condition asks whether the *declared
+    initial state* sits inside it. This asks whether any state the declaration
+    can reach does. Neither establishes that the contents stay LIQUID -- that
+    depends on the fluid, and is asked of this ceiling by
+    :func:`ceiling_to_boiling_ratio` against the declared boiling temperature. It is the same question the electrical material
     model's ``ceiling_reduced_debye_temperature`` asks -- a condition evaluated
     at the extreme the declaration permits, decidable before a solver runs --
     and it introduces no new threshold: the bound is the envelope ceiling the
@@ -375,6 +396,149 @@ def adiabatic_ceiling_temperature(
     return Quantity(hottest + max(rise, 0.0), TEMPERATURE_UNIT)
 
 
+def adiabatic_floor_temperature(
+    *,
+    heat_of_reaction: Quantity | None,
+    density: Quantity | None,
+    heat_capacity: Quantity | None,
+    feed_concentration: Quantity | None,
+    initial_concentration: Quantity | None,
+    feed_temperature: Quantity | None,
+    initial_temperature: Quantity | None,
+    coolant_temperature: Quantity | None,
+) -> Quantity | None:
+    """The coldest temperature this declaration can reach, whatever it does.
+
+    **Definition.**
+    ``T_floor = min(T_0, T_f, T_c) - max(-beta, 0) max(C_A0, C_Af)``.
+
+    **Why it is a lower bound.** For an exothermic or thermoneutral reaction
+    (``beta >= 0``) the reaction term ``beta k C_A`` in the energy balance is
+    non-negative, so ``dT/dt >= a (T_f - T) - gamma (T - T_c)`` and ``T`` can
+    never fall below ``min(T_0, T_f, T_c)``. For an endothermic reaction
+    (``beta < 0``) the mirror image of the ceiling argument applies to
+    ``Z = T + beta C_A``: ``T = Z + |beta| C_A >= Z``, and bounding the jacket
+    term by ``gamma (Z + |beta| C_max - T_c)`` gives
+    ``Z >= min(Z_0, Z_f, T_c - |beta| C_max)``, each of which is at least
+    ``min(T_0, T_f, T_c) - |beta| C_max``.
+
+    It is what the freezing condition is asked at, for the same reason the
+    ceiling is what the boiling condition is asked at: a liquid claim is a
+    claim about every state the run can reach, not only the one it starts from.
+
+    Returns ``None`` if any of the eight is absent.
+    """
+    enthalpy = _as_quantity(
+        heat_of_reaction, MOLAR_ENERGY_UNIT, HEAT_OF_REACTION
+    )
+    rho = _positive(
+        _as_quantity(density, DENSITY_UNIT, DENSITY), DENSITY_UNIT, DENSITY
+    )
+    cp = _positive(
+        _as_quantity(heat_capacity, HEAT_CAPACITY_UNIT, HEAT_CAPACITY),
+        HEAT_CAPACITY_UNIT,
+        HEAT_CAPACITY,
+    )
+    concentrations = [
+        _as_quantity(feed_concentration, CONCENTRATION_UNIT, FEED_CONCENTRATION),
+        _as_quantity(
+            initial_concentration, CONCENTRATION_UNIT, INITIAL_CONCENTRATION
+        ),
+    ]
+    temperatures = [
+        _positive(_as_quantity(value, TEMPERATURE_UNIT, label),
+                  TEMPERATURE_UNIT, label)
+        for value, label in (
+            (feed_temperature, FEED_TEMPERATURE),
+            (initial_temperature, INITIAL_TEMPERATURE),
+            (coolant_temperature, COOLANT_TEMPERATURE),
+        )
+    ]
+    if enthalpy is None or rho is None or cp is None:
+        return None
+    if any(value is None for value in concentrations + temperatures):
+        return None
+    beta = (enthalpy * -1.0) / (rho * cp)              # K m**3 / mol
+    richest = max(
+        value.magnitude_in(CONCENTRATION_UNIT) for value in concentrations
+    )
+    rise = (beta * Quantity(richest, CONCENTRATION_UNIT)).magnitude_in(
+        TEMPERATURE_UNIT
+    )
+    coldest = min(
+        value.magnitude_in(TEMPERATURE_UNIT) for value in temperatures
+    )
+    return Quantity(coldest - max(-rise, 0.0), TEMPERATURE_UNIT)
+
+
+def _phase_ratio(
+    temperature: Quantity | None, boundary: Quantity | None, label: str
+) -> Quantity | None:
+    """``temperature / boundary`` as a dimensionless ratio, or ``None``."""
+    checked = _as_quantity(temperature, TEMPERATURE_UNIT, "temperature")
+    edge = _positive(
+        _as_quantity(boundary, TEMPERATURE_UNIT, label), TEMPERATURE_UNIT, label
+    )
+    if checked is None or edge is None:
+        return None
+    return Quantity(
+        checked.magnitude_in(TEMPERATURE_UNIT)
+        / edge.magnitude_in(TEMPERATURE_UNIT),
+        DIMENSIONLESS,
+    )
+
+
+def declared_temperature_to_boiling_ratio(
+    *,
+    feed_temperature: Quantity | None,
+    initial_temperature: Quantity | None,
+    coolant_temperature: Quantity | None,
+    boiling_temperature: Quantity | None,
+) -> Quantity | None:
+    """max(T_0, T_f, T_c) / T_boil -- is a DECLARED state already boiling?
+
+    Exact rather than conservative: each of the three is a temperature the
+    tank contents start at, are fed at, or are held against, and a declared
+    liquid state at or above the fluid's saturation temperature is not a
+    liquid. The jacket is included because a wall above the boiling point
+    boils the film against it whatever the bulk does. ``None`` unless all
+    three temperatures and the boiling temperature are declared.
+    """
+    temperatures = [
+        _as_quantity(value, TEMPERATURE_UNIT, label)
+        for value, label in (
+            (feed_temperature, FEED_TEMPERATURE),
+            (initial_temperature, INITIAL_TEMPERATURE),
+            (coolant_temperature, COOLANT_TEMPERATURE),
+        )
+    ]
+    if any(value is None for value in temperatures):
+        return None
+    hottest = Quantity(
+        max(value.magnitude_in(TEMPERATURE_UNIT) for value in temperatures),
+        TEMPERATURE_UNIT,
+    )
+    return _phase_ratio(hottest, boiling_temperature, BOILING_TEMPERATURE)
+
+
+def ceiling_to_boiling_ratio(
+    *,
+    ceiling: Quantity | None,
+    boiling_temperature: Quantity | None,
+) -> Quantity | None:
+    """T_ceiling / T_boil -- can a reachable state boil? ``None`` if either is absent."""
+    return _phase_ratio(ceiling, boiling_temperature, BOILING_TEMPERATURE)
+
+
+def floor_to_freezing_ratio(
+    *,
+    floor: Quantity | None,
+    freezing_temperature: Quantity | None,
+) -> Quantity | None:
+    """T_floor / T_freeze -- can a reachable state freeze? ``None`` if either is absent."""
+    return _phase_ratio(floor, freezing_temperature, FREEZING_TEMPERATURE)
+
+
 # =====================================================================
 # Assembly
 # =====================================================================
@@ -388,7 +552,14 @@ def adiabatic_ceiling_temperature(
 #: :data:`~engcore.domains.kinetics.cstr.problem.ASSEMBLER_NAMESPACE`, which
 #: can see the model record that reserves them; this module is imported by
 #: that one and cannot.
-ASSEMBLED_QUANTITIES = frozenset({ADIABATIC_CEILING_TEMPERATURE})
+ASSEMBLED_QUANTITIES = frozenset(
+    {
+        ADIABATIC_CEILING_TEMPERATURE,
+        CEILING_TO_BOILING_RATIO,
+        DECLARED_TEMPERATURE_TO_BOILING_RATIO,
+        FLOOR_TO_FREEZING_RATIO,
+    }
+)
 
 
 def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
@@ -405,16 +576,35 @@ def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
     depends on it reaches ``ValidityDomain.assess`` as UNKNOWN. There is no
     path through this function by which omitting an input yields IN_DOMAIN.
     """
+    envelope_inputs = dict(
+        heat_of_reaction=base.get(HEAT_OF_REACTION),
+        density=base.get(DENSITY),
+        heat_capacity=base.get(HEAT_CAPACITY),
+        feed_concentration=base.get(FEED_CONCENTRATION),
+        initial_concentration=base.get(INITIAL_CONCENTRATION),
+        feed_temperature=base.get(FEED_TEMPERATURE),
+        initial_temperature=base.get(INITIAL_TEMPERATURE),
+        coolant_temperature=base.get(COOLANT_TEMPERATURE),
+    )
+    ceiling = adiabatic_ceiling_temperature(**envelope_inputs)
+    floor = adiabatic_floor_temperature(**envelope_inputs)
     derived: dict[str, Quantity | None] = {
-        ADIABATIC_CEILING_TEMPERATURE: adiabatic_ceiling_temperature(
-            heat_of_reaction=base.get(HEAT_OF_REACTION),
-            density=base.get(DENSITY),
-            heat_capacity=base.get(HEAT_CAPACITY),
-            feed_concentration=base.get(FEED_CONCENTRATION),
-            initial_concentration=base.get(INITIAL_CONCENTRATION),
+        ADIABATIC_CEILING_TEMPERATURE: ceiling,
+        # The liquid-phase claim, asked of the fluid that was declared. Each is
+        # absent -- so its condition is UNKNOWN -- unless the fluid's own phase
+        # boundary is declared: the fluid-independent 250-1000 K envelope says
+        # nothing about where a particular liquid boils or freezes.
+        DECLARED_TEMPERATURE_TO_BOILING_RATIO: declared_temperature_to_boiling_ratio(
             feed_temperature=base.get(FEED_TEMPERATURE),
             initial_temperature=base.get(INITIAL_TEMPERATURE),
             coolant_temperature=base.get(COOLANT_TEMPERATURE),
+            boiling_temperature=base.get(BOILING_TEMPERATURE),
+        ),
+        CEILING_TO_BOILING_RATIO: ceiling_to_boiling_ratio(
+            ceiling=ceiling, boiling_temperature=base.get(BOILING_TEMPERATURE)
+        ),
+        FLOOR_TO_FREEZING_RATIO: floor_to_freezing_ratio(
+            floor=floor, freezing_temperature=base.get(FREEZING_TEMPERATURE)
         ),
     }
     return {name: value for name, value in derived.items() if value is not None}

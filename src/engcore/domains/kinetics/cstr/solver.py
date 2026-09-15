@@ -884,6 +884,14 @@ def solve_reactor_bundle(
         "initial_temperature": run.initial_temperature,
         "molar_gas_constant": MOLAR_GAS_CONSTANT,
     }
+    # Audit CAP-01. The fluid's phase boundaries decide the model's
+    # liquid-phase conditions, so a run that declares them records the values
+    # its assessment used. Optional, and recorded only when declared: a run
+    # that declares neither has exactly the provenance it had before.
+    for optional_name in ("boiling_temperature", "freezing_temperature"):
+        optional_value = getattr(run.chemistry, optional_name)
+        if optional_value is not None:
+            inputs[optional_name] = optional_value
 
     bulky = {
         "grid_time_s",

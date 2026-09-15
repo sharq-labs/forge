@@ -1510,6 +1510,12 @@ PROVENANCE_ONLY = {
 #: the thermal domain computes `characteristic_length` from V / A_s.
 CONTRACT_ONLY = {"residence_time"}
 
+#: Optional inputs (audit CAP-01) that `solve_reactor` records only when the run
+#: declares them, so they are added to the provenance mapping after the literal
+#: the source walk reads. `test_optional_phase_boundaries_are_recorded_when_declared`
+#: checks them against a real run instead.
+RECORDED_WHEN_DECLARED = {"boiling_temperature", "freezing_temperature"}
+
 
 def _provenance_input_names():
     """The keys `solve_reactor` records, read off the source.
@@ -1549,11 +1555,32 @@ def test_the_model_contract_covers_what_the_solver_records():
         f"contract, or add them to PROVENANCE_ONLY with the reason."
     )
 
-    unrecorded = declared - recorded - CONTRACT_ONLY
+    unrecorded = declared - recorded - CONTRACT_ONLY - RECORDED_WHEN_DECLARED
     assert not unrecorded, (
         f"{sorted(unrecorded)} are declared inputs that the solver never "
         f"records, so nothing shows a reader what value was used."
     )
+
+
+def test_optional_phase_boundaries_are_recorded_when_declared():
+    from dataclasses import replace
+
+    optional = {spec.name for spec in CSTR_MODEL.inputs if not spec.required}
+    assert RECORDED_WHEN_DECLARED == optional
+    base = reactor()
+    declared_run = replace(
+        base,
+        chemistry=replace(
+            base.chemistry,
+            boiling_temperature=Q(650.0, "kelvin"),
+            freezing_temperature=Q(260.0, "kelvin"),
+        ),
+    )
+    recorded = solve_reactor(declared_run, run_id="phase-provenance").provenance.inputs
+    assert RECORDED_WHEN_DECLARED <= set(recorded)
+    assert recorded["boiling_temperature"].magnitude_in("kelvin") == 650.0
+    undeclared = solve_reactor(base, run_id="phase-provenance-none").provenance.inputs
+    assert not (RECORDED_WHEN_DECLARED & set(undeclared))
 
 
 def test_the_named_exceptions_are_still_real():
@@ -1574,9 +1601,33 @@ def test_the_named_exceptions_are_still_real():
 
 
 def test_the_problem_supplies_every_input_the_model_declares():
-    """A contract the problem does not honour is the same defect reversed."""
+    """A contract the problem does not honour is the same defect reversed.
+
+    Audit CAP-01 added two OPTIONAL inputs, the fluid's boiling and freezing
+    temperatures. Every required input is supplied by every problem; an
+    optional one is supplied exactly when the run declares it.
+    """
+    from dataclasses import replace
+
     run = reactor()
     problem = build_cstr_problem(run)
     supplied = {p.name for p in problem.parameters}
+    required = {spec.name for spec in CSTR_MODEL.inputs if spec.required}
+    optional = {spec.name for spec in CSTR_MODEL.inputs if not spec.required}
+    assert optional == {"boiling_temperature", "freezing_temperature"}
+    assert required <= supplied, sorted(required - supplied)
+    assert not (optional & supplied)
+
+    declared_run = replace(
+        run,
+        chemistry=replace(
+            run.chemistry,
+            boiling_temperature=Q(650.0, "kelvin"),
+            freezing_temperature=Q(260.0, "kelvin"),
+        ),
+    )
+    declared_supplied = {
+        p.name for p in build_cstr_problem(declared_run).parameters
+    }
     declared = {spec.name for spec in CSTR_MODEL.inputs}
-    assert declared <= supplied, sorted(declared - supplied)
+    assert declared <= declared_supplied, sorted(declared - declared_supplied)

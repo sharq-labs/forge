@@ -103,6 +103,11 @@ from ....scientific.units.quantity import Quantity
 from ...derived_context import DomainValidityContext, assembler_namespace
 from .context import (
     ADIABATIC_CEILING_TEMPERATURE,
+    BOILING_TEMPERATURE,
+    CEILING_TO_BOILING_RATIO,
+    DECLARED_TEMPERATURE_TO_BOILING_RATIO,
+    FLOOR_TO_FREEZING_RATIO,
+    FREEZING_TEMPERATURE,
     CONCENTRATION_UNIT,
     DENSITY_UNIT,
     DIMENSIONLESS,
@@ -133,12 +138,16 @@ from .errors import ReactorConfigurationError
 # Validity envelope bounds — DOMAIN-OWNED, declared here and nowhere else
 # =====================================================================
 
-#: The model assumes a single liquid phase with constant density and heat
-#: capacity and no boiling. Below the lower bound an aqueous-like liquid would
-#: freeze; above the upper bound the constant-property and no-phase-change
-#: assumptions are indefensible for any ordinary solvent at moderate pressure.
-#: These are assumptions of the MODEL, not limits of the integrator, which is
-#: why they live in the model's ValidityDomain and are enforced on declaration.
+#: A FLUID-INDEPENDENT outer envelope on every declared temperature, and on the
+#: adiabatic ceiling. It is NOT the liquid-phase envelope and never was one: no
+#: single band describes where "a liquid" boils or freezes. Water freezes at
+#: 273.15 K, so 250 K is not its freezing point, and it boils at 373.15 K at one
+#: atmosphere and is supercritical above 647 K, so 1000 K is nowhere near its
+#: boiling point. The band bounds where the Arrhenius parameterization and the
+#: steady-state search are exercised; the single-liquid-phase assumption is
+#: checked separately, against the boiling and freezing temperatures the
+#: declared fluid states for itself (``ReactorChemistry.boiling_temperature`` and
+#: ``freezing_temperature``), and is UNKNOWN when the fluid does not state them.
 MIN_VALID_TEMPERATURE_K = 250.0
 MAX_VALID_TEMPERATURE_K = 1000.0
 
@@ -171,6 +180,54 @@ _ASSUMPTIONS = (
     "not modelled",
     "no heat loss other than through the jacket; no viscous dissipation",
     "no phase change, no boiling, no vapour space",
+)
+
+#: The single-liquid-phase assumption, asked of the declared fluid (audit
+#: CAP-01). Shared with the K4 competitor model, which claims the same liquid.
+#: All three bounds are definitional -- 1 is the phase boundary itself -- and
+#: strict, because a liquid AT its saturation temperature is boiling. Each is
+#: UNKNOWN unless the fluid declares the boundary it is stated against.
+LIQUID_PHASE_CONDITIONS = (
+    RangeCondition(
+        name=DECLARED_TEMPERATURE_TO_BOILING_RATIO,
+        maximum=Quantity(1.0, DIMENSIONLESS),
+        maximum_inclusive=False,
+        description=(
+            "max(T_0, T_f, T_c) / T_boil < 1: no declared temperature is at "
+            "or above the liquid's boiling temperature at the operating "
+            "pressure. Exact, not conservative -- a declared state already "
+            "boiling is not a single liquid phase. UNKNOWN unless the fluid "
+            "declares boiling_temperature."
+        ),
+    ),
+    RangeCondition(
+        name=CEILING_TO_BOILING_RATIO,
+        maximum=Quantity(1.0, DIMENSIONLESS),
+        maximum_inclusive=False,
+        description=(
+            "adiabatic_ceiling_temperature / T_boil < 1: no state the "
+            "declaration can reach boils. The ceiling is an upper bound from "
+            "the exact invariant Z = T + beta C_A, so a strongly cooled "
+            "reactor is still reported as able to boil; this condition does "
+            "not certify that the cooling holds. Single liquid phase, no "
+            "boiling and no vapour space are assumptions of the model, and "
+            "past this bound they are not shown to hold. UNKNOWN unless the "
+            "fluid declares boiling_temperature."
+        ),
+    ),
+    RangeCondition(
+        name=FLOOR_TO_FREEZING_RATIO,
+        minimum=Quantity(1.0, DIMENSIONLESS),
+        minimum_inclusive=False,
+        description=(
+            "T_floor / T_freeze > 1 with T_floor = min(T_0, T_f, T_c) - "
+            "max(-beta, 0) max(C_A0, C_Af): no state the declaration can "
+            "reach freezes. For an exothermic reaction the floor is the "
+            "coldest declared temperature; an endothermic one can cool the "
+            "tank below all three. UNKNOWN unless the fluid declares "
+            "freezing_temperature."
+        ),
+    ),
 )
 
 _REFERENCES = (
@@ -339,6 +396,33 @@ CSTR_MODEL = ScientificModelDefinition(
             unit_exemplar=TIME_UNIT,
             description="V/q; strictly positive.",
         ),
+        # ---- the fluid's own phase boundaries (audit CAP-01) -------------
+        #
+        # Optional as inputs, and not optional as evidence: the three phase
+        # conditions below read them, and each is UNKNOWN until they are
+        # declared, so a run that omits them cannot come back IN_DOMAIN.
+        ModelInputSpec(
+            name=BOILING_TEMPERATURE,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=TEMPERATURE_UNIT,
+            required=False,
+            description=(
+                "Boiling (saturation) temperature of the liquid AT THE "
+                "OPERATING PRESSURE. Read only by the liquid-phase conditions; "
+                "it does not enter the balances."
+            ),
+        ),
+        ModelInputSpec(
+            name=FREEZING_TEMPERATURE,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=TEMPERATURE_UNIT,
+            required=False,
+            description=(
+                "Freezing temperature of the liquid at the operating pressure. "
+                "Read only by the liquid-phase condition on the adiabatic "
+                "floor; it does not enter the balances."
+            ),
+        ),
     ),
     outputs=(
         ModelOutputSpec(
@@ -365,6 +449,9 @@ CSTR_MODEL = ScientificModelDefinition(
         derived_quantities=frozenset(
             {
                 ADIABATIC_CEILING_TEMPERATURE,
+                CEILING_TO_BOILING_RATIO,
+                DECLARED_TEMPERATURE_TO_BOILING_RATIO,
+                FLOOR_TO_FREEZING_RATIO,
                 'concentration',
                 'temperature',
             }
@@ -375,10 +462,14 @@ CSTR_MODEL = ScientificModelDefinition(
                 minimum=Quantity(MIN_VALID_TEMPERATURE_K, TEMPERATURE_UNIT),
                 maximum=Quantity(MAX_VALID_TEMPERATURE_K, TEMPERATURE_UNIT),
                 description=(
-                    "Single-phase liquid with constant properties and no "
-                    "boiling. Outside this band the constant-density, "
-                    "constant-cp and no-phase-change assumptions fail, and the "
-                    "model is not merely inaccurate but inapplicable."
+                    "Fluid-independent outer envelope, 250-1000 K, on the "
+                    "declared initial temperature: where the Arrhenius "
+                    "parameterization and the steady-state search are "
+                    "exercised. Inside it the model is still inapplicable to a "
+                    "fluid that boils or freezes there; this condition does "
+                    "NOT establish the liquid phase, which the three "
+                    "boiling/freezing conditions check against the declared "
+                    "fluid."
                 ),
             ),
             RangeCondition(
@@ -431,9 +522,11 @@ CSTR_MODEL = ScientificModelDefinition(
                     "C_A >= 0 and C_A <= max(C_A0, C_Af) it follows that T <= "
                     "Z <= max(T_0, T_f, T_c) + beta max(C_A0, C_Af) with or "
                     "without cooling. A declaration whose ceiling is above the "
-                    "envelope can leave the single-phase constant-property "
-                    "region the model assumes, and no choice of horizon or "
-                    "tolerance repairs that. Conservative by construction: a "
+                    "envelope leaves the region the parameterization is "
+                    "exercised over, and no choice of horizon or tolerance "
+                    "repairs that. Whether the contents stay liquid below the "
+                    "ceiling is not answered here: that depends on the fluid "
+                    "and is adiabatic_ceiling_to_boiling_ratio's question. Conservative by construction: a "
                     "strongly cooled reactor will not approach the ceiling and "
                     "is still reported as able to, because this condition does "
                     "not certify that the cooling holds. Where the trajectory "
@@ -443,10 +536,13 @@ CSTR_MODEL = ScientificModelDefinition(
                     "are declared."
                 ),
             ),
+            *LIQUID_PHASE_CONDITIONS,
         ),
         description=(
             "Well-mixed constant-volume liquid-phase operation with constant "
-            "physical properties and Arrhenius kinetics."
+            "physical properties and Arrhenius kinetics, while every "
+            "reachable state stays between the declared fluid's freezing and "
+            "boiling temperatures."
         ),
     ),
     required_capabilities=frozenset({KINETICS_CSTR_NONISOTHERMAL.name}),
@@ -582,6 +678,12 @@ class ReactorChemistry:
     heat_of_reaction: Quantity   # J/mol, negative when exothermic
     density: Quantity            # kg/m**3
     heat_capacity: Quantity      # J/(kg*K)
+    #: The liquid's boiling (saturation) temperature at the operating pressure,
+    #: and its freezing temperature. Optional, and without them the model's
+    #: liquid-phase conditions are UNKNOWN (audit CAP-01): the 250-1000 K
+    #: envelope is fluid-independent and cannot say where THIS liquid boils.
+    boiling_temperature: Quantity | None = None   # K
+    freezing_temperature: Quantity | None = None  # K
 
     def __post_init__(self) -> None:
         _positive(_quantity(self.k0, RATE_CONSTANT_UNIT, "k0"),
@@ -600,6 +702,24 @@ class ReactorChemistry:
             _quantity(self.heat_capacity, HEAT_CAPACITY_UNIT, "heat_capacity"),
             HEAT_CAPACITY_UNIT, "heat_capacity",
         )
+        boundaries = {}
+        for label in (BOILING_TEMPERATURE, FREEZING_TEMPERATURE):
+            value = getattr(self, label)
+            if value is None:
+                continue
+            boundaries[label] = _positive(
+                _quantity(value, TEMPERATURE_UNIT, label), TEMPERATURE_UNIT, label
+            )
+        if (
+            len(boundaries) == 2
+            and boundaries[FREEZING_TEMPERATURE] >= boundaries[BOILING_TEMPERATURE]
+        ):
+            raise ReactorConfigurationError(
+                f"freezing_temperature ({boundaries[FREEZING_TEMPERATURE]!r} K) "
+                f"must be below boiling_temperature "
+                f"({boundaries[BOILING_TEMPERATURE]!r} K); a fluid with no "
+                f"liquid range has no liquid phase for this model to describe"
+            )
 
     # -- base-unit accessors ------------------------------------------------
     @property
@@ -641,7 +761,7 @@ class ReactorChemistry:
         return self.k0_per_s * math.exp(-self.e_over_r_k / float(temperature_k))
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "k0_per_s": self.k0_per_s,
             "activation_energy_j_per_mol": self.e_j_per_mol,
             "e_over_r_k": self.e_over_r_k,
@@ -651,6 +771,18 @@ class ReactorChemistry:
             "beta_m3_k_per_mol": self.beta_m3_k_per_mol,
             "exothermic": self.is_exothermic,
         }
+        # Emitted only when declared, so a chemistry that declares neither has
+        # exactly the dictionary -- and the physics fingerprint -- it had
+        # before these fields existed.
+        if self.boiling_temperature is not None:
+            payload["boiling_temperature_k"] = self.boiling_temperature.magnitude_in(
+                TEMPERATURE_UNIT
+            )
+        if self.freezing_temperature is not None:
+            payload["freezing_temperature_k"] = (
+                self.freezing_temperature.magnitude_in(TEMPERATURE_UNIT)
+            )
+        return payload
 
 
 @dataclass(frozen=True)
@@ -1020,6 +1152,14 @@ class ReactorRun:
                 "residence_time": Quantity(
                     self.operation.residence_time_s, TIME_UNIT
                 ),
+                **{
+                    label: value
+                    for label, value in (
+                        (BOILING_TEMPERATURE, self.chemistry.boiling_temperature),
+                        (FREEZING_TEMPERATURE, self.chemistry.freezing_temperature),
+                    )
+                    if value is not None
+                },
             },
             reserved=ASSEMBLER_NAMESPACE,
         )
@@ -1158,6 +1298,15 @@ def build_cstr_problem(
             name="initial_temperature", value=run.initial_temperature,
             description="Tank temperature at t = 0",
         ),
+    ) + tuple(
+        ScientificParameter(name=label, value=value, description=text)
+        for label, value, text in (
+            (BOILING_TEMPERATURE, run.chemistry.boiling_temperature,
+             "Boiling temperature of the liquid at the operating pressure"),
+            (FREEZING_TEMPERATURE, run.chemistry.freezing_temperature,
+             "Freezing temperature of the liquid at the operating pressure"),
+        )
+        if value is not None
     )
     return ScientificProblem(
         problem_id=problem_id or f"kinetics-cstr-{run.run_label}",
