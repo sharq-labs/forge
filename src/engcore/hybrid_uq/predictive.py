@@ -1,9 +1,10 @@
 """Predictive uncertainty from either route, with parameter and measurement uncertainty kept apart.
 
 LINEARIZED_PREDICTIVE_UQ: mean g(z_hat), parameter variance diag(G Sigma G^T), measurement variance sigma^2,
-total = the sum. Exact only when g is affine over the posterior; the +/-2 sd principal-axis probes compare g
-with its linear extrapolation and downgrade when they disagree, and a probe that was not evaluated -- outside
-the bounds, refused, or not run at all because ``check_nonlinearity=False`` -- downgrades too.
+total = the sum. Exact only when g is affine over the posterior; +/-2 sd probes along every principal axis, every
+diagonal between two axes and each prediction's Sigma grad g compare g with its linear extrapolation, in units
+of the parameter standard uncertainty, and downgrade when they disagree; a probe that was not evaluated --
+outside the bounds, refused, or not run at all because ``check_nonlinearity=False`` -- downgrades too.
 
 POSTERIOR_GRID: the frozen ``posterior_predictive_uq``, grid-resolution refusal included, re-expressed in the
 same record. Model discrepancy is estimated by neither: every record names MODEL_DISCREPANCY_NOT_MODELLED.
@@ -25,7 +26,7 @@ from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity
 from ..uq.predictive import PredictiveObservableSpec, posterior_predictive_uq
 from ._records import decode_float, digest_of, encode_float, require_schema
-from .local_gaussian import LocalGaussianPosterior, PROBE_SD
+from .local_gaussian import LocalGaussianPosterior, PROBE_SD, _probe_directions
 from .sensitivity import DEFAULT_RELATIVE_STEP, RouteRefusedError, central_difference, evaluate, to_natural
 from .vocabulary import (
     GRID_ROUTE_MAXIMUM_PARAMETERS, MODEL_DISCREPANCY_NOT_MODELLED, UNCERTAINTY_SOURCES, ApproximationClass, HybridUQError, RouteClaim,
@@ -257,10 +258,23 @@ def linearized_predictive_uq(
         # The largest deviation over the probes that were evaluated. A probe outside the declared bounds or
         # refused by the predictive model was not evaluated, so it is counted, not read as agreement: the
         # nonlinearity it would have measured is unknown, and 0.0 over no probes is not evidence of linearity.
+        #
+        # The probes are the local route's unit-Mahalanobis directions -- every principal axis and every diagonal
+        # between two of them -- plus, for each prediction, the direction Sigma grad g along which its own
+        # parameter variance lies (audit HUQ-07: axes alone read g = c u1 + K u1 u2 as exactly linear).
+        #
+        # A deviation is measured in units of the PARAMETER standard uncertainty (audit HUQ-11): scaled by the total,
+        # a large measurement sigma hid a parameter part curved enough to move the parameter interval off its mass.
+        # Since the parameter sd never exceeds the total, this never reads less nonlinearity than the total scale did.
         nonlinearity = 0.0
         lam, vec = np.linalg.eigh(cov)
-        for k in range(len(z0)):
-            delta = PROBE_SD * math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k]
+        directions = _probe_directions(lam, vec)
+        for i in range(len(specs)):
+            if parameter_sd[i] > 0.0:
+                directions.append((cov @ G[i]) / parameter_sd[i])
+        roundoff_factor = 64.0 * float(np.finfo(float).eps)
+        for direction in directions:
+            delta = PROBE_SD * np.asarray(direction, dtype=np.float64)
             for sign in (1.0, -1.0):
                 point = z0 + sign * delta
                 if np.any(point < lower) or np.any(point > upper):
@@ -270,8 +284,12 @@ def linearized_predictive_uq(
                 if value is None:
                     skipped += 1
                     continue
-                scale = np.where(total_sd > 0.0, total_sd, 1.0)
-                nonlinearity = max(nonlinearity, float(np.max(np.abs(value - (g0 + sign * G @ delta)) / scale)))
+                linear = g0 + sign * G @ delta
+                deviation = np.maximum(np.abs(value - linear) - roundoff_factor * np.maximum(np.abs(value), np.abs(linear)), 0.0)
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    relative = np.where(parameter_sd > 0.0, deviation / np.where(parameter_sd > 0.0, parameter_sd, 1.0),
+                                        np.where(deviation > 0.0, math.inf, 0.0))
+                nonlinearity = max(nonlinearity, float(np.max(relative)))
     else:
         # A caller who chooses not to measure linearity has not shown it: every probe counts as not evaluated, so
         # the claim is capped at DOWNGRADED. predictive_nonlinearity stays None, which says nothing was measured.
