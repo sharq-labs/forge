@@ -91,6 +91,12 @@ def declare(
             "solver_id": item.solver.solver_id,
             "backend": item.solver.backend,
             "dependency_digest": item.dependencies.digest,
+            # Listed as declared: the core compares a route's identities
+            # against this list before it resolves any of them (IND-05).
+            "identities": {
+                dimension.value: sorted(names)
+                for dimension, names in item.dependencies.identities.items()
+            },
             "threshold_gate_id": threshold_gate_id,
             "tolerance_key": tolerance_key,
         }

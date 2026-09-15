@@ -94,10 +94,38 @@ EXTERNAL_ROUTE_ID = "electrical.dc.external_simulator"
 #: seven orders against what the comparison actually measures, which is stated
 #: here rather than tightened: a bound chosen to sit just above the observed
 #: value is a bound chosen from the answer.
+#:
+#: **0.2.0 adds one absolute floor per quantity kind** (NUM-03), in the unit the
+#: routes report that kind in. A purely relative comparison of two numbers near
+#: zero measures only their round-off: a bridge current of 1.2e-17 A on one
+#: route and 0.0 on the other is a relative difference of 1.0, and the
+#: consensus FAILED two routes that agree. With a floor declared, a quantity
+#: agrees when ``|a - b| <= max(1e-9 * max(|a|, |b|), floor)``.
+#:
+#: ``1e-15`` (femto-volt, femto-ampere, femto-watt) is the size of the
+#: double-precision round-off a solve at this domain's working scales leaves on
+#: an exact zero -- about ``eps`` times a current or voltage of order one -- and
+#: sits well below the 13 significant digits the external route prints for any
+#: non-zero quantity at those scales. It is NOT scale-free: a circuit whose
+#: currents are themselves near 1e-15 A is compared, for those currents, against
+#: the floor rather than relatively, and a circuit carrying hundreds of amperes
+#: leaves round-off above it. Both are stated here rather than hidden. The
+#: version moves because the numbers do; the pin in ``engcore.domains`` moves
+#: with it, and a record judged under 0.1.0 is not a record judged under this.
 DC_CONSENSUS_THRESHOLDS = VerificationThresholds(
     gate_id="electrical.dc.cross_solver",
-    version="0.1.0",
-    values={"agreement_rel_tol": 1e-9},
+    version="0.2.0",
+    values={
+        "agreement_rel_tol": 1e-9,
+        "agreement_rel_tol.floor.node_voltage": 1e-15,
+        "agreement_rel_tol.floor.resistor_voltage": 1e-15,
+        "agreement_rel_tol.floor.resistor_current": 1e-15,
+        "agreement_rel_tol.floor.resistor_power": 1e-15,
+        "agreement_rel_tol.floor.source_current": 1e-15,
+        "agreement_rel_tol.floor.source_power": 1e-15,
+        "agreement_rel_tol.floor.total_resistor_dissipation": 1e-15,
+        "agreement_rel_tol.floor.total_source_delivered_power": 1e-15,
+    },
     basis=(
         "the DC domain's own tolerance, preregistered for this comparison in "
         "the heterogeneous-solver milestone; both routes solve a small linear "

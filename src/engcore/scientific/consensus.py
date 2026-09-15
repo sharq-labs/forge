@@ -473,6 +473,21 @@ def _route_declarations() -> Mapping[str, Any]:
     return table if isinstance(table, _RuntimeMapping) else {}
 
 
+def _pinned_identities(pin: Mapping[str, Any]) -> dict[str, frozenset[str]] | None:
+    """The identities a route pin lists, by dimension value, or ``None`` if it lists none."""
+    table = pin.get("identities")
+    if not isinstance(table, _RuntimeMapping) or not table:
+        return None
+    listed: dict[str, frozenset[str]] = {}
+    for dimension, names in table.items():
+        if isinstance(names, str):
+            return None
+        listed[str(getattr(dimension, "value", dimension))] = frozenset(
+            str(name).strip() for name in names
+        )
+    return listed
+
+
 def _verify_route(route: "SolveRoute") -> str | None:
     """``None`` when ``route`` is a declaration the domain layer pins; otherwise why not.
 
@@ -481,7 +496,9 @@ def _verify_route(route: "SolveRoute") -> str | None:
     1. the route must declare dependencies at all;
     2. its route id must be one the domain layer declares;
     3. the solver that ran must be the implementation the declaration is for;
-    4. its dependencies must resolve, and hash to the pinned digest.
+    4. its identities, as declared, must be the ones the pin lists -- compared
+       before anything is resolved, so a record never chooses an import;
+    5. its dependencies must resolve, and hash to the pinned digest.
     """
     if route.dependencies is None:
         return "declares no dependencies"
@@ -497,6 +514,24 @@ def _verify_route(route: "SolveRoute") -> str | None:
         return (
             f"carries backend {route.solver.backend!r}, and the declaration of "
             f"{route.route_id!r} is for {pin['backend']!r}"
+        )
+    # BEFORE ANY RESOLUTION (IND-05). Hashing canonicalises every `py:`
+    # identity by importing the module it names, and this runs inside the
+    # constructor -- so inside `from_dict`. A payload naming `py:this:s` as a
+    # backend imported `this` on the reader before the digest could disagree
+    # with anything: a record chose code to run. The identities a route
+    # declares are compared, as declared, against the identities the pin lists,
+    # and only a declaration the pin lists verbatim is ever resolved.
+    listed = _pinned_identities(pin)
+    if listed is None:
+        return (
+            "is declared by a pin that lists no identities, so its dependencies "
+            "cannot be compared before they are resolved"
+        )
+    if {d.value: frozenset(n) for d, n in route.dependencies.identities.items()} != listed:
+        return (
+            f"declares dependency identities that are not the ones the domain "
+            f"layer's pin for {route.route_id!r} lists; nothing was resolved"
         )
     try:
         digest = route.dependencies.digest
@@ -694,6 +729,46 @@ def relative_difference(a: float, b: float) -> float:
     return abs(a - b) / scale
 
 
+#: How a threshold set declares an absolute floor for one kind of quantity:
+#: ``<tolerance_key>.floor.<kind>``, where ``kind`` is the part of a quantity's
+#: name before its first ``:`` (``flux`` for ``flux:inlet``). The floor is in the unit the routes report that
+#: kind in, and it is the domain's declaration, travelling in the threshold set
+#: and in its digest -- so a record recomputes the same comparison from itself.
+_FLOOR_KEY_SEPARATOR = ".floor."
+
+
+def _declared_floors(
+    thresholds: VerificationThresholds, tolerance_key: str
+) -> dict[str, float]:
+    """The absolute floors ``thresholds`` declares for ``tolerance_key``, by quantity kind."""
+    prefix = f"{tolerance_key}{_FLOOR_KEY_SEPARATOR}"
+    return {
+        name[len(prefix):]: float(value)
+        for name, value in thresholds.values.items()
+        if name.startswith(prefix) and len(name) > len(prefix)
+    }
+
+
+def _floored_difference(a: float, b: float, tolerance: float, floor: float) -> float:
+    """The relative difference, with a declared absolute floor on its scale (NUM-03).
+
+    ``relative_difference(1.2e-17, 0.0)`` is 1.0: two routes that agree on a
+    bridge current to round-off were recorded as disagreeing completely,
+    because a relative measure of two numbers near zero measures nothing but
+    the noise. With a floor ``f`` declared for the quantity the scale becomes
+    ``max(|a|, |b|, f / tolerance)``, so the comparison passes exactly when
+    ``|a - b| <= max(tolerance * max(|a|, |b|), f)`` -- the familiar
+    relative-plus-absolute rule, expressed so the record keeps one relative
+    number judged against one tolerance. No floor declared, or a zero
+    tolerance, and it is :func:`relative_difference` unchanged: never an
+    undeclared number.
+    """
+    if floor <= 0.0 or tolerance <= 0.0:
+        return relative_difference(a, b)
+    scale = max(abs(a), abs(b), floor / tolerance)
+    return abs(a - b) / scale
+
+
 @dataclass(frozen=True)
 class RouteComparison:
     """What the routes' answers did, before anybody asks what it means.
@@ -770,8 +845,13 @@ def _compare(
     values: Mapping[str, Mapping[str, float]],
     tolerance: float,
     required: tuple[str, ...] = (),
+    floors: Mapping[str, float] | None = None,
 ) -> RouteComparison:
     """The worst relative difference over the quantities that must agree.
+
+    ``floors`` are the absolute floors the threshold set declares, by quantity
+    kind (see :func:`_floored_difference`); a quantity with none is compared by
+    :func:`relative_difference` exactly as before.
 
     **What is compared** is the declared ``required`` set together with every
     quantity all routes happen to report. The union, and each half earns its
@@ -867,11 +947,16 @@ def _compare(
         )
     worst = 0.0
     worst_name = shared[0]
+    declared_floors = dict(floors or {})
+    floored: list[str] = []
     for name in shared:
+        floor = declared_floors.get(name.partition(":")[0], 0.0)
+        if floor > 0.0:
+            floored.append(name)
         readings = [float(produced[name]) for produced in values.values()]
         for index, first in enumerate(readings):
             for second in readings[index + 1 :]:
-                difference = relative_difference(first, second)
+                difference = _floored_difference(first, second, tolerance, floor)
                 if difference > worst:
                     worst = difference
                     worst_name = name
@@ -885,6 +970,12 @@ def _compare(
             f"{len(shared)} quantit{plural} compared across {len(values)} "
             f"routes; worst pairwise relative difference {worst:.3e} on "
             f"{worst_name!r}"
+            + (
+                f"; {len(floored)} compared with the absolute floor the "
+                f"threshold set declares for its kind"
+                if floored
+                else ""
+            )
         ),
     )
 
@@ -1098,6 +1189,7 @@ class CrossSolverConsensus:
             self.reported_values,
             self.thresholds[self.tolerance_key],
             self.required_outputs,
+            _declared_floors(self.thresholds, self.tolerance_key),
         )
         if self.comparison != expected:
             raise ScientificValidationError(
@@ -1563,7 +1655,12 @@ class CrossSolverConsensus:
         return cls(
             consensus_id=consensus_id,
             routes=routes,
-            comparison=_compare(values, thresholds[tolerance_key], required),
+            comparison=_compare(
+                values,
+                thresholds[tolerance_key],
+                required,
+                _declared_floors(thresholds, tolerance_key),
+            ),
             thresholds=thresholds,
             required_outputs=required,
             # Recorded from what each route actually handed over, so a refusal

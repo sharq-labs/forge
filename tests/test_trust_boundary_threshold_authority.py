@@ -129,7 +129,8 @@ def _assert_not_authoritative(thresholds: VerificationThresholds) -> None:
 # ---- Step 1: the reproduction ------------------------------------------------
 def test_an_impersonated_gate_earns_no_level_on_any_promotion_path():
     """1-6, verbatim: discover a real gate, copy its identity, loosen a number."""
-    assert DC_CONSENSUS_THRESHOLDS.identity == "electrical.dc.cross_solver@0.1.0"
+    # 0.2.0 since NUM-03 declared absolute floors per quantity kind in this set.
+    assert DC_CONSENSUS_THRESHOLDS.identity == "electrical.dc.cross_solver@0.2.0"
     forged = _copy(DC_CONSENSUS_THRESHOLDS, values={KEY: 0.5})
     assert forged.identity == DC_CONSENSUS_THRESHOLDS.identity
 
