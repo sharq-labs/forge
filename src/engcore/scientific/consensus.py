@@ -990,6 +990,11 @@ def _compare(
 #: the next freeze should make it a real field.
 _EXECUTION_BINDINGS = "_execution_bindings"
 
+#: The evidence line a consensus check carries its exact threshold record under.
+#: Read by ``results.validation`` when it re-verifies a check that declares
+#: ``CROSS_SOLVER_VALIDATED`` (VAL-01). Not exported.
+CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX = "consensus-thresholds:"
+
 
 def _values_digest(produced: Mapping[str, float]) -> str:
     """SHA-256 over one route's numbers exactly as the record carries them."""
@@ -1759,6 +1764,23 @@ class CrossSolverConsensus:
             )
         if not bindings:
             lines.append("execution binding: NONE (numbers handed over as a mapping)")
+        # The exact threshold record the comparison was judged under, written
+        # so a check carrying CROSS_SOLVER_VALIDATED can be re-verified from its
+        # own evidence against the registries (VAL-01). The `threshold:` lines
+        # below round to six digits for a reader and cannot be hashed.
+        lines.append(
+            CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX
+            + json.dumps(
+                {
+                    "gate_id": self.thresholds.gate_id,
+                    "version": self.thresholds.version,
+                    "tolerance_key": self.tolerance_key,
+                    "values": dict(self.thresholds.values),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
         return (*lines, *self.thresholds.evidence())
 
     # ---- construction ----------------------------------------------------
