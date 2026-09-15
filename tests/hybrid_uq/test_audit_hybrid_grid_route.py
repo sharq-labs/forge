@@ -57,6 +57,27 @@ def test_huq02_the_grid_predictive_never_supports_a_grid_the_router_refuses():
                                     source_ref="audit")
 
 
+def test_huq02_the_wrapper_judges_the_grid_itself_where_the_v1_checks_would_pass():
+    """The wrapper's own judgement, isolated from the resolution refusal that now shadows it.
+
+    The 3 x 3 case above is refused twice over: by the wrapper's judgement and, since the same audit's
+    INF-04 fix, by the resolution check inside the frozen predictive call. Redundancy is good and
+    unobservable: removing the wrapper's judgement leaves that test green. A grid whose weights do not
+    follow its own likelihood is resolved enough for V1 and is caught ONLY by the wrapper, so this is
+    where the wrapper's judgement is visible.
+    """
+    P = S.affine()
+    grid = P.grid(AXES)
+    table = P.table_builder()(grid.points)
+    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
+    weights = np.array(grid.weights, copy=True)
+    weights[int(np.argmax(weights))] *= 4.0
+    laundered = _forged(grid, weights=weights / weights.sum())
+    with pytest.raises(HybridUQError, match="softmax"):
+        grid_predictive_uncertainty(laundered, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
+                                    source_ref="audit")
+
+
 def test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement():
     P = S.affine()
     grid = P.grid(AXES)

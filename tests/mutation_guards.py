@@ -2014,8 +2014,10 @@ EVIDENCE: dict[str, tuple[str, str]] = {
             'test_huq08_a_converged_refit_below_the_estimate_is_never_the_same_optimum'),
     'G33e': ('SCIENTIFIC_ASSERTION',
             'test_huq10_a_route_whose_probes_all_left_the_bounds_emits_no_covariance'),
+    # Repointed after the round reported it GREEN: the 3 x 3 case is refused twice over (here and by
+    # INF-04's resolution check inside the frozen predictive call), so it could not see this guard go.
     'G33f': ('SCIENTIFIC_ASSERTION',
-            'test_huq02_the_grid_predictive_never_supports_a_grid_the_router_refuses'),
+            'test_huq02_the_wrapper_judges_the_grid_itself_where_the_v1_checks_would_pass'),
     'G33g': ('SCIENTIFIC_ASSERTION',
             'test_huq04_the_grid_digest_covers_the_likelihood_and_the_mask'),
     'G33h': ('SCIENTIFIC_ASSERTION',
