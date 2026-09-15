@@ -109,7 +109,7 @@ class LocalSensitivity:
     sigma: tuple[float, ...]
     predicted: tuple[float, ...]               # at the estimate, observation units
     jacobian: tuple[tuple[float, ...], ...]    # d predicted / d inference coordinate, n x p
-    steps: tuple[float, ...]                   # inference-coordinate steps (0.0 when supplied)
+    steps: tuple[float, ...]                   # inference-coordinate steps of the accepted estimates; positive and finite
     one_sided: tuple[bool, ...]
     dataset_id: str
     evaluation_count: int
