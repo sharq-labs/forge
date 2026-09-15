@@ -157,18 +157,29 @@ assert _THRESHOLD_ATTRIBUTE == "SCIENTIFIC_THRESHOLD_DECLARATIONS", (
 #: route's dependencies therefore means changing them in two places, on
 #: purpose: what a route is made of is a declaration, and a declaration that
 #: moves should say so here.
+#:
+#: ``threshold_gate_id`` and ``tolerance_key`` name the threshold a comparison
+#: between these routes is judged under (CONS-01). A declared set is declared
+#: for one gate; without this, routes 40 % apart judged against another
+#: domain's declared refinement contraction earned the level, because that set
+#: IS declared -- for a different gate. A consensus under any other set or key
+#: establishes nothing.
 SCIENTIFIC_ROUTE_DECLARATIONS = MappingProxyType({
     "electrical.dc.native_mna": MappingProxyType({
         "declared_by": "engcore.domains.electrical.dc_consensus.NATIVE_ROUTE_DEPENDENCIES",
         "solver_id": "electrical.dc.mna",
         "backend": "scipy.linalg.solve",
         "dependency_digest": "c23fff6bdbda0b6038ffcf4ee78bc994bad03aee511191445efec1a55329fd70",
+        "threshold_gate_id": "electrical.dc.cross_solver",
+        "tolerance_key": "agreement_rel_tol",
     }),
     "electrical.dc.external_simulator": MappingProxyType({
         "declared_by": "engcore.domains.electrical.dc_consensus.EXTERNAL_ROUTE_DEPENDENCIES",
         "solver_id": "engcore.electrical.dc.ngspice",
         "backend": "ngspice",
         "dependency_digest": "81156a57562add4c56a9a470c6039c0e0a52c9e2fbcf0fef3fc8ab0be8b39d43",
+        "threshold_gate_id": "electrical.dc.cross_solver",
+        "tolerance_key": "agreement_rel_tol",
     }),
     # The two integration entries pin no backend, and the DC entries above do.
     # This solver names its backend with the library version it ran against
@@ -181,12 +192,16 @@ SCIENTIFIC_ROUTE_DECLARATIONS = MappingProxyType({
         "declared_key": "BDF",
         "solver_id": "kinetics.cstr.scipy_implicit_ivp",
         "dependency_digest": "00f2410046eeb60a7fe3f6532da938b50493e0d3c49c20c2c124b727fc6e9288",
+        "threshold_gate_id": "kinetics.cstr.verification_gate",
+        "tolerance_key": "tolerance_rel_tol",
     }),
     "kinetics.cstr.integration:Radau": MappingProxyType({
         "declared_by": "engcore.domains.kinetics.cstr.validation.INTEGRATION_ROUTE_DEPENDENCIES",
         "declared_key": "Radau",
         "solver_id": "kinetics.cstr.scipy_implicit_ivp",
         "dependency_digest": "496c729764e156accba69ef31ec13556eb861e4b343a829a53d52a9c2d702c93",
+        "threshold_gate_id": "kinetics.cstr.verification_gate",
+        "tolerance_key": "tolerance_rel_tol",
     }),
 })
 

@@ -51,18 +51,39 @@ def dependencies(route_id: str, **overrides) -> RouteDependencies:
     return RouteDependencies(identities)
 
 
-def route(route_id: str, solver: SolverIdentity | None = None, **overrides) -> SolveRoute:
+#: The threshold gate and tolerance key a test pin names unless told otherwise:
+#: the DC cross-solver gate, which is what the consensus tests judge against.
+#: A route declaration names the gate its comparison belongs to (CONS-01), so a
+#: consensus judged under any other declared set earns nothing.
+DEFAULT_THRESHOLD_GATE_ID = "electrical.dc.cross_solver"
+DEFAULT_TOLERANCE_KEY = "agreement_rel_tol"
+
+
+def route(
+    route_id: str,
+    solver: SolverIdentity | None = None,
+    *,
+    threshold_gate_id: str = DEFAULT_THRESHOLD_GATE_ID,
+    tolerance_key: str = DEFAULT_TOLERANCE_KEY,
+    **overrides,
+) -> SolveRoute:
     """A declared route, pinned, ready to be handed to a consensus."""
     return declare(
         SolveRoute(
             route_id=route_id,
             solver=solver or SolverIdentity(f"solver.{route_id}", "1.0", backend=route_id),
             dependencies=dependencies(route_id, **overrides),
-        )
+        ),
+        threshold_gate_id=threshold_gate_id,
+        tolerance_key=tolerance_key,
     )[0]
 
 
-def declare(*routes: SolveRoute) -> tuple[SolveRoute, ...]:
+def declare(
+    *routes: SolveRoute,
+    threshold_gate_id: str = DEFAULT_THRESHOLD_GATE_ID,
+    tolerance_key: str = DEFAULT_TOLERANCE_KEY,
+) -> tuple[SolveRoute, ...]:
     """Pin each route's own declaration, as the domain layer would."""
     for item in routes:
         assert item.dependencies is not None, f"{item.route_id} declares nothing to pin"
@@ -70,8 +91,28 @@ def declare(*routes: SolveRoute) -> tuple[SolveRoute, ...]:
             "solver_id": item.solver.solver_id,
             "backend": item.solver.backend,
             "dependency_digest": item.dependencies.digest,
+            "threshold_gate_id": threshold_gate_id,
+            "tolerance_key": tolerance_key,
         }
     return routes
+
+
+def earned_consensus(routes, values, *, thresholds, tolerance_key, required, consensus_id="test"):
+    """The construction path that can award ``CROSS_SOLVER_VALIDATED``.
+
+    One place, so the tests that need a level-bearing consensus do not each
+    spell out how one is built.
+    """
+    from engcore.scientific.consensus import CrossSolverConsensus
+
+    return CrossSolverConsensus.over(
+        consensus_id=consensus_id,
+        routes=tuple(routes),
+        values=values,
+        thresholds=thresholds,
+        tolerance_key=tolerance_key,
+        required_outputs=tuple(required),
+    )
 
 
 @pytest.fixture(autouse=True)

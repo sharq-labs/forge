@@ -510,6 +510,48 @@ def _verify_route(route: "SolveRoute") -> str | None:
     return None
 
 
+def _threshold_authority_gap(
+    routes: tuple["SolveRoute", ...],
+    thresholds: VerificationThresholds,
+    tolerance_key: str,
+) -> str | None:
+    """``None`` when every route's pin names the gate and key this comparison was judged under.
+
+    A declared threshold set is declared FOR ONE GATE. ``award`` verifies that a
+    set is some gate's own declaration and never asked whether it is the gate
+    this comparison belongs to, so two routes 40 % apart judged against another
+    domain's declared refinement contraction (1.5) earned
+    ``CROSS_SOLVER_VALIDATED``. The comparison's gate and tolerance key are
+    therefore part of what the domain layer pins for each route, beside the
+    solver and the dependencies, and read from there: every route must name
+    ``thresholds.gate_id`` and ``tolerance_key``. A pin that names neither,
+    or routes whose pins name different gates, fail closed.
+    """
+    gaps: list[str] = []
+    for route in routes:
+        pin = _route_declarations().get(route.route_id)
+        if not isinstance(pin, _RuntimeMapping):
+            gaps.append(f"route {route.route_id!r} has no pinned declaration")
+            continue
+        gate = pin.get("threshold_gate_id")
+        key = pin.get("tolerance_key")
+        if not isinstance(gate, str) or not isinstance(key, str):
+            gaps.append(
+                f"the declaration of route {route.route_id!r} names no threshold "
+                f"gate and tolerance key for its comparison"
+            )
+            continue
+        if gate != thresholds.gate_id or key != tolerance_key:
+            gaps.append(
+                f"route {route.route_id!r} is declared for comparison under "
+                f"{gate!r} at {key!r}, and this consensus reads "
+                f"{thresholds.gate_id!r} at {tolerance_key!r}"
+            )
+    if not gaps:
+        return None
+    return "; ".join(gaps)
+
+
 @dataclass(frozen=True)
 class SolveRoute:
     """One way of getting an answer, and what it is made of.
@@ -1265,6 +1307,15 @@ class CrossSolverConsensus:
         return bool(self.reported_values)
 
     @property
+    def threshold_authority_gap(self) -> str | None:
+        """Why the threshold set is not the one these routes' declarations name, or ``None``.
+
+        Read against the domain layer's route pins on every call, as
+        ``award`` reads the threshold pins: see :func:`_threshold_authority_gap`.
+        """
+        return _threshold_authority_gap(self.routes, self.thresholds, self.tolerance_key)
+
+    @property
     def earned(self) -> bool:
         """Four conditions, and all of them.
 
@@ -1281,6 +1332,7 @@ class CrossSolverConsensus:
             and self.outputs_are_complete
             and self.comparison_is_derived
             and self.comparison.agreed
+            and self.threshold_authority_gap is None
         )
 
     @property
@@ -1367,6 +1419,15 @@ class CrossSolverConsensus:
                 f"but the record carries it without the numbers it was "
                 f"computed from, so it is a conclusion nobody can recompute and "
                 f"establishes no level"
+            )
+        authority_gap = self.threshold_authority_gap
+        if authority_gap is not None:
+            return (
+                f"the independent routes agree to "
+                f"{self.comparison.worst_relative_difference:.3e} against "
+                f"{self.tolerance_key!r} of {self.thresholds.identity}, but the "
+                f"level is withheld because that is not the threshold their "
+                f"declarations name: {authority_gap}"
             )
         if self.establishes is None:
             return (
