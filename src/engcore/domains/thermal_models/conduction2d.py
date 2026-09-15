@@ -95,6 +95,12 @@ APPLICABILITY = (
     "declared spatial law along its own edge",
     "at least one Dirichlet condition, or the steady problem has no unique solution",
     "the steady equation only: no time term, and no temperature-dependent property",
+    # Audit CAP-06. Stated because it is not checkable here: the model declares
+    # no span over which its one conductivity holds, so nothing compares the
+    # temperature range the solution reaches with one.
+    "no check that the single declared conductivity holds over the temperature "
+    "range the solution reaches: no k(T) span is declarable, so that range is "
+    "unassessed",
 )
 
 

@@ -462,6 +462,16 @@ RINT_OCV_MODEL = ScientificModelDefinition(
         "of charge",
         "any dependence of the internal resistance on temperature or state of "
         "charge; one measured value stands for the whole run",
+        # Audit CAP-06: two omissions that were stated as assumptions and
+        # screened by nothing, stated here as what this record does not check.
+        "any dependence of the open-circuit voltage on the declared "
+        "chemistry: chemistry is inert, the affine chord is the same line for "
+        "every chemistry, and no condition compares it with the curve shape a "
+        "chemistry is known to have -- only a declared OCV curve narrows it",
+        "a screen on the size of the omitted reversible heat: no condition "
+        "bounds -I T dU/dT against the Joule term, because dU/dT is not "
+        "declarable in this domain, so the heat output is unbounded in error at "
+        "low rate",
     ),
     model_id="battery.cell.rint_ocv",
     version=MODEL_VERSION,
@@ -1285,6 +1295,11 @@ PEUKERT_DERATING_MODEL = ScientificModelDefinition(
         "and says nothing about one that varies",
         "any derivation of the exponent, which is a fit and is treated as "
         "constant over the declared current and temperature range only",
+        # Audit CAP-06.
+        "any dependence of the exponent on the declared chemistry: chemistry "
+        "is inert and no chemistry-specific exponent range is checked; the "
+        "exponent, its reference current and its fit span are the caller's "
+        "for this cell",
     ),
     model_id="battery.cell.peukert_capacity_derating",
     version=MODEL_VERSION,
