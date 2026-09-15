@@ -452,7 +452,10 @@ def test_the_declaration_is_marked_as_caller_asserted_in_the_serialized_form():
     """The marking must survive to_dict, or a JSON reader never sees it."""
     entry = package(declarations=(DECLARATION,)).to_dict()["declarations"][0]
     assert entry["caller_asserted"] is True
-    assert entry["consumed_by_verdict"] is False
+    # Not stated by this hand-built declaration, so null -- never the literal
+    # false every record used to carry (results audit, CAP-04): in both shipped
+    # assemblers the declared values decide the verdict, and they now say so.
+    assert entry["consumed_by_verdict"] is None
     assert entry["source"] == "LumpedApplicabilityDeclaration"
     # carried verbatim, not summarised
     assert entry["payload"]["convection_regime"] == "forced"
@@ -506,10 +509,16 @@ def test_a_serialized_verdict_inconsistent_with_the_contents_is_rejected():
     assert "does not match" in str(caught.value)
 
 
-def test_a_payload_with_no_verdict_key_is_accepted_and_derives_its_own():
+def test_a_payload_with_no_verdict_key_is_refused():
+    """Refused since the results audit (RES-08); this test used to pin acceptance.
+
+    Checking the verdict only when the key was present made deleting it a way
+    past the check, and every writer of the schema emits it.
+    """
     payload = package().to_dict()
     del payload["verdict"]
-    assert CredibilityEvidenceReport.from_dict(payload).verdict is CredibilityVerdict.SUPPORTED
+    with pytest.raises(CredibilityEvidenceError, match="no verdict"):
+        CredibilityEvidenceReport.from_dict(payload)
 
 
 def test_poisoning_the_instance_dict_does_not_shadow_the_property():
