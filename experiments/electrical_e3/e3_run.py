@@ -601,14 +601,15 @@ def run_obligation_set_placement_probe() -> dict[str, Any]:
         BeliefUpdateGateway,
     )
     from engcore.sria.assurance import Arbiter
-    from experiments.electrical_e2.e2_harness import E2Executor
+    from experiments.electrical_e2.e2_harness import E2Executor, E2NumericalCritic
     from .e3_config import CALIBRATION_ACTION
 
     authority = AdmissionAuthority("e3.placement.probe")
     gateway = BeliefUpdateGateway(
         authorities=AdmissionAuthorityRegistry([authority])
     )
-    arbiter = Arbiter(authority)
+    # The Arbiter runs E2's registered critic (audit SRIA-TRUST-01).
+    arbiter = Arbiter(authority, critics=(E2NumericalCritic(),))
     obligations = ObligationSet(
         campaign_id="e3-placement-probe",
         obligations=(

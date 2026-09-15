@@ -74,6 +74,7 @@ from src.engcore.sria.assurance.obligations import (
     ObligationKind,
     ObligationSet,
     ValidationObligation,
+    obligations_from_charter,
 )
 from src.engcore.sria.assurance.uncertainty_budget import (
     ChannelEntry,
@@ -91,6 +92,7 @@ from src.engcore.sria.campaign import (
     AssessmentBundle,
     BudgetLedger,
     CampaignRunner,
+    CriticRequest,
     ExecutionRecord,
 )
 from src.engcore.sria.decision import (
@@ -643,6 +645,55 @@ class E1Harness:
         )
 
     def assess(self, execution, evidence, *, assessment_prefix) -> AssessmentBundle:
+        """Ask the Arbiter to run E1's registered numerical critic.
+
+        Audit SRIA-TRUST-01 / SRIA-06 (re-pin): the checks are unchanged and
+        now live in :class:`E1NumericalCritic`, which the Arbiter runs on this
+        evidence and records. The harness no longer builds the assessment or
+        reports obligation state; the Arbiter's decision does.
+        """
+        return AssessmentBundle(
+            critic_requests=(
+                CriticRequest(
+                    critic_id=E1NumericalCritic.critic_id,
+                    assessment_id=f"{assessment_prefix}-numerical",
+                    inputs=(execution, evidence),
+                ),
+            ),
+            uncertainty_budget=self._uncertainty_budget(evidence, execution),
+        )
+
+    def update_calibration(self, execution, *, record_id):
+        """Computational telemetry only. Never touches the posterior."""
+        entry = CalibrationMemoryEntry(
+            entry_id=record_id,
+            kind=MemoryKind.CALIBRATION_DIAGNOSTIC,
+            model_version="e1/1",
+            dataset_id="e1",
+            payload={
+                "action_id": execution.action_id,
+                "wall_seconds": execution.diagnostics["wall_seconds"],
+                "residual_linear_system": execution.diagnostics[
+                    "residual_linear_system"
+                ],
+            },
+            consumed_by=(Consumer.CALIBRATION_AUDIT,),
+        )
+        return self.memory.record(entry)
+
+
+class E1NumericalCritic:
+    """E1's numerical critic: solver termination, residual, validation report.
+
+    Registered with the E1 Arbiter and run through it (audit SRIA-TRUST-01).
+    The checks are exactly the ones E1's harness used to build inline.
+    """
+
+    critic_id = "e1.numerical"
+    critic_version = "1"
+    critic_class = CriticClass.NUMERICAL
+
+    def assess(self, execution, evidence, *, assessment_id: str) -> CriticAssessment:
         residual = float(execution.diagnostics["residual_linear_system"])
         atol = float(execution.diagnostics["residual_atol"])
         termination = (
@@ -697,15 +748,16 @@ class E1Harness:
                     impact=FindingImpact.EVIDENCE_INVALIDATING,
                 ),
             )
-        assessment = CriticAssessment(
-            assessment_id=f"{assessment_prefix}-numerical",
+        return CriticAssessment(
+            assessment_id=assessment_id,
             critic_id="e1.numerical",
             critic_version="1",
             critic_class=CriticClass.NUMERICAL,
-            subject_ref=evidence.evidence_id,
+            # The record this critic read (audit SRIA-TRUST-01).
+            subject_ref=evidence.record_hash,
             verdict=verdict,
             provenance=AssessmentProvenance(
-                assessment_id=f"{assessment_prefix}-numerical",
+                assessment_id=assessment_id,
                 critic_id="e1.numerical",
                 critic_version="1",
                 inputs_ref=(execution.execution_id,),
@@ -717,35 +769,6 @@ class E1Harness:
                 f"{verdict.value}"
             ),
         )
-        satisfied = verdict is CriticVerdict.PASS
-        state = {
-            o.obligation_id: satisfied
-            for o in self.obligations.obligations
-            if o.kind is ObligationKind.REQUIRED_CRITIC
-        }
-        return AssessmentBundle(
-            assessments=(assessment,),
-            uncertainty_budget=self._uncertainty_budget(evidence, execution),
-            obligation_state=state,
-        )
-
-    def update_calibration(self, execution, *, record_id):
-        """Computational telemetry only. Never touches the posterior."""
-        entry = CalibrationMemoryEntry(
-            entry_id=record_id,
-            kind=MemoryKind.CALIBRATION_DIAGNOSTIC,
-            model_version="e1/1",
-            dataset_id="e1",
-            payload={
-                "action_id": execution.action_id,
-                "wall_seconds": execution.diagnostics["wall_seconds"],
-                "residual_linear_system": execution.diagnostics[
-                    "residual_linear_system"
-                ],
-            },
-            consumed_by=(Consumer.CALIBRATION_AUDIT,),
-        )
-        return self.memory.record(entry)
 
 
 def e1_charter() -> CampaignCharter:
@@ -766,16 +789,9 @@ def e1_charter() -> CampaignCharter:
 
 
 def e1_obligations() -> ObligationSet:
-    return ObligationSet(
-        campaign_id=CAMPAIGN_ID,
-        obligations=(
-            ValidationObligation(
-                obligation_id="critic:numerical",
-                kind=ObligationKind.REQUIRED_CRITIC,
-                target=CriticClass.NUMERICAL.value,
-                source="e1 preregistered config",
-            ),
-        ),
+    """E1's single obligation, derived from E1's charter (audit SRIA-TRUST-02)."""
+    return obligations_from_charter(
+        e1_charter(), required_critics=(CriticClass.NUMERICAL,)
     )
 
 
@@ -786,7 +802,7 @@ def build_e1_campaign(
     authority = AdmissionAuthority("e1.authority")
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
-    arbiter = Arbiter(authority)
+    arbiter = Arbiter(authority, critics=(E1NumericalCritic(),))
     obligations = e1_obligations()
     harness = E1Harness(
         gateway=gateway,

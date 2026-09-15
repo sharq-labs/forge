@@ -87,6 +87,7 @@ def build_campaign(
     run_id="run",
     frozen_snapshot=False,
     reuse=None,
+    critics=(),
 ):
     """Assemble a campaign.
 
@@ -101,7 +102,9 @@ def build_campaign(
     if reuse is not None:
         gateway, arbiter, harness = reuse
     else:
-        gateway, arbiter, _authority = build_assurance()
+        # ``critics`` are extra critics the Arbiter is constructed to trust —
+        # stopping evaluators, for the stopping scenarios (audit SRIA-TRUST-01).
+        gateway, arbiter, _authority = build_assurance(critics=critics)
         harness = None
     seed = seed_rows if seed_rows is not None else {"theta": (1.0, 1.0, 1.0),
                                                     "phi": (0.5, 0.5, 0.5)}

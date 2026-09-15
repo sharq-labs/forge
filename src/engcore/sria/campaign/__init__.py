@@ -52,6 +52,7 @@ from .runner import (
     AssessmentBundle,
     CampaignHarness,
     CampaignRunner,
+    CriticRequest,
     deterministic_clock,
 )
 from .state import (
@@ -139,5 +140,6 @@ __all__ = [
     "IncrementalCampaignRunner",
     "CampaignHarness",
     "AssessmentBundle",
+    "CriticRequest",
     "deterministic_clock",
 ]

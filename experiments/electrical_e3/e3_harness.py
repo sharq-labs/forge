@@ -68,6 +68,7 @@ from engcore.sria.assurance.obligations import (
     ObligationKind,
     ObligationSet,
     ValidationObligation,
+    obligations_from_charter,
 )
 from engcore.sria.calibration import CalibrationMemory, CalibrationMemoryEntry
 from engcore.sria.calibration import Consumer, MemoryKind
@@ -105,6 +106,7 @@ from experiments.electrical_e2.e2_harness import (
     E2Executor,
     E2FaultyExecutor,
     E2Harness,
+    E2NumericalCritic,
 )
 from experiments.electrical_e2.e2_model import (
     E2Observation,
@@ -490,6 +492,10 @@ class E3Harness:
         return self.e2.build_evidence(execution, evidence_id=evidence_id)
 
     def assess(self, execution, evidence, *, assessment_prefix) -> AssessmentBundle:
+        # E2's critic runs through the shared Arbiter on this evidence, so the
+        # assessment is one that Arbiter recorded and will count. The obligation
+        # state below may only lower standing; the runner derives satisfaction
+        # from the Arbiter's decision (audit SRIA-TRUST-01 / SRIA-06).
         assessment, budget, state = self.e2.assess(
             execution, evidence, prefix=assessment_prefix
         )
@@ -536,7 +542,7 @@ def e3_charter() -> CampaignCharter:
 
 
 def e3_obligations() -> ObligationSet:
-    """The campaign's PER-EVIDENCE assurance obligations.
+    """The campaign's PER-EVIDENCE assurance obligations, derived from E3's charter.
 
     The adequacy obligation is deliberately NOT here. ``ObligationSet`` is
     evaluated by the Arbiter against the critic assessments of ONE evidence
@@ -546,16 +552,11 @@ def e3_obligations() -> ObligationSet:
     that failure mode in a test rather than asserting it, and routes the
     adequacy obligation through the stopping-criterion seam instead.
     """
-    return ObligationSet(
-        campaign_id=CAMPAIGN_ID,
-        obligations=(
-            ValidationObligation(
-                obligation_id="critic:numerical",
-                kind=ObligationKind.REQUIRED_CRITIC,
-                target=CriticClass.NUMERICAL.value,
-                source="e3 preregistered config",
-            ),
-        ),
+    # Derived from the charter rather than hand-built: a CampaignRunner refuses
+    # an obligation set that does not carry its charter's digest (audit
+    # SRIA-TRUST-02).
+    return obligations_from_charter(
+        e3_charter(), required_critics=(CriticClass.NUMERICAL,)
     )
 
 
@@ -573,6 +574,10 @@ class E3Stack:
     harness: E3Harness
     obligation_state: ObligationState
     label: str
+    #: The adequacy stopping evaluator, registered with ``arbiter`` when the
+    #: stack is built: the stopping review runs only evaluators the Arbiter was
+    #: constructed to trust (audit SRIA-TRUST-01).
+    adequacy_evaluator: Any = None
 
     def budget_ledger(
         self, *, total: float = TOTAL_BUDGET, reserved: float = 0.0
@@ -602,24 +607,21 @@ class E3Stack:
         a different run object, so without this the runner would believe
         nothing had ever been assessed and the stop review would short-circuit
         at "obligations were never assessed" before ever reaching the
-        registered criterion. The seeding uses the supported resume structure
-        (``CampaignCheckpoint.obligation_state``, whose own documentation calls
-        it durable scientific state that feeds the Arbiter's stopping review)
-        and the value is DERIVED from the real admission outcomes, never
-        asserted. That there is no other way to start a campaign from
-        previously admitted evidence is one of E3's findings, not a workaround
-        it is quiet about.
+        registered criterion.
+
+        Audit SRIA-06 (re-pin): the seeding used to restore a checkpoint whose
+        ``obligation_state`` was a boolean summary of the admissions. A resume
+        now refuses state its event log does not establish, so the runner
+        adopts the Arbiter decisions themselves through
+        :meth:`CampaignRunner.adopt_prior_assurance`, which verifies each was
+        issued by this stack's Arbiter under E3's obligation set.
         """
         criteria = ()
         evaluators: dict[str, Any] = {}
         if with_adequacy_criterion:
             criterion = adequacy_stopping_criterion()
             criteria = (criterion,)
-            evaluators = {
-                criterion.criterion_id: AdequacyStoppingEvaluator(
-                    self.obligation_state
-                )
-            }
+            evaluators = {criterion.criterion_id: self.adequacy_evaluator}
         runner = CampaignRunner(
             run_id=run_id,
             charter=e3_charter(),
@@ -634,30 +636,18 @@ class E3Stack:
             stopping_criteria=criteria,
             stopping_evaluators=evaluators,
         )
-        if seed_obligation_state:
-            runner.restore(
-                CampaignCheckpoint(
-                    run=runner.run,
-                    events=runner.events,
-                    budget=runner.budget,
-                    effects=runner.effects,
-                    plan=None,
-                    obligation_state=self.assurance_record(),
-                )
-            )
+        if seed_obligation_state and self.e2.decisions:
+            runner.adopt_prior_assurance(self.assurance_record())
         return runner
 
-    def assurance_record(self) -> dict[str, bool]:
-        """The campaign obligation state the M1/M3 chain actually established.
+    def assurance_record(self) -> tuple[Any, ...]:
+        """The Arbiter decisions the M1/M3 chain actually made, in order.
 
-        Derived from the real admission outcomes: the numerical critic assessed
-        every executed record and the Arbiter admitted the ones that passed.
+        Adopted by a runner as prior assurance; the runner derives obligation
+        state from their results (an obligation counts as satisfied only if
+        every adopted decision satisfied it), never from a caller's summary.
         """
-        admissions = self.e2.admissions
-        return {
-            "critic:numerical": bool(admissions)
-            and all(r.critic_verdict == "pass" for r in admissions)
-        }
+        return tuple(self.e2.decisions)
 
 
 def build_e3_stack(
@@ -665,20 +655,32 @@ def build_e3_stack(
     *,
     label: str,
     executor_class: type[E2Executor] = E2Executor,
+    critics: Sequence[Any] = (),
 ) -> E3Stack:
-    """Wire one world: authority, gateway, arbiter, E2 harness, E3 harness."""
-    from experiments.electrical_e2.e2_harness import e2_obligations
+    """Wire one world: authority, gateway, arbiter, E2 harness, E3 harness.
+
+    The Arbiter is constructed trusting E2's numerical critic, E3's adequacy
+    stopping evaluator and any extra ``critics`` (audit SRIA-TRUST-01). The
+    E2 measurement chain decides under E3's own obligation set, so the
+    decisions it produces are ones an E3 runner can adopt (audit SRIA-06).
+    """
+    from .e3_obligation import ObligationLedger
 
     authority = AdmissionAuthority(f"e3.authority.{label}")
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
-    arbiter = Arbiter(authority)
+    obligation_state = ObligationState(ledger=ObligationLedger())
+    adequacy_evaluator = AdequacyStoppingEvaluator(obligation_state)
+    arbiter = Arbiter(
+        authority,
+        critics=(E2NumericalCritic(), adequacy_evaluator, *critics),
+    )
     e2 = E2Harness(
         run_id=f"{label}-chain",
         gateway=gateway,
         arbiter=arbiter,
         executor=executor_class(spec),
-        obligations=e2_obligations(),
+        obligations=e3_obligations(),
         events=CampaignEventLog(f"{label}-chain"),
     )
     harness = E3Harness(
@@ -688,15 +690,15 @@ def build_e3_stack(
         executor_impl=E3Executor(e2.executor),
         obligations=e3_obligations(),
     )
-    from .e3_obligation import ObligationLedger
 
     return E3Stack(
         gateway=gateway,
         arbiter=arbiter,
         e2=e2,
         harness=harness,
-        obligation_state=ObligationState(ledger=ObligationLedger()),
+        obligation_state=obligation_state,
         label=label,
+        adequacy_evaluator=adequacy_evaluator,
     )
 
 

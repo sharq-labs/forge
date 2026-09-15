@@ -187,11 +187,49 @@ def charter_obligations(campaign_id="camp-31", **kw) -> ObligationSet:
 
 
 def numerical_assessment(result=None, aid="as-n"):
+    """A numerical assessment produced OUTSIDE any Arbiter.
+
+    Still useful as evidence-attached M1 assessment data, but since audit
+    SRIA-TRUST-01 no Arbiter counts it in a decision; decisions below run the
+    critic through the Arbiter with :func:`run_numerical`.
+    """
     return NumericalCritic().assess(
         result or good_result(),
         assessment_id=aid,
         budget=budget(),
         run_outcome=clean_run(),
+    )
+
+
+def trusted_arbiter(*extra):
+    """An Arbiter constructed to trust the SRIA critics these tests run."""
+    return Arbiter(
+        AUTHORITY, critics=(NumericalCritic(), CalibrationCriticAdapter(), *extra)
+    )
+
+
+def run_numerical(arbiter, evidence, result=None, aid="as-n", **options):
+    """Run the numerical critic through ``arbiter`` on ``evidence``'s run."""
+    options.setdefault("budget", budget())
+    options.setdefault("run_outcome", clean_run())
+    return arbiter.run_critic(
+        NumericalCritic.critic_id,
+        result or good_result(),
+        subject=evidence,
+        assessment_id=aid,
+        **options,
+    )
+
+
+def run_calibration(arbiter, evidence, reports, aid,
+                    required=(CalibrationVerdict.TRUSTED,)):
+    return arbiter.run_critic(
+        CalibrationCriticAdapter.critic_id,
+        reports,
+        subject=evidence,
+        assessment_id=aid,
+        subject_ref=evidence.record_hash,
+        required_verdicts=required,
     )
 
 
@@ -205,7 +243,11 @@ def test_untrusted_calibration_blocks_but_does_not_invalidate():
         required_critics=(CriticClass.NUMERICAL, CriticClass.CALIBRATION),
         required_calibration_verdicts=(CalibrationVerdict.TRUSTED,),
     )
-    calibration = CalibrationCriticAdapter().assess(
+    arbiter = trusted_arbiter()
+    evidence = _raw_evidence(good_result(), "ev-cal")
+    calibration = run_calibration(
+        arbiter,
+        evidence,
         [
             CalibrationReport(
                 model_id="cost.runtime",
@@ -213,14 +255,12 @@ def test_untrusted_calibration_blocks_but_does_not_invalidate():
                 verdict=CalibrationVerdict.UNTRUSTED,
             )
         ],
-        assessment_id="as-cal",
-        subject_ref="res-ok",
-        required_verdicts=(CalibrationVerdict.TRUSTED,),
+        "as-cal",
     )
-    decision = Arbiter(AUTHORITY).decide(
+    decision = arbiter.decide(
         decision_id="d1",
-        subject_ref="res-ok",
-        assessments=[numerical_assessment(), calibration],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter, evidence), calibration],
         obligations=obligations,
         budget=budget(),
     )
@@ -238,27 +278,26 @@ def test_degraded_and_insufficient_calibration_also_only_block():
         CalibrationVerdict.DEGRADED,
         CalibrationVerdict.INSUFFICIENT_DATA,
     ):
-        calibration = CalibrationCriticAdapter().assess(
-            [
-                CalibrationReport(
-                    model_id="m", model_version="1", verdict=verdict
-                )
-            ],
-            assessment_id=f"as-{verdict.value}",
-            subject_ref="res-ok",
-            required_verdicts=(CalibrationVerdict.TRUSTED,),
+        arbiter = trusted_arbiter()
+        evidence = _raw_evidence(good_result(), f"ev-{verdict.value}")
+        calibration = run_calibration(
+            arbiter,
+            evidence,
+            [CalibrationReport(model_id="m", model_version="1", verdict=verdict)],
+            f"as-{verdict.value}",
         )
-        decision = Arbiter(AUTHORITY).decide(
+        decision = arbiter.decide(
             decision_id=f"d-{verdict.value}",
-            subject_ref="res-ok",
-            assessments=[numerical_assessment(), calibration],
+            evidence=evidence,
+            assessments=[run_numerical(arbiter, evidence), calibration],
             obligations=charter_obligations(
                 required_critics=(CriticClass.NUMERICAL, CriticClass.CALIBRATION),
                 required_calibration_verdicts=(CalibrationVerdict.TRUSTED,),
             ),
             budget=budget(),
         )
-        assert decision.verdict is not AssuranceVerdict.VALID
+        assert decision.refused_assessments == ()
+        assert decision.verdict is AssuranceVerdict.INCONCLUSIVE
         assert decision.verdict is not AssuranceVerdict.INVALID
         assert all(not f.invalidates_subject for f in calibration.findings)
 
@@ -282,21 +321,20 @@ def test_invalid_requires_an_evidence_invalidating_finding():
         provenance=ProvenanceRecord(run_id="r"),
         convergence=ConvergenceState.CONVERGED,
     )
-    decision = Arbiter(AUTHORITY).decide(
+    arbiter = trusted_arbiter()
+    evidence = _raw_evidence(bare, "ev-bare")
+    decision = arbiter.decide(
         decision_id="d-absent",
-        subject_ref="res-bare",
+        evidence=evidence,
         assessments=[
-            NumericalCritic().assess(
-                bare,
-                assessment_id="as-n",
-                budget=budget(),
-                mandatory_checks=("residual_evidence",),
-                run_outcome=clean_run(),
+            run_numerical(
+                arbiter, evidence, bare, mandatory_checks=("residual_evidence",)
             )
         ],
         obligations=obligations,
         budget=budget(),
     )
+    assert decision.refused_assessments == ()
     assert decision.verdict is AssuranceVerdict.INCONCLUSIVE
     assert decision.verdict is not AssuranceVerdict.INVALID
 
@@ -308,13 +346,13 @@ def test_demonstrated_non_convergence_supports_invalid():
         provenance=ProvenanceRecord(run_id="r"),
         convergence=ConvergenceState.FAILED,
     )
-    assessment = NumericalCritic().assess(
-        failed, assessment_id="as-n", budget=budget(), run_outcome=clean_run()
-    )
+    arbiter = trusted_arbiter()
+    evidence = _raw_evidence(failed, "ev-nc")
+    assessment = run_numerical(arbiter, evidence, failed)
     assert assessment.invalidating_findings
-    decision = Arbiter(AUTHORITY).decide(
+    decision = arbiter.decide(
         decision_id="d-nc",
-        subject_ref="res-nc",
+        evidence=evidence,
         assessments=[assessment],
         obligations=charter_obligations(
             required_critics=(CriticClass.NUMERICAL,)
@@ -382,11 +420,11 @@ def valid_flow():
     """Produce a VALID decision plus the Arbiter that issued it."""
     result = good_result()
     evidence = evidence_for(result)
-    arbiter = Arbiter(AUTHORITY)
+    arbiter = trusted_arbiter()
     decision = arbiter.decide(
         decision_id="d-valid",
-        subject_ref=evidence.evidence_id,
-        assessments=[numerical_assessment(result)],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter, evidence, result)],
         obligations=full_obligations(),
         budget=budget(),
     )
@@ -432,7 +470,6 @@ def test_trusted_authority_cannot_admit_without_a_decision():
 
 def test_non_valid_decisions_cannot_produce_an_accepting_declaration():
     result = good_result()
-    evidence = evidence_for(result)
     gateway = BeliefUpdateGateway(authorities=registry())
 
     for verdict, decision_id in (
@@ -440,14 +477,15 @@ def test_non_valid_decisions_cannot_produce_an_accepting_declaration():
         (AssuranceVerdict.INVALID, "d-inv"),
         (AssuranceVerdict.NOT_ASSESSED, "d-na"),
     ):
-        arbiter = Arbiter(AUTHORITY)
+        arbiter = trusted_arbiter()
         # An empty obligation set yields INCONCLUSIVE; a failed result yields
         # INVALID; no assessments yields NOT_ASSESSED.
         if verdict is AssuranceVerdict.INCONCLUSIVE:
+            evidence = evidence_for(result)
             decision = arbiter.decide(
                 decision_id=decision_id,
-                subject_ref=evidence.evidence_id,
-                assessments=[numerical_assessment(result)],
+                evidence=evidence,
+                assessments=[run_numerical(arbiter, evidence, result)],
                 obligations=ObligationSet(campaign_id="none"),
                 budget=budget(),
             )
@@ -458,24 +496,19 @@ def test_non_valid_decisions_cannot_produce_an_accepting_declaration():
                 provenance=ProvenanceRecord(run_id="r"),
                 convergence=ConvergenceState.FAILED,
             )
+            evidence = evidence_for(failed)
             decision = arbiter.decide(
                 decision_id=decision_id,
-                subject_ref=evidence.evidence_id,
-                assessments=[
-                    NumericalCritic().assess(
-                        failed,
-                        assessment_id="as-f",
-                        budget=budget(),
-                        run_outcome=clean_run(),
-                    )
-                ],
+                evidence=evidence,
+                assessments=[run_numerical(arbiter, evidence, failed, aid="as-f")],
                 obligations=full_obligations(),
                 budget=budget(),
             )
         else:
+            evidence = evidence_for(result)
             decision = arbiter.decide(
                 decision_id=decision_id,
-                subject_ref=evidence.evidence_id,
+                evidence=evidence,
                 assessments=[],
                 obligations=full_obligations(),
             )
@@ -571,10 +604,12 @@ def test_unevaluated_charter_requirement_blocks_valid():
         o.target.startswith("validation_level:") for o in obligations.obligations
     )
 
-    decision = Arbiter(AUTHORITY).decide(
+    arbiter = trusted_arbiter()
+    evidence = _raw_evidence(good_result(), "ev-level")
+    decision = arbiter.decide(
         decision_id="d-level",
-        subject_ref="res-ok",
-        assessments=[numerical_assessment()],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter, evidence)],
         obligations=obligations,
         budget=budget(),
     )
@@ -582,7 +617,16 @@ def test_unevaluated_charter_requirement_blocks_valid():
     assert decision.verdict is AssuranceVerdict.INCONCLUSIVE
     assert any("not evaluable in M3" in r for r in decision.reasons)
     unmet = decision.unmet_obligations
-    assert any("validation_level" in u for u in unmet)
+    # Obligation results are keyed by the declared obligation id, not by a
+    # synthesized "check:<target>" name: the runner derives obligation state
+    # from these results, and a result the declared id could not find would
+    # leave the obligation looking unassessed (audit SRIA-06).
+    level_ids = {
+        o.obligation_id
+        for o in obligations.obligations
+        if o.target.startswith("validation_level:")
+    }
+    assert level_ids and level_ids <= set(unmet)
 
 
 # =====================================================================
@@ -663,15 +707,18 @@ def test_corrected_adversarial_matrix():
     )
     outcomes: dict[str, AssuranceVerdict] = {}
 
-    def decide(name, assessments, obs=None, bud=None):
-        arbiter = Arbiter(AUTHORITY)
+    def decide(name, result, produce, obs=None, bud=None):
+        """``produce(arbiter, evidence)`` returns the assessments to offer."""
+        arbiter = trusted_arbiter()
+        evidence = _raw_evidence(result, f"ev-{name}")
         d = arbiter.decide(
             decision_id=f"d-{name}",
-            subject_ref="res",
-            assessments=assessments,
+            evidence=evidence,
+            assessments=produce(arbiter, evidence),
             obligations=obs or obligations,
             budget=bud or budget(),
         )
+        assert d.refused_assessments == (), d.reasons
         outcomes[name] = d.verdict
         return d
 
@@ -684,14 +731,9 @@ def test_corrected_adversarial_matrix():
     )
     decide(
         "missing_residual",
-        [
-            NumericalCritic().assess(
-                bare,
-                assessment_id="a",
-                budget=budget(),
-                mandatory_checks=("residual_evidence",),
-                run_outcome=clean_run(),
-            )
+        bare,
+        lambda a, e: [
+            run_numerical(a, e, bare, aid="a", mandatory_checks=("residual_evidence",))
         ],
     )
 
@@ -702,14 +744,7 @@ def test_corrected_adversarial_matrix():
         provenance=ProvenanceRecord(run_id="r"),
         convergence=ConvergenceState.FAILED,
     )
-    decide(
-        "non_converged",
-        [
-            NumericalCritic().assess(
-                failed, assessment_id="a", budget=budget(), run_outcome=clean_run()
-            )
-        ],
-    )
+    decide("non_converged", failed, lambda a, e: [run_numerical(a, e, failed, aid="a")])
 
     # unknown required numerical uncertainty -> INCONCLUSIVE
     unknown_budget = UncertaintyBudget(
@@ -723,19 +758,23 @@ def test_corrected_adversarial_matrix():
     )
     decide(
         "unknown_numerical_uncertainty",
-        [numerical_assessment()],
+        good_result(),
+        lambda a, e: [run_numerical(a, e)],
         bud=unknown_budget,
     )
 
     # skipped required domain critic -> INCONCLUSIVE
-    decide("skipped_domain_critic", [numerical_assessment()])
+    decide("skipped_domain_critic", good_result(), lambda a, e: [run_numerical(a, e)])
 
     # untrusted auxiliary calibration -> INCONCLUSIVE
     decide(
         "untrusted_calibration",
-        [
-            numerical_assessment(),
-            CalibrationCriticAdapter().assess(
+        good_result(),
+        lambda a, e: [
+            run_numerical(a, e),
+            run_calibration(
+                a,
+                e,
                 [
                     CalibrationReport(
                         model_id="c",
@@ -743,9 +782,7 @@ def test_corrected_adversarial_matrix():
                         verdict=CalibrationVerdict.UNTRUSTED,
                     )
                 ],
-                assessment_id="a-cal",
-                subject_ref="res",
-                required_verdicts=(CalibrationVerdict.TRUSTED,),
+                "a-cal",
             ),
         ],
         obs=charter_obligations(

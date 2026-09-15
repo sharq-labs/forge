@@ -134,13 +134,20 @@ class StoppingCriterionEvaluator(Protocol):
     Supplied by the campaign or a domain pack. SRIA does not define what makes
     stopping right for a campaign it knows nothing about, and an evaluator that
     cannot reach a verdict must return ``NOT_ASSESSED`` rather than guess.
+
+    An evaluator is a critic like any other (audit SRIA-TRUST-01): it must be
+    registered with the Arbiter that reviews the stop, the review runs it
+    through :meth:`Arbiter.run_critic`, and the assessment it returns is about
+    ``proposal`` — its ``subject_ref`` is ``proposal.proposal_id``.
     """
 
     criterion_id: str
     critic_id: str
     critic_version: str
 
-    def evaluate(self, context: Any, *, assessment_id: str) -> CriticAssessment:
+    def evaluate(
+        self, context: Any, *, assessment_id: str, proposal: "StopProposal"
+    ) -> CriticAssessment:
         ...
 
 
@@ -354,6 +361,17 @@ class ArbiterStoppingReview:
                 **common,
             )
 
+        # -- the proposal must belong to the policy being applied ------------
+        # A stop is reviewed against ONE campaign's obligations. A proposal
+        # from another campaign reviewed under these obligations would borrow
+        # a policy it was never subject to (audit SRIA-TRUST-02).
+        if proposal.campaign_id != obligations.campaign_id:
+            return not_assessed(
+                f"stop proposal {proposal.proposal_id!r} belongs to campaign "
+                f"{proposal.campaign_id!r}, but the obligations under review are "
+                f"campaign {obligations.campaign_id!r}'s",
+            )
+
         # -- necessary context, none of it sufficient ----------------------
         if not terminal_objective_available:
             return not_assessed(
@@ -404,14 +422,26 @@ class ArbiterStoppingReview:
         assessments: list[CriticAssessment] = []
         evaluated: list[StoppingCriterion] = []
         missing: list[str] = []
+        unregistered: list[str] = []
         for criterion in criteria:
             evaluator = evaluators.get(criterion.criterion_id)
             if evaluator is None:
                 missing.append(criterion.criterion_id)
                 continue
-            assessment = evaluator.evaluate(
+            if not self._arbiter.is_registered(evaluator) or (
+                str(getattr(evaluator, "criterion_id", criterion.criterion_id))
+                != criterion.criterion_id
+            ):
+                unregistered.append(criterion.criterion_id)
+                continue
+            # The Arbiter runs the evaluator it was built with and records the
+            # output; an assessment the caller produced would not count.
+            assessment = self._arbiter.run_critic(
+                evaluator.critic_id,
                 evaluation_context,
+                subject=proposal.proposal_id,
                 assessment_id=f"{review_id}-{criterion.criterion_id}",
+                proposal=proposal,
             )
             assessments.append(assessment)
             evaluated.append(criterion)
@@ -420,6 +450,13 @@ class ArbiterStoppingReview:
             return not_assessed(
                 f"registered stopping criteria have no evaluator: {missing}",
                 "a criterion nobody can evaluate cannot support approval",
+            )
+        if unregistered:
+            return not_assessed(
+                f"stopping criteria {unregistered} name an evaluator this "
+                f"Arbiter was not constructed to trust",
+                "an evaluator outside the Arbiter's critic registry cannot "
+                "support approval",
             )
         if any(
             a.verdict in (CriticVerdict.NOT_ASSESSED, CriticVerdict.INCONCLUSIVE)
@@ -433,8 +470,9 @@ class ArbiterStoppingReview:
 
         # -- delegate. This class mints no verdict of its own. -------------
         criterion_obligations = ObligationSet(
-            campaign_id=proposal.campaign_id,
+            campaign_id=obligations.campaign_id,
             obligations=tuple(c.obligation for c in evaluated),
+            charter_digest=obligations.charter_digest,
         )
         decision = self._arbiter.decide(
             decision_id=f"{review_id}-arbiter",

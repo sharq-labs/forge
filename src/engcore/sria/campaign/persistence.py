@@ -8,6 +8,16 @@ prefixes by count + head digest.
 The persistence layer materializes the legacy ``CampaignCheckpoint`` shape on
 resume. Storage changes; decision, evidence, budget, stopping and scientific
 semantics do not.
+
+What the digests guarantee, stated plainly (audit SER-01): they are unkeyed
+SHA-256 commitments, so they detect *accidental* corruption — truncation, a
+partial write, a journal that no longer matches its checkpoint. Anyone who can
+edit the stored bytes can recompute every digest, so they are not a defence
+against deliberate edits. The assurance facts a resume acts on are therefore
+not taken from the stored copy: on materialize, ``obligation_state`` and each
+iteration record's Arbiter decision, verdict and admitted evidence ids are
+re-derived from the hash-chained event log, and any disagreement is refused.
+Legacy-format files are migrated only when the caller asks for it.
 """
 
 from __future__ import annotations
@@ -29,7 +39,7 @@ from .checkpoint import (
     IterationPlan,
     ResumeViolation,
 )
-from .events import CampaignEvent, CampaignEventLog
+from .events import CampaignEvent, CampaignEventLog, assurance_disagreements
 from .state import CampaignRun, ExecutionState, IterationRecord, PauseReason
 
 PERSISTENCE_SCHEMA = schema_string("sria_campaign_persistence_store", 2)
@@ -1627,6 +1637,19 @@ class IncrementalCheckpointStore:
             for entry in self._iteration_entries[: checkpoint.iteration_record_count]
         )
         run = checkpoint.run_state.materialize(iterations)
+        # Assurance state is scientific state, and the stored copy is only as
+        # trustworthy as whoever last wrote the bytes. Re-derive it from the
+        # event log and refuse to resume on any disagreement (audit SER-01).
+        problems = assurance_disagreements(
+            events.events,
+            obligation_state=checkpoint.obligation_state,
+            iterations=iterations,
+        )
+        if problems:
+            raise PersistenceIntegrityError(
+                "stored assurance state disagrees with the event log: "
+                + "; ".join(problems)
+            )
         _stamp_budget_continuation(
             budget,
             checkpoint.budget_charge_count,
@@ -1778,11 +1801,27 @@ class IncrementalCheckpointStore:
         return target
 
     @classmethod
-    def load_from_path(cls, path: str | Path) -> "IncrementalCheckpointStore":
+    def load_from_path(
+        cls, path: str | Path, *, allow_legacy_migration: bool = False
+    ) -> "IncrementalCheckpointStore":
+        """Load a V0.3 store.
+
+        A legacy-format file carries no checkpoint commitments at all, so
+        reading one is a migration, not a load. It happens only when the caller
+        passes ``allow_legacy_migration=True`` (or calls
+        :meth:`migrate_legacy_file`); otherwise the file is refused rather than
+        silently reinterpreted (audit SER-01).
+        """
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         if payload.get("schema") == PERSISTENCE_SCHEMA:
             return cls.from_dict(payload)
         if "checkpoints" in payload:
+            if not allow_legacy_migration:
+                raise PersistenceIntegrityError(
+                    f"{Path(path).name} is a legacy campaign checkpoint file; "
+                    f"migrating it must be requested explicitly "
+                    f"(allow_legacy_migration=True or migrate_legacy_file)"
+                )
             return cls.from_legacy_store(LegacyCheckpointStore.from_dict(payload))
         raise PersistenceIntegrityError("unknown campaign persistence format")
 

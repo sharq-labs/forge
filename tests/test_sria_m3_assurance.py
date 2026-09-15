@@ -268,6 +268,9 @@ class DemoDomainCritic:
                 assessment_id=assessment_id,
                 critic_id=self.critic_id,
                 critic_version=self.critic_version,
+                # Names the run it read, which is what binds this assessment to
+                # evidence derived from that run (audit SRIA-TRUST-01).
+                inputs_ref=(result.result_id, result.provenance.run_id),
             ),
             checks=tuple(checks),
             findings=tuple(findings),
@@ -302,6 +305,7 @@ def run_pipeline(
     mandatory_numerical=("residual_evidence",),
     subject_ref=None,
     run_outcome=None,
+    evidence=None,
 ):
     """Result -> critics -> arbiter. Returns (assessments, decision, arbiter).
 
@@ -309,15 +313,25 @@ def run_pipeline(
     authorize decisions it actually issued; a fresh instance would (rightly)
     refuse.
 
-    ``subject_ref`` is the artifact the *decision* is about. Critics assess a
-    result; admission is about an evidence record, so a flow that ends in
-    admission decides about the evidence id. The Arbiter's binding check then
-    prevents replaying a decision onto a different record.
+    Every decision here is about ONE evidence record (audit SRIA-TRUST-01):
+    ``evidence`` if given, else ``evidence_for(result, subject_ref)``. Before
+    the audit this fixture decided about a caller-chosen string — the result
+    id, or an evidence id — which is exactly the subject substitution the
+    audit exploited. The critics are registered with the Arbiter and run
+    through it on that evidence, so their assessments are recorded and bound.
     """
     run_outcome = clean_run() if run_outcome is None else run_outcome
+    if evidence is None:
+        evidence = evidence_for(result, evidence_id=subject_ref or "ev-m3")
+    critics = [NumericalCritic(), CalibrationCriticAdapter()]
+    if domain_critic is not None:
+        critics.append(domain_critic)
+    arbiter = Arbiter(AUTHORITY, critics=critics)
     assessments = [
-        NumericalCritic().assess(
+        arbiter.run_critic(
+            NumericalCritic.critic_id,
             result,
+            subject=evidence,
             assessment_id="as-num",
             budget=budget,
             mandatory_checks=mandatory_numerical,
@@ -326,8 +340,10 @@ def run_pipeline(
     ]
     if domain_critic is not None:
         assessments.append(
-            domain_critic.assess_domain(
+            arbiter.run_critic(
+                domain_critic.critic_id,
                 result,
+                subject=evidence,
                 assessment_id="as-dom",
                 budget=budget,
                 mandatory_checks=obligations.required_domain_checks,
@@ -335,17 +351,18 @@ def run_pipeline(
         )
     if calibration_reports:
         assessments.append(
-            CalibrationCriticAdapter().assess(
+            arbiter.run_critic(
+                CalibrationCriticAdapter.critic_id,
                 calibration_reports,
+                subject=evidence,
                 assessment_id="as-cal",
-                subject_ref=result.result_id,
+                subject_ref=evidence.record_hash,
                 required_verdicts=required_calibration,
             )
         )
-    arbiter = Arbiter(AUTHORITY)
     decision = arbiter.decide(
         decision_id="dec-1",
-        subject_ref=subject_ref or result.result_id,
+        evidence=evidence,
         assessments=assessments,
         obligations=obligations,
         budget=budget,
@@ -781,12 +798,17 @@ def test_unquantified_required_channel_blocks_valid():
 
 def test_empty_obligations_cannot_produce_valid():
     result = good_result()
-    decision = Arbiter(AUTHORITY).decide(
+    arbiter = Arbiter(AUTHORITY, critics=(NumericalCritic(),))
+    decision = arbiter.decide(
         decision_id="d",
         subject_ref=result.result_id,
         assessments=[
-            NumericalCritic().assess(
-                result, assessment_id="a", budget=full_budget(numerical=quantified())
+            arbiter.run_critic(
+                NumericalCritic.critic_id,
+                result,
+                subject=result.result_id,
+                assessment_id="a",
+                budget=full_budget(numerical=quantified()),
             )
         ],
         obligations=ObligationSet(campaign_id="empty"),
@@ -1188,9 +1210,9 @@ def test_end_to_end_electrical_dc_reaches_belief():
         domain_critic=DemoDomainCritic(
             discrepancy_supported_by="hand-derived analytical divider values"
         ),
-        subject_ref=evidence.evidence_id,
+        evidence=evidence,
     )
-    assert decision.verdict is AssuranceVerdict.VALID
+    assert decision.verdict is AssuranceVerdict.VALID, decision.reasons
 
     assessed = evidence
     for assessment in assessments:

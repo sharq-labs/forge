@@ -40,7 +40,7 @@ from engcore.sria.admission import (
     AdmissionDeclaration,
     DecisionBinding,
 )
-from engcore.sria.assurance import Arbiter, AssuranceVerdict, CriticClass
+from engcore.sria.assurance import Arbiter, AssuranceVerdict, CriticClass, NumericalCritic
 
 from tests.test_sria_m31_semantics import (  # noqa: E402
     budget,
@@ -48,6 +48,7 @@ from tests.test_sria_m31_semantics import (  # noqa: E402
     evidence_for,
     good_result,
     numerical_assessment,
+    run_numerical,
 )
 
 
@@ -66,7 +67,8 @@ def _raises(exc_type, fn, *args, **kwargs):
 def setup(tag: str):
     """A trusted authority, a genuine Arbiter, a gateway and evidence."""
     authority = AdmissionAuthority(f"authority.{tag}", secret=f"sig-{tag}")
-    arbiter = Arbiter(authority)
+    # The Arbiter trusts the numerical critic it runs (audit SRIA-TRUST-01).
+    arbiter = Arbiter(authority, critics=(NumericalCritic(),))
     gateway = BeliefUpdateGateway(
         authorities=AdmissionAuthorityRegistry([authority])
     )
@@ -75,11 +77,14 @@ def setup(tag: str):
 
 
 def valid_decision(arbiter, evidence, decision_id="d-valid"):
+    """A VALID decision about ``evidence``, from a critic run through ``arbiter``."""
     result = good_result()
     decision = arbiter.decide(
         decision_id=decision_id,
-        subject_ref=evidence.evidence_id,
-        assessments=[numerical_assessment(result)],
+        evidence=evidence,
+        assessments=[
+            run_numerical(arbiter, evidence, result, aid=f"{decision_id}-num")
+        ],
         obligations=charter_obligations(
             required_critics=(CriticClass.NUMERICAL,)
         ),
@@ -291,11 +296,11 @@ def test_D_modified_verdict_rejected():
     )
 
     # And the reverse: a code minted for a non-VALID decision relabelled VALID.
-    arbiter2 = Arbiter(authority)
+    arbiter2 = Arbiter(authority, critics=(NumericalCritic(),))
     inconclusive = arbiter2.decide(
         decision_id="d-inc",
-        subject_ref=evidence.evidence_id,
-        assessments=[numerical_assessment(good_result())],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter2, evidence, good_result())],
         obligations=charter_obligations(),   # nothing required -> INCONCLUSIVE
         budget=budget(),
     )

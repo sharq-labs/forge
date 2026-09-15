@@ -31,10 +31,15 @@ from __future__ import annotations
 
 from .arbiter import (
     ARBITER_VERSION,
+    SUBJECT_EVIDENCE,
+    SUBJECT_REFERENCE,
     Arbiter,
     ArbiterDecision,
     AssuranceVerdict,
+    CriticRegistration,
     ObligationResult,
+    assessment_digest,
+    budget_describes_claim,
 )
 from .assessment import (
     CheckRecord,
@@ -111,4 +116,9 @@ __all__ = [
     "AssuranceVerdict",
     "ObligationResult",
     "ARBITER_VERSION",
+    "CriticRegistration",
+    "SUBJECT_EVIDENCE",
+    "SUBJECT_REFERENCE",
+    "assessment_digest",
+    "budget_describes_claim",
 ]

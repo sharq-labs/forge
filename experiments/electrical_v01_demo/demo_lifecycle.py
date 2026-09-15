@@ -42,6 +42,7 @@ from experiments.electrical_e2.e2_harness import (
     E2Executor,
     E2FaultyExecutor,
     E2Harness,
+    E2NumericalCritic,
     e2_obligations,
 )
 from experiments.electrical_e2.e2_model import (
@@ -74,7 +75,7 @@ from engcore.sria.assurance.assessment import (
     FindingImpact,
     Severity,
 )
-from engcore.sria.assurance.obligations import ObligationKind
+from engcore.sria.assurance.obligations import ObligationKind, obligations_from_charter
 from engcore.sria.calibration.critic import CalibrationVerdict
 from engcore.sria.campaign import (
     AssessmentBundle,
@@ -480,6 +481,18 @@ class DemoHarness:
         return None
 
 
+def demo_obligations():
+    """The demo's single obligation, derived from the demo charter.
+
+    Audit SRIA-TRUST-02: a CampaignRunner refuses an obligation set that does
+    not carry its charter's digest. The demo used E2's hand-built set, whose
+    campaign is E2's, not the demo's.
+    """
+    return obligations_from_charter(
+        demo_charter(), required_critics=(CriticClass.NUMERICAL,)
+    )
+
+
 def demo_charter() -> CampaignCharter:
     return CampaignCharter(
         campaign_id=CAMPAIGN_ID,
@@ -548,7 +561,7 @@ class DemoCertificationEvaluator:
         self.last_state = state
         return state
 
-    def evaluate(self, context, *, assessment_id: str) -> CriticAssessment:
+    def evaluate(self, context, *, assessment_id: str, proposal) -> CriticAssessment:
         state = self.adequacy_state()
         if state is None:
             verdict = CriticVerdict.FAIL
@@ -589,7 +602,8 @@ class DemoCertificationEvaluator:
             critic_id=self.critic_id,
             critic_version=self.critic_version,
             critic_class=CriticClass.PROCESS,
-            subject_ref=assessment_id,
+            # About the stop proposal under review (audit SRIA-TRUST-01).
+            subject_ref=proposal.proposal_id,
             verdict=verdict,
             provenance=AssessmentProvenance(
                 assessment_id=assessment_id,
@@ -639,24 +653,26 @@ def build_stack(
     gateway = BeliefUpdateGateway(
         authorities=AdmissionAuthorityRegistry([authority])
     )
-    arbiter = Arbiter(authority)
+    commitments = CommitmentLedger(f"{label}-commitments")
+    evaluator = DemoCertificationEvaluator(gateway, commitments)
+    # The Arbiter is constructed trusting the critics it will run: E2's
+    # numerical critic and the demo's stopping evaluator (audit SRIA-TRUST-01).
+    arbiter = Arbiter(authority, critics=(E2NumericalCritic(), evaluator))
     e2 = E2Harness(
         run_id=f"{label}-chain",
         gateway=gateway,
         arbiter=arbiter,
         executor=executor_class(spec),
-        obligations=e2_obligations(),
+        obligations=demo_obligations(),
         events=CampaignEventLog(f"{label}-chain"),
     )
     harness = DemoHarness(
         gateway=gateway,
         e2=e2,
         executor_impl=DemoExecutor(e2.executor),
-        obligations=e2_obligations(),
+        obligations=demo_obligations(),
     )
-    commitments = CommitmentLedger(f"{label}-commitments")
     harness._generators = (DemoGenerator(harness, commitments),)
-    evaluator = DemoCertificationEvaluator(gateway, commitments)
     budget = BudgetLedger(
         total_budget=TOTAL_BUDGET,
         reserved_validation_budget=RESERVED_VALIDATION_BUDGET,

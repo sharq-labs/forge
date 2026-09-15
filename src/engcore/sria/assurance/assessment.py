@@ -270,6 +270,12 @@ class CriticAssessment:
     findings: tuple[Finding, ...] = ()
     uncertainty_observations: tuple[UncertaintyObservation, ...] = ()
     summary: str = ""
+    #: The Domain Pack a DOMAIN assessment speaks for. Stamped by the Arbiter
+    #: from its critic registry when a registered domain critic runs, and the
+    #: only scope in which a required domain check may be resolved: a domain
+    #: critic for one pack cannot discharge another pack's obligations
+    #: (audit SRIA-TRUST-03).
+    domain_pack_ref: str = ""
 
     def __post_init__(self) -> None:
         for label in ("assessment_id", "critic_id", "subject_ref"):
@@ -383,6 +389,7 @@ class CriticAssessment:
                 o.to_dict() for o in self.uncertainty_observations
             ],
             "summary": self.summary,
+            "domain_pack_ref": self.domain_pack_ref,
         }
 
     @classmethod
@@ -404,4 +411,5 @@ class CriticAssessment:
                 for o in payload.get("uncertainty_observations", ())
             ),
             summary=payload.get("summary", ""),
+            domain_pack_ref=payload.get("domain_pack_ref", ""),
         )

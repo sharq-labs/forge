@@ -88,6 +88,7 @@ from engcore.sria.assurance.obligations import (
     ObligationKind,
     ObligationSet,
     ValidationObligation,
+    obligations_from_charter,
 )
 from engcore.sria.assurance.uncertainty_budget import (
     ChannelEntry,
@@ -108,6 +109,7 @@ from engcore.sria.calibration.ingest import CAMPAIGN_ENVIRONMENT
 from engcore.sria.campaign import (
     AssessmentBundle,
     BudgetLedger,
+    CriticRequest,
     ExecutionRecord,
 )
 from engcore.sria.decision import (
@@ -499,9 +501,7 @@ class ToyHarness:
     gateway: BeliefUpdateGateway
     memory: CalibrationMemory = field(default_factory=CalibrationMemory)
     critic_verdict: CriticVerdict = CriticVerdict.PASS
-    obligations: ObligationSet = field(
-        default_factory=lambda: ObligationSet(campaign_id="m5-campaign")
-    )
+    obligations: ObligationSet = field(default_factory=lambda: critic_obligation())
     frozen_snapshot: BeliefSnapshot | None = None
     calibration_rows: list[ComputationalLearningRecord] = field(default_factory=list)
     seed_rows: list[ComputationalLearningRecord] = field(default_factory=list)
@@ -652,78 +652,28 @@ class ToyHarness:
         )
 
     def assess(self, execution, evidence, *, assessment_prefix) -> AssessmentBundle:
+        """Ask the Arbiter to run the registered toy critic on this evidence.
+
+        The harness no longer builds the assessment, and no longer reports
+        obligation state: the Arbiter runs the critic it was constructed with
+        and its decision is what satisfies (or fails) an obligation (audit
+        SRIA-TRUST-01 / SRIA-06).
+        """
         self._maybe_crash("assess")
-        termination = (
-            CriticVerdict.PASS
-            if execution.outcome.disposition is Disposition.SUCCESS
-            else CriticVerdict.FAIL
-        )
-        checks = (
-            CheckRecord(
-                name="solver_termination",
-                outcome=termination,
-                mandatory=True,
-                detail=f"disposition {execution.outcome.disposition.value}",
-            ),
-            CheckRecord(
-                name="convergence_state",
-                outcome=self.critic_verdict,
-                mandatory=True,
-                detail="declared by the toy solver",
-            ),
-        )
-        # The verdict follows the checks; a critic may not claim PASS over a
-        # mandatory check that did not pass.
-        outcomes = {c.outcome for c in checks}
-        if CriticVerdict.FAIL in outcomes:
-            verdict = CriticVerdict.FAIL
-        elif CriticVerdict.INCONCLUSIVE in outcomes:
-            verdict = CriticVerdict.INCONCLUSIVE
-        elif CriticVerdict.NOT_ASSESSED in outcomes:
-            verdict = CriticVerdict.NOT_ASSESSED
-        else:
-            verdict = CriticVerdict.PASS
-        # A failed mandatory check on its own is inconclusive; declaring the
-        # evidence *invalid* is a stronger claim and needs an explicit
-        # invalidating finding, exactly as M3 requires.
-        findings = ()
-        if verdict is CriticVerdict.FAIL:
-            findings = (
-                Finding(
-                    code="toy.solver_failed",
-                    severity=Severity.BLOCKING,
-                    category="numerical",
-                    message="the toy solver did not produce a usable result",
-                    check_name="convergence_state",
-                    impact=FindingImpact.EVIDENCE_INVALIDATING,
-                ),
-            )
-        assessment = CriticAssessment(
-            assessment_id=f"{assessment_prefix}-numerical",
-            critic_id="m5.toy_numerical",
-            critic_version="1",
-            critic_class=CriticClass.NUMERICAL,
-            subject_ref=evidence.evidence_id,
-            verdict=verdict,
-            findings=findings,
-            provenance=AssessmentProvenance(
-                assessment_id=f"{assessment_prefix}-numerical",
-                critic_id="m5.toy_numerical",
-                critic_version="1",
-                inputs_ref=(execution.execution_id,),
-            ),
-            checks=checks,
-            summary=f"toy numerical critic returned {verdict.value}",
-        )
-        satisfied = verdict is CriticVerdict.PASS
-        state = {
-            o.obligation_id: satisfied for o in self.obligations.obligations
-            if o.kind is ObligationKind.REQUIRED_CRITIC
-        }
         return AssessmentBundle(
-            assessments=(assessment,),
+            critic_requests=(
+                CriticRequest(
+                    critic_id=TOY_CRITIC_ID,
+                    assessment_id=f"{assessment_prefix}-numerical",
+                    inputs=(evidence,),
+                    options={
+                        "declared_convergence": self.critic_verdict,
+                        "disposition": execution.outcome.disposition,
+                        "inputs_ref": (execution.execution_id,),
+                    },
+                ),
+            ),
             uncertainty_budget=self.uncertainty_budget(evidence),
-            obligation_state=state,
         )
 
     # -- calibration -------------------------------------------------------
@@ -766,25 +716,137 @@ class ToyHarness:
 # Assurance wiring
 # =====================================================================
 
-def build_assurance(campaign_id: str = "m5-campaign"):
+TOY_CRITIC_ID = "m5.toy_numerical"
+
+
+class ToyNumericalCritic:
+    """The toy campaign's numerical critic, registered with its Arbiter.
+
+    It reads the evidence record itself, so the assessment's subject is that
+    record's hash. What the toy solver declared about convergence and how the
+    run ended arrive as inputs from the harness.
+    """
+
+    critic_id = TOY_CRITIC_ID
+    critic_version = "1"
+    critic_class = CriticClass.NUMERICAL
+
+    def assess(
+        self,
+        evidence,
+        *,
+        assessment_id: str,
+        declared_convergence: CriticVerdict = CriticVerdict.PASS,
+        disposition: Disposition = Disposition.SUCCESS,
+        inputs_ref: tuple = (),
+    ) -> CriticAssessment:
+        termination = (
+            CriticVerdict.PASS
+            if Disposition(disposition) is Disposition.SUCCESS
+            else CriticVerdict.FAIL
+        )
+        checks = (
+            CheckRecord(
+                name="solver_termination",
+                outcome=termination,
+                mandatory=True,
+                detail=f"disposition {Disposition(disposition).value}",
+            ),
+            CheckRecord(
+                name="convergence_state",
+                outcome=CriticVerdict(declared_convergence),
+                mandatory=True,
+                detail="declared by the toy solver",
+            ),
+        )
+        # The verdict follows the checks; a critic may not claim PASS over a
+        # mandatory check that did not pass.
+        outcomes = {c.outcome for c in checks}
+        if CriticVerdict.FAIL in outcomes:
+            verdict = CriticVerdict.FAIL
+        elif CriticVerdict.INCONCLUSIVE in outcomes:
+            verdict = CriticVerdict.INCONCLUSIVE
+        elif CriticVerdict.NOT_ASSESSED in outcomes:
+            verdict = CriticVerdict.NOT_ASSESSED
+        else:
+            verdict = CriticVerdict.PASS
+        # A failed mandatory check on its own is inconclusive; declaring the
+        # evidence *invalid* is a stronger claim and needs an explicit
+        # invalidating finding, exactly as M3 requires.
+        findings = ()
+        if verdict is CriticVerdict.FAIL:
+            findings = (
+                Finding(
+                    code="toy.solver_failed",
+                    severity=Severity.BLOCKING,
+                    category="numerical",
+                    message="the toy solver did not produce a usable result",
+                    check_name="convergence_state",
+                    impact=FindingImpact.EVIDENCE_INVALIDATING,
+                ),
+            )
+        return CriticAssessment(
+            assessment_id=assessment_id,
+            critic_id=self.critic_id,
+            critic_version=self.critic_version,
+            critic_class=self.critic_class,
+            subject_ref=evidence.record_hash,
+            verdict=verdict,
+            findings=findings,
+            provenance=AssessmentProvenance(
+                assessment_id=assessment_id,
+                critic_id=self.critic_id,
+                critic_version=self.critic_version,
+                inputs_ref=tuple(inputs_ref),
+            ),
+            checks=checks,
+            summary=f"toy numerical critic returned {verdict.value}",
+        )
+
+
+def toy_evidence(evidence_id: str, *, target: str = "theta", reliability: float = 0.9):
+    """A candidate toy evidence record outside any campaign run."""
+    return Evidence(
+        evidence_id=evidence_id,
+        source_class=SourceClass.SIMULATION,
+        claim_type=ClaimType.QOI_VALUE,
+        claim_binding=ClaimBinding(subject_kind="qoi", subject_ref=f"qoi.{target}"),
+        claim_payload={"target": target, "reliability": reliability,
+                       "result_ref": f"{evidence_id}-res"},
+        uncertainty=UncertaintyDeclaration(
+            subject_model=SubjectModel.PREDICTION_MODEL,
+            discrepancy=ModelDiscrepancy(
+                kind=DiscrepancyKind.ZERO_DECLARED,
+                rationale="toy campaign declares no model discrepancy",
+            ),
+        ),
+        provenance_ref=f"prov:{evidence_id}",
+        domain_pack_ref="m5.toy_pack",
+    )
+
+
+def build_assurance(campaign_id: str = "m5-campaign", critics=()):
+    """Authority, gateway and an Arbiter trusting the toy critic.
+
+    ``critics`` adds critics the Arbiter is constructed to trust as well —
+    stopping-criterion evaluators, typically. The registry is fixed at
+    construction (audit SRIA-TRUST-01).
+    """
     authority = AdmissionAuthority("m5.authority")
     registry = AdmissionAuthorityRegistry([authority])
     gateway = BeliefUpdateGateway(authorities=registry)
-    arbiter = Arbiter(authority)
+    arbiter = Arbiter(authority, critics=(ToyNumericalCritic(), *critics))
     return gateway, arbiter, authority
 
 
 def critic_obligation(campaign_id: str = "m5-campaign") -> ObligationSet:
-    return ObligationSet(
-        campaign_id=campaign_id,
-        obligations=(
-            ValidationObligation(
-                obligation_id="critic:numerical",
-                kind=ObligationKind.REQUIRED_CRITIC,
-                target=CriticClass.NUMERICAL.value,
-                source="m5 toy charter",
-            ),
-        ),
+    """The toy charter's single obligation, derived from that charter.
+
+    Hand-built before the audit; a runner now refuses an obligation set that
+    does not carry its charter's digest (audit SRIA-TRUST-02).
+    """
+    return obligations_from_charter(
+        toy_charter(campaign_id), required_critics=(CriticClass.NUMERICAL,)
     )
 
 

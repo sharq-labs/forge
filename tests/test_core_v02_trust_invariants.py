@@ -87,7 +87,12 @@ from engcore.sria.campaign.stopping import (
 from engcore.sria.evidence import Assessment, ClaimBinding, Evidence, LifecycleEvent
 
 from tests.sria_m5_benchmark import build_assurance, critic_obligation
-from tests.test_sria_m51_durability import CRITERION, ToyStoppingEvaluator, review_with
+from tests.test_sria_m51_durability import (
+    CRITERION,
+    ToyStoppingEvaluator,
+    arbiter_trusting,
+    review_with,
+)
 
 
 # =====================================================================
@@ -328,12 +333,11 @@ def test_unassessed_obligations_block_a_stop_an_approving_criterion_would_grant(
     evaluator PASSES separates the two: with `or` the stop is refused because
     checks were never run; with `and` it is approved over them.
     """
-    _gateway, arbiter, _admission = build_assurance()
-    approving = {
-        CRITERION.criterion_id: ToyStoppingEvaluator(
-            CRITERION.criterion_id, CriticVerdict.PASS,
-        )
-    }
+    # The evaluator is registered with the Arbiter that reviews the stop
+    # (audit SRIA-TRUST-01); an unregistered one would never be consulted.
+    evaluator = ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.PASS)
+    arbiter = arbiter_trusting(evaluator)
+    approving = {CRITERION.criterion_id: evaluator}
 
     # Control: with obligations assessed, this exact setup DOES approve.
     approved = review_with(
@@ -358,12 +362,9 @@ def test_unassessed_obligations_block_a_stop_an_approving_criterion_would_grant(
 def test_unresolved_assessments_block_a_stop_the_criterion_would_grant() -> None:
     """The other half of the same `or`: a mandatory assessment left unresolved
     must withhold approval even when the criterion is satisfied."""
-    _gateway, arbiter, _admission = build_assurance()
-    approving = {
-        CRITERION.criterion_id: ToyStoppingEvaluator(
-            CRITERION.criterion_id, CriticVerdict.PASS,
-        )
-    }
+    evaluator = ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.PASS)
+    arbiter = arbiter_trusting(evaluator)
+    approving = {CRITERION.criterion_id: evaluator}
     withheld = review_with(
         arbiter, review_id="unresolved",
         criteria=(CRITERION,), evaluators=approving,
@@ -376,15 +377,11 @@ def test_unresolved_assessments_block_a_stop_the_criterion_would_grant() -> None
 def test_an_approved_stop_always_names_the_authority_behind_it() -> None:
     """Approval must be traceable to an Arbiter decision and a named
     criterion. Without both, 'approved' is an opinion."""
-    _gateway, arbiter, _admission = build_assurance()
+    evaluator = ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.PASS)
     approved = review_with(
-        arbiter, review_id="traceable",
+        arbiter_trusting(evaluator), review_id="traceable",
         criteria=(CRITERION,),
-        evaluators={
-            CRITERION.criterion_id: ToyStoppingEvaluator(
-                CRITERION.criterion_id, CriticVerdict.PASS,
-            )
-        },
+        evaluators={CRITERION.criterion_id: evaluator},
     )
     assert approved.outcome is StopReviewOutcome.STOP_APPROVED
     assert approved.arbiter_decision_id
