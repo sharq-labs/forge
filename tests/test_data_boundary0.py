@@ -191,7 +191,12 @@ def test_a2_the_writer_emits_the_bumped_schema_and_the_reader_accepts_both():
     # model went unassessed is scientific content too, and a reader that
     # dropped it would be back to reading an empty mapping as either "nobody
     # asked" or "nobody said". The accept-set grew again rather than moving.
-    assert RESULT_SCHEMA == "scientific_result/4"
+    # ``/5`` since the results audit (RES-01): the /4 shape, held to its own
+    # provenance on read. /1 to /4 were read with an exemption for a provenance
+    # naming no participants, and the exemption covered the current version,
+    # so a current payload could attribute itself to a fabricated model and
+    # solver. The accept-set grew again rather than moving.
+    assert RESULT_SCHEMA == "scientific_result/5"
     assert RESULT_SCHEMA_V3 == "scientific_result/3"
     assert RESULT_SCHEMA_V2 == "scientific_result/2"
     assert RESULT_SCHEMA_V1 == "scientific_result/1"
@@ -200,8 +205,9 @@ def test_a2_the_writer_emits_the_bumped_schema_and_the_reader_accepts_both():
         "scientific_result/2",
         "scientific_result/3",
         "scientific_result/4",
+        "scientific_result/5",
     )
-    assert scalar_result().to_dict()["schema"] == "scientific_result/4"
+    assert scalar_result().to_dict()["schema"] == "scientific_result/5"
 
     assert RAW_OUTPUT_SCHEMA == "raw_solver_output/2"
     assert RAW_OUTPUT_SCHEMA_V1 == "raw_solver_output/1"
@@ -222,12 +228,12 @@ def test_a2b_an_old_reader_refuses_a_new_payload_rather_than_losing_data():
     """
     result, _ = solve_slab_with_bulk_field(make_slab(64, 80), run_id="v2-only")
     payload = result.to_dict()
-    assert payload["schema"] == "scientific_result/4"
+    assert payload["schema"] == "scientific_result/5"
     assert payload["data_references"], "the payload must actually carry one"
 
     with pytest.raises(ScientificCoreError) as excinfo:
         require_schema(payload, RESULT_SCHEMA_V1)
-    assert "scientific_result/4" in str(excinfo.value)
+    assert "scientific_result/5" in str(excinfo.value)
     # The /2 reader refuses it too, and for this milestone's own reason: a /3
     # payload can carry a validity assessment, and a reader that accepted it
     # and dropped that would report a result while losing the answer to
@@ -240,6 +246,11 @@ def test_a2b_an_old_reader_refuses_a_new_payload_rather_than_losing_data():
     # non-assessment from a silent one -- the exact confusion the field ended.
     with pytest.raises(ScientificCoreError):
         require_schema(payload, RESULT_SCHEMA_V3)
+    # And the /4 reader refuses it: a /5 payload states that it was held to its
+    # own provenance, which a /4 reader would read with the silent-provenance
+    # exemption the /5 record is not entitled to.
+    with pytest.raises(ScientificCoreError):
+        require_schema(payload, "scientific_result/4")
 
     raw_payload = RawSolverOutput(
         convergence=ConvergenceState.CONVERGED,
@@ -251,7 +262,7 @@ def test_a2b_an_old_reader_refuses_a_new_payload_rather_than_losing_data():
     # And an unknown future version is refused by the new reader too: the
     # accept-set is exact strings, not a range.
     with pytest.raises(ScientificCoreError):
-        ScientificResult.from_dict({**payload, "schema": "scientific_result/5"})
+        ScientificResult.from_dict({**payload, "schema": "scientific_result/6"})
 
 
 def test_a2c_a_v2_payload_round_trips_its_references():
@@ -265,31 +276,48 @@ def test_a2c_a_v2_payload_round_trips_its_references():
 
 def test_a3_a_payload_written_before_this_milestone_still_loads():
     """OLD payload → NEW reader must succeed. The exact bytes an older Crafty
-    would have produced: ``scientific_result/1``, and no such key."""
+    would have produced: ``scientific_result/1``, and no such key.
+
+    Nor the two validity keys: a /1 writer emitted neither, and since the
+    results audit (RES-02) a /1 payload carrying one is refused as a relabelled
+    newer record. This fixture used to keep them, which is not the bytes an
+    older writer produced."""
     payload = json.loads(canonical(scalar_result()))
     payload["schema"] = "scientific_result/1"
     del payload["data_references"]
+    del payload["validity"]
+    del payload["validity_not_assessed"]
     assert "data_references" not in payload
 
     restored = ScientificResult.from_dict(payload)
     assert restored.data_references == ()
     assert restored.value("v:out").magnitude_in("volt") == pytest.approx(1.6612)
-    # Re-serializing upgrades it: the writer emits one version only.
-    assert restored.to_dict()["schema"] == "scientific_result/4"
+    # Re-serializing upgrades it: its provenance attributes what it declares.
+    assert restored.to_dict()["schema"] == "scientific_result/5"
 
 
 def test_a3b_a_v1_payload_carries_no_references_even_if_a_key_appears():
     """``/1`` predates bulk data, so it loads with none — by version, not by
     key presence. A key in a ``/1`` payload was not written by this contract
-    and is not read as if it were."""
+    and is not read as if it were.
+
+    **Refused, since the results audit (RES-02).** This test used to pin that
+    the payload loaded with the key ignored, which is the relabelling
+    downgrade: a newer payload relabelled ``/1`` dropped its bulk references
+    without a refusal and re-serialized at the current version claiming none.
+    The key is still never read as if a /1 writer had written it; the payload
+    carrying it is now refused instead of silently thinned."""
     reference = ScientificDataReference.for_values(
         "u:field", [1.0, 2.0], unit="dimensionless"
     )[0]
     payload = json.loads(canonical(scalar_result()))
     payload["schema"] = "scientific_result/1"
     payload["data_references"] = [reference.to_dict()]
+    del payload["validity"]
+    del payload["validity_not_assessed"]
 
-    assert ScientificResult.from_dict(payload).data_references == ()
+    with pytest.raises(ScientificCoreError, match="data_references"):
+        ScientificResult.from_dict(payload)
 
 
 def test_a4_raw_solver_output_is_versioned_the_same_way():
