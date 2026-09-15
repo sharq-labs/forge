@@ -139,9 +139,9 @@ def harness_log(
 
 
 JUNIT_OK = (b'<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" '
-            b'errors="0" failures="0" skipped="1" tests="3"><testcase classname="tests.t" name="a"/>'
-            b'<testcase classname="tests.t" name="b"/><testcase classname="tests.t" name="c">'
-            b'<skipped message="x"/></testcase></testsuite></testsuites>')
+            b'errors="0" failures="0" skipped="0" tests="3"><testcase classname="tests.t" name="a"/>'
+            b'<testcase classname="tests.t" name="b"/><testcase classname="tests.t" name="c"/>'
+            b'</testsuite></testsuites>')
 
 
 def trust_result(ids: Sequence[str] = TRUST_IDS, status: Callable[[str], str] = lambda _: "KILLED") -> dict[str, Any]:
