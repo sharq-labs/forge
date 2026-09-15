@@ -188,6 +188,43 @@ def bound_over(*, consensus_id, routes, values, thresholds, tolerance_key, requi
         notes=notes,
     )
 
+
+def pin_artifact_bytes(route_id: str, identity: str, payload: bytes) -> None:
+    """Pin, as the domain layer would, which bytes one external dependency of a route is.
+
+    IND-03: bytes presented for an ``ext:`` identity are evidence only when their
+    digest is pinned for that identity on that route; a ``py:`` identity is never
+    pinned, because Forge reads the source it resolves for itself. A test that
+    builds a world of artifacts states that world's truth here, exactly as a
+    domain would state its own in ``engcore.domains``.
+    """
+    from engcore.scientific.consensus import canonical_component_identity
+    from engcore.scientific.errors import ScientificValidationError
+    from engcore.scientific.independence_evidence import ArtifactFingerprint
+
+    try:
+        canonical = canonical_component_identity(identity)
+    except ScientificValidationError:
+        return
+    if canonical.startswith("py:"):
+        return
+    digest = ArtifactFingerprint.from_bytes("pin", payload).digest
+    entry = PINS.setdefault(route_id, {})
+    digests = entry.setdefault("artifact_digests", {}).setdefault(canonical, [])
+    if digest not in digests:
+        digests.append(digest)
+
+
+def resolved_source(identity: str) -> bytes:
+    """The source bytes Forge resolves for a ``py:`` identity: its defining module's file."""
+    import importlib
+    import pathlib
+
+    from engcore.scientific.consensus import canonical_component_identity
+
+    module_name = canonical_component_identity(identity)[len("py:"):].partition(":")[0]
+    return pathlib.Path(importlib.import_module(module_name).__file__).read_bytes()
+
 @pytest.fixture(autouse=True)
 def route_declarations_for_tests(monkeypatch):
     """Install the test pins beside the real ones for one test."""

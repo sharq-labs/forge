@@ -45,6 +45,8 @@ from engcore.scientific.independence_evidence import (
 )
 from engcore.scientific.results.validation import ValidationLevel
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    pin_artifact_bytes,
+    resolved_source,
     bound_over,  # IND-02: a level needs results, not a mapping of numbers
     route,
     route_declarations_for_tests,
@@ -79,6 +81,11 @@ def _evidence(route_record, overrides=None):
             for row in rows
         )
         blobs[dimension] = {row[0]: row[1] for row in rows}
+        # IND-03: external bytes are evidence only where the domain layer pins
+        # their digest, so each world this helper builds pins its own artifacts.
+        # Python identities are never pinned: Forge reads their source itself.
+        for row in rows:
+            pin_artifact_bytes(route_record.route_id, row[2], row[1])
     return (
         RouteIndependenceEvidence(route_record.route_id, route_record.dependencies.digest, artifacts),
         blobs,
@@ -421,7 +428,8 @@ DEFINING = "py:engcore.domains.electrical.dc.solver:ElectricalDCSolver"
 def test_a_re_export_and_its_defining_module_evidence_the_same_dependency(declared, bound):
     assert REEXPORT != DEFINING and canonical_component_identity(REEXPORT) == DEFINING
     a, b = route("a", implementation=declared), route("b")
-    evidence = _evidence(a, {D.IMPLEMENTATION: [("dc-solver.py", b"solver source", bound, "source")]})
+    # The real source Forge resolves for the solver (IND-03), not a labelled blob.
+    evidence = _evidence(a, {D.IMPLEMENTATION: [("dc-solver.py", resolved_source(DEFINING), bound, "source")]})
     assessment = evidence[0].assess(a, evidence[1])
     assert assessment.verified, assessment.reasons
     assert assessment.covered[D.IMPLEMENTATION] == {DEFINING}
@@ -439,7 +447,7 @@ def test_two_spellings_of_one_python_dependency_are_one_identity_never_two():
     assert both.digest == one.digest
 
     a = route("a", implementation=[REEXPORT, DEFINING])
-    blob = b"solver source"
+    blob = resolved_source(DEFINING)  # IND-03: the source Forge resolves
     evidence = _evidence(a, {D.IMPLEMENTATION: [
         ("via-package.py", blob, REEXPORT, "source"),
         ("via-module.py", blob, DEFINING, "source"),
@@ -454,7 +462,7 @@ def test_alias_spellings_across_routes_do_not_make_one_implementation_two():
     b = route("b", implementation=DEFINING)
     assert _consensus(a, b).establishes is not ValidationLevel.CROSS_SOLVER_VALIDATED
 
-    shared = b"one solver source"
+    shared = resolved_source(DEFINING)  # IND-03: one real source, two spellings
     left = _evidence(a, {D.IMPLEMENTATION: [("solver.py", shared, REEXPORT, "source")]})
     right = _evidence(b, {D.IMPLEMENTATION: [("solver_impl.py", shared, DEFINING, "source")]})
     report = _pair(left, right, (a, b))
