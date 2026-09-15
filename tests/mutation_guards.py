@@ -2591,25 +2591,28 @@ def main(argv: list[str]) -> int:
             verdict, results[mid] = "HARNESS TIMEOUT", "TIMEOUT"
         elif code == 0:
             verdict, results[mid] = "GREEN -- DECORATION", "GREEN"
-        elif not failed:
-            # Nothing was collected: the suite stopped before any test ran.
-            # That is evidence only when the core REFUSED, and only when the
-            # mutation says so. A broken parse or a broken import is the kill
-            # mechanism this harness refuses to accept.
+        elif expect == REFUSED_AT_IMPORT:
+            # The core REFUSED while a module was being imported. With the
+            # original six target suites that stopped collection and no test
+            # ran. Since GUARDS 29-35 some target suites import the refusing
+            # domain lazily, inside a test, so the SAME refusal also surfaces
+            # as failed tests. Either way it is evidence only when the refusal
+            # is raised by the core and nothing broke the language; a failure
+            # list without a core refusal in it is not this mechanism.
             raised = "\n".join(
                 l for l in output.splitlines() if l.startswith("E   ")
             )
             broke = next((n for n in _NOT_A_REFUSAL if n in raised), None)
-            if expect != REFUSED_AT_IMPORT:
-                verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
-            elif broke:
+            if broke:
                 verdict, results[mid] = f"RED ({broke})", "IMPORT_OR_SYNTAX"
             elif not _CORE_REFUSAL.search(raised):
                 verdict, results[mid] = "RED (not a core refusal)", "IMPORT_OR_SYNTAX"
             else:
                 verdict, results[mid] = "RED (refused at import)", "RED"
-        elif expect == REFUSED_AT_IMPORT:
-            verdict, results[mid] = "RED (expected a refusal)", "UNRELATED"
+        elif not failed:
+            # Nothing was collected, and the mutation does not claim a refusal:
+            # a stopped suite is not the guard it names.
+            verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
         elif any(expect in name for name in failed):
             verdict, results[mid] = "RED", "RED"
         else:
