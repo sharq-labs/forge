@@ -601,8 +601,11 @@ def test_the_gate_awards_the_analytic_level_only_on_an_adiabatic_reactor(
     assert cooled.invariant_verified is False
     assert cooled.invariant_max_rel_error is None
     assert ValidationLevel.ANALYTICALLY_VERIFIED not in cooled.levels_earned
-    # But the independent steady state is still available to it.
-    assert ValidationLevel.CROSS_SOLVER_VALIDATED in cooled.levels_earned
+    # The algebraic steady state is still compared on a cooled reactor, and
+    # since IND-04 it establishes no level: it reads the solver's derived
+    # parameters, so its agreement is not independent evidence.
+    assert cooled.steady_state_verified is True
+    assert ValidationLevel.CROSS_SOLVER_VALIDATED not in cooled.levels_earned
     assert cooled.steady_state_rel_error <= STEADY_STATE_REL_TOL
 
 

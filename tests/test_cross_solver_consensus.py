@@ -478,14 +478,17 @@ def test_the_kinetics_gate_still_refuses_to_award_for_the_cross_method_arm():
     assert report.cross_method_agrees is True
     assert any("declares [" in line for line in check.evidence)
 
-    # And the arm that IS independent still awards, so the migration did not
-    # cost the domain the level it had earned.
+    # The steady-state arm awarded CROSS_SOLVER_VALIDATED until IND-04. Its
+    # reference is fed the solver's own derived parameters, so it is not an
+    # independent route either: it still runs and agrees, and establishes
+    # nothing.
     steady = next(
         c
         for c in report.to_report().checks
         if c.name == "independent_steady_state_agreement"
     )
-    assert steady.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
+    assert steady.outcome is ValidationOutcome.PASS
+    assert steady.establishes is None
 
 
 # =====================================================================
