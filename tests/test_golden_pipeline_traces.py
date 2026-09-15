@@ -426,12 +426,25 @@ def test_b00006_shows_the_battery_thermal_gap_the_scorer_works_around():
         for record in report.validity
         if record.model_id.startswith("battery.")
     }
+    # AUDIT CAP-02 moved rint_ocv off IN_DOMAIN here, and the case's ground
+    # truth (SUPPORTED) no longer describes the runtime. B00006 declares the
+    # generator's template pulse -- 4 A for 10 s against a ~20 s polarization
+    # time constant -- and since the declared pulse is screened at its own
+    # length that pulse is mid-slew (unmodelled fraction ~0.39 against 0.05):
+    # the Rint claim over the declared duty is unestablished, a gap and not a
+    # finding. The three other battery models are unchanged. The battery
+    # generator does not model the pulse, so every template case moves the
+    # same way; that is a ground-truth question for the benchmark's own
+    # adjudication log, not something this trace can settle.
     assert battery_models == {
         "battery.cell.constant_current_runtime": "in_domain",
         "battery.cell.coulomb_counting": "in_domain",
         "battery.cell.peukert_capacity_derating": "in_domain",
-        "battery.cell.rint_ocv": "in_domain",
+        "battery.cell.rint_ocv": "unknown",
     }
+    rint = _assessment(report, "battery.cell.rint_ocv")
+    assert rint.violated == ()
+    assert "pulse_polarization_unmodelled_fraction" in rint.unknown
 
     # The gap, named at the condition rather than as a status alone.
     thermal = _assessment(report, "thermal.lumped.first_order_capacity")
