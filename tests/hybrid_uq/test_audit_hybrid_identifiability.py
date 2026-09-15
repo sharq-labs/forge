@@ -45,6 +45,9 @@ def test_huq14_the_explanation_is_part_of_the_identity():
     routed = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward,
                                multistart=MultistartPolicy())
     ident = routed.identifiability
-    contradicted = dataclasses.replace(ident, report=dataclasses.replace(ident.report, why="NOT IDENTIFIABLE: do not use these"))
-    assert contradicted.digest != ident.digest
+    # an explanation that still follows from the numbers but says something else (here, another parameterization)
+    relabelled = dataclasses.replace(ident, report=dataclasses.replace(
+        ident.report, why=ident.report.why.replace("parameterization 'declared'", "parameterization 'forged'")))
+    assert relabelled.report.why != ident.report.why
+    assert relabelled.digest != ident.digest
     assert assess_routed_identifiability(routed.local_posterior).digest == ident.digest

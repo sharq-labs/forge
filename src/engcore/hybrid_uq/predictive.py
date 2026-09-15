@@ -161,6 +161,52 @@ class RoutedPredictiveUncertainty:
             object.__setattr__(self, label, (low, high))
         if not 0.0 < float(self.confidence_level) < 1.0:
             raise HybridUQError("confidence_level must lie strictly between 0 and 1")
+        self._require_numbers_agree(cls, param, total)
+
+    def _require_numbers_agree(self, cls: ApproximationClass, param: float, total: float) -> None:
+        """A predictive record's mean, intervals, uncertainties, nonlinearity and claim state one truth (audit HUQ-12).
+
+        LINEARIZED_PREDICTIVE_UQ intervals ARE mean +/- q sd, so they must be, to roundoff; its claim must follow
+        from the nonlinearity it records (an unmeasured one is an incomplete probe, one above the threshold is
+        PREDICTIVE_NONLINEAR). A POSTERIOR_GRID interval is a central interval of a distribution with the recorded
+        mean and standard deviation, which Cantelli's inequality confines to mean +/- sqrt((1 - t) / t) sd for the
+        tail mass t; it records no linearization, so no nonlinearity.
+        """
+        mean = float(self.mean)
+        if not math.isfinite(mean) or not math.isfinite(total):
+            raise HybridUQError("a predictive mean and total uncertainty must be finite")
+        if not all(math.isfinite(v) for v in self.parameter_interval + self.total_interval):
+            raise HybridUQError("predictive intervals must be finite")
+        level = float(self.confidence_level)
+        nonlinearity = self.predictive_nonlinearity
+        if cls is ApproximationClass.LINEARIZED_PREDICTIVE_UQ:
+            q = float(norm.ppf(0.5 + level / 2.0))
+            for label, sd in (("parameter_interval", param), ("total_interval", total)):
+                low, high = getattr(self, label)
+                tolerance = 8.0 * float(np.finfo(float).eps) * max(abs(mean), q * sd, abs(low), abs(high))
+                if abs(low - (mean - q * sd)) > tolerance or abs(high - (mean + q * sd)) > tolerance:
+                    raise HybridUQError(f"a linearized {label} is mean +/- {q:.6g} sd; ({low!r}, {high!r}) is not "
+                                        f"{mean!r} +/- {q:.6g} x {sd!r}")
+            if nonlinearity is None or math.isnan(float(nonlinearity)):
+                if RouteReason.NONLINEARITY_PROBE_INCOMPLETE not in self.reasons:
+                    raise HybridUQError("a linearized prediction whose nonlinearity was not measured is NONLINEARITY_PROBE_INCOMPLETE")
+            else:
+                if float(nonlinearity) < 0.0:
+                    raise HybridUQError("a negative predictive nonlinearity")
+                if (float(nonlinearity) > PREDICTIVE_NONLINEARITY_DOWNGRADE) != (RouteReason.PREDICTIVE_NONLINEAR in self.reasons):
+                    raise HybridUQError(f"a predictive nonlinearity of {float(nonlinearity):.3g} and reasons "
+                                        f"{[r.value for r in self.reasons]} disagree about PREDICTIVE_NONLINEAR")
+        else:
+            if nonlinearity is not None or RouteReason.PREDICTIVE_NONLINEAR in self.reasons:
+                raise HybridUQError("a POSTERIOR_GRID prediction is not linearized and records no nonlinearity")
+            tail = (1.0 - level) / 2.0
+            k = math.sqrt((1.0 - tail) / tail)
+            for label, sd in (("parameter_interval", param), ("total_interval", total)):
+                low, high = getattr(self, label)
+                reach = k * sd * (1.0 + 1e-6) + 1e-12 * max(abs(mean), 1.0)
+                if low < mean - reach or high > mean + reach:
+                    raise HybridUQError(f"a {label} ({low!r}, {high!r}) cannot be a central {level:g} interval of a distribution "
+                                        f"with mean {mean!r} and standard deviation {sd!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
