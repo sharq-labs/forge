@@ -1727,9 +1727,12 @@ def test_the_shipped_example_evaluates_the_element_condition():
     ).reports[0]
 
     element = next(r for r in report.validity if r.model_id == SELF_HEATED)
-    assert element.assessment.satisfied == (
+    # Audit CAP-03 added the interval resistance-variation condition, which the
+    # example answers through its declared resistance_variation_budget.
+    assert set(element.assessment.satisfied) == {
         dc_app.ELEMENT_HOT_SPOT_UTILIZATION,
-    )
+        dc_app.RESISTANCE_VARIATION_UTILIZATION,
+    }
     assert report.verdict is CredibilityVerdict.SUPPORTED
     assert (SELF_HEATED, dc_app.SELF_HEATED_RESISTOR_MODEL.version) in (
         report.contributing_models

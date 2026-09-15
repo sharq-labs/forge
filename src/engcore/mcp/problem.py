@@ -194,6 +194,17 @@ COUPLING_SUPPLIED_INPUTS: Mapping[str, str] = {
         "the element's dissipation is the electrical solve's own answer, and "
         "it is the heat input the coupling transports"
     ),
+    dc_app.TEMPERATURE_COEFFICIENT: (
+        "the element's temperature coefficient is the stage's own "
+        "conductor.temperature_coefficient, handed to the element record; a "
+        "second payload field for it could disagree with the one the run used"
+    ),
+    dc_app.INITIAL_BODY_TEMPERATURE: (
+        "the body temperature at the start of the interval is the stage's own "
+        "body.initial_temperature, handed to the element record so it can "
+        "measure how far R moved across the interval the fixed point held it "
+        "constant over"
+    ),
 }
 
 
@@ -488,6 +499,15 @@ _BINDINGS: tuple[Binding, ...] = (
         kind="quantity",
         model=_SELF_HEATED,
         input_name=dc_app.PERMISSIBLE_ELEMENT_TEMPERATURE,
+    ),
+    # Audit CAP-03: how much resistance change across one integrated interval
+    # the caller accepts the quasi-static fixed point holding constant.
+    Binding(
+        section=ELEMENT,
+        key=dc_app.RESISTANCE_VARIATION_BUDGET,
+        kind="quantity",
+        model=_SELF_HEATED,
+        input_name=dc_app.RESISTANCE_VARIATION_BUDGET,
     ),
     # ---- source regulation -------------------------------------------
     Binding(
@@ -1667,6 +1687,11 @@ def _companion_assessments(
                         component_id=stage.component_id
                     )
                 ),
+                # The two ends of the interval the fixed point held one R
+                # across (audit CAP-03): the declared start, and the
+                # temperature the property solve was evaluated at.
+                temperature_coefficient=stage.conductor.temperature_coefficient,
+                initial_body_temperature=stage.body.initial_temperature,
             )
         )
     if elements:
@@ -2785,6 +2810,13 @@ _EXAMPLE_RESISTOR_ELEMENT = {
     # package's -- the derating line reaches zero permissible dissipation
     # there, which is the manufacturer saying the element may not be hotter.
     "permissible_element_temperature": "428.15 kelvin",
+    # Audit CAP-03. The caller's statement of how much resistance change across
+    # one integrated interval they accept the quasi-static fixed point holding
+    # constant. Not a datasheet value -- a tolerance on the approximation. This
+    # case moves R by |alpha| |T_final - T_0| = 0.00393 * 38.6 K = 0.152 over
+    # its 120 s, and an independent RK4 of the true transient puts the
+    # reported rise 1.8 % low; 0.2 accepts that.
+    "resistance_variation_budget": "0.2 dimensionless",
 }
 
 #: **No `source_regulation` block, deliberately.**

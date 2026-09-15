@@ -47,4 +47,15 @@ SUPPLEMENT: dict[tuple[str, str], dict] = {
             "prerequisite, because a constant load cannot shift its own cutoff."
         ),
     },
+    # ---- electrical.dc: one resistance over the interval (audit CAP-03) ----
+    ("electrical.dc", "resistance_variation_utilization"): {
+        "clause": "UNKNOWN unless the budget is declared and the run supplied the coefficient and both body temperatures.",
+        "all_of": ["resistance_variation_budget"],
+        "context": "dc.self_heated",
+        "reading": (
+            "The coefficient and the two body temperatures are supplied by "
+            "the coupled run, never by the caller; the caller's prerequisite "
+            "is the budget."
+        ),
+    },
 }

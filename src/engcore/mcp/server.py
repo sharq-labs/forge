@@ -603,8 +603,14 @@ _RUN_DESCRIPTION = """\
 Run one electro-thermal case and return its credibility evidence report.
 
 Solves a DC series circuit of temperature-dependent resistors coupled to \
-first-order lumped thermal bodies, iterating to a fixed point, and returns one \
-report per stage: the values with units, each model's validity (status plus \
+first-order lumped thermal bodies, iterating to a quasi-static end-of-interval \
+fixed point, and returns one report per stage. Quasi-static means each body is \
+integrated over its declared duration with the dissipation at R(T_final), the \
+resistance of its end-of-interval temperature, held constant across the whole \
+interval: the real resistance moves from R(T_0) to R(T_final) and that \
+transient is approximated, not resolved. Declaring \
+stages[].conductor.element.resistance_variation_budget lets the element record \
+check how far R moved against what you accept. Each report carries: the values with units, each model's validity (status plus \
 the satisfied, violated and UNKNOWN condition names), every validation check \
 with its outcome and what it established -- including checks that did NOT run \
 -- the coupling outcome as its own field, full provenance, and anything you \
@@ -618,11 +624,14 @@ INSUFFICIENT_EVIDENCE means something was never produced, and verdict_reasons \
 says what to declare. NOT_SUPPORTED outranks INSUFFICIENT_EVIDENCE, so a \
 NOT_SUPPORTED report may carry gaps too, under other_findings.
 
-Expect INSUFFICIENT_EVIDENCE on a well-formed nominal case. The payload has no \
-field for a resistor's rated dissipation or a source's current limit, and \
-electrical.dc.kcl declares no validity conditions, so those models are \
-honestly UNKNOWN. That is the runtime's real answer, it is transmitted \
-unchanged, and it is neither an error nor a reason to retry.
+A fully declared nominal case can be SUPPORTED: the example_case in \
+describe_capabilities is. Expect INSUFFICIENT_EVIDENCE when optional \
+declarations are left out -- a resistor's ratings (stages[].conductor.ratings), \
+the source's current limit (source_ratings), the element data \
+(stages[].conductor.element) or the body's applicability fields -- because the \
+conditions that read them are then honestly UNKNOWN and verdict_reasons names \
+them. That is the runtime's real answer, it is transmitted unchanged, and it is \
+neither an error nor a reason to retry.
 
 The verdict is advisory input to an engineer of record. It is not a decision, \
 not a certification, and not a claim of conformance with any standard.

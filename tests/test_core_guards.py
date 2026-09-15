@@ -213,8 +213,12 @@ EXPECTED_RESERVING_MODELS = 15
 # pulse_terminal_voltage_ratio on the Rint model, and
 # pulse_cutoff_state_of_charge_shift on the constant-current runtime. A pulse
 # entered the Rint claim through its ratings and was never evaluated.
-EXPECTED_CONDITION_NAMES = 76
-EXPECTED_RESERVED_NAMES = 58
+# 76 -> 77 and 58 -> 59 (CAP-03): resistance_variation_utilization on the
+# self-heated resistor record, whose assumption "one resistance describes the
+# element over the whole run" had no condition while the coupled transient held
+# R(T_final) across the interval.
+EXPECTED_CONDITION_NAMES = 77
+EXPECTED_RESERVED_NAMES = 59
 
 
 def test_the_only_modules_the_walk_lost_are_declared_optional_ones():
