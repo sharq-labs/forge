@@ -53,6 +53,7 @@ import numpy as np
 
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.twins import TwinReference
+from ..scientific.units.quantity import Quantity, base_unit
 from .grid import GaussianObservation, InferenceProblemError, ObservationSet
 
 OBSERVATION_SPLIT_SCHEMA = schema_string("calibration_observation_split")
@@ -66,6 +67,12 @@ class DataLeakageError(InferenceProblemError):
     distinguished from an ill-posed problem -- they call for different
     responses, and Phase 19 asks for the distinction to be explicit.
     """
+
+
+def _canonical_number(value: float) -> str:
+    """Twelve significant digits, with -0 folded into 0, as the digest's text."""
+    text = f"{float(value) + 0.0:.12g}"
+    return "0" if text in ("-0", "0") else text
 
 
 def observation_content_digest(observation: GaussianObservation) -> str:
@@ -85,12 +92,25 @@ def observation_content_digest(observation: GaussianObservation) -> str:
             f"a content digest is taken of a GaussianObservation, got "
             f"{type(observation).__name__}"
         )
-    unit = observation.value.units
+    # INF-06: canonical content, not a spelling of it. The value used to be
+    # digested in whatever unit it was written in, beside that unit string, and
+    # bit-exact: 1.2345 ohm and 1234.5 milliohm -- or 1.2345 nudged by one ulp --
+    # were different "content" and crossed the split unseen. Value and sigma are
+    # now expressed in the dimension's base unit and rounded to twelve significant
+    # digits: two distinct measurements of a continuous quantity agreeing to
+    # twelve digits in value AND sigma are a copy, exactly as the module says of
+    # bit-identical ones. Sigma is converted as a DIFFERENCE, so an offset unit
+    # does not add its zero to it.
+    unit = base_unit(observation.value.units)
+    value = observation.value.magnitude_in(unit)
+    sigma_in_value_unit = observation.sigma.magnitude_in(observation.value.units)
+    upper = Quantity(observation.value.magnitude + sigma_in_value_unit, observation.value.units)
+    sigma = abs(upper.magnitude_in(unit) - value)
     payload = {
         "observable_name": observation.observable_name,
         "unit": unit,
-        "value": observation.value.magnitude_in(unit),
-        "sigma": observation.sigma.magnitude_in(unit),
+        "value": _canonical_number(value),
+        "sigma": _canonical_number(sigma),
     }
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
@@ -149,6 +169,24 @@ class ObservationSplit:
                 f"calibration and held-out sets: {shared_keys[:5]!r}"
                 f"{'…' if len(shared_keys) > 5 else ''}. A held-out score over "
                 f"these is a score on the fitting data"
+            )
+
+        # INF-06: one experimental condition belongs to one side. Splitting within
+        # a condition -- fitting the voltage and holding out the current of the
+        # same run -- leaks through the physics with no key shared, and
+        # `partition` documents that split as unavailable; the constructor now
+        # makes it so. Not waived by exact_replicates_allowed, which is about
+        # repeated values at DIFFERENT conditions.
+        shared_conditions = sorted(
+            {item.condition_id for item in self.calibration.observations}
+            & {item.condition_id for item in self.held_out.observations}
+        )
+        if shared_conditions:
+            raise DataLeakageError(
+                f"{len(shared_conditions)} experimental condition(s) appear in both "
+                f"the calibration and held-out sets: {shared_conditions[:5]!r}. Every "
+                f"observable measured at one condition belongs to the same side; a "
+                f"held-out observable from a calibrated run is not unseen data"
             )
 
         if not self.exact_replicates_allowed:
