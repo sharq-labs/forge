@@ -35,6 +35,7 @@ import mcp.types as mcp_types
 from mcp.server.mcpserver import MCPServer
 
 from ..scientific.models.definition import ValidityStatus
+from ..systems.electrothermal import coupled as cp
 from .errors import (
     MalformedPayloadError,
     MissingFieldError,
@@ -369,7 +370,19 @@ def _verdict_block(report: Any) -> dict[str, Any]:
 def _response(payload: Mapping[str, Any]) -> dict[str, Any]:
     """The whole run, as JSON. Every value transported, none computed."""
     case = run_electrothermal_case(payload)
-    stages = build_electrothermal_system(payload).stages
+    system = build_electrothermal_system(payload)
+    stages = system.stages
+    if case.run.refusal is not None:
+        # A refused run carries ONE report, about the problem that was refused,
+        # and the stage it belongs to is not necessarily the first. Zipping the
+        # payload's stages with the reports in order published R2's refusal
+        # under R1 (audit CAP-06). The stage is found by the problem id instead.
+        refused_id = case.run.refusal.result.problem_id
+        stages = tuple(
+            stage
+            for stage, prop_problem, thermal_problem in cp.stage_problems(system)
+            if refused_id in (prop_problem.problem_id, thermal_problem.problem_id)
+        ) or stages[:1]
     coupling = case.reports[0].coupling
     return {
         "schema": RESPONSE_SCHEMA,
