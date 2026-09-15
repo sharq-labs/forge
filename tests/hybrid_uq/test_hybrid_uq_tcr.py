@@ -38,7 +38,9 @@ def _design(temps, nodes):
 @pytest.mark.parametrize("temps,nodes", [(WIDE, 41), (NARROW, 81)], ids=["wide", "narrow"])
 def test_the_local_route_agrees_with_the_resolved_grid(temps, nodes):
     obs, forward, fit, grid = _design(temps, nodes)
-    local = route_uncertainty(calibration=fit, observations=obs, forward=forward, multistart=MultistartPolicy(starts=3))
+    # The canonical multistart. This asked for 3 starts before audit HUQ-01; a search below max(6, 2p + 2) starts
+    # can no longer stand behind a SUPPORTED claim, which is what this test asserts.
+    local = route_uncertainty(calibration=fit, observations=obs, forward=forward, multistart=MultistartPolicy())
     gridded = route_uncertainty(grid=grid)
     assert local.decision is RouteDecision.LOCAL_GAUSSIAN and local.claim is RouteClaim.SUPPORTED
     assert gridded.decision is RouteDecision.GRID_AS_SUPPLIED

@@ -1,9 +1,10 @@
 """Predictive uncertainty from either route, with parameter and measurement uncertainty kept apart.
 
 LINEARIZED_PREDICTIVE_UQ: mean g(z_hat), parameter variance diag(G Sigma G^T), measurement variance sigma^2,
-total = the sum. Exact only when g is affine over the posterior; the +/-2 sd principal-axis probes compare g
-with its linear extrapolation and downgrade when they disagree, and a probe that was not evaluated -- outside
-the bounds, refused, or not run at all because ``check_nonlinearity=False`` -- downgrades too.
+total = the sum. Exact only when g is affine over the posterior; +/-2 sd probes along every principal axis, every
+diagonal between two axes and each prediction's Sigma grad g compare g with its linear extrapolation, in units
+of the parameter standard uncertainty, and downgrade when they disagree; a probe that was not evaluated --
+outside the bounds, refused, or not run at all because ``check_nonlinearity=False`` -- downgrades too.
 
 POSTERIOR_GRID: the frozen ``posterior_predictive_uq``, grid-resolution refusal included, re-expressed in the
 same record. Model discrepancy is estimated by neither: every record names MODEL_DISCREPANCY_NOT_MODELLED.
@@ -18,17 +19,18 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 from scipy.stats import norm
 
-from ..inference.calibration import ForwardEvaluator
+from ..inference.calibration import ForwardEvaluator, assess_identifiability
 from ..inference.grid import AdmittedForwardTable, PosteriorGrid
 from ..scientific.ir.problem import ModelReference
 from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity
 from ..uq.predictive import PredictiveObservableSpec, posterior_predictive_uq
 from ._records import decode_float, digest_of, encode_float, require_schema
-from .local_gaussian import LocalGaussianPosterior, PROBE_SD
+from .local_gaussian import LocalGaussianPosterior, PROBE_SD, _probe_directions
 from .sensitivity import DEFAULT_RELATIVE_STEP, RouteRefusedError, central_difference, evaluate, to_natural
 from .vocabulary import (
-    MODEL_DISCREPANCY_NOT_MODELLED, UNCERTAINTY_SOURCES, ApproximationClass, HybridUQError, RouteClaim, RouteReason, claim_for,
+    GRID_ROUTE_MAXIMUM_PARAMETERS, MODEL_DISCREPANCY_NOT_MODELLED, UNCERTAINTY_SOURCES, ApproximationClass, HybridUQError, RouteClaim,
+    RouteReason, claim_for,
 )
 
 ROUTED_PREDICTIVE_UNCERTAINTY_SCHEMA = "hybrid_uq.routed_predictive_uncertainty/1"
@@ -36,7 +38,12 @@ PREDICTIVE_NONLINEARITY_DOWNGRADE = 0.10
 
 
 def grid_digest(posterior: PosteriorGrid) -> str:
-    """Identity of a grid posterior: names, dataset, and the bytes of its points and weights."""
+    """Identity of a grid posterior: names, dataset, and the bytes of its points, weights, log-likelihood and mask.
+
+    The log-likelihood and the admissible mask are part of the identity (audit HUQ-04): the frozen resolution checks
+    read the log-likelihood while the moments read the weights, so a digest over the weights alone let a refused
+    grid keep its identity under a laundered likelihood.
+    """
     import hashlib
 
     h = hashlib.sha256()
@@ -44,7 +51,57 @@ def grid_digest(posterior: PosteriorGrid) -> str:
     h.update(b"\x00" + str(posterior.dataset_id).encode("utf-8") + b"\x00")
     h.update(np.ascontiguousarray(posterior.points, dtype="<f8").tobytes())
     h.update(np.ascontiguousarray(posterior.weights, dtype="<f8").tobytes())
+    h.update(b"\x00log_likelihood\x00" + np.ascontiguousarray(posterior.log_likelihood, dtype="<f8").tobytes())
+    h.update(b"\x00admissible_mask\x00" + np.ascontiguousarray(posterior.admissible_mask, dtype=np.uint8).tobytes())
     return h.hexdigest()
+
+
+#: A grid's weights must be the normalized likelihood over its admissible, finite nodes to this relative tolerance
+#: (plus an absolute floor far below any weight that moves a moment). The frozen construction reproduces them to
+#: roundoff; anything else is weights and a likelihood that describe two different posteriors.
+GRID_WEIGHT_RELATIVE_TOLERANCE = 1.0e-9
+GRID_WEIGHT_ABSOLUTE_TOLERANCE = 1.0e-14
+
+
+def _require_weights_follow_likelihood(posterior: PosteriorGrid) -> None:
+    """Refuse a grid whose weights are not softmax(log_likelihood) over its admissible mask (audit HUQ-04).
+
+    Defence in depth: whatever the grid constructor enforces, a grid whose resolution is judged on one array and
+    whose moments are read from another is never routed, predicted from or certified here.
+    """
+    ll = np.asarray(posterior.log_likelihood, dtype=np.float64)
+    mask = np.asarray(posterior.admissible_mask, dtype=bool)
+    weights = np.asarray(posterior.weights, dtype=np.float64)
+    if ll.shape != weights.shape or mask.shape != weights.shape:
+        raise HybridUQError("a posterior grid's weights, log-likelihood and mask must have one entry per point")
+    usable = mask & np.isfinite(ll)
+    if not np.any(usable):
+        raise HybridUQError("a posterior grid with no admissible finite log-likelihood has no posterior")
+    expected = np.zeros_like(ll)
+    expected[usable] = np.exp(ll[usable] - float(np.max(ll[usable])))
+    expected /= float(np.sum(expected))
+    gap = np.abs(weights - expected)
+    if np.any(gap > GRID_WEIGHT_RELATIVE_TOLERANCE * expected + GRID_WEIGHT_ABSOLUTE_TOLERANCE):
+        worst = int(np.argmax(gap - GRID_WEIGHT_RELATIVE_TOLERANCE * expected))
+        raise HybridUQError(
+            f"the grid's weights are not softmax(log_likelihood) over its admissible mask: at point {worst} the weight is "
+            f"{float(weights[worst]):.6g} and its likelihood implies {float(expected[worst]):.6g}; a grid whose resolution "
+            f"is judged on one array and whose moments come from another is not a posterior")
+
+
+def _grid_route_claim(posterior: PosteriorGrid) -> RouteClaim:
+    """The claim a grid may carry: the router's own judgement, or a refusal raised (audit HUQ-02).
+
+    The same checks, in the same order, as the router's GRID_AS_SUPPLIED route: the validated dimension, weights
+    that follow the likelihood, and the frozen ``assess_identifiability`` (which raises GridResolutionError when the
+    repaired V1 resolution checks refuse). A grid the router would not route is not predicted from.
+    """
+    if len(posterior.parameter_names) > GRID_ROUTE_MAXIMUM_PARAMETERS:
+        raise HybridUQError(f"a grid of {len(posterior.parameter_names)} parameters is beyond the validated grid route "
+                            f"({GRID_ROUTE_MAXIMUM_PARAMETERS}); it is not predicted from")
+    _require_weights_follow_likelihood(posterior)
+    assess_identifiability(posterior)
+    return RouteClaim.SUPPORTED
 
 
 @dataclass(frozen=True)
@@ -104,6 +161,52 @@ class RoutedPredictiveUncertainty:
             object.__setattr__(self, label, (low, high))
         if not 0.0 < float(self.confidence_level) < 1.0:
             raise HybridUQError("confidence_level must lie strictly between 0 and 1")
+        self._require_numbers_agree(cls, param, total)
+
+    def _require_numbers_agree(self, cls: ApproximationClass, param: float, total: float) -> None:
+        """A predictive record's mean, intervals, uncertainties, nonlinearity and claim state one truth (audit HUQ-12).
+
+        LINEARIZED_PREDICTIVE_UQ intervals ARE mean +/- q sd, so they must be, to roundoff; its claim must follow
+        from the nonlinearity it records (an unmeasured one is an incomplete probe, one above the threshold is
+        PREDICTIVE_NONLINEAR). A POSTERIOR_GRID interval is a central interval of a distribution with the recorded
+        mean and standard deviation, which Cantelli's inequality confines to mean +/- sqrt((1 - t) / t) sd for the
+        tail mass t; it records no linearization, so no nonlinearity.
+        """
+        mean = float(self.mean)
+        if not math.isfinite(mean) or not math.isfinite(total):
+            raise HybridUQError("a predictive mean and total uncertainty must be finite")
+        if not all(math.isfinite(v) for v in self.parameter_interval + self.total_interval):
+            raise HybridUQError("predictive intervals must be finite")
+        level = float(self.confidence_level)
+        nonlinearity = self.predictive_nonlinearity
+        if cls is ApproximationClass.LINEARIZED_PREDICTIVE_UQ:
+            q = float(norm.ppf(0.5 + level / 2.0))
+            for label, sd in (("parameter_interval", param), ("total_interval", total)):
+                low, high = getattr(self, label)
+                tolerance = 8.0 * float(np.finfo(float).eps) * max(abs(mean), q * sd, abs(low), abs(high))
+                if abs(low - (mean - q * sd)) > tolerance or abs(high - (mean + q * sd)) > tolerance:
+                    raise HybridUQError(f"a linearized {label} is mean +/- {q:.6g} sd; ({low!r}, {high!r}) is not "
+                                        f"{mean!r} +/- {q:.6g} x {sd!r}")
+            if nonlinearity is None or math.isnan(float(nonlinearity)):
+                if RouteReason.NONLINEARITY_PROBE_INCOMPLETE not in self.reasons:
+                    raise HybridUQError("a linearized prediction whose nonlinearity was not measured is NONLINEARITY_PROBE_INCOMPLETE")
+            else:
+                if float(nonlinearity) < 0.0:
+                    raise HybridUQError("a negative predictive nonlinearity")
+                if (float(nonlinearity) > PREDICTIVE_NONLINEARITY_DOWNGRADE) != (RouteReason.PREDICTIVE_NONLINEAR in self.reasons):
+                    raise HybridUQError(f"a predictive nonlinearity of {float(nonlinearity):.3g} and reasons "
+                                        f"{[r.value for r in self.reasons]} disagree about PREDICTIVE_NONLINEAR")
+        else:
+            if nonlinearity is not None or RouteReason.PREDICTIVE_NONLINEAR in self.reasons:
+                raise HybridUQError("a POSTERIOR_GRID prediction is not linearized and records no nonlinearity")
+            tail = (1.0 - level) / 2.0
+            k = math.sqrt((1.0 - tail) / tail)
+            for label, sd in (("parameter_interval", param), ("total_interval", total)):
+                low, high = getattr(self, label)
+                reach = k * sd * (1.0 + 1e-6) + 1e-12 * max(abs(mean), 1.0)
+                if low < mean - reach or high > mean + reach:
+                    raise HybridUQError(f"a {label} ({low!r}, {high!r}) cannot be a central {level:g} interval of a distribution "
+                                        f"with mean {mean!r} and standard deviation {sd!r}")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -201,10 +304,23 @@ def linearized_predictive_uq(
         # The largest deviation over the probes that were evaluated. A probe outside the declared bounds or
         # refused by the predictive model was not evaluated, so it is counted, not read as agreement: the
         # nonlinearity it would have measured is unknown, and 0.0 over no probes is not evidence of linearity.
+        #
+        # The probes are the local route's unit-Mahalanobis directions -- every principal axis and every diagonal
+        # between two of them -- plus, for each prediction, the direction Sigma grad g along which its own
+        # parameter variance lies (audit HUQ-07: axes alone read g = c u1 + K u1 u2 as exactly linear).
+        #
+        # A deviation is measured in units of the PARAMETER standard uncertainty (audit HUQ-11): scaled by the total,
+        # a large measurement sigma hid a parameter part curved enough to move the parameter interval off its mass.
+        # Since the parameter sd never exceeds the total, this never reads less nonlinearity than the total scale did.
         nonlinearity = 0.0
         lam, vec = np.linalg.eigh(cov)
-        for k in range(len(z0)):
-            delta = PROBE_SD * math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k]
+        directions = _probe_directions(lam, vec)
+        for i in range(len(specs)):
+            if parameter_sd[i] > 0.0:
+                directions.append((cov @ G[i]) / parameter_sd[i])
+        roundoff_factor = 64.0 * float(np.finfo(float).eps)
+        for direction in directions:
+            delta = PROBE_SD * np.asarray(direction, dtype=np.float64)
             for sign in (1.0, -1.0):
                 point = z0 + sign * delta
                 if np.any(point < lower) or np.any(point > upper):
@@ -214,8 +330,12 @@ def linearized_predictive_uq(
                 if value is None:
                     skipped += 1
                     continue
-                scale = np.where(total_sd > 0.0, total_sd, 1.0)
-                nonlinearity = max(nonlinearity, float(np.max(np.abs(value - (g0 + sign * G @ delta)) / scale)))
+                linear = g0 + sign * G @ delta
+                deviation = np.maximum(np.abs(value - linear) - roundoff_factor * np.maximum(np.abs(value), np.abs(linear)), 0.0)
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    relative = np.where(parameter_sd > 0.0, deviation / np.where(parameter_sd > 0.0, parameter_sd, 1.0),
+                                        np.where(deviation > 0.0, math.inf, 0.0))
+                nonlinearity = max(nonlinearity, float(np.max(relative)))
     else:
         # A caller who chooses not to measure linearity has not shown it: every probe counts as not evaluated, so
         # the claim is capped at DOWNGRADED. predictive_nonlinearity stays None, which says nothing was measured.
@@ -251,7 +371,15 @@ def grid_predictive_uncertainty(
     source_ref: str,
     confidence_level: float = 0.95,
 ) -> RoutedPredictiveUncertainty:
-    """The frozen grid predictive, grid-resolution refusal included, in the V2 record."""
+    """The frozen grid predictive, in the V2 record, for a grid the router's own judgement accepts.
+
+    The frozen ``posterior_predictive_uq`` deliberately keeps a discrete grid too coarse to carry curvature (its
+    exact-mixture meaning). A V2 record says SUPPORTED, which the router only says of a grid the repaired V1
+    resolution checks accept, so that judgement is applied first and its refusal raised (audit HUQ-02).
+    """
+    if not isinstance(posterior, PosteriorGrid):
+        raise HybridUQError("grid_predictive_uncertainty takes a PosteriorGrid")
+    claim = _grid_route_claim(posterior)
     result = posterior_predictive_uq(posterior, predictive_table, spec, twin=twin, model=model, source_ref=source_ref,
                                      credible_mass=confidence_level)
     unit = result.mean.units
@@ -264,5 +392,5 @@ def grid_predictive_uncertainty(
         parameter_interval=(float(result.epistemic_interval.lower.magnitude_in(unit)), float(result.epistemic_interval.upper.magnitude_in(unit))),
         total_interval=(float(result.total_interval.lower.magnitude_in(unit)), float(result.total_interval.upper.magnitude_in(unit))),
         confidence_level=result.confidence_level, sources=UNCERTAINTY_SOURCES, model_discrepancy=MODEL_DISCREPANCY_NOT_MODELLED,
-        posterior_digest=grid_digest(posterior), route_claim=RouteClaim.SUPPORTED, reasons=(), predictive_nonlinearity=None,
+        posterior_digest=grid_digest(posterior), route_claim=claim, reasons=(), predictive_nonlinearity=None,
     )
