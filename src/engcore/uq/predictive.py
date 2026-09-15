@@ -25,7 +25,8 @@ from typing import Any
 import numpy as np
 from scipy.special import ndtr
 
-from ..inference import AdmittedForwardTable, PosteriorGrid
+from ..inference import AdmittedForwardTable, GridResolutionError, PosteriorGrid
+from ..inference.calibration import _grid_resolution_refusal
 from ..scientific.ir.problem import ModelReference
 from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from ..scientific.twins import TwinReference
@@ -259,6 +260,15 @@ def posterior_predictive_uq(
         raise UQProblemError("credible_mass must lie strictly between 0 and 1")
 
     _validate_posterior_table_binding(posterior, predictive_table)
+
+    # An under-resolved grid yields understated uncertainty with nothing to say
+    # so: a thin posterior ridge between nodes collapses the spread of the
+    # predictions that depend on it. Refused with the same error the
+    # identifiability assessment raises. A posterior too small to carry any
+    # curvature keeps its exact discrete-mixture meaning (see the refusal).
+    refusal = _grid_resolution_refusal(posterior, discrete_posterior_passes=True)
+    if refusal is not None:
+        raise GridResolutionError(refusal)
 
     try:
         column = predictive_table.observation_keys.index(spec.observation_key)

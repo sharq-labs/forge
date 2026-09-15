@@ -1,0 +1,85 @@
+{
+ "schema": "thin_ridge_repair_mutations/1",
+ "tree_head": "83090a643bd7301282b12e3dde07e84b14a5a9ae",
+ "targets": [
+  "tests/inference/test_grid_resolution_repair.py",
+  "tests/inference/test_tcr_calibration.py",
+  "tests/inference/test_tcr_heldout_uq.py",
+  "tests/inference/test_reproducibility_and_evidence.py",
+  "tests/test_k3_predictive_uq.py",
+  "tests/test_k31_predictive_admission.py",
+  "tests/test_k4_model_adequacy.py",
+  "tests/test_evidence_pairing_integrity.py"
+ ],
+ "results": {
+  "RIDGE-1": {
+   "mutation": "remove the aliasing check",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_the_f5_thin_ridge_is_refused\nFAILED tests/inference/test_grid_resolution_repair.py::test_the_tcr_narrow_design_grid_is_refused\nFAILED tests/inference/test_tcr_heldout_uq.py::test_case_c_a_broad_posterior_is_a_scientific_verdict_not_a_grid_refusal\nFAILED tests/inference/test_grid_resolution_repair.py::test_two_thin_tilted_modes_are_refused\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_refuses_the_f5_thin_ridge\n10 failed, 117 passed in 29.00s",
+   "seconds": 29.4
+  },
+  "RIDGE-2": {
+   "mutation": "use the diagonal of the fitted covariance only",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_the_f5_thin_ridge_is_refused\nFAILED tests/inference/test_grid_resolution_repair.py::test_the_tcr_narrow_design_grid_is_refused\nFAILED tests/inference/test_tcr_heldout_uq.py::test_case_c_a_broad_posterior_is_a_scientific_verdict_not_a_grid_refusal\nFAILED tests/inference/test_grid_resolution_repair.py::test_two_thin_tilted_modes_are_refused\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_refuses_the_f5_thin_ridge\n8 failed, 119 passed in 27.59s",
+   "seconds": 28.0
+  },
+  "RIDGE-3": {
+   "mutation": "enumerate axis lattice vectors only (drop off-axis n)",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_the_f5_thin_ridge_is_refused\nFAILED tests/inference/test_grid_resolution_repair.py::test_the_tcr_narrow_design_grid_is_refused\nFAILED tests/inference/test_tcr_heldout_uq.py::test_case_c_a_broad_posterior_is_a_scientific_verdict_not_a_grid_refusal\nFAILED tests/inference/test_grid_resolution_repair.py::test_two_thin_tilted_modes_are_refused\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_refuses_the_f5_thin_ridge\n8 failed, 119 passed in 27.85s",
+   "seconds": 28.3
+  },
+  "RIDGE-4": {
+   "mutation": "disable scale normalization (fit in parameter units)",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right\nFAILED tests/inference/test_tcr_calibration.py::test_calibration_and_identifiability_are_separate_verdicts\nFAILED tests/inference/test_tcr_heldout_uq.py::test_b_and_c_do_not_produce_the_same_diagnosis\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_works_on_a_healthy_grid\nFAILED tests/inference/test_reproducibility_and_evidence.py::test_the_coverage_study_is_a_function_of_its_seed_schedule\n26 failed, 101 passed in 28.19s",
+   "seconds": 28.6
+  },
+  "RIDGE-5": {
+   "mutation": "let ESS ~ 1 pass",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_mass_on_one_node_is_refused_even_when_the_fitted_curvature_looks_resolved\n1 failed, 126 passed in 31.74s",
+   "seconds": 32.2
+  },
+  "RIDGE-6": {
+   "mutation": "predictive UQ ignores the refusal",
+   "file": "src/engcore/uq/predictive.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_a_grid_whose_curvature_cannot_be_fitted_is_refused_not_passed\nFAILED tests/inference/test_grid_resolution_repair.py::test_mass_on_one_node_is_refused_even_when_the_fitted_curvature_looks_resolved\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_refuses_the_f5_thin_ridge\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_refuses_k2_c2_predictions\n4 failed, 123 passed in 28.85s",
+   "seconds": 29.2
+  },
+  "RIDGE-7": {
+   "mutation": "threshold comparison reversed",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_a_tcr_narrow_grid_that_resolves_the_ridge_is_classified_and_right\nFAILED tests/inference/test_tcr_calibration.py::test_calibration_and_identifiability_are_separate_verdicts\nFAILED tests/inference/test_reproducibility_and_evidence.py::test_the_coverage_study_is_a_function_of_its_seed_schedule\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_refuses_the_f5_thin_ridge\nFAILED tests/inference/test_grid_resolution_repair.py::test_predictive_uq_works_on_a_healthy_grid\n40 failed, 87 passed in 26.44s",
+   "seconds": 26.8
+  },
+  "RIDGE-8": {
+   "mutation": "covariance fit failure treated as PASS",
+   "file": "src/engcore/inference/calibration.py",
+   "verdict": "KILLED",
+   "exit_code": 1,
+   "summary": "FAILED tests/inference/test_grid_resolution_repair.py::test_a_grid_whose_curvature_cannot_be_fitted_is_refused_not_passed\n1 failed, 126 passed in 29.24s",
+   "seconds": 29.6
+  }
+ },
+ "control": {
+  "exit_code": 0,
+  "summary": "127 passed in 29.36s",
+  "seconds": 29.9
+ }
+}

@@ -1,0 +1,60 @@
+{
+ "schema": "grid_resolution_fixtures/1",
+ "fixtures": {
+  "k2_multi": {
+   "sha256": "4ff7247c9f5972986a308d0c28c05dfe03a85984803f3b90493a755623ddbef1",
+   "parameters": [
+    "log_k0",
+    "e_over_r_k"
+   ],
+   "grid_points": 3721,
+   "reproduces": "experiments/kinetics_k2/k2_report.md posterior mean and sd to 1e-9",
+   "source": "K2's frozen builder (experiments/kinetics_k2/k2_forward.build_forward_table_with_stats), 61x61 grid, 3,686/3,721 admitted",
+   "c2_prediction_columns": [
+    "C2:C_A:final",
+    "C2:T:final"
+   ],
+   "dataset_id": "K2-seed-20260809"
+  },
+  "k2_weak_c2": {
+   "sha256": "15f8b4fcfb20c796a0ff52b4a2c735b07144db3bf3581243175da2d3ec8c7280",
+   "parameters": [
+    "log_k0",
+    "e_over_r_k"
+   ],
+   "grid_points": 3721,
+   "reproduces": "experiments/kinetics_k2/k2_report.md posterior mean and sd to 1e-9",
+   "source": "K2's frozen builder (experiments/kinetics_k2/k2_forward.build_forward_table_with_stats), 61x61 grid, 3,686/3,721 admitted",
+   "c2_prediction_columns": [
+    "C2:C_A:final",
+    "C2:T:final"
+   ],
+   "dataset_id": "K2-primary-weak-C2"
+  },
+  "battery_p2": {
+   "sha256": "02a4a163de85162919eab310d77444651dcb32889d94c9fda3d0c370bb87fc8f",
+   "parameters": [
+    "open_circuit_voltage_curve@z=0",
+    "open_circuit_voltage_curve@z=0.5",
+    "open_circuit_voltage_curve@z=1"
+   ],
+   "grid_points": 15625,
+   "reproduces": "benchmarks/battery_flagship_b3/RESULTS.json CORE_GRID posterior mean to 1e-12",
+   "source": "B3 grid rule through the production battery adapter; the model is affine in its voltages, so the WLS Gaussian stored beside it is the exact posterior",
+   "dataset_id": "JAHN2024.A123_01.discharge.measured.calibration"
+  },
+  "battery_p3": {
+   "sha256": "9f0044ae49941855a2498b01fdaff8ea5773dcb959e2c2b303c51c098bb26649",
+   "parameters": [
+    "open_circuit_voltage_curve@z=0",
+    "open_circuit_voltage_curve@z=0.333333",
+    "open_circuit_voltage_curve@z=0.666667",
+    "open_circuit_voltage_curve@z=1"
+   ],
+   "grid_points": 28561,
+   "reproduces": "benchmarks/battery_flagship_b3/RESULTS.json CORE_GRID posterior mean to 1e-12",
+   "source": "B3 grid rule through the production battery adapter; the model is affine in its voltages, so the WLS Gaussian stored beside it is the exact posterior",
+   "dataset_id": "JAHN2024.A123_01.discharge.measured.calibration"
+  }
+ }
+}

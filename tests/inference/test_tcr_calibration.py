@@ -58,6 +58,12 @@ TRUTH = TcrTruth(
 
 WIDE_SPAN = [300.0, 320.0, 340.0, 360.0, 380.0, 400.0, 420.0, 440.0]
 NARROW_SPAN = [299.0, 299.5, 300.0, 300.5, 301.0, 301.5]
+#: Nodes per axis for the narrow design. Its posterior is a ridge (correlation
+#: -0.993) whose thin principal sd is far below either marginal; at 41 nodes
+#: the lattice aliases it (thin sd 0.68x the exact posterior) and the grid is
+#: refused. 81 resolves it (thin sd 1.000x). See
+#: benchmarks/core_v1_thin_ridge_repair/AFFECTED_TESTS.json.
+NARROW_GRID = 81
 
 
 def conditions(temperatures):
@@ -221,7 +227,7 @@ def test_the_narrow_span_case_is_not_reported_as_identifiable():
     observation is essentially at T_ref, so raising R_ref and lowering alpha
     traces a ridge the data cannot distinguish along.
     """
-    report = assess_identifiability(posterior_over(NARROW_SPAN))
+    report = assess_identifiability(posterior_over(NARROW_SPAN, n=NARROW_GRID))
     assert report.status is not IdentifiabilityStatus.IDENTIFIABLE, report.why
     assert report.max_abs_correlation > 0.95
 
@@ -229,7 +235,7 @@ def test_the_narrow_span_case_is_not_reported_as_identifiable():
 def test_the_two_designs_do_not_report_the_same_confidence():
     """Phase 11's actual requirement, stated as a comparison rather than a threshold."""
     wide = assess_identifiability(posterior_over(WIDE_SPAN))
-    narrow = assess_identifiability(posterior_over(NARROW_SPAN))
+    narrow = assess_identifiability(posterior_over(NARROW_SPAN, n=NARROW_GRID))
 
     assert wide.status is not narrow.status
     assert narrow.max_abs_correlation > wide.max_abs_correlation
@@ -343,7 +349,7 @@ def test_a_misspecified_model_still_converges():
 
 def test_calibration_and_identifiability_are_separate_verdicts():
     result, _, _, _ = run(temperatures=NARROW_SPAN)
-    report = assess_identifiability(posterior_over(NARROW_SPAN))
+    report = assess_identifiability(posterior_over(NARROW_SPAN, n=NARROW_GRID))
     assert result.status is CalibrationStatus.CONVERGED
     assert report.status is not IdentifiabilityStatus.IDENTIFIABLE
     assert CalibrationStatus.CONVERGED.value == "CALIBRATION_CONVERGED"

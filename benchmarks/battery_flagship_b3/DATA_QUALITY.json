@@ -1,0 +1,657 @@
+{
+ "schema": "battery_flagship_b3_data_quality/1",
+ "written_before_any_b3_fit": true,
+ "raw_sha256": {
+  "20230125_HysPowerTest_A123_01_25deg_SOC100.csv": "009c2fb085e219c7b20afaa050ac9e69d848cf04fc6e9165ce2bbd1282357feb",
+  "20230125_HysPowerTest_A123_01_25deg_SOC50.csv": "d6e8b4b7ea4f832a67a859604ab8d507d2a1fdd7541cb37a485ac933dec92fd3",
+  "20230125_Hys_A123_01_25deg_incrOCV.csv": "25c318255e1f4203842ec6780b9adbcbbc12a23461c0fb618be2da51480b9704",
+  "20230125_Hys_A123_01_25deg_pOCV.csv": "da6e14f79fe0e16d528780f6a5bacf725778c1390593d689bc6ad54a7517bda0"
+ },
+ "q_top_ah": 1.00621822243387,
+ "state_of_charge_definition": "z = Q / Q_top, Q_top = Q of the last charge-branch row (row 100) of the incremental file",
+ "findings": [
+  {
+   "check": "finite_values",
+   "status": "PASS",
+   "detail": "202 rows, every Q and OCV finite: True",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "row_count",
+   "status": "PASS",
+   "detail": "202 data rows",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "charge_branch_q_strictly_rising_rows_0_100",
+   "status": "PASS",
+   "detail": "Q 0.0 -> 1.00621822243387 Ah",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "discharge_branch_q_strictly_falling_rows_102_201",
+   "status": "PASS",
+   "detail": "Q 0.996172753109285 -> 0.00171323110375932 Ah",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "duplicate_physical_measurement_under_two_labels",
+   "status": "ANOMALY",
+   "detail": "row 101 repeats row 100 character for character (Q=1.00621822243387, OCV=3.43713439017354): the top of the charge branch is also listed as the start of the discharge branch",
+   "treatment": "kept in the raw file; assigned to the charge branch only, because that state was reached by charging. It is NOT a discharge-conditioned observation and is not in the discharge set. The discharge set is rows 102..201 (100 observations). Its Q is used as Q_top, the SOC normaliser."
+  },
+  {
+   "check": "other_duplicate_rows",
+   "status": "PASS",
+   "detail": "no other repeated Q value in the file",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "state_of_charge_step_uniformity",
+   "status": "INFO",
+   "detail": "charge steps 0.0100619..0.0100628 Ah; discharge steps 0.0100441..0.0100456 Ah. The discharge step is about 0.17 % smaller than the charge step, so the discharge branch ends at Q = 0.001713 Ah (z = 0.00170), not at 0",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "missing_measurements",
+   "status": "PASS",
+   "detail": "no gap: every step on each branch is one nominal 1 % increment (min/max above)",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "voltage_units_and_range",
+   "status": "PASS",
+   "detail": "OCV 2.643847..3.437134; column declared 'OCV' in volts; inside the cell's 2.0-3.6 V limits: True",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "quantisation",
+   "status": "INFO",
+   "detail": "smallest non-zero voltage step 1.9087768035e-04 V; every voltage is an integer multiple of it to 6.16e-07 of a step; step x 2^16 = 12.5094 V, consistent with a 16-bit converter. Consequence: equal consecutive voltages are code-level ties, not duplicates",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "voltage_monotone_in_q_on_each_branch",
+   "status": "PASS",
+   "detail": "charge non-decreasing in Q: True; discharge non-increasing as Q falls: True",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "branch_consistency_hysteresis_sign",
+   "status": "PASS",
+   "detail": "charge branch (linearly interpolated in z) minus discharge branch is positive at 100/100 discharge points; range +15.1..+70.3 mV",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "relaxed_versus_loaded_ordering",
+   "status": "INFO",
+   "detail": "against the C/20 loaded cycle (pOCV file, z normalised to its own top Q = 1.018902 Ah) over 0.05 <= z <= 0.95: charge-branch incrOCV at or below the loaded charge curve at 89/89 points; discharge-branch incrOCV at or above the loaded discharge curve at 90/90. Indicative only: the two tests count Q from different references (top Q 1.006218 vs 1.018902 Ah)",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "repeated_trials",
+   "status": "INFO",
+   "detail": "none: one cell, one incremental cycle; no replicate spread is available for Phase 8",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "temperature_consistency",
+   "status": "UNVERIFIABLE",
+   "detail": "the file has no temperature channel; 25 degC is the chamber setpoint stated in the paper and the file name",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "timing_and_rest_period_consistency",
+   "status": "UNVERIFIABLE",
+   "detail": "the file has no time channel; the rest after each interrupt, the step current and the sampled point of each rest are documented nowhere retrievable (DATA_SELECTION.json lists where this was looked for)",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "metadata_contradiction_power_test_rate",
+   "status": "ANOMALY",
+   "detail": "the Zenodo description calls the power tests 'C/2' charge or discharge to 50 % SOC followed by a '4C' discharge; the raw current reads +1.100 A before the rest at Q=0.3515 Ah, -4.400 A before the rest at Q=-0.1474 Ah, +1.100 A before the rest at Q=0.8551 Ah, -1.100 A before the rest at Q=0.3519 Ah. For a 1.1 Ah cell +/-1.10 A is 1C, not C/2, and -4.40 A is 4C. The paper's Methods call the fast discharge '3C'. These files are used only for their measured rest lengths, which the contradiction does not touch.",
+   "treatment": "reported; nothing removed or altered"
+  },
+  {
+   "check": "metadata_contradiction_capacity_reference",
+   "status": "INFO",
+   "detail": "Q at the top of the incremental cycle is 1.006218 Ah and at the top of the C/20 cycle 1.018902 Ah; the nominal capacity of an 18650M1A is 1.1 Ah. B3 uses z = Q / Q_top of the incremental file itself, for that file only.",
+   "treatment": "reported; nothing removed or altered"
+  }
+ ],
+ "power_test_rests": [
+  {
+   "file": "20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "rest_minutes": 10.0000001,
+   "q_ah": 0.351469598189783,
+   "preceding_current_a": 1.09999519780443,
+   "voltage_start_v": 3.35410259921861,
+   "voltage_at_5_min_v": 3.31649969618844,
+   "voltage_end_v": 3.31459091938488,
+   "change_last_5_min_mv": -1.9087768035599417
+  },
+  {
+   "file": "20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "rest_minutes": 10.000000105555,
+   "q_ah": -0.14736159796759,
+   "preceding_current_a": -4.39998999864411,
+   "voltage_start_v": 2.2353685146511,
+   "voltage_at_5_min_v": 2.69519284662911,
+   "voltage_end_v": 2.7196251897147,
+   "change_last_5_min_mv": 24.43234308559017
+  },
+  {
+   "file": "20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "rest_minutes": 10.000000100000003,
+   "q_ah": 0.855076844645905,
+   "preceding_current_a": 1.09999519780443,
+   "voltage_start_v": 3.59861690775486,
+   "voltage_at_5_min_v": 3.53810868308195,
+   "voltage_end_v": 3.51291282927494,
+   "change_last_5_min_mv": -25.19585380701006
+  },
+  {
+   "file": "20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "rest_minutes": 10.00000903333333,
+   "q_ah": 0.351935468448204,
+   "preceding_current_a": -1.10000428616928,
+   "voltage_start_v": 3.248738119662,
+   "voltage_at_5_min_v": 3.29244910846357,
+   "voltage_end_v": 3.29512139598855,
+   "change_last_5_min_mv": 2.672287524979833
+  }
+ ],
+ "batt001_relaxation_reference": {
+  "file": "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+  "file_sha256": "9b8c541675256c08c24cc6ebeb486a46d07c533a70bf4dabcca4955dba90e08a",
+  "minutes": 10,
+  "sheets": {
+   "24h_Discharge_APR": {
+    "BATT_001_OCV_V_00-SOC": {
+     "voltage_at_24h_v": 2.8473,
+     "voltage_at_reference_v": 2.5315,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": 315.8000000000003
+    },
+    "BATT_001_OCV_V_20-SOC": {
+     "voltage_at_24h_v": 3.2477,
+     "voltage_at_reference_v": 3.2285,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": 19.200000000000106
+    },
+    "BATT_001_OCV_V_40-SOC": {
+     "voltage_at_24h_v": 3.2894,
+     "voltage_at_reference_v": 3.2773,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": 12.100000000000222
+    },
+    "BATT_001_OCV_V_50-SOC": {
+     "voltage_at_24h_v": 3.292,
+     "voltage_at_reference_v": 3.284,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": 8.000000000000007
+    },
+    "BATT_001_OCV_V_60-SOC": {
+     "voltage_at_24h_v": 3.2929,
+     "voltage_at_reference_v": 3.2845,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": 8.399999999999963
+    },
+    "BATT_001_OCV_V_80-SOC": {
+     "voltage_at_24h_v": 3.3309,
+     "voltage_at_reference_v": 3.3206,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": 10.299999999999976
+    }
+   },
+   "24h_Charge_APR": {
+    "BATT_001_OCV_V_20-SOC": {
+     "voltage_at_24h_v": 3.249,
+     "voltage_at_reference_v": 3.262,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": -12.9999999999999
+    },
+    "BATT_001_OCV_V_40-SOC": {
+     "voltage_at_24h_v": 3.299,
+     "voltage_at_reference_v": 3.309,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": -10.000000000000231
+    },
+    "BATT_001_OCV_V_50-SOC": {
+     "voltage_at_24h_v": 3.299,
+     "voltage_at_reference_v": 3.306,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": -7.000000000000117
+    },
+    "BATT_001_OCV_V_60-SOC": {
+     "voltage_at_24h_v": 3.302,
+     "voltage_at_reference_v": 3.312,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": -9.999999999999787
+    },
+    "BATT_001_OCV_V_80-SOC": {
+     "voltage_at_24h_v": 3.333,
+     "voltage_at_reference_v": 3.344,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": -10.999999999999677
+    },
+    "BATT_001_OCV_V_100-SOC": {
+     "voltage_at_24h_v": 3.389,
+     "voltage_at_reference_v": 3.455,
+     "reference_sample_hours": 0.16666666666666666,
+     "residual_relaxation_mv": -66.00000000000028
+    }
+   }
+  },
+  "interior_discharge_abs_mv": [
+   19.200000000000106,
+   12.100000000000222,
+   8.000000000000007,
+   8.399999999999963,
+   10.299999999999976
+  ],
+  "interior_discharge_median_mv": 10.299999999999976
+ },
+ "hysteresis_charge_minus_discharge_at_discharge_z_mv": [
+  {
+   "state_of_charge": 0.001702643686590476,
+   "delta_mv": 70.28507858548672
+  },
+  {
+   "state_of_charge": 0.011684800749508504,
+   "delta_mv": 58.7705510175045
+  },
+  {
+   "state_of_charge": 0.0216681219743764,
+   "delta_mv": 51.06933437569117
+  },
+  {
+   "state_of_charge": 0.031651448831748336,
+   "delta_mv": 47.29306973694758
+  },
+  {
+   "state_of_charge": 0.041634831164438696,
+   "delta_mv": 43.7084514602164
+  },
+  {
+   "state_of_charge": 0.051616929702683674,
+   "delta_mv": 41.121311778386186
+  },
+  {
+   "state_of_charge": 0.0616002588696406,
+   "delta_mv": 39.06267076462022
+  },
+  {
+   "state_of_charge": 0.07158357835507022,
+   "delta_mv": 36.86129865237797
+  },
+  {
+   "state_of_charge": 0.08156564689761284,
+   "delta_mv": 34.03534528846252
+  },
+  {
+   "state_of_charge": 0.09154827688282924,
+   "delta_mv": 32.22025661915229
+  },
+  {
+   "state_of_charge": 0.10153158439985743,
+   "delta_mv": 31.257627603337834
+  },
+  {
+   "state_of_charge": 0.111515058892713,
+   "delta_mv": 31.223036011134297
+  },
+  {
+   "state_of_charge": 0.12149724176337663,
+   "delta_mv": 32.171706278138146
+  },
+  {
+   "state_of_charge": 0.13148053713486071,
+   "delta_mv": 33.55896793577173
+  },
+  {
+   "state_of_charge": 0.14146381736755417,
+   "delta_mv": 34.59108430944502
+  },
+  {
+   "state_of_charge": 0.15144731231527284,
+   "delta_mv": 34.257701895759936
+  },
+  {
+   "state_of_charge": 0.161429393672926,
+   "delta_mv": 32.995295550608986
+  },
+  {
+   "state_of_charge": 0.17141279585888589,
+   "delta_mv": 33.17764412166735
+  },
+  {
+   "state_of_charge": 0.18139602804544588,
+   "delta_mv": 34.695946551963175
+  },
+  {
+   "state_of_charge": 0.19137940002446727,
+   "delta_mv": 36.95153126601625
+  },
+  {
+   "state_of_charge": 0.20136270408817317,
+   "delta_mv": 39.016896467066964
+  },
+  {
+   "state_of_charge": 0.21134596987211618,
+   "delta_mv": 40.814938423573196
+  },
+  {
+   "state_of_charge": 0.22132944371537905,
+   "delta_mv": 41.521052583461504
+  },
+  {
+   "state_of_charge": 0.23131286512447324,
+   "delta_mv": 41.655806169813125
+  },
+  {
+   "state_of_charge": 0.24129507939185413,
+   "delta_mv": 41.86570640368048
+  },
+  {
+   "state_of_charge": 0.25127855632122287,
+   "delta_mv": 42.19298452744758
+  },
+  {
+   "state_of_charge": 0.2612620300236048,
+   "delta_mv": 42.569740656960064
+  },
+  {
+   "state_of_charge": 0.271244108221179,
+   "delta_mv": 43.3277852074192
+  },
+  {
+   "state_of_charge": 0.2812275131855839,
+   "delta_mv": 44.23019005249884
+  },
+  {
+   "state_of_charge": 0.29121091485989836,
+   "delta_mv": 44.98927739536596
+  },
+  {
+   "state_of_charge": 0.30119434286008867,
+   "delta_mv": 45.7254488744816
+  },
+  {
+   "state_of_charge": 0.3111777802443119,
+   "delta_mv": 45.889754250347806
+  },
+  {
+   "state_of_charge": 0.3211611797197455,
+   "delta_mv": 45.4598700263582
+  },
+  {
+   "state_of_charge": 0.33114321350852843,
+   "delta_mv": 44.48025020333013
+  },
+  {
+   "state_of_charge": 0.34112669228331505,
+   "delta_mv": 43.162835093754296
+  },
+  {
+   "state_of_charge": 0.3511088475422138,
+   "delta_mv": 41.950577471952414
+  },
+  {
+   "state_of_charge": 0.36109092111156227,
+   "delta_mv": 39.80680814760839
+  },
+  {
+   "state_of_charge": 0.37107440261773844,
+   "delta_mv": 37.091848884824415
+  },
+  {
+   "state_of_charge": 0.3810579268090271,
+   "delta_mv": 33.062268046847976
+  },
+  {
+   "state_of_charge": 0.3910401249244395,
+   "delta_mv": 29.454784000733536
+  },
+  {
+   "state_of_charge": 0.401023585264219,
+   "delta_mv": 27.31505955882252
+  },
+  {
+   "state_of_charge": 0.4110069385496771,
+   "delta_mv": 26.36035615211174
+  },
+  {
+   "state_of_charge": 0.42099027467901784,
+   "delta_mv": 25.40565179715104
+  },
+  {
+   "state_of_charge": 0.43097353230640906,
+   "delta_mv": 24.851294730252604
+  },
+  {
+   "state_of_charge": 0.4409561521715777,
+   "delta_mv": 25.004976126659972
+  },
+  {
+   "state_of_charge": 0.45093961302078944,
+   "delta_mv": 24.468247916717978
+  },
+  {
+   "state_of_charge": 0.4609229581471566,
+   "delta_mv": 24.6408537306384
+  },
+  {
+   "state_of_charge": 0.4709051980455998,
+   "delta_mv": 24.449637505855826
+  },
+  {
+   "state_of_charge": 0.4808872070690849,
+   "delta_mv": 24.657127147328595
+  },
+  {
+   "state_of_charge": 0.4908705998351399,
+   "delta_mv": 24.656496363352876
+  },
+  {
+   "state_of_charge": 0.5008539630216361,
+   "delta_mv": 24.43234308559017
+  },
+  {
+   "state_of_charge": 0.5108362037774828,
+   "delta_mv": 24.464300019594987
+  },
+  {
+   "state_of_charge": 0.5208194485043375,
+   "delta_mv": 24.463656652378596
+  },
+  {
+   "state_of_charge": 0.5308029422654299,
+   "delta_mv": 24.638566911135307
+  },
+  {
+   "state_of_charge": 0.5407863422749504,
+   "delta_mv": 24.638253408606037
+  },
+  {
+   "state_of_charge": 0.5507686318679885,
+   "delta_mv": 24.461740646676056
+  },
+  {
+   "state_of_charge": 0.5607520162603072,
+   "delta_mv": 24.84286618391529
+  },
+  {
+   "state_of_charge": 0.5707353993512115,
+   "delta_mv": 24.828155510036698
+  },
+  {
+   "state_of_charge": 0.5807177775476113,
+   "delta_mv": 24.636945253432074
+  },
+  {
+   "state_of_charge": 0.590700275099822,
+   "delta_mv": 24.840858627855678
+  },
+  {
+   "state_of_charge": 0.600683672533615,
+   "delta_mv": 24.827149860804365
+  },
+  {
+   "state_of_charge": 0.6106668999926399,
+   "delta_mv": 24.648675798366604
+  },
+  {
+   "state_of_charge": 0.6206503015019375,
+   "delta_mv": 24.66042762009968
+  },
+  {
+   "state_of_charge": 0.6306335006436139,
+   "delta_mv": 25.004976126659972
+  },
+  {
+   "state_of_charge": 0.6406157362111626,
+   "delta_mv": 24.45580507337697
+  },
+  {
+   "state_of_charge": 0.650597777390095,
+   "delta_mv": 24.466502098363208
+  },
+  {
+   "state_of_charge": 0.6605809888556835,
+   "delta_mv": 24.656416950231907
+  },
+  {
+   "state_of_charge": 0.6705643698638725,
+   "delta_mv": 24.846333431178813
+  },
+  {
+   "state_of_charge": 0.6805476701329751,
+   "delta_mv": 24.685768900762017
+  },
+  {
+   "state_of_charge": 0.6905311795601792,
+   "delta_mv": 24.87476641954567
+  },
+  {
+   "state_of_charge": 0.7005135095489655,
+   "delta_mv": 25.47466820737032
+  },
+  {
+   "state_of_charge": 0.7104958872575199,
+   "delta_mv": 25.881749965378287
+  },
+  {
+   "state_of_charge": 0.7204791843613418,
+   "delta_mv": 26.86881027493815
+  },
+  {
+   "state_of_charge": 0.7304614264537923,
+   "delta_mv": 27.85294583312803
+  },
+  {
+   "state_of_charge": 0.74044479045155,
+   "delta_mv": 29.02578416260626
+  },
+  {
+   "state_of_charge": 0.7504282367461118,
+   "delta_mv": 28.827375466216942
+  },
+  {
+   "state_of_charge": 0.76041156458909,
+   "delta_mv": 27.054698542215316
+  },
+  {
+   "state_of_charge": 0.7703937048963682,
+   "delta_mv": 24.522123576710797
+  },
+  {
+   "state_of_charge": 0.7803758703479067,
+   "delta_mv": 22.573520389272073
+  },
+  {
+   "state_of_charge": 0.7903591737602371,
+   "delta_mv": 21.582813945383528
+  },
+  {
+   "state_of_charge": 0.8003426829215444,
+   "delta_mv": 20.443431674183277
+  },
+  {
+   "state_of_charge": 0.8103249605392002,
+   "delta_mv": 19.85127875704018
+  },
+  {
+   "state_of_charge": 0.8203070541700936,
+   "delta_mv": 19.087768035619845
+  },
+  {
+   "state_of_charge": 0.8302903286611508,
+   "delta_mv": 18.33527723280204
+  },
+  {
+   "state_of_charge": 0.8402738019334581,
+   "delta_mv": 18.13857357970461
+  },
+  {
+   "state_of_charge": 0.8502565097270969,
+   "delta_mv": 17.56561179326832
+  },
+  {
+   "state_of_charge": 0.8602398113507417,
+   "delta_mv": 17.197193122210575
+  },
+  {
+   "state_of_charge": 0.8702231905042784,
+   "delta_mv": 17.36986891240999
+  },
+  {
+   "state_of_charge": 0.8802052618590228,
+   "delta_mv": 16.423274480320327
+  },
+  {
+   "state_of_charge": 0.8901876222369269,
+   "delta_mv": 16.047976889736137
+  },
+  {
+   "state_of_charge": 0.9001700842584306,
+   "delta_mv": 16.046649603660423
+  },
+  {
+   "state_of_charge": 0.910152302226926,
+   "delta_mv": 15.860211711908878
+  },
+  {
+   "state_of_charge": 0.9201356753419574,
+   "delta_mv": 15.667451297859625
+  },
+  {
+   "state_of_charge": 0.930118878921219,
+   "delta_mv": 15.670079120745584
+  },
+  {
+   "state_of_charge": 0.9401023314621991,
+   "delta_mv": 15.110546680800585
+  },
+  {
+   "state_of_charge": 0.9500855451845468,
+   "delta_mv": 15.500242632279893
+  },
+  {
+   "state_of_charge": 0.9600688383111023,
+   "delta_mv": 16.466779666940212
+  },
+  {
+   "state_of_charge": 0.9700512182885761,
+   "delta_mv": 18.585930104404902
+  },
+  {
+   "state_of_charge": 0.9800333328639907,
+   "delta_mv": 22.03800418318469
+  },
+  {
+   "state_of_charge": 0.9900166096174577,
+   "delta_mv": 25.612864523613332
+  }
+ ]
+}

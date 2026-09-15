@@ -1,0 +1,4 @@
+# Raw third-party evidence: bytes are pinned by SHA-256 and must never be
+# normalised. The repository-wide "* text=auto eol=lf" would rewrite the
+# CRLF line endings of the published incrOCV file and break its digest.
+* -text

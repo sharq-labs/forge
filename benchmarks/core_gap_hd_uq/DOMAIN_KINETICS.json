@@ -1,0 +1,267 @@
+{
+ "reference_grid": {
+  "source": "experiments/kinetics_k2/k2_report.md (frozen K2 scored run, 61x61 grid, 3,721 points, 11,163 condition solves, 1357 s on 24 workers)",
+  "MULTI": {
+   "mean": [
+    20.979314794931746,
+    8775.076414950117
+   ],
+   "sd": [
+    0.15202805349527396,
+    49.51789691706498
+   ],
+   "covariance": [
+    [
+     0.02311252904956188,
+     7.527989120383729
+    ],
+    [
+     7.527989120383729,
+     2452.022115089074
+    ]
+   ],
+   "correlation": 0.9999840117764515,
+   "grid_step": [
+    0.07675283643313484,
+    41.666666666666664
+   ]
+  },
+  "WEAK_C2": {
+   "mean": [
+    21.07347982427268,
+    8806.143839722085
+   ],
+   "sd": [
+    1.1959411184598971,
+    388.8372838352901
+   ]
+  }
+ },
+ "MULTI": {
+  "n_observations": 6,
+  "calibration": {
+   "status": "CALIBRATION_CONVERGED",
+   "evaluations": 21,
+   "condition_solves": 63,
+   "wall_seconds": 44.051798500004224,
+   "estimate": [
+    20.947665827719252,
+    8765.41445784357
+   ],
+   "termination": "`ftol` termination condition is satisfied."
+  },
+  "local_gaussian": {
+   "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+   "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+   "p": 2,
+   "n": 6,
+   "exact_posterior_claimed": false,
+   "structural": {
+    "rank": 2,
+    "singular_values": [
+     164.98765181379102,
+     0.01895680561568789
+    ],
+    "jacobian_condition": 8703.346711391812
+   },
+   "posterior": {
+    "mean": [
+     20.947665827719252,
+     8765.41445784357
+    ],
+    "sd": [
+     0.1615326037091032,
+     52.75125664658215
+    ],
+    "covariance": [
+     [
+      0.026092782061042177,
+      8.515047206428413
+     ],
+     [
+      8.515047206428413,
+      2782.695077793577
+     ]
+    ],
+    "interval_95": [
+     [
+      20.63106774212043,
+      21.264263913318075
+     ],
+     [
+      8662.02389467704,
+      8868.8050210101
+     ]
+    ],
+    "chi_square_at_estimate": 5.444574092935181
+   },
+   "identifiability": {
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "condition_number": 75748243.97870341,
+    "max_abs_correlation": 0.9992957874738767,
+    "relative_widths": [
+     0.030227528756915836,
+     0.023590570340690054
+    ],
+    "over_wide": [],
+    "reasons": [
+     "condition",
+     "correlation"
+    ],
+    "thresholds": {
+     "correlation": 0.95,
+     "condition_number": 1000000.0,
+     "relative_width": 1.0
+    },
+    "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+   },
+   "reparameterizations": {
+    "log_k_at_350K_and_e_over_r": {
+     "status": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+     "condition_number": 75746831.68012328,
+     "max_abs_correlation": 0.8701197348686158,
+     "relative_widths": [
+      0.011768541161724324,
+      0.023590570340690054
+     ],
+     "over_wide": [],
+     "reasons": [
+      "condition"
+     ],
+     "thresholds": {
+      "correlation": 0.95,
+      "condition_number": 1000000.0,
+      "relative_width": 1.0
+     },
+     "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+    }
+   },
+   "bounds": {
+    "min_distance_in_sd": 12.865421930322595,
+    "at_bound": [],
+    "within_3_sd": []
+   },
+   "nonlinearity": {
+    "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+    "max_relative_deviation": 0.07150467229462576,
+    "probes_outside_bounds_or_inadmissible": 0,
+    "min_rise": 3.753629111414039,
+    "max_rise": 4.286018689178503,
+    "predictive_max_deviation_in_total_sd": null
+   },
+   "multistart": [
+    {
+     "start": [
+      19.5,
+      8000.0
+     ],
+     "estimate": [
+      20.947666032147076,
+      8765.41452453198
+     ],
+     "chi_square": 5.444574092928773,
+     "mahalanobis_sq": 1.6017676369375982e-12
+    },
+    {
+     "start": [
+      22.5,
+      9600.0
+     ],
+     "estimate": [
+      20.9476657779749,
+      8765.414441378647
+     ],
+     "chi_square": 5.4445740929357775,
+     "mahalanobis_sq": 1.0851219732230222e-13
+    }
+   ],
+   "global_uniqueness": "MULTISTART_NO_SECOND_MODE",
+   "claim": "SUPPORTED",
+   "refusals": [],
+   "downgrades": [],
+   "forward_calls": {
+    "forward": 9,
+    "predict": 0
+   },
+   "wall_seconds": 160.91845499997726
+  },
+  "local_wall_seconds": 160.91846349998377,
+  "local_condition_solves": 27,
+  "vs_committed_k2_grid": {
+   "mean_shift_in_grid_sd": [
+    0.208178467623922,
+    0.19512050608146553
+   ],
+   "sd_ratio_local_over_grid": [
+    1.0625183970675827,
+    1.0652967902682249
+   ],
+   "correlation_local": 0.9992957874738769
+  },
+  "importance_check": {
+   "samples": 100,
+   "ess_fraction": 0.997327233911456,
+   "outside_bounds_or_inadmissible": 0,
+   "mean": [
+    20.959403077564442,
+    8769.306912842425
+   ],
+   "sd": [
+    0.14870633857126803,
+    48.38042099336931
+   ],
+   "max_mean_shift_in_gaussian_sd": 0.07378885824338556,
+   "wall_seconds": 207.09549919998972
+  },
+  "natural_k0_parameterization": {
+   "claim": "REFUSED",
+   "refusals": [
+    "NUMERICALLY_SINGULAR_JACOBIAN"
+   ],
+   "downgrades": null,
+   "identifiability": null,
+   "nonlinearity": null
+  }
+ },
+ "WEAK_C2": {
+  "n_observations": 2,
+  "calibration": {
+   "status": "CALIBRATION_CONVERGED",
+   "evaluations": 27,
+   "condition_solves": 27,
+   "wall_seconds": 8.474546700017527,
+   "estimate": [
+    20.793882214611088,
+    8712.085419706502
+   ],
+   "termination": "`ftol` termination condition is satisfied."
+  },
+  "local_gaussian": {
+   "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+   "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+   "p": 2,
+   "n": 2,
+   "exact_posterior_claimed": false,
+   "structural": {
+    "rank": 2,
+    "singular_values": [
+     167.66440944145413,
+     1.4650814858275086e-09
+    ],
+    "jacobian_condition": 114440330495.8521
+   },
+   "claim": "REFUSED",
+   "refusals": [
+    "NO_RESIDUAL_DEGREES_OF_FREEDOM",
+    "NUMERICALLY_SINGULAR_JACOBIAN"
+   ],
+   "wall_seconds": 1.5225569999893196,
+   "forward_calls": {
+    "forward": 5,
+    "predict": 0
+   }
+  },
+  "local_wall_seconds": 1.5225616000243463,
+  "local_condition_solves": 5
+ }
+}

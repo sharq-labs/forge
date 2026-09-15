@@ -1,0 +1,2752 @@
+{
+ "schema": "battery_flagship_b3_observations/1",
+ "derived_from": {
+  "file": "benchmarks/battery_flagship_b3/evidence/raw/20230125_Hys_A123_01_25deg_incrOCV.csv",
+  "sha256": "25c318255e1f4203842ec6780b9adbcbbc12a23461c0fb618be2da51480b9704"
+ },
+ "derivation": "rows 102..201 of the raw file (the discharge branch without the shared top row); z = Q / Q_top with Q_top the Q of row 100; no smoothing, resampling, interpolation or removal",
+ "voltage_meaning": "interrupt-relaxed voltage after an UNDOCUMENTED rest, discharge-conditioned: a pseudo-OCV, not equilibrium OCV and not loaded terminal voltage",
+ "q_top_ah": 1.00621822243387,
+ "split_rule": "order by ascending z; index i; held out iff i % 3 == 1",
+ "counts": {
+  "total": 100,
+  "calibration": 67,
+  "held_out": 33,
+  "regions": {
+   "KNEE": {
+    "bounds_z": [
+     0.0,
+     0.1
+    ],
+    "calibration": 7,
+    "held_out": 3
+   },
+   "LOW_SOC_TRANSITION": {
+    "bounds_z": [
+     0.1,
+     0.4
+    ],
+    "calibration": 20,
+    "held_out": 10
+   },
+   "PLATEAU": {
+    "bounds_z": [
+     0.4,
+     0.7
+    ],
+    "calibration": 20,
+    "held_out": 10
+   },
+   "HIGH_SOC_TRANSITION": {
+    "bounds_z": [
+     0.7,
+     1.0
+    ],
+    "calibration": 20,
+    "held_out": 10
+   }
+  }
+ },
+ "observations": [
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r201",
+   "row": 201,
+   "q_ah": 0.00171323110375932,
+   "state_of_charge": 0.001702643686590476,
+   "voltage_v": 2.6438467506133,
+   "raw": {
+    "Q": "0.00171323110375932",
+    "OCV": "2.6438467506133"
+   },
+   "index": 0,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 6.710995919716579,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r199",
+     "JAHN2024.A123_01.DCHG.r198"
+    ],
+    "u_state_of_charge_v": 0.012786164492570196,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01643387878606673
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r200",
+   "row": 200,
+   "q_ah": 0.0117574594396644,
+   "state_of_charge": 0.011684800749508504,
+   "voltage_v": 2.8202177272624,
+   "raw": {
+    "Q": "0.0117574594396644",
+    "OCV": "2.8202177272624"
+   },
+   "index": 1,
+   "partition": "held_out",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 13.680912455614946,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r201",
+     "JAHN2024.A123_01.DCHG.r199"
+    ],
+    "u_state_of_charge_v": 0.02606563901372968,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.02803576121167638
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r199",
+   "row": 199,
+   "q_ah": 0.0218028591765373,
+   "state_of_charge": 0.0216681219743764,
+   "voltage_v": 2.91699271120298,
+   "raw": {
+    "Q": "0.0218028591765373",
+    "OCV": "2.91699271120298"
+   },
+   "index": 2,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 11.35751575884472,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r201",
+     "JAHN2024.A123_01.DCHG.r198"
+    ],
+    "u_state_of_charge_v": 0.021638973776291575,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.023975645051074346
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r198",
+   "row": 198,
+   "q_ah": 0.0318482645809384,
+   "state_of_charge": 0.031651448831748336,
+   "voltage_v": 2.983990777008,
+   "raw": {
+    "Q": "0.0318482645809384",
+    "OCV": "2.983990777008"
+   },
+   "index": 3,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 5.404698391016001,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r199",
+     "JAHN2024.A123_01.DCHG.r196"
+    ],
+    "u_state_of_charge_v": 0.010297333434108024,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.014581544684198252
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r197",
+   "row": 197,
+   "q_ah": 0.0418937258056158,
+   "state_of_charge": 0.041634831164438696,
+   "voltage_v": 3.03648213910594,
+   "raw": {
+    "Q": "0.0418937258056158",
+    "OCV": "3.03648213910594"
+   },
+   "index": 4,
+   "partition": "held_out",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 4.7515112583694865,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r198",
+     "JAHN2024.A123_01.DCHG.r196"
+    ],
+    "u_state_of_charge_v": 0.00905284480345463,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01373100027527153
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r196",
+   "row": 196,
+   "q_ah": 0.0519378952529284,
+   "state_of_charge": 0.051616929702683674,
+   "voltage_v": 3.07885698414501,
+   "raw": {
+    "Q": "0.0519378952529284",
+    "OCV": "3.07885698414501"
+   },
+   "index": 5,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 4.36582324568285,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r198",
+     "JAHN2024.A123_01.DCHG.r195"
+    ],
+    "u_state_of_charge_v": 0.008318010446226754,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.013258041609061601
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r195",
+   "row": 195,
+   "q_ah": 0.061983302981276,
+   "state_of_charge": 0.0616002588696406,
+   "voltage_v": 3.11474198805197,
+   "raw": {
+    "Q": "0.061983302981276",
+    "OCV": "3.11474198805197"
+   },
+   "index": 6,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 3.084766425589416,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r196",
+     "JAHN2024.A123_01.DCHG.r193"
+    ],
+    "u_state_of_charge_v": 0.0058772693964638575,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01187975862897399
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r194",
+   "row": 194,
+   "q_ah": 0.0720287009678944,
+   "state_of_charge": 0.07158357835507022,
+   "voltage_v": 3.14547329458931,
+   "raw": {
+    "Q": "0.0720287009678944",
+    "OCV": "3.14547329458931"
+   },
+   "index": 7,
+   "partition": "held_out",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 2.8298870678732415,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r195",
+     "JAHN2024.A123_01.DCHG.r193"
+    ],
+    "u_state_of_charge_v": 0.005391658999362428,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.011647160868189173
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r193",
+   "row": 193,
+   "q_ah": 0.0820728402329847,
+   "state_of_charge": 0.08156564689761284,
+   "voltage_v": 3.1712417814374,
+   "raw": {
+    "Q": "0.0820728402329847",
+    "OCV": "3.1712417814374"
+   },
+   "index": 8,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 2.4347278629239963,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r195",
+     "JAHN2024.A123_01.DCHG.r192"
+    ],
+    "u_state_of_charge_v": 0.00463877959730675,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01131833228335609
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r192",
+   "row": 192,
+   "q_ah": 0.0921175444319242,
+   "state_of_charge": 0.09154827688282924,
+   "voltage_v": 3.18765726194803,
+   "raw": {
+    "Q": "0.0921175444319242",
+    "OCV": "3.18765726194803"
+   },
+   "index": 9,
+   "partition": "calibration",
+   "region": "KNEE",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.8795204357754876,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r193",
+     "JAHN2024.A123_01.DCHG.r190"
+    ],
+    "u_state_of_charge_v": 0.0016757114891640906,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010459176761054756
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r191",
+   "row": 191,
+   "q_ah": 0.102162930375719,
+   "state_of_charge": 0.10153158439985743,
+   "voltage_v": 3.19414710308014,
+   "raw": {
+    "Q": "0.102162930375719",
+    "OCV": "3.19414710308014"
+   },
+   "index": 10,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.4971076147176132,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r192",
+     "JAHN2024.A123_01.DCHG.r190"
+    ],
+    "u_state_of_charge_v": 0.0009471172100723084,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010367420148411391
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r190",
+   "row": 190,
+   "q_ah": 0.112208484333634,
+   "state_of_charge": 0.111515058892713,
+   "voltage_v": 3.19758290132655,
+   "raw": {
+    "Q": "0.112208484333634",
+    "OCV": "3.19758290132655"
+   },
+   "index": 11,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.4078996249624796,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r192",
+     "JAHN2024.A123_01.DCHG.r189"
+    ],
+    "u_state_of_charge_v": 0.0007771531623056356,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010353276609931416
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r189",
+   "row": 189,
+   "q_ah": 0.122252738637763,
+   "state_of_charge": 0.12149724176337663,
+   "voltage_v": 3.19987343349082,
+   "raw": {
+    "Q": "0.122252738637763",
+    "OCV": "3.19987343349082"
+   },
+   "index": 12,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.22944512035757497,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r190",
+     "JAHN2024.A123_01.DCHG.r187"
+    ],
+    "u_state_of_charge_v": 0.0004371516666088836,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010333318494253927
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r188",
+   "row": 188,
+   "q_ah": 0.13229811236049,
+   "state_of_charge": 0.13148053713486071,
+   "voltage_v": 3.20178221029438,
+   "raw": {
+    "Q": "0.13229811236049",
+    "OCV": "3.20178221029438"
+   },
+   "index": 13,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.22943665550699177,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r189",
+     "JAHN2024.A123_01.DCHG.r187"
+    ],
+    "u_state_of_charge_v": 0.00043713553890246617,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01033331781198289
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r187",
+   "row": 187,
+   "q_ah": 0.14234347085029,
+   "state_of_charge": 0.14146381736755417,
+   "voltage_v": 3.20445449781937,
+   "raw": {
+    "Q": "0.14234347085029",
+    "OCV": "3.20445449781937"
+   },
+   "index": 14,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.30591342485234657,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r189",
+     "JAHN2024.A123_01.DCHG.r186"
+    ],
+    "u_state_of_charge_v": 0.0005828433540178348,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010340506559129202
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r186",
+   "row": 186,
+   "q_ah": 0.152389045390261,
+   "state_of_charge": 0.15144731231527284,
+   "voltage_v": 3.20903556214792,
+   "raw": {
+    "Q": "0.152389045390261",
+    "OCV": "3.20903556214792"
+   },
+   "index": 15,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.5162477282263578,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r187",
+     "JAHN2024.A123_01.DCHG.r184"
+    ],
+    "u_state_of_charge_v": 0.0009835840240380676,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010370815158723746
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r185",
+   "row": 185,
+   "q_ah": 0.162433197550149,
+   "state_of_charge": 0.161429393672926,
+   "voltage_v": 3.21495277023896,
+   "raw": {
+    "Q": "0.162433197550149",
+    "OCV": "3.21495277023896"
+   },
+   "index": 16,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.5449418621158604,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r186",
+     "JAHN2024.A123_01.DCHG.r184"
+    ],
+    "u_state_of_charge_v": 0.0010382536915914502,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.0103761428407754
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r184",
+   "row": 184,
+   "q_ah": 0.172478678751548,
+   "state_of_charge": 0.17141279585888589,
+   "voltage_v": 3.21991558992822,
+   "raw": {
+    "Q": "0.172478678751548",
+    "OCV": "3.21991558992822"
+   },
+   "index": 17,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.4843848343204558,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r186",
+     "JAHN2024.A123_01.DCHG.r183"
+    ],
+    "u_state_of_charge_v": 0.0009228770578047486,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01036523379320957
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r183",
+   "row": 183,
+   "q_ah": 0.182523988896453,
+   "state_of_charge": 0.18139602804544588,
+   "voltage_v": 3.22354226585499,
+   "raw": {
+    "Q": "0.182523988896453",
+    "OCV": "3.22354226585499"
+   },
+   "index": 18,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3122883137352651,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r184",
+     "JAHN2024.A123_01.DCHG.r181"
+    ],
+    "u_state_of_charge_v": 0.0005949891485994377,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010341198267658462
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r182",
+   "row": 182,
+   "q_ah": 0.19256943970308,
+   "state_of_charge": 0.19137940002446727,
+   "voltage_v": 3.22640543106033,
+   "raw": {
+    "Q": "0.19256943970308",
+    "OCV": "3.22640543106033"
+   },
+   "index": 19,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.2867943767117712,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r183",
+     "JAHN2024.A123_01.DCHG.r181"
+    ],
+    "u_state_of_charge_v": 0.0005464166749688199,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010338517335999166
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r181",
+   "row": 181,
+   "q_ah": 0.202614822172079,
+   "state_of_charge": 0.20136270408817317,
+   "voltage_v": 3.22926859626567,
+   "raw": {
+    "Q": "0.202614822172079",
+    "OCV": "3.22926859626567"
+   },
+   "index": 20,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.286795068442531,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r183",
+     "JAHN2024.A123_01.DCHG.r180"
+    ],
+    "u_state_of_charge_v": 0.000546417992892923,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010338517405654857
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r180",
+   "row": 180,
+   "q_ah": 0.212660166123283,
+   "state_of_charge": 0.21134596987211618,
+   "voltage_v": 3.23213176147102,
+   "raw": {
+    "Q": "0.212660166123283",
+    "OCV": "3.23213176147102"
+   },
+   "index": 21,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3186588548302823,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r181",
+     "JAHN2024.A123_01.DCHG.r178"
+    ],
+    "u_state_of_charge_v": 0.0006071266595325405,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010341903707963368
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r179",
+   "row": 179,
+   "q_ah": 0.222705719427566,
+   "state_of_charge": 0.22132944371537905,
+   "voltage_v": 3.23537668203707,
+   "raw": {
+    "Q": "0.222705719427566",
+    "OCV": "3.23537668203707"
+   },
+   "index": 22,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3345897661115525,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r180",
+     "JAHN2024.A123_01.DCHG.r178"
+    ],
+    "u_state_of_charge_v": 0.000637479122057576,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010343729944035209
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r178",
+   "row": 178,
+   "q_ah": 0.232751219971633,
+   "state_of_charge": 0.23131286512447324,
+   "voltage_v": 3.23881248028348,
+   "raw": {
+    "Q": "0.232751219971633",
+    "OCV": "3.23881248028348"
+   },
+   "index": 23,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.32504344383743095,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r180",
+     "JAHN2024.A123_01.DCHG.r177"
+    ],
+    "u_state_of_charge_v": 0.0006192909353329505,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010342624946630177
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r177",
+   "row": 177,
+   "q_ah": 0.242795505867711,
+   "state_of_charge": 0.24129507939185413,
+   "voltage_v": 3.24186652316918,
+   "raw": {
+    "Q": "0.242795505867711",
+    "OCV": "3.24186652316918"
+   },
+   "index": 24,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.2931758974235917,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r178",
+     "JAHN2024.A123_01.DCHG.r175"
+    ],
+    "u_state_of_charge_v": 0.0005585751048814885,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010339167068573013
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r176",
+   "row": 176,
+   "q_ah": 0.25284106227729,
+   "state_of_charge": 0.25127855632122287,
+   "voltage_v": 3.24492056605488,
+   "raw": {
+    "Q": "0.25284106227729",
+    "OCV": "3.24492056605488"
+   },
+   "index": 25,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.286790432665479,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r177",
+     "JAHN2024.A123_01.DCHG.r175"
+    ],
+    "u_state_of_charge_v": 0.0005464091605513977,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010338516938846007
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r175",
+   "row": 175,
+   "q_ah": 0.262886615439816,
+   "state_of_charge": 0.2612620300236048,
+   "voltage_v": 3.24759285357987,
+   "raw": {
+    "Q": "0.262886615439816",
+    "OCV": "3.24759285357987"
+   },
+   "index": 26,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.2676835573082136,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r177",
+     "JAHN2024.A123_01.DCHG.r174"
+    ],
+    "u_state_of_charge_v": 0.0005100056737694613,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01033665687305854
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r174",
+   "row": 174,
+   "q_ah": 0.272930764419975,
+   "state_of_charge": 0.271244108221179,
+   "voltage_v": 3.24988338574414,
+   "raw": {
+    "Q": "0.272930764419975",
+    "OCV": "3.24988338574414"
+   },
+   "index": 27,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.2103238062512657,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r175",
+     "JAHN2024.A123_01.DCHG.r172"
+    ],
+    "u_state_of_charge_v": 0.00040072067031531137,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010331841393463667
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r173",
+   "row": 173,
+   "q_ah": 0.282976248417096,
+   "state_of_charge": 0.2812275131855839,
+   "voltage_v": 3.25198304022806,
+   "raw": {
+    "Q": "0.282976248417096",
+    "OCV": "3.25198304022806"
+   },
+   "index": 28,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.20075475062231984,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r174",
+     "JAHN2024.A123_01.DCHG.r172"
+    ],
+    "u_state_of_charge_v": 0.00038248917073254547,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010331150346878076
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r172",
+   "row": 172,
+   "q_ah": 0.293021729103668,
+   "state_of_charge": 0.29121091485989836,
+   "voltage_v": 3.25389181703162,
+   "raw": {
+    "Q": "0.293021729103668",
+    "OCV": "3.25389181703162"
+   },
+   "index": 29,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.19756800447075035,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r174",
+     "JAHN2024.A123_01.DCHG.r171"
+    ],
+    "u_state_of_charge_v": 0.0003764176038626682,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010330927341558889
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r171",
+   "row": 171,
+   "q_ah": 0.303067236279816,
+   "state_of_charge": 0.30119434286008867,
+   "voltage_v": 3.25580059383518,
+   "raw": {
+    "Q": "0.303067236279816",
+    "OCV": "3.25580059383518"
+   },
+   "index": 30,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.22943358013612394,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r172",
+     "JAHN2024.A123_01.DCHG.r169"
+    ],
+    "u_state_of_charge_v": 0.00043712967953401144,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010333317564112739
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r170",
+   "row": 170,
+   "q_ah": 0.313112752898349,
+   "state_of_charge": 0.3111777802443119,
+   "voltage_v": 3.25809112599945,
+   "raw": {
+    "Q": "0.313112752898349",
+    "OCV": "3.25809112599945"
+   },
+   "index": 31,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.24855312457064013,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r171",
+     "JAHN2024.A123_01.DCHG.r169"
+    ],
+    "u_state_of_charge_v": 0.00047355730414997955,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01033492264336725
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r169",
+   "row": 169,
+   "q_ah": 0.323158231372367,
+   "state_of_charge": 0.3211611797197455,
+   "voltage_v": 3.26076341352444,
+   "raw": {
+    "Q": "0.323158231372367",
+    "OCV": "3.26076341352444"
+   },
+   "index": 32,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.2613115194381387,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r171",
+     "JAHN2024.A123_01.DCHG.r168"
+    ],
+    "u_state_of_charge_v": 0.0004978653110968664,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010336064985866956
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r168",
+   "row": 168,
+   "q_ah": 0.333202335667591,
+   "state_of_charge": 0.33114321350852843,
+   "voltage_v": 3.26362657872978,
+   "raw": {
+    "Q": "0.333202335667591",
+    "OCV": "3.26362657872978"
+   },
+   "index": 33,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.29956426089411303,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r169",
+     "JAHN2024.A123_01.DCHG.r166"
+    ],
+    "u_state_of_charge_v": 0.0005707465720004646,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010339831776848286
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r167",
+   "row": 167,
+   "q_ah": 0.343247893934063,
+   "state_of_charge": 0.34112669228331505,
+   "voltage_v": 3.26668062161548,
+   "raw": {
+    "Q": "0.343247893934063",
+    "OCV": "3.26668062161548"
+   },
+   "index": 34,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3059299675179175,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r168",
+     "JAHN2024.A123_01.DCHG.r166"
+    ],
+    "u_state_of_charge_v": 0.0005828748720288225,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010340508335691912
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r166",
+   "row": 166,
+   "q_ah": 0.353292120454731,
+   "state_of_charge": 0.3511088475422138,
+   "voltage_v": 3.26973466450118,
+   "raw": {
+    "Q": "0.353292120454731",
+    "OCV": "3.26973466450118"
+   },
+   "index": 35,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3186849606092416,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r168",
+     "JAHN2024.A123_01.DCHG.r165"
+    ],
+    "u_state_of_charge_v": 0.0006071763977216221,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01034190662798797
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r165",
+   "row": 165,
+   "q_ah": 0.363336264777885,
+   "state_of_charge": 0.36109092111156227,
+   "voltage_v": 3.27317046274759,
+   "raw": {
+    "Q": "0.363336264777885",
+    "OCV": "3.27317046274759"
+   },
+   "index": 36,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3887778451550731,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r166",
+     "JAHN2024.A123_01.DCHG.r163"
+    ],
+    "u_state_of_charge_v": 0.0007407212787323055,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010350605660387133
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r164",
+   "row": 164,
+   "q_ah": 0.373381825792731,
+   "state_of_charge": 0.37107440261773844,
+   "voltage_v": 3.27679713867436,
+   "raw": {
+    "Q": "0.373381825792731",
+    "OCV": "3.27679713867436"
+   },
+   "index": 37,
+   "partition": "held_out",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.41106515316727443,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r165",
+     "JAHN2024.A123_01.DCHG.r163"
+    ],
+    "u_state_of_charge_v": 0.0007831843035574821,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010353731075192659
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r163",
+   "row": 163,
+   "q_ah": 0.383427429758115,
+   "state_of_charge": 0.3810579268090271,
+   "voltage_v": 3.28137820300291,
+   "raw": {
+    "Q": "0.383427429758115",
+    "OCV": "3.28137820300291"
+   },
+   "index": 38,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.4078963707725475,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r165",
+     "JAHN2024.A123_01.DCHG.r162"
+    ],
+    "u_state_of_charge_v": 0.0007771469622411056,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010353276144534728
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r162",
+   "row": 162,
+   "q_ah": 0.393471699401788,
+   "state_of_charge": 0.3910401249244395,
+   "voltage_v": 3.28538663429039,
+   "raw": {
+    "Q": "0.393471699401788",
+    "OCV": "3.28538663429039"
+   },
+   "index": 39,
+   "partition": "calibration",
+   "region": "LOW_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.26131028837847625,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r163",
+     "JAHN2024.A123_01.DCHG.r160"
+    ],
+    "u_state_of_charge_v": 0.0004978629656131957,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01033606487289048
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r161",
+   "row": 161,
+   "q_ah": 0.40351723911862,
+   "state_of_charge": 0.401023585264219,
+   "voltage_v": 3.28805892181537,
+   "raw": {
+    "Q": "0.40351723911862",
+    "OCV": "3.28805892181537"
+   },
+   "index": 40,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.19119493369210297,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r162",
+     "JAHN2024.A123_01.DCHG.r160"
+    ],
+    "u_state_of_charge_v": 0.00036427527323493344,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010330492050176589
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r160",
+   "row": 160,
+   "q_ah": 0.413562671115443,
+   "state_of_charge": 0.4110069385496771,
+   "voltage_v": 3.28920418789751,
+   "raw": {
+    "Q": "0.413562671115443",
+    "OCV": "3.28920418789751"
+   },
+   "index": 41,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.16570266692911254,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r162",
+     "JAHN2024.A123_01.DCHG.r159"
+    ],
+    "u_state_of_charge_v": 0.0003157059818779747,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010328893444656347
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r159",
+   "row": 159,
+   "q_ah": 0.423608085849468,
+   "state_of_charge": 0.42099027467901784,
+   "voltage_v": 3.29034945397965,
+   "raw": {
+    "Q": "0.423608085849468",
+    "OCV": "3.29034945397965"
+   },
+   "index": 42,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.07010716576494207,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r160",
+     "JAHN2024.A123_01.DCHG.r157"
+    ],
+    "u_state_of_charge_v": 0.00013357209038748638,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324931526523641
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r158",
+   "row": 158,
+   "q_ah": 0.433653421593401,
+   "state_of_charge": 0.43097353230640906,
+   "voltage_v": 3.29111296470107,
+   "raw": {
+    "Q": "0.433653421593401",
+    "OCV": "3.29111296470107"
+   },
+   "index": 43,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.04780097454448669,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r159",
+     "JAHN2024.A123_01.DCHG.r157"
+    ],
+    "u_state_of_charge_v": 9.107308821859328e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324469179162141
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r157",
+   "row": 157,
+   "q_ah": 0.443698115609364,
+   "state_of_charge": 0.4409561521715777,
+   "voltage_v": 3.29130384238143,
+   "raw": {
+    "Q": "0.443698115609364",
+    "OCV": "3.29130384238143"
+   },
+   "index": 44,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.050986817318771784,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r159",
+     "JAHN2024.A123_01.DCHG.r156"
+    ],
+    "u_state_of_charge_v": 9.714293392358004e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324524505936464
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r156",
+   "row": 156,
+   "q_ah": 0.453743655838796,
+   "state_of_charge": 0.45093961302078944,
+   "voltage_v": 3.2918764754225,
+   "raw": {
+    "Q": "0.453743655838796",
+    "OCV": "3.2918764754225"
+   },
+   "index": 45,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.03824048642342415,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r157",
+     "JAHN2024.A123_01.DCHG.r154"
+    ],
+    "u_state_of_charge_v": 7.285791193067034e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324324568677712
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r155",
+   "row": 155,
+   "q_ah": 0.463789079625793,
+   "state_of_charge": 0.4609229581471566,
+   "voltage_v": 3.29206735310285,
+   "raw": {
+    "Q": "0.463789079625793",
+    "OCV": "3.29206735310285"
+   },
+   "index": 46,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.028681004857040785,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r156",
+     "JAHN2024.A123_01.DCHG.r154"
+    ],
+    "u_state_of_charge_v": 5.464465338697683e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324212103701429
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r154",
+   "row": 154,
+   "q_ah": 0.473833391312313,
+   "state_of_charge": 0.4709051980455998,
+   "voltage_v": 3.29244910846357,
+   "raw": {
+    "Q": "0.473833391312313",
+    "OCV": "3.29244910846357"
+   },
+   "index": 47,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.019121170139637326,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r156",
+     "JAHN2024.A123_01.DCHG.r153"
+    ],
+    "u_state_of_charge_v": 3.643072200022281e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324131765992565
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r153",
+   "row": 153,
+   "q_ah": 0.483877470688243,
+   "state_of_charge": 0.4808872070690849,
+   "voltage_v": 3.29244910846357,
+   "raw": {
+    "Q": "0.483877470688243",
+    "OCV": "3.29244910846357"
+   },
+   "index": 48,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.03186737090973234,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r154",
+     "JAHN2024.A123_01.DCHG.r151"
+    ],
+    "u_state_of_charge_v": 6.071549607122873e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324246020680371
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r152",
+   "row": 152,
+   "q_ah": 0.493922942411162,
+   "state_of_charge": 0.4908705998351399,
+   "voltage_v": 3.29283086382428,
+   "raw": {
+    "Q": "0.493922942411162",
+    "OCV": "3.29283086382428"
+   },
+   "index": 49,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.04779887148657236,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r153",
+     "JAHN2024.A123_01.DCHG.r151"
+    ],
+    "u_state_of_charge_v": 9.10690813551185e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324469143818009
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r151",
+   "row": 151,
+   "q_ah": 0.50396838437059,
+   "state_of_charge": 0.5008539630216361,
+   "voltage_v": 3.29340349686535,
+   "raw": {
+    "Q": "0.50396838437059",
+    "OCV": "3.29340349686535"
+   },
+   "index": 50,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.031867124333822175,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r153",
+     "JAHN2024.A123_01.DCHG.r150"
+    ],
+    "u_state_of_charge_v": 6.071502628102398e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032424601791761
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r150",
+   "row": 150,
+   "q_ah": 0.514012696919845,
+   "state_of_charge": 0.5108362037774828,
+   "voltage_v": 3.29340349686535,
+   "raw": {
+    "Q": "0.514012696919845",
+    "OCV": "3.29340349686535"
+   },
+   "index": 51,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.01912028574992911,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r151",
+     "JAHN2024.A123_01.DCHG.r148"
+    ],
+    "u_state_of_charge_v": 3.6429037011523654e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032413176004689
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r149",
+   "row": 149,
+   "q_ah": 0.524058019683023,
+   "state_of_charge": 0.5208194485043375,
+   "voltage_v": 3.29378525222606,
+   "raw": {
+    "Q": "0.524058019683023",
+    "OCV": "3.29378525222606"
+   },
+   "index": 52,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.028679347976921916,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r150",
+     "JAHN2024.A123_01.DCHG.r148"
+    ],
+    "u_state_of_charge_v": 5.46414966063741e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.0103242120869935
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r148",
+   "row": 148,
+   "q_ah": 0.534103593028989,
+   "state_of_charge": 0.5308029422654299,
+   "voltage_v": 3.29397612990641,
+   "raw": {
+    "Q": "0.534103593028989",
+    "OCV": "3.29397612990641"
+   },
+   "index": 53,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.02549272757068869,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r150",
+     "JAHN2024.A123_01.DCHG.r147"
+    ],
+    "u_state_of_charge_v": 4.8570169313539206e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324181739267206
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r147",
+   "row": 147,
+   "q_ah": 0.544149072040415,
+   "state_of_charge": 0.5407863422749504,
+   "voltage_v": 3.29416700758677,
+   "raw": {
+    "Q": "0.544149072040415",
+    "OCV": "3.29416700758677"
+   },
+   "index": 54,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.019120225258657204,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r148",
+     "JAHN2024.A123_01.DCHG.r145"
+    ],
+    "u_state_of_charge_v": 3.642892176017167e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324131759640223
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r146",
+   "row": 146,
+   "q_ah": 0.554193433730542,
+   "state_of_charge": 0.5507686318679885,
+   "voltage_v": 3.29454876294748,
+   "raw": {
+    "Q": "0.554193433730542",
+    "OCV": "3.29454876294748"
+   },
+   "index": 55,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.01912058470903265,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r147",
+     "JAHN2024.A123_01.DCHG.r145"
+    ],
+    "u_state_of_charge_v": 3.6429606605116045e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324131762056736
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r145",
+   "row": 145,
+   "q_ah": 0.564238897027655,
+   "state_of_charge": 0.5607520162603072,
+   "voltage_v": 3.29454876294748,
+   "raw": {
+    "Q": "0.564238897027655",
+    "OCV": "3.29454876294748"
+   },
+   "index": 56,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.025493648079987483,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r147",
+     "JAHN2024.A123_01.DCHG.r144"
+    ],
+    "u_state_of_charge_v": 4.857192311930099e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324181747518145
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r144",
+   "row": 144,
+   "q_ah": 0.574284359015261,
+   "state_of_charge": 0.5707353993512115,
+   "voltage_v": 3.2949305183082,
+   "raw": {
+    "Q": "0.574284359015261",
+    "OCV": "3.2949305183082"
+   },
+   "index": 57,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.02549432758417,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r145",
+     "JAHN2024.A123_01.DCHG.r142"
+    ],
+    "u_state_of_charge_v": 4.8573217748645873e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324181753609038
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r143",
+   "row": 143,
+   "q_ah": 0.584328809859705,
+   "state_of_charge": 0.5807177775476113,
+   "voltage_v": 3.29531227366891,
+   "raw": {
+    "Q": "0.584328809859705",
+    "OCV": "3.29531227366891"
+   },
+   "index": 58,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.01912134918931107,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r144",
+     "JAHN2024.A123_01.DCHG.r142"
+    ],
+    "u_state_of_charge_v": 3.643106313566801e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324131767196335
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r142",
+   "row": 142,
+   "q_ah": 0.594373380802141,
+   "state_of_charge": 0.590700275099822,
+   "voltage_v": 3.29531227366891,
+   "raw": {
+    "Q": "0.594373380802141",
+    "OCV": "3.29531227366891"
+   },
+   "index": 59,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.025494315374047914,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r144",
+     "JAHN2024.A123_01.DCHG.r141"
+    ],
+    "u_state_of_charge_v": 4.857319448523887e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324181753499587
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r141",
+   "row": 141,
+   "q_ah": 0.604418857221823,
+   "state_of_charge": 0.600683672533615,
+   "voltage_v": 3.29569402902962,
+   "raw": {
+    "Q": "0.604418857221823",
+    "OCV": "3.29569402902962"
+   },
+   "index": 60,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.03823923447523054,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r142",
+     "JAHN2024.A123_01.DCHG.r139"
+    ],
+    "u_state_of_charge_v": 7.285552664900259e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032432455184525
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r140",
+   "row": 140,
+   "q_ah": 0.614464162609796,
+   "state_of_charge": 0.6106668999926399,
+   "voltage_v": 3.29607578439033,
+   "raw": {
+    "Q": "0.614464162609796",
+    "OCV": "3.29607578439033"
+   },
+   "index": 61,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.03823934038295694,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r141",
+     "JAHN2024.A123_01.DCHG.r139"
+    ],
+    "u_state_of_charge_v": 7.285572843032193e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324324553269159
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r139",
+   "row": 139,
+   "q_ah": 0.624509643130325,
+   "state_of_charge": 0.6206503015019375,
+   "voltage_v": 3.29645753975104,
+   "raw": {
+    "Q": "0.624509643130325",
+    "OCV": "3.29645753975104"
+   },
+   "index": 62,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.0318662397084383,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r141",
+     "JAHN2024.A123_01.DCHG.r138"
+    ],
+    "u_state_of_charge_v": 6.071334084330238e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324246008005992
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r138",
+   "row": 138,
+   "q_ah": 0.634554920024866,
+   "state_of_charge": 0.6306335006436139,
+   "voltage_v": 3.2966484174314,
+   "raw": {
+    "Q": "0.634554920024866",
+    "OCV": "3.2966484174314"
+   },
+   "index": 63,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.03824249116744218,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r139",
+     "JAHN2024.A123_01.DCHG.r136"
+    ],
+    "u_state_of_charge_v": 7.286173148101528e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324324595632671
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r137",
+   "row": 137,
+   "q_ah": 0.644599227353561,
+   "state_of_charge": 0.6406157362111626,
+   "voltage_v": 3.29722105047247,
+   "raw": {
+    "Q": "0.644599227353561",
+    "OCV": "3.29722105047247"
+   },
+   "index": 64,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.047804807251453064,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r138",
+     "JAHN2024.A123_01.DCHG.r136"
+    ],
+    "u_state_of_charge_v": 9.10803905061092e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032446924357887
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r136",
+   "row": 136,
+   "q_ah": 0.654643339084888,
+   "state_of_charge": 0.650597777390095,
+   "voltage_v": 3.29760280583318,
+   "raw": {
+    "Q": "0.654643339084888",
+    "OCV": "3.29760280583318"
+   },
+   "index": 65,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.04461622133477085,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r138",
+     "JAHN2024.A123_01.DCHG.r135"
+    ],
+    "u_state_of_charge_v": 8.500531841291778e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324417437716754
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r135",
+   "row": 135,
+   "q_ah": 0.664688628379974,
+   "state_of_charge": 0.6605809888556835,
+   "voltage_v": 3.29798456119389,
+   "raw": {
+    "Q": "0.664688628379974",
+    "OCV": "3.29798456119389"
+   },
+   "index": 66,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.050985873504104835,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r136",
+     "JAHN2024.A123_01.DCHG.r133"
+    ],
+    "u_state_of_charge_v": 9.714113571512836e-05,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324524489017368
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r134",
+   "row": 134,
+   "q_ah": 0.674734088271914,
+   "state_of_charge": 0.6705643698638725,
+   "voltage_v": 3.29836631655461,
+   "raw": {
+    "Q": "0.674734088271914",
+    "OCV": "3.29836631655461"
+   },
+   "index": 67,
+   "partition": "held_out",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.0573588603050712,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r135",
+     "JAHN2024.A123_01.DCHG.r133"
+    ],
+    "u_state_of_charge_v": 0.00010928330634389191,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324645871172374
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r133",
+   "row": 133,
+   "q_ah": 0.684779466922714,
+   "state_of_charge": 0.6805476701329751,
+   "voltage_v": 3.29912982727603,
+   "raw": {
+    "Q": "0.684779466922714",
+    "OCV": "3.29912982727603"
+   },
+   "index": 68,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.07010487861783901,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r135",
+     "JAHN2024.A123_01.DCHG.r132"
+    ],
+    "u_state_of_charge_v": 0.0001335677327870008,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324931470150936
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r132",
+   "row": 132,
+   "q_ah": 0.694825056032207,
+   "state_of_charge": 0.6905311795601792,
+   "voltage_v": 3.30008421567781,
+   "raw": {
+    "Q": "0.694825056032207",
+    "OCV": "3.30008421567781"
+   },
+   "index": 69,
+   "partition": "calibration",
+   "region": "PLATEAU",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.09560386160661018,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r133",
+     "JAHN2024.A123_01.DCHG.r130"
+    ],
+    "u_state_of_charge_v": 0.0001821498202726756,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010325674219202186
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r131",
+   "row": 131,
+   "q_ah": 0.704869458369272,
+   "state_of_charge": 0.7005135095489655,
+   "voltage_v": 3.30065684871888,
+   "raw": {
+    "Q": "0.704869458369272",
+    "OCV": "3.30065684871888"
+   },
+   "index": 70,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.0956075507088035,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r132",
+     "JAHN2024.A123_01.DCHG.r130"
+    ],
+    "u_state_of_charge_v": 0.00018215684895635204,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010325674343193912
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r130",
+   "row": 130,
+   "q_ah": 0.714913908722837,
+   "state_of_charge": 0.7104958872575199,
+   "voltage_v": 3.30199299248137,
+   "raw": {
+    "Q": "0.714913908722837",
+    "OCV": "3.30199299248137"
+   },
+   "index": 71,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.10835181133450057,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r132",
+     "JAHN2024.A123_01.DCHG.r129"
+    ],
+    "u_state_of_charge_v": 0.0002064379265558196,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010326131228179892
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r129",
+   "row": 129,
+   "q_ah": 0.724959284188674,
+   "state_of_charge": 0.7204791843613418,
+   "voltage_v": 3.30332913624387,
+   "raw": {
+    "Q": "0.724959284188674",
+    "OCV": "3.30332913624387"
+   },
+   "index": 72,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.20395023256203892,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r130",
+     "JAHN2024.A123_01.DCHG.r127"
+    ],
+    "u_state_of_charge_v": 0.00038857738151423386,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010331377541523482
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r128",
+   "row": 128,
+   "q_ah": 0.735003598082844,
+   "state_of_charge": 0.7304614264537923,
+   "voltage_v": 3.30542879072778,
+   "raw": {
+    "Q": "0.735003598082844",
+    "OCV": "3.30542879072778"
+   },
+   "index": 73,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.23900812163375343,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r129",
+     "JAHN2024.A123_01.DCHG.r127"
+    ],
+    "u_state_of_charge_v": 0.00045537163110038944,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010334105323949546
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r127",
+   "row": 127,
+   "q_ah": 0.745049040858578,
+   "state_of_charge": 0.74044479045155,
+   "voltage_v": 3.30810107825277,
+   "raw": {
+    "Q": "0.745049040858578",
+    "OCV": "3.30810107825277"
+   },
+   "index": 74,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.3186706509172653,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r129",
+     "JAHN2024.A123_01.DCHG.r126"
+    ],
+    "u_state_of_charge_v": 0.0006071491340967241,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010341905027368299
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r126",
+   "row": 126,
+   "q_ah": 0.755094566442856,
+   "state_of_charge": 0.7504282367461118,
+   "voltage_v": 3.31287302026168,
+   "raw": {
+    "Q": "0.755094566442856",
+    "OCV": "3.31287302026168"
+   },
+   "index": 75,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.5672363712214258,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r127",
+     "JAHN2024.A123_01.DCHG.r124"
+    ],
+    "u_state_of_charge_v": 0.001080730436342161,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010380479170062797
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r125",
+   "row": 125,
+   "q_ah": 0.765139972838992,
+   "state_of_charge": 0.76041156458909,
+   "voltage_v": 3.31917198371343,
+   "raw": {
+    "Q": "0.765139972838992",
+    "OCV": "3.31917198371343"
+   },
+   "index": 76,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.6118650186839172,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r126",
+     "JAHN2024.A123_01.DCHG.r124"
+    ],
+    "u_state_of_charge_v": 0.0011657594297080876,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01038967586462757
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r124",
+   "row": 124,
+   "q_ah": 0.775184184315067,
+   "state_of_charge": 0.7703937048963682,
+   "voltage_v": 3.32508919180447,
+   "raw": {
+    "Q": "0.775184184315067",
+    "OCV": "3.32508919180447"
+   },
+   "index": 77,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.5481394867087582,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r126",
+     "JAHN2024.A123_01.DCHG.r123"
+    ],
+    "u_state_of_charge_v": 0.0010443459846757241,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010376754216024374
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r123",
+   "row": 123,
+   "q_ah": 0.785228421091755,
+   "state_of_charge": 0.7803758703479067,
+   "voltage_v": 3.32928850077231,
+   "raw": {
+    "Q": "0.785228421091755",
+    "OCV": "3.32928850077231"
+   },
+   "index": 78,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.26768401139501613,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r124",
+     "JAHN2024.A123_01.DCHG.r121"
+    ],
+    "u_state_of_charge_v": 0.0005100065389210157,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010336656915744737
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r122",
+   "row": 122,
+   "q_ah": 0.795273802905328,
+   "state_of_charge": 0.7903591737602371,
+   "voltage_v": 3.33157903293658,
+   "raw": {
+    "Q": "0.795273802905328",
+    "OCV": "3.33157903293658"
+   },
+   "index": 79,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.19119494376186297,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r123",
+     "JAHN2024.A123_01.DCHG.r121"
+    ],
+    "u_state_of_charge_v": 0.00036427529242040295,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01033049205085311
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r121",
+   "row": 121,
+   "q_ah": 0.805319391747271,
+   "state_of_charge": 0.8003426829215444,
+   "voltage_v": 3.33310605437943,
+   "raw": {
+    "Q": "0.805319391747271",
+    "OCV": "3.33310605437943"
+   },
+   "index": 80,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.16570852929290877,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r123",
+     "JAHN2024.A123_01.DCHG.r120"
+    ],
+    "u_state_of_charge_v": 0.00031571715118111697,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010328893786055757
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r120",
+   "row": 120,
+   "q_ah": 0.81536374138755,
+   "state_of_charge": 0.8103249605392002,
+   "voltage_v": 3.33425132046157,
+   "raw": {
+    "Q": "0.81536374138755",
+    "OCV": "3.33425132046157"
+   },
+   "index": 81,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.08923197329850359,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r121",
+     "JAHN2024.A123_01.DCHG.r118"
+    ],
+    "u_state_of_charge_v": 0.00017000974255390142,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010325467197015084
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r119",
+   "row": 119,
+   "q_ah": 0.825407905896996,
+   "state_of_charge": 0.8203070541700936,
+   "voltage_v": 3.33501483118299,
+   "raw": {
+    "Q": "0.825407905896996",
+    "OCV": "3.33501483118299"
+   },
+   "index": 82,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.07648351052296087,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r120",
+     "JAHN2024.A123_01.DCHG.r118"
+    ],
+    "u_state_of_charge_v": 0.00014572065878369682,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010325095836575449
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r118",
+   "row": 118,
+   "q_ah": 0.835453258609457,
+   "state_of_charge": 0.8302903286611508,
+   "voltage_v": 3.33577834190442,
+   "raw": {
+    "Q": "0.835453258609457",
+    "OCV": "3.33577834190442"
+   },
+   "index": 83,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.070108037111332,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r120",
+     "JAHN2024.A123_01.DCHG.r117"
+    ],
+    "u_state_of_charge_v": 0.00013357375052532657,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324931548000729
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r117",
+   "row": 117,
+   "q_ah": 0.845498811339234,
+   "state_of_charge": 0.8402738019334581,
+   "voltage_v": 3.33635097494548,
+   "raw": {
+    "Q": "0.845498811339234",
+    "OCV": "3.33635097494548"
+   },
+   "index": 84,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.06373321447130685,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r118",
+     "JAHN2024.A123_01.DCHG.r115"
+    ],
+    "u_state_of_charge_v": 0.00012142808215338624,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032478156200928
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r116",
+   "row": 116,
+   "q_ah": 0.855543593830426,
+   "state_of_charge": 0.8502565097270969,
+   "voltage_v": 3.33711448566691,
+   "raw": {
+    "Q": "0.855543593830426",
+    "OCV": "3.33711448566691"
+   },
+   "index": 85,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.06692092218206215,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r117",
+     "JAHN2024.A123_01.DCHG.r115"
+    ],
+    "u_state_of_charge_v": 0.00012750148103956422,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324854776302598
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r115",
+   "row": 115,
+   "q_ah": 0.865588973844191,
+   "state_of_charge": 0.8602398113507417,
+   "voltage_v": 3.33768711870798,
+   "raw": {
+    "Q": "0.865588973844191",
+    "OCV": "3.33768711870798"
+   },
+   "index": 86,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.06373341475925413,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r117",
+     "JAHN2024.A123_01.DCHG.r114"
+    ],
+    "u_state_of_charge_v": 0.00012142846375317717,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010324781566497219
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r114",
+   "row": 114,
+   "q_ah": 0.875634431869946,
+   "state_of_charge": 0.8702231905042784,
+   "voltage_v": 3.33825975174905,
+   "raw": {
+    "Q": "0.875634431869946",
+    "OCV": "3.33825975174905"
+   },
+   "index": 87,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.07648412676889502,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r115",
+     "JAHN2024.A123_01.DCHG.r112"
+    ],
+    "u_state_of_charge_v": 0.00014572183288989152,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032509585314597
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r113",
+   "row": 113,
+   "q_ah": 0.885678573964725,
+   "state_of_charge": 0.8802052618590228,
+   "voltage_v": 3.33921414015083,
+   "raw": {
+    "Q": "0.885678573964725",
+    "OCV": "3.33921414015083"
+   },
+   "index": 88,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.08604798504686442,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r114",
+     "JAHN2024.A123_01.DCHG.r112"
+    ],
+    "u_state_of_charge_v": 0.00016394343018910583,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010325369096181185
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r112",
+   "row": 112,
+   "q_ah": 0.895723006879874,
+   "state_of_charge": 0.8901876222369269,
+   "voltage_v": 3.33997765087225,
+   "raw": {
+    "Q": "0.895723006879874",
+    "OCV": "3.33997765087225"
+   },
+   "index": 89,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.08286034154330747,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r114",
+     "JAHN2024.A123_01.DCHG.r111"
+    ],
+    "u_state_of_charge_v": 0.00015787015363407059,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010325274452017232
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r111",
+   "row": 111,
+   "q_ah": 0.905767542070665,
+   "state_of_charge": 0.9001700842584306,
+   "voltage_v": 3.34074116159368,
+   "raw": {
+    "Q": "0.905767542070665",
+    "OCV": "3.34074116159368"
+   },
+   "index": 90,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.1019780108906978,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r112",
+     "JAHN2024.A123_01.DCHG.r109"
+    ],
+    "u_state_of_charge_v": 0.00019429420572925098,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.01032589559130109
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r110",
+   "row": 110,
+   "q_ah": 0.915811831690872,
+   "state_of_charge": 0.910152302226926,
+   "voltage_v": 3.34169554999546,
+   "raw": {
+    "Q": "0.915811831690872",
+    "OCV": "3.34169554999546"
+   },
+   "index": 91,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.11472398461369662,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r111",
+     "JAHN2024.A123_01.DCHG.r109"
+    ],
+    "u_state_of_charge_v": 0.00021857854721743996,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010326381074964017
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r109",
+   "row": 109,
+   "q_ah": 0.925857283640573,
+   "state_of_charge": 0.9201356753419574,
+   "voltage_v": 3.34303169375795,
+   "raw": {
+    "Q": "0.925857283640573",
+    "OCV": "3.34303169375795"
+   },
+   "index": 92,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.11472242155638199,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r111",
+     "JAHN2024.A123_01.DCHG.r108"
+    ],
+    "u_state_of_charge_v": 0.0002185755691932875,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010326381011928598
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r108",
+   "row": 108,
+   "q_ah": 0.935902565000293,
+   "state_of_charge": 0.930118878921219,
+   "voltage_v": 3.34417695984009,
+   "raw": {
+    "Q": "0.935902565000293",
+    "OCV": "3.34417695984009"
+   },
+   "index": 93,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.19757041089459831,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r109",
+     "JAHN2024.A123_01.DCHG.r106"
+    ],
+    "u_state_of_charge_v": 0.00037642218871587437,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010330927508613589
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r107",
+   "row": 107,
+   "q_ah": 0.945948096869831,
+   "state_of_charge": 0.9401023314621991,
+   "voltage_v": 3.34627661432401,
+   "raw": {
+    "Q": "0.945948096869831",
+    "OCV": "3.34627661432401"
+   },
+   "index": 94,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.23899543098311668,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r108",
+     "JAHN2024.A123_01.DCHG.r106"
+    ],
+    "u_state_of_charge_v": 0.00045534745216353707,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010334104258534609
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r106",
+   "row": 106,
+   "q_ah": 0.955993388435709,
+   "state_of_charge": 0.9500855451845468,
+   "voltage_v": 3.34894890184899,
+   "raw": {
+    "Q": "0.955993388435709",
+    "OCV": "3.34894890184899"
+   },
+   "index": 95,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.2804216802546587,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r108",
+     "JAHN2024.A123_01.DCHG.r105"
+    ],
+    "u_state_of_charge_v": 0.0005342750575193934,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010337882731060488
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r105",
+   "row": 105,
+   "q_ah": 0.966038759899548,
+   "state_of_charge": 0.9600688383111023,
+   "voltage_v": 3.35257557777576,
+   "raw": {
+    "Q": "0.966038759899548",
+    "OCV": "3.35257557777576"
+   },
+   "index": 96,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.6437418991454492,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r106",
+     "JAHN2024.A123_01.DCHG.r103"
+    ],
+    "u_state_of_charge_v": 0.001226493043908878,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010396665557323088
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r104",
+   "row": 104,
+   "q_ah": 0.976083212536141,
+   "state_of_charge": 0.9700512182885761,
+   "voltage_v": 3.35792015282573,
+   "raw": {
+    "Q": "0.976083212536141",
+    "OCV": "3.35792015282573"
+   },
+   "index": 97,
+   "partition": "held_out",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.7839902857413267,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r105",
+     "JAHN2024.A123_01.DCHG.r103"
+    ],
+    "u_state_of_charge_v": 0.0014937021082988618,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010431563426083732
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r103",
+   "row": 103,
+   "q_ah": 0.986127398120346,
+   "state_of_charge": 0.9800333328639907,
+   "voltage_v": 3.36822754756496,
+   "raw": {
+    "Q": "0.986127398120346",
+    "OCV": "3.36822754756496"
+   },
+   "index": 98,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 1.2683634452230133,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r105",
+     "JAHN2024.A123_01.DCHG.r102"
+    ],
+    "u_state_of_charge_v": 0.0024165569225483,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010603118262284328
+   }
+  },
+  {
+   "observation_id": "JAHN2024.A123_01.DCHG.r102",
+   "row": 102,
+   "q_ah": 0.996172753109285,
+   "state_of_charge": 0.9900166096174577,
+   "voltage_v": 3.39056023616664,
+   "raw": {
+    "Q": "0.996172753109285",
+    "OCV": "3.39056023616664"
+   },
+   "index": 99,
+   "partition": "calibration",
+   "region": "HIGH_SOC_TRANSITION",
+   "uncertainty": {
+    "u_acquisition_v": 0.0005773502691896258,
+    "u_quantisation_v": 5.510164006607907e-05,
+    "u_temperature_v": 0.0004,
+    "local_abs_dV_dz_from_calibration_v": 0.7839902857413267,
+    "slope_taken_from": [
+     "JAHN2024.A123_01.DCHG.r105",
+     "JAHN2024.A123_01.DCHG.r103"
+    ],
+    "u_state_of_charge_v": 0.0014937021082988618,
+    "u_relaxation_allowance_v": 0.0103,
+    "combined_standard_uncertainty_v": 0.010431563426083732
+   }
+  }
+ ]
+}

@@ -36,9 +36,10 @@ LAYERS = (
     "data",           # 1 -- the data boundary
     "inference",      # 2 -- admission, observations, split, grid, calibration
     "uq",             # 3 -- posterior-predictive uncertainty
-    "adequacy",       # 4 -- held-out scoring, evidence identity
-    "execution",      # 5 -- the sweep engine
-    "studies",        # 6 -- orchestration
+    "hybrid_uq",      # 4 -- Core V2: routed grid / local-Gaussian uncertainty
+    "adequacy",       # 5 -- held-out scoring, evidence identity
+    "execution",      # 6 -- the sweep engine
+    "studies",        # 7 -- orchestration
 )
 LAYER_OF = {name: index for index, name in enumerate(LAYERS)}
 
@@ -229,9 +230,14 @@ def test_no_frozen_class_is_defined_under_a_src_prefixed_module():
 
 
 def test_the_canonical_modules_are_exactly_the_core_packages():
-    assert set(api_snapshot.CANONICAL_MODULES) == {
+    """Core V2 is additive: its canonical modules are the V1 seven plus the V2
+    additions, and together they are every Core layer."""
+    assert set(api_snapshot.V2_CANONICAL_MODULES) == {
         f"engcore.{name}" for name in LAYERS
     }
+    assert api_snapshot.V2_CANONICAL_MODULES[: len(api_snapshot.CANONICAL_MODULES)] == (
+        api_snapshot.CANONICAL_MODULES
+    )
 
 
 # =====================================================================

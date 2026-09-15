@@ -1,0 +1,466 @@
+{
+ "case": "F5_weak_identifiability from benchmarks/core_gap_hd_uq/FAILURE_CASES.json (committed observations reused byte-for-byte)",
+ "model": "y = t1 + t2 x, x = linspace(10, 10.05, 6), sigma 0.01, flat prior on [-50,50] x [-5,5]",
+ "parameter_count": 2,
+ "trusted_reference": {
+  "analytic_gaussian": {
+   "mean": [
+    3.0552710895943846,
+    0.09544165904668489
+   ],
+   "covariance": [
+    [
+     5.742909523914584,
+     -0.5728571428676226
+    ],
+    [
+     -0.5728571428676226,
+     0.05714285714390249
+    ]
+   ],
+   "sd": [
+    2.396436839124825,
+    0.23904572186906523
+   ],
+   "correlation": -0.9999985489342388
+  },
+  "principal_axes": {
+   "eigenvalues": [
+    1.6420213418827379e-07,
+    5.800052216856352
+   ],
+   "widths_sd": [
+    0.00040521862517445295,
+    2.40832975666879
+   ],
+   "thin_direction": [
+    -0.09925774538857346,
+    -0.9950617568675713
+   ],
+   "condition_number": 35322636.00304991
+  },
+  "conditional_sd_t1_given_t2": 0.004082482904601919,
+  "box_probability_mass": 1.0,
+  "independent_quadrature_in_principal_coordinates_truncated_to_box": {
+   "mean": [
+    3.0552710895943784,
+    0.09544165904668463
+   ],
+   "sd": [
+    2.3964368391248194,
+    0.2390457218690642
+   ]
+  }
+ },
+ "grids": [
+  {
+   "per_axis": 201,
+   "window": "declared_bounds",
+   "step": [
+    0.5,
+    0.04999999999999982
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 9.559905140022288,
+    "spacing_to_std": [
+     0.37080992435480037,
+     0.3708099243547925
+    ],
+    "grid_points": 40401
+   },
+   "grid_mean": [
+    0.40348886407691836,
+    0.35965111359230856
+   ],
+   "grid_sd": [
+    1.3483997249264215,
+    0.13483997249264215
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 1.1065521036164228,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390041,
+     0.5640760748125805
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999999
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "wall_seconds": 0.10492329997941852
+  },
+  {
+   "per_axis": 201,
+   "window": "estimate_pm_6_marginal_sd",
+   "step": [
+    0.14378621034748917,
+    0.014342743312143913
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 59.081773404088366,
+    "spacing_to_std": [
+     0.06000002359267841,
+     0.06000002359268001
+    ],
+    "grid_points": 40401
+   },
+   "grid_mean": [
+    3.0552710894029134,
+    0.09544165906578445
+   ],
+   "grid_sd": [
+    2.3964358968190695,
+    0.2390456278736151
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 7.989917209707173e-11,
+    "sd_ratio_grid_over_true": [
+     0.9999996067888207,
+     0.999999606788821
+    ],
+    "false_precision": false,
+    "material": false,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999998
+   },
+   "classification": "A_CORRECT_ACCEPT",
+   "wall_seconds": 0.12230290001025423
+  },
+  {
+   "per_axis": 201,
+   "window": "declared_bounds_offset_half_step",
+   "step": [
+    0.5,
+    0.049999999999998934
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 9.559905140022932,
+    "spacing_to_std": [
+     0.37080992435479143,
+     0.3708099243547836
+    ],
+    "grid_points": 40000
+   },
+   "grid_mean": [
+    0.40348886407665896,
+    0.3596511135923344
+   ],
+   "grid_sd": [
+    1.348399724926454,
+    0.13483997249264537
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 1.1065521036165311,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390177,
+     0.564076074812594
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -1.0000000000000002
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "wall_seconds": 0.09681770001770929
+  },
+  {
+   "per_axis": 401,
+   "window": "declared_bounds",
+   "step": [
+    0.25,
+    0.025000000000000355
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 19.119810280046494,
+    "spacing_to_std": [
+     0.18540496217739647,
+     0.18540496217738592
+    ],
+    "grid_points": 160801
+   },
+   "grid_mean": [
+    0.4034888640769299,
+    0.3596511135923074
+   ],
+   "grid_sd": [
+    1.3483997249264486,
+    0.13483997249264487
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 1.106552103616418,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390154,
+     0.5640760748125919
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999997
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "wall_seconds": 0.4339073000010103
+  },
+  {
+   "per_axis": 401,
+   "window": "estimate_pm_6_marginal_sd",
+   "step": [
+    0.07189310517374459,
+    0.0071713716560719565
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 118.16354676896748,
+    "spacing_to_std": [
+     0.030000011883930484,
+     0.030000011883930377
+    ],
+    "grid_points": 160801
+   },
+   "grid_mean": [
+    3.05527108940293,
+    0.09544165906578275
+   ],
+   "grid_sd": [
+    2.3964358898221763,
+    0.23904562717567146
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 7.989208939297934e-11,
+    "sd_ratio_grid_over_true": [
+     0.9999996038691138,
+     0.9999996038691134
+    ],
+    "false_precision": false,
+    "material": false,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999994
+   },
+   "classification": "A_CORRECT_ACCEPT",
+   "wall_seconds": 0.4207569000427611
+  },
+  {
+   "per_axis": 401,
+   "window": "declared_bounds_offset_half_step",
+   "step": [
+    0.25,
+    0.025000000000000355
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 19.119810280046554,
+    "spacing_to_std": [
+     0.1854049621773961,
+     0.18540496217738556
+    ],
+    "grid_points": 160000
+   },
+   "grid_mean": [
+    0.4034888640774164,
+    0.35965111359225876
+   ],
+   "grid_sd": [
+    1.3483997249264512,
+    0.13483997249264512
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 1.106552103616215,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390165,
+     0.5640760748125929
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -1.0
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "wall_seconds": 0.4806856000213884
+  },
+  {
+   "per_axis": 801,
+   "window": "declared_bounds",
+   "step": [
+    0.125,
+    0.012500000000000178
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 38.239620560093066,
+    "spacing_to_std": [
+     0.09270248108869816,
+     0.0927024810886929
+    ],
+    "grid_points": 641601
+   },
+   "grid_mean": [
+    0.40348886407693085,
+    0.3596511135923073
+   ],
+   "grid_sd": [
+    1.3483997249264497,
+    0.13483997249264495
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 1.1065521036164176,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390158,
+     0.5640760748125923
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999999
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "wall_seconds": 1.7382917000213638
+  },
+  {
+   "per_axis": 801,
+   "window": "estimate_pm_6_marginal_sd",
+   "step": [
+    0.03594655258687318,
+    0.0035856858280358672
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 236.3270934967962,
+    "spacing_to_std": [
+     0.015000005964874254,
+     0.015000005964874195
+    ],
+    "grid_points": 641601
+   },
+   "grid_mean": [
+    3.05527108940293,
+    0.09544165906578284
+   ],
+   "grid_sd": [
+    2.396435886162179,
+    0.2390456268105851
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 7.989243772268879e-11,
+    "sd_ratio_grid_over_true": [
+     0.9999996023418475,
+     0.9999996023418475
+    ],
+    "false_precision": false,
+    "material": false,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -1.0000000000000002
+   },
+   "classification": "A_CORRECT_ACCEPT",
+   "wall_seconds": 1.6888118999777362
+  },
+  {
+   "per_axis": 801,
+   "window": "declared_bounds_offset_half_step",
+   "step": [
+    0.125,
+    0.012500000000001066
+   ],
+   "guard": {
+    "verdict": "ACCEPT",
+    "status": "PARAMETERS_NOT_IDENTIFIABLE",
+    "effective_sample_size": 38.23962056009391,
+    "spacing_to_std": [
+     0.09270248108869683,
+     0.09270248108868828
+    ],
+    "grid_points": 640000
+   },
+   "grid_mean": [
+    0.4034888640771852,
+    0.35965111359228197
+   ],
+   "grid_sd": [
+    1.348399724926469,
+    0.13483997249264687
+   ],
+   "comparison": {
+    "max_mean_error_in_true_sd": 1.1065521036163115,
+    "sd_ratio_grid_over_true": [
+     0.5626685848390239,
+     0.5640760748126002
+    ],
+    "false_precision": true,
+    "material": true,
+    "correlation_true": -0.9999985489342388,
+    "correlation_grid": -0.9999999999999996
+   },
+   "classification": "C_FALSE_ACCEPT",
+   "wall_seconds": 1.816738399968017
+  }
+ ],
+ "GRID_STABLE_BUT_WRONG": {
+  "stable_under_refinement": true,
+  "all_accepted_by_guard": true,
+  "all_materially_wrong": true,
+  "occurs": true
+ },
+ "mechanism": {
+  "ridge_slope_dt1_dt2": -10.025000000000002,
+  "t1_shift_per_t2_step_over_t1_step": 1.0024999999999966,
+  "note": "the same ratio holds at every nested refinement (both steps halve), so the sampled phase pattern of the ridge through the lattice repeats: resolution-stable aliasing"
+ },
+ "candidates_on_declared_bounds_801": {
+  "A": {
+   "value": 6677581.547274238,
+   "flag": true
+  },
+  "B": {
+   "value": 2.6464789083019453e+17,
+   "flag": true
+  },
+  "fit": "ok (delta 500.0, 1476 nodes)",
+  "C": {
+   "value": 43.355431332865344,
+   "flag": true
+  },
+  "D": {
+   "value": 0.13234669521831677,
+   "flag": true,
+   "aliasing_amplitude": 0.9359686023087043
+  },
+  "E": {
+   "value": 4.872124592229322,
+   "flag": true,
+   "ess": 38.239620560093066,
+   "ess_expected": 7.8486540802101885
+  },
+  "sigma_H": [
+   [
+    5.742909524680573,
+    -0.5728571429440296
+   ],
+   [
+    -0.5728571429440296,
+    0.05714285715152405
+   ]
+  ],
+  "F": {
+   "value": {
+    "mean_shift_in_sd_H": 1.886325621695728e-13,
+    "sd_ratio_offset_over_base": [
+     1.0000000000000144,
+     1.0000000000000142
+    ]
+   },
+   "flag": false
+  }
+ },
+ "aliasing_number_with_true_sigma": 0.13234669520438302
+}

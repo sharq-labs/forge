@@ -1,0 +1,203 @@
+{
+ "schema": "core_gap_hd_uq_scaling/1",
+ "family": "TabulatedForm LINEAR, uniform knots, B3 data",
+ "n_cal": 67,
+ "n_held": 33,
+ "grid_rule": {
+  "per_axis": 9,
+  "span_marginal_se": 4
+ },
+ "local": {
+  "2": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "wall_seconds": 0.19602269999450073,
+   "forward_calls": {
+    "forward": 9,
+    "predict": 9
+   },
+   "production_predictions": 900,
+   "python_heap_peak_bytes_tracemalloc": 25940,
+   "calibration": {
+    "evaluations": 6,
+    "admitted_predictions": 1072,
+    "wall_seconds": 0.232
+   }
+  },
+  "5": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "wall_seconds": 0.4781379000050947,
+   "forward_calls": {
+    "forward": 21,
+    "predict": 21
+   },
+   "production_predictions": 2100,
+   "python_heap_peak_bytes_tracemalloc": 35508,
+   "calibration": {
+    "evaluations": 6,
+    "admitted_predictions": 2412,
+    "wall_seconds": 0.549
+   }
+  },
+  "10": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "wall_seconds": 1.065354899968952,
+   "forward_calls": {
+    "forward": 41,
+    "predict": 41
+   },
+   "production_predictions": 4100,
+   "python_heap_peak_bytes_tracemalloc": 90940,
+   "calibration": {
+    "evaluations": 6,
+    "admitted_predictions": 4422,
+    "wall_seconds": 1.112
+   }
+  },
+  "20": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "wall_seconds": 2.4106490000267513,
+   "forward_calls": {
+    "forward": 81,
+    "predict": 81
+   },
+   "production_predictions": 8100,
+   "python_heap_peak_bytes_tracemalloc": 206300,
+   "calibration": {
+    "evaluations": 6,
+    "admitted_predictions": 8442,
+    "wall_seconds": 2.441
+   }
+  },
+  "41": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "wall_seconds": 5.924002100015059,
+   "forward_calls": {
+    "forward": 165,
+    "predict": 165
+   },
+   "production_predictions": 16500,
+   "python_heap_peak_bytes_tracemalloc": 307636,
+   "calibration": {
+    "evaluations": 6,
+    "admitted_predictions": 16884,
+    "wall_seconds": 6.015
+   }
+  }
+ },
+ "grid_measured": {
+  "2": {
+   "grid_points": 81,
+   "production_predictions": 8100,
+   "wall_seconds_calibration_table_and_posterior": 1.159999500028789,
+   "wall_seconds_held_out_table_and_uq": 0.605815100017935,
+   "wall_seconds_total": 1.765814600046724,
+   "peak_rss_increase_bytes": 2097152,
+   "rss_increase_with_calibration_table_bytes": 1863680,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "workers": 1
+  },
+  "3": {
+   "grid_points": 729,
+   "production_predictions": 72900,
+   "wall_seconds_calibration_table_and_posterior": 10.86708490003366,
+   "wall_seconds_held_out_table_and_uq": 5.435783000022639,
+   "wall_seconds_total": 16.3028679000563,
+   "peak_rss_increase_bytes": 13291520,
+   "rss_increase_with_calibration_table_bytes": 15400960,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "workers": 1
+  },
+  "4": {
+   "grid_points": 6561,
+   "production_predictions": 656100,
+   "wall_seconds_calibration_table_and_posterior": 102.37133390002418,
+   "wall_seconds_held_out_table_and_uq": 51.8102658999851,
+   "wall_seconds_total": 154.18159980000928,
+   "peak_rss_increase_bytes": 145375232,
+   "rss_increase_with_calibration_table_bytes": 142028800,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "workers": 1
+  },
+  "5_committed_b3_12_workers": {
+   "P4": {
+    "grid_points": 59049,
+    "wall_seconds_informational": 228.3,
+    "production_predictions": 5904900
+   },
+   "T5": {
+    "grid_points": 59049,
+    "wall_seconds_informational": 213.2,
+    "production_predictions": 5904900
+   }
+  }
+ },
+ "grid_projected": {
+  "5": {
+   "label": "PROJECTED from p=4 serial measurement",
+   "grid_points": 59049.0,
+   "production_predictions": 5904900.0,
+   "serial_wall_seconds": 1387.6343982000835,
+   "serial_wall_hours": 0.3854539995000232,
+   "wall_hours_24_ideal_workers": 0.016060583312500966,
+   "calibration_table_bytes": 1278259200.0,
+   "calibration_table_gib": 1.1904716491699219
+  },
+  "6": {
+   "label": "PROJECTED from p=4 serial measurement",
+   "grid_points": 531441.0,
+   "production_predictions": 53144100.0,
+   "serial_wall_seconds": 12488.709583800752,
+   "serial_wall_hours": 3.4690859955002087,
+   "wall_hours_24_ideal_workers": 0.14454524981250869,
+   "calibration_table_bytes": 11504332800.0,
+   "calibration_table_gib": 10.714244842529297
+  },
+  "7": {
+   "label": "PROJECTED from p=4 serial measurement",
+   "grid_points": 4782969.0,
+   "production_predictions": 478296900.0,
+   "serial_wall_seconds": 112398.38625420675,
+   "serial_wall_hours": 31.221773959501874,
+   "wall_hours_24_ideal_workers": 1.300907248312578,
+   "calibration_table_bytes": 103538995200.0,
+   "calibration_table_gib": 96.42820358276367
+  },
+  "10": {
+   "label": "PROJECTED from p=4 serial measurement",
+   "grid_points": 3486784401.0,
+   "production_predictions": 348678440100.0,
+   "serial_wall_seconds": 81938423.57931672,
+   "serial_wall_hours": 22760.673216476865,
+   "wall_hours_24_ideal_workers": 948.3613840198694,
+   "calibration_table_bytes": 75479927500800.0,
+   "calibration_table_gib": 70296.16041183472
+  },
+  "20": {
+   "label": "PROJECTED from p=4 serial measurement",
+   "grid_points": 1.2157665459056929e+19,
+   "production_predictions": 1.215766545905693e+21,
+   "serial_wall_seconds": 2.8570161717889216e+17,
+   "serial_wall_hours": 79361560327470.05,
+   "wall_hours_24_ideal_workers": 3306731680311.252,
+   "calibration_table_bytes": 2.6318223379840036e+23,
+   "calibration_table_gib": 245107555574179.03
+  },
+  "41": {
+   "label": "PROJECTED from p=4 serial measurement",
+   "grid_points": 1.3302794647291133e+39,
+   "production_predictions": 1.3302794647291134e+41,
+   "serial_wall_seconds": 3.1261182144952705e+37,
+   "serial_wall_hours": 8.683661706931307e+33,
+   "wall_hours_24_ideal_workers": 3.6181923778880444e+32,
+   "calibration_table_bytes": 2.879713397959431e+43,
+   "calibration_table_gib": 2.6819420959422656e+34
+  }
+ },
+ "per_row_seconds_serial_measured_p4": 0.02349971037951673,
+ "calibration_table_bytes_per_row_measured_p4": 21647.43179393385
+}

@@ -1,0 +1,206 @@
+{
+ "schema": "core_v2_hybrid_uq_performance/1",
+ "family": "TabulatedForm LINEAR, uniform knots, B3 data",
+ "n_cal": 67,
+ "n_held": 33,
+ "grid_rule": {
+  "per_axis": 9,
+  "span_marginal_se": 4
+ },
+ "v2_measured": {
+  "2": {
+   "label": "MEASURED",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "calibration": {
+    "wall_seconds": 0.2537464000051841,
+    "forward_evaluations": 16
+   },
+   "diagnostics_and_jacobian_without_multistart": {
+    "wall_seconds": 0.125744900025893,
+    "forward_evaluations": 9,
+    "expected_4p_plus_1": 9
+   },
+   "route_with_default_multistart": {
+    "wall_seconds": 2.258788699982688,
+    "forward_evaluations": 146
+   },
+   "linearized_predictive": {
+    "wall_seconds": 0.07667769998079166,
+    "forward_evaluations": 9
+   },
+   "production_predictions": 11754,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 91515
+  },
+  "5": {
+   "label": "MEASURED",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "calibration": {
+    "wall_seconds": 0.6075900999712758,
+    "forward_evaluations": 36
+   },
+   "diagnostics_and_jacobian_without_multistart": {
+    "wall_seconds": 0.39904970000497997,
+    "forward_evaluations": 21,
+    "expected_4p_plus_1": 21
+   },
+   "route_with_default_multistart": {
+    "wall_seconds": 5.195576200028881,
+    "forward_evaluations": 291
+   },
+   "linearized_predictive": {
+    "wall_seconds": 0.16453730000648648,
+    "forward_evaluations": 21
+   },
+   "production_predictions": 24009,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 118783
+  },
+  "10": {
+   "label": "MEASURED",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "calibration": {
+    "wall_seconds": 1.208158099965658,
+    "forward_evaluations": 66
+   },
+   "diagnostics_and_jacobian_without_multistart": {
+    "wall_seconds": 0.7509138000314124,
+    "forward_evaluations": 41,
+    "expected_4p_plus_1": 41
+   },
+   "route_with_default_multistart": {
+    "wall_seconds": 9.601137199962977,
+    "forward_evaluations": 519
+   },
+   "linearized_predictive": {
+    "wall_seconds": 0.43559500004630536,
+    "forward_evaluations": 41
+   },
+   "production_predictions": 43295,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 170732
+  },
+  "20": {
+   "label": "MEASURED",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "calibration": {
+    "wall_seconds": 2.880792800046038,
+    "forward_evaluations": 126
+   },
+   "diagnostics_and_jacobian_without_multistart": {
+    "wall_seconds": 1.9289190999697894,
+    "forward_evaluations": 81,
+    "expected_4p_plus_1": 81
+   },
+   "route_with_default_multistart": {
+    "wall_seconds": 23.48209260002477,
+    "forward_evaluations": 1081
+   },
+   "linearized_predictive": {
+    "wall_seconds": 0.8347253000247292,
+    "forward_evaluations": 81
+   },
+   "production_predictions": 88969,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 279489
+  },
+  "41": {
+   "label": "MEASURED",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "calibration": {
+    "wall_seconds": 6.435948300000746,
+    "forward_evaluations": 252
+   },
+   "diagnostics_and_jacobian_without_multistart": {
+    "wall_seconds": 4.242894500028342,
+    "forward_evaluations": 165,
+    "expected_4p_plus_1": 165
+   },
+   "route_with_default_multistart": {
+    "wall_seconds": 60.59084089996759,
+    "forward_evaluations": 2154
+   },
+   "linearized_predictive": {
+    "wall_seconds": 2.4189843000494875,
+    "forward_evaluations": 165
+   },
+   "production_predictions": 177702,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 562795
+  }
+ },
+ "v1_grid_measured": {
+  "2": {
+   "label": "MEASURED (serial)",
+   "grid_points": 81,
+   "production_predictions": 8100,
+   "wall_seconds": 2.1239344000350684,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_refusals": 0,
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 2043610
+  },
+  "3": {
+   "label": "MEASURED (serial)",
+   "grid_points": 729,
+   "production_predictions": 72900,
+   "wall_seconds": 19.006822999974247,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_refusals": 0,
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 15869310
+  },
+  "4": {
+   "label": "MEASURED (serial)",
+   "grid_points": 6561,
+   "production_predictions": 656100,
+   "wall_seconds": 178.83464890002506,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_refusals": 0,
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 140671906
+  },
+  "5": {
+   "label": "MEASURED in the committed B3 run, 12 workers (not re-run)",
+   "models": {
+    "P4": {
+     "grid_points": 59049,
+     "wall_seconds_informational": 228.3
+    },
+    "T5": {
+     "grid_points": 59049,
+     "wall_seconds_informational": 213.2
+    }
+   }
+  }
+ },
+ "v1_grid_projected": {
+  "10": {
+   "label": "PROJECTED from the p = 4 serial measurement",
+   "grid_points": 3486784401.0,
+   "production_predictions": 348678440100.0,
+   "serial_wall_seconds": 95040064.64607821,
+   "serial_wall_years": 3.011637914355915,
+   "heap_bytes": 74758818396546.0
+  },
+  "20": {
+   "label": "PROJECTED from the p = 4 serial measurement",
+   "grid_points": 1.2157665459056929e+19,
+   "production_predictions": 1.215766545905693e+21,
+   "serial_wall_seconds": 3.313842148779771e+17,
+   "serial_wall_years": 10500932101.236378,
+   "heap_bytes": 2.606678818222684e+23
+  },
+  "41": {
+   "label": "PROJECTED from the p = 4 serial measurement",
+   "grid_points": 1.3302794647291133e+39,
+   "production_predictions": 1.3302794647291134e+41,
+   "serial_wall_seconds": 3.6259725806088135e+37,
+   "serial_wall_years": 1.1490013754559325e+30,
+   "heap_bytes": 2.8522016128045136e+43
+  }
+ },
+ "v1_per_row_seconds_measured_p4": 0.027257224340805526
+}

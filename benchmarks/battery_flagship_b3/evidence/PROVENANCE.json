@@ -1,0 +1,81 @@
+{
+ "schema": "battery_flagship_b3_provenance/1",
+ "rule": "Raw bytes are immutable. Every derived artifact names the raw file and SHA-256 it was computed from. Nothing in raw/ is ever edited, re-encoded or line-ending normalised (raw/.gitattributes sets -text).",
+ "dataset": {
+  "title": "Probability distributed equivalent circuit model - Data",
+  "creators": "Jahn, Leonard",
+  "persistent_identifier_cited_by_the_paper": "10.5281/zenodo.10852930",
+  "concept_doi": "10.5281/zenodo.10852929",
+  "retrieved_from_version": "10.5281/zenodo.11958572 (2024-06-17), whose four files used here have the same MD5 as in 10.5281/zenodo.10852930 (2024-03-22) according to both records' API metadata",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "related_publication": "Jahn, L., Mossle, P., Roder, F., Danzer, M. A. A physically motivated voltage hysteresis model for lithium-ion batteries using a probability distributed equivalent circuit. Communications Engineering 3, 74 (2024). https://doi.org/10.1038/s44172-024-00221-4 (CC BY 4.0)",
+  "code_record": "10.5281/zenodo.10852695 (read as text; none of its scripts reads the incrOCV file)",
+  "institution": "Chair of Electrical Energy Systems and Bavarian Center for Battery Technology, University of Bayreuth, Germany",
+  "cell": "A123 18650M1A, one cell (file label A123_01), LiFePO4 cathode / graphite anode",
+  "test_conditions_from_the_paper": "BaSyTec CTS battery tester; Binder MK115 climate chamber at 25 degC; cell preconditioned with ten 1C full cycles",
+  "attribution_required_by_license": "Cite 10.5281/zenodo.10852930 and doi:10.1038/s44172-024-00221-4. Changes made: none to the vendored bytes; all extraction is in separate derived artifacts."
+ },
+ "acquisition": {
+  "method": "HTTPS GET with curl from the Zenodo record file endpoint, then MD5 compared with the record's published checksum",
+  "date": "2026-09-13",
+  "by": "Battery Flagship B3 audit, branch claude/battery-flagship-b3"
+ },
+ "instrument_specification_used_in_phase8": {
+  "instrument": "BaSyTec CTS (named in the paper Methods)",
+  "voltage_accuracy": "1 mV",
+  "voltage_resolution": "16 bit",
+  "current_accuracy": "1 mA / 50 uA / 2.5 uA / 0.2 uA on the 5 A / 300 mA / 15 mA / 1 mA ranges; 'relative accuracy of at least 0.33% within the whole range from 60 uA to 20 A'",
+  "source": "technical-data table in the raw HTML of https://www.thasar.com/products/basytec-cts-battery-test-system (a BaSyTec distributor), read as page text on 2026-09-13",
+  "source_limitation": "the manufacturer's own brochure PDFs (basytec.de/prospekte/...CTS...) return an HTML 404 page; the figures are distributor-transcribed, not read from a manufacturer document. The 16-bit figure is corroborated independently by the data: every incrOCV voltage is an integer multiple of a 190.88 uV step."
+ },
+ "files": [
+  {
+   "raw_filename": "20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "vendored_path": "benchmarks/battery_flagship_b3/evidence/raw/20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "bytes": 47380,
+   "sha256": "009c2fb085e219c7b20afaa050ac9e69d848cf04fc6e9165ce2bbd1282357feb",
+   "md5_published_by_zenodo": "588ecca63c63ebc21204a10d5d123958",
+   "md5_of_vendored_bytes_matches": true,
+   "crlf_line_endings": true,
+   "role_in_b3": "SECONDARY, Phase 8 only: as SOC50, two further measured 10 min rests.",
+   "record_description_verbatim": "'starting at 100 % SOC with C/2 constant current discharge to 50 % SOC followed by a 4C constant current discharge to the lower cut-off voltage. Data: nx4 vector [t Q I U]'",
+   "acquisition_url": "https://zenodo.org/records/11958572/files/20230125_HysPowerTest_A123_01_25deg_SOC100.csv?download=1"
+  },
+  {
+   "raw_filename": "20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "vendored_path": "benchmarks/battery_flagship_b3/evidence/raw/20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "bytes": 20988,
+   "sha256": "d6e8b4b7ea4f832a67a859604ab8d507d2a1fdd7541cb37a485ac933dec92fd3",
+   "md5_published_by_zenodo": "e043115d3e8aaf1e83f7d5a7670c409e",
+   "md5_of_vendored_bytes_matches": true,
+   "crlf_line_endings": true,
+   "role_in_b3": "SECONDARY, Phase 8 only: the same cell, tester and chamber, with two measured 10 min rests. Evidence of the rest length this laboratory uses; not scored.",
+   "record_description_verbatim": "'starting at 0 % SOC with C/2 constant current charge to 50 % SOC followed by a 4C constant current discharge to the lower cut-off voltage. Data: nx4 vector [t Q I U]'",
+   "acquisition_url": "https://zenodo.org/records/11958572/files/20230125_HysPowerTest_A123_01_25deg_SOC50.csv?download=1"
+  },
+  {
+   "raw_filename": "20230125_Hys_A123_01_25deg_incrOCV.csv",
+   "vendored_path": "benchmarks/battery_flagship_b3/evidence/raw/20230125_Hys_A123_01_25deg_incrOCV.csv",
+   "bytes": 7242,
+   "sha256": "25c318255e1f4203842ec6780b9adbcbbc12a23461c0fb618be2da51480b9704",
+   "md5_published_by_zenodo": "196f0ca05003ceb8a11039665da1d815",
+   "md5_of_vendored_bytes_matches": true,
+   "crlf_line_endings": true,
+   "role_in_b3": "PRIMARY B3 evidence: interrupt-relaxed voltage against charge throughput, charge branch then discharge branch",
+   "record_description_verbatim": "'Full cycle with current interupts at specific states of charge. Data: nx2 vector [Q U] with Q being the currently stored amount of charge in the cell and U being the voltage measured'",
+   "acquisition_url": "https://zenodo.org/records/11958572/files/20230125_Hys_A123_01_25deg_incrOCV.csv?download=1"
+  },
+  {
+   "raw_filename": "20230125_Hys_A123_01_25deg_pOCV.csv",
+   "vendored_path": "benchmarks/battery_flagship_b3/evidence/raw/20230125_Hys_A123_01_25deg_pOCV.csv",
+   "bytes": 691936,
+   "sha256": "da6e14f79fe0e16d528780f6a5bacf725778c1390593d689bc6ad54a7517bda0",
+   "md5_published_by_zenodo": "62dbf637d9ed8d568576ccdff2c692b0",
+   "md5_of_vendored_bytes_matches": true,
+   "crlf_line_endings": true,
+   "role_in_b3": "SECONDARY, Phase 7 only: loaded C/20 terminal voltage, used to check that the incrOCV branches sit on the relaxed side of the loaded branches. Never scored as OCV.",
+   "record_description_verbatim": "'C/20 constant current full cycle starting at fully discharge state. Data: nx3 vector [t Q U]'",
+   "acquisition_url": "https://zenodo.org/records/11958572/files/20230125_Hys_A123_01_25deg_pOCV.csv?download=1"
+  }
+ ]
+}

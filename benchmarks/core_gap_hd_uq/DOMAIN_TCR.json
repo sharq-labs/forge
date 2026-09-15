@@ -1,0 +1,359 @@
+{
+ "source": "engcore.studies TCR (EXPERIMENTAL study scaffolding) with the designs, truth, sigma and seed of tests/inference/test_tcr_calibration.py",
+ "WIDE_SPAN": {
+  "n": 8,
+  "calibration_status": "CALIBRATION_CONVERGED",
+  "estimate": [
+   1.2591462177267174,
+   0.00391589367711874
+  ],
+  "core_grid": {
+   "points": 1681,
+   "mean": [
+    1.2591447038570387,
+    0.003915926175403195
+   ],
+   "sd": [
+    0.0013806426883029397,
+    1.6093524446565528e-05
+   ],
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "max_abs_correlation": 0.9208180549475521,
+   "wall_seconds": 1.437159100023564,
+   "marginal_95": [
+    [
+     1.2562468697547315,
+     1.2620455656857146
+    ],
+    [
+     0.0038869255377569933,
+     0.003949689839874997
+    ]
+   ],
+   "diagnostics": {
+    "effective_sample_size": 54.45316916644882,
+    "occupied_support_fraction": 0.1124330755502677,
+    "spacing_to_std": [
+     0.2999998261735475,
+     0.29999788150048573
+    ],
+    "grid_points": 1681
+   }
+  },
+  "local_gaussian": {
+   "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+   "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+   "p": 2,
+   "n": 8,
+   "exact_posterior_claimed": false,
+   "structural": {
+    "rank": 2,
+    "singular_values": [
+     159338.92032827722,
+     724.2590626162241
+    ],
+    "jacobian_condition": 220.0026600325869
+   },
+   "posterior": {
+    "mean": [
+     1.2591462177267174,
+     0.00391589367711874
+    ],
+    "sd": [
+     0.0013806418883279303,
+     1.6093410799291732e-05
+    ],
+    "covariance": [
+     [
+      1.906172023805713e-06,
+      -2.0459884372745225e-08
+     ],
+     [
+      -2.0459884372745225e-08,
+      2.589978711547598e-10
+     ]
+    ],
+    "interval_95": [
+     [
+      1.2564402093500473,
+      1.2618522261033875
+     ],
+     [
+      0.00388435117156372,
+      0.003947436182673759
+     ]
+    ],
+    "chi_square_at_estimate": 2.7480927533705177
+   },
+   "identifiability": {
+    "status": "PARAMETERS_IDENTIFIABLE",
+    "condition_number": 48401.17042141403,
+    "max_abs_correlation": 0.9208184917941974,
+    "relative_widths": [
+     0.0042981638487634664,
+     0.016109990799458223
+    ],
+    "over_wide": [],
+    "reasons": [],
+    "thresholds": {
+     "correlation": 0.95,
+     "condition_number": 1000000.0,
+     "relative_width": 1.0
+    },
+    "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+   },
+   "bounds": {
+    "min_distance_in_sd": 912.0005907191807,
+    "at_bound": [],
+    "within_3_sd": []
+   },
+   "nonlinearity": {
+    "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+    "max_relative_deviation": 2.7321749328734768e-05,
+    "probes_outside_bounds_or_inadmissible": 0,
+    "min_rise": 3.9999991490015603,
+    "max_rise": 4.000109286997315,
+    "predictive_max_deviation_in_total_sd": null
+   },
+   "multistart": [
+    {
+     "start": [
+      5.0,
+      0.015
+     ],
+     "estimate": [
+      1.259146217715264,
+      0.003915893677249609
+     ],
+     "chi_square": 2.7480927533701767,
+     "mahalanobis_sq": 7.041767304350424e-17
+    },
+    {
+     "start": [
+      2.0,
+      0.0
+     ],
+     "estimate": [
+      1.2591462177155126,
+      0.0039158936772464865
+     ],
+     "chi_square": 2.748092753370512,
+     "mahalanobis_sq": 6.728421782325551e-17
+    }
+   ],
+   "global_uniqueness": "MULTISTART_NO_SECOND_MODE",
+   "claim": "SUPPORTED",
+   "refusals": [],
+   "downgrades": [],
+   "forward_calls": {
+    "forward": 9,
+    "predict": 0
+   },
+   "wall_seconds": 0.07176859996980056
+  },
+  "local_wall_seconds": 0.07177340000635013,
+  "slope_parameterization": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "nonlinearity": 4.7047636897445955e-09,
+   "refusals": [],
+   "downgrades": []
+  },
+  "agreement": {
+   "mean_shift_in_grid_sd": [
+    0.0010964963574951355,
+    0.002019339179736695
+   ],
+   "sd_ratio_local_over_grid": [
+    0.9999994205778104,
+    0.9999929383228532
+   ],
+   "identifiability_equal": true
+  }
+ },
+ "NARROW_SPAN": {
+  "n": 6,
+  "calibration_status": "CALIBRATION_CONVERGED",
+  "estimate": [
+   1.2643400451880453,
+   0.0032526222525304273
+  ],
+  "core_grid": {
+   "points": 1681,
+   "mean": [
+    1.2642940891327825,
+    0.003259719060437098
+   ],
+   "sd": [
+    0.0068097533826517,
+    0.0007706295140360596
+   ],
+   "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+   "max_abs_correlation": 0.9968020160043383,
+   "wall_seconds": 1.1191307999542914,
+   "marginal_95": [
+    [
+     1.2499806191548408,
+     1.2766481249035446
+    ],
+    [
+     0.0018598934431877582,
+     0.004877472496294782
+    ]
+   ],
+   "diagnostics": {
+    "effective_sample_size": 13.553449500662072,
+    "occupied_support_fraction": 0.0362879238548483,
+    "spacing_to_std": [
+     0.3012365471677794,
+     0.3012101942578256
+    ],
+    "grid_points": 1681
+   }
+  },
+  "local_gaussian": {
+   "posterior_class": "LOCAL_GAUSSIAN_APPROXIMATION",
+   "predictive_class": "LINEARIZED_PREDICTIVE_UQ",
+   "p": 2,
+   "n": 6,
+   "exact_posterior_claimed": false,
+   "structural": {
+    "rank": 2,
+    "singular_values": [
+     11143.257371799613,
+     145.33037512993357
+    ],
+    "jacobian_condition": 76.6753499523889
+   },
+   "posterior": {
+    "mean": [
+     1.2643400451880453,
+     0.0032526222525304273
+    ],
+    "sd": [
+     0.006837821987997186,
+     0.0007737382190555579
+    ],
+    "covariance": [
+     [
+      4.675580953953778e-05,
+      -5.254525936713399e-06
+     ],
+     [
+      -5.254525936713399e-06,
+      5.986708316272666e-07
+     ]
+    ],
+    "interval_95": [
+     [
+      1.2509381603588747,
+      1.277741930017216
+     ],
+     [
+      0.0017361232097193708,
+      0.004769121295341483
+     ]
+    ],
+    "chi_square_at_estimate": 2.3282431741397946
+   },
+   "identifiability": {
+    "status": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+    "condition_number": 5879.109290321367,
+    "max_abs_correlation": 0.9931656721357156,
+    "relative_widths": [
+     0.021199810731577826,
+     0.9324778133281679
+    ],
+    "over_wide": [],
+    "reasons": [
+     "correlation"
+    ],
+    "thresholds": {
+     "correlation": 0.95,
+     "condition_number": 1000000.0,
+     "relative_width": 1.0
+    },
+    "rule": "frozen assess_identifiability thresholds and classification, Gaussian marginals"
+   },
+   "bounds": {
+    "min_distance_in_sd": 21.64475960346355,
+    "at_bound": [],
+    "within_3_sd": []
+   },
+   "nonlinearity": {
+    "probe": "principal axes of the covariance at +/-2 sd; expected chi-square rise 4",
+    "max_relative_deviation": 0.008744492434115791,
+    "probes_outside_bounds_or_inadmissible": 0,
+    "min_rise": 3.9998747356375484,
+    "max_rise": 4.034977969736463,
+    "predictive_max_deviation_in_total_sd": null
+   },
+   "multistart": [
+    {
+     "start": [
+      0.5,
+      -0.01
+     ],
+     "estimate": [
+      1.264340045635395,
+      0.003252622202295998
+     ],
+     "chi_square": 2.328243174139885,
+     "mahalanobis_sq": 4.2803414912592005e-15
+    },
+    {
+     "start": [
+      5.0,
+      0.015
+     ],
+     "estimate": [
+      1.2643400461066001,
+      0.003252622146382156
+     ],
+     "chi_square": 2.3282431741396215,
+     "mahalanobis_sq": 1.9090524695190518e-14
+    },
+    {
+     "start": [
+      2.0,
+      0.0
+     ],
+     "estimate": [
+      1.2643400454121496,
+      0.003252622227539002
+     ],
+     "chi_square": 2.328243174140005,
+     "mahalanobis_sq": 1.07876143690186e-15
+    }
+   ],
+   "global_uniqueness": "MULTISTART_NO_SECOND_MODE",
+   "claim": "SUPPORTED",
+   "refusals": [],
+   "downgrades": [],
+   "forward_calls": {
+    "forward": 9,
+    "predict": 0
+   },
+   "wall_seconds": 0.07867140002781525
+  },
+  "local_wall_seconds": 0.07867580000311136,
+  "slope_parameterization": {
+   "claim": "SUPPORTED",
+   "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+   "nonlinearity": 2.0370130471292214e-08,
+   "refusals": [],
+   "downgrades": []
+  },
+  "agreement": {
+   "mean_shift_in_grid_sd": [
+    0.006748563814349592,
+    0.009209104735039487
+   ],
+   "sd_ratio_local_over_grid": [
+    1.0041218240614986,
+    1.0040339812619126
+   ],
+   "identifiability_equal": true
+  }
+ }
+}

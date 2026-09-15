@@ -164,7 +164,10 @@ def test_the_coverage_study_is_a_function_of_its_seed_schedule():
     common = dict(
         truth=TRUTH, calibration_temperatures=CAL_T, heldout_temperatures=HELD_T,
         reference_temperature=T_REF, observation_sigma=SIGMA, twin=TWIN,
-        grid_points_per_axis=11,
+        # 15, the study's default: at 11 nodes this ridge (correlation -0.97)
+        # aliases, thin sd 0.58x exact, and the grid is refused. The test
+        # is about determinism, not grid size.
+        grid_points_per_axis=15,
     )
     first, _, _ = run_coverage_study(seeds=[11, 12, 13], **common)
     second, _, _ = run_coverage_study(seeds=[11, 12, 13], **common)

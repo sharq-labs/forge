@@ -1,0 +1,10 @@
+{
+ "schema": "core_v2_freeze_manifest_suite/1",
+ "commit": "278b91b324e9082cd7e4e2b42348c2425af7a93e",
+ "command": "python -X utf8 -m pytest tests/test_core_freeze_v2_manifest.py -q -p no:cacheprovider",
+ "exit_code": 0,
+ "summary_line": "6 passed, 1 skipped in 5.54s",
+ "green": true,
+ "seconds": 6.2,
+ "note": "run before the assurance record exists: the full-verification test skips by design and the command-line verifier judges the assurance"
+}

@@ -1,0 +1,148 @@
+{
+ "schema": "core_v1_thin_ridge_repair_threshold_protocol/1",
+ "written_before_any_validation_case_was_scored": true,
+ "baseline_commit": "273bfff7d3d685d9e0bb62519795aeb47c05b027",
+ "what_was_already_seen": [
+  "benchmarks/core_gap_thin_ridge: a first adversarial family of 402 cases (seed 20260913) on which aliasing threshold 18.42 had 28 thin-rule false positives and 9.21 had 6, found post hoc",
+  "the real grids TCR wide/narrow, Battery P2/P3, K2 MULTI/WEAK_C2 and F5, whose aliasing numbers were reported there"
+ ],
+ "diagnostic": {
+  "definition": "A = min over non-zero integer vectors n of (2 pi)^2 n^T S n, with S the local covariance fitted to the grid's own log-likelihood in LATTICE UNITS (coordinates divided by each axis's step), found exactly by Fincke-Pohst enumeration",
+  "implementation": "src/engcore/inference/calibration.py, private; the validation calls the same functions the guard calls",
+  "companion_refusals_not_threshold_bearing": [
+   "not an axis-aligned tensor lattice",
+   "effective sample size < p + 1",
+   "local curvature cannot be fitted or is not concave"
+  ]
+ },
+ "materiality_declared_now": "a grid is MATERIALLY WRONG when, against its trusted reference, a marginal mean is off by more than 0.1 true sd, or a marginal sd ratio leaves [0.9, 1.1], or the sd along the TRUE thinnest principal direction leaves [0.9, 1.1], or the mean along it is off by more than 0.1 of its sd",
+ "candidate_thresholds": {
+  "ladder": [
+   "2 ln 10^1",
+   "2 ln 10^2",
+   "2 ln 10^3",
+   "2 ln 10^4",
+   "2 ln 10^5"
+  ],
+  "values": [
+   4.605170185988092,
+   9.210340371976184,
+   13.815510557964274,
+   18.420680743952367,
+   23.025850929940457
+  ],
+  "why_a_ladder": "a decade in aliasing amplitude exp(-A/2) is the natural resolution of the quantity; choosing among declared rungs cannot tune a decimal to the data"
+ },
+ "validation_sets": {
+  "HELD_BACK_SYNTHETIC": {
+   "seed": 20260914,
+   "disjoint_from_first_family": "no correlation, width, angle, density, window or scale value below was used in benchmarks/core_gap_thin_ridge",
+   "families": {
+    "2D_correlation": {
+     "rho": [
+      0.8,
+      0.95,
+      0.995,
+      0.9995,
+      0.99995
+     ],
+     "window_marginal_sd": [
+      5,
+      8,
+      12
+     ],
+     "per_axis": [
+      15,
+      31,
+      61,
+      121
+     ],
+     "lattice_phases": 3
+    },
+    "2D_rotation": {
+     "thin_width": [
+      0.3,
+      0.03,
+      0.003
+     ],
+     "angle_deg": [
+      5,
+      20,
+      60,
+      85
+     ],
+     "per_axis": [
+      31,
+      121
+     ],
+     "lattice_phases": 3
+    },
+    "2D_scaling_consistent": {
+     "scale": [
+      3,
+      300
+     ],
+     "rho": [
+      0.995
+     ],
+     "per_axis": [
+      31,
+      121
+     ],
+     "lattice_phases": 3,
+     "grid": "window scaled with the parameter (units only)"
+    },
+    "3D_one_thin_oblique_direction": {
+     "thin_width": [
+      0.2,
+      0.02
+     ],
+     "per_axis": [
+      11,
+      21
+     ],
+     "lattice_phases": 3,
+     "orientation": "thin eigenvector (1, 2, 3)/sqrt(14)"
+    },
+    "1D": {
+     "spacing_over_sd": [
+      0.3,
+      0.7,
+      1.2,
+      2.0
+     ],
+     "lattice_phases": 3
+    }
+   },
+   "truth": "exact: every target is a Gaussian embedded as admitted linear observations; windows are at least 5 marginal sd so truncation is below 1e-6 in mass"
+  },
+  "REAL": {
+   "required_healthy_if_truth_confirms": [
+    "TCR wide (41x41)",
+    "Battery B3 P2 (25^3)",
+    "Battery B3 P3 (13^4)",
+    "TCR narrow re-gridded at 161x161"
+   ],
+   "known_materially_wrong": [
+    "F5 declared-bounds 201/401/801",
+    "TCR narrow 41x41 (test design)",
+    "K2 MULTI (proxy truth)"
+   ],
+   "reported_not_threshold_bearing": [
+    "K2 WEAK_C2 (no trusted reference)"
+   ]
+  }
+ },
+ "selection_rule": [
+  "(i) every case that is materially wrong against a trusted reference must be refused at T: A < T, or a companion refusal fires",
+  "(ii) every REAL case confirmed healthy against its trusted reference must be kept: A >= T and no companion refusal",
+  "(iii) on HELD_BACK_SYNTHETIC cases that are healthy, at most 10 % may be refused",
+  "choose the LARGEST ladder value satisfying (i), (ii) and (iii): the most conservative threshold that keeps what must be kept",
+  "if no ladder value satisfies all three, the repair is BLOCKED and no threshold is committed"
+ ],
+ "not_allowed": [
+  "moving materiality after scoring",
+  "a value off the ladder",
+  "excluding a case after scoring"
+ ]
+}

@@ -43,7 +43,7 @@ included                   each area's explicit glob patterns, files only
 excluded                   any path with a ``__pycache__`` component; ``*.pyc``
 path normalization         repository-relative, POSIX separators, no ``./``
 ordering                   sorted by the UTF-8 encoded path bytes
-byte handling              exact bytes; nothing is decoded
+byte handling               exact bytes; nothing is decoded
 line endings               **not normalized** — CRLF and LF are different files
 symlinks                   refused: a symlink in scope fails the build
 generated files            none in scope beyond the exclusions above
@@ -167,6 +167,10 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tools/certification/core_freeze.py",
      "the Core Freeze V1 verifier the freeze self-checks call, which itself "
      "calls verify_certificate"),
+    ("tools/certification/core_freeze_v2.py",
+     "the Core Freeze V2 verifier that binds the Hybrid UQ contract and is "
+     "executed by the pinned certificate-child freeze self-check; weakening it "
+     "would change whether V2 is accepted without changing Hybrid UQ source"),
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),
@@ -239,9 +243,22 @@ SCOPE: tuple[ScopeArea, ...] = (
         classification="CORE_CERTIFIED",
         patterns=("src/engcore/inference/**/*.py",),
         why=(
-            "the admission invariant for forward rows: a posterior may only be "
-            "built from predictions that were admitted. A trust boundary in its "
-            "own right, and one the certified mutation harness exercises"
+            "the admission invariant for forward rows: a posterior may only "
+            "be built from predictions that were admitted. A trust boundary in "
+            "its own right, and one the certified mutation harness exercises"
+        ),
+    ),
+    ScopeArea(
+        name="routed_uncertainty",
+        classification="CORE_CERTIFIED",
+        patterns=("src/engcore/hybrid_uq/**/*.py",),
+        why=(
+            "Core V2: which approximation produced an uncertainty and whether "
+            "it may be reported at all. The local-Gaussian validity diagnostics, "
+            "the multistart, the router's refusal to use a grid V1 refuses, and "
+            "the rule that a refused route emits no numbers each decide what a "
+            "reported interval MEANS; a silent edit here turns a refusal into a "
+            "precise-looking number"
         ),
     ),
     ScopeArea(

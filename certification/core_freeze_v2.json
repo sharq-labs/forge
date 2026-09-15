@@ -1,0 +1,237 @@
+{
+  "api": {
+    "v1": {
+      "frozen_count": 194,
+      "frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+      "modules": [
+        "engcore.scientific",
+        "engcore.data",
+        "engcore.inference",
+        "engcore.uq",
+        "engcore.adequacy",
+        "engcore.execution",
+        "engcore.studies"
+      ],
+      "total_count": 205
+    },
+    "v1_entries_byte_identical_in_v2": true,
+    "v2": {
+      "added_frozen_symbols": [
+        "engcore.hybrid_uq.ApproximationClass",
+        "engcore.hybrid_uq.GRID_ROUTE_MAXIMUM_PARAMETERS",
+        "engcore.hybrid_uq.GridRebuildPolicy",
+        "engcore.hybrid_uq.HybridUQError",
+        "engcore.hybrid_uq.HybridUQResult",
+        "engcore.hybrid_uq.LocalGaussianPosterior",
+        "engcore.hybrid_uq.LocalSensitivity",
+        "engcore.hybrid_uq.MEASUREMENT_UNCERTAINTY",
+        "engcore.hybrid_uq.MODEL_DISCREPANCY_NOT_MODELLED",
+        "engcore.hybrid_uq.MultistartPolicy",
+        "engcore.hybrid_uq.PARAMETER_UNCERTAINTY",
+        "engcore.hybrid_uq.ParameterInterval",
+        "engcore.hybrid_uq.RouteClaim",
+        "engcore.hybrid_uq.RouteDecision",
+        "engcore.hybrid_uq.RouteDiagnostics",
+        "engcore.hybrid_uq.RouteReason",
+        "engcore.hybrid_uq.RouteRefusedError",
+        "engcore.hybrid_uq.RoutedIdentifiability",
+        "engcore.hybrid_uq.RoutedPredictiveUncertainty",
+        "engcore.hybrid_uq.UNCERTAINTY_SOURCES",
+        "engcore.hybrid_uq.assess_routed_identifiability",
+        "engcore.hybrid_uq.grid_predictive_uncertainty",
+        "engcore.hybrid_uq.linearized_predictive_uq",
+        "engcore.hybrid_uq.local_gaussian_posterior",
+        "engcore.hybrid_uq.reconstruct_local_sensitivity",
+        "engcore.hybrid_uq.route_uncertainty",
+        "engcore.hybrid_uq.routed_predictive_uncertainty"
+      ],
+      "added_modules": [
+        "engcore.hybrid_uq"
+      ],
+      "experimental_count": 11,
+      "frozen_count": 221,
+      "frozen_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb",
+      "modules": [
+        "engcore.scientific",
+        "engcore.data",
+        "engcore.inference",
+        "engcore.uq",
+        "engcore.adequacy",
+        "engcore.execution",
+        "engcore.studies",
+        "engcore.hybrid_uq"
+      ],
+      "total_count": 232
+    }
+  },
+  "capability_claim": "Core V2 adds routed uncertainty quantification beside Core V1's grid route, for calibrations posed through engcore.inference.calibrate with declared Gaussian observation noise and a flat prior inside declared bounds. route_uncertainty returns, deterministically and with every route it considered recorded: POSTERIOR_GRID when a supplied tensor grid of at most 5 parameters passes the repaired V1 resolution checks; LOCAL_GAUSSIAN_APPROXIMATION (N(z_hat, (Jw^T Jw)^-1) in declared inference coordinates, O(p) forward evaluations plus a mandatory deterministic multistart) when its validity diagnostics support it; POSTERIOR_GRID rebuilt from the local covariance when a rebuild policy is supplied, p <= 5, and the rebuilt grid is contained, converged at declared bounds, and accepted by the V1 checks; the local Gaussian DOWNGRADED with its reasons; or REFUSED with no numbers. Identifiability uses the frozen V1 thresholds and rule in a recorded parameterization. Predictive uncertainty keeps parameter and measurement uncertainty separate and names model discrepancy as not modelled. No approximation class is an exact posterior.",
+  "certificate": {
+    "aggregate_digest": "090b37d95ee13190231657ba0871354451a6639febf6e70e7797a75586044256",
+    "certified_areas": [
+      "core",
+      "evidence_identity",
+      "harness",
+      "inference_admission",
+      "routed_uncertainty",
+      "runtime_data",
+      "trust_registry"
+    ],
+    "certified_commit": "624b7cf691fda1e384315f3b70e4cf266ff238c9",
+    "hybrid_uq_certified": true,
+    "verifies": true
+  },
+  "freeze": {
+    "additive_over": "Core Freeze V1 (v1.0-core-freeze), with the certified thin-ridge repair",
+    "baseline_v1_repaired": "7519aee559750f51bfc58aea12ab29ec199743f4",
+    "candidate_commit": "7876bd9f3e22db67c26f510b820719477a9c655d",
+    "name": "Core Freeze V2",
+    "tag": "v2.0-core-freeze"
+  },
+  "non_claims": [
+    "not an exact posterior, in any route",
+    "not a proof of global mode uniqueness: multistart bounds it, it does not prove it",
+    "no model-discrepancy estimate, no estimated noise, no non-Gaussian likelihoods, no informative priors",
+    "no MCMC, Laplace-with-full-Hessian, sparse-grid or importance-sampling posterior",
+    "no grid route above 5 parameters; no resolution check for non-tensor or linearly mapped point sets (refused)",
+    "no adequacy scoring over the linearized predictive in the frozen API (engcore.adequacy is unchanged)",
+    "no change to any V1 symbol, signature, default, enum, record schema, serialization or identity digest",
+    "local-route validity thresholds are declared engineering thresholds validated on Battery B3, TCR, K2 and synthetic failure cases, not universal guarantees"
+  ],
+  "pinned_v2_snapshot_files": {
+    "tests/api/v2_frozen_api_snapshot.json": "906332249626ca4e88fe37de9de90db3672e8ceaec597ff1ecd843cc0be9b818",
+    "tests/api/v2_full_api_snapshot.json": "059ae2e2190fa8bc2a5eb7d9dfd6638a595b9ce487ae100763f90cd4154f5eb8"
+  },
+  "references": {
+    "api_design": "docs/CORE_V2_API_DESIGN.md",
+    "manifest_tests": "tests/test_core_freeze_v2_manifest.py",
+    "policy": "docs/CORE_FREEZE_POLICY.md",
+    "round": "benchmarks/core_v2_hybrid_uq",
+    "v1_verifier": "tools/certification/core_freeze.py",
+    "verifier": "tools/certification/core_freeze_v2.py"
+  },
+  "schema": "engcore.core_freeze/2",
+  "serialization_inventory": {
+    "HybridUQResult": {
+      "canonical_sha256": "f350bca599d9f16da8f492c77253b14566453b45a1c6c1142906e7a618f89a8b",
+      "identity_digest": "4b5bb10842976227f394fd5e0eaed64064cc87ab94cc088a783bb0a274d906fc",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.hybrid_uq_result/1",
+      "unknown_schema_refused": true
+    },
+    "LocalGaussianPosterior": {
+      "canonical_sha256": "3d0fc258b20522e3cdad4f5eb192acfcaefe43654558271f5eaf27ecc5c16679",
+      "identity_digest": "8e33c97da578718f11f5bf6026c4a32ca6eeaf83da3f12c9c88728ca94378e58",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.local_gaussian_posterior/1",
+      "unknown_schema_refused": true
+    },
+    "LocalSensitivity": {
+      "canonical_sha256": "62cd4cd0263db84384d3051d9a556ccc1bad5374b0551410127a9b4dcbc07b7b",
+      "identity_digest": "66c2457d2a903b38119bada392cae5fb8a0bc9b8ac35543711ffe040a5b97813",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.local_sensitivity/1",
+      "unknown_schema_refused": true
+    },
+    "MultistartPolicy": {
+      "canonical_sha256": "8be8e67dd765f4daf425aabf403edb6768c7bae7894a0c4875d0e808eb8548d6",
+      "identity_digest": "8be8e67dd765f4daf425aabf403edb6768c7bae7894a0c4875d0e808eb8548d6",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.multistart_policy/1",
+      "unknown_schema_refused": true
+    },
+    "ParameterInterval": {
+      "canonical_sha256": "0e4465b1be0ed4b4086b05fcc17feddb0c5859ea2b4ac9fa858527d623ae5f9b",
+      "identity_digest": null,
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.parameter_interval/1",
+      "unknown_schema_refused": true
+    },
+    "RouteDiagnostics": {
+      "canonical_sha256": "ce5ea02b1011db8168815524d4a61e13701a99f53347ebfd378db0aed5b88fa8",
+      "identity_digest": "683d28c68477e526cca375ec140c4fdaceb7c73272d416577d29ea153709377b",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.route_diagnostics/1",
+      "unknown_schema_refused": true
+    },
+    "RoutedIdentifiability": {
+      "canonical_sha256": "0c5f86d3f9835a906a4b7ca2416e828acc76ea365b5b017d542a3aaac2bbf715",
+      "identity_digest": "b038ea3025607c0edb16852648af8ae72906b15a5432ba29e6f7f57f1a4689f2",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.routed_identifiability/1",
+      "unknown_schema_refused": true
+    },
+    "RoutedPredictiveUncertainty": {
+      "canonical_sha256": "c5ad47fa0e02eda439f992817f72bfb304453d8f28a344737788711cdf69dcd2",
+      "identity_digest": "c5ad47fa0e02eda439f992817f72bfb304453d8f28a344737788711cdf69dcd2",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.routed_predictive_uncertainty/1",
+      "unknown_schema_refused": true
+    }
+  },
+  "v1_manifest_sha256": "eb7643007ca8ced81e80b0403fcf953c2d2f9855b92e2b1242255339f9220aee",
+  "v1_repair": {
+    "aliasing_number_minimum": 9.210340371976184,
+    "errata": "benchmarks/core_v1_thin_ridge_repair/ERRATA.md",
+    "errata_present": true,
+    "is_two_ln_100": true
+  },
+  "vocabulary": {
+    "approximation_classes": {
+      "LINEARIZED_PREDICTIVE_UQ": {
+        "describes": "predictions",
+        "exact_posterior": false
+      },
+      "LOCAL_GAUSSIAN_APPROXIMATION": {
+        "describes": "parameters",
+        "exact_posterior": false
+      },
+      "POSTERIOR_GRID": {
+        "describes": "parameters",
+        "exact_posterior": false
+      }
+    },
+    "grid_route_maximum_parameters": 5,
+    "route_claims": [
+      "SUPPORTED",
+      "DOWNGRADED",
+      "REFUSED"
+    ],
+    "route_decisions": [
+      "GRID_AS_SUPPLIED",
+      "LOCAL_GAUSSIAN",
+      "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "REFUSED"
+    ],
+    "route_reasons": {
+      "BETTER_OPTIMUM_FOUND": "REFUSED",
+      "BOUND_WITHIN_3_SD": "DOWNGRADED",
+      "CALIBRATION_NOT_CONVERGED": "REFUSED",
+      "FORWARD_INADMISSIBLE_NEAR_ESTIMATE": "REFUSED",
+      "GLOBAL_UNIQUENESS_NOT_ASSESSED": "DOWNGRADED",
+      "GRID_BEYOND_VALIDATED_DIMENSION": "REFUSED",
+      "GRID_NOT_SUPPLIED": "REFUSED",
+      "GRID_REBUILD_OVER_BUDGET": "REFUSED",
+      "GRID_REBUILD_UNRESOLVED": "REFUSED",
+      "GRID_UNRESOLVED": "REFUSED",
+      "LOCAL_INPUTS_NOT_SUPPLIED": "REFUSED",
+      "MULTISTART_INCOMPLETE": "DOWNGRADED",
+      "NONLINEARITY_PROBE_INCOMPLETE": "DOWNGRADED",
+      "NONLINEAR_BEYOND_LOCAL_GAUSSIAN": "REFUSED",
+      "NONLINEAR_WITHIN_2_SD": "DOWNGRADED",
+      "NOT_A_LOCAL_MINIMUM": "REFUSED",
+      "NOT_STATIONARY": "REFUSED",
+      "NO_RESIDUAL_DEGREES_OF_FREEDOM": "REFUSED",
+      "NUMERICALLY_SINGULAR_JACOBIAN": "REFUSED",
+      "PARAMETER_AT_BOUND": "REFUSED",
+      "POORLY_SCALED_PARAMETERIZATION": "DOWNGRADED",
+      "PREDICTIVE_NONLINEAR": "DOWNGRADED",
+      "SECOND_MODE_FOUND": "REFUSED",
+      "STRUCTURALLY_UNIDENTIFIABLE": "REFUSED"
+    },
+    "uncertainty_sources": [
+      "PARAMETER_UNCERTAINTY",
+      "MEASUREMENT_UNCERTAINTY",
+      "MODEL_DISCREPANCY_NOT_MODELLED"
+    ]
+  }
+}

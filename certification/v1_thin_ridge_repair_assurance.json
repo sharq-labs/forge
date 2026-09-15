@@ -1,0 +1,303 @@
+{
+  "harness_identity": {
+    "files": {
+      "tests/mutation_guards.py": "170442a2d7bb893e6d3ba134931f11f75092588011b2a1953b825788d490e62b",
+      "tests/test_core_guards.py": "658db9ee95115d83e470b4ff4a41c9ae55be1c773e0f8f1ede0487d4eddac342",
+      "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
+      "tests/test_offset_unit_declaration.py": "855f5d20f8c53ed90f20cee67222c943aa535629f871c8c2cdea4a6c4927b6e8",
+      "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
+    },
+    "note": "'79/79 killed' is a statement about these exact bytes. The same sentence over a weakened suite would be worth nothing, so the runner and the four suites it runs each mutant against are pinned here and in the manifest's harness area."
+  },
+  "mutation": {
+    "certified_harness": {
+      "command": "python -X utf8 tests/mutation_guards.py <scratch-dir>",
+      "control": "GREEN",
+      "control_means": "the four TARGET suites run against an UNMUTATED copy of the tree. Without it a red result below could be the copy being broken rather than the mutation being caught",
+      "control_suites_passed": 470,
+      "in_the_formal_certificate": true,
+      "killed": 79,
+      "log": "benchmarks/core_v1_thin_ridge_repair/MUTATION_HARNESS_79.log",
+      "log_bytes": 34557,
+      "log_sha256": "283f576729f64f4e86cbae5ab5722eae961dd6833c336bcc29a662f200ea84bb",
+      "runner": "tests/mutation_guards.py",
+      "survivor_ids": [],
+      "survivors": 0,
+      "total": 79,
+      "why_it_was_re_run": "The certified POPULATION changed this round: src/engcore/inference/calibration.py (inference_admission area) gained the private thin-ridge resolution guard. '79/79 killed' is a statement about exact bytes, so it was re-earned on the repair candidate (harness run from a scratch worktree at bccbbf7, whose src and tests are identical to the certified commit's) rather than carried forward."
+    },
+    "sprint10_api_stability_matrix": {
+      "command": "python -X utf8 benchmarks/core_api_stability/audit/mutations.py",
+      "control": "GREEN",
+      "in_the_formal_certificate": false,
+      "invalid_mutations": [
+        "PKG-1",
+        "PKG-2"
+      ],
+      "killed": 21,
+      "requested_total": 23,
+      "runner": "benchmarks/core_api_stability/audit/mutations.py",
+      "survivors": 0,
+      "two_were_mis_aimed": "SER-3 SURVIVED correctly on its first form -- it dropped a field from IDENTITY_FIELDS, which drives differences(), while the digest hashes _canonical(), so it did not do what its own description said. EXC-1 was STALE against a moved raise site and its property is about the exception ROOT anyway. Both retargeted; both now kill. Recorded rather than deleted.",
+      "why_not": "tests/mutation_guards.py is INSIDE certified scope and pinned, so a guard written this round cannot join MUTATIONS without invalidating the snapshot. Recorded separately and never added to the certified 79.",
+      "written": 21
+    },
+    "sprint9_runtime_families": {
+      "carried_forward_because": "NOT re-measured this round, and labelled rather than presented as fresh. The only Core SOURCE changes in Sprint 10 were removing a no-op `from __future__ import annotations` from engcore/scientific/__init__.py and adding src/engcore/api_snapshot.py, a new module nothing else imports. Neither touches the evidence, route, field/mesh, spatial-profile or runtime surfaces these families mutate; everything else this round is tests, benchmarks and documentation.",
+      "control": "GREEN",
+      "families": {
+        "PAR": 5,
+        "PERF-RT": 4
+      },
+      "in_the_formal_certificate": false,
+      "killed": 9,
+      "not_applicable": [
+        "PAR-5",
+        "PAR-6"
+      ],
+      "note": "Sprint 9 runtime mutations. NOT part of the certified 79 and never added to it. PAR-5 and PAR-6 are recorded NOT APPLICABLE with their reasons rather than dropped: both target a process backend this round deliberately did not build.",
+      "re_measured_this_round": false,
+      "runner": "benchmarks/core_runtime_finalization/audit/mutations.py",
+      "stale": [],
+      "survivors": [],
+      "total": 9
+    },
+    "targeted_families": {
+      "carried_forward_because": "NOT re-measured this round, and labelled rather than presented as fresh. The only Core SOURCE changes in Sprint 10 were removing a no-op `from __future__ import annotations` from engcore/scientific/__init__.py and adding src/engcore/api_snapshot.py, a new module nothing else imports. Neither touches the evidence, route, field/mesh, spatial-profile or runtime surfaces these families mutate; everything else this round is tests, benchmarks and documentation.",
+      "control": "GREEN",
+      "families": {
+        "EI": {
+          "killed": 10,
+          "survivors": 0,
+          "total": 10,
+          "what": "evidence pairing integrity (Sprint 3)"
+        },
+        "FM": {
+          "killed": 8,
+          "survivors": 0,
+          "total": 8,
+          "what": "field and mesh records (Sprint 4)"
+        },
+        "RI": {
+          "killed": 11,
+          "survivor_ids": [
+            "RI2b"
+          ],
+          "survivor_status": "KNOWN EQUIVALENT MUTANT. Proven equivalent in Sprint 3 by running the mutation in memory: the verdict gate already excludes a shared implementation, so removing the second check changes no reachable behaviour. Recorded as a survivor rather than excluded from the count",
+          "survivors": 1,
+          "total": 12,
+          "what": "route independence authority (Sprint 3)"
+        },
+        "SP": {
+          "killed": 10,
+          "survivors": 0,
+          "total": 10,
+          "what": "spatial profiles (Sprint 5)"
+        }
+      },
+      "in_the_formal_certificate": false,
+      "measured_in": "core_v2_recertification round",
+      "note": "Run through a separate apply/revert harness kept outside the repository, because tests/mutation_guards.py is itself pinned and cannot gain mutations without re-certification. These are NOT part of the certified suite above and are recorded separately so the two are never added together. CARRIED FORWARD, not re-measured: these four families mutate evidence pairing, route independence, field/mesh records and spatial profiles, all of which live in src/engcore/scientific, and every certified file under it is byte-identical to the commit they were measured at. The five src/ files that DID change this round are domain models outside certified scope and outside every one of these families. Sprint 9 changed src/engcore/scientific (5 files) and src/engcore/execution is unchanged; none of the EI/RI/FM/SP families mutates a line this round touched, and all four were measured against code whose behaviour is unchanged -- every optimization is a same-answer transformation tested against the path it replaced.",
+      "re_measured_this_round": false,
+      "re_run_this_round": false
+    },
+    "v1_thin_ridge_repair_matrix": {
+      "command": "python -X utf8 benchmarks/core_v1_thin_ridge_repair/audit/ridge_mutations.py --tree <scratch worktree>",
+      "control": "GREEN",
+      "in_the_formal_certificate": false,
+      "killed": 8,
+      "runner": "benchmarks/core_v1_thin_ridge_repair/audit/ridge_mutations.py",
+      "survivors": [],
+      "total": 8,
+      "why_not": "tests/mutation_guards.py is inside certified scope and pinned; RIDGE-1..8 are recorded separately and never added to the certified 79."
+    }
+  },
+  "sprint10": {
+    "deprecated_symbol_count": 0,
+    "domain_boundary": "INTACT",
+    "domain_end_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+    "domain_start_digest": "81bcc7f8527833a138009a2d9b19f11aefade2537315a6e33bcacdbbc3ce9a85",
+    "experimental_symbol_count": 11,
+    "frozen_api_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+    "frozen_symbol_count": 194,
+    "round": "Core Hygiene & API Stability",
+    "wheel_source_frozen_api_parity": "MATCH"
+  },
+  "test_suites": {
+    "battery_regressions": {
+      "command": "python -X utf8 -m pytest tests/domains/battery -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 265,
+      "seconds": 13.1,
+      "selection": "tests/domains/battery",
+      "skipped": 0,
+      "summary_line": "265 passed in 12.52s"
+    },
+    "capability_boundary": {
+      "command": "python -X utf8 -m pytest tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py -q -p no:cacheprovider",
+      "deselected": 746,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 308,
+      "seconds": 11.1,
+      "selection": "tests/domains -k applicab or boundary tests/mcp/test_battery_boundary.py",
+      "skipped": 0,
+      "summary_line": "308 passed, 746 deselected in 10.24s"
+    },
+    "certification_suite": {
+      "command": "python -X utf8 -m pytest tests/test_core_certificate.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 1,
+      "failed": 1,
+      "note": "measured BEFORE this reissue: test_the_certificate_describes_this_tree fails because the inference area changed and the certificate has not yet been rebuilt. Re-run after the reissue is recorded in REPAIR_REPORT.md",
+      "passed": 27,
+      "seconds": 6.1,
+      "selection": "tests/test_core_certificate.py",
+      "skipped": 1,
+      "summary_line": "1 failed, 27 passed, 1 skipped in 5.63s"
+    },
+    "contract_guard": {
+      "command": "python -X utf8 -m pytest tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 305,
+      "seconds": 26.4,
+      "selection": "tests/test_core_guards.py tests/test_design_d0_contracts.py tests/test_data_boundary0.py",
+      "skipped": 0,
+      "summary_line": "305 passed, 7 warnings in 25.50s"
+    },
+    "core_api_stability": {
+      "command": "python -X utf8 -m pytest tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_core_api_serialization.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py tests/test_trust_boundary_package_identity.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 138,
+      "seconds": 24.0,
+      "selection": "tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_layering.py tests/test_core_api_serialization.py tests/test_core_api_deprecation.py tests/test_core_freeze_policy.py tests/test_trust_boundary_package_identity.py",
+      "skipped": 0,
+      "summary_line": "138 passed, 14 warnings in 23.15s"
+    },
+    "fast": {
+      "command": "python -X utf8 -m pytest tests -n 4 -m \"not expensive and not campaign\" -q -p no:cacheprovider",
+      "failed": 3,
+      "failed_tests": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "note": "all three fail on certificate.verifies before the reissue",
+      "passed": 5005,
+      "skipped": 5,
+      "summary_line": "3 failed, 5005 passed, 5 skipped, 42 warnings in 74.59s"
+    },
+    "field_profile_suites": {
+      "command": "python -X utf8 -m pytest tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 147,
+      "seconds": 2.3,
+      "selection": "tests/test_field_profiles.py tests/test_field_profiled_conditions.py tests/test_field_profile_limit.py tests/test_field_coefficient_spike.py tests/test_conduction2d_profiled.py",
+      "skipped": 0,
+      "summary_line": "147 passed in 1.74s"
+    },
+    "field_suites": {
+      "command": "python -X utf8 -m pytest tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 124,
+      "seconds": 1.8,
+      "selection": "tests/test_field_records.py tests/test_field_values.py tests/test_field_composition.py tests/test_field_ir_ceiling.py tests/test_conduction2d.py tests/test_conduction2d_convergence.py",
+      "skipped": 0,
+      "summary_line": "124 passed in 1.18s"
+    },
+    "full": {
+      "command": "python -X utf8 -m pytest tests -n 4 -q -p no:cacheprovider",
+      "failed": 3,
+      "failed_tests": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "note": "all three fail on certificate.verifies before the reissue",
+      "passed": 5551,
+      "skipped": 5,
+      "summary_line": "3 failed, 5551 passed, 5 skipped, 42 warnings in 152.12s"
+    },
+    "grid_resolution_repair": {
+      "command": "python -X utf8 -m pytest tests/inference/test_grid_resolution_repair.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 32,
+      "seconds": 45.6,
+      "selection": "tests/inference/test_grid_resolution_repair.py",
+      "skipped": 0,
+      "summary_line": "32 passed in 44.99s"
+    },
+    "mutation_harness_self_guard": {
+      "command": "python -X utf8 -m pytest tests/test_mutation_harness.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 6,
+      "seconds": 1.2,
+      "selection": "tests/test_mutation_harness.py",
+      "skipped": 0,
+      "summary_line": "6 passed in 0.83s"
+    },
+    "predictive_uq_and_adequacy": {
+      "command": "python -X utf8 -m pytest tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py tests/test_evidence_pairing_integrity.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 47,
+      "seconds": 1.3,
+      "selection": "tests/test_k3_predictive_uq.py tests/test_k31_predictive_admission.py tests/test_k4_model_adequacy.py tests/test_evidence_pairing_integrity.py",
+      "skipped": 0,
+      "summary_line": "47 passed in 0.78s"
+    },
+    "scientific_truth": {
+      "command": "python -X utf8 -m pytest tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 293,
+      "seconds": 4.2,
+      "selection": "tests/domains/test_evidentiary_level_audit.py tests/oracles/test_independent_case_truth.py tests/oracles/test_independent_reason_truth.py tests/test_result_validity.py tests/test_blind_challenge_guards.py",
+      "skipped": 3,
+      "summary_line": "293 passed, 3 skipped in 3.30s"
+    },
+    "tcr_calibration_and_uq": {
+      "command": "python -X utf8 -m pytest tests/inference -q -p no:cacheprovider",
+      "deselected": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 153,
+      "seconds": 92.5,
+      "selection": "tests/inference",
+      "skipped": 0,
+      "summary_line": "153 passed in 91.85s (0:01:31)"
+    }
+  },
+  "v1_thin_ridge_repair": {
+    "baseline": "273bfff7d3d685d9e0bb62519795aeb47c05b027",
+    "errata": "benchmarks/core_v1_thin_ridge_repair/ERRATA.md",
+    "experimental_symbol_count": 11,
+    "frozen_api_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+    "frozen_symbol_count": 194,
+    "kind": "correctness repair of frozen grid-resolution behaviour; no public API, signature, serialization or identity change",
+    "regression_matrix": "benchmarks/core_v1_thin_ridge_repair/REGRESSION_MATRIX.json",
+    "round": "Core V1 Certified Repair -- Thin-Ridge Posterior Resolution Guard",
+    "threshold": {
+      "protocol": "benchmarks/core_v1_thin_ridge_repair/THRESHOLD_PROTOCOL.json",
+      "selection": "benchmarks/core_v1_thin_ridge_repair/THRESHOLD_SELECTION.json",
+      "value": 9.210340371976184
+    },
+    "wheel_source_frozen_api_parity": "MATCH"
+  }
+}

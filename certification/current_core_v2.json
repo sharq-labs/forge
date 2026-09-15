@@ -2,10 +2,10 @@
   "assurance": {
     "control_plane": {
       "area": "certification_control",
-      "digest": "74cd2ba4aab02c00d4aac6227eb5d6c9a930fbe3b96999e0c4e96c1063ac2a02",
+      "digest": "a91f383e43092488e47ff50fa5651bb01b4bc10931043e4b25ccb875a9485b7e",
       "executed_certified_bytes_match_source": true,
-      "executed_merge_preview_commit": "d2ac4cccb362c0d2cfeea8128d11d7380e317721",
-      "file_count": 15
+      "executed_merge_preview_commit": "a0e066b485a5c0d7d7bf1f8b241bd9d46faa74d8",
+      "file_count": 16
     },
     "environment": {
       "certificate_builder_platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
@@ -16,13 +16,13 @@
       "execution_model": "parallel_github_actions_jobs",
       "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
       "ngspice": "ngspice-42 : Circuit level simulation program",
-      "pip_freeze_3_11_sha256": "b0ffd37c81a715391e6f47906717955ebaa8e9b1c5b8b3bb4c2342181483ebf6",
-      "pip_freeze_3_12_sha256": "c6751fe590db990a24ae65729b221d8278df4ef295b3d49957ff54e596ad5aff",
+      "pip_freeze_3_11_sha256": "3e62818a368ce9fd0e99c195f1f9f775f991189349456d4fc9d2042561b9c385",
+      "pip_freeze_3_12_sha256": "aa8d686393267b1ca54844b84ac233aca046674971045737303e2fe7dccf15f6",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
       "schema": "forge.certification_environment/3",
-      "source_commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+      "source_commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "execution_model": "parallel_gates_then_certificate",
@@ -126,7 +126,7 @@
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "3883b1b55ae700fdf92e35f03e347494fdd9d37df75a32b1e24f99ee5d9178ed",
+          "execution_log_sha256": "a01e24225d26dbd920726527a9b19f71a8349157d10efb9a0f8b18aff018a726",
           "killed_count": 20,
           "selected_count": 20,
           "selected_ids": [
@@ -155,7 +155,7 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "7228c16d1dd7199183df84e7ee78ba329285e5953543e3c1b420e703250ec330",
+          "execution_log_sha256": "a0fac746df745842ab442caabf21dc5e3deea65dc2102c9e67594b08061f8537",
           "killed_count": 20,
           "selected_count": 20,
           "selected_ids": [
@@ -184,7 +184,7 @@
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "51669ad6ff9f19ca246dd7fc8d9e4fa37faff8f02c8f80385d8d81e494b8627c",
+          "execution_log_sha256": "fcee78c5569c71a80dc309a2304417c3739bee96d51794d0280404bbf19f09d2",
           "killed_count": 20,
           "selected_count": 20,
           "selected_ids": [
@@ -213,7 +213,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "0985442a2796d771d6c36dda0c4c21734f345d1ecd51153ba14cac4eeedcd25a",
+          "execution_log_sha256": "2a91acd7f5af4bffe6acdf280a696a3e68226787f6ff4af5b75e45b3adc2a176",
           "killed_count": 19,
           "selected_count": 19,
           "selected_ids": [
@@ -251,46 +251,46 @@
       "fast_python_3_11": {
         "clean_tree_after_gate": true,
         "gate": "fast311",
-        "gate_record_sha256": "be28b4d12762799a9e32d78290268d28b7b5197c4d045dae0f39468232c704b5",
-        "head_commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+        "gate_record_sha256": "b60e3ff3f25b12db9e2b85ac08eb87c097aaac18735eac62a021dc054dd3e09e",
+        "head_commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "14ac73f6bda15c5d9a230b5ad2d081f6c9600786f05f6cb479ec3521754318f4",
+            "junit_sha256": "0752147a8b5ca9fcece790891994ab38723c7d63df1f8d8ba6ab5daea8104207",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "8aa5e354271aba25b0bb1bd15887d8ba25eb25a72cfa009b347c1975ca18199c",
+            "junit_sha256": "59510914fda0ce5057d63b886dd1ef6b6aec35bfabc46d6b27edf3b6a29fabf6",
             "skipped": 19,
-            "tests": 5600
+            "tests": 5832
           }
         }
       },
       "fast_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "fast312",
-        "gate_record_sha256": "a3bef6984266a373e225496fc03a07f873c7f8cbd857e122a2791a7b98e55ecb",
-        "head_commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+        "gate_record_sha256": "4ea32a610a6e7f36e14726427f866454f480f5dbb4d363d24390645afbb65bfa",
+        "head_commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "383ec1621fdd10530d4172c9b01d706df5b36a50669a887acb44ee7c7cc8eb25",
+            "junit_sha256": "e9c7316fc87b89fd76f2e63b8f22c079bf88e2904108d753d383c412dd189451",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "cd28054c16e0ed729ebd9491ae3b468181e954b848b4a19e2144f9241945eb87",
+            "junit_sha256": "ed0f3c4f720a4ba5fc1189b95be1980debe1483f314d80e543aa4687536b8c5e",
             "skipped": 19,
-            "tests": 5600
+            "tests": 5832
           }
         }
       },
@@ -298,28 +298,28 @@
       "scientific_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "scientific312",
-        "gate_record_sha256": "6f4cfaad9cac541e43ed6db3f414ab1bc6674797f5a7d5ee5828daad7879271d",
-        "head_commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+        "gate_record_sha256": "32df7fbf5c58b50dee5743546c8efc3875c4895fe54dde2964a1d04cf2b801d5",
+        "head_commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
         "result": "success",
         "suites": {
           "scientific": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "3355cfc61c37ec54133cfc7e27bfedf731c49620d8a9307f8a4d0551d903ce32",
+            "junit_sha256": "01c4493a8d65a82b407f14087a577dd363a513e26d24ddbef8f5eba43c2f2849",
             "skipped": 5,
-            "tests": 6139
+            "tests": 6371
           }
         }
       }
     },
     "lineage": {
-      "certificate_artifact": "hardened-core-assurance-9b229ce29a704b4689c10eb9ae0395498fd4597f",
-      "certificate_parent": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+      "certificate_artifact": "hardened-core-assurance-e17c9e291690862da87925b29ca4ae1df3da75de",
+      "certificate_parent": "e17c9e291690862da87925b29ca4ae1df3da75de",
       "certify_job": "certify",
-      "pull_request": 44,
+      "pull_request": 41,
       "repository": "sharq-labs/forge",
       "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
-      "source_commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+      "source_commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
       "source_gates": [
         "fast311",
         "fast312",
@@ -332,12 +332,12 @@
       ],
       "workflow": ".github/workflows/recertify-hardened-core.yml",
       "workflow_run_attempt": 1,
-      "workflow_run_id": 34893754269
+      "workflow_run_id": 34937656602
     },
     "policy": "Built by tools/certification/hardening_assurance.py from the evidence artifacts of every source gate for this source commit, after all of them succeeded, and embedded by the official certificate builder.",
     "schema": "forge.core_hardening_assurance/3",
-    "source_commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
-    "source_tree": "a630fcc93169d9afd5cf695c55a6de3aaecc3438",
+    "source_commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
+    "source_tree": "c747b8dff2e1927031901c142d4044eca753a1bd",
     "trust_hardening_mutations": {
       "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
       "expected_population": 20,
@@ -368,7 +368,7 @@
       "population": 20,
       "population_sha256": "2f2a4d233851ae7ca0ac36b58d400da3c692f6cf44a3626fb553b062a91d0bad",
       "result_schema": "forge.trust_mutation_assurance/1",
-      "result_sha256": "bc160031cc862ba1aa2afe81f8e835b063227a69f0167fe28786d7a2bae19ee9",
+      "result_sha256": "fc66df3e7d24025b9539942eaef8c82a1b160294b90e2b6a55f8337985b4d8ef",
       "script": "benchmarks/trust_hardening/audit/mutations.py",
       "survived": 0
     }
@@ -406,12 +406,12 @@
     "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "ed608b6c370ecf3ee82227b506a4628b5fc20a0538086b40cacd3515c4083a1e",
+    "aggregate_digest": "5b4c5e222b17ef0ac6ff66ae7f9862ecd59c3f29dd04d3ce9c4eb680d924453f",
     "areas": {
       "certification_control": {
         "classification": "CERTIFICATION_CONTROL",
-        "digest": "74cd2ba4aab02c00d4aac6227eb5d6c9a930fbe3b96999e0c4e96c1063ac2a02",
-        "file_count": 15,
+        "digest": "a91f383e43092488e47ff50fa5651bb01b4bc10931043e4b25ccb875a9485b7e",
+        "file_count": 16,
         "file_reasons": {
           ".github/workflows/recertify-hardened-core.yml": "defines the source gates, the evidence the certify job consumes, the official-builder invocation and the certificate-child checks. Removing a gate from certify's needs, or a step from a gate, changes what a certificate attests without touching any Python",
           ".github/workflows/tests.yml": "decides which pull requests delegate assurance to recertification and what the certificate-child job runs. A narrower classifier call or a dropped child check lets a core change merge on the ordinary suite",
@@ -425,6 +425,7 @@
           "tools/certification/certificate_lineage.py": "binds a certificate child to its exact parent and to the certify run that produced it; without it a stale or hand-assembled certificate with matching bytes verifies",
           "tools/certification/core_certificate.py": "the builder and verifier: the digest algorithm, this scope table and the definition of a verifying certificate",
           "tools/certification/core_freeze.py": "the Core Freeze V1 verifier the freeze self-checks call, which itself calls verify_certificate",
+          "tools/certification/core_freeze_v2.py": "the Core Freeze V2 verifier that binds the Hybrid UQ contract and is executed by the pinned certificate-child freeze self-check; weakening it would change whether V2 is accepted without changing Hybrid UQ source",
           "tools/certification/hardening_assurance.py": "builds the assurance record from the gates' downloaded evidence and re-validates it on the child; it is what turns job results into claims",
           "tools/certification/mutation_population.py": "the canonical formal mutation population, the shard rule and the coverage proof; a wrong union with the right count would certify a mutation family that never ran",
           "tools/certification/recertification_scope.py": "the single classifier deciding which changes require recertification and which self-checks are deferred to the certificate child"
@@ -434,14 +435,15 @@
           ".github/workflows/tests.yml": "8be60362b4977e01cefb925d27ccea2e8a3efd7f1bca5038f0b81d2f2129297b",
           "benchmarks/core_freeze_v1/audit/reproduce.py": "40823bfb455ca06455b501f39b00fad2190107da08c72e27128ab555155970e2",
           "tests/test_core_certificate.py": "7059dddd2561da65709b4e3b379b145f5c8a60325545f1bd895daca5c27539ab",
-          "tests/test_core_freeze_manifest.py": "d93add15d9e1a3b21d2b5316d95796d3cfa2937487be277987f9a9a3e33b9eae",
+          "tests/test_core_freeze_manifest.py": "0e3a1229d8b44a3ddcf8c4a7d81600596c4f3ad72804e261c8a379962f4461f8",
           "tools/__init__.py": "8861d485b3cc33501966df3dada7c2e980beece7bd920fff7648a28b62e5eb42",
           "tools/certification/__init__.py": "c67a1b43f0d35e62ff42e47a2ea61ada2047728d0ca223f4673be27429666a4e",
           "tools/certification/assert_clean_tree.py": "efbb87867b52ee6ce196ee0affc63ba97232e632f358c05514e1e49cb1f2215d",
           "tools/certification/branch_policy.py": "938441cab1927f5e570ce3cf60c1922f893caf731913cc550cd4192712e204c1",
           "tools/certification/certificate_lineage.py": "0976d849d2f5ebb63769c11c1133d96ce475cd59557d56c3be7bdf15cf328d27",
-          "tools/certification/core_certificate.py": "9395bbc76c5be7e4c7b9fb4f572c241037ea74f75a589d878729b4f174d8f93b",
+          "tools/certification/core_certificate.py": "f45e2245406e64f501af56b1bdac8d1eaca83a93f70f172f93536f9b357295d6",
           "tools/certification/core_freeze.py": "b5fb42b4136a6c407689bcd69d7e2223692857b5a99dd5048028d1e416285b9c",
+          "tools/certification/core_freeze_v2.py": "8dad9752b1d4bd710c98d2deb9670ed2831609e71944037600f995bb0e77fed6",
           "tools/certification/hardening_assurance.py": "a06f9891fb36cfd670702c6842a76556a7719d5ef4b72b27837a7875ba6da8a7",
           "tools/certification/mutation_population.py": "de87e71a7af92087f2d939df8eea3431104b10c081c664303f90313c05022dad",
           "tools/certification/recertification_scope.py": "3549a84817bb1cb6d17d4f1372121f34a220fda405a1abb628d23469617f9017"
@@ -565,12 +567,12 @@
       },
       "inference_admission": {
         "classification": "CORE_CERTIFIED",
-        "digest": "4d5b4146e550ea89c917c898b7e3a7108c472ac2615b572bb1f913aa461f05e9",
+        "digest": "18e8efa77440d090f14b0212c45104fe6cf6b0f3587bee19fca0445887193046",
         "file_count": 7,
         "files": {
           "src/engcore/inference/__init__.py": "60453cf9178dc9b0bbe661aad77441b4254ffb67680b69b8fd2c35318ef805e3",
           "src/engcore/inference/admissibility.py": "59259b42d6baa227c3948f405cd4a09ecd8611854ab4e341a2587ae479454e69",
-          "src/engcore/inference/calibration.py": "74c9748bb1786b517fac6d14133a6bf675a23d736334cf15203309a3e63c0ca7",
+          "src/engcore/inference/calibration.py": "4bc7228aad8a21a877601e10fd95e873cb89bb1a5104eef3093913c394a55fd5",
           "src/engcore/inference/field_observation.py": "559f01cbbb3f15b0acee82712520a94e370ad52fee913232f99ba7fcaa051b02",
           "src/engcore/inference/grid.py": "5ee07bcfe9c91d78c81d4a0034b7b23bf0136cb571b32a9da1f2f6771ad33a96",
           "src/engcore/inference/parameters.py": "5c78d48518d0b737cb23098018533444f1bedf305ac7ef8a28aa27b86745001f",
@@ -580,6 +582,25 @@
           "src/engcore/inference/**/*.py"
         ],
         "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
+      },
+      "routed_uncertainty": {
+        "classification": "CORE_CERTIFIED",
+        "digest": "39cdc3951571062a3d809f61d51c163d17ac2950f193867f392cd9a9669500bd",
+        "file_count": 8,
+        "files": {
+          "src/engcore/hybrid_uq/__init__.py": "a3232caceb207cb8533d1b6cbe62c2c3c925f8ad22c486b8228dc87a4c658744",
+          "src/engcore/hybrid_uq/_records.py": "931a90f38f6e5db60d1a3c07fe6aba96fbec8d0e6ce29781c46af1ec27671102",
+          "src/engcore/hybrid_uq/identifiability.py": "ecb3f711e8f3fad2c1a8e42657d36889fa94d8de344fd0660ec87ff64fc46906",
+          "src/engcore/hybrid_uq/local_gaussian.py": "7a47b82e685ab3f3ae1343bb57d66ff3a687768aae0f06b503a7b6f3f6b5af05",
+          "src/engcore/hybrid_uq/predictive.py": "30d9e9666c9ff283f626b2a01445abc77de3118fb723637d1fcb0d01465009cf",
+          "src/engcore/hybrid_uq/router.py": "3bab057f7a489712c0ea779d9dda2cbfe2a63cccaee51454d55a903e216c4ed2",
+          "src/engcore/hybrid_uq/sensitivity.py": "9fcf32ca58c2a84a558d632961ea2c9167b4c7950a8851481d31d8b1b6e3c43b",
+          "src/engcore/hybrid_uq/vocabulary.py": "db98aed460a83ea95701157ff177fd8ea1294697a6e80f605fbd20ba4a30a769"
+        },
+        "patterns": [
+          "src/engcore/hybrid_uq/**/*.py"
+        ],
+        "why": "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a silent edit here turns a refusal into a precise-looking number"
       },
       "runtime_data": {
         "classification": "RUNTIME_SUPPORT",
@@ -623,13 +644,13 @@
         "why": "the domain-layer declarations the core verifies against and cannot see past: SCIENTIFIC_THRESHOLD_DECLARATIONS decides whether a threshold set is declared, and SCIENTIFIC_ROUTE_DECLARATIONS decides whether two routes are independent. An edit here turns a gate that awards nothing into one that awards a level, without touching a line of the core. One file, and the strongest case for inclusion outside scientific/"
       }
     },
-    "file_count": 99
+    "file_count": 108
   },
   "notes": {},
   "repository": {
     "branch": "HEAD",
     "clean": true,
-    "commit": "9b229ce29a704b4689c10eb9ae0395498fd4597f",
+    "commit": "e17c9e291690862da87925b29ca4ae1df3da75de",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -676,6 +697,14 @@
         "why": "the admission invariant for forward rows: a posterior may only be built from predictions that were admitted. A trust boundary in its own right, and one the certified mutation harness exercises"
       },
       {
+        "area": "routed_uncertainty",
+        "classification": "CORE_CERTIFIED",
+        "patterns": [
+          "src/engcore/hybrid_uq/**/*.py"
+        ],
+        "why": "Core V2: which approximation produced an uncertainty and whether it may be reported at all. The local-Gaussian validity diagnostics, the multistart, the router's refusal to use a grid V1 refuses, and the rule that a refused route emits no numbers each decide what a reported interval MEANS; a silent edit here turns a refusal into a precise-looking number"
+      },
+      {
         "area": "harness",
         "classification": "HARNESS",
         "patterns": [
@@ -703,6 +732,7 @@
           "tools/certification/certificate_lineage.py": "binds a certificate child to its exact parent and to the certify run that produced it; without it a stale or hand-assembled certificate with matching bytes verifies",
           "tools/certification/core_certificate.py": "the builder and verifier: the digest algorithm, this scope table and the definition of a verifying certificate",
           "tools/certification/core_freeze.py": "the Core Freeze V1 verifier the freeze self-checks call, which itself calls verify_certificate",
+          "tools/certification/core_freeze_v2.py": "the Core Freeze V2 verifier that binds the Hybrid UQ contract and is executed by the pinned certificate-child freeze self-check; weakening it would change whether V2 is accepted without changing Hybrid UQ source",
           "tools/certification/hardening_assurance.py": "builds the assurance record from the gates' downloaded evidence and re-validates it on the child; it is what turns job results into claims",
           "tools/certification/mutation_population.py": "the canonical formal mutation population, the shard rule and the coverage proof; a wrong union with the right count would certify a mutation family that never ran",
           "tools/certification/recertification_scope.py": "the single classifier deciding which changes require recertification and which self-checks are deferred to the certificate child"

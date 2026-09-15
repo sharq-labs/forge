@@ -322,49 +322,53 @@ def test_case_b_a_collapsed_posterior_is_a_grid_refusal():
         assess_identifiability(coarse)
 
 
+def _narrow_design_posterior(observations, by_condition, nodes):
+    oracle = ols_reference_estimate(observations, by_condition, T_REF)
+    r_axis = np.linspace(
+        oracle["reference_resistance"] - 6.0 * oracle["se_reference_resistance"],
+        oracle["reference_resistance"] + 6.0 * oracle["se_reference_resistance"], nodes,
+    )
+    a_axis = np.linspace(
+        oracle["temperature_coefficient"] - 6.0 * oracle["se_temperature_coefficient"],
+        oracle["temperature_coefficient"] + 6.0 * oracle["se_temperature_coefficient"], nodes,
+    )
+    table = tcr_forward_table(
+        observations, [(float(r), float(a)) for r in r_axis for a in a_axis],
+        reference_temperature=T_REF, temperatures_by_condition=by_condition,
+    )
+    return gaussian_grid_posterior(table, observations)
+
+
 def test_case_c_a_broad_posterior_is_a_scientific_verdict_not_a_grid_refusal():
-    """Weakly identified: the posterior is BROAD, so the grid resolves it fine.
+    """Weakly identified: the posterior is BROAD, and a grid that resolves it answers.
 
     This is what stops case B and case C collapsing into one diagnosis. The
-    narrow-temperature design produces a long ridge; its mass is spread over
-    many grid points and its step is small relative to its own width, so the
-    grid-resolution branch is never reached and the answer is a scientific one.
+    narrow-temperature design produces a long ridge; on a grid that samples
+    the ridge ACROSS its short axis too, the answer is a scientific one.
+
+    Correction (benchmarks/core_v1_thin_ridge_repair/ERRATA.md): this test
+    used a 21-node grid and said the grid "resolves it perfectly well"
+    because every axis step was 0.6 of that axis's MARGINAL sd. It did not.
+    The ridge is a correlation -0.993 posterior whose thin principal sd
+    falls between the lattice nodes; the 21-node grid reported that thin sd
+    at 0.055x the exact posterior and a correlation of -1.00000. Axis steps
+    against marginal widths cannot see a tilted ridge. The 21-node grid is
+    now refused and the verdict is read from an 81-node grid (thin sd
+    0.9998x exact).
     """
     narrow_t = [299.0, 299.5, 300.0, 300.5, 301.0, 301.5]
     by_condition = {f"T{i}": Quantity(t, KELVIN) for i, t in enumerate(narrow_t)}
     observations = synthesize_tcr_observations(
         TRUTH, narrow_t, sigma=SIGMA, dataset_id="tcr.narrow", seed=5,
     )
-    oracle = ols_reference_estimate(observations, by_condition, T_REF)
-    r_axis = np.linspace(
-        oracle["reference_resistance"] - 6.0 * oracle["se_reference_resistance"],
-        oracle["reference_resistance"] + 6.0 * oracle["se_reference_resistance"], 21,
-    )
-    a_axis = np.linspace(
-        oracle["temperature_coefficient"] - 6.0 * oracle["se_temperature_coefficient"],
-        oracle["temperature_coefficient"] + 6.0 * oracle["se_temperature_coefficient"], 21,
-    )
-    table = tcr_forward_table(
-        observations, [(float(r), float(a)) for r in r_axis for a in a_axis],
-        reference_temperature=T_REF, temperatures_by_condition=by_condition,
-    )
-    posterior = gaussian_grid_posterior(table, observations)
-    diagnostics = posterior_grid_diagnostics(posterior)
 
-    # THIS is why the grid refusal requires two conditions rather than one.
-    #
-    # The effective sample size here is BELOW the threshold -- about 5.9 -- so
-    # an ESS-only rule would refuse this posterior as an unresolved grid. It is
-    # nothing of the kind: the grid step is 0.6 of the posterior's own standard
-    # deviation, so the grid resolves it perfectly well. The mass is
-    # concentrated because a ridge is concentrated ACROSS its short axis, which
-    # is a fact about the science.
-    #
-    # Refusing here would have told the reader to refine a grid that is already
-    # fine, and hidden a real weak-identifiability finding behind a numerical
-    # complaint.
-    assert diagnostics["effective_sample_size"] < 8.0
-    assert max(diagnostics["spacing_to_std"]) < 1.0
+    aliased = _narrow_design_posterior(observations, by_condition, 21)
+    assert max(posterior_grid_diagnostics(aliased)["spacing_to_std"]) < 1.0
+    with pytest.raises(GridResolutionError, match="lattice aliasing number"):
+        assess_identifiability(aliased)
+
+    posterior = _narrow_design_posterior(observations, by_condition, 81)
+    assert max(posterior_grid_diagnostics(posterior)["spacing_to_std"]) < 1.0
     report = assess_identifiability(posterior)
     # A scientific VERDICT -- weak or none, depending on how long the ridge is
     # for this draw -- and crucially not an exception. Which of the two it
@@ -385,22 +389,8 @@ def test_b_and_c_do_not_produce_the_same_diagnosis():
     broad_obs = synthesize_tcr_observations(
         TRUTH, narrow_t, sigma=SIGMA, dataset_id="n", seed=5,
     )
-    oracle = ols_reference_estimate(broad_obs, by_condition, T_REF)
-    r_axis = np.linspace(
-        oracle["reference_resistance"] - 6.0 * oracle["se_reference_resistance"],
-        oracle["reference_resistance"] + 6.0 * oracle["se_reference_resistance"], 21,
-    )
-    a_axis = np.linspace(
-        oracle["temperature_coefficient"] - 6.0 * oracle["se_temperature_coefficient"],
-        oracle["temperature_coefficient"] + 6.0 * oracle["se_temperature_coefficient"], 21,
-    )
-    broad = gaussian_grid_posterior(
-        tcr_forward_table(
-            broad_obs, [(float(r), float(a)) for r in r_axis for a in a_axis],
-            reference_temperature=T_REF, temperatures_by_condition=by_condition,
-        ),
-        broad_obs,
-    )
+    # 81 nodes: the 21-node grid this test once used aliases the ridge (case C).
+    broad = _narrow_design_posterior(broad_obs, by_condition, 81)
     # broad -> a verdict; collapsed -> an exception. Different in KIND, which
     # is the requirement: one is answered, the other is refused.
     broad_report = assess_identifiability(broad)

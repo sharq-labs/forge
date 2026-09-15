@@ -141,10 +141,14 @@ def test_an_identity_conversion_does_not_reach_the_units_backend():
         f"times; it should be a string comparison"
     )
 
-    # ...and a REAL conversion still does, or the short-circuit is too greedy.
+    # A real conversion may legitimately use a memoized conversion rule when
+    # another test warmed the process-local cache first. Clear the derived unit
+    # caches so this assertion measures the cold backend path, not test order.
+    quantity_module.clear_unit_caches()
     with _Counter(quantity_module, "registry") as backend:
-        quantity.to("millikelvin")
+        converted = quantity.to("millikelvin")
     assert backend.count > 0
+    assert converted.magnitude == pytest.approx(300_000.0)
 
 
 def test_a_repeated_unit_string_is_canonicalised_once():
