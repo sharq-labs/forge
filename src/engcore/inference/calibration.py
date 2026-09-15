@@ -42,6 +42,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
+from ..scientific.results.immutable import freeze
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.units.quantity import Quantity
 from .grid import InferenceProblemError, ObservationSet, PosteriorGrid
@@ -173,8 +174,11 @@ class CalibrationSpec:
         # refusal to pose the problem rather than an optimizer failure that
         # looks like a scientific finding.
         self.parameters.require_all_in_bounds(initial)
-        object.__setattr__(self, "fixed", dict(fixed))
-        object.__setattr__(self, "initial_point", dict(initial))
+        # Frozen, not copied: a calibration record states what was held fixed and
+        # where it started, and a caller alias must not rewrite that statement after
+        # the run. Ported from PR #24.
+        object.__setattr__(self, "fixed", freeze(dict(fixed)))
+        object.__setattr__(self, "initial_point", freeze(dict(initial)))
 
     @property
     def initial_vector(self) -> tuple[float, ...]:

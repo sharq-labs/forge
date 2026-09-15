@@ -136,10 +136,17 @@ class SolverDefinition:
 
         try:
             issued[key] = weakref.ref(session, forget)
-        except TypeError:
-            # A ``__slots__`` solver without ``__weakref__``: nothing to track
-            # it by that would not keep it alive. The probe check still holds.
-            pass
+        except TypeError as exc:
+            # A ``__slots__`` solver without ``__weakref__`` cannot be tracked, so
+            # a factory returning one such instance every time would hand two
+            # requests the same session and the same bindings unnoticed. Freshness
+            # that cannot be proven is refused, not assumed. Ported from PR #24.
+            label = f"{self._identity.solver_id}@{self._identity.version}"
+            raise TypeError(
+                f"the factory registered for {label} returned a solver session "
+                f"that cannot be weak-referenced; session freshness cannot be "
+                f"proven, so the registry refuses to issue it"
+            ) from exc
 
 
 class SolverRegistry:
