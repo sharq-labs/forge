@@ -867,6 +867,54 @@ def _grid_resolution_refusal(
     return None
 
 
+#: The thresholds assess_identifiability declares, and the direction in which each
+#: one is STRICTER: a lower correlation, condition number or relative width, and a
+#: higher effective-point floor, each make an IDENTIFIABLE verdict harder to reach.
+_DECLARED_IDENTIFIABILITY_THRESHOLDS = (
+    ("correlation_threshold", 0.95),
+    ("condition_threshold", 1.0e6),
+    ("width_threshold", 1.0),
+    ("minimum_effective_points", 8.0),
+)
+_HIGHER_IS_STRICTER = frozenset({"minimum_effective_points"})
+
+
+def _require_declared_or_tighter_thresholds(**given: float) -> dict[str, float]:
+    """Refuse thresholds that are meaningless or looser than declared (INF-10); return the tightened ones.
+
+    The thresholds are arguments so a study can be stricter than the declared
+    classification. They used to be loosenable too, silently:
+    ``width_threshold=1e9, correlation_threshold=1.0, condition_threshold=1e300``
+    returned PARAMETERS_IDENTIFIABLE for an alpha whose 95 % interval is 136 % of
+    alpha, and nothing in the report said the rule had been moved. A verdict is
+    the declared rule's verdict or a stricter one; it is never bought by
+    argument.
+    """
+    tightened: dict[str, float] = {}
+    for name, declared in _DECLARED_IDENTIFIABILITY_THRESHOLDS:
+        value = float(given[name])
+        if not math.isfinite(value) or value <= 0.0:
+            raise CalibrationError(
+                f"identifiability threshold {name}={value!r} is not a finite positive number"
+            )
+        if name == "correlation_threshold" and value >= 1.0:
+            raise CalibrationError(
+                f"identifiability threshold {name}={value!r} can never be exceeded by a "
+                f"correlation, so it tests nothing"
+            )
+        looser = value < declared if name in _HIGHER_IS_STRICTER else value > declared
+        if looser:
+            raise CalibrationError(
+                f"identifiability threshold {name}={value!r} is looser than the declared "
+                f"{declared!r}. The classification may be made stricter by argument, "
+                f"never more lenient: a relaxed rule would report IDENTIFIABLE for a "
+                f"posterior the declared rule does not"
+            )
+        if value != declared:
+            tightened[name] = value
+    return tightened
+
+
 def assess_identifiability(
     posterior: PosteriorGrid,
     *,
@@ -889,6 +937,12 @@ def assess_identifiability(
     """
     if not isinstance(posterior, PosteriorGrid):
         raise CalibrationError("identifiability is assessed from a PosteriorGrid")
+    tightened = _require_declared_or_tighter_thresholds(
+        correlation_threshold=correlation_threshold,
+        condition_threshold=condition_threshold,
+        width_threshold=width_threshold,
+        minimum_effective_points=minimum_effective_points,
+    )
 
     diagnostics = posterior_grid_diagnostics(posterior)
     ess = diagnostics["effective_sample_size"]
@@ -1027,6 +1081,11 @@ def assess_identifiability(
             f"and this is still IDENTIFIABLE on purpose: correlation says a "
             f"ridge exists, not that it is long, and both marginal intervals "
             f"here are within {widest:.3g} of their own values"
+        )
+    if tightened:
+        why += (
+            f". Classified under caller-tightened thresholds {tightened}; the "
+            f"declared defaults are {dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)}"
         )
 
     return IdentifiabilityReport(
