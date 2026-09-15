@@ -119,8 +119,10 @@ SCIENTIFIC_THRESHOLD_DECLARATIONS = MappingProxyType({
         "threshold_digest": "aa1ca369a23744b731efa7945237741fe44953a87c4577861f559cb40cc94da9",
     }),
     "electrical.dc.linear_residual": MappingProxyType({
+        # 0.2.0 (NUM-01): same values, now applied per row relative to the row's
+        # own terms with a scaled floor; re-pinned because the meaning moved.
         "declared_by": "engcore.domains.electrical.dc.validation.DC_CONVERGENCE_THRESHOLDS",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "threshold_digest": "3f5290aba1f08882446beba6cb794512ee335c408a0e4cb6ed07d1ac0a41e9f5",
     }),
     "kinetics.cstr.verification_gate": MappingProxyType({
