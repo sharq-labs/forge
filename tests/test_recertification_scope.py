@@ -112,7 +112,7 @@ def test_every_file_a_certified_mutation_names_requires_recertification():
     "README.md",
     "docs/TESTING.md",
     "src/engcore/domains/thermal/conduction1d/solver.py",
-    "src/engcore/mcp/server.py",
+    "src/engcore/mcp/bundle.py",
     "src/engcore/sria/decision/utility.py",
     "src/engcore/scientificx/module.py",
     "src/engcore/scientific.py",

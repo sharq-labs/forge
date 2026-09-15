@@ -70,7 +70,12 @@ HARNESS_PATH = "tests/mutation_guards.py"
 #: applicability, result/provenance attribution, exact model versions, SRIA
 #: evidence integrity, belief and uncertainty isolation, solver session
 #: freshness, calibration spec immutability).
-EXPECTED_FORMAL_POPULATION = 94
+#: 284 from GUARDS 29-35 (main audit round, 2026-09-15): 172 mutations against the
+#: invariants the audit's fix streams added (SRIA evidence-to-belief chain, consensus and
+#: level authority, stored results, inference applicability, Hybrid UQ, domain claims), and
+#: 18 folding the RIDGE-1..8 and HD-1..10 side matrices into the certified population
+#: (CERT-02), so the thin-ridge and Core V2 routing guards are re-proven every round.
+EXPECTED_FORMAL_POPULATION = 284
 SHARD_COUNT = 4
 
 SHARD_RECORD_SCHEMA = "forge.formal_mutation_shard/1"
