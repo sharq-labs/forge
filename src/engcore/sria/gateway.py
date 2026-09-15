@@ -47,6 +47,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Iterator, Mapping
 
+from ..scientific.results.immutable import detach, freeze
 from ..scientific.serialization import schema_string
 from .admission import (
     AdmissionAttempt,
@@ -84,7 +85,13 @@ _TOKEN = _GatewayToken()
 
 @dataclass(frozen=True)
 class BeliefEntry:
-    """One admitted contribution to one belief key."""
+    """One admitted contribution to one belief key.
+
+    The entry is part of the belief store, so its payload must be just as
+    immutable as the attribute that points at it. ``frozen=True`` alone only
+    protects the attribute; it does not protect a nested dict/list. The payload
+    is therefore recursively frozen on entry and detached on serialization.
+    """
 
     evidence_id: str
     belief_key: str
@@ -94,6 +101,22 @@ class BeliefEntry:
     status: EvidenceStatus
     admitted_by: str
     claim_payload: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        for label in (
+            "evidence_id",
+            "belief_key",
+            "claim_type",
+            "content_hash",
+            "record_hash",
+        ):
+            value = str(getattr(self, label)).strip()
+            if not value:
+                raise BeliefWriteViolation(f"belief entry requires non-empty {label}")
+            object.__setattr__(self, label, value)
+        object.__setattr__(self, "status", EvidenceStatus(self.status))
+        object.__setattr__(self, "admitted_by", str(self.admitted_by).strip())
+        object.__setattr__(self, "claim_payload", freeze(dict(self.claim_payload)))
 
     @property
     def is_active(self) -> bool:
@@ -109,7 +132,7 @@ class BeliefEntry:
             "record_hash": self.record_hash,
             "status": self.status.value,
             "admitted_by": self.admitted_by,
-            "claim_payload": dict(self.claim_payload),
+            "claim_payload": detach(self.claim_payload),
         }
 
 
@@ -133,6 +156,8 @@ class ScientificBelief:
                 "scientific belief may only be written by the Belief Update "
                 "Gateway; no source writes belief directly"
             )
+        if not isinstance(entry, BeliefEntry):
+            raise BeliefWriteViolation("scientific belief stores BeliefEntry records only")
         if entry.evidence_id not in self._entries:
             self._order.append(entry.evidence_id)
         self._entries[entry.evidence_id] = entry
@@ -217,6 +242,7 @@ class BeliefUpdateGateway:
                 f"{type(candidate).__name__}; a raw solver result is not "
                 f"evidence until it has been bound, assessed and admitted"
             )
+        candidate.require_integrity()
         return candidate
 
     def verify_admission(self, evidence: Evidence) -> AdmissionAttempt:
@@ -276,7 +302,7 @@ class BeliefUpdateGateway:
             record_hash=evidence.record_hash,
             status=evidence.status,
             admitted_by=evidence.admission.arbiter_id,
-            claim_payload=dict(evidence.claim_payload),
+            claim_payload=evidence.claim_payload,
         )
         self._belief._apply(_TOKEN, entry)
         # M3.4: retire the authorization. It admitted once; replaying it to
@@ -347,7 +373,7 @@ class BeliefUpdateGateway:
             admitted_by=(
                 evidence.admission.arbiter_id if evidence.admission else ""
             ),
-            claim_payload=dict(evidence.claim_payload),
+            claim_payload=evidence.claim_payload,
         )
         self._belief._apply(_TOKEN, entry)
         return entry

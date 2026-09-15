@@ -53,6 +53,7 @@ from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping
 
+from ..scientific.results.immutable import detach, freeze
 from ..scientific.serialization import encode, require_schema, schema_string
 from .admission import (
     AdmissionAttempt,
@@ -169,10 +170,13 @@ class ClaimBinding:
             if not value:
                 raise EvidenceError(f"claim binding requires {label}")
             object.__setattr__(self, label, value)
+        # Qualifiers are part of scientific content identity and of belief_key.
+        # A frozen dataclass does not freeze the dict behind an attribute, so
+        # keep the mapping recursively immutable after construction.
         object.__setattr__(
             self,
             "qualifiers",
-            {str(k): str(v) for k, v in self.qualifiers.items()},
+            freeze({str(k): str(v) for k, v in self.qualifiers.items()}),
         )
 
     @property
@@ -319,14 +323,18 @@ class Evidence:
             raise EvidenceError(
                 f"claim_payload must be serializable: {exc}"
             ) from exc
-        object.__setattr__(self, "claim_payload", payload)
+        # The payload participates directly in content_hash/record_hash and is
+        # later copied into ScientificBelief. Freeze it at the record boundary;
+        # otherwise a nested dict/list can be changed after an admission was
+        # signed while the stored hash still describes the old content.
+        object.__setattr__(self, "claim_payload", freeze(payload))
 
         object.__setattr__(self, "assessments", tuple(self.assessments))
         object.__setattr__(
             self, "admission_attempts", tuple(self.admission_attempts)
         )
         object.__setattr__(self, "lifecycle_log", tuple(self.lifecycle_log))
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(self, "metadata", freeze(dict(self.metadata)))
 
         computed = self._compute_content_hash()
         declared = str(self.content_hash).strip()
@@ -355,7 +363,7 @@ class Evidence:
         return {
             "claim_type": self.claim_type.value,
             "claim_binding": self.claim_binding.to_dict(),
-            "claim_payload": self.claim_payload,
+            "claim_payload": detach(self.claim_payload),
             "uncertainty": self.uncertainty.to_dict(),
             "domain_pack_ref": self.domain_pack_ref,
             "context_ref": self.context_ref,
@@ -379,6 +387,22 @@ class Evidence:
         )
         return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
+    def require_integrity(self) -> None:
+        """Refuse a record whose live scientific content no longer matches its hash.
+
+        Normal mutation is prevented by recursively freezing identity-bearing
+        containers. This second check closes the boundary even if a caller
+        deliberately reaches around ``frozen=True``/``FrozenMapping``: the
+        Gateway asks for ``record_hash``, and ``record_hash`` re-derives the
+        content identity before an old authorization can be reused.
+        """
+        computed = self._compute_content_hash()
+        if computed != self.content_hash:
+            raise EvidenceError(
+                f"evidence {self.evidence_id!r} scientific content no longer "
+                "matches content_hash; refusing an identity for mutated evidence"
+            )
+
     @property
     def record_hash(self) -> str:
         """Evidence Record Identity — never interchangeable with content_hash.
@@ -386,6 +410,7 @@ class Evidence:
         Distinguishes two records that make the identical claim but come from
         different sources or runs.
         """
+        self.require_integrity()
         blob = json.dumps(
             {
                 "evidence_id": self.evidence_id,
@@ -585,9 +610,7 @@ class Evidence:
                 ],
                 "lifecycle_log": [e.to_dict() for e in self.lifecycle_log],
                 "supersedes": self.supersedes,
-                "metadata": dict(
-                    sorted(self.metadata.items(), key=lambda kv: kv[0])
-                ),
+                "metadata": detach(self.metadata),
             }
         )
         return payload
