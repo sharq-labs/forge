@@ -85,7 +85,7 @@ Every V2 record carries its `approximation_class`. `ApproximationClass.exact_pos
 
 `calibrate` returns no Jacobian, and its return contract is frozen. V2 does not modify it. It gives the local sensitivity its own record, which can be built two ways:
 
-- **reconstructed** from the calibrated estimate with the caller's own forward evaluator: 2p + 1 evaluations, central differences;
+- **reconstructed** from the calibrated estimate with the caller's own forward evaluator, by finite differences that must be shown to converge. Each column starts at 1e-5 of the declared inference range (central, or one-sided toward the interior at a bound) and is recomputed at half the step, nested, until two successive estimates agree to `DERIVATIVE_RELATIVE_TOLERANCE` = 1e-3 of the sigma-weighted column plus evaluation roundoff. The coarser estimate of the agreeing pair is kept, so a column already accurate at the first step is unchanged. At least 4p + 1 evaluations. A derivative that does not stabilize before roundoff or the coordinate's resolution is reached raises `RouteRefusedError`: there is no curvature to report;
 - **preserved**, by constructing the record directly from a domain's analytic or retained Jacobian.
 
 ```python
@@ -257,7 +257,7 @@ def grid_predictive_uncertainty(
 ) -> RoutedPredictiveUncertainty
 ```
 
-- **Linearized:** G by central differences in inference coordinates, 2p + 1 calls. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated.
+- **Linearized:** G by the same convergence-checked finite differences in inference coordinates, at least 4p + 1 calls; a derivative that does not stabilize raises `RouteRefusedError`. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated.
 - **Refused posterior:** raises `RouteRefusedError`.
 - **Grid:** wraps the frozen `posterior_predictive_uq`, including its grid-resolution refusal. The epistemic part becomes `parameter_standard_uncertainty`, the declared sigma becomes `measurement_standard_uncertainty`, and V1's exact mixture interval is kept as `total_interval`.
 - **Model discrepancy:** never estimated; every record names `MODEL_DISCREPANCY_NOT_MODELLED`.
@@ -362,6 +362,8 @@ def routed_predictive_uncertainty(
 | `PREDICTIVE_NONLINEAR` | predictive only |
 
 **Router-only reasons:** `GRID_NOT_SUPPLIED`, `GRID_BEYOND_VALIDATED_DIMENSION`, `GRID_UNRESOLVED`, `LOCAL_INPUTS_NOT_SUPPLIED`, `GRID_REBUILD_OVER_BUDGET`, `GRID_REBUILD_UNRESOLVED`.
+
+**Refusals with no reason code.** Some local-route refusals happen before there is a posterior record to attach a reason to. The main one is a finite-difference Jacobian that does not converge. `local_gaussian_posterior` raises `RouteRefusedError` for these. The router records them as `LOCAL_GAUSSIAN` with outcome `REFUSED` and the exception text as `detail`, and ends `REFUSED` with no numbers. They get no reason code because `RouteReason` is part of the Core Freeze V2 contract, and a new member would move the V2 frozen digest.
 
 The thresholds are module constants, recorded inside every `RouteDiagnostics.thresholds`. The nonlinearity, bound, condition and multistart thresholds were validated by the HD-UQ review (`benchmarks/core_gap_hd_uq`) on the following:
 

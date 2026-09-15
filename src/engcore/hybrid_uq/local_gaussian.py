@@ -32,7 +32,8 @@ from ._records import (
     require_schema,
 )
 from .sensitivity import (
-    LocalSensitivity, evaluate, inference_bounds, reconstruct_local_sensitivity, to_inference, to_natural, transforms_of,
+    LocalSensitivity, _DerivativeNotConverged, evaluate, inference_bounds, reconstruct_local_sensitivity, to_inference,
+    to_natural, transforms_of,
 )
 from .vocabulary import (
     ApproximationClass, HybridUQError, RouteClaim, RouteReason, RouteRefusedError, claim_for,
@@ -546,6 +547,10 @@ def local_gaussian_posterior(
     if sensitivity is None:
         try:
             sensitivity = reconstruct_local_sensitivity(calibration, observations, forward)
+        except _DerivativeNotConverged:
+            # Not an inadmissible point, and no route reason names it: the route has no curvature to report
+            # and refuses by raising, so nothing downstream can build a covariance from an unstable Jacobian.
+            raise
         except RouteRefusedError:
             return _refused(calibration, observations, RouteReason.FORWARD_INADMISSIBLE_NEAR_ESTIMATE)
     else:

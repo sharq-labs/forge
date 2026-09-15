@@ -329,7 +329,8 @@ def test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence(refused)
 
     (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
     assert calls["refused"] == (4 if refused == "every_probe" else 1)
-    assert calls["admitted"] == 1 + 2 * 2 + (0 if refused == "every_probe" else 3)
+    # 1 + 4p finite-difference calls (a step and its half, per column), then whichever probes were admitted
+    assert calls["admitted"] == 1 + 4 * 2 + (0 if refused == "every_probe" else 3)
     assert r.route_claim is RouteClaim.DOWNGRADED
     assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
     if refused == "every_probe":
@@ -364,7 +365,7 @@ def test_a_complete_linear_check_is_supported():
         return _linear(t)
 
     (r,) = linearized_predictive_uq(post, predict, [_spec("y@0.5")])
-    assert len(calls) == 1 + 2 * 2 + 2 * 2
+    assert len(calls) == 1 + 4 * 2 + 2 * 2
     assert r.route_claim is RouteClaim.SUPPORTED and r.reasons == ()
     assert r.predictive_nonlinearity < 1e-6
 

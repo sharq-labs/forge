@@ -353,12 +353,19 @@ def route_uncertainty(
     if calibration is None or observations is None or forward is None:
         considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "SKIPPED", "reason": RouteReason.LOCAL_INPUTS_NOT_SUPPLIED.value})
     else:
-        local = local_gaussian_posterior(calibration, observations, forward, multistart=multistart)
-        reasons = ",".join(r.value for r in local.reasons)
-        if local.claim is RouteClaim.SUPPORTED:
-            considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "USED", "reason": ""})
-            return _local_result(local, considered)
-        considered.append({"route": "LOCAL_GAUSSIAN", "outcome": local.claim.value, "reason": reasons})
+        try:
+            local = local_gaussian_posterior(calibration, observations, forward, multistart=multistart)
+        except RouteRefusedError as exc:
+            # The route refused without a posterior record (a derivative that did not stabilize): recorded, and
+            # nothing is rebuilt from it, because there is no covariance to design a grid from.
+            considered.append({"route": "LOCAL_GAUSSIAN", "outcome": RouteClaim.REFUSED.value,
+                               "reason": "the local route refused before it had a posterior", "detail": str(exc)[:400]})
+        else:
+            reasons = ",".join(r.value for r in local.reasons)
+            if local.claim is RouteClaim.SUPPORTED:
+                considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "USED", "reason": ""})
+                return _local_result(local, considered)
+            considered.append({"route": "LOCAL_GAUSSIAN", "outcome": local.claim.value, "reason": reasons})
 
     # 3. a grid rebuilt from the local covariance, then verified by the frozen V1 checks
     if rebuild is not None and local is not None:
@@ -399,7 +406,12 @@ def route_uncertainty(
         return _local_result(local, considered)
 
     # 5. nothing established
-    names = local.parameter_names if local is not None else (grid.parameter_names if grid is not None else ())
+    if local is not None:
+        names = local.parameter_names
+    elif grid is not None:
+        names = grid.parameter_names
+    else:
+        names = calibration.spec.parameters.names if isinstance(calibration, CalibrationResult) else ()
     return HybridUQResult(decision=RouteDecision.REFUSED, approximation_class=None, claim=RouteClaim.REFUSED, parameter_names=names,
                           coordinates="none", mean=None, covariance=None, local_posterior=local, grid_summary=None,
                           considered=tuple(considered), identifiability=None)

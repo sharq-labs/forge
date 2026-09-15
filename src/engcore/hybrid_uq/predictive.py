@@ -176,13 +176,14 @@ def linearized_predictive_uq(
     def g(z):
         return evaluate(predict, to_natural(z, transforms), keys, units, references)
 
+    measurement = [None if s.observation_sigma is None else float(s.observation_sigma.magnitude_in(s.unit)) for s in specs]
     try:
-        g0, G, _steps, _one_sided, _count = central_difference(g, z0, lower, upper, DEFAULT_RELATIVE_STEP)
+        g0, G, _steps, _one_sided, _count = central_difference(
+            g, z0, lower, upper, DEFAULT_RELATIVE_STEP, weights=[math.nan if m is None else m for m in measurement])
     except RouteRefusedError as exc:
-        raise RouteRefusedError(f"the predictive forward model refused a point near the estimate: {exc}") from None
+        raise RouteRefusedError(f"the predictive derivative could not be established near the estimate: {exc}") from None
     parameter_var = np.einsum("ij,jk,ik->i", G, cov, G)
     parameter_sd = np.sqrt(np.maximum(parameter_var, 0.0))
-    measurement = [None if s.observation_sigma is None else float(s.observation_sigma.magnitude_in(s.unit)) for s in specs]
     total_sd = np.asarray([math.sqrt(parameter_var[i] + (m ** 2 if m is not None else 0.0)) for i, m in enumerate(measurement)])
 
     nonlinearity = None
