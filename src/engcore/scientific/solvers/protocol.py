@@ -561,13 +561,16 @@ class DeclaredSupport:
             )
 
         if self.served_models:
-            served = {model.model_id for model in self.served_models}
-            referenced = {reference.model_id for reference in problem.models}
+            # (model_id, version), not model_id: a solver implementing one
+            # version of a model does not implement the next, and matching on
+            # the id alone let a problem naming model@2 run on code for model@1.
+            served = {model.key for model in self.served_models}
+            referenced = {reference.key for reference in problem.models}
             if not referenced & served:
                 reasons.append(
-                    f"the problem names no model this solver implements; it "
-                    f"names {sorted(referenced) or 'none'} and this solver "
-                    f"implements {sorted(served)}"
+                    f"the problem names no model version this solver implements; "
+                    f"it names {[f'{m}@{v}' for m, v in sorted(referenced)] or 'none'} "
+                    f"and this solver implements {[f'{m}@{v}' for m, v in sorted(served)]}"
                 )
 
         reasons.extend(self.additional_support_gap(problem))

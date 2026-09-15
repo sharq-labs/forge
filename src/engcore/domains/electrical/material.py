@@ -1699,10 +1699,10 @@ class ResistancePropertySolver(DeclaredSupport):
     def additional_support_gap(self, problem) -> tuple[str, ...]:
         """The model must be named at this **version**, not just by id.
 
-        ``served_models`` matches on ``model_id``, which is right for a domain
-        whose models are versioned together. This evaluator implements one
-        record, and a problem asking for a future revision of the same relation
-        is asking for arithmetic this code does not perform.
+        ``served_models`` now matches on ``(model_id, version)`` as well, so this
+        is a second statement of the same rule for this evaluator's one record:
+        a problem asking for a future revision of the same relation is asking
+        for arithmetic this code does not perform.
         """
         wanted = LINEAR_TCR_MODEL.key
         if any(model.key == wanted for model in problem.models):
