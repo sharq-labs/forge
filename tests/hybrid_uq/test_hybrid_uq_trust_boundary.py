@@ -446,3 +446,46 @@ def test_an_offset_scale_coordinate_may_be_copied_but_not_combined():
     assert post.reparameterized([[1.0, 0.0], [0.0, 1.0]], ("t1", "t2"), ("degC", "degC"), "copy") is not None
     with pytest.raises(HybridUQError, match="offset scale"):
         post.reparameterized([[1.0, 1.0], [0.0, 1.0]], ("t1_plus_t2", "t2"), ("degC", "degC"), "sum")
+
+
+def _rebuilt_grid_result():
+    from engcore.hybrid_uq import GridRebuildPolicy, MultistartPolicy
+
+    P = S.strong_nonlinearity()
+    result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward,
+                               multistart=MultistartPolicy(), rebuild=GridRebuildPolicy(P.table_builder()))
+    assert result.decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE
+    return result
+
+
+def _shift_grid_mean(p):
+    # another mean, compatible and finite; the grid summary is left exactly as serialized
+    p["mean"] = [v + 0.25 for v in p["mean"]]
+
+
+def _other_valid_covariance(p):
+    # another valid PSD covariance of the same shape
+    p["covariance"] = [[1.21 * v for v in row] for row in p["covariance"]]
+
+
+@pytest.mark.parametrize("make", [_grid_result, _rebuilt_grid_result], ids=["GRID_AS_SUPPLIED", "GRID_REBUILT"])
+@pytest.mark.parametrize("edit", [_shift_grid_mean, _other_valid_covariance], ids=["mean", "covariance"])
+def test_a_serialized_grid_record_cannot_report_moments_its_summarized_grid_did_not_produce(make, edit):
+    """HUQ7. from_dict has no grid to compare against, so the summary commits to the moments instead."""
+    from engcore.hybrid_uq import HybridUQResult
+
+    result = make()
+    assert result.grid_summary["moments_digest"]
+    payload = _tampered(result, edit)
+    assert payload["grid_summary"] == json.loads(json.dumps(result.to_dict()))["grid_summary"]
+    with pytest.raises(HybridUQError, match="moments grid_summary commits to"):
+        HybridUQResult.from_dict(payload)
+
+
+def test_a_serialized_rebuilt_grid_record_still_round_trips_identically():
+    from engcore.hybrid_uq import HybridUQResult
+    from engcore.hybrid_uq._records import canonical_bytes
+
+    result = _rebuilt_grid_result()
+    again = HybridUQResult.from_dict(json.loads(canonical_bytes(result.to_dict())))
+    assert canonical_bytes(again.to_dict()) == canonical_bytes(result.to_dict()) and again.digest == result.digest

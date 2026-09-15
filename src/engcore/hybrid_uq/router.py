@@ -154,6 +154,9 @@ class HybridUQResult:
             summary = self.grid_summary or {}
             if summary.get("route") != decision.value:
                 problems.append("grid_summary names another route")
+            moments = _grid_moments_digest(decision.value, names, summary.get("grid_digest"), self.mean, self.covariance)
+            if summary.get("moments_digest") != moments:
+                problems.append("mean and covariance are not the moments grid_summary commits to for its grid")
             if ident is None:
                 problems.append("no identifiability for a route that reports numbers")
             else:
@@ -224,8 +227,22 @@ class HybridUQResult:
         return digest_of(payload)
 
 
+def _grid_moments_digest(route: str, parameter_names, grid_identity, mean, covariance) -> str:
+    """The commitment binding a grid result's reported moments to the grid its summary names.
+
+    ``from_dict`` cannot restore the grid itself (it is data-plane), so without this a serialized grid record could
+    keep its ``grid_digest`` and carry any other mean and valid covariance. The digest is over the canonical route,
+    names, grid digest, mean and covariance, exactly as the record serializes them.
+    """
+    return digest_of({"route": str(route), "parameter_names": [str(n) for n in parameter_names],
+                      "grid_digest": grid_identity, "mean": encode_vector(float(v) for v in mean),
+                      "covariance": encode_matrix(tuple(tuple(float(v) for v in row) for row in covariance))})
+
+
 def _grid_summary(grid: PosteriorGrid, how: str) -> dict[str, Any]:
-    return {"route": how, "dataset_id": grid.dataset_id, "points": int(len(grid.weights)), "grid_digest": grid_digest(grid)}
+    identity = grid_digest(grid)
+    return {"route": how, "dataset_id": grid.dataset_id, "points": int(len(grid.weights)), "grid_digest": identity,
+            "moments_digest": _grid_moments_digest(how, grid.parameter_names, identity, grid.mean, grid.covariance)}
 
 
 #: A rebuilt grid must contain its posterior: on every face that is not a declared bound, the largest

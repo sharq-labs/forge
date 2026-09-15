@@ -631,8 +631,9 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
     # CORE_CERTIFIED and its fail-closed guards had never been observed to
     # fail. Each mutation restores the behaviour from before its fix, and
     # `tests/hybrid_uq/test_hybrid_uq_trust_boundary.py` joins TARGETS for
-    # them -- without it these six would run against suites that cannot see
-    # them and be reported GREEN.
+    # them -- without it these would run against suites that cannot see
+    # them and be reported GREEN. G27g (HUQ7) was added in review: a serialized
+    # grid record carries no grid, so its moments are bound by a digest.
     ("G27a", "src/engcore/hybrid_uq/sensitivity.py::_bind_supplied_sensitivity",
      "    mismatches = [label for label, (found, wanted) in expected.items() if found != wanted]\n",
      "    mismatches = [label for label, (found, wanted) in expected.items() "
@@ -667,6 +668,12 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "    term = Quantity(magnitude, output)\n",
      "HUQ6: a reparameterization combines coordinates of any dimensions under "
      "any declared unit again, so volt plus ampere reads as a voltage"),
+    ("G27g", "src/engcore/hybrid_uq/router.py::HybridUQResult._require_one_truth",
+     "            if summary.get(\"moments_digest\") != moments:\n",
+     "            if False:\n",
+     "HUQ7: a serialized grid record is no longer bound to the moments its "
+     "summarized grid produced, so it can keep the grid digest and report "
+     "another mean or covariance"),
 )
 
 
@@ -905,6 +912,8 @@ EVIDENCE: dict[str, tuple[str, str]] = {
              "test_v_to_x_the_same_contradictions_are_refused_in_memory"),
     "G27f": ("CONTRACT_REFUSAL",
              "test_ab_a_voltage_plus_a_current_is_refused"),
+    "G27g": ("SERIALIZATION_INVARIANT",
+             "test_a_serialized_grid_record_cannot_report_moments_its_summarized_grid_did_not_produce"),
 }
 
 #: The five that were dead when this round opened, pinned by name. Deleting or

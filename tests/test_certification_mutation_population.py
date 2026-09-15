@@ -49,12 +49,12 @@ def _coverage(population, records, logs=None):
 
 
 # ---- the real population -------------------------------------------------------------
-def test_the_real_population_is_the_certified_85_and_shards_22_21_21_21(population):
-    assert population.count == mp.EXPECTED_FORMAL_POPULATION == 85
+def test_the_real_population_is_the_certified_86_and_shards_22_22_21_21(population):
+    assert population.count == mp.EXPECTED_FORMAL_POPULATION == 86
     assert population.problems() == []
-    assert [len(population.shard(i)) for i in range(4)] == [22, 21, 21, 21]
+    assert [len(population.shard(i)) for i in range(4)] == [22, 22, 21, 21]
     union = [mid for i in range(4) for mid in population.shard(i)]
-    assert sorted(union) == sorted(population.ids) and len(set(union)) == 85
+    assert sorted(union) == sorted(population.ids) and len(set(union)) == 86
 
 
 def test_the_population_identity_is_deterministic(population):
@@ -97,15 +97,15 @@ def test_an_unknown_mutation_id_fails(population):
     assert any("unknown mutation ids ['G99z']" in p for p in problems), problems
 
 
-# ---- 4: a duplicated shard, with the total count still 85 ------------------------------------
+# ---- 4: a duplicated shard, with the total count still 86 ------------------------------------
 def test_a_duplicated_shard_fails_even_when_the_count_is_right(population):
     records, logs = _records(population)
-    # shard 2 (21) twice and shard 1 (21) never: the counts still sum to 85.
-    duplicate = dict(records[2])
+    # shard 0 (22) twice and shard 1 (22) never: the counts still sum to 86.
+    duplicate = dict(records[0])
     records = [records[0], duplicate, records[2], records[3]]
-    assert sum(r["selected_count"] for r in records) == 85
+    assert sum(r["selected_count"] for r in records) == 86
     problems = _coverage(population, records, {0: logs[0], 2: logs[2], 3: logs[3]})
-    assert any("recorded more than once: [2]" in p for p in problems), problems
+    assert any("recorded more than once: [0]" in p for p in problems), problems
     assert any("no record for shard indices [1]" in p for p in problems), problems
     assert any("no shard executed" in p for p in problems), problems
 
@@ -148,7 +148,7 @@ def test_a_record_from_another_commit_fails(population):
 def test_a_wrong_population_size_fails_even_when_consistent():
     small = mp.Population(ids=("G1a", "G1b", "G2a", "G2b"))
     records, logs = _records(small)
-    assert any("claims 85" in p for p in mp.coverage_problems(small, records, logs=logs))
+    assert any("claims 86" in p for p in mp.coverage_problems(small, records, logs=logs))
 
 
 # ---- the transcript, which is where the verdicts actually live ----------------------------------
