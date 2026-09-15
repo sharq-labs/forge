@@ -104,6 +104,9 @@ def test_a_cell_that_declares_nothing_beyond_its_five_numbers_is_unknown():
         ctx.INTERNAL_RESISTANCE_DRIFT_RATIO,
         ctx.SELF_HEATING_RISE_RATIO,
         ctx.POLARIZATION_UNMODELLED_FRACTION,
+        # Audit CAP-02: the declared pulse, screened. No pulse, no answer.
+        ctx.PULSE_POLARIZATION_UNMODELLED_FRACTION,
+        ctx.PULSE_TERMINAL_VOLTAGE_RATIO,
     }
     # The positivity checks still pass, and still prove nothing about whether
     # the Rint representation applies to this cell.
@@ -223,14 +226,19 @@ def test_the_cell_model_accepts_a_pulse_shorter_than_its_rated_pulse():
 
 
 def test_the_cell_model_rejects_a_pulse_longer_than_its_rating_was_measured_over():
-    """A 20 s pulse against a 10 s rating, at a peak current well inside it.
+    """A 90 s pulse against a 10 s rating, at a peak current well inside it.
 
     A peak rating is meaningless without its duration: what it bounds is the
     heat deposited and the overpotential reached during the pulse, and both
     grow with its length. The current condition passes and this one does not.
+
+    90 s rather than the 20 s this test used to declare (audit CAP-02): a 20 s
+    pulse against the 30 s polarization time constant is mid-slew and now also
+    fails the pulse-polarization condition. Three time constants is settled, so
+    the duration rating is the one condition this pulse violates.
     """
     verdicts = assess_models(
-        make_cell(), make_load(pulse_duration=Quantity(20.0, S))
+        make_cell(), make_load(pulse_duration=Quantity(90.0, S))
     )
     assert verdicts[RINT].status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
     assert verdicts[RINT].violated == (ctx.PULSE_DURATION_UTILIZATION,)
@@ -572,7 +580,12 @@ def test_the_cell_model_rejects_an_ohmic_drop_that_reverses_the_terminal_voltage
     )
     verdicts = assess_models(cell, make_load())
     assert verdicts[RINT].status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert verdicts[RINT].violated == (ctx.TERMINAL_VOLTAGE_RATIO,)
+    # Audit CAP-02: the declared 5 A pulse drops 10 V across the same 2 ohm, so
+    # the pulse terminal voltage reverses too -- the same physics at the pulse.
+    assert set(verdicts[RINT].violated) == {
+        ctx.TERMINAL_VOLTAGE_RATIO,
+        ctx.PULSE_TERMINAL_VOLTAGE_RATIO,
+    }
 
 
 def test_the_terminal_voltage_ratio_is_unknown_without_an_operating_point():
@@ -674,7 +687,13 @@ def test_the_runtime_model_rejects_a_depth_of_discharge_the_voltage_cutoff_forbi
         make_cell(), make_load(cutoff_voltage=Quantity(3.9, V))
     )
     assert verdicts[RUNTIME].status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
-    assert verdicts[RUNTIME].violated == (ctx.CUTOFF_CONSISTENCY_MARGIN,)
+    # Audit CAP-02: at a 3.9 V cutoff the declared 5 A pulse bites at 0.875,
+    # above the 0.8125 the continuous current does, so the pulse shift fires
+    # beside the consistency margin -- two independent readings of one cutoff.
+    assert set(verdicts[RUNTIME].violated) == {
+        ctx.CUTOFF_CONSISTENCY_MARGIN,
+        ctx.PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT,
+    }
 
 
 def test_the_cutoff_consistency_is_unknown_when_only_one_cutoff_is_declared():

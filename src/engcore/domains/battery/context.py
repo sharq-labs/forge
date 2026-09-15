@@ -153,6 +153,14 @@ SELF_HEATING_RISE_RATIO = "self_heating_rise_ratio"
 POLARIZATION_SETTLING_RATIO = "polarization_settling_ratio"
 POLARIZATION_UNMODELLED_FRACTION = "polarization_unmodelled_fraction"
 TERMINAL_VOLTAGE_RATIO = "terminal_voltage_ratio"
+#: The declared pulse, screened (audit CAP-02). A pulse used to enter the Rint
+#: claim through its rating conditions and was then never evaluated: these are
+#: the polarization fraction at the pulse's own length, the terminal-voltage
+#: admissibility at the pulse's own current, and how far the pulse moves the
+#: voltage cutoff the constant-current runtime is computed to.
+PULSE_POLARIZATION_UNMODELLED_FRACTION = "pulse_polarization_unmodelled_fraction"
+PULSE_TERMINAL_VOLTAGE_RATIO = "pulse_terminal_voltage_ratio"
+PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT = "pulse_cutoff_state_of_charge_shift"
 SOC_STEP_RESOLUTION_RATIO = "soc_step_resolution_ratio"
 CAPACITY_TEMPERATURE_DRIFT_RATIO = "capacity_temperature_drift_ratio"
 CUTOFF_CONSISTENCY_MARGIN = "cutoff_consistency_margin"
@@ -1603,6 +1611,66 @@ def polarization_unmodelled_fraction(
     return Quantity(min(developed, 1.0 - developed), DIMENSIONLESS)
 
 
+def pulse_cutoff_state_of_charge_shift(
+    *,
+    discharge_current: Quantity | None,
+    pulse_current: Quantity | None,
+    cutoff_voltage: Quantity | None,
+    cutoff_state_of_charge: Quantity | None,
+    voltage_cutoff_soc: Quantity | None,
+    pulse_voltage_cutoff_soc: Quantity | None,
+) -> Quantity | None:
+    """z_cut(I_pulse) - z_stop(I) -- does the pulse stop the run first?
+
+    **Definition.** ``z_stop(I)`` is the runtime model's binding cutoff: the
+    higher of the declared state-of-charge cutoff and the state of charge at
+    which ``OCV(z) - I R_int`` reaches the declared voltage cutoff at the
+    CONTINUOUS current. ``z_cut(I_pulse)`` is that voltage inversion at the
+    declared PULSE current. A heavier current reaches the voltage cutoff at a
+    higher state of charge, so a positive shift means a pulse drawn anywhere
+    below ``z_cut(I_pulse)`` trips the cutoff before the charge the runtime
+    counts to has been reached: the published runtime is then too long.
+
+    **Zero without a declared pulse, and that is not a default.** The load a
+    caller declared with no pulse is its continuous current, whose own voltage
+    cutoff cannot lie above the binding cutoff that already includes it. A
+    pulse the caller did not declare is a declaration they did not make.
+
+    ``None`` -- so UNKNOWN -- without a declared voltage cutoff, pulse or no
+    pulse (the question is about a cutoff that does not exist, and the sibling
+    cutoff-consistency condition is already UNKNOWN there), without a discharge
+    current, or when the inversion could not name a state of charge.
+
+    Not counted: the charge the pulses themselves draw, which needs a duty
+    cycle this domain does not declare.
+    """
+    checked_current = _checked(discharge_current, CURRENT_UNIT, DISCHARGE_CURRENT)
+    if checked_current is None:
+        return None
+    if _checked(cutoff_voltage, VOLTAGE_UNIT, CUTOFF_VOLTAGE) is None:
+        return None
+    pulse = _checked(pulse_current, CURRENT_UNIT, PULSE_CURRENT)
+    if pulse is None:
+        return Quantity(0.0, DIMENSIONLESS)
+    pulse_cut = _checked(
+        pulse_voltage_cutoff_soc, DIMENSIONLESS, "pulse_voltage_cutoff_state_of_charge"
+    )
+    continuous_cut = _checked(
+        voltage_cutoff_soc, DIMENSIONLESS, "voltage_cutoff_state_of_charge"
+    )
+    if pulse_cut is None or continuous_cut is None:
+        return None
+    declared = _checked(
+        cutoff_state_of_charge, DIMENSIONLESS, CUTOFF_STATE_OF_CHARGE
+    )
+    binding = max(
+        value.magnitude_in(DIMENSIONLESS)
+        for value in (declared, continuous_cut)
+        if value is not None
+    )
+    return Quantity(pulse_cut.magnitude_in(DIMENSIONLESS) - binding, DIMENSIONLESS)
+
+
 # =====================================================================
 # Peukert rate-capacity derating
 # =====================================================================
@@ -1806,6 +1874,9 @@ ASSEMBLED_QUANTITIES = frozenset(
         POLARIZATION_SETTLING_RATIO,
         POLARIZATION_UNMODELLED_FRACTION,
         TERMINAL_VOLTAGE_RATIO,
+        PULSE_POLARIZATION_UNMODELLED_FRACTION,
+        PULSE_TERMINAL_VOLTAGE_RATIO,
+        PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT,
         SOC_STEP_RESOLUTION_RATIO,
         CAPACITY_TEMPERATURE_DRIFT_RATIO,
         CUTOFF_CONSISTENCY_MARGIN,
@@ -1879,6 +1950,14 @@ def derived_cell_quantities(
         current=discharge_current,
         internal_resistance=resistance,
     )
+    # The declared pulse, at the same worst state of charge (audit CAP-02).
+    # Absent unless a pulse current is declared, so the condition reading it is
+    # unanswered rather than satisfied for a duty with no pulse.
+    pulse_terminal = terminal_voltage(
+        open_circuit=worst_ocv,
+        current=base.get(PULSE_CURRENT),
+        internal_resistance=resistance,
+    )
     heat = heat_generation(
         current=discharge_current, internal_resistance=resistance
     )
@@ -1909,6 +1988,25 @@ def derived_cell_quantities(
     # of them is unknown, so reachability cannot be satisfied on that basis.
     # Both cutoff conditions are withheld instead.
     cutoff_undeterminable = False
+    # The same inversion at the declared pulse current (audit CAP-02), by the
+    # same route -- the curve for a curve cell, the chord otherwise.
+    pulse_voltage_cutoff_soc = None
+    if base.get(PULSE_CURRENT) is not None:
+        if open_circuit_voltage_curve is not None:
+            pulse_voltage_cutoff_soc = voltage_cutoff_state_of_charge_on_curve(
+                cutoff_voltage=base.get(CUTOFF_VOLTAGE),
+                current=base.get(PULSE_CURRENT),
+                internal_resistance=resistance,
+                curve=open_circuit_voltage_curve,
+            ).value
+        else:
+            pulse_voltage_cutoff_soc = voltage_cutoff_state_of_charge(
+                cutoff_voltage=base.get(CUTOFF_VOLTAGE),
+                current=base.get(PULSE_CURRENT),
+                internal_resistance=resistance,
+                ocv_at_empty=ocv_empty,
+                ocv_at_full=ocv_full,
+            )
     if open_circuit_voltage_curve is not None:
         voltage_cutoff_soc = voltage_cutoff_state_of_charge_on_curve(
             cutoff_voltage=base.get(CUTOFF_VOLTAGE),
@@ -1959,6 +2057,21 @@ def derived_cell_quantities(
         ),
         TERMINAL_VOLTAGE_RATIO: terminal_voltage_ratio(
             terminal=worst_terminal, open_circuit=worst_ocv
+        ),
+        PULSE_TERMINAL_VOLTAGE_RATIO: terminal_voltage_ratio(
+            terminal=pulse_terminal, open_circuit=worst_ocv
+        ),
+        PULSE_POLARIZATION_UNMODELLED_FRACTION: polarization_unmodelled_fraction(
+            duration=base.get(PULSE_DURATION),
+            time_constant=base.get(POLARIZATION_TIME_CONSTANT),
+        ),
+        PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT: pulse_cutoff_state_of_charge_shift(
+            discharge_current=discharge_current,
+            pulse_current=base.get(PULSE_CURRENT),
+            cutoff_voltage=base.get(CUTOFF_VOLTAGE),
+            cutoff_state_of_charge=base.get(CUTOFF_STATE_OF_CHARGE),
+            voltage_cutoff_soc=voltage_cutoff_soc,
+            pulse_voltage_cutoff_soc=pulse_voltage_cutoff_soc,
         ),
         CUTOFF_CONSISTENCY_MARGIN: cutoff_consistency_margin(
             cutoff_state_of_charge=base.get(CUTOFF_STATE_OF_CHARGE),
@@ -2012,4 +2125,5 @@ def derived_cell_quantities(
     if cutoff_undeterminable:
         derived[CUTOFF_CONSISTENCY_MARGIN] = None
         derived[CUTOFF_REACHABILITY_MARGIN] = None
+        derived[PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT] = None
     return {name: value for name, value in derived.items() if value is not None}

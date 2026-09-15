@@ -630,10 +630,16 @@ def test_a_step_that_left_the_domain_is_not_forgotten_by_the_last_step():
         "battery.cell.rint_ocv"
     ].violated
 
-    # 2. The final step is clean, which is why reading it lost the finding.
+    # 2. The final step carries no finding, which is why reading it lost the
+    #    one at step 1. It is no longer IN_DOMAIN: this case declares a 10 s
+    #    pulse against a ~20 s polarization time constant, and since audit
+    #    CAP-02 that pulse is screened at every step and leaves the claim
+    #    UNKNOWN there. A gap, not a finding -- so the final step still has
+    #    nothing violated, which is the fact this test is about.
+    assert run.final.validity["battery.cell.rint_ocv"].violated == ()
     assert (
         run.final.validity["battery.cell.rint_ocv"].status
-        is ValidityStatus.IN_DOMAIN
+        is not ValidityStatus.OUTSIDE_VALIDATED_DOMAIN
     )
 
     # 3. The combination over the march is not clean, and that is what the

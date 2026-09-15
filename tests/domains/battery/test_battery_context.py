@@ -921,6 +921,10 @@ def test_every_derived_name_is_actually_produced_by_the_assembler():
             ctx.PEUKERT_EXTRAPOLATION_RATIO,
             ctx.PEUKERT_CAPACITY_RATIO,
             ctx.PEUKERT_TEMPERATURE_DRIFT_RATIO,
+            # Audit CAP-02: the declared pulse, screened.
+            ctx.PULSE_POLARIZATION_UNMODELLED_FRACTION,
+            ctx.PULSE_TERMINAL_VOLTAGE_RATIO,
+            ctx.PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT,
         }
     }
     assert named == produced

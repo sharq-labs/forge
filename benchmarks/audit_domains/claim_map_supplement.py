@@ -28,4 +28,23 @@ SUPPLEMENT: dict[tuple[str, str], dict] = {
         "clause": "UNKNOWN unless the fluid declares freezing_temperature.",
         "all_of": ["freezing_temperature"],
     },
+    # ---- battery.cell: the declared pulse, screened (audit CAP-02) ---------
+    ("battery.cell", "pulse_polarization_unmodelled_fraction"): {
+        "clause": "UNKNOWN unless pulse_duration and polarization_time_constant are declared.",
+        "all_of": ["pulse_duration", "polarization_time_constant"],
+        "reading": "A conservative screen: past its bound it is also UNKNOWN, with the screen reason.",
+    },
+    ("battery.cell", "pulse_terminal_voltage_ratio"): {
+        "clause": "UNKNOWN unless a pulse current and the operating point are declared.",
+        "all_of": ["pulse_current", "state_of_charge", "discharge_current"],
+        "reading": "'the operating point' is the state and control, as for terminal_voltage_ratio.",
+    },
+    ("battery.cell", "pulse_cutoff_state_of_charge_shift"): {
+        "clause": "UNKNOWN unless a voltage cutoff and a discharge current are declared.",
+        "all_of": ["cutoff_voltage", "discharge_current"],
+        "reading": (
+            "Zero and satisfied when no pulse is declared: the pulse is not a "
+            "prerequisite, because a constant load cannot shift its own cutoff."
+        ),
+    },
 }

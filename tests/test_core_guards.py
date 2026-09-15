@@ -208,8 +208,13 @@ EXPECTED_RESERVING_MODELS = 15
 # -- to BOTH CSTR records, each reserved because each is derived. Both records
 # claimed "single liquid phase, no boiling" and checked it against nothing but
 # a fluid-independent 250-1000 K band.
-EXPECTED_CONDITION_NAMES = 73
-EXPECTED_RESERVED_NAMES = 55
+# 73 -> 76 and 55 -> 58 in the same stream (CAP-02): the declared pulse,
+# screened -- pulse_polarization_unmodelled_fraction and
+# pulse_terminal_voltage_ratio on the Rint model, and
+# pulse_cutoff_state_of_charge_shift on the constant-current runtime. A pulse
+# entered the Rint claim through its ratings and was never evaluated.
+EXPECTED_CONDITION_NAMES = 76
+EXPECTED_RESERVED_NAMES = 58
 
 
 def test_the_only_modules_the_walk_lost_are_declared_optional_ones():
