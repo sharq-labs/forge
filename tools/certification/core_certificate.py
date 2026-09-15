@@ -182,6 +182,11 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "the Core Freeze V2 verifier that binds the Hybrid UQ contract and is "
      "executed by the pinned certificate-child freeze self-check; weakening it "
      "would change whether V2 is accepted without changing Hybrid UQ source"),
+    ("tools/certification/core_freeze_v3.py",
+     "the Core Freeze V3 verifier the pinned certificate-child freeze self-check "
+     "executes since V3 superseded the V2 serialization contract; weakening it would "
+     "change whether the hardened routed-uncertainty contract is accepted without "
+     "changing Hybrid UQ source"),
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),

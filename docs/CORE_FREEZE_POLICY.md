@@ -287,3 +287,35 @@ The V2 surface is `api_snapshot.build(modules=api_snapshot.V2_CANONICAL_MODULES)
 - the thin-ridge repair still being in force.
 
 A later commit that fails any of these is not a descendant of Core Freeze V2.
+
+Since Core Freeze V3 (section 13) the V2 serialization contract is superseded for descendants; the V2
+manifest, assurance and tag remain the record of that freeze and are never rewritten.
+
+## 13. Core Freeze V3 (hardened routed uncertainty)
+
+The main adversarial audit of 2026-09-15 found Hybrid UQ records accepted while contradicting their own
+numbers. The fixes re-derive every route claim from the carried numbers on read, commit the multistart policy
+actually used, and cover the log-likelihood in the grid digest. Core Freeze V2's identity references are
+literal records of exactly the refused kind, so the V2 serialization contract cannot hold on a correct tree.
+Under section 10 an incompatible change is a new freeze: Core Freeze V3, tagged `v3.0-core-freeze`.
+
+| key | value |
+| --- | --- |
+| frozen API | unchanged: the V2 surface and pinned V2 snapshot bytes, the V1 frozen digest above |
+| V3 manifest | `certification/core_freeze_v3.json` |
+| V3 verifier | `python -m tools.certification.core_freeze_v3 --verify` |
+| superseded | the Core Freeze V2 serialization inventory and identity references (history untouched) |
+| audit | `docs/audits/MAIN_AUDIT_2026-09-15.md` |
+
+The V3 verifier binds on:
+
+- Core Freeze V1 still verifying, with its manifest unchanged;
+- the Core Freeze V2 manifest bytes unchanged (history, recorded by digest);
+- the live frozen API surface being exactly the one Core Freeze V2 recorded, so V3 moves no shape;
+- the V3 serialization inventory and identity reference digests, over records consistent with their numbers;
+- the V2 identity references still being refused by the hardened readers;
+- the route vocabulary and the thin-ridge repair;
+- the certificate covering every area in which the audit found a false accept.
+
+Shape changes the audit showed are needed are NOT part of V3. They are stated in the V3 manifest as deferred
+non-claims and require their own compatibility review and freeze.

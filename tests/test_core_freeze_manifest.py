@@ -27,7 +27,7 @@ pytestmark = pytest.mark.skipif(
     not (REPO / ".git").exists(), reason="the freeze verifier reads git state"
 )
 
-from tools.certification import core_freeze, core_freeze_v2  # noqa: E402
+from tools.certification import core_freeze, core_freeze_v3  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -166,9 +166,11 @@ def test_a_descendant_that_keeps_the_contract_still_verifies(live, manifest):
     sees when a later commit refactors internals. The byte-level checks must
     become informational, and the contract checks must still bind and pass.
 
-    This is also a certificate-child self-check. Once Core V2 exists, the same
-    trusted check requires the full V2 verifier to pass against the freshly
-    generated certificate, so V2 cannot evade the certificate-child lifecycle.
+    This is also a certificate-child self-check. The same trusted check requires
+    the full verifier of the binding freeze to pass against the freshly generated
+    certificate. That was Core Freeze V2; since the main audit (2026-09-15) V2's
+    serialization contract is superseded and Core Freeze V3 binds, so V3 cannot
+    evade the certificate-child lifecycle either.
     """
     later = copy.deepcopy(manifest)
     later["trees"]["src"] = "0" * 40
@@ -179,8 +181,8 @@ def test_a_descendant_that_keeps_the_contract_still_verifies(live, manifest):
     informational = {c.name for c in result.checks if not c.binding}
     assert {"domain.digest", "bytes.reproduction_sha256"} <= informational
 
-    v2_result = core_freeze_v2.verify(REPO)
-    assert v2_result.ok, "\nCore Freeze V2:\n" + v2_result.render()
+    v3_result = core_freeze_v3.verify(REPO)
+    assert v3_result.ok, "\nCore Freeze V3:\n" + v3_result.render()
 
 
 def test_on_the_exact_freeze_the_domain_digest_binds(live, manifest):
