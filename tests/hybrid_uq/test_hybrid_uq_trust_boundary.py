@@ -7,7 +7,9 @@ module is that mutation's target suite.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
+import math
 
 import numpy as np
 import pytest
@@ -121,3 +123,69 @@ def test_u_a_derivative_that_never_stabilizes_produces_no_covariance():
     local = [c for c in result.considered if c["route"] == "LOCAL_GAUSSIAN"]
     assert local and local[0]["outcome"] == "REFUSED" and "did not stabilize" in local[0]["detail"]
     assert result.parameter_names == P.parameters.names
+
+
+# ---------------------------------------------------------------------------
+# a supplied LocalSensitivity is a trust boundary
+# ---------------------------------------------------------------------------
+def _honest_supplied():
+    P = S.affine()
+    calibration = P.calibrate()
+    reconstructed = reconstruct_local_sensitivity(calibration, P.observations, P.forward)
+    return P, calibration, dataclasses.replace(reconstructed, method="supplied", evaluation_count=0)
+
+
+def _route_with(P, calibration, sensitivity):
+    return local_gaussian_posterior(calibration, P.observations, P.forward, multistart=None, sensitivity=sensitivity)
+
+
+@pytest.mark.parametrize("field,tamper,message", [
+    ("sigma", lambda s: tuple(v * 1.5 for v in s.sigma), "observation sigmas"),                        # A
+    ("observed", lambda s: tuple(v + 0.01 for v in s.observed), "observed values"),                   # B
+    ("observation_units", lambda s: ("volt",) * len(s.observation_units), "observation units"),        # C
+    ("inference_transforms", lambda s: ("identity", "log"), "inference transforms"),                  # D
+    ("parameter_names", lambda s: tuple(reversed(s.parameter_names)), "parameter names"),
+], ids=["A_sigma", "B_observed", "C_units", "D_transforms", "names"])
+def test_a_to_d_a_record_with_the_same_ids_and_estimate_but_other_material_state_is_rejected(field, tamper, message):
+    P, calibration, supplied = _honest_supplied()
+    tampered = dataclasses.replace(supplied, **{field: tamper(supplied)})
+    assert tampered.parameter_set_digest == supplied.parameter_set_digest and tampered.estimate == supplied.estimate
+    assert tampered.observation_keys == supplied.observation_keys and tampered.dataset_id == supplied.dataset_id
+    with pytest.raises(HybridUQError, match=message):
+        _route_with(P, calibration, tampered)
+
+
+@pytest.mark.parametrize("field,tamper", [
+    ("predicted", lambda s: (math.nan,) + s.predicted[1:]),                                           # E
+    ("jacobian", lambda s: ((math.inf, s.jacobian[0][1]),) + s.jacobian[1:]),                        # F
+    ("steps", lambda s: (0.0,) + s.steps[1:]),                                                        # G
+    ("steps", lambda s: (-1e-4,) + s.steps[1:]),
+    ("steps", lambda s: (math.inf,) + s.steps[1:]),
+], ids=["E_predicted_nan", "F_jacobian_inf", "G_step_zero", "G_step_negative", "G_step_inf"])
+def test_e_to_g_a_record_with_non_finite_numbers_or_an_impossible_step_is_not_a_record(field, tamper):
+    _P, _calibration, supplied = _honest_supplied()
+    with pytest.raises(HybridUQError, match="finite"):
+        dataclasses.replace(supplied, **{field: tamper(supplied)})
+
+
+def test_h_predictions_or_a_jacobian_that_disagree_with_the_forward_evaluator_are_rejected():
+    P, calibration, supplied = _honest_supplied()
+    shifted = dataclasses.replace(supplied, predicted=tuple(v + 0.5 * s for v, s in zip(supplied.predicted, supplied.sigma)))
+    with pytest.raises(HybridUQError, match="prediction at the estimate"):
+        _route_with(P, calibration, shifted)
+    # a Jacobian whose slope column is 20% too large: the covariance it implies is materially too narrow
+    scaled = dataclasses.replace(supplied, jacobian=tuple((row[0], 1.2 * row[1]) for row in supplied.jacobian))
+    with pytest.raises(HybridUQError, match="Jacobian column for 'theta2'"):
+        _route_with(P, calibration, scaled)
+
+
+def test_i_an_honest_supplied_sensitivity_is_still_used_and_gives_the_reconstructed_posterior():
+    P, calibration, supplied = _honest_supplied()
+    from_supplied = _route_with(P, calibration, supplied)
+    reconstructed = local_gaussian_posterior(calibration, P.observations, P.forward, multistart=None)
+    assert from_supplied.sensitivity_digest == supplied.digest
+    assert from_supplied.claim is reconstructed.claim
+    assert np.array_equal(np.asarray(from_supplied.covariance), np.asarray(reconstructed.covariance))
+    # a supplied analytic Jacobian, exact rather than finite-difference, is within the agreement and is the one used
+    analytic = dataclasses.replace(supplied, jacobian=tuple((1.0, float(x)) for x in P.x))
+    assert _route_with(P, calibration, analytic).sensitivity_digest == analytic.digest

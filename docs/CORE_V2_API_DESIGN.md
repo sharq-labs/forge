@@ -88,6 +88,14 @@ Every V2 record carries its `approximation_class`. `ApproximationClass.exact_pos
 - **reconstructed** from the calibrated estimate with the caller's own forward evaluator, by finite differences that must be shown to converge. Each column starts at 1e-5 of the declared inference range (central, or one-sided toward the interior at a bound) and is recomputed at half the step, nested, until two successive estimates agree to `DERIVATIVE_RELATIVE_TOLERANCE` = 1e-3 of the sigma-weighted column plus evaluation roundoff. The coarser estimate of the agreeing pair is kept, so a column already accurate at the first step is unchanged. At least 4p + 1 evaluations. A derivative that does not stabilize before roundoff or the coordinate's resolution is reached raises `RouteRefusedError`: there is no curvature to report;
 - **preserved**, by constructing the record directly from a domain's analytic or retained Jacobian.
 
+A preserved record passed to `local_gaussian_posterior(..., sensitivity=)` is a **trust boundary**, and identifiers are not enough to cross it:
+
+- **Equal, with no tolerance, to the request:** parameter-set digest, parameter names, inference transforms, estimate, observation keys, dataset id, observation units, observed values and sigmas. They are copies of data the request already holds.
+- **Structurally valid as a record:** finite estimate, observed, predicted and Jacobian values; positive finite steps and sigmas.
+- **Verified against the forward evaluator the route is given:** `predicted` must agree with the evaluator at the estimate to 1e-6 sigma. Each sigma-weighted Jacobian column must agree with the convergence-checked finite difference to 1% of the column.
+
+Disagreement raises `HybridUQError`. If the verification cannot be completed, the route refuses: a refused point gives `FORWARD_INADMISSIBLE_NEAR_ESTIMATE`, and an unstable derivative raises `RouteRefusedError`. This establishes that a supplied Jacobian is consistent with this forward model at this point. It does not establish where the numbers came from. The supplied values, not the finite difference, are the ones the route uses.
+
 ```python
 @dataclass(frozen=True)
 class LocalSensitivity:

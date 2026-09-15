@@ -232,6 +232,11 @@ class LocalSensitivity:
             raise HybridUQError(f"the jacobian must be {n} x {p}")
         if not all(math.isfinite(v) for row in self.jacobian for v in row):
             raise HybridUQError("the jacobian must be finite")
+        for label in ("estimate", "observed", "predicted"):
+            if not all(math.isfinite(v) for v in getattr(self, label)):
+                raise HybridUQError(f"{label} must be finite")
+        if not all(s > 0.0 and math.isfinite(s) for s in self.steps):
+            raise HybridUQError("finite-difference steps must be finite and positive")
         if not all(s > 0.0 and math.isfinite(s) for s in self.sigma):
             raise HybridUQError("observation sigmas must be finite and positive")
         if self.method not in ("central_difference", "supplied"):
@@ -337,3 +342,80 @@ def reconstruct_local_sensitivity(
         sigma=tuple(sigma), predicted=tuple(base), jacobian=tuple(map(tuple, jac)), steps=steps, one_sided=one_sided,
         dataset_id=observations.dataset_id, evaluation_count=evaluations, method="central_difference",
     )
+
+
+#: A supplied prediction at the estimate must reproduce the forward evaluator's to this many observation sigmas.
+SUPPLIED_PREDICTION_AGREEMENT_SD = 1.0e-6
+#: A supplied Jacobian column must agree with the convergence-checked finite-difference column, in the
+#: sigma-weighted 2-norm, to this fraction of the column: ten times the tolerance the finite difference is held to.
+SUPPLIED_JACOBIAN_AGREEMENT = 1.0e-2
+
+
+def _bind_supplied_sensitivity(
+    sensitivity: LocalSensitivity,
+    calibration: CalibrationResult,
+    observations: ObservationSet,
+    forward: ForwardEvaluator,
+) -> int:
+    """Hold a caller-supplied sensitivity to the request before it may shape a route. Returns the evaluations spent.
+
+    A supplied record is a trust boundary. Identifiers are not enough: a stale or fabricated record can keep the
+    parameter-set digest, the keys and the estimate while carrying other observed values, sigmas, units or
+    transforms, and every one of those moves the covariance, the stationarity test and the claim. So every field
+    the request itself determines must be EQUAL to it -- no tolerance, because they are copies of the same data.
+
+    ``predicted`` and ``jacobian`` are not copies of anything the request holds. They are VERIFIED against the forward
+    evaluator the route is given: the prediction at the estimate to ``SUPPLIED_PREDICTION_AGREEMENT_SD`` sigma, and
+    each Jacobian column against the convergence-checked finite difference to ``SUPPLIED_JACOBIAN_AGREEMENT``. That
+    establishes agreement with this forward model at this point, not where the numbers came from, and it is what
+    the covariance needs. The supplied values are then the ones used.
+
+    Raises :class:`HybridUQError` on any disagreement, and :class:`RouteRefusedError` when the verification itself
+    cannot be completed (an inadmissible point, a derivative that does not stabilize).
+    """
+    if not isinstance(sensitivity, LocalSensitivity):
+        raise HybridUQError("sensitivity must be a LocalSensitivity")
+    parameters = calibration.spec.parameters
+    transforms = transforms_of(parameters)
+    observed, sigma = observations.numeric_vectors()
+    units = tuple(o.value.units for o in observations.observations)
+    expected = {
+        "parameter set": (sensitivity.parameter_set_digest, parameters.digest),
+        "parameter names": (tuple(sensitivity.parameter_names), tuple(parameters.names)),
+        "inference transforms": (tuple(sensitivity.inference_transforms), transforms),
+        "estimate": (tuple(sensitivity.estimate), tuple(float(v) for v in calibration.estimate_vector)),
+        "observation keys": (tuple(sensitivity.observation_keys), tuple(observations.keys)),
+        "dataset": (sensitivity.dataset_id, observations.dataset_id),
+        "observation units": (tuple(sensitivity.observation_units), units),
+        "observed values": (tuple(sensitivity.observed), tuple(float(v) for v in observed)),
+        "observation sigmas": (tuple(sensitivity.sigma), tuple(float(v) for v in sigma)),
+    }
+    mismatches = [label for label, (found, wanted) in expected.items() if found != wanted]
+    if mismatches:
+        raise HybridUQError(f"the supplied sensitivity is not this calibration's: {mismatches} differ")
+
+    lower, upper = inference_bounds(parameters)
+    references = tuple(o.value for o in observations.observations)
+    keys = observations.keys
+
+    def fun(z):
+        return evaluate(forward, to_natural(z, transforms), keys, units, references)
+
+    base, jac, _steps, _one_sided, evaluations = central_difference(
+        fun, to_inference(calibration.estimate_vector, transforms), lower, upper, DEFAULT_RELATIVE_STEP, weights=sigma)
+    predicted_sd = np.abs(np.asarray(sensitivity.predicted) - base) / sigma
+    if float(np.max(predicted_sd)) > SUPPLIED_PREDICTION_AGREEMENT_SD:
+        raise HybridUQError(
+            f"the supplied sensitivity does not agree with the forward evaluator: its prediction at the estimate is "
+            f"{float(np.max(predicted_sd)):.3g} sigma from the evaluator's (at most {SUPPLIED_PREDICTION_AGREEMENT_SD:g})")
+    supplied = np.asarray(sensitivity.jacobian) / sigma[:, None]
+    reference = jac / sigma[:, None]
+    for i in range(reference.shape[1]):
+        size = max(float(np.linalg.norm(supplied[:, i])), float(np.linalg.norm(reference[:, i])))
+        gap = float(np.linalg.norm(supplied[:, i] - reference[:, i]))
+        if gap > SUPPLIED_JACOBIAN_AGREEMENT * size:
+            raise HybridUQError(
+                f"the supplied sensitivity does not agree with the forward evaluator: its Jacobian column for "
+                f"{parameters.names[i]!r} differs from the converged finite difference by {gap / size if size else math.inf:.3g} "
+                f"of the column (at most {SUPPLIED_JACOBIAN_AGREEMENT:g})")
+    return evaluations

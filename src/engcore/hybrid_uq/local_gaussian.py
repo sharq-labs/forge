@@ -32,7 +32,7 @@ from ._records import (
     require_schema,
 )
 from .sensitivity import (
-    LocalSensitivity, _DerivativeNotConverged, evaluate, inference_bounds, reconstruct_local_sensitivity, to_inference,
+    LocalSensitivity, _bind_supplied_sensitivity, _DerivativeNotConverged, evaluate, inference_bounds, reconstruct_local_sensitivity, to_inference,
     to_natural, transforms_of,
 )
 from .vocabulary import (
@@ -554,17 +554,12 @@ def local_gaussian_posterior(
         except RouteRefusedError:
             return _refused(calibration, observations, RouteReason.FORWARD_INADMISSIBLE_NEAR_ESTIMATE)
     else:
-        if not isinstance(sensitivity, LocalSensitivity):
-            raise HybridUQError("sensitivity must be a LocalSensitivity")
-        mismatches = []
-        if sensitivity.parameter_set_digest != parameters.digest:
-            mismatches.append("parameter set")
-        if tuple(sensitivity.observation_keys) != tuple(keys) or sensitivity.dataset_id != observations.dataset_id:
-            mismatches.append("observations")
-        if not np.allclose(sensitivity.estimate, estimate, rtol=1e-12, atol=0.0):
-            mismatches.append("estimate")
-        if mismatches:
-            raise HybridUQError(f"the supplied sensitivity is not this calibration's: {mismatches} differ")
+        try:
+            evaluations += _bind_supplied_sensitivity(sensitivity, calibration, observations, forward)
+        except _DerivativeNotConverged:
+            raise
+        except RouteRefusedError:
+            return _refused(calibration, observations, RouteReason.FORWARD_INADMISSIBLE_NEAR_ESTIMATE)
     evaluations += sensitivity.evaluation_count
 
     p, n = len(names), len(keys)
