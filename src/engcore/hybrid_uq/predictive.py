@@ -2,7 +2,8 @@
 
 LINEARIZED_PREDICTIVE_UQ: mean g(z_hat), parameter variance diag(G Sigma G^T), measurement variance sigma^2,
 total = the sum. Exact only when g is affine over the posterior; the +/-2 sd principal-axis probes compare g
-with its linear extrapolation and downgrade when they disagree.
+with its linear extrapolation and downgrade when they disagree, and a probe that was not evaluated -- outside
+the bounds, refused, or not run at all because ``check_nonlinearity=False`` -- downgrades too.
 
 POSTERIOR_GRID: the frozen ``posterior_predictive_uq``, grid-resolution refusal included, re-expressed in the
 same record. Model discrepancy is estimated by neither: every record names MODEL_DISCREPANCY_NOT_MODELLED.
@@ -176,13 +177,22 @@ def linearized_predictive_uq(
     def g(z):
         return evaluate(predict, to_natural(z, transforms), keys, units, references)
 
-    try:
-        g0, G, _steps, _one_sided, _count = central_difference(g, z0, lower, upper, DEFAULT_RELATIVE_STEP)
-    except RouteRefusedError as exc:
-        raise RouteRefusedError(f"the predictive forward model refused a point near the estimate: {exc}") from None
-    parameter_var = np.einsum("ij,jk,ik->i", G, cov, G)
-    parameter_sd = np.sqrt(np.maximum(parameter_var, 0.0))
     measurement = [None if s.observation_sigma is None else float(s.observation_sigma.magnitude_in(s.unit)) for s in specs]
+    try:
+        g0, G, _steps, _one_sided, _count = central_difference(
+            g, z0, lower, upper, DEFAULT_RELATIVE_STEP, weights=[math.nan if m is None else m for m in measurement])
+    except RouteRefusedError as exc:
+        raise RouteRefusedError(f"the predictive derivative could not be established near the estimate: {exc}") from None
+    parameter_var = np.einsum("ij,jk,ik->i", G, cov, G)
+    # g Sigma g^T of a valid covariance is non-negative up to roundoff, which is bounded by |g| |Sigma| |g|^T. A
+    # variance below that bound is a defect in the covariance and raises; it is never turned into zero uncertainty.
+    roundoff = 64.0 * float(np.finfo(float).eps) * np.einsum("ij,jk,ik->i", np.abs(G), np.abs(cov), np.abs(G))
+    if np.any(parameter_var < -roundoff):
+        worst = int(np.argmin(parameter_var + roundoff))
+        raise HybridUQError(f"the parameter variance of {keys[worst]!r} is {float(parameter_var[worst]):.3g}, negative beyond "
+                            f"roundoff ({float(-roundoff[worst]):.3g}): the posterior covariance is not a covariance")
+    parameter_var = np.maximum(parameter_var, 0.0)
+    parameter_sd = np.sqrt(parameter_var)
     total_sd = np.asarray([math.sqrt(parameter_var[i] + (m ** 2 if m is not None else 0.0)) for i, m in enumerate(measurement)])
 
     nonlinearity = None
@@ -206,6 +216,10 @@ def linearized_predictive_uq(
                     continue
                 scale = np.where(total_sd > 0.0, total_sd, 1.0)
                 nonlinearity = max(nonlinearity, float(np.max(np.abs(value - (g0 + sign * G @ delta)) / scale)))
+    else:
+        # A caller who chooses not to measure linearity has not shown it: every probe counts as not evaluated, so
+        # the claim is capped at DOWNGRADED. predictive_nonlinearity stays None, which says nothing was measured.
+        skipped = 2 * len(z0)
     reasons = set(posterior.diagnostics.downgrades)
     if nonlinearity is not None and nonlinearity > PREDICTIVE_NONLINEARITY_DOWNGRADE:
         reasons.add(RouteReason.PREDICTIVE_NONLINEAR)

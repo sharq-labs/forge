@@ -47,8 +47,9 @@ def test_an_affine_model_far_from_its_bounds_gives_the_exact_gaussian():
 def test_the_cost_is_order_p_plus_multistart():
     P = S.affine()
     calibration, post = _route(P, multistart=None)
-    # 2p + 1 Jacobian calls and 2p principal-axis probes: 4p + 1
-    assert post.diagnostics.evaluation_count == 4 * 2 + 1
+    # 4p + 1 Jacobian calls (a step and its half per column, to show the derivative converged) and 2p
+    # principal-axis probes: 6p + 1
+    assert post.diagnostics.evaluation_count == 6 * 2 + 1
 
 
 def test_intervals_are_labelled_and_mapped_back_through_a_log_transform():

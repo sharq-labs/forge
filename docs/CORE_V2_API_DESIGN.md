@@ -85,8 +85,16 @@ Every V2 record carries its `approximation_class`. `ApproximationClass.exact_pos
 
 `calibrate` returns no Jacobian, and its return contract is frozen. V2 does not modify it. It gives the local sensitivity its own record, which can be built two ways:
 
-- **reconstructed** from the calibrated estimate with the caller's own forward evaluator: 2p + 1 evaluations, central differences;
+- **reconstructed** from the calibrated estimate with the caller's own forward evaluator, by finite differences that must be shown to converge. Each column starts at 1e-5 of the declared inference range (central, or one-sided toward the interior at a bound) and is recomputed at half the step, nested, until two successive estimates agree to `DERIVATIVE_RELATIVE_TOLERANCE` = 1e-3 of the sigma-weighted column plus evaluation roundoff. The coarser estimate of the agreeing pair is kept, so a column already accurate at the first step is unchanged. At least 4p + 1 evaluations. A derivative that does not stabilize before roundoff or the coordinate's resolution is reached raises `RouteRefusedError`: there is no curvature to report;
 - **preserved**, by constructing the record directly from a domain's analytic or retained Jacobian.
+
+A preserved record passed to `local_gaussian_posterior(..., sensitivity=)` is a **trust boundary**, and identifiers are not enough to cross it:
+
+- **Equal, with no tolerance, to the request:** parameter-set digest, parameter names, inference transforms, estimate, observation keys, dataset id, observation units, observed values and sigmas. They are copies of data the request already holds.
+- **Structurally valid as a record:** finite estimate, observed, predicted and Jacobian values; positive finite steps and sigmas.
+- **Verified against the forward evaluator the route is given:** `predicted` must agree with the evaluator at the estimate to 1e-6 sigma. Each sigma-weighted Jacobian column must agree with the convergence-checked finite difference to 1% of the column.
+
+Disagreement raises `HybridUQError`. If the verification cannot be completed, the route refuses: a refused point gives `FORWARD_INADMISSIBLE_NEAR_ESTIMATE`, and an unstable derivative raises `RouteRefusedError`. This establishes that a supplied Jacobian is consistent with this forward model at this point. It does not establish where the numbers came from. The supplied values, not the finite difference, are the ones the route uses.
 
 ```python
 @dataclass(frozen=True)
@@ -101,7 +109,7 @@ class LocalSensitivity:
     sigma: tuple[float, ...]
     predicted: tuple[float, ...]               # at the estimate, observation units
     jacobian: tuple[tuple[float, ...], ...]    # d predicted / d inference coordinate, n x p
-    steps: tuple[float, ...]                   # inference-coordinate steps (0.0 when supplied)
+    steps: tuple[float, ...]                   # inference-coordinate steps of the accepted estimates; positive and finite
     one_sided: tuple[bool, ...]
     dataset_id: str
     evaluation_count: int
@@ -199,6 +207,15 @@ def local_gaussian_posterior(
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 
+**A reparameterization keeps unit semantics.** `reparameterized(matrix, names, units, label)` forms linear combinations of inference coordinates, so every output row must be dimensionally meaningful.
+
+- **Coordinate units:** an `identity` coordinate is in its declared unit. A `log` coordinate is `dimensionless`: it is ln(value / declared unit), a pure number whose origin depends on that declared unit, which the parent parameterization identity records. A `linear_map` coordinate is in its recorded unit.
+- **Coefficients:** a plain number is dimensionless. A `Quantity` carries its unit, as the K2 alignment's `Quantity(-1/T*, "1/kelvin")` does.
+- **Rows:** every term (coefficient × coordinate) of output row i must be compatible with `units[i]`, and is converted into it, so a volt coordinate reported in millivolts is scaled by 1000. Incompatible terms raise `HybridUQError`, as in volt + ampere, or a correct combination under a wrong output unit.
+- **Offset units:** degrees Celsius and similar are refused, except in an unscaled copy of one coordinate into its own unit. A sum on an interval scale has no meaning.
+
+**A covariance is validated, never repaired.** Every non-refused `LocalGaussianPosterior` and `HybridUQResult` covariance must be finite, with a positive diagonal. It must also be symmetric and positive semidefinite, judged on its correlation matrix. Asymmetry may be at most 1e-10 in correlation units, and the smallest correlation eigenvalue at least −16·p·ε. Correlation units make the test independent of parameter scales: a raw-eigenvalue tolerance would pass a negative direction along a parameter whose variance is many orders smaller. A matrix singular only within roundoff is accepted. A materially indefinite one, such as `[[1, 2], [2, 1]]`, raises `HybridUQError`, whether it is constructed or read back. Eigenvalues are never clipped and variances never replaced. A linearized predictive variance g Σ gᵀ below −64·ε·(|g| |Σ| |g|ᵀ) raises instead of becoming zero uncertainty.
+
 ### 3.4 Identifiability (2)
 
 ```python
@@ -257,7 +274,7 @@ def grid_predictive_uncertainty(
 ) -> RoutedPredictiveUncertainty
 ```
 
-- **Linearized:** G by central differences in inference coordinates, 2p + 1 calls. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated.
+- **Linearized:** G by the same convergence-checked finite differences in inference coordinates, at least 4p + 1 calls; a derivative that does not stabilize raises `RouteRefusedError`. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated. With `check_nonlinearity=False` no probe is run. The prediction is then DOWNGRADED with `NONLINEARITY_PROBE_INCOMPLETE` and `predictive_nonlinearity` is `None`: skipping the measurement of an assumption is not evidence that it holds. The numbers are the same either way; only the claim differs.
 - **Refused posterior:** raises `RouteRefusedError`.
 - **Grid:** wraps the frozen `posterior_predictive_uq`, including its grid-resolution refusal. The epistemic part becomes `parameter_standard_uncertainty`, the declared sigma becomes `measurement_standard_uncertainty`, and V1's exact mixture interval is kept as `total_interval`.
 - **Model discrepancy:** never estimated; every record names `MODEL_DISCREPANCY_NOT_MODELLED`.
@@ -288,6 +305,16 @@ class HybridUQResult:
     identifiability: RoutedIdentifiability | None
     # the PosteriorGrid itself is data-plane: held on the instance (compare=False), not serialized
     # to_dict / from_dict / digest
+```
+
+**One truth per record.** A `HybridUQResult` holds its names, mean, covariance and claim at the top level and again in the records it carries, and the two must agree. A contradiction raises `HybridUQError`, whether the record is constructed or read back.
+
+- **`LOCAL_GAUSSIAN`:** coordinates are `inference`. Names, claim, mean (= `inference_point`) and covariance are equal to the local posterior's. Identifiability is present, read from `LOCAL_GAUSSIAN_APPROXIMATION`, and names the posterior's `parameterization_digest` and claim.
+- **Grid routes:** coordinates are `natural`. `grid_summary.route` is the decision. Identifiability is read from `POSTERIOR_GRID`, SUPPORTED, and carries the grid-axes digest of the top-level names. A supplied grid carries no local posterior; a rebuilt grid carries the one it was designed from, over the same names. When the data-plane grid is held, its names, mean, covariance and digest must match too.
+- **`REFUSED`:** coordinates are `none`, and a carried local posterior is the refused one, over the same names.
+- **Every route:** identifiability describes the same parameters.
+
+```python
 
 def route_uncertainty(
     *, grid: PosteriorGrid | None = None,
@@ -355,13 +382,15 @@ def routed_predictive_uncertainty(
 |---|---|
 | `BOUND_WITHIN_3_SD` | a bound within 3 sd of the estimate |
 | `NONLINEAR_WITHIN_2_SD` | 0.10 < nonlinearity index ≤ 0.50 |
-| `NONLINEARITY_PROBE_INCOMPLETE` | a probe fell outside the bounds or was inadmissible |
+| `NONLINEARITY_PROBE_INCOMPLETE` | a ±2 sd probe was not evaluated: it fell outside the bounds, was inadmissible, or (predictive only) was never run because `check_nonlinearity=False` |
 | `POORLY_SCALED_PARAMETERIZATION` | raw cond(J_w) > 1/√ε while the equilibrated condition is representable |
 | `GLOBAL_UNIQUENESS_NOT_ASSESSED` | `multistart=None` |
 | `MULTISTART_INCOMPLETE` | fewer than half the starts converged |
 | `PREDICTIVE_NONLINEAR` | predictive only |
 
 **Router-only reasons:** `GRID_NOT_SUPPLIED`, `GRID_BEYOND_VALIDATED_DIMENSION`, `GRID_UNRESOLVED`, `LOCAL_INPUTS_NOT_SUPPLIED`, `GRID_REBUILD_OVER_BUDGET`, `GRID_REBUILD_UNRESOLVED`.
+
+**Refusals with no reason code.** Some local-route refusals happen before there is a posterior record to attach a reason to. The main one is a finite-difference Jacobian that does not converge. `local_gaussian_posterior` raises `RouteRefusedError` for these. The router records them as `LOCAL_GAUSSIAN` with outcome `REFUSED` and the exception text as `detail`, and ends `REFUSED` with no numbers. They get no reason code because `RouteReason` is part of the Core Freeze V2 contract, and a new member would move the V2 frozen digest.
 
 The thresholds are module constants, recorded inside every `RouteDiagnostics.thresholds`. The nonlinearity, bound, condition and multistart thresholds were validated by the HD-UQ review (`benchmarks/core_gap_hd_uq`) on the following:
 

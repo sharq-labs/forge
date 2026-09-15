@@ -62,7 +62,11 @@ HARNESS_PATH = "tests/mutation_guards.py"
 #: The population the certificate claims. A harness change that adds or removes
 #: a mutation must change this in the same (recertified) change, so the number
 #: in the certificate is a decision rather than whatever the list held that day.
-EXPECTED_FORMAL_POPULATION = 79
+#: 79 through Core Freeze V2; 86 from GUARD 27, which added G27a-G27g against the
+#: Hybrid UQ trust boundaries (supplied-sensitivity binding, covariance validity,
+#: unchecked predictive linearity, derivative convergence, routed-record
+#: consistency, dimensional reparameterization, serialized grid-moment binding).
+EXPECTED_FORMAL_POPULATION = 86
 SHARD_COUNT = 4
 
 SHARD_RECORD_SCHEMA = "forge.formal_mutation_shard/1"

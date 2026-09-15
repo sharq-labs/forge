@@ -22,8 +22,10 @@ from ..inference.grid import AdmittedForwardTable, ObservationSet, PosteriorGrid
 from ..scientific.ir.problem import ModelReference
 from ..scientific.twins import TwinReference
 from ..uq.predictive import PredictiveObservableSpec
-from ._records import decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema
-from .identifiability import RoutedIdentifiability, assess_routed_identifiability
+from ._records import (
+    decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
+)
+from .identifiability import RoutedIdentifiability, _grid_axes_digest, assess_routed_identifiability
 from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, local_gaussian_posterior
 from .predictive import RoutedPredictiveUncertainty, grid_digest, grid_predictive_uncertainty, linearized_predictive_uq
 from .sensitivity import to_natural
@@ -99,6 +101,7 @@ class HybridUQResult:
                 raise HybridUQError(f"decision {decision.value} carries a mean and a covariance and is not REFUSED")
             object.__setattr__(self, "mean", tuple(float(v) for v in self.mean))
             object.__setattr__(self, "covariance", tuple(tuple(float(v) for v in row) for row in self.covariance))
+            require_valid_covariance(self.covariance, len(self.mean))
         if decision is RouteDecision.LOCAL_GAUSSIAN and (self.local_posterior is None or self.local_posterior.claim is not claim):
             raise HybridUQError("a LOCAL_GAUSSIAN decision carries the local posterior whose claim it reports")
         if decision in (RouteDecision.GRID_AS_SUPPLIED, RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE) and claim is not RouteClaim.SUPPORTED:
@@ -107,6 +110,80 @@ class HybridUQResult:
             raise HybridUQError("coordinates is natural, inference or none")
         object.__setattr__(self, "parameter_names", tuple(self.parameter_names))
         object.__setattr__(self, "considered", tuple(dict(c) for c in self.considered))
+        self._require_one_truth()
+
+    def _require_one_truth(self) -> None:
+        """Refuse a record whose top-level numbers and the records it carries say different things.
+
+        A serialized result holds its parameter names, mean, covariance and claim twice: at the top level, and in
+        the local posterior and identifiability records it carries. If they could disagree, a reader would have
+        two scientific answers in one record and no way to know which one the router produced.
+        """
+        decision, names, local, ident = self.decision, self.parameter_names, self.local_posterior, self.identifiability
+        if local is not None and not isinstance(local, LocalGaussianPosterior):
+            raise HybridUQError("local_posterior must be a LocalGaussianPosterior")
+        if ident is not None and not isinstance(ident, RoutedIdentifiability):
+            raise HybridUQError("identifiability must be a RoutedIdentifiability")
+        problems = []
+        if decision is RouteDecision.LOCAL_GAUSSIAN:
+            if self.coordinates != "inference":
+                problems.append("coordinates are not 'inference'")
+            if names != local.parameter_names:
+                problems.append("parameter names differ from the local posterior's")
+            if self.mean != local.inference_point:
+                problems.append("mean differs from the local posterior's inference point")
+            if self.covariance != local.covariance:
+                problems.append("covariance differs from the local posterior's")
+            if ident is None:
+                problems.append("no identifiability for a route that reports numbers")
+            else:
+                if ident.approximation_class is not ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION:
+                    problems.append("identifiability was read from another approximation")
+                if ident.parameterization_digest != local.parameterization_digest:
+                    problems.append("identifiability names another parameterization")
+                if ident.route_claim is not self.claim:
+                    problems.append("identifiability carries another claim")
+        elif decision is RouteDecision.REFUSED:
+            if self.coordinates != "none":
+                problems.append("a refused routing has no coordinates")
+            if local is not None and (local.claim is not RouteClaim.REFUSED or names != local.parameter_names):
+                problems.append("a refused routing carries a local posterior that is not the refused one it names")
+        else:
+            if self.coordinates != "natural":
+                problems.append("grid coordinates are not 'natural'")
+            summary = self.grid_summary or {}
+            if summary.get("route") != decision.value:
+                problems.append("grid_summary names another route")
+            moments = _grid_moments_digest(decision.value, names, summary.get("grid_digest"), self.mean, self.covariance)
+            if summary.get("moments_digest") != moments:
+                problems.append("mean and covariance are not the moments grid_summary commits to for its grid")
+            if ident is None:
+                problems.append("no identifiability for a route that reports numbers")
+            else:
+                if ident.approximation_class is not ApproximationClass.POSTERIOR_GRID:
+                    problems.append("identifiability was read from another approximation")
+                if ident.parameterization_digest != _grid_axes_digest(names):
+                    problems.append("identifiability names another parameterization")
+                if ident.route_claim is not RouteClaim.SUPPORTED:
+                    problems.append("identifiability carries another claim")
+            if decision is RouteDecision.GRID_AS_SUPPLIED and local is not None:
+                problems.append("a supplied grid was used, so no local posterior was built")
+            if decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and (local is None or names != local.parameter_names):
+                problems.append("a rebuilt grid carries the local posterior it was designed from, over the same parameters")
+            grid = self.grid
+            if grid is not None:
+                if tuple(grid.parameter_names) != names:
+                    problems.append("parameter names differ from the grid's")
+                if not np.array_equal(np.asarray(self.mean), np.asarray(grid.mean)):
+                    problems.append("mean differs from the grid's")
+                if not np.array_equal(np.asarray(self.covariance), np.asarray(grid.covariance)):
+                    problems.append("covariance differs from the grid's")
+                if summary.get("grid_digest") != grid_digest(grid):
+                    problems.append("grid_summary names another grid")
+        if ident is not None and tuple(ident.report.parameter_names) != names:
+            problems.append("identifiability describes other parameters")
+        if problems:
+            raise HybridUQError(f"the routed result contradicts itself: {problems}")
 
     @property
     def exact_posterior(self) -> bool:
@@ -150,8 +227,22 @@ class HybridUQResult:
         return digest_of(payload)
 
 
+def _grid_moments_digest(route: str, parameter_names, grid_identity, mean, covariance) -> str:
+    """The commitment binding a grid result's reported moments to the grid its summary names.
+
+    ``from_dict`` cannot restore the grid itself (it is data-plane), so without this a serialized grid record could
+    keep its ``grid_digest`` and carry any other mean and valid covariance. The digest is over the canonical route,
+    names, grid digest, mean and covariance, exactly as the record serializes them.
+    """
+    return digest_of({"route": str(route), "parameter_names": [str(n) for n in parameter_names],
+                      "grid_digest": grid_identity, "mean": encode_vector(float(v) for v in mean),
+                      "covariance": encode_matrix(tuple(tuple(float(v) for v in row) for row in covariance))})
+
+
 def _grid_summary(grid: PosteriorGrid, how: str) -> dict[str, Any]:
-    return {"route": how, "dataset_id": grid.dataset_id, "points": int(len(grid.weights)), "grid_digest": grid_digest(grid)}
+    identity = grid_digest(grid)
+    return {"route": how, "dataset_id": grid.dataset_id, "points": int(len(grid.weights)), "grid_digest": identity,
+            "moments_digest": _grid_moments_digest(how, grid.parameter_names, identity, grid.mean, grid.covariance)}
 
 
 #: A rebuilt grid must contain its posterior: on every face that is not a declared bound, the largest
@@ -353,12 +444,19 @@ def route_uncertainty(
     if calibration is None or observations is None or forward is None:
         considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "SKIPPED", "reason": RouteReason.LOCAL_INPUTS_NOT_SUPPLIED.value})
     else:
-        local = local_gaussian_posterior(calibration, observations, forward, multistart=multistart)
-        reasons = ",".join(r.value for r in local.reasons)
-        if local.claim is RouteClaim.SUPPORTED:
-            considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "USED", "reason": ""})
-            return _local_result(local, considered)
-        considered.append({"route": "LOCAL_GAUSSIAN", "outcome": local.claim.value, "reason": reasons})
+        try:
+            local = local_gaussian_posterior(calibration, observations, forward, multistart=multistart)
+        except RouteRefusedError as exc:
+            # The route refused without a posterior record (a derivative that did not stabilize): recorded, and
+            # nothing is rebuilt from it, because there is no covariance to design a grid from.
+            considered.append({"route": "LOCAL_GAUSSIAN", "outcome": RouteClaim.REFUSED.value,
+                               "reason": "the local route refused before it had a posterior", "detail": str(exc)[:400]})
+        else:
+            reasons = ",".join(r.value for r in local.reasons)
+            if local.claim is RouteClaim.SUPPORTED:
+                considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "USED", "reason": ""})
+                return _local_result(local, considered)
+            considered.append({"route": "LOCAL_GAUSSIAN", "outcome": local.claim.value, "reason": reasons})
 
     # 3. a grid rebuilt from the local covariance, then verified by the frozen V1 checks
     if rebuild is not None and local is not None:
@@ -399,7 +497,12 @@ def route_uncertainty(
         return _local_result(local, considered)
 
     # 5. nothing established
-    names = local.parameter_names if local is not None else (grid.parameter_names if grid is not None else ())
+    if local is not None:
+        names = local.parameter_names
+    elif grid is not None:
+        names = grid.parameter_names
+    else:
+        names = calibration.spec.parameters.names if isinstance(calibration, CalibrationResult) else ()
     return HybridUQResult(decision=RouteDecision.REFUSED, approximation_class=None, claim=RouteClaim.REFUSED, parameter_names=names,
                           coordinates="none", mean=None, covariance=None, local_posterior=local, grid_summary=None,
                           considered=tuple(considered), identifiability=None)
