@@ -60,7 +60,9 @@ def smoke(model_fn, label):
     forward = lambda t: [Quantity(float(v), "dimensionless") for v in model_fn(np.asarray(t), x)]
     spec = CalibrationSpec(parameters=params, fixed={}, initial_point={"a": Quantity(0.5, "dimensionless"), "b": Quantity(0.5, "dimensionless")}, noise_model=NoiseModel())
     fit = calibrate(spec, obs, forward, heldout_dataset_id=f"wheel.{label}.heldout")
-    routed = route_uncertainty(calibration=fit, observations=obs, forward=forward, multistart=MultistartPolicy(starts=3))
+    # The canonical multistart: since audit HUQ-01 a search below max(6, 2p + 2) starts cannot support a claim, and
+    # this smoke asserts a SUPPORTED affine route. It asked for 3 starts when WHEEL_V2.json was first written.
+    routed = route_uncertainty(calibration=fit, observations=obs, forward=forward, multistart=MultistartPolicy())
     out = {"decision": routed.decision.value, "claim": routed.claim.value, "digest": routed.digest}
     if routed.decision is RouteDecision.LOCAL_GAUSSIAN:
         (p,) = linearized_predictive_uq(routed.local_posterior, lambda t: [Quantity(float(t[0] + 0.5 * t[1]), "dimensionless")],
