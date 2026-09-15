@@ -13,6 +13,7 @@ another:
     PARAMETERS_IDENTIFIABLE / WEAKLY / NOT          does the data determine them
     HELD_OUT_VALIDATION_PASS / FAIL                 does it predict unseen data
     UNCERTAINTY_CALIBRATED / UNDER / OVERCOVERS     are the intervals honest
+      / COVERAGE_INCONCLUSIVE                       (or is there too little evidence to say)
 
 A study can, and in the misspecified case does, report CONVERGED and
 IDENTIFIABLE and still FAIL held-out validation. That combination is the point
@@ -29,6 +30,8 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from ..adequacy.predictive import assess_predictive_observation
+from ..domains.electrical import material as _material
+from ..inference.admissibility import InferenceAdmissibilityError
 from ..inference.calibration import (
     CalibrationResult,
     CalibrationStatus,
@@ -36,12 +39,30 @@ from ..inference.calibration import (
     IdentifiabilityStatus,
     assess_identifiability,
 )
-from ..inference.grid import ObservationSet, PosteriorGrid, gaussian_grid_posterior
-from ..inference.split import ObservationSplit, require_split
+from ..inference.grid import (
+    InferenceProblemError,
+    ObservationSet,
+    PosteriorGrid,
+    gaussian_grid_posterior,
+)
+from ..inference.split import (
+    ObservationSplit,
+    _require_posterior_conditioned_on_calibration,
+    require_split,
+)
+from ..scientific.models.definition import ValidityStatus
 from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity
 from ..uq.predictive import PredictiveObservableSpec, posterior_predictive_uq
-from .tcr import OHM, TCR_MODEL_REF, tcr_forward_table
+from .tcr import (
+    KELVIN,
+    OHM,
+    PER_KELVIN,
+    TCR_MODEL_REF,
+    build_tcr_parameter_set,
+    tcr_forward_table,
+    tcr_validity_at,
+)
 
 #: Stated, not implied. The predictive interval this study reports combines
 #: PARAMETER uncertainty and MEASUREMENT noise and nothing else. No
@@ -70,6 +91,10 @@ class CoverageVerdict(str, Enum):
     CALIBRATED = "UNCERTAINTY_CALIBRATED"
     UNDERCOVERS = "UNCERTAINTY_UNDERCOVERS"
     OVERCOVERS = "UNCERTAINTY_OVERCOVERS"
+    #: INF-05: the Wilson interval neither lies inside the acceptance band nor
+    #: wholly outside it -- too little evidence to call the intervals honest or
+    #: dishonest. Used to be reported as CALIBRATED (1 covered of 2 was).
+    INCONCLUSIVE = "UNCERTAINTY_COVERAGE_INCONCLUSIVE"
 
 
 @dataclass(frozen=True)
@@ -164,6 +189,96 @@ class HeldOutMetrics:
 HELD_OUT_CHI_SQUARE_ALPHA = 0.01
 
 
+def _require_declared_sigma(split: ObservationSplit, observation_sigma: Quantity) -> None:
+    """INF-02: the noise a held-out score uses is each observation's DECLARED sigma.
+
+    ``observation_sigma`` used to replace every held-out observation's own
+    sigma, so a caller could widen the predictive distribution until a failing
+    model passed (chi2 49.3, p 5e-10 at the declared 0.002 ohm; chi2 1.81 at a
+    caller's 0.02 ohm). The parameter is kept for its callers, and it must now
+    state the declared sigma: anything else is refused rather than used.
+    """
+    if not isinstance(observation_sigma, Quantity):
+        raise InferenceProblemError("observation_sigma must be a Quantity")
+    given = observation_sigma.magnitude_in(OHM)
+    for observation in split.held_out.observations:
+        declared = observation.sigma.magnitude_in(OHM)
+        if not math.isclose(given, declared, rel_tol=1.0e-12, abs_tol=0.0):
+            raise InferenceProblemError(
+                f"observation_sigma {given!r} ohm differs from the declared sigma "
+                f"{declared!r} ohm of held-out observation {observation.key!r}. A "
+                f"held-out score is computed with the measurement uncertainty the "
+                f"evidence declares; a caller's sigma is not evidence, and a wider "
+                f"one turns a failing model into a passing one"
+            )
+
+
+def _require_bound_and_applicable(
+    posterior: PosteriorGrid,
+    split: ObservationSplit,
+    *,
+    reference_temperature: Quantity,
+    temperatures_by_condition: Mapping[str, Quantity],
+    counter: dict[str, int] | None,
+) -> None:
+    """INF-03 and INF-01, before any held-out or predictive statement is made.
+
+    Content binding: the posterior must be the likelihood of this split's
+    calibration half, recomputed through the production forward model over the
+    posterior's own points -- not merely carry its dataset id.
+
+    Applicability: the linear TCR model's own validity assessment, of the
+    conductor the posterior's MAP estimate declares, at every condition of the
+    split. A calibration sweep may leave candidates unassessed; a statement
+    about the calibrated model at a declared condition may not. Anything but
+    IN_DOMAIN is refused, so no PASS and no predictive interval is issued where
+    the model has not been shown to apply.
+    """
+    calibration_table = tcr_forward_table(
+        split.calibration,
+        [tuple(float(v) for v in row) for row in posterior.points],
+        reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition,
+        counter=counter,
+    )
+    _require_posterior_conditioned_on_calibration(split, posterior, calibration_table)
+
+    expected = (_material.REFERENCE_RESISTANCE, _material.TEMPERATURE_COEFFICIENT)
+    if tuple(posterior.parameter_names) != expected:
+        raise InferenceProblemError(
+            f"a TCR posterior's axes are {expected!r}, got {tuple(posterior.parameter_names)!r}"
+        )
+    r_ref, alpha = (float(v) for v in posterior.map_point)
+    problems: list[str] = []
+    seen: set[str] = set()
+    for observation in (*split.calibration.observations, *split.held_out.observations):
+        condition = observation.condition_id
+        if condition in seen:
+            continue
+        seen.add(condition)
+        temperature = temperatures_by_condition[condition]
+        assessment = tcr_validity_at(
+            reference_resistance=Quantity(r_ref, OHM),
+            temperature_coefficient=Quantity(alpha, PER_KELVIN),
+            reference_temperature=reference_temperature,
+            temperature=temperature,
+        )
+        if assessment.status is not ValidityStatus.IN_DOMAIN:
+            detail = list(assessment.violated) or list(assessment.unknown)
+            problems.append(
+                f"{condition} at {temperature.magnitude_in(KELVIN):g} K: "
+                f"{assessment.status.value} {detail}"
+            )
+    if problems:
+        raise InferenceAdmissibilityError(
+            f"{TCR_MODEL_REF.model_id} is not shown to apply at the study's declared "
+            f"conditions for the calibrated conductor (MAP R_ref={r_ref:.6g} ohm, "
+            f"alpha={alpha:.6g} /K): {problems}. A held-out verdict or a predictive "
+            f"interval there would be a statement about a model outside its "
+            f"validated domain"
+        )
+
+
 def predict_held_out(
     posterior: PosteriorGrid,
     split: ObservationSplit,
@@ -180,8 +295,19 @@ def predict_held_out(
     The predictive table is built over the SAME parameter support as the
     posterior -- the UQ layer refuses anything else -- but evaluated at the
     held-out conditions, which the posterior has never seen.
+
+    Refused, before any interval is computed, when the posterior is not the
+    calibration half's likelihood (INF-03), when ``observation_sigma`` is not
+    the held-out observations' declared sigma (INF-02), or when the model is not
+    IN_DOMAIN at the declared conditions (INF-01).
     """
     require_split(split)
+    split.require_posterior_was_fitted_here(posterior.dataset_id)
+    _require_declared_sigma(split, observation_sigma)
+    _require_bound_and_applicable(
+        posterior, split, reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition, counter=counter,
+    )
     predictive_table = tcr_forward_table(
         split.held_out,
         [tuple(float(v) for v in row) for row in posterior.points],
@@ -194,7 +320,7 @@ def predict_held_out(
         spec = PredictiveObservableSpec(
             observation_key=observation.key,
             unit=OHM,
-            observation_sigma=observation_sigma,
+            observation_sigma=observation.sigma,
         )
         quantified = posterior_predictive_uq(
             posterior,
@@ -213,7 +339,7 @@ def predict_held_out(
                 parameter_sigma=quantified.epistemic_standard_uncertainty,
                 parameter_lower=quantified.epistemic_interval.lower,
                 parameter_upper=quantified.epistemic_interval.upper,
-                observation_sigma=observation_sigma,
+                observation_sigma=spec.observation_sigma,
                 total_sigma=quantified.total_standard_uncertainty,
                 total_lower=quantified.total_interval.lower,
                 total_upper=quantified.total_interval.upper,
@@ -238,10 +364,19 @@ def validate_held_out(
 
     The calibration half is never touched here. The split refuses a posterior
     that was not conditioned on the calibration half, which is what stops this
-    function from being handed the fitting data under a different label.
+    function from being handed the fitting data under a different label -- and,
+    since a label is only a label, the posterior's log-likelihood must also BE
+    the calibration half's likelihood (INF-03). The score uses each held-out
+    observation's declared sigma (INF-02), and no verdict is issued where the
+    model is not IN_DOMAIN at the declared conditions (INF-01).
     """
     require_split(split)
     split.require_posterior_was_fitted_here(posterior.dataset_id)
+    _require_declared_sigma(split, observation_sigma)
+    _require_bound_and_applicable(
+        posterior, split, reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition, counter=counter,
+    )
 
     predictive_table = tcr_forward_table(
         split.held_out,
@@ -259,7 +394,7 @@ def validate_held_out(
         spec = PredictiveObservableSpec(
             observation_key=observation.key,
             unit=OHM,
-            observation_sigma=observation_sigma,
+            observation_sigma=observation.sigma,
         )
         assessment = assess_predictive_observation(
             posterior,
@@ -435,6 +570,10 @@ def run_coverage_study(
     heldout_ids = tuple(
         f"T{i}" for i in range(len(calibration_temperatures), len(all_temperatures))
     )
+    r_bounds, a_bounds = (
+        (p.bounds.lower.magnitude_in(p.unit), p.bounds.upper.magnitude_in(p.unit))
+        for p in build_tcr_parameter_set().parameters
+    )
 
     def one_repetition(shared: SharedContext, case: SweepCase) -> CoverageRepetition:
         seed = int(case.inputs["seed"])
@@ -456,17 +595,21 @@ def run_coverage_study(
         oracle = ols_reference_estimate(
             split.calibration, by_condition, reference_temperature
         )
-        r_axis = np.linspace(
-            oracle["reference_resistance"] - sigma_span * oracle["se_reference_resistance"],
-            oracle["reference_resistance"] + sigma_span * oracle["se_reference_resistance"],
+        # INF-08: axes clipped to the declared parameter bounds, which the
+        # forward table now refuses to cross.
+        r_axis = _bounded_axis(
+            oracle["reference_resistance"],
+            sigma_span * oracle["se_reference_resistance"],
             grid_points_per_axis,
+            lower=r_bounds[0],
+            upper=r_bounds[1],
         )
-        a_axis = np.linspace(
-            oracle["temperature_coefficient"]
-            - sigma_span * oracle["se_temperature_coefficient"],
-            oracle["temperature_coefficient"]
-            + sigma_span * oracle["se_temperature_coefficient"],
+        a_axis = _bounded_axis(
+            oracle["temperature_coefficient"],
+            sigma_span * oracle["se_temperature_coefficient"],
             grid_points_per_axis,
+            lower=a_bounds[0],
+            upper=a_bounds[1],
         )
         points = [(float(r), float(a)) for r in r_axis for a in a_axis]
         table = tcr_forward_table(
@@ -488,7 +631,9 @@ def run_coverage_study(
             counter=counter,
         )
         # `counter` counts grid ROWS; each row runs one production solve per
-        # condition in the set it was built over.
+        # condition in the set it was built over. The calibration table is built
+        # twice -- once to fit, once inside validate_held_out to bind the
+        # posterior to the calibration half by content (INF-03).
         rows = counter.get("n", 0)
         return CoverageRepetition(
             seed=seed,
@@ -498,7 +643,7 @@ def run_coverage_study(
             heldout_verdict=metrics.verdict.value,
             forward_evaluations=(
                 grid_points_per_axis**2
-                * (len(split.calibration.observations) + len(split.held_out.observations))
+                * (2 * len(split.calibration.observations) + len(split.held_out.observations))
             ) if rows else 0,
         )
 
@@ -560,12 +705,24 @@ def classify_coverage(
     """Compare measured against nominal using a threshold fixed in advance.
 
     ``acceptance_half_width`` is an argument with a declared default rather
-    than a number chosen once the result was on screen. The verdict is decided
-    by whether the Wilson interval for the measured coverage overlaps the
-    acceptance band, so a study with few repetitions cannot claim calibration
-    it has not earned.
+    than a number chosen once the result was on screen.
+
+    INF-05: CALIBRATED requires the Wilson interval to lie INSIDE the acceptance
+    band. It used to require only overlap, which a study with almost no evidence
+    satisfies by having a wide interval: 1 covered of 2 (Wilson [0.09, 0.91])
+    and even 0 of 0 (NaN) came back CALIBRATED. An interval that is neither
+    inside the band nor wholly outside it is INCONCLUSIVE, and no intervals at
+    all is refused.
     """
-    measured = covered / total if total else float("nan")
+    covered, total = int(covered), int(total)
+    if total <= 0:
+        raise ValueError(
+            "no intervals were evaluated, so there is no coverage to classify; an "
+            "absent measurement is not a calibrated one"
+        )
+    if not 0 <= covered <= total:
+        raise ValueError(f"covered={covered} is not between 0 and total={total}")
+    measured = covered / total
     low, high = wilson_interval(covered, total)
     band_low = nominal - acceptance_half_width
     band_high = nominal + acceptance_half_width
@@ -584,9 +741,31 @@ def classify_coverage(
             f"[{low:.4f}, {high:.4f}] lies entirely above the acceptance band "
             f"[{band_low:.3f}, {band_high:.3f}] around nominal {nominal}",
         )
+    if band_low <= low and high <= band_high:
+        return (
+            CoverageVerdict.CALIBRATED,
+            f"measured {measured:.4f} over {total} intervals, Wilson 95% "
+            f"[{low:.4f}, {high:.4f}] lies inside the acceptance band "
+            f"[{band_low:.3f}, {band_high:.3f}] around nominal {nominal}",
+        )
     return (
-        CoverageVerdict.CALIBRATED,
+        CoverageVerdict.INCONCLUSIVE,
         f"measured {measured:.4f} over {total} intervals, Wilson 95% "
-        f"[{low:.4f}, {high:.4f}] overlaps the acceptance band "
-        f"[{band_low:.3f}, {band_high:.3f}] around nominal {nominal}",
+        f"[{low:.4f}, {high:.4f}] straddles the acceptance band "
+        f"[{band_low:.3f}, {band_high:.3f}] around nominal {nominal}: too little "
+        f"evidence to call the intervals calibrated or miscalibrated"
     )
+
+
+def _bounded_axis(
+    centre: float, half_width: float, points: int, *, lower: float, upper: float
+) -> np.ndarray:
+    """``points`` evenly spaced values over ``centre +/- half_width``, clipped to ``[lower, upper]`` (INF-08)."""
+    low = max(float(centre) - float(half_width), float(lower))
+    high = min(float(centre) + float(half_width), float(upper))
+    if not low < high:
+        raise InferenceProblemError(
+            f"the grid axis centred at {centre!r} +/- {half_width!r} has no extent "
+            f"inside the declared bounds [{lower!r}, {upper!r}]"
+        )
+    return np.linspace(low, high, int(points))

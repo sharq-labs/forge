@@ -49,6 +49,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
+import numpy as np
+
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.twins import TwinReference
 from .grid import GaussianObservation, InferenceProblemError, ObservationSet
@@ -306,6 +308,80 @@ class ObservationSplit:
             twin=twin,
             source_dataset_id=source.dataset_id,
             exact_replicates_allowed=exact_replicates_allowed,
+        )
+
+
+#: How closely a posterior's stored log-likelihood must reproduce the likelihood
+#: of a split's calibration half, recomputed from an admitted forward table over
+#: the posterior's own points. Both sides are the same float64 arithmetic over
+#: the same admitted values, so an honest posterior agrees to roundoff; a
+#: posterior conditioned on even one extra observation moves every node by that
+#: observation's squared standardized residual.
+_LIKELIHOOD_BINDING_RTOL = 1.0e-9
+_LIKELIHOOD_BINDING_ATOL = 1.0e-9
+
+
+def _require_posterior_conditioned_on_calibration(
+    split: ObservationSplit,
+    posterior: Any,
+    calibration_table: Any,
+) -> None:
+    """Refuse a posterior whose CONTENT is not the calibration half's likelihood (INF-03).
+
+    :meth:`ObservationSplit.require_posterior_was_fitted_here` compares a
+    ``dataset_id`` string, and a posterior's ``dataset_id`` is whatever its
+    builder was told. An :class:`ObservationSet` of every row -- held-out rows
+    included -- labelled with the calibration id passed it, and the model was
+    scored on data it had been fitted to.
+
+    So the label check runs first (it names the held-out case precisely) and the
+    content check after it: the grid log-likelihood is recomputed from
+    ``calibration_table`` -- an admitted forward table over the posterior's own
+    points, evaluated at the calibration half's conditions -- and the split's
+    calibration observations, and must equal the one the posterior carries.
+    ``PosteriorGrid`` already binds its weights to that log-likelihood, so this
+    binds the whole posterior to the calibration evidence by content.
+    """
+    from .grid import AdmittedForwardTable, PosteriorGrid, gaussian_grid_posterior
+
+    require_split(split)
+    if not isinstance(posterior, PosteriorGrid):
+        raise InferenceProblemError(
+            f"a held-out statement is made about a PosteriorGrid, got {type(posterior).__name__}"
+        )
+    split.require_posterior_was_fitted_here(posterior.dataset_id)
+    if not isinstance(calibration_table, AdmittedForwardTable):
+        raise InferenceProblemError(
+            "binding a posterior to its calibration half needs the admitted forward "
+            "table over the posterior's points at the calibration conditions"
+        )
+    if (
+        calibration_table.parameter_names != posterior.parameter_names
+        or calibration_table.points.shape != posterior.points.shape
+        or not np.array_equal(calibration_table.points, posterior.points)
+    ):
+        raise DataLeakageError(
+            "the calibration forward table is not over the posterior's parameter "
+            "support, so it cannot show which evidence the posterior was conditioned on"
+        )
+    recomputed = gaussian_grid_posterior(calibration_table, split.calibration).log_likelihood
+    stored = posterior.log_likelihood
+    same_support = np.array_equal(np.isfinite(stored), np.isfinite(recomputed))
+    finite = np.isfinite(stored)
+    if not same_support or not np.allclose(
+        stored[finite], recomputed[finite],
+        rtol=_LIKELIHOOD_BINDING_RTOL, atol=_LIKELIHOOD_BINDING_ATOL,
+    ):
+        worst = (
+            float(np.max(np.abs(stored[finite] - recomputed[finite])))
+            if same_support and np.any(finite) else float("inf")
+        )
+        raise DataLeakageError(
+            f"the posterior labelled {posterior.dataset_id!r} is not conditioned on "
+            f"this split's calibration half: its log-likelihood differs from the "
+            f"likelihood of the calibration observations by up to {worst:.3g} nats. "
+            f"A matching dataset id is a label; a posterior fitted to other evidence "
+            f"-- the held-out rows included -- cannot be scored as held-out validation"
         )
 
 
