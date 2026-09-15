@@ -18,6 +18,8 @@ against.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Iterable, Mapping
@@ -83,10 +85,18 @@ class ValidationObligation:
 
 @dataclass(frozen=True)
 class ObligationSet:
-    """Everything a campaign requires before a result may be called VALID."""
+    """Everything a campaign requires before a result may be called VALID.
+
+    ``charter_digest`` names the exact :class:`CampaignCharter` the set was
+    derived from. :func:`obligations_from_charter` sets it; a hand-built set
+    has none, and a campaign runner refuses a set whose charter digest is not
+    its own charter's (audit SRIA-TRUST-02). ``digest`` is the identity of the
+    policy itself, which every Arbiter decision records.
+    """
 
     campaign_id: str
     obligations: tuple[ValidationObligation, ...] = ()
+    charter_digest: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "obligations", tuple(self.obligations))
@@ -98,6 +108,14 @@ class ObligationSet:
     @property
     def is_empty(self) -> bool:
         return not self.obligations
+
+    @property
+    def digest(self) -> str:
+        """Canonical identity of this policy: campaign, charter and obligations."""
+        blob = json.dumps(
+            self.to_dict(), sort_keys=True, separators=(",", ":"), default=str
+        )
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
     def of_kind(self, kind: ObligationKind) -> tuple[ValidationObligation, ...]:
         kind = ObligationKind(kind)
@@ -139,6 +157,7 @@ class ObligationSet:
             "schema": OBLIGATION_SET_SCHEMA,
             "campaign_id": self.campaign_id,
             "obligations": [o.to_dict() for o in self.obligations],
+            "charter_digest": self.charter_digest,
         }
 
     @classmethod
@@ -150,6 +169,7 @@ class ObligationSet:
                 ValidationObligation.from_dict(o)
                 for o in payload.get("obligations", ())
             ),
+            charter_digest=payload.get("charter_digest", ""),
         )
 
 
@@ -235,4 +255,8 @@ def obligations_from_charter(
                 )
             )
 
-    return ObligationSet(campaign_id=charter.campaign_id, obligations=tuple(obligations))
+    return ObligationSet(
+        campaign_id=charter.campaign_id,
+        obligations=tuple(obligations),
+        charter_digest=charter.digest,
+    )

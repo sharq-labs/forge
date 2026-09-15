@@ -32,6 +32,7 @@ from engcore.sria.assurance import (
     CriticClass,
     NumericalCritic,
     ObligationSet,
+    trusting_authority,
 )
 from engcore.scientific import (
     ConvergenceState,
@@ -48,6 +49,8 @@ from tests.test_sria_m31_semantics import (  # noqa: E402
     evidence_for,
     good_result,
     numerical_assessment,
+    run_numerical,
+    trusted_arbiter,
 )
 
 
@@ -64,8 +67,17 @@ def _raises(exc_type, fn, *args, **kwargs):
 
 
 def fresh_authority(tag: str = "m32") -> AdmissionAuthority:
-    """A new authority per test: Arbiters register with it at construction."""
-    return AdmissionAuthority(f"arbiter.{tag}", secret=f"secret-{tag}")
+    """A new authority per test: its one Arbiter registers with it at construction.
+
+    Declared to trust the numerical critic the test Arbiters run and the
+    numerical-critic policy they admit under (audit sria follow-up).
+    """
+    return trusting_authority(
+        f"arbiter.{tag}",
+        (NumericalCritic(),),
+        policies=(charter_obligations(required_critics=(CriticClass.NUMERICAL,)),),
+        secret=f"secret-{tag}",
+    )
 
 
 def gateway_for(authority: AdmissionAuthority) -> BeliefUpdateGateway:
@@ -75,14 +87,18 @@ def gateway_for(authority: AdmissionAuthority) -> BeliefUpdateGateway:
 
 
 def valid_flow(authority: AdmissionAuthority, eid: str = "ev-32"):
-    """Genuine path: critics -> Arbiter -> VALID decision."""
+    """Genuine path: critics -> Arbiter -> VALID decision.
+
+    The critic is registered with and run through the Arbiter, on the evidence
+    the decision is about (audit SRIA-TRUST-01).
+    """
     result = good_result()
     evidence = evidence_for(result, eid)
-    arbiter = Arbiter(authority)
+    arbiter = Arbiter(authority, critics=(NumericalCritic(),))
     decision = arbiter.decide(
         decision_id=f"d-{eid}",
-        subject_ref=evidence.evidence_id,
-        assessments=[numerical_assessment(result)],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter, evidence, result)],
         obligations=charter_obligations(
             required_critics=(CriticClass.NUMERICAL,)
         ),
@@ -265,38 +281,33 @@ def test_B2_arbiter_will_not_authorize_a_mismatched_record():
 def test_C_inconclusive_and_invalid_decisions_cannot_admit():
     authority = fresh_authority("C")
     gateway = gateway_for(authority)
-    arbiter = Arbiter(authority)
+    arbiter = Arbiter(authority, critics=(NumericalCritic(),))
     result = good_result()
     evidence = evidence_for(result, "ev-C")
 
     # Genuine INCONCLUSIVE (no obligations declared).
     inconclusive = arbiter.decide(
         decision_id="d-inc",
-        subject_ref=evidence.evidence_id,
-        assessments=[numerical_assessment(result)],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter, evidence, result)],
         obligations=ObligationSet(campaign_id="none"),
         budget=budget(),
     )
     assert inconclusive.verdict is AssuranceVerdict.INCONCLUSIVE
 
-    # Genuine INVALID (demonstrated non-convergence).
+    # Genuine INVALID (demonstrated non-convergence). The failed run is its
+    # own evidence record: a decision is about exactly one record.
     failed = ScientificResult(
         result_id="res-failed",
         values={"V": Quantity(1.0, "volt")},
         provenance=ProvenanceRecord(run_id="r"),
         convergence=ConvergenceState.FAILED,
     )
+    failed_evidence = evidence_for(failed, "ev-C-failed")
     invalid = arbiter.decide(
         decision_id="d-inv",
-        subject_ref=evidence.evidence_id,
-        assessments=[
-            NumericalCritic().assess(
-                failed,
-                assessment_id="as-f",
-                budget=budget(),
-                run_outcome=clean_run(),
-            )
-        ],
+        evidence=failed_evidence,
+        assessments=[run_numerical(arbiter, failed_evidence, failed, aid="as-f")],
         obligations=charter_obligations(
             required_critics=(CriticClass.NUMERICAL,)
         ),
@@ -304,7 +315,7 @@ def test_C_inconclusive_and_invalid_decisions_cannot_admit():
     )
     assert invalid.verdict is AssuranceVerdict.INVALID
 
-    for decision in (inconclusive, invalid):
+    for decision, evidence in ((inconclusive, evidence), (invalid, failed_evidence)):
         declaration = arbiter.authorize_admission(decision, evidence)
         # A non-VALID decision yields a declining declaration...
         assert declaration.admitted is False
@@ -322,14 +333,14 @@ def test_C2_cannot_relabel_a_non_valid_decision_as_valid():
     """
     authority = fresh_authority("C2")
     gateway = gateway_for(authority)
-    arbiter = Arbiter(authority)
+    arbiter = Arbiter(authority, critics=(NumericalCritic(),))
     result = good_result()
     evidence = evidence_for(result, "ev-C2")
 
     inconclusive = arbiter.decide(
         decision_id="d-inc2",
-        subject_ref=evidence.evidence_id,
-        assessments=[numerical_assessment(result)],
+        evidence=evidence,
+        assessments=[run_numerical(arbiter, evidence, result)],
         obligations=ObligationSet(campaign_id="none"),
         budget=budget(),
     )

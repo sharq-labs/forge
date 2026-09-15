@@ -18,6 +18,8 @@ campaign is finished.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping
@@ -281,6 +283,30 @@ class CampaignCharter:
         duplicates = {i for i in ids if ids.count(i) > 1}
         if duplicates:
             raise CharterError(f"duplicate terminal decision ids: {sorted(duplicates)}")
+
+    @property
+    def digest(self) -> str:
+        """Canonical identity of this exact charter, amendments included.
+
+        Anything derived from a charter — an obligation set above all — records
+        this digest, so a policy can be checked against the charter it claims
+        to implement instead of being trusted because it names the same
+        campaign id (audit SRIA-TRUST-02).
+        """
+        blob = json.dumps(
+            self.to_dict(), sort_keys=True, separators=(",", ":"), default=str
+        )
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+    @property
+    def version(self) -> str:
+        """The charter version, derived rather than asserted.
+
+        ``"1"`` for an unamended charter and one more per recorded amendment.
+        The amendment history is append-only, so this cannot move backwards and
+        a caller cannot label an amended charter as the original.
+        """
+        return str(1 + len(self.amendment_history))
 
     def amend(self, amendment: CharterAmendment, **changes: Any) -> "CampaignCharter":
         """Produce the amended charter, preserving the full history.

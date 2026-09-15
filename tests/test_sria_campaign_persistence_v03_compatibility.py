@@ -79,6 +79,12 @@ def _legacy_checkpoint_with_plan() -> CampaignCheckpoint:
         iteration=0,
         payload={"campaign_id": "campaign-compat"},
     )
+    # The obligation state below must be backed by the log (audit SER-01).
+    events.append(
+        CampaignEventType.PRIOR_ASSURANCE_ADOPTED,
+        iteration=0,
+        payload={"obligation_results": {"adequacy": True, "independence": False}},
+    )
     events.append(
         CampaignEventType.ACTION_SELECTED,
         iteration=1,

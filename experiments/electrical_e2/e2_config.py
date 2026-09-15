@@ -133,7 +133,7 @@ E1_FROZEN_FILE_DIGESTS: dict[str, str] = {
     "experiments/electrical_e1/e1_truth.py":
         "32fb8c67ffdf13f235e04a69c22796bbcc4e64f3f1ece60415bc45cfcfadf9b3",
     "experiments/electrical_e1/e1_harness.py":
-        "467a68146f55d0f8e4deef467288a3c8e4b9a0100ddbb39b67fb5614e19df14a",
+        "251e31212b49866fbcca27e02865a03b0b05cf79fb8d4b56c84db424fa125df5",
     "experiments/electrical_e1/e1_run.py":
         "d2538d3ac2bcb1b6ca1a1a4c04bb01ac8ee70cdaecfa54f7b35d934c2552914b",
     "tests/test_sria_e1_electrical.py":

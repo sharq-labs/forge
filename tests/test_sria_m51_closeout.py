@@ -40,7 +40,12 @@ from engcore.sria.campaign import (
 )
 from engcore.sria.provenance import AssessmentProvenance
 
-from tests.sria_m5_benchmark import build_assurance, critic_obligation
+from tests.sria_m5_benchmark import (
+    TOY_CRITIC_ID,
+    build_assurance,
+    critic_obligation,
+    toy_evidence,
+)
 from tests.test_sria_m5_campaign import S1, S1_SEED, S5, S5_SEED, build_campaign
 from tests.test_sria_m51_durability import CRITERION, ToyStoppingEvaluator
 
@@ -171,28 +176,15 @@ def test_a_restart_does_not_reopen_a_satisfied_obligation():
 # 2. Standing may fall, never rise
 # =====================================================================
 
-def _numerical_assessment(subject: str, aid: str) -> CriticAssessment:
-    return CriticAssessment(
-        assessment_id=aid,
-        critic_id="closeout.numerical",
-        critic_version="1",
-        critic_class=CriticClass.NUMERICAL,
-        subject_ref=subject,
-        verdict=CriticVerdict.PASS,
-        provenance=AssessmentProvenance(
-            assessment_id=aid,
-            critic_id="closeout.numerical",
-            critic_version="1",
-        ),
-        checks=(
-            CheckRecord(
-                name="convergence_state",
-                outcome=CriticVerdict.PASS,
-                mandatory=True,
-                detail="closeout fixture",
-            ),
-        ),
-        summary="closeout fixture assessment",
+def _numerical_assessment(arbiter, evidence, aid: str) -> CriticAssessment:
+    """The toy numerical critic, run by ``arbiter`` on ``evidence``.
+
+    Hand-built before the audit; an Arbiter now counts only assessments it ran
+    through a registered critic for the record it decides about (audit
+    SRIA-TRUST-01).
+    """
+    return arbiter.run_critic(
+        TOY_CRITIC_ID, evidence, subject=evidence, assessment_id=aid
     )
 
 
@@ -201,10 +193,10 @@ def _admitted(gateway, arbiter, evidence_id="ev-standing"):
     from tests.test_sria_m31_semantics import evidence_for, good_result
 
     evidence = evidence_for(good_result(), evidence_id)   # already ASSESSED
-    assessment = _numerical_assessment(evidence.evidence_id, f"{evidence_id}-a")
+    assessment = _numerical_assessment(arbiter, evidence, f"{evidence_id}-a")
     decision = arbiter.decide(
         decision_id=f"{evidence_id}-d",
-        subject_ref=evidence.evidence_id,
+        evidence=evidence,
         assessments=(assessment,),
         obligations=critic_obligation(),
     )
@@ -252,10 +244,10 @@ def test_reactivation_through_the_authorized_path_still_works():
     gateway.update_standing(suspended)
     assert len(gateway.belief) == 0
 
-    assessment = _numerical_assessment(suspended.evidence_id, "ev-back-a2")
+    assessment = _numerical_assessment(arbiter, suspended, "ev-back-a2")
     fresh_decision = arbiter.decide(
         decision_id="ev-back-d2",
-        subject_ref=suspended.evidence_id,
+        evidence=suspended,
         assessments=(assessment,),
         obligations=critic_obligation(),
     )
@@ -281,12 +273,28 @@ def _stopping_campaign(verdict, *, criteria, evaluators, run_id):
         actions_by_iteration=S5, seed_rows=S5_SEED,
         realized_costs={"a_theta": 5.0, "b_phi": 5.0},
         max_iterations=2, run_id=run_id,
+        critics=tuple(evaluators.values()),
     )
     runner._stopping_criteria = tuple(criteria)
     runner._stopping_evaluators = dict(evaluators)
     # A discharged obligation set is necessary context; the criterion is what
-    # actually decides.
-    runner._obligation_state = {"critic:numerical": True}
+    # actually decides. It is established the supported way: a genuine prior
+    # decision from the runner's own Arbiter, adopted — never a boolean poked
+    # into the runner (audit SRIA-06).
+    arbiter = runner._arbiter
+    prior = toy_evidence(f"{run_id}-prior")
+    decision = arbiter.decide(
+        decision_id=f"{run_id}-prior-d",
+        evidence=prior,
+        assessments=(
+            arbiter.run_critic(
+                TOY_CRITIC_ID, prior, subject=prior, assessment_id=f"{run_id}-prior-a"
+            ),
+        ),
+        obligations=runner._obligations,
+    )
+    runner.adopt_prior_assurance((decision,))
+    assert runner._obligation_state == {"critic:numerical": True}
     runner.run_campaign()
     return runner
 
@@ -402,41 +410,57 @@ def test_validation_level_obligations_are_unevaluable_and_fail_closed():
     target = obligations.obligations[0].target
     assert target == "validation_level:benchmark_validated"
 
-    _g, arbiter, _a = build_assurance()
+    class LevelClaimingCritic:
+        """A registered critic that claims it evaluated the level."""
+
+        critic_id = "closeout.numerical"
+        critic_version = "1"
+        critic_class = CriticClass.NUMERICAL
+
+        def assess(self, evidence, *, assessment_id):
+            return CriticAssessment(
+                assessment_id=assessment_id,
+                critic_id=self.critic_id,
+                critic_version=self.critic_version,
+                critic_class=self.critic_class,
+                subject_ref=evidence.record_hash,
+                verdict=CriticVerdict.PASS,
+                provenance=AssessmentProvenance(
+                    assessment_id=assessment_id,
+                    critic_id=self.critic_id,
+                    critic_version=self.critic_version,
+                ),
+                checks=(
+                    CheckRecord(
+                        name=target,
+                        outcome=CriticVerdict.PASS,
+                        mandatory=True,
+                        detail="a critic claiming it evaluated the level",
+                    ),
+                ),
+                summary="attempt to satisfy a validation-level obligation",
+            )
+
+    _g, arbiter, _a = build_assurance(critics=(LevelClaimingCritic(),))
     # Even a critic that explicitly passes a check of exactly that name cannot
     # satisfy it — the Arbiter refuses to certify a level it cannot evaluate.
-    satisfying_attempt = _numerical_assessment("ev-1", "a-lim")
-    satisfying_attempt = CriticAssessment(
-        assessment_id="a-lim",
-        critic_id="closeout.numerical",
-        critic_version="1",
-        critic_class=CriticClass.NUMERICAL,
-        subject_ref="ev-1",
-        verdict=CriticVerdict.PASS,
-        provenance=AssessmentProvenance(
-            assessment_id="a-lim",
-            critic_id="closeout.numerical",
-            critic_version="1",
-        ),
-        checks=(
-            CheckRecord(
-                name=target,
-                outcome=CriticVerdict.PASS,
-                mandatory=True,
-                detail="a critic claiming it evaluated the level",
-            ),
-        ),
-        summary="attempt to satisfy a validation-level obligation",
+    evidence = toy_evidence("ev-1")
+    satisfying_attempt = arbiter.run_critic(
+        "closeout.numerical", evidence, subject=evidence, assessment_id="a-lim"
     )
     decision = arbiter.decide(
         decision_id="d-lim",
-        subject_ref="ev-1",
+        evidence=evidence,
         assessments=(satisfying_attempt,),
         obligations=obligations,
     )
+    assert decision.refused_assessments == ()
     assert decision.verdict is not AssuranceVerdict.VALID
     assert decision.unmet_obligations
-    assert any("validation_level" in o for o in decision.unmet_obligations)
+    # Results carry the declared obligation id (audit SRIA-06), so look the
+    # validation-level obligation up by its target.
+    level_id = obligations.obligations[0].obligation_id
+    assert level_id in decision.unmet_obligations
 
     # The M5 campaign path is unaffected: its charter declares none of these.
     from tests.sria_m5_benchmark import toy_charter

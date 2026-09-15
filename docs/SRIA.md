@@ -30,6 +30,65 @@ admission decision, and only the belief-update gateway writes. The enforcement
 is architectural — capability boundaries and an import scanner — not security
 isolation, and `sria/__init__.py` says so plainly.
 
+## The admission path, as enforced
+
+The 2026-09 adversarial audit (stream `sria`) found that several links of that
+path were conventions rather than checks. Each link below is now enforced in
+code and pinned by a `tests/test_audit_sria_*.py` module; the file named is
+where the check lives.
+
+1. **The authority declares what it trusts** (`admission.py`). An
+   `AdmissionAuthority` is constructed with the digest of the one critic
+   registry and the obligation-set digests it serves —
+   `assurance.trusting_authority(authority_id, critics, policies=...)`
+   computes them. An authority that declares nothing admits nothing, and an
+   authority serves exactly one Arbiter: a second `Arbiter` around it is
+   refused at construction.
+2. **Critics are registered and run by the Arbiter** (`assurance/arbiter.py`).
+   The Arbiter is built with its critics; `Arbiter.run_critic` calls the
+   registered critic's own entry point and records the digest of what it
+   produced. A hand-built `CriticAssessment` is refused. Stopping-criterion
+   evaluators are critics too, and a campaign harness asks for critic runs
+   (`CriticRequest`) instead of supplying assessments.
+3. **A decision is about one evidence record** (`Arbiter.decide(evidence=...)`).
+   Its subject is `evidence.record_hash`. An assessment counts only if it was
+   recorded for that record, names that record or the run it came from, comes
+   from the evidence's own domain pack (for DOMAIN checks), and — for a
+   QOI/parameter claim stating a value and units — was made over a result that
+   holds the claimed quantity at the claimed value (unit-converted; equal up to
+   rounding or within the claim's declared `tolerance`). The uncertainty budget
+   must describe the claimed quantity and carry the evidence's own uncertainty
+   declaration. Required checks reported more than once are ambiguous and
+   unmet; every assessment of a required critic class must pass. Any refused
+   assessment keeps the verdict from VALID.
+4. **The policy is the charter's** (`campaign/runner.py`). An obligation set
+   records the digest of the charter it was derived from; a runner refuses a
+   set for another campaign or another charter version. The decision records
+   the set's digest, and the authorization carries it with the registry digest.
+5. **An authorization is single-use and bound** (`Arbiter.authorize_admission`).
+   Only an evidence decision about this exact record, issued by this Arbiter,
+   authorizes — once. The Gateway re-verifies signature, record, verdict,
+   commitment, registry and policy on its own.
+6. **Belief keeps its history** (`gateway.py`). An evidence id names one
+   record; a withdrawn (INVALID/SUPERSEDED) record is not re-admitted; every
+   write stays in `ScientificBelief.history()`.
+7. **Assurance state is derived, never asserted** (`campaign/events.py`,
+   `campaign/stopping.py`, `campaign/persistence.py`). A campaign's obligation
+   state is folded from the Arbiter's results in the event log (the latest
+   decision about an obligation governs; a harness may only report an
+   obligation unmet). `adopt_prior_assurance` takes decisions its Arbiter
+   issued. The stopping review takes Arbiter decisions, not a caller's
+   obligation map, and keeps only those its own Arbiter issued for this
+   campaign's policy. A checkpoint whose stored obligation state or iteration
+   verdicts disagree with its event log is refused on resume; the persistence
+   digests are unkeyed and detect accidental corruption, not deliberate edits.
+
+What this still is not: whoever constructs the authority chooses the critic
+registry and policies it trusts, and the registry digest names each critic's
+implementation (`module.qualname`) — Python cannot prove the object behind a
+name is the reviewed code, and the first Arbiter built with the declared
+registry holds the authority.
+
 ## What it is not
 
 **It is not on the verification path.** Nothing in the MCP evidence layer, the

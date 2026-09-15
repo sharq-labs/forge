@@ -507,7 +507,9 @@ class AdequacyStoppingEvaluator:
             ),
         )
 
-    def evaluate(self, context: Any, *, assessment_id: str) -> CriticAssessment:
+    def evaluate(
+        self, context: Any, *, assessment_id: str, proposal: Any
+    ) -> CriticAssessment:
         verdict, findings, summary = self._verdicts()
         ledger = self._state.ledger
         run_ref = str(getattr(context, "run_id", "") or "e3")
@@ -518,7 +520,10 @@ class AdequacyStoppingEvaluator:
             # PROCESS: "were the declared obligations followed?" — which is
             # exactly and only what this evaluator speaks to.
             critic_class=CriticClass.PROCESS,
-            subject_ref=assessment_id,
+            # The stop proposal under review is this assessment's subject; the
+            # Arbiter that runs the evaluator hands it over and binds the
+            # assessment to it (audit SRIA-TRUST-01).
+            subject_ref=proposal.proposal_id,
             verdict=verdict,
             provenance=AssessmentProvenance(
                 assessment_id=assessment_id,

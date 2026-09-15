@@ -77,14 +77,41 @@ PROPOSAL = StopProposal(
 )
 
 
+def satisfying_decision(arbiter, tag="met"):
+    """A genuine decision from ``arbiter`` that satisfies critic:numerical.
+
+    The stopping review derives obligation state from decisions its Arbiter
+    issued; a caller-supplied mapping is no longer accepted (audit sria
+    follow-up).
+    """
+    from tests.sria_m5_benchmark import TOY_CRITIC_ID, toy_evidence
+
+    evidence = toy_evidence(f"ev-{tag}-{id(arbiter)}")
+    return arbiter.decide(
+        decision_id=f"d-{tag}",
+        evidence=evidence,
+        assessments=(
+            arbiter.run_critic(
+                TOY_CRITIC_ID, evidence, subject=evidence, assessment_id=f"a-{tag}"
+            ),
+        ),
+        obligations=critic_obligation(),
+    )
+
+
 def review_with(arbiter, **kwargs):
+    """Review PROPOSAL; obligations are met unless ``assurance_decisions`` says
+    otherwise (pass ``()`` for "never assessed")."""
     base = dict(
         review_id="rev1",
         obligations=critic_obligation(),
-        obligation_state={"critic:numerical": True},
         terminal_objective_available=True,
     )
     base.update(kwargs)
+    if "assurance_decisions" not in base:
+        base["assurance_decisions"] = (
+            satisfying_decision(arbiter, f"met-{base['review_id']}"),
+        )
     return ArbiterStoppingReview(arbiter).review(PROPOSAL, **base)
 
 
@@ -97,7 +124,7 @@ class ToyStoppingEvaluator:
         self.critic_version = "1"
         self._verdict = verdict
 
-    def evaluate(self, context, *, assessment_id: str) -> CriticAssessment:
+    def evaluate(self, context, *, assessment_id: str, proposal) -> CriticAssessment:
         # A criterion the campaign can show is *not* met is an invalidating
         # finding, which is what lets the Arbiter reject rather than abstain.
         findings = ()
@@ -118,7 +145,9 @@ class ToyStoppingEvaluator:
             critic_id=self.critic_id,
             critic_version=self.critic_version,
             critic_class=CriticClass.PROCESS,
-            subject_ref=PROPOSAL.proposal_id,
+            # The assessment is about the proposal under review, which the
+            # Arbiter hands the evaluator it runs (audit SRIA-TRUST-01).
+            subject_ref=proposal.proposal_id,
             verdict=self._verdict,
             provenance=AssessmentProvenance(
                 assessment_id=assessment_id, critic_id=self.critic_id,
@@ -134,6 +163,17 @@ class ToyStoppingEvaluator:
             ),
             summary=f"stopping criterion evaluated to {self._verdict.value}",
         )
+
+
+def arbiter_trusting(*evaluators):
+    """An Arbiter constructed to trust ``evaluators``.
+
+    A stopping evaluator is a critic: the review runs only evaluators the
+    Arbiter was built with, so every test that expects the criterion to be
+    evaluated registers its evaluator here (audit SRIA-TRUST-01).
+    """
+    _g, arbiter, _a = build_assurance(critics=evaluators)
+    return arbiter
 
 
 CRITERION = StoppingCriterion(
@@ -152,7 +192,7 @@ CRITERION = StoppingCriterion(
 def test_A_stop_proposal_alone_cannot_yield_approval():
     """Non-positive VoI is a statement about prices, not about science."""
     _g, arbiter, _a = build_assurance()
-    review = review_with(arbiter, obligation_state={}, obligations=critic_obligation())
+    review = review_with(arbiter, assurance_decisions=(), obligations=critic_obligation())
     assert review.outcome is not StopReviewOutcome.STOP_APPROVED
     assert review.arbiter_decision_id == ""
 
@@ -179,30 +219,30 @@ def test_C_missing_stopping_criterion_gives_not_assessed():
     review = review_with(arbiter, criteria=(CRITERION,))
     assert review.outcome is StopReviewOutcome.STOP_NOT_ASSESSED
     assert any("no evaluator" in r for r in review.reasons)
+    # An evaluator the Arbiter was not built to trust cannot be consulted.
+    unsure = ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.NOT_ASSESSED)
+    review = review_with(
+        arbiter, criteria=(CRITERION,), evaluators={CRITERION.criterion_id: unsure},
+    )
+    assert review.outcome is StopReviewOutcome.STOP_NOT_ASSESSED
+    assert review.arbiter_decision_id == ""
+    assert any("not constructed to trust" in r for r in review.reasons)
     # An evaluator that cannot reach a verdict.
     review = review_with(
-        arbiter,
+        arbiter_trusting(unsure),
         criteria=(CRITERION,),
-        evaluators={
-            CRITERION.criterion_id: ToyStoppingEvaluator(
-                CRITERION.criterion_id, CriticVerdict.NOT_ASSESSED
-            )
-        },
+        evaluators={CRITERION.criterion_id: unsure},
     )
     assert review.outcome is StopReviewOutcome.STOP_NOT_ASSESSED
     assert any("UNKNOWN is the honest answer" in r for r in review.reasons)
 
 
 def test_D_an_evaluable_charter_criterion_may_be_arbiter_approved():
-    _g, arbiter, _a = build_assurance()
+    passing = ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.PASS)
     review = review_with(
-        arbiter,
+        arbiter_trusting(passing),
         criteria=(CRITERION,),
-        evaluators={
-            CRITERION.criterion_id: ToyStoppingEvaluator(
-                CRITERION.criterion_id, CriticVerdict.PASS
-            )
-        },
+        evaluators={CRITERION.criterion_id: passing},
     )
     assert review.outcome is StopReviewOutcome.STOP_APPROVED
     assert review.arbiter_decision_id                  # rests on a real decision
@@ -212,15 +252,12 @@ def test_D_an_evaluable_charter_criterion_may_be_arbiter_approved():
     assert any("not a general certification" in r for r in review.reasons)
 
     # A criterion the Arbiter finds unsatisfied is rejected, not ignored.
+    failing = ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.FAIL)
     rejected = review_with(
-        arbiter,
+        arbiter_trusting(failing),
         review_id="rev2",
         criteria=(CRITERION,),
-        evaluators={
-            CRITERION.criterion_id: ToyStoppingEvaluator(
-                CRITERION.criterion_id, CriticVerdict.FAIL
-            )
-        },
+        evaluators={CRITERION.criterion_id: failing},
     )
     assert rejected.outcome is StopReviewOutcome.STOP_REJECTED
 

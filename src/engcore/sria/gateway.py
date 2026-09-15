@@ -59,6 +59,10 @@ from .evidence import BELIEF_BEARING_STATUS, Evidence, EvidenceStatus
 
 BELIEF_ENTRY_SCHEMA = schema_string("sria_belief_entry")
 
+#: Standings no admission may leave. SUSPENDED is not here: reinstating a
+#: suspended record through a fresh decision is the supported route.
+_TERMINAL_STANDING = frozenset({EvidenceStatus.INVALID, EvidenceStatus.SUPERSEDED})
+
 
 class _GatewayToken:
     """Write capability for :class:`ScientificBelief`.
@@ -127,11 +131,19 @@ class ScientificBelief:
     admitted; :meth:`active_view` filters to those still belief-bearing, so
     suspending evidence removes its influence without erasing the record that
     it once had influence.
+
+    An ``evidence_id`` names exactly one evidence record for the life of the
+    belief store: the Gateway refuses to write a different record under an id
+    it already holds, so the current-standing view can never replace one claim
+    with another. :meth:`history` additionally keeps every entry ever written,
+    in order, so no recorded standing is lost when a later one supersedes it
+    (audit SRIA-05).
     """
 
     def __init__(self) -> None:
         self._entries: dict[str, BeliefEntry] = {}   # evidence_id -> entry
         self._order: list[str] = []
+        self._history: list[BeliefEntry] = []        # every write, append-only
 
     # ---- write path (gateway only) --------------------------------------
     def _apply(self, token: Any, entry: BeliefEntry) -> None:
@@ -140,9 +152,18 @@ class ScientificBelief:
                 "scientific belief may only be written by the Belief Update "
                 "Gateway; no source writes belief directly"
             )
-        if entry.evidence_id not in self._entries:
+        current = self._entries.get(entry.evidence_id)
+        if current is not None and current.record_hash != entry.record_hash:
+            raise BeliefWriteViolation(
+                f"evidence id {entry.evidence_id!r} already names record "
+                f"{current.record_hash[:12]}… ({current.status.value}); a "
+                f"different record cannot be written under it — a revised claim "
+                f"needs its own evidence id and supersedes the old record"
+            )
+        if current is None:
             self._order.append(entry.evidence_id)
         self._entries[entry.evidence_id] = entry
+        self._history.append(entry)
 
     # ---- read path ------------------------------------------------------
     def __len__(self) -> int:
@@ -160,8 +181,12 @@ class ScientificBelief:
         }
 
     def audit_log(self) -> tuple[BeliefEntry, ...]:
-        """Every contribution ever admitted, active or not."""
+        """Every contribution ever admitted, active or not, at its current standing."""
         return tuple(self._entries[eid] for eid in self._order)
+
+    def history(self) -> tuple[BeliefEntry, ...]:
+        """Every entry ever written — admissions and standing changes — in order."""
+        return tuple(self._history)
 
     def contributions(self, belief_key: str) -> tuple[BeliefEntry, ...]:
         """Active contributions to one belief key."""
@@ -268,6 +293,19 @@ class BeliefUpdateGateway:
             raise AdmissionError(
                 f"evidence {evidence.evidence_id!r} carries no admitting "
                 f"declaration; the Arbiter must admit before belief is written"
+            )
+
+        # A record a scientific authority withdrew for good stays withdrawn
+        # (audit SRIA-05). Checked before the authorization is verified and
+        # consumed, so a refused write does not spend it. That an evidence id
+        # names exactly one record is enforced where every write lands,
+        # ScientificBelief._apply, which also runs before consumption.
+        current = self._belief._entries.get(evidence.evidence_id)
+        if current is not None and current.status in _TERMINAL_STANDING:
+            raise BeliefWriteViolation(
+                f"evidence {evidence.evidence_id!r} is recorded as "
+                f"{current.status.value}, which is terminal; no decision "
+                f"re-admits a record a scientific authority withdrew for good"
             )
 
         # verify_admission checks issuer signature, subject binding, and (M3.1)
