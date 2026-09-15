@@ -27,8 +27,11 @@ from ._records import (
 )
 from .identifiability import RoutedIdentifiability, _grid_axes_digest, assess_routed_identifiability
 from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, local_gaussian_posterior
-from .predictive import RoutedPredictiveUncertainty, grid_digest, grid_predictive_uncertainty, linearized_predictive_uq
-from .sensitivity import to_natural
+from .predictive import (
+    RoutedPredictiveUncertainty, _require_weights_follow_likelihood, grid_digest, grid_predictive_uncertainty,
+    linearized_predictive_uq,
+)
+from .sensitivity import SUPPLIED_PREDICTION_AGREEMENT_SD, evaluate, to_natural
 from .vocabulary import (
     GRID_ROUTE_MAXIMUM_PARAMETERS, ApproximationClass, HybridUQError, RouteClaim, RouteDecision, RouteReason, RouteRefusedError,
 )
@@ -303,7 +306,58 @@ def _require_requested_grid(table, names, natural):
                             f"({table.points[first].tolist()} returned, {requested[first].tolist()} requested)")
 
 
-def _build(local, policy, observations, lo, hi, nodes):
+#: Interior rows of a rebuilt table re-evaluated through the forward model, chosen from a digest of the table itself,
+#: on top of its two extreme corners, the node nearest the estimate and the table's own best-fitting node.
+_SPOT_CHECK_INTERIOR_ROWS = 4
+
+
+def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, forward):
+    """Refuse a rebuilt table whose values are not the forward model's at the nodes it is spot-checked on (HUQ-05).
+
+    ``_require_requested_grid`` binds a table's coordinates to the request; nothing bound its VALUES, so a builder
+    answering with another model's predictions at the requested coordinates was certified. Deterministic nodes are
+    re-evaluated through the forward evaluator the route was given: the two extreme corners, the node nearest the
+    estimate, the table's best-fitting node, and interior nodes chosen from a digest of the table's own bytes. An
+    admitted node must be admitted by the forward evaluator and agree with it to ``SUPPLIED_PREDICTION_AGREEMENT_SD``
+    observation sigmas; a node the forward evaluator admits must not be refused by the table.
+    """
+    import hashlib
+
+    if forward is None:
+        raise HybridUQError("a rebuilt grid is verified against the forward evaluator; none was supplied")
+    predictions, _columns = table.select_observations(observations)
+    observed, sigma = observations.numeric_vectors()
+    keys = observations.keys
+    units = tuple(o.value.units for o in observations.observations)
+    references = tuple(o.value for o in observations.observations)
+    mask = np.asarray(table.admissible_mask, dtype=bool)
+    n = len(natural)
+    span = np.where(np.ptp(mesh, axis=0) > 0.0, np.ptp(mesh, axis=0), 1.0)
+    rows = {0, n - 1, int(np.argmin(np.sum(((mesh - z0) / span) ** 2, axis=1)))}
+    if np.any(mask):
+        chi = np.sum(((predictions - observed[None, :]) / sigma[None, :]) ** 2, axis=1)
+        rows.add(int(np.argmin(np.where(mask, chi, np.inf))))
+    seed = hashlib.sha256(np.ascontiguousarray(table.values, dtype="<f8").tobytes()
+                          + np.ascontiguousarray(mask, dtype=np.uint8).tobytes()).digest()
+    rows.update(int.from_bytes(seed[4 * k:4 * k + 4], "little") % n for k in range(_SPOT_CHECK_INTERIOR_ROWS))
+    for row in sorted(rows):
+        value = evaluate(forward, natural[row], keys, units, references)
+        if value is None:
+            if mask[row]:
+                raise HybridUQError(f"the rebuilt table admits row {row} ({list(natural[row])}), which the forward evaluator "
+                                    f"refuses: the table is not this forward model's")
+            continue
+        if not mask[row]:
+            raise HybridUQError(f"the rebuilt table refuses row {row} ({list(natural[row])}), which the forward evaluator "
+                                f"admits: the table is not this forward model's")
+        gap = float(np.max(np.abs(predictions[row] - value) / sigma))
+        if not gap <= SUPPLIED_PREDICTION_AGREEMENT_SD:
+            raise HybridUQError(f"the rebuilt table's values differ from the forward evaluator's by {gap:.3g} sigma at row {row} "
+                                f"({list(natural[row])}; at most {SUPPLIED_PREDICTION_AGREEMENT_SD:g}): a table from another "
+                                f"model is not certified as this posterior")
+
+
+def _build(local, policy, observations, forward, lo, hi, nodes):
     p = len(lo)
     axes = [np.linspace(lo[i], hi[i], int(nodes[i])) for i in range(p)]
     mesh = np.array(np.meshgrid(*axes, indexing="ij")).reshape(p, -1).T
@@ -312,13 +366,14 @@ def _build(local, policy, observations, lo, hi, nodes):
     if not isinstance(table, AdmittedForwardTable):
         raise HybridUQError("table_builder must return an AdmittedForwardTable")
     _require_requested_grid(table, local.parameter_names, natural)
+    _require_table_agrees_with_forward(table, natural, mesh, np.asarray(local.inference_point), observations, forward)
     rebuilt = gaussian_grid_posterior(table, observations)
     usable = rebuilt.admissible_mask & np.isfinite(rebuilt.log_likelihood)
     ll = np.where(usable, rebuilt.log_likelihood, -np.inf).reshape(tuple(int(n) for n in nodes))
     return rebuilt, ll
 
 
-def _rebuild_grid(local, policy, observations, refinement=0):
+def _rebuild_grid(local, policy, observations, forward, refinement=0):
     """Design, build, check containment and truncation convergence. ``(posterior, detail)`` or ``(None, (reason, detail))``.
 
     The design is the local Gaussian in inference coordinates. The box covers +/-sigma_span sd around the
@@ -347,7 +402,7 @@ def _rebuild_grid(local, policy, observations, refinement=0):
         nodes, problem = _node_counts(cov, lo, hi, target, budget)
         if nodes is None:
             return None, (RouteReason.GRID_REBUILD_OVER_BUDGET, problem)
-        rebuilt, ll = _build(local, policy, observations, lo, hi, nodes)
+        rebuilt, ll = _build(local, policy, observations, forward, lo, hi, nodes)
         peak = float(np.max(ll))
         grew = False
         truncated = []
@@ -383,7 +438,7 @@ def _rebuild_grid(local, policy, observations, refinement=0):
             return None, (RouteReason.GRID_REBUILD_OVER_BUDGET,
                           f"a declared bound truncates the posterior and the moments had not converged within the budget "
                           f"of {budget} points after {halvings} halving(s)")
-        candidate, _ = _build(local, policy, observations, lo, hi, finer)
+        candidate, _ = _build(local, policy, observations, forward, lo, hi, finer)
         scale = np.sqrt(np.maximum(np.diag(candidate.covariance), 1e-300))
         moved = max(float(np.max(np.abs(candidate.mean - rebuilt.mean) / scale)),
                     float(np.max(np.abs(np.sqrt(np.diag(candidate.covariance)) - np.sqrt(np.diag(rebuilt.covariance))) / scale)))
@@ -397,6 +452,23 @@ def _rebuild_grid(local, policy, observations, refinement=0):
                           f"after {halvings} halving(s)")
     return rebuilt, (f"{int(np.prod(nodes.astype(float)))} points, nodes {[int(n) for n in nodes]}, {attempt} box expansion(s), "
                      f"{halvings} truncation halving(s) on axes {truncated}, {int(refinement)} refinement(s)")
+
+
+def _require_grid_bound_to_request(grid: PosteriorGrid, calibration, observations) -> None:
+    """Refuse a supplied grid that is not a posterior for the request it is routed with (audit HUQ-06).
+
+    A grid over other parameters, or computed from other data, would otherwise be certified GRID_AS_SUPPLIED for a
+    calibration and observations it never saw. Where the request names its parameters (a calibration) or its data
+    (observations), the grid must be over exactly those parameters, in that order, and from that dataset.
+    """
+    if isinstance(calibration, CalibrationResult):
+        requested = tuple(calibration.spec.parameters.names)
+        if tuple(grid.parameter_names) != requested:
+            raise HybridUQError(f"the supplied grid is over parameters {list(grid.parameter_names)}; the request calibrates "
+                                f"{list(requested)}: a grid for other parameters is not this request's posterior")
+    if isinstance(observations, ObservationSet) and str(grid.dataset_id) != str(observations.dataset_id):
+        raise HybridUQError(f"the supplied grid was computed from dataset {grid.dataset_id!r}; the request's observations are "
+                            f"{observations.dataset_id!r}: a grid from other data is not this request's posterior")
 
 
 def route_uncertainty(
@@ -415,6 +487,8 @@ def route_uncertainty(
     if rebuild is not None and not isinstance(rebuild, GridRebuildPolicy):
         raise HybridUQError("rebuild must be a GridRebuildPolicy")
     considered: list[dict[str, str]] = []
+    if isinstance(grid, PosteriorGrid):
+        _require_grid_bound_to_request(grid, calibration, observations)
 
     # 1. the grid as supplied
     if grid is None:
@@ -425,6 +499,7 @@ def route_uncertainty(
         considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "PASSED_OVER",
                            "reason": RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value})
     else:
+        _require_weights_follow_likelihood(grid)
         try:
             identifiability = assess_routed_identifiability(grid)
         except GridResolutionError as exc:
@@ -469,7 +544,7 @@ def route_uncertainty(
                                "reason": "no usable local covariance to design a grid from"})
         else:
             for refinement in range(_MAXIMUM_REFINEMENTS + 1):
-                rebuilt, detail = _rebuild_grid(local, rebuild, observations, refinement)
+                rebuilt, detail = _rebuild_grid(local, rebuild, observations, forward, refinement)
                 if rebuilt is None:
                     reason, why = detail
                     considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",

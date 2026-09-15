@@ -18,7 +18,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 from scipy.stats import norm
 
-from ..inference.calibration import ForwardEvaluator
+from ..inference.calibration import ForwardEvaluator, assess_identifiability
 from ..inference.grid import AdmittedForwardTable, PosteriorGrid
 from ..scientific.ir.problem import ModelReference
 from ..scientific.twins import TwinReference
@@ -28,7 +28,8 @@ from ._records import decode_float, digest_of, encode_float, require_schema
 from .local_gaussian import LocalGaussianPosterior, PROBE_SD
 from .sensitivity import DEFAULT_RELATIVE_STEP, RouteRefusedError, central_difference, evaluate, to_natural
 from .vocabulary import (
-    MODEL_DISCREPANCY_NOT_MODELLED, UNCERTAINTY_SOURCES, ApproximationClass, HybridUQError, RouteClaim, RouteReason, claim_for,
+    GRID_ROUTE_MAXIMUM_PARAMETERS, MODEL_DISCREPANCY_NOT_MODELLED, UNCERTAINTY_SOURCES, ApproximationClass, HybridUQError, RouteClaim,
+    RouteReason, claim_for,
 )
 
 ROUTED_PREDICTIVE_UNCERTAINTY_SCHEMA = "hybrid_uq.routed_predictive_uncertainty/1"
@@ -36,7 +37,12 @@ PREDICTIVE_NONLINEARITY_DOWNGRADE = 0.10
 
 
 def grid_digest(posterior: PosteriorGrid) -> str:
-    """Identity of a grid posterior: names, dataset, and the bytes of its points and weights."""
+    """Identity of a grid posterior: names, dataset, and the bytes of its points, weights, log-likelihood and mask.
+
+    The log-likelihood and the admissible mask are part of the identity (audit HUQ-04): the frozen resolution checks
+    read the log-likelihood while the moments read the weights, so a digest over the weights alone let a refused
+    grid keep its identity under a laundered likelihood.
+    """
     import hashlib
 
     h = hashlib.sha256()
@@ -44,7 +50,57 @@ def grid_digest(posterior: PosteriorGrid) -> str:
     h.update(b"\x00" + str(posterior.dataset_id).encode("utf-8") + b"\x00")
     h.update(np.ascontiguousarray(posterior.points, dtype="<f8").tobytes())
     h.update(np.ascontiguousarray(posterior.weights, dtype="<f8").tobytes())
+    h.update(b"\x00log_likelihood\x00" + np.ascontiguousarray(posterior.log_likelihood, dtype="<f8").tobytes())
+    h.update(b"\x00admissible_mask\x00" + np.ascontiguousarray(posterior.admissible_mask, dtype=np.uint8).tobytes())
     return h.hexdigest()
+
+
+#: A grid's weights must be the normalized likelihood over its admissible, finite nodes to this relative tolerance
+#: (plus an absolute floor far below any weight that moves a moment). The frozen construction reproduces them to
+#: roundoff; anything else is weights and a likelihood that describe two different posteriors.
+GRID_WEIGHT_RELATIVE_TOLERANCE = 1.0e-9
+GRID_WEIGHT_ABSOLUTE_TOLERANCE = 1.0e-14
+
+
+def _require_weights_follow_likelihood(posterior: PosteriorGrid) -> None:
+    """Refuse a grid whose weights are not softmax(log_likelihood) over its admissible mask (audit HUQ-04).
+
+    Defence in depth: whatever the grid constructor enforces, a grid whose resolution is judged on one array and
+    whose moments are read from another is never routed, predicted from or certified here.
+    """
+    ll = np.asarray(posterior.log_likelihood, dtype=np.float64)
+    mask = np.asarray(posterior.admissible_mask, dtype=bool)
+    weights = np.asarray(posterior.weights, dtype=np.float64)
+    if ll.shape != weights.shape or mask.shape != weights.shape:
+        raise HybridUQError("a posterior grid's weights, log-likelihood and mask must have one entry per point")
+    usable = mask & np.isfinite(ll)
+    if not np.any(usable):
+        raise HybridUQError("a posterior grid with no admissible finite log-likelihood has no posterior")
+    expected = np.zeros_like(ll)
+    expected[usable] = np.exp(ll[usable] - float(np.max(ll[usable])))
+    expected /= float(np.sum(expected))
+    gap = np.abs(weights - expected)
+    if np.any(gap > GRID_WEIGHT_RELATIVE_TOLERANCE * expected + GRID_WEIGHT_ABSOLUTE_TOLERANCE):
+        worst = int(np.argmax(gap - GRID_WEIGHT_RELATIVE_TOLERANCE * expected))
+        raise HybridUQError(
+            f"the grid's weights are not softmax(log_likelihood) over its admissible mask: at point {worst} the weight is "
+            f"{float(weights[worst]):.6g} and its likelihood implies {float(expected[worst]):.6g}; a grid whose resolution "
+            f"is judged on one array and whose moments come from another is not a posterior")
+
+
+def _grid_route_claim(posterior: PosteriorGrid) -> RouteClaim:
+    """The claim a grid may carry: the router's own judgement, or a refusal raised (audit HUQ-02).
+
+    The same checks, in the same order, as the router's GRID_AS_SUPPLIED route: the validated dimension, weights
+    that follow the likelihood, and the frozen ``assess_identifiability`` (which raises GridResolutionError when the
+    repaired V1 resolution checks refuse). A grid the router would not route is not predicted from.
+    """
+    if len(posterior.parameter_names) > GRID_ROUTE_MAXIMUM_PARAMETERS:
+        raise HybridUQError(f"a grid of {len(posterior.parameter_names)} parameters is beyond the validated grid route "
+                            f"({GRID_ROUTE_MAXIMUM_PARAMETERS}); it is not predicted from")
+    _require_weights_follow_likelihood(posterior)
+    assess_identifiability(posterior)
+    return RouteClaim.SUPPORTED
 
 
 @dataclass(frozen=True)
@@ -251,7 +307,15 @@ def grid_predictive_uncertainty(
     source_ref: str,
     confidence_level: float = 0.95,
 ) -> RoutedPredictiveUncertainty:
-    """The frozen grid predictive, grid-resolution refusal included, in the V2 record."""
+    """The frozen grid predictive, in the V2 record, for a grid the router's own judgement accepts.
+
+    The frozen ``posterior_predictive_uq`` deliberately keeps a discrete grid too coarse to carry curvature (its
+    exact-mixture meaning). A V2 record says SUPPORTED, which the router only says of a grid the repaired V1
+    resolution checks accept, so that judgement is applied first and its refusal raised (audit HUQ-02).
+    """
+    if not isinstance(posterior, PosteriorGrid):
+        raise HybridUQError("grid_predictive_uncertainty takes a PosteriorGrid")
+    claim = _grid_route_claim(posterior)
     result = posterior_predictive_uq(posterior, predictive_table, spec, twin=twin, model=model, source_ref=source_ref,
                                      credible_mass=confidence_level)
     unit = result.mean.units
@@ -264,5 +328,5 @@ def grid_predictive_uncertainty(
         parameter_interval=(float(result.epistemic_interval.lower.magnitude_in(unit)), float(result.epistemic_interval.upper.magnitude_in(unit))),
         total_interval=(float(result.total_interval.lower.magnitude_in(unit)), float(result.total_interval.upper.magnitude_in(unit))),
         confidence_level=result.confidence_level, sources=UNCERTAINTY_SOURCES, model_discrepancy=MODEL_DISCREPANCY_NOT_MODELLED,
-        posterior_digest=grid_digest(posterior), route_claim=RouteClaim.SUPPORTED, reasons=(), predictive_nonlinearity=None,
+        posterior_digest=grid_digest(posterior), route_claim=claim, reasons=(), predictive_nonlinearity=None,
     )
