@@ -151,7 +151,8 @@ def good_result(result_id: str = "res-good") -> ScientificResult:
     return ScientificResult(
         result_id=result_id,
         values={"V:mid": Quantity(9.0, "volt")},
-        provenance=ProvenanceRecord(run_id="run-1"),
+        # A result may not name a solver its own provenance does not (core trust closure).
+        provenance=ProvenanceRecord(run_id="run-1", solvers=(("demo.linear", "1"),)),
         solver=SolverIdentity(solver_id="demo.linear", version="1"),
         convergence=ConvergenceState.CONVERGED,
         validation=ValidationReport(

@@ -107,6 +107,8 @@ def scalar_result(**overrides) -> ScientificResult:
         provenance=ProvenanceRecord(
             run_id="legacy-1",
             software_version="legacy/0.1.0",
+            # A result may not name a solver its own provenance does not (core trust closure).
+            solvers=(("legacy.solver", "0.1.0"),),
             inputs={"r": Quantity(2.0, "ohm")},
         ),
     )

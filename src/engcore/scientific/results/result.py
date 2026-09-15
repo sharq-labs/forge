@@ -278,6 +278,7 @@ class ScientificResult:
 
         object.__setattr__(self, "convergence", ConvergenceState(self.convergence))
         object.__setattr__(self, "models", tuple(tuple(m) for m in self.models))
+        self._require_provenance_consistency()
         object.__setattr__(self, "assumptions", tuple(self.assumptions))
         object.__setattr__(self, "warnings", tuple(self.warnings))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
@@ -372,6 +373,49 @@ class ScientificResult:
                     ),
                 )
         object.__setattr__(self, "uncertainty", freeze(uncertainty))
+
+    def _require_provenance_consistency(self) -> None:
+        """A result may narrow its provenance, but it may never contradict it.
+
+        ``ProvenanceRecord`` validates its own participants and execution
+        bindings; nothing checked the other half of the boundary, so a result
+        could publicly attribute itself to a model or a solver its own
+        execution record does not contain, and every consumer reading
+        ``models`` or ``solver`` would believe it. Extra provenance
+        participants stay legitimate (coupled or supporting work), so equality
+        is deliberately not required. Ported from PR #39.
+        """
+        result_models = set(self.models)
+        missing_models = sorted(result_models - set(self.provenance.models))
+        if missing_models:
+            raise ScientificCoreError(
+                f"result {self.result_id!r} declares model(s) {missing_models} "
+                f"that its provenance does not name. A result cannot attribute "
+                f"itself to a model its execution record does not contain"
+            )
+        if self.solver is None:
+            return
+        if not isinstance(self.solver, SolverIdentity):
+            raise ScientificCoreError("result solver must be a SolverIdentity")
+        solver_key = self.solver.key
+        if solver_key not in set(self.provenance.solvers):
+            raise ScientificCoreError(
+                f"result {self.result_id!r} declares solver "
+                f"{self.solver.solver_id}@{self.solver.version}, but its "
+                f"provenance does not name that solver"
+            )
+        if self.provenance.bindings and result_models:
+            attributable = any(
+                binding.solver.key == solver_key and binding.model.key in result_models
+                for binding in self.provenance.bindings
+            )
+            if not attributable:
+                raise ScientificCoreError(
+                    f"result {self.result_id!r} declares solver "
+                    f"{self.solver.solver_id}@{self.solver.version}, but no "
+                    f"provenance execution binding connects that solver to any "
+                    f"model the result declares"
+                )
 
     def _checked_validity(self) -> tuple[dict, dict]:
         """Normalise both validity mappings, refusing every way to blur a gap.
