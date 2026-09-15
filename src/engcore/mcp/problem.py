@@ -410,7 +410,9 @@ _BINDINGS: tuple[Binding, ...] = (
         input_name="debye_temperature",
     ),
     # Audit CAP-05. The one category a condition here consults: the Debye
-    # floor is elemental-metal physics and answers only for that class.
+    # floor is elemental-metal physics. Declaring a non-elemental class
+    # withholds it; leaving the class out makes a declared Debye temperature
+    # the caller's assertion of an elemental metal.
     # Model-bound like every other limit, so its required flag and prose are
     # the record's; being a category it has no unit and no dimension.
     Binding(
@@ -423,8 +425,11 @@ _BINDINGS: tuple[Binding, ...] = (
         note=(
             "One of "
             f"{list(mat.CONDUCTOR_CLASS_VOCABULARY)}. Gates the three Debye "
-            "conditions, which describe elemental metals only: for any other "
-            "class, or none, they are UNKNOWN whatever debye_temperature says."
+            "conditions, which describe elemental metals only: for a declared "
+            "class other than elemental_metal they are UNKNOWN whatever "
+            "debye_temperature says. Left out, a declared debye_temperature "
+            "is your explicit assertion that the conductor is an elemental "
+            "metal, and the report records it as asserted."
         ),
     ),
     # ---- component ratings -------------------------------------------
@@ -1944,6 +1949,38 @@ def _material_assessments(
     return assessments
 
 
+def _conductor_class_declarations(
+    system: cp.CoupledElectroThermalSystem,
+) -> tuple[AssertedContext, ...]:
+    """What each conductor was taken to be, where a verdict rests on it.
+
+    Audit CAP-05, lead decision: a Debye temperature declared without a
+    conductor class is the caller's explicit assertion that the conductor is
+    an elemental metal, and the three Debye conditions answer on it. That
+    assertion is recorded here, per stage, so it is visible in the report
+    rather than implied by an absence. Stages whose declaration says nothing
+    about the class and declares no Debye temperature add nothing.
+    """
+    records = []
+    for stage in system.stages:
+        assertion = mat.conductor_class_assertion(stage.conductor.limits)
+        if assertion is None:
+            continue
+        records.append(
+            AssertedContext(
+                source=f"MaterialLimits.conductor_class:{stage.component_id}",
+                payload=assertion,
+                description=(
+                    "the conductor class the Debye-temperature conditions "
+                    "were answered under, and whether it was declared or "
+                    "asserted by declaring a Debye temperature"
+                ),
+                consumed_by_verdict=True,
+            )
+        )
+    return tuple(records)
+
+
 def _contributing_models(
     problems: Sequence[Any], closure: frozenset[str]
 ) -> tuple[tuple[str, str], ...]:
@@ -2265,7 +2302,8 @@ def run_electrothermal_case(
                         description="caller-declared applicability context",
                         consumed_by_verdict=True,
                     ),
-                ),
+                )
+                + _conductor_class_declarations(system),
             )
         )
     return ElectroThermalCaseRun(
@@ -2649,10 +2687,10 @@ def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tupl
             tuple(sorted(thermal_solo[key] or thermal_joint[key])),
         )
 
-    # A copper probe: an elemental metal, so the class that lets the Debye
-    # temperature decide anything is declared, and dropping the class is
-    # measured as unlocking the three Debye conditions just as dropping the
-    # Debye temperature is (audit CAP-05).
+    # A copper probe, declared an elemental metal (audit CAP-05). Dropping the
+    # class unlocks nothing -- an undeclared class with a declared Debye
+    # temperature is the caller's assertion of elemental_metal -- and that is
+    # what this measurement reports for it.
     full_limits = mat.MaterialLimits(
         linearization_band=Quantity(80.0, "kelvin"),
         maximum_operating_temperature=Quantity(400.0, "kelvin"),

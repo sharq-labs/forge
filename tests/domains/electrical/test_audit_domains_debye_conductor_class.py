@@ -5,9 +5,15 @@ limit-versus-limit siblings rest on the Bloch-Grueneisen form of an elemental
 metal's phonon-limited resistivity. They were evaluated for any conductor that
 declared a Debye temperature -- including the flagship example, a thick-film
 TO-220 part declared with copper's 343 K. A thick film on alumina, an alloy or
-a semiconductor is not described by that argument, so the floor now answers
-only for a conductor DECLARED as an elemental metal and is UNKNOWN otherwise,
-including when no class is declared.
+a semiconductor is not described by that argument.
+
+Lead decision (declaring is asserting): ``conductor_class`` is optional. A
+declared class other than ``elemental_metal`` makes the three Debye conditions
+UNKNOWN and the Debye temperature unused. With no class declared, declaring a
+Debye temperature is the caller's explicit assertion of an elemental metal: the
+conditions answer, and the assertion is recorded in the report as
+``asserted_conductor_class = elemental_metal`` asserted by the
+``debye_temperature`` declaration.
 """
 
 from __future__ import annotations
@@ -67,11 +73,47 @@ def test_a_non_elemental_conductor_leaves_every_debye_condition_unknown(conducto
     assert assessment.status is ValidityStatus.UNKNOWN
 
 
-def test_an_undeclared_class_leaves_every_debye_condition_unknown() -> None:
+def test_an_undeclared_class_answers_on_the_asserted_elemental_metal() -> None:
     assessment = _assess(None)
-    assert set(DEBYE_CONDITIONS) <= set(assessment.unknown)
-    # Nor can a non-elemental conductor be refused on a floor that does not apply.
-    assert not (set(DEBYE_CONDITIONS) & set(_assess(None, temperature=100.0).violated))
+    assert set(DEBYE_CONDITIONS) <= set(assessment.satisfied)
+    assert mat.REDUCED_DEBYE_TEMPERATURE in _assess(None, temperature=100.0).violated
+
+
+def test_a_declared_non_elemental_class_is_not_refused_on_a_floor_that_does_not_apply() -> None:
+    assert not (set(DEBYE_CONDITIONS) & set(_assess("thick_film", temperature=100.0).violated))
+
+
+def test_the_assertion_is_recorded_and_says_what_made_it() -> None:
+    asserted = mat.conductor_class_assertion(
+        mat.MaterialLimits(debye_temperature=Q(343.0, "kelvin"))
+    )
+    assert asserted["asserted_conductor_class"] == mat.ELEMENTAL_METAL
+    assert asserted["asserted_by"] == "debye_temperature declaration"
+    declared = mat.conductor_class_assertion(mat.MaterialLimits(conductor_class="thick_film"))
+    assert declared["conductor_class"] == "thick_film" and declared["basis"] == "declared"
+    assert mat.conductor_class_assertion(mat.MaterialLimits()) is None
+    text = " ".join(
+        c.description for c in mat.RATED_LINEAR_TCR_MODEL.validity.conditions
+        if c.name == mat.REDUCED_DEBYE_TEMPERATURE
+    )
+    assert "asserted by debye_temperature declaration" in text
+
+
+def test_the_report_carries_the_assertion() -> None:
+    import copy
+
+    from engcore.mcp.problem import example_electrothermal_payload, run_electrothermal_case
+
+    payload = copy.deepcopy(example_electrothermal_payload())
+    payload["stages"][0]["conductor"]["limits"] = {"debye_temperature": "343 kelvin"}
+    report = run_electrothermal_case(payload, run_id="asserted").reports[0]
+    records = [d for d in report.declarations if d.source.startswith("MaterialLimits.conductor_class")]
+    assert len(records) == 1
+    assert records[0].payload["asserted_conductor_class"] == "elemental_metal"
+    assert records[0].consumed_by_verdict is True
+    # The flagship thick-film example declares no Debye limits and asserts nothing.
+    shipped = run_electrothermal_case(example_electrothermal_payload(), run_id="shipped").reports[0]
+    assert not [d for d in shipped.declarations if d.source.startswith("MaterialLimits.conductor_class")]
 
 
 def test_an_unknown_class_is_refused_at_declaration() -> None:
@@ -89,7 +131,7 @@ def test_the_class_round_trips_and_is_absent_from_bytes_when_undeclared() -> Non
     ).to_dict()
 
 
-def test_the_public_derivation_withholds_the_floor_without_the_class() -> None:
+def test_the_public_derivation_withholds_the_floor_for_a_declared_non_elemental_class() -> None:
     """Not only the rated context: ``derived_material_quantities`` is public and
     is called directly (the Contract Integrity nominals do), so it gates too."""
     base = {
@@ -98,7 +140,7 @@ def test_the_public_derivation_withholds_the_floor_without_the_class() -> None:
         mat.DEBYE_TEMPERATURE: Q(343.0, "kelvin"),
     }
     t = Q(320.0, "kelvin")
-    assert mat.REDUCED_DEBYE_TEMPERATURE not in mat.derived_material_quantities(base, temperature=t)
+    assert mat.REDUCED_DEBYE_TEMPERATURE in mat.derived_material_quantities(base, temperature=t)
     assert mat.REDUCED_DEBYE_TEMPERATURE not in mat.derived_material_quantities(
         {**base, mat.CONDUCTOR_CLASS: "thick_film"}, temperature=t
     )

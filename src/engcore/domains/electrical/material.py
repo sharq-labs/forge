@@ -132,6 +132,7 @@ __all__ = [
     "CONDUCTOR_CLASS_VOCABULARY",
     "DEBYE_TEMPERATURE",
     "ELEMENTAL_METAL",
+    "conductor_class_assertion",
     "CEILING_REDUCED_DEBYE_TEMPERATURE",
     "DIMENSIONLESS",
     "LINEARIZATION_BAND",
@@ -208,8 +209,21 @@ DEBYE_TEMPERATURE = "debye_temperature"
 #: phonon-limited resistivity of an ELEMENTAL METAL. A thick film on alumina,
 #: an alloy with a large residual resistivity, a metal film or a semiconductor
 #: is not described by it, and a Debye temperature declared for one decides
-#: nothing. So the three Debye conditions answer only for a conductor declared
-#: ``elemental_metal`` and are UNKNOWN for every other class and for no class.
+#: nothing.
+#:
+#: DECLARING IS ASSERTING (lead decision on audit CAP-05). The class is
+#: optional, and the rule is:
+#:
+#: * a declared class other than ``elemental_metal``: the three Debye
+#:   conditions are UNKNOWN and the declared Debye temperature is not used;
+#: * ``elemental_metal`` declared: they answer;
+#: * NO class declared but a ``debye_temperature`` declared: declaring a Debye
+#:   temperature IS the caller's explicit assertion that the conductor is an
+#:   elemental metal describable by Bloch-Grueneisen -- recorded as
+#:   ``asserted_conductor_class = elemental_metal (asserted by
+#:   debye_temperature declaration)`` by :func:`conductor_class_assertion` and
+#:   carried into the report -- and they answer on that assertion.
+#:
 #: The gate can only withhold a verdict, never grant one.
 CONDUCTOR_CLASS = "conductor_class"
 ELEMENTAL_METAL = "elemental_metal"
@@ -644,9 +658,12 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
             description=(
                 "Debye temperature of the material, which sets the "
                 "temperature below which resistivity stops being linear in T. "
-                "Read only for a conductor whose conductor_class is "
-                "elemental_metal; for any other class the Bloch-Grueneisen "
-                "argument does not apply and the Debye conditions are UNKNOWN."
+                "Declaring it without a conductor_class is the caller's "
+                "explicit assertion that the conductor is an elemental metal "
+                "(asserted_conductor_class = elemental_metal, asserted by "
+                "debye_temperature declaration); with a declared class other "
+                "than elemental_metal it is not used and the Debye conditions "
+                "are UNKNOWN."
             ),
         ),
         ModelInputSpec(
@@ -657,8 +674,10 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
             description=(
                 "What kind of conductor this is, one of "
                 f"{list(CONDUCTOR_CLASS_VOCABULARY)}. Gates the three Debye "
-                "conditions, which describe elemental metals only: any other "
-                "class, or none, leaves them UNKNOWN."
+                "conditions, which describe elemental metals only: a declared "
+                "class other than elemental_metal leaves them UNKNOWN. "
+                "Undeclared, a declared debye_temperature is the caller's "
+                "assertion of elemental_metal."
             ),
         ),
     ),
@@ -762,10 +781,15 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "single coefficient fits. Ashcroft & Mermin, Solid State "
                     "Physics (1976), Ch. 26, Eq. 26.55; Kittel, Introduction "
                     "to Solid State Physics, 8th ed. (2005), Ch. 6. THAT "
-                    "ARGUMENT IS ABOUT ELEMENTAL METALS: evaluated only for a "
-                    "conductor whose conductor_class is elemental_metal, and "
-                    "UNKNOWN for any other class or none. UNKNOWN unless the "
-                    "material declares debye_temperature."
+                    "ARGUMENT IS ABOUT ELEMENTAL METALS: UNKNOWN for a "
+                    "declared conductor_class other than elemental_metal. "
+                    "With no class declared, the declared debye_temperature "
+                    "is the caller's explicit assertion that the conductor is "
+                    "an elemental metal (asserted_conductor_class = "
+                    "elemental_metal, asserted by debye_temperature "
+                    "declaration) and this condition answers on that "
+                    "assertion. UNKNOWN unless the material declares "
+                    "debye_temperature."
                 ),
             ),
             # ---- the declared limits against each other -------------------
@@ -841,10 +865,10 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "a temperature the same declaration says is curved. "
                     "Distinct from the condition on the run: a run can stay "
                     "in the linear regime while the coefficient it uses was "
-                    "anchored outside it. Elemental metals only, as "
-                    "reduced_debye_temperature: UNKNOWN unless the material "
-                    "declares debye_temperature and conductor_class "
-                    "elemental_metal."
+                    "anchored outside it. Elemental metals only, on the same "
+                    "declaring-is-asserting rule as reduced_debye_temperature: "
+                    "UNKNOWN unless the material declares debye_temperature, "
+                    "and UNKNOWN for a declared non-elemental class."
                 ),
             ),
             CrossLimitCondition(
@@ -864,9 +888,11 @@ RATED_LINEAR_TCR_MODEL = ScientificModelDefinition(
                     "because an empty set cannot be repaired by moving the "
                     "operating point, cooling the part or shortening the "
                     "run — only by changing the declaration. Elemental metals "
-                    "only, as reduced_debye_temperature: UNKNOWN unless the "
-                    "material declares maximum_operating_temperature, "
-                    "debye_temperature and conductor_class elemental_metal."
+                    "only, on the same declaring-is-asserting rule as "
+                    "reduced_debye_temperature: UNKNOWN unless the material "
+                    "declares maximum_operating_temperature and "
+                    "debye_temperature, and UNKNOWN for a declared "
+                    "non-elemental class."
                 ),
             ),
             RangeCondition(
@@ -945,6 +971,40 @@ def resistance_solver_capabilities() -> frozenset[SolverCapability]:
 # =====================================================================
 # Declaration
 # =====================================================================
+
+def conductor_class_assertion(limits: "MaterialLimits") -> dict[str, str] | None:
+    """What the declaration says the conductor is, and on whose word.
+
+    ``None`` when nothing about the class bears on a verdict: no class and no
+    Debye temperature. Otherwise a record a report can carry verbatim:
+
+    * a declared class: ``{"conductor_class": <class>, "basis": "declared"}``;
+    * no class but a declared Debye temperature:
+      ``{"asserted_conductor_class": "elemental_metal",
+      "asserted_by": "debye_temperature declaration", ...}`` -- the caller's
+      explicit assertion under which the three Debye conditions answered.
+    """
+    if limits.conductor_class is not None:
+        return {
+            "conductor_class": limits.conductor_class,
+            "basis": "declared",
+            "debye_conditions": (
+                "answered"
+                if limits.conductor_class == ELEMENTAL_METAL
+                else "unknown: a declared non-elemental class"
+            ),
+        }
+    if limits.debye_temperature is not None:
+        return {
+            "asserted_conductor_class": ELEMENTAL_METAL,
+            "asserted_by": "debye_temperature declaration",
+            "debye_conditions": (
+                "answered on the caller's assertion that the conductor is an "
+                "elemental metal describable by Bloch-Grueneisen"
+            ),
+        }
+    return None
+
 
 @dataclass(frozen=True)
 class MaterialLimits:
@@ -1540,10 +1600,12 @@ def derived_material_quantities(
     ``ValidityDomain.assess`` as UNKNOWN.
     """
     reference_temperature = base.get(REFERENCE_TEMPERATURE)
-    # Audit CAP-05: the Debye floor describes elemental metals only.
+    # Audit CAP-05: the Debye floor describes elemental metals only. A
+    # declared non-elemental class withholds it; no class means the declared
+    # Debye temperature is itself the assertion of an elemental metal.
     debye = (
         base.get(DEBYE_TEMPERATURE)
-        if base.get(CONDUCTOR_CLASS) == ELEMENTAL_METAL
+        if base.get(CONDUCTOR_CLASS) in (None, ELEMENTAL_METAL)
         else None
     )
     derived: dict[str, Quantity | None] = {
@@ -1615,11 +1677,13 @@ def rated_resistance_validity_context(
     )
     # Audit CAP-05. The two limit-versus-limit Debye conditions read the
     # declared Debye temperature straight out of this namespace, so for a
-    # conductor not declared an elemental metal it is withheld from them here:
-    # they reach ``assess`` as UNKNOWN rather than applying a metal's
-    # Bloch-Grueneisen floor to a film, an alloy or a semiconductor. It stays
-    # on the problem, so provenance still shows what was declared.
-    if declared.get(CONDUCTOR_CLASS) != ELEMENTAL_METAL:
+    # conductor DECLARED as something other than an elemental metal it is
+    # withheld from them here: they reach ``assess`` as UNKNOWN rather than
+    # applying a metal's Bloch-Grueneisen floor to a film, an alloy or a
+    # semiconductor. It stays on the problem, so provenance still shows what
+    # was declared. With no class declared the Debye temperature is the
+    # caller's assertion of an elemental metal; see conductor_class_assertion.
+    if declared.get(CONDUCTOR_CLASS) not in (None, ELEMENTAL_METAL):
         declared = {
             name: value
             for name, value in declared.items()
