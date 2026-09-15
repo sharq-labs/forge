@@ -63,6 +63,7 @@ from engcore.scientific.serialization import to_json
 from engcore.scientific.solvers.admission import require_agreement
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -92,7 +93,7 @@ def _route(route_id: str) -> SolveRoute:
 
 
 def _consensus(values, required):
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="invariants",
         routes=tuple(_route(name) for name in sorted(values)),
         values=values,

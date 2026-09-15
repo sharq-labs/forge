@@ -40,13 +40,10 @@ def _dc_routes():
 
 
 def _over(routes, values, thresholds, key, required=("v",)):
-    return CrossSolverConsensus.over(
-        consensus_id="cons-01",
-        routes=routes,
-        values=values,
-        thresholds=thresholds,
-        tolerance_key=key,
-        required_outputs=required,
+    # Bound to results, so the only thing on trial is whose threshold it is.
+    return earned_consensus(
+        routes, values, thresholds=thresholds, tolerance_key=key,
+        required=required, consensus_id="cons-01",
     )
 
 

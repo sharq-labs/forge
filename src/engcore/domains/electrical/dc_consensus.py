@@ -65,6 +65,7 @@ from ...scientific.consensus import (
     SolveRoute,
 )
 from ...scientific.errors import ScientificValidationError
+from ...scientific.results.result import ScientificResult
 from ...scientific.results.thresholds import VerificationThresholds
 from ...scientific.solvers.protocol import SolverIdentity
 from ...scientific.units.quantity import Quantity
@@ -276,9 +277,9 @@ def route_values(result: Any) -> dict[str, float]:
 
 def dc_consensus(
     *,
-    native: Any,
+    native: ScientificResult,
     native_solver: SolverIdentity,
-    external: Any,
+    external: ScientificResult,
     external_solver: SolverIdentity,
     consensus_id: str = "electrical.dc.operating_point",
     thresholds: VerificationThresholds = DC_CONSENSUS_THRESHOLDS,
@@ -297,16 +298,27 @@ def dc_consensus(
     the pair would silently declare the external route's arithmetic under a
     name that is not the one that produced it.
     """
+    # TYPED, NOT DUCK-TYPED (IND-02). This read `getattr(result, "provenance")`
+    # off whatever it was handed, so a `SimpleNamespace` carrying the native
+    # result's values and a provenance naming the external solver was accepted
+    # as the external route and earned the level. A route is compared on an
+    # executed `ScientificResult`, and the core's `from_results` binds each
+    # route to that result's id, run, solver identity and numbers.
     for label, result, solver in (
         ("native", native, native_solver),
         ("external", external, external_solver),
     ):
+        if not isinstance(result, ScientificResult):
+            raise ScientificValidationError(
+                f"the {label} route was handed a {type(result).__name__}, not a "
+                f"ScientificResult; a DC route is compared on an executed result"
+            )
         # A route is attributed to the solver that produced its numbers. The
         # identities arrive beside the results rather than in them, so a result
         # can be handed over under another route's identity -- and the two
         # routes would then be one program compared with itself, which the core
         # has no way to see. What a result does carry is its provenance.
-        recorded = tuple(getattr(getattr(result, "provenance", None), "solvers", ()) or ())
+        recorded = tuple(result.provenance.solvers)
         if (solver.solver_id, solver.version) not in recorded:
             raise ScientificValidationError(
                 f"the {label} result's provenance records solvers {list(recorded)}, "
@@ -315,15 +327,15 @@ def dc_consensus(
             )
 
     native_values = route_values(native)
-    return CrossSolverConsensus.over(
+    return CrossSolverConsensus.from_results(
         consensus_id=consensus_id,
         routes=(
             native_route(native_solver),
             external_route(external_solver),
         ),
-        values={
-            NATIVE_ROUTE_ID: native_values,
-            EXTERNAL_ROUTE_ID: route_values(external),
+        results={
+            NATIVE_ROUTE_ID: native,
+            EXTERNAL_ROUTE_ID: external,
         },
         thresholds=thresholds,
         tolerance_key="agreement_rel_tol",

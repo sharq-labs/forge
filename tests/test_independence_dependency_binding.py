@@ -45,6 +45,7 @@ from engcore.scientific.independence_evidence import (
 )
 from engcore.scientific.results.validation import ValidationLevel
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     route,
     route_declarations_for_tests,
 )
@@ -101,7 +102,7 @@ def _pair(left_evidence, right_evidence, routes):
 
 
 def _consensus(*routes):
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="dependency-binding",
         routes=routes,
         values={item.route_id: {"x": 1.0, "y": 2.0} for item in routes},

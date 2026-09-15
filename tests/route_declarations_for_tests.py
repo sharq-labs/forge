@@ -103,23 +103,90 @@ def declare(
     return routes
 
 
+def bound_results(routes, values, *, consensus_id="test", unit="dimensionless"):
+    """One executed-looking ``ScientificResult`` per route, carrying ``values``.
+
+    Distinct result ids and run ids, each naming its route's solver in its own
+    provenance and as its solver identity -- what ``from_results`` requires of
+    a result before it binds a route to it (IND-02).
+    """
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ScientificResult
+    from engcore.scientific.units.quantity import Quantity
+
+    results = {}
+    for item in routes:
+        results[item.route_id] = ScientificResult(
+            result_id=f"{consensus_id}:{item.route_id}",
+            values={
+                name: Quantity(float(value), unit)
+                for name, value in values.get(item.route_id, {}).items()
+            },
+            provenance=ProvenanceRecord(
+                run_id=f"{consensus_id}:{item.route_id}:run",
+                solvers=(item.solver.key,),
+            ),
+            solver=item.solver,
+        )
+    return results
+
+
 def earned_consensus(routes, values, *, thresholds, tolerance_key, required, consensus_id="test"):
     """The construction path that can award ``CROSS_SOLVER_VALIDATED``.
 
-    One place, so the tests that need a level-bearing consensus do not each
-    spell out how one is built.
+    ``from_results`` over :func:`bound_results`: since IND-02 a mapping of
+    numbers (``over``) never awards the level, so a test that needs a
+    level-bearing consensus binds each route to a result.
     """
     from engcore.scientific.consensus import CrossSolverConsensus
 
-    return CrossSolverConsensus.over(
+    routes = tuple(routes)
+    return CrossSolverConsensus.from_results(
         consensus_id=consensus_id,
-        routes=tuple(routes),
-        values=values,
+        routes=routes,
+        results=bound_results(routes, values, consensus_id=consensus_id),
         thresholds=thresholds,
         tolerance_key=tolerance_key,
         required_outputs=tuple(required),
     )
 
+
+def bound_over(*, consensus_id, routes, values, thresholds, tolerance_key, required_outputs=(), notes=""):
+    """``CrossSolverConsensus.over``'s signature, bound to results where it can be.
+
+    A drop-in for the tests written against ``over`` before IND-02, whose
+    positive cases need the level: every route's numbers are carried by a
+    ``ScientificResult`` (:func:`bound_results`) and compared through
+    ``from_results``. Non-finite numbers cannot be carried by a ``Quantity``,
+    so those cases -- which establish nothing on any path -- go through
+    ``over`` unchanged. Every refusal the tests pin is reached on both paths.
+    """
+    import math
+
+    from engcore.scientific.consensus import CrossSolverConsensus
+
+    routes = tuple(routes)
+    finite = all(
+        math.isfinite(float(value))
+        for produced in values.values()
+        for value in produced.values()
+    )
+    known = {item.route_id for item in routes}
+    if not finite or set(values) != known:
+        return CrossSolverConsensus.over(
+            consensus_id=consensus_id, routes=routes, values=values,
+            thresholds=thresholds, tolerance_key=tolerance_key,
+            required_outputs=required_outputs, notes=notes,
+        )
+    return CrossSolverConsensus.from_results(
+        consensus_id=consensus_id,
+        routes=routes,
+        results=bound_results(routes, values, consensus_id=consensus_id),
+        thresholds=thresholds,
+        tolerance_key=tolerance_key,
+        required_outputs=required_outputs,
+        notes=notes,
+    )
 
 @pytest.fixture(autouse=True)
 def route_declarations_for_tests(monkeypatch):

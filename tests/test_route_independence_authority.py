@@ -50,6 +50,7 @@ from engcore.scientific.results.validation import ValidationLevel
 from engcore.scientific.solvers.protocol import SolverIdentity
 from engcore.scientific.units.quantity import Quantity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route,
@@ -63,7 +64,7 @@ BDF_BACKEND = "scipy.integrate.solve_ivp:BDF"
 
 
 def _over(*routes: SolveRoute) -> CrossSolverConsensus:
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="route-independence",
         routes=routes,
         values={r.route_id: {"x": 1.0, "y": 2.0} for r in routes},

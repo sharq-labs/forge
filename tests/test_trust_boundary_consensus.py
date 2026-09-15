@@ -48,6 +48,7 @@ from engcore.scientific.results.thresholds import VerificationThresholds
 from engcore.scientific.results.validation import ValidationLevel
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -86,7 +87,7 @@ COMPLETE_REPORTS = {"a": ("A", "B"), "b": ("A", "B")}
 
 
 def _factory(values, required=REQUIRED, routes=ROUTES) -> CrossSolverConsensus:
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="tb3",
         routes=routes,
         values=values,
@@ -197,8 +198,13 @@ def test_c_complete_reports_and_agreement_establish_on_both_paths():
     for consensus in (factory, direct):
         assert consensus.missing_outputs == ()
         assert consensus.output_completeness is OutputCompleteness.COMPLETE
-        assert consensus.establishes is VALIDATED
-    assert _verdict(direct) == _verdict(factory)
+    assert factory.establishes is VALIDATED
+    # IND-02: the public constructor cannot carry an execution binding, so the
+    # same fields rebuilt by hand agree on completeness and establish nothing.
+    # The level belongs to numbers read from executed results.
+    assert direct.establishes is None
+    assert direct.execution_binding_gap is not None
+    assert _verdict(direct)[:2] == _verdict(factory)[:2]
 
 
 def test_c_the_same_comparison_without_its_numbers_establishes_nothing():
@@ -242,7 +248,13 @@ def test_d_an_undeclared_requirement_is_undeclared_on_both_paths():
     ids=["none", "a:A", "both:A", "a:AB", "a:AB,b:A", "both:AB", "disagree"],
 )
 def test_e_f_direct_reconstruction_matches_the_factory(values):
-    factory = _factory(values)
+    # The unbound factory, because the reconstruction under test is field for
+    # field and an execution binding is not a field (IND-02). What a bound
+    # record keeps through the constructor is checked at the end.
+    factory = CrossSolverConsensus.over(
+        consensus_id="tb3", routes=ROUTES, values=values, thresholds=THRESHOLDS,
+        tolerance_key="agreement_rel_tol", required_outputs=REQUIRED,
+    )
     direct = _rebuilt(factory)
     without_empty_entries = _rebuilt(
         factory,
@@ -262,6 +274,12 @@ def test_e_f_direct_reconstruction_matches_the_factory(values):
     assert without_numbers.missing_outputs == factory.missing_outputs
     assert without_numbers.output_completeness is factory.output_completeness
     assert without_numbers.establishes is None
+    # A bound record rebuilt through the constructor keeps every verdict but
+    # the level, which needs the binding the constructor cannot carry.
+    bound = _factory(values)
+    rebuilt_bound = _rebuilt(bound)
+    assert _verdict(rebuilt_bound)[:2] == _verdict(bound)[:2]
+    assert rebuilt_bound.establishes is None
 
 
 def test_no_routes_is_not_a_complete_answer():
@@ -459,7 +477,7 @@ def _assert_every_invariant(consensus: CrossSolverConsensus, case) -> None:
     for route in consensus.routes:
         assert set(required) <= set(consensus.reported_outputs.get(route.route_id, ())), case
     assert consensus.comparison_is_derived, case
-    recomputed = CrossSolverConsensus.over(
+    recomputed = bound_over(
         consensus_id=consensus.consensus_id,
         routes=consensus.routes,
         values=consensus.reported_values,

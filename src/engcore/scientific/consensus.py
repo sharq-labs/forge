@@ -980,6 +980,67 @@ def _compare(
     )
 
 
+#: Where a consensus built by :meth:`CrossSolverConsensus.from_results` keeps the
+#: execution each route's numbers were read from. An attribute and not a
+#: dataclass field ON PURPOSE: the field list of this record is frozen API, and
+#: the binding is the one thing a level now needs that the frozen shape has no
+#: place for. It is never an argument -- the constructor and ``over`` cannot set
+#: it -- and it is written once, by ``from_results`` or by ``from_dict`` after
+#: its structure is checked. See the FROZEN-API decision recorded for IND-02:
+#: the next freeze should make it a real field.
+_EXECUTION_BINDINGS = "_execution_bindings"
+
+
+def _values_digest(produced: Mapping[str, float]) -> str:
+    """SHA-256 over one route's numbers exactly as the record carries them."""
+    blob = json.dumps(
+        {str(name): float(value) for name, value in produced.items()},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _checked_binding(route_id: str, entry: Any) -> dict[str, Any]:
+    """One serialized execution binding, structurally checked, or a refusal."""
+    if not isinstance(entry, _RuntimeMapping):
+        raise ScientificValidationError(
+            f"execution binding for route {route_id!r} is not a mapping"
+        )
+    solver = entry.get("solver")
+    if not isinstance(solver, _RuntimeMapping):
+        raise ScientificValidationError(
+            f"execution binding for route {route_id!r} names no solver"
+        )
+    texts = {
+        "result_id": entry.get("result_id"),
+        "run_id": entry.get("run_id"),
+        "values_digest": entry.get("values_digest"),
+        "solver_id": solver.get("solver_id"),
+        "version": solver.get("version"),
+    }
+    for label, text in texts.items():
+        if not isinstance(text, str) or not text.strip():
+            raise ScientificValidationError(
+                f"execution binding for route {route_id!r} carries no {label}"
+            )
+    backend = solver.get("backend")
+    if backend is not None and not isinstance(backend, str):
+        raise ScientificValidationError(
+            f"execution binding for route {route_id!r} carries a non-string backend"
+        )
+    return {
+        "result_id": texts["result_id"],
+        "run_id": texts["run_id"],
+        "solver": {
+            "solver_id": texts["solver_id"],
+            "version": texts["version"],
+            "backend": backend,
+        },
+        "values_digest": texts["values_digest"],
+    }
+
+
 @dataclass(frozen=True)
 class CrossSolverConsensus:
     """Several routes on one problem, what they did, and what it establishes.
@@ -1408,6 +1469,75 @@ class CrossSolverConsensus:
         return _threshold_authority_gap(self.routes, self.thresholds, self.tolerance_key)
 
     @property
+    def execution_binding_gap(self) -> str | None:
+        """Why the compared numbers are not bound to distinct executions, or ``None``.
+
+        IND-02. Routes were labels and numbers were a mapping: identical
+        fabricated numbers under the two production DC route ids earned the
+        level, and so did one route's result wrapped as the other's. A level now
+        needs every route's numbers to have been READ from an executed result
+        by :meth:`from_results`, which records, per route, the result id, the
+        run id, the solver identity (id, version and backend) and a digest of
+        the numbers. This re-verifies that binding against the record on every
+        read -- the route's solver, the numbers it carries, and that no two
+        routes share a result or a run.
+
+        What it cannot do is prove a result was not fabricated before it was
+        handed over: a ``ScientificResult`` is public to construct. It closes
+        the mapping-of-numbers and the duck-typed-result holes, binds the solver
+        version into what is verified, and makes one execution presented twice
+        visible and refused.
+        """
+        bindings = getattr(self, _EXECUTION_BINDINGS, None)
+        if bindings is None:
+            return (
+                "the numbers were handed over as a mapping rather than read from "
+                "executed results, so nothing binds them to a solve; only "
+                "CrossSolverConsensus.from_results can bind them"
+            )
+        gaps: list[str] = []
+        declared = {r.route_id for r in self.routes}
+        unbound = sorted(declared - set(bindings))
+        if unbound:
+            gaps.append(f"route(s) {unbound} carry no execution binding")
+        strangers = sorted(set(bindings) - declared)
+        if strangers:
+            gaps.append(f"execution bindings under undeclared route(s) {strangers}")
+        for route in self.routes:
+            binding = bindings.get(route.route_id)
+            if binding is None:
+                continue
+            solver = binding["solver"]
+            if (solver["solver_id"], solver["version"], solver["backend"]) != (
+                route.solver.solver_id, route.solver.version, route.solver.backend
+            ):
+                gaps.append(
+                    f"route {route.route_id!r} is bound to a result from "
+                    f"{solver['solver_id']}@{solver['version']}[{solver['backend']}], "
+                    f"not the route's {route.solver.solver_id}@"
+                    f"{route.solver.version}[{route.solver.backend}]"
+                )
+            produced = self.reported_values.get(route.route_id)
+            if produced is None or _values_digest(produced) != binding["values_digest"]:
+                gaps.append(
+                    f"the numbers recorded for route {route.route_id!r} are not "
+                    f"the numbers its bound result produced"
+                )
+        for label, kind in (("result_id", "result"), ("run_id", "run")):
+            seen: dict[str, list[str]] = {}
+            for route_id, binding in sorted(bindings.items()):
+                seen.setdefault(binding[label], []).append(route_id)
+            shared = {key: ids for key, ids in seen.items() if len(ids) > 1}
+            if shared:
+                gaps.append(
+                    f"routes {sorted(i for ids in shared.values() for i in ids)} "
+                    f"are bound to one {kind} ({sorted(shared)}); agreement between "
+                    f"an execution and itself is not agreement between distinct "
+                    f"executions"
+                )
+        return "; ".join(gaps) if gaps else None
+
+    @property
     def earned(self) -> bool:
         """Four conditions, and all of them.
 
@@ -1425,6 +1555,7 @@ class CrossSolverConsensus:
             and self.comparison_is_derived
             and self.comparison.agreed
             and self.threshold_authority_gap is None
+            and self.execution_binding_gap is None
         )
 
     @property
@@ -1521,6 +1652,14 @@ class CrossSolverConsensus:
                 f"level is withheld because that is not the threshold their "
                 f"declarations name: {authority_gap}"
             )
+        binding_gap = self.execution_binding_gap
+        if binding_gap is not None:
+            return (
+                f"the independent routes agree to "
+                f"{self.comparison.worst_relative_difference:.3e}, but the level "
+                f"is withheld because the numbers are not bound to distinct "
+                f"executed results: {binding_gap}"
+            )
         if self.establishes is None:
             return (
                 f"the independent routes agree to "
@@ -1610,6 +1749,16 @@ class CrossSolverConsensus:
             "required outputs: "
             + (", ".join(self.required_outputs) or "NONE DECLARED")
         )
+        bindings = getattr(self, _EXECUTION_BINDINGS, None) or {}
+        for route_id, binding in sorted(bindings.items()):
+            solver = binding["solver"]
+            lines.append(
+                f"route {route_id} read from result {binding['result_id']} of run "
+                f"{binding['run_id']} by {solver['solver_id']}@{solver['version']}"
+                f"[{solver['backend']}]; numbers sha256:{binding['values_digest']}"
+            )
+        if not bindings:
+            lines.append("execution binding: NONE (numbers handed over as a mapping)")
         return (*lines, *self.thresholds.evidence())
 
     # ---- construction ----------------------------------------------------
@@ -1677,6 +1826,110 @@ class CrossSolverConsensus:
             reported_values=values if finite else {},
         )
 
+    @classmethod
+    def from_results(
+        cls,
+        *,
+        consensus_id: str,
+        routes: Iterable[SolveRoute],
+        results: Mapping[str, Any],
+        thresholds: VerificationThresholds,
+        tolerance_key: str,
+        required_outputs: Iterable[str] = (),
+        notes: str = "",
+    ) -> "CrossSolverConsensus":
+        """Compare executed results, one per route, and bind each route to its result.
+
+        The construction path that can award ``CROSS_SOLVER_VALIDATED`` (IND-02).
+        :meth:`over` takes numbers and can no longer award it: a mapping of
+        numbers is attributable to nobody.
+
+        Refused outright: a result that is not a ``ScientificResult``; a route
+        with no result or a result under no declared route; a result whose own
+        provenance does not name the route's solver at the route's version; a
+        result whose solver identity is not the route's (backend included).
+        Recorded and refused a level rather than raised: two routes bound to one
+        result or one run, because the record of that comparison is still worth
+        keeping and it establishes nothing.
+
+        The compared numbers are read from each result's values -- every
+        ``Quantity``, in its own unit, so a route that returned the right number
+        in another unit shows up as a disagreement rather than being converted
+        into an agreement.
+        """
+        from .results.result import ScientificResult
+
+        routes = tuple(routes)
+        by_route = dict(results)
+        known = {r.route_id for r in routes}
+        strangers = sorted(set(by_route) - known)
+        if strangers:
+            raise ScientificValidationError(
+                f"consensus {consensus_id!r} was handed results for undeclared "
+                f"route(s) {strangers}; declared routes: {sorted(known)}"
+            )
+        values: dict[str, dict[str, float]] = {}
+        bindings: dict[str, dict[str, Any]] = {}
+        for route in routes:
+            if route.route_id not in by_route:
+                raise ScientificValidationError(
+                    f"consensus {consensus_id!r} has no result for route "
+                    f"{route.route_id!r}; every route is compared on what it "
+                    f"actually executed"
+                )
+            result = by_route[route.route_id]
+            if not isinstance(result, ScientificResult):
+                raise ScientificValidationError(
+                    f"consensus {consensus_id!r} route {route.route_id!r} was "
+                    f"handed a {type(result).__name__}, not a ScientificResult; "
+                    f"an object that merely carries values and a provenance is "
+                    f"not an executed result"
+                )
+            recorded = tuple(result.provenance.solvers)
+            if route.solver.key not in recorded:
+                raise ScientificValidationError(
+                    f"route {route.route_id!r} runs solver "
+                    f"{route.solver.solver_id}@{route.solver.version}, and its "
+                    f"result's provenance records solvers {list(recorded)}; a "
+                    f"result presented under another solver's identity is refused"
+                )
+            if result.solver is not None and (
+                result.solver.solver_id, result.solver.version, result.solver.backend
+            ) != (route.solver.solver_id, route.solver.version, route.solver.backend):
+                raise ScientificValidationError(
+                    f"route {route.route_id!r} runs solver "
+                    f"{route.solver.solver_id}@{route.solver.version} on backend "
+                    f"{route.solver.backend!r}, and its result was produced by "
+                    f"{result.solver.solver_id}@{result.solver.version} on backend "
+                    f"{result.solver.backend!r}"
+                )
+            produced = {
+                str(name): float(quantity.magnitude_in(quantity.units))
+                for name, quantity in result.values.items()
+            }
+            values[route.route_id] = produced
+            bindings[route.route_id] = {
+                "result_id": result.result_id,
+                "run_id": result.provenance.run_id,
+                "solver": {
+                    "solver_id": route.solver.solver_id,
+                    "version": route.solver.version,
+                    "backend": route.solver.backend,
+                },
+                "values_digest": _values_digest(produced),
+            }
+        record = cls.over(
+            consensus_id=consensus_id,
+            routes=routes,
+            values=values,
+            thresholds=thresholds,
+            tolerance_key=tolerance_key,
+            required_outputs=required_outputs,
+            notes=notes,
+        )
+        object.__setattr__(record, _EXECUTION_BINDINGS, freeze(bindings))
+        return record
+
     # ---- serialization ---------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1696,6 +1949,9 @@ class CrossSolverConsensus:
                 for route_id, produced in sorted(self.reported_values.items())
             },
             "notes": self.notes,
+            # What each route's numbers were read from; None for a record whose
+            # numbers were handed over as a mapping. Re-verified on the way in.
+            "execution_bindings": self._serialized_bindings(),
             # Derived, emitted for readers, and recomputed on the way back in.
             "independence": self.independence.value,
             "shared_solver_identities": list(self.shared_solver_identities),
@@ -1717,6 +1973,20 @@ class CrossSolverConsensus:
                 self.establishes.value if self.establishes else None
             ),
             "reason": self.reason,
+        }
+
+    def _serialized_bindings(self) -> dict[str, Any] | None:
+        bindings = getattr(self, _EXECUTION_BINDINGS, None)
+        if bindings is None:
+            return None
+        return {
+            route_id: {
+                "result_id": binding["result_id"],
+                "run_id": binding["run_id"],
+                "solver": dict(binding["solver"]),
+                "values_digest": binding["values_digest"],
+            }
+            for route_id, binding in sorted(bindings.items())
         }
 
     @classmethod
@@ -1786,6 +2056,21 @@ class CrossSolverConsensus:
                 else {}
             ),
         )
+        serialized_bindings = payload.get("execution_bindings") if carries_numbers else None
+        if serialized_bindings is not None:
+            if not isinstance(serialized_bindings, _RuntimeMapping):
+                raise ScientificValidationError(
+                    f"serialized consensus {record.consensus_id!r} carries execution "
+                    f"bindings that are not a mapping by route id"
+                )
+            object.__setattr__(
+                record,
+                _EXECUTION_BINDINGS,
+                freeze({
+                    str(route_id): _checked_binding(str(route_id), entry)
+                    for route_id, entry in serialized_bindings.items()
+                }),
+            )
         # The same rule ValidationReport.from_dict applies to attained levels:
         # a derived field in a payload is advisory, and a hand-edited record
         # may not smuggle in a level its own contents do not produce.

@@ -57,6 +57,7 @@ from engcore.scientific.results.validation import (
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -93,7 +94,7 @@ DISAGREEING = {"a": {"v": 1.0}, "b": {"v": 1.3}}
 
 
 def _over(thresholds, values=DISAGREEING) -> CrossSolverConsensus:
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="threshold-authority",
         routes=ROUTES,
         values=values,

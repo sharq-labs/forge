@@ -62,6 +62,7 @@ from engcore.scientific.serialization import to_json
 from engcore.scientific.solvers.admission import require_agreement
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -110,7 +111,7 @@ def _consensus(values, *, tolerance: float = 1e-6) -> CrossSolverConsensus:
     common: set[str] | None = None
     for produced in values.values():
         common = set(produced) if common is None else common & set(produced)
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="test-consensus",
         routes=routes,
         values=values,
