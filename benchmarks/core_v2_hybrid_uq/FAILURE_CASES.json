@@ -21,7 +21,7 @@
      "BOUND_WITHIN_3_SD"
     ],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 1.645600058360813,
+    "nonlinearity_index": 1.7722638029864237,
     "jacobian_condition": 1.9383703608179716,
     "raw_jacobian_condition": 4.231040760815263,
     "emits_covariance": false
@@ -313,9 +313,11 @@
     "refusals": [
      "SECOND_MODE_FOUND"
     ],
-    "downgrades": [],
+    "downgrades": [
+     "NONLINEAR_WITHIN_2_SD"
+    ],
     "uniqueness": "SECOND_MODE_FOUND",
-    "nonlinearity_index": 0.01619695113985764,
+    "nonlinearity_index": 0.11862546508209637,
     "jacobian_condition": 9.505396814951084,
     "raw_jacobian_condition": 16.54321235752065,
     "emits_covariance": false
@@ -347,7 +349,7 @@
      {
       "route": "LOCAL_GAUSSIAN",
       "outcome": "REFUSED",
-      "reason": "SECOND_MODE_FOUND"
+      "reason": "SECOND_MODE_FOUND,NONLINEAR_WITHIN_2_SD"
      },
      {
       "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
@@ -518,6 +520,7 @@
   "mapped_non_tensor_point_set": {
    "expect": {
     "router_grid_only": "REFUSED",
+    "router_with_local_other_parameter_names": "HybridUQError",
     "router_with_local": "LOCAL_GAUSSIAN"
    },
    "v1": "GRID_TOO_COARSE_FOR_INFERENCE: the posterior's points are not an axis-aligned tensor lattice, so no lattice step exists to check its resolution against",
@@ -537,6 +540,7 @@
      }
     ]
    },
+   "router_with_local_other_parameter_names": "HybridUQError: the supplied grid is over parameters ['a', 'b_minus_a']; the request calibrates ['theta1', 'theta2']: a grid for other parameters is not this request's posterio",
    "router_with_local": {
     "decision": "LOCAL_GAUSSIAN",
     "considered": [

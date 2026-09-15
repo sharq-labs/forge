@@ -25,7 +25,7 @@
     "claim": "SUPPORTED",
     "reasons": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 2.7321749328734768e-05,
+    "nonlinearity_index": 0.005225483449801782,
     "mean": [
      1.2591462177267174,
      0.00391589367711874
@@ -36,8 +36,8 @@
     ],
     "correlation": -0.9208184917941975,
     "identifiability": "PARAMETERS_IDENTIFIABLE",
-    "forward_evaluations": 174,
-    "wall_seconds": 0.21609140001237392
+    "forward_evaluations": 182,
+    "wall_seconds": 0.18458539999846835
    },
    "v1_resolved_grid": {
     "nodes_per_axis": 41,
@@ -52,7 +52,7 @@
     ],
     "identifiability": "PARAMETERS_IDENTIFIABLE",
     "forward_evaluations": 1681,
-    "wall_seconds": 1.7069229999906383
+    "wall_seconds": 1.5784381999983452
    },
    "exact_quadrature": {
     "mean": [
@@ -115,7 +115,7 @@
     "claim": "SUPPORTED",
     "reasons": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 0.00874449243410802,
+    "nonlinearity_index": 0.07527838387588748,
     "mean": [
      1.2643400451880453,
      0.0032526222525304273
@@ -126,8 +126,8 @@
     ],
     "correlation": -0.9931656721357156,
     "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
-    "forward_evaluations": 234,
-    "wall_seconds": 0.23100949998479337
+    "forward_evaluations": 242,
+    "wall_seconds": 0.18818700000701938
    },
    "v1_resolved_grid": {
     "nodes_per_axis": 81,
@@ -142,7 +142,7 @@
     ],
     "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
     "forward_evaluations": 6561,
-    "wall_seconds": 5.116624300018884
+    "wall_seconds": 5.442753900002572
    },
    "exact_quadrature": {
     "mean": [

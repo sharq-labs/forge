@@ -1,0 +1,93 @@
+{
+ "schema": "core_v2_hybrid_uq_superseded/1",
+ "file": "benchmarks/core_v2_hybrid_uq/KINETICS_K2.json",
+ "sha256": "2864ed96b841584457ad01f7334ece57c8da3bab3a97bee9f740e1138222f786",
+ "status": "superseded, not regenerated",
+ "produced_by": "benchmarks/core_v2_hybrid_uq/audit/kinetics.py (commits 5d0ced5, 690ac77, 2026-09-13)",
+ "superseded_by": "audit stream hybrid, HUQ-01..HUQ-14 (branch claude/audit-hybrid)",
+ "marked_on_tree": "044b626",
+ "rules_changed": [
+  {
+   "id": "HUQ-08",
+   "rule": "chi-square probes along every principal axis AND every pairwise diagonal (2p^2); a converged refit with a lower objective inside the separation radius refuses NOT_A_LOCAL_MINIMUM",
+   "commit": "18e1a95",
+   "effect_on_this_record": "MULTI SUPPORTED was established over 4 axis probes. Re-measured over 8 probes without multistart: nonlinearity index 0.0715047 (unchanged; the maximum lies on an axis), minimum chi-square rise 3.75363, no reason added. The committed refits' chi-square values are not below the estimate's, so the lower-objective rule would not fire on them, but the refits were not re-run."
+  },
+  {
+   "id": "HUQ-07",
+   "rule": "predictive probes along axes, pairwise diagonals and Sigma grad g per prediction",
+   "commit": "25138e7",
+   "effect_on_this_record": "C2 predictive SUPPORTED was established over axis probes only; re-measured (see HUQ-11)."
+  },
+  {
+   "id": "HUQ-11",
+   "rule": "predictive nonlinearity scaled by parameter sd, not total sd",
+   "commit": "25138e7",
+   "effect_on_this_record": "C2 nonlinearity was 0.036 total sd; re-measured 0.05658 parameter sd, below the 0.10 downgrade threshold."
+  },
+  {
+   "id": "HUQ-01",
+   "rule": "a multistart below max(6, 2p + 2) starts caps the claim at DOWNGRADED",
+   "commit": "18e1a95",
+   "effect_on_this_record": "the script's policy is 6 starts at p = 2, exactly the minimum (max_evaluations=400 is not part of it; 2 of the 6 committed refits failed, so more than half converged), so no downgrade is projected."
+  },
+  {
+   "id": "HUQ-03",
+   "rule": "a log coordinate's identifiability width is its natural-scale relative width",
+   "commit": "3ddc686",
+   "effect_on_this_record": "k0_declared_log: the ln k0 width is now exp(q sd) - exp(-q sd) ~ 0.645 instead of 2 q sd / |ln k0| ~ 0.030; the status stays PARAMETERS_NOT_IDENTIFIABLE (condition number and correlation both exceed their thresholds)."
+  },
+  {
+   "id": "HUQ-14",
+   "rule": "RoutedIdentifiability.digest includes why",
+   "commit": "3ddc686",
+   "effect_on_this_record": "MULTI_v2.route.record_digest and every embedded record's digest no longer reproduce (with HUQ-01's policy keys in thresholds)."
+  }
+ ],
+ "unchanged": "the MULTI estimate and standard deviations (identical when re-derived without multistart), covariance, determinant and correlation, identifiability statuses (declared NOT_IDENTIFIABLE, aligned WEAKLY_IDENTIFIABLE), the C2 predictive parameter and total sd, the reference grids (Core V1, unaffected), the CORRECTED errata quantities, WEAK_C2 REFUSED (NO_RESIDUAL_DEGREES_OF_FREEDOM), and the natural_k0_identity REFUSED / k0_declared_log DOWNGRADED parameterization verdicts.",
+ "now_would_say": {
+  "MULTI_v2": {
+   "label": "PROJECTED (Jacobian, probes, identifiability and C2 predictive MEASURED without multistart; refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "reasons": [],
+   "nonlinearity_index_8_probes": 0.07150467229495039,
+   "identifiability_declared": "PARAMETERS_NOT_IDENTIFIABLE",
+   "identifiability_aligned": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+   "C2_predictive_claim": "SUPPORTED",
+   "C2_max_predictive_nonlinearity_parameter_sd": 0.05658004437696277
+  },
+  "natural_k0_identity": {
+   "label": "MEASURED (no multistart, as committed)",
+   "claim": "REFUSED",
+   "reasons": [
+    "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+    "GLOBAL_UNIQUENESS_NOT_ASSESSED",
+    "POORLY_SCALED_PARAMETERIZATION"
+   ]
+  },
+  "k0_declared_log": {
+   "label": "MEASURED (no multistart, as committed)",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "GLOBAL_UNIQUENESS_NOT_ASSESSED"
+   ],
+   "identifiability": "PARAMETERS_NOT_IDENTIFIABLE"
+  },
+  "WEAK_C2_v2": {
+   "label": "RULE (structural refusal before any probe or multistart)",
+   "claim": "REFUSED",
+   "reasons": [
+    "NO_RESIDUAL_DEGREES_OF_FREEDOM"
+   ]
+  }
+ },
+ "why_not_regenerated": "the MULTI multistart alone is ~76 min of CSTR solves (committed route wall time 4558 s); this stream must never run the K2 multistart. Its frozen bytes are left untouched.",
+ "stage_cache_trap": "kinetics.py caches stages in D:/v2_k2_cache; stage1/2/5 cached there hold records built under the old rules. The V2-route stages are now cached under *_audit_hybrid names, so a rerun recomputes them instead of restating the old records.",
+ "how_to_regenerate": "python -X utf8 benchmarks/core_v2_hybrid_uq/audit/kinetics.py (V1 reference-grid stages 3a/3b may be reused from the cache).",
+ "probe": {
+  "command": "python -X utf8 benchmarks/core_v2_hybrid_uq/audit/superseded_probe.py k2 <out.json>",
+  "multistart": "none run; MULTI claims PROJECTED",
+  "wall_seconds": 206.6
+ }
+}

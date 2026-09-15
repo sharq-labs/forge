@@ -1,0 +1,275 @@
+{
+ "schema": "core_v2_hybrid_uq_superseded/1",
+ "file": "benchmarks/core_v2_hybrid_uq/BATTERY_T41.json",
+ "sha256": "a6844a94bef7c370dc285af90cbbc27073f3a914319d31005e26da728ffb0b9e",
+ "status": "superseded, not regenerated",
+ "produced_by": "benchmarks/core_v2_hybrid_uq/audit/battery.py (commit 86c336b, 2026-09-13)",
+ "superseded_by": "audit stream hybrid, HUQ-01..HUQ-14 (branch claude/audit-hybrid)",
+ "marked_on_tree": "044b626",
+ "rules_changed": [
+  {
+   "id": "HUQ-01",
+   "rule": "a multistart below max(6, 2p + 2) starts (or a narrower span / looser quantiles than canonical) is MULTISTART_BELOW_MINIMUM_SEARCH and caps the claim at DOWNGRADED (MULTISTART_INCOMPLETE)",
+   "commit": "18e1a95",
+   "effect_on_this_record": "the record's call, route_uncertainty(..., multistart=MultistartPolicy()), runs 6 starts; that is the minimum only for p <= 2. Every model with p >= 3 (P2..P9, T3..T41) is DOWNGRADED; T41 would need 84 starts. Only P1 keeps SUPPORTED."
+  },
+  {
+   "id": "HUQ-08",
+   "rule": "chi-square probes along every principal axis AND every pairwise diagonal (2p^2); a converged refit with a lower objective inside the separation radius refuses NOT_A_LOCAL_MINIMUM",
+   "commit": "18e1a95",
+   "effect_on_this_record": "measured without multistart for every model: nonlinearity indices over 2p^2 probes stay <= 1.9e-5 and no probe lowers chi-square, so no reason is added; but the record's route.forward_evaluations_diagnostic_and_jacobian (hardcoded 4k + 1) and the multistart evaluation split derived from it are wrong (the diagnostics are 4k + 1 + 2k^2)."
+  },
+  {
+   "id": "HUQ-07",
+   "rule": "predictive probes along axes, pairwise diagonals and Sigma grad g per prediction",
+   "commit": "25138e7",
+   "effect_on_this_record": "measured: max predictive nonlinearity <= 2.2e-7 parameter sd; no PREDICTIVE_NONLINEAR. The predictive claim inherits the posterior's, so it is DOWNGRADED wherever the route is."
+  },
+  {
+   "id": "HUQ-11",
+   "rule": "predictive nonlinearity scaled by parameter sd, not total sd",
+   "commit": "25138e7",
+   "effect_on_this_record": "no effect on any claim here (see HUQ-07)."
+  },
+  {
+   "id": "HUQ-14",
+   "rule": "RoutedIdentifiability.digest includes why",
+   "commit": "3ddc686",
+   "effect_on_this_record": "covariance_digest (the local posterior digest) and every routed-record digest no longer reproduce; together with HUQ-01's policy keys in RouteDiagnostics.thresholds, no digest in this file is current."
+  },
+  {
+   "id": "HUQ-03",
+   "rule": "a log coordinate's identifiability width is its natural-scale relative width",
+   "commit": "3ddc686",
+   "effect_on_this_record": "no effect: every battery parameter is an identity-declared voltage."
+  }
+ ],
+ "unchanged": "posterior means and standard deviations (max relative sd change vs the committed record 0.0), identifiability statuses, the vs_b3_domain_route and vs_committed_core_grid tolerance verdicts (P9 still the one miss), held-out chi-square and coverage: the audited rules change what the route will claim, not the covariance it computes.",
+ "now_would_say": {
+  "P1": {
+   "p": 2,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "SUPPORTED",
+   "reasons": [],
+   "minimum_starts": 6,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 5.575810178015672e-07,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "SUPPORTED",
+   "max_predictive_nonlinearity_parameter_sd": 3.624862139779515e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "P2": {
+   "p": 3,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 8,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 8.117643801597296e-08,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 4.4824293974937413e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "P3": {
+   "p": 4,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 10,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 3.357081368449144e-08,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 6.97689927851492e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "P4": {
+   "p": 5,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 12,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 4.484313365082926e-08,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 2.0443764777603494e-10,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "P5": {
+   "p": 6,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 14,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 2.7248084677466977e-07,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 9.73501453087163e-10,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "P7": {
+   "p": 8,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 18,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 2.097430593650529e-06,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 2.471150261718047e-08,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "P9": {
+   "p": 10,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 22,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 1.90766807750542e-05,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 2.185878578545602e-07,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "T3": {
+   "p": 3,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 8,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 2.5322094643343007e-08,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 4.6830358249526794e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "T5": {
+   "p": 5,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 12,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 2.7094898769064457e-08,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 3.8491512406468696e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "T6": {
+   "p": 6,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 14,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 6.783000827681462e-09,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 3.618844323754015e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "T11": {
+   "p": 11,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 24,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 4.406064846307345e-08,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 3.745391756679665e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "T21": {
+   "p": 21,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 44,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 7.82581111025138e-09,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 3.5759371018005415e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  },
+  "T41": {
+   "p": 41,
+   "label": "PROJECTED (Jacobian, probes, identifiability and predictive MEASURED without multistart; multistart refits not re-run)",
+   "decision": "LOCAL_GAUSSIAN",
+   "claim": "DOWNGRADED",
+   "reasons": [
+    "MULTISTART_INCOMPLETE"
+   ],
+   "minimum_starts": 84,
+   "default_policy_starts": 6,
+   "nonlinearity_index_2p2_probes": 2.102815588322926e-09,
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "predictive_claim": "DOWNGRADED",
+   "max_predictive_nonlinearity_parameter_sd": 2.8341504870071186e-11,
+   "max_sd_relative_change_vs_committed": 0.0,
+   "committed_claim": "SUPPORTED"
+  }
+ },
+ "why_not_regenerated": "the user-approved follow-up classifies BATTERY_T41 as expensive (the full script runs every scored model with multistart refits, a tracemalloc pass on T41 and the B3 comparisons); a SUPPORTED T41 would additionally need the 84-start run, which this stream must not run. Its frozen bytes are left untouched.",
+ "how_to_regenerate": "python -X utf8 benchmarks/core_v2_hybrid_uq/audit/battery.py (its route evaluation fields were corrected in the same round); for SUPPORTED claims at p >= 3 pass MultistartPolicy(starts=max(6, 2p + 2)).",
+ "probe": {
+  "command": "python -X utf8 benchmarks/core_v2_hybrid_uq/audit/superseded_probe.py battery <out.json>",
+  "multistart": "none run; claims PROJECTED"
+ }
+}
