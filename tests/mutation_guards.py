@@ -674,6 +674,54 @@ MUTATIONS: tuple[tuple[str, str, str, str, str], ...] = (
      "HUQ7: a serialized grid record is no longer bound to the moments its "
      "summarized grid produced, so it can keep the grid digest and report "
      "another mean or covariance"),
+    # GUARD 28 is the core trust closure round: the invariants PR #39 and PR
+    # #24 proposed, reproduced against main and enforced in the form current
+    # main's architecture allows. `tests/test_core_trust_closure.py` joins
+    # TARGETS for them.
+    ("G28a", "src/engcore/inference/admissibility.py::_require_applicability_not_refuted",
+     "    if refuted:\n",
+     "    if False:\n",
+     "inference admits a numerically clean source whose model was assessed "
+     "OUTSIDE_VALIDATED_DOMAIN or UNKNOWN, so it enters a posterior as evidence"),
+    ("G28b", "src/engcore/scientific/results/result.py::ScientificResult._require_provenance_consistency",
+     "        missing_models = sorted(result_models - set(self.provenance.models))\n",
+     "        missing_models = []\n",
+     "a result may again attribute itself to a model its own provenance does "
+     "not name"),
+    ("G28c", "src/engcore/scientific/solvers/protocol.py::DeclaredSupport.support_gap",
+     "            served = {model.key for model in self.served_models}\n"
+     "            referenced = {reference.key for reference in problem.models}\n",
+     "            served = {(model.model_id,) for model in self.served_models}\n"
+     "            referenced = {(reference.model_id,) for reference in problem.models}\n",
+     "declared solver support matches a model by id again, so a problem naming "
+     "model@2 runs on a solver that implements model@1"),
+    ("G28d", "src/engcore/sria/evidence.py::Evidence.require_integrity",
+     "        if self._compute_content_hash() != self.content_hash:\n",
+     "        if False:\n",
+     "SRIA evidence whose live content no longer matches its hash keeps its "
+     "record identity and is accepted by the gateway"),
+    ("G28e", "src/engcore/sria/gateway.py::BeliefEntry.__post_init__",
+     "        object.__setattr__(self, \"claim_payload\", freeze(dict(self.claim_payload)))\n",
+     "        object.__setattr__(self, \"claim_payload\", dict(self.claim_payload))\n",
+     "a stored belief entry's payload is mutable through a read again"),
+    ("G28f", "src/engcore/sria/uncertainty.py::UncertaintyDeclaration.__post_init__",
+     "        object.__setattr__(self, \"channels\", freeze(channels))\n",
+     "        object.__setattr__(self, \"channels\", channels)\n",
+     "an uncertainty channel inside evidence content identity can be changed "
+     "after the evidence was hashed"),
+    ("G28g", "src/engcore/scientific/solvers/registry.py::SolverDefinition._remember",
+     "            raise TypeError(\n"
+     "                f\"the factory registered for {label} returned a solver session \"\n",
+     "            return None\n"
+     "            raise TypeError(\n"
+     "                f\"the factory registered for {label} returned a solver session \"\n",
+     "a solver session that cannot be tracked is issued again, so a factory "
+     "returning one instance hands two requests the same bindings"),
+    ("G28h", "src/engcore/inference/calibration.py::CalibrationSpec.__post_init__",
+     "        object.__setattr__(self, \"fixed\", freeze(dict(fixed)))\n",
+     "        object.__setattr__(self, \"fixed\", dict(fixed))\n",
+     "a calibration record's held-fixed inputs can be rewritten through a "
+     "caller alias after the run"),
 )
 
 
@@ -914,6 +962,22 @@ EVIDENCE: dict[str, tuple[str, str]] = {
              "test_ab_a_voltage_plus_a_current_is_refused"),
     "G27g": ("SERIALIZATION_INVARIANT",
              "test_a_serialized_grid_record_cannot_report_moments_its_summarized_grid_did_not_produce"),
+    "G28a": ("VALIDITY_INVARIANT",
+             "test_a_admission_refuses_a_usable_source_whose_model_was_assessed_and_not_shown_to_apply"),
+    "G28b": ("PROVENANCE_INVARIANT",
+             "test_b_a_result_declaring_a_model_its_provenance_does_not_name_is_refused"),
+    "G28c": ("CONTRACT_REFUSAL",
+             "test_c_a_solver_serving_model_at_1_does_not_support_a_problem_naming_model_at_2"),
+    "G28d": ("PROVENANCE_INVARIANT",
+             "test_d_content_mutated_around_the_frozen_record_cannot_reuse_its_identity_or_be_submitted"),
+    "G28e": ("TYPE_INVARIANT",
+             "test_e_a_belief_entry_payload_cannot_be_mutated_through_a_read"),
+    "G28f": ("TYPE_INVARIANT",
+             "test_f_an_uncertainty_channel_cannot_change_through_the_declaration_or_a_caller_alias"),
+    "G28g": ("CONTRACT_REFUSAL",
+             "test_a_session_that_cannot_be_tracked_is_refused_rather_than_shared_between_requests"),
+    "G28h": ("PROVENANCE_INVARIANT",
+             "test_a_calibration_spec_cannot_be_rewritten_through_its_mappings_after_construction"),
 }
 
 #: The five that were dead when this round opened, pinned by name. Deleting or
@@ -973,6 +1037,9 @@ TARGETS = (
     # Added with G27. The Hybrid UQ trust-boundary suite: the only module that
     # asserts the six Core V2 refusals those mutations remove.
     "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py",
+    # Added with G28. The core trust closure suite: the only module asserting
+    # the eight refusals those mutations remove.
+    "tests/test_core_trust_closure.py",
 )
 #: What the mutated copy needs to be a faithful copy. ``experiments`` is here
 #: because a guard in the target suite reads the frozen experiment configs to
