@@ -5,8 +5,12 @@
 Same family (TabulatedForm LINEAR, uniform knots), same B3 data and sigmas, same production battery adapter for every
 prediction, as in the HD-UQ review.
 
-* **V2** is MEASURED at every p, calibration included. Its cost is split into the O(p) validity diagnostics plus
-  Jacobian (4p + 1 evaluations) and the multistart. The linearized predictive is timed separately.
+* **V2** is MEASURED at every p, calibration included. Its cost is split into the validity diagnostics plus
+  Jacobian and the multistart. The Jacobian is at least 4p + 1 evaluations (convergence-checked finite
+  differences); the chi-square probes are 2p^2 (every principal axis and every diagonal between two axes, audit
+  HUQ-08), so the diagnostics are O(p^2) forward evaluations, not O(p). The default multistart is below the
+  minimum search for p >= 3 (audit HUQ-01), so those routes are DOWNGRADED. The linearized predictive is timed
+  separately; its probes are 2p^2 plus 2 per prediction (audit HUQ-07).
 * **The V1 grid** (9 nodes per axis over +/-4 marginal SE, the B3 rule at p = 5; build, posterior, the repaired
   V1 checks and the frozen predictive) is MEASURED serially at p = 2, 3 and 4. p = 5 is the committed B3 run on
   12 workers. p >= 6 is PROJECTED from the measured p = 4 per-row cost and labelled PROJECTED.
@@ -84,7 +88,13 @@ def main():
             "label": "MEASURED", "decision": routed_ms.decision.value, "claim": routed_ms.claim.value,
             "identifiability": None if routed_ms.identifiability is None else routed_ms.identifiability.status.value,
             "calibration": {"wall_seconds": t_cal, "forward_evaluations": c_cal},
-            "diagnostics_and_jacobian_without_multistart": {"wall_seconds": t_diag, "forward_evaluations": c_diag, "expected_4p_plus_1": 4 * p + 1},
+            "diagnostics_and_jacobian_without_multistart": {
+                "wall_seconds": t_diag, "forward_evaluations": c_diag,
+                "route_recorded_evaluations": routed.local_posterior.diagnostics.evaluation_count,
+                "jacobian_minimum_4p_plus_1": 4 * p + 1, "chi_square_probes_2p_squared": 2 * p * p,
+                "chi_square_probes_skipped": routed.local_posterior.diagnostics.nonlinearity_probes_skipped},
+            "claim_without_multistart": routed.claim.value,
+            "reasons_with_default_multistart": [r.value for r in routed_ms.local_posterior.reasons],
             "route_with_default_multistart": {"wall_seconds": t_ms, "forward_evaluations": c_ms},
             "linearized_predictive": {"wall_seconds": t_pred, "forward_evaluations": c_pred},
             "production_predictions": (c_cal + c_diag + c_ms) * n_cal + c_pred * n_held,

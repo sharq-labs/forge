@@ -14,124 +14,157 @@
    "claim": "SUPPORTED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 0.2537464000051841,
+    "wall_seconds": 0.30223519999708515,
     "forward_evaluations": 16
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 0.125744900025893,
-    "forward_evaluations": 9,
-    "expected_4p_plus_1": 9
+    "wall_seconds": 0.29875729999912437,
+    "forward_evaluations": 17,
+    "route_recorded_evaluations": 17,
+    "jacobian_minimum_4p_plus_1": 9,
+    "chi_square_probes_2p_squared": 8,
+    "chi_square_probes_skipped": 0
    },
+   "claim_without_multistart": "DOWNGRADED",
+   "reasons_with_default_multistart": [],
    "route_with_default_multistart": {
-    "wall_seconds": 2.258788699982688,
-    "forward_evaluations": 146
+    "wall_seconds": 2.8651516000099946,
+    "forward_evaluations": 154
    },
    "linearized_predictive": {
-    "wall_seconds": 0.07667769998079166,
-    "forward_evaluations": 9
+    "wall_seconds": 0.7152604000002611,
+    "forward_evaluations": 83
    },
-   "production_predictions": 11754,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 91515
+   "production_predictions": 15268,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 92349
   },
   "5": {
    "label": "MEASURED",
    "decision": "LOCAL_GAUSSIAN",
-   "claim": "SUPPORTED",
+   "claim": "DOWNGRADED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 0.6075900999712758,
+    "wall_seconds": 0.6414933999913046,
     "forward_evaluations": 36
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 0.39904970000497997,
-    "forward_evaluations": 21,
-    "expected_4p_plus_1": 21
+    "wall_seconds": 1.3100742999959039,
+    "forward_evaluations": 71,
+    "route_recorded_evaluations": 71,
+    "jacobian_minimum_4p_plus_1": 21,
+    "chi_square_probes_2p_squared": 50,
+    "chi_square_probes_skipped": 0
    },
+   "claim_without_multistart": "DOWNGRADED",
+   "reasons_with_default_multistart": [
+    "MULTISTART_INCOMPLETE"
+   ],
    "route_with_default_multistart": {
-    "wall_seconds": 5.195576200028881,
-    "forward_evaluations": 291
+    "wall_seconds": 5.989423699997133,
+    "forward_evaluations": 341
    },
    "linearized_predictive": {
-    "wall_seconds": 0.16453730000648648,
-    "forward_evaluations": 21
+    "wall_seconds": 1.3056195999961346,
+    "forward_evaluations": 137
    },
-   "production_predictions": 24009,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 118783
+   "production_predictions": 34537,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 119875
   },
   "10": {
    "label": "MEASURED",
    "decision": "LOCAL_GAUSSIAN",
-   "claim": "SUPPORTED",
+   "claim": "DOWNGRADED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 1.208158099965658,
+    "wall_seconds": 1.5835730000108015,
     "forward_evaluations": 66
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 0.7509138000314124,
-    "forward_evaluations": 41,
-    "expected_4p_plus_1": 41
+    "wall_seconds": 5.540886300004786,
+    "forward_evaluations": 241,
+    "route_recorded_evaluations": 241,
+    "jacobian_minimum_4p_plus_1": 41,
+    "chi_square_probes_2p_squared": 200,
+    "chi_square_probes_skipped": 0
    },
+   "claim_without_multistart": "DOWNGRADED",
+   "reasons_with_default_multistart": [
+    "MULTISTART_INCOMPLETE"
+   ],
    "route_with_default_multistart": {
-    "wall_seconds": 9.601137199962977,
-    "forward_evaluations": 519
+    "wall_seconds": 15.218755799985956,
+    "forward_evaluations": 719
    },
    "linearized_predictive": {
-    "wall_seconds": 0.43559500004630536,
-    "forward_evaluations": 41
+    "wall_seconds": 3.1279429999995045,
+    "forward_evaluations": 307
    },
-   "production_predictions": 43295,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 170732
+   "production_predictions": 78873,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 170527
   },
   "20": {
    "label": "MEASURED",
    "decision": "LOCAL_GAUSSIAN",
-   "claim": "SUPPORTED",
+   "claim": "DOWNGRADED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 2.880792800046038,
+    "wall_seconds": 2.5986458000115817,
     "forward_evaluations": 126
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 1.9289190999697894,
-    "forward_evaluations": 81,
-    "expected_4p_plus_1": 81
+    "wall_seconds": 19.042162800004007,
+    "forward_evaluations": 881,
+    "route_recorded_evaluations": 881,
+    "jacobian_minimum_4p_plus_1": 81,
+    "chi_square_probes_2p_squared": 800,
+    "chi_square_probes_skipped": 0
    },
+   "claim_without_multistart": "DOWNGRADED",
+   "reasons_with_default_multistart": [
+    "MULTISTART_INCOMPLETE"
+   ],
    "route_with_default_multistart": {
-    "wall_seconds": 23.48209260002477,
-    "forward_evaluations": 1081
+    "wall_seconds": 39.46940669999458,
+    "forward_evaluations": 1881
    },
    "linearized_predictive": {
-    "wall_seconds": 0.8347253000247292,
-    "forward_evaluations": 81
+    "wall_seconds": 10.35060639999574,
+    "forward_evaluations": 947
    },
-   "production_predictions": 88969,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 279489
+   "production_predictions": 224747,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 279554
   },
   "41": {
    "label": "MEASURED",
    "decision": "LOCAL_GAUSSIAN",
-   "claim": "SUPPORTED",
+   "claim": "DOWNGRADED",
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "calibration": {
-    "wall_seconds": 6.435948300000746,
+    "wall_seconds": 8.344476100013708,
     "forward_evaluations": 252
    },
    "diagnostics_and_jacobian_without_multistart": {
-    "wall_seconds": 4.242894500028342,
-    "forward_evaluations": 165,
-    "expected_4p_plus_1": 165
+    "wall_seconds": 105.18790610000724,
+    "forward_evaluations": 3527,
+    "route_recorded_evaluations": 3527,
+    "jacobian_minimum_4p_plus_1": 165,
+    "chi_square_probes_2p_squared": 3362,
+    "chi_square_probes_skipped": 0
    },
+   "claim_without_multistart": "DOWNGRADED",
+   "reasons_with_default_multistart": [
+    "MULTISTART_INCOMPLETE"
+   ],
    "route_with_default_multistart": {
-    "wall_seconds": 60.59084089996759,
-    "forward_evaluations": 2154
+    "wall_seconds": 192.0017441000091,
+    "forward_evaluations": 5516
    },
    "linearized_predictive": {
-    "wall_seconds": 2.4189843000494875,
-    "forward_evaluations": 165
+    "wall_seconds": 54.46071759999904,
+    "forward_evaluations": 3593
    },
-   "production_predictions": 177702,
-   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 562795
+   "production_predictions": 741334,
+   "python_heap_peak_bytes_tracemalloc_route_and_predictive": 1036105
   }
  },
  "v1_grid_measured": {
@@ -139,16 +172,16 @@
    "label": "MEASURED (serial)",
    "grid_points": 81,
    "production_predictions": 8100,
-   "wall_seconds": 2.1239344000350684,
+   "wall_seconds": 2.164851899986388,
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "predictive_refusals": 0,
-   "python_heap_peak_bytes_tracemalloc_calibration_table": 2043610
+   "python_heap_peak_bytes_tracemalloc_calibration_table": 2043482
   },
   "3": {
    "label": "MEASURED (serial)",
    "grid_points": 729,
    "production_predictions": 72900,
-   "wall_seconds": 19.006822999974247,
+   "wall_seconds": 19.129484799996135,
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "predictive_refusals": 0,
    "python_heap_peak_bytes_tracemalloc_calibration_table": 15869310
@@ -157,7 +190,7 @@
    "label": "MEASURED (serial)",
    "grid_points": 6561,
    "production_predictions": 656100,
-   "wall_seconds": 178.83464890002506,
+   "wall_seconds": 183.2075130000012,
    "identifiability": "PARAMETERS_IDENTIFIABLE",
    "predictive_refusals": 0,
    "python_heap_peak_bytes_tracemalloc_calibration_table": 140671906
@@ -181,26 +214,26 @@
    "label": "PROJECTED from the p = 4 serial measurement",
    "grid_points": 3486784401.0,
    "production_predictions": 348678440100.0,
-   "serial_wall_seconds": 95040064.64607821,
-   "serial_wall_years": 3.011637914355915,
+   "serial_wall_seconds": 97363983.91623364,
+   "serial_wall_years": 3.0852784722613142,
    "heap_bytes": 74758818396546.0
   },
   "20": {
    "label": "PROJECTED from the p = 4 serial measurement",
    "grid_points": 1.2157665459056929e+19,
    "production_predictions": 1.215766545905693e+21,
-   "serial_wall_seconds": 3.313842148779771e+17,
-   "serial_wall_years": 10500932101.236378,
+   "serial_wall_seconds": 3.3948722033833837e+17,
+   "serial_wall_years": 10757700849.821861,
    "heap_bytes": 2.606678818222684e+23
   },
   "41": {
    "label": "PROJECTED from the p = 4 serial measurement",
    "grid_points": 1.3302794647291133e+39,
    "production_predictions": 1.3302794647291134e+41,
-   "serial_wall_seconds": 3.6259725806088135e+37,
-   "serial_wall_years": 1.1490013754559325e+30,
+   "serial_wall_seconds": 3.7146348472487986e+37,
+   "serial_wall_years": 1.1770967523667194e+30,
    "heap_bytes": 2.8522016128045136e+43
   }
  },
- "v1_per_row_seconds_measured_p4": 0.027257224340805526
+ "v1_per_row_seconds_measured_p4": 0.027923717878372382
 }

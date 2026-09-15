@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "tests" / "hybrid_uq"))
 import hybrid_synthetic as S  # noqa: E402
 
 from engcore.hybrid_uq import (  # noqa: E402
-    GridRebuildPolicy, MultistartPolicy, RouteClaim, RouteDecision, RouteReason, RouteRefusedError, assess_routed_identifiability,
+    GridRebuildPolicy, HybridUQError, MultistartPolicy, RouteClaim, RouteDecision, RouteReason, RouteRefusedError, assess_routed_identifiability,
     local_gaussian_posterior, route_uncertainty,
 )
 from engcore.inference import GridResolutionError, PosteriorGrid  # noqa: E402
@@ -115,7 +115,19 @@ def main():
     mapped = PosteriorGrid(parameter_names=("a", "b_minus_a"), points=grid.points @ T.T, weights=grid.weights,
                            log_likelihood=grid.log_likelihood, admissible_mask=grid.admissible_mask, dataset_id=grid.dataset_id)
     alone = route_uncertainty(grid=mapped)
-    with_local = route_uncertainty(grid=mapped, calibration=P.calibrate(), observations=P.observations, forward=P.forward, multistart=MultistartPolicy())
+    calibration = P.calibrate()
+    # Audit HUQ-06: a supplied grid must be over the parameters the request calibrates. The mapped grid is over
+    # (a, b_minus_a) and the request calibrates (theta1, theta2), so routing the two together is refused outright. The
+    # same non-tensor points under the request's own names keep this case's original question: V1 refuses the point
+    # set, and the router must fall through to the local route.
+    try:
+        route_uncertainty(grid=mapped, calibration=calibration, observations=P.observations, forward=P.forward, multistart=MultistartPolicy())
+        other_names = "ROUTED"
+    except HybridUQError as exc:
+        other_names = f"HybridUQError: {str(exc)[:160]}"
+    renamed = PosteriorGrid(parameter_names=grid.parameter_names, points=mapped.points, weights=mapped.weights,
+                            log_likelihood=mapped.log_likelihood, admissible_mask=mapped.admissible_mask, dataset_id=mapped.dataset_id)
+    with_local = route_uncertainty(grid=renamed, calibration=calibration, observations=P.observations, forward=P.forward, multistart=MultistartPolicy())
     try:
         from engcore.inference import assess_identifiability
 
@@ -124,12 +136,16 @@ def main():
     except GridResolutionError as exc:
         v1 = str(exc)[:160]
     out["cases"]["mapped_non_tensor_point_set"] = {
-        "expect": {"router_grid_only": "REFUSED", "router_with_local": "LOCAL_GAUSSIAN"}, "v1": v1,
+        "expect": {"router_grid_only": "REFUSED", "router_with_local_other_parameter_names": "HybridUQError",
+                   "router_with_local": "LOCAL_GAUSSIAN"}, "v1": v1,
         "router_grid_only": {"decision": alone.decision.value, "considered": alone.considered},
+        "router_with_local_other_parameter_names": other_names,
         "router_with_local": {"decision": with_local.decision.value, "considered": with_local.considered},
-        "met": alone.decision is RouteDecision.REFUSED and with_local.decision is RouteDecision.LOCAL_GAUSSIAN,
+        "met": (alone.decision is RouteDecision.REFUSED and other_names.startswith("HybridUQError")
+                and with_local.decision is RouteDecision.LOCAL_GAUSSIAN
+                and with_local.considered[0]["outcome"] == "REFUSED_BY_V1"),
     }
-    print("mapped_non_tensor_point_set", alone.decision.value, with_local.decision.value, flush=True)
+    print("mapped_non_tensor_point_set", alone.decision.value, other_names[:40], with_local.decision.value, flush=True)
     out["all_met"] = all(c["met"] for c in out["cases"].values())
     dump("FAILURE_CASES.json", out)
 

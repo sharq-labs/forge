@@ -87,9 +87,12 @@ def main():
                "refusals": [r.value for r in post.diagnostics.refusals], "downgrades": [r.value for r in post.diagnostics.downgrades],
                "uniqueness": post.diagnostics.uniqueness, "nonlinearity_index": post.diagnostics.nonlinearity_index,
                "jacobian_condition": post.diagnostics.jacobian_condition,
+               # The route's evaluations are no longer 4k + 1 for the Jacobian and diagnostics: the Jacobian is
+               # convergence-checked (at least 4k + 1) and the chi-square probes are 2k^2 (audit HUQ-08). This split
+               # was hardcoded when BATTERY_T41.json was written; it is recorded as bounds now, not as a count.
                "route": {"wall_seconds": route_seconds, "forward_evaluations_total": route_calls,
-                         "forward_evaluations_diagnostic_and_jacobian": 4 * k + 1,
-                         "forward_evaluations_multistart_including_start_checks": route_calls - (4 * k + 1),
+                         "route_recorded_evaluations": post.diagnostics.evaluation_count,
+                         "jacobian_minimum_4k_plus_1": 4 * k + 1, "chi_square_probes_2k_squared": 2 * k * k,
                          "production_predictions": route_calls * len(cal.observations)},
                "multistart": [{"status": m["status"], "retractions": m.get("retractions"), "classification": m.get("classification")}
                               for m in post.diagnostics.multistart]}

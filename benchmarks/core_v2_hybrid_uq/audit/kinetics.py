@@ -260,7 +260,10 @@ def main():
         print("MULTI route", route["decision"], route["claim"], f"{route['wall_seconds']:.0f}s", flush=True)
         return {"calibration": cal, "route": route, "routed_record": routed.to_dict()}
 
-    multi = cached("stage1_multi_route", stage_multi)
+    # Stages that run the V2 route are cached under names that postdate the audited route rules (stream hybrid,
+    # HUQ-01..14): a stage cached before them holds a record built under the weaker multistart and probe rules,
+    # and reusing it would restate that record as current. The V1 reference grids (3a, 3b) are unaffected.
+    multi = cached("stage1_multi_route_audit_hybrid", stage_multi)
     routed = HybridUQResult.from_dict(multi["routed_record"])
     post = routed.local_posterior
     route = dict(multi["route"])
@@ -303,7 +306,7 @@ def main():
                                     "nonlinearity": r.predictive_nonlinearity, "record": r.to_dict()}
                 for r in linearized_predictive_uq(post, predict, specs)}
 
-    out["MULTI_v2"]["C2_predictive"] = cached("stage2_c2_predictive", stage_c2)
+    out["MULTI_v2"]["C2_predictive"] = cached("stage2_c2_predictive_audit_hybrid", stage_c2)
 
     # 3a. MULTI reference grid, decorrelated
     def stage_multi_reference():
@@ -424,7 +427,7 @@ def main():
             print(label, result[label], flush=True)
         return result
 
-    out["parameterizations"] = cached("stage5_parameterizations", stage_parameterizations)
+    out["parameterizations"] = cached("stage5_parameterizations_audit_hybrid", stage_parameterizations)
     out["parameterizations"]["declared_ln_k0_e_over_r"] = {"claim": post.claim.value, "identifiability": ident_declared.status.value}
     out["parameterizations"]["ln_k_at_T_star_e_over_r"] = {"claim": post.claim.value, "identifiability": ident_aligned.status.value,
                                                            "T_star_k": T_star}

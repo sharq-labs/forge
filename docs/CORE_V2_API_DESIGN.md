@@ -150,13 +150,16 @@ class RouteDiagnostics:
     at_bound: tuple[str, ...]
     near_bound: tuple[str, ...]
     minimum_bound_distance_sd: float
-    nonlinearity_index: float                  # max |rise/4 - 1| over +/-2 sd principal-axis probes
-    nonlinearity_probes_skipped: int
+    nonlinearity_index: float                  # max |rise/4 - 1| over +/-2 sd probes along every principal axis and
+                                               #   every diagonal between two axes; NaN when fewer than p were evaluated
+    nonlinearity_probes_skipped: int           # of 2p^2
     minimum_chi_square_rise: float
-    multistart: tuple[dict, ...]               # per start: start, status, estimate, chi_square, mahalanobis_sq
-    uniqueness: str                            # MULTISTART_NO_SECOND_MODE / SECOND_MODE_FOUND /
-                                               #   BETTER_OPTIMUM_FOUND / NOT_ASSESSED / MULTISTART_INCOMPLETE
-    thresholds: Mapping[str, float]
+    multistart: tuple[dict, ...]               # per start: start, status, estimate, chi_square, mahalanobis_sq,
+                                               #   classification (frozen mappings)
+    uniqueness: str                            # MULTISTART_NO_SECOND_MODE / SECOND_MODE_FOUND / BETTER_OPTIMUM_FOUND /
+                                               #   LOWER_OBJECTIVE_SAME_BASIN / MULTISTART_BELOW_MINIMUM_SEARCH /
+                                               #   MULTISTART_INCOMPLETE / NOT_ASSESSED
+    thresholds: Mapping[str, float]            # the declared constants, plus multistart_* keys for the policy used
     evaluation_count: int
     claim: RouteClaim
     refusals: tuple[RouteReason, ...]
@@ -207,6 +210,13 @@ def local_gaussian_posterior(
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 
+*Amendment (audit, stream hybrid: HUQ-01, HUQ-08, HUQ-10).* The implementation had diverged from what a SUPPORTED claim needs; these rules now hold:
+
+- **A minimum search.** A multistart below `max(6, 2p + 2)` starts, or with `interior_fraction < 0.8`, `mode_separation_quantile > 0.999` or `comparable_fit_quantile != 0.99`, is uniqueness `MULTISTART_BELOW_MINIMUM_SEARCH` and adds `MULTISTART_INCOMPLETE`: the claim is at most DOWNGRADED. Before, `MultistartPolicy(starts=1)` could stand behind SUPPORTED. The default 6-start policy is therefore below the minimum for p ≥ 3. The policy actually used is recorded in `thresholds` as `multistart_starts`, `multistart_interior_fraction`, `multistart_max_evaluations`, `multistart_mode_separation_quantile`, `multistart_comparable_fit_quantile`, `multistart_maximum_retractions` and `multistart_minimum_starts`, so it is part of the diagnostics digest.
+- **Diagonal probes.** The ±2 sd χ² probes run along every principal axis **and** every diagonal (sᵢvᵢ ± sⱼvⱼ)/√2 between two of them: 2p² probes, each of unit Mahalanobis length. Axis probes alone could not see a cross term uᵢuⱼ, so a saddle whose descent lay between two axes passed as a minimum. The validity diagnostics therefore cost at least 4p + 1 + 2p² forward evaluations (O(p²)), not O(p).
+- **A lower refit is never the same optimum.** A converged refit inside the separation radius whose χ² is below the estimate's by more than max(2 × the Gauss–Newton predicted decrease, 0.05²) is `LOWER_OBJECTIVE_SAME_BASIN` and refuses `NOT_A_LOCAL_MINIMUM`.
+- **No measurement is not a measurement.** When fewer than p probes are evaluated (outside the bounds, or refused), `nonlinearity_index` is NaN and the route refuses `NONLINEAR_BEYOND_LOCAL_GAUSSIAN`: no covariance nobody compared with the model is emitted.
+
 **A reparameterization keeps unit semantics.** `reparameterized(matrix, names, units, label)` forms linear combinations of inference coordinates, so every output row must be dimensionally meaningful.
 
 - **Coordinate units:** an `identity` coordinate is in its declared unit. A `log` coordinate is `dimensionless`: it is ln(value / declared unit), a pure number whose origin depends on that declared unit, which the parent parameterization identity records. A `linear_map` coordinate is in its recorded unit.
@@ -235,7 +245,8 @@ def assess_routed_identifiability(
 ```
 
 - **Grid:** delegates to the frozen `assess_identifiability`, with its refusals intact.
-- **Local route:** applies the frozen thresholds and the **same** classification rule to the Gaussian covariance, with Gaussian marginal intervals (±z·sd in inference coordinates) in place of discrete ones.
+- **Local route:** applies the frozen thresholds and the **same** classification rule to the Gaussian covariance, with Gaussian marginal intervals (±z·sd in inference coordinates) in place of discrete ones. *Amendment (audit HUQ-03):* for a `log` coordinate the relative width is the natural-scale interval exp(z ± z₉₅·sd) relative to exp(z), i.e. exp(z₉₅·sd) − exp(−z₉₅·sd). Dividing 2·z₉₅·sd by the inference point ln(value / unit) made the verdict depend on the unit the parameter was declared in.
+- **Identity and consistency (audits HUQ-09, HUQ-14):** the digest includes `why`, and a status or `why` that the frozen rule does not give from the report's own numbers and thresholds is refused on construction and on read.
 - **Defaults** equal the frozen function's defaults. A test reads them from its signature.
 - **Refused local posterior:** raises `RouteRefusedError`.
 
@@ -274,9 +285,10 @@ def grid_predictive_uncertainty(
 ) -> RoutedPredictiveUncertainty
 ```
 
-- **Linearized:** G by the same convergence-checked finite differences in inference coordinates, at least 4p + 1 calls; a derivative that does not stabilize raises `RouteRefusedError`. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated. With `check_nonlinearity=False` no probe is run. The prediction is then DOWNGRADED with `NONLINEARITY_PROBE_INCOMPLETE` and `predictive_nonlinearity` is `None`: skipping the measurement of an assumption is not evidence that it holds. The numbers are the same either way; only the claim differs.
+- **Linearized:** G by the same convergence-checked finite differences in inference coordinates, at least 4p + 1 calls; a derivative that does not stabilize raises `RouteRefusedError`. With `check_nonlinearity`, ±2 sd probes compare g with its linear extrapolation: along every principal axis, every diagonal between two axes, and, for each prediction, along Σ∇g normalised to unit Mahalanobis length (another 2p² + 2k calls for k predictions; audit HUQ-07, since axis probes alone read g = c·u₁ + K·u₁u₂ as exactly linear). A deviation above 0.10 **parameter** sd adds `PREDICTIVE_NONLINEAR`, a downgrade (audit HUQ-11: scaled by the total sd, a large measurement sigma hid a curved parameter part). The record carries one claim, so that downgrade applies to the whole record, total interval included. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated. With `check_nonlinearity=False` no probe is run. The prediction is then DOWNGRADED with `NONLINEARITY_PROBE_INCOMPLETE` and `predictive_nonlinearity` is `None`: skipping the measurement of an assumption is not evidence that it holds. The numbers are the same either way; only the claim differs.
 - **Refused posterior:** raises `RouteRefusedError`.
-- **Grid:** wraps the frozen `posterior_predictive_uq`, including its grid-resolution refusal. The epistemic part becomes `parameter_standard_uncertainty`, the declared sigma becomes `measurement_standard_uncertainty`, and V1's exact mixture interval is kept as `total_interval`.
+- **Grid:** wraps the frozen `posterior_predictive_uq`, including its grid-resolution refusal. The epistemic part becomes `parameter_standard_uncertainty`, the declared sigma becomes `measurement_standard_uncertainty`, and V1's exact mixture interval is kept as `total_interval`. *Amendment (audit HUQ-02):* the claim is never hardcoded. The router's own grid judgement is applied first — the validated dimension, weights equal to softmax(log_likelihood) over the admissible mask, and the frozen `assess_identifiability` — and its refusal is raised, so a grid the router would not route (which the frozen predictive keeps under its discrete-mixture semantics) is not predicted from.
+- **Record consistency (audit HUQ-12):** the mean, total and intervals are finite; a linearized interval is exactly mean ± z·sd (to roundoff) and its claim follows from `predictive_nonlinearity` (unmeasured → `NONLINEARITY_PROBE_INCOMPLETE`, above 0.10 ↔ `PREDICTIVE_NONLINEAR`); a grid interval lies within Cantelli's bound mean ± √((1−t)/t)·sd and records no nonlinearity.
 - **Model discrepancy:** never estimated; every record names `MODEL_DISCREPANCY_NOT_MODELLED`.
 
 ### 3.6 The router (4)
@@ -300,7 +312,8 @@ class HybridUQResult:
     mean: tuple[float, ...] | None
     covariance: tuple[tuple[float, ...], ...] | None
     local_posterior: LocalGaussianPosterior | None
-    grid_summary: Mapping[str, Any] | None     # dataset id, points, digest of points+weights, grid refusal text
+    grid_summary: Mapping[str, Any] | None     # exactly: route, dataset_id, points, grid_digest (points, weights,
+                                               #   log-likelihood, mask), moments_digest (frozen mapping)
     considered: tuple[Mapping[str, str], ...]  # every route tried, in order, with its outcome and reason
     identifiability: RoutedIdentifiability | None
     # the PosteriorGrid itself is data-plane: held on the instance (compare=False), not serialized
@@ -313,6 +326,16 @@ class HybridUQResult:
 - **Grid routes:** coordinates are `natural`. `grid_summary.route` is the decision. Identifiability is read from `POSTERIOR_GRID`, SUPPORTED, and carries the grid-axes digest of the top-level names. A supplied grid carries no local posterior; a rebuilt grid carries the one it was designed from, over the same names. When the data-plane grid is held, its names, mean, covariance and digest must match too.
 - **`REFUSED`:** coordinates are `none`, and a carried local posterior is the refused one, over the same names.
 - **Every route:** identifiability describes the same parameters.
+
+*Amendment (audits HUQ-09, HUQ-12, HUQ-13).* Agreement between copies is not enough, because every digest in a record can be recomputed by whoever edits it. Digests are **integrity-only**; claims are re-derived from the numbers the record carries:
+
+- `RouteDiagnostics` re-derives its refusals and downgrades from its measured fields under the declared thresholds (which must be the declared constants), including the multistart entries, policy and uniqueness.
+- A carried `LocalGaussianPosterior` must have `to_inference(estimate) == inference_point`, and its covariance, point and bounds must reproduce the recorded bound distance and near-bound set.
+- A `LOCAL_GAUSSIAN` result's identifiability is recomputed from its covariance under the router's thresholds, `why` included.
+- A grid result's identifiability is held to its covariance (condition number, correlation), to the frozen rule (status, `why`) and to Cantelli's bound on each 95% width; `grid_summary` is a closed key set whose `moments_digest` also commits to `dataset_id` and `points`; means are finite.
+- `thresholds`, `multistart` entries, `grid_summary` and `considered` are frozen mappings at construction.
+
+What no field carries — the Jacobian, the grid itself, the estimate's own χ² against a refit's — cannot be re-derived, and a small shift of a grid mean under a recomputed commitment still passes.
 
 ```python
 
@@ -334,6 +357,7 @@ def routed_predictive_uncertainty(
 
 **Routing rule.** It is deterministic, runs in this order, and every step is recorded in `considered`.
 
+0. **A supplied grid belongs to the request** (audits HUQ-04, HUQ-06). When a calibration is supplied, the grid's parameter names must equal the calibration's, in order; when observations are supplied, the grid's `dataset_id` must equal theirs. The grid's weights must be softmax(log_likelihood) over its admissible mask. Otherwise `HybridUQError`.
 1. **Grid as supplied.** A `grid` is supplied, its p ≤ `maximum_grid_parameters`, and the frozen `assess_identifiability` does not raise. That means all of the following pass:
    - the repaired V1 checks (tensor lattice, ESS ≥ p+1, the ESS-and-spacing rule, lattice aliasing number ≥ 2 ln 100);
    - a usable local curvature fit.
@@ -344,6 +368,7 @@ def routed_predictive_uncertainty(
    - designs an axis-aligned tensor grid whose box covers ±`sigma_span` sd around the estimate and every mode multistart found, clipped to bounds;
    - picks per-axis node counts so the aliasing number predicted from the local covariance is ≥ `aliasing_margin` × 2 ln 100, within `maximum_points`;
    - builds the table with the caller's builder, and **requires it to be the requested grid**: its `parameter_names` equal the posterior's, in order, and its `points` equal the requested coordinates exactly, same row count and same row order. Every later check reads the table by the requested node layout, so any other table (another grid, a stale cache, the same rows reordered, the same numbers under other names) raises `HybridUQError`. It is never sorted or remapped;
+   - **spot-checks the table's values against the forward evaluator** (audit HUQ-05): both extreme corners, the node nearest the estimate, the table's best-fitting node and four interior nodes chosen from a digest of the table must agree with the forward evaluator on admission, and to 1e-6 observation sigma on value, else `HybridUQError`. The check is not exhaustive;
    - **checks containment:** on every face that is not a declared bound, the largest log-likelihood must sit at least ln 10⁶ below the peak. Otherwise the box grows by half its width on that side, at most 6 times. The frozen V1 checks verify resolution, not containment;
    - **checks truncation convergence:** where a declared bound cuts the posterior off, the density is not smooth at the edge and the Poisson-aliasing argument behind the V1 check does not bound the error there. The step on each such axis is halved, nested, until means and sds move by less than 0.05 posterior sd, at most 5 halvings within `maximum_points`;
    - runs the **frozen** V1 checks on the result. If V1 refuses, the aliasing target is raised 4× (steps halved) and the grid rebuilt, at most 3 times.
@@ -371,8 +396,8 @@ def routed_predictive_uncertainty(
 | `NUMERICALLY_SINGULAR_JACOBIAN` | equilibrated cond(J_w) > 1/√ε ≈ 6.7e7 |
 | `PARAMETER_AT_BOUND` | the Gauss–Newton step from the estimate exceeds 0.05 sd and points through a bound the estimate is within 1e-6 bound-range of |
 | `NOT_STATIONARY` | the Gauss–Newton step exceeds 0.05 sd with no bound to explain it |
-| `NOT_A_LOCAL_MINIMUM` | a ±2 sd probe lowers χ² |
-| `NONLINEAR_BEYOND_LOCAL_GAUSSIAN` | nonlinearity index > 0.50 |
+| `NOT_A_LOCAL_MINIMUM` | a ±2 sd probe (axis or diagonal) lowers χ², or a converged refit inside the separation radius has a lower χ² (`LOWER_OBJECTIVE_SAME_BASIN`) |
+| `NONLINEAR_BEYOND_LOCAL_GAUSSIAN` | nonlinearity index > 0.50, or fewer than p probes evaluated (index NaN) |
 | `SECOND_MODE_FOUND` | a multistart optimum with Mahalanobis² > χ²_p(0.999) and χ² ≤ χ²_min + χ²_p(0.99) |
 | `BETTER_OPTIMUM_FOUND` | a multistart optimum with Mahalanobis² > χ²_p(0.999) and χ² lower than the estimate's by more than χ²_p(0.99) |
 
@@ -385,8 +410,8 @@ def routed_predictive_uncertainty(
 | `NONLINEARITY_PROBE_INCOMPLETE` | a ±2 sd probe was not evaluated: it fell outside the bounds, was inadmissible, or (predictive only) was never run because `check_nonlinearity=False` |
 | `POORLY_SCALED_PARAMETERIZATION` | raw cond(J_w) > 1/√ε while the equilibrated condition is representable |
 | `GLOBAL_UNIQUENESS_NOT_ASSESSED` | `multistart=None` |
-| `MULTISTART_INCOMPLETE` | fewer than half the starts converged |
-| `PREDICTIVE_NONLINEAR` | predictive only |
+| `MULTISTART_INCOMPLETE` | fewer than half the starts converged, or the policy is below the minimum search (`max(6, 2p + 2)` starts, canonical span and quantiles) |
+| `PREDICTIVE_NONLINEAR` | predictive only: a probe deviates from the linear extrapolation by more than 0.10 parameter sd |
 
 **Router-only reasons:** `GRID_NOT_SUPPLIED`, `GRID_BEYOND_VALIDATED_DIMENSION`, `GRID_UNRESOLVED`, `LOCAL_INPUTS_NOT_SUPPLIED`, `GRID_REBUILD_OVER_BUDGET`, `GRID_REBUILD_UNRESOLVED`.
 
@@ -400,6 +425,8 @@ The thresholds are module constants, recorded inside every `RouteDiagnostics.thr
 - failure cases F1–F6.
 
 The stationarity threshold is new and must be validated on the same set before freeze.
+
+*Amendment (audit, stream hybrid).* The committed Core V2 evidence under `benchmarks/core_v2_hybrid_uq` was produced before the audited rules above. `TCR.json`, `FAILURE_CASES.json`, `PERFORMANCE.json` and `WHEEL_V2.json` were regenerated under them; `BATTERY_T41.json` and `KINETICS_K2.json` were not, and each carries a `*.SUPERSEDED.md` / `*.SUPERSEDED.json` marker beside it stating what changed and what is known about what it would now say.
 
 ## 5. Serialization (V2 inventory)
 
