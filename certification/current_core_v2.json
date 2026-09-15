@@ -4,7 +4,7 @@
       "area": "certification_control",
       "digest": "b198f76348a4d62831bb1573216edbe5bef864d20ac93db722b0f5807eefb4e6",
       "executed_certified_bytes_match_source": true,
-      "executed_merge_preview_commit": "ff81df06619232875edf069e9eaef062c2ece977",
+      "executed_merge_preview_commit": "ad52798f8efe4ff8bc54a38e81714862b0028f88",
       "file_count": 16
     },
     "environment": {
@@ -16,13 +16,13 @@
       "execution_model": "parallel_github_actions_jobs",
       "install": "python -m pip install -e \".[dev,mcp,oracles]\"",
       "ngspice": "ngspice-42 : Circuit level simulation program",
-      "pip_freeze_3_11_sha256": "fe74e4d93f4533b9ca9f9b6e8f13b73f345ab601ba8aa3674e876325610e39d9",
-      "pip_freeze_3_12_sha256": "d668a1b3ed20a52779d5f43aeb6f94e3b1fc51f8af160113bd98808a0031155c",
+      "pip_freeze_3_11_sha256": "b3e196464095dc4ff17f1ab9fd880f5bc0ea00fe2803d71ab544ca808582777a",
+      "pip_freeze_3_12_sha256": "8c4c1f90c77d26ee98a500d22d3c2d4bc654e0a8865f1df88e97771434f22436",
       "python_3_11": "Python 3.11.16",
       "python_3_12": "Python 3.12.14",
       "runner_os": "Linux",
       "schema": "forge.certification_environment/3",
-      "source_commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+      "source_commit": "829daca461826683e6320e845145131f73d90cec",
       "workflow": ".github/workflows/recertify-hardened-core.yml"
     },
     "execution_model": "parallel_gates_then_certificate",
@@ -141,7 +141,7 @@
       "shards": {
         "0": {
           "control": "GREEN",
-          "execution_log_sha256": "a5472145ecd08bc57eb9467349c2f9c8455ab59a3693518ee1539c222941623b",
+          "execution_log_sha256": "9d04137eaad4d8cc2e7a7cde1df3bec0874c052f1dd5cbd2a1aa8f1a0a64ada5",
           "killed_count": 24,
           "selected_count": 24,
           "selected_ids": [
@@ -174,7 +174,7 @@
         },
         "1": {
           "control": "GREEN",
-          "execution_log_sha256": "e50d66bbe0dccbfe3e150aaab1fb487a84f33620d0ca80e011ab7ee3211c0559",
+          "execution_log_sha256": "2ea3b021db70589d031b07b898d707e2d01ed9ccdf5fedcf7c7962eb57d4941e",
           "killed_count": 24,
           "selected_count": 24,
           "selected_ids": [
@@ -207,7 +207,7 @@
         },
         "2": {
           "control": "GREEN",
-          "execution_log_sha256": "7dc199ceb0f84db799e5fa8d4aa7ce9886ba0f22cc76c64eb6f1e95d93388f4d",
+          "execution_log_sha256": "99a919599158bf6fb346b64629563a743f08b40295c355953d9853ff474ee21e",
           "killed_count": 23,
           "selected_count": 23,
           "selected_ids": [
@@ -239,7 +239,7 @@
         },
         "3": {
           "control": "GREEN",
-          "execution_log_sha256": "eda012c36ac970ca46f6d7a8107d4d39a3bdb0f62554c39d17abeef1d8fd2181",
+          "execution_log_sha256": "5155b1aa2256c8a12abb038df2884208c2ab5eddf96f8b33f625ba207d885bcc",
           "killed_count": 23,
           "selected_count": 23,
           "selected_ids": [
@@ -281,46 +281,46 @@
       "fast_python_3_11": {
         "clean_tree_after_gate": true,
         "gate": "fast311",
-        "gate_record_sha256": "e66b83b473f54d1767363d56fdbe2bd19dc393c6897c981f3c565a87e47b276b",
-        "head_commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+        "gate_record_sha256": "167b8315aed4e73e3c5c64d9fc681fb03faa8e7109d66cd4f086fb657a8685c0",
+        "head_commit": "829daca461826683e6320e845145131f73d90cec",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "bc802fe18398776d147c2e0fab9917817b5034e7c4bd481ca7ea1c8771583ab4",
+            "junit_sha256": "557f984f314844361b39b9566d863e527fd7217879b493ee0d1fb5f458cd8015",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "c8da0a5565b3067bba946d857239d13252f52e03d3325cf616fa4c5ac0124ac1",
+            "junit_sha256": "02fbd664fa6e440851e4dd477ff2d46b4aa2c53bfb031e862c311c62af6a5e60",
             "skipped": 19,
-            "tests": 5901
+            "tests": 5904
           }
         }
       },
       "fast_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "fast312",
-        "gate_record_sha256": "39f92cfef88193faead68d0beea303c0d4d968895cbd6ff90d4cb6ec53863da1",
-        "head_commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+        "gate_record_sha256": "a2d0069a8e5e1c6f080724ee6d740624cd4a27f83ede7b06cb2b49b577c9df5a",
+        "head_commit": "829daca461826683e6320e845145131f73d90cec",
         "result": "success",
         "suites": {
           "dependency_guard": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "e9f2d5b1609149d3712b096be97be7b92bc660c42f90c9179e37ef0ec15312db",
+            "junit_sha256": "f7726c6eced70834468b0e692f6dc70abbf36ec8ed745c140cecc338272d652e",
             "skipped": 0,
             "tests": 1
           },
           "fast": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "e2f5d8419013b2a88ca637da14e3ecc1101faa6a7aa6ff952d3d6021ce3feaf4",
+            "junit_sha256": "f4c675701d41018b8d0d0b40ffd7edc5d0589157100591b9e13f62483079bf7b",
             "skipped": 19,
-            "tests": 5901
+            "tests": 5904
           }
         }
       },
@@ -328,28 +328,28 @@
       "scientific_python_3_12": {
         "clean_tree_after_gate": true,
         "gate": "scientific312",
-        "gate_record_sha256": "2c71f8c63330b2aec6e314c411df3f14a0cc3b486acfddd3722477556a3e53a4",
-        "head_commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+        "gate_record_sha256": "cd6fd14d805330c893f6acb543359a791169b26c6b6ba709f5c5a0a14ef4d61c",
+        "head_commit": "829daca461826683e6320e845145131f73d90cec",
         "result": "success",
         "suites": {
           "scientific": {
             "errors": 0,
             "failures": 0,
-            "junit_sha256": "aad590251cb912282a88bd5c6934398748a253bf9e47c2b53f16dc4a4bfc1039",
+            "junit_sha256": "80be39e2e04eb17e1d142154253f83d8c3c08d7d88a659e99abaefc7b98cbded",
             "skipped": 5,
-            "tests": 6440
+            "tests": 6443
           }
         }
       }
     },
     "lineage": {
-      "certificate_artifact": "hardened-core-assurance-f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
-      "certificate_parent": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+      "certificate_artifact": "hardened-core-assurance-829daca461826683e6320e845145131f73d90cec",
+      "certificate_parent": "829daca461826683e6320e845145131f73d90cec",
       "certify_job": "certify",
       "pull_request": 46,
       "repository": "sharq-labs/forge",
       "rule": "the certificate-only child that commits this certificate has exactly one parent, and it is source_commit",
-      "source_commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+      "source_commit": "829daca461826683e6320e845145131f73d90cec",
       "source_gates": [
         "fast311",
         "fast312",
@@ -362,12 +362,12 @@
       ],
       "workflow": ".github/workflows/recertify-hardened-core.yml",
       "workflow_run_attempt": 1,
-      "workflow_run_id": 34991792998
+      "workflow_run_id": 34994315021
     },
     "policy": "Built by tools/certification/hardening_assurance.py from the evidence artifacts of every source gate for this source commit, after all of them succeeded, and embedded by the official certificate builder.",
     "schema": "forge.core_hardening_assurance/3",
-    "source_commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
-    "source_tree": "c39c6a0580b5366f95f27cbbadf3ba873bd99aff",
+    "source_commit": "829daca461826683e6320e845145131f73d90cec",
+    "source_tree": "c1a1e3ebfe35cb505a76545348879a119932c725",
     "trust_hardening_mutations": {
       "claim": "Fresh trust-boundary mutation population on the source commit in an independent gate; ids and statuses read from its result file and checked against the runner's own MUTATIONS",
       "expected_population": 20,
@@ -398,7 +398,7 @@
       "population": 20,
       "population_sha256": "2f2a4d233851ae7ca0ac36b58d400da3c692f6cf44a3626fb553b062a91d0bad",
       "result_schema": "forge.trust_mutation_assurance/1",
-      "result_sha256": "5efd4df7825994aa9f3992ff3944ebe65e059b9c2e28236733c0af6357f2fb84",
+      "result_sha256": "63ec52f7dfb822e729188c46a719800727bbcdae6b32045b0db65d73a9f6d25b",
       "script": "benchmarks/trust_hardening/audit/mutations.py",
       "survived": 0
     }
@@ -436,7 +436,7 @@
     "version": "2.1.0"
   },
   "manifest": {
-    "aggregate_digest": "b37fddebdcfb4d8c0efc5fb5102e95fcb181cf5268e18d0170c6cbf7c91729d0",
+    "aggregate_digest": "eacc7640af0dd218dc28b4335e7dbf50fe58667774564b322c683692798daf12",
     "areas": {
       "certification_control": {
         "classification": "CERTIFICATION_CONTROL",
@@ -491,7 +491,7 @@
       },
       "core": {
         "classification": "CORE_CERTIFIED",
-        "digest": "71c349657ca3fe3b543cad37168f33a76772214f3d1f48f7bdadaa8962789615",
+        "digest": "4146f802bb8170479cff9d264468025fc0598b60d7e1bc6f6f4e457baf3adf76",
         "file_count": 62,
         "files": {
           "src/engcore/scientific/__init__.py": "f79cc0ab53915788875d632fcbc6a75a2f2822d5e3b01269e1a78e7b24367b1e",
@@ -540,7 +540,7 @@
           "src/engcore/scientific/results/execution_manifest.py": "6f76349b1169f461dd9d1b40b648f2e3123143938bedb9a0f6bf144f68c5b8f6",
           "src/engcore/scientific/results/immutable.py": "1335a7870336c7adb4c3ca01ef21fcf4747cca0e0612b3bdb340336b1c4fde08",
           "src/engcore/scientific/results/provenance.py": "bcb3ed882c53e83ca97fc6de610ad03d8ffa51409e3ed976b5c7ed6a31b70ebb",
-          "src/engcore/scientific/results/result.py": "7fb238a923aee1297d964e636e8a7e11908b36d16e3fbef5aa764088a3ff8bb9",
+          "src/engcore/scientific/results/result.py": "b4719109799018a3a5f066d4cdf9cec119fd155202a5327b0e1fcf7331bac5b2",
           "src/engcore/scientific/results/thresholds.py": "d3ec465167af523bfec8f6fac5d7f9280cd2134130186b18e021b305b0790399",
           "src/engcore/scientific/results/uncertainty.py": "cc6504522af61bbf620ed76ccdeeee6963e1eb273175c835f7ff1cde35886801",
           "src/engcore/scientific/results/validation.py": "068247a5a65157b4ef4900c1933cb534096fe3ee5647dd6ddbb34efa1206ace5",
@@ -577,14 +577,14 @@
       },
       "harness": {
         "classification": "HARNESS",
-        "digest": "35dbd9c2775ed9c640b8fe31f3bbd07f8dbc0e028e00021bb63f7ba561ac2b40",
+        "digest": "d211acc258ab9ecad7d6d355ad2c32dbca9dd5f9ff21bba4dc2f2aec38f3f16a",
         "file_count": 7,
         "files": {
           "tests/hybrid_uq/test_hybrid_uq_trust_boundary.py": "3a92b8427b2094cf79095fc45f5081485ae438ea33a3f2786212f09f0f6d8994",
           "tests/mutation_guards.py": "cab2901a737c7c9a237c10a3540e1435aa3de2e073f38705f6b24932988e1d8d",
           "tests/test_core_guards.py": "4234da4e06f3899c6c2488e6c1ab40025b29994e0cb2cd48fe84909f4dcdcfdf",
           "tests/test_core_semantic_invariants.py": "d37cae7fd21217fae2feb56127806abd6ac618a3b1e5ea46420910b7a380f031",
-          "tests/test_core_trust_closure.py": "5683488fa903fb53c1a5d58ba07a5950710581c2e395c29c17df58f867943f15",
+          "tests/test_core_trust_closure.py": "9bfc114a8b1db3b2f423f461b3fca61a58a279ebab849f3c68a50ee832eacacf",
           "tests/test_offset_unit_declaration.py": "6ed5a0a65b7bab4ec31b7d45f23fa68e667a93dfa6e647cbed81b1a859a3afde",
           "tests/test_repair_guidance.py": "fa85884f07997094c643b753591b168c0c888525e9a1e044390dcd3bc94a2be5"
         },
@@ -684,7 +684,7 @@
   "repository": {
     "branch": "HEAD",
     "clean": true,
-    "commit": "f4a5d6c234625d0e1e8e50a8274f11129ffd2651",
+    "commit": "829daca461826683e6320e845145131f73d90cec",
     "dirty_paths": []
   },
   "schema": "core_certificate/2",
@@ -837,7 +837,7 @@
     "v1_algorithm_recovered": true,
     "v1_algorithm_source": "certification/current_core_v1.json -> verification.how_to_reproduce_the_certified_tree",
     "v1_certificate": "certification/current_core_v1.json",
-    "v1_compatible_core_digest_now": "042b247b2965154083cabbadf654728cb623a58bd0191b8477e10db5da8b7360",
+    "v1_compatible_core_digest_now": "787990a70f846639bc865f88caf27ec9b5b1d1a344ca6ce4ea64a98a8ee4e1ab",
     "v1_core_digest_at_its_own_commit": "82558f5b4386a73a951f21fdb8b5a45df2c6c032423a205108a1fccfd97d2507"
   }
 }
