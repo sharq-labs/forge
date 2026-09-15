@@ -1,7 +1,7 @@
 """Targeted mutations for the new trust-boundary mechanisms.
 
 This campaign is intentionally separate from ``tests/mutation_guards.py``.
-The formal 79-mutant certificate harness is byte-pinned evidence about an older
+The formal certificate harness is byte-pinned evidence about its own
 population; silently adding these mutations to that number would make the old
 claim mean something it never measured.
 
@@ -24,6 +24,15 @@ Pytest exit status is also interpreted conservatively: exit 0 means SURVIVED,
 exit 1 (actual test failures) means KILLED, and collection/usage/internal-error
 statuses are INVALID.  Infrastructure failures are never credited as mutation
 kills.
+
+An exit code alone is not attribution (main audit CERT-04).  Before any mutant
+runs, the same suites run once against an UNMUTATED copy through the same
+wrapper and environment; if that control is not green the whole round is
+INVALID, because a suite that already fails would "kill" every mutant.  And a
+mutant counts as KILLED only when pytest reports at least one FAILED test in
+the declared suites and, where the mutation names the test that guards it
+(``expect``), that test is among the failures.  Anything else is INVALID
+("RED, NOT THE GUARD"), never a kill.
 """
 
 from __future__ import annotations
@@ -61,6 +70,9 @@ class Mutation:
     old: str
     new: str
     property: str
+    #: Substring of the pytest node id of the test that guards this property.
+    #: When set, a kill counts only if that test is among the failures.
+    expect: str = ""
 
 
 MUTATIONS = (
@@ -70,6 +82,7 @@ MUTATIONS = (
         "if model.key not in requested_model_keys:",
         "if False and model.key not in requested_model_keys:",
         "the problem must request the exact selected model/version",
+        expect='test_problem_must_name_the_exact_model_version_selected',
     ),
     Mutation(
         "TRUST-A2",
@@ -77,6 +90,7 @@ MUTATIONS = (
         "if realization.model_key != model.key:",
         "if False and realization.model_key != model.key:",
         "a realization cannot silently implement another model/version",
+        expect='test_realization_cannot_silently_compute_another_model_version',
     ),
     Mutation(
         "TRUST-A3",
@@ -84,6 +98,7 @@ MUTATIONS = (
         "undeclared_by_problem = sorted(model_solver_requirements - problem_solver_requirements)",
         "undeclared_by_problem = []",
         "a problem cannot weaken the selected model's computational claim",
+        expect='test_problem_cannot_weaken_a_models_computational_requirements',
     ),
     Mutation(
         "TRUST-A4",
@@ -91,6 +106,7 @@ MUTATIONS = (
         "missing_solver = sorted(required_by_stack - solver_declared)",
         "missing_solver = []",
         "solver capabilities must cover model and realization requirements",
+        expect='test_solver_must_cover_requirements_of_both_model_and_realization',
     ),
     Mutation(
         "TRUST-A5",
@@ -98,6 +114,7 @@ MUTATIONS = (
         "missing_science = sorted(\n        realization.required_capabilities - available_science,\n        key=lambda capability: capability.identifier,\n    )",
         "missing_science = []",
         "realization scientific dependencies must be explicitly available",
+        expect='test_realization_scientific_dependencies_are_not_equated_with_solver_caps',
     ),
     Mutation(
         "TRUST-M1",
@@ -105,6 +122,7 @@ MUTATIONS = (
         "if missing or extra:",
         "if False and (missing or extra):",
         "artifact attestation covers exactly the artifacts the raw result declared",
+        expect='test_declared_artifacts_must_be_covered_exactly_fail_closed',
     ),
     Mutation(
         "TRUST-M2",
@@ -112,6 +130,7 @@ MUTATIONS = (
         "if _hex_digest(claimed, label=\"manifest_digest\") != record.manifest_digest:",
         "if False and _hex_digest(claimed, label=\"manifest_digest\") != record.manifest_digest:",
         "a serialized manifest rejects post-attestation content changes",
+        expect='test_serialized_manifest_verifies_its_own_content_digest',
     ),
     Mutation(
         "TRUST-R1",
@@ -119,6 +138,7 @@ MUTATIONS = (
         "if prepared_problem != expected_problem:",
         "if False and prepared_problem != expected_problem:",
         "prepare cannot swap the scientific problem admitted by the runtime",
+        expect='test_prepare_cannot_switch_the_admitted_problem_before_solve',
     ),
     Mutation(
         "TRUST-R2",
@@ -126,6 +146,7 @@ MUTATIONS = (
         "if prepared.solver != solver.identity:",
         "if False and prepared.solver != solver.identity:",
         "prepare cannot switch solver identity after admission",
+        expect='test_prepare_cannot_switch_solver_identity_before_solve',
     ),
     Mutation(
         "TRUST-R3",
@@ -133,6 +154,7 @@ MUTATIONS = (
         "if not isinstance(value, Quantity):",
         "if False and not isinstance(value, Quantity):",
         "raw dimensionless numbers cannot cross the trusted metric boundary",
+        expect='test_raw_float_cannot_cross_the_metric_boundary_in_a_trusted_record',
     ),
     Mutation(
         "TRUST-I1",
@@ -140,6 +162,7 @@ MUTATIONS = (
         "return not self.shared_artifacts",
         "return True",
         "shared artifact bytes defeat route independence regardless of labels",
+        expect='test_different_labels_on_same_verified_bytes_are_detected_as_shared_machinery',
     ),
     Mutation(
         "TRUST-I2",
@@ -147,6 +170,7 @@ MUTATIONS = (
         "return self.all_routes_verified and self.artifact_disjoint and len(self.route_findings) >= 2",
         "return self.artifact_disjoint and len(self.route_findings) >= 2",
         "missing or mismatched route evidence cannot be treated as strong independence",
+        expect='test_missing_route_evidence_is_unverified_not_independent_by_silence',
     ),
     # ---- Round 1A: dependency evidence integrity -------------------------
     # Each targets the per-dependency mechanism in
@@ -157,6 +181,7 @@ MUTATIONS = (
         "for identity in sorted(declared_identities - covered_identities):",
         "for identity in sorted(frozenset()):",
         "every declared dependency identity must be covered by verified evidence of its own",
+        expect='test_every_dependency_identity_requires_its_own_bound_artifact_evidence',
     ),
     Mutation(
         "TRUST-D2",
@@ -164,6 +189,7 @@ MUTATIONS = (
         "    if identity not in declared_identities:\n",
         "    if False:\n",
         "an artifact bound to an undeclared dependency identity is refused, never counted",
+        expect='test_artifact_bound_to_an_undeclared_dependency_identity_is_rejected',
     ),
     Mutation(
         "TRUST-D3",
@@ -171,6 +197,7 @@ MUTATIONS = (
         "        if len(by_identity) > 1:\n",
         "        if False:\n",
         "one verified artifact cannot establish more than one declared dependency in a route",
+        expect='test_C_one_blob_cannot_evidence_identities_in_two_dimensions_of_one_route',
     ),
     Mutation(
         "TRUST-D4",
@@ -179,6 +206,7 @@ MUTATIONS = (
         "                        continue\n",
         "                    _verified_against_bytes(artifact, dimension, dimension_bytes, reasons)\n",
         "a dependency is covered only after its artifact bytes re-hash to the fingerprint",
+        expect='test_DEF_a_bound_artifact_whose_bytes_do_not_verify_covers_nothing',
     ),
     Mutation(
         "TRUST-D5",
@@ -186,6 +214,7 @@ MUTATIONS = (
         '    dependency_identity: str = field(default="")\n',
         '    dependency_identity: str = field(default="", compare=False)\n',
         "the dependency binding is part of fingerprint identity, so a double use stays visible",
+        expect='test_same_bytes_bound_to_two_dependencies_remain_two_evidence_records',
     ),
     Mutation(
         "TRUST-D6",
@@ -193,6 +222,7 @@ MUTATIONS = (
         "        identity = canonical_component_identity(artifact.dependency_identity)\n",
         "        identity = artifact.dependency_identity\n",
         "bindings are compared as canonical identities, not as raw spellings",
+        expect='test_alias_spellings_across_routes_do_not_make_one_implementation_two',
     ),
     Mutation(
         "TRUST-D7",
@@ -200,6 +230,7 @@ MUTATIONS = (
         '                    f"{_binding_label(artifact, dimension)}"\n',
         '                    ""\n',
         "the trusted check records which dependency every artifact evidences",
+        expect='test_O_trusted_evidence_lines_record_the_exact_canonical_identity_of_every_artifact',
     ),
     Mutation(
         "TRUST-C1",
@@ -207,6 +238,7 @@ MUTATIONS = (
         "trusted_earned = base_earned and independence.strongly_independent",
         "trusted_earned = base_earned",
         "CROSS_SOLVER_VALIDATED requires artifact-backed independence as well as agreement",
+        expect='test_forged_fingerprint_cannot_keep_cross_solver_level',
     ),
 )
 
@@ -307,12 +339,58 @@ raise SystemExit(returncode)
 '''
 
 
+#: The unmutated control. Run through the same wrapper, environment and suites.
+CONTROL = Mutation(
+    "CONTROL",
+    "src/engcore/__init__.py",
+    "",
+    "",
+    "the suites are green on an unmutated copy, so a red mutant is the mutation's doing",
+)
+
+
+def failed_tests(output: str) -> tuple[str, ...]:
+    """Node ids pytest reported as FAILED in its short summary."""
+    found = []
+    for line in output.splitlines():
+        if line.startswith("FAILED "):
+            found.append(line[len("FAILED "):].split(" - ", 1)[0].strip())
+    return tuple(found)
+
+
+def classify(mutation: Mutation, returncode: int | None, output: str) -> tuple[str, str]:
+    """(status, reason) for one mutant run. Only an attributed failure is a kill."""
+    if returncode == 0:
+        return "SURVIVED", ""
+    if returncode != 1:
+        # pytest: 2 interrupted/collection, 3 internal error, 4 usage error,
+        # 5 no tests. 86/87 are our origin/contamination guards. None of these
+        # prove that a behavioural assertion detected the mutation.
+        return "INVALID", f"pytest exit {returncode} is not a test failure"
+    failed = failed_tests(output)
+    in_suites = [
+        node for node in failed
+        if any(node.replace("\\", "/").split("::", 1)[0].endswith(test) for test in TESTS)
+    ]
+    if not in_suites:
+        return "INVALID", "exit 1 with no FAILED test in the declared suites"
+    if mutation.expect and not any(mutation.expect in node for node in in_suites):
+        return "INVALID", (
+            f"RED, NOT THE GUARD: expected {mutation.expect!r} among the failures, "
+            f"got {sorted(in_suites)[:5]}"
+        )
+    return "KILLED", ""
+
+
 def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
     mutant = scratch / mutation.mutation_id
     src_copy = mutant / "src"
     shutil.copytree(ROOT / "src", src_copy)
     try:
-        mutated_path = _apply(mutant, mutation)
+        if mutation is CONTROL:
+            mutated_path = src_copy / "engcore" / "__init__.py"
+        else:
+            mutated_path = _apply(mutant, mutation)
         py_compile.compile(str(mutated_path), doraise=True)
         module_name = _module_name_for_path(mutation.path)
     except Exception as exc:
@@ -340,6 +418,7 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
         "-o",
         f"pythonpath={src_copy}",
         "-q",
+        "-rf",
         "-p",
         "no:cacheprovider",
     ]
@@ -362,22 +441,18 @@ def _run_one(mutation: Mutation, scratch: pathlib.Path) -> Result:
             detail=f"test timeout after {exc.timeout}s",
         )
 
-    if completed.returncode == 0:
-        status = "SURVIVED"
-    elif completed.returncode == 1:
-        status = "KILLED"
-    else:
-        # pytest: 2 interrupted/collection, 3 internal error, 4 usage error,
-        # 5 no tests. 86/87 are our origin/contamination guards. None of these
-        # prove that a behavioural assertion detected the mutation.
-        status = "INVALID"
     tail = "\n".join(completed.stdout.splitlines()[-30:])
+    if mutation is CONTROL:
+        status = "GREEN" if completed.returncode == 0 else "RED"
+        reason = ""
+    else:
+        status, reason = classify(mutation, completed.returncode, completed.stdout)
     return Result(
         mutation.mutation_id,
         status,
         mutation.property,
         returncode=completed.returncode,
-        detail=tail,
+        detail=(f"{reason}\n{tail}" if reason else tail),
     )
 
 
@@ -397,6 +472,12 @@ def main(argv: list[str] | None = None) -> int:
 
     results: list[Result] = []
     try:
+        control = _run_one(CONTROL, scratch)
+        print(f"CONTROL: {control.status} — {control.property}", flush=True)
+        if control.status != "GREEN":
+            print(control.detail, flush=True)
+            print("CONTROL RED: the round is void; no mutant result would be attributable.")
+            return 1
         for mutation in MUTATIONS:
             result = _run_one(mutation, scratch)
             results.append(result)

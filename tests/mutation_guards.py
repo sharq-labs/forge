@@ -2486,6 +2486,11 @@ def _run(where: pathlib.Path, scratch: pathlib.Path):
     suite: nothing was observed, and a mutation whose only evidence is that
     the run did not finish is a mutation nobody checked.
     """
+    # pytest creates --basetemp with mkdir(parents=False), lazily, the first time
+    # a test asks for tmp_path. Until GUARDS 29-35 no target suite did, so the
+    # missing `pt` parent went unnoticed; the first suite that used tmp_path
+    # made CONTROL red for a reason unrelated to any guard.
+    (scratch / "pt").mkdir(parents=True, exist_ok=True)
     try:
         done = subprocess.run(
             # `--continue-on-collection-errors`, because without it ONE
