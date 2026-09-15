@@ -192,9 +192,13 @@ def test_predictive_material_fields_move_its_digest(records):
 # fresh-process digest stability
 # ---------------------------------------------------------------------------
 def test_digests_are_stable_in_a_fresh_process_with_another_hash_seed(records):
+    # The fresh process must import THIS tree's engcore. pytest's pythonpath setting does not reach a subprocess, and
+    # without the explicit insert an editable install of another checkout answers instead, so the digests compared
+    # would be another tree's (seen during the audit, when the V2 digests had legitimately moved).
     script = f"""
 import sys, json
-sys.path.insert(0, {str(HERE)!r})
+sys.path.insert(0, {str(HERE.parents[1] / "src")!r})
+sys.path.insert(1, {str(HERE)!r})
 import hybrid_synthetic as S
 from engcore.hybrid_uq import MultistartPolicy, local_gaussian_posterior, assess_routed_identifiability, route_uncertainty
 P = S.affine(); cal = P.calibrate()
