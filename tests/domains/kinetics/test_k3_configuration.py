@@ -20,35 +20,26 @@ from engcore.domains.kinetics.cstr.problem import CSTR_MODEL
 from engcore.inference import InferenceAdmissibilityError
 from engcore.scientific import TwinKind
 from engcore.scientific.units.quantity import Quantity
+from engcore.domains.kinetics.cstr.fluids import SEBORG_TEXTBOOK_LIQUID, declare_fluid
 
 
-#: Audit CAP-01. The CSTR's single-liquid-phase conditions read the fluid's own
-#: boiling and freezing temperatures and are UNKNOWN until they are declared.
-#: The frozen K-series parameterization (the Seborg textbook liquid) declares
-#: neither, so its runs are no longer IN_DOMAIN and the inference boundary
-#: refuses them on applicability -- that refusal is asserted below, and is the
-#: correct behaviour. To keep exercising the admission path itself, the
-#: positive tests declare a liquid range HERE: a hypothetical pressurised liquid
-#: that stays liquid between 260 K and 650 K. It is this test's declaration,
-#: not a property of the textbook parameterization, and it clears every K-series
-#: adiabatic ceiling (at most 579.2 K) and floor (at least 285 K).
-DECLARED_BOILING = Quantity(650.0, "kelvin")
-DECLARED_FREEZING = Quantity(260.0, "kelvin")
+#: Audit CAP-01, lead decision. The CSTR's single-liquid-phase conditions read
+#: the fluid's own boiling and freezing temperatures and are UNKNOWN until they
+#: are declared, so the frozen K-series code -- which declares none -- is
+#: refused on applicability. The textbook liquid's real range is declared once,
+#: in the domain (``engcore.domains.kinetics.cstr.fluids.SEBORG_TEXTBOOK_LIQUID``:
+#: a dilute aqueous liquid at an assumed 101.325 kPa, 273.15-373.124 K), and a
+#: solved run is assessed at the temperatures it actually reached. Runs that
+#: stay liquid are admitted; runs that truly boil stay refused.
 PHASE_CONDITIONS = (
     "declared_temperature_to_boiling_ratio",
-    "adiabatic_ceiling_to_boiling_ratio",
-    "adiabatic_floor_to_freezing_ratio",
+    "reachable_maximum_to_boiling_ratio",
+    "reachable_minimum_to_freezing_ratio",
 )
 
 
 def declared_liquid(chemistry):
-    from dataclasses import replace
-
-    return replace(
-        chemistry,
-        boiling_temperature=DECLARED_BOILING,
-        freezing_temperature=DECLARED_FREEZING,
-    )
+    return declare_fluid(chemistry, SEBORG_TEXTBOOK_LIQUID)
 
 
 def with_declared_liquid(run):
@@ -96,14 +87,24 @@ def test_k3_reference_twin_binds_model_without_collapsing_posterior() -> None:
 
 def test_k3_truth_holdouts_cross_k15_admissibility_boundary() -> None:
     # Audit CAP-01: the frozen truth declares no liquid range and is refused on
-    # applicability; the same holdouts with a declared liquid range still cross.
+    # applicability. With the textbook liquid's real range declared, H1 truly
+    # boils (truth peak 507 K against 373.124 K) and stays refused, so K3 as
+    # preregistered cannot be re-derived (experiments/kinetics_k3/
+    # SUPERSEDED_CAP01.md); H2 stays liquid and still crosses.
     with pytest.raises(InferenceAdmissibilityError, match="applicability"):
         holdout_truth_means()
 
     liquid = declared_liquid(chemistry_from_coordinates(*TRUTH_COORDINATES))
     adapter = CSTRInferenceForwardAdapter()
+    with pytest.raises(InferenceAdmissibilityError, match="applicability"):
+        adapter.evaluate(
+            HOLDOUT_BY_ID["H1"].build(liquid),
+            observable_names=OBSERVABLE_NAMES,
+            run_id_prefix="k3-truth-H1",
+        )
+    liquid_ids = ("H2",)
     means = {}
-    for condition_id in HOLDOUT_IDS:
+    for condition_id in liquid_ids:
         prediction = adapter.evaluate(
             HOLDOUT_BY_ID[condition_id].build(liquid),
             observable_names=OBSERVABLE_NAMES,
@@ -116,7 +117,7 @@ def test_k3_truth_holdouts_cross_k15_admissibility_boundary() -> None:
 
     assert set(means) == {
         f"{condition_id}:{observable_name}"
-        for condition_id in HOLDOUT_IDS
+        for condition_id in liquid_ids
         for observable_name in OBSERVABLE_NAMES
     }
     for value in means.values():

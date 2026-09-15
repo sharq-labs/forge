@@ -172,3 +172,40 @@ def test_the_ceiling_condition_no_longer_claims_to_establish_the_liquid_phase() 
         assert "single-phase liquid with constant properties and no boiling" not in text
     # The liquid claim is carried by the conditions that read the fluid.
     assert "boiling" in by_name[ctx.CEILING_TO_BOILING_RATIO].description.lower()
+
+
+def test_the_textbook_liquid_is_declared_once_in_the_domain_with_its_basis() -> None:
+    from engcore.domains.kinetics.cstr.fluids import SEBORG_TEXTBOOK_LIQUID
+
+    assert SEBORG_TEXTBOOK_LIQUID.boiling_temperature.magnitude_in("kelvin") == 373.124
+    assert SEBORG_TEXTBOOK_LIQUID.freezing_temperature.magnitude_in("kelvin") == 273.15
+    assert SEBORG_TEXTBOOK_LIQUID.pressure.magnitude_in("pascal") == 101325.0
+    assert "ASSUMED" in SEBORG_TEXTBOOK_LIQUID.basis
+
+
+def test_a_solved_run_is_assessed_at_the_states_it_reached_not_the_ceiling() -> None:
+    """Cooled hard enough to stay liquid: refused on the ceiling, admitted on the run."""
+    from engcore.domains.kinetics.cstr import solve_reactor
+
+    chem = water(boiling=373.124, freezing=273.15)
+    # A heavily cooled, dilute feed: ceiling well above boiling, trajectory not.
+    r = run(chem, tf=300.0, tc=295.0, caf=12000.0, t0=300.0)
+    before = r.validity_context().assess(CSTR_MODEL)
+    assert ctx.CEILING_TO_BOILING_RATIO in before.violated
+    solved = solve_reactor(r, run_id="cap01-realised")
+    peak = solved.value("T:max").magnitude_in("kelvin")
+    after = solved.validity_of(CSTR_MODEL.model_id)
+    if peak < 373.124:
+        assert ctx.CEILING_TO_BOILING_RATIO in after.satisfied
+    else:  # pragma: no cover - guards the test's own premise
+        raise AssertionError(f"premise failed: the run peaked at {peak} K")
+
+
+def test_a_solved_run_that_truly_boils_stays_outside() -> None:
+    from engcore.domains.kinetics.cstr import solve_reactor
+
+    r = run(water(boiling=373.124, freezing=273.15), tf=360.0, tc=350.0, caf=12000.0, t0=360.0)
+    solved = solve_reactor(r, run_id="cap01-boils")
+    assert solved.value("T:max").magnitude_in("kelvin") > 373.124
+    after = solved.validity_of(CSTR_MODEL.model_id)
+    assert ctx.CEILING_TO_BOILING_RATIO in after.violated

@@ -164,8 +164,12 @@ FREEZING_TEMPERATURE = "freezing_temperature"
 DAMKOHLER_NUMBER = "damkohler_number"
 ADIABATIC_CEILING_TEMPERATURE = "adiabatic_ceiling_temperature"
 DECLARED_TEMPERATURE_TO_BOILING_RATIO = "declared_temperature_to_boiling_ratio"
-CEILING_TO_BOILING_RATIO = "adiabatic_ceiling_to_boiling_ratio"
-FLOOR_TO_FREEZING_RATIO = "adiabatic_floor_to_freezing_ratio"
+#: Asked at the hottest and coldest state the run can reach. Before a solve
+#: that is the invariant bound (adiabatic ceiling / floor); on a solved result
+#: whose integration completed its horizon it is the trajectory's realised
+#: extreme -- see :func:`derived_cstr_quantities`.
+CEILING_TO_BOILING_RATIO = "reachable_maximum_to_boiling_ratio"
+FLOOR_TO_FREEZING_RATIO = "reachable_minimum_to_freezing_ratio"
 
 
 # =====================================================================
@@ -562,8 +566,26 @@ ASSEMBLED_QUANTITIES = frozenset(
 )
 
 
-def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
+def derived_cstr_quantities(
+    base: Mapping[str, Any],
+    *,
+    reached_minimum: Quantity | None = None,
+    reached_maximum: Quantity | None = None,
+) -> dict[str, Quantity]:
     """Every group derivable from a reactor's declared quantities.
+
+    **The two reachable-state phase ratios** (lead decision on audit CAP-01:
+    refuse only what TRULY leaves the liquid range). Without
+    ``reached_minimum``/``reached_maximum`` they are asked at the invariant
+    floor and ceiling -- rigorous bounds decidable before any solve, and
+    conservative: a cooled reactor is reported able to reach its adiabatic
+    ceiling. A solved result whose integration completed its horizon passes
+    the trajectory's realised extremes instead, and the ratios are then asked
+    at the states the run actually occupied. Those extremes are SAMPLED -- the
+    solver's accepted nodes union its dense output grid -- so they are a lower
+    bound on the continuous excursion, and a run sampled within a fraction of a
+    kelvin of a phase boundary is not established by them; that residual is
+    recorded in the condition text rather than hidden.
 
     ``base`` is the declaration expressed as a mapping of names to Quantities:
     the chemistry, the operation and the initial state. No state coordinate has
@@ -588,6 +610,17 @@ def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
     )
     ceiling = adiabatic_ceiling_temperature(**envelope_inputs)
     floor = adiabatic_floor_temperature(**envelope_inputs)
+    if (reached_minimum is None) != (reached_maximum is None):
+        raise InvalidScientificProblem(
+            "a reached temperature range needs both its minimum and its "
+            "maximum; one end alone is not a range the run occupied"
+        )
+    reachable_maximum = ceiling if reached_maximum is None else _as_quantity(
+        reached_maximum, TEMPERATURE_UNIT, "reached_maximum"
+    )
+    reachable_minimum = floor if reached_minimum is None else _as_quantity(
+        reached_minimum, TEMPERATURE_UNIT, "reached_minimum"
+    )
     derived: dict[str, Quantity | None] = {
         ADIABATIC_CEILING_TEMPERATURE: ceiling,
         # The liquid-phase claim, asked of the fluid that was declared. Each is
@@ -601,10 +634,12 @@ def derived_cstr_quantities(base: Mapping[str, Any]) -> dict[str, Quantity]:
             boiling_temperature=base.get(BOILING_TEMPERATURE),
         ),
         CEILING_TO_BOILING_RATIO: ceiling_to_boiling_ratio(
-            ceiling=ceiling, boiling_temperature=base.get(BOILING_TEMPERATURE)
+            ceiling=reachable_maximum,
+            boiling_temperature=base.get(BOILING_TEMPERATURE),
         ),
         FLOOR_TO_FREEZING_RATIO: floor_to_freezing_ratio(
-            floor=floor, freezing_temperature=base.get(FREEZING_TEMPERATURE)
+            floor=reachable_minimum,
+            freezing_temperature=base.get(FREEZING_TEMPERATURE),
         ),
     }
     return {name: value for name, value in derived.items() if value is not None}
@@ -614,6 +649,8 @@ def cstr_validity_context(
     declared: Mapping[str, Any],
     *,
     reserved: Iterable[str],
+    reached_minimum: Quantity | None = None,
+    reached_maximum: Quantity | None = None,
 ) -> DomainValidityContext:
     """The context ``CSTR_MODEL`` is assessed against, in two namespaces.
 
@@ -646,7 +683,11 @@ def cstr_validity_context(
         declared=stripped,
         assembled={
             **state,
-            **derived_cstr_quantities({**stripped, **state}),
+            **derived_cstr_quantities(
+                {**stripped, **state},
+                reached_minimum=reached_minimum,
+                reached_maximum=reached_maximum,
+            ),
         },
         reserved=reserved,
     )

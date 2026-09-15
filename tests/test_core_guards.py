@@ -204,7 +204,7 @@ EXPECTED_RESERVING_MODELS = 15
 # represent. Looked at deliberately, which is what the exact count is for.
 # 67 -> 73 and 49 -> 55 in the domains audit-fix stream (CAP-01), which added
 # the three single-liquid-phase conditions -- declared_temperature_to_boiling_
-# ratio, adiabatic_ceiling_to_boiling_ratio, adiabatic_floor_to_freezing_ratio
+# ratio, reachable_maximum_to_boiling_ratio, reachable_minimum_to_freezing_ratio
 # -- to BOTH CSTR records, each reserved because each is derived. Both records
 # claimed "single liquid phase, no boiling" and checked it against nothing but
 # a fluid-independent 250-1000 K band.

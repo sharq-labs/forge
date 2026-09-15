@@ -205,14 +205,18 @@ LIQUID_PHASE_CONDITIONS = (
         maximum=Quantity(1.0, DIMENSIONLESS),
         maximum_inclusive=False,
         description=(
-            "adiabatic_ceiling_temperature / T_boil < 1: no state the "
-            "declaration can reach boils. The ceiling is an upper bound from "
-            "the exact invariant Z = T + beta C_A, so a strongly cooled "
-            "reactor is still reported as able to boil; this condition does "
-            "not certify that the cooling holds. Single liquid phase, no "
-            "boiling and no vapour space are assumptions of the model, and "
-            "past this bound they are not shown to hold. UNKNOWN unless the "
-            "fluid declares boiling_temperature."
+            "T_reachable,max / T_boil < 1: no state the run can reach boils. "
+            "BEFORE A SOLVE T_reachable,max is the adiabatic ceiling, an upper "
+            "bound from the exact invariant Z = T + beta C_A, so a strongly "
+            "cooled reactor is reported as able to boil. ON A SOLVED RESULT "
+            "whose integration completed its horizon it is the trajectory's "
+            "realised maximum, sampled over the solver's accepted nodes and "
+            "its dense output grid: the state the run actually reached, and a "
+            "lower bound on the continuous peak, so a run sampled within a "
+            "fraction of a kelvin of boiling is not established by it. Single "
+            "liquid phase, no boiling and no vapour space are assumptions of "
+            "the model, and past this bound they are not shown to hold. "
+            "UNKNOWN unless the fluid declares boiling_temperature."
         ),
     ),
     RangeCondition(
@@ -220,11 +224,13 @@ LIQUID_PHASE_CONDITIONS = (
         minimum=Quantity(1.0, DIMENSIONLESS),
         minimum_inclusive=False,
         description=(
-            "T_floor / T_freeze > 1 with T_floor = min(T_0, T_f, T_c) - "
-            "max(-beta, 0) max(C_A0, C_Af): no state the declaration can "
-            "reach freezes. For an exothermic reaction the floor is the "
-            "coldest declared temperature; an endothermic one can cool the "
-            "tank below all three. UNKNOWN unless the fluid declares "
+            "T_reachable,min / T_freeze > 1: no state the run can reach "
+            "freezes. Before a solve T_reachable,min = min(T_0, T_f, T_c) - "
+            "max(-beta, 0) max(C_A0, C_Af), the invariant floor (an "
+            "endothermic reaction can cool the tank below all three declared "
+            "temperatures); on a solved result that completed its horizon it "
+            "is the sampled realised minimum, on the same terms as the "
+            "boiling condition. UNKNOWN unless the fluid declares "
             "freezing_temperature."
         ),
     ),
@@ -1119,8 +1125,17 @@ class ReactorRun:
         )
         return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
-    def validity_context(self) -> DomainValidityContext:
+    def validity_context(
+        self,
+        *,
+        reached_temperature_range: tuple[Quantity, Quantity] | None = None,
+    ) -> DomainValidityContext:
         """The declaration expressed for ``ValidityDomain.assess``.
+
+        ``reached_temperature_range`` is ``(minimum, maximum)`` over a SOLVED
+        trajectory. Supplied, the two reachable-state phase conditions are
+        asked at the states the run occupied instead of at the invariant
+        bounds; see :func:`~engcore.domains.kinetics.cstr.context.derived_cstr_quantities`.
 
         The temperatures offered are the DECLARED ones. A trajectory can still
         leave the envelope during integration, and that is a different question
@@ -1162,6 +1177,14 @@ class ReactorRun:
                 },
             },
             reserved=ASSEMBLER_NAMESPACE,
+            reached_minimum=(
+                None if reached_temperature_range is None
+                else reached_temperature_range[0]
+            ),
+            reached_maximum=(
+                None if reached_temperature_range is None
+                else reached_temperature_range[1]
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:

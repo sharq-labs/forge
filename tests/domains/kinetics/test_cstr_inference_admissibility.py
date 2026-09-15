@@ -23,35 +23,26 @@ from engcore.inference import (
 )
 from engcore.scientific.results.validation import ValidationLevel
 from engcore.scientific.units.quantity import Quantity
+from engcore.domains.kinetics.cstr.fluids import SEBORG_TEXTBOOK_LIQUID, declare_fluid
 
 
-#: Audit CAP-01. The CSTR's single-liquid-phase conditions read the fluid's own
-#: boiling and freezing temperatures and are UNKNOWN until they are declared.
-#: The frozen K-series parameterization (the Seborg textbook liquid) declares
-#: neither, so its runs are no longer IN_DOMAIN and the inference boundary
-#: refuses them on applicability -- that refusal is asserted below, and is the
-#: correct behaviour. To keep exercising the admission path itself, the
-#: positive tests declare a liquid range HERE: a hypothetical pressurised liquid
-#: that stays liquid between 260 K and 650 K. It is this test's declaration,
-#: not a property of the textbook parameterization, and it clears every K-series
-#: adiabatic ceiling (at most 579.2 K) and floor (at least 285 K).
-DECLARED_BOILING = Quantity(650.0, "kelvin")
-DECLARED_FREEZING = Quantity(260.0, "kelvin")
+#: Audit CAP-01, lead decision. The CSTR's single-liquid-phase conditions read
+#: the fluid's own boiling and freezing temperatures and are UNKNOWN until they
+#: are declared, so the frozen K-series code -- which declares none -- is
+#: refused on applicability. The textbook liquid's real range is declared once,
+#: in the domain (``engcore.domains.kinetics.cstr.fluids.SEBORG_TEXTBOOK_LIQUID``:
+#: a dilute aqueous liquid at an assumed 101.325 kPa, 273.15-373.124 K), and a
+#: solved run is assessed at the temperatures it actually reached. Runs that
+#: stay liquid are admitted; runs that truly boil stay refused.
 PHASE_CONDITIONS = (
     "declared_temperature_to_boiling_ratio",
-    "adiabatic_ceiling_to_boiling_ratio",
-    "adiabatic_floor_to_freezing_ratio",
+    "reachable_maximum_to_boiling_ratio",
+    "reachable_minimum_to_freezing_ratio",
 )
 
 
 def declared_liquid(chemistry):
-    from dataclasses import replace
-
-    return replace(
-        chemistry,
-        boiling_temperature=DECLARED_BOILING,
-        freezing_temperature=DECLARED_FREEZING,
-    )
+    return declare_fluid(chemistry, SEBORG_TEXTBOOK_LIQUID)
 
 
 def with_declared_liquid(run):
@@ -78,9 +69,9 @@ def test_shared_guard_refuses_unadmitted_values_and_bare_scientific_result():
 
 
 def test_numerical_prediction_constructor_refuses_single_solve_validation():
-    # Declared liquid, so the applicability gate is passed and the gate this
-    # negative control is about -- sequence-level convergence -- is the one
-    # that refuses.
+    # The textbook liquid declared: H1 stays liquid (peak 317.8 K), so the
+    # applicability gate is passed and the gate this negative control is
+    # about -- sequence-level convergence -- is the one that refuses.
     run = with_declared_liquid(HOLDOUT.build())
     source = solve_reactor(run, run_id="k15-constructor-source")
     assert source.is_usable
@@ -118,6 +109,21 @@ def test_frozen_h1_without_a_declared_liquid_range_is_refused_on_applicability()
             observable_names=(CA_FINAL_METRIC, T_FINAL_METRIC),
             run_id_prefix="k15-h1-undeclared",
         )
+
+
+def test_h1_is_refused_before_a_solve_and_admitted_on_the_states_it_reached():
+    """The invariant ceiling (559 K) is above boiling; the run peaks at 317.8 K.
+
+    Declaration-only, the reachable-maximum condition is asked at the ceiling
+    and is violated. On the solved result it is asked at the realised peak and
+    is satisfied, which is what lets a run that truly stays liquid through.
+    """
+    run = with_declared_liquid(HOLDOUT.build())
+    before = run.validity_context().assess(CSTR_MODEL)
+    assert "reachable_maximum_to_boiling_ratio" in before.violated
+    solved = solve_reactor(run, run_id="k15-h1-realised")
+    after = solved.validity_of(CSTR_MODEL.model_id)
+    assert set(PHASE_CONDITIONS) <= set(after.satisfied)
 
 
 def test_h1_confirmatory_holdout_is_admitted_with_units_provenance_and_sequence():

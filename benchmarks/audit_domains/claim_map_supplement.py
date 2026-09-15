@@ -20,11 +20,11 @@ SUPPLEMENT: dict[tuple[str, str], dict] = {
             "is about the optional fluid property."
         ),
     },
-    ("kinetics.cstr", "adiabatic_ceiling_to_boiling_ratio"): {
+    ("kinetics.cstr", "reachable_maximum_to_boiling_ratio"): {
         "clause": "UNKNOWN unless the fluid declares boiling_temperature.",
         "all_of": ["boiling_temperature"],
     },
-    ("kinetics.cstr", "adiabatic_floor_to_freezing_ratio"): {
+    ("kinetics.cstr", "reachable_minimum_to_freezing_ratio"): {
         "clause": "UNKNOWN unless the fluid declares freezing_temperature.",
         "all_of": ["freezing_temperature"],
     },

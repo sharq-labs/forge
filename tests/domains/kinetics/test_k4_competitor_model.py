@@ -50,10 +50,10 @@ def test_constant_rate_competitor_validity_is_not_unbounded() -> None:
                 "declared_temperature_to_boiling_ratio": Quantity(
                     0.5, "dimensionless"
                 ),
-                "adiabatic_ceiling_to_boiling_ratio": Quantity(
+                "reachable_maximum_to_boiling_ratio": Quantity(
                     0.8, "dimensionless"
                 ),
-                "adiabatic_floor_to_freezing_ratio": Quantity(
+                "reachable_minimum_to_freezing_ratio": Quantity(
                     1.2, "dimensionless"
                 ),
             },

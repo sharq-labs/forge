@@ -108,6 +108,7 @@ from .problem import (
     T_AT_MAX_METRIC,
     T_FINAL_METRIC,
     T_MAX_METRIC,
+    TEMPERATURE_UNIT,
     MOLAR_GAS_CONSTANT,
     GAS_CONSTANT_UNIT,
     ReactorRun,
@@ -371,7 +372,8 @@ class CSTRSolver(DeclaredSupport):
                 f"gamma={run.gamma_per_s:.6g} 1/s, "
                 f"adiabatic_rise={run.adiabatic_rise_k:.6g} K, "
                 f"Da(T_f)={run.damkohler_at_feed_temperature:.6g}",
-                f"model validity assessment: {assessment.status.value}",
+                f"declaration-only model validity assessment (invariant "
+                f"temperature bounds): {assessment.status.value}",
             ),
         )
 
@@ -865,7 +867,27 @@ def solve_reactor_bundle(
     # empty. Recomputed here rather than smuggled out of `prepare`, because it
     # is a pure function of the run and this keeps the note and the field
     # provably the same verdict rather than two that happen to agree.
-    assessment = run.validity_context().assess(CSTR_MODEL)
+    #
+    # One deliberate difference from `prepare` (lead decision on audit
+    # CAP-01): a run whose integration completed its horizon is assessed with
+    # its reachable-state phase conditions asked at the trajectory's sampled
+    # realised extremes rather than at the invariant bounds, so a cooled run
+    # that truly stays liquid is not refused for a ceiling it never reached.
+    # `prepare`'s note says which of the two it is.
+    reached = None
+    diagnostics_in = raw.diagnostics
+    if (
+        diagnostics_in.get("outcome") == "completed_horizon"
+        and "min_temperature_k" in diagnostics_in
+        and "max_temperature_k" in diagnostics_in
+    ):
+        reached = (
+            Quantity(float(diagnostics_in["min_temperature_k"]), TEMPERATURE_UNIT),
+            Quantity(float(diagnostics_in["max_temperature_k"]), TEMPERATURE_UNIT),
+        )
+    assessment = run.validity_context(reached_temperature_range=reached).assess(
+        CSTR_MODEL
+    )
 
     inputs = {
         "k0": run.chemistry.k0,
