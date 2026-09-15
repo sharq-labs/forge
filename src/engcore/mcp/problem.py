@@ -2080,7 +2080,9 @@ def run_electrothermal_case(
     What has not changed: the thermal sub-result still supplies the values, the
     checks and their notes, because those are what this report is *about*; and
     the caller's applicability declaration still goes in as asserted context,
-    marked as the caller's claim and consumed by no verdict.
+    marked as the caller's claim -- and, since the results audit (CAP-04),
+    marked ``consumed_by_verdict: true``, because the lumped assessment is
+    computed from its values and they decide the verdict.
 
     This is more restrictive than it was, and the restriction is the finding
     rather than a side effect. Nothing in the payload declares a resistor's
@@ -2209,11 +2211,16 @@ def run_electrothermal_case(
                     for model_id, assessment in sorted(assessments.items())
                 ),
                 validation=_declared_limit_checks(stage) + cross_checks,
+                # Stated, not defaulted: the lumped assessment above is
+                # computed from this declaration (Biot, Fourier, excursion
+                # budgets), so its values decide the verdict -- a body
+                # conductivity of 200 -> 0.05 W/(m K) moves it.
                 declarations=(
                     AssertedContext(
                         source="LumpedApplicabilityDeclaration",
                         payload=stage.body.applicability.to_dict(),
                         description="caller-declared applicability context",
+                        consumed_by_verdict=True,
                     ),
                 ),
             )

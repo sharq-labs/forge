@@ -390,7 +390,7 @@ def main() -> int:
         verdict = applicability(cell)
         assessment = assess_ocv_empirical_adequacy(
             cell, held_points(discharge, batt1_budget, held_z, "BATT_001", B1.DISCHARGE_SHEET),
-            applicability_status=verdict.status.value,
+            applicability_status=verdict,
         )
         empirical[name] = {**assessment.to_dict(), "applicability_violated": list(verdict.violated)}
 

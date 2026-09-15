@@ -179,11 +179,18 @@ def condition_posterior_on_predictive_admission(
         conditioned_weights = conditioned_weights / float(
             np.sum(conditioned_weights, dtype=np.float64)
         )
+        # The conditioned record states the conditioning in its likelihood as
+        # well as its weights: a rejected node has no likelihood under the
+        # predictive-admitted event. PosteriorGrid refuses weights that are not
+        # the normalized likelihood (HUQ-04), and zeroed weights beside the
+        # unconditioned likelihood would be exactly that.
+        conditioned_log_likelihood = np.array(posterior.log_likelihood, dtype=np.float64, copy=True)
+        conditioned_log_likelihood[rejected] = -np.inf
         conditioned = PosteriorGrid(
             parameter_names=posterior.parameter_names,
             points=posterior.points,
             weights=conditioned_weights,
-            log_likelihood=posterior.log_likelihood,
+            log_likelihood=conditioned_log_likelihood,
             admissible_mask=posterior.admissible_mask,
             dataset_id=posterior.dataset_id,
         )

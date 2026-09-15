@@ -21,6 +21,7 @@ from engcore.domains.battery.empirical import (
 )
 from engcore.scientific.errors import InvalidScientificProblem, ScientificCoreError
 from engcore.scientific.models.curves import DeclaredCurve, TabulatedForm
+from engcore.scientific.models.definition import ValidityAssessment, ValidityStatus
 from engcore.scientific.units.quantity import Quantity as Q
 
 CHORD_CELL = battery_cell.CellSpecification(
@@ -77,8 +78,10 @@ def test_the_b1_gap_applicable_with_no_violation_yet_empirically_inadequate():
     assert applicability.violated == ()
 
     held_out = [point(0.0, 2.8473, 0.0023), point(0.4, 3.2894, 0.00097), point(0.6, 3.2929, 0.00123)]
+    # INF-09 (audit): the applicability is passed as the ValidityAssessment itself;
+    # a string is refused. The record still carries its status value.
     result = assess_ocv_empirical_adequacy(
-        CHORD_CELL, held_out, applicability_status=applicability.status.value
+        CHORD_CELL, held_out, applicability_status=applicability
     )
     assert result.status is OcvEmpiricalStatus.EMPIRICALLY_INADEQUATE
     assert result.applicability_status == applicability.status.value
@@ -90,8 +93,11 @@ def test_the_b1_gap_applicable_with_no_violation_yet_empirically_inadequate():
 def test_applicability_is_carried_but_never_consulted():
     """An IN_DOMAIN applicability status does not rescue a failing cell."""
     failing = [point(0.0, 2.8473, 0.0023)]
+    # INF-09 (audit): a typed IN_DOMAIN assessment, where this used to pass the
+    # bare string "in_domain" -- which is now refused.
+    in_domain = ValidityAssessment(status=ValidityStatus.IN_DOMAIN, satisfied=("state_of_charge",))
     assert assess_ocv_empirical_adequacy(
-        CHORD_CELL, failing, applicability_status="in_domain"
+        CHORD_CELL, failing, applicability_status=in_domain
     ).status is OcvEmpiricalStatus.EMPIRICALLY_INADEQUATE
 
 

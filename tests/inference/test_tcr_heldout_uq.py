@@ -454,9 +454,13 @@ def test_wilson_interval_brackets_the_point_estimate():
 def test_coverage_classification_uses_the_interval_not_the_point():
     """A small study cannot claim calibration it has not earned."""
     # 9/10 covered: point estimate 0.90, but the interval is far too wide to
-    # distinguish anything -> CALIBRATED (i.e. not enough evidence to reject)
+    # distinguish anything. INF-05 (audit): this used to be CALIBRATED because
+    # the Wilson interval [0.60, 0.98] OVERLAPS the band [0.90, 1.00]; by that
+    # rule 1 of 2 was calibrated too. It is not contained in the band, so it is
+    # INCONCLUSIVE -- still not a claim of miscalibration, and no longer a
+    # claim of calibration.
     verdict, _ = classify_coverage(9, 10, nominal=0.95, acceptance_half_width=0.05)
-    assert verdict is CoverageVerdict.CALIBRATED
+    assert verdict is CoverageVerdict.INCONCLUSIVE
     # 700/1000 covered: unambiguous undercoverage
     verdict, why = classify_coverage(700, 1000, nominal=0.95, acceptance_half_width=0.05)
     assert verdict is CoverageVerdict.UNDERCOVERS, why

@@ -17,6 +17,11 @@ from engcore.scientific.independence_evidence import (
     require_strong_independence,
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
+from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    pin_artifact_bytes,
+    resolved_source,
+    route_declarations_for_tests,
+)
 
 
 _REQUIRED = (
@@ -74,6 +79,9 @@ def _evidence(route: SolveRoute, seed: int):
                 )
             )
             dimension_bytes[name] = payload
+            # IND-03: external bytes are evidence only where the domain layer
+            # pins their digest; this fixture's world pins its own artifacts.
+            pin_artifact_bytes(route.route_id, dependency_identity, payload)
             counter += 1
         artifacts[dimension] = frozenset(dimension_artifacts)
         artifact_bytes[dimension] = dimension_bytes
@@ -199,6 +207,9 @@ def test_different_labels_on_same_verified_bytes_are_detected_as_shared_machiner
     )
     left_bytes = dict(artifact_bytes["left"])
     right_bytes = dict(artifact_bytes["right"])
+    # In this world both routes really load one artifact, and the pins say so.
+    pin_artifact_bytes("left", left_identity, shared_bytes)
+    pin_artifact_bytes("right", right_identity, shared_bytes)
     left_bytes[IndependenceDimension.IMPLEMENTATION] = {"wrapper-a": shared_bytes}
     right_bytes[IndependenceDimension.BACKEND] = {"binary-b": shared_bytes}
 
@@ -351,7 +362,9 @@ def test_dependency_binding_is_canonicalized_at_assessment_not_trusted_as_a_labe
     """
     reexport = "py:engcore.domains.electrical.dc:ElectricalDCSolver"
     defining = "py:engcore.domains.electrical.dc.solver:ElectricalDCSolver"
-    payload = b"implementation-source"
+    # The real source Forge resolves for the dependency (IND-03): bytes a caller
+    # merely labels as the implementation are not evidence of it.
+    payload = resolved_source(defining)
     artifact = ArtifactFingerprint.from_bytes(
         "dc-solver", payload, dependency_identity=reexport
     )

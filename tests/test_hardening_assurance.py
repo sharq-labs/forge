@@ -135,6 +135,12 @@ def test_a_gate_that_did_not_prove_a_clean_checkout_is_refused(source):
     ("junit_fast", b'<testsuites><testsuite tests="9" failures="1" errors="0" skipped="0"/></testsuites>', "no failures"),
     ("junit_fast", b'<testsuites><testsuite tests="0" failures="0" errors="0" skipped="0"/></testsuites>', "needs tests"),
     ("junit_dependency_guard", b"<testsuites", "not a JUnit report"),
+    # Main audit CERT-07: a gate needed only tests and no failures, so a trust
+    # test that started skipping was accepted like a passing one.
+    ("junit_fast", b'<testsuites><testsuite tests="9" failures="0" errors="0" skipped="20"/></testsuites>',
+     "above the declared ceiling"),
+    ("junit_dependency_guard", b'<testsuites><testsuite tests="1" failures="0" errors="0" skipped="1"/></testsuites>',
+     "above the declared ceiling"),
 ])
 def test_a_functional_suite_without_a_clean_report_is_refused(source, suite, xml, fragment):
     root, head, evidence = source

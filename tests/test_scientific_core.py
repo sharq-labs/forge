@@ -1109,17 +1109,28 @@ def test_validation_level_requires_a_passing_check():
     )
     assert not failed.claims(ValidationLevel.BENCHMARK_VALIDATED)
 
+    # A PASS naming a benchmark with a sentence behind it is refused since
+    # VAL-01: BENCHMARK_VALIDATED is granted by a pinned oracle, whose record
+    # the check must carry. The passing half is shown on a level a named
+    # comparison can carry on its own.
+    _raises(
+        ScientificValidationError,
+        ValidationCheck,
+        "benchmark", ValidationOutcome.PASS,
+        establishes=ValidationLevel.BENCHMARK_VALIDATED,
+        evidence=("fixture:agreement with a named reference benchmark",),
+    )
     passed = ValidationReport(
         checks=(
             ValidationCheck(
-                "benchmark", ValidationOutcome.PASS,
-                establishes=ValidationLevel.BENCHMARK_VALIDATED,
-                evidence=("fixture:agreement with a named reference benchmark",),
+                "analytic", ValidationOutcome.PASS,
+                establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+                evidence=("fixture:agreement with a named closed form",),
             ),
         )
     )
-    assert passed.claims(ValidationLevel.BENCHMARK_VALIDATED)
-    passed.require_level(ValidationLevel.BENCHMARK_VALIDATED)
+    assert passed.claims(ValidationLevel.ANALYTICALLY_VERIFIED)
+    passed.require_level(ValidationLevel.ANALYTICALLY_VERIFIED)
 
 
 def test_forged_validation_claim_is_rejected_on_load():

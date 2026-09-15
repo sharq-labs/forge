@@ -94,7 +94,7 @@ MUTATIONS: tuple[tuple[str, str, list[tuple[str, str]], str, str], ...] = (
     (
         "UQ-1", STUDY,
         [(
-            "            observation_sigma=observation_sigma,\n"
+            "            observation_sigma=observation.sigma,\n"
             "        )\n"
             "        quantified = posterior_predictive_uq(",
             "            observation_sigma=None,\n"
@@ -170,14 +170,14 @@ MUTATIONS: tuple[tuple[str, str, list[tuple[str, str]], str, str], ...] = (
           "        spec = PredictiveObservableSpec(\n"
           "            observation_key=observation.key,\n"
           "            unit=OHM,\n"
-          "            observation_sigma=observation_sigma,\n"
+          "            observation_sigma=observation.sigma,\n"
           "        )\n"
           "        assessment = assess_predictive_observation(",
           "    for observation in split.calibration.observations:\n"
           "        spec = PredictiveObservableSpec(\n"
           "            observation_key=observation.key,\n"
           "            unit=OHM,\n"
-          "            observation_sigma=observation_sigma,\n"
+          "            observation_sigma=observation.sigma,\n"
           "        )\n"
           "        assessment = assess_predictive_observation(")],
         f"{T_UQ}::test_the_well_specified_model_passes_held_out_validation",

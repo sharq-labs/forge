@@ -22,8 +22,9 @@ THE VERIFICATION GATE establishes the claims that need more than one solve:
     ANALYTICALLY_VERIFIED     the trajectory reproduces the exact reaction-free
                               invariant — available for an adiabatic reactor
                               only, where that invariant is a closed form
-    CROSS_SOLVER_VALIDATED    the stationary end state agrees with a steady
-                              state found by an independent algebraic solver
+
+and it REPORTS, establishing nothing, whether the stationary end state agrees
+with a steady state found by an algebraic root search (see below).
 
 THE ORDERING IS NOT DECORATIVE
 -------------------------------
@@ -43,10 +44,22 @@ those is invisible to the comparison. Reporting it as CROSS_SOLVER_VALIDATED
 would be letting the solver grade itself with a second copy of its own
 homework, so the comparison is recorded as evidence and awards no level.
 
-The independent steady state is different in kind: different equations
-(algebraic rather than differential), a different algorithm (Brent bracketing),
-and an implementation in :mod:`reference` that shares no arithmetic with the
-solve path. That one does award a level.
+WHY THE ALGEBRAIC STEADY STATE ESTABLISHES NOTHING EITHER (IND-04)
+---------------------------------------------------------------------
+The steady-state reference is different in kind -- algebraic equations rather
+than differential ones, Brent bracketing rather than implicit time stepping, a
+separate implementation in :mod:`reference` -- and it used to award
+``CROSS_SOLVER_VALIDATED`` on the claim that it "shares no arithmetic with the
+integrator". It shares the preprocessing. The gate feeds it the same derived
+parameters the solver assembles its right-hand side from
+(``run.chemistry.beta_m3_k_per_mol``, ``run.gamma_per_s``,
+``run.operation.dilution_rate_per_s``), so an error in deriving any of them is
+invisible to the comparison -- exactly the shared machinery the core's
+consensus refuses a level for, and this arm is not routed through a pinned
+consensus at all. Nor is it a closed form: the root is found numerically. So
+the comparison is run, recorded with its residual and tolerance, and establishes
+no level. What its agreement shows is that the integration settles on the
+stationary point of the equations both sides were derived into.
 
 PROVENANCE OF THE THRESHOLDS — READ THIS BEFORE QUOTING THEM
 -------------------------------------------------------------
@@ -739,10 +752,9 @@ class CSTRVerificationReport:
                 ValidationLevel.ANALYTICALLY_VERIFIED,
                 earned=self.invariant_verified,
             ),
-            self.thresholds.award(
-                ValidationLevel.CROSS_SOLVER_VALIDATED,
-                earned=self.steady_state_verified,
-            ),
+            # No third level (IND-04): the algebraic steady state shares the
+            # solver's derived parameters, so its agreement is reported by the
+            # check and establishes nothing. See the module docstring.
         )
         return tuple(level for level in earned if level is not None)
 
@@ -764,8 +776,9 @@ class CSTRVerificationReport:
             )
         if self.steady_state_verified:
             parts.append(
-                "and the stationary end state agrees with an independently "
-                "computed algebraic steady state"
+                "and the stationary end state agrees with an algebraic steady "
+                "state found by a separate root search from the same derived "
+                "parameters (reported; establishes no level)"
             )
         return "; ".join(parts) + (
             ". No comparison against any physical measurement was performed"
@@ -830,10 +843,10 @@ class CSTRVerificationReport:
                 detail=self.steady_state_detail,
                 residual=self.steady_state_rel_error,
                 tolerance=self.steady_state_rel_tol,
-                establishes=self.thresholds.award(
-                    ValidationLevel.CROSS_SOLVER_VALIDATED,
-                    earned=self.steady_state_verified,
-                ),
+                # IND-04: no level. The reference reads the same derived
+                # parameters the solver assembles from, so this is not
+                # independent evidence, and it is not a closed form.
+                establishes=None,
                 evidence=(
                     f"{STEADY_STATE_REFERENCE_ID}: {STEADY_STATE_EXPRESSION}",
                     *(
@@ -1227,16 +1240,19 @@ def run_verification_gate(
                     f"{nearest.temperature_k:.9f} K ({nearest.stability}) to a "
                     f"relative error of {steady_state_rel_error:.3e}, within "
                     f"{_steady_state_rel_tol:.3e}. The reference solves the "
-                    f"algebraic residual by Brent bracketing and shares no "
-                    f"arithmetic with the integrator. "
+                    f"algebraic residual by Brent bracketing, a separate "
+                    f"algorithm and implementation, but from the same derived "
+                    f"parameters the integrator is assembled from, so an error "
+                    f"in deriving them is invisible here and this establishes "
+                    f"no validation level. "
                     f"{len(found)} transversal steady state(s) were found in "
                     f"the envelope ({SEARCH_SEMANTICS})"
                 )
             elif not tolerance_independent:
                 steady_state_detail = (
-                    f"relative agreement with the independent steady state is "
-                    f"{steady_state_rel_error:.3e}, but CROSS_SOLVER_VALIDATED "
-                    f"is withheld because the sequence is not tolerance "
+                    f"relative agreement with the algebraic steady state is "
+                    f"{steady_state_rel_error:.3e}, but it is not counted as "
+                    f"agreement because the sequence is not tolerance "
                     f"independent"
                 )
             else:
@@ -1323,14 +1339,11 @@ def run_verification_gate(
             )
             comparison = cross_method_consensus.comparison
             cross_method_max_rel_difference = comparison.worst_relative_difference
-            cross_method_agrees = comparison.agreed
-            cross_method_detail = (
-                f"{run.integration.method} and {cross_method} at "
-                f"{ladder[-1].label} agree on every QoI to "
-                f"{cross_method_max_rel_difference:.3e}. This establishes NO "
-                f"validation level: both arms share this domain's right-hand "
-                f"side, its analytic Jacobian and SciPy's step control, so a "
-                f"shared error is invisible to the comparison"
+            cross_method_agrees = (
+                comparison.agreed if comparison.compared_anything else None
+            )
+            cross_method_detail = _cross_method_detail(
+                run.integration.method, cross_method, ladder[-1].label, comparison
             )
 
     return CSTRVerificationReport(
@@ -1349,6 +1362,38 @@ def run_verification_gate(
         cross_method_max_rel_difference=cross_method_max_rel_difference,
         cross_method_consensus=cross_method_consensus,
         thresholds=thresholds,
+    )
+
+
+def _cross_method_detail(
+    method: str, cross_method: str, rung_label: str, comparison: Any
+) -> str:
+    """What the cross-method arm found, in words that match what it found (IND-06).
+
+    It used to read "agree on every QoI to X" whatever the comparison said,
+    including for arms that disagreed, and raised ``TypeError`` formatting a
+    worst difference of ``None`` when nothing could be compared.
+    """
+    caveat = (
+        "This establishes NO validation level: both arms share this domain's "
+        "right-hand side, its analytic Jacobian and SciPy's step control, so a "
+        "shared error is invisible to the comparison"
+    )
+    if not comparison.compared_anything:
+        return (
+            f"{method} and {cross_method} at {rung_label}: no comparison was made "
+            f"({comparison.detail}). {caveat}"
+        )
+    worst = comparison.worst_relative_difference
+    if comparison.agreed:
+        return (
+            f"{method} and {cross_method} at {rung_label} agree on every QoI to "
+            f"{worst:.3e}. {caveat}"
+        )
+    return (
+        f"{method} and {cross_method} at {rung_label} disagree: worst relative "
+        f"difference {worst:.3e} on {comparison.worst_quantity!r} exceeds "
+        f"{comparison.tolerance:.3e}. {caveat}"
     )
 
 

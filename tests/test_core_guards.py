@@ -1466,16 +1466,13 @@ def test_every_marched_step_carries_its_own_cell_report():
 #: One, and it is not a gap. The conduction1d slab verifier used to be the
 #: other, held open only by the freeze; the thermal re-freeze routed it through
 #: the core's strict rule and it is gone from this set.
-_PERMISSIVE_BY_EXCEPTION = {
-    # REVIEWED AND CORRECT, which is a different thing from unfixed.
-    # `ValidationReport.from_dict` cross-checks a serialized `attained_levels`
-    # against the levels recomputed from the checks. That field is advisory
-    # and derived: the report's levels come from its checks whether the key is
-    # present or not, so an absent key withholds no guarantee and forges
-    # nothing. Absence here is a payload that omitted a derived view, not an
-    # integrity question left unanswered.
-    "src/engcore/scientific/results/validation.py",
-}
+_PERMISSIVE_BY_EXCEPTION: set[str] = set()
+# Empty since RES-08. `ValidationReport.from_dict` was the last entry: it
+# compared a serialized `attained_levels` only when the list was non-empty
+# (`if declared and declared != recomputed`), which let `[]` stand over a report
+# that attains a level. It now compares whenever the key is present, and a
+# stored `status` too, so the shape is gone from the tree and the exception with
+# it.
 
 
 def test_no_verifier_still_treats_an_absent_fingerprint_as_a_match():
@@ -2341,10 +2338,18 @@ def test_the_universal_core_names_no_module_it_exempts():
 #
 # Every one is exercised below.
 
-def _cross_solver():
+def _guarded_level():
+    """A level whose only requirement is GUARD 2: a comparison behind it.
+
+    These routes used ``CROSS_SOLVER_VALIDATED`` with a sentence for evidence.
+    Since VAL-01 the three strongest levels also need their issuer's record in
+    the evidence (see ``tests/test_audit_consensus_level_issuers.py``), so a
+    sentence can no longer build one at all, and the GUARD 2 enumeration is
+    exercised on a level that sentence-evidence can still legitimately carry.
+    """
     from engcore.scientific.results.validation import ValidationLevel
 
-    return ValidationLevel.CROSS_SOLVER_VALIDATED
+    return ValidationLevel.ANALYTICALLY_VERIFIED
 
 
 def _earned_check(name="earned"):
@@ -2356,7 +2361,7 @@ def _earned_check(name="earned"):
     return ValidationCheck(
         name=name,
         outcome=ValidationOutcome.PASS,
-        establishes=_cross_solver(),
+        establishes=_guarded_level(),
         evidence=("route a vs route b",),
     )
 
@@ -2376,7 +2381,7 @@ def test_the_construction_axis_is_still_closed_on_every_route_to_it():
         ValidationCheck(
             name="claimed",
             outcome=ValidationOutcome.PASS,
-            establishes=_cross_solver(),
+            establishes=_guarded_level(),
         )
 
     with pytest.raises(ScientificValidationError):  # 2. from_dict
@@ -2385,7 +2390,7 @@ def test_the_construction_axis_is_still_closed_on_every_route_to_it():
             "name": "claimed",
             "outcome": "pass",
             "detail": "",
-            "establishes": _cross_solver().value,
+            "establishes": _guarded_level().value,
             "residual": None,
             "tolerance": None,
             "evidence": [],
@@ -2413,7 +2418,7 @@ def test_a_report_refuses_anything_that_is_not_a_validation_check():
         name = "smuggled"
         outcome = ValidationOutcome.PASS
         passed = True
-        establishes = _cross_solver()
+        establishes = _guarded_level()
         residual = None
         tolerance = None
         evidence = ()
@@ -2446,14 +2451,14 @@ def test_a_check_altered_after_it_was_built_cannot_carry_a_level():
 
     # and after the report already exists
     report = ValidationReport(checks=(_earned_check(),))
-    assert report.attained_levels == frozenset({_cross_solver()})
+    assert report.attained_levels == frozenset({_guarded_level()})
     object.__setattr__(report.checks[0], "evidence", ())
     with pytest.raises(ScientificValidationError, match="altered after"):
         report.attained_levels
     with pytest.raises(ScientificValidationError):
-        report.claims(_cross_solver())
+        report.claims(_guarded_level())
     with pytest.raises(ScientificValidationError):
-        report.require_level(_cross_solver())
+        report.require_level(_guarded_level())
 
 
 def test_a_subclass_does_not_get_to_answer_the_question_about_itself():
@@ -2484,7 +2489,7 @@ def test_a_subclass_does_not_get_to_answer_the_question_about_itself():
         name="liar",
         outcome=ValidationOutcome.PASS,
         detail="",
-        establishes=_cross_solver(),
+        establishes=_guarded_level(),
         residual=None,
         tolerance=None,
         evidence=(),
@@ -2509,7 +2514,7 @@ def test_every_report_in_the_repository_still_builds():
     )
 
     assert unverified_report("nothing ran").attained_levels == frozenset()
-    assert ValidationReport(checks=(_earned_check(),)).claims(_cross_solver())
+    assert ValidationReport(checks=(_earned_check(),)).claims(_guarded_level())
 
 
 # =====================================================================
@@ -3488,6 +3493,7 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
     condition can check, because the model does not represent them -- so a
     reader who sees only a status has been told less than they think.
     """
+    from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
     from engcore.mcp.evidence import ModelValidityRecord
     from engcore.scientific.models.definition import (
         UnknownCondition,
@@ -3496,11 +3502,15 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
         ValidityStatus,
     )
 
+    # Every declared condition, since the results audit (RES-04): an
+    # assessment of a resolvable model must account for exactly the conditions
+    # that model declares, and this fixture used to name one of twelve.
     record = ModelValidityRecord(
         model_id="thermal.lumped.first_order_capacity",
         version="0.1.0",
         assessment=ValidityAssessment(
-            status=ValidityStatus.IN_DOMAIN, satisfied=("biot_number",)
+            status=ValidityStatus.IN_DOMAIN,
+            satisfied=tuple(c.name for c in LUMPED_CAPACITY_MODEL.validity.conditions),
         ),
     )
     payload = record.to_dict()
@@ -3523,10 +3533,11 @@ def test_the_credibility_report_carries_exclusions_beside_validity():
         version="0.1.0",
         assessment=ValidityAssessment(
             status=ValidityStatus.UNKNOWN,
-            unknown=("mesh_resolution",),
+            # The model's one declared condition (RES-04; see above).
+            unknown=("alpha",),
             unknown_reasons=(
                 UnknownCondition(
-                    name="mesh_resolution",
+                    name="alpha",
                     reason=UnknownReason.UNREADABLE_SHAPE,
                 ),
             ),
