@@ -254,3 +254,45 @@ def test_m_a_valid_covariance_still_round_trips_byte_identically():
     result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward)
     restored = type(result).from_dict(json.loads(canonical_bytes(result.to_dict())))
     assert canonical_bytes(restored.to_dict()) == canonical_bytes(result.to_dict()) and restored.digest == result.digest
+
+
+# ---------------------------------------------------------------------------
+# a predictive linearity check that was not run is not a check that passed
+# ---------------------------------------------------------------------------
+def _supported_multistart_posterior():
+    from engcore.hybrid_uq import MultistartPolicy
+
+    P = S.affine()
+    post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
+    assert post.claim is RouteClaim.SUPPORTED and post.reasons == ()
+    return post
+
+
+def test_n_an_unchecked_affine_prediction_from_a_supported_posterior_is_downgraded():
+    from engcore.hybrid_uq import RouteReason, linearized_predictive_uq
+    from engcore.uq import PredictiveObservableSpec
+
+    post = _supported_multistart_posterior()
+    spec = PredictiveObservableSpec("y@0.5", UNIT, Quantity(0.05, UNIT))
+    (r,) = linearized_predictive_uq(post, lambda t: [Quantity(t[0] + 0.5 * t[1], UNIT)], [spec], check_nonlinearity=False)
+    assert r.route_claim is RouteClaim.DOWNGRADED
+    assert RouteReason.NONLINEARITY_PROBE_INCOMPLETE in r.reasons
+    assert r.predictive_nonlinearity is None
+
+
+def test_o_and_p_skipping_the_check_changes_the_claim_and_not_the_numbers():
+    from engcore.hybrid_uq import linearized_predictive_uq
+    from engcore.uq import PredictiveObservableSpec
+
+    post = _supported_multistart_posterior()
+    spec = PredictiveObservableSpec("y@0.5", UNIT, Quantity(0.05, UNIT))
+    predict = lambda t: [Quantity(t[0] + 0.5 * t[1], UNIT)]  # noqa: E731
+    (checked,) = linearized_predictive_uq(post, predict, [spec])
+    (unchecked,) = linearized_predictive_uq(post, predict, [spec], check_nonlinearity=False)
+    # P: the default, complete check on an affine prediction still supports it
+    assert checked.route_claim is RouteClaim.SUPPORTED and checked.reasons == ()
+    assert checked.predictive_nonlinearity is not None and checked.predictive_nonlinearity < 1e-6
+    # O: identical uncertainty numbers
+    for field in ("mean", "parameter_standard_uncertainty", "measurement_standard_uncertainty", "total_standard_uncertainty",
+                  "parameter_interval", "total_interval"):
+        assert getattr(unchecked, field) == getattr(checked, field), field

@@ -267,7 +267,7 @@ def grid_predictive_uncertainty(
 ) -> RoutedPredictiveUncertainty
 ```
 
-- **Linearized:** G by the same convergence-checked finite differences in inference coordinates, at least 4p + 1 calls; a derivative that does not stabilize raises `RouteRefusedError`. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated.
+- **Linearized:** G by the same convergence-checked finite differences in inference coordinates, at least 4p + 1 calls; a derivative that does not stabilize raises `RouteRefusedError`. With `check_nonlinearity`, the ±2 sd principal-axis probes (another 2p calls) compare g with its linear extrapolation. A deviation above 0.10 total sd adds `PREDICTIVE_NONLINEAR`, a downgrade. A probe outside the declared bounds, or one the predictive evaluator refuses, was not compared. It adds `NONLINEARITY_PROBE_INCOMPLETE`, a downgrade, however well the evaluated probes agree. `predictive_nonlinearity` is the largest deviation over the probes that were evaluated. With `check_nonlinearity=False` no probe is run. The prediction is then DOWNGRADED with `NONLINEARITY_PROBE_INCOMPLETE` and `predictive_nonlinearity` is `None`: skipping the measurement of an assumption is not evidence that it holds. The numbers are the same either way; only the claim differs.
 - **Refused posterior:** raises `RouteRefusedError`.
 - **Grid:** wraps the frozen `posterior_predictive_uq`, including its grid-resolution refusal. The epistemic part becomes `parameter_standard_uncertainty`, the declared sigma becomes `measurement_standard_uncertainty`, and V1's exact mixture interval is kept as `total_interval`.
 - **Model discrepancy:** never estimated; every record names `MODEL_DISCREPANCY_NOT_MODELLED`.
@@ -365,7 +365,7 @@ def routed_predictive_uncertainty(
 |---|---|
 | `BOUND_WITHIN_3_SD` | a bound within 3 sd of the estimate |
 | `NONLINEAR_WITHIN_2_SD` | 0.10 < nonlinearity index ≤ 0.50 |
-| `NONLINEARITY_PROBE_INCOMPLETE` | a probe fell outside the bounds or was inadmissible |
+| `NONLINEARITY_PROBE_INCOMPLETE` | a ±2 sd probe was not evaluated: it fell outside the bounds, was inadmissible, or (predictive only) was never run because `check_nonlinearity=False` |
 | `POORLY_SCALED_PARAMETERIZATION` | raw cond(J_w) > 1/√ε while the equilibrated condition is representable |
 | `GLOBAL_UNIQUENESS_NOT_ASSESSED` | `multistart=None` |
 | `MULTISTART_INCOMPLETE` | fewer than half the starts converged |

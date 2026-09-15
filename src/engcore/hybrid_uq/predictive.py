@@ -2,7 +2,8 @@
 
 LINEARIZED_PREDICTIVE_UQ: mean g(z_hat), parameter variance diag(G Sigma G^T), measurement variance sigma^2,
 total = the sum. Exact only when g is affine over the posterior; the +/-2 sd principal-axis probes compare g
-with its linear extrapolation and downgrade when they disagree.
+with its linear extrapolation and downgrade when they disagree, and a probe that was not evaluated -- outside
+the bounds, refused, or not run at all because ``check_nonlinearity=False`` -- downgrades too.
 
 POSTERIOR_GRID: the frozen ``posterior_predictive_uq``, grid-resolution refusal included, re-expressed in the
 same record. Model discrepancy is estimated by neither: every record names MODEL_DISCREPANCY_NOT_MODELLED.
@@ -215,6 +216,10 @@ def linearized_predictive_uq(
                     continue
                 scale = np.where(total_sd > 0.0, total_sd, 1.0)
                 nonlinearity = max(nonlinearity, float(np.max(np.abs(value - (g0 + sign * G @ delta)) / scale)))
+    else:
+        # A caller who chooses not to measure linearity has not shown it: every probe counts as not evaluated, so
+        # the claim is capped at DOWNGRADED. predictive_nonlinearity stays None, which says nothing was measured.
+        skipped = 2 * len(z0)
     reasons = set(posterior.diagnostics.downgrades)
     if nonlinearity is not None and nonlinearity > PREDICTIVE_NONLINEARITY_DOWNGRADE:
         reasons.add(RouteReason.PREDICTIVE_NONLINEAR)
