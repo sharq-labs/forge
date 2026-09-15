@@ -189,6 +189,29 @@ def _node_counts(cov, lo, hi, target, budget):
     return nodes, None
 
 
+def _require_requested_grid(table, names, natural):
+    """Refuse a table that is not the grid that was asked for, row for row.
+
+    Its log-likelihood is reshaped onto the requested node layout and its faces are read by index, so a table
+    for other coordinates, the same coordinates in another row order, or the same numbers under other
+    parameter names would be checked for containment and certified as a grid it is not. The builder is handed
+    float64 coordinates and a table stores float64, so the comparison is exact: no sort, no tolerance.
+    """
+    if tuple(table.parameter_names) != tuple(names):
+        raise HybridUQError(f"table_builder returned a table over parameters {list(table.parameter_names)}; "
+                            f"the rebuilt grid was requested over {list(names)}, in that order")
+    requested = np.asarray(natural, dtype=np.float64).reshape(len(natural), len(names))
+    if table.points.shape != requested.shape:
+        raise HybridUQError(f"table_builder returned {table.points.shape[0]} point(s) of dimension {table.points.shape[1]}; "
+                            f"{requested.shape[0]} point(s) of dimension {requested.shape[1]} were requested")
+    mismatched = np.flatnonzero(np.any(table.points != requested, axis=1))
+    if mismatched.size:
+        first = int(mismatched[0])
+        raise HybridUQError(f"table_builder returned points that are not the requested grid in the requested order: "
+                            f"{mismatched.size} row(s) differ, first at row {first} "
+                            f"({table.points[first].tolist()} returned, {requested[first].tolist()} requested)")
+
+
 def _build(local, policy, observations, lo, hi, nodes):
     p = len(lo)
     axes = [np.linspace(lo[i], hi[i], int(nodes[i])) for i in range(p)]
@@ -197,6 +220,7 @@ def _build(local, policy, observations, lo, hi, nodes):
     table = policy.table_builder(natural)
     if not isinstance(table, AdmittedForwardTable):
         raise HybridUQError("table_builder must return an AdmittedForwardTable")
+    _require_requested_grid(table, local.parameter_names, natural)
     rebuilt = gaussian_grid_posterior(table, observations)
     usable = rebuilt.admissible_mask & np.isfinite(rebuilt.log_likelihood)
     ll = np.where(usable, rebuilt.log_likelihood, -np.inf).reshape(tuple(int(n) for n in nodes))

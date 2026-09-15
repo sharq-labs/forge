@@ -157,3 +157,114 @@ def test_a_result_cannot_claim_a_route_it_did_not_take():
         dataclasses.replace(result, approximation_class=ApproximationClass.POSTERIOR_GRID)
     with pytest.raises(HybridUQError):
         dataclasses.replace(result, decision=RouteDecision.REFUSED)
+
+
+# --- a rebuilt grid is the grid that was requested, row for row ---------------------------------------------------------
+#
+# The router reshapes a rebuilt table's log-likelihood onto the node layout it asked for and reads its faces by index.
+# A builder that answers with any other table -- other coordinates, the same coordinates in another order, the same
+# numbers under other parameter names -- must not be checked for containment, passed to V1 and certified as
+# GRID_REBUILT_FROM_LOCAL_COVARIANCE. Each adversary below wraps the honest builder, so every table it returns is
+# internally consistent and admissible; only its correspondence to the request is wrong.
+
+
+def _permuted(table, order):
+    import dataclasses
+
+    return dataclasses.replace(table, points=table.points[order], values=table.values[order],
+                               admissible_mask=table.admissible_mask[order],
+                               admission_refs=tuple(table.admission_refs[i] for i in order),
+                               rejection_reasons=tuple(table.rejection_reasons[i] for i in order))
+
+
+def _adversaries(honest):
+    import dataclasses
+
+    def shifted_grid(points):
+        # the same row count, every row evaluated and labelled at another coordinate
+        return honest(np.asarray(points, dtype=float) + np.array([0.25, 0.125]))
+
+    def rescaled_grid(points):
+        # a cached table for another grid with exactly prod(nodes) rows
+        return honest(np.asarray(points, dtype=float) * 1.1)
+
+    def one_stale_row(points):
+        # a single row that belongs to another coordinate, its values consistent with that coordinate
+        points = np.array(points, dtype=float)
+        points[len(points) // 2] += np.array([1.0e-3, 0.0])
+        return honest(points)
+
+    def reversed_rows(points):
+        table = honest(points)
+        return _permuted(table, np.arange(len(table.points))[::-1])
+
+    def two_rows_swapped(points):
+        table = honest(points)
+        order = np.arange(len(table.points))
+        order[[0, len(order) - 1]] = order[[len(order) - 1, 0]]
+        return _permuted(table, order)
+
+    def parameter_names_swapped(points):
+        table = honest(points)
+        return dataclasses.replace(table, parameter_names=tuple(reversed(table.parameter_names)))
+
+    def parameter_names_renamed(points):
+        table = honest(points)
+        return dataclasses.replace(table, parameter_names=tuple(f"{n}_cached" for n in table.parameter_names))
+
+    def one_row_short(points):
+        return honest(list(points)[:-1])
+
+    return {"shifted_grid": shifted_grid, "rescaled_grid": rescaled_grid, "one_stale_row": one_stale_row,
+            "reversed_rows": reversed_rows, "two_rows_swapped": two_rows_swapped,
+            "parameter_names_swapped": parameter_names_swapped, "parameter_names_renamed": parameter_names_renamed,
+            "one_row_short": one_row_short}
+
+
+_ADVERSARY_MESSAGES = {
+    "shifted_grid": "not the requested grid", "rescaled_grid": "not the requested grid", "one_stale_row": r"1 row\(s\) differ",
+    "reversed_rows": "not the requested grid", "two_rows_swapped": r"2 row\(s\) differ",
+    "parameter_names_swapped": "requested over", "parameter_names_renamed": "requested over", "one_row_short": "were requested",
+}
+
+
+@pytest.mark.parametrize("adversary", sorted(_ADVERSARY_MESSAGES))
+def test_a_rebuilt_table_that_is_not_the_requested_grid_is_never_certified(adversary):
+    P = S.strong_nonlinearity()
+    builder = _adversaries(P.table_builder())[adversary]
+    with pytest.raises(HybridUQError, match=_ADVERSARY_MESSAGES[adversary]):
+        route_uncertainty(rebuild=GridRebuildPolicy(builder), **_inputs(P))
+
+
+def test_a_reordered_table_is_refused_even_though_its_rows_are_the_requested_rows():
+    """Sorting would hide the attack: the refusal is about the order the router reads, not the set of rows."""
+    P = S.strong_nonlinearity()
+    honest = P.table_builder()
+    seen = {}
+
+    def reversed_rows(points):
+        seen["requested"] = np.asarray(points, dtype=float)
+        table = honest(points)
+        return _permuted(table, np.arange(len(table.points))[::-1])
+
+    with pytest.raises(HybridUQError, match="first at row 0"):
+        route_uncertainty(rebuild=GridRebuildPolicy(reversed_rows), **_inputs(P))
+    requested = seen["requested"]
+    assert np.array_equal(np.unique(requested, axis=0), np.unique(requested[::-1], axis=0))
+
+
+def test_an_honest_builder_still_rebuilds_and_the_certified_grid_is_the_last_grid_it_was_asked_for():
+    P = S.strong_nonlinearity()
+    honest = P.table_builder()
+    requests = []
+
+    def recording(points):
+        requests.append(np.asarray(points, dtype=float))
+        return honest(points)
+
+    result = route_uncertainty(rebuild=GridRebuildPolicy(recording), **_inputs(P))
+    assert result.decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and result.claim is RouteClaim.SUPPORTED
+    assert result.grid.parameter_names == P.parameters.names
+    assert np.array_equal(result.grid.points, requests[-1])
+    mean, sd = _reference(P, [np.linspace(0.01, 20.0, 481), np.linspace(0.01, 10.0, 481)])
+    assert np.all(np.abs(np.asarray(result.mean) - mean) / sd < 0.05)
