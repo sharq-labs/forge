@@ -298,6 +298,16 @@ class HybridUQResult:
     identifiability: RoutedIdentifiability | None
     # the PosteriorGrid itself is data-plane: held on the instance (compare=False), not serialized
     # to_dict / from_dict / digest
+```
+
+**One truth per record.** A `HybridUQResult` holds its names, mean, covariance and claim at the top level and again in the records it carries, and the two must agree. A contradiction raises `HybridUQError`, whether the record is constructed or read back.
+
+- **`LOCAL_GAUSSIAN`:** coordinates are `inference`. Names, claim, mean (= `inference_point`) and covariance are equal to the local posterior's. Identifiability is present, read from `LOCAL_GAUSSIAN_APPROXIMATION`, and names the posterior's `parameterization_digest` and claim.
+- **Grid routes:** coordinates are `natural`. `grid_summary.route` is the decision. Identifiability is read from `POSTERIOR_GRID`, SUPPORTED, and carries the grid-axes digest of the top-level names. A supplied grid carries no local posterior; a rebuilt grid carries the one it was designed from, over the same names. When the data-plane grid is held, its names, mean, covariance and digest must match too.
+- **`REFUSED`:** coordinates are `none`, and a carried local posterior is the refused one, over the same names.
+- **Every route:** identifiability describes the same parameters.
+
+```python
 
 def route_uncertainty(
     *, grid: PosteriorGrid | None = None,

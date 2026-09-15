@@ -25,7 +25,7 @@ from ..uq.predictive import PredictiveObservableSpec
 from ._records import (
     decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
 )
-from .identifiability import RoutedIdentifiability, assess_routed_identifiability
+from .identifiability import RoutedIdentifiability, _grid_axes_digest, assess_routed_identifiability
 from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, local_gaussian_posterior
 from .predictive import RoutedPredictiveUncertainty, grid_digest, grid_predictive_uncertainty, linearized_predictive_uq
 from .sensitivity import to_natural
@@ -110,6 +110,77 @@ class HybridUQResult:
             raise HybridUQError("coordinates is natural, inference or none")
         object.__setattr__(self, "parameter_names", tuple(self.parameter_names))
         object.__setattr__(self, "considered", tuple(dict(c) for c in self.considered))
+        self._require_one_truth()
+
+    def _require_one_truth(self) -> None:
+        """Refuse a record whose top-level numbers and the records it carries say different things.
+
+        A serialized result holds its parameter names, mean, covariance and claim twice: at the top level, and in
+        the local posterior and identifiability records it carries. If they could disagree, a reader would have
+        two scientific answers in one record and no way to know which one the router produced.
+        """
+        decision, names, local, ident = self.decision, self.parameter_names, self.local_posterior, self.identifiability
+        if local is not None and not isinstance(local, LocalGaussianPosterior):
+            raise HybridUQError("local_posterior must be a LocalGaussianPosterior")
+        if ident is not None and not isinstance(ident, RoutedIdentifiability):
+            raise HybridUQError("identifiability must be a RoutedIdentifiability")
+        problems = []
+        if decision is RouteDecision.LOCAL_GAUSSIAN:
+            if self.coordinates != "inference":
+                problems.append("coordinates are not 'inference'")
+            if names != local.parameter_names:
+                problems.append("parameter names differ from the local posterior's")
+            if self.mean != local.inference_point:
+                problems.append("mean differs from the local posterior's inference point")
+            if self.covariance != local.covariance:
+                problems.append("covariance differs from the local posterior's")
+            if ident is None:
+                problems.append("no identifiability for a route that reports numbers")
+            else:
+                if ident.approximation_class is not ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION:
+                    problems.append("identifiability was read from another approximation")
+                if ident.parameterization_digest != local.parameterization_digest:
+                    problems.append("identifiability names another parameterization")
+                if ident.route_claim is not self.claim:
+                    problems.append("identifiability carries another claim")
+        elif decision is RouteDecision.REFUSED:
+            if self.coordinates != "none":
+                problems.append("a refused routing has no coordinates")
+            if local is not None and (local.claim is not RouteClaim.REFUSED or names != local.parameter_names):
+                problems.append("a refused routing carries a local posterior that is not the refused one it names")
+        else:
+            if self.coordinates != "natural":
+                problems.append("grid coordinates are not 'natural'")
+            summary = self.grid_summary or {}
+            if summary.get("route") != decision.value:
+                problems.append("grid_summary names another route")
+            if ident is None:
+                problems.append("no identifiability for a route that reports numbers")
+            else:
+                if ident.approximation_class is not ApproximationClass.POSTERIOR_GRID:
+                    problems.append("identifiability was read from another approximation")
+                if ident.parameterization_digest != _grid_axes_digest(names):
+                    problems.append("identifiability names another parameterization")
+                if ident.route_claim is not RouteClaim.SUPPORTED:
+                    problems.append("identifiability carries another claim")
+            if decision is RouteDecision.GRID_AS_SUPPLIED and local is not None:
+                problems.append("a supplied grid was used, so no local posterior was built")
+            if decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and (local is None or names != local.parameter_names):
+                problems.append("a rebuilt grid carries the local posterior it was designed from, over the same parameters")
+            grid = self.grid
+            if grid is not None:
+                if tuple(grid.parameter_names) != names:
+                    problems.append("parameter names differ from the grid's")
+                if not np.array_equal(np.asarray(self.mean), np.asarray(grid.mean)):
+                    problems.append("mean differs from the grid's")
+                if not np.array_equal(np.asarray(self.covariance), np.asarray(grid.covariance)):
+                    problems.append("covariance differs from the grid's")
+                if summary.get("grid_digest") != grid_digest(grid):
+                    problems.append("grid_summary names another grid")
+        if ident is not None and tuple(ident.report.parameter_names) != names:
+            problems.append("identifiability describes other parameters")
+        if problems:
+            raise HybridUQError(f"the routed result contradicts itself: {problems}")
 
     @property
     def exact_posterior(self) -> bool:

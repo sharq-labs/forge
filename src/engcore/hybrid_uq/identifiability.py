@@ -29,7 +29,12 @@ ROUTED_IDENTIFIABILITY_SCHEMA = "hybrid_uq.routed_identifiability/1"
 
 def grid_parameterization_digest(posterior: PosteriorGrid) -> str:
     """The identity of a grid's coordinates: its parameter names, in order, and its dataset."""
-    return digest_of({"grid_parameter_names": list(posterior.parameter_names), "label": "grid_axes"})
+    return _grid_axes_digest(posterior.parameter_names)
+
+
+def _grid_axes_digest(parameter_names: Sequence[str]) -> str:
+    """The same identity from the names alone, so a record without its grid can still be checked against it."""
+    return digest_of({"grid_parameter_names": list(parameter_names), "label": "grid_axes"})
 
 
 def classify(mean: Sequence[float], covariance, lows: Sequence[float], highs: Sequence[float],

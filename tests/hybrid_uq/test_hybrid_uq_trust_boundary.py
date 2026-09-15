@@ -296,3 +296,94 @@ def test_o_and_p_skipping_the_check_changes_the_claim_and_not_the_numbers():
     for field in ("mean", "parameter_standard_uncertainty", "measurement_standard_uncertainty", "total_standard_uncertainty",
                   "parameter_interval", "total_interval"):
         assert getattr(unchecked, field) == getattr(checked, field), field
+
+
+# ---------------------------------------------------------------------------
+# a routed record states one scientific truth
+# ---------------------------------------------------------------------------
+def _local_result():
+    from engcore.hybrid_uq import MultistartPolicy
+
+    P = S.affine()
+    result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward,
+                               multistart=MultistartPolicy())
+    assert result.decision is RouteDecision.LOCAL_GAUSSIAN and result.claim is RouteClaim.SUPPORTED
+    return result
+
+
+def _grid_result():
+    P = S.affine()
+    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]))
+    assert result.decision is RouteDecision.GRID_AS_SUPPLIED
+    return result
+
+
+def _tampered(result, edit):
+    payload = json.loads(json.dumps(result.to_dict()))
+    edit(payload)
+    return payload
+
+
+def _shift_mean(p):
+    p["mean"][0] += 0.1
+
+
+def _scale_covariance(p):
+    p["covariance"] = [[1.21 * v for v in row] for row in p["covariance"]]
+
+
+def _rename(p):
+    p["parameter_names"] = list(reversed(p["parameter_names"]))
+
+
+def _other_parameterization(p):
+    p["identifiability"]["parameterization_digest"] = "0" * 64
+
+
+@pytest.mark.parametrize("edit", [_shift_mean, _scale_covariance, _rename, _other_parameterization],
+                         ids=["V_mean", "W_covariance", "X_names", "Y_identifiability_parameterization"])
+def test_v_to_y_a_local_record_whose_top_level_disagrees_with_what_it_carries_is_refused(edit):
+    from engcore.hybrid_uq import HybridUQResult
+
+    result = _local_result()
+    with pytest.raises(HybridUQError, match="contradicts itself"):
+        HybridUQResult.from_dict(_tampered(result, edit))
+
+
+def test_v_to_x_the_same_contradictions_are_refused_in_memory():
+    result = _local_result()
+    with pytest.raises(HybridUQError, match="mean differs"):
+        dataclasses.replace(result, mean=(result.mean[0] + 0.1, result.mean[1]))
+    with pytest.raises(HybridUQError, match="covariance differs"):
+        dataclasses.replace(result, covariance=tuple(tuple(1.21 * v for v in row) for row in result.covariance))
+    with pytest.raises(HybridUQError, match="parameter names differ"):
+        dataclasses.replace(result, parameter_names=tuple(reversed(result.parameter_names)))
+
+
+@pytest.mark.parametrize("edit", [
+    _other_parameterization,
+    lambda p: p["grid_summary"].update(route="GRID_REBUILT_FROM_LOCAL_COVARIANCE"),
+    lambda p: p.update(coordinates="inference"),
+    _rename,
+], ids=["identifiability_parameterization", "summary_route", "coordinates", "names"])
+def test_a_grid_record_whose_top_level_disagrees_with_what_it_carries_is_refused(edit):
+    from engcore.hybrid_uq import HybridUQResult
+
+    with pytest.raises(HybridUQError, match="contradicts itself"):
+        HybridUQResult.from_dict(_tampered(_grid_result(), edit))
+
+
+def test_a_grid_result_holding_its_grid_cannot_report_other_numbers():
+    result = _grid_result()
+    with pytest.raises(HybridUQError, match="mean differs from the grid's"):
+        dataclasses.replace(result, mean=(result.mean[0] + 1e-3, result.mean[1]))
+
+
+def test_z_valid_local_and_grid_records_still_round_trip_identically():
+    from engcore.hybrid_uq import HybridUQResult
+    from engcore.hybrid_uq._records import canonical_bytes
+
+    for result in (_local_result(), _grid_result()):
+        again = HybridUQResult.from_dict(json.loads(canonical_bytes(result.to_dict())))
+        assert canonical_bytes(again.to_dict()) == canonical_bytes(result.to_dict())
+        assert again.digest == result.digest
