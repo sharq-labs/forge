@@ -140,7 +140,7 @@ from ..scientific.models.definition import (
 )
 from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
-from ..scientific.results.result import ScientificResult
+from ..scientific.results.result import ScientificResult, stored_attribution_gap
 from ..scientific.results.validation import (
     CHECK_SCHEMA,
     REPORT_SCHEMA,
@@ -151,6 +151,7 @@ from ..scientific.results.validation import (
 )
 from ..scientific.serialization import (
     require_schema,
+    require_schema_any,
     schema_string,
     unwritable,
 )
@@ -224,7 +225,13 @@ def _declared_models() -> Mapping[tuple[str, str], Any]:
 
 
 MODEL_VALIDITY_SCHEMA = schema_string("mcp_model_validity_record")
-ASSERTED_CONTEXT_SCHEMA = schema_string("mcp_asserted_context")
+#: /2 since the results audit (CAP-04): ``consumed_by_verdict`` stopped being a
+#: literal ``false`` and became the assembler's statement of whether validity
+#: conditions were evaluated from the declared values. /1 is still read, and
+#: its literal ``false`` is read as "not stated" -- it was never a statement
+#: about the values, and in both shipped assemblers it was false.
+ASSERTED_CONTEXT_SCHEMA = schema_string("mcp_asserted_context", 2)
+ASSERTED_CONTEXT_SCHEMA_V1 = schema_string("mcp_asserted_context", 1)
 # The schema string is a **wire identifier**, not vocabulary, and it is
 # deliberately not renamed with the class. A payload written before this
 # rename carries ``mcp_evidence_package/1``, and ``require_schema`` compares it
@@ -508,6 +515,7 @@ def derive_verdict(
     required_levels: Sequence[ValidationLevel] = (),
     coupling: "CouplingEvidence | None" = None,
     unattributed_assessments: Sequence[tuple[str, str]] = (),
+    unresolved_models: Sequence[tuple[str, str]] = (),
 ) -> CredibilityVerdict:
     """The one place a verdict is decided. Pure, total, and order-independent.
 
@@ -528,7 +536,9 @@ def derive_verdict(
         ``NOT_RUN``; or a model that took part in the run was never assessed
         (``unassessed_models``); or an assessment names a model nothing
         records as having produced anything (``unattributed_assessments``); or
-        the coupled run that produced these values did not reach its own
+        an assessment is of a model whose declared validity domain this
+        package cannot resolve, so its condition names could not be checked
+        (``unresolved_models``); or the coupled run that produced these values did not reach its own
         criterion (``coupling``); or **no check both passed and established an
         evidentiary level**; or a level the caller declared it needs
         (``required_levels``) was not attained; or there are no validity
@@ -645,6 +655,8 @@ def derive_verdict(
     if unassessed_models:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if unattributed_assessments:
+        return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+    if unresolved_models:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if not validity:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
@@ -806,6 +818,68 @@ class ModelValidityRecord:
                 f"unknown={list(assessment.unknown)}); a record may report a "
                 f"status but may not contradict the conditions it carries"
             )
+        self._require_conditions_of_the_declared_model(assessment)
+
+    def _require_conditions_of_the_declared_model(
+        self, assessment: ValidityAssessment
+    ) -> None:
+        """3. The condition names must be the model's own, all of them, once.
+
+        Step 2 checks the status against the assessment's own lists, and that
+        is all it can check: the lists themselves were trusted. So a record for
+        a real model carrying ``satisfied=("a_condition_it_does_not_have",)``
+        was IN_DOMAIN, and one naming a single real condition while omitting
+        the violated ones was IN_DOMAIN the same way -- both SUPPORTED.
+
+        Where the model is resolvable, ``ValidityDomain.assess`` reports every
+        declared condition exactly once, in exactly one list, so an assessment
+        it produced (or a precedence merge of several, which keeps each name in
+        one list) accounts for exactly the declared names. Anything else was
+        not produced by the model's own domain and is refused. Where the model
+        is NOT resolvable, nothing here can check the names: the record says so
+        through :attr:`model_resolved`, and a report carrying it cannot be
+        SUPPORTED (see :attr:`CredibilityEvidenceReport.unresolved_models`).
+        """
+        model = _declared_models().get((self.model_id, self.version))
+        if model is None:
+            return
+        reported = [
+            *assessment.satisfied,
+            *assessment.violated,
+            *assessment.unknown,
+        ]
+        repeated = sorted({name for name in reported if reported.count(name) > 1})
+        if repeated:
+            raise CredibilityEvidenceError(
+                f"model validity record for {self.model_id!r} reports "
+                f"condition(s) {repeated} more than once; the model's validity "
+                f"domain decides each condition exactly once, so an assessment "
+                f"placing one in two lists was not produced by it"
+            )
+        declared = {condition.name for condition in model.validity.conditions}
+        stray = sorted(set(reported) - declared)
+        missing = sorted(declared - set(reported))
+        if stray or missing:
+            raise CredibilityEvidenceError(
+                f"model validity record for "
+                f"{self.model_id!r}@{self.version!r} does not account for "
+                f"exactly the conditions that model declares: names it does "
+                f"not declare {stray}, declared conditions left out "
+                f"{missing}. An assessment is a verdict over the model's own "
+                f"validity domain; one naming other conditions, or omitting "
+                f"some, is not that verdict"
+            )
+
+    @property
+    def model_resolved(self) -> bool:
+        """Whether this record's model is one this package can resolve.
+
+        **Derived, never supplied.** ``False`` means the condition names in the
+        assessment could not be checked against any declared validity domain,
+        so the record is a claim nobody here can verify -- and a report
+        carrying one is INSUFFICIENT_EVIDENCE rather than SUPPORTED.
+        """
+        return (self.model_id, self.version) in _declared_models()
 
     @property
     def key(self) -> tuple[str, str]:
@@ -849,6 +923,9 @@ class ModelValidityRecord:
             "exclusions": (
                 None if self.exclusions is None else list(self.exclusions)
             ),
+            # Derived, and like `exclusions` not read back: a payload claiming
+            # its model resolved does not make it so.
+            "model_resolved": self.model_resolved,
         }
 
     @classmethod
@@ -907,6 +984,45 @@ def _merged_validity(
     return tuple(merged)
 
 
+#: The name of the check a report carries for a stored result whose models or
+#: solver its own provenance does not attribute. See
+#: :func:`_attribution_gap_checks`.
+STORED_ATTRIBUTION_CHECK = "stored_result_attribution"
+
+
+def _attribution_gap_checks(result: ScientificResult) -> tuple[ValidationCheck, ...]:
+    """A NOT_RUN check naming a stored record's attribution gap, or nothing.
+
+    A result read from a payload written before the provenance-consistency
+    check may declare models or a solver its provenance never names; the core
+    reads it as written and marks it (``stored_attribution_gap``). Assembling a
+    report around it must not turn that silence into attribution -- which is
+    exactly what an assembler passing ``contributing_models=result.models``
+    used to do, producing SUPPORTED over a fabricated model and solver.
+
+    NOT_RUN rather than FAIL: nothing found the attribution false; nobody
+    checked it, because the record predates the check. INSUFFICIENT_EVIDENCE
+    is the verdict that recommends the right work -- re-derive the record --
+    and the check travels inside ``validation``, so the downgrade survives the
+    report's own serialization boundary and a re-derived verdict keeps it.
+    """
+    gap = stored_attribution_gap(result)
+    if not gap:
+        return ()
+    return (
+        ValidationCheck(
+            name=STORED_ATTRIBUTION_CHECK,
+            outcome=ValidationOutcome.NOT_RUN,
+            detail=(
+                f"result {result.result_id!r} was read from a payload written "
+                f"before results were held to their own provenance, and it "
+                f"{'; '.join(gap)}. Its attribution was never checked; "
+                f"re-derive the result to obtain an attributed record"
+            ),
+        ),
+    )
+
+
 @dataclass(frozen=True)
 class AssertedContext:
     """Something the caller *said*, carried verbatim and marked as not evidence.
@@ -921,9 +1037,9 @@ class AssertedContext:
     exists to prevent.
 
     So it lives in its own field, under its own schema, and the marking
-    **survives serialization**: ``to_dict`` emits ``caller_asserted: true`` and
-    ``consumed_by_verdict: false`` as literal keys. A reader parsing the JSON
-    without ever seeing this docstring still cannot mistake it for a check.
+    **survives serialization**: ``to_dict`` emits ``caller_asserted: true`` as a
+    literal key. A reader parsing the JSON without ever seeing this docstring
+    still cannot mistake it for a check.
 
     **Why the marking is not "no check consumed this".** That was the first
     wording and it is false. Wrap a whole ``LumpedApplicabilityDeclaration``
@@ -935,12 +1051,26 @@ class AssertedContext:
     "no check consumed this" over that payload would put a false statement in
     the record, which is the precise failure this field exists to prevent.
 
-    ``consumed_by_verdict: false`` is asserted instead, and it is true by
-    construction rather than by inspection: ``declarations`` is not a parameter
-    of :func:`derive_verdict`, so nothing in this field can move a verdict. A
-    reader who wants to know whether a particular declared value was consumed
-    by a *condition* has the answer in the same report — the condition names
-    are in the validity records beside it.
+    **Nor is it "consumed by no verdict", which was the second wording and is
+    false too** (results audit, CAP-04). It was argued true by construction --
+    ``declarations`` is not a parameter of :func:`derive_verdict` -- and that
+    is a fact about this *record object*, not about the *values* a reader sees
+    in it. Both shipped assemblers compute the validity assessments that decide
+    the verdict from exactly these declared values: the electrothermal body
+    conductivity 200 -> 0.05 W/(m K) moves a stage's verdict, and so does the
+    battery continuous C-rate 3 -> 0.5 1/h, while the wire said ``false``.
+
+    So ``consumed_by_verdict`` is now the **assembler's statement** of whether
+    it evaluated validity conditions from the declared values: ``true`` when it
+    did (both shipped assemblers), ``false`` only when an assembler states the
+    values fed no condition, and ``null`` when nobody said -- never a default
+    ``false``. It is a whole-payload flag, and errs in the conservative
+    direction: a payload with one inert key among consumed ones (the
+    convection regime) is ``true``, because telling a reader that editing a
+    value cannot matter is the claim that must not be made falsely. The record
+    object still cannot move a verdict *directly* -- it is not a parameter of
+    :func:`derive_verdict` -- and which conditions read what is in the validity
+    records beside it.
 
     ``payload`` is whatever the declaration's own ``to_dict`` produced. It is
     stored verbatim — not summarised, not filtered — because the point is that
@@ -955,6 +1085,10 @@ class AssertedContext:
     source: str
     payload: Mapping[str, Any]
     description: str = ""
+    #: Whether the assembler evaluated validity conditions -- and so the
+    #: verdict -- from these declared values. ``None`` means not stated. See
+    #: the class docstring for why this is never a default ``False``.
+    consumed_by_verdict: bool | None = None
 
     def __post_init__(self) -> None:
         source = str(self.source).strip()
@@ -964,6 +1098,15 @@ class AssertedContext:
                 "an unattributed claim is not context, it is noise"
             )
         object.__setattr__(self, "source", source)
+        if self.consumed_by_verdict is not None and not isinstance(
+            self.consumed_by_verdict, bool
+        ):
+            raise CredibilityEvidenceError(
+                f"asserted context {source!r}: consumed_by_verdict must be "
+                f"true, false or null, got {self.consumed_by_verdict!r}; a "
+                f"truthy string would state that the values decided the "
+                f"verdict without anyone having said so"
+            )
 
         if not isinstance(self.payload, Mapping):
             raise CredibilityEvidenceError(
@@ -1008,14 +1151,13 @@ class AssertedContext:
             "schema": ASSERTED_CONTEXT_SCHEMA,
             "source": self.source,
             "description": self.description,
-            # Not decoration. These two keys are the only thing standing
-            # between a JSON reader and treating a caller's claim as a result.
+            # Not decoration. This key is what stands between a JSON reader
+            # and treating a caller's claim as a result.
             "caller_asserted": True,
-            # True by construction, not by inspection: `declarations` is not a
-            # parameter of derive_verdict. Deliberately NOT the stronger
-            # "consumed_by_any_check", which would be false for any payload
-            # carrying an applicability declaration — see the class docstring.
-            "consumed_by_verdict": False,
+            # The assembler's statement, or null. Never a literal false by
+            # default: it was one, and in every shipped assembler the declared
+            # values decided the verdict -- see the class docstring.
+            "consumed_by_verdict": self.consumed_by_verdict,
             # Detached at every depth. A declaration's payload is the one
             # free-form structure in this record, and it is carried verbatim —
             # which has to mean the reader gets a copy, not a handle on the
@@ -1027,11 +1169,20 @@ class AssertedContext:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "AssertedContext":
-        require_schema(payload, ASSERTED_CONTEXT_SCHEMA)
+        version = require_schema_any(
+            payload, (ASSERTED_CONTEXT_SCHEMA_V1, ASSERTED_CONTEXT_SCHEMA)
+        )
         return cls(
             source=payload["source"],
             payload=dict(payload.get("payload", {})),
             description=payload.get("description", ""),
+            # A /1 record's `false` was a literal every writer emitted, not a
+            # statement about the values, so it is read as not stated.
+            consumed_by_verdict=(
+                None
+                if version == ASSERTED_CONTEXT_SCHEMA_V1
+                else payload.get("consumed_by_verdict")
+            ),
         )
 
 
@@ -1246,6 +1397,20 @@ class CredibilityEvidenceReport:
             required_levels=self.required_levels,
             coupling=self.coupling,
             unattributed_assessments=self.unattributed_assessments,
+            unresolved_models=self.unresolved_models,
+        )
+
+    @property
+    def unresolved_models(self) -> tuple[tuple[str, str], ...]:
+        """Assessed models whose declared validity domain nothing here resolves.
+
+        An assessment of a resolvable model is refused unless it accounts for
+        exactly that model's declared conditions. One of an unresolvable model
+        cannot be held to that, so its condition names are a claim nobody here
+        checked -- a gap, reported as INSUFFICIENT_EVIDENCE, never SUPPORTED.
+        """
+        return tuple(
+            sorted(record.key for record in self.validity if not record.model_resolved)
         )
 
     @property
@@ -1461,7 +1626,9 @@ class CredibilityEvidenceReport:
             values=dict(result.values),
             provenance=provenance or result.provenance,
             validity=_merged_validity(result, tuple(validity)),
-            validation=tuple(result.validation.checks) + tuple(validation),
+            validation=tuple(result.validation.checks)
+            + _attribution_gap_checks(result)
+            + tuple(validation),
             declarations=tuple(declarations),
             required_levels=tuple(required_levels),
             contributing_models=tuple(contributing_models),
@@ -1597,6 +1764,7 @@ class CredibilityEvidenceReport:
                 "unattributed_assessments": [
                     list(m) for m in self.unattributed_assessments
                 ],
+                "unresolved_models": [list(m) for m in self.unresolved_models],
             },
         }
 
@@ -1641,14 +1809,59 @@ class CredibilityEvidenceReport:
         # hand-edited record cannot smuggle in a verdict its contents do not
         # support. Exactly what ValidationReport.from_dict does for
         # attained_levels, one level up.
+        #
+        # REQUIRED, since the results audit (RES-08). It used to be checked only
+        # when present, so deleting it was a way past the check -- and every
+        # writer of this schema emits it, so a report without one is not a
+        # report this writer produced.
+        if "verdict" not in payload:
+            raise CredibilityEvidenceError(
+                "serialized report carries no verdict; every writer of "
+                f"{EVIDENCE_PACKAGE_SCHEMA} emits the derived verdict beside "
+                "the contents, and a report with it removed cannot be checked "
+                "against them"
+            )
         declared = payload.get("verdict")
-        if declared is not None and declared != report.verdict.value:
+        if declared != report.verdict.value:
             raise CredibilityEvidenceError(
                 f"serialized verdict {declared!r} does not match the verdict "
                 f"its contents produce ({report.verdict.value!r}); a report "
                 f"may report a verdict but may not assert one"
             )
+        # The qualifiers are derived too, and a JSON reader acts on them
+        # without opening the check list: they were never read back, so a
+        # hand-edited report could empty `warning_checks` or add an attained
+        # level beside an honest verdict. Recomputed and compared when present
+        # -- an older writer may predate one -- and a qualifier this writer
+        # never emits is refused rather than carried.
+        stated = payload.get("verdict_qualifiers")
+        if stated is not None:
+            _require_qualifiers_as_derived(stated, report)
         return report
+
+
+def _require_qualifiers_as_derived(
+    stated: Any, report: CredibilityEvidenceReport
+) -> None:
+    """Refuse serialized verdict qualifiers the report's contents do not derive."""
+    if not isinstance(stated, Mapping):
+        raise CredibilityEvidenceError(
+            f"serialized verdict_qualifiers must be a mapping, got "
+            f"{type(stated).__name__}"
+        )
+    derived = report.to_dict()["verdict_qualifiers"]
+    for name, value in stated.items():
+        if name not in derived:
+            raise CredibilityEvidenceError(
+                f"serialized verdict_qualifiers carries {name!r}, which no "
+                f"writer of {EVIDENCE_PACKAGE_SCHEMA} derives"
+            )
+        if value != derived[name]:
+            raise CredibilityEvidenceError(
+                f"serialized verdict qualifier {name!r} is {value!r}, but the "
+                f"report's contents derive {derived[name]!r}; a qualifier is "
+                f"read off the contents and may not be asserted beside them"
+            )
 
 
 #: Deprecated alias, kept for one release.
