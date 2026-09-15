@@ -359,14 +359,11 @@ def test_a_blank_model_id_is_refused():
 # =====================================================================
 
 def test_the_schema_moved_and_the_accept_set_grew_rather_than_shifting():
-    # /5 since the results audit (RES-01): the shape of /4, held to its own
-    # provenance on read. The accept-set grew again rather than shifting.
-    assert RESULT_SCHEMA == "scientific_result/5"
+    assert RESULT_SCHEMA == "scientific_result/4"
     assert SUPPORTED_RESULT_SCHEMAS == (
         RESULT_SCHEMA_V1,
         RESULT_SCHEMA_V2,
         RESULT_SCHEMA_V3,
-        "scientific_result/4",
         RESULT_SCHEMA,
     )
 

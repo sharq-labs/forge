@@ -39,11 +39,17 @@ from engcore.scientific.units.quantity import Quantity
 MODEL = CONSTANT_CURRENT_RUNTIME_MODEL
 CONDITIONS = tuple(c.name for c in MODEL.validity.conditions)
 SOLVER = SolverIdentity("anything", "1")
+#: A passing check that earns a level, so the control can reach SUPPORTED. The
+#: audit probe used EXPERIMENTALLY_VALIDATED; since VAL-01 that level needs a
+#: verifiable issuer record a hand-built check cannot carry, and the finding
+#: under test is about validity conditions, not validation levels -- so the
+#: fixture earns a level that a residual against a tolerance can establish.
 PASSED = ValidationCheck(
-    name="experiment",
+    name="analytic_reference",
     outcome=ValidationOutcome.PASS,
-    establishes=ValidationLevel.EXPERIMENTALLY_VALIDATED,
-    evidence=("fixture",),
+    establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+    residual=1e-9,
+    tolerance=1e-6,
 )
 
 
@@ -99,7 +105,7 @@ def test_res04_the_hand_authored_payload_from_the_probe_is_refused_on_read():
             }
         ],
         "validation": [PASSED.to_dict()],
-        "required_levels": ["experimentally_validated"],
+        "required_levels": ["analytically_verified"],
     }
     with pytest.raises(CredibilityEvidenceError):
         CredibilityEvidenceReport.from_dict(json.loads(json.dumps(payload)))

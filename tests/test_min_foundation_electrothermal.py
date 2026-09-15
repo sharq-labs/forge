@@ -847,15 +847,6 @@ def test_g3_no_existing_schema_version_moved():
     energy states how much arrives and where the rest goes. Additive, and a
     ``/1`` record of an energy crossing is refused on read rather than being
     taken as lossless.
-
-    ``scientific_result`` reads ``/5`` since the results audit (RES-01). The
-    shape did not change; attribution did. ``/1`` to ``/4`` were read with an
-    exemption for a provenance that names no participants, and the exemption
-    applied to the current version too, so a current payload could attribute
-    itself to a fabricated model and solver. ``/5`` says the record is held to
-    its own provenance on read as at construction; the exemption stops at
-    ``/4``, and a record read under it re-serializes at ``/4``. Additive -- every
-    ``/1`` to ``/4`` payload a writer of that version produced still loads.
     """
     from engcore.scientific.ir.problem import PROBLEM_SCHEMA
     from engcore.scientific.models.definition import MODEL_SCHEMA
@@ -867,7 +858,7 @@ def test_g3_no_existing_schema_version_moved():
     assert PROBLEM_SCHEMA == "scientific_problem/1"
     assert MODEL_SCHEMA == "scientific_model_definition/2"
     assert REALIZATION_SCHEMA == "model_realization_definition/1"
-    assert RESULT_SCHEMA == "scientific_result/5"
+    assert RESULT_SCHEMA == "scientific_result/4"
     assert PROVENANCE_SCHEMA == "provenance_record/4"
     assert SCIENTIFIC_TWIN_SCHEMA == "scientific_twin/1"
     assert QUANTITY_DEPENDENCY_SCHEMA == "quantity_dependency/2"

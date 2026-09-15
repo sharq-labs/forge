@@ -5,12 +5,13 @@ Each test here was written against the unfixed reader and seen failing first.
 RES-01  The silent-provenance read exemption applied to every declared version,
         including the current one, so a current payload could attribute itself
         to a fabricated model and solver while its provenance named nobody, and
-        read back as usable and analytically verified. The constructor refuses
-        the same record. The exemption now applies only to payloads declaring a
-        version written before the consistency check existed (<= /4), and a
-        record read under it is marked: it re-serializes at /4, never at the
-        attributed /5, and a credibility report assembled around it cannot be
-        SUPPORTED.
+        read back as usable and analytically verified -- and a credibility report
+        around it was SUPPORTED. The constructor refuses the same record. The
+        serialization contract is frozen (no version bump), so the payload still
+        reads, but it is MARKED: ``stored_attribution_gap`` names the gap, the
+        bytes round-trip as written, and a credibility report assembled around it
+        carries a NOT_RUN check and cannot be SUPPORTED. Complete provenance is
+        not marked; contradictory provenance is still refused.
 RES-02  Relabelling a payload to an older version silently dropped content the
         older reader ignores by version (validity, data references, bindings);
         and a current payload with a required key deleted read as the older
@@ -28,7 +29,11 @@ import json
 import pytest
 
 from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
-from engcore.mcp.evidence import CredibilityEvidenceReport, CredibilityVerdict
+from engcore.mcp.evidence import (
+    STORED_ATTRIBUTION_CHECK,
+    CredibilityEvidenceReport,
+    CredibilityVerdict,
+)
 from engcore.scientific.errors import ScientificCoreError
 from engcore.scientific.ir.problem import ModelReference
 from engcore.scientific.models.definition import ValidityAssessment, ValidityStatus
@@ -38,6 +43,7 @@ from engcore.scientific.results.result import (
     RESULT_SCHEMA,
     SUPPORTED_RESULT_SCHEMAS,
     ScientificResult,
+    stored_attribution_gap,
 )
 from engcore.scientific.results.validation import (
     ValidationCheck,
@@ -102,27 +108,63 @@ def _silenced(payload: dict) -> dict:
 # RES-01
 # =====================================================================
 
-def test_res01_the_writer_emits_the_attributed_version():
-    assert RESULT_SCHEMA == "scientific_result/5"
-    assert SUPPORTED_RESULT_SCHEMAS[-1] == "scientific_result/5"
-    assert _result().to_dict()["schema"] == "scientific_result/5"
+def test_res01_the_frozen_format_does_not_move():
+    assert RESULT_SCHEMA == "scientific_result/4"
+    assert SUPPORTED_RESULT_SCHEMAS == (
+        "scientific_result/1",
+        "scientific_result/2",
+        "scientific_result/3",
+        "scientific_result/4",
+    )
+    assert _result().to_dict()["schema"] == "scientific_result/4"
 
 
-def test_res01_a_current_payload_with_silent_provenance_is_refused():
+def test_res01_construction_still_refuses_silent_provenance():
+    silent = ProvenanceRecord(run_id="silent")
     with pytest.raises(ScientificCoreError, match="provenance does not name"):
-        ScientificResult.from_dict(_silenced(_payload()))
+        _result(provenance=silent)
 
 
-def test_res01_a_current_payload_naming_the_model_but_no_solver_is_refused():
+def test_res01_complete_provenance_is_not_marked():
+    record = ScientificResult.from_dict(_payload())
+    assert stored_attribution_gap(record) == ()
+    assert stored_attribution_gap(_result()) == ()
+
+
+@pytest.mark.parametrize("version", [1, 2, 3, 4])
+def test_res01_a_silent_payload_of_any_version_is_read_but_marked(version):
+    payload = _silenced(_payload())
+    payload["schema"] = f"scientific_result/{version}"
+    for newer in {
+        1: ("validity", "validity_not_assessed", "data_references"),
+        2: ("validity", "validity_not_assessed"),
+        3: ("validity_not_assessed",),
+    }.get(version, ()):
+        payload.pop(newer)
+    record = ScientificResult.from_dict(payload)
+    gap = stored_attribution_gap(record)
+    assert any("model" in g for g in gap) and any("solver" in g for g in gap)
+
+
+def test_res01_a_marked_current_record_round_trips_byte_identically():
+    payload = _silenced(_payload())
+    record = ScientificResult.from_dict(payload)
+    assert record.to_dict() == payload
+    again = ScientificResult.from_dict(json.loads(json.dumps(record.to_dict())))
+    assert stored_attribution_gap(again) == stored_attribution_gap(record)
+    assert json.dumps(again.to_dict(), sort_keys=True) == json.dumps(payload, sort_keys=True)
+
+
+def test_res01_provenance_naming_the_model_but_no_solver_marks_the_solver():
     payload = _payload()
     payload["provenance"]["bindings"] = []
     payload["provenance"]["solvers"] = []
     payload["solver"] = FABRICATED_SOLVER.to_dict()
-    with pytest.raises(ScientificCoreError, match="provenance does not name that solver"):
-        ScientificResult.from_dict(payload)
+    gap = stored_attribution_gap(ScientificResult.from_dict(payload))
+    assert len(gap) == 1 and "fabricated_solver" in gap[0]
 
 
-def test_res01_a_current_payload_naming_the_solver_but_no_model_is_refused():
+def test_res01_provenance_naming_the_solver_but_no_model_marks_the_model():
     payload = _payload()
     payload["provenance"]["bindings"] = []
     payload["provenance"]["models"] = []
@@ -130,53 +172,37 @@ def test_res01_a_current_payload_naming_the_solver_but_no_model_is_refused():
     payload["models"] = [["fabricated.model", "9"]]
     payload["validity"] = {}
     payload["validity_not_assessed"] = {"fabricated.model": "not assessed"}
+    gap = stored_attribution_gap(ScientificResult.from_dict(payload))
+    assert len(gap) == 1 and "fabricated.model" in gap[0]
+
+
+def test_res01_contradictory_provenance_is_still_refused():
+    payload = _payload()
+    payload["provenance"]["bindings"] = []
+    payload["provenance"]["models"] = [["other.model", "1"]]
     with pytest.raises(ScientificCoreError, match="provenance does not name"):
+        ScientificResult.from_dict(payload)
+    payload = _payload()
+    payload["provenance"]["bindings"] = []
+    payload["provenance"]["solvers"] = [["other.solver", "1"]]
+    with pytest.raises(ScientificCoreError, match="provenance does not name that solver"):
         ScientificResult.from_dict(payload)
 
 
-def test_res01_a_legacy_silent_record_is_read_but_never_relabelled_as_attributed():
-    payload = _silenced(_payload())
-    payload["schema"] = "scientific_result/4"
-    legacy = ScientificResult.from_dict(payload)
-    assert legacy.provenance.models == () and legacy.provenance.solvers == ()
-
-    written = legacy.to_dict()
-    assert written["schema"] == "scientific_result/4"
-    # And what it writes is exactly what it read, so it reloads the same way.
-    assert ScientificResult.from_dict(json.loads(json.dumps(written))).to_dict() == written
-    # A consistent /4 record carries no gap, and upgrades as before.
-    consistent = _payload()
-    consistent["schema"] = "scientific_result/4"
-    assert ScientificResult.from_dict(consistent).to_dict()["schema"] == RESULT_SCHEMA
-
-
-def test_res01_a_credibility_report_cannot_launder_a_legacy_silent_record():
+def test_res01_a_credibility_report_cannot_launder_a_silent_record():
     control = ScientificResult.from_dict(_payload())
     assert (
         CredibilityEvidenceReport.from_result(control).verdict
         is CredibilityVerdict.SUPPORTED
     ), "the control must be SUPPORTED, or the refusal below proves nothing"
 
-    payload = _silenced(_payload())
-    payload["schema"] = "scientific_result/4"
-    legacy = ScientificResult.from_dict(payload)
-    report = CredibilityEvidenceReport.from_result(legacy, contributing_models=legacy.models)
+    silent = ScientificResult.from_dict(_silenced(_payload()))
+    report = CredibilityEvidenceReport.from_result(silent, contributing_models=silent.models)
     assert report.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
-    assert report.not_run_checks, "the gap must be named in the report itself"
+    assert report.not_run_checks == (STORED_ATTRIBUTION_CHECK,)
     # And the downgrade survives the report's own serialization boundary.
     again = CredibilityEvidenceReport.from_dict(json.loads(json.dumps(report.to_dict())))
     assert again.verdict is CredibilityVerdict.INSUFFICIENT_EVIDENCE
-
-
-def test_res01_a_current_result_may_not_embed_an_older_provenance_record():
-    payload = _payload()
-    payload["provenance"]["schema"] = "provenance_record/1"
-    del payload["provenance"]["bindings"]
-    del payload["provenance"]["transfers"]
-    payload["provenance"]["solvers"] = [list(SOLVER.key)]
-    payload["provenance"]["models"] = [list(MODEL.key)]
-    with pytest.raises(ScientificCoreError, match="provenance_record"):
-        ScientificResult.from_dict(payload)
 
 
 # =====================================================================
@@ -217,10 +243,9 @@ def test_res02_a_v3_payload_carrying_a_v4_key_is_refused():
 @pytest.mark.parametrize(
     "version, key",
     [
-        ("scientific_result/5", "validity"),
-        ("scientific_result/5", "validity_not_assessed"),
-        ("scientific_result/5", "data_references"),
+        ("scientific_result/4", "validity"),
         ("scientific_result/4", "validity_not_assessed"),
+        ("scientific_result/4", "data_references"),
         ("scientific_result/3", "validity"),
         ("scientific_result/2", "data_references"),
     ],
@@ -323,7 +348,7 @@ def _bad_payload() -> dict:
 
 
 @pytest.mark.parametrize("key", ["convergence", "validation"])
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("version", [1, 2, 3, 4])
 def test_res05_a_missing_convergence_or_validation_is_refused(key, version):
     payload = _bad_payload()
     assert ScientificResult.from_dict(payload).is_usable is False
