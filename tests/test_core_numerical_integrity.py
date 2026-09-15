@@ -62,6 +62,7 @@ from engcore.scientific.serialization import to_json
 from engcore.scientific.solvers.admission import require_agreement
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -88,7 +89,12 @@ def _route(route_id: str, component: str) -> SolveRoute:
                 {SharedComponent(kind=ComponentKind.IMPLEMENTATION, name=component)}
             ),
             dependencies=dependencies(route_id, implementation=f"ext:test:{component}"),
-        )
+        ),
+        # The routes are judged under the CSTR gate below, so their pins name
+        # it: a route declaration names the threshold its comparison belongs
+        # to, and any other declared set awards nothing (CONS-01).
+        threshold_gate_id=CSTR_GATE_THRESHOLDS.gate_id,
+        tolerance_key="tolerance_rel_tol",
     )[0]
 
 
@@ -105,7 +111,7 @@ def _consensus(values, *, tolerance: float = 1e-6) -> CrossSolverConsensus:
     common: set[str] | None = None
     for produced in values.values():
         common = set(produced) if common is None else common & set(produced)
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="test-consensus",
         routes=routes,
         values=values,

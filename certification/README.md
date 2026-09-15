@@ -91,7 +91,7 @@ than change an answer.
 | `evidence_identity` | CORE_CERTIFIED | `src/engcore/adequacy/**` — evidence pairing |
 | `inference_admission` | CORE_CERTIFIED | `src/engcore/inference/**` — the admission invariant |
 | `runtime_data` | RUNTIME_SUPPORT | `src/engcore/data/**` — what a data reference resolves through |
-| `harness` | HARNESS | the mutation runner and the four suites it runs |
+| `harness` | HARNESS | the mutation runner and the suites in its `TARGETS` |
 | `certification_control` | CERTIFICATION_CONTROL | the verifier and every `tools/certification/*.py` module, the two certification workflows, the self-check test modules, the freeze probe — each file with its own reason |
 | `runtime_dependencies` | RUNTIME_ENVIRONMENT | `pyproject.toml` — what every gate installs and how pytest is configured |
 

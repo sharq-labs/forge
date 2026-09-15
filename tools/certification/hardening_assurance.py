@@ -127,6 +127,33 @@ FUNCTIONAL = (
     ("scientific_python_3_12", "scientific312", ("junit_scientific",)),
 )
 
+#: The most skipped tests each functional suite may report and still count as a
+#: gate. A gate used to require only "tests > 0, no failures, no errors", so a
+#: trust test that started skipping -- a missing optional dependency, a new
+#: skipif -- was accepted as silently as a passing one. These are the counts the
+#: last certificate measured (FAST 19, SCIENTIFIC 5, dependency guard 0).
+#: Raising one is a recorded decision in the same recertified change, never a
+#: side effect.
+SKIP_CEILING: Mapping[str, int] = {
+    "junit_dependency_guard": 0,
+    "junit_fast": 19,
+    "junit_scientific": 5,
+}
+
+
+def skip_problem(suite: str, counts: Mapping[str, Any]) -> str | None:
+    """Why ``counts`` skips more than ``suite`` may, or ``None``."""
+    ceiling = SKIP_CEILING.get(suite)
+    if ceiling is None:
+        return f"{suite}: no skip ceiling is declared; refusing to accept an unbounded skip count"
+    skipped = int(counts.get("skipped") or 0)
+    if skipped > ceiling:
+        return (
+            f"{suite}: {skipped} tests skipped, above the declared ceiling of {ceiling}; "
+            "a skipped trust test is not a passing one"
+        )
+    return None
+
 
 class AssuranceError(RuntimeError):
     """The evidence does not support an assurance record. Every reason is listed."""
@@ -322,6 +349,9 @@ def build_assurance(
                 continue
             if counts["tests"] <= 0 or counts["failures"] or counts["errors"]:
                 problems.append(f"{gate}: {suite} reports {counts}; a gate needs tests and no failures or errors")
+            skipped = skip_problem(suite, counts)
+            if skipped:
+                problems.append(f"{gate}: {skipped}")
             entry["suites"][suite.removeprefix("junit_")] = {**counts, "junit_sha256": sha256_bytes(blob)}
         functional[label] = entry
     functional["deferred_self_checks"] = list(CERTIFICATE_SELF_CHECKS)
@@ -500,6 +530,8 @@ def assurance_problems(
             counts = (entry.get("suites") or {}).get(suite.removeprefix("junit_")) or {}
             if not counts.get("tests") or counts.get("failures") != 0 or counts.get("errors") != 0:
                 problems.append(f"functional.{label}.{suite}: {counts or 'absent'}")
+            elif skip_problem(suite, counts):
+                problems.append(f"functional.{label}.{skip_problem(suite, counts)}")
     if list(functional.get("deferred_self_checks") or ()) != list(CERTIFICATE_SELF_CHECKS):
         problems.append("functional.deferred_self_checks is not the self-check list this verifier runs")
 

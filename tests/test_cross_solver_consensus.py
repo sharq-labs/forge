@@ -39,6 +39,7 @@ from engcore.scientific.results.validation import (
 )
 from engcore.scientific.solvers.protocol import SolverIdentity
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
     declare,
     dependencies,
     route_declarations_for_tests,
@@ -95,7 +96,7 @@ def _consensus(
         for produced in values.values():
             common = set(produced) if common is None else common & set(produced)
         required_outputs = tuple(sorted(common or ()))
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="test",
         routes=routes,
         values=values,
@@ -426,7 +427,7 @@ def test_the_two_integrator_routes_declare_the_same_machinery():
     solver = SolverIdentity("kinetics.cstr.scipy_implicit_ivp", "0.1.0")
     bdf = integration_route("BDF", solver)
     radau = integration_route("Radau", solver)
-    consensus = CrossSolverConsensus.over(
+    consensus = bound_over(
         consensus_id="k",
         routes=(bdf, radau),
         values={bdf.route_id: {"x": 1.0}, radau.route_id: {"x": 1.0}},
@@ -477,14 +478,17 @@ def test_the_kinetics_gate_still_refuses_to_award_for_the_cross_method_arm():
     assert report.cross_method_agrees is True
     assert any("declares [" in line for line in check.evidence)
 
-    # And the arm that IS independent still awards, so the migration did not
-    # cost the domain the level it had earned.
+    # The steady-state arm awarded CROSS_SOLVER_VALIDATED until IND-04. Its
+    # reference is fed the solver's own derived parameters, so it is not an
+    # independent route either: it still runs and agrees, and establishes
+    # nothing.
     steady = next(
         c
         for c in report.to_report().checks
         if c.name == "independent_steady_state_agreement"
     )
-    assert steady.establishes is ValidationLevel.CROSS_SOLVER_VALIDATED
+    assert steady.outcome is ValidationOutcome.PASS
+    assert steady.establishes is None
 
 
 # =====================================================================

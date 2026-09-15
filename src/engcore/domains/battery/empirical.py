@@ -62,12 +62,15 @@ from enum import Enum
 from typing import Any, Sequence
 
 from ...scientific.errors import InvalidScientificProblem
+from ...scientific.models.definition import ValidityAssessment, ValidityStatus
 from ...scientific.units.quantity import Quantity
 from . import context as ctx
 from .cell import CellSpecification
 
 #: The alpha preregistered for Battery Flagship B1 and reused by B2.
 DEFAULT_ALPHA = 0.01
+
+_VALIDITY_STATUS_VALUES = frozenset(status.value for status in ValidityStatus)
 
 
 class ConditioningDirection(str, Enum):
@@ -134,6 +137,17 @@ class OcvEmpiricalAssessment:
         )
     )
 
+    def __post_init__(self) -> None:
+        # INF-09: the carried applicability is a ValidityStatus value or nothing.
+        # A free-text sentence in the field a reader takes the model's
+        # applicability verdict from is not a verdict.
+        if self.applicability_status is not None and self.applicability_status not in _VALIDITY_STATUS_VALUES:
+            raise InvalidScientificProblem(
+                f"applicability status {self.applicability_status!r} is not a validity "
+                f"status {sorted(_VALIDITY_STATUS_VALUES)}; the applicability an OCV "
+                f"adequacy record carries comes from a ValidityAssessment"
+            )
+
     @property
     def empirically_adequate(self) -> bool:
         return self.status is OcvEmpiricalStatus.EMPIRICALLY_ADEQUATE
@@ -158,14 +172,20 @@ def assess_ocv_empirical_adequacy(
     evidence: Sequence[MeasuredOcvPoint],
     *,
     alpha: float = DEFAULT_ALPHA,
-    applicability_status: str | None = None,
+    applicability_status: ValidityAssessment | None = None,
 ) -> OcvEmpiricalAssessment:
     """Score a declared cell's OCV against independent measured OCV.
 
-    ``applicability_status`` is the caller's existing applicability verdict,
-    carried alongside so the two answers travel together. It is recorded and
+    ``applicability_status`` is the model's existing applicability verdict --
+    the :class:`ValidityAssessment` that
+    :func:`~engcore.domains.battery.cell.assess_rint_validity` returned -- carried
+    alongside so the two answers travel together, recorded as its status. It is
     never consulted: applicability does not make a cell empirically adequate,
     and empirical adequacy does not make it applicable.
+
+    INF-09: it used to be a ``str`` recorded verbatim, so
+    ``"in_domain (trust me)"`` became the record's applicability. A string is
+    refused; the verdict has to be an assessment.
     """
     from scipy.stats import chi2
 
@@ -173,6 +193,16 @@ def assess_ocv_empirical_adequacy(
         raise InvalidScientificProblem("alpha must lie strictly between 0 and 1")
     if not isinstance(cell, CellSpecification):
         raise InvalidScientificProblem("assess_ocv_empirical_adequacy takes a CellSpecification")
+    if applicability_status is not None and not isinstance(applicability_status, ValidityAssessment):
+        raise InvalidScientificProblem(
+            f"applicability_status must be the model's ValidityAssessment (for example "
+            f"from assess_rint_validity), got {type(applicability_status).__name__} "
+            f"{applicability_status!r}; a caller's description of applicability is not "
+            f"an assessment of it"
+        )
+    applicability_status = (
+        None if applicability_status is None else applicability_status.status.value
+    )
 
     points = tuple(evidence)
     if not points:

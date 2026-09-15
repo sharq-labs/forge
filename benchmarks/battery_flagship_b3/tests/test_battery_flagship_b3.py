@@ -349,8 +349,13 @@ def test_applicability_is_carried_and_never_consulted(best, data):
     cell = _curve_cell(param, estimates)
     ids = [o.condition_id for o in data.split.held_out.observations]
     exact = {i: cell.open_circuit_voltage(Q(data.z[i], "dimensionless")).magnitude_in("volt") for i in ids}
-    result = assess_ocv_empirical_adequacy(cell, _points(data, ids, exact), applicability_status="violated")
-    assert result.status is OcvEmpiricalStatus.EMPIRICALLY_ADEQUATE and result.applicability_status == "violated"
+    # INF-09 (audit): applicability is a typed ValidityAssessment now; the bare string
+    # "violated" (not even a validity status) is refused. Still carried, still not consulted.
+    from engcore.scientific.models.definition import ValidityAssessment, ValidityStatus
+
+    outside = ValidityAssessment(status=ValidityStatus.OUTSIDE_VALIDATED_DOMAIN, violated=("audit",))
+    result = assess_ocv_empirical_adequacy(cell, _points(data, ids, exact), applicability_status=outside)
+    assert result.status is OcvEmpiricalStatus.EMPIRICALLY_ADEQUATE and result.applicability_status == "outside_validated_domain"
 
 
 def test_a_curve_cell_is_scored_on_its_curve_not_its_endpoint_chord(best, data):

@@ -42,14 +42,20 @@ MA = ModelReference("model-a", "1")
 MB = ModelReference("model-b", "1")
 
 
+# INF-04 (audit): the posterior used to be two nodes weighted (0.25, 0.75). Two
+# unequal nodes have an effective sample size of 1.6, below the p + 1 = 2 a
+# one-parameter covariance needs, and a collapsed posterior is now refused by
+# predictive UQ regardless of node count. The 0.75 node is split across two
+# parameter points with the SAME predicted value, so the predictive mixture -- and
+# every exact number pinned below -- is unchanged (ESS 2.9).
 def _posterior(dataset_id: str = "TRAIN-1") -> PosteriorGrid:
-    points = np.asarray([[0.0], [1.0]], dtype=np.float64)
+    points = np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64)
     return PosteriorGrid(
         parameter_names=("p",),
         points=points,
-        weights=np.asarray([0.25, 0.75]),
-        log_likelihood=np.log(np.asarray([0.25, 0.75])),
-        admissible_mask=np.asarray([True, True]),
+        weights=np.asarray([0.25, 0.375, 0.375]),
+        log_likelihood=np.log(np.asarray([0.25, 0.375, 0.375])),
+        admissible_mask=np.asarray([True, True, True]),
         dataset_id=dataset_id,
     )
 
@@ -58,11 +64,11 @@ def _table() -> AdmittedForwardTable:
     return AdmittedForwardTable(
         parameter_names=("p",),
         observation_keys=KEYS,
-        points=np.asarray([[0.0], [1.0]], dtype=np.float64),
-        values=np.asarray([[10.0, 20.0], [14.0, 22.0]], dtype=np.float64),
-        admissible_mask=np.asarray([True, True]),
-        admission_refs=(("a:H1", "a:H2"), ("b:H1", "b:H2")),
-        rejection_reasons=("", ""),
+        points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
+        values=np.asarray([[10.0, 20.0], [14.0, 22.0], [14.0, 22.0]], dtype=np.float64),
+        admissible_mask=np.asarray([True, True, True]),
+        admission_refs=(("a:H1", "a:H2"), ("b:H1", "b:H2"), ("c:H1", "c:H2")),
+        rejection_reasons=("", "", ""),
     )
 
 

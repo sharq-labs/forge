@@ -75,6 +75,7 @@ import ast
 import hashlib
 import io
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -783,6 +784,14 @@ _NOT_A_REFUSAL = (
     "NameError",
 )
 
+#: A refusal at import must be RAISED BY THE CORE. Main audit CERT-08: the list
+#: above only named what a refusal is not, so a TypeError or AttributeError at
+#: import -- the vacuous kill the G14a note describes -- was credited as a
+#: refusal. Python prints a non-builtin exception with its module path, so a
+#: core refusal appears as ``E   engcore.<module>.<Name>: <message>``; anything
+#: else (a bare builtin name) is not evidence that a rule fired.
+_CORE_REFUSAL = re.compile(r"^E\s+(?:src\.)?engcore\.[\w.]+:\s", re.MULTILINE)
+
 EVIDENCE: dict[str, tuple[str, str]] = {
     "G1a": ("CONTRACT_REFUSAL",
             "test_a_caller_parameter_named_after_a_derived_quantity_is_refused"),
@@ -1395,6 +1404,8 @@ def main(argv: list[str]) -> int:
                 verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
             elif broke:
                 verdict, results[mid] = f"RED ({broke})", "IMPORT_OR_SYNTAX"
+            elif not _CORE_REFUSAL.search(raised):
+                verdict, results[mid] = "RED (not a core refusal)", "IMPORT_OR_SYNTAX"
             else:
                 verdict, results[mid] = "RED (refused at import)", "RED"
         elif expect == REFUSED_AT_IMPORT:

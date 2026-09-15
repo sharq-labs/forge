@@ -15,27 +15,33 @@ from engcore.scientific import ModelReference, Quantity, TwinReference
 from engcore.uq import PredictiveObservableSpec
 
 
+# INF-04 (audit): the posterior used to be two nodes weighted (0.25, 0.75). Two
+# unequal nodes have an effective sample size of 1.6, below the p + 1 = 2 a
+# one-parameter covariance needs, and a collapsed posterior is now refused by
+# predictive UQ regardless of node count. The 0.75 node is split across two
+# parameter points with the SAME predicted value, so the predictive mixture -- and
+# every exact number pinned below -- is unchanged (ESS 2.9).
 def _posterior(dataset_id: str = "fit") -> PosteriorGrid:
-    points = np.asarray([[0.0], [1.0]], dtype=np.float64)
+    points = np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64)
     return PosteriorGrid(
         parameter_names=("p",),
         points=points,
-        weights=np.asarray([0.25, 0.75], dtype=np.float64),
-        log_likelihood=np.log(np.asarray([0.25, 0.75], dtype=np.float64)),
-        admissible_mask=np.asarray([True, True]),
+        weights=np.asarray([0.25, 0.375, 0.375], dtype=np.float64),
+        log_likelihood=np.log(np.asarray([0.25, 0.375, 0.375], dtype=np.float64)),
+        admissible_mask=np.asarray([True, True, True]),
         dataset_id=dataset_id,
     )
 
 
-def _table(mask=(True, True)) -> AdmittedForwardTable:
+def _table(mask=(True, True, True)) -> AdmittedForwardTable:
     return AdmittedForwardTable(
         parameter_names=("p",),
         observation_keys=("H:y",),
-        points=np.asarray([[0.0], [1.0]], dtype=np.float64),
-        values=np.asarray([[10.0], [14.0]], dtype=np.float64),
+        points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
+        values=np.asarray([[10.0], [14.0], [14.0]], dtype=np.float64),
         admissible_mask=np.asarray(mask, dtype=bool),
-        admission_refs=(("a",), ("b",) if mask[1] else ()),
-        rejection_reasons=("", "" if mask[1] else "rejected"),
+        admission_refs=tuple((f"r{i}",) if ok else () for i, ok in enumerate(mask)),
+        rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
     )
 
 
@@ -106,7 +112,7 @@ def test_positive_mass_on_rejected_predictive_support_fails_closed() -> None:
     twin, model = _refs()
     with pytest.raises(ModelAdequacyError, match="rejects parameter support carrying posterior mass"):
         assess_predictive_observation(
-            _posterior(), _table((True, False)), _spec(), Quantity(12.0, "kelvin"),
+            _posterior(), _table((True, True, False)), _spec(), Quantity(12.0, "kelvin"),
             twin=twin, model=model, source_ref="heldout", heldout_dataset_id="HOLD"
         )
 
