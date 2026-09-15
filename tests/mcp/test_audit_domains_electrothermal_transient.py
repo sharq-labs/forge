@@ -38,6 +38,7 @@ def _nickel(budget=None, volts="8 volt", duration="50 second"):
         "linearization_band": "160 kelvin",
         "maximum_operating_temperature": "600 kelvin",
         "debye_temperature": "450 kelvin",
+        "conductor_class": "elemental_metal",   # nickel
     }
     conductor["ratings"] = {
         "rated_power": "50 watt",

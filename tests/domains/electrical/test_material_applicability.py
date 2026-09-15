@@ -40,11 +40,14 @@ from engcore.systems.electrothermal import coupled as cp
 K = "kelvin"
 
 #: Copper-like. The Debye temperature is copper's: 343 K, Kittel, *Introduction
-#: to Solid State Physics*, 8th ed. (2005), Ch. 5, Table 1.
+#: to Solid State Physics*, 8th ed. (2005), Ch. 5, Table 1. Declared an
+#: elemental metal (audit CAP-05), which is what lets that number decide the
+#: Bloch-Grueneisen floor at all.
 COPPER_LIMITS = mat.MaterialLimits(
     linearization_band=Quantity(100.0, K),
     maximum_operating_temperature=Quantity(450.0, K),
     debye_temperature=Quantity(343.0, K),
+    conductor_class=mat.ELEMENTAL_METAL,
 )
 
 #: The operating point the tests assess at, unless they say otherwise: 340 K,
@@ -57,6 +60,7 @@ def limits(**overrides):
         "linearization_band": COPPER_LIMITS.linearization_band,
         "maximum_operating_temperature": COPPER_LIMITS.maximum_operating_temperature,
         "debye_temperature": COPPER_LIMITS.debye_temperature,
+        "conductor_class": COPPER_LIMITS.conductor_class,
     }
     fields.update(overrides)
     return mat.MaterialLimits(**fields)

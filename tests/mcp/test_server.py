@@ -225,6 +225,10 @@ def test_every_described_field_carries_the_models_own_required_and_dimension():
         spec = by_name[field["model_input"]]
         assert field["required"] is spec.required, field["path"]
         assert field["unit_exemplar"] == spec.unit_exemplar, field["path"]
+        if spec.unit_exemplar is None:
+            # Audit CAP-05: conductor_class is a categorical model input.
+            assert field["kind"] == "category", field["path"]
+            continue
         assert field["dimension"], field["path"]
 
 

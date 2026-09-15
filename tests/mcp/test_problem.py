@@ -268,6 +268,9 @@ COLD_START_PAYLOAD["stages"][0]["conductor"]["limits"] = {
     "linearization_band": "60 kelvin",
     "maximum_operating_temperature": "450 kelvin",
     "debye_temperature": "343 kelvin",
+    # Audit CAP-05: a copper element, declared as the elemental metal the Debye
+    # floor describes; otherwise that floor is UNKNOWN whatever it says.
+    "conductor_class": "elemental_metal",
 }
 
 
@@ -288,6 +291,7 @@ def limits_payload():
         "linearization_band": "80 kelvin",
         "maximum_operating_temperature": "400 kelvin",
         "debye_temperature": "343 kelvin",
+        "conductor_class": "elemental_metal",
     }
     # Copper moves R by 0.076 over this body's rise; the element record's
     # budget is the caller's and is declared wide enough here.
@@ -777,8 +781,14 @@ def test_every_described_field_reports_the_models_own_facts():
         spec = by_name[field.model_input]
         assert field.required is spec.required, field.path
         assert field.unit_exemplar == spec.unit_exemplar, field.path
-        assert field.dimension == dimensionality(spec.unit_exemplar), field.path
         assert field.description == spec.description, field.path
+        if spec.unit_exemplar is None:
+            # A categorical model input (audit CAP-05: conductor_class) has no
+            # unit and therefore no dimension; it must be described as one.
+            assert field.kind == "category", field.path
+            assert field.dimension is None, field.path
+            continue
+        assert field.dimension == dimensionality(spec.unit_exemplar), field.path
 
 
 def test_the_description_names_every_condition_the_models_declare():

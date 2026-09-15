@@ -90,6 +90,11 @@ MATERIAL_BASE = {
     "linearization_band": Q(100.0, "kelvin"),
     "maximum_operating_temperature": Q(440.0, "kelvin"),
     "debye_temperature": Q(275.0, "kelvin"),
+    # Audit CAP-05 (domains stream): the Debye conditions answer only for a
+    # conductor declared an elemental metal, so a nominal that is to decide
+    # them declares that class. Without it this nominal no longer produces
+    # reduced_debye_temperature, which is the gate working, not the claim.
+    "conductor_class": "elemental_metal",
 }
 MATERIAL_STATE = {
     "temperature": Q(350.0, "kelvin"),

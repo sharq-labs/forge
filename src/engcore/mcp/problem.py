@@ -409,6 +409,24 @@ _BINDINGS: tuple[Binding, ...] = (
         model=_RATED_TCR,
         input_name="debye_temperature",
     ),
+    # Audit CAP-05. The one category a condition here consults: the Debye
+    # floor is elemental-metal physics and answers only for that class.
+    # Model-bound like every other limit, so its required flag and prose are
+    # the record's; being a category it has no unit and no dimension.
+    Binding(
+        section=LIMITS,
+        key=mat.CONDUCTOR_CLASS,
+        kind="category",
+        model=_RATED_TCR,
+        input_name=mat.CONDUCTOR_CLASS,
+        vocabulary=tuple(mat.CONDUCTOR_CLASS_VOCABULARY),
+        note=(
+            "One of "
+            f"{list(mat.CONDUCTOR_CLASS_VOCABULARY)}. Gates the three Debye "
+            "conditions, which describe elemental metals only: for any other "
+            "class, or none, they are UNKNOWN whatever debye_temperature says."
+        ),
+    ),
     # ---- component ratings -------------------------------------------
     #
     # Separate from `limits` because they are facts about a different thing.
@@ -2624,10 +2642,15 @@ def _measure_unlocks() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], tupl
             tuple(sorted(thermal_solo[key] or thermal_joint[key])),
         )
 
+    # A copper probe: an elemental metal, so the class that lets the Debye
+    # temperature decide anything is declared, and dropping the class is
+    # measured as unlocking the three Debye conditions just as dropping the
+    # Debye temperature is (audit CAP-05).
     full_limits = mat.MaterialLimits(
         linearization_band=Quantity(80.0, "kelvin"),
         maximum_operating_temperature=Quantity(400.0, "kelvin"),
         debye_temperature=Quantity(343.0, "kelvin"),
+        conductor_class=mat.ELEMENTAL_METAL,
     )
     solo, alternates, joint = measure(
         limits_optional,

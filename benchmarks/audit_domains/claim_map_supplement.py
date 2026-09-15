@@ -47,6 +47,24 @@ SUPPLEMENT: dict[tuple[str, str], dict] = {
             "prerequisite, because a constant load cannot shift its own cutoff."
         ),
     },
+    # ---- electrical.material: the Debye floor is elemental-metal physics ---
+    # (audit CAP-05). The Contract Integrity map's entries read "UNKNOWN
+    # unless the material declares debye_temperature", which still holds; the
+    # records now add the class, and these entries say so.
+    ("electrical.material", "reduced_debye_temperature"): {
+        "clause": "UNKNOWN unless the material declares debye_temperature and conductor_class elemental_metal.",
+        "all_of": ["debye_temperature", "conductor_class"],
+    },
+    ("electrical.material", "reference_reduced_debye_temperature"): {
+        "clause": "UNKNOWN unless the material declares debye_temperature and conductor_class elemental_metal.",
+        "all_of": ["debye_temperature", "conductor_class"],
+        "cross_limit": True,
+    },
+    ("electrical.material", "ceiling_reduced_debye_temperature"): {
+        "clause": "UNKNOWN unless the material declares maximum_operating_temperature, debye_temperature and conductor_class elemental_metal.",
+        "all_of": ["maximum_operating_temperature", "debye_temperature", "conductor_class"],
+        "cross_limit": True,
+    },
     # ---- electrical.dc: one resistance over the interval (audit CAP-03) ----
     ("electrical.dc", "resistance_variation_utilization"): {
         "clause": "UNKNOWN unless the budget is declared and the run supplied the coefficient and both body temperatures.",
