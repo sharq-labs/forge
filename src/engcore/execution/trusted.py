@@ -36,8 +36,9 @@ from ..scientific.results.execution_manifest import (
     ExecutionManifest,
     canonical_record_digest,
 )
-from ..scientific.results.validation import ValidationReport
+from ..scientific.results.validation import ValidationOutcome, ValidationReport
 from ..scientific.solvers.protocol import (
+    ConvergenceState,
     PreparedSolve,
     RawSolverOutput,
     ScientificSolver,
@@ -76,6 +77,7 @@ class TrustedExecutionRecord:
             raise ScientificCoreError(
                 "trusted execution manifest must be an ExecutionManifest"
             )
+        self._require_one_execution()
 
         normalized: dict[str, Quantity] = {}
         for raw_name, value in self.metrics.items():
@@ -96,10 +98,86 @@ class TrustedExecutionRecord:
             MappingProxyType(dict(sorted(normalized.items()))),
         )
 
+    def _require_one_execution(self) -> None:
+        """The parts must describe one execution, whoever assembled them (RES-07).
+
+        The record is a public constructor, and it checked only that each part
+        had the right type: an admission for ``never-admitted``, a prepared
+        solve with no problem under another solver, a DIVERGED raw output and a
+        manifest for a different problem and a third solver built a record whose
+        ``trusted`` was True. Everything checkable from the parts themselves is
+        checked here, in the order the runtime produces them:
+
+        * the prepared solve carries the problem that was admitted, under the
+          solver that was admitted;
+        * the manifest attests that problem (id and content digest), that
+          solver, those settings, that raw output, its data references and
+          declared artifact names, and the admitted realization.
+
+        Artifact and prepared-payload BYTES are not carried by the record, so
+        their digests cannot be recomputed here; the names are checked against
+        what the raw output declared.
+        """
+        prepared = self.prepared
+        problem = prepared.problem
+        if not isinstance(problem, ScientificProblem):
+            raise ScientificCoreError(
+                "trusted execution prepared solve carries no ScientificProblem, so "
+                "nothing binds it to the admitted problem"
+            )
+        admission = self.admission
+        if admission.problem_id != problem.problem_id:
+            raise ScientificCoreError(
+                f"trusted execution admission is for problem {admission.problem_id!r}, "
+                f"and the prepared solve is for {problem.problem_id!r}"
+            )
+        if tuple(admission.solver_key) != prepared.solver.key:
+            raise ScientificCoreError(
+                f"trusted execution admission is for solver {admission.solver_key!r}, "
+                f"and the prepared solve names {prepared.solver.key!r}"
+            )
+        manifest = self.manifest
+        expected = {
+            "problem_id": problem.problem_id,
+            "problem_digest": canonical_record_digest(problem.to_dict()),
+            "solver": prepared.solver,
+            "settings_digest": canonical_record_digest(prepared.settings.to_dict()),
+            "raw_output_digest": canonical_record_digest(self.raw.to_dict()),
+            "data_references": tuple(self.raw.data_references),
+            "preparation_notes": tuple(prepared.notes),
+        }
+        mismatched = sorted(
+            name for name, value in expected.items() if getattr(manifest, name) != value
+        )
+        attested = sorted(artifact.name for artifact in manifest.artifacts)
+        if attested != sorted(self.raw.artifacts):
+            mismatched.append("artifacts")
+        if manifest.realization_id is not None:
+            realization = "@".join(str(part) for part in admission.realization_key)
+            if manifest.realization_id != realization:
+                mismatched.append("realization_id")
+        if mismatched:
+            raise ScientificCoreError(
+                f"trusted execution manifest does not attest this execution: "
+                f"{mismatched} differ from the admitted, prepared and raw records "
+                f"it is presented with"
+            )
+
     @property
     def trusted(self) -> bool:
-        """True by construction; exposed to make the call-site intent explicit."""
-        return True
+        """Whether this record may be relied on as a usable execution.
+
+        The parts are verified to belong together at construction. On top of
+        that, an output the backend did not bring to a usable end -- not
+        converged, diverged, failed, out of iterations -- or a validation that
+        FAILED is attested faithfully and is not trusted (RES-07): the record
+        says what happened, and what happened is not a result.
+        """
+        usable = self.raw.convergence in (
+            ConvergenceState.CONVERGED,
+            ConvergenceState.NOT_APPLICABLE,
+        )
+        return usable and self.validation.status is not ValidationOutcome.FAIL
 
 
 class TrustedExecutionRuntime:
