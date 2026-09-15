@@ -11,6 +11,7 @@ import sys
 
 import numpy as np
 import pytest
+from scipy.stats import norm
 
 import hybrid_synthetic as S
 from engcore.hybrid_uq import (
@@ -167,9 +168,40 @@ def test_two_parameterizations_of_one_posterior_never_share_an_identity(records)
 
 def test_predictive_material_fields_move_its_digest(records):
     predictive = records[RoutedPredictiveUncertainty]
-    for field, value in {"mean": predictive.mean + 1e-9, "posterior_digest": "0" * 64, "confidence_level": 0.9,
-                         "parameter_interval": (predictive.parameter_interval[0] - 1e-9, predictive.parameter_interval[1])}.items():
-        assert dataclasses.replace(predictive, **{field: value}).digest != predictive.digest, field
+
+    shifted_mean = predictive.mean + 1e-9
+    delta = shifted_mean - predictive.mean
+    shifted = dataclasses.replace(
+        predictive,
+        mean=shifted_mean,
+        parameter_interval=tuple(v + delta for v in predictive.parameter_interval),
+        total_interval=tuple(v + delta for v in predictive.total_interval),
+    )
+    assert shifted.digest != predictive.digest
+
+    assert dataclasses.replace(predictive, posterior_digest="0" * 64).digest != predictive.digest
+
+    level = 0.9
+    q = float(norm.ppf(0.5 + level / 2.0))
+    confidence_changed = dataclasses.replace(
+        predictive,
+        confidence_level=level,
+        parameter_interval=(
+            predictive.mean - q * predictive.parameter_standard_uncertainty,
+            predictive.mean + q * predictive.parameter_standard_uncertainty,
+        ),
+        total_interval=(
+            predictive.mean - q * predictive.total_standard_uncertainty,
+            predictive.mean + q * predictive.total_standard_uncertainty,
+        ),
+    )
+    assert confidence_changed.digest != predictive.digest
+
+    with pytest.raises(HybridUQError, match="parameter_interval contradicts"):
+        dataclasses.replace(
+            predictive,
+            parameter_interval=(predictive.parameter_interval[0] - 1e-9, predictive.parameter_interval[1]),
+        )
 
 
 # ---------------------------------------------------------------------------

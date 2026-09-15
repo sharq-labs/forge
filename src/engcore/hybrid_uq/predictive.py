@@ -46,6 +46,11 @@ def grid_digest(posterior: PosteriorGrid) -> str:
     return h.hexdigest()
 
 
+def _same_number(actual: float, expected: float) -> bool:
+    """Tight deterministic comparison for values derived on the same record."""
+    return math.isclose(float(actual), float(expected), rel_tol=1e-12, abs_tol=1e-14)
+
+
 @dataclass(frozen=True)
 class RoutedPredictiveUncertainty:
     """One predicted quantity, its parameter and measurement uncertainty separately, and where it came from."""
@@ -85,24 +90,68 @@ class RoutedPredictiveUncertainty:
         object.__setattr__(self, "sources", tuple(self.sources))
         if self.model_discrepancy != MODEL_DISCREPANCY_NOT_MODELLED:
             raise HybridUQError("model discrepancy is not modelled by either route, and the record must say so")
+
+        mean = float(self.mean)
         param = float(self.parameter_standard_uncertainty)
         meas = None if self.measurement_standard_uncertainty is None else float(self.measurement_standard_uncertainty)
         total = float(self.total_standard_uncertainty)
+        if not math.isfinite(mean):
+            raise HybridUQError("predictive mean must be finite")
         if not (param >= 0.0 and math.isfinite(param)) or (meas is not None and not (meas > 0.0 and math.isfinite(meas))):
             raise HybridUQError("standard uncertainties must be finite and non-negative (measurement strictly positive)")
+        if not (total >= 0.0 and math.isfinite(total)):
+            raise HybridUQError("total standard uncertainty must be finite and non-negative")
+        object.__setattr__(self, "mean", mean)
+        object.__setattr__(self, "parameter_standard_uncertainty", param)
+        object.__setattr__(self, "measurement_standard_uncertainty", meas)
+        object.__setattr__(self, "total_standard_uncertainty", total)
+
         if cls is ApproximationClass.LINEARIZED_PREDICTIVE_UQ:
             expected = math.sqrt(param ** 2 + (meas ** 2 if meas is not None else 0.0))
-            if not math.isclose(total, expected, rel_tol=1e-12, abs_tol=0.0):
+            if not _same_number(total, expected):
                 raise HybridUQError("a linearized total is the root-sum-square of parameter and measurement uncertainty")
         elif total + 1e-12 * max(1.0, total) < param:
             raise HybridUQError("a total uncertainty cannot be smaller than its parameter part")
+
+        intervals: dict[str, tuple[float, float]] = {}
         for label in ("parameter_interval", "total_interval"):
             low, high = (float(v) for v in getattr(self, label))
+            if not (math.isfinite(low) and math.isfinite(high)):
+                raise HybridUQError(f"{label} bounds must be finite")
             if not low <= high:
                 raise HybridUQError(f"{label} is inverted")
+            intervals[label] = (low, high)
             object.__setattr__(self, label, (low, high))
-        if not 0.0 < float(self.confidence_level) < 1.0:
+
+        level = float(self.confidence_level)
+        if not 0.0 < level < 1.0:
             raise HybridUQError("confidence_level must lie strictly between 0 and 1")
+        object.__setattr__(self, "confidence_level", level)
+
+        # A linearized record carries every number needed to derive its own
+        # Gaussian intervals. Accepting unrelated bounds would let one record
+        # state two incompatible uncertainty claims. Grid intervals are exact
+        # posterior quantiles and cannot be reconstructed from mean/sd alone,
+        # so this invariant is intentionally specific to the linearized route.
+        if cls is ApproximationClass.LINEARIZED_PREDICTIVE_UQ:
+            q = float(norm.ppf(0.5 + level / 2.0))
+            expected_parameter = (mean - q * param, mean + q * param)
+            expected_total = (mean - q * total, mean + q * total)
+            for label, expected in (
+                ("parameter_interval", expected_parameter),
+                ("total_interval", expected_total),
+            ):
+                actual = intervals[label]
+                if not all(_same_number(a, e) for a, e in zip(actual, expected)):
+                    raise HybridUQError(
+                        f"{label} contradicts mean, standard uncertainty and confidence_level"
+                    )
+
+        if self.predictive_nonlinearity is not None:
+            nonlinearity = float(self.predictive_nonlinearity)
+            if not math.isfinite(nonlinearity) or nonlinearity < 0.0:
+                raise HybridUQError("predictive_nonlinearity must be finite and non-negative when supplied")
+            object.__setattr__(self, "predictive_nonlinearity", nonlinearity)
 
     def to_dict(self) -> dict[str, Any]:
         return {
