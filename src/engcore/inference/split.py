@@ -217,6 +217,17 @@ class ObservationSplit:
                     f"replicates, declare it with allow_exact_replicates() so "
                     f"the decision is visible"
                 )
+            # CORE-017 (scientific core audit 2026-09-16): the digest above rounds to twelve digits, so a copy nudged by a
+            # part per million of its own sigma crossed it. A pair whose values agree to 1e-6 of the larger sigma and whose
+            # sigmas agree to 1e-6 relative is the same reading.
+            near = _near_duplicates(self.calibration.observations, self.held_out.observations)
+            if near:
+                raise DataLeakageError(
+                    f"{len(near)} held-out observation(s) repeat a calibration reading to within a millionth of its "
+                    f"declared sigma: {near[:3]!r}. That is a copy below any measurement resolution, not a new "
+                    f"measurement. If this study really does carry exact replicates, declare it with "
+                    f"allow_exact_replicates()"
+                )
 
     @property
     def calibration_dataset_id(self) -> str:
@@ -421,6 +432,36 @@ def _require_posterior_conditioned_on_calibration(
             f"A matching dataset id is a label; a posterior fitted to other evidence "
             f"-- the held-out rows included -- cannot be scored as held-out validation"
         )
+
+
+#: CORE-017: two readings of one observable are the same reading when their values differ by at most this fraction of
+#: the larger declared sigma and their sigmas by at most this relative amount (class C, a copy-detection resolution).
+NEAR_DUPLICATE_RELATIVE_TO_SIGMA = 1.0e-6
+
+
+def _base_value_and_sigma(observation: GaussianObservation) -> tuple[str, float, float]:
+    base = base_unit(observation.value.units)
+    value = observation.value.magnitude_in(base)
+    upper = Quantity(observation.value.magnitude + observation.sigma.magnitude_in(observation.value.units),
+                     observation.value.units)
+    return base, value, abs(upper.magnitude_in(base) - value)
+
+
+def _near_duplicates(calibration, held_out) -> list[tuple[str, str]]:
+    """Pairs across the halves that are one reading: same observable and base unit, values within 1e-6 sigma, sigmas within 1e-6."""
+    by_observable: dict[tuple[str, str], list[tuple[float, float, str]]] = {}
+    for item in calibration:
+        unit, value, sigma = _base_value_and_sigma(item)
+        by_observable.setdefault((item.observable_name, unit), []).append((value, sigma, item.key))
+    found = []
+    for item in held_out:
+        unit, value, sigma = _base_value_and_sigma(item)
+        for other_value, other_sigma, other_key in by_observable.get((item.observable_name, unit), ()):
+            scale = max(sigma, other_sigma)
+            if abs(value - other_value) <= NEAR_DUPLICATE_RELATIVE_TO_SIGMA * scale and \
+                    abs(sigma - other_sigma) <= NEAR_DUPLICATE_RELATIVE_TO_SIGMA * scale:
+                found.append((other_key, item.key))
+    return found
 
 
 def allow_exact_replicates(split_kwargs: Mapping[str, Any]) -> dict[str, Any]:

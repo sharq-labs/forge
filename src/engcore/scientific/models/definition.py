@@ -658,7 +658,8 @@ class CrossLimitCondition:
                     f"dimensionless; got {bound}"
                 )
         if self.minimum is not None and self.maximum is not None:
-            if self.maximum.magnitude < self.minimum.magnitude:
+            # CORE-018: ordered in one unit. Raw magnitudes accepted [0.9, 50 percent] and refused [50 percent, 0.9].
+            if self.maximum.magnitude_in(self.minimum.units) < self.minimum.magnitude:
                 raise ModelValidityError(
                     f"cross-limit condition {self.name!r}: maximum below "
                     f"minimum"

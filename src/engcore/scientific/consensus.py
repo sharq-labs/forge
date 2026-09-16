@@ -1892,6 +1892,12 @@ class CrossSolverConsensus:
             )
         values: dict[str, dict[str, float]] = {}
         bindings: dict[str, dict[str, Any]] = {}
+        # CORE-018 (scientific core audit 2026-09-16): every route's value of a name is expressed in the unit of the
+        # first declared route that reports it. Raw magnitudes compared 1 m with 1000 mm as a 0.999 disagreement.
+        common_unit: dict[str, str] = {}
+        for route in routes:
+            for name, quantity in getattr(by_route.get(route.route_id), "values", {}).items():
+                common_unit.setdefault(str(name), quantity.units)
         for route in routes:
             if route.route_id not in by_route:
                 raise ScientificValidationError(
@@ -1926,7 +1932,7 @@ class CrossSolverConsensus:
                     f"{result.solver.backend!r}"
                 )
             produced = {
-                str(name): float(quantity.magnitude_in(quantity.units))
+                str(name): float(quantity.magnitude_in(common_unit.get(str(name), quantity.units)))
                 for name, quantity in result.values.items()
             }
             values[route.route_id] = produced
