@@ -1,0 +1,13 @@
+B7a test_r10_derive_verdict_reads_convergence_on_its_own -> KILLED | 1 failed in 2.38s | code 408bbb70bd051dc4->917d732ed981866f | R-10: the exported verdict function stops reading the solver's termination state
+B7b test_r10_the_downgrade_survives_a_payload_with_the_new_field_deleted -> KILLED | 4 failed in 2.38s | code 408bbb70bd051dc4->95b094441466bb0f | R-10: the NOT_RUN check goes, so a payload with the additive field deleted re-derives SUPPORTED
+B7c test_r10_a_result_whose_solver_did_not_finish_is_never_supported -> KILLED | 4 failed in 2.30s | code 408bbb70bd051dc4+917d732ed981866f->917d732ed981866f+d99f8bcdd08e5b95 | R-10: BOTH halves removed -- the verdict rule and the check -- which is the audited behaviour exactly, so a DIVERGED result reports SUPPORTED again
+B7d test_r10_the_convergence_state_is_in_the_report_and_its_json -> KILLED | 4 failed in 2.39s | code 408bbb70bd051dc4->f91d963b147a4137 | R-10: the report stops carrying the state, so a reader cannot see it
+B7e test_r10_the_convergence_state_is_in_the_report_and_its_json -> KILLED | 4 failed in 2.47s | code 408bbb70bd051dc4->ebfbf5744705bc3e | R-10: the state is carried and then not serialized, so it is absent from the report JSON again
+B7f test_r40_a_provenance_override_cannot_drop_a_declared_model -> KILLED | 1 failed in 2.42s | code 408bbb70bd051dc4->5687616219514ca2 | R-40: an override provenance narrows the inventory again
+B7g test_r43_a_numerical_estimate_may_not_be_declared_as_aleatoric_or_model_form -> KILLED | 1 failed in 0.64s | code 9901c4a7ee16042f->12889cae4595aa6f | R-43: a declaration files a NUMERICAL estimate under any channel again
+B7h test_r43_a_budget_channel_entry_refuses_a_contradictory_source -> KILLED | 1 failed in 0.72s | code bcad2c0d8fb4f863->362d52f9746f56ee | R-43: the budget aggregates a contradictory source again
+B7i test_r43_a_numerical_estimate_may_not_be_declared_as_aleatoric_or_model_form -> KILLED | 1 failed in 0.63s | code 9901c4a7ee16042f->e86013f5137666b0 | R-43: the map itself says a mesh estimate is aleatoric uncertainty
+B7j test_r43_the_report_carries_per_value_uncertainty_and_its_source -> KILLED | 1 failed in 2.32s | code 408bbb70bd051dc4->a97f3c2cd39f94b0 | R-43: from_result drops result.uncertainty again
+B7k test_r43_the_v1_predictive_intervals_declare_what_they_are_of -> KILLED | 1 failed in 0.75s | code 3e060192aaa9b984->ee26deaff1e023dc | R-43: the V1 producer stops saying what its epistemic interval is of
+B7l test_r43_an_undeclared_source_is_recorded_as_unattributed_not_as_compatible -> KILLED | 1 failed in 0.61s | code 9901c4a7ee16042f->a7210395ac0ecaab | R-43: an undeclared source stops being named as unattributed
+CONTROL (unmutated, 10 test(s)) GREEN | 19 passed in 2.53s

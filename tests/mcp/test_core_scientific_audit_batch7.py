@@ -9,7 +9,7 @@ R-10 and the from_result half of R-43 are on the PRODUCTION path: the MCP tools 
 `from_result` and read `derive_verdict`, and production passes `run.provenance` as the override R-40 is about.
 
 Every test here was committed as `xfail(strict=True)` first and run with `--runxfail` at 8149151 to watch it
-fail, and the markers came off in the implementation commit. What the 25 of them failed on there, recorded so
+fail; the markers came off in the implementation commit, and the xfail commit is 5b8d036. What the 25 of them failed on there, recorded so
 the evidence is not overstated:
 
 * 10 on an assertion, which is the scientific content: each of the four unfinished convergence states
@@ -101,7 +101,6 @@ def _result(**overrides) -> ScientificResult:
 # R-10: the report never read the result's convergence
 # =====================================================================
 @pytest.mark.parametrize("state", UNFINISHED, ids=[s.value for s in UNFINISHED])
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r10_a_result_whose_solver_did_not_finish_is_never_supported(state):
     """The audited record: convergence=diverged, is_usable=False, verdict=supported."""
     result = _result(convergence=state)
@@ -113,7 +112,6 @@ def test_r10_a_result_whose_solver_did_not_finish_is_never_supported(state):
 
 
 @pytest.mark.parametrize("state", UNFINISHED, ids=[s.value for s in UNFINISHED])
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r10_the_convergence_state_is_in_the_report_and_its_json(state):
     """'convergence' in report JSON: False, in the audited record."""
     report = CredibilityEvidenceReport.from_result(_result(convergence=state))
@@ -123,7 +121,6 @@ def test_r10_the_convergence_state_is_in_the_report_and_its_json(state):
 
 
 @pytest.mark.parametrize("state", UNFINISHED, ids=[s.value for s in UNFINISHED])
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r10_the_downgrade_survives_a_round_trip(state):
     """The audited record read back SUPPORTED after from_dict."""
     report = CredibilityEvidenceReport.from_result(_result(convergence=state))
@@ -132,7 +129,6 @@ def test_r10_the_downgrade_survives_a_round_trip(state):
 
 
 @pytest.mark.parametrize("state", UNFINISHED, ids=[s.value for s in UNFINISHED])
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r10_the_downgrade_survives_a_payload_with_the_new_field_deleted(state):
     """A reader written before the field, and a hand-edit that deletes it, both keep the downgrade.
 
@@ -153,7 +149,6 @@ def test_r10_a_converged_result_keeps_its_verdict():
     assert direct.verdict is CredibilityVerdict.SUPPORTED
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r10_a_converged_result_carries_the_state_it_reached():
     """NOT_APPLICABLE is a claim -- direct or closed-form evaluation -- and None is the absence of one, which
     is why the field's default decides nothing."""
@@ -162,7 +157,6 @@ def test_r10_a_converged_result_carries_the_state_it_reached():
     assert direct.convergence is ConvergenceState.NOT_APPLICABLE
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r10_derive_verdict_reads_convergence_on_its_own():
     """derive_verdict is exported and documented as usable alone, so the rule has to live in it."""
     result = _result()
@@ -190,7 +184,6 @@ def _two_models() -> ScientificResult:
     )
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r40_a_provenance_override_cannot_drop_a_declared_model():
     """The audited record: INSUFFICIENT_EVIDENCE with the result's own provenance, SUPPORTED with an
     overriding run provenance naming only the assessed model, and unassessed=()."""
@@ -225,7 +218,6 @@ def _numerical(value: float = 0.001) -> Uncertainty:
                        source_kind=UncertaintySource.NUMERICAL, method="mesh refinement, two levels")
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r43_the_report_carries_per_value_uncertainty_and_its_source():
     """The audited record: from_result drops result.uncertainty, and 'numerical' appears nowhere in the JSON."""
     report = CredibilityEvidenceReport.from_result(_result(uncertainty={"T": _numerical()}))
@@ -237,7 +229,6 @@ def test_r43_the_report_carries_per_value_uncertainty_and_its_source():
     assert again.uncertainty["T"].source_kind is UncertaintySource.NUMERICAL
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r43_a_numerical_estimate_may_not_be_declared_as_aleatoric_or_model_form():
     """The audited record: a mesh-refinement NUMERICAL estimate filed under ALEATORIC and MODEL_FORM makes
     budget_from_declaration report both channels as KNOWN."""
@@ -264,7 +255,6 @@ def test_r43_a_numerical_estimate_may_not_be_declared_as_aleatoric_or_model_form
         channels={UncertaintyChannel.NUMERICAL: _numerical()})
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r43_a_budget_channel_entry_refuses_a_contradictory_source():
     from engcore.sria.assurance.uncertainty_budget import ChannelEntry, ChannelState
     from engcore.sria.uncertainty import UncertaintyChannel
@@ -276,7 +266,6 @@ def test_r43_a_budget_channel_entry_refuses_a_contradictory_source():
                  uncertainty=_numerical(), rationale="mesh study")
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r43_a_combined_uncertainty_belongs_to_no_single_channel():
     """COMBINED is already a mixture: root-sum-squaring it with another channel double-counts what it holds."""
     from engcore.sria.assurance.uncertainty_budget import ChannelEntry, ChannelState
@@ -289,7 +278,6 @@ def test_r43_a_combined_uncertainty_belongs_to_no_single_channel():
             ChannelEntry(channel=channel, state=ChannelState.KNOWN, uncertainty=combined, rationale="x")
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r43_an_undeclared_source_is_recorded_as_unattributed_not_as_compatible():
     """UNSPECIFIED is accepted -- every domain solver still emits it -- and named, so it is visible."""
     from engcore.sria.uncertainty import (
@@ -309,7 +297,6 @@ def test_r43_an_undeclared_source_is_recorded_as_unattributed_not_as_compatible(
     assert declaration.unattributed_channels == (UncertaintyChannel.ALEATORIC,)
 
 
-@pytest.mark.xfail(strict=True, reason="I-10 not implemented yet (batch 7 preregistration)")
 def test_r43_the_v1_predictive_intervals_declare_what_they_are_of():
     """posterior_predictive_uq knows its epistemic interval is PARAMETER and its total is COMBINED, says so in
     its notes in prose, and left source_kind UNSPECIFIED on both."""

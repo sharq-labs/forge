@@ -25,7 +25,7 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..scientific.results.immutable import freeze
-from ..scientific.results.uncertainty import Uncertainty
+from ..scientific.results.uncertainty import Uncertainty, UncertaintySource
 from ..scientific.serialization import require_schema, schema_string
 from .errors import UncertaintyContractError
 
@@ -40,6 +40,60 @@ class UncertaintyChannel(str, Enum):
     EPISTEMIC_PARAMETER = "epistemic_parameter"
     MODEL_FORM = "model_form"
     NUMERICAL = "numerical"
+
+
+#: Which :class:`~engcore.scientific.results.uncertainty.UncertaintySource` each channel accepts
+#: (R-43, core re-audit 2026-09-16). The CORE-016 record exists to stop a discretization estimate
+#: standing in for scientific uncertainty; a channel is the thing a budget root-sum-squares, so a
+#: record filed under a channel its own declared source contradicts is refused rather than summed.
+#:
+#: COMBINED appears under no channel on purpose: it is already a mixture of channels, and
+#: root-sum-squaring it with another would count what it contains twice.
+#:
+#: UNSPECIFIED is accepted everywhere and counts as UNATTRIBUTED rather than as compatible --
+#: see :attr:`UncertaintyDeclaration.unattributed_channels`. Refusing it is the stricter reading,
+#: and it is not taken here because every domain solver in this repository still emits the default,
+#: so the refusal would fall on every existing declaration rather than on any wrong one.
+CHANNEL_ACCEPTS_SOURCE: "Mapping[UncertaintyChannel, frozenset[UncertaintySource]]" = {
+    UncertaintyChannel.ALEATORIC: frozenset(
+        {UncertaintySource.UNSPECIFIED, UncertaintySource.MEASUREMENT}
+    ),
+    UncertaintyChannel.EPISTEMIC_PARAMETER: frozenset(
+        {UncertaintySource.UNSPECIFIED, UncertaintySource.PARAMETER}
+    ),
+    UncertaintyChannel.MODEL_FORM: frozenset(
+        {UncertaintySource.UNSPECIFIED, UncertaintySource.MODEL_FORM}
+    ),
+    UncertaintyChannel.NUMERICAL: frozenset(
+        {UncertaintySource.UNSPECIFIED, UncertaintySource.NUMERICAL}
+    ),
+}
+
+
+def require_source_fits_channel(channel: "UncertaintyChannel", uncertainty: Uncertainty, *, where: str) -> None:
+    """Refuse an uncertainty whose declared source contradicts the channel it is filed under (R-43).
+
+    One rule, two callers: :class:`UncertaintyDeclaration`, where a channel is declared, and the assurance
+    budget's ``ChannelEntry``, where it is aggregated. Stated here so the two cannot drift.
+    """
+    channel = UncertaintyChannel(channel)
+    source = UncertaintySource(uncertainty.source_kind)
+    accepted = CHANNEL_ACCEPTS_SOURCE[channel]
+    if source in accepted:
+        return
+    if source is UncertaintySource.COMBINED:
+        raise UncertaintyContractError(
+            f"{where}: channel {channel.value!r} carries an uncertainty declared COMBINED. A combined "
+            f"uncertainty is already a mixture of channels; filing it under one and root-sum-squaring it "
+            f"with another counts what it contains twice. Declare the per-channel parts"
+        )
+    raise UncertaintyContractError(
+        f"{where}: channel {channel.value!r} carries an uncertainty declared {source.value!r}, which is "
+        f"not what that channel is. A {source.value} uncertainty filed under {channel.value!r} would be "
+        f"aggregated as {channel.value} uncertainty it is not: the source_kind record exists to stop a "
+        f"discretization estimate standing in for scientific uncertainty. "
+        f"{channel.value!r} accepts {sorted(s.value for s in accepted)}"
+    )
 
 
 class SubjectModel(str, Enum):
@@ -115,6 +169,9 @@ class UncertaintyDeclaration:
                 raise UncertaintyContractError(
                     f"channel {channel.value!r} must carry an Uncertainty record"
                 )
+            # R-43: a record whose declared source names another channel is refused here,
+            # where the channel is declared, and again in the budget that aggregates it.
+            require_source_fits_channel(channel, value, where="uncertainty declaration")
             channels[channel] = value
         # Part of Evidence content identity: a channel must not change through a
         # caller alias after the evidence hash and admission were issued.
@@ -123,6 +180,27 @@ class UncertaintyDeclaration:
     def channel(self, channel: UncertaintyChannel) -> Uncertainty:
         """Uncertainty for a channel; explicitly UNKNOWN when undeclared."""
         return self.channels.get(UncertaintyChannel(channel), Uncertainty.unknown())
+
+    @property
+    def unattributed_channels(self) -> tuple[UncertaintyChannel, ...]:
+        """Quantified channels whose record declares no source (R-43).
+
+        UNSPECIFIED is accepted -- every domain solver in this repository still emits it -- and it is not
+        the same as compatible. A budget built from these channels is summing numbers nobody has said are
+        the channel's, and this property is what lets a reader see that rather than infer it from a
+        default. It is derived, so a caller cannot set it.
+        """
+        return tuple(
+            sorted(
+                (
+                    channel
+                    for channel, record in self.channels.items()
+                    if record.is_quantified
+                    and UncertaintySource(record.source_kind) is UncertaintySource.UNSPECIFIED
+                ),
+                key=lambda c: c.value,
+            )
+        )
 
     @property
     def quantified_channels(self) -> tuple[UncertaintyChannel, ...]:

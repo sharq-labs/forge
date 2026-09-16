@@ -45,12 +45,14 @@ from ...scientific.errors import UnitCompatibilityError
 from ...scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from ...scientific.serialization import require_schema, schema_string
 from ...scientific.units.quantity import Quantity
+from ..errors import UncertaintyContractError
 from ..uncertainty import (
     DiscrepancyKind,
     ModelDiscrepancy,
     SubjectModel,
     UncertaintyChannel,
     UncertaintyDeclaration,
+    require_source_fits_channel,
 )
 
 CHANNEL_ENTRY_SCHEMA = schema_string("sria_uncertainty_channel_entry")
@@ -100,6 +102,17 @@ class ChannelEntry:
 
         if not isinstance(self.uncertainty, Uncertainty):
             raise BudgetError("channel entry requires an Uncertainty record")
+
+        # R-43 (core re-audit 2026-09-16): the CORE-016 source_kind record exists to stop a
+        # discretization estimate standing in for scientific uncertainty, and `aggregate`
+        # root-sum-squares channels. A record whose declared source names another channel was
+        # summed as the channel it was filed under: a mesh-refinement NUMERICAL estimate filed
+        # under ALEATORIC and MODEL_FORM made both read KNOWN from one number that is neither.
+        # The same rule the declaration applies, from the same place.
+        try:
+            require_source_fits_channel(self.channel, self.uncertainty, where="uncertainty budget")
+        except UncertaintyContractError as exc:
+            raise BudgetError(str(exc)) from exc
 
         quantified = self.uncertainty.is_quantified
         if self.state is ChannelState.KNOWN and not quantified:

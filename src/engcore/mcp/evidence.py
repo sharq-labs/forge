@@ -141,6 +141,7 @@ from ..scientific.models.definition import (
 from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
 from ..scientific.results.result import ScientificResult, stored_attribution_gap
+from ..scientific.results.uncertainty import Uncertainty, UncertaintySource
 from ..scientific.results.validation import (
     CHECK_SCHEMA,
     REPORT_SCHEMA,
@@ -155,6 +156,7 @@ from ..scientific.serialization import (
     schema_string,
     unwritable,
 )
+from ..scientific.solvers.protocol import ConvergenceState
 from ..scientific.units.quantity import Quantity
 from .errors import CredibilityEvidenceError
 
@@ -507,6 +509,18 @@ def combine_assessments(
     )
 
 
+#: The two states that mean "the solver is done": it converged, or it was a direct
+#: evaluation that neither converges nor fails to. Exactly ``ScientificResult.is_usable``'s
+#: pair, stated once so the boundary and the core cannot drift (R-10).
+_CONVERGENCE_STATES_THAT_FINISHED = frozenset(
+    {ConvergenceState.CONVERGED, ConvergenceState.NOT_APPLICABLE}
+)
+
+#: The name of the check a report carries for a result whose solver did not finish.
+#: See :func:`_convergence_checks`.
+SOLVER_CONVERGENCE_CHECK = "solver_did_not_converge"
+
+
 def derive_verdict(
     *,
     validity: Sequence["ModelValidityRecord"],
@@ -516,6 +530,7 @@ def derive_verdict(
     coupling: "CouplingEvidence | None" = None,
     unattributed_assessments: Sequence[tuple[str, str]] = (),
     unresolved_models: Sequence[tuple[str, str]] = (),
+    convergence: "ConvergenceState | str | None" = None,
 ) -> CredibilityVerdict:
     """The one place a verdict is decided. Pure, total, and order-independent.
 
@@ -539,7 +554,9 @@ def derive_verdict(
         an assessment is of a model whose declared validity domain this
         package cannot resolve, so its condition names could not be checked
         (``unresolved_models``); or the coupled run that produced these values did not reach its own
-        criterion (``coupling``); or **no check both passed and established an
+        criterion (``coupling``); or **the solver that produced these values did
+        not finish** (``convergence`` is neither ``CONVERGED`` nor
+        ``NOT_APPLICABLE``); or **no check both passed and established an
         evidentiary level**; or a level the caller declared it needs
         (``required_levels``) was not attained; or there are no validity
         records at all.
@@ -614,6 +631,24 @@ def derive_verdict(
     ``required_levels`` is unchanged and remains the way a caller demands a
     *particular* level rather than merely some level.
 
+    **A solver that did not finish produced an iterate, not a solution**
+    (R-10, core re-audit 2026-09-16). ``ScientificResult`` records the backend's
+    own termination state and defines :attr:`~ScientificResult.is_usable` from
+    it; ``from_dict`` refuses a payload with that state deleted, precisely so a
+    diverged result is not read as usable. This boundary then threw the fact
+    away: a DIVERGED, FAILED or MAX_ITERATIONS result with one passing
+    level-bearing check was SUPPORTED, and stayed SUPPORTED after a round trip,
+    while ``ScientificEvaluation`` refused OK over the same result -- the core
+    disagreeing with itself. It now decides here.
+
+    ``INSUFFICIENT_EVIDENCE`` rather than ``NOT_SUPPORTED``, for the reason the
+    ``coupling`` rule beside it gives: the fix is to go and produce a solution,
+    and a solver that stopped early has not refuted the model. ``None`` is the
+    absence of a state, for a report assembled around values that came from no
+    solver, and decides nothing; ``NOT_APPLICABLE`` is a *claim* -- direct or
+    closed-form evaluation -- and is as good as CONVERGED here, exactly as it is
+    in ``is_usable``.
+
     **Fails closed on anything it does not recognise.** The three rules are
     total over today's enum members, but totality here is achieved by a final
     ``SUPPORTED`` return, and a member added to ``ValidityStatus`` or
@@ -668,6 +703,21 @@ def derive_verdict(
     # finding that more evidence cannot rescue.
     if coupling is not None and coupling.criterion is not CouplingCriterion.MET:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+    # R-10: the solver's own termination state, read through the enum for the
+    # reason the statuses above are -- this function is exported and must not
+    # rely on a caller having run ConvergenceState's constructor.
+    if convergence is not None:
+        try:
+            state = ConvergenceState(convergence)
+        except ValueError as exc:
+            raise CredibilityEvidenceError(
+                f"cannot derive a verdict from convergence {convergence!r} ({exc}); a "
+                f"termination state this function does not understand must not be read "
+                f"as 'the solver finished'"
+            ) from exc
+        if state not in _CONVERGENCE_STATES_THAT_FINISHED:
+            return CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
     # The evidential guard, and the core's own definition of what counts:
     # exactly `ValidationReport.attained_levels`. It subsumes "there are no
@@ -990,6 +1040,46 @@ def _merged_validity(
 STORED_ATTRIBUTION_CHECK = "stored_result_attribution"
 
 
+def _declared_model_keys(result: ScientificResult, model_ids: Mapping[str, str]) -> tuple[tuple[str, str], ...]:
+    """``(model_id, version)`` for each id, versioned from the result's own ``models`` (R-40).
+
+    A model the result says nobody assessed is one it declares took part, so it belongs in the report's
+    inventory. Its version comes from ``result.models``, which is where the core requires every id a result
+    names to appear; an id that is somehow not there is skipped rather than given a made-up version.
+    """
+    versions = {model_id: version for model_id, version in result.models}
+    return tuple((model_id, versions[model_id]) for model_id in sorted(model_ids) if model_id in versions)
+
+
+def _convergence_checks(result: ScientificResult) -> tuple[ValidationCheck, ...]:
+    """A NOT_RUN check naming a solver that did not finish, or nothing (R-10).
+
+    The report carries the state in its own :attr:`CredibilityEvidenceReport.convergence` field, which is
+    what a reader sees. The check is what makes the downgrade survive serialization: the field is additive,
+    so a reader written before it drops it and a payload with the key deleted would re-derive the verdict
+    without it. A check cannot be deleted without deleting a check, which is visible in the check list and
+    moves the verdict by itself.
+
+    NOT_RUN rather than FAIL, and for the reason ``STORED_ATTRIBUTION_CHECK`` is NOT_RUN: nothing found the
+    values false: the solver said it had not finished. The work the verdict should recommend is to finish it.
+    """
+    state = ConvergenceState(result.convergence)
+    if state in _CONVERGENCE_STATES_THAT_FINISHED:
+        return ()
+    return (
+        ValidationCheck(
+            name=SOLVER_CONVERGENCE_CHECK,
+            outcome=ValidationOutcome.NOT_RUN,
+            detail=(
+                f"the solver that produced result {result.result_id!r} reported "
+                f"{state.value!r}: it did not finish, so these values are an iterate and not "
+                f"a solution. Nothing here says they are wrong; nothing says they are the "
+                f"answer either. Re-run to convergence"
+            ),
+        ),
+    )
+
+
 def _attribution_gap_checks(result: ScientificResult) -> tuple[ValidationCheck, ...]:
     """A NOT_RUN check naming a stored record's attribution gap, or nothing.
 
@@ -1233,6 +1323,20 @@ class CredibilityEvidenceReport:
     #: own words belong would be a small forgery.
     validation_notes: str = ""
     notes: str = ""
+    #: What the solver that produced these values said about its own termination
+    #: (R-10, core re-audit 2026-09-16). ``None`` for a report assembled around
+    #: values that came from no solver, which is not the same as NOT_APPLICABLE:
+    #: that is a claim about a direct evaluation, and this is the absence of one.
+    #: Set by :meth:`from_result` from the result, and read by the verdict.
+    convergence: "ConvergenceState | None" = None
+    #: Per-value uncertainty as the result declared it, INCLUDING its
+    #: ``source_kind`` (R-43). Carried so a reader can tell a discretization
+    #: estimate from a measurement standard deviation; it decides no verdict,
+    #: because a declared uncertainty is information and this program's
+    #: strictness rule lowers a claim for information that is UNDECLARED.
+    #: Whether such a record may stand in for scientific uncertainty is
+    #: decided where it is used as one, which is the SRIA budget's channel rule.
+    uncertainty: Mapping[str, Uncertainty] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
@@ -1375,6 +1479,29 @@ class CredibilityEvidenceReport:
                 )
         object.__setattr__(self, "declarations", declarations)
 
+        # R-10: read through the enum rather than kept as whatever was passed, so the
+        # verdict rule cannot be handed a bare string that happens to compare equal.
+        if self.convergence is not None:
+            object.__setattr__(self, "convergence", ConvergenceState(self.convergence))
+
+        # R-43: typed and frozen for the reason ``values`` is -- a type check is worth
+        # nothing if a bare number can be written in afterwards.
+        declared = dict(self.uncertainty)
+        for name, record in declared.items():
+            if not isinstance(record, Uncertainty):
+                raise CredibilityEvidenceError(
+                    f"report uncertainty {name!r} must be an Uncertainty record, got "
+                    f"{type(record).__name__}; a bare interval says nothing about what "
+                    f"it is an uncertainty OF"
+                )
+            if name not in self.values:
+                raise CredibilityEvidenceError(
+                    f"report declares an uncertainty for {name!r}, which is not one of its "
+                    f"values {sorted(self.values)}: an uncertainty about nothing this report "
+                    f"carries is not evidence about it"
+                )
+        object.__setattr__(self, "uncertainty", freeze(declared))
+
     # ---- derived state --------------------------------------------------
     @property
     def verdict(self) -> CredibilityVerdict:
@@ -1400,7 +1527,21 @@ class CredibilityEvidenceReport:
             coupling=self.coupling,
             unattributed_assessments=self.unattributed_assessments,
             unresolved_models=self.unresolved_models,
+            convergence=self.convergence,
         )
+
+    @property
+    def uncertainty_sources(self) -> Mapping[str, str]:
+        """Each value's declared uncertainty source, for the reader who never opens the field (R-43).
+
+        Only the values that declare one: an omission is not the word ``unspecified``, and writing it for
+        every value would make "nobody said" and "somebody said nothing in particular" the same statement.
+        """
+        return {
+            name: UncertaintySource(record.source_kind).value
+            for name, record in sorted(self.uncertainty.items())
+            if UncertaintySource(record.source_kind) is not UncertaintySource.UNSPECIFIED
+        }
 
     @property
     def unresolved_models(self) -> tuple[tuple[str, str], ...]:
@@ -1630,13 +1771,24 @@ class CredibilityEvidenceReport:
             validity=_merged_validity(result, tuple(validity)),
             validation=tuple(result.validation.checks)
             + _attribution_gap_checks(result)
+            + _convergence_checks(result)
             + tuple(validation),
             declarations=tuple(declarations),
             required_levels=tuple(required_levels),
-            contributing_models=tuple(contributing_models),
+            # R-40: an override provenance may WIDEN the inventory and never narrow it. The
+            # result's own declared models, and the ones it says nobody assessed, go in whatever
+            # provenance is passed -- a model a result DECLARES took part in producing its values,
+            # whether or not the run provenance names its execution, which is the case
+            # ``contributing_models`` was added for. Before this, a "run" provenance naming one of
+            # two declared models made the other disappear and the verdict SUPPORTED.
+            contributing_models=tuple(contributing_models)
+            + tuple(result.models)
+            + tuple(_declared_model_keys(result, result.validity_not_assessed)),
             coupling=coupling,
             validation_notes=result.validation.notes,
             notes=notes,
+            convergence=result.convergence,
+            uncertainty=dict(result.uncertainty),
         )
 
     def validation_report(self) -> ValidationReport:
@@ -1745,6 +1897,19 @@ class CredibilityEvidenceReport:
             "coupling": self.coupling.to_dict() if self.coupling else None,
             "validation_notes": self.validation_notes,
             "notes": self.notes,
+            # R-10 and R-43, each written only when it carries information, so a record
+            # written before these fields existed reads back byte-identically and the
+            # schema does not move: a report around values that came from no solver has
+            # no convergence state, and one whose result declared no uncertainty has no
+            # uncertainty. The downgrade a non-converged state carries does NOT depend on
+            # this key surviving -- `_convergence_checks` puts a NOT_RUN check in the check
+            # list for exactly that reason.
+            **({} if self.convergence is None else {"convergence": self.convergence.value}),
+            **({} if not self.uncertainty else {
+                "uncertainty": {
+                    name: record.to_dict() for name, record in sorted(self.uncertainty.items())
+                }
+            }),
             # Derived, emitted for readers, and re-derived on the way back in.
             "verdict": self.verdict.value,
             # Derived, and emitted for the same reason `exclusions` is: the
@@ -1769,6 +1934,11 @@ class CredibilityEvidenceReport:
                 "unresolved_models": [list(m) for m in self.unresolved_models],
                 # CORE-008: SUPPORTED on verification alone says so in every report
                 "evidence_basis": ValidationReport(checks=tuple(self.validation)).evidence_basis,
+                # R-43: which of this report's numbers carry an uncertainty that is NOT the
+                # value's scientific uncertainty. Emitted only when something declared one,
+                # for the reason `uncertainty_sources` skips UNSPECIFIED.
+                **({} if not self.uncertainty_sources
+                   else {"uncertainty_sources": dict(self.uncertainty_sources)}),
             },
         }
 
@@ -1808,6 +1978,17 @@ class CredibilityEvidenceReport:
             ),
             validation_notes=payload.get("validation_notes", ""),
             notes=payload.get("notes", ""),
+            # Absent in a record written before these fields, and in one whose writer had
+            # nothing to say: read as the absence they are, never as a benign default.
+            convergence=(
+                ConvergenceState(payload["convergence"])
+                if payload.get("convergence") is not None
+                else None
+            ),
+            uncertainty={
+                name: Uncertainty.from_dict(record)
+                for name, record in (payload.get("uncertainty") or {}).items()
+            },
         )
         # The verdict in a payload is advisory; recompute and verify so a
         # hand-edited record cannot smuggle in a verdict its contents do not

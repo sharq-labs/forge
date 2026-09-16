@@ -29,7 +29,7 @@ from ..inference import AdmittedForwardTable, GridResolutionError, PosteriorGrid
 from ..inference.calibration import _grid_resolution_refusal
 from ..scientific.ir.problem import ModelReference
 from ..scientific.results.immutable import freeze
-from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
+from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind, UncertaintySource
 from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity, normalize_unit
 
@@ -331,6 +331,10 @@ def posterior_predictive_uq(
         source=source_ref,
         method="weighted_posterior_predictive_discrete",
         notes="Parameter/posterior uncertainty only; excludes model discrepancy and observation noise.",
+        # R-43 (core re-audit 2026-09-16): what the notes above already say, in the field a
+        # consumer can read. The CORE-016 record had no producer at all, so nothing downstream
+        # could tell this interval from a measurement standard deviation or a mesh estimate.
+        source_kind=UncertaintySource.PARAMETER,
     )
     total_interval = Uncertainty(
         kind=UncertaintyKind.INTERVAL,
@@ -343,6 +347,9 @@ def posterior_predictive_uq(
             "Total predictive uncertainty from parameter posterior plus declared independent "
             "observation noise; excludes model discrepancy."
         ),
+        # R-43: a mixture of the parameter channel and the observation channel, which is
+        # exactly COMBINED -- and is why no single SRIA channel accepts it.
+        source_kind=UncertaintySource.COMBINED,
     )
 
     return QuantifiedPredictiveResult(

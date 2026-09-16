@@ -217,3 +217,66 @@ by-design 18, unchanged). `tests/test_mutation_harness.py` 6 passed, every pinne
 once; `tests/mutation_guards.py` was not touched.
 
 **Open decisions.** None in this batch.
+
+### The expensive tier's baseline in this environment
+
+Recorded once here so every batch below can tell an environmental failure from one of its own. At batch 7's
+preregistration commit `5b8d036`, before any of that batch's code, the expensive tier
+(`python -m pytest -m expensive -q -n 4 --dist loadfile`) reports **18 failed, 527 passed, 14 errors**. It was
+run in a `git worktree` at that commit and diffed against the same run after batch 7's implementation: the two
+failure lists are identical. The causes:
+
+* 12 failures and all 14 errors in `tests/test_heterogeneous_ngspice.py`, plus
+  `tests/test_cross_solver_consensus.py::test_the_dc_routes_earn_the_level_on_a_real_circuit` and
+  `tests/mcp/test_problem.py::test_the_second_route_actually_runs_and_the_level_is_withheld`: this environment
+  invokes the ngspice provider as `('wsl.exe', '-e', 'ngspice')` and cannot launch it (`NgspiceUnavailable`);
+* 2 in `tests/domains/kinetics/test_cstr_domain.py`, where the benign regime's `validation_status` is NOT_RUN
+  under this environment's solver numerics;
+* 2 gate rebuilds under `benchmarks/empirical_validation` and `benchmarks/model_measurement_validation`, the
+  two the per-batch protocol restores with `git checkout --`.
+
+### Batch 7 — I-10
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-10 | **DONE** | `5b8d036` (preregistration + 25 strict xfails), this commit | the battery MCP tool assembles its report without a `ScientificResult`, so the convergence rule does not reach it; a hand-assembled payload with the new field deleted relies on the NOT_RUN check; UNSPECIFIED source kinds are named rather than refused |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-10 | **FIXED** | `CredibilityEvidenceReport` carries the result's `ConvergenceState` in a new trailing field, `from_result` sets it, and `derive_verdict` takes it as a keyword and returns INSUFFICIENT_EVIDENCE for any state that is neither CONVERGED nor NOT_APPLICABLE — the same verdict and the same reasoning as the `coupling` rule it sits beside: a solver that stopped early produced an iterate, and the fix is to finish it. The state is serialized, and read back, only when there is one; the downgrade does not depend on that, because `from_result` also appends a NOT_RUN check `solver_did_not_converge`, so it survives a reader written before the field and a payload with the key deleted. All four unfinished states now report INSUFFICIENT_EVIDENCE where they reported SUPPORTED. |
+| R-40 | **FIXED** | `from_result` adds the result's own declared models, and the ones named in `validity_not_assessed`, to `contributing_models` whatever provenance is passed. The override — the documented path for coupled runs, and what production passes — can still widen the inventory and can no longer narrow it. The audited case now reports INSUFFICIENT_EVIDENCE with the declared-but-unassessed model named, with the override as with the result's own provenance. |
+| R-43 | **PARTIAL** | The report now carries per-value `uncertainty` including `source_kind`, serialized when non-empty, with the declared sources in `verdict_qualifiers.uncertainty_sources` for a reader who never opens the field. `posterior_predictive_uq` declares PARAMETER on its epistemic interval and COMBINED on its total, which is what their notes already said in prose. `UncertaintyDeclaration` and the budget's `ChannelEntry` refuse a record whose declared source names another channel, under one map stated once in `CHANNEL_ACCEPTS_SOURCE`; COMBINED is accepted by no channel, because root-sum-squaring a mixture with one of its own parts counts it twice. **PARTIAL and not FIXED**: every domain solver still emits UNSPECIFIED, so the map has something true to check only for the two V1 intervals; UNSPECIFIED is named through a new `unattributed_channels` rather than refused, because refusing it would fall on every existing declaration and no wrong one; and nothing yet carries a V1 interval into an `UncertaintyDeclaration`, so the producer and the budget are still two unconnected halves. That connection is I-16's reach ledger. |
+
+**Compatibility.** Additive: two trailing dataclass fields with defaults on `CredibilityEvidenceReport`
+(`convergence`, `uncertainty`), one keyword-only argument with a default on `derive_verdict` (`convergence`),
+one derived property on each of `CredibilityEvidenceReport` (`uncertainty_sources`) and
+`UncertaintyDeclaration` (`unattributed_channels`), and one new module-level name in each of
+`mcp.evidence` (`SOLVER_CONVERGENCE_CHECK`) and `sria.uncertainty` (`CHANNEL_ACCEPTS_SOURCE`,
+`require_source_fits_channel`). No field, member or default is removed, renamed, reordered or changed, and no
+schema is bumped: `mcp_evidence_package` gains two top-level keys and one qualifier, each written only when it
+carries information, so a record written before this reads back byte-identically. `posterior_predictive_uq`
+is V1-frozen and its signature and return type are untouched; one already-existing field of a record it
+returns moves off its default, and `Uncertainty` serializes `source_kind` only when declared.
+
+The verdict WORD is unchanged. Non-convergence uses the existing INSUFFICIENT_EVIDENCE.
+
+**Production effect.** The MCP electrothermal report carries `convergence: not_applicable` and stays
+SUPPORTED; the battery report's is `None`, because the battery march returns steps rather than a
+`ScientificResult` and there is no state to read — its own fixed point is gated by `CouplingEvidence`, which
+`derive_verdict` already reads. No production verdict moved.
+
+**Guard mutations.** `benchmarks/core_v4_false_confidence/BATCH7_MUTATIONS.log`, from
+`audit/batch7_mutations.py`, through the isolated runner: **12 of 12 KILLED**, unmutated control green. B7c is
+a compound mutation that removes the verdict rule and the check together, which is the audited behaviour
+exactly; B7a and B7b kill each half separately. The 10 pinned mutations that target the four files this batch
+changed were re-run under the same runner and all 10 are still KILLED
+(`BATCH7_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6463 passed, 15 xfailed, 18 failed (the by-design 18, unchanged; 27 more passing
+than batch 6). Expensive tier identical to the recorded baseline above. `tests/test_mutation_harness.py` 6
+passed, every anchor intact; `tests/mutation_guards.py` untouched. No committed evidence claim moved: the only
+evidence generator whose output changes is `tcr.py`, and that is batch 6's already-recorded `detail`.
+
+**Open decisions.** None in this batch.
