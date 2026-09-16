@@ -104,6 +104,29 @@ def _grid_route_claim(posterior: PosteriorGrid) -> RouteClaim:
     return RouteClaim.SUPPORTED
 
 
+def _grid_evidence_judgement(posterior: PosteriorGrid, claim: RouteClaim, observations, forward,
+                             calibration) -> tuple[RouteClaim, tuple[RouteReason, ...]]:
+    """The claim left once the grid is held to the evidence it describes (scientific core audit 2026-09-16).
+
+    Resolution says nothing about whose likelihood a grid carries (CORE-005), whether the declared noise explains it
+    (CORE-001) or whether its box holds the posterior (CORE-002). Given the observations and forward model, the router's
+    checks run here: binding raises, and a misfit or an uncontained posterior raises too, since a grid claim cannot be
+    downgraded past either. Without them nothing shows the grid is this evidence, and the claim is DOWNGRADED with
+    GRID_NOT_BOUND_TO_EVIDENCE.
+    """
+    from ._grid_evidence import grid_containment, grid_goodness_of_fit, require_grid_is_this_evidence
+
+    if (observations is None) != (forward is None):
+        raise HybridUQError("a grid is held to its evidence with both the observations and the forward model, or neither")
+    if observations is None:
+        return RouteClaim.DOWNGRADED, (RouteReason.GRID_NOT_BOUND_TO_EVIDENCE,)
+    require_grid_is_this_evidence(posterior, calibration, observations, forward)
+    problem = grid_goodness_of_fit(posterior, observations) or grid_containment(posterior, calibration)
+    if problem is not None:
+        raise HybridUQError(f"{problem[0].value}: {problem[1]}; the router would not route this grid, so it is not predicted from")
+    return claim, ()
+
+
 @dataclass(frozen=True)
 class RoutedPredictiveUncertainty:
     """One predicted quantity, its parameter and measurement uncertainty separately, and where it came from."""
@@ -370,16 +393,29 @@ def grid_predictive_uncertainty(
     model: ModelReference,
     source_ref: str,
     confidence_level: float = 0.95,
+    observations=None,
+    forward: ForwardEvaluator | None = None,
+    calibration=None,
 ) -> RoutedPredictiveUncertainty:
     """The frozen grid predictive, in the V2 record, for a grid the router's own judgement accepts.
 
     The frozen ``posterior_predictive_uq`` deliberately keeps a discrete grid too coarse to carry curvature (its
     exact-mixture meaning). A V2 record says SUPPORTED, which the router only says of a grid the repaired V1
     resolution checks accept, so that judgement is applied first and its refusal raised (audit HUQ-02).
+
+    ``observations`` and ``forward`` (and optionally ``calibration``, whose declared bounds name the faces a posterior may
+    reach) hold the grid to the evidence it describes; without them the record is DOWNGRADED, GRID_NOT_BOUND_TO_EVIDENCE.
     """
     if not isinstance(posterior, PosteriorGrid):
         raise HybridUQError("grid_predictive_uncertainty takes a PosteriorGrid")
     claim = _grid_route_claim(posterior)
+    claim, reasons = _grid_evidence_judgement(posterior, claim, observations, forward, calibration)
+    return _grid_record(posterior, predictive_table, spec, claim, reasons, twin=twin, model=model, source_ref=source_ref,
+                        confidence_level=confidence_level)
+
+
+def _grid_record(posterior, predictive_table, spec, claim, reasons, *, twin, model, source_ref, confidence_level):
+    """The V2 record of the frozen grid predictive, under a claim already judged."""
     result = posterior_predictive_uq(posterior, predictive_table, spec, twin=twin, model=model, source_ref=source_ref,
                                      credible_mass=confidence_level)
     unit = result.mean.units
@@ -392,5 +428,5 @@ def grid_predictive_uncertainty(
         parameter_interval=(float(result.epistemic_interval.lower.magnitude_in(unit)), float(result.epistemic_interval.upper.magnitude_in(unit))),
         total_interval=(float(result.total_interval.lower.magnitude_in(unit)), float(result.total_interval.upper.magnitude_in(unit))),
         confidence_level=result.confidence_level, sources=UNCERTAINTY_SOURCES, model_discrepancy=MODEL_DISCREPANCY_NOT_MODELLED,
-        posterior_digest=grid_digest(posterior), route_claim=claim, reasons=(), predictive_nonlinearity=None,
+        posterior_digest=grid_digest(posterior), route_claim=claim, reasons=reasons, predictive_nonlinearity=None,
     )

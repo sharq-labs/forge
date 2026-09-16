@@ -80,6 +80,11 @@ class RouteReason(str, Enum):
     NONLINEAR_BEYOND_LOCAL_GAUSSIAN = "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
     SECOND_MODE_FOUND = "SECOND_MODE_FOUND"
     BETTER_OPTIMUM_FOUND = "BETTER_OPTIMUM_FOUND"
+    #: CORE-001: chi2_min is implausible under the declared noise (p < 0.01) AND exceeds four times its degrees of
+    #: freedom, so the covariance understates the parameter uncertainty by more than a factor 2 however it is scaled.
+    MODEL_MISFIT_BEYOND_DECLARED_NOISE = "MODEL_MISFIT_BEYOND_DECLARED_NOISE"
+    #: CORE-003: the chi2 rise at 3 or 6 sd along a principal axis is below half the Gaussian's r^2.
+    TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN = "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"
     # local route: downgrades
     BOUND_WITHIN_3_SD = "BOUND_WITHIN_3_SD"
     NONLINEAR_WITHIN_2_SD = "NONLINEAR_WITHIN_2_SD"
@@ -88,6 +93,12 @@ class RouteReason(str, Enum):
     GLOBAL_UNIQUENESS_NOT_ASSESSED = "GLOBAL_UNIQUENESS_NOT_ASSESSED"
     MULTISTART_INCOMPLETE = "MULTISTART_INCOMPLETE"
     PREDICTIVE_NONLINEAR = "PREDICTIVE_NONLINEAR"
+    #: CORE-001: chi2_min is implausible under the declared noise (p < 0.01) with a variance ratio of at most 4.
+    RESIDUALS_EXCEED_DECLARED_NOISE = "RESIDUALS_EXCEED_DECLARED_NOISE"
+    #: CORE-003: the chi2 rise at 3 or 6 sd along a principal axis is below 0.9 of the Gaussian's r^2.
+    TAIL_HEAVIER_WITHIN_6_SD = "TAIL_HEAVIER_WITHIN_6_SD"
+    #: CORE-002/005: a grid predicted from without the observations and forward model that bind it to its evidence.
+    GRID_NOT_BOUND_TO_EVIDENCE = "GRID_NOT_BOUND_TO_EVIDENCE"
     # router: why a route was passed over
     GRID_NOT_SUPPLIED = "GRID_NOT_SUPPLIED"
     GRID_BEYOND_VALIDATED_DIMENSION = "GRID_BEYOND_VALIDATED_DIMENSION"
@@ -95,6 +106,10 @@ class RouteReason(str, Enum):
     LOCAL_INPUTS_NOT_SUPPLIED = "LOCAL_INPUTS_NOT_SUPPLIED"
     GRID_REBUILD_OVER_BUDGET = "GRID_REBUILD_OVER_BUDGET"
     GRID_REBUILD_UNRESOLVED = "GRID_REBUILD_UNRESOLVED"
+    #: CORE-002: posterior density reaches a face of a supplied grid within ln 1e6 of its peak.
+    GRID_DOES_NOT_CONTAIN_POSTERIOR = "GRID_DOES_NOT_CONTAIN_POSTERIOR"
+    #: CORE-002: on a rebuilt grid, the posterior reaches both declared bounds of an axis within ln 1e6 of its peak.
+    GRID_POSTERIOR_BOUND_DOMINATED = "GRID_POSTERIOR_BOUND_DOMINATED"
 
     @property
     def severity(self) -> RouteClaim:
@@ -104,6 +119,7 @@ class RouteReason(str, Enum):
 _DOWNGRADES = frozenset({
     "BOUND_WITHIN_3_SD", "NONLINEAR_WITHIN_2_SD", "NONLINEARITY_PROBE_INCOMPLETE", "POORLY_SCALED_PARAMETERIZATION",
     "GLOBAL_UNIQUENESS_NOT_ASSESSED", "MULTISTART_INCOMPLETE", "PREDICTIVE_NONLINEAR",
+    "RESIDUALS_EXCEED_DECLARED_NOISE", "TAIL_HEAVIER_WITHIN_6_SD", "GRID_NOT_BOUND_TO_EVIDENCE",
 })
 
 

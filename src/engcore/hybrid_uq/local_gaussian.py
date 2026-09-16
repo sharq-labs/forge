@@ -9,6 +9,10 @@ single optimum. Every one of those assumptions has a diagnostic. When a diagnost
 * bounds not dominating -- distance to each bound in sd;
 * locally affine within about +/-2 sd -- chi-square rise along every principal axis and every diagonal between
   two of them, against the 4 a Gaussian implies; fewer evaluated probes than parameters is no measurement;
+* no heavier tail than the Gaussian out to 6 sd -- the chi-square rise at 3 and 6 sd along every principal axis,
+  against r^2 (CORE-003). Only a shortfall is gated: it means mass the reported interval does not hold;
+* residuals the declared noise can explain -- chi2_min against chi-square on n - p degrees of freedom (CORE-001). A
+  covariance built from a declared sigma is the parameter uncertainty only if that sigma describes the residuals;
 * parameterization conditioning -- raw versus equilibrated condition;
 * a single mode -- a deterministic multistart through the frozen ``calibrate``, of at least a minimum search.
   Without one, or below that minimum, the claim is capped at DOWNGRADED: no SUPPORTED claim assumes a single
@@ -42,7 +46,11 @@ from .vocabulary import (
 )
 
 MULTISTART_POLICY_SCHEMA = "hybrid_uq.multistart_policy/1"
-ROUTE_DIAGNOSTICS_SCHEMA = "hybrid_uq.route_diagnostics/1"
+ROUTE_DIAGNOSTICS_SCHEMA = "hybrid_uq.route_diagnostics/2"
+#: Written before the goodness-of-fit and tail diagnostics existed (CORE-001/-003). Read only to refuse it with the
+#: reason: nothing it carries can show that a claim it makes survives those rules, and its threshold set is not the
+#: canonical one.
+ROUTE_DIAGNOSTICS_SCHEMA_V1 = "hybrid_uq.route_diagnostics/1"
 PARAMETER_INTERVAL_SCHEMA = "hybrid_uq.parameter_interval/1"
 LOCAL_GAUSSIAN_POSTERIOR_SCHEMA = "hybrid_uq.local_gaussian_posterior/1"
 
@@ -55,6 +63,17 @@ STATIONARITY_SD = 0.05
 AT_BOUND_RELATIVE = 1.0e-6
 NUMERICAL_CONDITION_LIMIT = 1.0 / math.sqrt(float(np.finfo(float).eps))
 PROBE_SD = 2.0
+
+#: CORE-001, preregistered in benchmarks/core_v4_false_confidence/BATCH1_THRESHOLD_PROTOCOL.json. The alpha is the
+#: one HELD_OUT_CHI_SQUARE_ALPHA already declares (class B); the variance ratio is class C: above 4 the residual
+#: scatter exceeds twice the declared sigma, so no rescaling of the covariance makes its sds right to a factor 2.
+GOODNESS_OF_FIT_ALPHA = 0.01
+MISFIT_REFUSE_VARIANCE_RATIO = 4.0
+#: CORE-003: tail probe radii, and the rise ratio (chi2 rise / r^2, 1 for the reported Gaussian) below which the
+#: route downgrades and refuses -- the existing nonlinearity thresholds, on the shortfall side only (class C).
+TAIL_PROBE_SD = (3.0, 6.0)
+TAIL_DOWNGRADE_RATIO = 1.0 - NONLINEARITY_DOWNGRADE
+TAIL_REFUSE_RATIO = 1.0 - NONLINEARITY_REFUSE
 
 _PRIMES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
            109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229)
@@ -85,8 +104,42 @@ def _thresholds() -> dict[str, float]:
         "nonlinearity_downgrade": NONLINEARITY_DOWNGRADE, "nonlinearity_refuse": NONLINEARITY_REFUSE,
         "bound_downgrade_sd": BOUND_DOWNGRADE_SD, "stationarity_sd": STATIONARITY_SD,
         "at_bound_relative": AT_BOUND_RELATIVE, "numerical_condition_limit": NUMERICAL_CONDITION_LIMIT,
-        "probe_sd": PROBE_SD,
+        "probe_sd": PROBE_SD, "goodness_of_fit_alpha": GOODNESS_OF_FIT_ALPHA,
+        "misfit_refuse_variance_ratio": MISFIT_REFUSE_VARIANCE_RATIO, "tail_probe_sd_inner": TAIL_PROBE_SD[0],
+        "tail_probe_sd_outer": TAIL_PROBE_SD[1], "tail_downgrade_ratio": TAIL_DOWNGRADE_RATIO,
+        "tail_refuse_ratio": TAIL_REFUSE_RATIO,
     }
+
+
+def _goodness_of_fit(chi_square_minimum: float, observations: int, parameters: int) -> tuple[set, set]:
+    """``(refusals, downgrades)`` the declared noise implies for a chi-square minimum (CORE-001). One rule, two callers.
+
+    Under-dispersion is not gated: a declared sigma larger than the residuals makes the reported uncertainty
+    conservative, and conservatism is not false confidence.
+    """
+    dof = int(observations) - int(parameters)
+    chi = float(chi_square_minimum)
+    if dof < 1 or not (chi >= 0.0) or float(chi2.sf(chi, dof)) >= GOODNESS_OF_FIT_ALPHA:
+        return set(), set()
+    if chi / dof > MISFIT_REFUSE_VARIANCE_RATIO:
+        return {RouteReason.MODEL_MISFIT_BEYOND_DECLARED_NOISE}, set()
+    return set(), {RouteReason.RESIDUALS_EXCEED_DECLARED_NOISE}
+
+
+def _tail_verdict(minimum_rise_ratio: float) -> tuple[set, set]:
+    """``(refusals, downgrades)`` for the smallest tail rise ratio measured (CORE-003); NaN means none was evaluated."""
+    ratio = float(minimum_rise_ratio)
+    if math.isnan(ratio):
+        return set(), set()
+    if ratio < TAIL_REFUSE_RATIO:
+        return {RouteReason.TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN}, set()
+    if ratio < TAIL_DOWNGRADE_RATIO:
+        return set(), {RouteReason.TAIL_HEAVIER_WITHIN_6_SD}
+    return set(), set()
+
+
+#: The goodness-of-fit reasons, which no grid route may be built past: a grid claim is SUPPORTED or absent.
+MISFIT_REASONS = frozenset({RouteReason.MODEL_MISFIT_BEYOND_DECLARED_NOISE, RouteReason.RESIDUALS_EXCEED_DECLARED_NOISE})
 
 
 #: The smallest multistart that may stand behind a claim of a single mode (audit HUQ-01). A caller may search more;
@@ -269,6 +322,12 @@ class RouteDiagnostics:
     claim: RouteClaim
     refusals: tuple[RouteReason, ...]
     downgrades: tuple[RouteReason, ...]
+    #: CORE-001: the chi-square at the estimate the goodness of fit is judged on. NaN only on an early refusal.
+    chi_square_minimum: float = math.nan
+    #: CORE-003: the smallest chi2 rise / r^2 over the evaluated tail probes; NaN when none was evaluated.
+    minimum_tail_rise_ratio: float = math.nan
+    #: CORE-003: tail probes inside the declared bounds that the forward evaluator refused.
+    tail_probes_skipped: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim", RouteClaim(self.claim))
@@ -308,12 +367,22 @@ class RouteDiagnostics:
             "thresholds": {k: encode_float(v) for k, v in sorted(self.thresholds.items())},
             "evaluation_count": int(self.evaluation_count), "claim": self.claim.value,
             "refusals": [r.value for r in self.refusals], "downgrades": [r.value for r in self.downgrades],
+            "chi_square_minimum": encode_float(self.chi_square_minimum),
+            "minimum_tail_rise_ratio": encode_float(self.minimum_tail_rise_ratio),
+            "tail_probes_skipped": int(self.tail_probes_skipped),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "RouteDiagnostics":
-        require_schema(payload, ROUTE_DIAGNOSTICS_SCHEMA)
-        return cls(
+        legacy = isinstance(payload, Mapping) and payload.get("schema") == ROUTE_DIAGNOSTICS_SCHEMA_V1
+        if not legacy:
+            require_schema(payload, ROUTE_DIAGNOSTICS_SCHEMA)
+        added = {} if legacy else {
+            "chi_square_minimum": decode_float(payload["chi_square_minimum"]),
+            "minimum_tail_rise_ratio": decode_float(payload["minimum_tail_rise_ratio"]),
+            "tail_probes_skipped": int(payload["tail_probes_skipped"]),
+        }
+        return cls(**added,
             parameters=int(payload["parameters"]), observations=int(payload["observations"]),
             jacobian_rank=int(payload["jacobian_rank"]), jacobian_condition=decode_float(payload["jacobian_condition"]),
             raw_jacobian_condition=decode_float(payload["raw_jacobian_condition"]),
@@ -382,8 +451,9 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
         if d.newton_step_in_sd or d.at_bound or d.near_bound or d.multistart or d.uniqueness != "NOT_ASSESSED" \
                 or int(d.nonlinearity_probes_skipped) != 0 or policy_keys:
             problems.append(f"{reason.value} is recorded before any step, probe or multistart, yet the record carries them")
-        if not all(math.isnan(float(v)) for v in (d.minimum_bound_distance_sd, d.nonlinearity_index, d.minimum_chi_square_rise)):
-            problems.append(f"{reason.value} measures no bound distance, nonlinearity or chi-square rise")
+        if not all(math.isnan(float(v)) for v in (d.minimum_bound_distance_sd, d.nonlinearity_index, d.minimum_chi_square_rise,
+                                                 d.chi_square_minimum, d.minimum_tail_rise_ratio)) or int(d.tail_probes_skipped) != 0:
+            problems.append(f"{reason.value} measures no bound distance, nonlinearity, chi-square rise, goodness of fit or tail")
         rank, condition = int(d.jacobian_rank), float(d.jacobian_condition)
         if reason is RouteReason.NO_RESIDUAL_DEGREES_OF_FREEDOM and not p >= n:
             problems.append(f"{p} parameter(s) and {n} observation(s) leave residual degrees of freedom")
@@ -443,6 +513,24 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
         if rise < -1e-9:
             # the route's roundoff allowance scales with a chi-square the record does not carry
             optional.add(RouteReason.NOT_A_LOCAL_MINIMUM)
+        chi_minimum = float(d.chi_square_minimum)
+        if not (math.isfinite(chi_minimum) and chi_minimum >= 0.0):
+            problems.append("a measured route records the chi-square minimum its goodness of fit is judged on; this record "
+                            f"carries {chi_minimum!r} (a {ROUTE_DIAGNOSTICS_SCHEMA_V1} record never assessed it)")
+        else:
+            found_refusals, found_downgrades = _goodness_of_fit(chi_minimum, n, p)
+            refusals |= found_refusals
+            downgrades |= found_downgrades
+        tail_skipped, tail_ratio = int(d.tail_probes_skipped), float(d.minimum_tail_rise_ratio)
+        if not 0 <= tail_skipped <= 2 * len(TAIL_PROBE_SD) * p:
+            problems.append(f"{tail_skipped} tail probes skipped of {2 * len(TAIL_PROBE_SD) * p}")
+        if tail_skipped:
+            downgrades.add(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
+        if math.isinf(tail_ratio):
+            problems.append("a tail rise ratio is finite, or NaN when no tail probe was evaluated")
+        found_refusals, found_downgrades = _tail_verdict(tail_ratio)
+        refusals |= found_refusals
+        downgrades |= found_downgrades
         entries = tuple(d.multistart)
         if not entries and policy_keys:
             problems.append("a multistart policy is recorded with no starts")
@@ -948,6 +1036,12 @@ def local_gaussian_posterior(
     sd = np.sqrt(np.diag(cov))
     chi_min = sensitivity.chi_square
 
+    # residuals the declared noise can explain (CORE-001): the covariance above is the parameter uncertainty only if
+    # the declared sigma describes the scatter about the fit
+    fit_refusals, fit_downgrades = _goodness_of_fit(chi_min, n, p)
+    refusals.extend(sorted(fit_refusals, key=lambda r: r.value))
+    downgrades.extend(sorted(fit_downgrades, key=lambda r: r.value))
+
     # interior, stationary optimum: the Gauss-Newton step from the estimate, in sd units
     residual = sensitivity.standardized_residuals
     step = -(cov @ (A.T @ residual))
@@ -1010,6 +1104,30 @@ def local_gaussian_posterior(
     elif worst > NONLINEARITY_DOWNGRADE:
         downgrades.append(RouteReason.NONLINEAR_WITHIN_2_SD)
     if skipped:
+        downgrades.append(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
+
+    # no heavier tail than the reported Gaussian out to 6 sd (CORE-003). The +/-2 sd probes cannot see a posterior that
+    # is Gaussian to just past 2 sd and nearly flat beyond, which puts most of its mass outside the reported interval.
+    # A probe beyond a declared bound is not needed: no posterior mass lies there.
+    tail_skipped, tail_ratio = 0, math.inf
+    for k in range(p):
+        axis = math.sqrt(max(float(lam[k]), 0.0)) * vec[:, k]
+        for radius in TAIL_PROBE_SD:
+            for sign in (1.0, -1.0):
+                point = z0 + sign * radius * axis
+                if np.any(point < lower) or np.any(point > upper):
+                    continue
+                value = chi_square_at(point)
+                evaluations += 1
+                if value is None:
+                    tail_skipped += 1
+                    continue
+                tail_ratio = min(tail_ratio, (value - chi_min) / radius ** 2)
+    tail_ratio = math.nan if math.isinf(tail_ratio) else float(tail_ratio)
+    tail_refusals, tail_downgrades = _tail_verdict(tail_ratio)
+    refusals.extend(sorted(tail_refusals, key=lambda r: r.value))
+    downgrades.extend(sorted(tail_downgrades, key=lambda r: r.value))
+    if tail_skipped:
         downgrades.append(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
 
     # a single mode: deterministic multistart through the frozen calibrate
@@ -1078,6 +1196,7 @@ def local_gaussian_posterior(
         multistart=tuple(starts_record), uniqueness=uniqueness, thresholds=thresholds, evaluation_count=evaluations,
         claim=claim, refusals=tuple(r for r in refusals if r.severity is RouteClaim.REFUSED),
         downgrades=tuple(d for d in downgrades if d.severity is RouteClaim.DOWNGRADED),
+        chi_square_minimum=float(chi_min), minimum_tail_rise_ratio=tail_ratio, tail_probes_skipped=tail_skipped,
     )
     posterior = LocalGaussianPosterior(
         approximation_class=ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION, parameter_names=names,

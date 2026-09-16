@@ -51,7 +51,8 @@ def test_the_cost_is_order_p_plus_multistart():
     # probes and 2p(p - 1) diagonal probes between two axes: 4p + 1 + 2p^2. This pinned 6p + 1 before audit HUQ-08,
     # when the probes looked along the principal axes only and a cross term between two of them went unseen.
     p = 2
-    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p
+    # + 4p tail probes at 3 and 6 sd along the principal axes (CORE-003); all inside the declared bounds here
+    assert post.diagnostics.evaluation_count == 4 * p + 1 + 2 * p * p + 4 * p
 
 
 def test_intervals_are_labelled_and_mapped_back_through_a_log_transform():

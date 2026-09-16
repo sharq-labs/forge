@@ -4,6 +4,12 @@ or a refusal -- deterministically, in that order, with every route it tried reco
 The grid route is the repaired V1 grid route and nothing looser: a grid is used only when the frozen
 ``assess_identifiability`` accepts it (tensor lattice, ESS, the ESS-and-spacing rule, lattice aliasing, a usable
 curvature fit). The router has no way to accept a grid V1 refuses.
+
+Resolution is not enough (scientific core audit 2026-09-16). A supplied grid must also be the request's evidence --
+bound by content to the observations and forward model, not by dataset id (CORE-005) -- the declared noise must
+explain its residuals (CORE-001), and its box must contain the posterior (CORE-002). A local route whose residuals
+the declared noise does not explain is never rebuilt into a grid, and a rebuilt grid whose posterior spans both
+declared bounds of an axis is not used: the width it reports there is the bounds', not the data's.
 """
 
 from __future__ import annotations
@@ -26,13 +32,16 @@ from ._records import (
     decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
 )
 from ..scientific.results.immutable import freeze
+from ._grid_evidence import EDGE_LOG_LIKELIHOOD_DROP, grid_containment, grid_goodness_of_fit, require_grid_is_this_evidence
 from .identifiability import (
     RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
 )
-from .local_gaussian import LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior
+from .local_gaussian import (
+    MISFIT_REASONS, LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior,
+)
 from .predictive import (
-    RoutedPredictiveUncertainty, _require_weights_follow_likelihood, grid_digest, grid_predictive_uncertainty,
-    linearized_predictive_uq,
+    RoutedPredictiveUncertainty, _grid_record, _grid_route_claim, _require_weights_follow_likelihood, grid_digest,
+    grid_predictive_uncertainty, linearized_predictive_uq,
 )
 from .sensitivity import SUPPLIED_PREDICTION_AGREEMENT_SD, evaluate, to_natural
 from .vocabulary import (
@@ -287,9 +296,9 @@ def _grid_summary(grid: PosteriorGrid, how: str) -> dict[str, Any]:
 
 
 #: A rebuilt grid must contain its posterior: on every face that is not a declared bound, the largest
-#: log-likelihood must sit at least this far below the grid's maximum (density below 1e-6 of the peak).
-#: The frozen V1 checks verify resolution, not containment, so the router checks containment itself.
-EDGE_LOG_LIKELIHOOD_DROP = math.log(1.0e6)
+#: log-likelihood must sit at least EDGE_LOG_LIKELIHOOD_DROP below the grid's maximum (density below 1e-6 of the
+#: peak). The frozen V1 checks verify resolution, not containment, so the router checks containment itself -- on
+#: supplied grids too, since CORE-002 (see _grid_evidence).
 _MAXIMUM_BOX_EXPANSIONS = 6
 #: When V1 refuses a rebuilt grid, the aliasing target is raised 4x (steps halved) and the grid rebuilt, at most
 #: this many times and always within the point budget.
@@ -466,6 +475,14 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
         return None, (RouteReason.GRID_REBUILD_UNRESOLVED,
                       f"posterior density still reaches a non-bound face after {_MAXIMUM_BOX_EXPANSIONS} expansions")
 
+    # CORE-002: density within ln 1e6 of the peak on BOTH declared bounds of an axis means the data rule out no part of
+    # the declared range there; the moments along it describe the bounds, and no refinement changes that.
+    dominated = sorted({local.parameter_names[i] for i in truncated if truncated.count(i) >= 2})
+    if dominated:
+        return None, (RouteReason.GRID_POSTERIOR_BOUND_DOMINATED,
+                      f"the posterior reaches both declared bounds of {dominated} within ln 1e6 of its peak: the width "
+                      f"reported there would be the declared range's, not the data's")
+
     halvings = 0
     truncated = sorted(set(truncated))
     while truncated:
@@ -538,19 +555,34 @@ def route_uncertainty(
                            "reason": RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value})
     else:
         _require_weights_follow_likelihood(grid)
+        # CORE-005: a grid is a posterior for a request only when it can be shown to be that request's evidence, and that
+        # needs the observations and the forward model its likelihood is re-evaluated from.
+        bound = isinstance(observations, ObservationSet) and forward is not None
+        if bound:
+            require_grid_is_this_evidence(grid, calibration, observations, forward)
         try:
             identifiability = assess_routed_identifiability(grid)
         except GridResolutionError as exc:
             considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "REFUSED_BY_V1",
                                "reason": RouteReason.GRID_UNRESOLVED.value, "detail": str(exc)[:400]})
         else:
-            considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "USED", "reason": ""})
-            return HybridUQResult(
-                decision=RouteDecision.GRID_AS_SUPPLIED, approximation_class=ApproximationClass.POSTERIOR_GRID,
-                claim=RouteClaim.SUPPORTED, parameter_names=grid.parameter_names, coordinates="natural",
-                mean=tuple(grid.mean), covariance=tuple(map(tuple, grid.covariance)), local_posterior=None,
-                grid_summary=_grid_summary(grid, "GRID_AS_SUPPLIED"), considered=tuple(considered),
-                identifiability=identifiability, grid=grid)
+            if not bound:
+                problem = (RouteReason.GRID_NOT_BOUND_TO_EVIDENCE,
+                           "a supplied grid is used only with the observations and forward model it is checked against")
+            else:
+                # CORE-001 and CORE-002: the declared noise explains the residuals, and the box holds the posterior
+                problem = grid_goodness_of_fit(grid, observations) or grid_containment(grid, calibration)
+            if problem is not None:
+                considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "PASSED_OVER", "reason": problem[0].value,
+                                   "detail": problem[1][:400]})
+            else:
+                considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "USED", "reason": ""})
+                return HybridUQResult(
+                    decision=RouteDecision.GRID_AS_SUPPLIED, approximation_class=ApproximationClass.POSTERIOR_GRID,
+                    claim=RouteClaim.SUPPORTED, parameter_names=grid.parameter_names, coordinates="natural",
+                    mean=tuple(grid.mean), covariance=tuple(map(tuple, grid.covariance)), local_posterior=None,
+                    grid_summary=_grid_summary(grid, "GRID_AS_SUPPLIED"), considered=tuple(considered),
+                    identifiability=identifiability, grid=grid)
 
     # 2. the local Gaussian route
     local = None
@@ -574,7 +606,13 @@ def route_uncertainty(
     # 3. a grid rebuilt from the local covariance, then verified by the frozen V1 checks
     if rebuild is not None and local is not None:
         p = len(local.parameter_names)
-        if p > int(maximum_grid_parameters):
+        misfit = sorted(set(local.reasons) & MISFIT_REASONS, key=lambda r: r.value)
+        if misfit:
+            # CORE-001: a grid claim is SUPPORTED or absent, so a grid cannot carry a misfit the local route recorded
+            considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
+                               "reason": misfit[0].value,
+                               "detail": "the declared noise does not explain the residuals; no grid is built past that"})
+        elif p > int(maximum_grid_parameters):
             considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
                                "reason": RouteReason.GRID_BEYOND_VALIDATED_DIMENSION.value})
         elif set(local.diagnostics.refusals) & _STRUCTURAL:
@@ -653,5 +691,9 @@ def routed_predictive_uncertainty(
         raise HybridUQError("this grid result was read back from a record; the grid itself is data-plane and was not serialized")
     if predictive_table is None or twin is None or model is None or source_ref is None:
         raise HybridUQError("a grid result predicts through a table over result.grid.points: pass predictive_table, twin, model, source_ref")
-    return tuple(grid_predictive_uncertainty(result.grid, predictive_table, spec, twin=twin, model=model, source_ref=source_ref,
-                                             confidence_level=confidence_level) for spec in specs)
+    # The router held this grid to its evidence, its goodness of fit and its containment before it built the result
+    # (CORE-001/-002/-005), and _require_one_truth binds result.grid to the grid_summary digest the result carries. The
+    # resolution judgement is re-applied; the evidence checks cannot be, since the result does not carry the evidence.
+    claim = _grid_route_claim(result.grid)
+    return tuple(_grid_record(result.grid, predictive_table, spec, claim, (), twin=twin, model=model, source_ref=source_ref,
+                              confidence_level=confidence_level) for spec in specs)

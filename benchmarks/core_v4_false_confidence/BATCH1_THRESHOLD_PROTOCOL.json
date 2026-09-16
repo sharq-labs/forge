@@ -85,5 +85,31 @@
   "tests/hybrid_uq, tests/inference, tests/test_k3_predictive_uq.py and tests/test_k4_model_adequacy.py, with every changed assertion listed and explained",
   "the cheap committed evidence (TCR, FAILURE_CASES, PERFORMANCE) re-scored under these rules, with every changed claim listed; BATTERY_T41 and KINETICS_K2 marked as the audit round marked them if not regenerated"
  ],
- "amendments": "any change to a value or rule above after the first scoring is recorded here as a dated amendment with the result that prompted it, never edited in place"
+ "amendments": "any change to a value or rule above after the first scoring is recorded here as a dated amendment with the result that prompted it, never edited in place",
+ "amendment_log": [
+  {
+   "id": 1,
+   "date": "2026-09-16",
+   "changes": "compatibility.legacy_records",
+   "was": "a hybrid_uq.route_diagnostics/1 record is refused on read unless its route was REFUSED before measuring anything",
+   "now": "every hybrid_uq.route_diagnostics/1 record is refused on read",
+   "why": "found while writing the read-back test, before any committed evidence was scored: every record must carry the canonical threshold set, which now includes the batch-1 thresholds, so the exemption could not hold. No threshold value or gating rule changed"
+  },
+  {
+   "id": 2,
+   "date": "2026-09-16",
+   "changes": "rules.supplied_grid_binding.tolerance",
+   "was": "|chi2_grid - chi2_forward| <= 2e-6 * sqrt(n * chi2_forward) + n * 1e-12 + 1e-9",
+   "now": "the same, plus 64 * eps * (|log normalizer| + |log-likelihood| + chi2_forward + n)",
+   "why": "a clarification written with the implementation, before any test ran against it: the grid's chi-square is recovered from its log-likelihood by subtracting the Gaussian normalizer, whose float64 roundoff scales with its magnitude and was not in the stated bound. Class A: agreement of one computation with itself"
+  },
+  {
+   "id": 3,
+   "date": "2026-09-16",
+   "changes": "rules.standalone_grid_predictive and compatibility.moves",
+   "was": "grid_predictive_uncertainty gains two defaulted keyword arguments, observations and forward",
+   "now": "three: observations, forward and calibration (default None); calibration supplies the declared bounds the containment rule names in its refusal",
+   "why": "written with the implementation: the router's containment check reads declared bounds from the calibration, and the standalone function applies the same check. No threshold or gating rule changed"
+  }
+ ]
 }

@@ -313,7 +313,8 @@ def _local_result():
 
 def _grid_result():
     P = S.affine()
-    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]))
+    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]),
+                               observations=P.observations, forward=P.forward)
     assert result.decision is RouteDecision.GRID_AS_SUPPLIED
     return result
 
@@ -451,7 +452,7 @@ def test_an_offset_scale_coordinate_may_be_copied_but_not_combined():
 def _rebuilt_grid_result():
     from engcore.hybrid_uq import GridRebuildPolicy, MultistartPolicy
 
-    P = S.strong_nonlinearity()
+    P = S.bimodal_two_parameter()  # F1 until CORE-002: its rebuilt posterior spans both declared bounds
     result = route_uncertainty(calibration=P.calibrate(), observations=P.observations, forward=P.forward,
                                multistart=MultistartPolicy(), rebuild=GridRebuildPolicy(P.table_builder()))
     assert result.decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE

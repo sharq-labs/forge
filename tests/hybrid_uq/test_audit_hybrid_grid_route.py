@@ -48,7 +48,9 @@ def _forged(grid, **arrays):
 def test_huq02_the_grid_predictive_never_supports_a_grid_the_router_refuses():
     P = S.affine()
     coarse = P.grid([np.linspace(0.0, 2.0, 3), np.linspace(1.0, 3.0, 3)])
-    routed = route_uncertainty(grid=coarse)
+    # the grid is held to the evidence it describes since CORE-005 (scientific core audit 2026-09-16): a supplied grid is
+    # routed only with the observations and forward model its likelihood is re-evaluated from
+    routed = route_uncertainty(grid=coarse, observations=P.observations, forward=P.forward)
     assert routed.decision is RouteDecision.REFUSED and routed.considered[0]["outcome"] == "REFUSED_BY_V1"
     table = P.table_builder()(coarse.points)
     spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
@@ -84,8 +86,12 @@ def test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement():
     table = P.table_builder()(grid.points)
     spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
     record = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
-                                         source_ref="audit")
+                                         source_ref="audit", observations=P.observations, forward=P.forward)
     assert record.route_claim.value == "SUPPORTED" and record.parameter_standard_uncertainty > 0.0
+    # CORE-005: without the evidence that binds it, the same grid is not SUPPORTED
+    unbound = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
+                                          source_ref="audit")
+    assert unbound.route_claim.value == "DOWNGRADED" and [r.value for r in unbound.reasons] == ["GRID_NOT_BOUND_TO_EVIDENCE"]
 
 
 # ---------------------------------------------------------------------------
@@ -159,10 +165,17 @@ def test_huq05_a_table_altered_only_at_its_peak_is_caught():
 # HUQ-06
 # ---------------------------------------------------------------------------
 def test_huq06_a_grid_for_other_data_is_not_routed_for_this_request():
+    """Since CORE-005 a grid of other data is refused by content (test_core005_*). The dataset-id guard is kept for what
+    content cannot see: a grid that names another dataset. B carries A's exact observations under another id, so only
+    the label guard can refuse it -- otherwise the content refusal shadows this guard and a mutation removing it lives."""
     A = S.affine("A")
-    B = S.affine("B", seed=999)
-    with pytest.raises(HybridUQError, match="dataset"):
+    B = S.affine("B", observed=A.observed)
+    with pytest.raises(HybridUQError, match="computed from dataset 'synthetic.B'"):
         route_uncertainty(grid=B.grid(AXES), calibration=A.calibrate(), observations=A.observations, forward=A.forward,
+                          multistart=MultistartPolicy())
+    other = S.affine("A", seed=999)
+    with pytest.raises(HybridUQError, match="not this request's evidence"):
+        route_uncertainty(grid=other.grid(AXES), calibration=A.calibrate(), observations=A.observations, forward=A.forward,
                           multistart=MultistartPolicy())
 
 

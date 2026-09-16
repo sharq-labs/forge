@@ -53,7 +53,8 @@ def local():
 @pytest.fixture(scope="module")
 def grid():
     P = S.affine()
-    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]))
+    result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]),
+                               observations=P.observations, forward=P.forward)
     assert result.decision.value == "GRID_AS_SUPPLIED"
     return result
 
