@@ -148,6 +148,8 @@ class RoutedPredictiveUncertainty:
     route_claim: RouteClaim
     reasons: tuple[RouteReason, ...]
     predictive_nonlinearity: float | None
+    #: CORE-012: the total interval treats measurement errors as independent Gaussian, which no data here can establish.
+    measurement_errors_assumed_independent: bool = True
 
     def __post_init__(self) -> None:
         cls = ApproximationClass(self.approximation_class)
@@ -246,6 +248,7 @@ class RoutedPredictiveUncertainty:
             "model_discrepancy": self.model_discrepancy, "posterior_digest": self.posterior_digest,
             "route_claim": self.route_claim.value, "reasons": [r.value for r in self.reasons],
             "predictive_nonlinearity": None if self.predictive_nonlinearity is None else encode_float(self.predictive_nonlinearity),
+            "measurement_errors_assumed_independent": bool(self.measurement_errors_assumed_independent),
         }
 
     @classmethod
@@ -267,11 +270,42 @@ class RoutedPredictiveUncertainty:
             model_discrepancy=payload["model_discrepancy"], posterior_digest=payload["posterior_digest"],
             route_claim=RouteClaim(payload["route_claim"]), reasons=tuple(RouteReason(r) for r in payload["reasons"]),
             predictive_nonlinearity=None if nonlin is None else decode_float(nonlin),
+            measurement_errors_assumed_independent=bool(payload.get("measurement_errors_assumed_independent", True)),
         )
 
     @property
     def digest(self) -> str:
         return digest_of(self.to_dict())
+
+
+#: CORE-006: a prediction condition equal to an end of the calibrated range, to this relative tolerance, is inside it.
+PREDICTION_RANGE_RELATIVE_TOLERANCE = 1.0e-9
+
+
+def _prediction_domain_reasons(spec: PredictiveObservableSpec, calibration_observations) -> set:
+    """CORE-006: where a prediction sits relative to the conditions its calibration covered, as route reasons.
+
+    DOWNGRADED ``PREDICTION_DOMAIN_NOT_DECLARED`` when nothing can show it -- no calibration observations, no conditions
+    on the prediction, or a prediction condition some calibration observation does not declare -- and DOWNGRADED
+    ``PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`` when a condition lies outside the calibration's range of it. The range is
+    per condition: a joint region is not checked.
+    """
+    observations = getattr(calibration_observations, "observations", None)
+    if not observations or not spec.conditions:
+        return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
+    for name, value in spec.conditions.items():
+        stated = [o.conditions.get(name) for o in observations]
+        if any(v is None for v in stated):
+            return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
+        try:
+            magnitudes = [v.magnitude_in(value.units) for v in stated]
+        except Exception:  # noqa: BLE001 - a condition in another dimension is not a range for this one
+            return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
+        low, high, x = min(magnitudes), max(magnitudes), value.magnitude
+        slack = PREDICTION_RANGE_RELATIVE_TOLERANCE * max(abs(low), abs(high), abs(x))
+        if x < low - slack or x > high + slack:
+            return {RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS}
+    return set()
 
 
 def linearized_predictive_uq(
@@ -281,8 +315,13 @@ def linearized_predictive_uq(
     *,
     confidence_level: float = 0.95,
     check_nonlinearity: bool = True,
+    calibration_observations=None,
 ) -> tuple[RoutedPredictiveUncertainty, ...]:
-    """Linearized predictive uncertainty from a local Gaussian posterior. Refuses a refused posterior."""
+    """Linearized predictive uncertainty from a local Gaussian posterior. Refuses a refused posterior.
+
+    ``calibration_observations`` (CORE-006): the observations the posterior was calibrated on, whose declared conditions
+    say which range a prediction may claim. Without them, or without conditions, a prediction is DOWNGRADED.
+    """
     if not isinstance(posterior, LocalGaussianPosterior):
         raise HybridUQError("linearized_predictive_uq takes a LocalGaussianPosterior")
     cov = posterior._require_numbers()
@@ -369,10 +408,11 @@ def linearized_predictive_uq(
         reasons.add(RouteReason.PREDICTIVE_NONLINEAR)
     if skipped:
         reasons.add(RouteReason.NONLINEARITY_PROBE_INCOMPLETE)
-    claim = claim_for(reasons)
     q = float(norm.ppf(0.5 + level / 2.0))
     out = []
     for i, spec in enumerate(specs):
+        spec_reasons = reasons | _prediction_domain_reasons(spec, calibration_observations)
+        claim = claim_for(spec_reasons)
         out.append(RoutedPredictiveUncertainty(
             observation_key=spec.observation_key, unit=spec.unit, approximation_class=ApproximationClass.LINEARIZED_PREDICTIVE_UQ,
             mean=float(g0[i]), parameter_standard_uncertainty=float(parameter_sd[i]),
@@ -380,7 +420,7 @@ def linearized_predictive_uq(
             parameter_interval=(float(g0[i] - q * parameter_sd[i]), float(g0[i] + q * parameter_sd[i])),
             total_interval=(float(g0[i] - q * total_sd[i]), float(g0[i] + q * total_sd[i])), confidence_level=level,
             sources=UNCERTAINTY_SOURCES, model_discrepancy=MODEL_DISCREPANCY_NOT_MODELLED, posterior_digest=posterior.digest,
-            route_claim=claim, reasons=tuple(reasons), predictive_nonlinearity=nonlinearity,
+            route_claim=claim, reasons=tuple(spec_reasons), predictive_nonlinearity=nonlinearity,
         ))
     return tuple(out)
 
@@ -411,6 +451,8 @@ def grid_predictive_uncertainty(
         raise HybridUQError("grid_predictive_uncertainty takes a PosteriorGrid")
     claim = _grid_route_claim(posterior)
     claim, reasons = _grid_evidence_judgement(posterior, claim, observations, forward, calibration)
+    reasons = tuple(sorted(set(reasons) | _prediction_domain_reasons(spec, observations), key=lambda r: r.value))
+    claim = claim_for(reasons)
     return _grid_record(posterior, predictive_table, spec, claim, reasons, twin=twin, model=model, source_ref=source_ref,
                         confidence_level=confidence_level)
 

@@ -19,8 +19,8 @@ model adequacy / competition work (K4).
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Mapping
 
 import numpy as np
 from scipy.special import ndtr
@@ -28,6 +28,7 @@ from scipy.special import ndtr
 from ..inference import AdmittedForwardTable, GridResolutionError, PosteriorGrid
 from ..inference.calibration import _grid_resolution_refusal
 from ..scientific.ir.problem import ModelReference
+from ..scientific.results.immutable import freeze
 from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity, normalize_unit
@@ -44,8 +45,16 @@ class PredictiveObservableSpec:
     observation_key: str
     unit: str
     observation_sigma: Quantity | None = None
+    conditions: Mapping[str, Quantity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        # CORE-006 (scientific core audit 2026-09-16): the operating point, so a prediction can be compared with the
+        # range a calibration covered. Frozen; serialized only when declared.
+        conditions = dict(self.conditions)
+        for name, value in conditions.items():
+            if not str(name).strip() or not isinstance(value, Quantity):
+                raise UQProblemError(f"condition {name!r} must be a named Quantity")
+        object.__setattr__(self, "conditions", freeze({str(k).strip(): v for k, v in sorted(conditions.items())}))
         key = str(self.observation_key).strip()
         if not key:
             raise UQProblemError("predictive observable requires a non-empty observation_key")

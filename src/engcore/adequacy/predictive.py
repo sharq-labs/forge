@@ -204,6 +204,10 @@ class PredictiveObservationAssessment:
     #: record whose fields describe other evidence than its identity states is
     #: refused rather than believed.
     evidence: PredictiveEvidenceIdentity
+    #: CORE-007 (scientific core audit 2026-09-16): True only when the assessment was made with the split and the
+    #: calibration table, so the posterior was shown BY CONTENT to be the calibration half's likelihood and the observation
+    #: to be the split's held-out one. A read-back record's value is integrity-only, like every serialized digest.
+    content_bound: bool = False
 
     def __post_init__(self) -> None:
         if not str(self.observation_key).strip():
@@ -292,6 +296,7 @@ class PredictiveObservationAssessment:
             "model": self.model.to_dict(),
             "source_ref": self.source_ref,
             "evidence": self.evidence.to_dict(),
+            **({"content_bound": True} if self.content_bound else {}),
         }
 
     @classmethod
@@ -325,6 +330,7 @@ class PredictiveObservationAssessment:
             model=ModelReference.from_dict(payload["model"]),
             source_ref=payload["source_ref"],
             evidence=PredictiveEvidenceIdentity.from_dict(payload["evidence"]),
+            content_bound=bool(payload.get("content_bound", False)),
         )
 
 
@@ -338,6 +344,11 @@ class ModelScoreComparison:
     preferred_model: ModelReference | None
     #: SHA-256 over the ordered evidence identities both models were scored on.
     evidence_digest: str
+    #: CORE-011: the number of paired observations and the standard error of the summed paired difference.
+    n: int = 0
+    standard_error: float = math.nan
+    #: Why a preferred model was or was not named.
+    why: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -348,6 +359,9 @@ class ModelScoreComparison:
             "delta_a_minus_b": self.delta_a_minus_b,
             "preferred_model": self.preferred_model.to_dict() if self.preferred_model else None,
             "evidence_digest": self.evidence_digest,
+            "n": int(self.n),
+            "standard_error": None if not math.isfinite(self.standard_error) else float(self.standard_error),
+            "why": self.why,
         }
 
 
@@ -362,13 +376,45 @@ def assess_predictive_observation(
     source_ref: str,
     heldout_dataset_id: str,
     credible_mass: float = 0.95,
+    split=None,
+    calibration_table: AdmittedForwardTable | None = None,
 ) -> PredictiveObservationAssessment:
     """Score one held-out observation against an exact predictive mixture.
 
     ``heldout_dataset_id`` names the held-out partition ``observed`` belongs to.
     It is required: it is part of what makes this assessment comparable with
     another model's, and the score alone cannot say which partition it came from.
+
+    ``split`` and ``calibration_table`` (CORE-007): given both, the posterior must be the split's calibration-half
+    likelihood by content, and ``observed`` must be the split's held-out observation of this key; the assessment is then
+    ``content_bound``. A comparison names a preferred model only over content-bound assessments.
     """
+    content_bound = False
+    if (split is None) != (calibration_table is None):
+        raise ModelAdequacyError("content binding needs both the split and the calibration table, or neither")
+    if split is not None:
+        from ..inference.split import _require_posterior_conditioned_on_calibration, require_split
+
+        require_split(split)
+        _require_posterior_conditioned_on_calibration(split, posterior, calibration_table)
+        if str(heldout_dataset_id).strip() != split.heldout_dataset_id:
+            raise ModelAdequacyError(
+                f"held-out dataset {heldout_dataset_id!r} is not the split's held-out set {split.heldout_dataset_id!r}")
+        matching = [o for o in split.held_out.observations if o.key == spec.observation_key]
+        if not matching:
+            raise ModelAdequacyError(
+                f"{spec.observation_key!r} is not an observation of the split's held-out set; a score on it is not "
+                f"held-out evidence")
+        held = matching[0].value
+        try:
+            same = isinstance(observed, Quantity) and math.isclose(
+                observed.magnitude_in(held.units), held.magnitude, rel_tol=1e-12, abs_tol=0.0)
+        except Exception:  # noqa: BLE001 - an incompatible value is another value
+            same = False
+        if not same:
+            raise ModelAdequacyError(
+                f"{spec.observation_key!r} is scored at {observed}, but the split's held-out observation is {held}")
+        content_bound = True
 
     if spec.observation_sigma is None:
         raise ModelAdequacyError(
@@ -478,7 +524,15 @@ def assess_predictive_observation(
             posterior_dataset_id=posterior.dataset_id,
             twin=twin,
         ),
+        content_bound=content_bound,
     )
+
+
+#: CORE-011, preregistered in benchmarks/core_v4_false_confidence/BATCH4_THRESHOLD_PROTOCOL.json (class C, from the
+#: elpd-difference practice of Vehtari, Gelman and Gabry 2017 and Sivula, Magnusson and Vehtari 2022).
+COMPARISON_MINIMUM_N = 2
+COMPARISON_MINIMUM_ABS_DELTA = 4.0
+COMPARISON_MINIMUM_SE_MULTIPLE = 2.0
 
 
 def compare_log_predictive_scores(
@@ -539,10 +593,36 @@ def compare_log_predictive_scores(
     if not math.isfinite(score_a) or not math.isfinite(score_b):
         raise ModelAdequacyError("model comparison score is non-finite")
     delta = score_a - score_b
-    preferred = model_a if delta > 0.0 else model_b if delta < 0.0 else None
     evidence_digest = hashlib.sha256(
         json.dumps([item.evidence.digest for item in a], separators=(",", ":")).encode("utf-8")
     ).hexdigest()
+
+    # CORE-011 (scientific core audit 2026-09-16): a preference only when the difference is decisive. It used to be
+    # named for any delta > 0, including 1.5e-9 nats on one observation.
+    n = len(a)
+    differences = np.asarray([x.log_predictive_density - y.log_predictive_density for x, y in zip(a, b)], dtype=np.float64)
+    standard_error = float(math.sqrt(n * float(np.var(differences, ddof=1)))) if n >= 2 else math.nan
+    leader = model_a if delta > 0.0 else model_b if delta < 0.0 else None
+    if not all(item.content_bound for item in (*a, *b)):
+        preferred, why = None, (
+            "no preferred model: not every assessment is content-bound to its split (CORE-007), so nothing shows the "
+            "held-out scores were not computed on data the posteriors were fitted to")
+    elif n < COMPARISON_MINIMUM_N:
+        preferred, why = None, (
+            f"no preferred model: {n} paired observation(s), fewer than the {COMPARISON_MINIMUM_N} a standard error of "
+            f"the difference needs")
+    elif abs(delta) <= COMPARISON_MINIMUM_ABS_DELTA:
+        preferred, why = None, (
+            f"no preferred model: |delta| {abs(delta):.3g} nats does not exceed {COMPARISON_MINIMUM_ABS_DELTA:g} nats")
+    elif abs(delta) <= COMPARISON_MINIMUM_SE_MULTIPLE * standard_error:
+        preferred, why = None, (
+            f"no preferred model: |delta| {abs(delta):.3g} nats is within {COMPARISON_MINIMUM_SE_MULTIPLE:g} standard "
+            f"errors ({standard_error:.3g})")
+    else:
+        preferred, why = leader, (
+            f"|delta| {abs(delta):.3g} nats over {n} content-bound paired observations exceeds "
+            f"{COMPARISON_MINIMUM_ABS_DELTA:g} nats and {COMPARISON_MINIMUM_SE_MULTIPLE:g} standard errors "
+            f"({standard_error:.3g})")
     return ModelScoreComparison(
-        model_a, model_b, score_a, score_b, delta, preferred, evidence_digest
+        model_a, model_b, score_a, score_b, delta, preferred, evidence_digest, n=n, standard_error=standard_error, why=why
     )

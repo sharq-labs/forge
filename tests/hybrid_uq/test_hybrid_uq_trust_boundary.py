@@ -285,10 +285,12 @@ def test_o_and_p_skipping_the_check_changes_the_claim_and_not_the_numbers():
     from engcore.uq import PredictiveObservableSpec
 
     post = _supported_multistart_posterior()
-    spec = PredictiveObservableSpec("y@0.5", UNIT, Quantity(0.05, UNIT))
+    spec = PredictiveObservableSpec("y@0.5", UNIT, Quantity(0.05, UNIT), conditions={"x": Quantity(0.5, UNIT)})
     predict = lambda t: [Quantity(t[0] + 0.5 * t[1], UNIT)]  # noqa: E731
-    (checked,) = linearized_predictive_uq(post, predict, [spec])
-    (unchecked,) = linearized_predictive_uq(post, predict, [spec], check_nonlinearity=False)
+    calibrated = S.conditioned(S.affine())  # CORE-006: x = 0.5 lies inside the calibrated range
+    (checked,) = linearized_predictive_uq(post, predict, [spec], calibration_observations=calibrated)
+    (unchecked,) = linearized_predictive_uq(post, predict, [spec], check_nonlinearity=False,
+                                            calibration_observations=calibrated)
     # P: the default, complete check on an affine prediction still supports it
     assert checked.route_claim is RouteClaim.SUPPORTED and checked.reasons == ()
     assert checked.predictive_nonlinearity is not None and checked.predictive_nonlinearity < 1e-6

@@ -1,28 +1,23 @@
 """Scientific core audit 2026-09-16, batch 4: prediction domain, content-bound adequacy and decisive comparison.
 
 Findings CORE-006, CORE-007, CORE-011 and CORE-012 (docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md), under
-benchmarks/core_v4_false_confidence/BATCH4_THRESHOLD_PROTOCOL.json. Recorded as strict xfails before the fix.
+benchmarks/core_v4_false_confidence/BATCH4_THRESHOLD_PROTOCOL.json. Recorded as strict xfails in commit fe8ad72, each
+seen failing, before the fix.
 """
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import numpy as np
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "hybrid_uq"))
-import hybrid_synthetic as S  # noqa: E402
+import hybrid_synthetic as S
+from engcore.adequacy import assess_predictive_observation, compare_log_predictive_scores
+from engcore.hybrid_uq import MultistartPolicy, RouteClaim, linearized_predictive_uq, local_gaussian_posterior
+from engcore.inference import AdmittedForwardTable, GaussianObservation, ObservationSet, gaussian_grid_posterior
+from engcore.inference.split import ObservationSplit
+from engcore.scientific import ModelReference, Quantity, TwinReference
+from engcore.uq import PredictiveObservableSpec
 
-from engcore.adequacy import assess_predictive_observation, compare_log_predictive_scores  # noqa: E402
-from engcore.hybrid_uq import MultistartPolicy, RouteClaim, linearized_predictive_uq, local_gaussian_posterior  # noqa: E402
-from engcore.inference import AdmittedForwardTable, GaussianObservation, ObservationSet, gaussian_grid_posterior  # noqa: E402
-from engcore.inference.split import ObservationSplit  # noqa: E402
-from engcore.scientific import ModelReference, Quantity, TwinReference  # noqa: E402
-from engcore.uq import PredictiveObservableSpec  # noqa: E402
-
-AUDITED = pytest.mark.xfail(strict=True, reason="reproduced before batch 4; fixed in batch 4")
 UNIT = "dimensionless"
 TWIN = TwinReference("rig", "1")
 
@@ -32,11 +27,7 @@ TWIN = TwinReference("rig", "1")
 # ---------------------------------------------------------------------------
 def _affine_with_conditions():
     P = S.affine("CORE006")
-    observations = ObservationSet(tuple(
-        GaussianObservation(o.condition_id, o.observable_name, o.value, o.sigma, o.source_ref,
-                            conditions={"x": Quantity(float(x), UNIT)})
-        for o, x in zip(P.observations.observations, P.x)), dataset_id=P.observations.dataset_id)
-    P.observations = observations
+    P.observations = S.conditioned(P)
     return P
 
 
@@ -49,7 +40,6 @@ def _spec(x=None):
     return PredictiveObservableSpec(f"y@{x}", UNIT, Quantity(0.05, UNIT), conditions=conditions)
 
 
-@AUDITED
 def test_core006_a_prediction_with_no_declared_domain_is_downgraded():
     P = _affine_with_conditions()
     post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
@@ -60,7 +50,6 @@ def test_core006_a_prediction_with_no_declared_domain_is_downgraded():
     assert "PREDICTION_DOMAIN_NOT_DECLARED" in {r.value for r in unbound.reasons}
 
 
-@AUDITED
 def test_core006_an_extrapolated_prediction_is_downgraded_and_an_interpolated_one_is_not():
     P = _affine_with_conditions()
     post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
@@ -74,7 +63,6 @@ def test_core006_an_extrapolated_prediction_is_downgraded_and_an_interpolated_on
 # ---------------------------------------------------------------------------
 # CORE-012: the independence assumption is stated on the record
 # ---------------------------------------------------------------------------
-@AUDITED
 def test_core012_every_routed_prediction_states_that_errors_are_assumed_independent():
     P = _affine_with_conditions()
     post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
@@ -127,7 +115,6 @@ BIASED = lambda th, key: th * XS[key.split(":")[0]] + 2.0  # noqa: E731
 TWIN_OF_GOOD = lambda th, key: th * XS[key.split(":")[0]] + 1e-9  # noqa: E731
 
 
-@AUDITED
 def test_core007_a_held_out_point_inside_the_conditioning_set_is_refused_when_the_split_is_given():
     split = _split()
     leaky = ObservationSet(split.calibration.observations + (split.held_out.observations[0],), dataset_id="calibration")
@@ -140,7 +127,6 @@ def test_core007_a_held_out_point_inside_the_conditioning_set_is_refused_when_th
                                       calibration_table=_table(split.calibration.keys, GOOD))
 
 
-@AUDITED
 def test_core011_a_negligible_difference_names_no_preferred_model():
     split = _split()
     comparison = compare_log_predictive_scores(ModelReference("A", "1"), _assessments("A", GOOD, split),
@@ -148,7 +134,6 @@ def test_core011_a_negligible_difference_names_no_preferred_model():
     assert comparison.preferred_model is None and comparison.n == 3 and "4 nats" in comparison.why
 
 
-@AUDITED
 def test_core011_a_decisive_difference_on_content_bound_evidence_names_the_better_model():
     split = _split()
     comparison = compare_log_predictive_scores(ModelReference("A", "1"), _assessments("A", GOOD, split),
@@ -157,7 +142,6 @@ def test_core011_a_decisive_difference_on_content_bound_evidence_names_the_bette
     assert comparison.preferred_model == ModelReference("A", "1")
 
 
-@AUDITED
 def test_core007_the_same_decisive_difference_on_unbound_evidence_names_no_preferred_model():
     split = _split()
     comparison = compare_log_predictive_scores(ModelReference("A", "1"), _assessments("A", GOOD, split, bound=False),

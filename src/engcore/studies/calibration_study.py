@@ -220,8 +220,8 @@ def _require_bound_and_applicable(
     reference_temperature: Quantity,
     temperatures_by_condition: Mapping[str, Quantity],
     counter: dict[str, int] | None,
-) -> None:
-    """INF-03 and INF-01, before any held-out or predictive statement is made.
+):
+    """INF-03 and INF-01, before any held-out or predictive statement is made. Returns the calibration table.
 
     Content binding: the posterior must be the likelihood of this split's
     calibration half, recomputed through the production forward model over the
@@ -277,6 +277,7 @@ def _require_bound_and_applicable(
             f"interval there would be a statement about a model outside its "
             f"validated domain"
         )
+    return calibration_table
 
 
 def predict_held_out(
@@ -373,7 +374,7 @@ def validate_held_out(
     require_split(split)
     split.require_posterior_was_fitted_here(posterior.dataset_id)
     _require_declared_sigma(split, observation_sigma)
-    _require_bound_and_applicable(
+    calibration_table = _require_bound_and_applicable(
         posterior, split, reference_temperature=reference_temperature,
         temperatures_by_condition=temperatures_by_condition, counter=counter,
     )
@@ -406,6 +407,9 @@ def validate_held_out(
             source_ref=f"study:{split.heldout_dataset_id}",
             heldout_dataset_id=split.heldout_dataset_id,
             credible_mass=credible_mass,
+            # CORE-007: bound by content, so these assessments can support a model comparison
+            split=split,
+            calibration_table=calibration_table,
         )
         residuals.append(assessment.standardized_residual)
         log_densities.append(assessment.log_predictive_density)

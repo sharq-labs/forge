@@ -30,6 +30,7 @@ from engcore.hybrid_uq import (
 from engcore.hybrid_uq.predictive import grid_digest
 from engcore.inference import AdmittedForwardTable, GridResolutionError
 from engcore.scientific.twins import TwinReference
+from engcore.scientific.units.quantity import Quantity
 from engcore.uq import PredictiveObservableSpec
 
 AXES = [np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]
@@ -84,14 +85,18 @@ def test_huq02_a_resolved_grid_is_still_supported_through_the_same_judgement():
     P = S.affine()
     grid = P.grid(AXES)
     table = P.table_builder()(grid.points)
-    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless")
+    # CORE-006: a prediction at the sixth observation's x, inside the range the conditioned observations declare
+    spec = PredictiveObservableSpec(observation_key=P.observations.keys[5], unit="dimensionless",
+                                    conditions={"x": Quantity(float(P.x[5]), "dimensionless")})
     record = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
-                                         source_ref="audit", observations=P.observations, forward=P.forward)
+                                         source_ref="audit", observations=S.conditioned(P), forward=P.forward)
     assert record.route_claim.value == "SUPPORTED" and record.parameter_standard_uncertainty > 0.0
-    # CORE-005: without the evidence that binds it, the same grid is not SUPPORTED
+    # CORE-005 and CORE-006: without the evidence that binds it, the same grid is not SUPPORTED, and nothing states the
+    # range the prediction may claim either
     unbound = grid_predictive_uncertainty(grid, table, spec, twin=TwinReference("twin.synthetic", "1"), model=S.MODEL,
                                           source_ref="audit")
-    assert unbound.route_claim.value == "DOWNGRADED" and [r.value for r in unbound.reasons] == ["GRID_NOT_BOUND_TO_EVIDENCE"]
+    assert unbound.route_claim.value == "DOWNGRADED"
+    assert [r.value for r in unbound.reasons] == ["GRID_NOT_BOUND_TO_EVIDENCE", "PREDICTION_DOMAIN_NOT_DECLARED"]
 
 
 # ---------------------------------------------------------------------------

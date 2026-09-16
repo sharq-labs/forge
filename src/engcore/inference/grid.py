@@ -14,11 +14,12 @@ contains no CSTR semantics and no solver execution policy.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 import numpy as np
 
+from ..scientific.results.immutable import freeze
 from ..scientific.units.quantity import Quantity
 from .admissibility import (
     AdmissibleAnalyticPrediction,
@@ -42,8 +43,16 @@ class GaussianObservation:
     value: Quantity
     sigma: Quantity
     source_ref: str
+    conditions: Mapping[str, Quantity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        # CORE-006 (scientific core audit 2026-09-16): the operating point, so a prediction can be compared with the
+        # range a calibration covered. Frozen; serialized only when declared.
+        conditions = dict(self.conditions)
+        for name, value in conditions.items():
+            if not str(name).strip() or not isinstance(value, Quantity):
+                raise InferenceProblemError(f"condition {name!r} must be a named Quantity")
+        object.__setattr__(self, "conditions", freeze({str(k).strip(): v for k, v in sorted(conditions.items())}))
         for label in ("condition_id", "observable_name", "source_ref"):
             text = str(getattr(self, label)).strip()
             if not text:
@@ -66,6 +75,7 @@ class GaussianObservation:
             "value": self.value.to_dict(),
             "sigma": self.sigma.to_dict(),
             "source_ref": self.source_ref,
+            **({"conditions": {k: v.to_dict() for k, v in self.conditions.items()}} if self.conditions else {}),
         }
 
 

@@ -42,12 +42,14 @@ from .local_gaussian import (
     MISFIT_REASONS, LocalGaussianPosterior, MultistartPolicy, _posterior_record_problems, local_gaussian_posterior,
 )
 from .predictive import (
-    RoutedPredictiveUncertainty, _grid_record, _grid_route_claim, _require_weights_follow_likelihood, grid_digest,
+    RoutedPredictiveUncertainty, _grid_record, _grid_route_claim, _prediction_domain_reasons,
+    _require_weights_follow_likelihood, grid_digest,
     grid_predictive_uncertainty, linearized_predictive_uq,
 )
 from .sensitivity import SUPPLIED_PREDICTION_AGREEMENT_SD, evaluate, to_natural
 from .vocabulary import (
     GRID_ROUTE_MAXIMUM_PARAMETERS, ApproximationClass, HybridUQError, RouteClaim, RouteDecision, RouteReason, RouteRefusedError,
+    claim_for,
 )
 
 HYBRID_UQ_RESULT_SCHEMA = "hybrid_uq.hybrid_uq_result/1"
@@ -681,8 +683,13 @@ def routed_predictive_uncertainty(
     model: ModelReference | None = None,
     source_ref: str | None = None,
     confidence_level: float = 0.95,
+    calibration_observations: ObservationSet | None = None,
 ) -> tuple[RoutedPredictiveUncertainty, ...]:
-    """Predictive uncertainty through whichever route the result used. A refused result has none."""
+    """Predictive uncertainty through whichever route the result used. A refused result has none.
+
+    ``calibration_observations`` (CORE-006) are the observations the result was calibrated on; their declared conditions
+    bound the range a prediction may claim. Without them every prediction is DOWNGRADED ``PREDICTION_DOMAIN_NOT_DECLARED``.
+    """
     if not isinstance(result, HybridUQResult):
         raise HybridUQError("routed_predictive_uncertainty takes a HybridUQResult")
     if result.decision is RouteDecision.REFUSED:
@@ -690,7 +697,8 @@ def routed_predictive_uncertainty(
     if result.decision is RouteDecision.LOCAL_GAUSSIAN:
         if predict is None:
             raise HybridUQError("a LOCAL_GAUSSIAN result predicts through a forward evaluator: pass predict")
-        return linearized_predictive_uq(result.local_posterior, predict, specs, confidence_level=confidence_level)
+        return linearized_predictive_uq(result.local_posterior, predict, specs, confidence_level=confidence_level,
+                                        calibration_observations=calibration_observations)
     if result.grid is None:
         raise HybridUQError("this grid result was read back from a record; the grid itself is data-plane and was not serialized")
     if predictive_table is None or twin is None or model is None or source_ref is None:
@@ -698,6 +706,10 @@ def routed_predictive_uncertainty(
     # The router held this grid to its evidence, its goodness of fit and its containment before it built the result
     # (CORE-001/-002/-005), and _require_one_truth binds result.grid to the grid_summary digest the result carries. The
     # resolution judgement is re-applied; the evidence checks cannot be, since the result does not carry the evidence.
-    claim = _grid_route_claim(result.grid)
-    return tuple(_grid_record(result.grid, predictive_table, spec, claim, (), twin=twin, model=model, source_ref=source_ref,
-                              confidence_level=confidence_level) for spec in specs)
+    _grid_route_claim(result.grid)
+    out = []
+    for spec in specs:
+        reasons = tuple(sorted(_prediction_domain_reasons(spec, calibration_observations), key=lambda r: r.value))
+        out.append(_grid_record(result.grid, predictive_table, spec, claim_for(reasons), reasons, twin=twin, model=model,
+                                source_ref=source_ref, confidence_level=confidence_level))
+    return tuple(out)

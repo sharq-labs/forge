@@ -91,6 +91,18 @@ class Problem:
         return build
 
 
+def conditioned(problem):
+    """The problem's observations with each one's x declared as its condition (CORE-006: the calibrated range).
+
+    Separate from ``Problem.observations`` so every existing observation keeps its bytes; a prediction check passes this
+    as ``calibration_observations`` and declares its own x on the spec.
+    """
+    return ObservationSet(tuple(
+        GaussianObservation(o.condition_id, o.observable_name, o.value, o.sigma, o.source_ref,
+                            conditions={"x": Quantity(float(x), UNIT)})
+        for o, x in zip(problem.observations.observations, problem.x)), dataset_id=problem.observations.dataset_id)
+
+
 def affine(label="affine", **kw):
     x = np.linspace(0.0, 1.0, 12)
     return Problem(label, lambda t, x: t[0] + t[1] * x, x, (1.0, 2.0), 0.05, (-10.0, -10.0), (10.0, 10.0), (0.0, 0.0), **kw)
