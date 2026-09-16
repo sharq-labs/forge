@@ -1,0 +1,8 @@
+B4a test_core006_an_extrapolated_prediction_is_downgraded_and_an_interpolated_one_is_not -> KILLED | 1 failed in 1.05s
+B4b test_core006_a_prediction_with_no_declared_domain_is_downgraded -> KILLED | 1 failed in 1.07s
+B4c test_core006_an_extrapolated_prediction_is_downgraded_and_an_interpolated_one_is_not -> KILLED | 1 failed in 1.35s
+B4d test_core007_a_held_out_point_inside_the_conditioning_set_is_refused_when_the_split_is_given -> KILLED | 1 failed in 1.14s
+B4e test_core007_the_same_decisive_difference_on_unbound_evidence_names_no_preferred_model -> KILLED | 1 failed in 1.28s
+B4f test_core011_a_negligible_difference_names_no_preferred_model -> KILLED | 1 failed in 1.15s
+B4g test_core012_every_routed_prediction_states_that_errors_are_assumed_independent -> KILLED | 1 failed in 1.16s
+CONTROL (unmutated) GREEN | 6 passed in 1.25s

@@ -36,13 +36,13 @@ route vocabulary once, and the certification round (Core Freeze V4) is run once,
 | CORE-003 | P1 | local route diagnostics | The chi² probes sit at exactly ±2 sd. A posterior Gaussian to 2.05 sd with a slowly rising tail is SUPPORTED; its reported 95% interval holds 4.7% of the posterior mass. | 1 | PARTIAL |
 | CORE-004 | P1 | identifiability | Relative width is divided by \|mean\| and the condition number is taken on the raw covariance: a location shift turns IDENTIFIABLE into NOT_IDENTIFIABLE, a metre→micrometre rescale turns IDENTIFIABLE into WEAKLY_IDENTIFIABLE (condition 2.54 → 2.54e12). | 2 | PARTIAL |
 | CORE-005 | P0 | grid route binding | A supplied grid is bound to the request by `dataset_id` string only (HUQ-06). A grid computed from data shifted by 185 sd, under the same id, is `GRID_AS_SUPPLIED SUPPORTED`. | 1 | PARTIAL |
-| CORE-006 | P1 | predictive UQ | No calibration or prediction domain; the predictor is not bound to the calibrated model. Extrapolation to 10⁴× the calibrated range, and an unrelated predictor in kelvin, are SUPPORTED. | 4 | OPEN (INF-01 deferred) |
-| CORE-007 | P1 | adequacy | Held-out leakage is refused by label only; a model comparison between two identical models is won by +0.95 nats through the leak. | 4 | OPEN (INF-03/07 deferred) |
+| CORE-006 | P1 | predictive UQ | No calibration or prediction domain; the predictor is not bound to the calibrated model. Extrapolation to 10⁴× the calibrated range, and an unrelated predictor in kelvin, are SUPPORTED. | 4 | PARTIAL |
+| CORE-007 | P1 | adequacy | Held-out leakage is refused by label only; a model comparison between two identical models is won by +0.95 nats through the leak. | 4 | FIXED (content binding available; comparisons require it) |
 | CORE-008 | P1 | result semantics | A record whose only passing checks are verification levels (dimensional, numerical convergence, analytic) derives a SUPPORTED credibility verdict. | 3 | PARTIAL |
 | CORE-009 | P1 (latent) | experimental validation | An oracle observation carries no conditions, inputs or model version; `EXPERIMENTALLY_VALIDATED` attaches to any result. | 3b | PARTIAL |
 | CORE-010 | P2 | grid prior | Grid weights carry no cell volume, so node density is an undeclared prior: a clustered axis moves the mean 0.9 sd and cuts the sd 29%, SUPPORTED, against the non-claim "no informative priors". | 2 | FIXED (routed claims) |
-| CORE-011 | P2 | model comparison | `preferred_model` is issued for any delta > 0, including 1.5e-9 nats on one observation. | 4 | OPEN |
-| CORE-012 | P2 | calibration statistics | Only independent Gaussian noise is representable, and nothing asks for independence to be attested; a shared systematic offset narrows as 1/√n. | 4 | OPEN |
+| CORE-011 | P2 | model comparison | `preferred_model` is issued for any delta > 0, including 1.5e-9 nats on one observation. | 4 | FIXED |
+| CORE-012 | P2 | calibration statistics | Only independent Gaussian noise is representable, and nothing asks for independence to be attested; a shared systematic offset narrows as 1/√n. | 4 | PARTIAL (recorded) |
 | CORE-013 | P2 | validation report | `ValidationReport.status` is PASS while an experimental check is NOT_RUN. | 3 | FIXED |
 | CORE-014 | P2 | validity | A validity assessment is not bound to the input values it was computed at. | 3b | PARTIAL |
 | CORE-015 | P2 | experiments | An OK evaluation accepts unassessed or model-less results (residual of RES-06). | 3 | FIXED |
@@ -112,3 +112,16 @@ serialized only when it carries information, so no existing record's bytes or or
 | CORE-009 | `OracleObservation.conditions`; a comparison whose stated conditions are missing or differ is NOT_RUN and awards no level. | A `ValidationCheck` is still not bound to the result it qualifies (the deferred VAL-01 field); no pinned oracle declares conditions yet. |
 | CORE-014 | `ValidityDomain.assess(..., record_values=True)` records the Quantities read; `ScientificResult` refuses an assessment made at another operating point than its provenance inputs. | Opt-in: an assessment built without `record_values` binds nothing, and no domain opts in yet. |
 | CORE-016 | `UncertaintySource` on `Uncertainty.source_kind`; cross-domain transfer carries it. | `QuantityTransfer` carries no upstream credibility, and nothing combines uncertainty sources; UNSPECIFIED is the default. |
+
+## Batch 4 — what now holds
+
+Commits `fe8ad72` (preregistration, strict xfails), `43c68d2` (fix). Strictness decided by the repository owner on 2026-09-16:
+undeclared or unbound information lowers comparison and prediction claims; error independence is recorded. Guard mutations:
+`BATCH4_MUTATIONS.log` (7 killed, green control); the 21 existing mutations in the changed files still apply and are killed.
+
+| ID | What now holds | Residual |
+|---|---|---|
+| CORE-006 | Observations and prediction specs carry conditions. A routed prediction outside the calibration's per-condition range is DOWNGRADED `PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`; one whose range nothing states is DOWNGRADED `PREDICTION_DOMAIN_NOT_DECLARED`. | The calibrated region is a per-condition box, not a joint region. The predictor callable is bound to the posterior's digest, not to the calibrated model. Until domains declare conditions, their routed predictions are DOWNGRADED. |
+| CORE-007 | `assess_predictive_observation(split=, calibration_table=)` binds the posterior to the calibration half by content and the observation to the split (`content_bound`); the TCR study passes both. | An assessment made without them is still made and serialized; it simply cannot support a comparison. A read-back `content_bound` is integrity-only. |
+| CORE-011 | `preferred_model` only for n >= 2, &#124;delta&#124; > 4 nats and > 2 paired standard errors, on content-bound assessments; `n`, `standard_error`, `why` recorded. | The thresholds are class C, from the elpd-difference literature; the number of models compared on the same held-out set is not recorded. |
+| CORE-012 | Every routed predictive record states `measurement_errors_assumed_independent`. | Correlated and systematic errors remain unrepresentable, and nothing tests the assumption. |
