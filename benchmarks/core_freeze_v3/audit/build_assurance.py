@@ -82,7 +82,7 @@ def run_suites(basetemp: str) -> None:
     write_json(ROUND / "SUITES.json", {"commit": commit, "suites": results})
 
 
-def record_formal(logs: list[str]) -> None:
+def record_formal(logs: list[str], shard_commits: list[str]) -> None:
     from tools.certification import mutation_population as formal
 
     population = formal.canonical_population(ROOT)
@@ -94,8 +94,20 @@ def record_formal(logs: list[str]) -> None:
             raise SystemExit(f"shard {index} transcript does not support the claim: {problems}")
         target = ROUND / f"FORMAL_SHARD_{index}.log"
         target.write_bytes(text.encode("utf-8"))
+        measured = git("rev-parse", shard_commits[index]) if shard_commits else git("rev-parse", "HEAD")
         shards.append({"index": index, "selected": len(population.shard(index)), "log": target.name,
-                       "log_sha256": sha256(text.encode("utf-8"))})
+                       "log_sha256": sha256(text.encode("utf-8")), "measured_at": measured})
+    # A shard re-run after a change to ITS mutations only is legitimate evidence only if nothing a
+    # mutation or its suites read moved between the commits the shards were measured at.
+    if shard_commits and len(set(shard_commits)) > 1:
+        from tools.certification import mutation_population as _mp  # noqa: F401
+        import runpy
+        targets = list(runpy.run_path(str(ROOT / "tests" / "mutation_guards.py"), run_name="probe")["TARGETS"])
+        first = shard_commits[0]
+        for other in shard_commits[1:]:
+            moved = git("diff", "--name-only", first, other, "--", "src", *targets)
+            if moved:
+                raise SystemExit(f"shards measured at {first} and {other} saw different source or suites: {moved}")
     write_json(ROUND / "FORMAL_MUTATIONS.json", {
         "commit": git("rev-parse", "HEAD"), "population_sha256": population.sha256, "population": population.count,
         "shard_count": len(logs), "killed": sum(s["selected"] for s in shards), "control": "GREEN", "shards": shards})
@@ -147,13 +159,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("which", choices=["suites", "formal", "trust", "freeze"])
     ap.add_argument("--logs", nargs="*")
+    ap.add_argument("--shard-commits", nargs="*",
+                    help="the commit each shard transcript was measured at, in shard order")
     ap.add_argument("--candidate")
     ap.add_argument("--basetemp", default="D:/fbt-v3")
     args = ap.parse_args()
     if args.which == "suites":
         run_suites(args.basetemp)
     elif args.which == "formal":
-        record_formal(args.logs or [])
+        record_formal(args.logs or [], args.shard_commits or [])
     elif args.which == "trust":
         record_trust()
     else:
