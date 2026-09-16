@@ -1,5 +1,5 @@
 {
-  "commit": "069908f1b0bcf5bb759a0f0f0c35b10ed007b8fe",
+  "commit": "656dea7998212bc8d3e6aa2391fb0f89117f3894",
   "suites": {
     "FAST": {
       "deselected_certificate_child_self_checks": [
@@ -10,7 +10,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "6055 passed, 6 skipped, 42 warnings in 121.93s (0:02:01)"
+      "summary_line": "6056 passed, 5 skipped, 42 warnings in 122.80s (0:02:02)"
     },
     "api_snapshot_v1": {
       "deselected_certificate_child_self_checks": [
@@ -21,7 +21,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "17 passed in 3.35s"
+      "summary_line": "17 passed in 3.54s"
     },
     "api_snapshot_v2": {
       "deselected_certificate_child_self_checks": [
@@ -32,7 +32,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "5 passed in 0.94s"
+      "summary_line": "5 passed in 0.97s"
     },
     "audit_regressions": {
       "deselected_certificate_child_self_checks": [
@@ -43,7 +43,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "452 passed in 7.70s"
+      "summary_line": "452 passed in 8.51s"
     },
     "certificate": {
       "deselected_certificate_child_self_checks": [
@@ -54,7 +54,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "206 passed, 1 skipped, 2 deselected in 30.91s"
+      "summary_line": "206 passed, 1 skipped, 2 deselected in 27.75s"
     },
     "freeze_manifest_v1": {
       "deselected_certificate_child_self_checks": [
@@ -65,7 +65,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "36 passed, 1 skipped, 2 deselected in 2.47s"
+      "summary_line": "36 passed, 1 skipped, 2 deselected in 2.59s"
     },
     "freeze_manifest_v3": {
       "deselected_certificate_child_self_checks": [
@@ -76,7 +76,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "15 passed, 1 skipped in 4.55s"
+      "summary_line": "16 passed in 5.27s"
     },
     "hybrid_uq_focused": {
       "deselected_certificate_child_self_checks": [
@@ -87,7 +87,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "236 passed in 19.64s"
+      "summary_line": "236 passed in 21.04s"
     }
   }
 }
