@@ -67,6 +67,9 @@ def run_suites(basetemp: str) -> None:
     for name, args in SUITES.items():
         if args is None:
             args = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in ROOT.glob("tests/**/test_audit_*.py"))
+        # pytest creates --basetemp with parents=False, so its parent must exist before the first
+        # test asks for tmp_path (the same trap that made the mutation harness's control red).
+        pathlib.Path(basetemp).mkdir(parents=True, exist_ok=True)
         deselect = [item for check in CERTIFICATE_SELF_CHECKS for item in ("--deselect", check)]
         cmd = [sys.executable, "-X", "utf8", "-m", "pytest", *args, "-q", "-p", "no:cacheprovider",
                f"--basetemp={basetemp}/{name}", *deselect]
