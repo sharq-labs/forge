@@ -2,8 +2,16 @@
  "schema": "core_v4_false_confidence_threshold_protocol/1",
  "batch": 3,
  "part": "3a",
- "findings": ["CORE-008", "CORE-013", "CORE-015"],
- "deferred_to_part_3b": ["CORE-009", "CORE-014", "CORE-016"],
+ "findings": [
+  "CORE-008",
+  "CORE-013",
+  "CORE-015"
+ ],
+ "deferred_to_part_3b": [
+  "CORE-009",
+  "CORE-014",
+  "CORE-016"
+ ],
  "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
  "baseline_commit": "08e50a6",
  "written_before_any_rule_below_was_implemented_or_scored": true,
@@ -40,5 +48,15 @@
   "every batch-3a regression test, seen failing on the baseline commit and passing after",
   "every existing assertion that changes, with the reason, including any domain study or benchmark whose best candidate changes"
  ],
- "amendments": "recorded here as dated entries, never edited in place"
+ "amendments": "recorded here as dated entries, never edited in place",
+ "amendment_log": [
+  {
+   "id": 1,
+   "date": "2026-09-16",
+   "changes": "rules.evidence_basis.where",
+   "was": "ValidationReport.evidence_basis (derived) and the credibility report's verdict_qualifiers.evidence_basis",
+   "now": "ValidationReport.evidence_basis is a derived property and is NOT added to ValidationReport.to_dict; the credibility report's verdict_qualifiers carries it and re-derives it on read",
+   "why": "written with the implementation, before any test ran against it: ValidationReport bytes are inside every serialized ScientificResult, whose serialization contract Core Freeze V1 binds; a new key there is not additive in bytes. The qualifier reaches every credibility report without it. No rule changed"
+  }
+ ]
 }

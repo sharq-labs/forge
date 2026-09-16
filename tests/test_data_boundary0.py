@@ -687,7 +687,9 @@ def test_e2_missing_bulk_data_does_not_invalidate_the_scalar_science(tmp_path):
     assert canonical(result) == before
     assert result.is_usable is True
     assert result.value("u:midpoint").magnitude_in("dimensionless") > 0.4
-    assert result.validation.status.value == "pass"
+    # Unchanged by the deletion (canonical(result) == before). The slab records NOT_RUN checks for comparisons it
+    # was not given, so since CORE-013 the aggregate is not_run, not pass; what matters here is that no check failed.
+    assert result.validation.status.value != "fail"
     assert result.data_references[0].count == 129
 
 

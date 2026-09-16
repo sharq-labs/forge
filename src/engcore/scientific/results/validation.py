@@ -388,6 +388,15 @@ class ValidationLevel(str, Enum):
     EXPERIMENTALLY_VALIDATED = "experimentally_validated"
 
 
+#: CORE-008: the levels that compare a result with something outside the model that produced it. Every other level
+#: a check may establish is verification: evidence that the declared model was solved correctly.
+VALIDATION_LEVELS = frozenset({
+    ValidationLevel.BENCHMARK_VALIDATED,
+    ValidationLevel.CROSS_SOLVER_VALIDATED,
+    ValidationLevel.EXPERIMENTALLY_VALIDATED,
+})
+
+
 @dataclass(frozen=True)
 class ValidationCheck:
     """One executed (or deliberately skipped) verification step."""
@@ -767,22 +776,44 @@ class ValidationReport:
     # ---- derived state --------------------------------------------------
     @property
     def status(self) -> ValidationOutcome:
-        """Aggregate outcome. FAIL dominates; an empty report is NOT_RUN.
+        """Aggregate outcome. FAIL dominates, then NOT_RUN; an empty report is NOT_RUN.
 
         The comparison rule is re-applied here for the reason it is re-applied
         on :attr:`attained_levels`, one field over. GUARD 2 is about levels, so
         it is re-read where a level becomes a claim; GUARD 21 is about
         *outcomes*, and this is where an outcome becomes one.
+
+        CORE-013 (scientific core audit 2026-09-16): a check that never ran
+        outranks a warning and a pass. The order used to be FAIL > WARNING >
+        PASS > NOT_RUN, so one passing mesh-convergence check reported PASS
+        over an experimental comparison that was never made. ``is_usable``
+        reads only "not FAIL" and is unchanged.
         """
         self._require_no_check_contradicts_its_numbers()
         outcomes = {c.outcome for c in self.checks}
         if ValidationOutcome.FAIL in outcomes:
             return ValidationOutcome.FAIL
+        if ValidationOutcome.NOT_RUN in outcomes or not outcomes:
+            return ValidationOutcome.NOT_RUN
         if ValidationOutcome.WARNING in outcomes:
             return ValidationOutcome.WARNING
-        if ValidationOutcome.PASS in outcomes:
-            return ValidationOutcome.PASS
-        return ValidationOutcome.NOT_RUN
+        return ValidationOutcome.PASS
+
+    @property
+    def evidence_basis(self) -> str:
+        """``VALIDATED``, ``VERIFICATION_ONLY`` or ``NONE``: what kind of evidence the attained levels are (CORE-008).
+
+        Dimensional validity, numerical convergence and analytic verification say the declared model was solved
+        correctly. Benchmark, cross-solver and experimental validation compare it with something outside itself. A
+        verdict resting on the first kind alone is a statement about the solution, not about the world, and this says
+        which kind a report holds so no reader has to infer it from level names.
+        """
+        attained = self.attained_levels
+        if attained & VALIDATION_LEVELS:
+            return "VALIDATED"
+        if attained:
+            return "VERIFICATION_ONLY"
+        return "NONE"
 
     @property
     def attained_levels(self) -> frozenset[ValidationLevel]:

@@ -43,7 +43,12 @@ def _close(quantity: Quantity, expected: float, unit: str, tol: float = TOL) -> 
 def _solved(circuit: DCCircuit, run_id: str = "t"):
     result = solve_circuit(circuit, run_id=run_id)
     assert result.convergence is ConvergenceState.CONVERGED, result.warnings
-    assert result.validation.status is ValidationOutcome.PASS
+    # No check failed, and every check that applies passed. A check recorded NOT_RUN (an element class the circuit
+    # does not have) makes the aggregate NOT_RUN since CORE-013 (scientific core audit 2026-09-16), so the helper
+    # asserts the checks rather than an aggregate a vacuous check now decides.
+    assert result.validation.status is not ValidationOutcome.FAIL
+    assert all(c.outcome in (ValidationOutcome.PASS, ValidationOutcome.NOT_RUN) for c in result.validation.checks)
+    assert result.validation.status is (ValidationOutcome.NOT_RUN if result.validation.not_run else ValidationOutcome.PASS)
     return result
 
 

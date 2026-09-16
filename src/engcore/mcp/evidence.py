@@ -1767,6 +1767,8 @@ class CredibilityEvidenceReport:
                     list(m) for m in self.unattributed_assessments
                 ],
                 "unresolved_models": [list(m) for m in self.unresolved_models],
+                # CORE-008: SUPPORTED on verification alone says so in every report
+                "evidence_basis": ValidationReport(checks=tuple(self.validation)).evidence_basis,
             },
         }
 

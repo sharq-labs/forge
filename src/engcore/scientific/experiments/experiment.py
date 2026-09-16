@@ -60,6 +60,18 @@ class ExperimentBudget:
         )
 
 
+def _established(evaluation: ScientificEvaluation) -> bool:
+    """CORE-015: the evaluation's result names a model and every model it names was assessed IN_DOMAIN."""
+    from ..models.definition import ValidityStatus
+
+    result = evaluation.result
+    models = tuple(getattr(result, "models", ()) or ())
+    validity = getattr(result, "validity", None) or {}
+    return bool(models) and all(
+        model_id in validity and validity[model_id].status is ValidityStatus.IN_DOMAIN for model_id, _version in models
+    )
+
+
 class ScientificExperiment:
     """A study: one problem, a budget, and an ordered evaluation history.
 
@@ -169,11 +181,16 @@ class ScientificExperiment:
 
     # ---- study state -----------------------------------------------------
     def best(self, objective_name: str) -> ScientificEvaluation | None:
-        """Best usable evaluation for one declared objective.
+        """Best established evaluation for one declared objective.
 
-        Only OK evaluations with a feasible-or-unchecked constraint state are
-        eligible: a value obtained from a non-converged solve is not a
-        candidate for "best".
+        Only OK evaluations are eligible: a value obtained from a non-converged
+        solve is not a candidate for "best". Since CORE-015 (scientific core
+        audit 2026-09-16) an OK evaluation must also be established: its result
+        names at least one model and every one was assessed IN_DOMAIN, and, when
+        the experiment declares constraints, they were checked and satisfied.
+        A candidate whose validity is UNKNOWN or unassessed, or whose
+        feasibility was never checked, was ranked on a value nothing showed
+        applies -- often the most extreme one, which is why it won.
         """
         objective = next(
             (o for o in self.objectives if o.name == objective_name), None
@@ -186,7 +203,8 @@ class ScientificExperiment:
             for e in self._evaluations
             if e.status is EvaluationStatus.OK
             and objective.name in e.objective_values
-            and e.is_feasible is not False
+            and (e.is_feasible is True or (e.is_feasible is None and not self.constraints))
+            and _established(e)
         ]
         if not eligible:
             return None

@@ -152,8 +152,10 @@ def test_report_records_not_run_for_absent_element_classes():
     result = solve_circuit(circuit, run_id="no-vsource")
     checks = {c.name: c for c in result.validation.checks}
     assert checks["voltage_source_relation"].outcome is ValidationOutcome.NOT_RUN
-    # a NOT_RUN check contributes no evidence and no level
-    assert result.validation.status is ValidationOutcome.PASS
+    # a NOT_RUN check contributes no evidence and no level -- and, since CORE-013 (scientific core audit
+    # 2026-09-16), keeps the aggregate from reading PASS. It used to read PASS here while derive_verdict already
+    # returned INSUFFICIENT_EVIDENCE for the same checks; the aggregate now says what the verdict says.
+    assert result.validation.status is ValidationOutcome.NOT_RUN
 
 
 def test_dimensional_check_rejects_a_mislabelled_metric():
