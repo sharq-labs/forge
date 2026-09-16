@@ -51,7 +51,7 @@ route vocabulary once, and the certification round (Core Freeze V4) is run once,
 
 ## Batch 1 — what now holds
 
-Commits `9993110` (audit record, preregistration, strict xfails) and `685c592` (fix). Thresholds:
+Commits `f174d3c` (audit record, preregistration, strict xfails) and `2018fb8` (fix). Thresholds:
 `benchmarks/core_v4_false_confidence/BATCH1_THRESHOLD_PROTOCOL.json`, with three dated amendments, none of which moved a
 threshold or a gating rule. Regression tests: `tests/hybrid_uq/test_core_scientific_audit_batch1.py`. Guard mutations:
 `benchmarks/core_v4_false_confidence/BATCH1_MUTATIONS.log` (17 killed, green control); all 71 existing

@@ -2,7 +2,7 @@
 
 Findings CORE-001, CORE-002, CORE-003 and CORE-005 (docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md). Each test
 states the honest behaviour and reproduces the audited input exactly; each was recorded as a strict xfail against
-``4033c22`` (commit 9993110) and seen failing on its assertion before its fix was written. The thresholds they exercise were preregistered in
+``4033c22`` (commit f174d3c) and seen failing on its assertion before its fix was written. The thresholds they exercise were preregistered in
 benchmarks/core_v4_false_confidence/BATCH1_THRESHOLD_PROTOCOL.json.
 """
 
