@@ -1,0 +1,93 @@
+{
+  "commit": "069908f1b0bcf5bb759a0f0f0c35b10ed007b8fe",
+  "suites": {
+    "FAST": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "6055 passed, 6 skipped, 42 warnings in 121.93s (0:02:01)"
+    },
+    "api_snapshot_v1": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "17 passed in 3.35s"
+    },
+    "api_snapshot_v2": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "5 passed in 0.94s"
+    },
+    "audit_regressions": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "452 passed in 7.70s"
+    },
+    "certificate": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "206 passed, 1 skipped, 2 deselected in 30.91s"
+    },
+    "freeze_manifest_v1": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "36 passed, 1 skipped, 2 deselected in 2.47s"
+    },
+    "freeze_manifest_v3": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "15 passed, 1 skipped in 4.55s"
+    },
+    "hybrid_uq_focused": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "236 passed in 19.64s"
+    }
+  }
+}
