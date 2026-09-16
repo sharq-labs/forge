@@ -25,7 +25,7 @@ route vocabulary once, and the certification round (Core Freeze V4) is run once,
 | 3a | verification versus validation in result semantics | CORE-008, CORE-013, CORE-015 |
 | 3b | scoping and binding of validity, validation and uncertainty records | CORE-009, CORE-014, CORE-016 |
 | 4 | adequacy, comparison and prediction domain | CORE-006, CORE-007, CORE-011, CORE-012 |
-| — | hardening, folded into the nearest batch | CORE-017, CORE-018 |
+| 5 | hardening | CORE-017, CORE-018 |
 
 ## Findings
 
@@ -47,8 +47,8 @@ route vocabulary once, and the certification round (Core Freeze V4) is run once,
 | CORE-014 | P2 | validity | A validity assessment is not bound to the input values it was computed at. | 3b | PARTIAL |
 | CORE-015 | P2 | experiments | An OK evaluation accepts unassessed or model-less results (residual of RES-06). | 3 | FIXED |
 | CORE-016 | P2 | uncertainty, composition | Uncertainty carries no source category; transfers drop upstream uncertainty and credibility. | 3b | PARTIAL |
-| CORE-017 | P3 | split | The copy detector rounds to twelve digits; a 1 ppm sigma change evades it (residual of INF-06). | — | OPEN |
-| CORE-018 | P3 | misc | Consensus compares values in each route's own unit; bound ordering uses raw magnitudes; `ModelType` and model validation status are inert labels. | — | OPEN |
+| CORE-017 | P3 | split | The copy detector rounds to twelve digits; a 1 ppm sigma change evades it (residual of INF-06). | 5 | FIXED |
+| CORE-018 | P3 | misc | Consensus compares values in each route's own unit; bound ordering uses raw magnitudes; `ModelType` and model validation status are inert labels. | 5 | FIXED (unit handling); labels unchanged |
 
 ## Batch 1 — what now holds
 
@@ -125,3 +125,22 @@ undeclared or unbound information lowers comparison and prediction claims; error
 | CORE-007 | `assess_predictive_observation(split=, calibration_table=)` binds the posterior to the calibration half by content and the observation to the split (`content_bound`); the TCR study passes both. | An assessment made without them is still made and serialized; it simply cannot support a comparison. A read-back `content_bound` is integrity-only. |
 | CORE-011 | `preferred_model` only for n >= 2, &#124;delta&#124; > 4 nats and > 2 paired standard errors, on content-bound assessments; `n`, `standard_error`, `why` recorded. | The thresholds are class C, from the elpd-difference literature; the number of models compared on the same held-out set is not recorded. |
 | CORE-012 | Every routed predictive record states `measurement_errors_assumed_independent`. | Correlated and systematic errors remain unrepresentable, and nothing tests the assumption. |
+
+## Batch 5 — what now holds
+
+Commits `e299af9` (preregistration, strict xfails), `3f5d59e` (fix). Guard mutations: `BATCH5_MUTATIONS.log` (3 killed, green
+control); the 14 existing mutations in the changed files still apply and are killed.
+
+| ID | What now holds | Residual |
+|---|---|---|
+| CORE-017 | `ObservationSplit` refuses a held-out reading within 1e-6 sigma in value and 1e-6 relative in sigma of a calibration reading, unless exact replicates are declared. | A deliberate copy perturbed beyond a millionth of its sigma is indistinguishable from a measurement. |
+| CORE-018 | Consensus compares each name in the first reporting route's unit; cross-limit bounds are ordered in one unit. | `ModelType` and model-level validation status remain descriptive labels; nothing reads them for trust, so no rule was added. |
+
+## Where the audit stands
+
+Every finding has been worked. Status after batch 5: FIXED CORE-001 (routed claims), CORE-007, CORE-010 (routed claims), CORE-011,
+CORE-013, CORE-015, CORE-017, CORE-018; PARTIAL CORE-002, CORE-003, CORE-004, CORE-005, CORE-006, CORE-008, CORE-009, CORE-012,
+CORE-014, CORE-016, each with its residual stated above. Nothing is certified yet: the frozen API snapshots (V1 and V2), the
+Core Freeze V1/V2/V3 verifiers and the core certificate fail on this branch by design, and are brought forward in the Core
+Freeze V4 round (new snapshots, manifest, assurance, the batch guard mutations folded into `tests/mutation_guards.py`, and the
+full mutation population).
