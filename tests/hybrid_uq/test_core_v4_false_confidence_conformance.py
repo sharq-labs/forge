@@ -210,7 +210,7 @@ def test_r06_a_supplied_grid_over_one_of_two_modes_is_never_supported():
 # ---------------------------------------------------------------------------
 # R-07, R-08, R-18: the multistart search itself (I-02)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-07 open until I-02: a separated optimum is classified by peak height alone")
+# Closed by I-02 (batch 10): a separated optimum is classified by its Laplace mass ratio. xfail at 8f094f04.
 def test_r07_a_broad_basin_that_holds_the_mass_is_not_a_single_mode():
     """R-07: every refit reaches a basin 10 chi-square units up, is called WORSE_LOCAL_OPTIMUM, and is ignored.
 
@@ -223,7 +223,8 @@ def test_r07_a_broad_basin_that_holds_the_mass_is_not_a_single_mode():
     assert_mass_floor(result, "worse_local_optimum_holds_the_mass")
 
 
-@pytest.mark.xfail(strict=True, reason="R-08 open until I-02: max_evaluations is not part of the minimum search")
+# Closed by I-02 (batch 10): max_evaluations is part of the minimum search and a failed refit is retried at the
+# canonical budget. xfail at 8f094f04.
 def test_r08_a_refit_budget_below_the_canonical_one_never_claims_a_single_mode():
     """R-08: max_evaluations 12 drops exactly the slow refit that reaches the second mode, with no shortfall recorded."""
     problem = F.second_mode_behind_a_refit_budget()
@@ -232,7 +233,8 @@ def test_r08_a_refit_budget_below_the_canonical_one_never_claims_a_single_mode()
     assert_mass_floor(result, "second_mode_behind_a_refit_budget")
 
 
-@pytest.mark.xfail(strict=True, reason="R-18 open until I-02: a retracted start counts as a full-span start")
+# Closed by I-02 (batch 10): a refused start is replaced by the next Halton point, not halved toward the
+# estimate. xfail at 8f094f04.
 def test_r18_starts_retracted_into_the_estimates_basin_never_claim_a_single_mode():
     """R-18: five of six starts are halved toward the estimate, and the search reads MULTISTART_NO_SECOND_MODE."""
     problem = F.retracted_starts_never_leave_the_basin()

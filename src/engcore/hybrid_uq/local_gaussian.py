@@ -163,6 +163,19 @@ _MULTISTART_POLICY_KEYS = (
 #: change of a STATIONARITY_SD step.
 LOWER_OBJECTIVE_FLOOR = STATIONARITY_SD ** 2
 
+#: A separated converged refit is a SECOND MODE when the posterior mass around it is not negligible, and only a worse
+#: local optimum when it is (audit R-07). Negligible is this ratio of its mass to the estimate's: a mode with mass
+#: ratio r holds r / (1 + r) of the total, so for a 95% interval around the estimate to still hold the 0.90 that the
+#: V4 conformance floor requires, the mass elsewhere must stay under 0.05 -- r < 0.0526. This floor is a factor 50
+#: inside that. Classifying by objective alone read a broad basin ten chi-square units up holding 0.79 of the
+#: posterior as WORSE_LOCAL_OPTIMUM, which the verdict then ignored.
+MULTISTART_MASS_FLOOR = 1.0e-3
+
+#: The largest log mass ratio the route turns into a number. Above it the ratio overflows a float, and a mode that
+#: dominates the estimate by e^700 is recorded as a second mode whose ratio could not be written rather than as a
+#: fabricated finite one.
+_MASS_RATIO_LOG_LIMIT = 700.0
+
 
 def _minimum_starts(p: int) -> int:
     return max(MINIMUM_MULTISTART_STARTS, 2 * int(p) + 2)
@@ -191,6 +204,13 @@ def _search_shortfalls(record: Mapping[str, float], p: int) -> list[str]:
         shortfalls.append("mode_separation_quantile above the canonical value merges separated modes")
     if float(record["multistart_comparable_fit_quantile"]) != canonical.comparable_fit_quantile:
         shortfalls.append("comparable_fit_quantile is not the canonical value")
+    if float(record["multistart_max_evaluations"]) < float(int(canonical.max_evaluations)):
+        # the start that travels to a distant mode is the slow one, so a small budget removes exactly that refit
+        shortfalls.append(f"max_evaluations {int(record['multistart_max_evaluations'])} is below the canonical "
+                          f"{int(canonical.max_evaluations)}, which drops the slowest refits")
+    if float(record["multistart_maximum_retractions"]) < float(int(canonical.maximum_retractions)):
+        shortfalls.append(f"maximum_retractions {int(record['multistart_maximum_retractions'])} replaces fewer refused "
+                          f"starts than the canonical {int(canonical.maximum_retractions)}, so the search looks in fewer places")
     return shortfalls
 
 
@@ -205,7 +225,9 @@ def _multistart_verdict(entries: Sequence[Mapping[str, Any]], p: int,
         return "NOT_ASSESSED", set(), {RouteReason.GLOBAL_UNIQUENESS_NOT_ASSESSED}
     classes = [entry.get("classification") for entry in entries]
     converged = sum(1 for entry in entries if entry.get("status") == CalibrationStatus.CONVERGED.value)
-    incomplete = converged * 2 < len(entries)
+    # a start that did not converge looked nowhere, so the minimum search is a minimum number of CONVERGED refits
+    # (audit R-08). The rule was `converged * 2 < len(entries)`, under which half the starts could fail silently.
+    incomplete = converged < _minimum_starts(p)
     if all(key in thresholds for key in _MULTISTART_POLICY_KEYS):
         below = bool(_search_shortfalls(thresholds, p))
     else:
@@ -220,9 +242,11 @@ def _multistart_verdict(entries: Sequence[Mapping[str, Any]], p: int,
         refusals.add(RouteReason.NOT_A_LOCAL_MINIMUM)
     if incomplete or below:
         downgrades.add(RouteReason.MULTISTART_INCOMPLETE)
+    # a policy below the minimum search is named before a refit that failed: it is the more specific fact, and it is
+    # the reason the converged count cannot reach the minimum in the first place. Both downgrade, above.
     uniqueness = ("BETTER_OPTIMUM_FOUND" if "BETTER_OPTIMUM" in classes else "SECOND_MODE_FOUND" if "SECOND_MODE" in classes
                   else "LOWER_OBJECTIVE_SAME_BASIN" if "LOWER_OBJECTIVE_SAME_BASIN" in classes
-                  else "MULTISTART_INCOMPLETE" if incomplete else "MULTISTART_BELOW_MINIMUM_SEARCH" if below
+                  else "MULTISTART_BELOW_MINIMUM_SEARCH" if below else "MULTISTART_INCOMPLETE" if incomplete
                   else "MULTISTART_NO_SECOND_MODE")
     return uniqueness, refusals, downgrades
 
@@ -235,9 +259,14 @@ class MultistartPolicy:
     """A deterministic multistart. Halton points in the central part of the inference-space bounds box.
 
     A start the forward model refuses (outside its admissible region, which a bounds box does not describe) is
-    retracted toward the calibrated estimate, halving the distance each time, until the model admits it -- at
-    most ``maximum_retractions`` times. The retraction is recorded per start; a start that never becomes
-    admissible is recorded as such and does not count as converged.
+    REPLACED by the next unused point of the same Halton sequence, at most ``maximum_retractions`` times, from
+    one counter shared by every start so no two take the same replacement. The number of replacements is
+    recorded per start; a start with no admissible replacement is recorded as such and does not count as
+    converged.
+
+    It was retracted toward the calibrated estimate instead, halving the distance each time, so a start
+    retracted k times searched 2 ** -k of its intended span -- up to 1 / 4096 -- and still counted as a full
+    start (audit R-18). ``maximum_retractions`` keeps its name and its value as the replacement budget.
     """
 
     starts: int = 6
@@ -263,17 +292,22 @@ class MultistartPolicy:
             if not 0.0 < float(getattr(self, label)) < 1.0:
                 raise HybridUQError(f"{label} must lie in (0, 1)")
 
-    def start_points(self, parameter_set: CalibrationParameterSet) -> tuple[tuple[float, ...], ...]:
-        """Starts in natural units. The same parameter set always gets the same starts."""
+    def _point(self, parameter_set: CalibrationParameterSet, index: int) -> tuple[float, ...]:
+        """The ``index``-th point of this policy's Halton sequence, in natural units. ``index`` starts at 1.
+
+        ``start_points`` is this for 1 .. ``starts``. A refused start is replaced by the next unused index, so a
+        replacement is another point of the same sequence over the same span, not a point pulled toward the estimate.
+        """
         transforms = transforms_of(parameter_set)
         lower, upper = inference_bounds(parameter_set)
         margin = 0.5 * (1.0 - float(self.interior_fraction))
-        points = []
-        for index in range(1, int(self.starts) + 1):
-            u = np.asarray([_radical_inverse(index, _prime(d)) for d in range(len(lower))])
-            z = lower + (margin + float(self.interior_fraction) * u) * (upper - lower)
-            points.append(tuple(float(v) for v in to_natural(z, transforms)))
-        return tuple(points)
+        u = np.asarray([_radical_inverse(int(index), _prime(d)) for d in range(len(lower))])
+        z = lower + (margin + float(self.interior_fraction) * u) * (upper - lower)
+        return tuple(float(v) for v in to_natural(z, transforms))
+
+    def start_points(self, parameter_set: CalibrationParameterSet) -> tuple[tuple[float, ...], ...]:
+        """Starts in natural units. The same parameter set always gets the same starts."""
+        return tuple(self._point(parameter_set, index) for index in range(1, int(self.starts) + 1))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": MULTISTART_POLICY_SCHEMA, "starts": int(self.starts), "scheme": self.scheme,
@@ -550,6 +584,18 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
                     problems.append("a converged start without a classification, a finite distance and a finite chi-square")
                 elif separation is not None and (m2 > separation) != (classification in ("BETTER_OPTIMUM", "SECOND_MODE", "WORSE_LOCAL_OPTIMUM")):
                     problems.append(f"a start {m2:.3g} from the estimate is classified {classification}")
+                elif separation is not None and classification in ("SECOND_MODE", "WORSE_LOCAL_OPTIMUM"):
+                    # the classification is worth nothing if a record can carry the word without the mass it
+                    # follows from. A record with no policy (separation is None) predates the rule and the ratio.
+                    ratio, unavailable = entry.get("laplace_mass_ratio"), entry.get("laplace_mass_unavailable")
+                    if ratio is None and isinstance(unavailable, str) and unavailable and classification == "SECOND_MODE":
+                        pass
+                    elif not isinstance(ratio, float) or not math.isfinite(ratio) or ratio < 0.0:
+                        problems.append(f"a separated start classified {classification} carries no finite non-negative "
+                                        f"laplace_mass_ratio ({ratio!r})")
+                    elif (ratio > MULTISTART_MASS_FLOOR) != (classification == "SECOND_MODE"):
+                        problems.append(f"a separated start whose laplace_mass_ratio is {ratio:.3g} against a floor of "
+                                        f"{MULTISTART_MASS_FLOOR:g} is classified {classification}")
             elif classification is not None:
                 problems.append(f"a start that did not converge ({status}) carries a classification")
         uniqueness, found_refusals, found_downgrades = _multistart_verdict(entries, p, thresholds)
@@ -585,7 +631,7 @@ def _decode_start(entry: Mapping[str, Any]) -> dict[str, Any]:
     for key, value in entry.items():
         if isinstance(value, list):
             out[key] = decode_vector(value)
-        elif key in ("chi_square", "mahalanobis_sq"):
+        elif key in ("chi_square", "mahalanobis_sq", "laplace_mass_ratio"):
             out[key] = decode_float(value)
         else:
             out[key] = value
@@ -950,6 +996,49 @@ def _refused(calibration: CalibrationResult, observations: ObservationSet, reaso
     )
 
 
+def _log_det_information(weighted_jacobian: "np.ndarray") -> float | None:
+    """``log det(A.T @ A)`` for a whitened Jacobian, or None when that information is not positive definite.
+
+    ``A.T @ A`` is the Gauss-Newton information and the local Gaussian covariance is its inverse, so
+    ``log det(Sigma) = -log det(A.T @ A)``. Working in logs keeps a broad mode whose determinant underflows a
+    float from turning into a zero or an infinity.
+    """
+    A = np.asarray(weighted_jacobian, dtype=np.float64)
+    sign, logdet = np.linalg.slogdet(A.T @ A)
+    if not (sign > 0.0 and math.isfinite(logdet)):
+        return None
+    return float(logdet)
+
+
+def _separated_mass_ratio(refit: CalibrationResult, observations: ObservationSet, forward: ForwardEvaluator,
+                          chi_minimum: float, log_det_at_minimum: float | None) -> tuple[float | None, int, str]:
+    """``(ratio, evaluations, unavailable)`` -- the Laplace mass ratio of a separated converged refit.
+
+    The ratio is ``exp(-(chi - chi_min) / 2) * sqrt(det(Sigma) / det(Sigma_min))``, the Laplace approximation to
+    the ratio of the two modes' posterior mass, from a local sensitivity reconstructed at the refit. Posterior
+    mass depends on a mode's VOLUME as well as its peak height, which is why the objective alone cannot say
+    whether a separated optimum matters (audit R-07).
+
+    ``ratio`` is None exactly when ``unavailable`` says why: the curvature at the refit could not be
+    reconstructed, the information there is not positive definite, or the ratio overflows a float. A mode whose
+    mass cannot be bounded is not a negligible mode, so the caller counts it.
+    """
+    if log_det_at_minimum is None:
+        return None, 0, "the information at the estimate is not positive definite"
+    try:
+        local = reconstruct_local_sensitivity(refit, observations, forward)
+    except (_DerivativeNotConverged, RouteRefusedError) as error:
+        return None, 0, f"the curvature at the refit is not available ({type(error).__name__})"
+    spent = int(local.evaluation_count)
+    log_det = _log_det_information(local.weighted_jacobian)
+    if log_det is None:
+        return None, spent, "the information at the refit is not positive definite"
+    exponent = -0.5 * (float(refit.objective_value) - float(chi_minimum)) + 0.5 * (float(log_det_at_minimum) - log_det)
+    if exponent > _MASS_RATIO_LOG_LIMIT:
+        return None, spent, f"the mass ratio exceeds exp({_MASS_RATIO_LOG_LIMIT:g})"
+    return float(math.exp(exponent)), spent, ""
+
+
 def local_gaussian_posterior(
     calibration: CalibrationResult,
     observations: ObservationSet,
@@ -1143,19 +1232,23 @@ def local_gaussian_posterior(
         gradient = A.T @ residual
         lower_tolerance = max(2.0 * float(gradient @ cov @ gradient), LOWER_OBJECTIVE_FLOOR) + 1e-9 * max(1.0, chi_min)
         spec = calibration.spec
+        canonical_budget = int(MultistartPolicy().max_evaluations)
+        log_det_at_minimum = _log_det_information(A)
+        # one counter for every start's replacements, so no two starts take the same Halton point
+        halton_index = int(multistart.starts)
         for start in multistart.start_points(parameters):
             proposed = tuple(start)
-            zs = to_inference(start, transforms)
-            retractions = 0
+            replacements = 0
             admissible = evaluate(forward, start, keys, units, references) is not None
             evaluations += 1
-            while not admissible and retractions < int(multistart.maximum_retractions):
-                retractions += 1
-                start = tuple(float(v) for v in to_natural(z0 + (zs - z0) / 2.0 ** retractions, transforms))
+            while not admissible and replacements < int(multistart.maximum_retractions):
+                replacements += 1
+                halton_index += 1
+                start = multistart._point(parameters, halton_index)
                 admissible = evaluate(forward, start, keys, units, references) is not None
                 evaluations += 1
             if not admissible:
-                starts_record.append({"start": proposed, "status": "NO_ADMISSIBLE_START", "retractions": retractions})
+                starts_record.append({"start": proposed, "status": "NO_ADMISSIBLE_START", "replacements": replacements})
                 continue
             restart = CalibrationSpec(parameters=spec.parameters, fixed=spec.fixed,
                                       initial_point={nm: Quantity(v, u) for nm, v, u in zip(names, start, parameters.units)},
@@ -1163,8 +1256,18 @@ def local_gaussian_posterior(
             refit = calibrate(restart, observations, forward, heldout_dataset_id=calibration.provenance.heldout_dataset_id,
                               max_evaluations=int(multistart.max_evaluations), seed=calibration.provenance.seed)
             evaluations += int(refit.evaluation_count)
-            entry: dict[str, Any] = {"start": tuple(start), "proposed_start": proposed, "retractions": retractions,
+            retried = False
+            if refit.status is not CalibrationStatus.CONVERGED and int(multistart.max_evaluations) < canonical_budget:
+                # the caller's budget was too small, or this problem does not converge from here: one retry at the
+                # canonical budget is the difference, and it is what the entry records (audit R-08)
+                refit = calibrate(restart, observations, forward, heldout_dataset_id=calibration.provenance.heldout_dataset_id,
+                                  max_evaluations=canonical_budget, seed=calibration.provenance.seed)
+                evaluations += int(refit.evaluation_count)
+                retried = True
+            entry: dict[str, Any] = {"start": tuple(start), "proposed_start": proposed, "replacements": replacements,
                                      "status": refit.status.value}
+            if retried:
+                entry["retried_at_canonical_budget"] = True
             if refit.status is CalibrationStatus.CONVERGED:
                 other = to_inference(refit.estimate_vector, transforms)
                 m2 = float(np.sum((A @ (other - z0)) ** 2))
@@ -1173,10 +1276,19 @@ def local_gaussian_posterior(
                 if m2 > separation:
                     if refit.objective_value < chi_min - comparable:
                         entry["classification"] = "BETTER_OPTIMUM"
-                    elif refit.objective_value <= chi_min + comparable:
-                        entry["classification"] = "SECOND_MODE"
                     else:
-                        entry["classification"] = "WORSE_LOCAL_OPTIMUM"
+                        ratio, spent, unavailable = _separated_mass_ratio(refit, observations, forward, chi_min,
+                                                                         log_det_at_minimum)
+                        evaluations += spent
+                        if ratio is None:
+                            entry["laplace_mass_unavailable"] = unavailable
+                        else:
+                            entry["laplace_mass_ratio"] = ratio
+                        # only a mass that is bounded AND negligible makes a separated optimum merely worse: a mode
+                        # whose mass could not be bounded is not a negligible mode
+                        entry["classification"] = ("WORSE_LOCAL_OPTIMUM"
+                                                   if ratio is not None and ratio <= MULTISTART_MASS_FLOOR
+                                                   else "SECOND_MODE")
                 elif refit.objective_value < chi_min - lower_tolerance:
                     # inside the separation radius, but lower: not the estimate's optimum, whatever the distance
                     entry["classification"] = "LOWER_OBJECTIVE_SAME_BASIN"

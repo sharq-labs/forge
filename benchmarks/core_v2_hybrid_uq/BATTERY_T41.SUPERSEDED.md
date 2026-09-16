@@ -16,6 +16,19 @@ current.** Machine-readable marker: `BATTERY_T41.SUPERSEDED.json`.
   `PREDICTIVE_NONLINEAR`. The predictive claim inherits the posterior's downgrade.
 - **HUQ-14 / HUQ-09 (3ddc686, 2eca3d1).** `covariance_digest` and every record digest no longer reproduce.
 - **HUQ-03.** No effect: the parameters are identity-declared voltages.
+- **R-08 / I-02 (core re-audit batch 10).** The minimum search now includes `max_evaluations` and
+  `maximum_retractions`, and counts CONVERGED refits rather than half the proposed ones. Every committed model
+  lists 6 of 6 starts CONVERGED, so the converged-count rule adds nothing here and `MULTISTART_NO_SECOND_MODE`
+  still re-derives from the starts on read-back; the policy this run used is not in the route thresholds, so no
+  budget shortfall can be projected from the committed bytes. The claims in the table below are unchanged.
+- **R-18 / I-02.** A refused start is now REPLACED by the next unused point of the same Halton sequence instead
+  of halved toward the estimate. P1..P5 record `retractions` of 1, 2, 3, 2 and 1 -- between one and three of each
+  model's six starts were pulled into the estimate's basin, one of them to 1/8 of its intended distance, and then
+  counted as full-span starts behind SUPPORTED `MULTISTART_NO_SECOND_MODE`. So the committed "no second mode"
+  rests on a narrower search than the record implies. What it would say instead cannot be projected without
+  re-running the search, which is the battery solve this stream must not pay for.
+- **R-07 / I-02.** A separated converged refit is classified by its Laplace mass ratio against a floor of 1e-3.
+  No effect: all thirty committed refits are `SAME_OPTIMUM`, so nothing here is separated.
 
 **Unchanged:** posterior means and sds (max relative sd change 0.0), identifiability statuses, the tolerance verdicts
 against B3's exact route and committed grids (P9 still the one miss), held-out χ² and coverage.

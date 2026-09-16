@@ -135,7 +135,7 @@ class MultistartPolicy:
     max_evaluations: int = 2000
     mode_separation_quantile: float = 0.999   # Mahalanobis^2 beyond chi2(p) quantile = a different optimum
     comparable_fit_quantile: float = 0.99     # chi-square within chi2(p) quantile of the best = comparable
-    maximum_retractions: int = 12             # an inadmissible start is halved toward the estimate until admitted
+    maximum_retractions: int = 12             # an inadmissible start is replaced by the next unused Halton point
     # start_points(parameter_set) -> tuple[tuple[float, ...], ...]  (deterministic, natural units)
     # to_dict / from_dict / digest
 
@@ -206,7 +206,7 @@ def local_gaussian_posterior(
 ) -> LocalGaussianPosterior
 ```
 
-*Amendment.* `maximum_retractions` was added when the Battery B3 run showed a failure: every box-filling Halton start produced non-monotone knot voltages. The production adapter refuses those, so no restart could run, and each model was capped at MULTISTART_INCOMPLETE. A bounds box does not describe a model's admissible region; retracting toward the (admissible) estimate does. Every retraction is recorded per start.
+*Amendment.* `maximum_retractions` was added when the Battery B3 run showed a failure: every box-filling Halton start produced non-monotone knot voltages. The production adapter refuses those, so no restart could run, and each model was capped at MULTISTART_INCOMPLETE. A bounds box does not describe a model's admissible region, so a refused start needs a different one. It was first retracted toward the (admissible) estimate, halving the distance each time; the re-audit's R-18 shows why that is not a search (below), and the field now budgets REPLACEMENTS. The name and the default of 12 are unchanged.
 
 `multistart` is **required**. Passing `None` is allowed, but it is recorded as `GLOBAL_UNIQUENESS_NOT_ASSESSED`, which caps the claim at DOWNGRADED. No SUPPORTED claim assumes a single mode without a multistart that looked for another.
 
@@ -216,6 +216,13 @@ def local_gaussian_posterior(
 - **Diagonal probes.** The ±2 sd χ² probes run along every principal axis **and** every diagonal (sᵢvᵢ ± sⱼvⱼ)/√2 between two of them: 2p² probes, each of unit Mahalanobis length. Axis probes alone could not see a cross term uᵢuⱼ, so a saddle whose descent lay between two axes passed as a minimum. The validity diagnostics therefore cost at least 4p + 1 + 2p² forward evaluations (O(p²)), not O(p).
 - **A lower refit is never the same optimum.** A converged refit inside the separation radius whose χ² is below the estimate's by more than max(2 × the Gauss–Newton predicted decrease, 0.05²) is `LOWER_OBJECTIVE_SAME_BASIN` and refuses `NOT_A_LOCAL_MINIMUM`.
 - **No measurement is not a measurement.** When fewer than p probes are evaluated (outside the bounds, or refused), `nonlinearity_index` is NaN and the route refuses `NONLINEAR_BEYOND_LOCAL_GAUSSIAN`: no covariance nobody compared with the model is emitted.
+
+*Amendment (core re-audit 2026-09-16, I-02: R-07, R-08, R-18).* The search a claim of a single mode rests on counted things that had not happened. Four further rules hold:
+
+- **The budget and the replacement allowance are part of the minimum search.** `max_evaluations` below the canonical 2000, or `maximum_retractions` below the canonical 12, is a recorded shortfall like a narrower span, because the start that travels to a distant mode is the slow one: a refit budget of 12 turned REFUSED `SECOND_MODE_FOUND` into SUPPORTED `MULTISTART_NO_SECOND_MODE` with no shortfall recorded at all.
+- **The minimum search counts CONVERGED refits.** A search is incomplete unless at least `max(6, 2p + 2)` starts converged. The rule was `converged * 2 < len(entries)`, so up to half the starts could fail silently — and the refits that fail are the ones that were travelling furthest. A refit that does not converge under a budget below the canonical one is retried exactly once at the canonical budget, and the retry's outcome is what the entry records.
+- **A refused start is REPLACED, not retracted.** The next unused point of the same Halton sequence takes its place, from one counter shared by every start so no two take the same one. Retraction narrowed the span — a start retracted k times searched `2 ** -k` of its intended span, up to 1/4096 — and the recorded count was read by nothing. Each entry now records `replacements` and no longer records `retractions`.
+- **A separated optimum is classified by its MASS.** A converged refit beyond the separation radius that is not a `BETTER_OPTIMUM` is `SECOND_MODE` when its Laplace mass ratio `exp(-(χ² - χ²_min) / 2) * sqrt(det Σ / det Σ_min)` exceeds `MULTISTART_MASS_FLOOR = 1e-3`, and `WORSE_LOCAL_OPTIMUM` when it does not; the ratio is recorded per entry and the read-back holds the word to it. Posterior mass depends on a mode's volume as well as its peak height, and classifying by height alone read a broad basin ten χ² units up holding 0.79 of the posterior as merely worse — which the verdict then ignored. A mode whose mass cannot be bounded (no curvature at the refit, or an overflowing ratio) records `laplace_mass_unavailable` and counts as a second mode. `BETTER_OPTIMUM` is unchanged and its mass is never consulted: it says the estimate is not the optimum, and no mass argument rescues the covariance built at it.
 
 **A reparameterization keeps unit semantics.** `reparameterized(matrix, names, units, label)` forms linear combinations of inference coordinates, so every output row must be dimensionally meaningful.
 

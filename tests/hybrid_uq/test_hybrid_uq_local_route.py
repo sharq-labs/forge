@@ -256,8 +256,12 @@ def test_the_claim_must_follow_from_the_reasons():
     assert math.isfinite(post.diagnostics.minimum_bound_distance_sd)
 
 
-def test_an_inadmissible_multistart_start_is_retracted_toward_the_estimate_and_recorded():
-    """A bounds box is not an admissible region: here only theta1 > theta2 is admissible."""
+def test_an_inadmissible_multistart_start_is_replaced_by_another_halton_point_and_recorded():
+    """A bounds box is not an admissible region: here only theta1 > theta2 is admissible.
+
+    I-02 (batch 10) replaced retraction toward the estimate with replacement by the next unused point of the
+    same Halton sequence, so the recorded count is `replacements` and the used start is a full-span point.
+    """
     P = S.affine()
     base = P.forward
 
@@ -266,8 +270,11 @@ def test_an_inadmissible_multistart_start_is_retracted_toward_the_estimate_and_r
 
     calibration = P.calibrate()
     post = local_gaussian_posterior(calibration, P.observations, ordered, multistart=MultistartPolicy())
-    retracted = [m for m in post.diagnostics.multistart if m.get("retractions", 0) > 0]
-    assert retracted, "the Halton starts include inadmissible points; at least one must be retracted"
+    replaced = [m for m in post.diagnostics.multistart if m.get("replacements", 0) > 0]
+    assert replaced, "the Halton starts include inadmissible points; at least one must be replaced"
+    assert all("retractions" not in m for m in post.diagnostics.multistart), "nothing retracts any more"
+    assert all(tuple(m["start"]) != tuple(m["proposed_start"]) for m in replaced), \
+        "a replaced start is a different point from the one the model refused"
     assert all(m["status"] == "CALIBRATION_CONVERGED" for m in post.diagnostics.multistart)
     assert post.diagnostics.uniqueness == "MULTISTART_NO_SECOND_MODE"
     assert post.claim is RouteClaim.SUPPORTED

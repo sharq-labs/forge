@@ -42,6 +42,24 @@
    "rule": "a log coordinate's identifiability width is its natural-scale relative width",
    "commit": "3ddc686",
    "effect_on_this_record": "no effect: every battery parameter is an identity-declared voltage."
+  },
+  {
+   "id": "R-08 / I-02",
+   "rule": "the minimum multistart search includes max_evaluations and maximum_retractions (a value below the canonical policy's is a recorded shortfall), and a search is incomplete unless at least max(6, 2p + 2) starts CONVERGED, not merely half of those proposed. A refit that does not converge under a budget below the canonical one is retried once at the canonical budget.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "every model's committed multistart lists 6 of 6 starts CALIBRATION_CONVERGED, so the converged-count rule adds nothing and MULTISTART_NO_SECOND_MODE still re-derives from the starts on read-back. The policy T41 ran is not recorded in the route thresholds, so no budget shortfall can be projected from the committed bytes; battery.py's policy would have to be read to say more, and the route was not re-run."
+  },
+  {
+   "id": "R-18 / I-02",
+   "rule": "a start the forward model refuses is REPLACED by the next unused point of the same Halton sequence, from one counter shared by every start, instead of being halved toward the calibrated estimate. The entry records `replacements` and no longer records `retractions`.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "this is the record the re-audit's R-18 finding points at for reach: P1..P5 record retractions of 1, 2, 3, 2 and 1, so between one and three of each model's six starts were halved toward the estimate -- one of them to 1/8 of its intended distance -- and then counted as full-span starts behind SUPPORTED MULTISTART_NO_SECOND_MODE. Under replacement those starts would have searched other full-span points of the Halton sequence instead, so the committed 'no second mode' rests on a narrower search than the record implies. What it would say after the change cannot be projected without re-running the search, which is the battery solve this stream must not pay for. The bytes and the SUPERSEDED status are unchanged."
+  },
+  {
+   "id": "R-07 / I-02",
+   "rule": "a separated converged refit that is not a BETTER_OPTIMUM is SECOND_MODE when its Laplace mass ratio exp(-(chi - chi_min) / 2) * sqrt(det(Sigma) / det(Sigma_min)) exceeds MULTISTART_MASS_FLOOR = 1e-3 and WORSE_LOCAL_OPTIMUM when it does not, and the ratio is recorded so a reader can re-derive the classification.",
+   "commit": "core re-audit batch 10 (I-02), branch claude/core-scientific-audit",
+   "effect_on_this_record": "no committed entry in any model is separated: all thirty refits are SAME_OPTIMUM. The mass rule reaches nothing here, and the read-back's mass rule is gated on a multistart policy record these bytes do not carry."
   }
  ],
  "unchanged": "posterior means and standard deviations (max relative sd change vs the committed record 0.0), identifiability statuses, the vs_b3_domain_route and vs_committed_core_grid tolerance verdicts (P9 still the one miss), held-out chi-square and coverage: the audited rules change what the route will claim, not the covariance it computes.",

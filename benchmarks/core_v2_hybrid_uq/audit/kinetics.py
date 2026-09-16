@@ -268,7 +268,7 @@ def main():
     post = routed.local_posterior
     route = dict(multi["route"])
     route.update({"reasons": [r.value for r in post.reasons], "uniqueness": post.diagnostics.uniqueness,
-                  "multistart": [{k: v for k, v in m.items() if k in ("status", "classification", "retractions", "estimate", "chi_square", "mahalanobis_sq")}
+                  "multistart": [{k: v for k, v in m.items() if k in ("status", "classification", "replacements", "estimate", "chi_square", "mahalanobis_sq", "laplace_mass_ratio")}
                                  for m in post.diagnostics.multistart],
                   "nonlinearity_index": post.diagnostics.nonlinearity_index, "jacobian_condition": post.diagnostics.jacobian_condition,
                   "raw_jacobian_condition": post.diagnostics.raw_jacobian_condition, "record_digest": routed.digest})

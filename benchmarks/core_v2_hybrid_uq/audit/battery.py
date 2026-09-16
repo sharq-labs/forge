@@ -94,7 +94,8 @@ def main():
                          "route_recorded_evaluations": post.diagnostics.evaluation_count,
                          "jacobian_minimum_4k_plus_1": 4 * k + 1, "chi_square_probes_2k_squared": 2 * k * k,
                          "production_predictions": route_calls * len(cal.observations)},
-               "multistart": [{"status": m["status"], "retractions": m.get("retractions"), "classification": m.get("classification")}
+               "multistart": [{"status": m["status"], "replacements": m.get("replacements"), "classification": m.get("classification"),
+                               "laplace_mass_ratio": m.get("laplace_mass_ratio")}
                               for m in post.diagnostics.multistart]}
         if routed.decision is RouteDecision.REFUSED:
             out["models"][model_id] = row

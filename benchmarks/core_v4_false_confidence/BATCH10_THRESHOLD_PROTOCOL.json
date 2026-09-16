@@ -91,7 +91,8 @@
     "A record written before this batch carries no laplace_mass_ratio for a separated start, so its classification cannot be re-derived and it is refused on read unless the V1 schema exemption applies. No committed record in the repository holds a separated converged start outside KINETICS_K2.json, whose MULTI refits are all WORSE_LOCAL_OPTIMUM or SAME_OPTIMUM and which is SUPERSEDED.",
     "Replacing a refused start with the next Halton point still cannot reach a mode the Halton sequence does not land near. Six points in the central 80% of a bounds box is a coarse search in any dimension above two, and the record says MULTISTART_NO_SECOND_MODE rather than 'unique'. That residual is I-01's and is unchanged.",
     "The retry at the canonical budget makes a small-budget search cost more than the caller asked for. That is deliberate and recorded in evaluation_count; a caller who wants the cheap search and not the claim gets MULTISTART_INCOMPLETE instead.",
-    "R-07's own reproduction may still not REFUSE after this batch if its basin's Laplace mass ratio falls below the floor. The conformance case asserts the MASS invariant and not a reason word, so whichever way it lands the invariant is what is measured -- and if it lands SUPPORTED with a 95% interval holding 0.177 of the posterior, the case stays xfail and the residual is recorded rather than the floor moved."
+    "R-07's own reproduction may still not REFUSE after this batch if its basin's Laplace mass ratio falls below the floor. The conformance case asserts the MASS invariant and not a reason word, so whichever way it lands the invariant is what is measured -- and if it lands SUPPORTED with a 95% interval holding 0.177 of the posterior, the case stays xfail and the residual is recorded rather than the floor moved.",
+    "ADDED DURING IMPLEMENTATION (not stated in advance, and recorded here as a residual rather than worked around): the mass rule's read-back is gated on the multistart policy record, which postdates any pre-batch bytes, so a pre-batch record is exempt from it -- but the converged-count rule is NOT gated, and a pre-batch record whose refits failed no longer re-derives the uniqueness word it states and is refused on read. KINETICS_K2.json's MULTI_v2 route record is the one such record in the repository (4 of 6 converged, no policy keys, MULTISTART_NO_SECOND_MODE stated). It is already SUPERSEDED and its marker now records this. Refusing it is the correct strictness: a record claiming no second mode over a search two thirds of which converged is overclaiming, and the strictness rule of this program says undeclared or unbound information lowers a claim."
   ],
   "amendments": "recorded here as dated entries, never edited in place",
   "amendment_log": [
@@ -103,6 +104,30 @@
       "why_this_is_not_a_threshold_change": "No threshold, class or value in `rules` is touched. The floor stays MULTISTART_MASS_FLOOR = 1e-3 as preregistered; 1e-12 is a test input chosen to sit far below any floor the preregistered bound (0 < floor < 0.0526) admits, so the test does not depend on the floor's value.",
       "mechanics": "Tests that need the floor read it with getattr(local_gaussian, 'MULTISTART_MASS_FLOOR', None) rather than importing it, so a preregistered test fails on its own assertion instead of on an ImportError, as the per-batch protocol requires.",
       "verified": "11 reproductions fail on their own assertions under --runxfail; 2 guards pass; nothing skips."
+    },
+    {
+      "date": "2026-09-16",
+      "stage": "during implementation",
+      "change": "The uniqueness WORD now names `below` before `incomplete`. Counting converged refits made a policy below the minimum search incomplete as well, so the more specific word (MULTISTART_BELOW_MINIMUM_SEARCH) was masked by the more general one (MULTISTART_INCOMPLETE) for a caller whose policy is simply too small.",
+      "why_this_is_not_a_threshold_change": "no threshold or class in `rules` moves, and no claim moves: `if incomplete or below:` adds MULTISTART_INCOMPLETE to the downgrades either way. Only the word a record states changes, and it states the more specific fact. The alternative was to edit tests/hybrid_uq/test_audit_hybrid_local_route.py::test_huq01_the_one_start_mirror_mode_is_no_longer_supported_and_says_why, which asserts the specific word for exactly this case."
+    },
+    {
+      "date": "2026-09-16",
+      "stage": "after the first guard-mutation run, before the batch was committed",
+      "change": "Three tests were added and one strengthened, because three mutations showed rules that no test measured.",
+      "detail": [
+        "Zeroing the shared Halton counter SURVIVED. The R-18 basin test asserted only 'not SUPPORTED', which a search whose replacements all collapse onto one point still satisfies (five of six starts then find no admissible point and the record downgrades). It now asserts SECOND_MODE_FOUND: with replacement working, the far island IS reached.",
+        "Dropping the volume term from the mass ratio SURVIVED, because R-07's own basin clears the floor on peak height alone (exp(-10 / 2) = 6.7e-3 > 1e-3). The volume half of the rule was therefore unmeasured. Added test_a_separated_mode_is_weighed_by_its_volume_and_not_only_its_height: the same basin made a tenth as wide, so the height ratio still clears the floor and the mass ratio 6.7e-4 does not. Its 1e-3-vs-6.7e-4 comparison uses the preregistered floor and no new number.",
+        "The entry-key mutation was refused as MUTATION CHANGED NO CODE (a string literal, which _code_digest ignores); it now mutates the code that chooses the key."
+      ],
+      "why_this_is_not_a_threshold_change": "no threshold, class or value in `rules` is touched. The added cases are measurements of rules already preregistered."
+    },
+    {
+      "date": "2026-09-16",
+      "stage": "during implementation",
+      "change": "The mass rule is completed for the case the preregistration did not name: a separated refit whose mass cannot be BOUNDED. The curvature at the refit may not reconstruct, the information there may not be positive definite, or the ratio may overflow a float. In those cases the entry records `laplace_mass_unavailable` with the reason instead of a number, and the refit counts as a SECOND_MODE -- a mode whose mass cannot be bounded is not a negligible mode. The read-back accepts a recorded reason in place of the ratio for SECOND_MODE and for nothing else.",
+      "why": "the preregistered read-back rule requires a FINITE non-negative ratio. Writing a fabricated finite number for an uncomputable one, or a non-finite one the read-back then has to admit, would both be worse than recording that it could not be bounded. The classification is a single decision in the code (`WORSE_LOCAL_OPTIMUM if ratio is not None and ratio <= floor else SECOND_MODE`) so the conservative branch is not a second, unexercised rule.",
+      "why_this_is_not_a_threshold_change": "no threshold moves. MULTISTART_MASS_FLOOR is 1e-3 as preregistered."
     }
   ]
 }

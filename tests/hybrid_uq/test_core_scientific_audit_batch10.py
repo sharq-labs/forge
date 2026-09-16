@@ -11,12 +11,14 @@ The search every hybrid-UQ claim of a single mode rests on counted things that h
 * **R-07** -- a separated converged refit was classified by its objective alone, so a broad basin ten
   chi-square units up holding 0.79 of the posterior was WORSE_LOCAL_OPTIMUM, which the verdict ignored.
 
-Preregistered in `benchmarks/core_v4_false_confidence/BATCH10_THRESHOLD_PROTOCOL.json`. Every
-reproduction here was committed as `xfail(strict=True)` first and run with `--runxfail` to watch it fail on
-its own assertion, at 514e910. Two tests are NOT reproductions and carry no marker, because they pass
-today and must keep passing: the lower-separated-optimum case (a better optimum must not become a
-mass-weighed WORSE_LOCAL_OPTIMUM) and the unseparated-start case (a SAME_OPTIMUM refit is not a mode and
-gets no ratio).
+Preregistered in `benchmarks/core_v4_false_confidence/BATCH10_THRESHOLD_PROTOCOL.json`. The eleven
+reproductions here were committed as `xfail(strict=True)` at 8f094f04 and run with `--runxfail` to watch
+each fail on its own assertion; the markers came off when I-02 was implemented. The rest carry no marker
+and never did. Two of them passed at 8f094f04 and must keep passing: the lower-separated-optimum case (a
+better optimum must not become a mass-weighed WORSE_LOCAL_OPTIMUM) and the unseparated-start case (a
+SAME_OPTIMUM refit is not a mode and gets no ratio). Two were added with the implementation, to exercise the
+branch the audited cases do not reach: a separated mode whose mass cannot be bounded is counted, and the
+read-back takes a recorded reason in place of the number for SECOND_MODE and for nothing else.
 """
 
 from __future__ import annotations
@@ -61,7 +63,6 @@ def _entries(post):
 # =====================================================================
 # R-08: the budget and the allowance are part of the search
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r08_a_refit_budget_below_the_canonical_one_is_a_shortfall():
     """The audited record: max_evaluations 12 gives SUPPORTED with 'recorded policy shortfalls: []'."""
     from engcore.hybrid_uq.local_gaussian import _policy_record, _search_shortfalls
@@ -73,7 +74,6 @@ def test_r08_a_refit_budget_below_the_canonical_one_is_a_shortfall():
     assert _search_shortfalls(_policy_record(CANONICAL, 1), 1) == [], "the canonical policy is the minimum"
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r08_a_replacement_allowance_below_the_canonical_one_is_a_shortfall():
     from engcore.hybrid_uq.local_gaussian import _policy_record, _search_shortfalls
 
@@ -82,7 +82,6 @@ def test_r08_a_replacement_allowance_below_the_canonical_one_is_a_shortfall():
     assert shortfalls, "a search that may not replace a refused start looks in fewer places"
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r08_a_search_is_incomplete_unless_the_minimum_number_converged():
     """The audited rule was `converged * 2 < len(entries)`: up to half the starts could fail silently."""
     from engcore.hybrid_uq.local_gaussian import _multistart_verdict, _policy_record
@@ -99,7 +98,6 @@ def test_r08_a_search_is_incomplete_unless_the_minimum_number_converged():
     assert RouteReason.MULTISTART_INCOMPLETE not in downgrades, uniqueness
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r08_a_failed_refit_is_retried_at_the_canonical_budget():
     """The audited record: max_evaluations 12 gives SUPPORTED MULTISTART_NO_SECOND_MODE and sd 1.0, against
     REFUSED SECOND_MODE_FOUND at the canonical budget and a reference sd of 9.72."""
@@ -114,7 +112,6 @@ def test_r08_a_failed_refit_is_retried_at_the_canonical_budget():
 # =====================================================================
 # R-18: a refused start is replaced, not retracted
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r18_a_refused_start_is_replaced_by_the_next_halton_point():
     """The audited record: 'proposed [-12.0] used [-0.75] retractions 4' -- a start that searched 1/16 of
     its intended span and counted as a full one."""
@@ -133,9 +130,10 @@ def test_r18_a_refused_start_is_replaced_by_the_next_halton_point():
             assert not any(abs(halved - 2.0 ** -k) < 1e-9 for k in range(1, 13)), (
                 f"used {used} is {halved:.6g} of the way from the estimate to proposed {proposed}")
         assert isinstance(entry.get("replacements", 0), int)
+    used = [tuple(entry["start"]) for entry in entries]
+    assert len(set(used)) == len(used), f"one shared counter means no two starts take the same point: {used}"
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r18_starts_that_never_leave_the_basin_do_not_claim_a_single_mode():
     """The audited record: MULTISTART_NO_SECOND_MODE, SUPPORTED, sd 0.1, over a posterior whose two equal
     modes sit at 0 and 20 -- so the reported 95% interval holds 0.4748 of it."""
@@ -143,12 +141,15 @@ def test_r18_starts_that_never_leave_the_basin_do_not_claim_a_single_mode():
     post = _local(problem)
     assert post.claim is not RouteClaim.SUPPORTED, (
         f"uniqueness {post.diagnostics.uniqueness} over {[e.get('classification') for e in _entries(post)]}")
+    # and it is the second island the search reaches, not merely a shortfall it reports: a replacement is a
+    # full-span point of the same sequence, so a start refused near the estimate can still land on the far island
+    assert RouteReason.SECOND_MODE_FOUND in post.reasons, (
+        f"uniqueness {post.diagnostics.uniqueness} over {[e.get('start') for e in _entries(post)]}")
 
 
 # =====================================================================
 # R-07: a separated optimum is classified by its mass
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r07_a_separated_optimum_records_the_mass_its_classification_follows_from():
     problem = F.worse_local_optimum_holds_the_mass()
     post = _local(problem)
@@ -165,7 +166,6 @@ def test_r07_a_separated_optimum_records_the_mass_its_classification_follows_fro
         assert entry["classification"] == expected, (entry["classification"], ratio)
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r07_a_broad_basin_that_holds_the_mass_is_a_second_mode():
     """The audited record: all six starts WORSE_LOCAL_OPTIMUM at chi2 = 10 and m2 = 2.5e5, SUPPORTED, while
     0.792 of the posterior sits in that basin."""
@@ -174,6 +174,33 @@ def test_r07_a_broad_basin_that_holds_the_mass_is_a_second_mode():
     assert RouteReason.SECOND_MODE_FOUND in post.reasons, (
         f"uniqueness {post.diagnostics.uniqueness}; mass ratios "
         f"{[e.get('laplace_mass_ratio') for e in _entries(post)]}")
+
+
+def test_a_separated_mode_is_weighed_by_its_volume_and_not_only_its_height():
+    """The case that separates mass from height, which the R-07 reproduction does not.
+
+    R-07's broad basin is a second mode under either rule: its peak-height ratio exp(-10 / 2) = 6.7e-3 is
+    already above the floor, and the volume only raises it. This is the other direction -- the same basin 10
+    chi-square units up, made a tenth as wide as the estimate's, so the height still clears the floor and the
+    mass ratio 6.7e-4 does not. Not a reproduction: it is here so the volume term of the ratio is measured.
+    """
+    def model(t, _x):
+        th = float(t[0])
+        s = np.exp(-((th / 0.5) ** 2))
+        return np.asarray([th / 0.01 * s, np.sqrt(10.0) * (1.0 - s), (th - 5.0) * 1000.0 * (1.0 - s)])
+
+    problem = S.Problem("narrow_worse_optimum", model, np.arange(3.0), (0.0,), 1.0, (-1.0,), (30.0,), (0.05,),
+                        observed=(0.0, 0.0, 0.0))
+    post = _local(problem)
+    floor = _mass_floor()
+    separated = [e for e in _entries(post) if e.get("classification") in ("SECOND_MODE", "WORSE_LOCAL_OPTIMUM")]
+    assert separated, [e.get("classification") for e in _entries(post)]
+    for entry in separated:
+        height = math.exp(-0.5 * (entry["chi_square"] - float(post.diagnostics.chi_square_minimum)))
+        assert height > floor, f"the height alone clears the floor, or the case does not separate the rules: {height:.3g}"
+        assert entry["laplace_mass_ratio"] < floor, entry
+        assert entry["classification"] == "WORSE_LOCAL_OPTIMUM", entry
+    assert RouteReason.SECOND_MODE_FOUND not in post.reasons, [r.value for r in post.reasons]
 
 
 def test_r07_a_lower_separated_optimum_is_still_refused_whatever_its_mass():
@@ -192,7 +219,6 @@ def test_r07_a_lower_separated_optimum_is_still_refused_whatever_its_mass():
     assert RouteReason.BETTER_OPTIMUM_FOUND in post.reasons
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_r07_a_negligible_separated_optimum_is_still_only_worse():
     """The floor has to leave something below it, or it is not a floor.
 
@@ -216,7 +242,6 @@ def test_r07_a_negligible_separated_optimum_is_still_only_worse():
 # =====================================================================
 # the read-back
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_the_read_back_holds_a_separated_classification_to_its_recorded_mass():
     """A SECOND_MODE start whose recorded ratio is negligible is a record whose word does not follow from
     its own number.
@@ -242,7 +267,6 @@ def test_the_read_back_holds_a_separated_classification_to_its_recorded_mass():
         LocalGaussianPosterior.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="I-02 not implemented yet (batch 10 preregistration)")
 def test_the_read_back_requires_a_mass_ratio_for_a_separated_start():
     import json
 
@@ -255,6 +279,57 @@ def test_the_read_back_requires_a_mass_ratio_for_a_separated_start():
         entry.pop("laplace_mass_ratio", None)
     with pytest.raises(HybridUQError, match="(?i)mass"):
         LocalGaussianPosterior.from_dict(payload)
+
+
+def test_a_mass_that_cannot_be_bounded_is_not_a_negligible_mode():
+    """When the curvature at either optimum gives no determinant, there is no ratio and no negligibility.
+
+    Not a reproduction: it covers the branch the audited cases do not reach, so that the rule which counts an
+    unbounded mode is a checked rule and not an unexercised one.
+    """
+    from engcore.hybrid_uq.local_gaussian import _log_det_information, _separated_mass_ratio
+
+    problem = S.bimodal_two_parameter()
+    calibration = problem.calibrate()
+    ratio, spent, unavailable = _separated_mass_ratio(calibration, problem.observations, problem.forward,
+                                                      float(calibration.objective_value), None)
+    assert ratio is None and spent == 0 and "not positive definite" in unavailable
+    assert _log_det_information(np.zeros((3, 2))) is None, "a rank-deficient information has no determinant"
+
+
+def test_the_read_back_accepts_a_separated_start_whose_mass_could_not_be_bounded():
+    """A recorded reason stands in for the number, and only for SECOND_MODE: nothing else may skip the ratio."""
+    import json
+
+    from engcore.hybrid_uq.local_gaussian import LocalGaussianPosterior
+    from engcore.hybrid_uq.vocabulary import HybridUQError
+
+    post = _local(S.bimodal_two_parameter())
+    payload = json.loads(json.dumps(post.to_dict()))
+    entries = payload["diagnostics"]["multistart"]
+    separated = [e for e in entries if e.get("classification") == "SECOND_MODE"]
+    assert len(separated) >= 2, [e.get("classification") for e in entries]
+    for entry in separated:
+        entry.pop("laplace_mass_ratio")
+        entry["laplace_mass_unavailable"] = "the curvature at the refit is not available (RouteRefusedError)"
+    LocalGaussianPosterior.from_dict(json.loads(json.dumps(payload)))
+
+    blank = json.loads(json.dumps(payload))
+    for entry in blank["diagnostics"]["multistart"]:
+        if entry.get("classification") == "SECOND_MODE":
+            entry["laplace_mass_unavailable"] = ""
+    with pytest.raises(HybridUQError, match="(?i)mass"):
+        LocalGaussianPosterior.from_dict(blank)
+
+    # the same record with ONE of the three separated starts called merely worse: the uniqueness word and the
+    # refusal are unchanged, so the only thing wrong with it is that a WORSE_LOCAL_OPTIMUM gives no ratio.
+    worse = json.loads(json.dumps(payload))
+    for entry in worse["diagnostics"]["multistart"]:
+        if entry.get("classification") == "SECOND_MODE":
+            entry["classification"] = "WORSE_LOCAL_OPTIMUM"
+            break
+    with pytest.raises(HybridUQError, match="(?i)mass"):
+        LocalGaussianPosterior.from_dict(worse)
 
 
 def test_an_unseparated_start_needs_no_mass_ratio():

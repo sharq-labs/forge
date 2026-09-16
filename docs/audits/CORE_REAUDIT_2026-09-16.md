@@ -411,3 +411,94 @@ identical to the recorded baseline. `tests/test_mutation_harness.py` 6 passed, e
 `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 10 — I-02
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-02 | **DONE** | `8f094f04` (preregistration + 11 strict xfails), this commit | the Laplace mass ratio is a Laplace approximation, used only against a floor 50x inside the value that would matter; a pre-batch record carrying no `laplace_mass_ratio` is exempt from the mass rule (it is gated on the policy record, which postdates such bytes) but not from the converged-count rule, so a pre-batch record whose refits failed no longer re-derives its own uniqueness word and is refused on read; replacement still cannot reach a mode the Halton sequence does not land near (that residual is I-01's); a search under a small budget costs up to `starts` extra calibrations at the canonical one |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-08 | **FIXED** | `_search_shortfalls` now compares the recorded `multistart_max_evaluations` and `multistart_maximum_retractions` with the canonical policy's, so a budget or a replacement allowance below canonical is a recorded shortfall like a narrower span — the start that travels to a distant mode is the slow one, so a small budget removes exactly that refit. `_multistart_verdict`'s completeness rule became `converged < _minimum_starts(p)`, replacing `converged * 2 < len(entries)` under which half the starts could fail silently. And a refit that does not converge under a budget below canonical is retried exactly once at the canonical budget, so the audited case reaches the true answer (REFUSED `SECOND_MODE_FOUND`) rather than the honest withholding (DOWNGRADED). The audited record — `max_evaluations=12` giving SUPPORTED `MULTISTART_NO_SECOND_MODE` with `recorded policy shortfalls: []` and sd 1.0 against a reference sd of 9.72 — now refuses. |
+| R-18 | **FIXED** | A start the forward model refuses is REPLACED by the next unused point of the same Halton sequence, from one counter shared by every start so no two take the same one, instead of being halved toward the calibrated estimate. Each entry records `replacements` and no longer records `retractions`. The audited islands case (`proposed [-12.0] used [-0.75] retractions 4`, five of six starts pulled into the estimate's own basin, SUPPORTED `MULTISTART_NO_SECOND_MODE` over a posterior whose 95% interval holds 0.4748) now reaches the far island and refuses `SECOND_MODE_FOUND`. |
+| R-07 | **FIXED** | A converged refit beyond the separation radius that is not a `BETTER_OPTIMUM` is classified by its Laplace mass ratio `exp(-(chi - chi_min) / 2) * sqrt(det(Sigma) / det(Sigma_min))` against `MULTISTART_MASS_FLOOR = 1e-3`: above it `SECOND_MODE`, below it `WORSE_LOCAL_OPTIMUM`. The ratio is recorded per entry and `_require_reasons_follow_measurements` holds the word to it, so the classification cannot be carried without the number it follows from. A mode whose mass cannot be bounded — no curvature at the refit, an information matrix that is not positive definite, or a ratio that overflows a float — records `laplace_mass_unavailable` and counts as a second mode. The audited case (six starts at chi-square 10 above the estimate and m2 = 2.5e5, all `WORSE_LOCAL_OPTIMUM`, SUPPORTED, while 0.792 of the posterior sits in that basin) now refuses. `BETTER_OPTIMUM` is unchanged and its mass is never consulted. |
+
+**The conformance suite.** I-15's R-07, R-08 and R-18 cases came off `xfail`: three more of the seventeen
+are live (five in total, with R-01 and R-06).
+
+**Compatibility.** Additive. No V1 symbol is touched. On V2: `MultistartPolicy` gains no field — the
+`maximum_retractions` name and its default of 12 are kept and it is now the REPLACEMENT budget, which is the
+behaviour change I-02 asks for — and one private method (`_point`) that `start_points` is now written in
+terms of. `RouteDiagnostics` gains no field: the multistart entries are free-form mappings inside an existing
+one, and there each separated entry gains `laplace_mass_ratio` (or `laplace_mass_unavailable`) and
+`replacements` takes the place of `retractions`. `route_diagnostics/2` is NOT bumped, because the keys change
+inside an existing field; a record written before this batch is refused on read where the converged-count
+rule now bites, which the residual above states. `local_gaussian_posterior`'s signature is unchanged.
+
+**One correction to the preregistered rules**, recorded in the protocol's `amendment_log` and repeated here:
+making the completeness rule count converged refits meant a policy below the minimum search and a refit that
+failed were both `incomplete`, and the more specific word (`MULTISTART_BELOW_MINIMUM_SEARCH`) was being
+masked by the more general one. The uniqueness expression now names `below` before `incomplete`. Both add
+`MULTISTART_INCOMPLETE` to the downgrades either way, so no claim moves; only the word a record states does,
+and it states the more specific fact.
+
+**Existing tests edited (no assertion weakened).**
+
+* `tests/hybrid_uq/test_hybrid_uq_local_route.py`'s retraction test is now
+  `test_an_inadmissible_multistart_start_is_replaced_by_another_halton_point_and_recorded`: it reads
+  `replacements` instead of `retractions` and gained two assertions (nothing retracts, and a replaced start
+  is a different point from the one the model refused);
+* nothing else. `test_audit_hybrid_local_route.py::test_huq01_the_one_start_mirror_mode_is_no_longer_supported_and_says_why`
+  keeps its expected word because of the ordering correction above, which is why that correction was made
+  rather than the test edited.
+
+**Committed evidence.** No claim in the cheap records moves: `TCR.json` records no multistart,
+`FAILURE_CASES.json` records `"multistart": null`, and `PERFORMANCE.json`'s five V2 claims turn on the
+goodness of fit (p = 2, 5, 10 REFUSED) and on the 6-start default being below `max(6, 2p + 2)` (p = 20, 41
+DOWNGRADED with `MULTISTART_INCOMPLETE`) — both untouched by this batch, and all ten committed-evidence
+guards pass unchanged. So those records' bytes stay as their runs wrote them rather than absorbing this
+container's wall-time drift. The two SUPERSEDED markers gained an `R-08 / I-02`, an `R-18 / I-02` and an
+`R-07 / I-02` entry each, in the JSON and the companion Markdown, and `KINETICS_K2`'s `now_would_say.MULTI_v2`
+moved from SUPPORTED to DOWNGRADED (`MULTISTART_INCOMPLETE`): its policy is 6 starts at p = 2 with
+`max_evaluations=400` against a canonical 2000, and 2 of its 6 committed refits failed, so 4 converged where
+6 are required — either shortfall alone caps it. Its one separated refit sits at chi-square 2699.72 against
+5.4446, a height ratio of `exp(-1347.1)`, so no covariance could lift it above the floor and
+`WORSE_LOCAL_OPTIMUM` is projected unchanged. `BATTERY_T41`'s thirty refits are all `SAME_OPTIMUM` and all 6
+of 6 converged in every model, so its table does not move; what its marker now records is that P1..P5
+retracted between one and three starts each, so the committed "no second mode" rests on a narrower search
+than the record implies. Neither multistart was re-run, as the protocol requires. The two generators
+(`audit/battery.py`, `audit/kinetics.py`) now project `replacements` and `laplace_mass_ratio` instead of
+`retractions`, so a future regeneration records the keys that exist.
+
+**Guard mutations.** `BATCH10_MUTATIONS.log`: **15 of 15 KILLED**, control green. Three of the fifteen were
+rewritten after a first run, and what they bought is the point of running them:
+
+* the entry-key mutation was refused as MUTATION CHANGED NO CODE, because it renamed a string literal and
+  `_code_digest` ignores STRING tokens; it now mutates the code that chooses the key;
+* zeroing the shared Halton counter SURVIVED against the replacement test, so the R-18 basin test was
+  strengthened from "does not claim a single mode" to "refuses `SECOND_MODE_FOUND`" — with the counter frozen,
+  five of six starts find no admissible point at all and the far island is never visited;
+* dropping the VOLUME term from the mass ratio SURVIVED, because R-07's own basin clears the floor on peak
+  height alone (`exp(-10 / 2) = 6.7e-3`). The rule's volume half was therefore unmeasured, so the batch
+  gained `test_a_separated_mode_is_weighed_by_its_volume_and_not_only_its_height`: the same basin made a tenth
+  as wide, where the height still clears the floor and the mass ratio 6.7e-4 does not. Two further tests were
+  added for the branch the audited cases do not reach (a mass that cannot be bounded, and the read-back
+  taking a recorded reason in place of the number for `SECOND_MODE` and for nothing else).
+
+The 10 pinned mutations on `local_gaussian.py` were re-run isolated and all 10 are still KILLED
+(`BATCH10_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6525 passed, 12 xfailed, 18 failed (the by-design 18, unchanged; the three
+xfails that became passes are I-15's R-07, R-08 and R-18 cases). Expensive tier 528 passed, 18 failed, 14
+errors — the recorded baseline's failure and error lists exactly, with the one extra pass being batch 9's
+added expensive test. `tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py`
+untouched. Two anchors constrained the implementation and were honoured rather than edited: `G33a` pins
+`    if incomplete or below:` (so the completeness rule changed in the line above it) and `G33d` pins the
+`elif refit.objective_value < chi_min - lower_tolerance:` line at its indentation (so the mass classification
+stayed inline in the loop instead of moving to a helper). Nothing under `src/engcore/domains/thermal/` was
+edited.
+
+**Open decisions.** None in this batch.

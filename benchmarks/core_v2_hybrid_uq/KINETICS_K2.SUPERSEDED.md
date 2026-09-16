@@ -17,6 +17,18 @@ established under the weaker rules and are not current**; its covariance-derived
 - **HUQ-03 (3ddc686).** `k0_declared_log`'s ln k0 width is now the natural-scale relative width (≈0.645, was ≈0.030);
   the status stays NOT_IDENTIFIABLE.
 - **HUQ-14 / HUQ-09.** `MULTI_v2.route.record_digest` and every embedded record digest no longer reproduce.
+- **R-08 / I-02 (core re-audit batch 10).** The minimum search now includes `max_evaluations` and counts
+  CONVERGED refits. K2's policy is 6 starts at p = 2 with `max_evaluations=400` against a canonical 2000, and 2 of
+  the 6 committed refits are `CALIBRATION_FAILED`, so 4 converged where 6 are required. Either shortfall alone caps
+  MULTI at DOWNGRADED. Because the committed route record carries no multistart policy keys, its stated
+  `MULTISTART_NO_SECOND_MODE` no longer follows from the starts it lists and `RouteDiagnostics.from_dict` refuses
+  it -- a strictness increase on bytes that were already superseded.
+- **R-18 / I-02.** A refused start is now replaced by the next unused Halton point instead of halved toward the
+  estimate. Every committed MULTI entry records `retractions` 0, so the span each start searched is the span the
+  record implies and nothing here moves.
+- **R-07 / I-02.** A separated converged refit is classified by its Laplace mass ratio against a floor of 1e-3.
+  MULTI's one separated refit sits at chi-square 2699.72 against the estimate's 5.4446: its height ratio alone is
+  exp(-1347.1), so no covariance could lift it above the floor and `WORSE_LOCAL_OPTIMUM` is projected unchanged.
 
 **Unchanged:** the MULTI estimate and sds (identical when re-derived without multistart), its covariance, identifiability statuses, C2 predictive sds,
 the V1 reference grids, every `CORRECTED` errata quantity (so `benchmarks/core_v1_thin_ridge_repair/ERRATA.md`'s addendum
@@ -26,7 +38,7 @@ stands), WEAK_C2 REFUSED, and the parameterization verdicts.
 
 | part | label | claim now | reasons |
 |---|---|---|---|
-| MULTI route | PROJECTED (refits not re-run) | SUPPORTED | - |
+| MULTI route | PROJECTED (refits not re-run) | DOWNGRADED | MULTISTART_INCOMPLETE (budget 400 < 2000; 4 of 6 converged) |
 | C2 predictive | PROJECTED | SUPPORTED | - |
 | natural_k0_identity | MEASURED | REFUSED | NONLINEAR_BEYOND_LOCAL_GAUSSIAN, GLOBAL_UNIQUENESS_NOT_ASSESSED, POORLY_SCALED_PARAMETERIZATION |
 | k0_declared_log | MEASURED | DOWNGRADED | GLOBAL_UNIQUENESS_NOT_ASSESSED |
