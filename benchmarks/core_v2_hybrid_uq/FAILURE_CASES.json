@@ -5,7 +5,8 @@
    "expect": {
     "local": "REFUSED",
     "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
-    "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"
+    "rebuild": "REFUSED",
+    "rebuild_reason": "GRID_POSTERIOR_BOUND_DOMINATED"
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
@@ -15,7 +16,8 @@
    "local": {
     "claim": "REFUSED",
     "refusals": [
-     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+     "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"
     ],
     "downgrades": [
      "BOUND_WITHIN_3_SD"
@@ -42,8 +44,8 @@
     ]
    },
    "router_with_rebuild": {
-    "decision": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
-    "claim": "SUPPORTED",
+    "decision": "REFUSED",
+    "claim": "REFUSED",
     "considered": [
      {
       "route": "GRID_AS_SUPPLIED",
@@ -53,31 +55,17 @@
      {
       "route": "LOCAL_GAUSSIAN",
       "outcome": "REFUSED",
-      "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN,BOUND_WITHIN_3_SD"
+      "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN,TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN,BOUND_WITHIN_3_SD"
      },
      {
       "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
-      "outcome": "USED",
-      "reason": "",
-      "detail": "861 points, nodes [41, 21], 3 box expansion(s), 1 truncation halving(s) on axes [0], 0 refinement(s)"
+      "outcome": "PASSED_OVER",
+      "reason": "GRID_POSTERIOR_BOUND_DOMINATED",
+      "detail": "the posterior reaches both declared bounds of ['theta1'] within ln 1e6 of its peak: the width reported there would be the declared range's, not the data's"
      }
     ],
-    "mean": [
-     3.432935531694749,
-     1.3935221738990573
-    ],
-    "sd": [
-     1.7585098297797475,
-     0.3052249267698167
-    ],
-    "mean_shift_reference_sd": [
-     0.0007193160159275661,
-     0.00019290937664624873
-    ],
-    "sd_ratio_reference": [
-     1.0040013977412257,
-     1.0002579345359452
-    ]
+    "mean": null,
+    "sd": null
    },
    "router_without_rebuild": {
     "decision": "REFUSED",
@@ -393,7 +381,8 @@
    "local": {
     "claim": "REFUSED",
     "refusals": [
-     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"
+     "NONLINEAR_BEYOND_LOCAL_GAUSSIAN",
+     "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"
     ],
     "downgrades": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
@@ -517,11 +506,115 @@
    },
    "met": true
   },
+  "CORE001_gross_misfit": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "MODEL_MISFIT_BEYOND_DECLARED_NOISE",
+    "rebuild": "REFUSED",
+    "rebuild_reason": "MODEL_MISFIT_BEYOND_DECLARED_NOISE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    0.5454545454710565,
+    4.9999999999672164
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "MODEL_MISFIT_BEYOND_DECLARED_NOISE"
+    ],
+    "downgrades": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 3.5397533793002367e-09,
+    "jacobian_condition": 3.4743348998827694,
+    "raw_jacobian_condition": 4.050049956698993,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "router_with_rebuild": {
+    "decision": "REFUSED",
+    "claim": "REFUSED",
+    "considered": [
+     {
+      "route": "GRID_AS_SUPPLIED",
+      "outcome": "SKIPPED",
+      "reason": "GRID_NOT_SUPPLIED"
+     },
+     {
+      "route": "LOCAL_GAUSSIAN",
+      "outcome": "REFUSED",
+      "reason": "MODEL_MISFIT_BEYOND_DECLARED_NOISE"
+     },
+     {
+      "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "outcome": "PASSED_OVER",
+      "reason": "MODEL_MISFIT_BEYOND_DECLARED_NOISE",
+      "detail": "the declared noise does not explain the residuals; no grid is built past that"
+     }
+    ],
+    "mean": null,
+    "sd": null
+   },
+   "router_without_rebuild": {
+    "decision": "REFUSED",
+    "emits_numbers": false
+   },
+   "met": true
+  },
+  "CORE001_moderate_misfit": {
+   "expect": {
+    "local": "DOWNGRADED",
+    "reason": "RESIDUALS_EXCEED_DECLARED_NOISE"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    0.5454545457743123,
+    4.999999999507186
+   ],
+   "local": {
+    "claim": "DOWNGRADED",
+    "refusals": [],
+    "downgrades": [
+     "RESIDUALS_EXCEED_DECLARED_NOISE"
+    ],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 3.4226959044758587e-09,
+    "jacobian_condition": 3.4743348998842105,
+    "raw_jacobian_condition": 4.050049956700673,
+    "emits_covariance": true
+   },
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "met": true
+  },
+  "CORE003_tail_beyond_the_2_sd_probes": {
+   "expect": {
+    "local": "REFUSED",
+    "reason": "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    100.00000000000809
+   ],
+   "local": {
+    "claim": "REFUSED",
+    "refusals": [
+     "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"
+    ],
+    "downgrades": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 8.483880264975596e-12,
+    "jacobian_condition": 1.0,
+    "raw_jacobian_condition": 1.0,
+    "emits_covariance": false
+   },
+   "identifiability": "NONE (route refused)",
+   "met": true
+  },
   "mapped_non_tensor_point_set": {
    "expect": {
     "router_grid_only": "REFUSED",
     "router_with_local_other_parameter_names": "HybridUQError",
-    "router_with_local": "LOCAL_GAUSSIAN"
+    "router_with_local": "HybridUQError (CORE-005: not this request's evidence)"
    },
    "v1": "GRID_TOO_COARSE_FOR_INFERENCE: the posterior's points are not an axis-aligned tensor lattice, so no lattice step exists to check its resolution against",
    "router_grid_only": {
@@ -541,22 +634,7 @@
     ]
    },
    "router_with_local_other_parameter_names": "HybridUQError: the supplied grid is over parameters ['a', 'b_minus_a']; the request calibrates ['theta1', 'theta2']: a grid for other parameters is not this request's posterio",
-   "router_with_local": {
-    "decision": "LOCAL_GAUSSIAN",
-    "considered": [
-     {
-      "route": "GRID_AS_SUPPLIED",
-      "outcome": "REFUSED_BY_V1",
-      "reason": "GRID_UNRESOLVED",
-      "detail": "GRID_TOO_COARSE_FOR_INFERENCE: the posterior's points are not an axis-aligned tensor lattice, so no lattice step exists to check its resolution against"
-     },
-     {
-      "route": "LOCAL_GAUSSIAN",
-      "outcome": "USED",
-      "reason": ""
-     }
-    ]
-   },
+   "router_with_local": "HybridUQError: the grid's likelihood at node 0 ([0.6, 0.7999999999999999]) implies chi-square 2384.48; the forward evaluator and the request's observations give 5293.34. A gri",
    "met": true
   }
  },

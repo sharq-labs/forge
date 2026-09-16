@@ -12,6 +12,12 @@ API. For each case this reports:
 
 Every expectation is written into the case BEFORE it runs, and ``met`` records whether it held.
 
+Scientific core audit 2026-09-16, batch 1 (benchmarks/core_v4_false_confidence/BATCH1_THRESHOLD_PROTOCOL.json). Two
+expectations changed before this file was re-run, both already seen in tests/hybrid_uq: strong_nonlinearity's rebuilt grid
+spans both declared bounds of its decay rate and is passed over GRID_POSTERIOR_BOUND_DOMINATED (its sd was the upper bound's:
+1.75 at 20, 2.57 at 40, 5.81 at 80), and the renamed non-tensor point set is refused as not the request's evidence before
+V1 is asked (CORE-005). The batch-1 cases below the original ones were written before this file first ran them.
+
 Writes benchmarks/core_v2_hybrid_uq/FAILURE_CASES.json.
 """
 
@@ -40,7 +46,8 @@ def poorly_scaled():
 
 CASES = [
     ("strong_nonlinearity", S.strong_nonlinearity, [np.linspace(0.01, 20.0, 481), np.linspace(0.01, 10.0, 481)],
-     {"local": "REFUSED", "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN", "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"}),
+     {"local": "REFUSED", "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN", "rebuild": "REFUSED",
+      "rebuild_reason": "GRID_POSTERIOR_BOUND_DOMINATED"}),
     ("parameter_at_bound", S.at_bound, [np.linspace(0.8, 1.2, 401), np.linspace(0.0, 0.3, 401)],
      {"local": "REFUSED", "reason": "PARAMETER_AT_BOUND", "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"}),
     ("nearly_singular_jacobian", S.nearly_singular, None,
@@ -57,7 +64,30 @@ CASES = [
      {"local": "SUPPORTED", "identifiability": "PARAMETERS_NOT_IDENTIFIABLE"}),
     ("thin_correlated_ridge_with_aliased_bounds_grid", S.thin_ridge, [np.linspace(-50, 50, 401), np.linspace(-5, 5, 401)],
      {"local": "SUPPORTED", "grid_as_supplied": "REFUSED_BY_V1", "router": "LOCAL_GAUSSIAN"}),
+    # --- scientific core audit 2026-09-16, batch 1 -------------------------------------------------------------------
+    ("CORE001_gross_misfit", lambda: _misfit(0.01), None,
+     {"local": "REFUSED", "reason": "MODEL_MISFIT_BEYOND_DECLARED_NOISE", "rebuild": "REFUSED",
+      "rebuild_reason": "MODEL_MISFIT_BEYOND_DECLARED_NOISE"}),
+    ("CORE001_moderate_misfit", lambda: _misfit(0.165), None,
+     {"local": "DOWNGRADED", "reason": "RESIDUALS_EXCEED_DECLARED_NOISE"}),
+    ("CORE003_tail_beyond_the_2_sd_probes", lambda: _tail(), None,
+     {"local": "REFUSED", "reason": "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"}),
 ]
+
+
+def _misfit(sigma):
+    x = np.linspace(0.0, 1.0, 12)
+    return S.Problem("CORE001_misfit", lambda t, x: t[0] + t[1] * x, x, (1.0, 2.0), sigma, (-50.0, -50.0), (50.0, 50.0),
+                     (0.0, 0.0), observed=1.0 + 2.0 * x + 3.0 * x ** 2)
+
+
+def _tail(eps=0.01, c=2.05):
+    import math
+
+    def model(t, x):
+        th = float(t[0]) - 100.0
+        return np.asarray([max(-c, min(c, th)), math.sqrt(eps * max(abs(th) - c, 0.0)), 0.0])
+    return S.Problem("CORE003_tail", model, [0.0, 1.0, 2.0], (100.0,), 1.0, (-900.0,), (1100.0,), (100.3,), observed=[0.0, 0.0, 0.0])
 
 
 def main():
@@ -89,6 +119,8 @@ def main():
             row["router_with_rebuild"] = {"decision": routed.decision.value, "claim": routed.claim.value, "considered": routed.considered,
                                           "mean": routed.mean, "sd": None if routed.covariance is None else list(np.sqrt(np.diag(routed.covariance)))}
             met = met and routed.decision.value == expect["rebuild"]
+            if "rebuild_reason" in expect:
+                met = met and any(c.get("reason") == expect["rebuild_reason"] for c in routed.considered)
             if routed.covariance is not None and axes is not None:
                 sd = np.asarray(row["dense_reference"]["sd"])
                 shift = np.abs(np.asarray(routed.mean) - np.asarray(row["dense_reference"]["mean"])) / sd
@@ -127,7 +159,15 @@ def main():
         other_names = f"HybridUQError: {str(exc)[:160]}"
     renamed = PosteriorGrid(parameter_names=grid.parameter_names, points=mapped.points, weights=mapped.weights,
                             log_likelihood=mapped.log_likelihood, admissible_mask=mapped.admissible_mask, dataset_id=mapped.dataset_id)
-    with_local = route_uncertainty(grid=renamed, calibration=calibration, observations=P.observations, forward=P.forward, multistart=MultistartPolicy())
+    # CORE-005: the renamed points are not where the grid's likelihood was computed, so the grid is not this request's
+    # evidence; the router says so before V1 is asked.
+    try:
+        with_local = route_uncertainty(grid=renamed, calibration=calibration, observations=P.observations, forward=P.forward,
+                                       multistart=MultistartPolicy())
+        renamed_outcome, renamed_refused_as_other_evidence = f"ROUTED {with_local.decision.value}", False
+    except HybridUQError as exc:
+        renamed_outcome = f"HybridUQError: {str(exc)[:160]}"
+        renamed_refused_as_other_evidence = "not this request's evidence" in str(exc)
     try:
         from engcore.inference import assess_identifiability
 
@@ -137,15 +177,14 @@ def main():
         v1 = str(exc)[:160]
     out["cases"]["mapped_non_tensor_point_set"] = {
         "expect": {"router_grid_only": "REFUSED", "router_with_local_other_parameter_names": "HybridUQError",
-                   "router_with_local": "LOCAL_GAUSSIAN"}, "v1": v1,
+                   "router_with_local": "HybridUQError (CORE-005: not this request's evidence)"}, "v1": v1,
         "router_grid_only": {"decision": alone.decision.value, "considered": alone.considered},
         "router_with_local_other_parameter_names": other_names,
-        "router_with_local": {"decision": with_local.decision.value, "considered": with_local.considered},
+        "router_with_local": renamed_outcome,
         "met": (alone.decision is RouteDecision.REFUSED and other_names.startswith("HybridUQError")
-                and with_local.decision is RouteDecision.LOCAL_GAUSSIAN
-                and with_local.considered[0]["outcome"] == "REFUSED_BY_V1"),
+                and renamed_refused_as_other_evidence),
     }
-    print("mapped_non_tensor_point_set", alone.decision.value, other_names[:40], with_local.decision.value, flush=True)
+    print("mapped_non_tensor_point_set", alone.decision.value, other_names[:40], renamed_outcome[:60], flush=True)
     out["all_met"] = all(c["met"] for c in out["cases"].values())
     dump("FAILURE_CASES.json", out)
 

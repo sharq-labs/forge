@@ -87,7 +87,8 @@ def main():
         t0 = time.perf_counter()
         resolved = grid_for(obs, by, oracle, resolved_nodes)
         grid_seconds = time.perf_counter() - t0
-        grid_route = route_uncertainty(grid=resolved)
+        # CORE-005 (scientific core audit 2026-09-16): a supplied grid is routed only with the evidence it is checked against
+        grid_route = route_uncertainty(grid=resolved, observations=obs, forward=forward)
         coarse = grid_for(obs, by, oracle, 41)
         with_coarse = route_uncertainty(grid=coarse, calibration=fit, observations=obs, forward=forward, multistart=MultistartPolicy())
         m, c = exact(obs, by, oracle)

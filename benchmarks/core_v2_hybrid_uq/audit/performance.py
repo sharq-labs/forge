@@ -76,12 +76,17 @@ def main():
         t0 = time.perf_counter()
         routed_ms = route_uncertainty(calibration=fit, observations=cal, forward=forward, multistart=MultistartPolicy())
         t_ms, c_ms = time.perf_counter() - t0, calls["cal"] - c_cal - c_diag
+        # Since the scientific core audit 2026-09-16 (CORE-001) a route whose residuals the declared noise cannot explain
+        # refuses and has no posterior to predict from: its predictive cost is recorded as not incurred, not as zero work.
+        refused = routed_ms.local_posterior.covariance is None
         t0 = time.perf_counter()
-        linearized_predictive_uq(routed_ms.local_posterior, predict, specs)
+        if not refused:
+            linearized_predictive_uq(routed_ms.local_posterior, predict, specs)
         t_pred, c_pred = time.perf_counter() - t0, calls["held"]
         tracemalloc.start()
         route_uncertainty(calibration=fit, observations=cal, forward=forward, multistart=MultistartPolicy())
-        linearized_predictive_uq(routed_ms.local_posterior, predict, specs)
+        if not refused:
+            linearized_predictive_uq(routed_ms.local_posterior, predict, specs)
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         out["v2_measured"][p] = {
@@ -94,9 +99,13 @@ def main():
                 "jacobian_minimum_4p_plus_1": 4 * p + 1, "chi_square_probes_2p_squared": 2 * p * p,
                 "chi_square_probes_skipped": routed.local_posterior.diagnostics.nonlinearity_probes_skipped},
             "claim_without_multistart": routed.claim.value,
+            "goodness_of_fit": {"chi_square_minimum": routed.local_posterior.diagnostics.chi_square_minimum,
+                                "degrees_of_freedom": n_cal - p,
+                                "variance_ratio": routed.local_posterior.diagnostics.chi_square_minimum / (n_cal - p)},
             "reasons_with_default_multistart": [r.value for r in routed_ms.local_posterior.reasons],
             "route_with_default_multistart": {"wall_seconds": t_ms, "forward_evaluations": c_ms},
-            "linearized_predictive": {"wall_seconds": t_pred, "forward_evaluations": c_pred},
+            "linearized_predictive": ({"not_incurred": "the route refused; there is no posterior to predict from"} if refused
+                                      else {"wall_seconds": t_pred, "forward_evaluations": c_pred}),
             "production_predictions": (c_cal + c_diag + c_ms) * n_cal + c_pred * n_held,
             "python_heap_peak_bytes_tracemalloc_route_and_predictive": peak,
         }

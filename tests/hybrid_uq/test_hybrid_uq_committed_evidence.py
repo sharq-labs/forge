@@ -116,6 +116,28 @@ def test_performance_counts_the_audited_diagnostics_and_claims():
             assert v["claim"] != "SUPPORTED" and "MULTISTART_INCOMPLETE" in v["reasons_with_default_multistart"], p
 
 
+def test_performance_records_that_the_coarse_knot_models_do_not_fit_the_b3_data():
+    """Scientific core audit 2026-09-16, CORE-001, first measured on real evidence.
+
+    The same uniform-knot LINEAR family on B3's calibration data: with 2, 5 and 10 knots the residuals are 24x, 13x and
+    4.6x the declared noise variance, so the route refuses and emits no covariance. Before the goodness-of-fit rule these
+    routes reported covariances built from a declared sigma the residuals contradict. With 20 and 41 knots the fit is
+    within the declared noise and only the multistart minimum caps the claim. The V1 grid part of this record still
+    reads PARAMETERS_IDENTIFIABLE at p = 2..4: the frozen V1 ``assess_identifiability`` takes no observations and applies
+    no goodness of fit, which is why only the routed (V2) claims are held to it.
+    """
+    measured = _load("PERFORMANCE.json")["v2_measured"]
+    for p in ("2", "5", "10"):
+        v = measured[p]
+        assert v["claim"] == "REFUSED" and "MODEL_MISFIT_BEYOND_DECLARED_NOISE" in v["reasons_with_default_multistart"], p
+        assert v["goodness_of_fit"]["variance_ratio"] > 4.0, p
+        assert "not_incurred" in v["linearized_predictive"], p
+    for p in ("20", "41"):
+        v = measured[p]
+        assert v["claim"] == "DOWNGRADED" and v["goodness_of_fit"]["variance_ratio"] < 1.0, p
+        assert not {"MODEL_MISFIT_BEYOND_DECLARED_NOISE", "RESIDUALS_EXCEED_DECLARED_NOISE"} & set(v["reasons_with_default_multistart"]), p
+
+
 def test_the_hd_mutation_matrix_killed_everything_with_a_green_control():
     hd = _load("HD_MUTATIONS.json")
     assert hd["control"]["exit_code"] == 0
