@@ -37,7 +37,7 @@
     "correlation": -0.9208184917941975,
     "identifiability": "PARAMETERS_IDENTIFIABLE",
     "forward_evaluations": 190,
-    "wall_seconds": 0.19011840000166558
+    "wall_seconds": 0.216578199993819
    },
    "v1_resolved_grid": {
     "nodes_per_axis": 41,
@@ -52,7 +52,7 @@
     ],
     "identifiability": "PARAMETERS_IDENTIFIABLE",
     "forward_evaluations": 1681,
-    "wall_seconds": 1.6192389999923762
+    "wall_seconds": 1.6871027999732178
    },
    "exact_quadrature": {
     "mean": [
@@ -127,7 +127,7 @@
     "correlation": -0.9931656721357156,
     "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
     "forward_evaluations": 250,
-    "wall_seconds": 0.18608339998172596
+    "wall_seconds": 0.2142149999854155
    },
    "v1_resolved_grid": {
     "nodes_per_axis": 81,
@@ -142,7 +142,7 @@
     ],
     "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
     "forward_evaluations": 6561,
-    "wall_seconds": 4.359264600003371
+    "wall_seconds": 4.662341999995988
    },
    "exact_quadrature": {
     "mean": [

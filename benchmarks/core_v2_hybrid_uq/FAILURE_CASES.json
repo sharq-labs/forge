@@ -418,7 +418,7 @@
     "raw_jacobian_condition": 11104504640448.625,
     "emits_covariance": true
    },
-   "identifiability": "PARAMETERS_WEAKLY_IDENTIFIABLE",
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
    "met": true
   },
   "weak_identification": {

@@ -1,0 +1,8 @@
+B2a test_core004_the_grid_verdict_does_not_depend_on_the_unit_of_a_parameter -> KILLED | 1 failed in 1.13s
+B2b test_core004_the_local_verdict_does_not_depend_on_the_unit_of_a_parameter -> KILLED | 1 failed in 1.15s
+B2c test_core004_the_verdict_says_its_widths_are_relative_to_each_parameters_declared_zero -> KILLED | 1 failed in 1.08s
+B2d test_core010_a_grid_not_uniform_in_the_inference_coordinate_is_passed_over -> KILLED | 2 failed in 1.15s
+B2e test_core010_a_log_spaced_grid_is_the_declared_prior_of_a_log_parameter -> KILLED | 1 failed in 1.19s
+B2f test_core010_a_grid_not_uniform_in_the_inference_coordinate_is_passed_over -> KILLED | 2 failed in 1.12s
+B2g test_core010_the_standalone_grid_predictive_refuses_an_undeclared_prior_given_the_evidence -> KILLED | 1 failed in 1.08s
+CONTROL (unmutated) GREEN | 7 passed in 1.08s
