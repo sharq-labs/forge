@@ -1,7 +1,8 @@
 """Scientific core audit 2026-09-16, batch 3b: scoping validation, validity and uncertainty records to what they describe.
 
 Findings CORE-009, CORE-014 and CORE-016 (docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md), under
-benchmarks/core_v4_false_confidence/BATCH3B_THRESHOLD_PROTOCOL.json. Recorded as strict xfails before the fix.
+benchmarks/core_v4_false_confidence/BATCH3B_THRESHOLD_PROTOCOL.json. Recorded as strict xfails in commit 5b960db, each seen
+failing, before the fix.
 """
 
 from __future__ import annotations
@@ -16,8 +17,6 @@ from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from engcore.scientific.results.validation import ValidationOutcome
 from engcore.scientific.units.quantity import Quantity
 
-AUDITED = pytest.mark.xfail(strict=True, reason="reproduced before batch 3b; fixed in batch 3b")
-
 K = "kelvin"
 
 
@@ -31,7 +30,6 @@ def _evidence(**observation):
                                                                     **observation),))
 
 
-@AUDITED
 def test_core009_a_comparison_at_other_conditions_is_not_made():
     evidence = _evidence(conditions={"T": Quantity(300.0, K)})
     hot = evidence.compare({"y": Quantity(1.0, "meter")}, conditions={"T": Quantity(5000.0, K)})
@@ -62,7 +60,6 @@ def _result(assessment, temperature):
                             provenance=ProvenanceRecord(run_id="r", models=(_MODEL,), inputs={"T": Quantity(temperature, K)}))
 
 
-@AUDITED
 def test_core014_an_assessment_read_at_another_operating_point_is_refused():
     assessment = _DOMAIN.assess({"T": Quantity(300.0, K)}, record_values=True)
     assert assessment.status is ValidityStatus.IN_DOMAIN and assessment.evaluated["T"] == Quantity(300.0, K)
@@ -80,7 +77,6 @@ def test_core014_an_assessment_that_did_not_record_values_serializes_as_before()
 # ---------------------------------------------------------------------------
 # CORE-016: uncertainty had no source
 # ---------------------------------------------------------------------------
-@AUDITED
 def test_core016_an_uncertainty_says_what_kind_of_uncertainty_it_is():
     from engcore.scientific.results.uncertainty import UncertaintySource
 

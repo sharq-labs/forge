@@ -27,16 +27,33 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping as RuntimeMapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 from .errors import ScientificValidationError
+from .results.immutable import freeze
 from .results.validation import ValidationCheck, ValidationLevel, ValidationOutcome
 from .serialization import require_schema, schema_string
 from .units.quantity import Quantity
 from .units.validation import require_same_dimension
+
+
+#: CORE-009/CORE-014: two statements of one operating point agree to this relative tolerance (class A).
+_OPERATING_POINT_RTOL = 1.0e-9
+
+
+def _same_operating_point(stated: Quantity, other: Any) -> bool:
+    """Whether ``other`` is the same quantity as ``stated``: same dimension, equal to 1e-9 relative, or both zero."""
+    if not isinstance(other, Quantity):
+        return False
+    try:
+        require_same_dimension(stated, other, context="operating point")
+        a, b = stated.magnitude_in(stated.units), other.magnitude_in(stated.units)
+    except Exception:  # noqa: BLE001 - an incompatible statement is a different operating point
+        return False
+    return a == b or abs(a - b) <= _OPERATING_POINT_RTOL * max(abs(a), abs(b))
 
 ORACLE_IDENTITY_SCHEMA = schema_string("oracle_identity")
 ORACLE_OBSERVATION_SCHEMA = schema_string("oracle_observation")
@@ -208,8 +225,20 @@ class OracleObservation:
     expected: Quantity
     absolute_tolerance: Quantity
     note: str = ""
+    #: CORE-009 (scientific core audit 2026-09-16): the operating point the observation was made at. A comparison is
+    #: evidence about the model only there, so ``OracleEvidenceSet.compare`` makes none at any other. Serialized only
+    #: when declared, so the content digest of evidence written before it is unchanged.
+    conditions: Mapping[str, Quantity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        conditions = dict(self.conditions)
+        for key, value in conditions.items():
+            if not str(key).strip() or not isinstance(value, Quantity):
+                raise ScientificValidationError(
+                    f"oracle observation condition {key!r} must be a named Quantity; an operating point without a "
+                    f"unit identifies nothing"
+                )
+        object.__setattr__(self, "conditions", freeze({str(k).strip(): v for k, v in sorted(conditions.items())}))
         metric = str(self.metric).strip()
         if not metric:
             raise ScientificValidationError("oracle observation requires metric")
@@ -238,6 +267,7 @@ class OracleObservation:
             "expected": self.expected.to_dict(),
             "absolute_tolerance": self.absolute_tolerance.to_dict(),
             "note": self.note,
+            **({"conditions": {k: v.to_dict() for k, v in self.conditions.items()}} if self.conditions else {}),
         }
 
     @classmethod
@@ -248,6 +278,7 @@ class OracleObservation:
             expected=Quantity.from_dict(payload["expected"]),
             absolute_tolerance=Quantity.from_dict(payload["absolute_tolerance"]),
             note=payload.get("note", ""),
+            conditions={k: Quantity.from_dict(v) for k, v in (payload.get("conditions") or {}).items()},
         )
 
 
@@ -353,8 +384,31 @@ class OracleEvidenceSet:
         predicted: Mapping[str, Quantity],
         *,
         name: str = "external_oracle",
+        conditions: Mapping[str, Quantity] | None = None,
     ) -> ValidationCheck:
-        """Compare every observation; only pinned evidence may award a level."""
+        """Compare every observation; only pinned evidence may award a level.
+
+        CORE-009: an observation that declares its operating point is compared only at that point. If ``conditions``
+        omits a declared condition or states another value, no comparison is made: the check is NOT_RUN and awards no
+        level. It is not FAIL, because a comparison at other conditions is not evidence against the model.
+        """
+        stated = dict(conditions or {})
+        elsewhere: list[str] = []
+        for observation in self.observations:
+            for key, value in observation.conditions.items():
+                if key not in stated:
+                    elsewhere.append(f"{observation.metric}:{key} not stated (observed at {value})")
+                elif not _same_operating_point(value, stated[key]):
+                    elsewhere.append(f"{observation.metric}:{key} is {stated[key]}, observed at {value}")
+        if elsewhere:
+            return ValidationCheck(
+                name=name,
+                outcome=ValidationOutcome.NOT_RUN,
+                detail=(f"no comparison made: the prediction is not at the conditions the evidence was observed at "
+                        f"{elsewhere}"),
+                evidence=(f"oracle:{self.identity.oracle_id}@{self.identity.version}",
+                          f"sha256:{self.identity.evidence_digest}"),
+            )
         residual_ratio = 0.0
         failures: list[str] = []
         compared: list[str] = []

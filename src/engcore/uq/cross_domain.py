@@ -157,6 +157,7 @@ def propagate_transfer_uncertainty(
             kind=UncertaintyKind.STANDARD,
             standard_uncertainty=propagated,
             source=f"transfer:{transfer.source_record_id}",
+            source_kind=source_uncertainty.source_kind,  # CORE-016: a transfer changes units, not what it is
             method=method_prefix,
             notes=(
                 f"propagated from {source_uncertainty.method or 'declared source method'}; "
@@ -188,6 +189,7 @@ def propagate_transfer_uncertainty(
             upper=Quantity(hi, source_unit).to(target_unit),
             confidence_level=source_uncertainty.confidence_level,
             source=f"transfer:{transfer.source_record_id}",
+            source_kind=source_uncertainty.source_kind,  # CORE-016: a transfer changes units, not what it is
             method=method_prefix,
             notes=(
                 f"propagated interval from {source_uncertainty.method or 'declared source method'}; "

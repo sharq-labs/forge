@@ -245,6 +245,13 @@ def _stated_by_a_package_for(module: str) -> str | None:
     return None
 
 
+def _same_operating_point(stated, other) -> bool:
+    """CORE-014: the rule ``oracles`` states, applied to a validity assessment's recorded values."""
+    from ..oracles import _same_operating_point as same
+
+    return same(stated, other)
+
+
 @dataclass(frozen=True)
 class ScientificResult:
     """An interpreted, attributable scientific output."""
@@ -584,6 +591,15 @@ class ScientificResult:
                     f"verdict about a model that did not take part is not a "
                     f"verdict about this result"
                 )
+            # CORE-014: an assessment that recorded the values it read is a verdict at that operating point only
+            inputs = dict(getattr(self.provenance, "inputs", {}) or {})
+            for name, value in dict(getattr(assessment, "evaluated", {}) or {}).items():
+                if name in inputs and not _same_operating_point(value, inputs[name]):
+                    raise ScientificCoreError(
+                        f"validity for {key!r} was assessed with {name} = {value}, but this result's provenance "
+                        f"records {name} = {inputs[name]}. An assessment made at another operating point is not a "
+                        f"verdict about this result"
+                    )
             checked[key] = (
                 assessment
                 if assessment.status is status
@@ -593,6 +609,7 @@ class ScientificResult:
                     violated=assessment.violated,
                     unknown=assessment.unknown,
                     unknown_reasons=assessment.unknown_reasons,
+                    evaluated=assessment.evaluated,
                 )
             )
 

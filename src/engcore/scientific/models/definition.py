@@ -1114,8 +1114,19 @@ class ValidityAssessment:
     violated: tuple[str, ...] = ()
     unknown: tuple[str, ...] = ()
     unknown_reasons: tuple[UnknownCondition, ...] = ()
+    #: CORE-014 (scientific core audit 2026-09-16): the Quantities the conditions read, when the assessment was made
+    #: with ``record_values=True``. A result refuses an assessment whose values differ from its own provenance inputs.
+    #: Serialized only when recorded, so records written without it keep their bytes.
+    evaluated: Mapping[str, Quantity] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        evaluated = dict(self.evaluated)
+        for key, value in evaluated.items():
+            if not str(key).strip() or not isinstance(value, Quantity):
+                raise ScientificCoreError(
+                    f"validity assessment evaluated value {key!r} must be a named Quantity"
+                )
+        object.__setattr__(self, "evaluated", freeze({str(k).strip(): v for k, v in sorted(evaluated.items())}))
         object.__setattr__(self, "satisfied", tuple(self.satisfied))
         object.__setattr__(self, "violated", tuple(self.violated))
         object.__setattr__(self, "unknown", tuple(self.unknown))
@@ -1259,6 +1270,7 @@ class ValidityAssessment:
             "violated": list(self.violated),
             "unknown": list(self.unknown),
             "unknown_reasons": [e.to_dict() for e in self.unknown_reasons],
+            **({"evaluated": {k: v.to_dict() for k, v in self.evaluated.items()}} if self.evaluated else {}),
         }
 
     @classmethod
@@ -1286,6 +1298,7 @@ class ValidityAssessment:
                 UnknownCondition.from_dict(e)
                 for e in payload.get("unknown_reasons", ())
             ),
+            evaluated={k: Quantity.from_dict(v) for k, v in (payload.get("evaluated") or {}).items()},
         )
 
 
@@ -1370,8 +1383,13 @@ class ValidityDomain:
         *,
         declared: Mapping[str, Any] | None = None,
         assembled: Mapping[str, Any] | None = None,
+        record_values: bool = False,
     ) -> ValidityAssessment:
         """Classify a context as in-domain, outside-domain, or unknown.
+
+        ``record_values`` (CORE-014): record on the assessment every Quantity the conditions read, so a result can
+        refuse the assessment when its own provenance states another operating point. Off by default because it adds
+        bytes to every serialized result.
 
         A domain with no conditions is UNKNOWN, not valid: absence of declared
         limits is not evidence of unlimited validity.
@@ -1474,12 +1492,18 @@ class ValidityDomain:
         else:
             status = ValidityStatus.IN_DOMAIN
 
+        evaluated = {}
+        if record_values:
+            read = {getattr(condition, label, None) for condition in self.conditions
+                    for label in ("name", "numerator", "denominator")}
+            evaluated = {key: value for key, value in merged.items() if key in read and isinstance(value, Quantity)}
         return ValidityAssessment(
             status=status,
             satisfied=tuple(satisfied),
             violated=tuple(violated),
             unknown=tuple(unknown),
             unknown_reasons=tuple(reasons),
+            evaluated=evaluated,
         )
 
     def _merge(

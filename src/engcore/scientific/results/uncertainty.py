@@ -26,6 +26,22 @@ class UncertaintyKind(str, Enum):
     INTERVAL = "interval"      # explicit lower/upper bounds
 
 
+class UncertaintySource(str, Enum):
+    """CORE-016 (scientific core audit 2026-09-16): what an uncertainty is an uncertainty OF.
+
+    A discretization estimate and a measurement standard deviation are both STANDARD uncertainties, and only one of
+    them bounds how far the value may be from the world. ``NUMERICAL`` says, in the record itself, that the uncertainty
+    is the solution's error about the declared model and not the value's scientific uncertainty.
+    """
+
+    UNSPECIFIED = "unspecified"   # the default: nothing was declared, and nothing may be inferred from that
+    MEASUREMENT = "measurement"
+    PARAMETER = "parameter"
+    NUMERICAL = "numerical"
+    MODEL_FORM = "model_form"
+    COMBINED = "combined"
+
+
 @dataclass(frozen=True)
 class Uncertainty:
     """Uncertainty attached to one reported value."""
@@ -38,9 +54,12 @@ class Uncertainty:
     source: str = ""
     method: str = ""
     notes: str = ""
+    #: CORE-016: serialized only when declared, so records written before it keep their bytes.
+    source_kind: UncertaintySource = UncertaintySource.UNSPECIFIED
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", UncertaintyKind(self.kind))
+        object.__setattr__(self, "source_kind", UncertaintySource(self.source_kind))
 
         for label in ("standard_uncertainty", "lower", "upper"):
             value = getattr(self, label)
@@ -150,6 +169,7 @@ class Uncertainty:
             "source": self.source,
             "method": self.method,
             "notes": self.notes,
+            **({"source_kind": self.source_kind.value} if self.source_kind is not UncertaintySource.UNSPECIFIED else {}),
         }
 
     @classmethod
@@ -168,4 +188,5 @@ class Uncertainty:
             source=payload.get("source", ""),
             method=payload.get("method", ""),
             notes=payload.get("notes", ""),
+            source_kind=UncertaintySource(payload.get("source_kind", UncertaintySource.UNSPECIFIED.value)),
         )
