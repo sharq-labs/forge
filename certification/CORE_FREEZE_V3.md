@@ -1,6 +1,6 @@
 # Core Freeze V3 — hardened routed uncertainty
 
-**Tag:** `v3.0-core-freeze` (created after merge) · **Candidate:** `1c734ed22296c64188567d3fe50279d8d71bc38e`
+**Tag:** `v3.0-core-freeze` (created after merge) · **Candidate:** `9acffc0065a59948648c9d4a87e7dd0fbf9a3e4a`
 **Manifest:** `certification/core_freeze_v3.json` · **Assurance:** `certification/core_freeze_v3_assurance.json`
 **Verifier:** `python -m tools.certification.core_freeze_v3 --verify` · **Audit:** `docs/audits/MAIN_AUDIT_2026-09-15.md`
 
@@ -35,13 +35,13 @@ V1 is untouched. The frozen API surface does not move: V3 changes behaviour and 
 
 | suite | result |
 |---|---|
-| `FAST` | 6055 passed, 6 skipped |
+| `FAST` | 6056 passed, 5 skipped |
 | `hybrid_uq_focused` | 236 passed |
 | `audit_regressions` | 452 passed |
 | `api_snapshot_v1` | 17 passed |
 | `api_snapshot_v2` | 5 passed |
 | `freeze_manifest_v1` | 36 passed, 1 skipped, 2 deselected |
-| `freeze_manifest_v3` | 15 passed, 1 skipped |
+| `freeze_manifest_v3` | 16 passed |
 | `certificate` | 206 passed, 1 skipped, 2 deselected |
 
 **Formal mutation population (GUARDS 1–35): 284/284 killed by the guard each names**, four shards of 71, each with
@@ -56,6 +56,15 @@ The first round of this population was not clean, and that is the point of runni
 (the grid predictive's judgement, shadowed by the resolution refusal the same audit added — now isolated by its own
 test) and two were red for another guard (the CSTR and K4 liquid-phase conditions, which actually refuse at import).
 All three were corrected and the whole population re-run.
+
+A second, narrower problem surfaced only on the Python 3.11 CI gate: two SRIA mutations (G29aj, G29ao)
+rewrote nothing but the expressions interpolated inside an f-string. Since PEP 701 those are real tokens on
+3.12+, so the harness saw a code change here; on 3.11 an f-string is one STRING token, which the code digest
+drops, so the harness correctly refused them there. Both were repointed to changes that are executable on every
+supported Python, `tests/test_mutation_harness.py` now measures the rule the way the oldest supported
+interpreter tokenizes, and shards 1 and 2 (which hold those two mutations) were re-run in full at `2ade43d`.
+Shards 0 and 3 were measured at `b8b13b2`; the assurance builder verified that no file under `src/` or in the
+harness targets differs between the two commits before recording the set.
 
 On a recertification source commit the four certificate/freeze self-checks read the previous certificate by
 construction. They are deselected here exactly as the CI source gates deselect them, and the recertify workflow's
