@@ -520,6 +520,89 @@ _CONVERGENCE_STATES_THAT_FINISHED = frozenset(
 #: See :func:`_convergence_checks`.
 SOLVER_CONVERGENCE_CHECK = "solver_did_not_converge"
 
+def attained_levels_of(validation: Sequence[ValidationCheck]) -> frozenset[ValidationLevel]:
+    """The levels these checks establish, re-derived from their fields (R-47, core re-audit 2026-09-16).
+
+    ``ValidationReport.attained_levels`` re-applies GUARD 2, GUARD 21 and VAL-01 "at the moment the level is
+    read as a claim", over fields rather than over the object, because a method can be overridden and a
+    property shadowed. :func:`derive_verdict` is exported and documented as usable on its own over two plain
+    sequences, and it used to read ``check.passed`` and ``check.establishes`` with neither type check nor
+    re-derivation -- so a duck-typed object claiming EXPERIMENTALLY_VALIDATED satisfied ``required_levels``
+    and returned SUPPORTED while ``ValidationReport`` refused it. Same rules, same place, here.
+
+    A check that does not carry a field the rule reads is REFUSED rather than read past. "This object has no
+    residual" must not resolve to "nothing argues against this result".
+    """
+    from ..scientific.results.validation import _issuer_gap, level_is_earned, outcome_is_earned
+
+    attained: set[ValidationLevel] = set()
+    for check in validation:
+        try:
+            outcome = ValidationOutcome(check.outcome)
+            declared = getattr(check, "establishes")
+            residual = getattr(check, "residual")
+            tolerance = getattr(check, "tolerance")
+            evidence = tuple(getattr(check, "evidence") or ())
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise CredibilityEvidenceError(
+                f"cannot derive a verdict from a check this function cannot read ({exc}); a record "
+                f"missing the fields the level rules are applied over must not be read as one that "
+                f"passed them"
+            ) from exc
+        if declared is None:
+            continue
+        level = ValidationLevel(declared)
+        # GUARD 2, GUARD 21 and VAL-01 are all scoped to PASS and WARNING: a FAIL or NOT_RUN
+        # claims nothing and is held to nothing. A WARNING is a pass with a caveat and IS held
+        # to them -- and still attains nothing, because the core's own `attained_levels` counts
+        # only PASSING checks. Both halves of that are the core's; neither is re-decided here.
+        if outcome not in (ValidationOutcome.PASS, ValidationOutcome.WARNING):
+            continue
+        if not level_is_earned(level, outcome, residual, tolerance, evidence):
+            raise CredibilityEvidenceError(
+                f"check {getattr(check, 'name', '?')!r} declares {level.value} and compared nothing "
+                f"(GUARD 2); the core's own ValidationReport refuses it, and a verdict may not read it "
+                f"as an attained level"
+            )
+        if not outcome_is_earned(outcome, declared, residual, tolerance):
+            raise CredibilityEvidenceError(
+                f"check {getattr(check, 'name', '?')!r} declares {level.value} with a residual its own "
+                f"tolerance does not admit (GUARD 21); a verdict may not read it as an attained level"
+            )
+        gap = _issuer_gap(level, outcome, residual, tolerance, evidence)
+        if gap is not None:
+            raise CredibilityEvidenceError(
+                f"check {getattr(check, 'name', '?')!r} declares {level.value} and {gap} (VAL-01); only "
+                f"the issuer of that level can grant it, and a verdict may not read a claimed one"
+            )
+        if outcome is ValidationOutcome.PASS:
+            attained.add(level)
+    return frozenset(attained)
+
+
+def evidence_basis_of(attained: "frozenset[ValidationLevel] | set[ValidationLevel]") -> str:
+    """``ValidationReport.evidence_basis``'s rule over a set of levels, so both sides use the one rule."""
+    from ..scientific.results.validation import VALIDATION_LEVELS
+
+    if set(attained) & set(VALIDATION_LEVELS):
+        return "VALIDATED"
+    return "VERIFICATION_ONLY" if attained else "NONE"
+
+
+#: What kind of evidence a set of attained levels is, in increasing strength (R-04, core re-audit
+#: 2026-09-16). Exactly ``ValidationReport.evidence_basis``'s three words, ordered here so a caller can
+#: DEMAND one: VALIDATED compares the model with something outside itself; VERIFICATION_ONLY says the
+#: declared model was solved correctly, which is a statement about the solution and not about the world;
+#: NONE is the absence of any attained level.
+EVIDENCE_BASIS_ORDER: Mapping[str, int] = {"NONE": 0, "VERIFICATION_ONLY": 1, "VALIDATED": 2}
+
+#: How an assembler records a level it removed from a check it is carrying (R-04). ``_withhold_level`` in
+#: ``mcp.problem`` strips ``establishes`` on purpose -- agreement between two solvers of one declared model
+#: is verification, not validation -- and wrote the reason into the check's ``detail`` prose, where a reader
+#: asking "what did this run nearly establish" had to parse a sentence for it. The line is structured; the
+#: sentence stays.
+WITHHELD_LEVEL_EVIDENCE_PREFIX = "level-withheld:"
+
 
 def derive_verdict(
     *,
@@ -531,6 +614,7 @@ def derive_verdict(
     unattributed_assessments: Sequence[tuple[str, str]] = (),
     unresolved_models: Sequence[tuple[str, str]] = (),
     convergence: "ConvergenceState | str | None" = None,
+    required_evidence_basis: str | None = None,
 ) -> CredibilityVerdict:
     """The one place a verdict is decided. Pure, total, and order-independent.
 
@@ -649,6 +733,23 @@ def derive_verdict(
     closed-form evaluation -- and is as good as CONVERGED here, exactly as it is
     in ``is_usable``.
 
+    **The attained levels are re-derived here, not taken from the checks**
+    (R-47, core re-audit 2026-09-16). This function used to read ``check.passed``
+    and ``check.establishes``, with no type check and without re-applying the
+    rules :attr:`ValidationReport.attained_levels` applies "at the moment it is
+    read as a claim". A ``SimpleNamespace`` claiming EXPERIMENTALLY_VALIDATED
+    satisfied ``required_levels`` and returned SUPPORTED, while
+    ``ValidationReport`` refused the very same object. See
+    :func:`attained_levels_of`.
+
+    **``required_evidence_basis``** is ``required_levels`` for the *kind* of
+    evidence rather than the particular level, over
+    :attr:`ValidationReport.evidence_basis`'s three words ordered by
+    :data:`EVIDENCE_BASIS_ORDER`. A caller that will not rely on verification
+    alone says ``"VALIDATED"`` and gets INSUFFICIENT_EVIDENCE until something
+    compares the model with the world. ``None`` demands nothing, so no call
+    written before it changes.
+
     **Fails closed on anything it does not recognise.** The three rules are
     total over today's enum members, but totality here is achieved by a final
     ``SUPPORTED`` return, and a member added to ``ValidityStatus`` or
@@ -723,15 +824,24 @@ def derive_verdict(
     # exactly `ValidationReport.attained_levels`. It subsumes "there are no
     # checks at all" -- an empty check list attains nothing, and so does a
     # full one that establishes nothing.
-    attained = {
-        check.establishes
-        for check in validation
-        if check.passed and check.establishes is not None
-    }
+    attained = attained_levels_of(validation)
     if not attained:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
     if required_levels and not set(required_levels) <= attained:
         return CredibilityVerdict.INSUFFICIENT_EVIDENCE
+
+    # R-04: the KIND of evidence, not the particular level. After the attained
+    # set, so the basis is read off the levels this function itself derived.
+    if required_evidence_basis is not None:
+        demanded = str(required_evidence_basis)
+        if demanded not in EVIDENCE_BASIS_ORDER:
+            raise CredibilityEvidenceError(
+                f"required_evidence_basis {required_evidence_basis!r} is not one of "
+                f"{sorted(EVIDENCE_BASIS_ORDER)}; a requirement nothing can satisfy would "
+                f"yield INSUFFICIENT_EVIDENCE forever with nothing in the record to say why"
+            )
+        if EVIDENCE_BASIS_ORDER[evidence_basis_of(attained)] < EVIDENCE_BASIS_ORDER[demanded]:
+            return CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
     # Everything below is SUPPORTED, so everything reaching here must be a
     # member this function was written to handle. A future enum addition is a
@@ -1337,6 +1447,13 @@ class CredibilityEvidenceReport:
     #: Whether such a record may stand in for scientific uncertainty is
     #: decided where it is used as one, which is the SRIA budget's channel rule.
     uncertainty: Mapping[str, Uncertainty] = field(default_factory=dict)
+    #: The KIND of evidence the assembling study declares it needs before it
+    #: will rely on this result (R-04): ``"VALIDATED"``, ``"VERIFICATION_ONLY"``
+    #: or ``"NONE"``. ``required_levels`` for the kind rather than the
+    #: particular level, and the same rule: a demand that was not met is
+    #: INSUFFICIENT_EVIDENCE. ``None`` demands nothing, which is why no report
+    #: assembled before this field existed changes.
+    required_evidence_basis: str | None = None
 
     def __post_init__(self) -> None:
         run_id = str(self.run_id).strip()
@@ -1484,6 +1601,18 @@ class CredibilityEvidenceReport:
         if self.convergence is not None:
             object.__setattr__(self, "convergence", ConvergenceState(self.convergence))
 
+        # R-04: refused at construction for the reason required_levels' UNVERIFIED is --
+        # a demand nothing can satisfy would report INSUFFICIENT_EVIDENCE forever with
+        # nothing in the record to say why.
+        if self.required_evidence_basis is not None:
+            demanded = str(self.required_evidence_basis)
+            if demanded not in EVIDENCE_BASIS_ORDER:
+                raise CredibilityEvidenceError(
+                    f"required_evidence_basis {self.required_evidence_basis!r} is not one of "
+                    f"{sorted(EVIDENCE_BASIS_ORDER)}"
+                )
+            object.__setattr__(self, "required_evidence_basis", demanded)
+
         # R-43: typed and frozen for the reason ``values`` is -- a type check is worth
         # nothing if a bare number can be written in afterwards.
         declared = dict(self.uncertainty)
@@ -1528,7 +1657,45 @@ class CredibilityEvidenceReport:
             unattributed_assessments=self.unattributed_assessments,
             unresolved_models=self.unresolved_models,
             convergence=self.convergence,
+            required_evidence_basis=self.required_evidence_basis,
         )
+
+    @property
+    def evidence_basis(self) -> str:
+        """What kind of evidence this report's attained levels are (R-04).
+
+        The core's own ``ValidationReport.evidence_basis`` rule, over the levels
+        :func:`attained_levels_of` re-derives. A property so no assembler can assert one.
+        """
+        return evidence_basis_of(self.attained_levels)
+
+    @property
+    def missing_evidence_basis(self) -> str | None:
+        """The basis this report was required to have and does not, or ``None`` (R-04).
+
+        Parallel to :attr:`missing_required_levels`, and what the transport's rule table names.
+        """
+        demanded = self.required_evidence_basis
+        if demanded is None:
+            return None
+        if EVIDENCE_BASIS_ORDER[self.evidence_basis] < EVIDENCE_BASIS_ORDER[demanded]:
+            return demanded
+        return None
+
+    @property
+    def levels_withheld(self) -> tuple[tuple[str, str], ...]:
+        """``(check name, level)`` for every level an assembler removed from a check it carries (R-04).
+
+        Read off the ``level-withheld:`` lines the assembler writes, so a reader asking what this run
+        NEARLY established does not have to parse a detail sentence for it. Derived, never supplied: an
+        assembler that wants to claim a level was withheld has to actually withhold one.
+        """
+        found = []
+        for check in self.validation:
+            for line in getattr(check, "evidence", ()) or ():
+                if isinstance(line, str) and line.startswith(WITHHELD_LEVEL_EVIDENCE_PREFIX):
+                    found.append((str(check.name), line[len(WITHHELD_LEVEL_EVIDENCE_PREFIX):]))
+        return tuple(sorted(found))
 
     @property
     def uncertainty_sources(self) -> Mapping[str, str]:
@@ -1939,6 +2106,14 @@ class CredibilityEvidenceReport:
                 # for the reason `uncertainty_sources` skips UNSPECIFIED.
                 **({} if not self.uncertainty_sources
                    else {"uncertainty_sources": dict(self.uncertainty_sources)}),
+                # R-04: what this run nearly established, and what a caller demanded of the
+                # kind of evidence. Each written only when there is one.
+                **({} if not self.levels_withheld
+                   else {"levels_withheld": [list(entry) for entry in self.levels_withheld]}),
+                **({} if self.required_evidence_basis is None
+                   else {"required_evidence_basis": self.required_evidence_basis}),
+                **({} if self.missing_evidence_basis is None
+                   else {"missing_evidence_basis": self.missing_evidence_basis}),
             },
         }
 
@@ -1989,6 +2164,11 @@ class CredibilityEvidenceReport:
                 name: Uncertainty.from_dict(record)
                 for name, record in (payload.get("uncertainty") or {}).items()
             },
+            # R-04: read from the qualifiers, where it is written, because it is what the
+            # assembling study declared and not something the contents derive.
+            required_evidence_basis=(
+                (payload.get("verdict_qualifiers") or {}).get("required_evidence_basis")
+            ),
         )
         # The verdict in a payload is advisory; recompute and verify so a
         # hand-edited record cannot smuggle in a verdict its contents do not
@@ -1999,6 +2179,24 @@ class CredibilityEvidenceReport:
         # when present, so deleting it was a way past the check -- and every
         # writer of this schema emits it, so a report without one is not a
         # report this writer produced.
+        # R-04 (core re-audit 2026-09-16), and the same argument the verdict's own
+        # requirement below makes: the qualifiers block was read back only when
+        # present, so DELETING it -- or just the `evidence_basis` inside it -- was a
+        # way past the comparison. And evidence_basis is the one qualifier that says a
+        # SUPPORTED verdict rests on verification alone, which on this platform every
+        # SUPPORTED MCP verdict does. Every writer of this schema emits the block, so a
+        # payload without the key is not a payload this writer produced.
+        #
+        # Placed before the verdict's requirement rather than between it and the
+        # comparison it guards, so the two stay one contiguous rule.
+        if "verdict_qualifiers" not in payload:
+            raise CredibilityEvidenceError(
+                "serialized report carries no verdict_qualifiers; every writer of "
+                f"{EVIDENCE_PACKAGE_SCHEMA} derives them from the contents, and a report "
+                "with the block removed cannot be checked against them -- including "
+                "evidence_basis, which is what says a SUPPORTED verdict rests on "
+                "verification alone"
+            )
         if "verdict" not in payload:
             raise CredibilityEvidenceError(
                 "serialized report carries no verdict; every writer of "
@@ -2017,8 +2215,9 @@ class CredibilityEvidenceReport:
         # without opening the check list: they were never read back, so a
         # hand-edited report could empty `warning_checks` or add an attained
         # level beside an honest verdict. Recomputed and compared when present
-        # -- an older writer may predate one -- and a qualifier this writer
-        # never emits is refused rather than carried.
+        # -- a `null` is a writer with nothing to say -- and a qualifier this
+        # writer never emits is refused rather than carried. That the BLOCK
+        # itself is present is required above, beside the verdict (R-04).
         stated = payload.get("verdict_qualifiers")
         if stated is not None:
             _require_qualifiers_as_derived(stated, report)
@@ -2035,6 +2234,20 @@ def _require_qualifiers_as_derived(
             f"{type(stated).__name__}"
         )
     derived = report.to_dict()["verdict_qualifiers"]
+    # R-04: REQUIRED, for the reason the verdict itself became required in RES-08. The
+    # comparison used to run over the keys PRESENT, so deleting evidence_basis -- or the
+    # whole block -- was a way past it, and evidence_basis is the one qualifier that says
+    # a SUPPORTED verdict rests on verification alone. Every key this writer derives must
+    # be there; a key it derives only when the contents carry one is not derived here
+    # either, so the two sides stay symmetric.
+    missing = sorted(set(derived) - set(stated))
+    if missing:
+        raise CredibilityEvidenceError(
+            f"serialized verdict_qualifiers omits {missing}, which this writer of "
+            f"{EVIDENCE_PACKAGE_SCHEMA} derives from the contents; a report with a qualifier "
+            f"removed cannot be checked against them, and evidence_basis is what says a "
+            f"SUPPORTED verdict rests on verification alone"
+        )
     for name, value in stated.items():
         if name not in derived:
             raise CredibilityEvidenceError(

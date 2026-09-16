@@ -280,3 +280,56 @@ passed, every anchor intact; `tests/mutation_guards.py` untouched. No committed 
 evidence generator whose output changes is `tcr.py`, and that is batch 6's already-recorded `detail`.
 
 **Open decisions.** None in this batch.
+
+### Batch 8 — I-09, part A of two
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-09 | **PARTIAL** | `03da331` (preregistration + 15 strict xfails), this commit | the issuer half — a registered reference id and digest for ANALYTICALLY_VERIFIED — is batch 9; DIMENSIONALLY_VALID and NUMERICALLY_CONVERGED still need no issuer; the bundle manifest is still unkeyed |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-04 | **PARTIAL** | The adoption half is closed. The verdict block an agent reads first carries `evidence_basis`, `evidence_basis_means`, `attained_levels`, `levels_withheld` and `warning_checks`, and its `means`, `does_not_mean` and `action` come from a table keyed by **(verdict, evidence basis)**: a SUPPORTED report on verification alone now says that every level attained says the declared model was solved correctly and that the report contains no comparison of the model with the world — where it used to say "nothing in this report argues against relying on the result". A non-deciding `verification_only` rule fires in `other_findings`, so the reader who scans rules sees it too. `describe_capabilities` lists all three readings per verdict under `verdicts[].by_evidence_basis`. A caller can demand a kind of evidence with `required_evidence_basis`, which is `required_levels` for the kind rather than the level, reported under the rule `required_evidence_basis_not_attained`. `_withhold_level` records the level it strips as a structured `level-withheld:` line, so `levels_withheld` names it instead of leaving it inside a prose `detail`. And the qualifiers block, with `evidence_basis` in it, is now REQUIRED on read — deleting the block, or just that one key, was a way past the comparison. **PARTIAL**: the issuer half is batch 9, and the two residuals above stay open. |
+| R-47 | **FIXED** | `derive_verdict` builds its attained set through the new `attained_levels_of`, which re-applies the core's own field-level rules — GUARD 2 (`level_is_earned`), GUARD 21 (`outcome_is_earned`) and VAL-01 (`_issuer_gap`) — over each check's `outcome`, `establishes`, `residual`, `tolerance` and `evidence`, instead of reading `check.passed` and `check.establishes`. Fields rather than `isinstance`, for `level_is_earned`'s own stated reason: a method can be overridden and a property shadowed. A check missing a field the rule reads is refused rather than read past, because "this object has no residual" must not resolve to "nothing argues against this result". The duck-typed object claiming EXPERIMENTALLY_VALIDATED is now refused, as `ValidationReport` already refused it. Every genuine `ValidationCheck` gives the same answer as before, which the FAST tier confirms across 6479 tests. |
+
+**The verdict WORD is unchanged and no benchmark was re-scored.** What changed is the sentence beside it and
+the keys around it.
+
+**Compatibility.** Additive: one trailing dataclass field with a default (`required_evidence_basis`), three
+derived properties (`evidence_basis`, `missing_evidence_basis`, `levels_withheld`), one keyword-only argument
+with a default on `derive_verdict`, two new exported functions (`attained_levels_of`, `evidence_basis_of`),
+two new module-level constants (`EVIDENCE_BASIS_ORDER`, `WITHHELD_LEVEL_EVIDENCE_PREFIX`). The MCP response
+schema gains five keys in the verdict block and one in each `describe_capabilities` verdict entry; every
+existing key keeps its name and place. `docs/mcp/README.md` is updated with the new section. One correction to
+the preregistered compatibility note is recorded in the protocol's amendment log: a pre-CORE-008 payload with
+no `verdict_qualifiers` block at all is now refused, which the note wrongly said would be unaffected.
+
+**Two implementation corrections**, both in the protocol's amendment log rather than glossed:
+
+1. The level rules are scoped to PASS **and** WARNING, while the core's `attained_levels` counts only
+   PASSING checks. A WARNING check is therefore held to the rules and still attains nothing. The first
+   implementation admitted a WARNING check's level, and the existing
+   `tests/mcp/test_evidence.py::test_a_level_established_by_a_check_that_did_not_pass_does_not_count`
+   caught it — which is what that test is for.
+2. Pinned mutations `G31x` and `G31y` anchor the verdict-requirement statements and the qualifier comparison
+   as contiguous code. `tests/mutation_guards.py` may not be edited before the I-30 round, so the new
+   qualifiers-present refusal was moved above the verdict's own rather than between it and the comparison it
+   guards. The `if stated is not None` guard still does real work: a present key with a `null` value, which
+   the `in payload` check does not cover.
+
+**Guard mutations.** `BATCH8_MUTATIONS.log`, from `audit/batch8_mutations.py`: **14 of 14 KILLED**, control
+green. B8j..B8l were first written as string renames and were correctly refused by the harness's own
+`MUTATION CHANGED NO CODE` check — `_code_digest` ignores string tokens on purpose — and were rewritten to
+mutate the code behind each key. The 13 pinned mutations that target the three files this batch changed were
+re-run isolated and all 13 are still KILLED (`BATCH8_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6479 passed, 15 xfailed, 18 failed (the by-design 18, unchanged).
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Two
+existing test fixtures were updated, both because a stub of a report must carry what the transport reads off
+one: `tests/mcp/test_server.py`'s `SimpleNamespace` gained `evidence_basis`, `levels_withheld`,
+`missing_evidence_basis` and `convergence`, and its `attained_levels` became a real `ValidationLevel` member.
+No assertion was weakened.
+
+**Open decisions.** None in this batch.

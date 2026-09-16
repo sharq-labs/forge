@@ -1,8 +1,13 @@
 {
   "schema": "core_v4_false_confidence_threshold_protocol/1",
   "batch": 8,
-  "improvements": ["I-09 (part A of two)"],
-  "problems_addressed": ["R-04 (the adoption half)", "R-47"],
+  "improvements": [
+    "I-09 (part A of two)"
+  ],
+  "problems_addressed": [
+    "R-04 (the adoption half)",
+    "R-47"
+  ],
   "deferred_to_batch_9": "R-04's issuer half: requiring a registered reference id and digest for ANALYTICALLY_VERIFIED. It moves the one SUPPORTED report on the production MCP path, touches five producers in src/ and 21 test files, and needs the hard benchmark re-scored. Splitting it out keeps each half separately verifiable; I-09 stays PARTIAL until batch 9.",
   "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
   "baseline_commit": "763c37b",
@@ -12,7 +17,6 @@
     "the audited reproductions only: the production electrothermal verdict block reads `supported` with verdict_reasons [] and other_findings [], its `means` says 'at least one check both passed and established an evidentiary level', and the words 'evidence_basis' and 'verification' appear nowhere in the block or in describe_capabilities, while the nested report's verdict_qualifiers.evidence_basis reads VERIFICATION_ONLY; a report JSON with evidence_basis or the whole verdict_qualifiers removed is accepted on read, because _require_qualifiers_as_derived compares only the keys present; and a SimpleNamespace claiming EXPERIMENTALLY_VALIDATED satisfies derive_verdict's required_levels and returns SUPPORTED, while ValidationReport refuses the same object",
     "NOTHING about how any rule below scores anywhere else"
   ],
-
   "rules": {
     "the_verdict_block_carries_the_evidence_basis": {
       "improvement": "I-09",
@@ -20,7 +24,8 @@
       "rule": "_verdict_block emits `evidence_basis`, `attained_levels`, `levels_withheld` and `warning_checks` beside `value`, and its `means`, `does_not_mean` and `action` come from a table keyed by (verdict, evidence_basis) rather than by verdict alone.",
       "why_the_prose_and_not_only_a_field": "an agent reads `means`. Telling it 'nothing in this report argues against relying on the result' when the only evidence is that the declared model was solved correctly is the substitution the whole layer exists to refuse, one level up from where CORE-008 closed it. A field it may not read is not the fix.",
       "the_verdict_word_is_unchanged": "SUPPORTED stays SUPPORTED. What changes is the sentence beside it, which is not scored by any benchmark, and the keys added around it.",
-      "class": "A (prose and vocabulary; no threshold)"
+      "class": "A (prose and vocabulary; no threshold)",
+      "measured_outcome": "implemented as stated. The production electrothermal block now reads evidence_basis VERIFICATION_ONLY with attained_levels ['analytically_verified'], its `means` says every level attained is a VERIFICATION level and the report contains no comparison of the model with the world, and a non-deciding `verification_only` rule fires in other_findings. No verdict word moved."
     },
     "an_agent_can_demand_a_basis": {
       "improvement": "I-09",
@@ -48,7 +53,8 @@
       "rule": "derive_verdict builds its attained set by re-applying the core's own field-level rules -- `level_is_earned` (GUARD 2), `_check_contradicts_its_numbers` (GUARD 21) and the issuer rule (VAL-01) -- over each check's outcome, establishes, residual, tolerance and evidence, instead of reading `check.passed` and `check.establishes`. A check missing any of those fields is refused rather than read.",
       "why_fields_and_not_isinstance": "the core's own `level_is_earned` docstring gives the reason and this is the same reason one level up: a method can be overridden and a property can be shadowed, so a rule that could only be asked of an object is a rule the object answers for itself. Refusing anything that is not a ValidationCheck would also work and is narrower, but derive_verdict is exported and documented as usable on its own over 'two sequences', and reading the fields keeps that true while making the answer the core's.",
       "effect": "identical for every real ValidationCheck, because ValidationReport already applies these rules; the SimpleNamespace claiming EXPERIMENTALLY_VALIDATED is now refused, as ValidationReport already refuses it.",
-      "class": "A (re-use of three already-preregistered rules; no new number)"
+      "class": "A (re-use of three already-preregistered rules; no new number)",
+      "measured_outcome": "implemented as stated, with one correction found while implementing and recorded in the amendment log: the level rules are scoped to PASS and WARNING, but the core's own attained_levels counts only PASSING checks, so a WARNING check is HELD to the rules and still attains nothing. The first implementation admitted a WARNING check's level and was caught by the existing tests/mcp/test_evidence.py::test_a_level_established_by_a_check_that_did_not_pass_does_not_count."
     },
     "a_solver_that_did_not_finish_is_a_named_rule": {
       "improvement": "I-10, completed here",
@@ -58,7 +64,6 @@
       "class": "A"
     }
   },
-
   "compatibility_impact": {
     "the_verdict_word": "UNCHANGED. No SUPPORTED becomes INSUFFICIENT_EVIDENCE in this batch and no benchmark is re-scored. The issuer rule that WOULD move a verdict is batch 9's.",
     "the_mcp_response_schema": "ADDITIVE. The verdict block gains evidence_basis, evidence_basis_means, attained_levels, levels_withheld and warning_checks; every existing key keeps its name and its place. `means`, `does_not_mean` and `action` keep their keys and change their TEXT for a report whose basis is not VALIDATED, which is the point. describe_capabilities' verdict entries keep their three keys and gain `by_evidence_basis`. The schema is described in docs/mcp/README.md and asserted in tests/mcp/test_server.py; both are updated.",
@@ -70,14 +75,25 @@
     "serialized_records": "mcp_evidence_package's verdict_qualifiers gains `levels_withheld` and `required_evidence_basis`, each written only when it carries information; and evidence_basis becomes REQUIRED on read. A record written before this batch that carries evidence_basis reads back unchanged; one written before CORE-008, which has no verdict_qualifiers at all, is unaffected because the requirement is over the keys a present qualifiers block must have.",
     "check_bytes": "_withhold_level adds one evidence line to the MCP problem runner's cross-solver check. Any SHA-pinned fixture holding that check's bytes moves and is regenerated by writing bytes."
   },
-
   "residuals_stated_in_advance": [
     "DIMENSIONALLY_VALID and NUMERICALLY_CONVERGED still need no issuer. The audit's fix direction wants a declared unit_exemplar comparison record and a declared threshold set respectively; neither is in I-09's text, which names ANALYTICALLY_VERIFIED only, and both are recorded as OPEN under R-04 until a later batch.",
     "ANALYTICALLY_VERIFIED still needs no issuer: batch 9.",
     "The bundle manifest is still unkeyed, so write_bundle followed by an edit and a rewritten manifest still verifies (finding 43's third consequence). That is a signing problem and not a verdict rule; recorded as OPEN under R-04.",
-    "An issuer's record still cannot be told from a faithful copy of one: a check copied from a genuine consensus onto another result carries a genuine record. The core already states this residual in _issuer_gap and it is unchanged here."
+    "An issuer's record still cannot be told from a faithful copy of one: a check copied from a genuine consensus onto another result carries a genuine record. The core already states this residual in _issuer_gap and it is unchanged here.",
+    "A pre-CORE-008 record with no verdict_qualifiers block is now refused on read, which the preregistered compatibility note wrongly said would be unaffected. See amendment_log entry 1. Nothing in the repository reads such a payload; a consumer that holds one must re-derive the report rather than read it as current."
   ],
-
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-16",
+      "entry": 1,
+      "what": "recorded two implementation corrections that do not change any preregistered rule",
+      "corrections": [
+        "attained_levels_of applies GUARD 2, GUARD 21 and VAL-01 to PASS and WARNING checks alike, and adds a level to the attained set only for a PASS. Both halves are the core's own rule (level_is_earned is scoped to PASS and WARNING; ValidationReport.attained_levels counts check.passed), and the preregistered rule said 'the core's own field-level rules' without spelling out that the two scopes differ. The first implementation admitted a WARNING check's level and an existing test caught it.",
+        "the refusal of a payload with no verdict_qualifiers block at all is placed BEFORE the verdict's own requirement rather than between it and the comparison it guards, because pinned mutation G31x anchors those two statements as one contiguous rule and G31y anchors the `if stated is not None` comparison. tests/mutation_guards.py is certification-pinned and may not be edited before the I-30 round, so the code was restructured to match the anchors, which is the rule the program works under. The `if stated is not None` guard still does real work: it covers a present key with a null value, which the `in payload` check does not."
+      ],
+      "correction_to_the_preregistered_compatibility_note": "the note said a record written before CORE-008, with no verdict_qualifiers block at all, would be unaffected. It is NOT: such a payload is now refused. Finding 50 names the whole-block deletion as part of the audited defect, and a record from before CORE-008 is not one this writer produced. No test or committed record in the repository reads such a payload, so nothing broke; the note was wrong and is corrected here rather than quietly satisfied.",
+      "effect_on_the_rules_already_scored": "none."
+    }
+  ]
 }

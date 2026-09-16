@@ -81,6 +81,7 @@ from ..scientific.models.definition import (
 )
 from ..scientific.results.validation import (
     ValidationCheck,
+    ValidationLevel,
     ValidationOutcome,
 )
 from ..scientific.units.quantity import Quantity, dimension_of, dimensionality
@@ -94,6 +95,7 @@ from .errors import (
     WrongDimensionError,
 )
 from .evidence import (
+    WITHHELD_LEVEL_EVIDENCE_PREFIX,
     AssertedContext,
     CouplingEvidence,
     CredibilityEvidenceReport,
@@ -1442,7 +1444,15 @@ def _withhold_level(check: ValidationCheck) -> ValidationCheck:
     Every other field is carried through unchanged, so the residual, the
     tolerance and the consensus's own account of why the routes are independent
     all reach the reader intact. Only the claim about *these* values is dropped.
+
+    R-04 (core re-audit 2026-09-16): the level is also recorded STRUCTURALLY, as a
+    ``level-withheld:`` line in the evidence, so ``CredibilityEvidenceReport.levels_withheld``
+    can name it and the verdict block can carry it. Before that it reached a reader only
+    inside the ``detail`` sentence below, where a reader asking what this run nearly
+    established had to parse prose for it. The sentence stays; it says WHY, and the line
+    says WHAT.
     """
+    withheld = None if check.establishes is None else ValidationLevel(check.establishes)
     return ValidationCheck(
         name=check.name,
         outcome=check.outcome,
@@ -1450,7 +1460,11 @@ def _withhold_level(check: ValidationCheck) -> ValidationCheck:
         establishes=None,
         residual=check.residual,
         tolerance=check.tolerance,
-        evidence=check.evidence,
+        evidence=(
+            check.evidence
+            if withheld is None
+            else (*check.evidence, f"{WITHHELD_LEVEL_EVIDENCE_PREFIX}{withheld.value}")
+        ),
     )
 
 

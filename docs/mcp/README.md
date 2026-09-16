@@ -238,7 +238,7 @@ Takes the case object. Returns one report per stage:
 | Key | What it carries |
 |---|---|
 | `coupling` | The coupled run's own outcome token, iterations against budget, final iterate change against tolerance, and the derived criterion — **its own field**, not folded into `validation` |
-| `stages[].verdict` | The verdict, what it means and does not, and `verdict_reasons` |
+| `stages[].verdict` | The verdict, what it means and does not **on the kind of evidence this report actually holds**, its `evidence_basis`, the levels attained and the levels withheld, the warnings a `SUPPORTED` absorbs, and `verdict_reasons` |
 | `stages[].report` | The `CredibilityEvidenceReport` exactly as `to_dict()` produced it: values with units, per-model validity with satisfied/violated/unknown condition names, every validation check including `NOT_RUN`, provenance, and the caller's asserted context under `caller_asserted` |
 
 **`verdict_reasons` is the part that makes a verdict actionable.** Each entry
@@ -252,6 +252,42 @@ call.
 The enumeration is checked against the report's own verdict on every call: a
 non-`SUPPORTED` verdict that no rule explains raises rather than reaching an
 agent as a refusal it cannot act on.
+
+### `SUPPORTED` says which kind of evidence it rests on
+
+`evidence_basis` is `VALIDATED`, `VERIFICATION_ONLY` or `NONE`, and it is the
+first thing to read after the verdict word.
+
+* `VALIDATED` — at least one attained level compares the model with something
+  outside itself: a benchmark, an experiment, or an independently implemented
+  solver.
+* `VERIFICATION_ONLY` — every attained level says the *declared model was
+  solved correctly*. Nothing in the report compares it with the world. **A
+  correct solution of the wrong model is exactly what this cannot
+  distinguish.**
+* `NONE` — no check both passed and established a level. `SUPPORTED` cannot
+  arise here.
+
+**On this server, every `SUPPORTED` verdict is `VERIFICATION_ONLY`**, and that
+is a property of the platform rather than of a payload: the trusted oracle
+registry is empty, so no benchmark or experimental level can be issued, and the
+only cross-solver check has its level withheld on purpose — agreement between
+two solvers of one *declared* model is verification of that model, not
+validation against reality. The level it would have established is reported in
+`levels_withheld` rather than left inside a prose `detail`.
+
+`means`, `does_not_mean` and `action` are written for the basis the report
+actually has, so a `SUPPORTED` report on verification alone does not read as
+though a measurement agreed with it. `describe_capabilities` lists all three
+readings per verdict under `verdicts[].by_evidence_basis`, so an agent knows
+this before it calls.
+
+An agent that will not rely on verification alone sets
+`required_evidence_basis` to `VALIDATED` on its report, and the verdict becomes
+`INSUFFICIENT_EVIDENCE` — under the rule
+`required_evidence_basis_not_attained` — until something outside the model
+agrees with it. This is `required_levels` for the *kind* of evidence rather
+than the particular level.
 
 ## The nominal case is `INSUFFICIENT_EVIDENCE`, and that is not a bug
 

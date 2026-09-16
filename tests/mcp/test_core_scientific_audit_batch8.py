@@ -9,7 +9,7 @@ R-04's issuer half (a registered reference id and digest for ANALYTICALLY_VERIFI
 one SUPPORTED report on the production MCP path and needs the hard benchmark re-scored.
 
 Every test here was committed as `xfail(strict=True)` first and run with `--runxfail` at 763c37b to watch it
-fail; the markers came off in the implementation commit. What each failed on there, recorded so the evidence
+fail; the markers came off in the implementation commit, and the xfail commit is 03da331. What each failed on there, recorded so the evidence
 is not overstated: 3 on an assertion (the production `means` prose, the empty `other_findings`, and the rule
 table naming the convergence gap only as an unnamed NOT_RUN check), 5 on ``DID NOT RAISE`` (the refusals this
 batch adds, which is an assertion about a refusal that is absent), and 7 on a ``KeyError``/``TypeError`` for a
@@ -58,7 +58,6 @@ def _supported_report():
 # =====================================================================
 # R-04: the block an agent reads first
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_the_verdict_block_names_its_evidence_basis():
     """The audited record: 'evidence_basis' or 'verification' in verdict block: False False."""
     block = _electrothermal_stage()["verdict"]
@@ -67,7 +66,6 @@ def test_r04_the_verdict_block_names_its_evidence_basis():
     assert block["attained_levels"] == ["analytically_verified"]
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_a_verification_only_support_does_not_read_as_validation():
     """The audited `means`: 'Nothing in this report argues against relying on the result, and at least one
     check both passed and established an evidentiary level.' Nothing in it says the levels attained compare
@@ -79,22 +77,46 @@ def test_r04_a_verification_only_support_does_not_read_as_validation():
                                        or "measurement" in prose.lower())
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
-def test_r04_the_block_carries_the_levels_the_run_withheld():
+def test_r04_a_withheld_level_is_recorded_where_a_reader_finds_it():
     """The MCP problem runner strips the level off its only cross-solver check on purpose, and the reason
-    reached a reader only inside a detail sentence."""
-    block = _electrothermal_stage()["verdict"]
-    assert any(level == ValidationLevel.CROSS_SOLVER_VALIDATED.value
-               for _name, level in (tuple(entry) for entry in block["levels_withheld"])), block["levels_withheld"]
+    reached a reader only inside a detail sentence.
+
+    Exercised on ``_withhold_level`` and a report around its output rather than through a production run:
+    the cross-solver route needs the external ngspice provider, which this batch's environment cannot
+    launch (see the expensive tier's recorded baseline), and the rule under test is the recording, not the
+    route.
+    """
+    from engcore.mcp.problem import _withhold_level
+
+    # DIMENSIONALLY_VALID and not the production case's CROSS_SOLVER_VALIDATED, because VAL-01 refuses a
+    # hand-built check claiming that level -- only a pinned consensus can write its record -- which is
+    # itself the rule this batch leaves in place. What is under test is the recording of a withheld level,
+    # and that rule is the same whichever level is withheld.
+    genuine = ValidationCheck(name="cross_solver", outcome=ValidationOutcome.PASS,
+                              establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                              residual=1e-9, tolerance=1e-6, evidence=("two independent routes",))
+    stripped = _withhold_level(genuine)
+    assert stripped.establishes is None
+    assert f"level-withheld:{ValidationLevel.DIMENSIONALLY_VALID.value}" in stripped.evidence
+    assert "two independent routes" in stripped.evidence, "the issuer's own account still reaches the reader"
+
+    report = _supported_report()
+    carrying = CredibilityEvidenceReport(
+        run_id=report.run_id, values=dict(report.values), provenance=report.provenance,
+        validity=report.validity, validation=(*report.validation, stripped),
+        contributing_models=report.contributing_models, coupling=report.coupling,
+        convergence=report.convergence)
+    assert carrying.levels_withheld == (("cross_solver", ValidationLevel.DIMENSIONALLY_VALID.value),)
+    wire = json.loads(json.dumps(carrying.to_dict()))
+    assert wire["verdict_qualifiers"]["levels_withheld"] == [
+        ["cross_solver", ValidationLevel.DIMENSIONALLY_VALID.value]]
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_the_block_carries_the_warnings_supported_absorbs():
     block = _electrothermal_stage()["verdict"]
     assert isinstance(block["warning_checks"], list)
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_a_non_deciding_verification_only_rule_fires():
     """The audited record: verdict_reasons [] and other_findings [] on a VERIFICATION_ONLY SUPPORTED."""
     block = _electrothermal_stage()["verdict"]
@@ -103,7 +125,6 @@ def test_r04_a_non_deciding_verification_only_rule_fires():
     assert rules["verification_only"]["produces"] is None
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_describe_capabilities_explains_the_evidence_basis():
     """The audited record: 'evidence_basis' anywhere in describe_capabilities: False."""
     capabilities = describe_capabilities()
@@ -115,7 +136,6 @@ def test_r04_describe_capabilities_explains_the_evidence_basis():
     assert bases["VALIDATED"]["means"] != bases["VERIFICATION_ONLY"]["means"]
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_a_caller_can_demand_a_basis_it_did_not_get():
     report = _supported_report()
     demanding = CredibilityEvidenceReport(
@@ -127,7 +147,6 @@ def test_r04_a_caller_can_demand_a_basis_it_did_not_get():
     assert demanding.missing_evidence_basis == "VALIDATED"
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_demanding_the_basis_a_report_has_changes_nothing():
     report = _supported_report()
     for basis in ("VERIFICATION_ONLY", "NONE"):
@@ -139,7 +158,6 @@ def test_r04_demanding_the_basis_a_report_has_changes_nothing():
         assert demanding.verdict is CredibilityVerdict.SUPPORTED, basis
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_derive_verdict_reads_a_required_basis_on_its_own():
     validity = [ModelValidityRecord(model_id="m", version="1",
                                     assessment=ValidityAssessment(status=ValidityStatus.IN_DOMAIN,
@@ -154,7 +172,6 @@ def test_r04_derive_verdict_reads_a_required_basis_on_its_own():
                           required_evidence_basis="VALIDATED") is CredibilityVerdict.INSUFFICIENT_EVIDENCE
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_a_payload_with_the_evidence_basis_removed_is_refused():
     """The audited record: _require_qualifiers_as_derived compares only the keys present, so a report JSON
     with evidence_basis -- or the whole verdict_qualifiers -- removed is accepted."""
@@ -171,7 +188,6 @@ def test_r04_a_payload_with_the_evidence_basis_removed_is_refused():
     assert CredibilityEvidenceReport.from_dict(payload).verdict is CredibilityVerdict.SUPPORTED
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r04_the_battery_verdict_block_is_qualified_too():
     block = run_battery(example_battery_payload())["verdict"]
     assert block["evidence_basis"] in ("VALIDATED", "VERIFICATION_ONLY", "NONE")
@@ -181,7 +197,6 @@ def test_r04_the_battery_verdict_block_is_qualified_too():
 # =====================================================================
 # R-47: the exported verdict function trusted any object
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r47_derive_verdict_refuses_a_duck_typed_check():
     """The audited record: a SimpleNamespace claiming EXPERIMENTALLY_VALIDATED satisfies required_levels and
     returns SUPPORTED, while ValidationReport refuses the same object."""
@@ -196,7 +211,6 @@ def test_r47_derive_verdict_refuses_a_duck_typed_check():
                        required_levels=[ValidationLevel.EXPERIMENTALLY_VALIDATED])
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r47_derive_verdict_refuses_an_object_missing_the_fields_the_rule_reads():
     validity = [ModelValidityRecord(model_id="m", version="1",
                                     assessment=ValidityAssessment(status=ValidityStatus.IN_DOMAIN,
@@ -207,7 +221,6 @@ def test_r47_derive_verdict_refuses_an_object_missing_the_fields_the_rule_reads(
         derive_verdict(validity=validity, validation=[thin])
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_r47_a_pass_with_a_level_and_nothing_compared_establishes_nothing():
     """GUARD 2's rule, re-applied here rather than taken from the object: the core's ValidationReport already
     refuses this check, and derive_verdict read it as an attained level."""
@@ -236,7 +249,6 @@ def test_r47_a_real_check_is_unaffected():
 # =====================================================================
 # I-10's named rule, completed here
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-09 part A not implemented yet (batch 8 preregistration)")
 def test_the_rule_table_names_a_solver_that_did_not_finish():
     from engcore.mcp.server import _fired_rules
 
@@ -247,7 +259,7 @@ def test_the_rule_table_names_a_solver_that_did_not_finish():
         violated_conditions=(), failed_checks=(), not_run_checks=("solver_did_not_converge",),
         unassessed_models=(), unattributed_assessments=(), attained_levels=report.attained_levels,
         missing_required_levels=(), warning_checks=(), levels_withheld=(),
-        missing_evidence_basis=None,
+        missing_evidence_basis=None, evidence_basis="VERIFICATION_ONLY",
         convergence=__import__("engcore.scientific.solvers.protocol",
                                fromlist=["ConvergenceState"]).ConvergenceState.DIVERGED,
         validation_report=report.validation_report)
