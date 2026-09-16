@@ -39,14 +39,14 @@ route vocabulary once, and the certification round (Core Freeze V4) is run once,
 | CORE-006 | P1 | predictive UQ | No calibration or prediction domain; the predictor is not bound to the calibrated model. Extrapolation to 10⁴× the calibrated range, and an unrelated predictor in kelvin, are SUPPORTED. | 4 | OPEN (INF-01 deferred) |
 | CORE-007 | P1 | adequacy | Held-out leakage is refused by label only; a model comparison between two identical models is won by +0.95 nats through the leak. | 4 | OPEN (INF-03/07 deferred) |
 | CORE-008 | P1 | result semantics | A record whose only passing checks are verification levels (dimensional, numerical convergence, analytic) derives a SUPPORTED credibility verdict. | 3 | PARTIAL |
-| CORE-009 | P1 (latent) | experimental validation | An oracle observation carries no conditions, inputs or model version; `EXPERIMENTALLY_VALIDATED` attaches to any result. | 3b | OPEN |
+| CORE-009 | P1 (latent) | experimental validation | An oracle observation carries no conditions, inputs or model version; `EXPERIMENTALLY_VALIDATED` attaches to any result. | 3b | PARTIAL |
 | CORE-010 | P2 | grid prior | Grid weights carry no cell volume, so node density is an undeclared prior: a clustered axis moves the mean 0.9 sd and cuts the sd 29%, SUPPORTED, against the non-claim "no informative priors". | 2 | FIXED (routed claims) |
 | CORE-011 | P2 | model comparison | `preferred_model` is issued for any delta > 0, including 1.5e-9 nats on one observation. | 4 | OPEN |
 | CORE-012 | P2 | calibration statistics | Only independent Gaussian noise is representable, and nothing asks for independence to be attested; a shared systematic offset narrows as 1/√n. | 4 | OPEN |
 | CORE-013 | P2 | validation report | `ValidationReport.status` is PASS while an experimental check is NOT_RUN. | 3 | FIXED |
-| CORE-014 | P2 | validity | A validity assessment is not bound to the input values it was computed at. | 3b | OPEN |
+| CORE-014 | P2 | validity | A validity assessment is not bound to the input values it was computed at. | 3b | PARTIAL |
 | CORE-015 | P2 | experiments | An OK evaluation accepts unassessed or model-less results (residual of RES-06). | 3 | FIXED |
-| CORE-016 | P2 | uncertainty, composition | Uncertainty carries no source category; transfers drop upstream uncertainty and credibility. | 3b | OPEN |
+| CORE-016 | P2 | uncertainty, composition | Uncertainty carries no source category; transfers drop upstream uncertainty and credibility. | 3b | PARTIAL |
 | CORE-017 | P3 | split | The copy detector rounds to twelve digits; a 1 ppm sigma change evades it (residual of INF-06). | — | OPEN |
 | CORE-018 | P3 | misc | Consensus compares values in each route's own unit; bound ordering uses raw magnitudes; `ModelType` and model validation status are inert labels. | — | OPEN |
 
@@ -100,3 +100,15 @@ control); the 27 existing mutations in the three changed files still apply and a
 | CORE-013 | `ValidationReport.status` is FAIL > NOT_RUN > WARNING > PASS. | Domains record NOT_RUN both for missing evidence and for a check that does not apply (the DC solver's absent element classes); the aggregate and `derive_verdict` treat both as not established. |
 | CORE-008 | `ValidationReport.evidence_basis` (VALIDATED / VERIFICATION_ONLY / NONE) and `verdict_qualifiers.evidence_basis` on every credibility report, re-derived on read. | The verdict word is unchanged: SUPPORTED on verification alone is still SUPPORTED, now visibly qualified. Changing the word moves the scored benchmarks and is left as an explicit owner decision. |
 | CORE-015 | `Experiment.best` ranks only candidates whose models were all assessed IN_DOMAIN, with declared constraints checked and satisfied. | An OK evaluation may still be recorded over an unassessed result; it is recorded, not ranked. |
+
+## Batch 3b — what now holds
+
+Commits `5b960db` (preregistration, strict xfails), `439d76d` (fix). Guard mutations: `BATCH3B_MUTATIONS.log` (5 killed, green
+control); the 29 existing mutations in the changed files still apply and are killed. Every new field is opt-in and
+serialized only when it carries information, so no existing record's bytes or oracle content digest move.
+
+| ID | What now holds | Residual |
+|---|---|---|
+| CORE-009 | `OracleObservation.conditions`; a comparison whose stated conditions are missing or differ is NOT_RUN and awards no level. | A `ValidationCheck` is still not bound to the result it qualifies (the deferred VAL-01 field); no pinned oracle declares conditions yet. |
+| CORE-014 | `ValidityDomain.assess(..., record_values=True)` records the Quantities read; `ScientificResult` refuses an assessment made at another operating point than its provenance inputs. | Opt-in: an assessment built without `record_values` binds nothing, and no domain opts in yet. |
+| CORE-016 | `UncertaintySource` on `Uncertainty.source_kind`; cross-domain transfer carries it. | `QuantityTransfer` carries no upstream credibility, and nothing combines uncertainty sources; UNSPECIFIED is the default. |
