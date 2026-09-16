@@ -1,19 +1,19 @@
 {
   "audit": "docs/audits/MAIN_AUDIT_2026-09-15.md",
-  "candidate_commit": "1c734ed22296c64188567d3fe50279d8d71bc38e",
+  "candidate_commit": "9acffc0065a59948648c9d4a87e7dd0fbf9a3e4a",
   "evidence": {
-    "FORMAL_MUTATIONS.json": "2932775c633bc6ebb6ee8637eadd0577962f1e9e008aa7e857bf1ab6f05a50be",
+    "FORMAL_MUTATIONS.json": "2a4132c8e9516277a260789bab94e4b3cfaeb36e47bc6235524e178698840d3f",
     "FORMAL_SHARD_0.log": "78ca98eb7e7bc1f47a06343c030af8739cd3b93bb13356f91207904a714b5a4c",
-    "FORMAL_SHARD_1.log": "cae860d8622bd08e35f543193b3fe50ddeeb982246160da1471cc5ab671ffcaa",
-    "FORMAL_SHARD_2.log": "ca333fbc83aee03ccc8e35426f80c7a7b6c5a89eda84131d23b211295dfad4f4",
+    "FORMAL_SHARD_1.log": "17cee855249e0ac62cff9ba7ca7741ba32c352e358219b070c99eb235ae7cfb2",
+    "FORMAL_SHARD_2.log": "273f778d64f9caaf2b7a869b823497a4429515b95cd7204bfb9f91725ec50a34",
     "FORMAL_SHARD_3.log": "60ea05c13bdba9d86c3fdc39870b22ecb55a4a113a131badc0455811615a0dfe",
-    "SUITES.json": "87cfa084410f4b8597ebd7e53a9ffec1c4fbb593359879ba3bcf787d47bd980b",
+    "SUITES.json": "ca3d441633dce7c59e7937251015ce90954d32a8c1e88ad769336e3090613999",
     "TRUST_MUTATIONS.json": "52cb06a9fda0dd69fded235c34e5bdbf7db5a4a1f7bc817876ef4c5faed5056a"
   },
-  "manifest_sha256": "0204b96f73a4c6bd0790186f525b2c55f6d8d84d295d163571a54085580708b0",
+  "manifest_sha256": "6c0d7eb908b6f0280e83d20d4af29c0e486be5760470f4866c3146c2260bb86c",
   "mutations": {
     "formal": {
-      "commit": "069908f1b0bcf5bb759a0f0f0c35b10ed007b8fe",
+      "commit": "656dea7998212bc8d3e6aa2391fb0f89117f3894",
       "control": "GREEN",
       "killed": 284,
       "population": 284,
@@ -40,7 +40,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "6055 passed, 6 skipped, 42 warnings in 121.93s (0:02:01)"
+      "summary_line": "6056 passed, 5 skipped, 42 warnings in 122.80s (0:02:02)"
     },
     "api_snapshot_v1": {
       "deselected_certificate_child_self_checks": [
@@ -51,7 +51,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "17 passed in 3.35s"
+      "summary_line": "17 passed in 3.54s"
     },
     "api_snapshot_v2": {
       "deselected_certificate_child_self_checks": [
@@ -62,7 +62,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "5 passed in 0.94s"
+      "summary_line": "5 passed in 0.97s"
     },
     "audit_regressions": {
       "deselected_certificate_child_self_checks": [
@@ -73,7 +73,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "452 passed in 7.70s"
+      "summary_line": "452 passed in 8.51s"
     },
     "certificate": {
       "deselected_certificate_child_self_checks": [
@@ -84,7 +84,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "206 passed, 1 skipped, 2 deselected in 30.91s"
+      "summary_line": "206 passed, 1 skipped, 2 deselected in 27.75s"
     },
     "freeze_manifest_v1": {
       "deselected_certificate_child_self_checks": [
@@ -95,7 +95,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "36 passed, 1 skipped, 2 deselected in 2.47s"
+      "summary_line": "36 passed, 1 skipped, 2 deselected in 2.59s"
     },
     "freeze_manifest_v3": {
       "deselected_certificate_child_self_checks": [
@@ -106,7 +106,7 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "15 passed, 1 skipped in 4.55s"
+      "summary_line": "16 passed in 5.27s"
     },
     "hybrid_uq_focused": {
       "deselected_certificate_child_self_checks": [
@@ -117,9 +117,9 @@
       ],
       "exit_code": 0,
       "green": true,
-      "summary_line": "236 passed in 19.64s"
+      "summary_line": "236 passed in 21.04s"
     }
   },
-  "suites_commit": "069908f1b0bcf5bb759a0f0f0c35b10ed007b8fe",
+  "suites_commit": "656dea7998212bc8d3e6aa2391fb0f89117f3894",
   "tag": "v3.0-core-freeze"
 }
