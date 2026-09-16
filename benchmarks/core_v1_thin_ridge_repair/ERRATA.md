@@ -140,6 +140,8 @@ The E4 table above gave **estimates** against a local Gaussian proxy. They have 
 - **Reference grids:** built in decorrelated coordinates (ln k(T*), E/R) with the frozen K2 forward model. Each grid was contained, accepted by the repaired V1 checks, and converged under nested refinement (moments moved < 0.05 sd).
 - **V2 route:** `route_uncertainty` for MULTI, with a 6-start multistart.
 
+*Note (audit stream hybrid).* `KINETICS_K2.json` predates the audited V2 route rules (HUQ-01..14) and is marked superseded, not regenerated (`benchmarks/core_v2_hybrid_uq/KINETICS_K2.SUPERSEDED.md`): its route **claims** were established under axis-only probes. The quantities in the table below are properties of the covariance at the estimate and of the V1 reference grids, which those rules do not change; re-derived without multistart, the MULTI estimate and standard deviations are identical.
+
 | K2 quantity | committed (k2_report.md) | corrected: V2 route | corrected: converged reference grid |
 |---|---|---|---|
 | MULTI covariance | [[0.02311, 7.528], [7.528, 2452.0]] | [[0.02609, 8.515], [8.515, 2782.7]] | [[0.02618, 8.545], [8.545, 2792.6]] |

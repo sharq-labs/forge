@@ -325,6 +325,9 @@ MATERIAL_VIOLATIONS = {
     # 340 K against theta_D = 1200 K puts the conductor at 0.28, below 1/3.
     "reduced_debye_temperature": {
         "debye_temperature": Quantity(1200.0, "kelvin"),
+        # Audit CAP-05: the floor answers only for a declared elemental metal
+        # (1200 K is beryllium-like).
+        "conductor_class": mat.ELEMENTAL_METAL,
     },
     # |340 - 293.15| = 46.85 K against a declared 20 K band.
     "linearization_excursion_ratio": {

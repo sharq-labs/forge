@@ -180,11 +180,19 @@ def _stored_payload_with_silent_provenance():
 
 
 def test_b_a_stored_record_whose_provenance_is_silent_is_read_as_written():
+    """A stored record with silent provenance is read as written -- and, since the results audit (RES-01), marked.
+
+    Read as written is not read as attributed: the record carries its attribution gap
+    (``stored_attribution_gap``), so a consumer assembling evidence around it cannot present it as attributed.
+    Its bytes do not move."""
+    from engcore.scientific.results.result import stored_attribution_gap
+
     payload = _stored_payload_with_silent_provenance()
     result = ScientificResult.from_dict(payload)
     assert result.solver == SOLVER and result.models == (MODEL_V1.key,)
     assert result.provenance.solvers == () and result.provenance.models == ()
     assert result.to_dict() == payload
+    assert stored_attribution_gap(result)
 
 
 def test_b_new_construction_with_silent_provenance_is_still_refused():

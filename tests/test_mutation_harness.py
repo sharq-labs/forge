@@ -28,6 +28,9 @@ wait forty minutes to be told.
 
 from __future__ import annotations
 
+import hashlib
+import io
+import tokenize
 import pathlib
 
 import mutation_guards as mg
@@ -100,18 +103,54 @@ def test_every_mutation_still_matches_the_source_it_names():
     )
 
 
+def _conservative_digest(text: str) -> str:
+    """``_code_digest`` as the OLDEST supported Python computes it.
+
+    Since PEP 701 (3.12) an f-string tokenizes into FSTRING_START, its inner
+    expressions as real tokens, and FSTRING_END; before that it was one STRING
+    token, which `_code_digest` drops. So a mutation that only rewrites what is
+    interpolated inside an f-string changes executable tokens on 3.12+ and
+    changes NOTHING on 3.11 -- and the harness, correctly, refuses to believe a
+    mutation that changed no code. Two mutations shipped that way and went red
+    only on the 3.11 gate. Collapsing each f-string back to one dropped token
+    measures the rule the way the strictest supported interpreter does.
+    """
+    kept: list[str] = []
+    depth = 0
+    for token in tokenize.generate_tokens(io.StringIO(text).readline):
+        name = tokenize.tok_name.get(token.type, "")
+        if name == "FSTRING_START":
+            depth += 1
+            continue
+        if name == "FSTRING_END":
+            depth -= 1
+            continue
+        if depth:
+            continue
+        if token.type in (tokenize.COMMENT, tokenize.STRING, tokenize.NL,
+                          tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT):
+            continue
+        kept.append(token.string)
+    return hashlib.sha256("\x00".join(kept).encode("utf-8")).hexdigest()[:16]
+
+
 def test_every_mutation_changes_executable_code():
     """A mutation that changes a comment reports a guard nobody tested.
 
     The same rule the harness applies before running a suite, applied here
     before anyone waits for one. `_code_digest` drops COMMENT and STRING
     tokens, so a mutation whose only effect is prose is caught in both places.
+
+    Measured twice: as this interpreter tokenizes, and as the oldest supported
+    one does (see `_conservative_digest`), so a mutation cannot be inert on a
+    gate this machine never runs.
     """
     inert = []
     for mid, spec, old, new, _what in mg.MUTATIONS:
         text, region = _source(spec)
         mutated = text.replace(region, region.replace(old, new), 1)
-        if mg._code_digest(text) == mg._code_digest(mutated):
+        if (mg._code_digest(text) == mg._code_digest(mutated)
+                or _conservative_digest(text) == _conservative_digest(mutated)):
             inert.append(mid)
     assert inert == [], inert
 

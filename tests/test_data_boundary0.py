@@ -265,10 +265,17 @@ def test_a2c_a_v2_payload_round_trips_its_references():
 
 def test_a3_a_payload_written_before_this_milestone_still_loads():
     """OLD payload → NEW reader must succeed. The exact bytes an older Crafty
-    would have produced: ``scientific_result/1``, and no such key."""
+    would have produced: ``scientific_result/1``, and no such key.
+
+    Nor the two validity keys: a /1 writer emitted neither, and since the
+    results audit (RES-02) a /1 payload carrying one is refused as a relabelled
+    newer record. This fixture used to keep them, which is not the bytes an
+    older writer produced."""
     payload = json.loads(canonical(scalar_result()))
     payload["schema"] = "scientific_result/1"
     del payload["data_references"]
+    del payload["validity"]
+    del payload["validity_not_assessed"]
     assert "data_references" not in payload
 
     restored = ScientificResult.from_dict(payload)
@@ -281,15 +288,25 @@ def test_a3_a_payload_written_before_this_milestone_still_loads():
 def test_a3b_a_v1_payload_carries_no_references_even_if_a_key_appears():
     """``/1`` predates bulk data, so it loads with none — by version, not by
     key presence. A key in a ``/1`` payload was not written by this contract
-    and is not read as if it were."""
+    and is not read as if it were.
+
+    **Refused, since the results audit (RES-02).** This test used to pin that
+    the payload loaded with the key ignored, which is the relabelling
+    downgrade: a newer payload relabelled ``/1`` dropped its bulk references
+    without a refusal and re-serialized at the current version claiming none.
+    The key is still never read as if a /1 writer had written it; the payload
+    carrying it is now refused instead of silently thinned."""
     reference = ScientificDataReference.for_values(
         "u:field", [1.0, 2.0], unit="dimensionless"
     )[0]
     payload = json.loads(canonical(scalar_result()))
     payload["schema"] = "scientific_result/1"
     payload["data_references"] = [reference.to_dict()]
+    del payload["validity"]
+    del payload["validity_not_assessed"]
 
-    assert ScientificResult.from_dict(payload).data_references == ()
+    with pytest.raises(ScientificCoreError, match="data_references"):
+        ScientificResult.from_dict(payload)
 
 
 def test_a4_raw_solver_output_is_versioned_the_same_way():

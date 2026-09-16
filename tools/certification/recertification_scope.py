@@ -213,8 +213,81 @@ def scope_triggers(scope: Sequence[ScopeArea] | None = None) -> tuple[Trigger, .
     )
 
 
+#: Where the two mutation populations live, relative to the repository root.
+FORMAL_MUTATION_HARNESS = "tests/mutation_guards.py"
+TRUST_MUTATION_POPULATION = "benchmarks/trust_hardening/audit/mutations.py"
+
+
+def _formal_mutation_targets(source: str) -> tuple[str, ...]:
+    """Files named by ``MUTATIONS`` in the formal harness, read without running it."""
+    import ast
+
+    tree = ast.parse(source)
+    for node in tree.body:
+        target = getattr(node, "target", None)
+        targets = [target] if target is not None else list(getattr(node, "targets", ()))
+        if any(isinstance(t, ast.Name) and t.id == "MUTATIONS" for t in targets):
+            entries = ast.literal_eval(node.value)
+            # A spec may name a scope inside the file: ``path::qualname``.
+            return tuple(entry[1].split("::", 1)[0] for entry in entries)
+    raise OwnershipError(f"{FORMAL_MUTATION_HARNESS} defines no MUTATIONS")
+
+
+def _trust_mutation_targets(source: str) -> tuple[str, ...]:
+    """Files named by ``Mutation(...)`` entries in the trust population."""
+    import ast
+
+    found: list[str] = []
+    for node in ast.walk(ast.parse(source)):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "Mutation"
+            and len(node.args) >= 2
+            and isinstance(node.args[1], ast.Constant)
+            and isinstance(node.args[1].value, str)
+        ):
+            found.append(node.args[1].value)
+    if not found:
+        raise OwnershipError(f"{TRUST_MUTATION_POPULATION} defines no Mutation entries")
+    return tuple(found)
+
+
+@lru_cache(maxsize=4)
+def _mutation_targets(root: str) -> tuple[str, ...]:
+    base = pathlib.Path(root)
+    formal = _formal_mutation_targets(
+        (base / FORMAL_MUTATION_HARNESS).read_text(encoding="utf-8-sig")
+    )
+    trust = _trust_mutation_targets(
+        (base / TRUST_MUTATION_POPULATION).read_text(encoding="utf-8-sig")
+    )
+    return tuple(sorted(set(formal) | set(trust)))
+
+
+def mutation_target_triggers(root: pathlib.Path | None = None) -> tuple[Trigger, ...]:
+    """Every file a certified mutation population mutates is a trigger.
+
+    A certificate that reports "N/N killed" is a claim about the guards at the
+    lines those mutations remove. Before this trigger, 26 formal mutations
+    targeted files that were neither in scope nor a trigger, so a pull request
+    editing only one of those guards was classified ordinary and the
+    certificate still verified. Derived from the populations at call time, so
+    a new mutation cannot name a file outside recertification.
+    """
+    targets = _mutation_targets(str((root or repo_root()).resolve()))
+    return (
+        Trigger(
+            "mutation_targets",
+            targets,
+            "a file a certified mutation population mutates: the kill count in "
+            "the certificate is a claim about the guards in these bytes",
+        ),
+    )
+
+
 def triggers(scope: Sequence[ScopeArea] | None = None) -> tuple[Trigger, ...]:
-    return (*scope_triggers(scope), *ADDITIONAL_TRIGGERS)
+    return (*scope_triggers(scope), *ADDITIONAL_TRIGGERS, *mutation_target_triggers())
 
 
 def recertification_reasons(

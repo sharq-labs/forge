@@ -1,0 +1,249 @@
+{
+  "api": {
+    "v1": {
+      "frozen_count": 194,
+      "frozen_digest": "c80e6418592e94a05e3ae48e0856c96edb194054a312a8f78d10d133b72b4929",
+      "modules": [
+        "engcore.scientific",
+        "engcore.data",
+        "engcore.inference",
+        "engcore.uq",
+        "engcore.adequacy",
+        "engcore.execution",
+        "engcore.studies"
+      ],
+      "total_count": 205
+    },
+    "v1_entries_byte_identical_in_v2": true,
+    "v2": {
+      "added_frozen_symbols": [
+        "engcore.hybrid_uq.ApproximationClass",
+        "engcore.hybrid_uq.GRID_ROUTE_MAXIMUM_PARAMETERS",
+        "engcore.hybrid_uq.GridRebuildPolicy",
+        "engcore.hybrid_uq.HybridUQError",
+        "engcore.hybrid_uq.HybridUQResult",
+        "engcore.hybrid_uq.LocalGaussianPosterior",
+        "engcore.hybrid_uq.LocalSensitivity",
+        "engcore.hybrid_uq.MEASUREMENT_UNCERTAINTY",
+        "engcore.hybrid_uq.MODEL_DISCREPANCY_NOT_MODELLED",
+        "engcore.hybrid_uq.MultistartPolicy",
+        "engcore.hybrid_uq.PARAMETER_UNCERTAINTY",
+        "engcore.hybrid_uq.ParameterInterval",
+        "engcore.hybrid_uq.RouteClaim",
+        "engcore.hybrid_uq.RouteDecision",
+        "engcore.hybrid_uq.RouteDiagnostics",
+        "engcore.hybrid_uq.RouteReason",
+        "engcore.hybrid_uq.RouteRefusedError",
+        "engcore.hybrid_uq.RoutedIdentifiability",
+        "engcore.hybrid_uq.RoutedPredictiveUncertainty",
+        "engcore.hybrid_uq.UNCERTAINTY_SOURCES",
+        "engcore.hybrid_uq.assess_routed_identifiability",
+        "engcore.hybrid_uq.grid_predictive_uncertainty",
+        "engcore.hybrid_uq.linearized_predictive_uq",
+        "engcore.hybrid_uq.local_gaussian_posterior",
+        "engcore.hybrid_uq.reconstruct_local_sensitivity",
+        "engcore.hybrid_uq.route_uncertainty",
+        "engcore.hybrid_uq.routed_predictive_uncertainty"
+      ],
+      "added_modules": [
+        "engcore.hybrid_uq"
+      ],
+      "experimental_count": 11,
+      "frozen_count": 221,
+      "frozen_digest": "fd7d3f9f3f7d641e7484df15dd6ae4ac09cf4b072a19f230d6fcfb75fc9f37cb",
+      "modules": [
+        "engcore.scientific",
+        "engcore.data",
+        "engcore.inference",
+        "engcore.uq",
+        "engcore.adequacy",
+        "engcore.execution",
+        "engcore.studies",
+        "engcore.hybrid_uq"
+      ],
+      "total_count": 232
+    }
+  },
+  "api_identical_to_v2_manifest": true,
+  "capability_claim": "Core V3 keeps Core V2's routed uncertainty surface and makes each route's claim a function of evidence the record carries. route_uncertainty returns, deterministically and with every route it considered recorded: POSTERIOR_GRID when a supplied tensor grid of at most 5 parameters, bound to the request's parameter names and dataset and whose weights are the normalized likelihood, passes the repaired V1 resolution checks (a collapsed posterior is refused before any small-grid waiver); LOCAL_GAUSSIAN_APPROXIMATION (N(z_hat, (Jw^T Jw)^-1) in declared inference coordinates) when its validity diagnostics support it, which costs 4p+1+2p^2 forward evaluations for the axis and pairwise-diagonal probes plus a deterministic multistart of at least max(6, 2p+2) starts -- below that search the route is at most DOWNGRADED, and a converged refit below the estimate's objective refuses; POSTERIOR_GRID rebuilt from the local covariance when a rebuild policy is supplied, p <= 5, the rebuilt table agrees with the forward model at deterministic spot-check nodes and the rebuilt grid is accepted by the V1 checks; the local Gaussian DOWNGRADED with its reasons; or REFUSED with no numbers. Identifiability widths of log parameters are unit-invariant. Predictive uncertainty keeps parameter and measurement uncertainty separate, probes pairwise diagonals and the direction Sigma*grad g, judges nonlinearity against the parameter uncertainty, and names model discrepancy as not modelled. Every record is re-derived from its carried numbers on read. No approximation class is an exact posterior.",
+  "certificate": {
+    "issued_by": "the recertify workflow's certificate-only child",
+    "required_areas": [
+      "assurance_admission",
+      "core",
+      "evidence_identity",
+      "execution_trust",
+      "inference_admission",
+      "predictive_representation",
+      "routed_uncertainty"
+    ]
+  },
+  "freeze": {
+    "additive_over": "Core Freeze V1 (v1.0-core-freeze), unchanged",
+    "candidate_commit": "9acffc0065a59948648c9d4a87e7dd0fbf9a3e4a",
+    "name": "Core Freeze V3",
+    "supersedes": "Core Freeze V2 (v2.0-core-freeze) contract, for descendants; V2 history untouched",
+    "tag": "v3.0-core-freeze"
+  },
+  "non_claims": [
+    "not an exact posterior, in any route",
+    "not a proof of global mode uniqueness: the multistart bounds it, it does not prove it",
+    "no model-discrepancy estimate, no estimated noise, no non-Gaussian likelihoods, no informative priors",
+    "no MCMC, Laplace-with-full-Hessian, sparse-grid or importance-sampling posterior",
+    "no grid route above 5 parameters; no resolution check for non-tensor or linearly mapped point sets (refused)",
+    "rebuilt-table verification is a deterministic spot check at a fixed set of nodes, not an exhaustive comparison",
+    "serialized digests are integrity checks against accidental edits, not authority: a forger can recompute them; authority comes from re-deriving each claim from the carried numbers",
+    "DEFERRED (compatibility review, no shape change in V3): CalibrationResult, PosteriorGrid and QuantifiedPredictiveResult carry no applicability field; applicability is enforced only by the study-layer held-out and prediction gates",
+    "DEFERRED: require_posterior_was_fitted_here and assess_predictive_observation bind a posterior to its data by label; content binding is enforced only in the study layer",
+    "DEFERRED: ValidationCheck carries no field tying a level to the result it qualifies; strongest levels need an issuer record in evidence, weaker levels can still be hand-built",
+    "DEFERRED: CrossSolverConsensus execution bindings are a private attribute under schema /3, not a dataclass field",
+    "local-route validity thresholds are declared engineering thresholds, not universal guarantees"
+  ],
+  "pinned_v2_snapshot_files": {
+    "tests/api/v2_frozen_api_snapshot.json": "906332249626ca4e88fe37de9de90db3672e8ceaec597ff1ecd843cc0be9b818",
+    "tests/api/v2_full_api_snapshot.json": "059ae2e2190fa8bc2a5eb7d9dfd6638a595b9ce487ae100763f90cd4154f5eb8"
+  },
+  "references": {
+    "audit": "docs/audits/MAIN_AUDIT_2026-09-15.md",
+    "manifest_tests": "tests/test_core_freeze_v3_manifest.py",
+    "policy": "docs/CORE_FREEZE_POLICY.md",
+    "superseded_v2_verifier": "tools/certification/core_freeze_v2.py",
+    "v1_verifier": "tools/certification/core_freeze.py",
+    "verifier": "tools/certification/core_freeze_v3.py"
+  },
+  "schema": "engcore.core_freeze/3",
+  "serialization_inventory": {
+    "HybridUQResult": {
+      "canonical_sha256": "d2e69b3298fe41d9d1a5856b3571c0606d8b9983147766ec6b8d6e4235bd1865",
+      "identity_digest": "db9fe243c8d1c172ea4edc76fffa791b8d4cd2f5ac4ec86ce06cb0fb959902bf",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.hybrid_uq_result/1",
+      "unknown_schema_refused": true
+    },
+    "LocalGaussianPosterior": {
+      "canonical_sha256": "bef7d48b93cf4ff2866141bfeaab08fa47bd8c653f15df10c9607f23c6517cde",
+      "identity_digest": "742af27ecee335079b3512d93fef1c46f33d268474e5fdfe377b3dfd929ee016",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.local_gaussian_posterior/1",
+      "unknown_schema_refused": true
+    },
+    "LocalSensitivity": {
+      "canonical_sha256": "1cb8bee900884d77d79a4e4984220d5d7a63b353274623a24ba6500b9d364476",
+      "identity_digest": "c7f5ec205ef181199f454d3228a05fbef959334f4fa3b756748ee09fad544c25",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.local_sensitivity/1",
+      "unknown_schema_refused": true
+    },
+    "MultistartPolicy": {
+      "canonical_sha256": "8be8e67dd765f4daf425aabf403edb6768c7bae7894a0c4875d0e808eb8548d6",
+      "identity_digest": "8be8e67dd765f4daf425aabf403edb6768c7bae7894a0c4875d0e808eb8548d6",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.multistart_policy/1",
+      "unknown_schema_refused": true
+    },
+    "ParameterInterval": {
+      "canonical_sha256": "0e4465b1be0ed4b4086b05fcc17feddb0c5859ea2b4ac9fa858527d623ae5f9b",
+      "identity_digest": null,
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.parameter_interval/1",
+      "unknown_schema_refused": true
+    },
+    "RouteDiagnostics": {
+      "canonical_sha256": "29aefcd58733a8c81c3542d2daf3e307633b273773e86af81c06df3899418062",
+      "identity_digest": "885ef5d6ac09f2812be9b4f556bca088ce1c4489140571d3c5860a0252fe36aa",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.route_diagnostics/1",
+      "unknown_schema_refused": true
+    },
+    "RoutedIdentifiability": {
+      "canonical_sha256": "717b4f2394730f0fc8c612cfbc77fbdc599ac41945c8765e2bb797d8a8149dcf",
+      "identity_digest": "717b4f2394730f0fc8c612cfbc77fbdc599ac41945c8765e2bb797d8a8149dcf",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.routed_identifiability/1",
+      "unknown_schema_refused": true
+    },
+    "RoutedPredictiveUncertainty": {
+      "canonical_sha256": "07a2d3516a69d3f8f3e061832a8ecbc597ce46d465083f75abc81a791d3691f7",
+      "identity_digest": "07a2d3516a69d3f8f3e061832a8ecbc597ce46d465083f75abc81a791d3691f7",
+      "round_trip_byte_identical": true,
+      "schema": "hybrid_uq.routed_predictive_uncertainty/1",
+      "unknown_schema_refused": true
+    }
+  },
+  "supersedes_v2_because": [
+    "HUQ-09/HUQ-12: serialized Hybrid UQ records re-derive identifiability, refusals and downgrades from their carried numbers on read; the V2 fixture RouteDiagnostics omits canonical thresholds and declares a uniqueness and downgrade set its own starts do not imply, so it is refused",
+    "HUQ-01: the multistart policy actually used is committed in the diagnostics digest and a search below the minimum is at most DOWNGRADED; every V2 identity reference built over diagnostics moves",
+    "HUQ-14: RoutedIdentifiability's digest covers its `why` text, which must follow from its numbers",
+    "HUQ-04: the grid digest covers the log-likelihood and admissible mask the resolution checks read"
+  ],
+  "v1_manifest_sha256": "eb7643007ca8ced81e80b0403fcf953c2d2f9855b92e2b1242255339f9220aee",
+  "v1_repair": {
+    "aliasing_number_minimum": 9.210340371976184,
+    "errata": "benchmarks/core_v1_thin_ridge_repair/ERRATA.md",
+    "errata_present": true,
+    "is_two_ln_100": true
+  },
+  "v2_fixtures_refused": {
+    "fixture_records": "HybridUQError: the route diagnostics contradict their own measurements: ['threshold nonlinearity_downgrade is None, not the declared 0.1', 'threshold bound_downgrade_sd is None, not the declared 3.0', 'threshold stationarity_sd is None, not the declared 0.05', 'threshold at_bound_relative is None, not the declared"
+  },
+  "v2_manifest_sha256": "e0c2fe20e805d1162c3849765647838b4a101be6da5db67628ecd7dab273919f",
+  "vocabulary": {
+    "approximation_classes": {
+      "LINEARIZED_PREDICTIVE_UQ": {
+        "describes": "predictions",
+        "exact_posterior": false
+      },
+      "LOCAL_GAUSSIAN_APPROXIMATION": {
+        "describes": "parameters",
+        "exact_posterior": false
+      },
+      "POSTERIOR_GRID": {
+        "describes": "parameters",
+        "exact_posterior": false
+      }
+    },
+    "grid_route_maximum_parameters": 5,
+    "route_claims": [
+      "SUPPORTED",
+      "DOWNGRADED",
+      "REFUSED"
+    ],
+    "route_decisions": [
+      "GRID_AS_SUPPLIED",
+      "LOCAL_GAUSSIAN",
+      "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
+      "REFUSED"
+    ],
+    "route_reasons": {
+      "BETTER_OPTIMUM_FOUND": "REFUSED",
+      "BOUND_WITHIN_3_SD": "DOWNGRADED",
+      "CALIBRATION_NOT_CONVERGED": "REFUSED",
+      "FORWARD_INADMISSIBLE_NEAR_ESTIMATE": "REFUSED",
+      "GLOBAL_UNIQUENESS_NOT_ASSESSED": "DOWNGRADED",
+      "GRID_BEYOND_VALIDATED_DIMENSION": "REFUSED",
+      "GRID_NOT_SUPPLIED": "REFUSED",
+      "GRID_REBUILD_OVER_BUDGET": "REFUSED",
+      "GRID_REBUILD_UNRESOLVED": "REFUSED",
+      "GRID_UNRESOLVED": "REFUSED",
+      "LOCAL_INPUTS_NOT_SUPPLIED": "REFUSED",
+      "MULTISTART_INCOMPLETE": "DOWNGRADED",
+      "NONLINEARITY_PROBE_INCOMPLETE": "DOWNGRADED",
+      "NONLINEAR_BEYOND_LOCAL_GAUSSIAN": "REFUSED",
+      "NONLINEAR_WITHIN_2_SD": "DOWNGRADED",
+      "NOT_A_LOCAL_MINIMUM": "REFUSED",
+      "NOT_STATIONARY": "REFUSED",
+      "NO_RESIDUAL_DEGREES_OF_FREEDOM": "REFUSED",
+      "NUMERICALLY_SINGULAR_JACOBIAN": "REFUSED",
+      "PARAMETER_AT_BOUND": "REFUSED",
+      "POORLY_SCALED_PARAMETERIZATION": "DOWNGRADED",
+      "PREDICTIVE_NONLINEAR": "DOWNGRADED",
+      "SECOND_MODE_FOUND": "REFUSED",
+      "STRUCTURALLY_UNIDENTIFIABLE": "REFUSED"
+    },
+    "uncertainty_sources": [
+      "PARAMETER_UNCERTAINTY",
+      "MEASUREMENT_UNCERTAINTY",
+      "MODEL_DISCREPANCY_NOT_MODELLED"
+    ]
+  }
+}

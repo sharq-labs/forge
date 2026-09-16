@@ -121,10 +121,13 @@ from .context import (
     POLARIZATION_TIME_CONSTANT,
     POLARIZATION_UNMODELLED_FRACTION,
     PULSE_CURRENT,
+    PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT,
     PULSE_C_RATE_UTILIZATION,
     PULSE_DISCHARGE_C_RATE,
     PULSE_DURATION,
     PULSE_DURATION_UTILIZATION,
+    PULSE_POLARIZATION_UNMODELLED_FRACTION,
+    PULSE_TERMINAL_VOLTAGE_RATIO,
     RATED_PULSE_DURATION,
     RESISTANCE_REFERENCE_TEMPERATURE,
     RESISTANCE_TEMPERATURE_SPAN,
@@ -224,6 +227,12 @@ TEMPERATURE_POSITION_CEILING = Quantity(1.0, DIMENSIONLESS)
 #: no basis to assert. The bound is the physics of the computed quantity, so it
 #: is exactly zero and needs no source.
 MINIMUM_TERMINAL_VOLTAGE_RATIO = Quantity(0.0, DIMENSIONLESS)
+
+#: z_cut(I_pulse) - z_stop(I) <= 0. Definitional, as the cutoff-consistency
+#: floor is: 0 is the pulse reaching the voltage cutoff exactly where the
+#: runtime already stops, positive is the pulse stopping the run first.
+#: Audit CAP-02.
+PULSE_CUTOFF_SHIFT_CEILING = Quantity(0.0, DIMENSIONLESS)
 
 #: Step span <= the declared state-of-charge resolution. Definitional in the
 #: same way as the rating utilizations: the caller states how far one step may
@@ -453,6 +462,16 @@ RINT_OCV_MODEL = ScientificModelDefinition(
         "of charge",
         "any dependence of the internal resistance on temperature or state of "
         "charge; one measured value stands for the whole run",
+        # Audit CAP-06: two omissions that were stated as assumptions and
+        # screened by nothing, stated here as what this record does not check.
+        "any dependence of the open-circuit voltage on the declared "
+        "chemistry: chemistry is inert, the affine chord is the same line for "
+        "every chemistry, and no condition compares it with the curve shape a "
+        "chemistry is known to have -- only a declared OCV curve narrows it",
+        "a screen on the size of the omitted reversible heat: no condition "
+        "bounds -I T dU/dT against the Joule term, because dU/dT is not "
+        "declarable in this domain, so the heat output is unbounded in error at "
+        "low rate",
     ),
     model_id="battery.cell.rint_ocv",
     version=MODEL_VERSION,
@@ -585,6 +604,8 @@ RINT_OCV_MODEL = ScientificModelDefinition(
                 POLARIZATION_UNMODELLED_FRACTION,
                 PULSE_C_RATE_UTILIZATION,
                 PULSE_DURATION_UTILIZATION,
+                PULSE_POLARIZATION_UNMODELLED_FRACTION,
+                PULSE_TERMINAL_VOLTAGE_RATIO,
                 SELF_HEATING_RISE_RATIO,
                 SOC_WINDOW_MARGIN,
                 TERMINAL_VOLTAGE_RATIO,
@@ -803,6 +824,59 @@ RINT_OCV_MODEL = ScientificModelDefinition(
                     "condition rather than an applicability one, and not "
                     "counted among the eight above. UNKNOWN unless the "
                     "operating point is supplied."
+                ),
+            ),
+            # ---- the declared pulse, screened (audit CAP-02) ----------------
+            #
+            # The two pulse-rating conditions above admit a declared pulse into
+            # this record's claim. Until these two existed nothing then asked
+            # whether this record's circuit describes the cell DURING that
+            # pulse: the polarization condition read the continuous step and
+            # the terminal voltage the continuous current.
+            RangeCondition(
+                name=PULSE_POLARIZATION_UNMODELLED_FRACTION,
+                maximum=POLARIZATION_UNMODELLED_CEILING,
+                # A SCREEN, unlike the continuous polarization condition above,
+                # and the difference is what each one is about. That condition
+                # bounds the interval whose terminal voltage this model REPORTS:
+                # past it a reported value is observed to be wrong. This one
+                # bounds a pulse the model admits into its claim through the
+                # pulse ratings and reports NOTHING about -- no value this
+                # record emits is computed at the pulse. Past the bound the
+                # model has no evidence about its own behaviour during the
+                # declared duty, which is a gap in the claim rather than a
+                # finding against an output: UNKNOWN, never IN_DOMAIN.
+                conservative_screen=True,
+                description=(
+                    "min(f, 1 - f) <= 0.05 for f = 1 - exp(-t_pulse/tau_pol): "
+                    "the polarization condition above, asked at the declared "
+                    "pulse's own length instead of the continuous step. A "
+                    "pulse around one time constant long is slewing and no "
+                    "constant resistance reproduces the terminal voltage "
+                    "during it; 0.05 is the same convention, read from both "
+                    "ends. A CONSERVATIVE SCREEN: this record reports no value "
+                    "at the pulse, so a slewing pulse leaves its claim over the "
+                    "declared duty unestablished (UNKNOWN) rather than "
+                    "contradicting an output. Whether the pulse stops the run "
+                    "early is the runtime model's "
+                    "pulse_cutoff_state_of_charge_shift, which is a finding. "
+                    "UNKNOWN unless pulse_duration and "
+                    "polarization_time_constant are declared."
+                ),
+            ),
+            RangeCondition(
+                name=PULSE_TERMINAL_VOLTAGE_RATIO,
+                minimum=MINIMUM_TERMINAL_VOLTAGE_RATIO,
+                minimum_inclusive=False,
+                description=(
+                    "(OCV - I_pulse R_int)/OCV > 0 at the end-of-interval "
+                    "state of charge: the terminal-voltage admissibility above, "
+                    "asked at the declared pulse current. Past zero the "
+                    "circuit describes a cell sourcing the pulse at a negative "
+                    "terminal voltage. Whether the pulse also crosses a "
+                    "declared cutoff is the runtime model's question, not this "
+                    "one's. UNKNOWN unless a pulse current and the operating "
+                    "point are declared."
                 ),
             ),
         ),
@@ -1100,10 +1174,33 @@ CONSTANT_CURRENT_RUNTIME_MODEL = ScientificModelDefinition(
                 CONTINUOUS_C_RATE_UTILIZATION,
                 CUTOFF_CONSISTENCY_MARGIN,
                 CUTOFF_REACHABILITY_MARGIN,
+                PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT,
                 SOC_WINDOW_MARGIN,
             }
         ),
         conditions=(
+            RangeCondition(
+                name=PULSE_CUTOFF_STATE_OF_CHARGE_SHIFT,
+                maximum=PULSE_CUTOFF_SHIFT_CEILING,
+                description=(
+                    "z_cut(I_pulse) - z_stop(I) <= 0: the declared pulse does "
+                    "not reach the voltage cutoff at a higher state of charge "
+                    "than the one this runtime is computed to. A heavier "
+                    "current subtracts a larger I R_int from every point of "
+                    "the OCV curve, so a pulse drawn below z_cut(I_pulse) "
+                    "trips the cutoff first and t = (z_0 - z_stop) eta Q_nom "
+                    "/ I is too long. Audit CAP-02: a 25 A pulse on a 1.5 A "
+                    "load puts z_cut at 0.625 against z_stop 0.15, and the "
+                    "Rint terminal voltage at the pulse at 2.65 V against a "
+                    "3.0 V cutoff, while this model reported IN_DOMAIN. The "
+                    "charge the pulses themselves draw is NOT counted: that "
+                    "needs a duty cycle this domain does not declare, and is "
+                    "within the record's varying-load exclusion. "
+                    "Definitional bound. Zero, and satisfied, when a voltage "
+                    "cutoff is declared and no pulse is; UNKNOWN unless a "
+                    "voltage cutoff and a discharge current are declared."
+                ),
+            ),
             RangeCondition(
                 name=CUTOFF_CONSISTENCY_MARGIN,
                 minimum=CUTOFF_CONSISTENCY_FLOOR,
@@ -1198,6 +1295,11 @@ PEUKERT_DERATING_MODEL = ScientificModelDefinition(
         "and says nothing about one that varies",
         "any derivation of the exponent, which is a fit and is treated as "
         "constant over the declared current and temperature range only",
+        # Audit CAP-06.
+        "any dependence of the exponent on the declared chemistry: chemistry "
+        "is inert and no chemistry-specific exponent range is checked; the "
+        "exponent, its reference current and its fit span are the caller's "
+        "for this cell",
     ),
     model_id="battery.cell.peukert_capacity_derating",
     version=MODEL_VERSION,

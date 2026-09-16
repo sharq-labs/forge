@@ -402,8 +402,14 @@ def test_a_payload_written_before_this_field_loads_as_not_assessed(version):
     """
     payload = json.loads(json.dumps(result().to_dict(), sort_keys=True))
     payload["schema"] = version
-    payload.pop("validity")
     payload.pop("validity_not_assessed")
+    # A /3 writer always emitted `validity` (here: nobody assessed anything),
+    # so since the results audit (RES-02) a /3 payload without the key is a
+    # record with content deleted and is refused; /1 and /2 never wrote it.
+    if version == "scientific_result/3":
+        assert payload["validity"] == {}
+    else:
+        payload.pop("validity")
     if version == "scientific_result/1":
         payload.pop("data_references")
 
@@ -416,15 +422,26 @@ def test_a_payload_written_before_this_field_loads_as_not_assessed(version):
 
 
 def test_an_older_payload_carrying_the_key_is_not_read_as_if_it_had_written_it():
-    """By version, not by key presence — the rule ``/1`` already established."""
+    """By version, not by key presence — the rule ``/1`` already established.
+
+    **Refused, since the results audit (RES-02), rather than read with the key
+    ignored.** This test used to pin that a ``/2`` payload carrying an
+    assessment loaded as not assessed. That is the relabelling downgrade: an
+    OUTSIDE_VALIDATED_DOMAIN assessment relabelled ``/2`` read as "nobody
+    asked", moved a NOT_SUPPORTED verdict to INSUFFICIENT_EVIDENCE, and
+    re-serialized at the current version with the weaker content. A payload
+    carrying a key its declared version never wrote is not a record of that
+    version; the half of the rule that still holds -- the key is never *read*
+    as if the older writer had written it -- is kept by refusing it.
+    """
     original = result(validity={THERMAL: IN_DOMAIN})
     payload = json.loads(json.dumps(original.to_dict(), sort_keys=True))
     payload["schema"] = "scientific_result/2"
+    payload.pop("validity_not_assessed")
     assert payload["validity"], "the payload must actually carry one"
 
-    older = ScientificResult.from_dict(payload)
-    assert older.validity == {}
-    assert older.non_assessment_reason(THERMAL) == LEGACY_NON_ASSESSMENT
+    with pytest.raises(ScientificCoreError, match="relabelled"):
+        ScientificResult.from_dict(payload)
 
 
 def test_an_explicit_null_loads_as_not_assessed_and_not_as_an_error():

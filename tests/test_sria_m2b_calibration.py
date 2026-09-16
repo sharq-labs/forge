@@ -566,6 +566,10 @@ def test_critic_reports_insufficient_data_not_untrusted():
 
 
 def test_critic_trusts_a_good_model():
+    # Audit INF-11: this fixture used to omit the censoring input and still got
+    # TRUSTED, which is the omission the critic claims to refuse. A good model
+    # states its censored fraction; one that does not caps at DEGRADED
+    # (tests/test_audit_sria_cost_critic.py).
     critic = CalibrationCritic()
     report = critic.assess_cost_model(
         model_id="cost.good",
@@ -574,6 +578,7 @@ def test_critic_trusts_a_good_model():
         n_eval=300,
         coverage=0.81,
         baseline_mae_log10=1.2,
+        censored_fraction=0.0,
     )
     assert report.verdict is CalibrationVerdict.TRUSTED
     report.require_decision_grade()

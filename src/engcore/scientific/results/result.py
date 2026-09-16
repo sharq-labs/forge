@@ -130,7 +130,24 @@ RESULT_SCHEMA = schema_string("scientific_result", 4)
 #: record is read as written: its provenance is silent, not contradictory. A
 #: provenance that names OTHER participants is a contradiction and is refused on
 #: read as on construction.
+#:
+#: **Read as written is not read as attributed** (results audit, RES-01). The
+#: exemption applies to every version, the current one included, because the
+#: serialization contract is frozen and a payload cannot say which side of the
+#: check wrote it -- so a current payload attributing itself to a fabricated
+#: model and solver over an empty provenance reads back. What it may not do is
+#: read back looking attributed: a record read under the exemption is MARKED
+#: (:func:`stored_attribution_gap`), and a consumer assembling evidence around
+#: it must carry the gap. The credibility boundary does, as a NOT_RUN check.
 _READING_STORED_RESULT: ContextVar[bool] = ContextVar("_reading_stored_result", default=False)
+
+#: The instance attribute a record read under the silent-provenance exemption
+#: carries. Not a dataclass field -- the record's frozen shape and its
+#: serialized bytes do not move -- and set only inside ``__post_init__`` while
+#: ``_READING_STORED_RESULT`` is true, so no constructor argument can set or
+#: clear it. Re-reading what the record writes re-derives it, because the
+#: provenance it writes is still silent.
+_ATTRIBUTION_GAP_ATTRIBUTE = "_stored_attribution_gap"
 
 #: The version before ``validity_not_assessed`` existed. Still read, never
 #: written. Bumped for the same reason /3 was: a /3 payload can say nothing
@@ -152,6 +169,25 @@ SUPPORTED_RESULT_SCHEMAS = (
     RESULT_SCHEMA_V3,
     RESULT_SCHEMA,
 )
+
+#: The first version whose writer emitted each content key. A payload that
+#: declares an EARLIER version and carries the key was not written by the
+#: version it declares -- it is a newer payload relabelled, and reading it by
+#: its label would silently drop the key's content (an OUTSIDE assessment read
+#: as "not assessed", a bulk reference read as none). A payload that declares
+#: this version or later and LACKS the key was not written by any writer of
+#: that version either, and is refused for the same reason.
+_CONTENT_KEY_INTRODUCED_IN = (
+    ("data_references", RESULT_SCHEMA_V2),
+    ("validity", RESULT_SCHEMA_V3),
+    ("validity_not_assessed", RESULT_SCHEMA),
+)
+
+#: Keys every writer of every version emitted, whose absence used to be read
+#: as the most permissive state: a missing ``convergence`` as NOT_APPLICABLE and
+#: a missing ``validation`` as an empty report, so a diverged, failed result
+#: whose two keys were deleted read back as usable.
+_ALWAYS_WRITTEN_KEYS = ("convergence", "validation")
 
 #: The reason recorded for a model whose non-assessment the record itself
 #: could not carry, because the payload predates the field.
@@ -404,7 +440,11 @@ class ScientificResult:
         stored = _READING_STORED_RESULT.get()
         result_models = set(self.models)
         missing_models = sorted(result_models - set(self.provenance.models))
-        if stored and not self.provenance.models:
+        if stored and missing_models and not self.provenance.models:
+            self._record_attribution_gap(
+                f"declares model(s) {missing_models} over a provenance that "
+                f"names no models"
+            )
             missing_models = []
         if missing_models:
             raise ScientificCoreError(
@@ -417,7 +457,12 @@ class ScientificResult:
         if not isinstance(self.solver, SolverIdentity):
             raise ScientificCoreError("result solver must be a SolverIdentity")
         solver_key = self.solver.key
-        if solver_key not in set(self.provenance.solvers) and not (stored and not self.provenance.solvers):
+        if solver_key not in set(self.provenance.solvers) and stored and not self.provenance.solvers:
+            self._record_attribution_gap(
+                f"declares solver {self.solver.solver_id}@{self.solver.version} "
+                f"over a provenance that names no solvers"
+            )
+        elif solver_key not in set(self.provenance.solvers):
             raise ScientificCoreError(
                 f"result {self.result_id!r} declares solver "
                 f"{self.solver.solver_id}@{self.solver.version}, but its "
@@ -435,6 +480,15 @@ class ScientificResult:
                     f"provenance execution binding connects that solver to any "
                     f"model the result declares"
                 )
+
+    def _record_attribution_gap(self, gap: str) -> None:
+        """Mark this record as read under the silent-provenance exemption.
+
+        Reachable only while ``_READING_STORED_RESULT`` is true, which only
+        ``from_dict`` sets.
+        """
+        existing = getattr(self, _ATTRIBUTION_GAP_ATTRIBUTE, ())
+        object.__setattr__(self, _ATTRIBUTION_GAP_ATTRIBUTE, (*existing, gap))
 
     def _checked_validity(self) -> tuple[dict, dict]:
         """Normalise both validity mappings, refusing every way to blur a gap.
@@ -747,6 +801,7 @@ class ScientificResult:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificResult":
         version = require_schema_any(payload, SUPPORTED_RESULT_SCHEMAS)
+        _require_keys_of_declared_version(payload, version)
         solver = payload.get("solver")
         token = _READING_STORED_RESULT.set(True)
         try:
@@ -765,15 +820,15 @@ class ScientificResult:
             },
             models=tuple(tuple(m) for m in payload.get("models", ())),
             solver=SolverIdentity.from_dict(solver) if solver else None,
-            convergence=ConvergenceState(payload.get("convergence", "not_applicable")),
-            validation=ValidationReport.from_dict(payload["validation"])
-            if payload.get("validation")
-            else ValidationReport(),
+            # Required, and read as written: see `_ALWAYS_WRITTEN_KEYS`.
+            convergence=ConvergenceState(payload["convergence"]),
+            validation=ValidationReport.from_dict(payload["validation"]),
             # A /1 or /2 payload predates this field and cannot carry one, so
-            # it loads as not-assessed -- which is the truth about it. A /3
-            # payload with the key absent, or explicitly null, loads the same
-            # way for the same reason: there is one representation of "nobody
-            # asked", and it is the empty mapping.
+            # it loads as not-assessed -- which is the truth about it (and a
+            # /1 or /2 payload carrying the key is refused above as a
+            # relabelled newer one). A /3 or later payload must carry the key;
+            # an explicit null loads as the empty mapping, the one
+            # representation of "nobody asked".
             validity={}
             if version in (RESULT_SCHEMA_V1, RESULT_SCHEMA_V2)
             else {
@@ -807,7 +862,7 @@ class ScientificResult:
             if version == RESULT_SCHEMA_V1
             else tuple(
                 ScientificDataReference.from_dict(r)
-                for r in payload.get("data_references", ())
+                for r in (payload["data_references"] or ())
             ),
             provenance=ProvenanceRecord.from_dict(payload["provenance"]),
             metadata=dict(payload.get("metadata", {})),
@@ -837,3 +892,63 @@ def _declarations_for(payload: Mapping[str, Any], version: str) -> dict[str, str
     for model_id in declared - assessed - set(stated):
         stated[model_id] = LEGACY_NON_ASSESSMENT
     return stated
+
+
+def stored_attribution_gap(result: ScientificResult) -> tuple[str, ...]:
+    """What a stored record claims that its own provenance does not attribute.
+
+    Empty for every record built by the constructor and for every record read
+    back whose provenance names its participants. Non-empty only for a record
+    read from a payload -- of any version -- whose provenance is silent about
+    the model(s) or solver it declares: the shape ``from_dict`` reads as
+    written rather than refuses, because producers wrote it before the
+    provenance-consistency check existed and the payload cannot say which
+    side of the check wrote it.
+
+    Not exported from the canonical package: it is the read side of a marker a
+    consumer assembling evidence must not launder, and a consumer that cannot
+    see the gap would present the record's ``models`` and ``solver`` as
+    attributed. Deliberately a function over the record rather than a field
+    on it, so the record's frozen shape does not move.
+    """
+    return tuple(getattr(result, _ATTRIBUTION_GAP_ATTRIBUTE, ()))
+
+
+def _require_keys_of_declared_version(
+    payload: Mapping[str, Any], version: str
+) -> None:
+    """Refuse a payload whose keys no writer of its declared version emitted.
+
+    Reading by version rather than by key presence was the rule since /1 --
+    and it was applied in the permissive direction only: a key a declared
+    version could not have written was ignored, so relabelling a newer
+    payload to an older version was a way to drop its content without a
+    refusal. An OUTSIDE assessment relabelled /2 read as "not assessed"; a bulk
+    reference relabelled /1 read as none; and the record then re-serialized at
+    the current version, carrying the weaker content as if it were the truth.
+    """
+    rank = SUPPORTED_RESULT_SCHEMAS.index(version)
+    for key, introduced in _CONTENT_KEY_INTRODUCED_IN:
+        written_by_declared = rank >= SUPPORTED_RESULT_SCHEMAS.index(introduced)
+        if key in payload and not written_by_declared:
+            raise ScientificCoreError(
+                f"a {version} payload carries {key!r}, which no writer before "
+                f"{introduced} emitted. It is a newer payload relabelled, and "
+                f"reading it by its label would silently drop what {key!r} "
+                f"says; re-read it under the version that wrote it"
+            )
+        if key not in payload and written_by_declared:
+            raise ScientificCoreError(
+                f"a {version} payload is missing {key!r}, which every writer "
+                f"of that version emitted. A record with a content key deleted "
+                f"is not a record of that version, and reading the absence as "
+                f"the older shape would be inventing content"
+            )
+    for key in _ALWAYS_WRITTEN_KEYS:
+        if payload.get(key) is None:
+            raise ScientificCoreError(
+                f"a {version} payload carries no {key!r}. Every scientific "
+                f"result writer emitted it, and reading its absence as the "
+                f"default would read a diverged or failed result as usable"
+            )
+

@@ -44,6 +44,18 @@ def test_constant_rate_competitor_validity_is_not_unbounded() -> None:
                 # state coordinates, and withholding it leaves the condition
                 # UNKNOWN rather than satisfied.
                 "adiabatic_ceiling_temperature": Quantity(ceiling_k, "kelvin"),
+                # Audit CAP-01: the single-liquid-phase conditions this record
+                # now shares with the Arrhenius model, assembled from a fluid
+                # declaring boiling and freezing points that clear the state.
+                "declared_temperature_to_boiling_ratio": Quantity(
+                    0.5, "dimensionless"
+                ),
+                "reachable_maximum_to_boiling_ratio": Quantity(
+                    0.8, "dimensionless"
+                ),
+                "reachable_minimum_to_freezing_ratio": Quantity(
+                    1.2, "dimensionless"
+                ),
             },
         )
 

@@ -21,18 +21,40 @@ from engcore.scientific.results.validation import (
     ValidationOutcome,
 )
 from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
+    bound_over,  # IND-02: a level needs results, not a mapping of numbers
+    pin_artifact_bytes,
+    resolved_source,
     route,
     route_declarations_for_tests,
 )
 
+#: Real, distinct sources for every solver-independence dimension of both
+#: routes (IND-03). The fixture used to present ``artifact:<route>:<identity>``
+#: bytes for labels nothing could read, and the gate kept the level for them;
+#: evidence for a Python dependency is now the source Forge itself resolves.
+REAL_SOURCES = {
+    "a": {
+        "preprocessing": "py:json.decoder:JSONDecoder",
+        "numerical_method": "py:csv:DictReader",
+        "implementation": "py:textwrap:TextWrapper",
+        "backend": "py:fractions:Fraction",
+    },
+    "b": {
+        "preprocessing": "py:statistics:median",
+        "numerical_method": "py:difflib:SequenceMatcher",
+        "implementation": "py:shlex:shlex",
+        "backend": "py:string:Template",
+    },
+}
 
-def _consensus(*, agree: bool = True, complete: bool = True) -> CrossSolverConsensus:
-    routes = (route("a"), route("b"))
+
+def _consensus(*, agree: bool = True, complete: bool = True, routes=None) -> CrossSolverConsensus:
+    routes = routes or (route("a", **REAL_SOURCES["a"]), route("b", **REAL_SOURCES["b"]))
     values = {
         "a": {"x": 1.0, **({"y": 2.0} if complete else {})},
         "b": {"x": 1.0 if agree else 1.5, "y": 2.0},
     }
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="trusted-gate-test",
         routes=routes,
         values=values,
@@ -55,10 +77,16 @@ def _evidence_for(consensus: CrossSolverConsensus):
             dimension_bytes = {}
             for index, dependency_identity in enumerate(sorted(canonical[dimension])):
                 name = f"{route_record.route_id}-{dimension.value}-{index}"
-                payload = (
-                    f"artifact:{route_record.route_id}:{dimension.value}:"
-                    f"{dependency_identity}"
-                ).encode()
+                if dependency_identity.startswith("py:"):
+                    payload = resolved_source(dependency_identity)
+                else:
+                    # An external artifact: its bytes count only because the
+                    # (test) domain layer pins their digest for this identity.
+                    payload = (
+                        f"artifact:{route_record.route_id}:{dimension.value}:"
+                        f"{dependency_identity}"
+                    ).encode()
+                    pin_artifact_bytes(route_record.route_id, dependency_identity, payload)
                 dimension_artifacts.add(
                     ArtifactFingerprint.from_bytes(
                         name,
@@ -170,10 +198,17 @@ def test_missing_route_artifact_evidence_downgrades_pass_without_rewriting_outco
 
 
 def test_shared_verified_bytes_defeat_trusted_independence_even_under_different_labels():
-    consensus = _consensus()
+    # Two different labels for one real source file: route a's implementation
+    # and route b's backend are both defined in textwrap.py, so the genuine
+    # bytes Forge resolves for each are one artifact (IND-03 made the shared
+    # bytes real rather than a blob presented under two names).
+    consensus = _consensus(routes=(
+        route("a", **{**REAL_SOURCES["a"], "implementation": "py:textwrap:TextWrapper"}),
+        route("b", **{**REAL_SOURCES["b"], "backend": "py:textwrap:dedent"}),
+    ))
     evidence, artifact_bytes = _evidence_for(consensus)
     left, right = evidence
-    shared_bytes = b"same-runtime-bytes"
+    shared_bytes = resolved_source("py:textwrap:dedent")
 
     left_route, right_route = consensus.routes
     assert left_route.dependencies is not None and right_route.dependencies is not None
@@ -306,7 +341,7 @@ def test_unknown_evidence_route_is_refused_instead_of_ignored():
 
 
 def _declared_consensus(*routes) -> CrossSolverConsensus:
-    return CrossSolverConsensus.over(
+    return bound_over(
         consensus_id="trusted-gate-relabelling",
         routes=routes,
         values={item.route_id: {"x": 1.0, "y": 2.0} for item in routes},
@@ -331,6 +366,9 @@ def _backend_evidence(route_record, backend_rows):
             for name, payload, identity in rows
         )
         route_bytes[dimension] = {name: payload for name, payload, _ in rows}
+        # IND-03: this world's external artifacts, pinned as its domain would.
+        for _name, payload, identity in rows:
+            pin_artifact_bytes(route_record.route_id, identity, payload)
     return (
         RouteIndependenceEvidence(route_record.route_id, route_record.dependencies.digest, artifacts),
         route_bytes,

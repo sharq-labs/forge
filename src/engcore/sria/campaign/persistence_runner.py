@@ -75,7 +75,10 @@ class IncrementalCampaignRunner(CampaignRunner):
 
         This mirrors the frozen runner restore seam, while also preserving the
         executor-enforced budget-cap declaration that V0.3 persists explicitly.
+        Like the frozen seam, it refuses assurance state its event log does not
+        establish (audit SRIA-06 / SER-01).
         """
+        self._require_derivable_assurance(checkpoint)
         self._run = checkpoint.run
         self._events = self._adopt_events(checkpoint.events)
         self._budget = BudgetLedger(

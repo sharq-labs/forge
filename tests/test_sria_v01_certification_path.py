@@ -168,7 +168,18 @@ class V01AdequacyEvaluator:
     critic_id = "v01.certification"
     critic_version = "1"
 
-    def __init__(self, gateway, commitments: CommitmentLedger) -> None:
+    def __init__(self, gateway=None, commitments: CommitmentLedger | None = None) -> None:
+        self._gateway = gateway
+        self._commitments = commitments
+
+    def bind(self, gateway, commitments: CommitmentLedger) -> None:
+        """Supply the inputs this evaluator reads.
+
+        The evaluator is registered with the stack's Arbiter when the stack is
+        built (audit SRIA-TRUST-01), which is before the commitments exist, so
+        its inputs arrive afterwards. Registration fixes WHICH critic the
+        Arbiter trusts; what that critic reads is its own business.
+        """
         self._gateway = gateway
         self._commitments = commitments
 
@@ -204,7 +215,7 @@ class V01AdequacyEvaluator:
             surprises, aggregate_adequacy(surprises, joint)
         ).state
 
-    def evaluate(self, context, *, assessment_id: str) -> CriticAssessment:
+    def evaluate(self, context, *, assessment_id: str, proposal) -> CriticAssessment:
         state = self.adequacy_state()
         if state is None:
             verdict, findings, summary = (
@@ -245,7 +256,8 @@ class V01AdequacyEvaluator:
             critic_id=self.critic_id,
             critic_version=self.critic_version,
             critic_class=CriticClass.PROCESS,
-            subject_ref=assessment_id,
+            # About the stop proposal under review (audit SRIA-TRUST-01).
+            subject_ref=proposal.proposal_id,
             verdict=verdict,
             provenance=AssessmentProvenance(
                 assessment_id=assessment_id,
@@ -281,7 +293,8 @@ def build_v01_campaign(
     faulty: bool = False,
 ):
     """A real CampaignRunner in E3's post-calibration state."""
-    stack = build_e3_stack(spec, label=label)
+    evaluator = V01AdequacyEvaluator()
+    stack = build_e3_stack(spec, label=label, critics=(evaluator,))
     run_calibration(stack)
 
     weights = posterior_weights(stack.harness.current_observations())
@@ -326,7 +339,7 @@ def build_v01_campaign(
         if with_requirement
         else ()
     )
-    evaluator = V01AdequacyEvaluator(stack.gateway, commitments)
+    evaluator.bind(stack.gateway, commitments)
     generator = CertifiedProbeGenerator(commitments)
     # The runner reads its candidate pool from the harness when the harness
     # supplies one, so the certified generator has to be installed there — not

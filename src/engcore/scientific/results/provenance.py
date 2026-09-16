@@ -77,6 +77,39 @@ SUPPORTED_PROVENANCE_SCHEMAS = (
     PROVENANCE_SCHEMA,
 )
 
+#: The first version whose writer emitted each key. Same rule, and the same
+#: reason, as ``scientific_result``: a payload declaring an earlier version
+#: that carries the key is a newer record relabelled, and one declaring this
+#: version or later that lacks it is a record with content deleted. Reading
+#: either by its label used to drop the content silently.
+_KEY_INTRODUCED_IN = (
+    ("bindings", PROVENANCE_SCHEMA_V2),
+    ("transfers", PROVENANCE_SCHEMA_V3),
+)
+
+
+def _require_keys_of_declared_version(
+    payload: Mapping[str, Any], version: str
+) -> None:
+    rank = SUPPORTED_PROVENANCE_SCHEMAS.index(version)
+    for key, introduced in _KEY_INTRODUCED_IN:
+        written_by_declared = rank >= SUPPORTED_PROVENANCE_SCHEMAS.index(introduced)
+        if key in payload and not written_by_declared:
+            raise ScientificCoreError(
+                f"a {version} payload carries {key!r}, which no writer before "
+                f"{introduced} emitted. It is a newer record relabelled, and "
+                f"reading it by its label would silently drop what {key!r} "
+                f"says"
+            )
+        if key not in payload and written_by_declared:
+            raise ScientificCoreError(
+                f"a {version} payload is missing {key!r}, which every writer "
+                f"of that version emitted; a record with it deleted would read "
+                f"as the older shape, and an absent {key!r} is not a statement "
+                f"that there were none"
+            )
+
+
 EXECUTION_BINDING_SCHEMA = schema_string("execution_binding")
 
 
@@ -747,9 +780,13 @@ class ProvenanceRecord:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ProvenanceRecord":
         version = require_schema_any(payload, SUPPORTED_PROVENANCE_SCHEMAS)
+        _require_keys_of_declared_version(payload, version)
         # The one compatibility branch, decided by version and not by key
         # presence. ``provenance_record/1`` predates execution bindings and
-        # cannot have written one, so it loads with none.
+        # cannot have written one, so it loads with none -- and a /1 payload
+        # carrying the key is refused above as a relabelled newer record,
+        # because reading it by its label would drop the bindings and with
+        # them the check that a result's solver is bound to its models.
         #
         # It is NOT upgraded by inference. A ``/1`` record with exactly one
         # model and one solver looks like it determines a binding, and does
@@ -760,9 +797,25 @@ class ProvenanceRecord:
             ()
             if version == PROVENANCE_SCHEMA_V1
             else tuple(
-                ExecutionBinding.from_dict(b) for b in payload.get("bindings", ())
+                ExecutionBinding.from_dict(b) for b in (payload["bindings"] or ())
             )
         )
+        inputs = {
+            k: decode_value(v) for k, v in (payload.get("inputs") or {}).items()
+        }
+        if version != PROVENANCE_SCHEMA:
+            # /1 to /3 could carry only a Quantity input; a typed input in one
+            # was written by /4 and relabelled, and an older reader would have
+            # failed on it rather than read it.
+            typed = sorted(
+                name for name, value in inputs.items() if not isinstance(value, Quantity)
+            )
+            if typed:
+                raise ScientificCoreError(
+                    f"a {version} payload carries non-Quantity input(s) "
+                    f"{typed}, which no writer before {PROVENANCE_SCHEMA} "
+                    f"could emit; it is a newer record relabelled"
+                )
         return cls(
             run_id=payload["run_id"],
             software_version=payload.get("software_version", ""),
@@ -779,17 +832,14 @@ class ProvenanceRecord:
                 if version in (PROVENANCE_SCHEMA_V1, PROVENANCE_SCHEMA_V2)
                 else tuple(
                     QuantityTransfer.from_dict(x)
-                    for x in payload.get("transfers", ())
+                    for x in (payload["transfers"] or ())
                 )
             ),
             # `decode_value` dispatches on each value's OWN schema, so a
             # /1../3 record -- whose inputs are all `quantity/1` payloads --
             # decodes to exactly the Quantities it always did. No migration,
-            # no version branch, and nothing older is reinterpreted.
-            inputs={
-                k: decode_value(v)
-                for k, v in (payload.get("inputs") or {}).items()
-            },
+            # and nothing older is reinterpreted.
+            inputs=inputs,
             assumptions=tuple(payload.get("assumptions", ())),
             tolerances=dict(payload.get("tolerances", {})),
             environment=dict(payload.get("environment", {})),

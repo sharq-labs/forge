@@ -1,0 +1,26 @@
+{
+  "schema": "experiment_adjudication/1",
+  "experiment_id": "K1",
+  "adjudicated_record": "experiments/kinetics_k1/k1_results.json",
+  "frozen_record_edited": false,
+  "criterion": "A6",
+  "recorded": true,
+  "under_corrected_rule": false,
+  "changed_by_commit": "da159f9bac5fc5b2c939c68f811276f70b9c9887",
+  "merged_in": "add7ff6",
+  "finding": "IND-04",
+  "reason": "independent_steady_state_agreement no longer establishes CROSS_SOLVER_VALIDATED: the Brent steady-state reference shares the integrator's derived accessors, is not issued through a pinned consensus or oracle (VAL-01), and is not a closed form; no K1 check can issue that level, so the CROSS_SOLVER_VALIDATED half of A6 is unmeetable",
+  "also_unmet_predictions": {
+    "R1": "levels",
+    "R2": "levels",
+    "R3": "levels",
+    "R6a": "levels",
+    "R6b": "levels"
+  },
+  "acceptance_all_met": {"recorded": true, "under_corrected_rule": false},
+  "predictions_all_met": {"recorded": true, "under_corrected_rule": false},
+  "superseded_on": ["A6", "regimes[R1,R2,R3,R6a,R6b].prediction_met.levels", "acceptance_all_met", "predictions_all_met"],
+  "archived_records_carrying_the_old_level": [
+    "benchmarks/perf_runtime_audit/baseline_k1_solver_calls.json"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "commit": "656dea7998212bc8d3e6aa2391fb0f89117f3894",
+  "control": "GREEN",
+  "killed": 284,
+  "population": 284,
+  "population_sha256": "a05dcdad9bfb31d626d238ef255bae16b03058ae023092da074a06d20e9265c4",
+  "shard_count": 4,
+  "shards": [
+    {
+      "index": 0,
+      "log": "FORMAL_SHARD_0.log",
+      "log_sha256": "78ca98eb7e7bc1f47a06343c030af8739cd3b93bb13356f91207904a714b5a4c",
+      "measured_at": "b8b13b2279579e28972380fb37042af73ef47216",
+      "selected": 71
+    },
+    {
+      "index": 1,
+      "log": "FORMAL_SHARD_1.log",
+      "log_sha256": "17cee855249e0ac62cff9ba7ca7741ba32c352e358219b070c99eb235ae7cfb2",
+      "measured_at": "2ade43d36b069b287942463b3b013e90af50fd34",
+      "selected": 71
+    },
+    {
+      "index": 2,
+      "log": "FORMAL_SHARD_2.log",
+      "log_sha256": "273f778d64f9caaf2b7a869b823497a4429515b95cd7204bfb9f91725ec50a34",
+      "measured_at": "2ade43d36b069b287942463b3b013e90af50fd34",
+      "selected": 71
+    },
+    {
+      "index": 3,
+      "log": "FORMAL_SHARD_3.log",
+      "log_sha256": "60ea05c13bdba9d86c3fdc39870b22ecb55a4a113a131badc0455811615a0dfe",
+      "measured_at": "b8b13b2279579e28972380fb37042af73ef47216",
+      "selected": 71
+    }
+  ]
+}

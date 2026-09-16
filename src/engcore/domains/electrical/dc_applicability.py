@@ -182,6 +182,7 @@ POWER_UNIT = "watt"
 TEMPERATURE_UNIT = "kelvin"
 THERMAL_RESISTANCE_UNIT = "kelvin/watt"
 DIMENSIONLESS = "dimensionless"
+TEMPERATURE_COEFFICIENT_UNIT = "1/kelvin"
 
 # --- names of the values a solve produces ------------------------------------
 SOURCE_CURRENT = "source_current"
@@ -194,10 +195,16 @@ OUTPUT_RESISTANCE = "output_resistance"
 REGULATION_BAND = "regulation_band"
 ELEMENT_TO_BODY_THERMAL_RESISTANCE = "element_to_body_thermal_resistance"
 PERMISSIBLE_ELEMENT_TEMPERATURE = "permissible_element_temperature"
+#: Audit CAP-03. The coupled transient holds ONE resistance -- R at the
+#: end-of-interval temperature -- over the whole integrated interval.
+TEMPERATURE_COEFFICIENT = "element_temperature_coefficient"
+INITIAL_BODY_TEMPERATURE = "initial_body_temperature"
+RESISTANCE_VARIATION_BUDGET = "resistance_variation_budget"
 
 # --- names of the derived groups the conditions are stated over --------------
 SOURCE_REGULATION_UTILIZATION = "source_regulation_utilization"
 ELEMENT_HOT_SPOT_UTILIZATION = "element_hot_spot_utilization"
+RESISTANCE_VARIATION_UTILIZATION = "resistance_variation_utilization"
 
 #: **Definitional, not a threshold.** The quantity it bounds is the fraction of
 #: the caller's own declared regulation band that the source's internal drop
@@ -214,6 +221,11 @@ REGULATION_BUDGET_LIMIT = Quantity(1.0, DIMENSIONLESS)
 #: 1 is the permissible temperature. The same shape, and the same reason for
 #: the bound, as ``operating_temperature_utilization`` in ``material.py``.
 ELEMENT_TEMPERATURE_LIMIT = Quantity(1.0, DIMENSIONLESS)
+
+#: |alpha| |T_final - T_0| / resistance_variation_budget <= 1. Definitional,
+#: like every bound in this module: the fraction of the caller's own declared
+#: budget in use. Audit CAP-03.
+RESISTANCE_VARIATION_LIMIT = Quantity(1.0, DIMENSIONLESS)
 
 
 # =====================================================================
@@ -434,6 +446,43 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
                 "temperature. Absolute scale."
             ),
         ),
+        # ---- the resistance held over the interval (audit CAP-03) --------
+        ModelInputSpec(
+            name=TEMPERATURE_COEFFICIENT,
+            source_kind=InputSourceKind.VARIABLE,
+            unit_exemplar=TEMPERATURE_COEFFICIENT_UNIT,
+            required=False,
+            description=(
+                "The conductor's linear temperature coefficient, handed in "
+                "from the conductor declaration the run used."
+            ),
+        ),
+        ModelInputSpec(
+            name=INITIAL_BODY_TEMPERATURE,
+            source_kind=InputSourceKind.VARIABLE,
+            unit_exemplar=TEMPERATURE_UNIT,
+            required=False,
+            description=(
+                "The body temperature at the START of the integrated "
+                "interval. Absolute scale."
+            ),
+        ),
+        ModelInputSpec(
+            name=RESISTANCE_VARIATION_BUDGET,
+            source_kind=InputSourceKind.PARAMETER,
+            unit_exemplar=DIMENSIONLESS,
+            required=False,
+            description=(
+                "The largest fractional change of resistance, relative to the "
+                "reference resistance, that the caller accepts being held "
+                "constant across one integrated interval. The coupled "
+                "transient is a quasi-static end-of-interval fixed point: it "
+                "integrates the body with the dissipation at R(T_final) over "
+                "the whole interval, and this is the caller's statement of "
+                "how much the real R(T(t)) may depart from that. Unlocks "
+                f"{RESISTANCE_VARIATION_UTILIZATION}."
+            ),
+        ),
     ),
     outputs=(
         ModelOutputSpec(
@@ -457,6 +506,40 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
     ),
     validity=ValidityDomain(
         conditions=(
+            RangeCondition(
+                name=RESISTANCE_VARIATION_UTILIZATION,
+                maximum=RESISTANCE_VARIATION_LIMIT,
+                description=(
+                    "|alpha| |T_final - T_0| / resistance_variation_budget "
+                    "<= 1: the assumption 'one resistance describes the "
+                    "element over the whole run', checked. The coupled "
+                    "transient is a QUASI-STATIC END-OF-INTERVAL FIXED POINT: "
+                    "the body is integrated over its declared duration with "
+                    "the dissipation evaluated at R(T_final) throughout, "
+                    "while the element's real resistance moves from R(T_0) to "
+                    "R(T_final) across the interval. |alpha| |T_final - T_0| "
+                    "is that movement as a fraction of R_ref. Audit CAP-03: "
+                    "against an independent RK4 of C dT/dt = V^2/R(T(t)) - "
+                    "hA (T - T_amb), a nickel element (alpha 0.0068/K, 8 V, "
+                    "50 s) moved R by 38 % over the interval and the "
+                    "reported rise was 7.3 % low (56.5 K against 61.0 K), "
+                    "while the run was SUPPORTED. NOT the removed "
+                    "self_heating_resistance_drift_ratio: that measured R_op "
+                    "against R_ref, which the fixed point MODELS; this "
+                    "measures the change WITHIN the interval, which it does "
+                    "not. The bound of 1 is definitional -- the fraction of "
+                    "the caller's budget in use -- and the budget is the "
+                    "caller's, because how much rise error is acceptable is "
+                    "a property of what the answer is for. UNKNOWN unless the "
+                    "budget is declared and the run supplied the coefficient "
+                    "and both body temperatures. KNOWN LIMITATION (audit "
+                    "CAP-03, left partial by lead decision): this record is "
+                    "attached to a coupled run only when the caller declares "
+                    "element data, so a run that declares none gets no check "
+                    "of the resistance it held constant and can be SUPPORTED "
+                    "on the other models alone."
+                ),
+            ),
             RangeCondition(
                 name=ELEMENT_HOT_SPOT_UTILIZATION,
                 maximum=ELEMENT_TEMPERATURE_LIMIT,
@@ -493,7 +576,9 @@ SELF_HEATED_RESISTOR_MODEL = ScientificModelDefinition(
             "its own permissible temperature, at the operating point a coupled "
             "run actually reached."
         ),
-        derived_quantities=frozenset({ELEMENT_HOT_SPOT_UTILIZATION}),
+        derived_quantities=frozenset(
+            {ELEMENT_HOT_SPOT_UTILIZATION, RESISTANCE_VARIATION_UTILIZATION}
+        ),
     ),
     required_capabilities=frozenset({ELECTRICAL_DC_LINEAR.name}),
     validation_status=ModelValidationStatus.SELF_CONSISTENT,
@@ -620,6 +705,42 @@ def element_hot_spot_utilization(
     return Quantity((body + abs(power) * thermal) / permissible, DIMENSIONLESS)
 
 
+def resistance_variation_utilization(
+    *,
+    temperature_coefficient: Quantity | None = None,
+    initial_body_temperature: Quantity | None = None,
+    body_temperature: Quantity | None = None,
+    resistance_variation_budget: Quantity | None = None,
+) -> Quantity | None:
+    """``|alpha| |T_final - T_0| / budget``, or ``None``.
+
+    The change of a linear-TCR resistance across one integrated interval, as a
+    fraction of the reference resistance, over the caller's declared budget
+    for holding it constant. A difference of two absolute temperatures, so
+    the scale's origin cancels.
+    """
+    alpha = _magnitude(
+        temperature_coefficient,
+        TEMPERATURE_COEFFICIENT_UNIT,
+        TEMPERATURE_COEFFICIENT,
+    )
+    start = _magnitude(
+        initial_body_temperature, TEMPERATURE_UNIT, INITIAL_BODY_TEMPERATURE
+    )
+    end = _magnitude(body_temperature, TEMPERATURE_UNIT, BODY_TEMPERATURE)
+    budget = _positive(
+        _magnitude(
+            resistance_variation_budget,
+            DIMENSIONLESS,
+            RESISTANCE_VARIATION_BUDGET,
+        ),
+        RESISTANCE_VARIATION_BUDGET,
+    )
+    if alpha is None or start is None or end is None or budget is None:
+        return None
+    return Quantity(abs(alpha) * abs(end - start) / budget, DIMENSIONLESS)
+
+
 # =====================================================================
 # Contexts and assessments
 # =====================================================================
@@ -682,6 +803,8 @@ def self_heated_resistor_validity_context(
     *,
     body_temperature: Quantity | None = None,
     dissipated_power: Quantity | None = None,
+    temperature_coefficient: Quantity | None = None,
+    initial_body_temperature: Quantity | None = None,
 ) -> DomainValidityContext:
     """The context :data:`SELF_HEATED_RESISTOR_MODEL` is assessed against.
 
@@ -706,6 +829,14 @@ def self_heated_resistor_validity_context(
                 PERMISSIBLE_ELEMENT_TEMPERATURE
             ),
         ),
+        RESISTANCE_VARIATION_UTILIZATION: resistance_variation_utilization(
+            temperature_coefficient=temperature_coefficient,
+            initial_body_temperature=initial_body_temperature,
+            body_temperature=body_temperature,
+            resistance_variation_budget=declared.get(
+                RESISTANCE_VARIATION_BUDGET
+            ),
+        ),
     }
     return assembled_validity_context(
         declared=declared,
@@ -721,6 +852,8 @@ def assess_self_heated_resistor_validity(
     *,
     body_temperature: Quantity | None = None,
     dissipated_power: Quantity | None = None,
+    temperature_coefficient: Quantity | None = None,
+    initial_body_temperature: Quantity | None = None,
 ) -> ValidityAssessment:
     """Was Ohm's law with a constant R still describing this element, here?
 
@@ -733,6 +866,8 @@ def assess_self_heated_resistor_validity(
         problem,
         body_temperature=body_temperature,
         dissipated_power=dissipated_power,
+        temperature_coefficient=temperature_coefficient,
+        initial_body_temperature=initial_body_temperature,
     ).assess(SELF_HEATED_RESISTOR_MODEL)
 
 
@@ -793,8 +928,9 @@ def self_heated_resistor_problem(
 ) -> ScientificProblem:
     """One element's companion problem.
 
-    ``declared`` carries whatever of :data:`ELEMENT_TO_BODY_THERMAL_RESISTANCE`
-    and :data:`PERMISSIBLE_ELEMENT_TEMPERATURE` the caller supplied. Supplying
+    ``declared`` carries whatever of :data:`ELEMENT_TO_BODY_THERMAL_RESISTANCE`,
+    :data:`PERMISSIBLE_ELEMENT_TEMPERATURE` and
+    :data:`RESISTANCE_VARIATION_BUDGET` the caller supplied. Supplying
     neither produces a problem with no companion model reference, which is how
     a caller who did not ask this question is not answered it.
     """

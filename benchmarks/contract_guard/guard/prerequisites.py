@@ -63,6 +63,10 @@ SUPPLEMENTS = (
         "benchmarks.capability_boundary.audit.claim_map_supplement",
         "SUPPLEMENT",
     ),
+    (
+        "benchmarks.audit_domains.claim_map_supplement",
+        "SUPPLEMENT",
+    ),
 )
 
 

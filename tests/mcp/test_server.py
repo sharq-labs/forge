@@ -80,6 +80,9 @@ MODELS = (
 ATTACHED_MODELS = tuple(
     m for m in MODELS
     if m.model_id != dc_app.REGULATED_VOLTAGE_SOURCE_MODEL.model_id
+    # Audit CAP-05: the example is a thick-film part and declares no material
+    # limits, so the rated linear-TCR record is not attached either.
+    and m.model_id != mat.RATED_LINEAR_TCR_MODEL.model_id
 )
 
 
@@ -136,9 +139,13 @@ def violating_payload():
     without erasing it — and that needs a report which has both.
     """
     payload = unrated_payload()
-    payload["stages"][0]["conductor"]["limits"][
-        "maximum_operating_temperature"
-    ] = "301 kelvin"
+    # Audit CAP-05: the shipped example's thick-film part declares no material
+    # limits, so the violated one is declared here outright. The rated record's
+    # Debye conditions are then UNKNOWN beside it, which is one more gap for a
+    # violation to outrank -- the precedence this payload exists to show.
+    payload["stages"][0]["conductor"]["limits"] = {
+        "maximum_operating_temperature": "301 kelvin",
+    }
     return payload
 
 
@@ -218,6 +225,10 @@ def test_every_described_field_carries_the_models_own_required_and_dimension():
         spec = by_name[field["model_input"]]
         assert field["required"] is spec.required, field["path"]
         assert field["unit_exemplar"] == spec.unit_exemplar, field["path"]
+        if spec.unit_exemplar is None:
+            # Audit CAP-05: conductor_class is a categorical model input.
+            assert field["kind"] == "category", field["path"]
+            continue
         assert field["dimension"], field["path"]
 
 
@@ -425,7 +436,9 @@ def test_a_report_carries_validity_validation_provenance_and_the_claim():
     # The caller's own claim, fenced by markings that survive the wire.
     claim = report["declarations"][0]
     assert claim["caller_asserted"] is True
-    assert claim["consumed_by_verdict"] is False
+    # True since the results audit (CAP-04): the declared values are what the
+    # validity conditions are computed from. It used to be a literal False.
+    assert claim["consumed_by_verdict"] is True
 
 
 # =====================================================================

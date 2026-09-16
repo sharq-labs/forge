@@ -153,12 +153,19 @@ class CalibrationCritic:
         diagnostics: list[Diagnostic] = []
 
         # Censoring is read from training provenance when not passed
-        # explicitly, so a caller cannot obtain TRUSTED simply by omitting it.
-        if censored_fraction is None and training_provenance:
+        # explicitly. Only actual counts are evidence: a provenance mapping
+        # that does not say how many rows were kept and excluded says nothing
+        # about censoring, and zero counted rows is not "zero censored". When
+        # neither source exists the fraction stays unknown, and an unknown
+        # censoring fraction caps the verdict below (audit INF-11).
+        if censored_fraction is None and training_provenance and (
+            "observed_costs_used" in training_provenance
+            or "censored_excluded" in training_provenance
+        ):
             used = float(training_provenance.get("observed_costs_used", 0) or 0)
             excluded = float(training_provenance.get("censored_excluded", 0) or 0)
             total = used + excluded
-            censored_fraction = (excluded / total) if total else 0.0
+            censored_fraction = (excluded / total) if total else None
 
         if n_eval < COST_MIN_EVAL_POINTS:
             return CalibrationReport(
@@ -206,8 +213,21 @@ class CalibrationCritic:
                 )
             )
 
-        coverage_ok = True
-        if coverage is not None:
+        # An omitted input is not a passed diagnostic. A missing coverage
+        # figure means interval calibration was never checked, so it cannot
+        # support TRUSTED; it caps at DEGRADED and says why (audit INF-11).
+        coverage_ok = False
+        if coverage is None:
+            diagnostics.append(
+                Diagnostic(
+                    name="interval_coverage",
+                    value=None,
+                    threshold="must be supplied for TRUSTED",
+                    passed=False,
+                    detail="no held-out interval coverage was supplied",
+                )
+            )
+        else:
             low, high = COST_COVERAGE_TRUSTED
             coverage_ok = low <= coverage <= high
             diagnostics.append(
@@ -231,9 +251,25 @@ class CalibrationCritic:
                 )
             )
 
-        censoring_blocks_trust = False
+        # Unknown censoring blocks TRUSTED exactly as excessive censoring does:
+        # the estimator's downward bias cannot be bounded without the fraction.
+        censoring_blocks_trust = True
         censoring_unusable = False
-        if censored_fraction is not None:
+        if censored_fraction is None:
+            diagnostics.append(
+                Diagnostic(
+                    name="censored_fraction_of_support",
+                    value=None,
+                    threshold="must be known for TRUSTED",
+                    passed=False,
+                    detail=(
+                        "neither censored_fraction nor censoring counts in the "
+                        "training provenance were supplied, so the bias from "
+                        "dropped censored rows is unbounded"
+                    ),
+                )
+            )
+        else:
             censoring_blocks_trust = censored_fraction > COST_CENSORING_TRUSTED_MAX
             censoring_unusable = censored_fraction > COST_CENSORING_DEGRADED_MAX
             diagnostics.append(

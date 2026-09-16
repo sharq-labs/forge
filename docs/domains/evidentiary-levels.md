@@ -39,11 +39,18 @@ point of the table rather than a shortfall in it.
 | Category | Count | of which added this pass |
 |---|---|---|
 | earnable now (implemented) | **1** | **0** |
-| earnable later | **4** | **1** |
+| earnable later | **5** | **1** |
 | never earnable by this check | **17** | **9** |
-| **total audited** | **22** | **10** |
+| **total audited** | **23** | **10** |
 
-**Checks that pass today while establishing nothing: 17.** That is the number
+**Checks that pass today while establishing nothing: 18.** Seventeen until the
+consensus audit fix IND-04, which withdrew `CROSS_SOLVER_VALIDATED` from `cstr`'s
+`independent_steady_state_agreement` (row below, now *earnable later*): its
+reference is fed the same derived parameters the solver assembles from, so it
+was never independent in the sense this document's standard (1) requires. The
+arithmetic that follows is the pre-IND-04 count of 17; that row adds one.
+
+That is the number
 the audit exists to report, and the arithmetic behind it is: 22 rows, minus the
 4 whole-report routes, minus `metric_dimensions` (which now establishes
 `DIMENSIONALLY_VALID`), leaves 18 check rows; minus `cell_step_evaluated`,
@@ -92,11 +99,13 @@ by running the solvers rather than read off the source:
 | `DIMENSIONALLY_VALID` | **yes** | `dc/validation.py`, `battery/solver.py`, `material.py`, `cstr/validation.py`, `conduction1d_schemes.py`, and the frozen conduction solver |
 | `NUMERICALLY_CONVERGED` | **yes** | `dc/validation.py`'s linear residual; `cstr`'s `tolerance_independence`; the frozen conduction solver's refinement study |
 | `ANALYTICALLY_VERIFIED` | **yes** | `thermal_models/lumped.py`'s series-recurrence reference; `cstr`'s `analytic_invariant_agreement` |
-| `CROSS_SOLVER_VALIDATED` | **yes** | `cstr`'s `independent_steady_state_agreement` |
+| `CROSS_SOLVER_VALIDATED` | **no** (in any check under `domains/**`) | nothing since IND-04 withdrew `cstr`'s `independent_steady_state_agreement`; the only route to the level is a pinned `CrossSolverConsensus` over executed results (the DC pair), and the report that runs it withholds the level |
 | `BENCHMARK_VALIDATED` | **no** | nothing, anywhere |
 | `EXPERIMENTALLY_VALIDATED` | **no** | nothing, anywhere |
 
-**Four of six, and the two empty ones are empty for a reason that no amount of
+**Three of six since IND-04** (`CROSS_SOLVER_VALIDATED` is reachable only
+through a pinned consensus, not by a domain check). **The two below are empty
+for a reason that no amount of
 work in this repository will change.** `BENCHMARK_VALIDATED` requires a curated
 reference benchmark — a published problem with published answers, maintained by
 somebody who is not us — and this repository has none and is not in a position
@@ -167,15 +176,17 @@ produces a report at all.
 
 ### Kinetics CSTR — `src/engcore/domains/kinetics/cstr/validation.py`
 
-Excluded from the first pass; audited here. **This domain occupies four rungs**
-— `DIMENSIONALLY_VALID`, `NUMERICALLY_CONVERGED`, `ANALYTICALLY_VERIFIED` and
-`CROSS_SOLVER_VALIDATED` — more than any other in the repository, so the three
-rows below are what is left after the earnable evidence was already taken.
+Excluded from the first pass; audited here. **This domain occupies three rungs**
+— `DIMENSIONALLY_VALID`, `NUMERICALLY_CONVERGED` and `ANALYTICALLY_VERIFIED`. It
+occupied `CROSS_SOLVER_VALIDATED` too until IND-04 withdrew it (last row), so
+the first three rows below are what is left after the earnable evidence was
+already taken.
 
 | Check | Category | Decision |
 |---|---|---|
 | `integration_reported_success` | **never earnable by this check** | The integrator's own report that it finished. This is the canonical non-evidence: a library asserting its own success is the one claim that cannot be checked by reading the claim, and the whole architecture of this repository exists because a converged solve is not a validated result. Useful — a `FAIL` here stops everything downstream — and unlevellable at any level, in any rearrangement. |
 | `trajectory_finite` | **never earnable by this check** | No NaN and no infinity in the marched states. An admissibility screen on the output, the direct analogue of `field_finite` below and of `resistance_strictly_positive` above. It confirms the answer is a number; a level is a claim about *which* number. |
+| `independent_steady_state_agreement` | **earnable later** | **Withdrawn by IND-04; it awarded `CROSS_SOLVER_VALIDATED` until then.** The reference is genuinely different machinery — algebraic equations, Brent bracketing, a separate implementation in `reference.py` — and its detail used to say it "shares no arithmetic with the integrator". It shares the preprocessing: the gate passes it `run.chemistry.beta_m3_k_per_mol`, `run.gamma_per_s` and `run.operation.dilution_rate_per_s`, the same derived accessors `solver.assemble` builds the right-hand side from, so an error in deriving any of them is invisible to the comparison. That fails standard (1) above, it is not routed through a pinned consensus, and a numerically bracketed root is not a closed form, so no level fits. The comparison still runs, FAILs on a disagreement and is NOT_RUN when unavailable. **What would earn it later:** a reference that derives every parameter from the raw declaration itself (as it already does the Arrhenius exponent) and is declared and pinned as a consensus route beside the integration routes, so independence is a checked declaration rather than a sentence. |
 | `state_physically_admissible` | **never earnable by this check** | Concentrations non-negative and the temperature inside the declared envelope. Stronger than `trajectory_finite` because it reads the physics rather than the floating point, and still an admissibility screen: a trajectory can be admissible at every point and wrong at every point. The same category as `power_balance` — a necessary condition that a consistently wrong answer satisfies. |
 
 ### Thermal models — `src/engcore/domains/thermal_models/conduction1d_schemes.py`

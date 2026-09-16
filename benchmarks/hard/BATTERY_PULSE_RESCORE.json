@@ -1,0 +1,40 @@
+{
+  "schema": "benchmark_rescore_note/1",
+  "record": "benchmarks/hard/results_battery.json",
+  "rescored": "2026-09-15",
+  "scored": "400 of 400 cases, no split argument (as the record was produced before)",
+  "reason": "code rule changed: CAP-02 declared-pulse screening",
+  "commits": ["f39b537", "f434d94"],
+  "ground_truth_changed": false,
+  "expected_labels_moved": 0,
+  "case_set_digest": "32a7bff35d1dc454c771468a70da46ba1170ec27dba9bf599f279bd135bea853",
+  "split_battery_json_changed": false,
+  "before": {
+    "exact_verdict_match": "389/400 (97.2%)",
+    "catch_rate": "219/219 (100.0%)",
+    "false_accept": "0/219 (0.00%)",
+    "false_reject": "11/181 (6.1%)",
+    "declared_catcher_rate": "389/400 (97.2%)"
+  },
+  "after": {
+    "exact_verdict_match": "219/400 (54.8%)",
+    "catch_rate": "219/219 (100.0%)",
+    "false_accept": "0/219 (0.00%)",
+    "false_reject": "181/181 (100.0%)",
+    "declared_catcher_rate": "389/400 (97.2%)"
+  },
+  "transitions": [
+    {"expected": "SUPPORTED", "before": "SUPPORTED", "after": "INSUFFICIENT_EVIDENCE", "rows": 157,
+     "deciding": ["pulse_polarization_unmodelled_fraction"]},
+    {"expected": "SUPPORTED", "before": "SUPPORTED", "after": "NOT_SUPPORTED", "rows": 13,
+     "deciding": ["pulse_cutoff_state_of_charge_shift", "pulse_polarization_unmodelled_fraction"]}
+  ],
+  "per_model_on_moved_rows": {
+    "battery.cell.rint_ocv": "in_domain -> unknown (170)",
+    "battery.cell.constant_current_runtime": "in_domain -> outside_validated_domain (13)",
+    "battery.cell.coulomb_counting": "unchanged",
+    "battery.cell.peukert_capacity_derating": "unchanged"
+  },
+  "truth_defect": "generate_battery.py does not model the declared pulse: template 4 A for 10 s at polarization tau ~20 s is mid-slew (min(f,1-f) = 0.39 vs 0.05); in 13 cases the pulse also reaches the voltage cutoff above the runtime's stop state of charge",
+  "generator_correction": "deferred to a new battery benchmark version"
+}

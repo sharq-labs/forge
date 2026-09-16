@@ -298,9 +298,14 @@ def test_predictive_uq_is_right_on_a_weak_but_resolved_grid():
     assert _epistemic_sd(posterior, values) == pytest.approx(math.sqrt(g @ C @ g), rel=0.05)
 
 
-# Two nodes (the frozen ESS-and-spacing rule refuses its identifiability), and
+# Three nodes (the frozen ESS-and-spacing rule refuses its identifiability), and
 # five broad ones that the frozen rule passes and only the node-count check sees.
-@pytest.mark.parametrize("weights", [(0.25, 0.75), (0.1, 0.2, 0.4, 0.2, 0.1)])
+# INF-04 (audit): the first case used to be two nodes weighted (0.25, 0.75). Their
+# effective sample size, 1.6, is below the p + 1 = 2 a one-parameter covariance
+# needs, and a collapsed posterior is now refused by predictive UQ too, whatever its
+# node count (tests/inference/test_audit_inference_grid_resolution.py). Three nodes
+# with ESS 2.9 keep the case the waiver exists for.
+@pytest.mark.parametrize("weights", [(0.25, 0.375, 0.375), (0.1, 0.2, 0.4, 0.2, 0.1)])
 def test_a_discrete_posterior_too_small_to_carry_curvature_keeps_its_exact_mixture(weights):
     w = np.asarray(weights)
     values = 10.0 + 4.0 * np.arange(w.size)

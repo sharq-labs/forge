@@ -352,6 +352,60 @@ class AdmittedForwardTable:
         return self.values[:, columns], columns
 
 
+#: Largest total-variation distance, ``sum |w - softmax(log_likelihood)|``, at
+#: which stored weights still count as the posterior their log-likelihood states.
+#: float64 exponentiation and renormalization move the sum by about 1e-15; a
+#: record that sharpens, flattens or swaps either array moves it by orders of
+#: magnitude more.
+_WEIGHT_LIKELIHOOD_TOLERANCE = 1.0e-9
+
+
+def _require_weights_are_the_likelihood(
+    weights: np.ndarray, log_likelihood: np.ndarray, mask: np.ndarray
+) -> None:
+    """Refuse weights that are not the normalized ``exp(log_likelihood)`` over the support (HUQ-04).
+
+    A grid posterior is read through BOTH arrays: the resolution guard fits its
+    curvature and aliasing to ``log_likelihood``, while the effective sample
+    size, the moments and every predictive number read ``weights``. Two arrays
+    that describe different posteriors let every check pass on one while every
+    reported number comes from the other -- sharpened weights beside an honest
+    likelihood halve a reported sd, and an aliased grid's weights beside a
+    laundered likelihood pass the aliasing check. So the record must be one
+    posterior: the uniform-prior posterior over the nodes that are admissible
+    and carry a finite likelihood, and no mass anywhere else.
+    """
+    if np.any(np.isnan(log_likelihood)) or np.any(log_likelihood == np.inf):
+        raise InferenceProblemError(
+            "posterior log-likelihood must be finite, or -inf where a node has no "
+            "likelihood; NaN or +inf states no posterior"
+        )
+    support = mask & np.isfinite(log_likelihood)
+    if not np.any(support):
+        raise InferenceProblemError(
+            "posterior has no admissible node with a finite log-likelihood to carry its mass"
+        )
+    stray = float(np.sum(weights[~support]))
+    if stray > 0.0:
+        raise InferenceProblemError(
+            f"posterior places mass {stray:.3g} on nodes that are inadmissible or "
+            f"have no finite log-likelihood; weights are the normalized likelihood "
+            f"over admissible nodes, so that mass has no evidence behind it"
+        )
+    kept = log_likelihood[support]
+    expected = np.exp(kept - float(np.max(kept)))
+    expected = expected / float(np.sum(expected))
+    deviation = float(np.sum(np.abs(weights[support] - expected)))
+    if not deviation <= _WEIGHT_LIKELIHOOD_TOLERANCE:
+        raise InferenceProblemError(
+            f"posterior weights are not the normalized likelihood exp(log_likelihood) "
+            f"over the admissible nodes: total-variation distance {deviation:.3g} "
+            f"exceeds {_WEIGHT_LIKELIHOOD_TOLERANCE:g}. The resolution checks read "
+            f"the log-likelihood and the moments read the weights, so a record whose "
+            f"two arrays describe different posteriors is refused"
+        )
+
+
 @dataclass(frozen=True)
 class PosteriorGrid:
     parameter_names: tuple[str, ...]
@@ -376,6 +430,7 @@ class PosteriorGrid:
         total = float(weights.sum())
         if not math.isfinite(total) or abs(total - 1.0) > 1.0e-12:
             raise InferenceProblemError(f"posterior weights must sum to one, got {total!r}")
+        _require_weights_are_the_likelihood(weights, log_likelihood, mask)
         points.setflags(write=False)
         weights.setflags(write=False)
         log_likelihood.setflags(write=False)

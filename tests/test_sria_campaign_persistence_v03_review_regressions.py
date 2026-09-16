@@ -175,6 +175,28 @@ def _charge(
     )
 
 
+def _log_assurance(events: CampaignEventLog, record: IterationRecord) -> None:
+    """Log the Arbiter decision and admissions an iteration record repeats.
+
+    Materializing a checkpoint re-derives those facts from the event log and
+    refuses a record the log does not back (audit SER-01).
+    """
+    events.append(
+        CampaignEventType.ARBITER_DECIDED,
+        iteration=record.iteration,
+        payload={
+            "decision_id": record.arbiter_decision_id,
+            "verdict": record.arbiter_verdict,
+        },
+    )
+    for evidence_id in record.admitted_evidence_ids:
+        events.append(
+            CampaignEventType.EVIDENCE_ADMITTED,
+            iteration=record.iteration,
+            payload={"evidence_id": evidence_id},
+        )
+
+
 def _legacy_checkpoint(
     *,
     iteration: int,
@@ -185,6 +207,7 @@ def _legacy_checkpoint(
     cost_unit: str = "hour",
     enforced_cap: float | None = 90.0,
     enforced_cap_source: str = "test executor",
+    assurance_events: bool = False,
 ) -> CampaignCheckpoint:
     events = CampaignEventLog(RUN_ID)
     for index in range(iteration):
@@ -193,6 +216,8 @@ def _legacy_checkpoint(
             iteration=index + 1,
             payload={"iteration": index + 1},
         )
+        if assurance_events and index < len(iterations):
+            _log_assurance(events, iterations[index])
     run = CampaignRun(
         run_id=RUN_ID,
         campaign_id="v03-review-campaign",
@@ -569,6 +594,7 @@ def test_legacy_migration_materializes_exact_iteration_history_for_each_checkpoi
             iteration=index,
             charges=(charge_a,),
             iterations=iterations[:index],
+            assurance_events=True,
         )
         for index in range(1, 4)
     )
@@ -1726,6 +1752,8 @@ def _normal_save_fixture(
 ]:
     events = CampaignEventLog(RUN_ID)
     events.append(CampaignEventType.CAMPAIGN_CREATED, iteration=0)
+    for record in iterations:
+        _log_assurance(events, record)
     budget = BudgetLedger(
         total_budget=100.0,
         reserved_validation_budget=10.0,

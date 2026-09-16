@@ -92,7 +92,7 @@ E2_FROZEN_FILE_DIGESTS: dict[str, str] = {
     "experiments/electrical_e2/__init__.py":
         "d35f2e7cf4ab4dd9251f57ba5038f5237b239b9892fe6c9f9f8aacf66d8ae80c",
     "experiments/electrical_e2/e2_config.py":
-        "7e3ad55b7c77584aade036e1d3786d99136d139558e29f2c00ff55163409f033",
+        "61385a4e5ad6ffd84e8abcdcad2fa755bf804593af41066487f8c2a3fe896304",
     "experiments/electrical_e2/e2_model.py":
         "5984ca1dd9b290eb016c6d1dd88315713125cfd78504b493af7aba44df92697c",
     "experiments/electrical_e2/e2_adequacy.py":
@@ -100,7 +100,7 @@ E2_FROZEN_FILE_DIGESTS: dict[str, str] = {
     "experiments/electrical_e2/e2_truth.py":
         "6d39b99db4c23321743e49384b7d677a2f43781e0740a7870169ce18cece8410",
     "experiments/electrical_e2/e2_harness.py":
-        "eeb7ef9e4de506373babdf2d19277e0e2d19616743ee34bd972adbca0121dfff",
+        "5cf8a2a8f9dfd8fcf52d757ed07f1acdeb27134d20df6f2e538b2becdcd17cc5",
     "experiments/electrical_e2/e2_run.py":
         "c5f888d1e313ccffa09bf1ae8d703312c01727f24a1a0d127f0fa902b198dcde",
     "experiments/electrical_e2/e2_config_frozen.json":

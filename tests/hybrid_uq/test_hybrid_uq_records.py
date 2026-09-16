@@ -149,8 +149,12 @@ def test_evaluation_counts_are_not_material(records):
 def test_material_diagnostics_move_the_diagnostics_digest(records):
     diagnostics = records[RouteDiagnostics]
     assert dataclasses.replace(diagnostics, nonlinearity_index=diagnostics.nonlinearity_index + 0.01).digest != diagnostics.digest
-    thresholds = dict(diagnostics.thresholds, nonlinearity_refuse=0.9)
+    # The multistart policy recorded among the thresholds is material. This edited nonlinearity_refuse to 0.9 before
+    # audit HUQ-09; the declared thresholds are constants now, and a record carrying another value is refused.
+    thresholds = dict(diagnostics.thresholds, multistart_max_evaluations=4000.0)
     assert dataclasses.replace(diagnostics, thresholds=thresholds).digest != diagnostics.digest
+    with pytest.raises(HybridUQError, match="not the declared"):
+        dataclasses.replace(diagnostics, thresholds=dict(diagnostics.thresholds, nonlinearity_refuse=0.9))
 
 
 def test_two_parameterizations_of_one_posterior_never_share_an_identity(records):
@@ -167,18 +171,34 @@ def test_two_parameterizations_of_one_posterior_never_share_an_identity(records)
 
 def test_predictive_material_fields_move_its_digest(records):
     predictive = records[RoutedPredictiveUncertainty]
-    for field, value in {"mean": predictive.mean + 1e-9, "posterior_digest": "0" * 64, "confidence_level": 0.9,
-                         "parameter_interval": (predictive.parameter_interval[0] - 1e-9, predictive.parameter_interval[1])}.items():
-        assert dataclasses.replace(predictive, **{field: value}).digest != predictive.digest, field
+    # A linearized interval IS mean +/- q sd (audit HUQ-12), so a moved mean or level moves its intervals with it; this
+    # edited one field at a time before, which now makes a record that contradicts itself and is refused.
+    from scipy.stats import norm
+
+    def moved(mean=predictive.mean, level=predictive.confidence_level):
+        q = float(norm.ppf(0.5 + level / 2.0))
+        p, t = predictive.parameter_standard_uncertainty, predictive.total_standard_uncertainty
+        return dict(mean=mean, confidence_level=level, parameter_interval=(mean - q * p, mean + q * p),
+                    total_interval=(mean - q * t, mean + q * t))
+
+    for label, change in {"mean": moved(mean=predictive.mean + 1e-9), "posterior_digest": {"posterior_digest": "0" * 64},
+                          "confidence_level": moved(level=0.9)}.items():
+        assert dataclasses.replace(predictive, **change).digest != predictive.digest, label
+    with pytest.raises(HybridUQError, match="mean \\+/-"):
+        dataclasses.replace(predictive, parameter_interval=(predictive.parameter_interval[0] - 1e-9, predictive.parameter_interval[1]))
 
 
 # ---------------------------------------------------------------------------
 # fresh-process digest stability
 # ---------------------------------------------------------------------------
 def test_digests_are_stable_in_a_fresh_process_with_another_hash_seed(records):
+    # The fresh process must import THIS tree's engcore. pytest's pythonpath setting does not reach a subprocess, and
+    # without the explicit insert an editable install of another checkout answers instead, so the digests compared
+    # would be another tree's (seen during the audit, when the V2 digests had legitimately moved).
     script = f"""
 import sys, json
-sys.path.insert(0, {str(HERE)!r})
+sys.path.insert(0, {str(HERE.parents[1] / "src")!r})
+sys.path.insert(1, {str(HERE)!r})
 import hybrid_synthetic as S
 from engcore.hybrid_uq import MultistartPolicy, local_gaussian_posterior, assess_routed_identifiability, route_uncertainty
 P = S.affine(); cal = P.calibrate()

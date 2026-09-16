@@ -96,6 +96,8 @@ def test_every_derived_group_is_reserved_against_a_caller():
     assert app.ASSEMBLER_NAMESPACE == {
         app.SOURCE_REGULATION_UTILIZATION,
         app.ELEMENT_HOT_SPOT_UTILIZATION,
+        # Audit CAP-03: the resistance held across the integrated interval.
+        app.RESISTANCE_VARIATION_UTILIZATION,
     }
     for name in sorted(app.ASSEMBLER_NAMESPACE):
         forged = _problem(**{name: Quantity(0.0, NONE)})
@@ -269,8 +271,20 @@ def test_element_hot_spot_in_domain():
         _problem(**HOT_SPOT_DECLARED),
         **SOLVED,
     )
-    assert assessment.status is ValidityStatus.IN_DOMAIN
     assert app.ELEMENT_HOT_SPOT_UTILIZATION in assessment.satisfied
+    # Audit CAP-03: the record's other assumption -- one resistance over the
+    # whole run -- is UNKNOWN until its budget is declared, so IN_DOMAIN needs
+    # that too. Declared here, with a copper-like 0.00393/K over a 20 K rise.
+    full = app.assess_self_heated_resistor_validity(
+        _problem(
+            **HOT_SPOT_DECLARED,
+            **{app.RESISTANCE_VARIATION_BUDGET: Quantity(0.2, NONE)},
+        ),
+        **SOLVED,
+        temperature_coefficient=Quantity(0.00393, "1/kelvin"),
+        initial_body_temperature=Quantity(300.0, KELVIN),
+    )
+    assert full.status is ValidityStatus.IN_DOMAIN
 
     value = app.element_hot_spot_utilization(
         **SOLVED, **HOT_SPOT_DECLARED
@@ -313,7 +327,7 @@ def test_element_hot_spot_unknown_when_a_declaration_is_missing(withheld):
         **SOLVED,
     )
     assert assessment.status is ValidityStatus.UNKNOWN
-    assert assessment.unknown == (app.ELEMENT_HOT_SPOT_UTILIZATION,)
+    assert app.ELEMENT_HOT_SPOT_UTILIZATION in assessment.unknown
 
 
 def test_element_hot_spot_unknown_when_the_run_supplied_no_temperature():
@@ -322,7 +336,8 @@ def test_element_hot_spot_unknown_when_the_run_supplied_no_temperature():
         _problem(**HOT_SPOT_DECLARED),
         dissipated_power=Quantity(2.0, WATT),
     )
-    assert assessment.unknown == (app.ELEMENT_HOT_SPOT_UTILIZATION,)
+    assert app.ELEMENT_HOT_SPOT_UTILIZATION in assessment.unknown
+    assert app.ELEMENT_HOT_SPOT_UTILIZATION not in assessment.satisfied
 
 
 def test_a_bare_number_is_not_a_declaration():
@@ -365,4 +380,7 @@ def test_an_empty_declaration_leaves_every_condition_unknown():
     resistor = app.assess_self_heated_resistor_validity(_problem())
     assert resistor.status is ValidityStatus.UNKNOWN
     assert resistor.satisfied == () and resistor.violated == ()
-    assert set(resistor.unknown) == {app.ELEMENT_HOT_SPOT_UTILIZATION}
+    assert set(resistor.unknown) == {
+        app.ELEMENT_HOT_SPOT_UTILIZATION,
+        app.RESISTANCE_VARIATION_UTILIZATION,
+    }

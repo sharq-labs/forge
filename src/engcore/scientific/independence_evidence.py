@@ -15,6 +15,10 @@ declaration it carries. What a route's evidence establishes, and in what order:
    solver-independence dimension;
 3. bytes for the artifact were supplied, are ``bytes``, and re-hash to the
    fingerprint's digest;
+3a. those bytes are the dependency's own by an authority the caller does not
+   hold: for a ``py:`` identity, the source file Forge resolves for it; for an
+   ``ext:`` identity, a digest the domain layer pins for it on that route
+   (IND-03 -- self-consistent junk bytes used to pass every other rule);
 4. ONLY THEN is that canonical dependency identity counted as evidenced;
 5. every canonical dependency identity in every solver-independence dimension is
    evidenced this way;
@@ -42,8 +46,14 @@ identity.
 
 What this does NOT establish
 ----------------------------
-The bytes are presented by the caller. Nothing here observes the solver loading
-or executing them, so verified artifact identity is not proof of runtime use.
+The bytes are presented by the caller, and since IND-03 they count only when
+they are the dependency's own by an authority the caller does not hold: the
+source file Forge resolves for a ``py:`` identity, or a digest the domain layer
+pins for an ``ext:`` identity. A domain that pins no external digests therefore
+earns no artifact-backed independence for its external routes -- the production
+DC routes pin none today, so the trusted gate withholds the level for them.
+Nothing here observes the solver loading or executing the bytes, so verified
+artifact identity is still not proof of runtime use.
 A digest proves byte identity, not semantic independence: different digests do
 not prove independent development or an independent scientific formulation.
 This remains an additional gate beside the declaration-level checks, not a
@@ -52,6 +62,8 @@ replacement for them. Runtime-use attestation is a separate, later mechanism.
 
 from __future__ import annotations
 
+import importlib
+import pathlib
 from collections.abc import Mapping as RuntimeMapping
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
@@ -60,6 +72,7 @@ from .consensus import (
     IndependenceDimension,
     SOLVER_INDEPENDENCE_DIMENSIONS,
     SolveRoute,
+    _route_declarations,
     canonical_component_identity,
 )
 from .errors import ScientificValidationError
@@ -315,6 +328,94 @@ def _verified_against_bytes(
     return True
 
 
+#: The key, inside a route's pin in the domain layer, under which the digests of
+#: its external artifacts are declared: ``{identity: [sha256, ...]}``.
+_ARTIFACT_DIGESTS_KEY = "artifact_digests"
+
+
+def _resolved_source_digest(identity: str, name: str) -> str | None:
+    """The artifact digest of the file Forge itself resolves for a canonical ``py:`` identity.
+
+    The canonical identity names the object's defining module, so its file is
+    the source of the dependency: read by Forge, not presented by a caller.
+    ``None`` when the module has no file to read.
+    """
+    module_name = identity[len("py:"):].partition(":")[0]
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError:
+        return None
+    location = getattr(module, "__file__", None)
+    if not isinstance(location, str):
+        return None
+    try:
+        payload = pathlib.Path(location).read_bytes()
+    except OSError:
+        return None
+    return _artifact_digest(name, payload)
+
+
+def _pinned_artifact_digests(route_id: str, identity: str) -> frozenset[str]:
+    """The digests the domain layer pins for one external identity of one route."""
+    pin = _route_declarations().get(route_id)
+    if not isinstance(pin, RuntimeMapping):
+        return frozenset()
+    table = pin.get(_ARTIFACT_DIGESTS_KEY)
+    if not isinstance(table, RuntimeMapping):
+        return frozenset()
+    declared = table.get(identity)
+    if isinstance(declared, str):
+        declared = (declared,)
+    if not isinstance(declared, (list, tuple, frozenset, set)):
+        return frozenset()
+    return frozenset(str(item).strip().lower() for item in declared)
+
+
+def _authoritative_bytes(
+    artifact: "ArtifactFingerprint",
+    dimension: IndependenceDimension,
+    identity: str,
+    route_id: str,
+    reasons: list[str],
+) -> bool:
+    """Were the verified bytes the dependency's own, by an authority the caller does not hold? (IND-03)
+
+    Re-hashing proves only that the caller's bytes match the caller's
+    fingerprint: ``f"junk-{route}-{identity}"`` with its own digest passed every
+    other rule and kept ``CROSS_SOLVER_VALIDATED``. So the bytes are also
+    checked against something the caller did not supply:
+
+    * ``py:`` -- the source file Forge resolves for the identity's defining
+      module, read here;
+    * ``ext:`` -- a digest the domain layer pins for that identity on that
+      route, because Forge cannot read an external program for itself.
+    """
+    if identity.startswith("py:"):
+        expected = _resolved_source_digest(identity, artifact.name)
+        if expected is None:
+            reasons.append(
+                f"{dimension.value} artifact {artifact.name!r} is presented for "
+                f"{identity!r}, whose source Forge cannot resolve to a file to read"
+            )
+            return False
+        if expected != artifact.digest:
+            reasons.append(
+                f"{dimension.value} artifact {artifact.name!r} is presented for "
+                f"{identity!r}, and its bytes are not the source Forge resolves for "
+                f"that identity"
+            )
+            return False
+        return True
+    if artifact.digest not in _pinned_artifact_digests(route_id, identity):
+        reasons.append(
+            f"{dimension.value} artifact {artifact.name!r} is presented for external "
+            f"dependency {identity!r}, and its digest is not one the domain layer "
+            f"pinned for that dependency on route {route_id!r}"
+        )
+        return False
+    return True
+
+
 @dataclass(frozen=True)
 class RouteIndependenceEvidence:
     """Artifact declarations for one exact ``RouteDependencies`` declaration."""
@@ -409,6 +510,10 @@ class RouteIndependenceEvidence:
                     if not _verified_against_bytes(artifact, dimension, dimension_bytes, reasons):
                         continue
                     if identity is None:
+                        continue
+                    if not _authoritative_bytes(
+                        artifact, dimension, identity, route.route_id, reasons
+                    ):
                         continue
                     covered_identities.add(identity)
                     presented.setdefault(artifact.digest, {}).setdefault(identity, set()).add(

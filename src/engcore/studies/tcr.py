@@ -291,11 +291,24 @@ def tcr_forward_table(
     """
     from ..inference.grid import AdmittedForwardRow, AdmittedForwardTable
 
+    # INF-08: the grid is a grid over THIS study's declared parameters, and a row
+    # outside their physical bounds is refused rather than admitted. Checked for
+    # every point before any solve, so a grid that strays is refused whole
+    # instead of half-built. The parameter set is the flagship's own declaration
+    # (build_tcr_parameter_set); a posterior over alpha = 1.0 /K or R_ref = 50 ohm
+    # is a posterior over values that declaration rules out.
+    parameters = build_tcr_parameter_set()
+    points = [(float(point[0]), float(point[1])) for point in grid_points]
+    for r_ref, alpha in points:
+        parameters.require_all_in_bounds({
+            mat.REFERENCE_RESISTANCE: Quantity(r_ref, OHM),
+            mat.TEMPERATURE_COEFFICIENT: Quantity(alpha, PER_KELVIN),
+        })
+
     rows = []
-    for point in grid_points:
+    for r_ref, alpha in points:
         if counter is not None:
             counter["n"] = counter.get("n", 0) + 1
-        r_ref, alpha = float(point[0]), float(point[1])
         predictions = {}
         for observation in observations.observations:
             predictions[observation.condition_id] = tcr_prediction(
@@ -311,6 +324,32 @@ def tcr_forward_table(
         observations=observations,
         rows=rows,
     )
+
+
+def tcr_validity_at(
+    *,
+    reference_resistance: Quantity,
+    temperature_coefficient: Quantity,
+    reference_temperature: Quantity,
+    temperature: Quantity,
+    component_id: str = "R1",
+):
+    """The linear TCR model's OWN applicability verdict for one declared conductor at one temperature.
+
+    What :func:`tcr_prediction` deliberately does not ask of a candidate, asked
+    of a declaration the study has settled on: the domain's
+    :func:`~engcore.domains.electrical.material.assess_resistance_validity`
+    against a conductor built from the stated parameters. Not exported; the
+    orchestration layer calls it where a held-out or predictive statement is
+    about to be made (INF-01).
+    """
+    conductor = mat.TemperatureDependentConductor(
+        component_id=component_id,
+        reference_resistance=reference_resistance,
+        temperature_coefficient=temperature_coefficient,
+        reference_temperature=reference_temperature,
+    )
+    return mat.assess_resistance_validity(mat.build_resistance_problem(conductor), temperature)
 
 
 def ols_reference_estimate(

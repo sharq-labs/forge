@@ -41,10 +41,16 @@ def _store(n: int = 3) -> IncrementalCheckpointStore:
 
     for index in range(n):
         iteration = index + 1
+        # The event carries the obligation results the checkpoint's
+        # obligation_state repeats; materialize re-derives that state from the
+        # log and refuses a mismatch (audit SER-01).
         events.append(
-            CampaignEventType.ITERATION_COMPLETED,
+            CampaignEventType.ARBITER_DECIDED,
             iteration=iteration,
-            payload={"iteration": iteration},
+            payload={
+                "iteration": iteration,
+                "obligation_results": {"adequacy": iteration >= 2},
+            },
             at=f"t-{iteration}",
         )
         budget.settle(

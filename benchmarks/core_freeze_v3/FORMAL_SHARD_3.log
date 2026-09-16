@@ -1,0 +1,289 @@
+CONTROL GREEN                unmutated copy, 109s -- a red result below is the mutation's doing
+                           1117 passed, 7 warnings in 107.89s (0:01:47)
+
+G1e   RED                  assess goes back to silently dropping a derived quantity a model reads and does not reserve (the sixth-domain door)
+                           code 03a81617f4e175b3 -> 4e2d008c88664994   CONTRACT_REFUSAL   101s
+                           1 failed, 1116 passed, 7 warnings in 100.37s (0:01:40)
+                           test_a_derived_quantity_declared_as_an_input_is_refused_at_assessment
+G8c   RED                  the power utilization inverts against the PRINTED rating when a derating line is declared -- a hint that leaves the design refused
+                           code 3e9922260c30925d -> 73194d01b2083880   SCIENTIFIC_ASSERTION   99s
+                           2 failed, 1115 passed, 7 warnings in 97.67s (0:01:37)
+                           test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest, test_the_declared_crossing_is_what_lets_repair_invert_the_condition
+G2f   RED                  a report stops re-applying the rule to what it was handed
+                           code deed195b571ab3c5 -> 223409f3e9df4956   VALIDATION_INVARIANT   100s
+                           2 failed, 1115 passed, 7 warnings in 98.65s (0:01:38)
+                           test_a_check_altered_after_it_was_built_cannot_carry_a_level, test_a_subclass_does_not_get_to_answer_the_question_about_itself
+G2d   RED                  the constructor stops refusing a claimed level (GUARD 2 back to opt-in)
+                           code deed195b571ab3c5 -> 1a4f6f351d7ebafc   CONTRACT_REFUSAL   100s
+                           2 failed, 1115 passed, 7 warnings in 99.36s (0:01:39)
+                           test_the_construction_axis_is_still_closed_on_every_route_to_it, test_the_rule_itself_is_what_that_audit_applied
+G4b   RED                  support_gap stops checking that capabilities cover the request
+                           code 178e4308591d3bab -> 3d87c835d35af125   CONTRACT_REFUSAL   101s
+                           9 failed, 1108 passed, 7 warnings in 99.76s (0:01:39)
+                           test_a_problem_requesting_a_superset_is_refused[engcore.domains.battery.solver.BatteryCellSolver], test_a_problem_requesting_a_superset_is_refused[engcore.domains.electrical.dc.solver.ElectricalDCSolver], test_a_problem_requesting_a_superset_is_refused[engcore.domains.electrical.material.ResistancePropertySolver] (+6 more)
+G7a   RED                  RawSolverOutput stops refusing a non-finite value on a succeeded solve
+                           code 178e4308591d3bab -> 65454e093f46e3f2   CONTRACT_REFUSAL   99s
+                           2 failed, 1115 passed, 7 warnings in 98.03s (0:01:38)
+                           test_a_succeeded_solve_cannot_return_a_number_that_is_not_a_number, test_an_adapter_that_skips_the_admission_layer_produces_nothing
+G12a  RED                  a crossed quantity may arrive undeclared again (bare Quantity)
+                           code 3e9922260c30925d -> 9c6aa14803178847   CONTRACT_REFUSAL   100s
+                           1 failed, 1116 passed, 7 warnings in 99.12s (0:01:39)
+                           test_a_crossed_quantity_arriving_undeclared_is_refused
+G11a  RED                  provenance takes back a lineage name with no record behind it
+                           code 94b2626bee53c8ae -> 8c9a2b4e5be5d476   PROVENANCE_INVARIANT   102s
+                           1 failed, 1116 passed, 7 warnings in 100.67s (0:01:40)
+                           test_a_lineage_claim_without_the_record_it_names_is_refused
+G10b  RED                  the writability rule stops refusing anything it does not recognise
+                           code 76b8067e7c098ff6 -> f1039ded81aaccb4   SERIALIZATION_INVARIANT   100s
+                           12 failed, 1105 passed, 7 warnings in 98.81s (0:01:38)
+                           test_a_result_refuses_at_construction_what_it_could_not_record[a, test_a_result_refuses_at_construction_what_it_could_not_record[an, test_a_result_refuses_at_construction_what_it_could_not_record[bytes] (+5 more)
+G7b   RED                  the provider adapter stops admitting its parsed values
+                           code 5596cf82731062f3 -> 7d60a6baa7139e7f   CONTRACT_REFUSAL   102s
+                           1 failed, 1116 passed, 7 warnings in 100.79s (0:01:40)
+                           test_the_admission_layer_is_still_the_route_that_says_what_went_wrong
+G13d  RED                  a declared curve stops entering the cell's physical identity, so two cells with different OCV curves are cached as one
+                           code da0b56b03d34d2f9 -> 6d671f6372676b03   PROVENANCE_INVARIANT   101s
+                           1 failed, 1116 passed, 7 warnings in 100.13s (0:01:40)
+                           test_a_cell_declaring_a_curve_is_a_different_cell_and_says_so_everywhere
+G14d  RED                  exclusions go back to being optional, so omitting them is accepted at construction instead of refused
+                           code 4cf29e3beb3585a4 -> 8b644c4ff16a6cf6   CONTRACT_REFUSAL   102s
+                           1 failed, 1116 passed, 7 warnings in 100.72s (0:01:40)
+                           test_an_empty_exclusion_list_is_a_claim_and_nobody_makes_it_by_accident
+G15c  RED                  an undeclared efficiency stops reporting UNKNOWN
+                           code 5ebd85d8a42f92bd -> 5f1032f53cd08e13   VALIDITY_INVARIANT   101s
+                           1 failed, 1116 passed, 7 warnings in 100.32s (0:01:40)
+                           test_an_undeclared_efficiency_is_unknown_and_never_one
+G17a  RED                  the core branches on a domain by name and GUARD 17's derived reach is what notices -- the leak a sixth domain arrives through
+                           code e1154f3f8857cff9 -> 7e516e94b5aa5572   LAYERING_INVARIANT   100s
+                           1 failed, 1116 passed, 7 warnings in 98.93s (0:01:38)
+                           test_the_scientific_core_knows_shapes_and_not_things
+G19b  RED                  the same, reached as a STRING rather than a statement -- the `anyio` half, which a scan of ast.Import alone would miss
+                           code df38b18b26d135ac -> 95c3f66d7a53ee03   LAYERING_INVARIANT   102s
+                           1 failed, 1116 passed, 7 warnings in 100.68s (0:01:40)
+                           test_every_dependency_the_tree_reaches_for_is_declared
+G21b  RED                  a declared screen stops being one, so the two records that say a value past their bound is not shown to be wrong go back to reporting it as evidence against
+                           code 4cf29e3beb3585a4 -> 4309c54c62766fdd   VALIDITY_INVARIANT   100s
+                           5 failed, 1112 passed, 7 warnings in 99.53s (0:01:39)
+                           test_a_conservative_screen_emits_no_repair_because_it_finds_nothing, test_a_conservative_screen_reports_a_gap_and_not_a_finding, test_every_screen_still_refuses_and_none_of_them_can_certify (+2 more)
+G22c  RED                  a requires naming a condition the domain does not have stops being refused, so the condition is permanently UNKNOWN and nothing says why
+                           code 4cf29e3beb3585a4 -> c2a03ca6d7dc92ad   CONTRACT_REFUSAL   103s
+                           1 failed, 1116 passed, 7 warnings in 101.55s (0:01:41)
+                           test_a_dependency_that_cannot_be_satisfied_is_refused_at_construction
+G25a  RED                  a result may again declare one model at two versions, so a single validity verdict answers for two different claims
+                           code e1154f3f8857cff9 -> 2d33867724f0f4ae   CONTRACT_REFUSAL   101s
+                           1 failed, 1116 passed, 7 warnings in 100.00s (0:01:40)
+                           test_a_result_cannot_declare_one_model_at_two_versions
+G24c  RED                  a difference -- a coupling tolerance -- is admitted on a scale whose zero is a convention, which is the refusal the degC fix had to leave standing
+                           code 52ce8a2d2942c1a1 -> 0027bcc1236a4c6f   CONTRACT_REFUSAL   101s
+                           2 failed, 1115 passed, 7 warnings in 100.17s (0:01:40)
+                           test_an_affine_coupling_tolerance_is_still_refused[20
+G27a  RED                  HUQ1: a supplied LocalSensitivity is no longer held to the request's observation sigmas, so a stale record with the same ids and estimate and other sigmas reshapes the covariance
+                           code ce9530b0b543c810 -> 5d13c3db258b36cd   CONTRACT_REFUSAL   100s
+                           1 failed, 1116 passed, 7 warnings in 99.06s (0:01:39)
+                           test_a_to_d_a_record_with_the_same_ids_and_estimate_but_other_material_state_is_rejected[A_sigma]
+G27e  RED                  HUQ5: a LOCAL_GAUSSIAN routed record may report a mean its own local posterior contradicts
+                           code a8845c24e8a31aaf -> 8167077e8de7023e   SERIALIZATION_INVARIANT   99s
+                           2 failed, 1115 passed, 7 warnings in 98.38s (0:01:38)
+                           test_v_to_x_the_same_contradictions_are_refused_in_memory, test_v_to_y_a_local_record_whose_top_level_disagrees_with_what_it_carries_is_refused[V_mean]
+G28b  RED                  a result may again attribute itself to a model its own provenance does not name
+                           code e1154f3f8857cff9 -> 48dba2fc010fc661   PROVENANCE_INVARIANT   102s
+                           8 failed, 1109 passed, 7 warnings in 100.93s (0:01:40)
+                           test_b_a_contradiction_is_refused_on_read_back_too, test_b_a_result_declaring_a_model_its_provenance_does_not_name_is_refused, test_res01_a_silent_payload_of_any_version_is_read_but_marked[1] (+5 more)
+G28f  RED                  an uncertainty channel inside evidence content identity can be changed after the evidence was hashed
+                           code 3234640c8d83dafc -> f3fb4bc96a7d66f8   TYPE_INVARIANT   99s
+                           1 failed, 1116 passed, 7 warnings in 97.80s (0:01:37)
+                           test_f_an_uncertainty_channel_cannot_change_through_the_declaration_or_a_caller_alias
+G29b  RED                  SRIA-TRUST-01 (SRIA-T01-recorded-for-other-subject-counts) -- tests/test_audit_sria_assurance_binding.py
+                           code a9bb0d1da0d15895 -> 5f5e6957c9043170   CONTRACT_REFUSAL   101s
+                           1 failed, 1116 passed, 7 warnings in 100.25s (0:01:40)
+                           test_trust01_assessment_run_for_another_record_is_refused
+G29f  RED                  SRIA-TRUST-01 (SRIA-T01-misattributed-critic-output-recorded) -- tests/test_audit_sria_assurance_binding.py
+                           code a9bb0d1da0d15895 -> 59959263bf4b01be   CONTRACT_REFUSAL   100s
+                           1 failed, 1116 passed, 7 warnings in 99.18s (0:01:39)
+                           test_trust01_unregistered_critic_cannot_run_and_misattributed_output_is_refused
+G29j  RED                  SRIA-TRUST-02 (SRIA-T02-decision-omits-policy-digest) -- tests/test_audit_sria_policy_binding.py
+                           code a9bb0d1da0d15895 -> 77ae1304e8a5b733   CONTRACT_REFUSAL   100s
+                           15 failed, 1102 passed, 7 warnings in 98.93s (0:01:38)
+                           test_grounds_genuine_decisions_from_the_reviewing_arbiter_support_approval, test_grounds_the_latest_decision_about_an_obligation_governs, test_root_the_honest_registry_still_admits (+12 more)
+G29n  RED                  SRIA-TRUST-03 (SRIA-T03-duplicate-check-last-wins) -- tests/test_audit_sria_assurance_binding.py
+                           code a9bb0d1da0d15895 -> d44ee3c9e71de521   CONTRACT_REFUSAL   99s
+                           2 failed, 1115 passed, 7 warnings in 98.41s (0:01:38)
+                           test_trust03_a_required_check_reported_twice_is_ambiguous, test_trust03_a_required_domain_check_reported_twice_is_ambiguous
+G29r  RED                  SRIA-TRUST-04 (SRIA-T04-decision-authorizes-repeatedly) -- tests/test_audit_sria_assurance_binding.py
+                           code a9bb0d1da0d15895 -> ed1e39bbc3798b3a   CONTRACT_REFUSAL   99s
+                           1 failed, 1116 passed, 7 warnings in 97.65s (0:01:37)
+                           test_trust04_a_decision_authorizes_at_most_once
+G29v  RED                  SRIA-06 (SRIA-06-harness-satisfaction-merged) -- tests/test_audit_sria_obligation_state.py
+                           code 338462fa3ccd243d -> 81c8f8a48290b00c   CONTRACT_REFUSAL   101s
+                           1 failed, 1116 passed, 7 warnings in 99.94s (0:01:39)
+                           test_sria06_a_harness_cannot_mark_an_obligation_satisfied
+G29z  RED                  SER-01 (SER-01-materialize-trusts-stored-obligation-state) -- tests/test_audit_sria_persistence_derivation.py
+                           code 90ee43dee617086f -> 5e08fc7cb63f6489   CONTRACT_REFUSAL   99s
+                           4 failed, 1113 passed, 7 warnings in 97.77s (0:01:37)
+                           test_ser01_t1_edited_obligation_state_with_recomputed_digest_is_refused, test_ser01_t1b_flipping_an_unmet_obligation_is_refused, test_ser01_t3_tampered_legacy_file_is_refused_even_when_migration_is_requested (+1 more)
+G29ad RED                  INF-11 (INF-11-missing-coverage-passes) -- tests/test_audit_sria_cost_critic.py
+                           code f642a9dc899979e1 -> dad4adeffcc8db8e   CONTRACT_REFUSAL   100s
+                           1 failed, 1116 passed, 7 warnings in 98.73s (0:01:38)
+                           test_inf11_missing_coverage_caps_at_degraded
+G29ah RED                  SRIA-TRUST-02 follow-up (trust root) (SRIA-ROOT-undeclared-policy-authorizes) -- tests/test_audit_sria_trust_root.py
+                           code 3339610ad068dbe8 -> 74edb796c611059b   CONTRACT_REFUSAL   99s
+                           1 failed, 1116 passed, 7 warnings in 98.48s (0:01:38)
+                           test_root_a_policy_the_authority_does_not_serve_cannot_admit
+G29al RED                  SRIA-06 follow-up (stop review grounds) (SRIA-GROUNDS-other-policy-counts) -- tests/test_audit_sria_stop_review_grounds.py
+                           code 1bef3510700a1294 -> f1bb1b267afddee7   CONTRACT_REFUSAL   101s
+                           1 failed, 1116 passed, 7 warnings in 99.75s (0:01:39)
+                           test_grounds_a_decision_under_another_policy_is_ignored
+G29ap RED                  SRIA-TRUST-01 follow-up (claim binding) (SRIA-CLAIM-assessed-result-not-recorded) -- tests/test_audit_sria_claim_binding.py
+                           code a9bb0d1da0d15895 -> 652b96f30b77fe3c   CONTRACT_REFUSAL   98s
+                           4 failed, 1113 passed, 7 warnings in 97.08s (0:01:37)
+                           test_claim_a_different_value_for_the_assessed_quantity_does_not_count, test_claim_about_a_quantity_the_result_does_not_hold_does_not_count, test_claim_in_incompatible_units_does_not_count (+1 more)
+G30c  RED                  IND-05 (IND-05a) -- tests/test_audit_consensus_resolution_and_floor.py
+                           code c2c17439c5117c4c -> f52d5be7a277aa97   VALIDATION_INVARIANT   98s
+                           4 failed, 1113 passed, 7 warnings in 97.17s (0:01:37)
+                           test_reading_a_consensus_never_imports_a_module_the_payload_names[backend], test_reading_a_consensus_never_imports_a_module_the_payload_names[implementation], test_reading_a_consensus_never_imports_a_module_the_payload_names[preprocessing] (+1 more)
+G30g  RED                  IND-02 (IND-02c) -- tests/test_audit_consensus_execution_binding.py
+                           code c2c17439c5117c4c -> aab414f16259c9bb   VALIDATION_INVARIANT   97s
+                           2 failed, 1115 passed, 7 warnings in 96.13s (0:01:36)
+                           test_a_tampered_binding_cannot_keep_the_level[one-run], test_two_results_from_one_run_are_not_two_executions
+G30k  RED                  IND-03 (IND-03a) -- tests/test_audit_consensus_artifact_authority.py
+                           code 20df116281b4d20f -> e325cab8a283a929   VALIDATION_INVARIANT   96s
+                           5 failed, 1112 passed, 7 warnings in 95.63s (0:01:35)
+                           test_bytes_for_a_python_identity_that_are_another_modules_source_cover_nothing, test_external_bytes_count_only_when_the_domain_pins_their_digest, test_probe_junk_bytes_for_external_identities_nobody_pinned_keep_no_level (+2 more)
+G30o  RED                  IND-04 (IND-04b) -- tests/domains/kinetics/test_audit_consensus_cstr_levels.py
+                           code 14e6fb0f2958c8b3 -> daf77bbabc93e1fc   VALIDATION_INVARIANT   95s
+                           2 failed, 1115 passed, 7 warnings in 93.85s (0:01:33)
+                           test_no_cstr_gate_arm_awards_cross_solver_validated_in_source, test_the_steady_state_arm_establishes_no_cross_solver_level
+G30s  RED                  NUM-01 (NUM-01b) -- tests/domains/electrical/test_audit_consensus_dc_scale.py
+                           code 1e0688addc494478 -> aa7d8489d7857e4d   VALIDATION_INVARIANT   96s
+                           2 failed, 1115 passed, 7 warnings in 95.48s (0:01:35)
+                           test_a_corrupted_nanovolt_source_node_fails_the_source_relation, test_probe_a_corrupted_gigaohm_solution_fails
+G30w  RED                  NUM-02 (NUM-02b) -- tests/domains/electrical/test_audit_consensus_dc_scale.py
+                           code 5596cf82731062f3 -> c043f987f90fcb33   VALIDATION_INVARIANT   96s
+                           2 failed, 1115 passed, 7 warnings in 95.39s (0:01:35)
+                           test_probe_admission_refuses_a_zero_power_at_every_scale[1e-09], test_probe_admission_refuses_a_zero_power_at_every_scale[1e-12]
+G30aa RED                  VAL-01 (VAL-01d) -- tests/test_audit_consensus_level_issuers.py
+                           code deed195b571ab3c5 -> 0909e30b156b1d62   VALIDATION_INVARIANT   96s
+                           1 failed, 1116 passed, 7 warnings in 94.98s (0:01:34)
+                           test_a_consensus_issuer_record_of_undeclared_numbers_is_refused_even_when_self_consistent
+G30ae RED                  RES-08 (RES-08a) -- tests/test_audit_consensus_level_issuers.py
+                           code deed195b571ab3c5 -> 5bf3acab0601ae63   VALIDATION_INVARIANT   96s
+                           1 failed, 1116 passed, 7 warnings in 94.87s (0:01:34)
+                           test_a_stored_status_that_is_not_the_recomputed_one_is_refused
+G30ai RED                  RES-07 (RES-07c) -- tests/test_audit_consensus_trusted_record.py
+                           code 2d905c6e6fec72c7 -> b52a6d42d6ab5685   VALIDATION_INVARIANT   95s
+                           5 failed, 1112 passed, 7 warnings in 94.28s (0:01:34)
+                           test_a_failed_validation_is_not_trusted, test_probe_a_non_converged_output_is_not_trusted[diverged], test_probe_a_non_converged_output_is_not_trusted[failed] (+2 more)
+G31d  RED                  RES-01 (results-RES01g-solver-gap-not-marked) -- tests/test_audit_results_stored_results.py
+                           code e1154f3f8857cff9 -> b46e2c6c3fb46b18   SERIALIZATION_INVARIANT   97s
+                           5 failed, 1112 passed, 7 warnings in 96.28s (0:01:36)
+                           test_res01_a_silent_payload_of_any_version_is_read_but_marked[1], test_res01_a_silent_payload_of_any_version_is_read_but_marked[2], test_res01_a_silent_payload_of_any_version_is_read_but_marked[3] (+2 more)
+G31h  RED                  RES-02 (results-RES02c-provenance-relabel-drops-bindings) -- tests/test_audit_results_stored_results.py
+                           code 94b2626bee53c8ae -> 0376fa801f2fd70e   SERIALIZATION_INVARIANT   96s
+                           3 failed, 1114 passed, 7 warnings in 95.16s (0:01:35)
+                           test_res02_a_provenance_relabelled_v1_while_carrying_bindings_is_refused, test_res02_an_older_provenance_carrying_transfers_is_refused[1], test_res02_an_older_provenance_carrying_transfers_is_refused[2]
+G31l  RED                  RES-04 (results-RES04a-condition-binding-skipped) -- tests/mcp/test_audit_results_validity_binding.py
+                           code d403a1c5dc5493d5 -> 8217fd3b71c22b7b   SERIALIZATION_INVARIANT   96s
+                           4 failed, 1113 passed, 7 warnings in 95.44s (0:01:35)
+                           test_res04_a_condition_reported_twice_is_refused, test_res04_a_condition_the_model_does_not_declare_is_refused, test_res04_a_result_carrying_a_fabricated_assessment_cannot_become_evidence (+1 more)
+G31p  RED                  RES-06 (results-RES06a-ok-over-unusable) -- tests/test_audit_results_evaluation.py
+                           code 7e1f29c9d7edb646 -> 544dcc8e24a2b610   SERIALIZATION_INVARIANT   97s
+                           2 failed, 1115 passed, 7 warnings in 96.29s (0:01:36)
+                           test_res06_ok_over_a_result_that_cannot_support_it_is_refused[diverged], test_res06_ok_over_a_result_that_cannot_support_it_is_refused[validation-failed]
+G31t  RED                  CAP-04 (results-CAP04a-battery-flag-unstated) -- tests/mcp/test_audit_results_declarations.py
+                           code e8661413d76fbe0b -> 249d33e61e7adc1b   SERIALIZATION_INVARIANT   96s
+                           1 failed, 1116 passed, 7 warnings in 94.72s (0:01:34)
+                           test_cap04_a_declaration_that_moves_the_battery_verdict_says_so
+G31x  RED                  RES-08 (results-RES08a-verdict-optional-again) -- tests/mcp/test_audit_results_declarations.py
+                           code d403a1c5dc5493d5 -> 08e0d5069eb83d10   SERIALIZATION_INVARIANT   96s
+                           1 failed, 1116 passed, 7 warnings in 95.38s (0:01:35)
+                           test_res08_a_report_without_its_verdict_is_refused
+G32b  RED                  HUQ-04 (grid part) (HUQ-04-weights-bound-to-log-likelihood) -- tests/inference/test_audit_inference_posterior_binding.py
+                           code 002e85f814182916 -> c890225686829e53   VALIDITY_INVARIANT   95s
+                           2 failed, 1115 passed, 7 warnings in 94.55s (0:01:34)
+                           test_a_laundered_log_likelihood_beside_the_original_weights_is_refused, test_sharpened_weights_beside_the_honest_log_likelihood_are_refused
+G32f  RED                  INF-02 (INF-02-declared-sigma-only) -- tests/inference/test_audit_inference_heldout_study.py
+                           code a5b9a17e9100d9da -> 4b9841ccb02fd41d   VALIDITY_INVARIANT   97s
+                           1 failed, 1116 passed, 7 warnings in 96.39s (0:01:36)
+                           test_an_inflated_observation_sigma_cannot_flip_fail_to_pass
+G32j  RED                  INF-08 (INF-08-tcr-table-rows-within-declared-bounds) -- tests/inference/test_audit_inference_heldout_study.py
+                           code 96c630aa11b7d9a4 -> 8fc252da5c6fac2b   VALIDITY_INVARIANT   95s
+                           4 failed, 1113 passed, 7 warnings in 94.58s (0:01:34)
+                           test_a_tcr_forward_row_outside_the_declared_bounds_is_refused[point0], test_a_tcr_forward_row_outside_the_declared_bounds_is_refused[point1], test_a_tcr_forward_row_outside_the_declared_bounds_is_refused[point2] (+1 more)
+G32n  RED                  INF-07 (INF-07-heldout-is-not-posterior-dataset) -- tests/inference/test_audit_inference_split_guards.py
+                           code a042d1218349bc5e -> 61cd0099f35521d0   VALIDITY_INVARIANT   96s
+                           1 failed, 1116 passed, 7 warnings in 95.07s (0:01:35)
+                           test_scoring_against_the_posteriors_own_dataset_is_refused
+G32r  RED                  INF-09 (INF-09-applicability-is-a-validity-assessment) -- tests/domains/battery/test_audit_inference_ocv_applicability.py
+                           code b18b9e194e967b04 -> 0dad7d3c505c8b1c   VALIDITY_INVARIANT   97s
+                           3 failed, 1114 passed, 7 warnings in 95.91s (0:01:35)
+                           test_a_caller_string_is_not_an_applicability_verdict[in_domain, test_a_caller_string_is_not_an_applicability_verdict[in_domain], test_a_caller_string_is_not_an_applicability_verdict[violated]
+G33c  RED                  HUQ-08 (HYB-HUQ08a) -- tests/hybrid_uq/test_audit_hybrid_local_route.py
+                           code 18a133800d2daa92 -> 4c8c2c7eab94b257   SCIENTIFIC_ASSERTION   97s
+                           7 failed, 1110 passed, 7 warnings in 96.16s (0:01:36)
+                           test_a_complete_linear_check_is_supported, test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence[every_probe], test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence[one_probe] (+4 more)
+G33g  RED                  HUQ-04 (HYB-HUQ04a) -- tests/hybrid_uq/test_audit_hybrid_grid_route.py
+                           code 9238faefa3abf9cb -> d76b7ef4d81a2e33   SCIENTIFIC_ASSERTION   96s
+                           1 failed, 1116 passed, 7 warnings in 95.24s (0:01:35)
+                           test_huq04_the_grid_digest_covers_the_likelihood_and_the_mask
+G33k  RED                  HUQ-06 (HYB-HUQ06a) -- tests/hybrid_uq/test_audit_hybrid_grid_route.py
+                           code a8845c24e8a31aaf -> a66cbe5f9df584f9   SCIENTIFIC_ASSERTION   96s
+                           1 failed, 1116 passed, 7 warnings in 95.59s (0:01:35)
+                           test_huq06_a_grid_for_other_data_is_not_routed_for_this_request
+G33o  RED                  HUQ-07 (HYB-HUQ07a) -- tests/hybrid_uq/test_audit_hybrid_predictive.py
+                           code 9238faefa3abf9cb -> a05fec017b51ba06   SCIENTIFIC_ASSERTION   95s
+                           4 failed, 1113 passed, 7 warnings in 94.45s (0:01:34)
+                           test_a_complete_linear_check_is_supported, test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence[every_probe], test_a_probe_the_predictive_model_refuses_is_not_linearity_evidence[one_probe] (+1 more)
+G33s  RED                  HUQ-09 (HYB-HUQ09b) -- tests/hybrid_uq/test_audit_hybrid_records.py
+                           code a8845c24e8a31aaf -> 3b16a592a02fce24   SCIENTIFIC_ASSERTION   96s
+                           1 failed, 1116 passed, 7 warnings in 94.95s (0:01:34)
+                           test_huq09_an_identifiability_report_the_covariance_does_not_produce_is_refused[A1_numbers_explained]
+G33w  RED                  HUQ-09 (HYB-HUQ09f) -- tests/hybrid_uq/test_audit_hybrid_records.py
+                           code 18a133800d2daa92 -> 83877048f75f0328   SCIENTIFIC_ASSERTION   97s
+                           1 failed, 1116 passed, 7 warnings in 96.20s (0:01:36)
+                           test_huq12_an_estimate_that_is_not_its_inference_point_is_refused
+G33aa RED                  HUQ-12 (HYB-HUQ12c) -- tests/hybrid_uq/test_audit_hybrid_records.py
+                           code a8845c24e8a31aaf -> 1643e24e79ff8da6   SCIENTIFIC_ASSERTION   98s
+                           2 failed, 1115 passed, 7 warnings in 97.47s (0:01:37)
+                           test_huq12_the_grid_summary_is_a_closed_committed_record[dataset_id], test_huq12_the_grid_summary_is_a_closed_committed_record[points]
+G33ae RED                  HUQ-13 (HYB-HUQ13a) -- tests/hybrid_uq/test_audit_hybrid_records.py
+                           code 18a133800d2daa92 -> f4128fffc7971070   SCIENTIFIC_ASSERTION   96s
+                           1 failed, 1116 passed, 7 warnings in 95.48s (0:01:35)
+                           test_huq13_nested_mappings_of_a_validated_record_are_immutable
+G34a  RED (refused at import) CAP-01 (domains-cap01-cstr-liquid-phase-conditions-dropped) -- tests/domains/kinetics/test_audit_domains_cstr_liquid_envelope.py
+                           code 0d133b1154e4ca61 -> 3ef2724dfd5de0e8   VALIDITY_INVARIANT   76s
+                           40 failed, 789 passed, 7 warnings, 5 errors in 74.74s (0:01:14)
+                           test_a_budget_wide_enough_for_the_variation_is_satisfied, test_a_declared_derating_line_repairs_the_rating_and_refuses_the_rest, test_a_pulse_driving_the_rint_terminal_voltage_negative_is_outside (+37 more)
+G34e  RED                  CAP-01 (domains-cap01-realised-extremes-ignored) -- tests/domains/kinetics/test_audit_domains_cstr_liquid_envelope.py
+                           code 389f7ac12ca5c1cc -> 0936c9fdaa158e91   VALIDITY_INVARIANT   95s
+                           1 failed, 1116 passed, 7 warnings in 94.09s (0:01:34)
+                           test_a_solved_run_is_assessed_at_the_states_it_reached_not_the_ceiling
+G34i  RED                  CAP-02 (domains-cap02-pulse-terminal-voltage-at-continuous-current) -- tests/domains/battery/test_audit_domains_battery_pulse.py
+                           code bdb1780b58156491 -> a2fe98b174c28cc0   VALIDITY_INVARIANT   95s
+                           3 failed, 1114 passed, 7 warnings in 94.41s (0:01:34)
+                           test_a_pulse_driving_the_rint_terminal_voltage_negative_is_outside, test_the_pulse_polarization_reads_pulse_duration_not_the_step, test_without_a_declared_pulse_the_runtime_departure_is_zero_and_satisfied
+G34m  RED                  CAP-05 (domains-cap05c-assertion-not-recorded-in-report) -- tests/domains/electrical/test_audit_domains_debye_conductor_class.py
+                           code d683226e37fd65f9 -> 07125eec16b01f72   VALIDITY_INVARIANT   97s
+                           1 failed, 1116 passed, 7 warnings in 96.08s (0:01:36)
+                           test_the_report_carries_the_assertion
+G35b  RED                  CERT-02 fold of RIDGE-2: use the diagonal of the fitted covariance only
+                           code 37e751fcd093ade0 -> b173cea86647f2b7   SCIENTIFIC_ASSERTION   95s
+                           11 failed, 1106 passed, 7 warnings in 93.98s (0:01:33)
+                           test_a_grid_is_classified_by_the_frozen_function_itself_refusals_included, test_an_unresolved_grid_alone_is_a_refusal_with_no_numbers, test_an_unresolved_grid_is_never_trusted (+8 more)
+G35f  RED                  CERT-02 fold of RIDGE-6: predictive UQ ignores the refusal
+                           code 05bd9cd52d3130a8 -> 3d8efd8fb8105116   SCIENTIFIC_ASSERTION   95s
+                           7 failed, 1110 passed, 7 warnings in 94.55s (0:01:34)
+                           test_a_collapsed_one_parameter_posterior_is_refused_by_predictive_uq, test_a_collapsed_three_by_three_grid_is_refused_by_predictive_uq, test_a_grid_whose_curvature_cannot_be_fitted_is_refused_not_passed (+4 more)
+G35j  RED                  CERT-02 fold of HD-2: ignore the bound-active refusal
+                           code 18a133800d2daa92 -> 10926bdaa467efcc   SCIENTIFIC_ASSERTION   95s
+                           2 failed, 1115 passed, 7 warnings in 94.51s (0:01:34)
+                           test_a_parameter_at_its_bound_is_refused, test_a_refused_local_route_is_replaced_by_a_verified_rebuilt_grid_that_matches_a_dense_reference[F2_at_bound]
+G35n  RED                  CERT-02 fold of HD-6: drop parameter uncertainty from the prediction
+                           code 9238faefa3abf9cb -> 0997df9ac1323f54   SCIENTIFIC_ASSERTION   96s
+                           8 failed, 1109 passed, 7 warnings in 94.82s (0:01:34)
+                           test_a_complete_linear_check_is_supported, test_a_merged_total_is_rejected_by_the_record, test_a_probe_beyond_a_declared_bound_is_not_linearity_evidence[lower] (+5 more)
+G35r  RED                  CERT-02 fold of HD-10: predictive UQ accepts a refused local route
+                           code 9238faefa3abf9cb -> 62eb8fad055a29a9   SCIENTIFIC_ASSERTION   92s
+                           1 failed, 1116 passed, 7 warnings in 91.59s (0:01:31)
+                           test_predictive_uq_refuses_a_refused_local_route
+
+71/71 mutations were killed by the guard they name.

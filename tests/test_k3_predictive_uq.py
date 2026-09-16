@@ -14,26 +14,33 @@ from engcore.uq import (
 )
 
 
-def _posterior(*, weights=(0.25, 0.75), dataset_id="posterior-a") -> PosteriorGrid:
+# INF-04 / HUQ-04 (audit): the posterior used to be two nodes weighted (0.25, 0.75),
+# with a log-likelihood of [-1, 0] that did not produce those weights. Two unequal
+# nodes have an effective sample size of 1.6, below the p + 1 = 2 a one-parameter
+# covariance needs, and a collapsed posterior is now refused regardless of node
+# count; weights are now also required to be the normalized likelihood. The 0.75
+# node is split across two parameter points with the SAME predicted value, so the
+# predictive mixture -- and every exact number pinned below -- is unchanged (ESS 2.9).
+def _posterior(*, weights=(0.25, 0.375, 0.375), dataset_id="posterior-a") -> PosteriorGrid:
     return PosteriorGrid(
         parameter_names=("p",),
-        points=np.asarray([[0.0], [1.0]], dtype=np.float64),
+        points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         weights=np.asarray(weights, dtype=np.float64),
-        log_likelihood=np.asarray([-1.0, 0.0], dtype=np.float64),
-        admissible_mask=np.asarray([True, True], dtype=bool),
+        log_likelihood=np.log(np.asarray(weights, dtype=np.float64)),
+        admissible_mask=np.asarray([True, True, True], dtype=bool),
         dataset_id=dataset_id,
     )
 
 
-def _table(*, values=(10.0, 14.0), mask=(True, True)) -> AdmittedForwardTable:
+def _table(*, values=(10.0, 14.0, 14.0), mask=(True, True, True)) -> AdmittedForwardTable:
     return AdmittedForwardTable(
         parameter_names=("p",),
         observation_keys=("H1:y",),
-        points=np.asarray([[0.0], [1.0]], dtype=np.float64),
-        values=np.asarray([[values[0]], [values[1]]], dtype=np.float64),
+        points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
+        values=np.asarray([[v] for v in values], dtype=np.float64),
         admissible_mask=np.asarray(mask, dtype=bool),
-        admission_refs=(("admission:0",), ("admission:1",)),
-        rejection_reasons=("", "" if mask[1] else "rejected"),
+        admission_refs=tuple((f"admission:{i}",) if ok else () for i, ok in enumerate(mask)),
+        rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
     )
 
 
@@ -105,7 +112,7 @@ def test_replay_and_serialized_summary_are_deterministic() -> None:
     assert first.posterior_dataset_id == "posterior-a"
     assert first.twin == TwinReference("system-a", "1")
     assert first.model == ModelReference("model-a", "1")
-    assert first.posterior_support_size == 2
+    assert first.posterior_support_size == 3
 
 
 def test_parameter_support_mismatch_fails_closed() -> None:
@@ -133,8 +140,8 @@ def test_parameter_support_mismatch_fails_closed() -> None:
 def test_posterior_mass_on_rejected_predictive_support_fails_closed() -> None:
     with pytest.raises(UQProblemError, match="refusing silent renormalization"):
         posterior_predictive_uq(
-            _posterior(weights=(0.25, 0.75)),
-            _table(mask=(True, False)),
+            _posterior(weights=(0.25, 0.375, 0.375)),
+            _table(mask=(True, True, False)),
             PredictiveObservableSpec("H1:y", "K", Quantity(0.2, "K")),
             twin=TwinReference("system-a", "1"),
             model=ModelReference("model-a", "1"),

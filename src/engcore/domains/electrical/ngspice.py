@@ -727,8 +727,26 @@ class NgspiceDCSolver(DeclaredSupport):
     #: `1e-9` is the DC domain's own tolerance and is loose against that by
     #: orders of magnitude, while still catching any convention error — a sign
     #: flip, a factor of two, absorbed-versus-delivered — by orders more.
+    #:
+    #: **``ADMISSION_ATOL`` is a VOLTAGE (NUM-02).** It was applied as 1e-9 in
+    #: whatever unit each relation compared, so at 1 nA a factor-2 current
+    #: (1e-9 A apart) and a zero power were admitted. It is now the resolution
+    #: of a voltage, and each relation's absolute floor is carried into its own
+    #: unit through the element's declared resistance: ``dV / R`` for a current
+    #: and ``dV * (|I| + |V| / R)`` for a power. A nanoampere element gets a
+    #: floor nine orders below an ampere one; the relative term is unchanged.
     ADMISSION_ATOL = 1e-9
     ADMISSION_RTOL = 1e-9
+
+    @classmethod
+    def _admission_floors(
+        cls, *, v_drop: float, current: float, ohms: float
+    ) -> tuple[float, float]:
+        """``(current floor in A, power floor in W)`` for one element (NUM-02)."""
+        voltage_floor = cls.ADMISSION_ATOL
+        current_floor = voltage_floor / abs(ohms)
+        power_floor = voltage_floor * (abs(current) + abs(v_drop) / abs(ohms))
+        return current_floor, power_floor
 
     @classmethod
     def _admit_element_power(
@@ -811,11 +829,14 @@ class NgspiceDCSolver(DeclaredSupport):
 
         expected_current = v_drop / ohms
         expected_power = v_drop * current
+        current_floor, power_floor = cls._admission_floors(
+            v_drop=v_drop, current=expected_current, ohms=ohms
+        )
 
         require_agreement(
             actual=current,
             expected=expected_current,
-            atol=cls.ADMISSION_ATOL,
+            atol=current_floor,
             rtol=cls.ADMISSION_RTOL,
             error=NgspiceExecutionFailure,
             detail=(
@@ -830,7 +851,7 @@ class NgspiceDCSolver(DeclaredSupport):
         require_agreement(
             actual=power,
             expected=expected_power,
-            atol=cls.ADMISSION_ATOL,
+            atol=power_floor,
             rtol=cls.ADMISSION_RTOL,
             error=NgspiceExecutionFailure,
             detail=(
@@ -842,7 +863,7 @@ class NgspiceDCSolver(DeclaredSupport):
             ),
             operands={"v_drop": v_drop, "current": current},
         )
-        if power < -cls.ADMISSION_ATOL:
+        if power < -power_floor:
             raise NgspiceExecutionFailure(
                 f"provider element power for {component_id!r} is negative "
                 f"({power:.12g} W). A passive element absorbs power; a negative "
@@ -953,19 +974,30 @@ class NgspiceDCSolver(DeclaredSupport):
         detected a corrupted provider power correctly and changed nothing: the
         coupling loop reads values, not reports, and converged 18.05 K off.
         """
-        worst = 0.0
+        # Each relation against its own bound, in its own unit, with the floor
+        # the admission gate uses (NUM-02); the worst one is reported.
+        worst, tolerance, worst_ratio = 0.0, 0.0, -1.0
         for resistor in circuit.resistors:
             cid = resistor.component_id
             ohms = resistor.resistance.magnitude_in("ohm")
             v_ab = metrics[f"resistor_voltage:{cid}"].magnitude_in(VOLTAGE_UNIT)
             current = metrics[f"resistor_current:{cid}"].magnitude_in(CURRENT_UNIT)
             power = metrics[f"resistor_power:{cid}"].magnitude_in(POWER_UNIT)
-            worst = max(
-                worst,
-                abs(current - v_ab / ohms),      # I  vs  V/R   (declared R)
-                abs(power - v_ab * current),     # P  vs  V*I   (three channels)
+            current_floor, power_floor = NgspiceDCSolver._admission_floors(
+                v_drop=v_ab, current=v_ab / ohms, ohms=ohms
             )
-        tolerance = NgspiceDCSolver.ADMISSION_ATOL
+            rtol = NgspiceDCSolver.ADMISSION_RTOL
+            for deviation, bound in (
+                # I  vs  V/R   (declared R)
+                (abs(current - v_ab / ohms), current_floor + rtol * abs(v_ab / ohms)),
+                # P  vs  V*I   (three channels)
+                (abs(power - v_ab * current), power_floor + rtol * abs(v_ab * current)),
+            ):
+                ratio = deviation / bound if bound > 0.0 else (
+                    0.0 if deviation == 0.0 else float("inf")
+                )
+                if ratio > worst_ratio:
+                    worst, tolerance, worst_ratio = deviation, bound, ratio
         return ValidationCheck(
             name="provider_element_metric_consistency",
             outcome=(
