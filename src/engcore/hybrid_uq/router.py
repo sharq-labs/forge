@@ -61,6 +61,28 @@ _STRUCTURAL = frozenset({
     RouteReason.NUMERICALLY_SINGULAR_JACOBIAN,
 })
 
+#: The uniqueness words that say no adequate search stands behind a single mode: nothing looked, or what
+#: looked was below the minimum search (R-01, re-audit 2026-09-16). The word is read rather than the reason
+#: set because an early refusal records NOT_ASSESSED with no downgrade reason at all, and because the word is
+#: re-derived from the recorded starts by ``_multistart_verdict`` -- it cannot disagree with them.
+UNRESOLVED_UNIQUENESS = frozenset({"NOT_ASSESSED", "MULTISTART_INCOMPLETE", "MULTISTART_BELOW_MINIMUM_SEARCH"})
+
+#: How an unresolved uniqueness word is reported when it passes a grid route over.
+_UNRESOLVED_REASON = {
+    "NOT_ASSESSED": RouteReason.GLOBAL_UNIQUENESS_NOT_ASSESSED,
+    "MULTISTART_INCOMPLETE": RouteReason.MULTISTART_INCOMPLETE,
+    "MULTISTART_BELOW_MINIMUM_SEARCH": RouteReason.MULTISTART_INCOMPLETE,
+}
+
+
+def _bound_tolerance(lower, upper):
+    """The float64 round-trip allowance for "this coordinate IS that declared bound".
+
+    The same expression ``grid_containment`` and ``_rebuild_grid`` already use, so a face that counts as a
+    declared bound there counts as one here: one rule, one number.
+    """
+    return 1.0e-12 * (np.abs(np.asarray(upper, dtype=float) - np.asarray(lower, dtype=float)) + 1.0)
+
 
 @dataclass(frozen=True)
 class GridRebuildPolicy:
@@ -214,6 +236,16 @@ class HybridUQResult:
                 problems.append("a supplied grid was used, so no local posterior was built")
             if decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE and (local is None or names != local.parameter_names):
                 problems.append("a rebuilt grid carries the local posterior it was designed from, over the same parameters")
+            elif decision is RouteDecision.GRID_REBUILT_FROM_LOCAL_COVARIANCE:
+                # R-01 (re-audit 2026-09-16): the read rule is the write rule. The router no longer designs a box
+                # from a local posterior whose uniqueness search is unresolved, because the box centres are the
+                # estimate plus the modes that search found, and an unresolved search found none. A record that
+                # says otherwise was not produced by the router, and its SUPPORTED grid claim would be exactly the
+                # downgrade the local posterior it carries recorded, laundered away.
+                word = str(local.diagnostics.uniqueness)
+                if word in UNRESOLVED_UNIQUENESS:
+                    problems.append(f"a rebuilt grid was designed from a local posterior whose uniqueness is {word}: "
+                                    f"the box it names covers the modes a search found, and that search found none")
             grid = self.grid
             if grid is not None:
                 if tuple(grid.parameter_names) != names:
@@ -513,6 +545,66 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
                      f"{halvings} truncation halving(s) on axes {truncated}, {int(refinement)} refinement(s)")
 
 
+def _declared_bounds(calibration) -> list[tuple[float, float]] | None:
+    """Each parameter's declared bounds in its own natural unit, or None without a calibration to read them from."""
+    if not isinstance(calibration, CalibrationResult):
+        return None
+    return [(float(q.bounds.lower.magnitude_in(q.unit)), float(q.bounds.upper.magnitude_in(q.unit)))
+            for q in calibration.spec.parameters.parameters]
+
+
+def _grid_spans_the_declared_bounds(grid: PosteriorGrid, calibration) -> bool:
+    """Whether the grid's own box IS the declared box on every axis (R-06).
+
+    The declared bounds are the whole parameter space the request admits, so a grid that spans them has no
+    outside for a mode to hide in, and the router's containment check has already shown the posterior does not
+    reach its faces. Whether a mode INSIDE such a box is resolved is a grid-resolution question, not this one.
+    """
+    bounds = _declared_bounds(calibration)
+    if bounds is None or len(bounds) != len(grid.parameter_names):
+        return False
+    points = np.asarray(grid.points, dtype=np.float64)
+    for i, (lower, upper) in enumerate(bounds):
+        tolerance = float(_bound_tolerance(lower, upper))
+        axis = points[:, i]
+        if not (float(np.min(axis)) <= lower + tolerance and float(np.max(axis)) >= upper - tolerance):
+            return False
+    return True
+
+
+def _grid_uniqueness_basis(grid: PosteriorGrid, calibration, local, searched: bool) -> tuple[RouteReason, str] | str:
+    """R-06: why a supplied grid may not stand on uniqueness, or the basis on which it may.
+
+    Either the grid spans the declared bounds, or a uniqueness search at or above the minimum ran and every
+    separated mode it found lies inside the grid's box. A grid route's claim is SUPPORTED or absent, so a grid
+    with neither is passed over rather than downgraded.
+    """
+    if _grid_spans_the_declared_bounds(grid, calibration):
+        return "uniqueness: the grid spans the declared bounds of every axis, so no mode lies outside it"
+    if not searched or local is None:
+        return (RouteReason.GRID_UNIQUENESS_NOT_ASSESSED,
+                "the grid is narrower than the declared bounds and no uniqueness search stands behind it, so nothing "
+                "shows the posterior has no mode outside its box; a grid claim cannot be downgraded")
+    word = str(local.diagnostics.uniqueness)
+    if word in UNRESOLVED_UNIQUENESS:
+        return (RouteReason.GRID_UNIQUENESS_NOT_ASSESSED,
+                f"the grid is narrower than the declared bounds and the uniqueness search behind it is {word}, so "
+                f"nothing shows the posterior has no mode outside its box")
+    points = np.asarray(grid.points, dtype=np.float64)
+    low, high = np.min(points, axis=0), np.max(points, axis=0)
+    tolerance = _bound_tolerance(low, high)
+    for mode in getattr(local, "_modes", ()):  # inference coordinates, as the local route records them
+        natural = np.asarray(to_natural(np.asarray(mode, dtype=float), local.inference_transforms), dtype=float)
+        outside = [i for i in range(len(natural))
+                   if natural[i] < low[i] - tolerance[i] or natural[i] > high[i] + tolerance[i]]
+        if outside:
+            names = [str(grid.parameter_names[i]) for i in outside]
+            return (RouteReason.GRID_MISSES_A_FOUND_MODE,
+                    f"the uniqueness search found a mode at {[float(v) for v in natural]} which lies outside the grid's "
+                    f"box on {names}: the grid describes one mode of a posterior that has more than one")
+    return f"uniqueness: {word}, over {len(local.diagnostics.multistart)} start(s), every found mode inside the box"
+
+
 def _require_grid_bound_to_request(grid: PosteriorGrid, calibration, observations) -> None:
     """Refuse a supplied grid that is not a posterior for the request it is routed with (audit HUQ-06).
 
@@ -539,8 +631,18 @@ def route_uncertainty(
     multistart: MultistartPolicy | None = None,
     rebuild: GridRebuildPolicy | None = None,
     maximum_grid_parameters: int = GRID_ROUTE_MAXIMUM_PARAMETERS,
+    canonical_uniqueness_search: bool = True,
 ) -> HybridUQResult:
-    """Route an uncertainty request. See docs/CORE_V2_API_DESIGN.md section 3.6 for the rule."""
+    """Route an uncertainty request. See docs/CORE_V2_API_DESIGN.md section 3.6 for the rule.
+
+    ``canonical_uniqueness_search`` (R-01, R-06): a grid route's claim is SUPPORTED or absent, so a grid needs
+    a basis for the single mode it describes. When a grid route is in play -- a grid is supplied, or a
+    ``GridRebuildPolicy`` is given -- and the caller passed no ``multistart``, the router runs the canonical
+    :class:`MultistartPolicy` for its local route rather than recording that nobody looked. Pass ``False`` to
+    keep the older behaviour, which can only pass a grid over and never accept one. With neither a grid nor a
+    rebuild policy, ``multistart=None`` keeps its exact meaning and no search is run: there the DOWNGRADED
+    local claim already says what is not known, and a search would only cost evaluations.
+    """
     if int(maximum_grid_parameters) > GRID_ROUTE_MAXIMUM_PARAMETERS or int(maximum_grid_parameters) < 1:
         raise HybridUQError(f"maximum_grid_parameters must lie in [1, {GRID_ROUTE_MAXIMUM_PARAMETERS}], the validated grid range")
     if rebuild is not None and not isinstance(rebuild, GridRebuildPolicy):
@@ -548,6 +650,28 @@ def route_uncertainty(
     considered: list[dict[str, str]] = []
     if isinstance(grid, PosteriorGrid):
         _require_grid_bound_to_request(grid, calibration, observations)
+
+    # The search that stands behind whatever grid claim this call may make (R-01, R-06).
+    local_inputs = calibration is not None and observations is not None and forward is not None
+    a_grid_route_is_in_play = grid is not None or rebuild is not None
+    searching = multistart
+    if searching is None and bool(canonical_uniqueness_search) and a_grid_route_is_in_play and local_inputs:
+        searching = MultistartPolicy()
+    # The local route is built at most once, and step 1 may need it before step 2 reports it.
+    _local_route: list = []
+
+    def local_route():
+        """``(posterior, refusal)``: the local route with ``searching``, computed once. One of the two is None."""
+        if not _local_route:
+            if not local_inputs:
+                _local_route.append((None, None))
+            else:
+                try:
+                    _local_route.append((local_gaussian_posterior(calibration, observations, forward,
+                                                                  multistart=searching), None))
+                except RouteRefusedError as exc:
+                    _local_route.append((None, exc))
+        return _local_route[0]
 
     # 1. the grid as supplied
     if grid is None:
@@ -578,11 +702,19 @@ def route_uncertainty(
                 # residuals, and the box holds the posterior
                 problem = (grid_prior_uniformity(grid, calibration) or grid_goodness_of_fit(grid, observations)
                            or grid_containment(grid, calibration))
+            if problem is None:
+                # R-06: last, because it is the only check that may cost a uniqueness search, and a grid that
+                # spans its declared bounds needs none. Nothing before this point has run the search the
+                # caller handed in, so a grid over one of two equal modes read SUPPORTED.
+                basis = _grid_uniqueness_basis(grid, calibration, *local_route()[:1], searched=searching is not None)
+                problem = None if isinstance(basis, str) else basis
+            else:
+                basis = ""
             if problem is not None:
                 considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "PASSED_OVER", "reason": problem[0].value,
                                    "detail": problem[1][:400]})
             else:
-                considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "USED", "reason": ""})
+                considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "USED", "reason": "", "detail": basis[:400]})
                 return HybridUQResult(
                     decision=RouteDecision.GRID_AS_SUPPLIED, approximation_class=ApproximationClass.POSTERIOR_GRID,
                     claim=RouteClaim.SUPPORTED, parameter_names=grid.parameter_names, coordinates="natural",
@@ -592,16 +724,15 @@ def route_uncertainty(
 
     # 2. the local Gaussian route
     local = None
-    if calibration is None or observations is None or forward is None:
+    if not local_inputs:
         considered.append({"route": "LOCAL_GAUSSIAN", "outcome": "SKIPPED", "reason": RouteReason.LOCAL_INPUTS_NOT_SUPPLIED.value})
     else:
-        try:
-            local = local_gaussian_posterior(calibration, observations, forward, multistart=multistart)
-        except RouteRefusedError as exc:
+        local, refusal = local_route()
+        if refusal is not None:
             # The route refused without a posterior record (a derivative that did not stabilize): recorded, and
             # nothing is rebuilt from it, because there is no covariance to design a grid from.
             considered.append({"route": "LOCAL_GAUSSIAN", "outcome": RouteClaim.REFUSED.value,
-                               "reason": "the local route refused before it had a posterior", "detail": str(exc)[:400]})
+                               "reason": "the local route refused before it had a posterior", "detail": str(refusal)[:400]})
         else:
             reasons = ",".join(r.value for r in local.reasons)
             if local.claim is RouteClaim.SUPPORTED:
@@ -624,6 +755,16 @@ def route_uncertainty(
         elif set(local.diagnostics.refusals) & _STRUCTURAL:
             considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
                                "reason": "no usable local covariance to design a grid from"})
+        elif str(local.diagnostics.uniqueness) in UNRESOLVED_UNIQUENESS:
+            # R-01: the same rule as the misfit above, for the same reason. The box is the estimate plus the modes
+            # a search found; an unresolved search found none, so the grid covers one basin and says SUPPORTED,
+            # which is exactly the DOWNGRADED caveat the local route recorded, laundered away. A found mode is not
+            # this case: it becomes a design centre, and the rebuilt box covers it.
+            word = str(local.diagnostics.uniqueness)
+            considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
+                               "reason": _UNRESOLVED_REASON[word].value,
+                               "detail": f"the uniqueness search behind this local route is {word}, so the box would cover "
+                                         f"one basin and report SUPPORTED; a grid claim cannot be downgraded"})
         else:
             for refinement in range(_MAXIMUM_REFINEMENTS + 1):
                 rebuilt, detail = _rebuild_grid(local, rebuild, observations, forward, refinement)

@@ -130,3 +130,90 @@ Stars: 5 = P0, 4 = P1, 3 = P2, 2 = bounded P3, 1 = hygiene. `risk %` = share of 
 | 28 | I-30 | ★★★★☆ | 3 | XL | later | R-66, R-67, R-68 | **Re-derived assurance evidence: batch guards in the mutation population, isolated runners, pinned helpers**. Bring the batch and fix guards into a V4 mutation population, drop the stale B1j and B1k kills, and run each mutant in a worktree on D:. A mutant counts as KILLED only when the named target test fails. Pin the helper modules (hybrid_synthetic.py and others) in the harness area. Make the V4 verifier re-derive the evidence digests, measured commit and figures, as V1 did. |
 | 29 | I-29 | ★★★★★ | 5 | L | later | R-65, R-69, R-70 | **Core Freeze V4 control plane with a real additive-only comparator**. Base V4 on a commit that descends from V3, and change the certificate-child self-check list so recertification is possible. Extend the snapshot to method signatures and enum member order. Compare against the stored V1 manifest bytes rather than the live API. The supersession check must assert the specific refusal rule, not any exception. |
 | 30 | I-23 | ★☆☆☆☆ | 1 | S | defer | R-62, R-74 | **Canonical identity for meshes and parameters**. Fingerprint geometry from canonical SI values with a relative tolerance. Normalize parameter bounds to canonical units and -0.0 to 0.0, so the digest and differences() agree. |
+
+## Progress
+
+Batches follow the per-batch protocol of `CORE_SCIENTIFIC_AUDIT_2026-09-16.md`: preregister the rules and
+thresholds, commit each audited reproduction as a strict xfail and watch it fail, implement, verify against
+the targeted files and the FAST tier, mutate every new guard, and record what moved. Each batch's rules are
+in `benchmarks/core_v4_false_confidence/BATCH<k>_THRESHOLD_PROTOCOL.json` and its guard mutations in
+`BATCH<k>_MUTATIONS.log`.
+
+The FAST tier (`python -m pytest -m "not expensive" -q -n 4 --dist loadfile`) has 18 failures BY DESIGN
+throughout, all in the Core Freeze V4 list of `docs/CORE_FREEZE_POLICY.md`
+(`test_core_api_snapshot`, `test_core_freeze_manifest`, `test_core_freeze_policy`, `test_core_freeze_v2_manifest`,
+`test_core_freeze_v3_manifest`, `test_core_v2_api_snapshot`, `test_core_v2_compatibility`, `test_core_certificate`).
+Each batch below reports that count so a 19th failure would be visible.
+
+### Batch 6 — I-01, I-15
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-01 | **DONE** | `5a08eef` (preregistration + xfails), this commit | the canonical multistart's own resolution; a supplied grid whose local route raises has no basis; a grid routed without a calibration can no longer be SUPPORTED |
+| I-15 | **PARTIAL** | `5a08eef`, this commit | the suite exists with 17 cases over 15 problems; only the R-01 and R-06 cases are live, the other 15 are `xfail(strict=True)` until their own improvement lands, which is I-15's design |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-01 | **FIXED** | `route_uncertainty` does not rebuild a grid from a local posterior whose uniqueness word is `NOT_ASSESSED`, `MULTISTART_INCOMPLETE` or `MULTISTART_BELOW_MINIMUM_SEARCH`: the rebuild is passed over under `GLOBAL_UNIQUENESS_NOT_ASSESSED` or `MULTISTART_INCOMPLETE`, the same way and in the same place a misfit already passes it over. `HybridUQResult._require_one_truth` refuses such a record on read, so the router's write rule is its read rule. And where a grid route is in play with no caller multistart, the router now runs the canonical `MultistartPolicy()` itself rather than recording that nobody looked: the audited case returns the honest bimodal grid (sd 1.0220 on theta1, against the reference's 1.0220) where it returned sd 0.02428 SUPPORTED. |
+| R-06 | **FIXED** | A supplied grid is accepted only with a uniqueness basis: either it spans the declared bounds of every axis, or a search at or above the minimum ran and every separated mode it found lies inside its box. Otherwise it is passed over `GRID_MISSES_A_FOUND_MODE` or `GRID_UNIQUENESS_NOT_ASSESSED`. The basis is the LAST check of the supplied-grid route and the bounds-spanning half costs nothing, so the search is only paid for on a grid that would otherwise be accepted. The basis the accepted grid stood on is recorded in the `considered` log's `detail`. |
+
+**Compatibility.** Additive on V2: two `RouteReason` members appended after the last existing one
+(`GRID_MISSES_A_FOUND_MODE`, `GRID_UNIQUENESS_NOT_ASSESSED`), and one keyword-only argument with a default
+(`route_uncertainty(canonical_uniqueness_search=True)`). No field, member or default is removed, renamed,
+reordered or changed. No schema is bumped and no serialized field is added. The V1 surface is untouched. The
+V1/V2 API snapshots move by the two added members and are regenerated in the V4 round (I-29), not here.
+
+The V2 behaviour change I-01 asks for is real and intended: with a grid route in play and `multistart=None`,
+`route_uncertainty` now runs the canonical search, so a call that used to return a wrong SUPPORTED grid may
+now return the honest grid, a REFUSED, or a pass-over. With neither a grid nor a rebuild policy,
+`multistart=None` keeps its exact V2 meaning and no search is run.
+
+**Blast radius, and what was done about it.** A supplied grid routed with observations and a forward model but
+no calibration has no declared bounds and no search, so it can no longer be SUPPORTED. Five test call sites
+and one evidence generator did that:
+
+* `tests/hybrid_uq/test_hybrid_uq_trust_boundary.py::_grid_result`,
+  `tests/hybrid_uq/test_audit_hybrid_records.py::grid`,
+  `tests/hybrid_uq/test_hybrid_uq_router.py::test_routed_predictive_uses_the_route_that_was_chosen` and
+  `tests/hybrid_uq/test_hybrid_uq_tcr.py::test_the_local_route_agrees_with_the_resolved_grid` were each given
+  the calibration they already had in hand, with a comment in place saying why. Not one assertion was
+  weakened or removed: these are record-integrity and agreement tests, and what they do to the record they
+  get is unchanged.
+* `benchmarks/core_v2_hybrid_uq/audit/tcr.py` needed the same change and was re-run. Every claim
+  `TCR.json` makes reproduces: both designs still `GRID_AS_SUPPLIED`, the same means, standard deviations,
+  identifiability statuses and agreement verdicts. The only change to the record is an added `detail` on the
+  WIDE 41-node grid's `USED` entry naming its uniqueness basis, plus float-level drift from this environment's
+  optimizer (relative 1e-8, and a forward-evaluation count of 192 against the recorded 190). So no committed
+  claim moved and `TCR.json`'s bytes are left pinned; re-pinning belongs to the V4 round, where I-30 re-derives
+  the assurance digests and the whole evidence set is re-run in one environment. `FAILURE_CASES.json` and
+  `PERFORMANCE.json` were re-run too: every case still meets its declared expectation, and their only
+  differences are the same environment drift, so their bytes are untouched.
+  `tests/hybrid_uq/test_hybrid_uq_committed_evidence.py` gained the guard that both TCR grids are still
+  `GRID_AS_SUPPLIED` under the new rule and that both stand on `MULTISTART_NO_SECOND_MODE`.
+
+**Guard mutations.** `benchmarks/core_v4_false_confidence/BATCH6_MUTATIONS.log`, from
+`benchmarks/core_v4_false_confidence/audit/batch6_mutations.py`. Nine of ten mutations KILLED. The tenth,
+B6b, SURVIVED **on purpose and is recorded as such**: I-01 gives R-01 two independent rules — resolve
+uniqueness, or withhold the grid — so removing either one alone leaves the conformance invariant standing.
+B6a and B6d kill each rule separately through the contract tests, and B6b2 removes both at once, which is
+exactly the audited behaviour, and kills the conformance mass floor. Without that compound mutation the mass
+floor would have been reported as load-bearing on no evidence.
+
+This batch also fixes **R-67** for its own runners, in
+`benchmarks/core_v4_false_confidence/audit/isolated_mutations.py`, which every later batch uses: each mutation
+is applied in a fresh copy of `src`, `tests`, `pyproject.toml` and the JSON evidence, never in the checkout;
+KILLED requires the named test to be collectable in the mutated copy AND pytest to exit 1 AND its summary to
+report a `failed` and no `error`, so a collection or import error the mutation caused is reported
+`COLLECTION_BROKEN` or `NOT_A_TEST_FAILURE` rather than counted as a kill; each mutation declares whether it
+must be killed or must survive; and an unmutated control runs last. (R-67 is not yet closed: the batch guards
+still sit outside the pinned population, which is I-30's.) The 12 pinned mutations that target the files this
+batch changed were re-run under the same runner and all 12 are still KILLED:
+`benchmarks/core_v4_false_confidence/BATCH6_PINNED_MUTATIONS.log`.
+
+**Verification.** `tests/hybrid_uq/` 275 passed, 15 xfailed. FAST tier 6436 passed, 15 xfailed, 18 failed (the
+by-design 18, unchanged). `tests/test_mutation_harness.py` 6 passed, every pinned anchor still matching exactly
+once; `tests/mutation_guards.py` was not touched.
+
+**Open decisions.** None in this batch.

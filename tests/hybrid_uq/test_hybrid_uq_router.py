@@ -160,7 +160,7 @@ def test_routed_predictive_uses_the_route_that_was_chosen():
                                          predict=lambda t: [Quantity(t[0] + t[1], UNIT)])
     assert r.approximation_class is ApproximationClass.LINEARIZED_PREDICTIVE_UQ
     grid = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]),
-                              observations=P.observations, forward=P.forward)
+                              calibration=P.calibrate(), observations=P.observations, forward=P.forward)
     with pytest.raises(HybridUQError, match="predictive_table"):
         routed_predictive_uncertainty(grid, [PredictiveObservableSpec("y@1", UNIT)])
 

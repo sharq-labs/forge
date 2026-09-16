@@ -41,7 +41,10 @@ def test_the_local_route_agrees_with_the_resolved_grid(temps, nodes):
     # The canonical multistart. This asked for 3 starts before audit HUQ-01; a search below max(6, 2p + 2) starts
     # can no longer stand behind a SUPPORTED claim, which is what this test asserts.
     local = route_uncertainty(calibration=fit, observations=obs, forward=forward, multistart=MultistartPolicy())
-    gridded = route_uncertainty(grid=grid, observations=obs, forward=forward)  # CORE-005: bound to its evidence
+    # CORE-005: bound to its evidence, and R-06 (re-audit 2026-09-16): a grid narrower than the declared bounds
+    # also needs a uniqueness basis, which only a search over the calibration can give it.
+    gridded = route_uncertainty(grid=grid, calibration=fit, observations=obs, forward=forward,
+                                multistart=MultistartPolicy())
     assert local.decision is RouteDecision.LOCAL_GAUSSIAN and local.claim is RouteClaim.SUPPORTED
     assert gridded.decision is RouteDecision.GRID_AS_SUPPLIED
     gs = np.sqrt(np.diag(gridded.covariance))

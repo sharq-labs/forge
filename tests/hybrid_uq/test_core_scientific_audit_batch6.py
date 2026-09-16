@@ -6,7 +6,8 @@ asserted here is the contract itself: which route is passed over, under which wo
 unresolved uniqueness search may no longer say.
 
 Every test in this file was committed as `xfail(strict=True)` first and run with `--runxfail` at f9bab88 to
-watch it fail. What each one failed on there, recorded so the evidence is not overstated:
+watch it fail (the markers came off in the implementation commit). What each one failed on there,
+recorded so the evidence is not overstated:
 
 * on its own assertion: ``below_the_minimum`` (`'USED' == 'PASSED_OVER'`), ``runs_the_canonical_search``
   (`'NOT_ASSESSED' == 'SECOND_MODE_FOUND'`), ``refused_on_read`` (`DID NOT RAISE HybridUQError`),
@@ -50,7 +51,6 @@ def _entry(result, route):
 # ---------------------------------------------------------------------------
 # R-01: a grid is not rebuilt past an unresolved uniqueness search
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r01_a_rebuild_is_passed_over_when_no_uniqueness_search_ran():
     """The audited record: multistart omitted, the local route DOWNGRADED GLOBAL_UNIQUENESS_NOT_ASSESSED, and
     step 3 rebuilding a SUPPORTED grid around the one estimate anyway. A grid claim is SUPPORTED or absent, so
@@ -65,7 +65,6 @@ def test_r01_a_rebuild_is_passed_over_when_no_uniqueness_search_ran():
     assert result.decision is RouteDecision.LOCAL_GAUSSIAN and result.claim is RouteClaim.DOWNGRADED
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r01_a_rebuild_is_passed_over_when_the_search_was_below_the_minimum():
     """MultistartPolicy(starts=1) gave the identical SUPPORTED grid: MULTISTART_INCOMPLETE must block it too."""
     problem = S.bimodal_two_parameter()
@@ -77,7 +76,6 @@ def test_r01_a_rebuild_is_passed_over_when_the_search_was_below_the_minimum():
     assert entry["reason"] == RouteReason.MULTISTART_INCOMPLETE.value
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r01_the_router_runs_the_canonical_search_when_a_grid_route_needs_one():
     """The other way to make the claim honest: resolve uniqueness instead of withholding the grid.
 
@@ -107,7 +105,6 @@ def test_r01_no_search_is_run_for_a_local_route_that_no_grid_route_needs():
     assert result.local_posterior.diagnostics.multistart == ()
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r01_a_rebuilt_grid_record_with_an_unresolved_search_is_refused_on_read():
     """The read rule is the write rule: a record the router can no longer produce cannot be read back either."""
     problem = S.bimodal_two_parameter()
@@ -126,7 +123,6 @@ def test_r01_a_rebuilt_grid_record_with_an_unresolved_search_is_refused_on_read(
 # ---------------------------------------------------------------------------
 # R-06: a supplied grid needs a uniqueness basis
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r06_a_supplied_grid_that_misses_a_found_mode_is_passed_over():
     """The audited record: GRID_AS_SUPPLIED SUPPORTED over one of two equal modes, with the caller's own
     MultistartPolicy passed in and never run."""
@@ -140,7 +136,6 @@ def test_r06_a_supplied_grid_that_misses_a_found_mode_is_passed_over():
     assert "theta1" in entry["detail"]
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r06_a_supplied_grid_with_no_uniqueness_basis_at_all_is_passed_over():
     """No search asked for, no search run, and a box narrower than the declared bounds: nothing says the
     posterior has one mode, and a grid route has no DOWNGRADED claim to say so with."""
@@ -153,7 +148,22 @@ def test_r06_a_supplied_grid_with_no_uniqueness_basis_at_all_is_passed_over():
     assert entry["reason"] == RouteReason.GRID_UNIQUENESS_NOT_ASSESSED.value
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
+def test_r06_a_supplied_grid_backed_only_by_a_below_minimum_search_is_passed_over():
+    """A search below the minimum is not a uniqueness basis either, for a supplied grid as for a rebuild.
+
+    Separate from the rebuild rule: this one lives in the supplied-grid basis, and the box here is a grid the
+    caller hands in rather than one the router designed.
+    """
+    problem = S.bimodal_two_parameter()
+    result = route_uncertainty(grid=problem.grid(F.bimodal_one_mode_axes()), calibration=problem.calibrate(),
+                               observations=problem.observations, forward=problem.forward,
+                               multistart=MultistartPolicy(starts=1))
+    entry = _entry(result, "GRID_AS_SUPPLIED")
+    assert entry["outcome"] == "PASSED_OVER"
+    assert entry["reason"] == RouteReason.GRID_UNIQUENESS_NOT_ASSESSED.value
+    assert "MULTISTART_BELOW_MINIMUM_SEARCH" in entry["detail"]
+
+
 def test_r06_a_grid_that_spans_the_declared_bounds_needs_no_search():
     """The declared bounds are the whole space the request admits, and containment has already shown the
     posterior does not reach the faces: there is no outside for a mode to hide in."""
@@ -168,7 +178,6 @@ def test_r06_a_grid_that_spans_the_declared_bounds_needs_no_search():
     assert sd[0] == pytest.approx(1.0220179476127045, rel=1e-6)
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r06_a_search_at_the_minimum_that_finds_one_mode_is_a_basis():
     """The route that must keep working: an honest unimodal problem, a grid narrower than its bounds."""
     problem = S.affine()
@@ -179,7 +188,6 @@ def test_r06_a_search_at_the_minimum_that_finds_one_mode_is_a_basis():
     assert "MULTISTART_NO_SECOND_MODE" in _entry(result, "GRID_AS_SUPPLIED")["detail"]
 
 
-@pytest.mark.xfail(strict=True, reason="I-01 not implemented yet (batch 6 preregistration)")
 def test_r06_the_canonical_search_backs_a_supplied_grid_by_default():
     """With no multistart asked for, the router runs the canonical search rather than passing the grid over."""
     problem = S.affine()

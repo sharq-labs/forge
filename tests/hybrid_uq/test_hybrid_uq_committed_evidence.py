@@ -81,6 +81,13 @@ def test_tcr_agrees_with_the_exact_posterior_in_both_designs():
         assert designs[name]["v2_local"]["nonlinearity_index"] < 0.10, name
     assert designs["NARROW"]["router_given_the_41_node_grid"]["decision"] == "LOCAL_GAUSSIAN"
     assert designs["WIDE"]["router_given_the_41_node_grid"]["decision"] == "GRID_AS_SUPPLIED"
+    # R-06 (re-audit 2026-09-16): a supplied grid narrower than the declared bounds now needs a uniqueness
+    # basis. Both TCR grids are +/- 6 OLS standard errors wide, far inside the declared bounds, so both stand
+    # on a search rather than on their box, and the record's grid route must still be the one it claims.
+    # benchmarks/core_v2_hybrid_uq/audit/tcr.py was re-run against the new rule: every claim below reproduces.
+    for name in ("WIDE", "NARROW"):
+        assert designs[name]["v1_resolved_grid"]["decision"] == "GRID_AS_SUPPLIED", name
+        assert designs[name]["v2_local"]["uniqueness"] == "MULTISTART_NO_SECOND_MODE", name
 
 
 def test_every_adversarial_case_met_its_declared_expectation():

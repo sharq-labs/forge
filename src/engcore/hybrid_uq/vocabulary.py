@@ -117,6 +117,12 @@ class RouteReason(str, Enum):
     #: CORE-010: a supplied grid's axes are not evenly spaced in the declared inference coordinates, so its equal node
     #: mass is an undeclared prior.
     GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES = "GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES"
+    #: R-06 (re-audit 2026-09-16): a uniqueness search found a mode outside a supplied grid's box, so the grid describes
+    #: one mode of a posterior that has more than one. Appended, not inserted: the member order is frozen.
+    GRID_MISSES_A_FOUND_MODE = "GRID_MISSES_A_FOUND_MODE"
+    #: R-06 (re-audit 2026-09-16): nothing establishes that a supplied grid narrower than the declared bounds holds the
+    #: whole posterior -- no adequate uniqueness search ran -- and a grid route has no DOWNGRADED claim to say so with.
+    GRID_UNIQUENESS_NOT_ASSESSED = "GRID_UNIQUENESS_NOT_ASSESSED"
 
     @property
     def severity(self) -> RouteClaim:

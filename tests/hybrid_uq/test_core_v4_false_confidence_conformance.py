@@ -177,12 +177,14 @@ def _local(problem, multistart=None):
 # ---------------------------------------------------------------------------
 # R-01, R-06: the router's uniqueness contract (I-01, this batch)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-01 open until I-01 lands in this same batch")
 def test_r01_a_grid_rebuilt_without_a_uniqueness_search_never_claims_one_mode():
     """R-01: with multistart omitted the rebuild used to launder DOWNGRADED into a SUPPORTED one-mode grid.
 
     The audited record reported mean (1.0217, 0.4061) and sd [0.0243, 0.0760] SUPPORTED, against a reference
     sd of 1.0220 on theta1 -- 42x too narrow -- and a 95% interval holding 0.4748 of the reference posterior.
+
+    Committed as xfail(strict=True) in 5a08eef, where it failed on this assertion at 0.4743 of the reference
+    mass; closed by I-01, which passes the rebuild over GLOBAL_UNIQUENESS_NOT_ASSESSED or resolves uniqueness.
     """
     problem = S.bimodal_two_parameter()
     result = _rebuilt(problem)
@@ -190,9 +192,12 @@ def test_r01_a_grid_rebuilt_without_a_uniqueness_search_never_claims_one_mode():
     assert_moments(result, "bimodal_two_parameter")
 
 
-@pytest.mark.xfail(strict=True, reason="R-06 open until I-01 lands in this same batch")
 def test_r06_a_supplied_grid_over_one_of_two_modes_is_never_supported():
-    """R-06: step 1 returned GRID_AS_SUPPLIED SUPPORTED before the caller's own MultistartPolicy ever ran."""
+    """R-06: step 1 returned GRID_AS_SUPPLIED SUPPORTED before the caller's own MultistartPolicy ever ran.
+
+    Committed as xfail(strict=True) in 5a08eef, where it failed on this assertion at 0.4743 of the reference
+    mass; closed by I-01, which passes the grid over GRID_MISSES_A_FOUND_MODE.
+    """
     problem = S.bimodal_two_parameter()
     calibration = problem.calibrate()
     one_mode = problem.grid(F.bimodal_one_mode_axes())

@@ -315,8 +315,12 @@ def _local_result():
 
 def _grid_result():
     P = S.affine()
+    # A supplied grid narrower than the declared bounds now needs a uniqueness basis (R-06, re-audit
+    # 2026-09-16), and the only basis a grid route can get is a search, which needs the calibration.
+    # The record this returns is what the router produces for a properly posed request; what the tests
+    # below do to it is unchanged.
     result = route_uncertainty(grid=P.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)]),
-                               observations=P.observations, forward=P.forward)
+                               calibration=P.calibrate(), observations=P.observations, forward=P.forward)
     assert result.decision is RouteDecision.GRID_AS_SUPPLIED
     return result
 

@@ -1,9 +1,29 @@
 {
   "schema": "core_v4_false_confidence_threshold_protocol/1",
   "batch": 6,
-  "improvements": ["I-01", "I-15"],
-  "problems_addressed": ["R-01", "R-06"],
-  "problems_given_a_conformance_case_only": ["R-03", "R-05", "R-07", "R-08", "R-11", "R-13", "R-14", "R-15", "R-16", "R-17", "R-18", "R-20", "R-26"],
+  "improvements": [
+    "I-01",
+    "I-15"
+  ],
+  "problems_addressed": [
+    "R-01",
+    "R-06"
+  ],
+  "problems_given_a_conformance_case_only": [
+    "R-03",
+    "R-05",
+    "R-07",
+    "R-08",
+    "R-11",
+    "R-13",
+    "R-14",
+    "R-15",
+    "R-16",
+    "R-17",
+    "R-18",
+    "R-20",
+    "R-26"
+  ],
   "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
   "machine_record": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
   "baseline_commit": "f9bab88",
@@ -13,7 +33,6 @@
     "the dense reference posterior over the declared bounds of that problem: mean (0.0, 0.40614), sd (1.02202, 0.07602), mass at t0 < 0 exactly 0.5, and 0.4748 of the reference mass inside the one-mode SUPPORTED 95% interval of t0",
     "NOTHING about how any rule below scores on any other case: no threshold below was chosen after seeing a result"
   ],
-
   "rules": {
     "unresolved_uniqueness_blocks_a_grid_rebuild": {
       "improvement": "I-01 stage 1",
@@ -26,12 +45,16 @@
     },
     "a_grid_route_runs_the_canonical_uniqueness_search_by_default": {
       "improvement": "I-01 stage 2",
-      "problems": ["R-01", "R-06"],
+      "problems": [
+        "R-01",
+        "R-06"
+      ],
       "rule": "When a grid route is in play (a grid is supplied, or a GridRebuildPolicy is given) and the caller passed multistart=None, route_uncertainty runs the canonical MultistartPolicy() for its local route instead of recording that nobody looked. A new keyword-only argument canonical_uniqueness_search: bool = True turns this off; turning it off can only pass a grid over, never accept one.",
       "scope": "only when a grid route is in play. With neither a grid nor a rebuild policy, multistart=None keeps its exact V2 meaning and its DOWNGRADED GLOBAL_UNIQUENESS_NOT_ASSESSED local claim, and no search is run: there the downgrade is already the honest answer and a search would only cost evaluations.",
       "why": "the two ways to make a grid claim honest are to resolve uniqueness or to withhold the claim. Resolving it is strictly better where the inputs for a search are present, and the inputs a grid route needs (calibration, observations, forward) are exactly the inputs a search needs.",
       "canonical_policy": "MultistartPolicy() with its frozen defaults (starts=6, interior_fraction=0.8, max_evaluations=2000, mode_separation_quantile=0.999, comparable_fit_quantile=0.99, maximum_retractions=12), preregistered in batch 1 as HUQ-01. No value is re-chosen here.",
-      "class": "A (a scope rule over an already-preregistered policy; no new number)"
+      "class": "A (a scope rule over an already-preregistered policy; no new number)",
+      "measured_outcome": "implemented as stated. The audited R-01 case (bimodal_two_parameter with a rebuild policy and no multistart) now returns the honest bimodal grid, sd [1.0220, 0.07602] against the reference's [1.0220, 0.07602], where it returned sd [0.02428, 0.07602] SUPPORTED before."
     },
     "a_supplied_grid_needs_a_uniqueness_basis": {
       "improvement": "I-01 stage 2",
@@ -41,7 +64,8 @@
       "why_spanning_the_bounds_is_a_basis": "the declared bounds are the whole parameter space the request admits. A grid that spans them has no outside for a mode to hide in, and containment has already shown the posterior does not reach its faces. Whether a mode INSIDE such a box is resolved is a grid-resolution question (I-05), not a router question.",
       "spanning_tolerance": "an axis spans its declared bounds when its lowest node is within 1e-12 * (|upper - lower| + 1) of the lower bound and its highest node within the same of the upper bound",
       "inside_the_box_tolerance": "a mode lies inside the box when, on every axis, its natural coordinate lies in [lowest node - t, highest node + t] with the same t = 1e-12 * (|upper - lower| + 1)",
-      "class": "A (both tolerances are the float64 round-trip allowance grid_containment already uses for 'this face is a declared bound'; one rule, one number, reused rather than re-chosen)"
+      "class": "A (both tolerances are the float64 round-trip allowance grid_containment already uses for 'this face is a declared bound'; one rule, one number, reused rather than re-chosen)",
+      "measured_outcome": "implemented as stated. The audited R-06 case is passed over GRID_MISSES_A_FOUND_MODE. Blast radius: five test call sites supplied a grid with no calibration and so lost the supplied-grid route on uniqueness; each was given the calibration it already had, which is the request the router can actually judge. No assertion was weakened. benchmarks/core_v2_hybrid_uq/audit/tcr.py needed the same change and was re-run: every claim TCR.json makes reproduces, so its bytes are left pinned (see the Progress section of the audit document)."
     },
     "a_rebuilt_grid_record_is_refused_on_read_if_its_uniqueness_is_unresolved": {
       "improvement": "I-01 stage 1",
@@ -56,7 +80,6 @@
       "compatibility": "ADDITIVE: new enum members at the end of the member order. No member is removed, renamed or moved. Readers of the V1/V2 frozen API see two added names and no changed one.",
       "class": "A (vocabulary, not a threshold)"
     },
-
     "conformance_supported_interval_mass_floor": {
       "improvement": "I-15",
       "rule": "For every conformance case, if the route's claim is SUPPORTED then the reported central 95% interval of each parameter must hold at least 0.90 of that parameter's marginal mass under the case's pinned dense reference posterior.",
@@ -89,9 +112,19 @@
       "improvement": "I-15",
       "rule": "Editing exactly one carried field of a serialized route record and reading it back must either be refused or leave the claim no higher than the unedited record's. No single-field edit may raise a claim.",
       "class": "A (a record integrity invariant, not a threshold)"
+    },
+    "conformance_supported_moments": {
+      "improvement": "I-15",
+      "added_by_amendment": "2026-09-16 (see amendment_log entry 1)",
+      "rule": "A SUPPORTED route's mean must lie within 0.10 reference sd of the pinned reference mean, and each reported marginal sd must be within 10% of the reference sd.",
+      "value": {
+        "mean_tolerance_sd": 0.1,
+        "sd_relative_tolerance": 0.1
+      },
+      "why": "both numbers are twice the router's own preregistered TRUNCATION_CONVERGENCE_SD of 0.05 sd, the point at which it already declares a grid's moments 'not converged'. A grid the router itself would refuse for moving 0.05 sd under refinement cannot be more than twice that from the truth. Neither number is taken from any measured case.",
+      "class": "C (a declared tolerance on how far a reported posterior's centre and width may sit from the reference, derived from an existing preregistered constant)"
     }
   },
-
   "compatibility_impact": {
     "v1_frozen_symbols": "untouched. Nothing in engcore.inference or the V1 grid route changes.",
     "v2_symbols": [
@@ -103,7 +136,6 @@
     "serialized_records": "no field is added, removed or renamed; no schema is bumped. The two new RouteReason values can appear in considered[].reason and in a diagnostics record only where the old code would have written a wrong claim instead.",
     "frozen_digests": "the V1 and V2 API snapshots move by two added enum members. Those snapshot tests already fail by design until the V4 round (docs/CORE_FREEZE_POLICY.md), and are regenerated there, not here."
   },
-
   "residuals_stated_in_advance": [
     "I-01 resolves uniqueness only to the resolution of the canonical multistart: 6 Halton starts in the central 80% of the bounds box. A mode in a basin that no start falls into is still missed, and the record says MULTISTART_NO_SECOND_MODE, not 'unique'. I-02 makes the count of the search honest; neither makes it complete.",
     "A supplied grid whose local route raises (a derivative that never stabilizes) has no uniqueness basis and is passed over GRID_UNIQUENESS_NOT_ASSESSED unless it spans the declared bounds, even when the grid itself is sound. The router cannot tell the two apart without a search.",
@@ -112,7 +144,16 @@
     "The canonical search costs about 6 extra calibrations on a supplied-grid acceptance that does not span its bounds. Nothing caches it across calls.",
     "I-15 is a suite, not a fix: only the R-01 and R-06 cases become strict in this batch. Every other case is xfail(strict=True) and turns into a passing assertion in the batch that fixes it -- a strict xfail that starts passing fails the suite, which is the ratchet."
   ],
-
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-16",
+      "entry": 1,
+      "what": "added the rule conformance_supported_moments (INV-7) to I-15 after the rules above were implemented and scored",
+      "why": "the preregistered mass floor of 0.90 does not bite on R-17, whose defect is a biased mean rather than a missed mode: the audited symptom is a SUPPORTED grid whose mean is off by up to 0.57 reference sd with the interval still nearly right. An invariant suite that cannot express 'the reported posterior is not the posterior' was incomplete.",
+      "what_had_been_seen_before_the_numbers_were_chosen": "R-17's own reproduction at a 0.6 sd grid step: a GRID_AS_SUPPLIED SUPPORTED mean 0.202 reference sd from the reference mean with an sd ratio of 1.074, and the reference moments of every case in REFERENCE_POSTERIORS.json. This is disclosed rather than glossed: the numbers below were NOT taken from it.",
+      "how_the_numbers_were_chosen": "from TRUNCATION_CONVERGENCE_SD = 0.05 sd, preregistered in an earlier batch as the router's own 'the moments have converged' threshold, doubled. 0.10 sd and 10% are that constant, not a fit to the 0.202 sd and 1.074 above.",
+      "effect_on_the_rules_already_scored": "none. INV-7 is an additional assertion on cases that are xfail until their own improvement lands; it changes no rule of I-01 and no result already recorded."
+    }
+  ]
 }
