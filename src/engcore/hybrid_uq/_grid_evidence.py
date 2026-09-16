@@ -27,6 +27,10 @@ EDGE_LOG_LIKELIHOOD_DROP = math.log(1.0e6)
 #: on top of its first and last node, its highest-likelihood node and the node nearest a calibrated estimate.
 SPOT_CHECK_INTERIOR_NODES = 4
 
+#: CORE-010: an axis is uniform in its inference coordinate when no step differs from the mean step by more than this
+#: fraction of it. A float64 linspace, and its image through exp or log, stays far inside.
+UNIFORM_STEP_RELATIVE_TOLERANCE = 1.0e-6
+
 #: A recomputed chi-square must agree with the grid's to every standardized residual within this many sigma: the
 #: agreement SUPPLIED_PREDICTION_AGREEMENT_SD already declares for a supplied prediction.
 RESIDUAL_AGREEMENT_SD = 1.0e-6
@@ -129,7 +133,42 @@ def grid_containment(grid: PosteriorGrid, calibration) -> tuple[RouteReason, str
     return None
 
 
+def grid_prior_uniformity(grid: PosteriorGrid, calibration) -> tuple[RouteReason, str] | None:
+    """CORE-010: equal node mass is the declared prior only on axes uniform in each parameter's inference coordinate.
+
+    ``gaussian_grid_posterior`` gives every node the same prior mass, so node density IS the prior density: a log-spaced
+    axis of an IDENTITY parameter is a prior uniform in its logarithm, and a clustered axis is a prior heaped where the
+    nodes are. Transforms come from the calibration; without one every axis must be uniform in its natural coordinate.
+    """
+    from ..inference.parameters import ParameterTransform
+
+    transforms = {}
+    if isinstance(calibration, CalibrationResult):
+        transforms = {q.name: q.transform for q in calibration.spec.parameters.parameters}
+    points = np.asarray(grid.points, dtype=np.float64)
+    for i, name in enumerate(grid.parameter_names):
+        transform = transforms.get(name, ParameterTransform.IDENTITY)
+        axis = np.unique(points[:, i])
+        if axis.size < 3:
+            continue
+        if transform is ParameterTransform.LOG:
+            if np.any(axis <= 0.0):
+                return (RouteReason.GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES,
+                        f"{name!r} is declared LOG but the grid has non-positive nodes")
+            axis = np.log(axis)
+        steps = np.diff(axis)
+        mean = float(np.mean(steps))
+        worst = float(np.max(np.abs(steps - mean)))
+        if not worst <= UNIFORM_STEP_RELATIVE_TOLERANCE * mean:
+            return (RouteReason.GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES,
+                    f"the nodes of {name!r} are not evenly spaced in its {transform.value} coordinate (largest step deviation "
+                    f"{worst / mean:.3g} of the mean step); every node carries equal prior mass, so their density would be an "
+                    f"undeclared prior on {name!r}")
+    return None
+
+
 def supplied_grid_problem(grid: PosteriorGrid, calibration, observations: ObservationSet, forward) -> tuple[RouteReason, str] | None:
     """Binding (raises), then goodness of fit, then containment: why a resolved supplied grid may not stand, or None."""
     require_grid_is_this_evidence(grid, calibration, observations, forward)
-    return grid_goodness_of_fit(grid, observations) or grid_containment(grid, calibration)
+    return (grid_prior_uniformity(grid, calibration) or grid_goodness_of_fit(grid, observations)
+            or grid_containment(grid, calibration))

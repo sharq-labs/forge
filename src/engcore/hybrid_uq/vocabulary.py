@@ -110,6 +110,9 @@ class RouteReason(str, Enum):
     GRID_DOES_NOT_CONTAIN_POSTERIOR = "GRID_DOES_NOT_CONTAIN_POSTERIOR"
     #: CORE-002: on a rebuilt grid, the posterior reaches both declared bounds of an axis within ln 1e6 of its peak.
     GRID_POSTERIOR_BOUND_DOMINATED = "GRID_POSTERIOR_BOUND_DOMINATED"
+    #: CORE-010: a supplied grid's axes are not evenly spaced in the declared inference coordinates, so its equal node
+    #: mass is an undeclared prior.
+    GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES = "GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES"
 
     @property
     def severity(self) -> RouteClaim:

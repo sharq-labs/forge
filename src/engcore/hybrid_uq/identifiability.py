@@ -19,7 +19,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 from scipy.stats import norm
 
-from ..inference.calibration import IdentifiabilityReport, IdentifiabilityStatus, assess_identifiability
+from ..inference.calibration import WIDTH_REFERENCE_NOTE, IdentifiabilityReport, IdentifiabilityStatus, assess_identifiability
 from ..inference.grid import PosteriorGrid
 from ._records import decode_float, decode_vector, digest_of, encode_float, encode_vector, require_schema
 from .local_gaussian import LocalGaussianPosterior
@@ -44,11 +44,12 @@ def classify(mean: Sequence[float], covariance, lows: Sequence[float], highs: Se
     """The frozen V1 rule, over any covariance and any marginal intervals. Private to V2."""
     cov = np.asarray(covariance, dtype=np.float64)
     n = cov.shape[0]
-    eigenvalues = np.linalg.eigvalsh(cov)
-    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
-    condition = math.inf if smallest <= 0.0 else largest / smallest
     sd = np.sqrt(np.diag(cov))
     correlation = cov / np.outer(sd, sd)
+    # CORE-004: the condition number of the correlation matrix, which no parameter's unit or scale moves
+    eigenvalues = np.linalg.eigvalsh(correlation)
+    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
+    condition = math.inf if smallest <= 0.0 else largest / smallest
     off = [abs(float(correlation[i, j])) for i in range(n) for j in range(n) if i != j]
     max_correlation = max(off) if off else 0.0
     widths = []
@@ -92,7 +93,7 @@ def _rule(condition: float, max_correlation: float, widths: Sequence[float], nam
         why += (f". The parameters are strongly correlated ({max_correlation:.4f}) and this is still IDENTIFIABLE on purpose: "
                 f"correlation says a ridge exists, not that it is long, and both marginal intervals here are within "
                 f"{widest:.3g} of their own values")
-    return status, why
+    return status, why + WIDTH_REFERENCE_NOTE
 
 
 #: The thresholds the router classifies under: the frozen ``assess_identifiability`` defaults.
@@ -140,13 +141,13 @@ def _grid_report_problems(report: IdentifiabilityReport, mean: Sequence[float], 
             problems.append(f"identifiability {key} {getattr(report, key)!r} is not the router's {value!r}")
     cov = np.asarray(covariance, dtype=np.float64)
     n = cov.shape[0]
-    eigenvalues = np.linalg.eigvalsh(cov)
-    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
-    condition = math.inf if smallest <= 0.0 else largest / smallest
     std = np.sqrt(np.maximum(np.diag(cov), 0.0))
     denominator = np.outer(std, std)
     with np.errstate(divide="ignore", invalid="ignore"):
         correlation = np.divide(cov, denominator, out=np.zeros_like(cov), where=denominator > 0.0)
+    eigenvalues = np.linalg.eigvalsh(correlation)  # CORE-004: as assess_identifiability computes it
+    smallest, largest = float(np.min(eigenvalues)), float(np.max(eigenvalues))
+    condition = math.inf if smallest <= 0.0 else largest / smallest
     off = [abs(float(correlation[i, j])) for i in range(n) for j in range(n) if i != j]
     max_correlation = max(off) if off else 0.0
     if not _same_number(report.condition_number, condition):

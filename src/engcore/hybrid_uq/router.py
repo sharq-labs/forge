@@ -32,7 +32,9 @@ from ._records import (
     decode_matrix, decode_vector, digest_of, encode_matrix, encode_vector, require_schema, require_valid_covariance,
 )
 from ..scientific.results.immutable import freeze
-from ._grid_evidence import EDGE_LOG_LIKELIHOOD_DROP, grid_containment, grid_goodness_of_fit, require_grid_is_this_evidence
+from ._grid_evidence import (
+    EDGE_LOG_LIKELIHOOD_DROP, grid_containment, grid_goodness_of_fit, grid_prior_uniformity, require_grid_is_this_evidence,
+)
 from .identifiability import (
     RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
 )
@@ -570,8 +572,10 @@ def route_uncertainty(
                 problem = (RouteReason.GRID_NOT_BOUND_TO_EVIDENCE,
                            "a supplied grid is used only with the observations and forward model it is checked against")
             else:
-                # CORE-001 and CORE-002: the declared noise explains the residuals, and the box holds the posterior
-                problem = grid_goodness_of_fit(grid, observations) or grid_containment(grid, calibration)
+                # CORE-010, CORE-001 and CORE-002: equal node mass is the declared prior, the declared noise explains the
+                # residuals, and the box holds the posterior
+                problem = (grid_prior_uniformity(grid, calibration) or grid_goodness_of_fit(grid, observations)
+                           or grid_containment(grid, calibration))
             if problem is not None:
                 considered.append({"route": "GRID_AS_SUPPLIED", "outcome": "PASSED_OVER", "reason": problem[0].value,
                                    "detail": problem[1][:400]})

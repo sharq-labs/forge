@@ -1,7 +1,8 @@
 """Scientific core audit 2026-09-16, batch 2: identifiability that does not depend on units, and grid priors.
 
 Findings CORE-004 and CORE-010 (docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md), under
-benchmarks/core_v4_false_confidence/BATCH2_THRESHOLD_PROTOCOL.json. Recorded as strict xfails before the fix.
+benchmarks/core_v4_false_confidence/BATCH2_THRESHOLD_PROTOCOL.json. Recorded as strict xfails in commit 4f5a341, each
+seen failing on its assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -23,8 +24,6 @@ from engcore.inference.calibration import IdentifiabilityStatus, assess_identifi
 from engcore.scientific.twins import TwinReference
 from engcore.uq import PredictiveObservableSpec
 
-AUDITED = pytest.mark.xfail(strict=True, reason="reproduced before batch 2; fixed in batch 2")
-
 
 # ---------------------------------------------------------------------------
 # CORE-004: the verdict moved with a unit
@@ -36,7 +35,6 @@ def _slope_problem(scale):
                      (-100.0, -100.0 / scale), (100.0, 100.0 / scale), (1.0, 0.1 / scale), observed=obs)
 
 
-@AUDITED
 def test_core004_the_local_verdict_does_not_depend_on_the_unit_of_a_parameter():
     verdicts = []
     for scale in (1.0, 1.0e-6):
@@ -47,7 +45,6 @@ def test_core004_the_local_verdict_does_not_depend_on_the_unit_of_a_parameter():
     assert verdicts[0] == verdicts[1] and verdicts[0][0] is IdentifiabilityStatus.IDENTIFIABLE
 
 
-@AUDITED
 def test_core004_the_grid_verdict_does_not_depend_on_the_unit_of_a_parameter():
     verdicts = []
     for scale in (1.0, 1.0e-6):
@@ -59,7 +56,6 @@ def test_core004_the_grid_verdict_does_not_depend_on_the_unit_of_a_parameter():
     assert verdicts[0] == verdicts[1]
 
 
-@AUDITED
 def test_core004_the_verdict_says_its_widths_are_relative_to_each_parameters_declared_zero():
     P = S.affine("CORE004_zero")
     post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
@@ -79,7 +75,6 @@ def _prior_problem(transform="identity"):
 CLUSTERED = np.concatenate([np.linspace(0.05, 1.0, 350, endpoint=False), np.linspace(1.0, 4.0, 60)])
 
 
-@AUDITED
 @pytest.mark.parametrize("axis", [CLUSTERED, np.geomspace(0.05, 4.0, 400)], ids=["clustered", "geomspace_identity"])
 def test_core010_a_grid_not_uniform_in_the_inference_coordinate_is_passed_over(axis):
     P = _prior_problem()
@@ -103,7 +98,6 @@ def test_core010_a_linspace_grid_is_still_the_declared_prior_of_an_identity_para
     assert result.considered[0]["reason"] != "GRID_PRIOR_NOT_UNIFORM_IN_INFERENCE_COORDINATES"
 
 
-@AUDITED
 def test_core010_the_standalone_grid_predictive_refuses_an_undeclared_prior_given_the_evidence():
     P = _prior_problem()
     grid = P.grid([CLUSTERED])
