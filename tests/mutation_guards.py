@@ -2076,8 +2076,11 @@ EVIDENCE: dict[str, tuple[str, str]] = {
             'test_huq13_nested_mappings_of_a_validated_record_are_immutable'),
     'G34a': ('VALIDITY_INVARIANT',
             'test_supercritical_water_like_reactor_is_not_in_domain_without_a_boiling_point'),
-    'G34b': ('VALIDITY_INVARIANT',
-            'test_the_competitor_model_claims_the_same_liquid_and_checks_it'),
+    # Dropping the liquid-phase conditions leaves the K4 alternative model reserving derived
+    # quantities nothing reads, and ModelValidityError refuses it while the module is imported --
+    # the refusal IS the guard, and no named test runs. Measured, after the round reported this
+    # mutation red for other guards.
+    'G34b': ('VALIDITY_INVARIANT', REFUSED_AT_IMPORT),
     'G34c': ('VALIDITY_INVARIANT',
             'test_exactly_at_boiling_is_not_liquid'),
     'G34d': ('VALIDITY_INVARIANT',
