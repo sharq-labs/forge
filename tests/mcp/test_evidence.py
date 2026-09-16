@@ -1775,3 +1775,16 @@ def test_f04_a_serialized_report_cannot_reintroduce_the_sentinel():
     payload["validation"][0]["establishes"] = ValidationLevel.UNVERIFIED.value
     with pytest.raises(ScientificValidationError):
         CredibilityEvidenceReport.from_dict(payload)
+
+
+@pytest.mark.xfail(strict=True, reason="CORE-008 reproduced before batch 3a; fixed in batch 3a")
+def test_core008_a_verdict_resting_on_verification_alone_says_so_in_every_report():
+    """Scientific core audit 2026-09-16, CORE-008. The verdict word is unchanged -- most domains earn only verification
+    levels, and moving the word moves scored benchmarks -- so the basis is a derived qualifier, re-derived on read."""
+    report = package()
+    assert report.verdict is CredibilityVerdict.SUPPORTED
+    payload = report.to_dict()
+    assert payload["verdict_qualifiers"]["evidence_basis"] == "VERIFICATION_ONLY"
+    payload["verdict_qualifiers"]["evidence_basis"] = "VALIDATED"
+    with pytest.raises(CredibilityEvidenceError):
+        CredibilityEvidenceReport.from_dict(payload)
