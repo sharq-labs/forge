@@ -1,0 +1,125 @@
+{
+  "audit": "docs/audits/MAIN_AUDIT_2026-09-15.md",
+  "candidate_commit": "1c734ed22296c64188567d3fe50279d8d71bc38e",
+  "evidence": {
+    "FORMAL_MUTATIONS.json": "2932775c633bc6ebb6ee8637eadd0577962f1e9e008aa7e857bf1ab6f05a50be",
+    "FORMAL_SHARD_0.log": "78ca98eb7e7bc1f47a06343c030af8739cd3b93bb13356f91207904a714b5a4c",
+    "FORMAL_SHARD_1.log": "cae860d8622bd08e35f543193b3fe50ddeeb982246160da1471cc5ab671ffcaa",
+    "FORMAL_SHARD_2.log": "ca333fbc83aee03ccc8e35426f80c7a7b6c5a89eda84131d23b211295dfad4f4",
+    "FORMAL_SHARD_3.log": "60ea05c13bdba9d86c3fdc39870b22ecb55a4a113a131badc0455811615a0dfe",
+    "SUITES.json": "87cfa084410f4b8597ebd7e53a9ffec1c4fbb593359879ba3bcf787d47bd980b",
+    "TRUST_MUTATIONS.json": "52cb06a9fda0dd69fded235c34e5bdbf7db5a4a1f7bc817876ef4c5faed5056a"
+  },
+  "manifest_sha256": "0204b96f73a4c6bd0790186f525b2c55f6d8d84d295d163571a54085580708b0",
+  "mutations": {
+    "formal": {
+      "commit": "069908f1b0bcf5bb759a0f0f0c35b10ed007b8fe",
+      "control": "GREEN",
+      "killed": 284,
+      "population": 284,
+      "population_sha256": "a05dcdad9bfb31d626d238ef255bae16b03058ae023092da074a06d20e9265c4",
+      "shard_count": 4
+    },
+    "trust": {
+      "commit": "999dbdf398d7e1121d5fcc287b602d9b2c391929",
+      "control": "GREEN",
+      "invalid": 0,
+      "killed": 20,
+      "population": 20,
+      "survived": 0
+    }
+  },
+  "schema": "engcore.core_freeze_assurance/3",
+  "suites": {
+    "FAST": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "6055 passed, 6 skipped, 42 warnings in 121.93s (0:02:01)"
+    },
+    "api_snapshot_v1": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "17 passed in 3.35s"
+    },
+    "api_snapshot_v2": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "5 passed in 0.94s"
+    },
+    "audit_regressions": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "452 passed in 7.70s"
+    },
+    "certificate": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "206 passed, 1 skipped, 2 deselected in 30.91s"
+    },
+    "freeze_manifest_v1": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "36 passed, 1 skipped, 2 deselected in 2.47s"
+    },
+    "freeze_manifest_v3": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "15 passed, 1 skipped in 4.55s"
+    },
+    "hybrid_uq_focused": {
+      "deselected_certificate_child_self_checks": [
+        "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+        "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
+        "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies"
+      ],
+      "exit_code": 0,
+      "green": true,
+      "summary_line": "236 passed in 19.64s"
+    }
+  },
+  "suites_commit": "069908f1b0bcf5bb759a0f0f0c35b10ed007b8fe",
+  "tag": "v3.0-core-freeze"
+}
