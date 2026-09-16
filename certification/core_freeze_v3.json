@@ -80,7 +80,7 @@
   },
   "freeze": {
     "additive_over": "Core Freeze V1 (v1.0-core-freeze), unchanged",
-    "candidate_commit": "d5839a90135f3fbc3807d46dbde55a450e3d5d26",
+    "candidate_commit": "1c734ed22296c64188567d3fe50279d8d71bc38e",
     "name": "Core Freeze V3",
     "supersedes": "Core Freeze V2 (v2.0-core-freeze) contract, for descendants; V2 history untouched",
     "tag": "v3.0-core-freeze"
