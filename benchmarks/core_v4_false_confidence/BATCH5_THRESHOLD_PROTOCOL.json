@@ -1,0 +1,30 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 5,
+ "findings": ["CORE-017", "CORE-018"],
+ "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
+ "baseline_commit": "dfba777",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_was_already_seen": [
+  "the audit reproductions only: A4 (a copied held-out reading with sigma 0.5000005 instead of 0.5, or value 4.0000001 K instead of 4.0, crossed ObservationSplit), and the audit agent's (consensus of 1 m against 1000 mm: relative difference 0.999, not agreed; a cross-limit range [0.9 dimensionless, 50 percent] accepted and [50 percent, 0.9] refused)"
+ ],
+ "rules": {
+  "near_duplicate_readings": {
+   "finding": "CORE-017",
+   "rule": "ObservationSplit refuses, unless exact replicates are declared, any pair across its halves with the same observable whose values differ by at most 1e-6 of the larger sigma and whose sigmas differ by at most 1e-6 relative, compared in the value's base unit",
+   "why": "two distinct measurements of a continuous quantity agreeing to a millionth of their own uncertainty, with the same declared uncertainty to a millionth, are a copy; twelve significant digits caught only copies that were not touched",
+   "class": "C (a declared copy-detection resolution, far below any physical measurement resolution)"
+  },
+  "consensus_in_one_unit": {
+   "finding": "CORE-018",
+   "rule": "CrossSolverConsensus.from_results expresses each named value in the unit of the first declared route that reports it before comparing; values_digest is computed over those numbers",
+   "effect_on_existing_records": "none where every route already reports a name in one unit, which is every committed consensus record"
+  },
+  "cross_limit_ordering_in_one_unit": {
+   "finding": "CORE-018",
+   "rule": "CrossLimitCondition orders its maximum against its minimum after converting the maximum into the minimum's unit"
+  }
+ },
+ "not_changed": "ModelType and the model-level validation status stay descriptive labels that drive no decision (CORE-018, part three); nothing in the core reads them for trust, so no rule is added",
+ "amendments": "recorded here as dated entries, never edited in place"
+}
