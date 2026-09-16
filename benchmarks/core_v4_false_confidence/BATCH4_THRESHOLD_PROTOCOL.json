@@ -1,0 +1,48 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 4,
+ "findings": ["CORE-006", "CORE-007", "CORE-011", "CORE-012"],
+ "audit": "docs/audits/CORE_SCIENTIFIC_AUDIT_2026-09-16.md",
+ "baseline_commit": "3c938cc",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "compatibility_decision": "additive only on V1-frozen symbols; new fields serialized only when informative (2026-09-16, repository owner)",
+ "strictness_decision": "2026-09-16, repository owner: undeclared or unbound information LOWERS the claim for comparison and prediction; independence of measurement errors is RECORDED and does not lower a claim, because the data cannot establish it",
+ "what_was_already_seen": [
+  "the audit reproductions only: E9 (a linearized prediction at x = 1e4 from a calibration over x in [0, 1], SUPPORTED; an unrelated predictor in kelvin, SUPPORTED), A1/A2 (a held-out point inside the posterior's conditioning set accepted; a comparison of two identical models won by +0.95 nats through that leak), A3 (preferred_model named for a 1.5e-9 nat difference on one observation)"
+ ],
+ "rules": {
+  "decisive_comparison": {
+   "finding": "CORE-011",
+   "statistic": "paired differences d_i = lpd_a,i - lpd_b,i over the n held-out observations; delta = sum d_i; standard error se = sqrt(n * var(d, ddof = 1))",
+   "rule": "preferred_model is named only when n >= 2, |delta| > 4 nats and |delta| > 2 se, and every assessment on both sides is content-bound (CORE-007); otherwise it is None and the comparison says why",
+   "thresholds": {"minimum_n": 2, "minimum_abs_delta_nats": 4.0, "minimum_se_multiple": 2.0},
+   "class": "C, from the elpd-difference practice of Vehtari, Gelman and Gabry (2017) and Sivula, Magnusson and Vehtari (2022): below about 4 nats, or within about 2 standard errors, a log-score difference does not separate models reliably, and the paired standard error is unreliable for small n",
+   "recorded": "ModelScoreComparison gains n, standard_error and why"
+  },
+  "content_bound_assessment": {
+   "finding": "CORE-007",
+   "rule": "assess_predictive_observation takes split and calibration_table. Given both, the posterior must be the calibration half's likelihood by content (the study layer's INF-03 check), the held-out id must be the split's, and the observation must be the split's held-out observation of that key with that value; the assessment is then content_bound. Without them it is still made, and is not content_bound",
+   "consequence": "a comparison over any assessment that is not content_bound names no preferred model"
+  },
+  "prediction_domain": {
+   "finding": "CORE-006",
+   "rule": "GaussianObservation and PredictiveObservableSpec gain conditions (name -> Quantity). A routed prediction is compared with the calibration observations it is given: every declared prediction condition must be declared by every calibration observation and lie within their [min, max] on that name. Otherwise the prediction record is DOWNGRADED",
+   "reasons": {
+    "PREDICTION_DOMAIN_NOT_DECLARED": "no calibration observations were given, or the prediction or some calibration observation declares no conditions, or a prediction condition is not declared by every calibration observation (downgrade)",
+    "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS": "a prediction condition lies outside the calibration's range of that condition (downgrade)"
+   },
+   "range_tolerance": "a value equal to an end of the range, to 1e-9 relative, is inside",
+   "class": "definitional; the box is per condition, which is stated as the residual (a joint region is not checked)"
+  },
+  "independence_recorded": {
+   "finding": "CORE-012",
+   "rule": "every routed predictive record states measurement_errors_assumed_independent = true; no claim changes"
+  }
+ },
+ "stated_residuals_before_implementation": [
+  "CORE-006: the calibrated region is a per-condition box, not a joint region; the predictor callable is not bound to the calibrated model (only to its posterior digest)",
+  "CORE-007: a study that never passes split and calibration_table gets no preferred model rather than a checked one",
+  "CORE-012: correlated or systematic errors remain unrepresentable; the record states the assumption rather than testing it"
+ ],
+ "amendments": "recorded here as dated entries, never edited in place"
+}
