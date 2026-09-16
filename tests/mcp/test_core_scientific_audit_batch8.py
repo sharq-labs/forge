@@ -162,8 +162,11 @@ def test_r04_derive_verdict_reads_a_required_basis_on_its_own():
     validity = [ModelValidityRecord(model_id="m", version="1",
                                     assessment=ValidityAssessment(status=ValidityStatus.IN_DOMAIN,
                                                                   satisfied=("c",)))]
-    verified = [ValidationCheck(name="analytic", outcome=ValidationOutcome.PASS,
-                                establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+    # R-04 (batch 9): ANALYTICALLY_VERIFIED is now held to its issuer's record. What is under test
+    # here is the evidence BASIS, which is the KIND a level is, and DIMENSIONALLY_VALID is the same
+    # kind -- verification -- and needs no issuer.
+    verified = [ValidationCheck(name="dimensional", outcome=ValidationOutcome.PASS,
+                                establishes=ValidationLevel.DIMENSIONALLY_VALID,
                                 residual=1e-9, tolerance=1e-6)]
     assert derive_verdict(validity=validity, validation=verified) is CredibilityVerdict.SUPPORTED
     assert derive_verdict(validity=validity, validation=verified,
@@ -239,11 +242,12 @@ def test_r47_a_real_check_is_unaffected():
     validity = [ModelValidityRecord(model_id="m", version="1",
                                     assessment=ValidityAssessment(status=ValidityStatus.IN_DOMAIN,
                                                                   satisfied=("c",)))]
-    real = ValidationCheck(name="analytic", outcome=ValidationOutcome.PASS,
-                           establishes=ValidationLevel.ANALYTICALLY_VERIFIED, residual=1e-9, tolerance=1e-6)
+    real = ValidationCheck(name="dimensional", outcome=ValidationOutcome.PASS,
+                           establishes=ValidationLevel.DIMENSIONALLY_VALID, residual=1e-9,
+                           tolerance=1e-6)
     assert derive_verdict(validity=validity, validation=[real]) is CredibilityVerdict.SUPPORTED
     assert derive_verdict(validity=validity, validation=[real],
-                          required_levels=[ValidationLevel.ANALYTICALLY_VERIFIED]) is CredibilityVerdict.SUPPORTED
+                          required_levels=[ValidationLevel.DIMENSIONALLY_VALID]) is CredibilityVerdict.SUPPORTED
 
 
 # =====================================================================

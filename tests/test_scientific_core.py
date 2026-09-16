@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
+from issued_levels import analytic_issuer_evidence
 from engcore.scientific import (
     AmbiguousSolverError,
     BindingIssueKind,
@@ -1127,7 +1128,10 @@ def test_validation_level_requires_a_passing_check():
             ValidationCheck(
                 "analytic", ValidationOutcome.PASS,
                 establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
-                evidence=("fixture:agreement with a named closed form",),
+                # R-04: the issuer's own record, beside what this fixture already said. The level
+                # is this fixture's means, not its subject.
+                evidence=analytic_issuer_evidence()
+                + ("fixture:agreement with a named closed form",),
             ),
         )
     )

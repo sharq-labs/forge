@@ -333,3 +333,81 @@ one: `tests/mcp/test_server.py`'s `SimpleNamespace` gained `evidence_basis`, `le
 No assertion was weakened.
 
 **Open decisions.** None in this batch.
+
+### Batch 9 — I-09, part B of two
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-09 | **DONE** | `03da331`, `b71d878` (part A), `d66a7fe` (preregistration + 14 strict xfails), this commit | DIMENSIONALLY_VALID and NUMERICALLY_CONVERGED still need no issuer; the bundle manifest is still unkeyed; the rule has the oracle rule's strength and no more; `thresholds.award` is not load-bearing in lumped |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-04 | **FIXED** | The issuer half closes here. A check that PASSes or WARNs and declares ANALYTICALLY_VERIFIED must now name **exactly one registered analytic reference**, as `"<id>: <expression>"` with the expression equal to the registered one byte for byte, and carry **exactly one threshold record** equal to the awarding gate's declared identity and fingerprint — or, for the level's other legitimate issuer, a pinned ANALYTIC_REFERENCE oracle's record, which the existing `_oracle_issuer_gap` already verifies. `engcore.domains` gains `SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS`, pinning the three closed forms this layer stands behind with their expressions and digests, recomputed at import so the table and the constants cannot drift. `thermal_models.lumped` gains a declared gate, `thermal_models.lumped.analytic_reference@0.1.0`, so the tolerance its analytic check is judged against has an owner; `SOLVER_ROUNDING_ULPS` keeps its name and value and is read from it. `ValidationCheck(PASS, establishes=ANALYTICALLY_VERIFIED, evidence=("trust me",))` is refused, as the same construction claiming BENCHMARK_VALIDATED already was. The two remaining parts of R-04 — an issuer for DIMENSIONALLY_VALID and NUMERICALLY_CONVERGED, and a keyed bundle manifest — are **OPEN**, recorded as such, and neither is in I-09's text. |
+
+**The production verdict did not move, and the hard benchmark was re-scored to check.**
+`python benchmarks/hard/score_hard.py --src $PWD/src --cases benchmarks/hard/cases_hard --split dev
+--workers 4`, on the dev partition the tracked `results_hard.json` holds. The sealed hold-out was not
+opened, no case file was read or written by hand, and no truth or adjudication file was touched. Every
+number is identical: 1400 scored, 243 sound, 1157 unsound, exact verdict match 1362/1400 (97.3%), catch rate
+1157/1157 (100.0%), false accept 0/1157, false reject 0/243. The only difference in the regenerated file is
+its `generated` timestamp, so no committed claim moved and the file's bytes are left as the 2026-09-09 run
+wrote them. Both production producers — the lumped analytic check the one SUPPORTED MCP report rests on, and
+the conduction1d refinement gate — keep the level, through their issuers.
+
+**Three things the implementation had to change from the preregistration**, all in the protocol's amendment
+log rather than glossed:
+
+1. **The rule reads the line the producers already wrote.** The preregistration asked for three new evidence
+   lines. `src/engcore/domains/thermal/` is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments, whose
+   claim is that their measured bias is a property of *that* solver, and
+   `test_frozen_thermal_solver_digests_match` caught the edit immediately. That pin is evidence this work has
+   no authority to spend. The stronger reason is the second one: **a digest of a public value carries no more
+   authority than the value.** The oracle rule needs a content digest because an oracle's evidence is data
+   the caller does not hold; an analytic reference's expression is in the source. So the two carried lines
+   were ceremony, the expression is compared in full instead, and the authority is where it always was — the
+   registry and the declared threshold set. **What that costs:** the rule has exactly the strength of the
+   oracle rule the audit named as the model, and no more. Every line it requires is reproducible from public
+   data, so it refuses a careless or invented claim and not a determined forgery. The core already states
+   that residual in `_issuer_gap` and it is unchanged. The *consensus* rule is stronger, because its binding
+   lines carry a digest over the run's own numbers — data nobody has who did not run it. An analytic
+   reference has no equivalent.
+2. **Three checks became one, because two were dead code.** The first implementation compared the gate name,
+   the version and the values fingerprint separately, and the mutation run showed two of the three could be
+   removed with every test still green: all three compared against the gate the *registry* names rather than
+   the one the record names, so each was subsumed by the fingerprint. One comparison now, of the whole
+   `<gate>@<version>#<fingerprint>` line. A survivor that buys the removal of dead code from a guard is a
+   survivor doing its job.
+3. **`thresholds.award(...)` is not load-bearing in the lumped check, and B9h is recorded as an expected
+   survivor.** Mutating it to award the level beside its gate leaves the level in place, because the check
+   still writes a valid threshold record and the issuer gap is what enforces it. `LumpedThermalSolver` takes
+   no caller-facing `thresholds=` argument, so there is no override for `award` to withhold from. It is kept
+   because it is the one place such an argument would be judged and because every other gate reads this way,
+   but the log says SURVIVED rather than counting it.
+
+**Blast radius, and what was done about it.** 14 hand-built ANALYTICALLY_VERIFIED checks in 9 test files lost
+their level. Nothing was weakened:
+
+* three sites in `tests/mcp/` moved to `DIMENSIONALLY_VALID`, which is the same evidence *basis* —
+  verification — and needs no issuer. Their subject is a verdict, a record or a basis, not that level;
+* the rest build the check through a new support module, `tests/issued_levels.py`, which resolves the
+  issuer's record from the two registries so a fixture cannot drift from the rule it satisfies;
+* `tests/test_core_guards.py::_guarded_level` moved from ANALYTICALLY_VERIFIED to DIMENSIONALLY_VALID. That
+  helper exists to name "a level sentence-evidence can still legitimately carry" and has now moved twice for
+  exactly that reason; its docstring records both moves and what would move it again;
+* `tests/test_audit_consensus_level_issuers.py::test_weaker_levels_are_unchanged` asserted that this level
+  needed no issuer. That statement is what this batch changed, so the test now names the two levels that
+  still need none and points at the new batch-9 suite for the one that does not;
+* `tests/test_trust_boundary_threshold_authority.py`'s `CANONICAL` list gained the new gate, which is what
+  that file's test G exists to force.
+
+**Guard mutations.** `BATCH9_MUTATIONS.log`: **9 of 10 KILLED**, the tenth an expected survivor documented
+above, control green. The 9 pinned mutations on the three files this batch changed were re-run isolated and
+all 9 are still KILLED (`BATCH9_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6506 passed, 15 xfailed, 18 failed (the by-design 18, unchanged). Expensive tier
+identical to the recorded baseline. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None in this batch.

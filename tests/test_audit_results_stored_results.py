@@ -28,6 +28,7 @@ import json
 
 import pytest
 
+from issued_levels import analytic_issuer_evidence
 from engcore.domains.thermal_models.lumped import LUMPED_CAPACITY_MODEL
 from engcore.mcp.evidence import (
     STORED_ATTRIBUTION_CHECK,
@@ -68,12 +69,16 @@ def _result(**overrides) -> ScientificResult:
     provenance = ProvenanceRecord(
         run_id="audit-run", bindings=(ExecutionBinding(model=MODEL, solver=SOLVER),)
     )
+    # R-04 (core re-audit 2026-09-16): ANALYTICALLY_VERIFIED is held to its issuer's record now.
+    # The level is this fixture's means and not its subject, so the check carries the two records a
+    # genuine issuer writes. Every assertion below is unchanged.
     check = ValidationCheck(
         name="analytic",
         outcome=ValidationOutcome.PASS,
         establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
         residual=1e-9,
         tolerance=1e-6,
+        evidence=analytic_issuer_evidence(),
     )
     fields = dict(
         result_id="audit-result",

@@ -1,8 +1,12 @@
 {
   "schema": "core_v4_false_confidence_threshold_protocol/1",
   "batch": 9,
-  "improvements": ["I-09 (part B of two)"],
-  "problems_addressed": ["R-04 (the issuer half)"],
+  "improvements": [
+    "I-09 (part B of two)"
+  ],
+  "problems_addressed": [
+    "R-04 (the issuer half)"
+  ],
   "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
   "baseline_commit": "b71d878",
   "written_before_any_rule_below_was_implemented_or_scored": true,
@@ -12,7 +16,6 @@
     "the three analytic references in src/ and their expressions, read to write the registry: thermal_models.lumped.series_recurrence, thermal.conduction1d.single_mode_analytic, kinetics.cstr.adiabatic_reaction_free_invariant, and that conduction1d and cstr already write a DECLARED threshold record into their checks' evidence while lumped writes none",
     "NOTHING about how any rule below scores on the hard benchmark or anywhere else"
   ],
-
   "rules": {
     "analytically_verified_needs_a_pinned_reference": {
       "improvement": "I-09",
@@ -21,14 +24,16 @@
       "why_this_shape": "it is the oracle rule's shape, which the audit names as the model: identity, content digest, a pinned authority line, and a re-verification against a registry the caller does not hold. The threshold record is the consensus rule's second half: the level belongs to the domain that awards it, and a set that is not the domain's own awards nothing. Neither is invented here.",
       "what_it_refuses": "a hand-written check, however worded. `evidence=('trust me',)` carries no reference line; a fabricated `analytic-reference:` line names an unregistered id; a copied line whose digest does not match the registered expression is refused; and a `thresholds:` record the caller built is not is_declared.",
       "what_it_does_not_refuse": "a check copied verbatim from a genuine solve onto another result. That residual is the core's own, stated in `_issuer_gap`, and is unchanged: closing it needs the record bound to the result it qualifies, which the frozen check shape has no field for.",
-      "class": "A (a re-verification against a pinned registry; no threshold)"
+      "class": "A (a re-verification against a pinned registry; no threshold)",
+      "measured_outcome": "implemented, with the record it reads CHANGED from the preregistered one -- see amendment_log entry 1. The hand-written check, an unregistered reference, a changed closed form, two references, a missing or doubled threshold record, another domain's declared set and a caller-built set are all refused. Both production producers keep the level. The hard benchmark re-scored identically."
     },
     "the_registry_pins_the_statement_and_not_the_code": {
       "improvement": "I-09",
       "problem": "R-04",
       "rule": "The registry pins each reference's id, version, the module constant that declares it, the reference EXPRESSION as a string, and the SHA-256 of that expression. It does not pin the implementing module's source bytes.",
       "why": "what makes the level meaningful is WHICH closed form the solve was compared against, and that is the expression. A source digest would move on every edit to a file, including edits that do not touch the formula, and would make the level brittle rather than bound. The three expressions are: thermal_models.lumped.series_recurrence -> sha256 2534eb18c91ca70e9dbd156ce76b824a75c2f595f3cb05f16eaab77352fd5ba4; thermal.conduction1d.single_mode_analytic -> a8564c9933fbad5abed6e16fd6f12188a3318872b27b8489f0222a04aee5f1c6; kinetics.cstr.adiabatic_reaction_free_invariant -> 0fb7efc02108e3d14f7b0369ea83ddbdfebcbc7834b153c11bee14161681693b. Each is recomputed at import from the constant it names, so the table and the constant cannot drift apart silently -- the same discipline the threshold table already uses.",
-      "class": "A"
+      "class": "A",
+      "measured_outcome": "implemented as stated. The registry pins the expression and its digest; the digest is the drift guard between the table and the constant, asserted by tests/test_core_scientific_audit_batch9.py::test_r04_the_registry_and_the_constants_it_names_cannot_drift, and is NOT a line the check carries -- see amendment_log entry 1."
     },
     "the_lumped_reference_gate_is_declared": {
       "improvement": "I-09",
@@ -46,7 +51,6 @@
       "class": "A (a stated non-rule)"
     }
   },
-
   "compatibility_impact": {
     "the_verdict_word": "UNCHANGED as a vocabulary. Whether any PARTICULAR verdict moves is a measurement, not a choice, and the hard benchmark is re-scored to find out. The intent is that it does not: the three production producers are given real issuer records, so the levels they award stay earned. If a production verdict does move, that is reported and not hidden.",
     "the_hard_benchmark": "re-scored with `--split dev --workers 4`, which is the partition the tracked results_hard.json holds. The sealed hold-out is NOT opened, no case file is read or written, and no truth or adjudication file is touched.",
@@ -58,15 +62,43 @@
     "check_bytes": "all three producers' analytic checks gain evidence lines. Any SHA-pinned fixture holding one moves and is regenerated by writing bytes.",
     "tests": "14 hand-built ANALYTICALLY_VERIFIED PASS checks in 9 test files lose their level. Each is examined: a test whose subject is a level-bearing check, not that particular level, is moved to DIMENSIONALLY_VALID with the reason in place; a test whose subject IS this level gains a real issuer record. No assertion is weakened or removed."
   },
-
   "residuals_stated_in_advance": [
     "The tolerance is not re-derived; see the rule of that name.",
     "A check copied verbatim from a genuine solve onto another result still carries a genuine record. The core's own residual, unchanged.",
     "DIMENSIONALLY_VALID and NUMERICALLY_CONVERGED still need no issuer. The audit's fix direction wants a declared unit_exemplar comparison record and a declared threshold set; neither is in I-09's text. NUMERICALLY_CONVERGED is the closer of the two, since every producer in src/ already awards it through a declared gate -- what is missing is the REQUIREMENT. Recorded as OPEN under R-04 after this batch.",
     "The bundle manifest is still unkeyed (finding 43's third consequence): write_bundle, an edit, a rewritten manifest and verify_bundle still report ok. A signing problem, not a verdict rule. OPEN under R-04.",
-    "The cstr `independent_steady_state_agreement` check deliberately establishes NO level (IND-04), so this rule does not touch it."
+    "The cstr `independent_steady_state_agreement` check deliberately establishes NO level (IND-04), so this rule does not touch it.",
+    "DISCOVERED WHILE IMPLEMENTING: `thresholds.award(...)` in the lumped analytic check is not load-bearing, because the solver takes no caller-facing thresholds argument. See amendment_log entry 3 for the one-line change that would fix it.",
+    "DISCOVERED WHILE IMPLEMENTING: the rule's strength is the oracle rule's strength and no more -- every line it requires is reproducible from public data. See amendment_log entry 1, 'what_this_costs'.",
+    "14 hand-built ANALYTICALLY_VERIFIED checks in 9 test files lost their level. Three in tests/mcp/ moved to DIMENSIONALLY_VALID, which is the same evidence BASIS and needs no issuer; the rest build the check through the new tests/issued_levels.py, which resolves the issuer's record from the two registries so a fixture cannot drift from the rule. tests/test_core_guards.py::_guarded_level moved from ANALYTICALLY_VERIFIED to DIMENSIONALLY_VALID, which is the second time that helper has moved for this reason and its docstring now records both. tests/test_audit_consensus_level_issuers.py::test_weaker_levels_are_unchanged asserted that this level needed no issuer; that statement is what the batch changed, and the test now names the two levels that still need none."
   ],
-
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-16",
+      "entry": 1,
+      "what": "the record the rule reads is the line the producers ALREADY wrote, and there is no new evidence line, no carried digest and no authority line",
+      "preregistered": "the check's evidence must carry exactly one `analytic-reference:<id>` line, one `analytic-reference-digest:sha256:<hex>` line, the literal `analytic-authority:repository-pinned`, and one `thresholds:` record.",
+      "implemented": "the check's evidence must name exactly one REGISTERED reference as `\"<id>: <expression>\"`, with the expression equal to the registered one byte for byte, and carry exactly one `thresholds:` record equal to the awarding gate's declared identity and fingerprint.",
+      "why_1_the_pin": "src/engcore/domains/thermal/ is SHA-256 pinned by the frozen thermal_t1, t2 and t3 experiments, whose central claim is that their measured bias is a property of THAT solver. Adding an evidence line to thermal/conduction1d/validation.py broke the pin (tests/test_thermal_t1_fidelity_inference.py::test_frozen_thermal_solver_digests_match caught it immediately). That pin is evidence this work has no authority to spend, exactly as engcore/domains/__init__.py already says for the same tree, so the rule is written to the records the producers already keep.",
+      "why_2_the_stronger_reason": "a digest of a PUBLIC value carries no more authority than the value. The oracle rule needs one because an oracle's evidence is data the caller does not hold; an analytic reference's expression is in the source. Comparing the expression in full is the same strength as comparing a digest of it, with one step fewer. So the two carried lines the preregistration asked for were ceremony, and the authority is where it always was: the registry (this id is one the repository stands behind) and the declared threshold set (which a caller cannot forge).",
+      "what_this_costs": "the rule has exactly the strength of the ORACLE rule the audit named as the model, and no more: every line it requires is reproducible from public data, so it refuses a careless or invented claim and not a determined forgery. The core already states that residual in _issuer_gap ('what this cannot do is tell an issued record from a faithful copy of one'), and it is unchanged. The CONSENSUS rule is stronger, because its binding lines carry a digest over the run's own numbers -- data a caller does not have unless they ran it. An analytic reference has no equivalent.",
+      "effect_on_the_rules_already_scored": "none; no other rule changes."
+    },
+    {
+      "date": "2026-09-16",
+      "entry": 2,
+      "what": "the three-part threshold comparison became one, because the batch-9 mutation run showed two parts were dead code",
+      "detail": "the first implementation checked the gate name, the version and the values fingerprint separately. Two mutations SURVIVED: all three compared against the gate the REGISTRY names rather than the one the record names, so each was subsumed by the fingerprint comparison. The implementation now makes one comparison of the whole `<gate>@<version>#<fingerprint>` line against the registry's, and B9d/B9e mutate that one line against the two cases it covers. A survivor that buys the removal of dead code from a guard is a survivor doing its job.",
+      "effect_on_the_rules_already_scored": "none; the rule is the same rule, expressed once."
+    },
+    {
+      "date": "2026-09-16",
+      "entry": 3,
+      "what": "B9h is recorded as an EXPECTED SURVIVOR, and what that admits",
+      "detail": "mutating the lumped check to award ANALYTICALLY_VERIFIED beside its gate rather than through `thresholds.award(...)` leaves the level in place, because the check still writes a valid threshold record and the issuer gap is what enforces it. LUMPED_ANALYTIC_REFERENCE_THRESHOLDS is a module constant and LumpedThermalSolver takes no `thresholds=` argument, so there is no caller override for `award` to withhold from. `award` is kept -- it is the one place a future `thresholds=` argument would be judged, and every other gate in the repository reads this way -- but it is NOT load-bearing in lumped today, and the mutation log and the audit document say so rather than counting it as a killed guard.",
+      "the_change_that_would_make_it_load_bearing": "give LumpedThermalSolver a keyword-only `thresholds: VerificationThresholds = LUMPED_ANALYTIC_REFERENCE_THRESHOLDS` and thread it to _reference_check, which is what the other three gates do. Additive, and out of I-09's scope; recorded as a residual.",
+      "effect_on_the_rules_already_scored": "none."
+    }
+  ]
 }

@@ -9,10 +9,13 @@ and the one SUPPORTED report either MCP tool can return rests on exactly that le
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH9_THRESHOLD_PROTOCOL.json`. Every test here was
 committed as `xfail(strict=True)` first and run with `--runxfail` at b71d878 to watch it fail; the markers
-came off in the implementation commit. What each failed on there, recorded so the evidence is not overstated:
+came off in the implementation commit, and the xfail commit is d66a7fe. What each failed on there, recorded so the evidence is not overstated:
 2 on an assertion (the production lumped check's evidence, and `DID NOT RAISE` for the hand-written check,
 which is an assertion about a refusal that is absent), and 12 on an `ImportError` for the registry or the
-threshold set the improvement adds. The registry is imported LAZILY inside each test for that reason: a
+threshold set the improvement adds. The tests were then rewritten once, after the implementation found that
+`src/engcore/domains/thermal/` is SHA-256 pinned by three frozen experiments and could not gain an evidence
+line -- see the protocol's amendment log; the rule they assert is the same rule, over the records the
+producers already kept. The registry is imported LAZILY inside each test for that reason: a
 module-level import would have made every test a collection error, which is not a failing assertion and
 proves nothing about the guard.
 
@@ -57,18 +60,26 @@ def _registries():
     return SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS, SCIENTIFIC_THRESHOLD_DECLARATIONS
 
 
-def _issued(reference_id: str, **overrides) -> dict:
-    """The evidence a genuine issuer writes for ``reference_id``."""
+def _thresholds_of(reference_id: str):
+    """The declared VerificationThresholds of the gate the registry says awards ``reference_id``."""
     references, gates = _registries()
-    declared = references[reference_id]
-    gate = gates[declared["thresholds_gate"]]
+    gate = gates[references[reference_id]["thresholds_gate"]]
     module, _, name = str(gate["declared_by"]).rpartition(".")
-    thresholds = getattr(__import__(module, fromlist=[name]), name)
+    return getattr(__import__(module, fromlist=[name]), name)
+
+
+def _issued(reference_id: str, **overrides) -> dict:
+    """The evidence a genuine issuer writes for ``reference_id``.
+
+    Two lines, and both are lines the producers in src/ already wrote before this batch: the reference
+    named as ``"<id>: <expression>"``, and the awarding gate's declared threshold record. What the
+    batch adds is the rule that CHECKS them.
+    """
+    references, _gates = _registries()
+    declared = references[reference_id]
     lines = {
-        "reference": f"analytic-reference:{reference_id}",
-        "digest": f"analytic-reference-digest:sha256:{declared['expression_digest']}",
-        "authority": "analytic-authority:repository-pinned",
-        "thresholds": thresholds.evidence()[0],
+        "reference": f"{reference_id}: {declared['expression']}",
+        "thresholds": _thresholds_of(reference_id).evidence()[0],
     }
     lines.update(overrides)
     return lines
@@ -82,51 +93,72 @@ def _check(evidence, *, level=ANALYTIC, outcome=ValidationOutcome.PASS) -> Valid
 # =====================================================================
 # the refusals
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_a_hand_written_analytically_verified_check_is_refused():
     """The audited reproduction, verbatim."""
     with pytest.raises(ScientificValidationError, match="(?i)analytic"):
         _check(("trust me",))
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_an_unregistered_reference_is_refused():
+    """A reference id is a public string and was never proof of anything."""
     lines = _issued("thermal_models.lumped.series_recurrence")
-    lines["reference"] = "analytic-reference:my.own.closed_form"
-    with pytest.raises(ScientificValidationError, match="(?i)not pinned|registry"):
+    lines["reference"] = "my.own.closed_form: T(t) = whatever I like"
+    with pytest.raises(ScientificValidationError, match="(?i)no single analytic reference"):
         _check(lines.values())
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
-def test_r04_a_reference_digest_that_is_not_the_registered_one_is_refused():
-    """A copied reference line with the expression quietly changed."""
-    lines = _issued("thermal_models.lumped.series_recurrence")
-    lines["digest"] = "analytic-reference-digest:sha256:" + "0" * 64
-    with pytest.raises(ScientificValidationError, match="(?i)digest|declaration"):
+def test_r04_a_closed_form_that_is_not_the_registered_one_is_refused():
+    """A copied reference line with the statement quietly changed: the level says a solve agreed
+    with a SPECIFIC closed form, and this is a different statement."""
+    reference_id = "thermal_models.lumped.series_recurrence"
+    lines = _issued(reference_id)
+    lines["reference"] = f"{reference_id}: T(t) = T0 for all t"
+    with pytest.raises(ScientificValidationError, match="(?i)not the registered one"):
         _check(lines.values())
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
-def test_r04_a_record_that_does_not_claim_repository_authority_is_refused():
+def test_r04_naming_two_registered_references_is_refused():
+    """One check, one closed form. Two would leave a reader unable to say which was compared."""
     lines = _issued("thermal_models.lumped.series_recurrence")
-    del lines["authority"]
-    with pytest.raises(ScientificValidationError, match="(?i)repository-pinned"):
+    references, _ = _registries()
+    other = "kinetics.cstr.adiabatic_reaction_free_invariant"
+    lines["second"] = f"{other}: {references[other]['expression']}"
+    with pytest.raises(ScientificValidationError, match="(?i)no single analytic reference"):
         _check(lines.values())
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_a_caller_built_threshold_set_is_refused():
     """The consensus rule's second half: a set that is not the domain's own awards nothing."""
     lines = _issued("thermal_models.lumped.series_recurrence")
     invented = VerificationThresholds(gate_id="thermal_models.lumped.analytic_reference",
                                       version="0.1.0", values={"rounding_ulps": 1.0e9})
     lines["thresholds"] = invented.evidence()[0]
-    assert not invented.is_declared
-    with pytest.raises(ScientificValidationError, match="(?i)declared set"):
+    assert not invented.is_declared, "the same gate id and version, other numbers"
+    with pytest.raises(ScientificValidationError, match="(?i)threshold specification"):
         _check(lines.values())
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
+def test_r04_a_check_with_no_threshold_record_is_refused():
+    """A valid reference and no record of which numbers it was judged against.
+
+    Its own test because the hand-written case above is refused a step earlier, for naming no
+    registered reference -- which the batch-9 mutation run showed: removing this guard left that
+    test green, so it was proving nothing about this one.
+    """
+    lines = _issued("thermal_models.lumped.series_recurrence")
+    del lines["thresholds"]
+    with pytest.raises(ScientificValidationError, match="(?i)no single verification threshold record"):
+        _check(lines.values())
+
+
+def test_r04_two_threshold_records_are_refused():
+    """One check, one set of numbers. Two would leave a reader unable to say which judged it."""
+    lines = _issued("thermal_models.lumped.series_recurrence")
+    lines["second"] = _thresholds_of("kinetics.cstr.adiabatic_reaction_free_invariant").evidence()[0]
+    with pytest.raises(ScientificValidationError, match="(?i)no single verification threshold record"):
+        _check(lines.values())
+
+
 def test_r04_a_reference_whose_gate_is_another_domains_is_refused():
     """The registry says which gate awards which reference; another domain's declared set is not it."""
     from engcore.domains.electrical.dc.validation import DC_CONVERGENCE_THRESHOLDS
@@ -134,11 +166,10 @@ def test_r04_a_reference_whose_gate_is_another_domains_is_refused():
     lines = _issued("thermal_models.lumped.series_recurrence")
     assert DC_CONVERGENCE_THRESHOLDS.is_declared
     lines["thresholds"] = DC_CONVERGENCE_THRESHOLDS.evidence()[0]
-    with pytest.raises(ScientificValidationError, match="(?i)gate|awards"):
+    with pytest.raises(ScientificValidationError, match="(?i)threshold specification"):
         _check(lines.values())
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_a_refused_payload_cannot_be_read_back_either():
     """The read rule is the write rule: a report cannot carry what the constructor refuses."""
     honest = _check(_issued("thermal_models.lumped.series_recurrence").values())
@@ -152,7 +183,6 @@ def test_r04_a_refused_payload_cannot_be_read_back_either():
 # what still stands
 # =====================================================================
 @pytest.mark.parametrize("reference_id", REFERENCES)
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_every_registered_reference_can_issue_its_level(reference_id):
     check = _check(_issued(reference_id).values())
     assert check.establishes is ANALYTIC
@@ -167,7 +197,6 @@ def test_r04_a_fail_or_not_run_is_held_to_nothing():
         assert ValidationReport(checks=(check,)).attained_levels == frozenset()
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_the_registry_and_the_constants_it_names_cannot_drift():
     """Each entry's digest is recomputed from the constant it names, here as well as at import."""
     references, gates = _registries()
@@ -183,22 +212,24 @@ def test_r04_the_registry_and_the_constants_it_names_cannot_drift():
 # =====================================================================
 # the three production producers
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_the_production_lumped_check_carries_its_issuer_record():
-    """The one SUPPORTED report either MCP tool can return rests on this check."""
+    """The one SUPPORTED report either MCP tool can return rests on this check.
+
+    It already named its reference; what it had no trace of was a declared threshold set, so the
+    tolerance it was judged against belonged to nobody.
+    """
     from engcore.mcp.problem import example_electrothermal_payload, run_electrothermal_case
 
+    references, _ = _registries()
     report = run_electrothermal_case(example_electrothermal_payload(), run_id="batch9").reports[0]
     (analytic,) = [c for c in report.validation if c.establishes is ANALYTIC]
     lines = set(analytic.evidence)
-    assert "analytic-authority:repository-pinned" in lines
-    assert any(line.startswith("analytic-reference:") for line in lines)
-    assert any(line.startswith("analytic-reference-digest:sha256:") for line in lines)
+    reference_id = "thermal_models.lumped.series_recurrence"
+    assert f"{reference_id}: {references[reference_id]['expression']}" in lines
     assert any(line.startswith("thresholds:thermal_models.lumped.analytic_reference@") for line in lines)
     assert report.attained_levels == frozenset({ANALYTIC}), "the level is still earned, by its issuer"
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 @pytest.mark.expensive
 def test_r04_the_conduction1d_and_cstr_gates_carry_their_issuer_records():
     """Both already wrote a DECLARED threshold record; what they lacked was a pinned reference."""
@@ -213,16 +244,19 @@ def test_r04_the_conduction1d_and_cstr_gates_carry_their_issuer_records():
                           diffusivity=Quantity(1.2e-5, "meter**2/second"),
                           end_time=Quantity(60.0, "second"),
                           discretization=SlabDiscretization(64, 80))
-    (check,) = [c for c in run_verification_gate(slab).report().checks
+    references, _ = _registries()
+    (check,) = [c for c in run_verification_gate(slab).to_report().checks
                 if c.name == "analytic_reference_agreement"]
     lines = set(check.evidence)
-    assert "analytic-authority:repository-pinned" in lines
-    assert "analytic-reference:thermal.conduction1d.single_mode_analytic" in lines
+    reference_id = "thermal.conduction1d.single_mode_analytic"
+    assert f"{reference_id}: {references[reference_id]['expression']}" in lines
     assert any(line.startswith("thresholds:thermal.conduction1d.refinement@") for line in lines)
     assert check.establishes is ANALYTIC, "the level is still earned, by its issuer"
+    # Nothing under src/engcore/domains/thermal/ was edited to make that true: the tree is SHA-256
+    # pinned by the frozen thermal_t1/t2/t3 experiments, and the rule is written to the records this
+    # gate already kept.
 
 
-@pytest.mark.xfail(strict=True, reason="I-09 part B not implemented yet (batch 9 preregistration)")
 def test_r04_a_caller_override_still_withholds_the_level_and_keeps_the_report():
     """The threshold rule's own promise, unchanged: the comparison, the residual and the detail all
     survive an override; only the claim is withheld. Now the issuer rule cannot be what refuses it."""
@@ -233,6 +267,6 @@ def test_r04_a_caller_override_still_withholds_the_level_and_keeps_the_report():
     assert not overridden.is_declared
     lines = _issued("thermal_models.lumped.series_recurrence")
     lines["thresholds"] = overridden.evidence()[0]
-    withheld = _check(lines.values(), level=None)
+    withheld = _check(lines.values(), level=None)  # what `award` returns for an override
     assert withheld.establishes is None
     assert withheld.residual == 1e-9 and withheld.tolerance == 1e-6

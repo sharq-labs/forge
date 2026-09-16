@@ -90,7 +90,10 @@ def _result(**overrides) -> ScientificResult:
         convergence=ConvergenceState.CONVERGED,
         validation=ValidationReport(checks=(ValidationCheck(
             name="analytic", outcome=ValidationOutcome.PASS,
-            establishes=ValidationLevel.ANALYTICALLY_VERIFIED, residual=1e-9, tolerance=1e-6),)),
+            # R-04 (batch 9): ANALYTICALLY_VERIFIED is now held to its issuer's record. This
+            # fixture needs a level-bearing PASS check and not that particular level, and
+            # DIMENSIONALLY_VALID needs no issuer.
+            establishes=ValidationLevel.DIMENSIONALLY_VALID, residual=1e-9, tolerance=1e-6),)),
         validity={MODEL.model_id: _in_domain()},
     )
     fields.update(overrides)

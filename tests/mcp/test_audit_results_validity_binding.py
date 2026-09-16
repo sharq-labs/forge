@@ -47,7 +47,10 @@ SOLVER = SolverIdentity("anything", "1")
 PASSED = ValidationCheck(
     name="analytic_reference",
     outcome=ValidationOutcome.PASS,
-    establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+    # R-04 (core re-audit 2026-09-16): ANALYTICALLY_VERIFIED is now held to its issuer's record.
+    # What this fixture needs is a level-bearing PASS check, not that particular level, and
+    # DIMENSIONALLY_VALID needs no issuer. Every assertion below is unchanged.
+    establishes=ValidationLevel.DIMENSIONALLY_VALID,
     residual=1e-9,
     tolerance=1e-6,
 )

@@ -244,6 +244,142 @@ def _issuer_gap(
         ValidationLevel.EXPERIMENTALLY_VALIDATED,
     ):
         return _oracle_issuer_gap(level, residual, tolerance, tuple(evidence))
+    if level is ValidationLevel.ANALYTICALLY_VERIFIED:
+        # TWO legitimate issuers, which is what the audit's fix direction asks for: "a pinned oracle
+        # record OR a declared threshold set". A pinned ANALYTIC_REFERENCE oracle awards this level
+        # through `_LEVEL_BY_KIND`, and a domain gate awards it against a registered closed form.
+        # An `oracle:` line says which rule the record is claiming, so the two cannot be mixed to
+        # satisfy neither.
+        if any(isinstance(line, str) and line.startswith("oracle:") for line in evidence):
+            return _oracle_issuer_gap(level, residual, tolerance, tuple(evidence))
+        return _analytic_issuer_gap(tuple(evidence))
+    return None
+
+
+#: Where the domain layer pins the closed forms it stands behind (R-04, core re-audit 2026-09-16).
+#: Read by name, like the threshold and route declarations, so the core never learns what is in it.
+ANALYTIC_REFERENCE_DECLARATIONS_ATTRIBUTE = "SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS"
+
+#: How an analytic reference's issuer names it in a check's evidence: ``"<reference id>: <expression>"``.
+#: The producers already wrote exactly this line; what was missing was anything that CHECKED it.
+ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR = ": "
+
+
+def _analytic_references() -> Mapping[str, Any]:
+    """The domain layer's pinned analytic references, or none if it pins none."""
+    import importlib
+
+    try:
+        package = importlib.import_module(f"{__name__.split('.')[0]}.domains")
+    except ImportError:  # pragma: no cover - an installation without its domains
+        return {}
+    table = getattr(package, ANALYTIC_REFERENCE_DECLARATIONS_ATTRIBUTE, None)
+    return table if isinstance(table, Mapping) else {}
+
+
+def _threshold_declarations() -> Mapping[str, Any]:
+    """The domain layer's pinned verification gates, read the way the thresholds module reads them."""
+    from .thresholds import _declarations
+
+    return _declarations()
+
+
+def _analytic_issuer_gap(evidence: tuple[str, ...]) -> str | None:
+    """Why a check claiming ANALYTICALLY_VERIFIED names no verifiable issuer, or ``None``.
+
+    R-04 (core re-audit 2026-09-16). An issuer record was required for only the three levels above
+    this one, and this one needed nothing but GUARD 2's "something was compared" -- where a sentence
+    is something. ``ValidationCheck(PASS, establishes=ANALYTICALLY_VERIFIED, evidence=("trust me",))``
+    was constructed, attained, survived ``from_dict`` and carried a SUPPORTED verdict, while the very
+    same construction claiming BENCHMARK_VALIDATED was refused. And every SUPPORTED report either MCP
+    tool can return rests on exactly this level.
+
+    The rule is the oracle rule's shape and the consensus rule's second half, neither invented here:
+
+    1. the check names exactly one analytic reference, as ``"<reference id>: <expression>"`` --
+       which is the line all three producers already wrote;
+    2. that reference is REGISTERED by the domain layer, because a reference id is a public string
+       and was never proof of anything;
+    3. the expression the check names is the registered expression, byte for byte -- what makes the
+       level meaningful is WHICH closed form the solve was compared against;
+    4. the check names exactly one threshold record, of the gate the registration says awards this
+       reference's level, and that record is that gate's declared set: the level belongs to the
+       domain that awards it, and a set that is not the domain's own awards nothing.
+
+    **Why the expression and not a digest of it.** The oracle rule requires a content digest because
+    an oracle's evidence is data the caller does not hold, so the digest binds the claim to something
+    outside the check. An analytic reference's expression is *in the source*, and a digest of a public
+    value carries no more authority than the value: anyone who can copy one can copy the other. So the
+    authority here is the registry (this id is one the repository stands behind) and the declared
+    threshold set (which a caller cannot forge), and the expression is compared in full rather than
+    through a digest that would add a step and no strength.
+
+    This also means no producer has to write a new evidence line, which matters: everything under
+    ``src/engcore/domains/thermal/`` is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments,
+    whose claim is that their measured bias is a property of *that* solver. That pin is evidence this
+    work has no authority to spend, so the rule is written to the records the producers already keep.
+
+    What this cannot do is tell an issued record from a faithful copy of one, which is
+    :func:`_issuer_gap`'s own residual, verbatim: a check copied from a genuine solve onto another
+    result carries a genuine record, and closing that needs the record bound to the result it
+    qualifies, which the frozen shape of this check has no field for.
+    """
+    references = _analytic_references()
+    named = [
+        line.split(ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR, 1)
+        for line in evidence
+        if isinstance(line, str) and ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR in line
+        and line.split(ANALYTIC_REFERENCE_EVIDENCE_SEPARATOR, 1)[0] in references
+    ]
+    if len(named) != 1:
+        return (
+            f"it names no single analytic reference this layer pins; the registry holds "
+            f"{sorted(references)}"
+        )
+    reference_id, expression = named[0]
+    declaration = references[reference_id]
+    if not isinstance(declaration, Mapping):
+        return f"analytic reference {reference_id!r} is not pinned by the analytic reference registry"
+    if expression != declaration.get("expression"):
+        return (
+            f"the closed form it names for {reference_id!r} is not the registered one: the level says "
+            f"a solve agreed with a specific closed form, and this is a different statement"
+        )
+    gate_id = declaration.get("thresholds_gate")
+    records = [
+        line[len("thresholds:"):]
+        for line in evidence
+        if isinstance(line, str) and line.startswith("thresholds:")
+    ]
+    if len(records) != 1:
+        return (
+            f"it carries no single verification threshold record; {reference_id!r}'s level is awarded "
+            f"by gate {gate_id!r} and a check that does not say which numbers it was judged against "
+            f"has not said the gate judged it"
+        )
+    # ONE comparison, against the domain layer's pin -- not an object rebuilt from the evidence, and
+    # not three checks where one does the work.
+    #
+    # `VerificationThresholds.evidence()` writes `thresholds:<gate>@<version>#<fingerprint>`, where
+    # the fingerprint is the first 16 hex of the values digest and a caller's override carries
+    # `+override.<marker>` in its version. The expected string is built from the gate the REGISTRY
+    # names for this reference, so a record naming another gate, another version, or other numbers
+    # fails the same comparison -- which is why there is one. The first draft had three, and the
+    # batch-9 mutation run showed two of them were dead: removing either left the third catching
+    # every case, because all three were compared against the registry's gate rather than the
+    # record's own. That is the same four steps `_verified_against_declaration` applies -- registered
+    # gate, registered version, registered values digest, not an override -- read off the line.
+    declared_gate = _threshold_declarations().get(gate_id)
+    if not isinstance(declared_gate, Mapping):
+        return f"gate {gate_id!r} is not pinned by the verification threshold registry"
+    pinned = str(declared_gate.get("threshold_digest") or "")
+    expected = f"{gate_id}@{declared_gate.get('version')}#{pinned[:16]}"
+    if records[0] != expected:
+        return (
+            f"its threshold record is {records[0]!r}; the set {gate_id!r} declares is {expected!r}. A "
+            f"record naming another gate, another version of it, or other numbers is a threshold "
+            f"specification and not the awarding gate's own, and awards nothing"
+        )
     return None
 
 

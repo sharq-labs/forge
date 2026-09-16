@@ -53,6 +53,7 @@ import itertools
 
 import pytest
 
+from issued_levels import analytic_issuer_evidence
 from engcore.mcp.evidence import (
     CouplingEvidence,
     CredibilityVerdict,
@@ -104,7 +105,13 @@ def _record(model_id: str, status: ValidityStatus) -> ModelValidityRecord:
 
 
 def _check(name: str, outcome: ValidationOutcome, level=None) -> ValidationCheck:
-    """A check that is internally coherent, so the shape guards admit it."""
+    """A check that is internally coherent, so the shape guards admit it.
+
+    R-04 (core re-audit 2026-09-16): a level an external issuer grants also needs that issuer's
+    record, so a PASS declaring one carries it. The level is this module's means -- every property
+    below perturbs a SUPPORTED core and asks whether the verdict moved the right way -- and not its
+    subject, so nothing else changes.
+    """
     if outcome is ValidationOutcome.PASS:
         return ValidationCheck(
             name=name,
@@ -113,6 +120,11 @@ def _check(name: str, outcome: ValidationOutcome, level=None) -> ValidationCheck
             establishes=level,
             residual=0.0,
             tolerance=1e-9,
+            evidence=(
+                analytic_issuer_evidence()
+                if level is ValidationLevel.ANALYTICALLY_VERIFIED
+                else ()
+            ),
         )
     if outcome is ValidationOutcome.FAIL:
         return ValidationCheck(

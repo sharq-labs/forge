@@ -127,8 +127,18 @@ def test_a_check_that_claims_nothing_may_still_name_the_level(outcome):
 
 
 def test_weaker_levels_are_unchanged():
-    ValidationCheck(name="c", outcome=ValidationOutcome.PASS,
-                    establishes=ValidationLevel.ANALYTICALLY_VERIFIED, evidence=("closed form",))
+    """R-04 (core re-audit 2026-09-16) moved ANALYTICALLY_VERIFIED out of this set.
+
+    VAL-01 held three levels to an issuer's record and this test asserted the other three were
+    unchanged. That was the gap the re-audit found: ANALYTICALLY_VERIFIED is a claim that a solve
+    agrees with an independent closed form, and a prose evidence string was enough to make it. The
+    level now needs a pinned analytic reference or a pinned oracle, which
+    tests/test_core_scientific_audit_batch9.py asserts. The two levels that still need no issuer,
+    and are still recorded as an OPEN residual under R-04, are these.
+    """
+    for level in (ValidationLevel.DIMENSIONALLY_VALID, ValidationLevel.NUMERICALLY_CONVERGED):
+        ValidationCheck(name="c", outcome=ValidationOutcome.PASS, establishes=level,
+                        evidence=("a comparison this test does not make",))
 
 
 # ---- VAL-01: what the platform issues still stands ----------------------------------------

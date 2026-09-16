@@ -34,6 +34,7 @@ from engcore.domains.electrical.dc.validation import (
 )
 from engcore.domains.electrical.dc_consensus import DC_CONSENSUS_THRESHOLDS
 from engcore.domains.kinetics.cstr.validation import CSTR_GATE_THRESHOLDS
+from engcore.domains.thermal_models.lumped import LUMPED_ANALYTIC_REFERENCE_THRESHOLDS
 from engcore.domains.thermal.conduction1d.validation import (
     CONDUCTION_GATE_THRESHOLDS,
     VerificationReport,
@@ -63,11 +64,19 @@ from tests.route_declarations_for_tests import (  # noqa: F401 - autouse fixture
     route_declarations_for_tests,
 )
 
+#: Every gate the domain layer registers. Walked from this list on one side and from the registry on
+#: the other (test G), so adding a gate means adding it here -- which is the point: a gate that
+#: awards a level and is registered without anybody noticing is what test G exists to prevent.
+#:
+#: LUMPED_ANALYTIC_REFERENCE_THRESHOLDS joined in R-04 (core re-audit 2026-09-16): the lumped
+#: analytic-reference check awarded ANALYTICALLY_VERIFIED against a tolerance the module computed
+#: with nothing declared behind it, and that is the check the one SUPPORTED MCP report rests on.
 CANONICAL = (
     DC_CONSENSUS_THRESHOLDS,
     DC_CONVERGENCE_THRESHOLDS,
     CSTR_GATE_THRESHOLDS,
     CONDUCTION_GATE_THRESHOLDS,
+    LUMPED_ANALYTIC_REFERENCE_THRESHOLDS,
 )
 CANONICAL_IDS = [c.gate_id for c in CANONICAL]
 LEVEL = ValidationLevel.CROSS_SOLVER_VALIDATED

@@ -30,6 +30,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import ModelValidityError, ScientificCoreError
 from engcore.scientific.models.definition import (
     CategoryCondition,
@@ -230,6 +231,8 @@ def test_the_verdict_rules_did_not_change():
         name="analytic_verification",
         outcome=ValidationOutcome.PASS,
         establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+        # R-04: the issuer's own record. The level is this fixture's means, not its subject.
+        evidence=analytic_issuer_evidence(),
         residual=1e-9,
         tolerance=1e-6,
     )

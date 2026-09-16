@@ -40,6 +40,7 @@ import dataclasses
 
 import pytest
 
+from issued_levels import analytic_issuer_evidence
 from engcore.scientific.errors import ScientificCoreError
 from engcore.scientific.results.provenance import ProvenanceRecord
 from engcore.scientific.results.result import ScientificResult
@@ -282,6 +283,8 @@ def test_a_validation_verdict_cannot_be_flipped_after_construction() -> None:
         name="analytic_agreement",
         outcome=ValidationOutcome.NOT_RUN,
         establishes=ValidationLevel.ANALYTICALLY_VERIFIED,
+        # R-04: the issuer's own record. The level is this fixture's means, not its subject.
+        evidence=analytic_issuer_evidence(),
     )
     report = ValidationReport(checks=(check,))
     assert report.attained_levels == frozenset()
