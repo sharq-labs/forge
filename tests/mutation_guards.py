@@ -2074,8 +2074,10 @@ EVIDENCE: dict[str, tuple[str, str]] = {
             'test_huq13_nested_mappings_of_a_validated_record_are_immutable'),
     'G33ah': ('SCIENTIFIC_ASSERTION',
             'test_huq13_nested_mappings_of_a_validated_record_are_immutable'),
-    'G34a': ('VALIDITY_INVARIANT',
-            'test_supercritical_water_like_reactor_is_not_in_domain_without_a_boiling_point'),
+    # Same mechanism as G34b, in the shipped CSTR model: without its liquid-phase conditions the
+    # model reserves derived quantities nothing reads, and ModelValidityError refuses it while
+    # problem.py is imported. Measured.
+    'G34a': ('VALIDITY_INVARIANT', REFUSED_AT_IMPORT),
     # Dropping the liquid-phase conditions leaves the K4 alternative model reserving derived
     # quantities nothing reads, and ModelValidityError refuses it while the module is imported --
     # the refusal IS the guard, and no named test runs. Measured, after the round reported this
