@@ -1,0 +1,72 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 9,
+  "improvements": ["I-09 (part B of two)"],
+  "problems_addressed": ["R-04 (the issuer half)"],
+  "audit": "docs/audits/CORE_REAUDIT_2026-09-16.md",
+  "baseline_commit": "b71d878",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "PRODUCTION. The one SUPPORTED report either MCP tool can return rests on exactly this level: thermal_models.lumped's `analytic_reference_agreement`. The hard benchmark scores MCP verdicts, so this rule is scored there and the benchmark is re-run.",
+  "what_was_already_seen": [
+    "the audited reproduction only: `ValidationCheck(PASS, establishes=ANALYTICALLY_VERIFIED, evidence=('trust me',))` is constructed, attained, survives from_dict and carries a SUPPORTED verdict, while the same construction claiming BENCHMARK_VALIDATED or CROSS_SOLVER_VALIDATED is refused -- and that the production lumped check carries a prose evidence string and a tolerance the domain computes per solve, with no threshold record and no oracle record",
+    "the three analytic references in src/ and their expressions, read to write the registry: thermal_models.lumped.series_recurrence, thermal.conduction1d.single_mode_analytic, kinetics.cstr.adiabatic_reaction_free_invariant, and that conduction1d and cstr already write a DECLARED threshold record into their checks' evidence while lumped writes none",
+    "NOTHING about how any rule below scores on the hard benchmark or anywhere else"
+  ],
+
+  "rules": {
+    "analytically_verified_needs_a_pinned_reference": {
+      "improvement": "I-09",
+      "problem": "R-04",
+      "rule": "A check that PASSes or WARNs and declares ANALYTICALLY_VERIFIED must carry, in its evidence, exactly one `analytic-reference:<id>` line, exactly one `analytic-reference-digest:sha256:<hex>` line, the literal line `analytic-authority:repository-pinned`, and exactly one `thresholds:<gate>@<version>#<fingerprint>` record. The reference id must be registered in a new `SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS` table on `engcore.domains`; the digest must equal the registered digest of the reference's own expression; and the threshold record must name the gate that registration says awards this reference's level, with a set that `is_declared`.",
+      "why_this_shape": "it is the oracle rule's shape, which the audit names as the model: identity, content digest, a pinned authority line, and a re-verification against a registry the caller does not hold. The threshold record is the consensus rule's second half: the level belongs to the domain that awards it, and a set that is not the domain's own awards nothing. Neither is invented here.",
+      "what_it_refuses": "a hand-written check, however worded. `evidence=('trust me',)` carries no reference line; a fabricated `analytic-reference:` line names an unregistered id; a copied line whose digest does not match the registered expression is refused; and a `thresholds:` record the caller built is not is_declared.",
+      "what_it_does_not_refuse": "a check copied verbatim from a genuine solve onto another result. That residual is the core's own, stated in `_issuer_gap`, and is unchanged: closing it needs the record bound to the result it qualifies, which the frozen check shape has no field for.",
+      "class": "A (a re-verification against a pinned registry; no threshold)"
+    },
+    "the_registry_pins_the_statement_and_not_the_code": {
+      "improvement": "I-09",
+      "problem": "R-04",
+      "rule": "The registry pins each reference's id, version, the module constant that declares it, the reference EXPRESSION as a string, and the SHA-256 of that expression. It does not pin the implementing module's source bytes.",
+      "why": "what makes the level meaningful is WHICH closed form the solve was compared against, and that is the expression. A source digest would move on every edit to a file, including edits that do not touch the formula, and would make the level brittle rather than bound. The three expressions are: thermal_models.lumped.series_recurrence -> sha256 2534eb18c91ca70e9dbd156ce76b824a75c2f595f3cb05f16eaab77352fd5ba4; thermal.conduction1d.single_mode_analytic -> a8564c9933fbad5abed6e16fd6f12188a3318872b27b8489f0222a04aee5f1c6; kinetics.cstr.adiabatic_reaction_free_invariant -> 0fb7efc02108e3d14f7b0369ea83ddbdfebcbc7834b153c11bee14161681693b. Each is recomputed at import from the constant it names, so the table and the constant cannot drift apart silently -- the same discipline the threshold table already uses.",
+      "class": "A"
+    },
+    "the_lumped_reference_gate_is_declared": {
+      "improvement": "I-09",
+      "problem": "R-04",
+      "rule": "thermal_models.lumped gains a declared VerificationThresholds set, `thermal_models.lumped.analytic_reference` at version 0.1.0, holding the rounding budget its tolerance is built from (`rounding_ulps`), registered in SCIENTIFIC_THRESHOLD_DECLARATIONS. Its analytic check awards through `thresholds.award` and writes `thresholds.evidence()`.",
+      "why_a_gate_at_all": "the level belongs to the domain that awards it, and until now the lumped check's tolerance was a number the module computed with nothing declared behind it. The value that IS a policy choice is the rounding budget; the rest of the tolerance is the reference's own reported error bound, which is a measurement and not a threshold.",
+      "the_number": "SOLVER_ROUNDING_ULPS, unchanged, moved from a module constant into the declared set's `rounding_ulps`. No number changes value in this batch.",
+      "class": "A (an existing number, given an owner)"
+    },
+    "the_tolerance_is_not_re_derived": {
+      "improvement": "I-09",
+      "problem": "R-04",
+      "rule": "The issuer rule does NOT re-derive the check's tolerance from the declared set, as the consensus rule does. It requires a declared set to be named and nothing more about the tolerance's value.",
+      "why_not": "the lumped tolerance is the reference's own per-solve error bound plus a rounding budget, and the conduction and cstr tolerances are relative errors down a refinement ladder. None is a single declared number the check's tolerance must equal, so the consensus rule's equality test does not apply and asserting one would be inventing a criterion these gates do not read. Recorded as a residual rather than approximated.",
+      "class": "A (a stated non-rule)"
+    }
+  },
+
+  "compatibility_impact": {
+    "the_verdict_word": "UNCHANGED as a vocabulary. Whether any PARTICULAR verdict moves is a measurement, not a choice, and the hard benchmark is re-scored to find out. The intent is that it does not: the three production producers are given real issuer records, so the levels they award stay earned. If a production verdict does move, that is reported and not hidden.",
+    "the_hard_benchmark": "re-scored with `--split dev --workers 4`, which is the partition the tracked results_hard.json holds. The sealed hold-out is NOT opened, no case file is read or written, and no truth or adjudication file is touched.",
+    "v1_and_v2_symbols": [
+      "validation._issuer_gap gains a branch. Private; no signature change.",
+      "engcore.domains gains SCIENTIFIC_ANALYTIC_REFERENCE_DECLARATIONS and one entry in SCIENTIFIC_THRESHOLD_DECLARATIONS. Additive.",
+      "thermal_models.lumped gains LUMPED_ANALYTIC_REFERENCE_THRESHOLDS. Additive. SOLVER_ROUNDING_ULPS keeps its name and value and is read from the declared set."
+    ],
+    "check_bytes": "all three producers' analytic checks gain evidence lines. Any SHA-pinned fixture holding one moves and is regenerated by writing bytes.",
+    "tests": "14 hand-built ANALYTICALLY_VERIFIED PASS checks in 9 test files lose their level. Each is examined: a test whose subject is a level-bearing check, not that particular level, is moved to DIMENSIONALLY_VALID with the reason in place; a test whose subject IS this level gains a real issuer record. No assertion is weakened or removed."
+  },
+
+  "residuals_stated_in_advance": [
+    "The tolerance is not re-derived; see the rule of that name.",
+    "A check copied verbatim from a genuine solve onto another result still carries a genuine record. The core's own residual, unchanged.",
+    "DIMENSIONALLY_VALID and NUMERICALLY_CONVERGED still need no issuer. The audit's fix direction wants a declared unit_exemplar comparison record and a declared threshold set; neither is in I-09's text. NUMERICALLY_CONVERGED is the closer of the two, since every producer in src/ already awards it through a declared gate -- what is missing is the REQUIREMENT. Recorded as OPEN under R-04 after this batch.",
+    "The bundle manifest is still unkeyed (finding 43's third consequence): write_bundle, an edit, a rewritten manifest and verify_bundle still report ok. A signing problem, not a verdict rule. OPEN under R-04.",
+    "The cstr `independent_steady_state_agreement` check deliberately establishes NO level (IND-04), so this rule does not touch it."
+  ],
+
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
