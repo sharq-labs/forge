@@ -1716,3 +1716,66 @@ on the two changed files, both KILLED. Three survived first and each produced wo
 and B26f are now paired (above), and B26l forced the populate block to be complete.
 
 **Open decisions.** None.
+
+### Batch 27 — I-22 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-22 | **PARTIAL** (part B of three) | `afb4694b`, `b9baf42e` (part A), `94b74325` (part B preregistration + 6 strict xfails), this commit | the record still does not say which unit its compared numbers are in — it is now derivable from the quantity's dimension, which is the point, but the record carries neither, so a reader has to know the quantities; writing it in would be a new key in a serialized record and belongs with I-25 or a schema bump; floors remain bare numbers in the threshold declaration (giving them explicit units is the audit's other fix direction and would change the threshold-set grammar and its digest); `CrossSolverConsensus.over` takes bare numbers and has no units to canonicalise |
+
+**R-xx closed.** R-52 is one defect at two sites, and it had a direction in each.
+
+| Claim | Status | How |
+|---|---|---|
+| declaration order decides the verdict | **FIXED** | CORE-018 fixed "1 m is not a 0.999 disagreement with 1000 mm" by converting every route's value into **the unit of the first declared route that reports the name** — and declaration order then decided two things it has no business deciding. The compared unit is now `base_unit` of the quantity's dimension: **a pure function of the dimension, so order cannot enter.** It is also the unit this module's own units layer names for exactly this job — "where a ratio or a difference has to be taken across two scales, this is the one they can both be put on". |
+| the ratio is taken on whatever scale arrived | **FIXED** | \|a−b\|/max(\|a\|,\|b\|) is a statement about a **ratio**, and a ratio means nothing where zero of the unit is a convention. `is_ratio_scale` had existed throughout — `CrossLimitCondition` used it and this comparison did not. Every coherent SI base unit *is* a ratio scale, so the canonical rule satisfies this structurally; the refusal is written anyway, and is exercised by a test that substitutes the identity for the canonical map (which is what CORE-018 did), because **a later common-unit rule that reintroduced an affine scale would otherwise be silent — and that silence is the shape R-52 had.** |
+| a declared floor takes its unit from order too | **FIXED** | `<tolerance_key>.floor.<kind>` is a bare number, so it needed a unit from somewhere and got it from declaration order: the same 1e-15 was worth 1e-15 A one way and **1e-9 A** the other, which turns 5e-10 A apart on a zero current into agreement. Read in the canonical unit it is fixed by the dimension. **Every floor DC declares keeps its meaning exactly** — node voltage, resistor voltage, current, power, dissipation; volt, ampere and watt are coherent, so the factor is 1 and no recorded magnitude or digest moves. |
+| `_same_operating_point` has the same shape | **FIXED** | A 1e-9 **relative** tolerance applied in `stated.units`: 0.02 degC against 0.020000001 degC is four parts in a trillion on the kelvin scale and read as a *different* operating point, while the identical 1e-9 K difference in kelvin read as the same one. Compared in the canonical unit now — which also makes the predicate **symmetric**, and "the same operating point" is a relation, not a claim one of the two makes about the other. `_OPERATING_POINT_RTOL` is untouched: this batch changes the scale a tolerance is applied on, never the tolerance. |
+
+**The direction matters in both directions, and the audit's numbers are reproduced here rather than
+restated.** 26.85 degC against 300.0000001 kelvin — one ten-billionth of a kelvin apart — scored 3.7244e-09
+and **disagreed** with the Celsius route declared first, and 3.3333e-10 and **agreed** with the kelvin route
+first, against one tolerance of 1e-9. That is the too-strict direction, which costs a true agreement. The
+loosening direction is the cryogenic pair: −273.14 degC against −273.1400000001 degC is a real 1e-8 relative
+disagreement on the kelvin scale and scored 3.7e-14 in Celsius, comfortably inside 1e-9.
+
+**One fixture number was corrected after seeing the run, and the claim was not.** The cryogenic reproduction
+was written with a 1e-11 degC difference and asserted the two spellings scored within 1e-6 of each other;
+that pair is a 1e-9 relative disagreement, not 1e-8, and subtracting 273.15 from a number near it is
+catastrophic cancellation, so the difference is resolved to about a part in ten thousand. The fixture now
+uses 1e-10 degC and compares the two spellings to a relative 1e-3, with the reason written in the test's own
+docstring. **The rule, the tolerance and the asserted verdict (`agreed is False`) are unchanged** — what
+moved was arithmetic in my fixture, not a threshold.
+
+**Compatibility.** Additive. No new public symbol, no signature, field, default or enum member change;
+`consensus.py` and `oracles.py` gain imports of `base_unit` and `is_ratio_scale`, which the layer ladder
+allows. No serialized record gains or loses a key. `reported_values` and each route's `values_digest` are
+magnitudes in the compared unit, so they would move for a quantity reported in a non-coherent unit — for
+every production and pinned consensus in this repository the factor is 1, asserted by the two tiers rather
+than by inspection.
+
+**The ledger says LATENT, and that is the honest word.** Both rules sit on code production runs — the only
+production caller of `from_results` is `dc_consensus`, and `_same_operating_point` is read by
+`ScientificResult`'s CORE-009/CORE-014 validity binding — but neither production path can currently present
+the **shape** the rules are about, so the guards are exercised in the library and the row says so.
+`what_would_create_it` names both shapes, and the first is ordinary: an external provider reporting in its
+own units rather than the native route's.
+
+**Committed evidence.** Nothing moved, for the reason above: every unit in play is coherent SI.
+`KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED markers.
+
+**No existing expectation moved.** The consensus and oracle suites pass unchanged (57 + the oracle, operating
+point and consensus selection reading 628 passed), which is itself the finding: nothing in the repository was
+asserting the order-dependent behaviour, so nothing was protecting it either.
+
+**Verification.** FAST tier 6796 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier at the recorded baseline. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH27_MUTATIONS.log`: **6 of 6 KILLED**, both controls green, plus 10 pinned re-runs
+on the two changed files all KILLED. None survived. One mutation is recorded as NOT MUTATED with its reason:
+the docstring and the floor's declaration comment are prose, and `mutation_guards._code_digest` ignores
+COMMENT and STRING tokens, so either edit reports MUTATION CHANGED NO CODE — what the docstring says is
+asserted by a test instead, because the defect being guarded against *is* prose that contradicts the code.
+
+**Open decisions.** None.

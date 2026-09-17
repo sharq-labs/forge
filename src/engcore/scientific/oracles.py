@@ -36,7 +36,7 @@ from .errors import ScientificValidationError
 from .results.immutable import freeze
 from .results.validation import ValidationCheck, ValidationLevel, ValidationOutcome
 from .serialization import require_schema, schema_string
-from .units.quantity import Quantity
+from .units.quantity import Quantity, base_unit
 from .units.validation import require_same_dimension
 
 
@@ -45,12 +45,25 @@ _OPERATING_POINT_RTOL = 1.0e-9
 
 
 def _same_operating_point(stated: Quantity, other: Any) -> bool:
-    """Whether ``other`` is the same quantity as ``stated``: same dimension, equal to 1e-9 relative, or both zero."""
+    """Whether ``other`` is the same quantity as ``stated``: same dimension, equal to 1e-9 relative, or both zero.
+
+    COMPARED IN THE CANONICAL UNIT OF THE DIMENSION, not in ``stated``'s own
+    (I-22, R-52). A 1e-9 RELATIVE tolerance is a statement about a ratio, and a
+    ratio means nothing on a scale whose zero is a convention: 0.02 degC and
+    0.020000001 degC are 273.17 K and 273.170000001 K -- four parts in a
+    trillion apart -- and read as DIFFERENT operating points, while the very
+    same 1e-9 K difference written in kelvin read as the same one. Comparing in
+    ``stated.units`` also made the predicate asymmetric, and "the same
+    operating point" is a relation, not a claim one of the two makes about the
+    other. The tolerance itself is untouched: what changes is the scale it is
+    applied on.
+    """
     if not isinstance(other, Quantity):
         return False
     try:
         require_same_dimension(stated, other, context="operating point")
-        a, b = stated.magnitude_in(stated.units), other.magnitude_in(stated.units)
+        canonical = base_unit(stated.units)
+        a, b = stated.magnitude_in(canonical), other.magnitude_in(canonical)
     except Exception:  # noqa: BLE001 - an incompatible statement is a different operating point
         return False
     return a == b or abs(a - b) <= _OPERATING_POINT_RTOL * max(abs(a), abs(b))

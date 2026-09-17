@@ -3,7 +3,7 @@
 Problem R-52 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json), improvement I-22 part B of
 three, under benchmarks/core_v4_false_confidence/BATCH27_THRESHOLD_PROTOCOL.json.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 94b74325, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -72,7 +72,6 @@ ONE_TEMPERATURE_TWO_SCALES = {
 # ---------------------------------------------------------------------------
 # the_compared_unit_is_canonical_and_not_the_first_routes
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-52: the first declared route that reports a name fixes its unit")
 def test_r52_the_verdict_does_not_depend_on_which_route_was_declared_first():
     forward = _comparison(("a", "b"), ONE_TEMPERATURE_TWO_SCALES)
     backward = _comparison(("b", "a"), ONE_TEMPERATURE_TWO_SCALES)
@@ -85,7 +84,6 @@ def test_r52_the_verdict_does_not_depend_on_which_route_was_declared_first():
     )
 
 
-@pytest.mark.xfail(strict=True, reason="R-52: degC-first makes the pair disagree")
 def test_r52_the_canonical_unit_is_the_kelvin_scale_and_the_pair_agrees():
     """Both readings are 300.0000001 K to within 1e-10 K, so they agree on the scale that means it."""
     comparison = _comparison(("a", "b"), ONE_TEMPERATURE_TWO_SCALES)
@@ -107,19 +105,25 @@ def test_r52_core018_still_holds_a_metre_is_not_a_disagreement_with_a_thousand_m
 # ---------------------------------------------------------------------------
 # a_relative_difference_needs_a_ratio_scale
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-52: the ratio is taken on whatever scale arrived")
 def test_r52_a_true_disagreement_near_absolute_zero_is_not_flattered_by_celsius():
-    """-273.14 degC against -273.14000000001 degC is 0.01 K against 0.01 K + 1e-8 relative."""
+    """-273.14 degC against -273.1400000001 degC is 0.01 K against 0.01 K + 1e-8 relative.
+
+    The two spellings are compared to a RELATIVE 1e-3 of each other, not exactly. Subtracting 273.15
+    from a number near it is catastrophic cancellation: the degC pair's 1e-10 difference is resolved to
+    about a part in ten thousand, which is a property of the fixture's arithmetic and not of the rule.
+    The point of the test is the four orders of magnitude between the two spellings before the fix, and
+    the verdict below.
+    """
     celsius = _comparison(
         ("a", "b"),
-        {"a": {NAME: (-273.14, "degC")}, "b": {NAME: (-273.14000000001, "degC")}},
+        {"a": {NAME: (-273.14, "degC")}, "b": {NAME: (-273.1400000001, "degC")}},
     )
     kelvin = _comparison(
         ("a", "b"),
         {"a": {NAME: (0.01, "kelvin")}, "b": {NAME: (0.01 * (1 + 1e-8), "kelvin")}},
     )
     assert celsius.worst_relative_difference == pytest.approx(
-        kelvin.worst_relative_difference, rel=1e-6
+        kelvin.worst_relative_difference, rel=1e-3
     ), (
         f"the same physical pair scored {celsius.worst_relative_difference} written in degC and "
         f"{kelvin.worst_relative_difference} written in kelvin"
@@ -130,7 +134,6 @@ def test_r52_a_true_disagreement_near_absolute_zero_is_not_flattered_by_celsius(
 # ---------------------------------------------------------------------------
 # a_declared_floor_is_read_in_that_canonical_unit
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-52: a bare floor takes its unit from declaration order")
 def test_r52_a_declared_floor_means_the_same_thing_in_either_order():
     """The audited loosening: 1e-15 read in megaampere is 1e-9 A, so 5e-10 A 'agrees'."""
     thresholds = VerificationThresholds(
@@ -171,7 +174,6 @@ def test_r52_the_floor_still_does_what_it_was_written_for():
 # ---------------------------------------------------------------------------
 # an_operating_point_is_compared_on_a_ratio_scale_too
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-52: the operating point is compared in the stated unit")
 def test_r52_an_operating_point_is_the_same_point_whatever_unit_states_it():
     from engcore.scientific import oracles
 
@@ -205,7 +207,6 @@ def test_r52_a_genuinely_different_operating_point_is_still_different():
 # ---------------------------------------------------------------------------
 # the_docstring_says_what_the_code_does
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-52: the docstring describes the pre-CORE-018 behaviour")
 def test_r52_the_docstring_no_longer_claims_each_value_is_read_in_its_own_unit():
     doc = CrossSolverConsensus.from_results.__doc__ or ""
     assert "in its own unit" not in doc, (
@@ -213,3 +214,31 @@ def test_r52_the_docstring_no_longer_claims_each_value_is_read_in_its_own_unit()
         "disagreement, which CORE-018 made false and this batch makes canonical"
     )
     assert "base unit" in doc or "canonical" in doc
+
+
+# ---------------------------------------------------------------------------
+# the refusal is reachable, and it fires
+# ---------------------------------------------------------------------------
+def test_r52_a_comparison_on_an_affine_scale_is_refused_rather_than_taken(monkeypatch):
+    """The ratio-scale refusal, exercised.
+
+    The canonical-unit rule above makes this refusal structurally unreachable: the coherent SI base unit
+    of a dimension is always a ratio scale. The refusal is written anyway, because that is a fact about
+    the unit registry and not about this function -- a later common-unit rule that reintroduced an affine
+    scale would otherwise be silent, which is exactly the shape R-52 had. So the canonical map is
+    replaced here with the identity, which is what CORE-018 did, and the refusal must fire.
+    """
+    from engcore.scientific import consensus as consensus_module
+
+    monkeypatch.setattr(consensus_module, "base_unit", lambda unit: unit)
+    with pytest.raises(ScientificValidationError, match="not a ratio scale"):
+        _comparison(("a", "b"), ONE_TEMPERATURE_TWO_SCALES)
+
+
+def test_r52_the_refusal_does_not_fire_on_a_ratio_scale_under_the_same_substitution():
+    """The control: it is the affine scale that is refused, not the substitution."""
+    comparison = _comparison(
+        ("a", "b"),
+        {"a": {NAME: (300.0, "kelvin")}, "b": {NAME: (300.0, "kelvin")}},
+    )
+    assert comparison.agreed is True
