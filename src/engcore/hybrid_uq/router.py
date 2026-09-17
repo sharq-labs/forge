@@ -14,7 +14,9 @@ declared bounds of an axis is not used: the width it reports there is the bounds
 
 from __future__ import annotations
 
+import hashlib
 import math
+import secrets
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
@@ -34,6 +36,7 @@ from ._records import (
 from ..scientific.results.immutable import freeze
 from ._grid_evidence import (
     EDGE_LOG_LIKELIHOOD_DROP, admissibility_cut_axes, grid_admissibility_truncation, grid_containment,
+    SPOT_CHECK_INADMISSIBLE_ROWS, SPOT_CHECK_WEIGHTED_ROWS,
     grid_goodness_of_fit, grid_is_this_evidence, grid_mode_resolution, grid_prior_uniformity,
 )
 from .identifiability import (
@@ -402,10 +405,17 @@ def _require_requested_grid(table, names, natural):
 
 #: Interior rows of a rebuilt table re-evaluated through the forward model, chosen from a digest of the table itself,
 #: on top of its two extreme corners, the node nearest the estimate and the table's own best-fitting node.
+#:
+#: NO LONGER THE COUNT, AND NO LONGER THE SEED (I-07, R-19). The audit says it in one sentence -- "a rebuild
+#: `table_builder` can do the same to `_require_table_agrees_with_forward`" -- and the mechanism is the one it
+#: measured on the supplied-grid path: the seed is a digest of the table's own values and mask, so a builder
+#: keeps the fixed rows honest, answers with a sharpened model everywhere else, and nudges one far-tail value
+#: until the drawn rows miss it. Two attempts were enough there. Kept because it is the constant a reader of
+#: the old behaviour will look for.
 _SPOT_CHECK_INTERIOR_ROWS = 4
 
 
-def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, forward):
+def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, forward, *, nonce=None):
     """Refuse a rebuilt table whose values are not the forward model's at the nodes it is spot-checked on (HUQ-05).
 
     ``_require_requested_grid`` binds a table's coordinates to the request; nothing bound its VALUES, so a builder
@@ -415,8 +425,6 @@ def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, f
     admitted node must be admitted by the forward evaluator and agree with it to ``SUPPLIED_PREDICTION_AGREEMENT_SD``
     observation sigmas; a node the forward evaluator admits must not be refused by the table.
     """
-    import hashlib
-
     if forward is None:
         raise HybridUQError("a rebuilt grid is verified against the forward evaluator; none was supplied")
     predictions, _columns = table.select_observations(observations)
@@ -428,12 +436,30 @@ def _require_table_agrees_with_forward(table, natural, mesh, z0, observations, f
     n = len(natural)
     span = np.where(np.ptp(mesh, axis=0) > 0.0, np.ptp(mesh, axis=0), 1.0)
     rows = {0, n - 1, int(np.argmin(np.sum(((mesh - z0) / span) ** 2, axis=1)))}
+    # THE ROWS ARE DRAWN FROM A SEED THE BUILDER DOES NOT CONTROL (I-07, R-19).
+    #
+    # `SPOT_CHECK_WEIGHTED_ROWS` rows by the posterior weight the table's own chi-square implies -- because
+    # a builder who moves a reported moment must move that weight -- and
+    # `SPOT_CHECK_INADMISSIBLE_ROWS` uniformly from the rows it refused, which carry no weight at all and
+    # are how a builder deletes mass without touching a value.
+    weight = np.zeros(n)
     if np.any(mask):
         chi = np.sum(((predictions - observed[None, :]) / sigma[None, :]) ** 2, axis=1)
         rows.add(int(np.argmin(np.where(mask, chi, np.inf))))
-    seed = hashlib.sha256(np.ascontiguousarray(table.values, dtype="<f8").tobytes()
-                          + np.ascontiguousarray(mask, dtype=np.uint8).tobytes()).digest()
-    rows.update(int.from_bytes(seed[4 * k:4 * k + 4], "little") % n for k in range(_SPOT_CHECK_INTERIOR_ROWS))
+        usable = mask & np.isfinite(chi)
+        if np.any(usable):
+            weight = np.where(usable, np.exp(-0.5 * (chi - np.min(chi[usable]))), 0.0)
+    stream = np.random.default_rng(np.frombuffer(
+        hashlib.sha256(nonce if nonce is not None else secrets.token_bytes(32)).digest(), dtype=np.uint32))
+    total = float(np.sum(weight))
+    if total > 0.0:
+        pool = np.flatnonzero(weight > 0.0)
+        draw = min(int(SPOT_CHECK_WEIGHTED_ROWS), pool.size)
+        rows.update(int(r) for r in stream.choice(pool, size=draw, replace=False, p=weight[pool] / total))
+    refused = np.flatnonzero(~mask)
+    if refused.size:
+        draw = min(int(SPOT_CHECK_INADMISSIBLE_ROWS), refused.size)
+        rows.update(int(r) for r in stream.choice(refused, size=draw, replace=False))
     for row in sorted(rows):
         value = evaluate(forward, natural[row], keys, units, references)
         if value is None:

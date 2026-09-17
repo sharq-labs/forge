@@ -2118,3 +2118,71 @@ no test here distinguishes the two. It is a defect in the rule's own *measuremen
 verdict, and the honest record is to declare it rather than to invent a fixture tuned to a factor of two.
 
 **Open decisions.** None.
+
+### Batch 33 — I-07 part B, and I-07 is DONE
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-07 | **DONE** | `19d6b5c8`, `dba69f30` (A: R-30, R-29), `2ff40531` (B preregistration + 11 strict xfails), this commit | a tampered region holding **less** than a quarter of the posterior weight is caught with probability below 0.99 — 17 draws catch a 10% region about 83% of the time, and the rule claims no more; certainty needs the audit's other alternative (re-evaluate every node within ln 1e6 of the peak) at a cost proportional to the grid; the weighted draw uses the **grid's own** weights, so a forger who lowers the weight of what they tampered with is drawn less often — but that lowering *is* the tampering and moves the moments the route reports, so the circularity is real and bounded rather than absent; a failing check is no longer reproducible without the nonce, which is correct for a probabilistic check and is why the detail names the nonce it drew |
+
+**R-19 is FIXED.** The audited forgery is worth restating, because the cost of the attack is the finding.
+
+> The honest grid is SUPPORTED with sd [0.02715, 0.04599]. Sharpen the bulk log-likelihood 4× — 5022 nodes
+> of 19881 — and keep the four fixed rows honest. Then change **one far-tail log-likelihood by 1e-9**, which
+> moves no posterior weight and passes every other check, and re-submit until the four seeded rows miss the
+> bulk. **Two attempts.** The forgery is GRID_AS_SUPPLIED SUPPORTED, considered USED, reporting
+> sd [0.01358, 0.02300] and PARAMETERS_IDENTIFIABLE.
+
+| Claim | Status | How |
+|---|---|---|
+| four of the eight rows are seeded from the supplier's own bytes | **FIXED** | The seed is a **verifier-side nonce**, `secrets.token_bytes(32)`, fresh on every call. A seed derived from the grid is a seed the supplier can search, and grinding it costs one 1e-9 change that moves no weight — so the search is free. Both functions take a keyword-only `nonce=` so a draw can be replayed, and **nothing in `src/` passes it**. |
+| a 25% tampered bulk escapes four draws 32% of the time | **FIXED** | 17 rows are drawn **without replacement in proportion to posterior weight**. 17 is computed, not chosen: `ceil(ln(1−0.99) / ln(1−0.25))`. **f = 0.25 is the audited attack** (5022/19881 = 25.3%), and P = 0.99 is the confidence level this core already uses for a decision of this kind. Weight-proportional because tampering that moves a reported *moment* must move posterior weight. |
+| inadmissible marks go unchecked | **FIXED** | An inadmissible node carries **zero** posterior weight, so a weighted draw can never reach one — and marking a quarter of the support refused deletes that mass without touching a single likelihood. Those nodes get their own uniform sample of 17, uniform being the only measure available on a set the posterior says nothing about. |
+| face nodes go unchecked, which defeats containment | **FIXED** | `grid_containment` is decided by the largest log-likelihood on each face, and a **contained** posterior has almost no weight there — so those are precisely the nodes a weighted draw is least likely to reach and precisely the ones a supplier would lower. All 2p of them are now always checked. |
+| a rebuild `table_builder` can do the same | **FIXED** | The audit says it in one sentence and the mechanism is identical. `_require_table_agrees_with_forward` draws the same way, weighting by the posterior the table's own chi-square implies. |
+
+**What it costs, stated rather than discovered.** The checked-row count rises from 8 to about
+4 + 2p + 17 + min(17, refused) — roughly 40 forward evaluations for a two-parameter grid. That is the price
+of the check being worth performing: **a spot check that samples 8 of 19881 nodes from the supplier's own
+seed is not a check.** Every term is a constant, so the cost does not grow with the grid.
+
+**Determinism is given up deliberately, and nothing depends on it.** This check writes nothing into a
+record — it returns a reason or None — so no digest, snapshot or committed artifact depends on which rows
+were drawn.
+
+**Amendment 1: four of eight mutations did not do their job, and each said something.** B33b pins the nonce
+to a constant *at the call site*, which a reproduction calling the row chooser directly cannot see — it now
+runs through the binding and captures the nonces, because **a hard-coded nonce is worse than the grid's own
+bytes: it never even changes**. B33d makes the draw uniform, and the reproduction compared against the top
+25% of node *count* — a quarter of the box, which a uniform draw hits just as often; it now measures against
+the nodes holding 95% of the posterior **mass**, under a tenth of this grid, and asserts the fixture is
+discriminating before measuring anything. B33g wraps the same digest of `table.values` in a
+`nonce if nonce is not None else …` that did not contain the one substring being looked for. And B33a's own
+edit reported MUTATION CHANGED NO CODE because it carried a comment-only paired edit.
+
+**One mutation is a declared survivor, and it is a gap in this repository rather than in the rule.** B33h
+makes the *rebuild* path's draw uniform. The audit demonstrated the forgery on the **supplied** grid and
+asserted the rebuild's exposure in one sentence without measuring it, so there is no rebuild forgery here to
+detect — the honest control is all that runs. Building one needs a `table_builder` that answers with a
+sharpened model at the requested coordinates, a fixture this batch does not have. `expect="SURVIVED"` records
+that rather than implying coverage.
+
+**Compatibility.** Additive. Two new module constants, one new keyword-only argument with a default on each
+of two functions. `SPOT_CHECK_INTERIOR_NODES` and `_SPOT_CHECK_INTERIOR_ROWS` keep their names and values and
+stop being the count — written at both definitions, beside what the old seed cost.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**No existing expectation moved.** `tests/hybrid_uq/` 429 passed, which is the finding: nothing was asserting
+which rows were checked, so nothing was protecting the four seeded ones either.
+
+**Verification.** FAST tier 6861 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH33_MUTATIONS.log`: **7 of 7 KILLED plus one declared survivor**, both controls
+green, plus pinned re-runs on the changed files all KILLED.
+
+**Open decisions.** None.

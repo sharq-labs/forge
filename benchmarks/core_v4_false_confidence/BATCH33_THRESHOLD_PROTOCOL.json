@@ -63,5 +63,22 @@
   "`secrets.token_bytes` makes a failing check non-reproducible: a grid that passes once may fail on a second call with a different draw. That is correct for a probabilistic check and inconvenient, so the refusal detail names the nonce it drew, and both functions accept one.",
   "Nothing here bounds what a forger can do to nodes OUTSIDE the ln 1e6 band, and nothing needs to: those nodes carry less than 1e-6 of the peak density, which is the same bound `grid_containment` and the mode search already work to."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. Three reproductions were strengthened, all forced by this batch's mutation run, and one mutation's own edit was rewritten.",
+   "the_numbers_that_forced_it": "Four of eight mutations did not do their job on the first run. (a) B33b pins the nonce to a CONSTANT at the binding's call site, and the reproduction called the row chooser directly with nonce=None -- which cannot see a call site. It now runs through `grid_is_this_evidence` with the chooser wrapped, and checks the captured nonces too: a hard-coded nonce is worse than the grid's own bytes, because it never even changes. (b) B33d makes the draw UNIFORM, and the reproduction compared against the top 25% of node COUNT -- a quarter of the box, which a uniform draw hits just as often. It now uses the smallest set of nodes holding 95% of the posterior MASS, which on this fixture is under a tenth of the grid, and requires at least 10 of the 17 drawn rows to land there on average. (c) B33g wraps the same digest of `table.values` in a `nonce if nonce is not None else ...`, which does not contain the one exact substring the reproduction looked for; it now asserts over the whole seed expression that the table is not in it. (d) B33a's own edit reported MUTATION CHANGED NO CODE, because it carried a comment-only paired edit; rewritten as a single-line seed substitution.",
+   "guards_strengthened": [
+    "test_r19_the_draw_is_not_a_function_of_the_grids_own_bytes now observes the draw THROUGH the binding and captures the nonces.",
+    "test_r19_the_draw_lands_where_the_posterior_weight_is now measures against posterior MASS rather than node count, and asserts the fixture is discriminating before it measures anything.",
+    "test_r19_the_rebuilt_table_check_no_longer_seeds_from_the_table now asserts over the seed expression rather than one substring."
+   ],
+   "one_deliberate_survivor": {
+    "id": "B33h",
+    "rule": "the rebuild path's weight-proportional draw",
+    "why": "The audit demonstrated the forgery on the SUPPLIED grid and asserted the rebuild's exposure in one sentence without a measurement, so this repository has no rebuild forgery to detect: the uniform draw is indistinguishable from the weighted one here, and the honest control is all that runs. Building the fixture needs a table_builder that answers with a sharpened model at the requested coordinates, which this batch does not have. Declared `expect=\"SURVIVED\"` so the gap is recorded rather than implied, and so a kill becomes the failure."
+   }
+  }
+ ]
 }

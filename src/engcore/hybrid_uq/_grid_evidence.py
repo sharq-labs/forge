@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import math
+import secrets
 
 import numpy as np
 
@@ -41,7 +42,30 @@ EDGE_LOG_LIKELIHOOD_DROP = math.log(1.0e6)
 
 #: Interior nodes of a supplied grid re-evaluated through the forward model, chosen from a digest of the grid's bytes,
 #: on top of its first and last node, its highest-likelihood node and the node nearest a calibrated estimate.
+#:
+#: NO LONGER THE COUNT, AND NO LONGER THE SEED (I-07, R-19). Every byte that digest was taken over is the
+#: SUPPLIER's, so a forger keeps the four fixed rows honest, sharpens the posterior bulk, and then changes one
+#: far-tail log-likelihood by 1e-9 -- which moves no weight and passes every other check -- until the four
+#: drawn rows miss the bulk. The audit measured TWO attempts, and the forged grid reported sd [0.01358,
+#: 0.02300] against the honest [0.02715, 0.04599], GRID_AS_SUPPLIED SUPPORTED. Even ungrounded, a 25%
+#: tampered bulk escapes four draws with probability 0.75^4 = 32%. The rows are now drawn by
+#: `_spot_check_rows` from a verifier-side nonce. Kept because it is the constant a reader of the old
+#: behaviour will look for.
 SPOT_CHECK_INTERIOR_NODES = 4
+
+#: I-07 (R-19): nodes drawn WITHOUT replacement in proportion to posterior weight, and nodes drawn uniformly
+#: from the inadmissible ones. Not chosen: ``ceil(ln(1 - P) / ln(1 - f))`` with P = 0.99 and f = 0.25 is 17 --
+#: the number of weight-proportional draws that miss a tampered region holding a quarter of the posterior
+#: weight with probability at most 0.01. f = 0.25 IS THE AUDITED ATTACK (5022 of 19881 nodes, 25.3%, which
+#: halved every reported width), and P = 0.99 is the confidence level this core already uses for a decision of
+#: this kind. Weight-proportional because tampering that moves a reported MOMENT must move posterior weight,
+#: so weight is the measure the thing being protected lives under.
+#:
+#: The inadmissible sample is UNIFORM and needs its own draw: such a node carries zero posterior weight, so a
+#: weighted draw can never select one -- and a node marked refused that the model admits is exactly how mass
+#: is deleted from a posterior without touching a likelihood.
+SPOT_CHECK_WEIGHTED_ROWS = 17
+SPOT_CHECK_INADMISSIBLE_ROWS = 17
 
 #: CORE-010: an axis is uniform in its inference coordinate when no step differs from the mean step by more than this
 #: fraction of it. A float64 linspace, and its image through exp or log, stays far inside.
@@ -71,6 +95,67 @@ PRIOR_REWEIGHT_MOMENT_SD = 0.05
 RESIDUAL_AGREEMENT_SD = 1.0e-6
 
 
+def _spot_check_rows(grid: PosteriorGrid, calibration, *, nonce: bytes | None = None) -> tuple[int, ...]:
+    """Which nodes of a supplied grid are re-evaluated through the forward model (I-07, R-19).
+
+    Four fixed rows, the highest-log-likelihood node of every FACE, ``SPOT_CHECK_WEIGHTED_ROWS`` nodes drawn
+    without replacement in proportion to posterior weight, and ``SPOT_CHECK_INADMISSIBLE_ROWS`` drawn
+    uniformly from the inadmissible ones.
+
+    ``nonce`` is the verifier's. Omitted, a fresh 32-byte one is taken from ``secrets`` on every call, so the
+    draw does not exist until the check runs and a supplier has nothing to search against; the audited
+    forgery ground the old seed -- a digest of the grid's own bytes -- in two attempts. Pass one to replay a
+    draw. Nothing this check produces enters a record, so the loss of a reproducible DRAW costs no digest,
+    snapshot or artifact.
+
+    The faces are not an optimisation: ``grid_containment`` is decided by the largest log-likelihood on each
+    face, and a contained posterior has almost no weight there, so those are the nodes a weighted draw is
+    LEAST likely to reach and exactly the ones a supplier would lower.
+    """
+    ll = np.asarray(grid.log_likelihood, dtype=np.float64)
+    usable = np.asarray(grid.admissible_mask, dtype=bool) & np.isfinite(ll)
+    points = np.asarray(grid.points, dtype=np.float64)
+    count = len(points)
+    rows = {0, count - 1, int(np.argmax(np.where(usable, ll, -np.inf)))}
+    if isinstance(calibration, CalibrationResult) and calibration.estimate_vector:
+        span = np.ptp(points, axis=0)
+        span = np.where(span > 0.0, span, 1.0)
+        rows.add(int(np.argmin(np.sum(((points - np.asarray(calibration.estimate_vector)) / span) ** 2, axis=1))))
+
+    shape = _lattice_shape(points)
+    if shape is not None and int(np.prod(shape)) == count:
+        lattice = np.where(usable, ll, -np.inf).reshape(shape)
+        for axis in range(len(shape)):
+            for index in (0, shape[axis] - 1):
+                face = np.take(lattice, index, axis=axis)
+                flat = int(np.argmax(face))
+                position = list(np.unravel_index(flat, face.shape))
+                position.insert(axis, index)
+                rows.add(int(np.ravel_multi_index(tuple(position), shape)))
+
+    stream = np.random.default_rng(np.frombuffer(
+        hashlib.sha256(nonce if nonce is not None else secrets.token_bytes(32)).digest(), dtype=np.uint32))
+    weight = np.where(usable, np.exp(ll - np.max(ll[usable])), 0.0) if np.any(usable) else np.zeros(count)
+    total = float(np.sum(weight))
+    if total > 0.0:
+        pool = np.flatnonzero(weight > 0.0)
+        draw = min(int(SPOT_CHECK_WEIGHTED_ROWS), pool.size)
+        rows.update(int(r) for r in stream.choice(pool, size=draw, replace=False, p=weight[pool] / total))
+    refused = np.flatnonzero(~usable)
+    if refused.size:
+        draw = min(int(SPOT_CHECK_INADMISSIBLE_ROWS), refused.size)
+        rows.update(int(r) for r in stream.choice(refused, size=draw, replace=False))
+    return tuple(sorted(rows))
+
+
+def _lattice_shape(points: "np.ndarray") -> tuple[int, ...] | None:
+    """The node counts per axis of a full rectangular lattice, or None when the points are not one."""
+    if points.ndim != 2 or points.shape[1] == 0:
+        return None
+    shape = tuple(int(np.unique(points[:, i]).size) for i in range(points.shape[1]))
+    return shape if all(n > 0 for n in shape) else None
+
+
 def _log_normalizer(observations: ObservationSet) -> float:
     _observed, sigma = observations.numeric_vectors()
     return -0.5 * float(np.sum(np.log(2.0 * math.pi * sigma * sigma)))
@@ -93,7 +178,7 @@ def require_grid_is_this_evidence(grid: PosteriorGrid, calibration, observations
 
 
 def grid_is_this_evidence(
-    grid: PosteriorGrid, calibration, observations: ObservationSet, forward
+    grid: PosteriorGrid, calibration, observations: ObservationSet, forward, *, nonce: bytes | None = None
 ) -> tuple[RouteReason, str] | None:
     """The same check, REPORTED rather than raised: ``(GRID_NOT_THIS_EVIDENCE, detail)`` or None (I-07, R-30).
 
@@ -112,18 +197,9 @@ def grid_is_this_evidence(
     points = np.asarray(grid.points, dtype=np.float64)
     ll = np.asarray(grid.log_likelihood, dtype=np.float64)
     usable = np.asarray(grid.admissible_mask, dtype=bool) & np.isfinite(ll)
-    count = len(points)
-    rows = {0, count - 1, int(np.argmax(np.where(usable, ll, -np.inf)))}
-    if isinstance(calibration, CalibrationResult) and calibration.estimate_vector:
-        span = np.ptp(points, axis=0)
-        span = np.where(span > 0.0, span, 1.0)
-        rows.add(int(np.argmin(np.sum(((points - np.asarray(calibration.estimate_vector)) / span) ** 2, axis=1))))
-    seed = hashlib.sha256(np.ascontiguousarray(points, dtype="<f8").tobytes()
-                          + np.ascontiguousarray(ll, dtype="<f8").tobytes()
-                          + np.ascontiguousarray(usable, dtype=np.uint8).tobytes()).digest()
-    rows.update(int.from_bytes(seed[4 * k:4 * k + 4], "little") % count for k in range(SPOT_CHECK_INTERIOR_NODES))
+    rows = _spot_check_rows(grid, calibration, nonce=nonce)
     n = len(observed)
-    for row in sorted(rows):
+    for row in rows:
         value = evaluate(forward, points[row], keys, units, references)
         where = f"node {row} ({points[row].tolist()})"
         if value is None:

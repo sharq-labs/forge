@@ -422,6 +422,40 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "The reweighting's effect on the FIRST TWO moments of each axis marginal. A node density that leaves both alone and distorts a tail, or a correlation, is not caught. The first two moments are what a grid route REPORTS, so they are what the rule is about -- but this is not a statement that the prior is uniform."
+  },
+  {
+   "problem": "R-19",
+   "title": "Evidence binding spot-checks 8 nodes, 4 of them seeded from the supplier's bytes",
+   "rule": "src/engcore/hybrid_uq/_grid_evidence.py",
+   "rule_symbol": "_spot_check_rows over SPOT_CHECK_WEIGHTED_ROWS and SPOT_CHECK_INADMISSIBLE_ROWS, with a verifier-side nonce and every face's highest node; the same rule in src/engcore/hybrid_uq/router.py::_require_table_agrees_with_forward",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-07 part B (batch 33)",
+   "why": "LATENT. The production calibration study supplies a grid it built itself in the same process, so the binding it faces is its own and there is no supplier to be adversarial; the MCP tools supply no grid. The threat the rule is about is a grid computed elsewhere, which is what supplying a grid is FOR -- so this is the guard on the feature rather than on a current caller.",
+   "what_would_create_it": "The first caller that supplies a grid, or a rebuild table_builder, that another party computed. The audited forgery needed no privileged access: keep the four fixed rows honest, sharpen the bulk, and nudge one far-tail log-likelihood by 1e-9 until the four seeded rows miss it. Two attempts, and the result was GRID_AS_SUPPLIED SUPPORTED with every reported width halved.",
+   "entry_points": [
+    "engcore.hybrid_uq.router.route_uncertainty (with grid= or rebuild=)",
+    "engcore.hybrid_uq.predictive.grid_predictive_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_binding_takes_a_verifier_side_nonce",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_draw_is_not_a_function_of_the_grids_own_bytes",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_a_pinned_nonce_makes_the_draw_reproducible",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_a_ground_forgery_no_longer_survives_the_draw",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_honest_grid_is_still_this_requests_evidence",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_sample_size_is_computed_from_a_stated_detection_probability",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_draw_lands_where_the_posterior_weight_is",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_an_inadmissible_node_the_model_admits_is_caught",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_highest_node_of_every_face_is_checked",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_rebuilt_table_check_takes_a_nonce_too",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_the_rebuilt_table_check_no_longer_seeds_from_the_table",
+    "tests/hybrid_uq/test_core_scientific_audit_batch33.py::test_r19_an_honest_rebuild_still_routes"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A tampered region holding LESS than a quarter of the posterior weight: 17 weighted draws catch a 10% region about 83% of the time, not 99%. The rule states a detection probability against a stated fraction and claims no more; certainty needs the audit's other alternative, re-evaluating every node within ln 1e6 of the peak, at a cost proportional to the grid. And the weighted draw uses the GRID's own weights, so a forger who lowers the weight of what they tampered with reduces their chance of being drawn -- but that lowering is itself the tampering and moves the moments the route reports, which is what the honest-versus-forged comparison measures. The circularity is real and bounded, not absent. Separately, the REBUILD path's weighted draw has no forgery reproduction here (mutation B33h is a declared survivor): the audit asserted that path's exposure in one sentence without measuring it."
   }
  ]
 }
