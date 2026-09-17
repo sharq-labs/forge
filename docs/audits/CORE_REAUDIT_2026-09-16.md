@@ -2298,11 +2298,11 @@ green.
 
 **Open decisions.** None.
 
-### Batch 36 — I-14 part D, and I-14 is DONE
+### Batch 36 — I-14 part D
 
 | ID | Status | Commits | Residuals |
 |---|---|---|---|
-| I-14 | **DONE** | `28e4c116`, `18db6895` (A, the leverage-null clamp, in batch 31 because it blocked I-06), `0cad9502`, `32f02f20` (B, R-28), `3aff191b`, `7755c80b` (C, R-22 b/c/d), `228d47b9` (D preregistration + 10 strict xfails), this commit | a `route_diagnostics/2` payload carries no digest, so its observation count is unbound and R-22(a) survives **for such a payload** — deliberately: refusing it would break records this core wrote three batches ago, the route now writes `/3` for everything, and the schema string says which shape a reader holds; the count-in-the-clear is checkable from the record alone and the **digest half is not, and cannot be** — verifying it needs the observations, which is the point of putting the count in the clear; the digest binds values and sigmas, not `dataset_id`, `condition_id` or `source_ref`, because the per-observation digest deliberately excludes them; BETTER_OPTIMUM vs SECOND_MODE remains un-derived, stated in part C |
+| I-14 | **PARTIAL** (parts A–D of five) | `28e4c116`, `18db6895` (A, the leverage-null clamp, in batch 31 because it blocked I-06), `0cad9502`, `32f02f20` (B, R-28), `3aff191b`, `7755c80b` (C, R-22 b/c/d), `228d47b9` (D preregistration + 10 strict xfails), this commit | a `route_diagnostics/2` payload carries no digest, so its observation count is unbound and R-22(a) survives **for such a payload** — deliberately: refusing it would break records this core wrote three batches ago, the route now writes `/3` for everything, and the schema string says which shape a reader holds; the count-in-the-clear is checkable from the record alone and the **digest half is not, and cannot be** — verifying it needs the observations, which is the point of putting the count in the clear; the digest binds values and sigmas, not `dataset_id`, `condition_id` or `source_ref`, because the per-observation digest deliberately excludes them; BETTER_OPTIMUM vs SECOND_MODE remains un-derived, stated in part C |
 
 **R-22 is FIXED, and it is the first of I-14's parts that is REACHED.**
 `require_posterior_matches_observations` is called by `local_gaussian_posterior` on the record it has just
@@ -2355,5 +2355,10 @@ Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `test
 `src/engcore/domains/thermal/` was edited.
 
 **Guard mutations.** `BATCH36_MUTATIONS.log`: **8 of 8 KILLED, no survivors**, both controls green.
+
+**I-14 IS NOT DONE, and batch 36's own heading said it was.** The improvement addresses four problems and
+this is the third of them: **R-25 and R-27 are still open**, and so is the record-forgery fuzzer its brief
+also asks for. Part E is those three. The error is recorded here rather than edited away, because a status
+table nobody can trust is worse than one with a correction in it.
 
 **Open decisions.** None.
