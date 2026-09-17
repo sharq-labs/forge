@@ -1,0 +1,145 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 38,
+ "improvements": [
+  "I-14 part F of six, the last part"
+ ],
+ "problems_addressed": [
+  "R-27 (its first three claims -- the audit's finding 22: the covariance shrink, the width flip, the rebuilt record carrying a misfit, the unheld ESS and spacing, and the unchecked `considered` ledger)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "2a37d112",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Finding 22 lists five gaps in what a serialized GRID result is held to on read. Two of them (a covariance shrunk inside the Cantelli window, and relative widths lowered) are provably undetectable from a record without its grid, and the audit's verifier says so: 'Cantelli's inequality is the tightest bound that assumes no distribution ... What is actually wrong there is the overclaim in the docstring'. Those two are answered by STATING the limit, quantitatively and in code, instead of implying it is covered. The other three -- a rebuilt record carrying a misfit local posterior, an effective sample size and a spacing held to nothing, and a `considered` ledger nobody reads -- are re-derivable from what the record carries and are closed. The record-forgery fuzzer the improvement's brief asks for is written here, over both record shapes, as the standing check that no single-field edit improves a claim.",
+ "reach": "LIBRARY_ONLY. Every rule is on `HybridUQResult._require_one_truth`, which runs on construction and therefore on `from_dict`. The only non-test caller of `from_dict` is benchmarks/core_v2_hybrid_uq/audit/kinetics.py:267, on a record it produced itself in the same process. No MCP or evidence path reads a routed record from outside, so this lowers library risk and the guard-reach row says so.",
+ "what_was_already_seen": {
+  "the_baseline_grid_record, at 2a37d112": "S.affine('B38_grid') on a 41x41 box routes GRID_AS_SUPPLIED SUPPORTED, sd [0.02714564, 0.04599331], PARAMETERS_IDENTIFIABLE, relative widths [0.1258, 0.0784], ESS 10.308 over 1681 points, occupancy 0.0196, spacing_to_std [0.7368, 0.8697].",
+  "the_covariance_shrink": "With the integrity-only moments digest recomputed, variance/5 reads back SUPPORTED with sd [0.01214, 0.02057]; variance/8 is refused -- 'a 95% interval 0.12 wide for theta1 cannot belong to a distribution with standard deviation 0.00959743'. So the window on THIS record is between 5 and 8, not the 'a covariance shrunk under a recomputed commitment breaks that bound' the docstring claims.",
+  "the_unheld_diagnostics": "Setting the carried effective_sample_size to 1.5 and every spacing_to_std to 50 reads back GRID_AS_SUPPLIED SUPPORTED unchanged -- a grid V1 would have refused with GRID_TOO_COARSE_FOR_INFERENCE.",
+  "the_considered_ledger": "`considered: []` reads back SUPPORTED, and so does a ledger whose only USED row has been edited to PASSED_OVER for MODEL_MISFIT_BEYOND_DECLARED_NOISE.",
+  "the_rebuilt_misfit": "S.at_bound() with a rebuild policy routes GRID_REBUILT_FROM_LOCAL_COVARIANCE SUPPORTED. Replacing its carried local posterior with a genuine REFUSED posterior over the same parameter names, whose only reason is MODEL_MISFIT_BEYOND_DECLARED_NOISE, reads back GRID_REBUILT_FROM_LOCAL_COVARIANCE SUPPORTED carrying it. The reasons are NOT forged: they are re-derived from that posterior's own measurements, which is why the record passes -- nothing relates the grid decision to them."
+ },
+ "rules": {
+  "a_rebuilt_grid_carries_no_misfit_or_structurally_refused_posterior": {
+   "improvement": "I-14",
+   "problem": "R-27",
+   "rule": "`HybridUQResult._require_one_truth` refuses a `GRID_REBUILT_FROM_LOCAL_COVARIANCE` record whose carried local posterior's reasons meet `MISFIT_REASONS`, or whose `diagnostics.refusals` meet the router's `_STRUCTURAL` set. The existing unresolved-uniqueness refusal (R-01, batch 1) stays as it is and this joins it.",
+   "class": "A",
+   "why": "The read rule is the write rule, exactly as for uniqueness. `route_uncertainty` passes the rebuild route over on both conditions before it builds anything (router.py steps 3a and 3c), so a record in this shape was not produced by the router. And the substance is the same laundering: the misfit reason the local route recorded is a statement that the declared noise does not explain the residuals, which the grid's SUPPORTED claim silently drops. Nothing numeric is chosen -- both sets are the write path's own.",
+   "closes": "the third claim of finding 22, on read alone."
+  },
+  "the_considered_ledger_names_the_route_the_decision_reports": {
+   "improvement": "I-14",
+   "problem": "R-27",
+   "rule": "A record's `considered` is non-empty; every row's keys are a subset of {route, outcome, reason, detail} and include `route` and `outcome`; every `route` is one of the four the router writes (GRID_AS_SUPPLIED, GRID_REBUILT_FROM_LOCAL_COVARIANCE, LOCAL_GAUSSIAN, LOCAL_GAUSSIAN_DOWNGRADED) and every `outcome` one of {USED, SKIPPED, PASSED_OVER, REFUSED_BY_V1, SUPPORTED, DOWNGRADED, REFUSED}; a REFUSED decision carries no USED row; every other decision carries exactly one, whose route is the one that decision and claim are written from (LOCAL_GAUSSIAN_DOWNGRADED for a DOWNGRADED local claim, the decision's own name otherwise).",
+   "class": "A",
+   "why": "The ledger is the record's account of how the decision was reached, and the router writes exactly one USED row per answered request, on the route it returns. A ledger that names no used route, or names another one, is not an account of this decision. The vocabularies are read off the write path, not chosen: the four route names and the seven outcomes are every string `route_uncertainty` writes. Checked against every committed ledger in benchmarks/core_v2_hybrid_uq (TCR, KINETICS_K2, FAILURE_CASES, BATTERY_T41: 24 records) before being written -- all conform.",
+   "closes": "the fifth claim of finding 22, both the empty ledger and the one that says the used route was passed over."
+  },
+  "a_grid_record_reports_diagnostics_a_grid_v1_accepted": {
+   "improvement": "I-14",
+   "problem": "R-27",
+   "rule": "`_grid_report_problems` gains, for a grid result's identifiability report: `spacing_to_std` has one entry per parameter; the effective sample size is finite, at least 1 and at most the point count `grid_summary` commits to; the occupied support fraction is finite and lies in (0, 1]; and the record is refused when the effective sample size is below 8 AND the worst spacing-to-standard-deviation ratio is at least 1.",
+   "class": "A",
+   "why": "Every part is either definitional or V1's own already-declared rule. An effective sample size is a count of nodes, so it cannot exceed the node count the summary commits to nor fall below 1; an occupied fraction is a fraction of a non-empty support. The refusal condition is `assess_identifiability`'s GRID_TOO_COARSE_FOR_INFERENCE condition verbatim (inference/calibration.py: `ess < minimum_effective_points and worst_spacing >= 1.0`), with `minimum_effective_points` at its declared default of 8 and the 1.0 that is the definition of 'the step is as wide as the posterior'. The router ran that check on the grid before accepting it, so a record failing it was not produced from an accepted grid. No new number is chosen: 8.0 is `_DECLARED_IDENTIFIABILITY_THRESHOLDS['minimum_effective_points']` and the batch reads it from there.",
+   "closes": "the fourth claim of finding 22 (ESS and spacing held to nothing)."
+  },
+  "the_re_derivation_limit_of_a_grid_record_is_stated_as_a_number": {
+   "improvement": "I-14",
+   "problem": "R-27",
+   "rule": "New public `grid_record_variance_shrink_window(mean, covariance, relative_widths)` in `engcore.hybrid_uq.identifiability`: the largest factor by which a grid record's covariance can be divided with its carried widths left alone before the Cantelli bound refuses it, `min_i (2 k sigma_i / (w_i |mu_i|))**2` over the parameters with a non-zero mean and a finite width, where `k = sqrt(0.975/0.025)`, and `inf` when no parameter constrains it. `_grid_report_problems`'s docstring is corrected: it no longer says 'A covariance shrunk under a recomputed commitment breaks that bound', and states instead that a shrink WITHIN this window, and widths lowered with or without it, cannot be detected from the record at all.",
+   "class": "A",
+   "why": "It is the algebra of the bound the code already applies, solved for the shrink factor, so no number is chosen. It is written as a function rather than a sentence because a sentence is what was wrong: the window depends on the record (it is 7.98 on the baseline record above, not a constant), and a reader who is told 'the covariance is re-derived' will believe a number this code cannot stand behind. The audit's verifier reached the same conclusion: gaps (a) and (b) 'are built into the design ... What is actually wrong there is the overclaim'.",
+   "closes": "nothing by refusing; it converts the first and second claims of finding 22 from an implied defence into a stated, pinned limit. R-27 is FIXED on the three closable claims and this limit is its stated residual."
+  },
+  "no_single_field_edit_improves_a_claim": {
+   "improvement": "I-14",
+   "problem": "R-27",
+   "rule": "A deterministic record-forgery fuzzer, seeded 20260917, over the batch's grid record and a SUPPORTED local record: for every carried field of the record and of the reports it holds, it applies a catalogue of edits (scale a number by 1e-4, 0.1, 10; replace it with 0, 1, NaN, inf, -1; swap an enum for every other member; empty, shorten or duplicate a sequence; drop or add a mapping key) with the integrity-only digests recomputed where the record's own writer would recompute them. The invariant: every edited record is EITHER refused, OR comes back with the original's decision, claim, identifiability status, relative widths, effective sample size, occupied support fraction, spacing-to-standard-deviation vector and `considered` ledger unchanged, and with a covariance whose shrink factor against the original lies inside `grid_record_variance_shrink_window`. In words: a record that reads back is the record the router wrote in every field a claim rests on, or it is refused. The mean is deliberately NOT in that list (see the residuals). A survivor that changes one of those fields is a finding, not a threshold to move.",
+   "class": "C",
+   "why": "Seed and edit catalogue are cost choices: a fixed seed keeps the test deterministic in the FAST tier, and the catalogue is the set of edits that were seen to matter across batches 26-37 (a scale, a zero, a NaN, an enum swap, an emptied sequence, a key). No claim in the repository depends on either number, and the invariant it checks contains no threshold at all -- only 'no better than'. Recorded as C rather than A because nothing derives the catalogue; it is a population, and the formal population is I-30's.",
+   "closes": "nothing on its own; it is the standing check that the record surface stays closed, which is what the improvement's brief asks for."
+  },
+  "a_record_the_router_returns_can_be_read_back": {
+   "improvement": "I-14",
+   "problem": "R-27",
+   "rule": "`_refused` writes the observation content digest into the diagnostics of the posterior it builds, as the full path does. No other field changes.",
+   "class": "A",
+   "why": "Found at 2a37d112 while writing this batch's reproductions: a posterior refused before any measurement (`nearly_singular`, NUMERICALLY_SINGULAR_JACOBIAN) serializes as a `hybrid_uq.route_diagnostics/3` record with an EMPTY digest, and batch 36's rule requires a `/3` record to carry one -- so `from_dict` refuses a record the router itself just produced. Failing closed, so nothing false was read; but a write path that emits an unreadable record is a defect, and the structural forgery this batch reproduces needs a refused posterior that round-trips. The digest is the one the observations give, so nothing is chosen.",
+   "closes": "the round-trip gap batch 36 left in the early-refusal path."
+  }
+ },
+ "thresholds": {
+  "k_cantelli": {
+   "value": "sqrt(0.975/0.025)",
+   "class": "A",
+   "why": "already in the code as the tightest distribution-free two-sided bound at 95%; reused, not chosen, and now named."
+  },
+  "minimum_effective_points": {
+   "value": 8.0,
+   "class": "A",
+   "why": "read from `_DECLARED_IDENTIFIABILITY_THRESHOLDS`, V1's declared default; not re-chosen here."
+  },
+  "worst_spacing_at_which_a_grid_is_too_coarse": {
+   "value": 1.0,
+   "class": "A",
+   "why": "V1's own condition: a step as wide as the posterior's standard deviation means every reported width is quantisation."
+  },
+  "occupied_support_fraction_range": {
+   "value": "(0, 1]",
+   "class": "A",
+   "why": "definitional: a fraction of a non-empty support."
+  },
+  "fuzzer_seed": {
+   "value": 20260917,
+   "class": "C",
+   "why": "determinism in the FAST tier; no claim depends on it."
+  }
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "`grid_record_variance_shrink_window` in engcore.hybrid_uq.identifiability (new public function)",
+   "a keyword-only `points=None` on the private `_grid_report_problems`",
+   "a private `_considered_problems` in engcore.hybrid_uq.router"
+  ],
+  "what_is_not_changed": [
+   "no serialized field is added or removed, so no schema bumps: `hybrid_uq.hybrid_uq_result/1` and the identifiability record keep their keys",
+   "no V1-frozen symbol, no enum member, no default",
+   "the verdict words SUPPORTED / DOWNGRADED / REFUSED are untouched",
+   "`to_dict` / `from_dict` stay an identity round trip: every new rule refuses a record the router cannot produce, and none lowers a claim on read"
+  ],
+  "records_that_already_exist": "All 24 routed records committed under benchmarks/core_v2_hybrid_uq (TCR, KINETICS_K2, FAILURE_CASES, BATTERY_T41) were checked against the `considered` rule before it was written and conform. KINETICS_K2 and BATTERY_T41 are not regenerated (they are the very long runs; their SUPERSEDED markers stay)."
+ },
+ "residuals_stated_in_advance": [
+  "A grid record's mean and covariance remain integrity-only. Within `grid_record_variance_shrink_window` the covariance can be divided and the record still reads back; the window is 7.98 on this batch's record. This is a property of a distribution-free bound, not of this implementation, and the only way to close it is to carry the grid's own marginal quantiles as a committed quantity, which would be a schema bump and is not taken here.",
+  "Relative widths lowered together with the covariance, or lowered alone, cannot be detected from a record: no lower bound on a central 95% interval follows from a standard deviation. So a NOT_IDENTIFIABLE grid record can still be edited into an IDENTIFIABLE one by lowering its widths and re-deriving its status and `why`. Stated in `_grid_report_problems`'s docstring rather than implied away.",
+  "`maximum_grid_parameters` is a caller's argument and is not carried, so the dimension the grid route was allowed cannot be re-derived on read; a record over more parameters than a particular caller allows still reads back. Unchanged by this batch.",
+  "The `considered` rule holds the ledger's shape and its USED row. It does not hold each PASSED_OVER row's reason against what that route would actually have said -- that is not re-derivable without re-running the route.",
+  "A small shift of the record's mean, with the moments digest recomputed, reads back. It is the same integrity-only limit as the covariance window and the audit states it in the same breath ('A small shift of the mean does not [break the bound], which is why the digests are integrity-only'). The fuzzer therefore does not hold the mean, and `_grid_report_problems`'s corrected docstring says so."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/hybrid_uq (the whole directory)",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at exactly the 18 by-design failures",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what": "The fuzzer's coverage floor was written as 'more than 200 edits' and the catalogue produces 199 on this record.",
+   "change": "The floor is 150.",
+   "why": "It is a sanity check that the catalogue still reaches the record's fields, not a threshold any claim rests on; 199 is the number the preregistered catalogue gives."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": 2,
+   "what": "The fuzzer's invariant was preregistered as 'refused, or every claim-bearing field UNCHANGED', listing the effective sample size, occupied support fraction, spacing vector and whole `considered` ledger among them. Run against the implemented rules it reported 21 survivors of 199, in four families: an effective sample size moved anywhere inside [1, points] that does not also make the spacing coarse (4 edits), an occupied support fraction moved anywhere inside (0, 1] (5), a spacing vector of [2.0, 2.0] with the effective sample size still 10.3 (1), and a `reason` string edited on a row that is not the used one (11).",
+   "change": "The invariant holds the decision, claim, identifiability status, `why`, thresholds and the used route EXACTLY, requires no relative width to narrow and no variance to shrink past `grid_record_variance_shrink_window`, and does not require the grid diagnostics or a passed-over row's strings to be unchanged.",
+   "why": "All four families are the integrity-only limit the batch already states, not gaps a rule could close. The effective sample size, the occupancy and the spacing are grid quantities: without the grid they can only be BOUNDED, which is what `_grid_diagnostic_problems` now does (V1's own refusal condition, both halves of it, plus the definitional ranges), and V1 accepts a coarse step when the posterior is well sampled, so [2.0, 2.0] with 10.3 effective points is a grid V1 would take. A passed-over row's reason cannot be re-derived without re-running that route, which the protocol's residuals said in advance. Narrowing the invariant to 'no better' rather than 'identical' is what the preregistered rule name says -- no single-field edit IMPROVES a claim -- and the numbers above are recorded here rather than hidden in the test."
+  }
+ ]
+}
