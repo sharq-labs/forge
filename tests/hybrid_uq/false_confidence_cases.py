@@ -163,6 +163,32 @@ def off_axis_flat_tail(scale: float = 1.0, label: str = "R14_off_axis_flat_tail"
                    observed=(0.0, 0.0, 0.0, 0.0))
 
 
+def off_axis_flat_tail_with_residual_dof(label: str = "R14_off_axis_flat_tail_with_dof"):
+    """R-14 with residual degrees of freedom, which is what the audit's own note says I-08 must add.
+
+    `off_axis_flat_tail` has 4 observations and 2 parameters, so I-04 (batch 11) caps it at DOWNGRADED for a
+    reason that has nothing to do with the probes: GOODNESS_OF_FIT_UNDERPOWERED fires at two residual degrees
+    of freedom, and the mass floor is then satisfied without any tail probe looking off-axis. This case has
+    SIX observations and 2 parameters -- four residual degrees of freedom, above
+    UNDERPOWERED_RESIDUAL_DOF -- so what carries it is the PROBE and not the cap.
+
+    predictions [u h, v h, 0.5 u h, 0.5 v h, 0.3 u h, 0.3 v h] with u = theta1, v = theta2 and
+    h = (1 + (|u v| / 6)^4)^(-1/8). Every row depends on one parameter only up to h, and h is flat at the
+    estimate, so the information is DIAGONAL and the invariant probe axes are the coordinate axes. Along each
+    of them the chi-square rise is exactly the Gaussian's 4, 9 and 36 at 2, 3 and 6 reported sd. Along either
+    diagonal it is 3.996, 8.792 and 15.92 -- a ratio of 0.442 at 6 sd, below TAIL_REFUSE_RATIO -- because h
+    damps as |u v| grows. With the tail probes on the axes alone the route reports SUPPORTED and NO reason at
+    all.
+    """
+    def model(t, _x):
+        u, v = float(t[0]), float(t[1])
+        h = (1.0 + (abs(u * v) / 6.0) ** 4) ** (-0.125)
+        return np.asarray([u * h, v * h, 0.5 * u * h, 0.5 * v * h, 0.3 * u * h, 0.3 * v * h])
+
+    return Problem(label, model, np.arange(6.0), (0.0, 0.0), 1.0, (-20.0, -20.0), (20.0, 20.0), (0.1, 0.1),
+                   observed=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
+
+
 # ---------------------------------------------------------------------------
 # R-16 (finding 10): the probe directions come from eigh(cov) in DECLARED units, so a unit change moves them
 # ---------------------------------------------------------------------------
