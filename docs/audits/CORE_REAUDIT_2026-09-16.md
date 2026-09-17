@@ -2297,3 +2297,63 @@ Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `test
 green.
 
 **Open decisions.** None.
+
+### Batch 36 — I-14 part D, and I-14 is DONE
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-14 | **DONE** | `28e4c116`, `18db6895` (A, the leverage-null clamp, in batch 31 because it blocked I-06), `0cad9502`, `32f02f20` (B, R-28), `3aff191b`, `7755c80b` (C, R-22 b/c/d), `228d47b9` (D preregistration + 10 strict xfails), this commit | a `route_diagnostics/2` payload carries no digest, so its observation count is unbound and R-22(a) survives **for such a payload** — deliberately: refusing it would break records this core wrote three batches ago, the route now writes `/3` for everything, and the schema string says which shape a reader holds; the count-in-the-clear is checkable from the record alone and the **digest half is not, and cannot be** — verifying it needs the observations, which is the point of putting the count in the clear; the digest binds values and sigmas, not `dataset_id`, `condition_id` or `source_ref`, because the per-observation digest deliberately excludes them; BETTER_OPTIMUM vs SECOND_MODE remains un-derived, stated in part C |
+
+**R-22 is FIXED, and it is the first of I-14's parts that is REACHED.**
+`require_posterior_matches_observations` is called by `local_gaussian_posterior` on the record it has just
+built, so every posterior the router produces is verified against the observations it was fitted to **while
+both are in hand** — and the production calibration study routes the local posterior. Without that call the
+binding would be a read-back rule, and a read-back rule is checked by whoever chooses to check.
+
+| Claim | Status | How |
+|---|---|---|
+| editing the observation count | **FIXED** | `observations` fed the goodness of fit and **nothing else read it**, so no other field disagreed: raising 10 to 40 turned chi-square 30 from a DOWNGRADE on 10 degrees of freedom into a plausible fit on 38. The record now carries `"<count>:<sha256>"` over the observations it was fitted to, and the count must agree. |
+| the count is in the clear **on purpose** | — | A digest alone cannot be checked against a count without the observations, so a reader holding only a record could verify nothing. With the count beside it the field is checkable from the record alone — and making the two agree requires editing the digest, which no longer matches the observations the moment anyone *does* hold them. |
+
+**The schema bump earns its keep, and a mutation says so.** `hybrid_uq.route_diagnostics/3` is what makes the
+field unconditional rather than "written only when it carries information" — B36b makes it optional again,
+and then an absent field no longer distinguishes an old record from an edited one, **which is the whole
+purpose of the version**. No committed artifact carries a serialized `route_diagnostics` payload; checked,
+not assumed.
+
+**Amendment 1 removed one of my own checks because it was masking the rule.** The production verifier also
+re-checked `calibration_content_digest`, and mutation B36d — which removes the **new** digest comparison —
+still passed, because the old field caught the same forgery. **The new binding was being credited to an old
+one.** That third check is gone: it is the posterior's own field, verified where it is used, and one rule per
+function.
+
+**And one mutation surfaced a structural fact worth writing down.** B36e removes the **count** comparison and
+survived: given a digest, the count is *redundant* — the digest states it — so the digest check catches the
+forgery first. The case the separate count check is actually for is the record that has **no** digest, a `/2`
+payload, and the reproduction now uses exactly that. The count comparison is the `/2` fallback and nothing
+else, a narrower job than the preregistration implied.
+
+**Why this is not a duplicate of `calibration_content_digest`.** That field is over
+`ObservationSet.to_dict()` and binds the dataset id, the condition ids, the source refs and the row **order**.
+This one binds values and sigmas alone, order-independently, and carries the count: the weaker and more
+robust binding, and **the only one an observation count can be recovered from**.
+
+**Compatibility.** Additive. One new trailing dataclass field with a default, one new public function in
+`inference/split`, one new public function in `hybrid_uq/local_gaussian`. The serialized record gains one
+key, under an explicit schema bump. The V1/V2 API snapshots pin the schema constant's value and move with it;
+they are in the by-design failing set until the V4 round.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**No existing expectation moved** — including every test that round-trips a diagnostics payload, because `/1`
+and `/2` stay readable.
+
+**Verification.** FAST tier 6893 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH36_MUTATIONS.log`: **8 of 8 KILLED, no survivors**, both controls green.
+
+**Open decisions.** None.

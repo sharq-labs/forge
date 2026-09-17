@@ -474,6 +474,28 @@ def _base_value_and_sigma(observation: GaussianObservation) -> tuple[str, float,
     return base, value, abs(observation.sigma.magnitude_as_spread_in(base))
 
 
+def observation_set_content_digest(observations: ObservationSet) -> str:
+    """``"<count>:<sha256>"`` over what a whole observation SET says (I-14, R-22(a)).
+
+    The set-level sibling of :func:`observation_content_digest`, and content-addressed in the same sense: the
+    per-observation digests, sorted, so two imports of the same rows in a different order are one content.
+    That function already excludes ``condition_id`` and ``source_ref`` for the same reason.
+
+    THE COUNT IS IN THE CLEAR, AND THAT IS THE DESIGN. A digest alone cannot be checked against a count
+    without the observations, so a reader holding only a record could verify nothing. With the count beside
+    it, a record's own ``observations`` field is checkable from the record alone -- and making the two agree
+    requires editing the digest, which no longer matches the observations the moment anyone does hold them.
+    """
+    if not isinstance(observations, ObservationSet):
+        raise InferenceProblemError(
+            f"an observation-set content digest is taken of an ObservationSet, got {type(observations).__name__}")
+    rows = tuple(observations.observations)
+    inner = hashlib.sha256()
+    for digest in sorted(observation_content_digest(row) for row in rows):
+        inner.update(digest.encode("ascii"))
+    return f"{len(rows)}:{inner.hexdigest()}"
+
+
 def _near_duplicates(left, right) -> list[tuple[str, str]]:
     """Pairs that are one reading. Two routes, and only one of them may ignore the declared sigma (audit R-32).
 

@@ -50,5 +50,18 @@
   "The count-in-the-clear check is verifiable from the record alone; the DIGEST half is not, and cannot be -- verifying it needs the observations. That asymmetry is the point of putting the count in the clear, and it is stated so that nobody reads the field as self-verifying.",
   "The digest binds the observations' VALUES and SIGMAS, through the existing per-observation content digest. It does not bind `dataset_id`, `condition_id` or `source_ref`, because that digest deliberately excludes them -- the same reading relabelled is the same reading. A record fitted to one set and relabelled with another set's dataset_id is not caught by this rule; `calibration_content_digest` is the field that speaks to that."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. One check was REMOVED from `require_posterior_matches_observations` because it was masking the rule this batch is about, and one reproduction was repointed at the case its rule actually covers. Both forced by the mutation run.",
+   "the_numbers_that_forced_it": "Two of eight mutations survived. (a) B36d removes the DIGEST comparison, and the reproduction still passed -- because the function also re-checked `calibration_content_digest`, which caught the same forgery. The new binding was being credited to an old one. That third check is removed: it is the posterior's own field, verified where it is used, and one rule per function. (b) B36e removes the COUNT comparison and survived for a structural reason worth writing down: given a digest the count is REDUNDANT, because the digest STATES the count in the clear, so a matching digest implies a matching count and the digest check catches the forgery first. The case the count check is actually for is the record that has NO digest -- a `/2` payload -- and the reproduction now uses exactly that.",
+   "what_this_says_about_the_design": "The count-in-the-clear is what makes a record checkable ALONE, and the digest is what makes it checkable AGAINST the observations. The separate count comparison inside the production check is therefore the `/2` fallback and nothing else, which is a narrower job than the preregistration implied and is now the job its test describes.",
+   "relationship_to_calibration_content_digest": "Stated because the redundancy is real. `calibration_content_digest` is over `ObservationSet.to_dict()` and binds the dataset id, the condition ids, the source refs and the row ORDER. `observation_content_digest` binds the values and sigmas alone, order-independently, and carries the count -- the weaker and more robust binding, and the only one an observation COUNT can be recovered from. The second is not a duplicate of the first; it is the one R-22(a) needs.",
+   "guards_added_or_repointed": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch36.py::test_r22a_an_older_records_count_is_still_checked_against_the_observations -- added, not preregistered: the `/2` record whose digest is empty, which is the only case the separate count check can decide.",
+    "the production check no longer re-verifies `calibration_content_digest`."
+   ]
+  }
+ ]
 }

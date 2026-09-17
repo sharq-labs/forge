@@ -31,6 +31,7 @@ from scipy.stats import chi2, norm
 from ..inference.calibration import CalibrationResult, CalibrationSpec, CalibrationStatus, ForwardEvaluator, calibrate
 from ..inference.grid import ObservationSet
 from ..inference.parameters import CalibrationParameterSet
+from ..inference.split import observation_set_content_digest
 from ..scientific.errors import UnitCompatibilityError
 from ..scientific.results.immutable import freeze
 from ..scientific.units.quantity import Quantity, is_ratio_scale
@@ -47,11 +48,16 @@ from .vocabulary import (
 )
 
 MULTISTART_POLICY_SCHEMA = "hybrid_uq.multistart_policy/1"
-ROUTE_DIAGNOSTICS_SCHEMA = "hybrid_uq.route_diagnostics/2"
+ROUTE_DIAGNOSTICS_SCHEMA = "hybrid_uq.route_diagnostics/3"
 #: Written before the goodness-of-fit and tail diagnostics existed (CORE-001/-003). Read only to refuse it with the
 #: reason: nothing it carries can show that a claim it makes survives those rules, and its threshold set is not the
 #: canonical one.
 ROUTE_DIAGNOSTICS_SCHEMA_V1 = "hybrid_uq.route_diagnostics/1"
+#: I-14 (R-22(a)): the schema `observation_content_digest` was added under. A /2 payload carries no
+#: digest, so its `observations` field is unbound and R-22(a) survives for such a payload -- which is
+#: deliberate: refusing it would break records this core wrote, and the route now writes /3 for
+#: everything, so every record this core PRODUCES is checkable.
+ROUTE_DIAGNOSTICS_SCHEMA_V2 = "hybrid_uq.route_diagnostics/2"
 PARAMETER_INTERVAL_SCHEMA = "hybrid_uq.parameter_interval/1"
 LOCAL_GAUSSIAN_POSTERIOR_SCHEMA = "hybrid_uq.local_gaussian_posterior/1"
 
@@ -539,6 +545,14 @@ class RouteDiagnostics:
     minimum_tail_rise_ratio: float = math.nan
     #: CORE-003: tail probes inside the declared bounds that the forward evaluator refused.
     tail_probes_skipped: int = 0
+    #: R-22(a) (re-audit 2026-09-16, I-14 part D): ``"<count>:<sha256>"`` over the observations this route
+    #: was fitted to. `observations` above feeds the goodness of fit and NOTHING ELSE READ IT, so editing 10
+    #: to 40 turned chi-square 30 from a DOWNGRADE on 10 degrees of freedom into a plausible fit on 38 and
+    #: the record read back SUPPORTED. The count is repeated in the clear here so that the two can be
+    #: compared without the observations; with them, `require_posterior_matches_observations` compares the
+    #: digest. Empty only in a `route_diagnostics/2` payload. Appended, not inserted: the field order is
+    #: frozen.
+    observation_content_digest: str = ""
     #: CORE-001 / R-03: the leverage-weighted residual statistic sum_i H_ii r_i^2 the goodness of fit was also
     #: judged on. NaN when no leverage test ran (an early refusal, or a record written before the rule).
     leverage_weighted_chi_square: float = math.nan
@@ -607,6 +621,7 @@ class RouteDiagnostics:
             "chi_square_minimum": encode_float(self.chi_square_minimum),
             "minimum_tail_rise_ratio": encode_float(self.minimum_tail_rise_ratio),
             "tail_probes_skipped": int(self.tail_probes_skipped),
+            "observation_content_digest": str(self.observation_content_digest),
         }
         # R-13 / R-15: written only when they carry information. A record that carried an empty extremes list
         # or a zero count would say a rule was applied where nothing was measured, and would also change the
@@ -626,13 +641,24 @@ class RouteDiagnostics:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "RouteDiagnostics":
-        legacy = isinstance(payload, Mapping) and payload.get("schema") == ROUTE_DIAGNOSTICS_SCHEMA_V1
-        if not legacy:
+        schema = payload.get("schema") if isinstance(payload, Mapping) else None
+        legacy = schema == ROUTE_DIAGNOSTICS_SCHEMA_V1
+        if not legacy and schema != ROUTE_DIAGNOSTICS_SCHEMA_V2:
             require_schema(payload, ROUTE_DIAGNOSTICS_SCHEMA)
+            # Unconditional under this schema, which is what the bump is FOR: the field is written whether or
+            # not it "carries information", so a reader never has to wonder whether its absence means an old
+            # record or an edited one (I-14, R-22(a)).
+            if not str(payload.get("observation_content_digest", "")):
+                raise HybridUQError(
+                    f"a {ROUTE_DIAGNOSTICS_SCHEMA} record carries the content digest of the observations it "
+                    f"was fitted to; without it the observation count is bound to nothing")
         added = {} if legacy else {
             "chi_square_minimum": decode_float(payload["chi_square_minimum"]),
             "minimum_tail_rise_ratio": decode_float(payload["minimum_tail_rise_ratio"]),
             "tail_probes_skipped": int(payload["tail_probes_skipped"]),
+            # Absent in a `/2` payload, which is readable and whose `observations` field is therefore
+            # unbound -- see ROUTE_DIAGNOSTICS_SCHEMA_V2.
+            "observation_content_digest": str(payload.get("observation_content_digest", "")),
         }
         # absent for any record written before the leverage test existed: such a record is held to the pooled
         # test alone, which is what its own numbers support
@@ -705,6 +731,24 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
     policy_keys = set(thresholds) & set(_MULTISTART_POLICY_KEYS)
     if policy_keys and policy_keys != set(_MULTISTART_POLICY_KEYS):
         problems.append("a partial multistart policy")
+    # THE OBSERVATION COUNT IS BOUND TO SOMETHING (I-14, R-22(a)).
+    #
+    # `observations` feeds `_goodness_of_fit` and nothing else read it, so no other field disagreed with an
+    # edit: raising 10 to 40 turned chi-square 30 from a DOWNGRADE on 10 degrees of freedom into a plausible
+    # fit on 38, and the record read back SUPPORTED. The digest repeats the count in the clear precisely so
+    # that this comparison is possible WITHOUT the observations; with them,
+    # `require_posterior_matches_observations` compares the digest itself.
+    carried = str(d.observation_content_digest)
+    if carried:
+        head, _, rest = carried.partition(":")
+        if not (head.isdigit() and len(rest) == 64 and all(c in "0123456789abcdef" for c in rest)):
+            problems.append(f"an observation content digest is '<count>:<sha256>'; this record carries {carried!r}")
+        elif int(head) != n:
+            problems.append(
+                f"the record says {n} observation(s) and its observation content digest was taken over "
+                f"{int(head)}; the count is what the goodness of fit is judged against")
+    # An EMPTY digest is the `/2` shape and is indistinguishable from it here, so whether one is REQUIRED is
+    # a question about the payload's schema and is answered in `from_dict`, where the schema is visible.
     refusals, downgrades, optional = set(), set(), set()
     early = set(d.refusals) & _EARLY_REFUSALS
     if p < 1:
@@ -1486,6 +1530,38 @@ def _clipped_radius(z0: "np.ndarray", direction: "np.ndarray", radius: float,
     return max(limit, 0.0)
 
 
+def require_posterior_matches_observations(posterior: "LocalGaussianPosterior", observations) -> None:
+    """Refuse a posterior whose recorded observations are not the ones handed in (I-14, R-22(a)).
+
+    Both halves: the COUNT, which the record states in the clear, and the DIGEST, which only these
+    observations can produce. Without this the binding would be a read-back rule and a read-back rule is
+    checked by whoever chooses to check -- so the local route calls it on the record it has just built, while
+    both are in hand. A forger who edits the count and the digest to agree with each other produces a record
+    that matches no observation set at all, and this is the check that says so.
+
+    Distinct from `calibration_content_digest`, which is over `ObservationSet.to_dict()` and therefore binds
+    the dataset id, the condition ids, the source refs and the row ORDER. The digest checked here binds the
+    values and sigmas alone, order-independently, and carries the count: the weaker, more robust binding, and
+    the only one the observation COUNT can be recovered from. Both are compared.
+    """
+    expected = observation_set_content_digest(observations)
+    carried = str(posterior.diagnostics.observation_content_digest)
+    if carried and carried != expected:
+        raise HybridUQError(
+            f"this posterior's diagnostics carry the observation content digest {carried!r} and the "
+            f"observations handed in digest to {expected!r}; a record is evidence about the observations it "
+            f"was fitted to and about no others")
+    counted = len(getattr(observations, "observations", ()))
+    if int(posterior.diagnostics.observations) != counted:
+        raise HybridUQError(
+            f"this posterior's diagnostics record {int(posterior.diagnostics.observations)} observation(s) "
+            f"and {counted} were handed in; the count is what the goodness of fit is judged against")
+    # `calibration_content_digest` is NOT re-checked here, deliberately. It is the posterior's own field and
+    # is verified where it is used; adding it to this function made the digest check above unreachable --
+    # mutation B36d removed that check and this one caught the same forgery, so the new binding was being
+    # credited to an old one. One rule per function.
+
+
 def _observation_content_digest(observations) -> str:
     """ONE canonical digest of the observation CONTENT a posterior was calibrated on (R-12).
 
@@ -1914,6 +1990,7 @@ def local_gaussian_posterior(
         claim=claim, refusals=tuple(r for r in refusals if r.severity is RouteClaim.REFUSED),
         downgrades=tuple(d for d in downgrades if d.severity is RouteClaim.DOWNGRADED),
         chi_square_minimum=float(chi_min), minimum_tail_rise_ratio=tail_ratio, tail_probes_skipped=tail_skipped,
+        observation_content_digest=observation_set_content_digest(observations),
         leverage_weighted_chi_square=leverage_statistic, leverage_null_cumulants=leverage_cumulants,
         curvature_eigenvalue_bounds=curvature_bounds, tail_probes_clipped=tail_clipped,
         tail_probes_outside_bounds=tail_outside,

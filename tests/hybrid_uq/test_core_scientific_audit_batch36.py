@@ -3,7 +3,7 @@
 Problem R-22 claim (a) (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json), improvement I-14
 part D of four, under benchmarks/core_v4_false_confidence/BATCH36_THRESHOLD_PROTOCOL.json.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 228d47b9, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -40,7 +40,6 @@ def _symbol(module, name):
 # ---------------------------------------------------------------------------
 # an_observation_set_has_a_content_digest
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_an_observation_set_digests_its_count_and_its_content():
     digest_of = _symbol(SPLIT, "observation_set_content_digest")
     problem = S.affine("R22a")
@@ -49,7 +48,6 @@ def test_r22a_an_observation_set_digests_its_count_and_its_content():
     assert digest.split(":")[0] == str(len(problem.observations.observations))
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_the_same_evidence_in_another_order_is_the_same_digest():
     """A set of observations is a set, and the per-observation digest already ignores what a row is called."""
     from engcore.inference.grid import ObservationSet
@@ -62,7 +60,6 @@ def test_r22a_the_same_evidence_in_another_order_is_the_same_digest():
     assert digest_of(forward) == digest_of(backward)
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_a_different_reading_is_a_different_digest():
     """The control: the digest must be over the content and not only the count."""
     from engcore.inference.grid import GaussianObservation, ObservationSet
@@ -80,7 +77,6 @@ def test_r22a_a_different_reading_is_a_different_digest():
 # ---------------------------------------------------------------------------
 # the_record_carries_it_and_the_count_agrees
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_a_record_carries_the_digest_of_the_observations_it_was_fitted_to():
     digest_of = _symbol(SPLIT, "observation_set_content_digest")
     problem = S.affine("R22a")
@@ -92,7 +88,6 @@ def test_r22a_a_record_carries_the_digest_of_the_observations_it_was_fitted_to()
     assert carried.split(":")[0] == str(payload["diagnostics"]["observations"])
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_editing_the_observation_count_is_refused():
     """The audited edit: `observations` feeds the goodness of fit and nothing else reads it."""
     posterior = _posterior(F.gross_misfit_with_ten_precise_points())
@@ -108,7 +103,6 @@ def test_r22a_editing_the_observation_count_is_refused():
         LocalGaussianPosterior.from_dict(forged)
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_a_record_with_no_digest_under_the_new_schema_is_refused():
     posterior = _posterior(S.affine("R22a"))
     forged = copy.deepcopy(posterior.to_dict())
@@ -117,7 +111,6 @@ def test_r22a_a_record_with_no_digest_under_the_new_schema_is_refused():
         LocalGaussianPosterior.from_dict(forged)
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_a_genuine_record_still_round_trips():
     """The control."""
     posterior = _posterior(S.affine("R22a"))
@@ -126,7 +119,6 @@ def test_r22a_a_genuine_record_still_round_trips():
     assert read.diagnostics.observation_content_digest == posterior.diagnostics.observation_content_digest
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_an_older_payload_is_still_readable():
     """A /2 payload carries no digest, and refusing it would break records this core wrote three batches ago."""
     posterior = _posterior(S.affine("R22a"))
@@ -139,7 +131,6 @@ def test_r22a_an_older_payload_is_still_readable():
 # ---------------------------------------------------------------------------
 # the_route_checks_its_own_record_against_the_observations_it_used
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_the_route_binds_its_own_record_to_the_observations_it_used():
     require = _symbol(LG, "require_posterior_matches_observations")
     problem = S.affine("R22a")
@@ -150,7 +141,6 @@ def test_r22a_the_route_binds_its_own_record_to_the_observations_it_used():
         require(posterior, other.observations)
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(a): the count is a free field and there is no digest")
 def test_r22a_a_record_whose_count_was_edited_to_agree_still_fails_against_the_observations():
     """Why the count is in the clear AND the digest is there: editing both to agree leaves a record that
     matches no observation set at all, and this is the check that says so."""
@@ -162,3 +152,23 @@ def test_r22a_a_record_whose_count_was_edited_to_agree_still_fails_against_the_o
         observation_content_digest="40:" + "0" * 64)
     with pytest.raises(HybridUQError, match="observation"):
         require(dataclasses.replace(posterior, diagnostics=forged), problem.observations)
+
+
+def test_r22a_an_older_records_count_is_still_checked_against_the_observations():
+    """The count check is what covers a `/2` record, whose digest is empty and carries no count at all.
+
+    ADDED while running batch 36's guard mutations, not preregistered. Given a digest the count is redundant
+    -- the digest STATES the count, so a matching digest implies a matching count -- and mutation B36e
+    survived because the digest check caught its forgery first. The case the count check is actually for is
+    the record that has no digest.
+    """
+    require = _symbol(LG, "require_posterior_matches_observations")
+    problem = S.affine("R22a")
+    posterior = _posterior(problem)
+    older = dataclasses.replace(posterior.diagnostics, observation_content_digest="", observations=40)
+    with pytest.raises(HybridUQError, match="observation"):
+        require(dataclasses.replace(posterior, diagnostics=older), problem.observations)
+    # and with the count right, an empty digest is not itself a finding: that is the `/2` shape.
+    require(dataclasses.replace(
+        posterior, diagnostics=dataclasses.replace(posterior.diagnostics, observation_content_digest="")),
+        problem.observations)
