@@ -1568,3 +1568,69 @@ wording is guarded by a test, and `_audit_tables` already refuses to import whil
 description.
 
 **Open decisions.** None.
+
+### Batch 25 — I-12 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-12 | **DONE** | `23609299`, `7f6f28c7` (part A), `09e78111` (part B preregistration + 10 strict xfails), this commit | the DECLARED basis remains a basis and is weaker than the bytes — it says the domain layer PINNED these routes' dependencies and the core verified the declaration against the pin, not that the two programs were read and found to share no code; no production route ships artifact digests, so `artifact-verified` is unreachable in production and the production path therefore awards nothing at all, which is what the gate withholding the level means; `_consensus_issuer_gap` still cannot tell an issued record from a faithful COPY of one (a check copied from a genuine consensus onto another result carries a genuine threshold record and a genuine basis line), which needs the check bound to the result it qualifies — the standing CORE-009/VAL-01 residual and I-20's |
+
+**R-xx closed.** R-21 is three separate claims and each is answered separately.
+
+| Claim | Status | How |
+|---|---|---|
+| (a) hand-written consensus evidence lines earn the level and survive a round trip | **ALREADY CLOSED**, and now pinned | VAL-01's `_consensus_issuer_gap` closed it in an earlier batch. Confirmed at this batch's baseline rather than assumed — `ValidationCheck(PASS, establishes=CROSS_SOLVER_VALIDATED, evidence=("trust me",))` raises — and `test_r21_a_hand_written_check_cannot_carry_the_level` is here so the closure cannot be lost. R-21 names it, so this document records it rather than leaving a reader to discover that one third of a problem was already fixed. |
+| (b) `TrustedConsensusGate` has no caller | **FIXED** | `engcore.mcp.problem`'s cross-solver check is built BY the gate. That path ships no artifact digests, so the gate withholds the level, says why in the detail, and records the withholding structurally as a `level-withheld:` line — which is R-04's rule applied one layer up: what a run came within one artifact digest of establishing reaches a reader as data and not as prose. The boundary's own `_withhold_level` still runs, because the two rules are different — **the gate withholds because the ARTIFACTS are not verified; the boundary withholds because the check is about values it does not scope to** — and either alone would leave the level one change away from a report. `_withhold_level` is now IDEMPOTENT, so the two rules do not state one fact twice. |
+| (c) a disagreement between non-independent routes warns, and the verdict stays SUPPORTED | **FIXED** | A disagreement beyond tolerance is FAIL whether or not the routes are independent. **The pinned reasoning was that "a comparison denied authority to award cannot be given authority to condemn", and those are not the same authority.** Awarding a level is a claim about what the evidence SHOWS; reporting a disagreement is a MEASUREMENT of what the two routes did. Both routes were asked for the same named quantities under one declared required-output contract and returned numbers 33% apart: at least one is wrong about the thing they were both asked to compute, however much machinery they share — and sharing machinery makes it worse, because then the same arithmetic produced two different answers. The other direction is unchanged and is the sentence this record exists to write: routes that AGREE while sharing a Jacobian produce a PASS that establishes nothing. |
+
+**Every level now says which independence it rests on.** A check carrying CROSS_SOLVER_VALIDATED must carry
+exactly one `independence basis:` line — `declared` (verified against the domain layer's pin, written by
+`CrossSolverConsensus.to_check`) or `artifact-verified` (the bytes digested and compared, written only by
+`TrustedConsensusGate` when `assess_independence_evidence` reports `strongly_independent`) — and
+`_consensus_issuer_gap` refuses the level without one, or with both. **The basis is ADDITIVE, which is what
+the improvement's brief asks for**: removing the declared basis would delete the only basis any route in this
+tree can currently reach and make the level unreachable rather than better founded. What R-21 is about is
+that a reader could not tell the two apart.
+
+**The ledger moved with the fix.** `certification/guard_reach_ledger.json`'s R-21 row is REACHED and FIXED,
+names the production entry point and the tests that exercise it there, and states the residual. I-16 exists
+because a guard whose reach nobody states is a guard whose reach nobody can lose; a fix that reaches
+production and leaves the row saying LIBRARY_ONLY is a fix nobody can check. Two of I-16's own tests named
+R-21 as LIBRARY_ONLY and were updated with a comment saying why — **that is the ratchet working**, and it is
+why those tests name the rows rather than counting them.
+
+**Compatibility.** No symbol removed, renamed or reordered; no enum member, dataclass field, default or
+signature changed. `CrossSolverConsensus.to_check` keeps its signature and return type; its `evidence` tuple
+gains one line, which that tuple is a list of by design. `engcore.mcp.problem` gains an import of
+`engcore.execution.consensus`, which the layer ladder allows (execution is layer 6, mcp above it). The
+deliberate behaviour changes are the three above, plus: a stored `ValidationCheck` carrying
+CROSS_SOLVER_VALIDATED without a basis line stops reading back, for the same reason VAL-01's threshold record
+does — the level is re-verified where it becomes a claim.
+
+**Committed evidence.** Nothing moved. A search found no serialized `ValidationCheck` carrying a cross-solver
+level in `benchmarks/` or `certification/`; `benchmarks/perf_runtime_audit/baseline_k1_solver_calls.json`
+carries a list of level NAMES (`levels_earned`), which is not a check and is unaffected.
+`KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED markers.
+
+**One existing expectation moved, and it is the one this part corrects.**
+`test_cross_solver_consensus.py::test_dependent_routes_that_disagree_warn_rather_than_fail` asserted the
+audited behaviour and stated its reasoning in its own docstring. It is now
+`test_dependent_routes_that_disagree_also_fail`, with the corrected argument written out and two assertions
+added: the residual is still 1/3, and the check still establishes NOTHING — **a stricter outcome must not
+become a claim**, which is the one thing this change could have got wrong.
+
+**Verification.** FAST tier 6774 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH25_MUTATIONS.log`: **9 of 9 KILLED**, both controls green, plus 21 pinned re-runs
+on the four changed files all KILLED. One survived first: B25g removed the gate's record of the level it
+nearly awarded, and the idempotence guard could not see it because that guard reaches `_withhold_level` with
+a check that still CARRIES the level — so the line it counts is the boundary's, not the gate's. The
+withheld-line assertion moved onto the gate's own case. One mutation is recorded as NOT MUTATED with its
+reason: the ledger row's move is JSON, and `mutation_guards._apply` parses every mutation with `ast`, so a
+JSON edit reports MUTATION BROKE THE PARSE — what the ledger says is verified by
+`tools/certification/guard_reach.py` and by batch 19's own twelve refusal cases instead.
+
+**Open decisions.** None.

@@ -30,6 +30,8 @@ from dataclasses import dataclass
 from typing import Mapping, Sequence
 
 from ..scientific.consensus import (
+    INDEPENDENCE_BASIS_ARTIFACT_VERIFIED,
+    INDEPENDENCE_BASIS_EVIDENCE_PREFIX,
     SOLVER_INDEPENDENCE_DIMENSIONS,
     CrossSolverConsensus,
     IndependenceDimension,
@@ -188,6 +190,19 @@ class TrustedConsensusGate:
                 "already earn CROSS_SOLVER_VALIDATED."
             )
 
+        # R-21 (I-12 part B): the basis the level rests on is REPLACED, not appended to. The consensus wrote
+        # `declared`; if the artifacts were read and found disjoint this level rests on the bytes, and a
+        # check carrying both lines names no single basis and is refused. If they were not, the level is
+        # withheld here and there is no basis to state at all -- and the level that was NEARLY earned is
+        # recorded structurally as a `level-withheld:` line, the way the MCP boundary records its own.
+        carried = tuple(
+            line for line in base.evidence
+            if not line.startswith(INDEPENDENCE_BASIS_EVIDENCE_PREFIX)
+        )
+        if trusted_earned:
+            carried = (*carried, INDEPENDENCE_BASIS_EVIDENCE_PREFIX + INDEPENDENCE_BASIS_ARTIFACT_VERIFIED)
+        elif base_earned:
+            carried = (*carried, f"level-withheld:{ValidationLevel.CROSS_SOLVER_VALIDATED.value}")
         check = ValidationCheck(
             name=base.name,
             outcome=base.outcome,
@@ -198,7 +213,7 @@ class TrustedConsensusGate:
             residual=base.residual,
             tolerance=base.tolerance,
             evidence=(
-                *base.evidence,
+                *carried,
                 f"artifact independence: {independence.reason}",
                 *_artifact_evidence_lines(evidence),
             ),

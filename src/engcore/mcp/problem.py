@@ -72,6 +72,7 @@ from ..domains.electrical.dc import problem as dc_problem
 from ..domains.electrical.dc import solver as dc_solver
 from ..domains.thermal_models import context as thermal_ctx
 from ..domains.thermal_models import lumped as lump
+from ..execution.consensus import TrustedConsensusGate
 from ..scientific.composition import QuantityTransfer
 from ..scientific.errors import ScientificCoreError
 from ..scientific.models.definition import (
@@ -1433,7 +1434,16 @@ def _cross_solver_checks(
         external=external,
         external_solver=external_solver.identity,
     )
-    return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)
+    # R-21 (I-12 part B): through the GATE, which is the only thing in this tree that requires the
+    # artifacts' own bytes before CROSS_SOLVER_VALIDATED. It had no caller, so the level rested on declared
+    # independence wherever it was awarded at all. This path ships no artifact digests, so the gate withholds
+    # the level and says why -- and `_withhold_level` still runs, because the two rules are different: the
+    # gate withholds because the ARTIFACTS are not verified, and this boundary withholds because the check is
+    # about values it does not scope to. Either alone would leave the level one change away from a report.
+    decision = TrustedConsensusGate().assess(
+        consensus, (), name=CROSS_SOLVER_CHECK_NAME,
+    )
+    return (_withhold_level(decision.check),)
 
 
 def _withhold_level(check: ValidationCheck) -> ValidationCheck:
@@ -1453,6 +1463,16 @@ def _withhold_level(check: ValidationCheck) -> ValidationCheck:
     says WHAT.
     """
     withheld = None if check.establishes is None else ValidationLevel(check.establishes)
+    # R-21 (I-12 part B): IDEMPOTENT. The gate upstream now withholds the level for its own reason and
+    # records it structurally, so this used to append a second `level-withheld:` line and a second sentence
+    # for the same level -- two statements of one fact, which a reader has to reconcile. Applied to a check
+    # that already says the level was withheld, this returns it unchanged.
+    already = any(
+        isinstance(line, str) and line.startswith(WITHHELD_LEVEL_EVIDENCE_PREFIX)
+        for line in check.evidence
+    )
+    if withheld is None and already:
+        return check
     return ValidationCheck(
         name=check.name,
         outcome=check.outcome,

@@ -393,7 +393,12 @@ def _consensus_issuer_gap(
     residual: float | None, tolerance: float | None, evidence: tuple[str, ...]
 ) -> str | None:
     """The record ``CrossSolverConsensus.to_check`` writes, re-verified."""
-    from ..consensus import CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX, _route_declarations
+    from ..consensus import (
+        CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX,
+        INDEPENDENCE_BASES,
+        INDEPENDENCE_BASIS_EVIDENCE_PREFIX,
+        _route_declarations,
+    )
     from .thresholds import VerificationThresholds
 
     records = [
@@ -403,6 +408,21 @@ def _consensus_issuer_gap(
     ]
     if len(records) != 1:
         return "it carries no single consensus threshold record"
+    # R-21 (I-12 part B): WHICH independence the level rests on. The level was awarded on declared
+    # independence and on byte-verified artifact independence alike, and a reader could not tell the two
+    # apart -- the gate that requires the bytes had no caller. Exactly one of the two enumerated bases, so a
+    # check can neither omit the statement nor claim both.
+    bases = [
+        line[len(INDEPENDENCE_BASIS_EVIDENCE_PREFIX):]
+        for line in evidence
+        if isinstance(line, str) and line.startswith(INDEPENDENCE_BASIS_EVIDENCE_PREFIX)
+    ]
+    if len(bases) != 1 or bases[0] not in INDEPENDENCE_BASES:
+        return (
+            f"it names no single independence basis out of {list(INDEPENDENCE_BASES)}: a level earned from "
+            f"declarations the domain layer pins and a level earned from the artifacts' own bytes are not "
+            f"the same claim, and a reader cannot tell them apart from the level alone"
+        )
     try:
         record = json.loads(records[0])
         thresholds = VerificationThresholds(

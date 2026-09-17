@@ -129,19 +129,24 @@
       "title": "CROSS_SOLVER_VALIDATED is guarded only by string checks, and non-independent disagreement is absorbed as WARNING",
       "rule": "src/engcore/execution/consensus.py",
       "rule_symbol": "TrustedConsensusGate.assess, which requires byte-verified artifact independence before CrossSolverConsensus.to_check may keep the CROSS_SOLVER_VALIDATED level",
-      "status": "LIBRARY_ONLY",
-      "audit_status": "OPEN",
+      "status": "REACHED",
+      "audit_status": "FIXED",
       "audit_reached_in_production": "library-only",
-      "closed_by": "I-12",
-      "why": "TrustedConsensusGate has no caller in src. The one production consensus check is minted in engcore.mcp.problem at the line `return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)`, which reaches CrossSolverConsensus.to_check -- the scientific comparison and the string-declared independence -- and never the gate. What keeps that from being a false CROSS_SOLVER_VALIDATED is the _withhold_level wrapper, which strips the level from the emitted check: a real mitigation, and the kind of fact a ledger should record rather than leave to a reader's inference. So production emits the comparison without the level, and the level nothing verifies is never awarded there. The hole is that the gate that WOULD verify it is unreachable from production, so any future caller that wants the level has nothing on the path to earn it from. TO_CHECK_OUTSIDE_THE_GATE is written so that UNWRAPPING the mcp call fails the build, which is what stops the mitigation being lost quietly while I-12 is outstanding.",
+      "closed_by": "I-12 (batches 24 and 25)",
+      "why": "CLOSED by I-12 part B (batch 25), and this row is what says so. `TrustedConsensusGate` had no caller in src: the one production consensus check was minted in engcore.mcp.problem from `CrossSolverConsensus.to_check`, which reaches the scientific comparison and the string-declared independence and never the gate. It is now built BY the gate. That path ships no artifact digests, so the gate withholds CROSS_SOLVER_VALIDATED and records the withholding structurally, and the boundary's own `_withhold_level` still runs for its own different reason -- the check is about values it does not scope to -- so the level is withheld twice over and either rule alone would leave it one change away from a report. Two more halves of R-21 closed with it: every check carrying the level must now name exactly one `independence basis:` -- `declared` (verified against the domain layer's pin) or `artifact-verified` (the gate's byte-digested line) -- which is what the audit meant by a reader being unable to tell the two apart; and a disagreement beyond tolerance is now FAIL whether or not the routes are verified independent, so the audited 33% case no longer reads WARNING under a SUPPORTED verdict. R-21's first claim -- hand-written evidence lines earning the level -- was already closed by VAL-01 and is pinned by a test of its own. Residual, stated rather than hidden behind the status: `artifact-verified` is unreachable in production, because no production route ships artifact digests, so the production path awards nothing at all.",
       "entry_points": [
-        "engcore.mcp.problem (the cross-solver check emitted by run_electrothermal when a second route is asked for) -- reaches CrossSolverConsensus.to_check, level-withheld, and NOT TrustedConsensusGate"
+        "engcore.mcp.tools.run_electrothermal (the cross-solver check emitted when a second route is asked for) -- reaches TrustedConsensusGate, which withholds the level for want of artifact bytes, and then the boundary's own _withhold_level"
       ],
       "exercised_by": [
+        "tests/test_core_scientific_audit_batch25.py::test_r21_the_production_cross_solver_check_is_built_by_the_gate",
+        "tests/test_core_scientific_audit_batch25.py::test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_second_sentence",
         "tests/mcp/test_problem.py::test_the_second_route_actually_runs_and_the_level_is_withheld",
         "tests/mcp/test_problem.py::test_no_cross_solver_check_is_emitted_unless_one_is_asked_for"
       ],
       "exercised_by_in_library": [
+        "tests/test_core_scientific_audit_batch25.py::test_r21_the_gate_names_the_artifact_verified_basis_when_the_bytes_agree",
+        "tests/test_core_scientific_audit_batch25.py::test_r21_a_check_claiming_the_level_without_a_basis_is_refused",
+        "tests/test_cross_solver_consensus.py::test_a_hand_edited_payload_cannot_smuggle_in_a_level",
         "tests/test_trusted_consensus_gate.py::test_digest_declarations_without_bytes_withhold_trusted_level",
         "tests/test_trusted_consensus_gate.py::test_forged_fingerprint_cannot_keep_cross_solver_level"
       ],
@@ -152,7 +157,7 @@
         "TO_CHECK_OUTSIDE_THE_GATE": []
       },
       "bypass_allow_list_reasons": {},
-      "what_the_check_cannot_see": "a to_check call whose _withhold_level wrapper sits further than 40 characters before it, which the checker reports rather than allows; and a caller that re-adds the level to an already-withheld check afterwards. The second is what I-12's artifact-independence requirement is for, not a static check's job."
+      "what_the_check_cannot_see": "a to_check call whose _withhold_level wrapper sits further than 40 characters before it, which the checker reports rather than allows. The production path no longer has such a call at all: the check it emits is the gate's. What no static check can see is a check COPIED from a genuine consensus onto another result -- it carries a genuine threshold record and a genuine basis line -- which needs the check bound to the result it qualifies (CORE-009/VAL-01, I-20's)."
     },
     {
       "problem": "R-43",

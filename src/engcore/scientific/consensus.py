@@ -995,6 +995,26 @@ _EXECUTION_BINDINGS = "_execution_bindings"
 #: ``CROSS_SOLVER_VALIDATED`` (VAL-01). Not exported.
 CONSENSUS_THRESHOLDS_EVIDENCE_PREFIX = "consensus-thresholds:"
 
+#: R-21 (re-audit 2026-09-16, I-12 part B): the line every check carrying CROSS_SOLVER_VALIDATED must carry,
+#: saying WHICH independence the level rests on. ``results.validation`` refuses the level without exactly
+#: one of them (VAL-01's rule, extended). Two values and no others:
+#:
+#: * ``declared`` -- independence read from declarations the DOMAIN LAYER PINS and this module verifies
+#:   against the pinned identities. A route nothing pins earns nothing at all, so this is not a caller's
+#:   word; it is weaker than the bytes because it says the declarations agree, not that the two programs
+#:   were read and found to share no code.
+#: * ``artifact-verified`` -- the same declarations PLUS the bytes of the named artifacts, digested and
+#:   compared. Written only by ``execution.consensus.TrustedConsensusGate`` when
+#:   ``assess_independence_evidence`` reports ``strongly_independent``.
+#:
+#: The basis is ADDITIVE, which is what the improvement's brief asks for: removing the declared basis would
+#: delete the only basis any route in this tree can currently reach and make the level unreachable rather
+#: than better founded. What R-21 is about is that a reader could not tell the two apart.
+INDEPENDENCE_BASIS_EVIDENCE_PREFIX = "independence basis:"
+INDEPENDENCE_BASIS_DECLARED = "declared"
+INDEPENDENCE_BASIS_ARTIFACT_VERIFIED = "artifact-verified"
+INDEPENDENCE_BASES = (INDEPENDENCE_BASIS_DECLARED, INDEPENDENCE_BASIS_ARTIFACT_VERIFIED)
+
 
 def _values_digest(produced: Mapping[str, float]) -> str:
     """SHA-256 over one route's numbers exactly as the record carries them."""
@@ -1696,21 +1716,37 @@ class CrossSolverConsensus:
         while sharing a Jacobian produce a PASS that establishes nothing, which
         is precisely the sentence the platform previously had no way to write.
 
-        A disagreement between independent routes is a FAIL — two independent
-        routes that differ have found something. A disagreement between routes
-        that share their machinery is a WARNING: a real finding about the
-        implementation, but calling it a scientific failure would hand the
-        comparison an authority this same record has just denied it.
+        A disagreement beyond tolerance is a FAIL, whether or not the routes are
+        independent.
+
+        R-21 (re-audit 2026-09-16, I-12 part B): a disagreement between routes
+        that share their machinery used to be a WARNING, on the reasoning that
+        "a comparison denied authority to award cannot be given authority to
+        condemn". Those are not the same authority. Awarding a level is a claim
+        about what the evidence SHOWS; reporting a disagreement is a
+        MEASUREMENT of what the two routes did. Both routes were asked for the
+        same named quantities, under one declared required-output contract, and
+        returned numbers that differ beyond the declared tolerance: at least
+        one of them is wrong about the thing they were both asked to compute,
+        and that is true however much machinery they share. Sharing machinery
+        makes it worse rather than better -- the same arithmetic produced two
+        different answers, which is a defect in the computation and not a
+        difference of opinion between independent witnesses. The audited case
+        read WARNING at a relative difference of 1/3, and the verdict over it
+        stayed SUPPORTED.
+
+        The outcome and the level are still allowed to disagree in the other
+        direction, which is the sentence this record exists to write: routes
+        that AGREE while sharing a Jacobian produce a PASS that establishes
+        nothing.
         """
         comparison = self.comparison
         if not comparison.compared_anything:
             outcome = ValidationOutcome.NOT_RUN
         elif comparison.agreed:
             outcome = ValidationOutcome.PASS
-        elif self.routes_are_independent:
-            outcome = ValidationOutcome.FAIL
         else:
-            outcome = ValidationOutcome.WARNING
+            outcome = ValidationOutcome.FAIL
         return ValidationCheck(
             name=name,
             outcome=outcome,
@@ -1781,6 +1817,11 @@ class CrossSolverConsensus:
                 separators=(",", ":"),
             )
         )
+        # R-21: which independence the level rests on, written only when a level is actually awarded --
+        # a check that establishes nothing has no basis to state, and a line saying `declared` beside no
+        # level would read as a claim nobody made.
+        if self.establishes is not None:
+            lines.append(INDEPENDENCE_BASIS_EVIDENCE_PREFIX + INDEPENDENCE_BASIS_DECLARED)
         return (*lines, *self.thresholds.evidence())
 
     # ---- construction ----------------------------------------------------

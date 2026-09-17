@@ -78,9 +78,14 @@ def test_i16_the_three_it_did_not_fix_say_so_and_name_their_improvement():
     assert LEDGER.exists(), f"{LEDGER} declares which guards production reaches"
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     rows = {row["problem"]: row for row in ledger["guards"]}
-    for problem in ("R-21", "R-43", "R-58"):
+    # R-21 left this list in batch 25: I-12 part B routed the production MCP path through
+    # TrustedConsensusGate, so the gate stopped being a rule with no caller and the row moved to REACHED.
+    # That is the ledger working -- a fix that reaches production and leaves the row saying LIBRARY_ONLY is
+    # a fix nobody can check -- and it is why this test names the rows rather than counting them.
+    for problem in ("R-43", "R-58"):
         assert rows[problem]["status"] == "LIBRARY_ONLY", rows[problem]
         assert rows[problem]["closed_by"].startswith("I-"), rows[problem]
+    assert rows["R-21"]["status"] == "REACHED", rows["R-21"]
 
 
 def test_i16_a_fixed_row_that_is_only_a_library_guard_is_refused():
@@ -249,7 +254,9 @@ def _tamper_exercised_by(ledger):
 
 
 def _tamper_closed_by(ledger):
-    _row(ledger, "R-21")["closed_by"] = ""
+    # R-43 rather than R-21, which stopped being LIBRARY_ONLY when I-12 part B landed (batch 25). The rule
+    # under test only applies to a row that IS LIBRARY_ONLY.
+    _row(ledger, "R-43")["closed_by"] = ""
     return "must name the improvement"
 
 

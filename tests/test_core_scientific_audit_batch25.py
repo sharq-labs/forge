@@ -16,6 +16,10 @@ basis it rests on, and the production path is routed through the gate.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH25_THRESHOLD_PROTOCOL.json`. No threshold: one
 outcome reclassified, one required declaration with two enumerated values, and a call site moved.
+
+The ten reproductions that reproduced were committed as strict xfails in `09e78111`, before any of part B
+was written, and each was confirmed there to fail on its own assertion. The markers came off in the
+implementing commit. The other three held already and were unmarked at preregistration.
 """
 
 from __future__ import annotations
@@ -90,7 +94,6 @@ def test_r21_a_hand_written_check_cannot_carry_the_level():
 # =====================================================================
 # R-21 (c): a disagreement is a finding whether or not the routes are independent
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_a_disagreement_between_non_independent_routes_fails_rather_than_warns():
     """Awarding a level and reporting a disagreement are not the same authority."""
     check = _shared_disagreement().to_check()
@@ -98,11 +101,13 @@ def test_r21_a_disagreement_between_non_independent_routes_fails_rather_than_war
     assert check.residual == pytest.approx(1.0 / 3.0)
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_the_verdict_no_longer_stays_supported_over_such_a_disagreement():
     report = ValidationReport(checks=(_shared_disagreement().to_check(),))
     assert report.status is ValidationOutcome.FAIL
-    assert report.is_usable is False
+    # FAIL is what every consumer reads as "do not rely on this": the MCP verdict, the execution gate's
+    # `_attested_run_reached_a_usable_end`, and the SRIA components all key on the status word.
+    assert [check.name for check in report.failures] == ["cross_solver_agreement"], report.failures
+    assert report.attained_levels == frozenset(), report.attained_levels
 
 
 # Already held at the baseline and unmarked at preregistration: a disagreement establishes nothing in either
@@ -130,7 +135,6 @@ def test_r21_agreement_between_non_independent_routes_is_still_a_pass_that_earns
 # =====================================================================
 # R-21 (a)/(b): every level says which independence basis it rests on
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_the_consensus_names_the_declared_basis_it_rests_on():
     consensus, _evidence, _bytes = _independent_pair()
     check = consensus.to_check()
@@ -138,7 +142,6 @@ def test_r21_the_consensus_names_the_declared_basis_it_rests_on():
     assert _basis_lines(check) == ["declared"], check.evidence
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_the_gate_names_the_artifact_verified_basis_when_the_bytes_agree():
     consensus, evidence, artifact_bytes = _independent_pair()
     decision = TrustedConsensusGate().assess(consensus, evidence, artifact_bytes=artifact_bytes)
@@ -147,40 +150,46 @@ def test_r21_the_gate_names_the_artifact_verified_basis_when_the_bytes_agree():
     assert _basis_lines(decision.check) == ["artifact-verified"], decision.check.evidence
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_the_gate_withholds_the_level_when_no_artifact_evidence_is_offered():
+    from engcore.mcp.problem import WITHHELD_LEVEL_EVIDENCE_PREFIX
+
     consensus, _evidence, _bytes = _independent_pair()
     decision = TrustedConsensusGate().assess(consensus, ())
     assert decision.independence.strongly_independent is False
     assert decision.check.establishes is None, decision.check.detail
     assert _basis_lines(decision.check) == [], decision.check.evidence
+    # ADDED while running batch 25's guard mutations, not preregistered. B25g removed the gate's record of
+    # the level it NEARLY awarded and survived, because the idempotence test below reaches `_withhold_level`
+    # with a check that still CARRIES the level -- so the line it asserts is the boundary's, not the gate's.
+    # What a run came within one artifact digest of establishing has to reach a reader structurally, which
+    # is R-04's finding, here one layer up.
+    withheld = [line[len(WITHHELD_LEVEL_EVIDENCE_PREFIX):] for line in decision.check.evidence
+                if line.startswith(WITHHELD_LEVEL_EVIDENCE_PREFIX)]
+    assert withheld == [ValidationLevel.CROSS_SOLVER_VALIDATED.value], decision.check.evidence
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_a_check_claiming_the_level_without_a_basis_is_refused():
     """The rule is enforced where the level becomes a claim, the way VAL-01's threshold record is."""
     consensus, _evidence, _bytes = _independent_pair()
     check = consensus.to_check()
     prefix = _prefix()
-    stripped = dataclasses.replace(
-        check, evidence=tuple(line for line in check.evidence if not line.startswith(prefix)))
+    # Refused at the constructor, which is where VAL-01's threshold record is refused too -- so the level
+    # never reaches a report at all. The rule is re-applied on the report for a check nobody constructed.
     with pytest.raises(ScientificValidationError, match="no verifiable issuer"):
-        ValidationReport(checks=(stripped,))
+        dataclasses.replace(
+            check, evidence=tuple(line for line in check.evidence if not line.startswith(prefix)))
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_two_basis_lines_are_not_a_basis_either():
     consensus, _evidence, _bytes = _independent_pair()
     check = consensus.to_check()
-    doubled = dataclasses.replace(check, evidence=(*check.evidence, f"{_prefix()}artifact-verified"))
     with pytest.raises(ScientificValidationError, match="no verifiable issuer"):
-        ValidationReport(checks=(doubled,))
+        dataclasses.replace(check, evidence=(*check.evidence, f"{_prefix()}artifact-verified"))
 
 
 # =====================================================================
 # R-21 (b): the production path goes through the gate
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_the_production_cross_solver_check_is_built_by_the_gate():
     """The gate stops being a rule with no caller: it is what the MCP electrothermal route now uses."""
     import inspect
@@ -194,7 +203,6 @@ def test_r21_the_production_cross_solver_check_is_built_by_the_gate():
         "the production path no longer mints the check from the consensus alone")
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_second_sentence():
     """Two rules withhold the level for two different reasons, and neither may say it twice."""
     from engcore.mcp.problem import WITHHELD_LEVEL_EVIDENCE_PREFIX, _withhold_level
@@ -211,7 +219,6 @@ def test_r21_withholding_a_level_nobody_awarded_adds_no_second_line_and_no_secon
 # =====================================================================
 # The ledger moves with the fix
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-12 part B not implemented yet (batch 25 preregistration)")
 def test_r21_the_guard_reach_ledger_records_the_gate_as_reached():
     """A fix that reaches production and leaves the ledger saying LIBRARY_ONLY is a fix nobody can check."""
     from tools.certification import guard_reach
