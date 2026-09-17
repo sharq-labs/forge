@@ -1,0 +1,66 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 26,
+ "improvements": [
+  "I-22 part A of three"
+ ],
+ "problems_addressed": [
+  "R-75"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "e65345c3",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "I-22 is four problems about offset-scale temperature. This part is the BOUNDARY one, R-75, and it is the only one of the four the audit marks `reached_in_production: yes`: what `Quantity.parse` accepts, what a `Quantity` will hold as a magnitude, and whether a DIFFERENCE unit may be declared where an ABSOLUTE temperature is required. Part B (the next batch) is R-57 and R-52 -- corner agreement and the consensus relative difference taken in one canonical absolute unit so route order cannot matter. Part C is R-48 -- tolerances, sigmas and spreads converted as deltas.",
+ "reach": "REACHED. `Quantity.parse` is called by `src/engcore/mcp/problem.py:_read_quantity`, which is how every declared value in an MCP `run_electrothermal` or `run_battery` payload is read, and by `coerce_quantity` in the units module itself. The delta refusal is added in `_read_quantity`, on that same production path.",
+ "what_was_already_seen": {
+  "R-75": "the audit's finding 106, reproduced at 294c129 and again at e65345c3. `Quantity.parse('5 volt 2')` returns 10.0 volt; `Quantity.parse('2 volt + 3 volt')` returns 5.0 volt; `Quantity.parse('2volt+3volt')` returns 5.0 volt; `Quantity.parse('27 delta_degC')` returns 27.0 delta_degree_Celsius and then passes `_read_quantity`'s dimension-only check against a `kelvin` exemplar, so an ambient temperature of 27 K -- not 300.15 K -- is what the model is solved at. `Quantity(True, 'volt')` is 1.0 volt and `Quantity('5', 'volt')` is 5.0 volt. The MECHANISM, read out of the code rather than guessed: the split path refuses 'volt 2' (pint: 'Unit expression cannot have a scaling factor'), `parse` swallows that refusal in `except (ValueError, UnitCompatibilityError): pass`, and the fallback `registry().Quantity(raw)` then evaluates the WHOLE string as an arithmetic expression -- 5 * volt * 2. The fallback exists for a real reason ('5volt', with no separator) and is kept."
+ },
+ "rules": {
+  "whitespace_means_a_declaration_not_an_expression": {
+   "improvement": "I-22",
+   "problem": "R-75",
+   "rule": "If the stripped text contains any whitespace, `Quantity.parse` splits it at the FIRST whitespace run into a magnitude and a unit expression, and that is the only path it may take: a refusal from either half is raised, never swallowed into the backend's string parser. The unit half may itself contain whitespace ('1 kg m / s**2' is a unit expression and stays one).",
+   "class": "A",
+   "why": "Not a threshold: a grammar. The boundary's own documented contract is 'a magnitude and a unit' -- `_read_quantity` says so in every one of its four messages -- and the fallback's own comment says it is there for the spellings 'the split cannot handle -- 5volt with no separator among them'. A string that HAS a separator is by that comment's own statement not the fallback's business. Nothing is judged here; the two cases are distinguished by whether a separator is present, which is a property of the text.",
+   "closes": "'5 volt 2' and '2 volt + 3 volt'."
+  },
+  "the_magnitude_written_is_the_magnitude_parsed": {
+   "improvement": "I-22",
+   "problem": "R-75",
+   "rule": "In BOTH paths the text must begin with a decimal literal matching `^[+-]?(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?` and the float that literal denotes must equal the magnitude of the returned quantity EXACTLY (`==`, not a tolerance). Text with no leading decimal literal is refused.",
+   "class": "A",
+   "why": "An identity, so there is no tolerance to choose and none is chosen: either the number the caller wrote is the number the core holds, or the text was read as something other than a declaration. The equality is exact because both sides come from the same decimal literal through the same `float` call whenever the text really is a declaration -- a difference is not rounding, it is arithmetic the caller did not ask for. This is the rule that covers the no-separator path, which has to stay open for '5volt'. It also makes the refusal of a bare unit ('volt', today silently 1.0 volt) the same rule as the existing refusal of a bare number: a quantity is a magnitude AND a unit, neither implied.",
+   "closes": "'2volt+3volt' (2 written, 5 returned), and a unit with no magnitude.",
+   "compatibility": "'1/2 volt' and any other spelling whose magnitude is an arithmetic expression stops parsing. That is the same tightening as the rule above and is stated here rather than discovered later."
+  },
+  "a_magnitude_is_a_number": {
+   "improvement": "I-22",
+   "problem": "R-75",
+   "rule": "`Quantity.__post_init__` refuses a `bool` and refuses a `str` magnitude, by exact type test, before the existing `float()` and finiteness check. Every other numeric type (`int`, `float`, and the numpy scalars the arrays produce) is accepted exactly as today.",
+   "class": "A",
+   "why": "`bool` is an `int` in Python, so `float(True)` is 1.0 and `Quantity(True, 'volt')` is one volt: a flag read as a measurement. A `str` magnitude reintroduces at the constructor everything the parse grammar above just closed, and with no unit half to check it against. The test is by type and not by value, so nothing about which numbers are allowed changes.",
+   "closes": "`Quantity(True, 'volt')` and `Quantity('5', 'volt')`."
+  },
+  "a_difference_unit_is_not_an_absolute_value": {
+   "improvement": "I-22",
+   "problem": "R-75",
+   "rule": "A new `is_delta_unit(unit)` in the units module is True when any component of the canonical unit, with any SI prefix removed by the registry's own `parse_unit_name`, is named `delta_*`. `_read_quantity` then refuses a declared value whose delta-ness DIFFERS from its binding's `unit_exemplar` -- in either direction -- naming the exemplar as the unit to use. The dimension check it already performs is unchanged and still runs.",
+   "class": "A",
+   "why": "`delta_degC` and `kelvin` are arithmetically identical for differences -- slope 1, offset 0 -- so no numerical check can separate them and the distinction is NOT a threshold. It lives in the name: pint's `delta_` prefix is the one place the caller's intent 'this is a span, not a point' is recorded, which is why the test is name-based and why the name is read through the registry's own prefix parser rather than by string slicing (`millidelta_degC` is a delta unit). The refusal is symmetric because the error is symmetric: an absolute temperature where a span is required is 273.15 wrong in the other direction. No `unit_exemplar` anywhere in `src/engcore/` is a delta unit today, so the reverse half of the rule refuses nothing that exists and is a guard against the exemplar that does not exist yet.",
+   "closes": "'27 delta_degC' against a `kelvin` exemplar.",
+   "not_closed_here": "`is_delta_unit` is only CONSULTED at the MCP boundary in this batch. The library comparisons -- corner agreement, consensus relative difference, tolerances and sigmas -- are R-57, R-52 and R-48, parts B and C.",
+   "which_refusal_channel": "`WrongDimensionError`, the boundary's existing 'this unit is not the one this field needs' channel, whose docstring is widened from 'dimension' to 'dimension or scale'. No new error class: the MCP error taxonomy and its mapping are unchanged, and a caller who already handles a wrong unit handles this."
+  }
+ },
+ "compatibility": {
+  "additive_only": "One new module-level function (`is_delta_unit`) beside `is_ratio_scale`, and one `cache_clear()` line added to `clear_unit_caches` (required: `tests/test_core_runtime_caches.py` enumerates the module's memos and fails if one survives a clear). No signature, field, default or enum member changes. No serialized record gains a field.",
+  "behaviour_narrowed_deliberately": "`Quantity.parse` refuses four shapes it used to accept: an expression after the unit, an arithmetic expression as the magnitude, a bare unit with no magnitude, and (through `__post_init__`) a bool or str magnitude. Each is a shape whose acceptance produced a number the caller did not write. The MCP boundary additionally refuses a delta unit where an absolute one is required; that call previously SUCCEEDED and returned a wrong answer, so the change is a refusal replacing a false result, not a refusal replacing a right one.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "`coerce_quantity(value, unit)` still accepts a bare number, by design and by its own docstring, because `unit` supplies the context explicitly. Nothing in this batch changes that.",
+  "The grammar is about the TEXT. A caller who constructs `Quantity(5.0, 'volt')` directly still bypasses it entirely -- as it must, that being the two-argument path the whole class is built on.",
+  "A delta unit declared through any boundary other than `_read_quantity` is not yet refused; the library rules are parts B and C."
+ ],
+ "amendment_log": []
+}
