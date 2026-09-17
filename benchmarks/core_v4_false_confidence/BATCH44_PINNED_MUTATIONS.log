@@ -1,0 +1,2 @@
+G32d tests/inference/test_audit_inference_posterior_binding.py -> KILLED | 1 failed, 5 passed in 0.59s | code 771e74384462dceb->1e02ee5e2e5aad27 | pinned: HUQ-04 (grid part) (HUQ-04-conditioned-likelihood-states-conditioning) -- tests/inference/test_audit_inference_posterior_binding.py
+CONTROL (unmutated, 1 test(s)) GREEN | 6 passed in 0.66s

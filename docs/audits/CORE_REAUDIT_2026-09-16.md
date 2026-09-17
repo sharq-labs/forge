@@ -2741,3 +2741,49 @@ gather) and narrowing `_RANKABLE` back to ELIGIBLE alone (which would delete the
 them). `BATCH43_PINNED_MUTATIONS.log`: no pinned mutation targets these files.
 
 **Open decisions.** None.
+
+### Batch 44 — I-28 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-28 | **PARTIAL** (part A of three) | `9788100d` (preregistration + 8 strict xfails), this commit | **R-71 is parts B and C**: the forward table's own constructor accepting any strings as admission records and binding observations by key label only (finding 102), and admission not being bound to the source result at all (finding 98) |
+
+**R-59 is FIXED.** `condition_posterior_on_predictive_admission` is meant to fail closed above a declared
+budget and accepted **any** finite non-negative one.
+
+| Claim | Status | How |
+|---|---|---|
+| any budget | **FIXED** | At 1.0 it conditioned away **99.9997%** of the posterior, renormalizing by 3.4e5, and at 5.0 it accepted that too. New `MAXIMUM_CONDITIONED_UNSUPPORTED_MASS = 0.05` — not a new number, but the complement of the 95% coverage every credible interval here is declared at: **a conditioning may not discard more mass than the tail a 95% claim already excludes.** Beyond that the record is a statement about a minority of the original mass, which is a different question and needs the observations that support it. Both in-repo callers declare 1e-12, twelve orders below the cap. |
+| an unmarked record | **FIXED** | The conditioned grid reused the original `dataset_id`, so a posterior whose sd had moved from 0.1 to 0.5 travelled as the fit to that dataset, and every PosteriorGrid-accepting UQ function takes `.posterior`. The identity is now derived — `<dataset>|predictive-admitted:<digest>` over the admitted mask, the supported mass and the rejected indices — because the dataset id is the field every downstream route reads to decide what a posterior is *about*. |
+| an unbound audit | **FIXED** | `PredictiveAdmissionAudit` gained a trailing `conditioned_weights_digest` (written only when conditioning happened) and `ConditionedPosterior` refuses a pair whose audit does not describe those weights. An audit recording a 1e-12 conditioning could travel beside one conditioned by 3.4e5. |
+
+**Amendment 1 is the interesting one: a change that looked stronger removed the force of a certified guard.**
+The preregistered rule also narrowed the conditioned grid's `admissible_mask` to the predictive-admitted
+nodes, so the summary would stop reporting full admissibility. Implemented, the pinned mutation **G32d** —
+which deletes `conditioned_log_likelihood[rejected] = -np.inf` — **stopped being killed by its own test**:
+`PosteriorGrid` holds weights to the likelihood over `mask & isfinite(log_likelihood)` (HUQ-04), so taking the
+rejected node out of the mask takes it out of that rule's reach, and a record could then carry a finite
+likelihood beside a zero weight — two arrays describing two different posteriors, which is the defect HUQ-04
+exists for. The mask is left as the fitting-conditions mask it *is*, and predictive support is reported
+separately, which is the audit's own alternative ("update admissible_mask, **or** report predictive support
+separately"). This is what the guard-mutation step is for, and it is why it runs before the batch is called
+done.
+
+**Compatibility.** Additive: one public constant, one trailing field written only when it carries
+information, one new `__post_init__`. No committed JSON carries a conditioning record; the only files naming
+it are the API snapshots, whose tests fail by design. An unconditioned pass-through still returns the
+original object, unmarked, because nothing was conditioned.
+
+**Committed evidence.** Nothing moved. `experiments/kinetics_k31` and `kinetics_k4` declare 1e-12 and their
+recorded conditionings discard no mass.
+
+**Verification.** FAST tier 7011 passed, 5 skipped, 0 xfailed, 19 failed (the by-design set, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed; `tests/mutation_guards.py` untouched. Guard reach ledger clean over 24 guards, R-59 LATENT/FIXED.
+
+**Guard mutations.** `BATCH44_MUTATIONS.log`: **8 of 8 KILLED**, including the three controls — a cap set to
+the audited budget itself, a cap below the budget both in-repo callers declare, and demanding the weights
+digest of a pass-through that conditioned nothing. `BATCH44_PINNED_MUTATIONS.log`: **1 of 1 KILLED** — G32d,
+which is the mutation amendment 1 is about.
+
+**Open decisions.** None.

@@ -772,6 +772,36 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "RANKED_WITHOUT_ASSESSMENT is still a caller's declaration, and nothing assesses a model that declares no validity domain -- declaring domains for the studies' models is their own work. The archives RECORD which members were ranked unassessed rather than refusing to build; refusing would delete those studies rather than correct them, which is the audit's own alternative. A D3 memory entry records the evaluation by reference, so the distinction lives on the evaluation and in the archive that ranked it, not on the entry; carrying it there too is deferred with the V4 inventory. And the rule requires at least one attained level, not a particular one: choosing which is a study's decision, for which `ValidationReport.require_level` exists."
+  },
+  {
+   "problem": "R-59",
+   "title": "Predictive-admission conditioning accepts any budget and returns an unmarked PosteriorGrid",
+   "rule": "src/engcore/uq/admission.py",
+   "rule_symbol": "MAXIMUM_CONDITIONED_UNSUPPORTED_MASS and the budget refusal in PredictiveAdmissionAudit.__post_init__; the derived dataset identity in condition_posterior_on_predictive_admission; conditioned_weights_digest and the binding check in ConditionedPosterior.__post_init__",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-28 part A (batch 44)",
+   "why": "LATENT. `engcore.uq` is public API, and the shapes these rules guard do not occur in the tree: both in-repo callers (experiments/kinetics_k31 and kinetics_k4) declare a budget of 1e-12, twelve orders below the new maximum, and their conditionings discard no mass at all, so no committed record carries a conditioning. No MCP entry point conditions a posterior. The rules are on the public functions a caller outside this repository would use, which is why the improvement exists.",
+   "what_would_create_it": "Any caller declaring a budget large enough to matter -- the audit's own reproduction used 1.0 and 5.0, discarding 99.9997% of the posterior -- or any consumer that takes `.posterior` off a conditioned pair and treats it as the fit to the dataset. The second is every PosteriorGrid-accepting UQ function, which is what made the missing marking consequential.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch44.py::test_r59_the_core_declares_a_maximum_budget",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_budget_that_would_condition_most_of_the_posterior_away_is_refused",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_budget_above_one_is_refused_too",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_the_audit_record_refuses_the_same_budget",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_budget_inside_the_maximum_still_works",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_a_conditioned_posterior_does_not_claim_the_datasets_identity",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_the_conditioned_record_states_the_conditioning_and_reports_its_support",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_an_audit_cannot_be_recombined_with_another_posterior",
+    "tests/test_core_scientific_audit_batch44.py::test_r59_an_unconditioned_pair_is_still_a_valid_pair",
+    "tests/test_k31_predictive_admission.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The weights digest is integrity-only, as every digest here is: it closes accidental recombination and a silent hand-off, not a determined edit. The derived dataset identity is a string, so a consumer that only logs it gains nothing automatic -- what it guarantees is that anything comparing a posterior's identity with the dataset it was fitted to will not match. The admissible mask is deliberately NOT narrowed (amendment 1): narrowing it took the rejected node out of HUQ-04's reach and stopped the certified mutation G32d from being killed, so predictive support is reported separately instead. And an unsupported mass of exactly zero still returns the original object, unmarked, because nothing was conditioned."
   }
  ]
 }

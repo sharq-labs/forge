@@ -42,7 +42,11 @@
   }
  },
  "thresholds": {
-  "MAXIMUM_CONDITIONED_UNSUPPORTED_MASS": {"value": 0.05, "class": "B", "why": "the complement of the 95% coverage this repository's credible intervals are declared at: a conditioning may not discard more mass than a 95% claim's whole excluded tail. Both in-repo callers declare 1e-12, twelve orders below it."}
+  "MAXIMUM_CONDITIONED_UNSUPPORTED_MASS": {
+   "value": 0.05,
+   "class": "B",
+   "why": "the complement of the 95% coverage this repository's credible intervals are declared at: a conditioning may not discard more mass than a 95% claim's whole excluded tail. Both in-repo callers declare 1e-12, twelve orders below it."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -74,5 +78,13 @@
   "the batch's guard mutations, isolated, with an unmutated control",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what": "The preregistered rule `a_conditioned_posterior_says_it_is_conditioned` narrowed the conditioned grid's `admissible_mask` to the original mask AND the predictive-admitted mask. Implemented, it WEAKENED a certified guard: the pinned mutation G32d (which removes `conditioned_log_likelihood[rejected] = -np.inf`) stopped being killed by its own test, tests/inference/test_audit_inference_posterior_binding.py -- 6 passed under the mutation where it must fail.",
+   "change": "The mask is left as the fitting-conditions mask it is, and predictive support is reported separately -- which is the audit's own alternative ('Update admissible_mask, OR report predictive support separately'). The conditioned record states the conditioning in its LIKELIHOOD (-inf on every rejected node, unchanged) and the audit carries the supported mass, the rejected indices and their reasons, now bound to those weights by digest. The batch's own reproduction was amended to assert exactly that, and mutation B44e was repointed to the `-inf` assignment.",
+   "why": "`PosteriorGrid` enforces HUQ-04 -- weights are the normalized likelihood -- over `mask & isfinite(log_likelihood)`. Narrowing the mask takes the rejected node OUT of the support that rule covers, so a conditioned record could carry a finite likelihood beside a zero weight and nothing would refuse it: two arrays describing two different posteriors, which is the defect HUQ-04 exists for. The mask also means what it says -- admissibility at the FITTING conditions -- and predictive admission is a different statement about a different condition. A change that looked stronger removed the force of a pinned invariant, which is exactly what the guard-mutation step is for."
+  }
+ ]
 }

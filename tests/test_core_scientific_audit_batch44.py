@@ -7,6 +7,8 @@ benchmarks/core_v4_false_confidence/BATCH44_THRESHOLD_PROTOCOL.json.
 finite non-negative one: at 1.0 it conditions away 99.9997% of the posterior, renormalizes by 3.4e5, and
 returns an ordinary PosteriorGrid with the same dataset id, the original admissible mask and no field
 recording that anything happened -- while every PosteriorGrid-accepting UQ function takes `.posterior`.
+
+Recorded as strict xfails in commit 9788100d, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -35,13 +37,11 @@ def _tail_heavy():
 # ---------------------------------------------------------------------------
 # a_budget_is_a_bound_and_the_core_has_a_maximum
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-59: there is no maximum at all -- any finite non-negative budget is accepted")
 def test_r59_the_core_declares_a_maximum_budget():
     maximum = _symbol("MAXIMUM_CONDITIONED_UNSUPPORTED_MASS")
     assert maximum == 0.05, maximum
 
 
-@pytest.mark.xfail(strict=True, reason="R-59 as audited: budget 1.0 is accepted and 99.9997% of the posterior is conditioned away, renormalized by 3.4e5")
 def test_r59_a_budget_that_would_condition_most_of_the_posterior_away_is_refused():
     """As audited: budget 1.0 accepted, 99.9997% of the mass discarded, factor 3.4e5."""
     with pytest.raises(UQProblemError, match="0.05|maximum"):
@@ -49,14 +49,12 @@ def test_r59_a_budget_that_would_condition_most_of_the_posterior_away_is_refused
             _tail_heavy(), K._table(), maximum_unsupported_mass=1.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-59 as audited: budget 5.0 is accepted too")
 def test_r59_a_budget_above_one_is_refused_too():
     with pytest.raises(UQProblemError, match="0.05|maximum"):
         condition_posterior_on_predictive_admission(
             _tail_heavy(), K._table(), maximum_unsupported_mass=5.0)
 
 
-@pytest.mark.xfail(strict=True, reason="R-59: PredictiveAdmissionAudit rejects only negative budgets")
 def test_r59_the_audit_record_refuses_the_same_budget():
     with pytest.raises(UQProblemError, match="0.05|maximum"):
         PredictiveAdmissionAudit(
@@ -84,7 +82,6 @@ def _conditioned():
         posterior, K._table(), maximum_unsupported_mass=0.05)
 
 
-@pytest.mark.xfail(strict=True, reason="R-59 as audited: the conditioned grid reuses the original dataset_id, so nothing downstream can tell")
 def test_r59_a_conditioned_posterior_does_not_claim_the_datasets_identity():
     posterior, result = _conditioned()
     assert result.audit.conditional_on_predictive_admission is True
@@ -93,12 +90,23 @@ def test_r59_a_conditioned_posterior_does_not_claim_the_datasets_identity():
     assert result.posterior.dataset_id.startswith(f"{posterior.dataset_id}|predictive-admitted:")
 
 
-@pytest.mark.xfail(strict=True, reason="R-59 as audited: the conditioned grid keeps the original admissible_mask, so the summary reports admissible_fraction 1.0")
-def test_r59_the_conditioned_mask_no_longer_claims_the_rejected_node():
+def test_r59_the_conditioned_record_states_the_conditioning_and_reports_its_support():
+    """AMENDED (amendment 1): the record states the conditioning in its LIKELIHOOD, and the audit reports
+    the predictive support separately -- which is the audit's own alternative to narrowing the mask.
+
+    Narrowing `admissible_mask` was the preregistered rule and it turned out to WEAKEN a certified guard:
+    HUQ-04 holds weights to the likelihood over `mask & isfinite(log_likelihood)`, so taking the rejected
+    node out of the mask takes it out of that rule's reach, and the pinned mutation G32d -- which removes the
+    `-inf` assignment on rejected nodes -- stopped being killed. The mask means admissibility at the FITTING
+    conditions, which is what it says; predictive support is a separate statement and is reported as one.
+    """
     posterior, result = _conditioned()
-    assert tuple(bool(v) for v in posterior.admissible_mask) == (True, True, True)
-    assert tuple(bool(v) for v in result.posterior.admissible_mask) == (True, True, False), (
-        "the summary still reports full admissibility over a node the conditioning removed")
+    assert tuple(bool(v) for v in result.posterior.admissible_mask) == (True, True, True)
+    assert float(np.asarray(result.posterior.log_likelihood)[2]) == float("-inf"), (
+        "a node with no likelihood under the predictive-admitted event still carries one")
+    assert result.audit.supported_mass == pytest.approx(0.99, rel=1e-12)
+    assert result.audit.rejected_point_indices == (2,)
+    assert result.audit.rejection_reasons == ("numerical convergence failed",)
 
 
 def test_r59_the_conditioning_is_deterministic():
@@ -119,14 +127,12 @@ def test_r59_the_weights_are_still_the_conditioned_weights():
 # ---------------------------------------------------------------------------
 # the_audit_is_bound_to_the_weights_it_describes
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-59 as audited: the audit is a separate object bound to the posterior by no digest")
 def test_r59_the_audit_carries_the_digest_of_the_weights_it_describes():
     _, result = _conditioned()
     assert getattr(result.audit, "conditioned_weights_digest", ""), (
         "the audit is bound to the posterior it describes by nothing at all")
 
 
-@pytest.mark.xfail(strict=True, reason="R-59: nothing stops an audit describing one conditioning travelling beside another posterior")
 def test_r59_an_audit_cannot_be_recombined_with_another_posterior():
     posterior, result = _conditioned()
     other = K._posterior((0.5, 0.5, 0.0), dataset_id=result.posterior.dataset_id)
