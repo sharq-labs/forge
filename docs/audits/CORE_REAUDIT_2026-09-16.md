@@ -1045,3 +1045,68 @@ Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists
 
 **Open decisions.** None new. What a coverage verdict should do about a refused fraction is carried to part B
 rather than decided here, and is written down in the protocol's `amendment_log` as such.
+
+### Batch 18 — I-03 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-03 | **DONE** | `e512de91`, `8b6360a7` (part A), `90ffb681` (part B preregistration + 15 strict xfails), this commit | the bias test uses the residuals' NOMINAL null, treating them as independent standard normals; they share one posterior, so the true sd of their mean is slightly above 1/√n and the test is slightly anti-conservative — the Mahalanobis statistic with the joint predictive covariance is the complete answer and needs a covariance `posterior_predictive_uq` does not return; the power floor is stated for a COMMON one-sigma bias and says nothing about power against a variance error or a pattern that cancels; the design-effect correction assumes exchangeable clustering within a repetition; the battery B1–B3 observations do not gain declared conditions, so their prediction-domain records stay `PREDICTION_DOMAIN_NOT_DECLARED` (I-13's); and `classify_coverage` still gives the pooled interval to a caller who passes only the two counts, which is what such a caller asked for |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-35 | **FIXED** | `HeldOutValidation` gained `INCONCLUSIVE`, and the rule moved into `held_out_verdict`, stated once and readable at its own boundary. Three answers: **FAIL** when either of two tests rejects; **INCONCLUSIVE** below `HELD_OUT_MINIMUM_N = 7`; **PASS** otherwise, in a sentence that now says NOT REJECTED rather than "consistent with", because that is what a test that did not reject has established. The second test is the one the omnibus chi-square cannot be: a sum of squares is blind to sign, and a truncated expansion leaves a common-sign bias — the audit measured a mean standardized residual of about 2.3 on every point while the model PASSED in 24 of 40 seeds at n = 1. The mean residual is tested directly (`z = √n · mean(r)`), and each test runs at half the declared alpha so the family-wise level is exactly the 0.01 the module already declared. **The floor is derived, not chosen**: the effect size of interest is a common bias of one DECLARED sigma per point — below its own measurement noise a model is not wrong in any way this evidence can speak to — and the bias test finds it at better than even odds exactly when √n ≥ z₁₋α/₂, i.e. n ≥ z² = 6.6349 at α = 0.01. A rejection still outranks the floor: FAIL is issued at any n, because a rejection is evidence whatever the sample size. |
+| R-36 | **FIXED** | The coverage interval is computed at an EFFECTIVE sample size. `coverage_design_effect` estimates the intraclass correlation of the per-repetition indicators with the conventional one-way random-effects ANOVA estimator, forms `1 + (m̄ − 1)·max(ICC, 0)`, and divides the pooled count by it; the Wilson interval and the standard error use that, the POINT estimate stays the pooled fraction, and `CoverageStudy` records the intervals per repetition, the ICC, the design effect and the effective size so a reader can see the correction rather than trust it. The `max(ICC, 0)` clamp is the fail-closed direction: the estimator can come out negative, and inflating precision for negative clustering would claim more than the data has. The audited verdict flip reproduces — 1104/1200 reads CALIBRATED pooled and INCONCLUSIVE at an effective size of 574. And the refused fraction now DECIDES: a coverage verdict is INCONCLUSIVE when the fraction of repetitions the V2 judgement refused exceeds the study's own `acceptance_half_width`, because a refused repetition's intervals are unobserved and the selection alone can move the measured coverage by at most that fraction — **derived from a threshold the study already declares, with no new number**. |
+| R-38 | **FIXED** | `observation_sigma` is optional on `predict_held_out` and `validate_held_out`. Given, INF-02's check is exactly what it was — that argument is the only thing standing between a caller and a self-chosen noise level, and the audit that added it measured the difference (chi-square 49.3 at the declared 0.002 ohm against 1.81 at a caller's 0.02 ohm). Omitted, each observation's own declared sigma is used, which is what the per-observation loop already did — so a half declaring [0.002, 0.002, 0.003] ohm is validated, where before no single value could validate it. And a coverage repetition records `CALIBRATION_NOT_RUN_GRID_POSTERIOR` instead of `CALIBRATION_CONVERGED`: it builds a grid posterior, no optimizer runs, and there is nothing for CONVERGED to be true of. Not a new `CalibrationStatus` member, because that enum's own docstring is "Did the optimizer find a minimum" and a value meaning none ran would be a legal thing for a `CalibrationResult` to claim. |
+
+**Part A's residual closed too.** The TCR observations now declare the temperature they were measured at
+(`GaussianObservation.conditions['temperature']`), and the study's predictive specs carry the condition they
+are AT — so CORE-006 compares the prediction with the range the calibration covered instead of saying
+`PREDICTION_DOMAIN_NOT_DECLARED` everywhere. The TCR flagship holds out temperatures above its calibration
+range by design, and its routed records now read DOWNGRADED / `PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`,
+which is the true statement about an extrapolation. A study inside its calibrated range says nothing about the
+domain, which is the other half of the same measurement.
+
+**Both new thresholds are derived from numbers the module already declared.** `HELD_OUT_MINIMUM_N = 7` from
+the module's own alpha through the bias test's power, and the refused-fraction limit IS the study's own
+acceptance half-width. Neither is a number chosen after looking at a result, and the derivations are in the
+protocol with the arithmetic.
+
+**Existing expectations moved, six of them, each because a small held-out set cannot validate a model.**
+Four tests asserted `HELD_OUT_VALIDATION_PASS` on 2, 3 or 4 held-out points; each now asserts INCONCLUSIVE
+and, where the test's own claim was "this evidence is not against the model", asserts that too (neither test
+rejects, p > 0.01). Two batch-17 tests asserted part A's own state — `PREDICTION_DOMAIN_NOT_DECLARED` and a
+PASS at n = 2 — and part B supersedes both deliberately; the comments say so. No assertion was weakened: the
+claim each test makes is unchanged and the word it reads is the honest one.
+
+**Compatibility.** Additive in shape. `HeldOutValidation` gained one member — the round's first named additive
+category. `CoverageStudy` gained five trailing fields with defaults. `observation_sigma` gained a default of
+None on two study functions, which no existing call notices; it stays REQUIRED on `run_coverage_study`, which
+synthesizes the observations and so needs the noise it draws from. `wilson_interval`'s two parameters are
+typed float rather than int so the interval can be computed at a non-integer effective size; the arithmetic is
+unchanged and an integer pair gives exactly the interval it always gave, which a no-regression guard measures.
+No field or member is removed, renamed or reordered and no existing default changes.
+
+**Committed evidence.** Nothing moved. No committed record in the repository carries a `HeldOutMetrics`, a
+`CoverageStudy` or a serialized TCR observation. `benchmarks/calibration_uq/ROUND_REPORT.md` records a
+`HELD_OUT_VALIDATION_PASS` in a historical table of a past round; it is pinned by no test and is not
+rewritten, and its held-out verdict would now read INCONCLUSIVE for the reason above — 3 held-out points.
+
+**Guard mutations.** `BATCH18_MUTATIONS.log`: **16 of 16 KILLED**, control green. Two needed a purchase on a
+first run and both are recorded. B18m matched twice inside `run_coverage_study` -- the refused path and the
+normal one carry the same line -- and the runner rightly refuses a mutation that is not one decision; it was
+repointed at the constant, which is where the claim lives. B18o survived: dropping the conditions from
+`predict_held_out`'s per-observation specs did not break the extrapolation test, because that test reads the
+HELD-OUT VERDICT's routed record, which comes from the other spec. The per-observation records needed a guard
+of their own, and
+`test_r02_each_predictive_record_carries_its_own_conditions_domain_verdict` is it. The 5 pinned mutations on
+the two files this batch changed were re-run isolated and all 5 are still KILLED
+(`BATCH18_PINNED_MUTATIONS.log`), control green.
+
+**Verification.** FAST tier 6672 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier PENDING. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None. The decision part A deferred — what a coverage verdict should do about a refused
+fraction — is decided here, from the study's own acceptance half-width.

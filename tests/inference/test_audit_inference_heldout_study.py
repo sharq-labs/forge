@@ -90,8 +90,18 @@ def test_a_prediction_far_outside_the_validated_domain_is_not_issued():
 
 
 def test_held_out_conditions_inside_the_validated_domain_still_validate():
+    """I-03 part B (batch 18, R-35): the verdict on 4 held-out points is INCONCLUSIVE, not PASS.
+
+    This test is about INF-01 -- conditions inside the validated domain are not refused -- and that
+    claim is unchanged: the statement is issued, and neither test rejects it. What moved is the
+    WORD, because 4 points is below the minimum of 7 at which the mean-residual test can find a
+    one-sigma common bias at better than even odds. Reporting PASS there was the audited defect:
+    absence of rejection read as validation.
+    """
     split, posterior, by = _study(CAL_T, HELD_T)
-    assert _validate(split, posterior, by).verdict is HeldOutValidation.PASS
+    metrics = _validate(split, posterior, by)
+    assert metrics.verdict is HeldOutValidation.INCONCLUSIVE, metrics.why
+    assert metrics.verdict is not HeldOutValidation.FAIL
     assert len(_predict(split, posterior, by)) == len(HELD_T)
 
 
@@ -110,8 +120,18 @@ def test_an_inflated_observation_sigma_cannot_flip_fail_to_pass():
 
 
 def test_the_declared_sigma_in_another_unit_is_the_same_sigma():
+    """The claim is that 2.0 milliohm IS 0.002 ohm, which is unchanged.
+
+    I-03 part B: the verdict word on 4 held-out points is INCONCLUSIVE rather than PASS (see
+    `test_held_out_conditions_inside_the_validated_domain_still_validate`). What this test measures
+    is that the unit conversion is accepted at all -- the refusal it guards against raises -- so it
+    asserts the same verdict the declared sigma in its own unit produces, whatever that word is.
+    """
     split, posterior, by = _study(CAL_T, HELD_T)
-    assert _validate(split, posterior, by, sigma=Quantity(2.0, "milliohm")).verdict is HeldOutValidation.PASS
+    in_ohm = _validate(split, posterior, by, sigma=Quantity(0.002, "ohm"))
+    in_milliohm = _validate(split, posterior, by, sigma=Quantity(2.0, "milliohm"))
+    assert in_milliohm.verdict is in_ohm.verdict is HeldOutValidation.INCONCLUSIVE
+    assert in_milliohm.chi_square == in_ohm.chi_square
 
 
 # =====================================================================

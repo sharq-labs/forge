@@ -113,15 +113,21 @@ def test_r02_held_out_metrics_carry_the_route_claim_and_reasons():
     assert metrics.to_dict()["route_claim"] == metrics.route_claim
 
 
-def test_r02_the_claim_names_the_prediction_domain_it_cannot_yet_show():
-    """Honest rather than silent: nothing today shows where the prediction sits in the calibrated range.
+def test_r02_the_claim_names_the_prediction_domain():
+    """Part A made the record SAY what it could show; part B (batch 18) made it informative.
 
-    Turning this into a real domain check is part B; what this batch buys is that the record SAYS so.
+    At part A the TCR observations carried no declared condition, so every routed record read
+    DOWNGRADED / PREDICTION_DOMAIN_NOT_DECLARED -- honest and uninformative, which is what this test
+    asserted when it was written. Part B put the temperature on the observations and on the
+    predictive specs, so the check now compares the prediction with the range the calibration
+    covered: this fixture holds out 375 and 400 K against a calibration of 250-350 K, and the record
+    says it is extrapolating. The claim -- that the record states its own domain position rather
+    than staying silent -- is the same one, and it is now a measurement instead of an absence.
     """
     split, posterior, by = _study()
     metrics = _validate(split, posterior, by)
     reasons = tuple(getattr(metrics, "reasons", ()))
-    assert "PREDICTION_DOMAIN_NOT_DECLARED" in reasons, reasons
+    assert "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS" in reasons, reasons
     assert getattr(metrics, "route_claim", "") == "DOWNGRADED", getattr(metrics, "route_claim", None)
 
 
@@ -240,7 +246,11 @@ def test_r02_the_production_wide_design_still_predicts_the_same_numbers():
                 < decomposition.central.magnitude_in("ohm")
                 < decomposition.total_upper.magnitude_in("ohm"))
     metrics = _validate(split, posterior, by)
-    assert metrics.verdict is HeldOutValidation.PASS
+    # I-03 part B (batch 18, R-35): INCONCLUSIVE at 2 held-out points rather than PASS, because
+    # neither held-out test could have found a one-sigma common bias at that n. What this test is
+    # about -- that the routed numbers are the numbers the study always computed -- is above.
+    assert metrics.verdict is HeldOutValidation.INCONCLUSIVE, metrics.why
+    assert metrics.chi_square_p_value > 0.01, metrics.why
     assert metrics.n == len(HELD_T)
 
 

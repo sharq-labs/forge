@@ -193,10 +193,21 @@ def test_model_discrepancy_is_recorded_as_not_modelled():
 # B2 -- held-out validation
 # =====================================================================
 
-def test_the_well_specified_model_passes_held_out_validation():
+def test_the_well_specified_model_is_not_rejected_on_held_out_evidence():
+    """I-03 part B (batch 18, R-35): 3 held-out points give INCONCLUSIVE, not PASS.
+
+    The claim this test makes is that a well-specified model's held-out evidence is not against it,
+    and that claim is unchanged -- neither the omnibus chi-square nor the mean-residual test
+    rejects. What moved is the WORD. Three points is below the minimum of 7 at which the
+    mean-residual test finds a one-sigma common bias at better than even odds, so the honest report
+    is that nothing was found AND nothing could have been; the audit measured a misspecified model
+    PASSing in 12 of 40 seeds at exactly this n, which is what PASS there was worth.
+    """
     split, posterior = build()
     m = metrics_for(split, posterior)
-    assert m.verdict is HeldOutValidation.PASS, m.why
+    assert m.verdict is HeldOutValidation.INCONCLUSIVE, m.why
+    assert m.verdict is not HeldOutValidation.FAIL
+    assert m.chi_square_p_value > 0.01, m.why
     assert m.n == 3
     assert m.rmse > 0.0 and m.mae > 0.0
     assert m.rmse >= m.mae  # RMSE >= MAE always; a violation means a mixed-up metric
@@ -323,7 +334,10 @@ def test_the_well_specified_and_misspecified_runs_differ_only_in_adequacy():
     clean_held = metrics_for(clean_split, clean_posterior)
 
     assert clean_id.status is bad_id.status is IdentifiabilityStatus.IDENTIFIABLE
-    assert clean_held.verdict is HeldOutValidation.PASS
+    # I-03 part B (batch 18, R-35): INCONCLUSIVE at 3 held-out points rather than PASS -- the
+    # contrast this test is about is between "not rejected" and "refused", and it is sharper for it.
+    assert clean_held.verdict is HeldOutValidation.INCONCLUSIVE
+    assert clean_held.chi_square_p_value > 0.01
     # I-03 part A (batch 17): the misspecified run is now REFUSED rather than FAILED, because its
     # calibration residuals exceed the declared noise and the study routes through the V2 judgement
     # first. The contrast this test is about is unchanged and sharper -- same convergence, same

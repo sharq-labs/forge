@@ -18,6 +18,11 @@ arithmetic the study does itself, and three problems live in it.
   repetition records `CALIBRATION_CONVERGED` although no optimizer runs.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH18_THRESHOLD_PROTOCOL.json`.
+
+Fifteen of these were audited reproductions, recorded as `xfail(strict=True)` in commit **90ffb681** and
+confirmed there to fail on their own assertions against the pre-batch tree (15 failed, 2 passed under
+`--runxfail`). The markers came off with the implementation. The two unmarked tests are no-regression guards:
+INF-02's supplied-sigma refusal still holds, and the pooled Wilson interval is the same number as before.
 """
 
 from __future__ import annotations
@@ -110,13 +115,11 @@ WIDE_HELD = [255.0, 265.0, 275.0, 285.0, 295.0, 305.0, 315.0, 319.0]
 # =====================================================================
 # R-35: a verdict needs the power to have found something
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r35_there_is_a_third_held_out_verdict():
     assert getattr(HeldOutValidation, "INCONCLUSIVE", None) is not None, list(HeldOutValidation)
     assert HeldOutValidation.INCONCLUSIVE.value == "HELD_OUT_VALIDATION_INCONCLUSIVE"
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r35_the_minimum_is_where_a_one_sigma_bias_is_found_at_better_than_even_odds():
     """Derived from the alpha this module already declares, and from no new number."""
     from scipy.stats import norm
@@ -129,7 +132,6 @@ def test_r35_the_minimum_is_where_a_one_sigma_bias_is_found_at_better_than_even_
     assert minimum == math.ceil(z * z) == 7, (minimum, z * z)
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r35_a_single_held_out_point_cannot_validate_a_model():
     """The audited case: one point, a 2.11 sd residual, and 'consistent with' in the record."""
     assert _sigma_is_optional(), "observation_sigma is optional, so the evidence's own sigmas are used"
@@ -140,7 +142,6 @@ def test_r35_a_single_held_out_point_cannot_validate_a_model():
     assert "7" in metrics.why or "power" in metrics.why.lower(), metrics.why
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r35_a_rejection_is_still_a_rejection_below_the_floor():
     """A FAIL at any n: a rejection is evidence whatever the sample size, and withholding it
     would be the opposite error to the one this rule closes."""
@@ -152,7 +153,6 @@ def test_r35_a_rejection_is_still_a_rejection_below_the_floor():
     assert inconclusive is HeldOutValidation.INCONCLUSIVE
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r35_a_common_sign_bias_is_found_where_the_omnibus_test_is_blind():
     """The shape a truncated expansion leaves, and the shape a sum of squares cannot see.
 
@@ -171,7 +171,6 @@ def test_r35_a_common_sign_bias_is_found_where_the_omnibus_test_is_blind():
     assert "bias" in why.lower() or "mean" in why.lower(), why
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r35_the_family_wise_level_is_the_one_the_module_declares():
     """Two tests, each at half the declared alpha, so the union rate stays at or below it."""
     from engcore.studies.calibration_study import HELD_OUT_CHI_SQUARE_ALPHA
@@ -184,13 +183,11 @@ def test_r35_the_family_wise_level_is_the_one_the_module_declares():
 # =====================================================================
 # R-36: the coverage interval accounts for its clustering
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r36_the_coverage_study_records_its_design_effect():
     assert {"intraclass_correlation", "design_effect", "effective_sample_size",
             "intervals_per_repetition"} <= _fields(CoverageStudy), sorted(_fields(CoverageStudy))
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r36_perfectly_clustered_indicators_give_a_design_effect_of_the_cluster_size():
     """The arithmetic, on the two extremes where the answer is known without estimation."""
     coverage_design_effect = _symbol("coverage_design_effect")
@@ -208,7 +205,6 @@ def test_r36_perfectly_clustered_indicators_give_a_design_effect_of_the_cluster_
     assert effective == pytest.approx(32.0, abs=1e-9)
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r36_the_audited_verdict_flip_reproduces_at_the_effective_sample_size():
     """The audit's own numbers: 1104/1200 reads CALIBRATED pooled and INCONCLUSIVE effectively."""
     # The half-width is the module's own default of 0.05, which is what the audit measured against:
@@ -225,7 +221,6 @@ def test_r36_the_audited_verdict_flip_reproduces_at_the_effective_sample_size():
     assert effective is CoverageVerdict.INCONCLUSIVE, why
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r36_a_refused_fraction_above_the_studys_own_tolerance_is_inconclusive():
     """Derived from the study's declared acceptance half-width, and from no new number.
 
@@ -235,13 +230,16 @@ def test_r36_a_refused_fraction_above_the_studys_own_tolerance_is_inconclusive()
     """
     coverage_verdict_with_refusals = _symbol("coverage_verdict_with_refusals")
     assert coverage_verdict_with_refusals is not None, "the module reads its own refused fraction"
+    # The module's own default half-width of 0.05, so the band is [0.90, 1.00] and 190/200 at an
+    # effective size of 200 lies inside it -- which makes the refused fraction the only thing under
+    # test here. 3 of 10 repetitions is 0.3, six times the half-width.
     verdict, why = coverage_verdict_with_refusals(
-        covered=190, total=200, nominal=0.95, acceptance_half_width=0.02,
+        covered=190, total=200, nominal=0.95, acceptance_half_width=0.05,
         effective_sample_size=200.0, refused=3, repetitions=10)
     assert verdict is CoverageVerdict.INCONCLUSIVE, why
     assert "0.3" in why or "refus" in why.lower(), why
     kept, _ = coverage_verdict_with_refusals(
-        covered=190, total=200, nominal=0.95, acceptance_half_width=0.02,
+        covered=190, total=200, nominal=0.95, acceptance_half_width=0.05,
         effective_sample_size=200.0, refused=0, repetitions=10)
     assert kept is CoverageVerdict.CALIBRATED
 
@@ -249,7 +247,6 @@ def test_r36_a_refused_fraction_above_the_studys_own_tolerance_is_inconclusive()
 # =====================================================================
 # R-38: each observation is scored with its own declared sigma
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r38_a_heterogeneous_held_out_half_can_be_validated():
     """The audited case: sigmas [0.002, 0.002, 0.003] could not be validated with ANY single value."""
     assert _sigma_is_optional(), "observation_sigma is optional, so the evidence's own sigmas are used"
@@ -274,7 +271,6 @@ def test_r38_a_supplied_sigma_that_is_not_the_declared_one_is_still_refused():
         _validate(split, posterior, by, observation_sigma=Quantity(0.02, OHM))
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r38_a_repetition_that_ran_no_optimizer_does_not_claim_one_converged():
     from engcore.studies.calibration_study import run_coverage_study
 
@@ -298,7 +294,6 @@ def test_r38_a_repetition_that_ran_no_optimizer_does_not_claim_one_converged():
 # =====================================================================
 # R-02's residual from part A: the prediction domain becomes informative
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r02_the_tcr_observations_declare_the_temperature_they_were_measured_at():
     source = tcr.synthesize_tcr_observations(
         TRUTH, [250.0, 300.0, 350.0], sigma=SIG, dataset_id="conditions", seed=3)
@@ -308,7 +303,6 @@ def test_r02_the_tcr_observations_declare_the_temperature_they_were_measured_at(
             [250.0, 300.0, 350.0][index], "kelvin")
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r02_an_extrapolating_study_says_it_is_extrapolating():
     """The TCR flagship holds out temperatures above its calibration range by design."""
     assert _sigma_is_optional(), "observation_sigma is optional, so the evidence's own sigmas are used"
@@ -319,7 +313,6 @@ def test_r02_an_extrapolating_study_says_it_is_extrapolating():
     assert "PREDICTION_DOMAIN_NOT_DECLARED" not in metrics.reasons, metrics.reasons
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part B not implemented yet (batch 18 preregistration)")
 def test_r02_a_study_inside_its_calibrated_range_says_nothing_about_the_domain():
     assert _sigma_is_optional(), "observation_sigma is optional, so the evidence's own sigmas are used"
     split, posterior, by = _study(cal_t=WIDE_CAL, held_t=WIDE_HELD)
@@ -337,3 +330,22 @@ def test_the_wilson_interval_is_unchanged_on_the_pooled_counts():
 
     low, high = wilson_interval(1152, 1200)
     assert low == pytest.approx(0.9474, abs=5e-4) and high == pytest.approx(0.9697, abs=5e-4)
+
+
+def test_r02_each_predictive_record_carries_its_own_conditions_domain_verdict():
+    """The per-observation records, not only the one the held-out verdict reads.
+
+    `validate_held_out` routes ONE spec for its verdict; `predict_held_out` routes one per held-out
+    condition, and each carries its own. A guard mutation that dropped the conditions from the
+    predictive specs alone survived the extrapolation test above, because that test reads the
+    verdict's record. (Guard mutation B18o, batch 18.)
+    """
+    assert _sigma_is_optional(), "observation_sigma is optional, so the evidence's own sigmas are used"
+    split, posterior, by = _study(cal_t=[250.0, 275.0, 300.0, 325.0, 350.0],
+                                  held_t=[375.0, 400.0, 425.0, 440.0])
+    decompositions = predict_held_out(posterior, split, reference_temperature=T_REF,
+                                      temperatures_by_condition=by, twin=TWIN)
+    assert decompositions
+    for decomposition in decompositions:
+        assert "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS" in decomposition.reasons, decomposition
+        assert "PREDICTION_DOMAIN_NOT_DECLARED" not in decomposition.reasons, decomposition

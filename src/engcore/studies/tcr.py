@@ -214,6 +214,11 @@ def tcr_prediction(
     )
 
 
+#: I-03 part B: the name a TCR observation's operating point is declared under, shared by the
+#: observations and by the predictive specs so `_prediction_domain_reasons` can compare them.
+CONDITION_TEMPERATURE = "temperature"
+
+
 def synthesize_tcr_observations(
     truth: TcrTruth,
     temperatures_k: Sequence[float],
@@ -269,6 +274,12 @@ def synthesize_tcr_observations(
                 value=Quantity(noisy, OHM),
                 sigma=sigma,
                 source_ref=f"synthetic:{dataset_id}:seed={seed}",
+                # I-03 part B (R-02's residual from part A): the OPERATING POINT this reading was
+                # taken at. Without it `_prediction_domain_reasons` (CORE-006) has no range to
+                # compare a prediction with, so every routed record read
+                # PREDICTION_DOMAIN_NOT_DECLARED -- honest, and uninformative. The temperature was
+                # always known here; it just lived in a side-map the observation did not carry.
+                conditions={CONDITION_TEMPERATURE: Quantity(float(temperature_k), KELVIN)},
             )
         )
     return ObservationSet(observations=tuple(observations), dataset_id=dataset_id)
