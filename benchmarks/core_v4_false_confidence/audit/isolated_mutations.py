@@ -50,7 +50,11 @@ import mutation_guards as M  # noqa: E402
 #: imports ``experiments.kinetics_k1.k1_config``. Without it that file ERRORS in every copy, which
 #: turns the run's control RED -- and a runner whose control is red says nothing at all. It is 6.7 MB
 #: beside the 34 MB already copied.
-_COPY_TREES = ("src", "tests", "experiments")
+#: ``tools`` and ``certification`` joined in batch 19 (I-16): that batch's guards live in
+#: ``tools/certification/guard_reach.py`` and the declaration it checks in
+#: ``certification/guard_reach_ledger.json``, so a copy without them cannot run the mutation at all.
+#: 1.0 MB between them.
+_COPY_TREES = ("src", "tests", "experiments", "tools", "certification")
 _COPY_FILES = ("pyproject.toml",)
 _COPY_GLOBS = ("benchmarks/core_v4_false_confidence/*.json", "benchmarks/core_v2_hybrid_uq/*.json")
 

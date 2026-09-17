@@ -187,6 +187,11 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "executes since V3 superseded the V2 serialization contract; weakening it would "
      "change whether the hardened routed-uncertainty contract is accepted without "
      "changing Hybrid UQ source"),
+    ("tools/certification/guard_reach.py",
+     "the guard REACH verifier (I-16): it refuses a guard_reach_ledger.json that "
+     "is not self-consistent and implements the four static bypass checks the "
+     "2026-09-16 re-audit named. A weaker check would let a guard whose reach "
+     "nobody states pass as a guard production runs"),
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),

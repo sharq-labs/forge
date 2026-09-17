@@ -1110,3 +1110,72 @@ Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists
 
 **Open decisions.** None. The decision part A deferred — what a coverage verdict should do about a refused
 fraction — is decided here, from the study's own acceptance half-width.
+
+### Batch 19 — I-16
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-16 | **DONE** | `ac5099f7` (preregistration), `67aadd85` (12 strict xfails), this commit | the ledger covers the guard families whose reach this round MEASURED by R-xx, not every check in the tree — the inventory is `tests/mutation_guards.py`'s job and I-30's; the four bypass checks are syntactic, so a bypass through a dynamic dispatch, a `getattr` or an alias the checker does not resolve is not caught, and each row says per check what it cannot see; the verifier reads `src/engcore` only, so a bypass in `benchmarks/`, in a script or in a test is not checked; and two of the five rows (R-43, R-58) declare a MISSING producer, which no static check over the tree can measure at all — they are declarations, closed by I-25 and I-27 and by their own tests, not by a scan |
+
+**What this improvement is.** I-16 fixes nothing about the science. It makes the REACH CLAIM checkable, and
+that is this round's central finding: the guards were not wrong, they were written where production does not
+go. `certification/guard_reach_ledger.json` now carries one row per guard family this round tracks, and
+`tools/certification/guard_reach.py` refuses a row that is not checkable and finds the four bypass shapes the
+audit named by reading the code. **A status is a declaration and the verifier checks what can be checked
+about it; nothing infers reach from a grep**, which is why each row also says what its checks cannot see.
+
+**R-xx recorded.** This batch closes no scientific problem. What it does is make five of them impossible to
+mis-state, and it records three of them as unreached for the first time in a machine-readable place.
+
+| ID | Ledger row | Why |
+|---|---|---|
+| R-01 | **LATENT**, audit status FIXED (I-01, batch 6) | `route_uncertainty` has no caller in `src` at all, so there is nothing for the rebuild rule to reach. LATENT and not LIBRARY_ONLY: LIBRARY_ONLY would say a production path bypasses the rule, and no production path asks for a rebuild. The row says what would create the shape — a production caller, which I-13 and I-07 are where one would arrive — and the `ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART` check turns the audited form (a rebuild policy passed together with `multistart=None`) into a build failure on that day. |
+| R-02 | **REACHED**, audit status FIXED (I-03, batches 17–18) | `engcore.studies.calibration_study` — the only production consumer of the predictive layer — routes through `grid_predictive_uncertainty`, so every production prediction, held-out verdict and coverage repetition passes CORE-001, CORE-002, CORE-005, CORE-006 and CORE-010 before the frozen V1 interval is formed. Six tests exercise it through the study's own entry points. The residual is stated on the row rather than hidden by the status: the study is the only production path that predicts at all — the MCP tools run solvers and report credibility and form no interval, so there is no second path for this rule to reach. |
+| R-09 | **REACHED**, audit status FIXED (I-11, batch 14) | `record_values` defaults to False on a V1-frozen symbol's method and before batch 14 nothing in `src` passed True. `DomainValidityContext.assess` now defaults it to True and the conduction and KCL sites pass it explicitly, so the CORE-014 binding has values to compare on every production path. D-14-1's residual is carried on the row: 59 of the 77 condition names across the 16 registered models are reserved derived quantities and 18 are declared inputs, so most names cannot be bound BY NAME and are reported in `unbound_assessment_values` rather than counted as agreements. |
+| R-21 | **LIBRARY_ONLY**, closed by I-12 | `TrustedConsensusGate` has no caller in `src`. The one production consensus check is minted in `engcore.mcp.problem` and reaches `CrossSolverConsensus.to_check` — the scientific comparison and the string-declared independence — never the gate. What keeps that from being a false CROSS_SOLVER_VALIDATED is the `_withhold_level` wrapper, which strips the level: **a real mitigation, and exactly the kind of fact a ledger should record rather than leave to a reader's inference**. The hole is that the gate that WOULD verify the level is unreachable from production. `TO_CHECK_OUTSIDE_THE_GATE` is written so that unwrapping the mcp call fails the build, which is what stops the mitigation being lost quietly while I-12 is outstanding. |
+| R-43 | **LIBRARY_ONLY**, closed by I-25 | `UncertaintySource` has no producer in `src`, so `source_kind` is UNSPECIFIED on every uncertainty production makes. Batch 8's I-09 gave the credibility report an `uncertainty` field, so the TRANSPORT reaches production and the DECLARATION does not — and an UNSPECIFIED kind is indistinguishable from a kind nobody was asked for, which is how an SRIA budget accepts NUMERICAL as model-form. |
+| R-58 | **LIBRARY_ONLY**, closed by I-27, audit reach `yes` | The one row where LIBRARY_ONLY understates the risk rather than overstating it: the PROBLEM is reached in production — the production electrothermal coupling and the battery coupled step pass bare point values with no uncertainty, validity or validation state — while the GUARD is not, because `UncertaintyTransfer` has no caller. So a crossing that loses its uncertainty loses it silently. The ledger records the audit's own `yes` beside the guard's LIBRARY_ONLY, which is the pair a reader needs. |
+
+**The rule that makes the ledger worth having.** Every problem a row marks `audit_status: FIXED` must have
+reach REACHED or LATENT. **A fix to a rule production does not reach is not a fix to a production problem**,
+and the verifier refuses to record it as one. Each row also carries the audit's own `reached_in_production`
+value and the verifier refuses a row that disagrees with `REAUDIT_2026-09-16.json`, so the ledger cannot
+drift from the audit it is about.
+
+**Both directions are enforced.** A row naming a bypass the checker does not implement is a finding, and a
+bypass the checker implements that no row names is a finding. A ledger the checker does not enforce is a
+comment; a checker with rules the ledger does not name is a guard nobody declared. Either half alone is the
+defect this round is about.
+
+**Compatibility.** No production code changed. One JSON artifact, one tool module, one test file, and one
+line of the shared mutation runner (`_COPY_TREES` gained `tools` and `certification`, because this batch's
+guards live there and a copy without them cannot run the mutation at all). No V1-frozen symbol is touched and
+no serialized record gains a field. The deliberate behaviour change is that the FAST tier now fails when
+production gains an undeclared bypass of one of the four shapes, or when a ledger row stops being checkable.
+
+**Two amendments, both recorded in the protocol with the numbers.** (1) The preregistered allow-list for
+`ASSESS_VALIDITY_WITHOUT_RECORD_VALUES` was `domains/derived_context.py`; the committed list is **empty**.
+Over the 233 production modules (52 under `src/engcore/domains`, carrying 7 assess call sites) the checker
+finds 0 hits with no allow-list: batch 14 closed every site, and `derived_context.py` forwards
+`record_values=record_values`, so the name is in the argument list the checker reads and that site was never a
+hit. **An allow-list entry that is not needed is a hole nobody would notice** — if a later edit dropped the
+flag from that helper, the entry would have hidden it. The reproduction could not keep its preregistered form
+(`... != []`), because that assertion asserts a fixed defect stays broken; it now asserts the tree is clean
+AND that the checker finds the shape in an injected source, the construction the `to_check` and rebuild
+reproductions already needed. (2) Two refusals were added beyond the written list — an allow-list entry with
+no reason, and an allow-list entry naming a path that does not exist. The first is the preregistered rule's
+own words (`with a reason per entry`) made enforceable, which nothing had checked; the second catches a stale
+entry surviving a rename. Both are strictly stricter and neither was added after seeing a result.
+
+**Guard mutations, and the finding they produced.** `BATCH19_MUTATIONS.log`: **21 of 21 KILLED**, control
+green (20 tests). Thirteen of them only kill because of a test this batch added after the fact:
+**13 of the verifier's refusals had no reproduction at all**, so removing them left the whole suite green and
+those mutations SURVIVED on the first run. That is a finding of exactly the kind I-16 exists to make visible —
+a checker whose refusals nobody exercises is the same defect one level up — and
+`test_i16_each_refusal_is_exercised` is the guard it asked for: twelve tampered ledgers, one per refusal, so
+a rule deleted from `verify` fails a test rather than quietly widening what the ledger may say. The test is
+not preregistered and says so in its own comment. The pinned re-run reports **NONE**: no mutation in
+`tests/mutation_guards.py` targets `tools/` or `certification/`, which are new to the mutation population
+(`BATCH19_PINNED_MUTATIONS.log`).
+
+**Open decisions.** None.

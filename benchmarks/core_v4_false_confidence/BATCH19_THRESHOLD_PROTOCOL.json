@@ -77,5 +77,21 @@
   ],
   "decisions_needed": [],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "four_static_bypass_checks_fail_the_build (b) ASSESS_VALIDITY_WITHOUT_RECORD_VALUES",
+      "what_changed": "The preregistered allow-list for this check was `domains/derived_context.py`, whose own default is True. The committed allow-list is EMPTY, and the reproduction shows detection on an INJECTED source rather than on a hit in the tree.",
+      "the_numbers_that_forced_it": "Over the 233 production modules (52 under src/engcore/domains, carrying 7 `.validity.assess(`/`.assess_validity(` call sites), the checker finds 0 hits with an empty allow-list. Batch 14's I-11 closed every one of the 7 sites. `domains/derived_context.py` is not among them either: line 192 forwards `record_values=record_values`, so the name IS in the argument list the checker reads and the site was never a hit. So the preregistered allow-list entry would have been unnecessary, and an unnecessary allow-list entry is a hole nobody would notice -- if a later edit dropped the flag from that helper, the allow-list would have hidden it.",
+      "why_this_is_not_a_threshold_change": "No threshold moved; this check has none. What moved is a factual expectation about the tree, and it moved in the direction the guard wants: the shape the check looks for does not occur. The reproduction could not keep its preregistered form (`assessments_without_record_values(allowed=()) != []`), because that assertion asserts a fixed defect stays broken. It now asserts the tree is clean AND that the checker finds the shape in an injected source and does not flag the same site once the flag is passed -- the same construction the TO_CHECK_OUTSIDE_THE_GATE and ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART reproductions already needed, for the same reason.",
+      "where_it_is_recorded": "the empty list and its reason are in the R-09 row's `note_on_the_empty_allow_list` in certification/guard_reach_ledger.json, in the checker's own docstring, and in the amended test's docstring."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "a_row_must_be_checkable_and_is_checked",
+      "what_changed": "Two refusals were added to the verifier beyond the list written in the preregistration: an allow-list entry with no reason, and an allow-list entry naming a path that does not exist.",
+      "why": "The first is the preregistered rule's own words made enforceable -- `Each check has a declared allow-list in the ledger, with a reason per entry` was written as a format requirement and nothing checked it, which is the one-level-up version of the defect this whole improvement is about. The second catches an allow-list that keeps allowing a module after it is renamed or deleted, which would silently widen the check's blind spot. Both are strictly stricter; neither can turn a finding into a pass.",
+      "the_numbers_that_forced_it": "none -- no result was seen. Both were added while implementing the preregistered rule text, before the ledger's first clean run."
+    }
+  ]
 }

@@ -1,0 +1,205 @@
+{
+  "schema": "guard_reach_ledger/1",
+  "improvement": "I-16",
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "verifier": "tools/certification/guard_reach.py",
+  "protocol": "benchmarks/core_v4_false_confidence/BATCH19_THRESHOLD_PROTOCOL.json",
+  "what_this_is": "The 2026-09-16 re-audit's central finding is not that individual guards were wrong. It is that guards were written where production does not go. A guard whose reach nobody states is a guard whose reach nobody can lose, so reach is DECLARED here, per guard family, and tools/certification/guard_reach.py refuses a declaration that is not checkable. A status is a declaration about what the code does, not a summary of what a grep found: nothing here is inferred.",
+  "statuses": {
+    "REACHED": "a production entry point reaches the rule and a named test exercises it there",
+    "LIBRARY_ONLY": "the rule exists and no production entry point reaches it. This is a FINDING and must name the improvement that will close it",
+    "LATENT": "the rule guards a shape that does not occur in the tree at all, so there is nothing to reach yet. Not the same as unreached, and must say what would create it"
+  },
+  "production_entry_points": [
+    "engcore.mcp.tools.run_electrothermal (MCP)",
+    "engcore.mcp.tools.run_battery (MCP)",
+    "the domain runners under engcore.domains (thermal_models, electrical.dc, battery, kinetics.cstr, repair)",
+    "engcore.studies.calibration_study (predict, validate, run_calibration_study, run_coverage_study)"
+  ],
+  "residuals": [
+    "This is the REACH map for the guard families whose reach the audit measured by R-xx, not a complete guard inventory. The inventory is tests/mutation_guards.py's job and the Core Freeze V4 round's (I-30).",
+    "The four bypass checks are SYNTACTIC. A bypass written in a shape none of them matches -- a dynamic dispatch, a getattr, a call through an alias the checker does not resolve -- is not caught. Each row says per check what it cannot see rather than claiming completeness.",
+    "The verifier reads src/engcore only. A bypass in benchmarks/, in a script or in a test is not production and is not checked."
+  ],
+  "guards": [
+    {
+      "problem": "R-01",
+      "title": "A grid rebuild turns an unassessed or incomplete uniqueness search into a SUPPORTED one-mode grid",
+      "rule": "src/engcore/hybrid_uq/router.py",
+      "rule_symbol": "route_uncertainty (the rebuild branch, which runs the canonical MultistartPolicy() itself where a grid route is in play and the caller supplied none)",
+      "status": "LATENT",
+      "audit_status": "FIXED",
+      "audit_reached_in_production": "library-only",
+      "closed_by": "I-01 (batch 6)",
+      "why": "The rule is right and there is nothing in the tree for it to reach: route_uncertainty has no caller in src at all. The one production study reaches the V2 gates through grid_predictive_uncertainty directly (see R-02) rather than through the router, so the rebuild shape does not occur in production today. That is LATENT and not LIBRARY_ONLY: LIBRARY_ONLY would say a production path bypasses the rule, and no production path asks for a rebuild.",
+      "what_would_create_it": "a production call to engcore.hybrid_uq.router.route_uncertainty. I-13 (binding routed predictions to calibration content) and I-07 (grid evidence the supplier cannot steer) are where a routed production path would arrive; on that day the ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART check turns the audited shape -- a rebuild policy passed together with multistart=None, which asks for the rebuild while declining the search -- into a build failure instead of a SUPPORTED one-mode grid.",
+      "entry_points": [],
+      "exercised_by": [],
+      "exercised_by_in_library": [
+        "tests/hybrid_uq/test_core_scientific_audit_batch6.py::test_r01_a_rebuild_is_passed_over_when_no_uniqueness_search_ran",
+        "tests/hybrid_uq/test_core_scientific_audit_batch6.py::test_r01_the_router_runs_the_canonical_search_when_a_grid_route_needs_one"
+      ],
+      "bypasses": [
+        "ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART"
+      ],
+      "bypass_allow_lists": {
+        "ROUTE_UNCERTAINTY_REBUILD_WITHOUT_MULTISTART": []
+      },
+      "bypass_allow_list_reasons": {},
+      "what_the_check_cannot_see": "a rebuild policy reached through a variable the checker cannot resolve (policy = None; ...; route_uncertainty(rebuild=policy, multistart=policy2)), and a caller that passes a multistart argument whose value is a None-valued name rather than the literal None."
+    },
+    {
+      "problem": "R-02",
+      "title": "The production calibration study predicts and validates through frozen V1 functions, so no V2 evidence gate runs",
+      "rule": "src/engcore/hybrid_uq/predictive.py",
+      "rule_symbol": "grid_predictive_uncertainty (CORE-006 route claim and evidence judgement) over grid_goodness_of_fit (CORE-001), grid_containment (CORE-002), require_grid_is_this_evidence (CORE-005) and grid_prior_uniformity (CORE-010)",
+      "status": "REACHED",
+      "audit_status": "FIXED",
+      "audit_reached_in_production": "yes",
+      "closed_by": "I-03 (batches 17 and 18)",
+      "why": "Batches 17 and 18 routed engcore.studies.calibration_study -- the only production consumer of the predictive layer -- through grid_predictive_uncertainty, so every production prediction, held-out verdict and coverage repetition now passes the V2 evidence gates before the frozen V1 interval is formed: a grid the router would not route RAISES, and a grid it routes with a finding DOWNGRADES the claim and carries the reasons onto the record. Residual, stated rather than hidden behind the status: the study is the only production path that predicts at all. The MCP tools run solvers and report credibility; they form no predictive interval, so there is no second production path for this rule to reach.",
+      "entry_points": [
+        "engcore.studies.calibration_study.predict",
+        "engcore.studies.calibration_study.validate",
+        "engcore.studies.calibration_study.run_calibration_study",
+        "engcore.studies.calibration_study.run_coverage_study"
+      ],
+      "exercised_by": [
+        "tests/test_core_scientific_audit_batch17.py::test_r02_the_claim_names_the_prediction_domain",
+        "tests/test_core_scientific_audit_batch17.py::test_r02_a_box_that_truncates_the_posterior_yields_no_predictive_interval",
+        "tests/test_core_scientific_audit_batch17.py::test_r02_a_box_that_truncates_the_posterior_yields_no_held_out_verdict",
+        "tests/test_core_scientific_audit_batch17.py::test_r02_the_coverage_study_records_a_refused_repetition_and_says_the_number_is_conditional",
+        "tests/test_core_scientific_audit_batch18.py::test_r02_an_extrapolating_study_says_it_is_extrapolating",
+        "tests/test_core_scientific_audit_batch18.py::test_r02_each_predictive_record_carries_its_own_conditions_domain_verdict"
+      ],
+      "bypasses": [
+        "RAW_POSTERIOR_GRID_CONSUMER"
+      ],
+      "bypass_allow_lists": {
+        "RAW_POSTERIOR_GRID_CONSUMER": [
+          "src/engcore/uq/predictive.py",
+          "src/engcore/hybrid_uq/predictive.py",
+          "src/engcore/adequacy/predictive.py"
+        ]
+      },
+      "bypass_allow_list_reasons": {
+        "src/engcore/uq/predictive.py": "it IS posterior_predictive_uq. The frozen V1 function applies only the grid-resolution refusal, which is exactly why a direct consumer of it is the audited shape.",
+        "src/engcore/hybrid_uq/predictive.py": "grid_predictive_uncertainty calls the frozen function AFTER judging the grid -- route claim, evidence judgement and prediction-domain reasons first, interval second. Wrapping it is the fix, so the wrapper is the one caller that is meant to be here.",
+        "src/engcore/adequacy/predictive.py": "the CORE-011 content binding applies grid_containment and grid_prior_uniformity to the posterior before it will bind, and withholds the binding on a finding (batch 17). It does NOT apply grid_goodness_of_fit: a content binding is about whether the grid is THIS posterior's evidence, not about whether the model fits, and the fit statement belongs to the verdict the binding is attached to. That omission is a residual BATCH17's protocol states, and this allow-list entry is where it stays visible."
+      },
+      "what_the_check_cannot_see": "a consumer that reaches the frozen function through an alias (f = posterior_predictive_uq; f(...)), through a getattr, or through a re-export the checker does not resolve back to this name."
+    },
+    {
+      "problem": "R-09",
+      "title": "The CORE-014 operating-point binding never fires in production and is bypassable when enabled",
+      "rule": "src/engcore/scientific/models/definition.py",
+      "rule_symbol": "ScientificModelDefinition.assess_validity(record_values=...) and ValidityAssessment.evaluated, bound by ScientificResult._require_assessment_is_about_this_model and CredibilityEvidenceReport._require_assessments_at_this_operating_point",
+      "status": "REACHED",
+      "audit_status": "FIXED",
+      "audit_reached_in_production": "yes",
+      "closed_by": "I-11 (batch 14)",
+      "why": "record_values defaults to False on a V1-frozen symbol's method and before batch 14 NOTHING in src passed True, so the CORE-014 binding looped over an empty mapping on every production path. Batch 14 set the default to True on DomainValidityContext.assess -- the domains' own helper, and the path battery, electrical and repair all assess through -- and passed it explicitly at the conduction and KCL sites, so a result or a credibility report now refuses a verdict made at a different operating point than its own provenance states. Residual, recorded on the report rather than hidden: 59 of the 77 condition names across the 16 registered models are reserved DERIVED quantities and 18 are declared inputs, so most names cannot be bound by name at all; they are REPORTED in CredibilityEvidenceReport.unbound_assessment_values and not counted as agreements (D-14-1). An interval verdict binds only the values that did not move within the step, so a coupled battery step binds its state of charge and current and not its temperature.",
+      "entry_points": [
+        "engcore.mcp.tools.run_electrothermal",
+        "engcore.mcp.tools.run_battery",
+        "engcore.domains.derived_context.DomainValidityContext.assess (battery, electrical, repair)",
+        "engcore.domains.thermal_models.conduction1d_bulk",
+        "engcore.domains.thermal_models.conduction1d_schemes",
+        "engcore.domains.electrical.dc.models.assess_kcl_validity"
+      ],
+      "exercised_by": [
+        "tests/test_core_scientific_audit_batch14.py::test_r09_the_production_conduction_models_record_their_operating_point",
+        "tests/test_core_scientific_audit_batch14.py::test_r09_the_production_electrical_assessments_record_their_operating_point",
+        "tests/test_core_scientific_audit_batch14.py::test_r09_the_derived_context_records_its_operating_point_by_default",
+        "tests/test_core_scientific_audit_batch14.py::test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point",
+        "tests/test_core_scientific_audit_batch14.py::test_r09_the_report_records_the_names_its_provenance_cannot_bind"
+      ],
+      "bypasses": [
+        "ASSESS_VALIDITY_WITHOUT_RECORD_VALUES"
+      ],
+      "bypass_allow_lists": {
+        "ASSESS_VALIDITY_WITHOUT_RECORD_VALUES": []
+      },
+      "bypass_allow_list_reasons": {},
+      "what_the_check_cannot_see": "an assessment built by hand rather than through assess_validity -- a ValidityAssessment(...) constructor call with an empty `evaluated` -- and an assessment produced outside src/engcore/domains. The first is what the MCP boundary's registry check and the model-id/version binding are for; the second is not production. The check also cannot see a call that passes record_values=False, which is a DECLARATION that the caller does not want the bytes: the shape it finds is a caller who never considered the question.",
+      "note_on_the_empty_allow_list": "BATCH19's preregistration expected domains/derived_context.py on this allow-list, because its own default is True. It is not needed: that method forwards `record_values=record_values` to assess_validity, so the checker sees the name in the argument list and the site is not a hit. An allow-list entry that is not needed is a hole nobody would notice, so the list is empty and the expectation is recorded as an amendment in the protocol instead."
+    },
+    {
+      "problem": "R-21",
+      "title": "CROSS_SOLVER_VALIDATED is guarded only by string checks, and non-independent disagreement is absorbed as WARNING",
+      "rule": "src/engcore/execution/consensus.py",
+      "rule_symbol": "TrustedConsensusGate.assess, which requires byte-verified artifact independence before CrossSolverConsensus.to_check may keep the CROSS_SOLVER_VALIDATED level",
+      "status": "LIBRARY_ONLY",
+      "audit_status": "OPEN",
+      "audit_reached_in_production": "library-only",
+      "closed_by": "I-12",
+      "why": "TrustedConsensusGate has no caller in src. The one production consensus check is minted in engcore.mcp.problem at the line `return (_withhold_level(consensus.to_check(name=CROSS_SOLVER_CHECK_NAME)),)`, which reaches CrossSolverConsensus.to_check -- the scientific comparison and the string-declared independence -- and never the gate. What keeps that from being a false CROSS_SOLVER_VALIDATED is the _withhold_level wrapper, which strips the level from the emitted check: a real mitigation, and the kind of fact a ledger should record rather than leave to a reader's inference. So production emits the comparison without the level, and the level nothing verifies is never awarded there. The hole is that the gate that WOULD verify it is unreachable from production, so any future caller that wants the level has nothing on the path to earn it from. TO_CHECK_OUTSIDE_THE_GATE is written so that UNWRAPPING the mcp call fails the build, which is what stops the mitigation being lost quietly while I-12 is outstanding.",
+      "entry_points": [
+        "engcore.mcp.problem (the cross-solver check emitted by run_electrothermal when a second route is asked for) -- reaches CrossSolverConsensus.to_check, level-withheld, and NOT TrustedConsensusGate"
+      ],
+      "exercised_by": [
+        "tests/mcp/test_problem.py::test_the_second_route_actually_runs_and_the_level_is_withheld",
+        "tests/mcp/test_problem.py::test_no_cross_solver_check_is_emitted_unless_one_is_asked_for"
+      ],
+      "exercised_by_in_library": [
+        "tests/test_trusted_consensus_gate.py::test_digest_declarations_without_bytes_withhold_trusted_level",
+        "tests/test_trusted_consensus_gate.py::test_forged_fingerprint_cannot_keep_cross_solver_level"
+      ],
+      "bypasses": [
+        "TO_CHECK_OUTSIDE_THE_GATE"
+      ],
+      "bypass_allow_lists": {
+        "TO_CHECK_OUTSIDE_THE_GATE": []
+      },
+      "bypass_allow_list_reasons": {},
+      "what_the_check_cannot_see": "a to_check call whose _withhold_level wrapper sits further than 40 characters before it, which the checker reports rather than allows; and a caller that re-adds the level to an already-withheld check afterwards. The second is what I-12's artifact-independence requirement is for, not a static check's job."
+    },
+    {
+      "problem": "R-43",
+      "title": "UncertaintySource never reaches a verdict or report, and SRIA budgets accept NUMERICAL as model-form",
+      "rule": "src/engcore/scientific/results/uncertainty.py",
+      "rule_symbol": "UncertaintySource and the source_kind it declares on a StandardUncertainty",
+      "status": "LIBRARY_ONLY",
+      "audit_status": "OPEN",
+      "audit_reached_in_production": "library-only",
+      "closed_by": "I-25",
+      "why": "UncertaintySource has no producer in src, so source_kind is UNSPECIFIED on every uncertainty production makes. Batch 8's I-09 gave the credibility report an `uncertainty` field, so the TRANSPORT now exists and reaches production; what does not exist is any production site that declares where the number came from. That matters twice: a budget cannot tell a numerical-discretization term from a model-form term, which is what lets an SRIA budget accept NUMERICAL as model-form; and an UNSPECIFIED kind is indistinguishable from a kind nobody was asked for, so the gap is invisible at the point of use. I-25 is where the producers declare it and the field records re-derive what they claim.",
+      "entry_points": [
+        "engcore.mcp.evidence.CredibilityEvidenceReport.from_result (reached by run_electrothermal and run_battery) -- carries the uncertainty, with source_kind UNSPECIFIED on every production record"
+      ],
+      "exercised_by": [],
+      "exercised_by_in_library": [
+        "tests/test_scientific_core.py::test_model_binding_rejects_wrong_source_kind"
+      ],
+      "bypasses": [],
+      "bypass_allow_lists": {},
+      "bypass_allow_list_reasons": {},
+      "what_the_check_cannot_see": "nothing static: this row declares a MISSING producer, and no syntactic check over the tree can distinguish an uncertainty whose kind is genuinely unknown from one whose producer never declared it. That is exactly why the reach is declared here and measured by I-25's own tests rather than by a scan."
+    },
+    {
+      "problem": "R-58",
+      "title": "Cross-domain crossings carry bare point values, and UncertaintyTransfer binds nothing",
+      "rule": "src/engcore/uq/cross_domain.py",
+      "rule_symbol": "UncertaintyTransfer, which binds a crossing quantity's propagated uncertainty to the transfer that produced it",
+      "status": "LIBRARY_ONLY",
+      "audit_status": "OPEN",
+      "audit_reached_in_production": "yes",
+      "closed_by": "I-27",
+      "why": "The problem is REACHED in production -- the audit's own value, and why this row's audit_reached_in_production is `yes` -- while the GUARD is not. The production electrothermal coupling passes bare point values across the thermal/electrical boundary with no uncertainty, no validity state and no validation state attached, and UncertaintyTransfer, the record that would bind them, has no caller in src. So a crossing that loses its uncertainty loses it silently: the receiving domain sees a number, and nothing downstream can tell a propagated quantity from a declared one. This is the one row where LIBRARY_ONLY understates the risk rather than overstating it, because the unguarded path is the one production actually runs. I-27 is where the transfers carry uncertainty and validity with physically bound checks.",
+      "entry_points": [
+        "engcore.mcp.tools.run_electrothermal (the thermal/electrical coupling) -- passes bare point values and reaches no UncertaintyTransfer",
+        "engcore.domains.battery.coupling (the coupled step) -- same shape"
+      ],
+      "exercised_by": [],
+      "exercised_by_in_library": [
+        "tests/test_cross_domain_uq.py::test_uncertainty_transfer_round_trip_recomputes_the_propagation",
+        "tests/test_cross_domain_uq.py::test_hand_forged_propagated_uncertainty_is_refused",
+        "tests/test_cross_domain_uq.py::test_unknown_uncertainty_stays_unknown_instead_of_becoming_zero"
+      ],
+      "bypasses": [],
+      "bypass_allow_lists": {},
+      "bypass_allow_list_reasons": {},
+      "what_the_check_cannot_see": "nothing static: a crossing that passes a float is a call the checker could find only by knowing which arguments are crossing quantities, which is a type question and not a syntactic one. I-27's own tests are what will measure it once the transfers exist; until then this row is the declaration that they do not."
+    }
+  ]
+}
