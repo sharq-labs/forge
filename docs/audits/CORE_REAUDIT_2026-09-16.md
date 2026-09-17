@@ -1040,7 +1040,7 @@ indentation as well as by scope. The 5 pinned mutations on the three files this 
 isolated and all 5 are still KILLED (`BATCH17_PINNED_MUTATIONS.log`), control green.
 
 **Verification.** FAST tier 6652 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
-Expensive tier PENDING. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
 `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None new. What a coverage verdict should do about a refused fraction is carried to part B
