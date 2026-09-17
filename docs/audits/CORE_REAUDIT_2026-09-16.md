@@ -1913,3 +1913,67 @@ pinned mutation in `tests/mutation_guards.py` targets either changed file, which
 NONE.
 
 **Open decisions.** None.
+
+### Batch 30 — I-22 part E, and I-22 is DONE
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-22 | **DONE** | `afb4694b`, `b9baf42e` (A, R-75), `94b74325`, `dbdbba14` (B, R-52), `6f4f27fd`, `23ca4409` (C, R-57), `d9dabf04`, `e50bb6e1` (D, R-48 finding 58), `65f38b8c` (E preregistration + 8 strict xfails), this commit | a `Quantity` handed around loose still carries no statement of whether it is a point or a span — what this improvement adds is that every declared spread FIELD makes that statement at construction (giving spreads their own type would be a non-additive change to a V1-frozen symbol, so this is a decision and not an oversight); `studies/calibration_study.py`, `studies/tcr.py`, `adequacy/predictive.py`, `hybrid_uq/predictive.py` and `uq/predictive.py` read sigmas with `magnitude_in` downstream of a declaration — safe **by** the declaration guard, not by their own statement, and named here rather than converted mechanically; the margin's unit is a function of the bound's unit, which travels in the same record, rather than a fixed constant |
+
+**R-48 is FIXED, and so is R-xx for all four of I-22's problems.** Finding 99's five spellings, each answered
+separately.
+
+| Claim | Status | How |
+|---|---|---|
+| a '2 degC' tolerance reads as 275.15 kelvin | **FIXED** | So a **600 kelvin reading satisfied a 358.15 kelvin limit**, and the check reported a 33.3 kelvin margin to prove it. `require_spread_unit` at the declaration, re-raised as `InvalidScientificProblem`. |
+| a '0.5 degC' sigma reads as 273.65 kelvin | **FIXED** | So the chi-squared of a 50 kelvin misfit was **0.033 instead of 10000**, and every goodness-of-fit, containment and near-duplicate test computed on it was measuring nothing. Same rule, re-raised as `InferenceProblemError`; and the same at `PredictiveObservableSpec`, which had been **storing** the 273.65. |
+| the reported margin is stored in an offset unit | **FIXED** | A twelve-degree margin under an 85 degC limit was `12.0 degree_Celsius`, and every consumer that converted it read **285.15 kelvin**. The check's own number was right and its unit made it wrong, which is the hardest kind of record to doubt. |
+| the physically correct declarations are refused | **FIXED** | A delta_degC tolerance on a degC bound and a delta_degC sigma on a degC value now work, at all five sites. |
+| a valid kelvin tolerance is refused as negative | **FIXED** | The sign was checked on the **converted** magnitude: 2 kelvin read absolutely into degC is −271.15. On a ratio scale a magnitude's sign does not depend on the unit, and the unit is now required to be one, so the check belongs on the magnitude as declared. |
+
+**`split.py`'s hand-written difference trick corrected the wrong half, and its comment said it was correcting
+the right one.** The content digest added the sigma to the value, converted both and subtracted — which fixes
+the value-unit-to-base step and reads the sigma's **own declared unit** with `magnitude_in`. That is where
+finding 99's 273.65 came from: the sigma was already wrong before the trick ran. `magnitude_as_spread_in` is
+the thing the trick was approximating, and it is exact for a delta unit the backend will not convert at all.
+The same trick appears twice in that file and both are now the reader.
+
+**Amendment 1 changes no rule, and what forced it is worth reading.** Two of eleven mutations survived, both
+for one reason: **the slope between the two Celsius scales is 1**, so no Celsius fixture can tell a conversion
+from a relabelling. B30i drops the base-unit fallback for a stored predictive sigma and the magnitude is still
+0.5 — what is wrong is the stored **unit**, `degree_Celsius`, an absolute unit carrying a spread. B30k corrects
+the margin's unit and does not carry its magnitude across. Both reproductions now use Fahrenheit, the one
+offset scale whose slope is not 1: a 21.6 delta_degF margin must be recorded as 12 kelvin, not as 21.6
+labelled kelvin. **A relabelling is worse than the original defect, because it looks canonical.**
+
+**Compatibility.** Additive. No new public symbol; no signature, field, default or enum member change; no
+serialized record gains or loses a key. Every spread and every bound in this repository is on a ratio scale,
+so every conversion above is the identity and no committed number or digest moves — asserted by both tiers,
+including `inference/split.py`'s content digests and the calibration study's committed evidence, rather than by
+inspection. The margin's unit is kept when the bound is on a ratio scale precisely so that every serialized
+`ConstraintCheck` stays byte for byte what it was.
+
+**The ledger row moves from PARTIAL to FIXED**, and its `what_the_check_cannot_see` states the limit that
+remains: a spread read with `magnitude_in` **downstream** of a declaration is safe because the guard admits
+only ratio-scale units, which is safety by the guard and not by the reader's own statement. Five modules are
+named there. LATENT rather than REACHED, because `ConstraintDefinition`, `GaussianObservation` and
+`PredictiveObservableSpec` are all reached in production — by the MCP rating and limit checks, the calibration
+study and `studies/tcr`, and the predictive layer — but reached with ohm, watt, kelvin and ampere, where every
+conversion is the identity. **What is reached is the guard; what is latent is the declaration that would trip
+it.**
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**No existing expectation moved.** Every constraint, inference, split, oracle and predictive suite passes
+unchanged.
+
+**Verification.** FAST tier 6827 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH30_MUTATIONS.log`: **11 of 11 KILLED**, control green, plus **6 pinned re-runs** on
+the four changed files all KILLED.
+
+**Open decisions.** None.

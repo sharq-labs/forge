@@ -58,5 +58,16 @@
   "`studies/calibration_study.py`, `studies/tcr.py`, `adequacy/predictive.py`, `hybrid_uq/predictive.py` and `uq/predictive.py` read sigmas with `magnitude_in` at several points downstream of a declaration. Those reads are now safe because the declaration guard admits only ratio-scale units, where the two readers agree exactly -- but they are safe BY that guard and not by their own statement. Converting them all would be a larger, mechanical change with no behaviour in it; naming them here is the honest alternative.",
   "The margin rule is conditional on the bound's unit, which means the unit of a reported margin is not a fixed function of the constraint alone. It is a fixed function of the bound's unit, which travels in the same record, so a reader can always tell -- but an unconditional canonical unit would have been simpler and would have moved every committed ConstraintCheck."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. Two reproductions were strengthened, both forced by this batch's own mutation run.",
+   "the_numbers_that_forced_it": "Two of eleven mutations survived on the first run, and both survived for the same reason: THE SLOPE BETWEEN THE TWO CELSIUS SCALES IS 1, so a fixture on a Celsius scale cannot tell a conversion from a relabelling. (a) B30i drops the base-unit fallback for a predictive spec's stored sigma, and the stored MAGNITUDE was still 0.5 -- what was wrong was the stored UNIT, `degree_Celsius`, an absolute unit carrying a spread. The reproduction now asserts `is_ratio_scale` of the stored unit. (b) B30k corrects the constraint margin's unit and does not carry its magnitude across; on a degC bound that is the identity. The reproduction now also checks a degF bound, Fahrenheit being the one offset scale whose slope is not 1: a 21.6 delta_degF margin must be recorded as 12 kelvin and not as 21.6 labelled kelvin. A relabelling is worse than the original defect, because it looks canonical.",
+   "guards_added_while_running_the_mutations": [
+    "tests/test_core_scientific_audit_batch30.py::test_r48_the_physically_correct_declarations_work now asserts that a stored predictive sigma's unit is a ratio scale, not merely that its magnitude is right.",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_reported_margin_is_a_difference_and_not_an_absolute_value gained a degF bound, the only offset scale whose slope is not 1."
+   ]
+  }
+ ]
 }

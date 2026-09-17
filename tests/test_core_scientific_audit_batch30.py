@@ -4,7 +4,7 @@ Problem R-48 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json), impr
 five, under benchmarks/core_v4_false_confidence/BATCH30_THRESHOLD_PROTOCOL.json. This part is the audit's
 finding 99; finding 58 was part D.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 65f38b8c, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -41,21 +41,18 @@ def _sigmas(observation):
 # ---------------------------------------------------------------------------
 # every_declared_spread_states_a_spread_unit
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-48: '2 degC' is accepted and read as 275.15 kelvin")
 def test_r48_a_constraint_tolerance_on_an_offset_scale_is_refused_at_declaration():
     """'2 degC' read as 275.15 kelvin let a 600 kelvin reading satisfy a 358.15 kelvin limit."""
     with pytest.raises(InvalidScientificProblem, match="delta_"):
         _constraint(Quantity(358.15, "kelvin"), Quantity(2.0, "degC"))
 
 
-@pytest.mark.xfail(strict=True, reason="R-48: '0.5 degC' is accepted and read as 273.65 kelvin")
 def test_r48_an_observation_sigma_on_an_offset_scale_is_refused_at_declaration():
     """'0.5 degC' read as 273.65 kelvin gave a 50 kelvin misfit a chi-squared of 0.033."""
     with pytest.raises(InferenceProblemError, match="delta_"):
         _observation(Quantity(300.0, "kelvin"), Quantity(0.5, "degC"))
 
 
-@pytest.mark.xfail(strict=True, reason="R-48: the predictive spec has no spread guard either")
 def test_r48_a_predictive_observation_sigma_on_an_offset_scale_is_refused_at_declaration():
     with pytest.raises(UQProblemError, match="delta_"):
         PredictiveObservableSpec(
@@ -68,7 +65,6 @@ def test_r48_a_predictive_observation_sigma_on_an_offset_scale_is_refused_at_dec
 # ---------------------------------------------------------------------------
 # a_positivity_check_is_on_the_magnitude_as_declared
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-48: the sign is checked on the converted magnitude")
 def test_r48_a_valid_tolerance_on_a_celsius_bound_is_not_called_negative():
     """2 kelvin read absolutely into degC is -271.15, and the record refused it for a sign."""
     constraint = _constraint(Quantity(85.0, "degC"), Quantity(2.0, "kelvin"))
@@ -76,7 +72,6 @@ def test_r48_a_valid_tolerance_on_a_celsius_bound_is_not_called_negative():
     assert constraint.check(Quantity(88.0, "degC")).satisfied is False
 
 
-@pytest.mark.xfail(strict=True, reason="R-48: positivity is checked on the converted magnitude")
 def test_r48_a_valid_sigma_on_a_celsius_value_is_not_called_non_positive():
     observation = _observation(Quantity(26.85, "degC"), Quantity(0.5, "kelvin"))
     assert _sigmas(observation)[0] == pytest.approx(0.5)
@@ -97,7 +92,6 @@ def test_r48_a_genuinely_negative_spread_is_still_refused():
 # ---------------------------------------------------------------------------
 # every_conversion_of_a_declared_spread_is_a_spread_conversion
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-48: the delta spelling is refused at every site")
 def test_r48_the_physically_correct_declarations_work():
     """A delta_degC tolerance on a degC bound, and a delta_degC sigma on a degC value."""
     constraint = _constraint(Quantity(85.0, "degC"), Quantity(2.0, "delta_degC"))
@@ -110,6 +104,17 @@ def test_r48_the_physically_correct_declarations_work():
         observation_key="T", unit="degC", observation_sigma=Quantity(0.5, "delta_degC")
     )
     assert spec.observation_sigma.magnitude == pytest.approx(0.5)
+    # ADDED while running batch 30's guard mutations, not preregistered. Mutation B30i drops the base-unit
+    # fallback and stores the spread labelled `degree_Celsius`; the MAGNITUDE is still 0.5, because the
+    # slope between the two Celsius scales is 1. What is wrong is the UNIT -- an absolute unit carrying a
+    # spread, which is the same defect as the mislabelled constraint margin below, and the label is the
+    # only place it shows.
+    from engcore.scientific.units.quantity import is_ratio_scale
+
+    assert is_ratio_scale(spec.observation_sigma.units), (
+        f"a stored spread is labelled {spec.observation_sigma.units!r}, whose zero is a convention; a "
+        f"consumer converting it adds that zero"
+    )
 
 
 def test_r48_a_fahrenheit_difference_is_five_ninths_of_a_kelvin_everywhere():
@@ -122,7 +127,6 @@ def test_r48_a_fahrenheit_difference_is_five_ninths_of_a_kelvin_everywhere():
     assert constraint.check(Quantity(360.0, "kelvin")).satisfied is False
 
 
-@pytest.mark.xfail(strict=True, reason="R-48: the digest reads the sigma's own unit absolutely")
 def test_r48_the_split_content_digest_reads_a_sigma_as_a_difference():
     """Two readings that are the same measurement, spelled on two scales, are one content."""
     from engcore.inference import split
@@ -135,7 +139,7 @@ def test_r48_the_split_content_digest_reads_a_sigma_as_a_difference():
         sigma=Quantity(0.5, "delta_degC"),
         source_ref="lab",
     )
-    assert split._content_digest(kelvin) == split._content_digest(celsius), (
+    assert split.observation_content_digest(kelvin) == split.observation_content_digest(celsius), (
         "the same measurement written on two scales must digest the same, which is what the "
         "duplicate-across-the-split guard is for"
     )
@@ -144,7 +148,6 @@ def test_r48_the_split_content_digest_reads_a_sigma_as_a_difference():
 # ---------------------------------------------------------------------------
 # a_reported_margin_is_on_a_scale_that_can_carry_a_difference
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-48: the margin is labelled with the bound's offset unit")
 def test_r48_a_reported_margin_is_a_difference_and_not_an_absolute_value():
     """A 12-degree margin labelled `12.0 degree_Celsius` reads as 285.15 kelvin to a consumer."""
     check = _constraint(Quantity(85.0, "degC"), Quantity(2.0, "delta_degC")).check(
@@ -154,6 +157,18 @@ def test_r48_a_reported_margin_is_a_difference_and_not_an_absolute_value():
     assert check.margin.magnitude_in("kelvin") == pytest.approx(12.0), (
         f"a consumer converting the margin read {check.margin.magnitude_in('kelvin')} kelvin for a "
         f"12-degree margin"
+    )
+    # ADDED while running batch 30's guard mutations, not preregistered. Mutation B30k corrects the
+    # margin's UNIT and does not carry its MAGNITUDE across, which is invisible on any Celsius scale
+    # because the slope there is 1. Fahrenheit is the one offset scale whose slope is not, so it is the
+    # only fixture that can tell a conversion from a relabelling -- and a relabelling is worse than the
+    # original defect, because it looks canonical.
+    fahrenheit = _constraint(Quantity(185.0, "degF"), Quantity(3.6, "delta_degF")).check(
+        Quantity(167.0, "degF")
+    )
+    assert fahrenheit.margin.units == "kelvin"
+    assert fahrenheit.margin.magnitude == pytest.approx((18.0 + 3.6) * 5.0 / 9.0), (
+        f"a 21.6 degF margin is 12 kelvin; the record says {fahrenheit.margin}"
     )
 
 

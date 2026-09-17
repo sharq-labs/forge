@@ -31,7 +31,14 @@ from ..scientific.ir.problem import ModelReference
 from ..scientific.results.immutable import freeze
 from ..scientific.results.uncertainty import Uncertainty, UncertaintyKind, UncertaintySource
 from ..scientific.twins import TwinReference
-from ..scientific.units.quantity import Quantity, normalize_unit
+from ..scientific.units.quantity import (
+    Quantity,
+    UnitCompatibilityError,
+    base_unit,
+    is_ratio_scale,
+    normalize_unit,
+    require_spread_unit,
+)
 
 
 class UQProblemError(ValueError):
@@ -66,9 +73,27 @@ class PredictiveObservableSpec:
             self.observation_sigma.require_compatible(
                 Quantity(1.0, self.unit), context=f"predictive noise {key}"
             )
-            sigma = self.observation_sigma.to(self.unit)
-            if sigma.magnitude <= 0.0:
+            # A NOISE SIGMA IS A SPREAD (I-22, R-48). Normalising it with
+            # `.to(self.unit)` is the ABSOLUTE conversion, so a '0.5 degC'
+            # sigma on a kelvin observable was STORED as 273.65 kelvin and
+            # every interval built from it was meaningless. The declared unit
+            # must be one that can state a spread, and it is then carried onto
+            # the observable's own scale as a difference -- or onto the
+            # dimension's base unit when the observable itself is on an offset
+            # scale, where an absolute unit cannot carry a spread at all.
+            try:
+                require_spread_unit(
+                    self.observation_sigma.units,
+                    context=f"predictive noise {key}",
+                )
+            except UnitCompatibilityError as exc:
+                raise UQProblemError(str(exc)) from exc
+            if self.observation_sigma.magnitude <= 0.0:
                 raise UQProblemError("observation_sigma must be strictly positive")
+            sigma_unit = self.unit if is_ratio_scale(self.unit) else base_unit(self.unit)
+            sigma = Quantity(
+                self.observation_sigma.magnitude_as_spread_in(sigma_unit), sigma_unit
+            )
             object.__setattr__(self, "observation_sigma", sigma)
 
 

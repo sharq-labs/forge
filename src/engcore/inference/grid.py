@@ -20,7 +20,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from ..scientific.results.immutable import freeze
-from ..scientific.units.quantity import Quantity
+from ..scientific.units.quantity import Quantity, UnitCompatibilityError, require_spread_unit
 from .admissibility import (
     AdmissibleAnalyticPrediction,
     AdmissibleNumericalPrediction,
@@ -61,7 +61,20 @@ class GaussianObservation:
         if not isinstance(self.value, Quantity) or not isinstance(self.sigma, Quantity):
             raise InferenceProblemError("observation value and sigma must be Quantity")
         self.value.require_compatible(self.sigma, context="observation sigma")
-        if self.sigma.magnitude_in(self.value.units) <= 0.0:
+        # A SIGMA IS A SPREAD (I-22, R-48). A '0.5 degC' sigma on a 300 kelvin
+        # reading was read as 273.65 kelvin, so the chi-squared of a 50 kelvin
+        # misfit was 0.033 instead of 10000 -- and every goodness-of-fit,
+        # containment and near-duplicate test computed on it was measuring
+        # nothing. The positivity check ran on the same converted number, so a
+        # legitimate kelvin sigma on a degC value would have failed it.
+        try:
+            require_spread_unit(
+                self.sigma.units,
+                context=f"observation {self.condition_id}:{self.observable_name} sigma",
+            )
+        except UnitCompatibilityError as exc:
+            raise InferenceProblemError(str(exc)) from exc
+        if self.sigma.magnitude <= 0.0:
             raise InferenceProblemError("observation sigma must be strictly positive")
 
     @property
@@ -115,7 +128,10 @@ class ObservationSet:
     def numeric_vectors(self) -> tuple[np.ndarray, np.ndarray]:
         values = np.asarray([item.value.magnitude for item in self.observations], dtype=np.float64)
         sigmas = np.asarray(
-            [item.sigma.magnitude_in(item.value.units) for item in self.observations],
+            # As a DIFFERENCE: the declared unit is a ratio scale, so this is
+            # the identity for every observation in this repository, and it is
+            # what lets a delta_degC sigma be read against a degC value at all.
+            [item.sigma.magnitude_as_spread_in(item.value.units) for item in self.observations],
             dtype=np.float64,
         )
         return values, sigmas

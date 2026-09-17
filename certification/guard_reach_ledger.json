@@ -302,14 +302,18 @@
    "problem": "R-48",
    "title": "Spreads on offset temperature scales convert as absolute temperatures",
    "rule": "src/engcore/scientific/units/quantity.py",
-   "rule_symbol": "require_spread_unit and Quantity.magnitude_as_spread_in over _slope_against_base, plus Quantity.to's wrapping of a backend scale refusal; applied at src/engcore/scientific/oracles.py::OracleObservation.__post_init__ and OracleEvidenceSet.compare",
+   "rule_symbol": "require_spread_unit and Quantity.magnitude_as_spread_in over _slope_against_base, plus Quantity.to's wrapping of a backend scale refusal; applied at every declared spread in the core -- OracleObservation.absolute_tolerance, ConstraintDefinition.tolerance and the margin its check reports, GaussianObservation.sigma as read by ObservationSet.numeric_vectors and by inference/split.py's two content digests, and PredictiveObservableSpec.observation_sigma",
    "status": "LATENT",
-   "audit_status": "PARTIAL",
+   "audit_status": "FIXED",
    "audit_reached_in_production": "library-only",
-   "closed_by": "I-22 part D (batch 29) for the audit's finding 58; part E for finding 99",
-   "why": "PARTIAL, and the ledger says so rather than claiming the problem closed. R-48 is one defect at four sites. This batch gives the units module the conversion every site needs -- a difference transforms by the linear part of an affine map -- the refusal that goes with it, and the first site: the oracle tolerance, which is the designed route to EXPERIMENTALLY_VALIDATED and therefore the site where a mis-read band is worth a validation level. Finding 99's three remaining sites (ConstraintDefinition.tolerance and the margin it reports; the GaussianObservation sigma read by inference/grid.py and inference/split.py) are part E and are NOT closed. LATENT rather than LIBRARY_ONLY for the part that is done: no oracle is pinned -- _TRUSTED_ORACLE_DECLARATIONS is an empty immutable mapping by design, so that the party asking for a level cannot grant itself authority -- and nothing outside the core builds an OracleEvidenceSet.",
-   "what_would_create_it": "The first pinned oracle. An experimental dataset whose band is stated in degrees Celsius is the ordinary case -- it is how a lab writes a tolerance -- and until this batch it was read as an absolute temperature, so a prediction 273 kelvin wrong PASSED and earned EXPERIMENTALLY_VALIDATED.",
+   "closed_by": "I-22 parts D (batch 29, the audit's finding 58) and E (batch 30, finding 99)",
+   "why": "FIXED, in two batches. R-48 is one defect at four sites and every site needed a conversion the units module did not have: a difference transforms by the linear part of an affine map, and `magnitude_in` applies the whole map. Part D gave the module `magnitude_as_spread_in` and `require_spread_unit`, wrapped the backend's scale refusal in this package's own error, and fixed the oracle tolerance. Part E applied both primitives at every other DECLARED spread, which is what part D's own version of this row named as the reason it stayed PARTIAL: `require_spread_unit` is applied at call sites, and nothing structurally requires a spread field to consult it. Now every spread field in `src/engcore` does. LATENT rather than REACHED: `ConstraintDefinition` is reached by every MCP rating and limit check, `GaussianObservation` by the production calibration study and by `studies/tcr`, `PredictiveObservableSpec` by the predictive layer the study routes through -- and all of them are reached with RATIO-SCALE units, ohm, watt, kelvin, ampere, so every conversion is the identity and no production number moves. What is reached is the guard; what is latent is the offset-scale declaration that would trip it.",
+   "what_would_create_it": "Any declaration that states a tolerance, a sigma or a band on an offset temperature scale -- '2 degC' as a limit tolerance and '0.5 degC' as a measurement sigma are how an engineer and a lab respectively write them, and the first let a 600 kelvin reading satisfy a 358.15 kelvin limit while the second gave a 50 kelvin misfit a chi-squared of 0.033. Or any field, bound or observable declared on an offset scale, where an absolute unit cannot carry the spread or the margin at all.",
    "entry_points": [
+    "engcore.mcp.problem (rating and limit checks, via ConstraintDefinition.check)",
+    "engcore.studies.calibration_study",
+    "engcore.studies.tcr",
+    "engcore.inference.split.observation_content_digest",
     "engcore.scientific.oracles.OracleEvidenceSet.compare",
     "engcore.scientific.units.quantity.Quantity.to"
    ],
@@ -321,12 +325,21 @@
     "tests/test_core_scientific_audit_batch29.py::test_r48_an_oracle_tolerance_on_an_offset_scale_is_refused_at_declaration",
     "tests/test_core_scientific_audit_batch29.py::test_r48_a_valid_band_on_an_expected_value_in_celsius_is_not_called_negative",
     "tests/test_core_scientific_audit_batch29.py::test_r48_the_physically_correct_declaration_does_not_crash_untyped",
-    "tests/test_core_scientific_audit_batch29.py::test_r48_no_spelling_of_a_half_degree_band_admits_a_273_kelvin_error"
+    "tests/test_core_scientific_audit_batch29.py::test_r48_no_spelling_of_a_half_degree_band_admits_a_273_kelvin_error",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_constraint_tolerance_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_an_observation_sigma_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_predictive_observation_sigma_on_an_offset_scale_is_refused_at_declaration",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_valid_tolerance_on_a_celsius_bound_is_not_called_negative",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_valid_sigma_on_a_celsius_value_is_not_called_non_positive",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_the_physically_correct_declarations_work",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_fahrenheit_difference_is_five_ninths_of_a_kelvin_everywhere",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_the_split_content_digest_reads_a_sigma_as_a_difference",
+    "tests/test_core_scientific_audit_batch30.py::test_r48_a_reported_margin_is_a_difference_and_not_an_absolute_value"
    ],
    "bypasses": [],
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
-   "what_the_check_cannot_see": "Every other place in the tree that reads a declared spread with `magnitude_in`. `require_spread_unit` is applied at call sites, one at a time, and nothing structurally requires a spread field to consult it -- which is exactly why three such sites are still open as part E, and why this row stays PARTIAL."
+   "what_the_check_cannot_see": "A spread read with `magnitude_in` DOWNSTREAM of a declaration. `studies/calibration_study.py`, `studies/tcr.py`, `adequacy/predictive.py`, `hybrid_uq/predictive.py` and `uq/predictive.py` do so at several points; those reads are safe because the declaration guard admits only ratio-scale units, where the two readers agree exactly -- but they are safe BY that guard and not by their own statement. And a `Quantity` handed around loose still carries no statement of whether it is a point or a span: what this improvement adds is that every declared spread FIELD makes that statement at construction."
   }
  ]
 }

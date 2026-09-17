@@ -101,11 +101,18 @@ def observation_content_digest(observation: GaussianObservation) -> str:
     # twelve digits in value AND sigma are a copy, exactly as the module says of
     # bit-identical ones. Sigma is converted as a DIFFERENCE, so an offset unit
     # does not add its zero to it.
+    #
+    # This used to do that conversion BY HAND -- add the sigma to the value,
+    # convert both, subtract -- and the trick corrected the wrong half. It fixed
+    # the value-unit-to-base step, and read the sigma's OWN declared unit with
+    # `magnitude_in`, which is where finding 99's 273.65 came from: a '0.5 degC'
+    # sigma on a kelvin reading was already wrong before the trick ran.
+    # `magnitude_as_spread_in` is the thing the trick was approximating, and it
+    # is exact for a delta unit the backend will not convert directly.
+    # (I-22, R-48.)
     unit = base_unit(observation.value.units)
     value = observation.value.magnitude_in(unit)
-    sigma_in_value_unit = observation.sigma.magnitude_in(observation.value.units)
-    upper = Quantity(observation.value.magnitude + sigma_in_value_unit, observation.value.units)
-    sigma = abs(upper.magnitude_in(unit) - value)
+    sigma = abs(observation.sigma.magnitude_as_spread_in(unit))
     payload = {
         "observable_name": observation.observable_name,
         "unit": unit,
@@ -462,9 +469,9 @@ NEAR_DUPLICATE_LINEAGE_RELATIVE_TO_SIGMA = 1.0e-3
 def _base_value_and_sigma(observation: GaussianObservation) -> tuple[str, float, float]:
     base = base_unit(observation.value.units)
     value = observation.value.magnitude_in(base)
-    upper = Quantity(observation.value.magnitude + observation.sigma.magnitude_in(observation.value.units),
-                     observation.value.units)
-    return base, value, abs(upper.magnitude_in(base) - value)
+    # The same hand-written difference trick as `_content_digest` had, replaced
+    # by the same spread reader and for the same reason (I-22, R-48).
+    return base, value, abs(observation.sigma.magnitude_as_spread_in(base))
 
 
 def _near_duplicates(left, right) -> list[tuple[str, str]]:
