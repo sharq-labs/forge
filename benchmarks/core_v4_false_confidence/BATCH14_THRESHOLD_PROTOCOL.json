@@ -1,0 +1,89 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 14,
+  "improvements": [
+    "I-11"
+  ],
+  "problems_addressed": [
+    "R-09",
+    "R-50"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "590d4dd0",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "R-09 is REACHED IN PRODUCTION: the MCP run_electrothermal and run_battery tools build their validity verdicts through the domain assess functions and CredibilityEvidenceReport.from_result(validity=...), and the CORE-014 binding is applied in neither. R-50 is library-only for the refusal but reaches three core consumers that gate on validity status alone -- Experiment.best (CORE-015 _established), inference admissibility (_require_applicability_not_refuted) and experiment evaluation.",
+  "what_was_already_seen": {
+    "R-09": "four findings. (45) record_values defaults to False and NOTHING in src passes True, so every production assessment has an empty `evaluated` and the check in ScientificResult loops over nothing: a result whose provenance says alpha = -1e-5 m^2/s (anti-diffusion, which the model's own condition forbids) carries an IN_DOMAIN assessment made at alpha = +1e-5, constructs, and reports SUPPORTED. (62) The model API cannot opt in at all, because ScientificModelDefinition.assess_validity has no record_values parameter and domains assess through it. (46) Four ways around it even when enabled: the result compares only names present in BOTH `evaluated` and provenance.inputs; ModelValidityRecord.__post_init__ rebuilds the assessment WITHOUT `evaluated`, so every credibility report loses the operating point; from_result(validity=...) accepts assembler-supplied records and never checks them, which is the route both production MCP assemblers take; and deleting `evaluated` from a stored payload undoes the refusal with no marker. (80) 59 of the 77 names the 16 registered models' conditions read are reserved DERIVED quantities, which are never provenance inputs, so even an opted-in assessment binds almost nothing.",
+    "R-50": "ValidityAssessment carries no model id, version or domain identity, and ScientificResult checks only that the key is a declared model. An assessment IN_DOMAIN with satisfied=('anything_at_all',) is accepted, round-trips and is returned by validity_of. The MCP boundary added the check (_require_conditions_of_the_declared_model) but only there, and only for models it can resolve through its package walk."
+  },
+  "rules": {
+    "the_model_api_can_opt_in": {
+      "improvement": "I-11",
+      "problem": "R-09 (finding 62)",
+      "rule": "ScientificModelDefinition.assess_validity gains a keyword-only `record_values: bool = False` and forwards it to ValidityDomain.assess. DomainValidityContext.assess gains a keyword-only `record_values: bool = True` and forwards it, so every domain that assesses through the derived context records its operating point without each domain remembering to.",
+      "why_the_two_defaults_differ": "assess_validity is a V1-frozen symbol's method and a new keyword there must not change what an existing call returns, so its default is False -- purely additive. DomainValidityContext is the domains' own helper and the place the audit's fix direction names first ('Pass it on the DomainValidityContext, battery, conduction and MCP report paths'), so its default is True and the production paths get the binding by construction rather than by memory.",
+      "class": "A (additive keywords; no threshold)"
+    },
+    "the_production_paths_record_their_operating_point": {
+      "improvement": "I-11",
+      "problem": "R-09 (findings 45, 80)",
+      "rule": "Every assessment site under src/engcore/domains that calls validity.assess or assess_validity directly passes record_values=True: the conduction bulk and scheme paths, the lumped capacity path, the electrical material and dc-applicability paths, and the battery cell paths that do not already go through DomainValidityContext.",
+      "why": "the guard the audit found empty is empty because nobody sets the flag. This sets it.",
+      "not_touched": "src/engcore/domains/thermal/** is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments and is NOT edited. src/engcore/domains/thermal_models/ is a different tree and is not pinned.",
+      "class": "A"
+    },
+    "the_report_keeps_the_operating_point_and_checks_it": {
+      "improvement": "I-11",
+      "problem": "R-09 (findings 46, 80)",
+      "rule": "ModelValidityRecord's rebuild carries `evaluated` through, so a credibility report and its serialized form keep the operating point. CredibilityEvidenceReport applies the CORE-014 comparison to EVERY validity record it holds -- carried from the result and supplied by an assembler alike -- against the report's own provenance inputs, with the same `_same_operating_point` rule the result uses. A record whose recorded value disagrees with the provenance is refused, which is where both production MCP tools form their verdict.",
+      "why": "the binding lived in one place and both production tools build their verdict somewhere else. A guard applied where the verdict is NOT formed is not a guard.",
+      "class": "A (an existing comparison, applied where the verdict is formed)"
+    },
+    "an_assessment_names_the_model_and_the_conditions_it_assessed": {
+      "improvement": "I-11",
+      "problem": "R-50",
+      "rule": "ValidityAssessment gains three TRAILING fields with defaults: `model_id: str = \"\"`, `model_version: str = \"\"` and `declared_conditions: tuple[str, ...] = ()`. ValidityDomain.assess fills declared_conditions with the names it decided, and ScientificModelDefinition.assess_validity fills the model key. ScientificResult then refuses an assessment whose declared_conditions are non-empty and whose satisfied/violated/unknown names are not exactly those, each once; and one whose model_id is non-empty and is not the key it is filed under, or whose model_version is not that model's declared version.",
+      "why_not_a_registry": "the MCP boundary can resolve a model because it walks the package; engcore.scientific cannot import the domains, and a core record that needed a registry to be checkable would be checkable only where the registry is. Carrying the names the domain decided makes the record self-describing, which is what finding 61's fix direction asks for ('record the model key and a digest of the ValidityDomain in the assessment (assess can fill both)'). The names are carried rather than a digest because the check is over names and a digest cannot enumerate them.",
+      "what_it_does_not_do": "a hand-built assessment can fabricate both halves consistently. What this closes is the case the audit found -- an assessment that names conditions the model does not have reaching Experiment.best, the inference admission gate and validity_of -- for every assessment the core itself produced. The MCP boundary's registry check stays, and is now the stronger of the two rather than the only one.",
+      "class": "A (additive trailing fields; no threshold)"
+    },
+    "the_comparison_tolerance_is_the_one_the_oracles_declare": {
+      "improvement": "I-11",
+      "problem": "R-09",
+      "rule": "Values are compared with `engcore.scientific.oracles._same_operating_point`, unchanged: the rule the oracle comparison already declares, so one statement of 'the same operating point' serves both.",
+      "class": "A (an existing declared rule, reused)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "ADDITIVE ONLY. ValidityAssessment gains three TRAILING fields with defaults. ScientificModelDefinition.assess_validity gains a keyword-only argument with a default of False, so an existing call returns what it returned. No field or member is removed, renamed or reordered and no existing default changes. ValidityDomain.assess is untouched -- its record_values default stays False.",
+    "serialized_records": "ValidityAssessment's three new keys are written only when non-empty, as `evaluated` already is, so a record written before this batch keeps its bytes and its digest. ModelValidityRecord's serialized form gains `evaluated` where the assessment has it, which is the information finding 46 says it was dropping. No schema string is bumped.",
+    "claims_that_move": [
+      "an assessment made at another operating point than the result's provenance is now REFUSED on every production path and in every credibility report, not only when a caller opted in;",
+      "an assessment naming conditions the model's domain did not decide is refused by ScientificResult, so the three core consumers that read status alone no longer accept it;",
+      "nothing else: the binding refuses a DISAGREEMENT, and a production run whose assessment and provenance agree is unaffected. That is checked by re-deriving the committed MCP and domain evidence below."
+    ],
+    "sha_pinned_fixtures": "adding the three keys to a serialized assessment changes the bytes of any fixture that carries one. Every pinned digest that moves is regenerated by WRITING THE BYTES the code now produces and re-reading them, never by editing a digest by hand, and the audit document lists each file."
+  },
+  "residuals_stated_in_advance": [
+    "record_values still records only Quantity values. Category and flag conditions (regime, steady state) are not recorded, because CategoryCondition and FlagCondition cannot read CategoricalValue and BooleanValue (UNREADABLE_SHAPE) and `ValidityAssessment.evaluated` is typed Mapping[str, Quantity] on a V1-frozen record. So an IN_DOMAIN verdict for 'laminar, steady' still attaches to a result whose provenance says turbulent. Widening it is finding 62's remaining half and is not in this improvement's brief.",
+    "59 of the 77 names the registered models' conditions read are reserved DERIVED quantities, which are never provenance inputs, so the binding cannot compare them. They are RECORDED as unbound rather than silently skipped, and what to do about it is a DECISION-NEEDED entry below, because treating an unbound name as a gap would turn production SUPPORTED into INSUFFICIENT_EVIDENCE and move scored benchmarks, which this round's hard constraints forbid without the owner's decision.",
+    "A hand-built assessment can fabricate its declared_conditions and its model key consistently. The core check closes the audited case -- an assessment naming conditions the model does not have -- for every assessment the core produced; forging one requires knowing the model's conditions, which is the MCP boundary's registry check.",
+    "The report-side comparison reads the report's provenance inputs. A report whose provenance carries NAMESPACED inputs (the production electrothermal report's are `['resistance-tcr-R1::temperature']`) binds nothing by name, exactly as the result-side check does not. Mapping a namespaced provenance input to a condition key is the second half of finding 45's fix direction and is part of the same DECISION-NEEDED."
+  ],
+  "decisions_needed": [
+    {
+      "id": "D-14-1",
+      "question": "What should a validity assessment whose recorded condition values CANNOT be bound to the result's provenance inputs -- because the condition reads a reserved derived quantity, or because the provenance input is namespaced -- count as?",
+      "why_it_is_a_decision": "the audit's fix direction says 'Treat an unbound assessment as a gap, not as a pass'. Doing that turns every production MCP verdict that rests on a derived condition from SUPPORTED into INSUFFICIENT_EVIDENCE: 59 of 77 condition names across the 16 registered models are reserved derived quantities. This round's hard constraints say the verdict word moves scored benchmarks and that an existing call must not change what it returns by default, so the change is the owner's to authorise.",
+      "options": [
+        "(a) RECORD only, as this batch does: the report lists the unbound names and the verdict is unchanged. The binding is load-bearing wherever a name CAN be compared, and honest about where it cannot.",
+        "(b) Treat unbound as a gap, accepting that production verdicts move to INSUFFICIENT_EVIDENCE until every domain maps its derived quantities to provenance inputs.",
+        "(c) Make the binding complete first: have each domain's assembler declare, per derived quantity, which declared inputs it is computed from, record those inputs' values too, and compare THEM. Then (b) costs nothing, because a derived condition binds through its inputs. This is the largest option and the only one that makes the guard total."
+      ],
+      "recommendation": "(a) now, and (c) as its own improvement. (a) is what this batch implements: it closes every audited reproduction (an assessment at another operating point, a report that dropped the operating point, an assessment naming conditions the model does not have) without moving a scored verdict. (c) is a real piece of work -- a declared input-to-derived-quantity map for 16 models -- and it is the honest way to reach (b). Doing (b) alone would trade a silent pass for a blanket INSUFFICIENT_EVIDENCE, which tells a reader less, not more.",
+      "recorded_in": "docs/audits/CORE_REAUDIT_2026-09-16.md, batch 14"
+    }
+  ],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
