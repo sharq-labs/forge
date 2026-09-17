@@ -3,6 +3,8 @@
 Problem R-45 (the audit's finding 90, item 2), improvement I-20 part C of three, under
 benchmarks/core_v4_false_confidence/BATCH41_THRESHOLD_PROTOCOL.json. The rest of the batch, which is about
 records an older reader silently unbinds, is in tests/test_core_scientific_audit_batch41.py.
+
+Recorded as strict xfails in commit 329dcd77, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -25,7 +27,6 @@ def _report_payload():
     return copy.deepcopy(assess_routed_identifiability(posterior).to_dict())
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 finding 90 item 2: CORE-004 changed the conditioning definition and the explanation text under the same version")
 def test_r45_a_routed_identifiability_record_declares_the_core004_definition():
     assert ID.ROUTED_IDENTIFIABILITY_SCHEMA == "hybrid_uq.routed_identifiability/2", (
         "CORE-004 changed both the conditioning definition and the explanation text under the same version")
@@ -36,7 +37,6 @@ def test_r45_a_current_record_still_round_trips():
     assert RoutedIdentifiability.from_dict(payload).to_dict() == payload
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the refusal reports that a verdict does not follow from numbers that give the same verdict")
 def test_r45_a_pre_core004_record_is_refused_for_the_reason_it_cannot_be_read():
     """The audited message named a contradiction where the only visible difference was a sentence of prose.
 

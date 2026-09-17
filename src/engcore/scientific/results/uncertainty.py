@@ -13,11 +13,18 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
-from ..serialization import require_schema, schema_string
+from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity
 from ..units.validation import require_same_dimension
 
 UNCERTAINTY_SCHEMA = schema_string("uncertainty")
+
+#: R-45 (re-audit 2026-09-16): the version a record declares WHEN IT CARRIES `source_kind`. CORE-016 added
+#: the field under `uncertainty/1`, so a reader that predates it accepted the record and dropped the key --
+#: and a NUMERICAL uncertainty came back UNSPECIFIED, indistinguishable from one nobody was asked for. A
+#: dropped key is worse than a refused record: the refusal is loud, the drop is invisible. Written only when
+#: the field is present, so every record that carries nothing new keeps its bytes and its digest.
+UNCERTAINTY_SCHEMA_V2 = schema_string("uncertainty", 2)
 
 
 class UncertaintyKind(str, Enum):
@@ -155,8 +162,9 @@ class Uncertainty:
         return cls(kind=UncertaintyKind.UNKNOWN, notes=notes)
 
     def to_dict(self) -> dict[str, Any]:
+        records_source_kind = self.source_kind is not UncertaintySource.UNSPECIFIED
         return {
-            "schema": UNCERTAINTY_SCHEMA,
+            "schema": UNCERTAINTY_SCHEMA_V2 if records_source_kind else UNCERTAINTY_SCHEMA,
             "kind": self.kind.value,
             "standard_uncertainty": (
                 self.standard_uncertainty.to_dict()
@@ -174,7 +182,17 @@ class Uncertainty:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Uncertainty":
-        require_schema(payload, UNCERTAINTY_SCHEMA)
+        version = require_schema_any(payload, (UNCERTAINTY_SCHEMA, UNCERTAINTY_SCHEMA_V2))
+        # R-45: the version and the field were introduced together, so a `/1` record carrying a source kind
+        # is a shape no writer here has produced. It is either an edit or a re-emit that kept the field and
+        # lost the version, and reading it would make the version string mean nothing.
+        if version == UNCERTAINTY_SCHEMA and "source_kind" in payload:
+            raise ScientificCoreError(
+                f"{UNCERTAINTY_SCHEMA} record carries a source_kind, which was introduced with "
+                f"{UNCERTAINTY_SCHEMA_V2}. A record that declares the older version while carrying the newer "
+                f"field cannot be read: its version is the reader's only statement of which fields it must "
+                f"understand. Re-emit it with the code that wrote the field"
+            )
         def _q(key):
             value = payload.get(key)
             return Quantity.from_dict(value) if value else None

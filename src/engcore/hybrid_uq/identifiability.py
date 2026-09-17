@@ -32,7 +32,15 @@ from ._records import decode_float, decode_vector, digest_of, encode_float, enco
 from .local_gaussian import LocalGaussianPosterior
 from .vocabulary import ApproximationClass, HybridUQError, RouteClaim
 
-ROUTED_IDENTIFIABILITY_SCHEMA = "hybrid_uq.routed_identifiability/1"
+#: R-45 (re-audit 2026-09-16): `/2` because CORE-004 changed two things under `/1` -- the conditioning is
+#: now computed on the CORRELATION matrix rather than the covariance, and every explanation carries
+#: `WIDTH_REFERENCE_NOTE`. A reader re-derives both, so a `/1` record was refused with "the verdict and its
+#: explanation do not follow from its own numbers, which give <the same verdict>": a message reporting a
+#: contradiction where the record is simply unreadable. The refusal is right -- a `/1` record's stored
+#: condition number was computed under a definition this code retired and nothing in the record says which
+#: -- so the version carries the reason, as `hybrid_uq.route_diagnostics/1` already does.
+ROUTED_IDENTIFIABILITY_SCHEMA = "hybrid_uq.routed_identifiability/2"
+ROUTED_IDENTIFIABILITY_SCHEMA_V1 = "hybrid_uq.routed_identifiability/1"
 
 
 def grid_parameterization_digest(posterior: PosteriorGrid) -> str:
@@ -349,6 +357,15 @@ class RoutedIdentifiability:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "RoutedIdentifiability":
+        if payload.get("schema") == ROUTED_IDENTIFIABILITY_SCHEMA_V1:
+            raise HybridUQError(
+                f"{ROUTED_IDENTIFIABILITY_SCHEMA_V1} records cannot be read: CORE-004 changed the "
+                f"conditioning definition (the condition number is the CORRELATION matrix's, not the "
+                f"covariance's) and appended the width-reference note to every explanation, both under that "
+                f"same version. A stored condition number does not say which definition produced it, so the "
+                f"verdict cannot be re-derived from it. Re-derive the identifiability from the covariance "
+                f"instead of reading the record"
+            )
         require_schema(payload, ROUTED_IDENTIFIABILITY_SCHEMA)
         return cls(approximation_class=ApproximationClass(payload["approximation_class"]),
                    parameterization_digest=payload["parameterization_digest"], route_claim=RouteClaim(payload["route_claim"]),

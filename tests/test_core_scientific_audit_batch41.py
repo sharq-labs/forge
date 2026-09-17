@@ -8,6 +8,8 @@ the dangerous one: a record carrying a NEW binding under an UNCHANGED version st
 reader, which drops the binding and re-emits something that reads as a default rather than as a loss. The
 audit followed it through: an assessment bound to 300 K, re-emitted once, admitted a result at 5000 K as
 IN_DOMAIN, because `evaluated` was gone and the CORE-014 refusal had nothing to fire on.
+
+Recorded as strict xfails in commit 329dcd77, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -40,7 +42,6 @@ def _uncertainty(**kw):
                          method="grid convergence study", source="mesh refinement", **kw)
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 finding 90 item 3: CORE-016's source_kind rides under uncertainty/1, so an older reader accepts the record and drops it")
 def test_r45_an_uncertainty_that_records_where_the_number_came_from_declares_a_new_version():
     bound = _uncertainty(source_kind=U.UncertaintySource.NUMERICAL)
     payload = bound.to_dict()
@@ -62,7 +63,6 @@ def test_r45_an_uncertainty_that_records_nothing_new_keeps_its_bytes():
     assert U.Uncertainty.from_dict(payload) == plain
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: there is no version that the new key belongs to, so nothing can be refused for carrying it")
 def test_r45_the_old_version_carrying_the_new_key_is_refused():
     payload = _uncertainty(source_kind=U.UncertaintySource.NUMERICAL).to_dict()
     payload["schema"] = "uncertainty/1"
@@ -77,7 +77,6 @@ def _assessment(**kw):
     return D.ValidityAssessment(status=D.ValidityStatus.IN_DOMAIN, satisfied=("T_range",), **kw)
 
 
-@pytest.mark.xfail(strict=True, reason="R-45 as audited: an assessment bound to 300 K, re-emitted through an older reader, admitted a result at 5000 K as IN_DOMAIN")
 def test_r45_an_assessment_bound_to_an_operating_point_declares_a_new_version():
     bound = _assessment(evaluated={"T": Quantity(300.0, "kelvin")})
     payload = bound.to_dict()
@@ -90,7 +89,6 @@ def test_r45_an_assessment_bound_to_an_operating_point_declares_a_new_version():
     assert D.ValidityAssessment.from_dict(payload) == bound
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: I-11's model binding rides under validity_assessment/2 as well")
 def test_r45_an_assessment_naming_its_model_declares_it_too():
     bound = _assessment(model_id="thermal.slab", model_version="1")
     assert bound.to_dict()["schema"] == "validity_assessment/3"
@@ -106,7 +104,6 @@ def test_r45_an_assessment_that_binds_nothing_keeps_its_bytes():
     assert D.ValidityAssessment.from_dict(payload) == plain
 
 
-@pytest.mark.xfail(strict=True, reason="R-45: the older version and the binding coexist, which is the shape that gets silently unbound")
 def test_r45_an_older_assessment_version_carrying_a_binding_is_refused():
     payload = _assessment(evaluated={"T": Quantity(300.0, "kelvin")}).to_dict()
     payload["schema"] = "validity_assessment/2"

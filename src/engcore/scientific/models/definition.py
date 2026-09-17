@@ -1050,6 +1050,17 @@ class UnknownCondition:
 VALIDITY_ASSESSMENT_SCHEMA_V1 = schema_string("validity_assessment", 1)
 VALIDITY_ASSESSMENT_SCHEMA_V2 = schema_string("validity_assessment", 2)
 
+#: R-45 (re-audit 2026-09-16): the version a record declares WHEN IT CARRIES one of the bindings a `/2`
+#: reader drops -- CORE-014's `evaluated` operating point, or I-11's model identity and declared conditions.
+#: Those keys were added under `/2`, so a reader that predates them accepted the record and dropped them,
+#: and the audit followed the consequence: an assessment bound to 300 K, re-emitted once, admitted a result
+#: at 5000 K as IN_DOMAIN, because the newer reader's own operating-point refusal had nothing left to fire
+#: on. Written only when one of the keys is present, so a record that binds nothing keeps its bytes.
+VALIDITY_ASSESSMENT_SCHEMA_V3 = schema_string("validity_assessment", 3)
+
+#: The keys whose presence a `/2` reader cannot see and would silently drop.
+_ASSESSMENT_BINDING_KEYS = ("evaluated", "model_id", "model_version", "declared_conditions")
+
 
 def classify_conditions(
     *,
@@ -1283,8 +1294,9 @@ class ValidityAssessment:
         return self.unknown_because(UnknownReason.NOT_SUPPLIED)
 
     def to_dict(self) -> dict[str, Any]:
+        binds = bool(self.evaluated or self.model_id or self.model_version or self.declared_conditions)
         return {
-            "schema": VALIDITY_ASSESSMENT_SCHEMA_V2,
+            "schema": VALIDITY_ASSESSMENT_SCHEMA_V3 if binds else VALIDITY_ASSESSMENT_SCHEMA_V2,
             "status": self.status.value,
             "satisfied": list(self.satisfied),
             "violated": list(self.violated),
@@ -1302,8 +1314,26 @@ class ValidityAssessment:
     def from_dict(cls, payload: Mapping[str, Any]) -> "ValidityAssessment":
         version = require_schema_any(
             payload,
-            (VALIDITY_ASSESSMENT_SCHEMA_V1, VALIDITY_ASSESSMENT_SCHEMA_V2),
+            (
+                VALIDITY_ASSESSMENT_SCHEMA_V1,
+                VALIDITY_ASSESSMENT_SCHEMA_V2,
+                VALIDITY_ASSESSMENT_SCHEMA_V3,
+            ),
         )
+        # R-45: a binding and the version that names it were introduced together, so an older version
+        # carrying one is the shape that gets silently unbound -- either an edit, or a re-emit that kept the
+        # field and lost the version. Reading it would make the version string mean nothing, and this record
+        # is the one whose binding a verdict rests on.
+        if version != VALIDITY_ASSESSMENT_SCHEMA_V3:
+            carried = [key for key in _ASSESSMENT_BINDING_KEYS if payload.get(key)]
+            if carried:
+                raise ScientificCoreError(
+                    f"{version} record carries {carried}, which were introduced with "
+                    f"{VALIDITY_ASSESSMENT_SCHEMA_V3}. A record that declares an older version while "
+                    f"carrying a newer binding cannot be read: its version is the reader's only statement "
+                    f"of which fields it must understand, and this binding is what an operating-point "
+                    f"refusal reads. Re-emit it with the code that wrote the field"
+                )
         unknown = tuple(payload.get("unknown", ()))
         if version == VALIDITY_ASSESSMENT_SCHEMA_V1 and unknown:
             raise ScientificCoreError(

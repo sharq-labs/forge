@@ -181,7 +181,12 @@ def test_the_reason_survives_serialization_and_a_v1_record_cannot_be_guessed():
     domain = ValidityDomain(conditions=(peclet(),))
     assessment = domain.assess({"cell_peclet": np.array([1.0])})
     payload = assessment.to_dict()
-    assert payload["schema"].endswith("/2")
+    # R-45 (re-audit 2026-09-16, I-20 part C): /3, not /2. This record names the conditions it was assessed
+    # against, and a reader that predates that field accepted the record and dropped it -- which is how a
+    # bound assessment became an unbound one in one load and re-emit, after which a result far outside the
+    # assessed condition read IN_DOMAIN because the refusal had nothing to fire on. The version is now what
+    # says the field is there. An assessment that binds nothing still writes /2, so no committed digest moved.
+    assert payload["schema"] == "validity_assessment/3" and payload["declared_conditions"]
 
     restored = ValidityAssessment.from_dict(payload)
     assert restored.reason_for("cell_peclet") is UnknownReason.UNREADABLE_SHAPE

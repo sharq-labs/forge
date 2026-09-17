@@ -2589,3 +2589,53 @@ V3-era reader drops) and `uncertainty` (to `/2`, when `source_kind` is recorded)
 rather than silently drops** them, give `routed_identifiability` a legacy reader that accepts a pre-CORE-004
 explanation whose verdict re-derives identically, and list every one of these as a compatibility event in the
 V4 serialization inventory.
+
+### Batch 41 — I-20 part C (the last part)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-20 | **DONE** (parts A–C) | `c1d1b846`, `dff3181f` (A, R-46), `6ac7c3bf`, `ac0ab42a` (B, findings 53/87/90-item-1), `329dcd77` (C preregistration + 7 strict xfails), this commit | `local_gaussian_posterior/1` and `hybrid_uq_result/1` are still refused through their embedded route diagnostics rather than by an outer version check; the **V4 serialization inventory** (I-30) is where these compatibility events become executable fixtures. Nothing gates on `source_kind` yet — its producers are I-25's |
+
+**R-45 is FIXED and REACHED.** Part B fixed the direction where a new reader refuses an old record. This part
+fixed the other one, and **it is the dangerous one**: a record carrying a new binding under an unchanged
+version string is *accepted* by an older reader, which drops the binding and re-emits something that reads as
+a **default rather than as a loss**. The audit followed it all the way: an assessment bound to 300 K,
+re-emitted once, admitted a result at **5000 K** as IN_DOMAIN, because `evaluated` was gone and the CORE-014
+refusal had nothing left to fire on; and a NUMERICAL uncertainty came back UNSPECIFIED, indistinguishable from
+one nobody was asked for.
+
+| Claim (finding 90) | Status | How |
+|---|---|---|
+| `uncertainty/1` carrying CORE-016's `source_kind` | **FIXED** | The record declares `uncertainty/2` **when it records a source kind**, and `/1` otherwise — so a record that carries nothing new keeps its bytes and its digest, while the one that carries the binding is refused by a reader that cannot see it. A `/1` payload carrying the key is refused: the key and the version were introduced together, so that shape is either an edit or a re-emit that kept the field and lost the version. |
+| `validity_assessment/2` carrying CORE-014's `evaluated` (and I-11's model binding) | **FIXED** | Same rule, conditional on `evaluated`, `model_id`, `model_version` or `declared_conditions` — the four keys a `/2` reader drops. It is the same principle the tree already applies to those keys (*"written only when they carry information … so an assessment recorded before this batch keeps its bytes and its digest"*), applied one level up to the version itself. |
+| `routed_identifiability/1` refused for the wrong reason | **FIXED** | The refusal is **right** and stays: a `/1` record's condition number was computed on the *covariance* under the definition CORE-004 retired, and nothing in the record says which definition produced it. What was wrong was the message — it reported that a verdict "does not follow from its own numbers, which give [the same verdict]", sending a reader to look for a defect that is not there. `hybrid_uq.routed_identifiability/2` now carries the reason, exactly as `route_diagnostics/1` already does. |
+
+**Compatibility.** Additive: three new version strings, each written only when the record carries the field
+that made it necessary, and every older version still read (or refused with a stated reason). No field,
+default or enum member changed. Scanned before implementing: **no committed JSON carries an `uncertainty` or
+`validity_assessment` payload at all**, and the only `routed_identifiability/1` records are in
+`certification/core_freeze_v2.json` and `core_freeze_v3.json`, whose manifest tests fail by design until the
+V4 round. One in-tree expectation moved, commented in place:
+`tests/test_unknown_reasons.py::test_the_reason_survives_serialization_and_a_v1_record_cannot_be_guessed`
+asserted `/2` on an assessment that names the conditions it was assessed against — it now asserts `/3` and the
+binding that earns it, and the `/1` half of that test is unchanged.
+
+**Committed evidence.** Nothing moved.
+
+**No existing expectation moved besides the one above.** Nothing under `src/engcore/domains/thermal/` was
+edited.
+
+**Verification.** FAST tier 6965 passed, 5 skipped, 0 xfailed, 19 failed — the by-design set, unchanged from
+batch 40 (the extra one inside `tests/test_core_api_snapshot.py` is still batch 40's appended enum member).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed; `tests/mutation_guards.py` untouched. Guard reach ledger clean over 20 guards, R-45 REACHED/FIXED.
+`tests/hybrid_uq`, `tests/test_scientific_core.py`, `tests/test_core_guards.py`,
+`tests/test_data_boundary0.py`: 936 passed.
+
+**Guard mutations.** `BATCH41_MUTATIONS.log`: **9 of 9 KILLED**. Four of them are the *conditional* half of
+the rule — making every record claim the new version moves digests that must not move, and that error is
+killed by its own control. One had to be rewritten as a **name** swap rather than an edited string literal:
+the mutation digest ignores string tokens, so an edited version literal reports "MUTATION CHANGED NO CODE".
+`BATCH41_PINNED_MUTATIONS.log`: **3 of 3 KILLED** on the files this batch changed. Both controls green.
+
+**Open decisions.** None.
