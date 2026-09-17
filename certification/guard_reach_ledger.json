@@ -269,6 +269,34 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "CrossSolverConsensus.over, which takes bare numbers and has no units to canonicalise. It cannot award CROSS_SOLVER_VALIDATED (IND-02), so what it records is a measurement rather than a claim -- but a caller reading its worst relative difference is reading whatever scale it handed in."
+  },
+  {
+   "problem": "R-57",
+   "title": "The corner-agreement guard compares magnitudes in each law's own unit",
+   "rule": "src/engcore/scientific/fields/conditions.py",
+   "rule_symbol": "_require_corners_agree, over CORNER_AGREEMENT_REL_TOL: both meeting laws' magnitudes converted into base_unit(definition.unit) before the difference is taken",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-22 part C (batch 28)",
+   "why": "LATENT rather than REACHED. require_complete_boundary IS reached -- the conduction2d domain calls it -- but no shipped 2D declaration states two edges of one field in different units of the same dimension: they state kelvin throughout, so the conversion is the identity and the guard's behaviour on production declarations is unchanged. The guard is nevertheless the production refusal, and the audit records what its absence cost: in conduction2d the corner node is pinned to whichever edge the assembly writes last and the domain's own boundary_conditions_held check reports FAIL -- a contradiction found after the solve rather than refused before it, and found only because that domain happens to check. A consumer relying on the core refusal got nothing.",
+   "what_would_create_it": "Any declaration that states one field's edges in more than one unit of its dimension -- a plate whose ambient side is given in degC and whose heated side in kelvin, which is how an engineer would write it -- or a field declared in degC, whose corner agreement was judged on a scale whose zero is a convention.",
+   "entry_points": [
+    "engcore.scientific.fields.require_complete_boundary",
+    "engcore.domains.thermal.conduction2d"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch28.py::test_r57_a_273_kelvin_corner_conflict_is_refused",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_two_edges_that_agree_physically_are_accepted_however_they_are_spelled",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_a_law_in_another_unit_agrees_at_the_corner_it_agrees_at",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_the_same_physical_pair_gets_the_same_verdict_in_either_declaration",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_the_refusal_does_not_label_two_scales_with_one_unit",
+    "tests/test_core_scientific_audit_batch28.py::test_r57_the_existing_cases_still_do_what_they_did"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "Two edges that agree at every corner and disagree along a shared span. They cannot share a span on a structured quadrilateral, so there is nothing more to compare here -- but that is a property of this support type, not a general one."
   }
  ]
 }

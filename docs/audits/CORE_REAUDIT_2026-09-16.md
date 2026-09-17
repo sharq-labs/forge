@@ -1779,3 +1779,64 @@ COMMENT and STRING tokens, so either edit reports MUTATION CHANGED NO CODE — w
 asserted by a test instead, because the defect being guarded against *is* prose that contradicts the code.
 
 **Open decisions.** None.
+
+### Batch 28 — I-22 part C
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-22 | **PARTIAL** (part C of four) | `afb4694b`, `b9baf42e` (A), `94b74325`, `dbdbba14` (B), `6f4f27fd` (C preregistration + 5 strict xfails), this commit | only DIRICHLET edges are compared, unchanged — a flux constrains a derivative and imposes nothing at the point; the guard compares the two laws AT the corner, which is complete on a structured quadrilateral but is a property of that support type and not a general one; a field declared in degC now has its corner agreement judged correctly, but a SPREAD declared in degC anywhere in the core is still converted as an absolute temperature — that is R-48, part D |
+
+**R-xx closed.** R-57, both directions of one arithmetic error.
+
+| Claim | Status | How |
+|---|---|---|
+| 300 K meeting 300 degC passes | **FIXED** | `SpatialProfile.evaluate` returns a magnitude in the **law's own** unit, and `require_consistent` checks a Dirichlet law for **dimension only** — "any unit of the right dimension is accepted" is the rule, deliberately. So the guard subtracted two numbers on two scales, and a 273.15 K contradiction at two corners was accepted. Both magnitudes are now converted into `base_unit(definition.unit)` first, through the two-point affine conversion `engcore.data.field.evaluate_on_region` already uses for exactly this reason. |
+| 300 K meeting 26.85 degC is refused | **FIXED** | The same error, costing a *correct* declaration. This direction matters as much: a guard that refuses a right answer teaches a caller to restate the declaration until the guard stops complaining, which is how a guard becomes a formality. |
+| the message labels two scales with one unit | **FIXED** | The audited refusal said `prescribe 300 and 26.85 kelvin there` for a pair of which only the first was in kelvin. It now reports both values on the compared scale, names that scale, and where a law's own unit differs adds the value **as written** with the unit it was written in. |
+
+**The canonical unit, not the field's declared one, and that is a rule this round has now applied three
+times.** `CORNER_AGREEMENT_REL_TOL` is a **relative** tolerance, which is a statement about a ratio, and a
+ratio means nothing where zero of the unit is a convention. Converting into `definition.unit` — which is what
+the audit's own fix direction suggested — would leave a field declared in degC judged on that scale: 1000 degC
+against 1000.00000115 degC is refused while **the same physical pair in kelvin is accepted**, for one physical
+plate. Mutation B28c is exactly that weaker fix, and it is killed. The tolerance itself does not move, and
+mutation B28e widens it by the nine orders this batch did not change, so that a reader can see it did not.
+
+**Two fixture numbers were corrected after the first run, and no claim was.** The invariance reproduction was
+written with a 1.5e-6 spread, which is outside 1e-9 relative of 1273.15 as well as of 1000, so both halves
+were refused and the test said nothing about the scale. It now uses 1.15e-6, which lies **between** the two
+tolerances. The corrected fixture was replayed against the baseline `conditions.py` and all five
+reproductions still fail there — checked, not assumed.
+
+**Compatibility.** Additive. No new public symbol, no signature, field, default or enum member change;
+`fields/conditions.py` gains an import of `base_unit`, which the layer ladder allows. No serialized record
+changes. `CORNER_AGREEMENT_REL_TOL` keeps its name, its value and its place. The deliberate behaviour change
+is symmetric: a pair that disagrees by more than 1e-9 relative once both are on one scale is refused where it
+was accepted, and a pair that agrees physically is accepted where it was refused.
+
+**The ledger says LATENT, and the reason is worth reading.** `require_complete_boundary` *is* reached — the
+conduction2d domain calls it — but no shipped 2D declaration states one field's edges in more than one unit,
+so the conversion is the identity on every production declaration. The guard is nevertheless the production
+refusal, and the audit records what its absence cost: the corner node was pinned to whichever edge the
+assembly wrote last, and **the domain's own `boundary_conditions_held` check reported FAIL** — a contradiction
+found after the solve instead of refused before it, and found only because that domain happens to check. A
+consumer relying on the core refusal got nothing. `what_would_create_it` names the ordinary declaration that
+would: a plate whose ambient side is given in degC and whose heated side in kelvin.
+
+**Committed evidence.** Nothing moved: every shipped 2D field declaration is in kelvin, so the canonical
+conversion is the identity. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED markers.
+
+**No existing expectation moved.** `tests/test_field_profiled_conditions.py` and
+`tests/test_field_profile_limit.py` pass unchanged (40 passed) — which is the finding again: nothing was
+asserting the two-scale behaviour, so nothing was protecting it.
+
+**Verification.** FAST tier 6804 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier at the recorded baseline. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH28_MUTATIONS.log`: **5 of 5 KILLED**, control green. None survived. No pinned
+mutation in `tests/mutation_guards.py` targets `fields/conditions.py`, which the pinned log records as NONE
+rather than leaving to inference — and which is itself a small finding: the corner guard had no pinned
+mutation before this batch.
+
+**Open decisions.** None.

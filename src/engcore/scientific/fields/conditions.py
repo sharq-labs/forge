@@ -20,7 +20,7 @@ from typing import Any, Iterable, Mapping
 from ..errors import InvalidScientificProblem
 from ..ir.conditions import BoundaryKind
 from ..serialization import require_schema, schema_string
-from ..units.quantity import Quantity
+from ..units.quantity import Quantity, base_unit
 from ..units.validation import require_same_dimension
 from .definition import FieldDefinition
 from .profiles import (
@@ -412,13 +412,44 @@ def _require_corners_agree(
         for point in region.corner_points(mesh):
             corners.setdefault(point, []).append(condition)
 
+    # ONE SCALE, AND IT IS THE DIMENSION'S CANONICAL ONE (I-22, R-57).
+    #
+    # `SpatialProfile.evaluate` returns a magnitude in the LAW's own unit, and
+    # `FieldBoundaryCondition.require_consistent` checks a Dirichlet law for
+    # DIMENSION only -- "any unit of the right dimension is accepted" is the
+    # rule, deliberately. So this guard was subtracting two numbers on two
+    # scales: 300 kelvin meeting 300 degC, a 273.15 K contradiction at two
+    # corners, was ACCEPTED, and 300 kelvin meeting 26.85 degC, which is the
+    # same temperature, was REFUSED -- and the message labelled both numbers
+    # with the field's unit when only one of them was in it.
+    #
+    # The canonical unit rather than `definition.unit`, for the reason batch 27
+    # gave one layer over: `CORNER_AGREEMENT_REL_TOL` is a RELATIVE tolerance,
+    # which is a statement about a ratio, and a ratio means nothing on a scale
+    # whose zero is a convention. `base_unit` is a pure function of the
+    # dimension and is always a ratio scale, so a field declared in degC now
+    # gets the same verdict as the same physical pair declared in kelvin.
+    canonical = base_unit(definition.unit)
+
+    def _on_the_canonical_scale(condition) -> float:
+        law = condition.law
+        return float(
+            Quantity(law.evaluate(x=x, y=y), law.unit).magnitude_in(canonical)
+        )
+
+    def _as_written(condition) -> str:
+        law = condition.law
+        if law.unit == canonical:
+            return ""
+        return f" (as written: {law.evaluate(x=x, y=y):g} {law.unit})"
+
     for (x, y), meeting in sorted(corners.items()):
         if len(meeting) < 2:
             continue
         first, *rest = meeting
-        reference = first.law.evaluate(x=x, y=y)
+        reference = _on_the_canonical_scale(first)
         for other in rest:
-            value = other.law.evaluate(x=x, y=y)
+            value = _on_the_canonical_scale(other)
             tolerance = CORNER_AGREEMENT_REL_TOL * max(
                 1.0, abs(reference), abs(value)
             )
@@ -426,8 +457,9 @@ def _require_corners_agree(
                 raise InvalidScientificProblem(
                     f"conditions {first.name!r} and {other.name!r} meet at "
                     f"corner ({x:g}, {y:g}) of support {mesh.mesh_id!r} and "
-                    f"prescribe {reference:g} and {value:g} "
-                    f"{definition.unit} there. A corner node belongs to both "
+                    f"prescribe {reference:g}{_as_written(first)} and "
+                    f"{value:g}{_as_written(other)} {canonical} there. A "
+                    f"corner node belongs to both "
                     f"edges, so one of these silently wins on whichever order "
                     f"the assembly happens to use"
                 )
