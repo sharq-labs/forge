@@ -48,7 +48,7 @@ def _nudged_grid(problem, relative=1.0e-9):
         points=mesh,
         values=values,
         admissible_mask=np.ones(len(mesh), dtype=bool),
-        admission_refs=tuple(("analytic",) * len(keys) for _ in mesh),
+        admission_refs=tuple(("analytic|fixture|ver|bind",) * len(keys) for _ in mesh),
         rejection_reasons=tuple("" for _ in mesh),
     )
     return gaussian_grid_posterior(table, problem.observations)

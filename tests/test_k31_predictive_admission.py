@@ -38,8 +38,13 @@ def _table(mask=(True, True, False)) -> AdmittedForwardTable:
         points=points,
         values=np.asarray([[10.0], [20.0], [30.0]], dtype=np.float64),
         admissible_mask=np.asarray(mask, dtype=bool),
-        admission_refs=(("a",), ("b",), ()),
+        admission_refs=(("numerical|p-a|v-a|b-a",), ("numerical|p-b|v-b|b-b",), ()),
         rejection_reasons=("", "", "numerical convergence failed"),
+        # R-71 (I-28 part B): a table declares the units its numbers are in. The predictive-admission path
+        # refuses a table that declares none, because nothing then says what its numbers mean or which
+        # observation set it was built against -- the audited reuse compared 1500 milliohm with a table in
+        # ohm. `from_rows` fills this from the set; a hand-built fixture states it.
+        observation_units=("volt",),
     )
 
 
@@ -120,7 +125,7 @@ def test_parameter_support_mismatch_fails_closed() -> None:
         points=np.asarray([[0.0], [1.0], [3.0]], dtype=np.float64),
         values=np.asarray([[10.0], [20.0], [30.0]], dtype=np.float64),
         admissible_mask=np.asarray([True, True, True]),
-        admission_refs=(("a",), ("b",), ("c",)),
+        admission_refs=(("numerical|p-a|v-a|b-a",), ("numerical|p-b|v-b|b-b",), ("numerical|p-c|v-c|b-c",)),
         rejection_reasons=("", "", ""),
     )
     with pytest.raises(UQProblemError, match="identical parameter support"):

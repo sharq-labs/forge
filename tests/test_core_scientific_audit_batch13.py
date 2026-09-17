@@ -85,7 +85,7 @@ def _table(keys, model, xs):
     values = np.asarray([[model(p[0], xs[k.split(":")[0]]) for k in keys] for p in points])
     return AdmittedForwardTable(parameter_names=("theta",), observation_keys=tuple(keys), points=points,
                                values=values, admissible_mask=np.ones(len(points), bool),
-                               admission_refs=tuple(("analytic",) * len(keys) for _ in points),
+                               admission_refs=tuple(("analytic|fixture|ver|bind",) * len(keys) for _ in points),
                                rejection_reasons=("",) * len(points))
 
 

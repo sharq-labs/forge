@@ -48,7 +48,7 @@ def _table(points: np.ndarray, values: np.ndarray, key: str = "H:y") -> Admitted
         points=points,
         values=values.reshape(n, 1),
         admissible_mask=np.ones(n, dtype=bool),
-        admission_refs=tuple((f"admission:{i}",) for i in range(n)),
+        admission_refs=tuple((f"numerical|p-{i}|v-{i}|b-{i}",) for i in range(n)),
         rejection_reasons=tuple("" for _ in range(n)),
     )
 

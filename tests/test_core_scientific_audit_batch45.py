@@ -8,6 +8,8 @@ finished arrays and checks only that each admitted row carries one non-empty str
 nothing parses those strings -- so a table of fabricated values with refs ('forged', 'x') produces a
 posterior. And a table's numbers are in the units of the set that built it while it records none of them, so
 reusing it with a set whose keys match in other units compared 1500 milliohm against a table in ohm.
+
+Recorded as strict xfails in commit 468262ab, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -44,7 +46,7 @@ def _table(refs=(GOOD_REF,), *, units=None, values=((10.0,), (20.0,), (30.0,))):
         kwargs["observation_units"] = units
     return AdmittedForwardTable(
         parameter_names=("x",),
-        observation_keys=("H:y",),
+        observation_keys=("c1:y",),
         points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         values=np.asarray(values, dtype=np.float64),
         admissible_mask=np.asarray([True, True, False], dtype=bool),
@@ -57,20 +59,17 @@ def _table(refs=(GOOD_REF,), *, units=None, values=((10.0,), (20.0,), (30.0,))):
 # ---------------------------------------------------------------------------
 # an_admission_record_has_the_form_the_gate_writes
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-71 as audited: refs ('forged', 'x') produce a posterior -- the table checks only that each admitted row carries one non-empty string per observation")
 def test_r71_a_table_whose_admission_records_are_free_strings_is_refused():
     """The audited forgery: refs ('forged', 'x') produced a posterior."""
     with pytest.raises(InferenceProblemError, match="admission record"):
         _table(refs=("forged",))
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: nothing parses the records, so the route the audit calls the difference between two kinds of evidence is unreadable")
 def test_r71_a_record_naming_no_declared_route_is_refused():
     with pytest.raises(InferenceProblemError, match="route|admission record"):
         _table(refs=("guessed|pred-1|ver-1|bind-1",))
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: any non-empty string is an admission record")
 def test_r71_a_record_with_an_empty_part_is_refused():
     with pytest.raises(InferenceProblemError, match="admission record"):
         _table(refs=("numerical|pred-1||bind-1",))
@@ -82,7 +81,6 @@ def test_r71_the_records_the_gate_writes_are_accepted():
     assert _table(refs=(ANALYTIC_REF,)) is not None
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: admission_route survives only as a prefix of a string nothing reads")
 def test_r71_a_table_says_which_routes_its_admitted_rows_crossed():
     table = _table(refs=(GOOD_REF,))
     assert hasattr(table, "admitted_routes"), (
@@ -115,7 +113,6 @@ def _observations(unit="ohm", magnitude=1.5):
     )
 
 
-@pytest.mark.xfail(strict=True, reason="R-71 as audited: 1500 milliohm against a table in ohm gives a MAP of 1.5 -- keys match, units are never checked")
 def test_r71_reusing_a_table_with_another_units_set_is_refused():
     """As audited: 1500 milliohm against a table in ohm gave a MAP of 1.5."""
     table = _table(refs=(GOOD_REF,), units=("ohm",))
@@ -125,14 +122,12 @@ def test_r71_reusing_a_table_with_another_units_set_is_refused():
         gaussian_grid_posterior(table, _observations(unit="milliohm", magnitude=1500.0))
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: the field the control needs does not exist yet")
 def test_r71_the_set_it_was_built_against_still_works():
     table = _table(refs=(GOOD_REF,), units=("ohm",))
     values, columns = table.select_observations(_observations())
     assert columns == (0,) and values.shape == (3, 1)
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: the field does not exist yet")
 def test_r71_a_table_that_declares_no_units_still_computes_a_posterior():
     """The control: refusing every undeclared table would delete legitimate cached tables."""
     table = _table(refs=(GOOD_REF,))
@@ -144,7 +139,6 @@ def test_r71_a_table_that_declares_no_units_still_computes_a_posterior():
 # ---------------------------------------------------------------------------
 # the_admission_path_requires_a_bound_table
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-71: there is no bound-table requirement at all")
 def test_r71_the_admission_path_refuses_an_unbound_table():
     require_bound = _symbol("require_bound_forward_table")
     with pytest.raises(InferenceProblemError, match="unit|bound"):
@@ -152,7 +146,6 @@ def test_r71_the_admission_path_refuses_an_unbound_table():
     require_bound(_table(refs=(GOOD_REF,), units=("ohm",)), _observations())
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: the predictive-admission route accepts a table bound to nothing")
 def test_r71_predictive_admission_refuses_an_unbound_table():
     from engcore.uq import UQProblemError, condition_posterior_on_predictive_admission
     import tests.test_k31_predictive_admission as K
@@ -161,3 +154,16 @@ def test_r71_predictive_admission_refuses_an_unbound_table():
         condition_posterior_on_predictive_admission(
             K._posterior((0.7, 0.3, 0.0)), _table(refs=(GOOD_REF,)),
             maximum_unsupported_mass=1.0e-12)
+
+
+def test_r71_a_record_with_the_wrong_number_of_parts_is_refused():
+    """ADDED while running batch 45's guard mutations, not preregistered.
+
+    B45d removes the part-count check and the audited 'forged' ref is still refused, because it is not a
+    declared route either. The case only the count sees is a record whose route IS declared and whose
+    remaining parts are missing or multiplied -- a half-written record, which is what a truncated cache or a
+    hand-assembled string produces.
+    """
+    for ref in ("numerical|pred-1", "numerical|pred-1|ver-1", "numerical|pred-1|ver-1|bind-1|extra"):
+        with pytest.raises(InferenceProblemError, match="admission record"):
+            _table(refs=(ref,))

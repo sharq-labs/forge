@@ -42,7 +42,7 @@ def _honest(per_axis: int = 41) -> PosteriorGrid:
         parameter_names=("a", "b"), observation_keys=obs.keys, points=mesh,
         values=mesh[:, [0]] + mesh[:, [1]] * x[None, :],
         admissible_mask=np.ones(len(mesh), dtype=bool),
-        admission_refs=tuple(tuple("analytic" for _ in obs.keys) for _ in mesh),
+        admission_refs=tuple(tuple("analytic|fixture|ver|bind" for _ in obs.keys) for _ in mesh),
         rejection_reasons=tuple("" for _ in mesh),
     )
     return gaussian_grid_posterior(table, obs)
@@ -108,8 +108,11 @@ def test_a_conditioned_posterior_still_binds_its_weights():
     table = AdmittedForwardTable(
         parameter_names=honest.parameter_names, observation_keys=("H:y",), points=honest.points,
         values=np.ones((len(honest.points), 1)), admissible_mask=mask,
-        admission_refs=tuple(("r",) if ok else () for ok in mask),
+        admission_refs=tuple(("analytic|fixture|ver|bind",) if ok else () for ok in mask),
         rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
+        # R-71 (I-28 part B): the predictive-admission path refuses a table that declares no observation
+        # units -- nothing then says what its numbers mean or which set it was built against.
+        observation_units=("volt",),
     )
     assert honest.weights[rejected] > 0.0
     conditioned = condition_posterior_on_predictive_admission(

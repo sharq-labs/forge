@@ -39,7 +39,7 @@ def _table(*, values=(10.0, 14.0, 14.0), mask=(True, True, True)) -> AdmittedFor
         points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         values=np.asarray([[v] for v in values], dtype=np.float64),
         admissible_mask=np.asarray(mask, dtype=bool),
-        admission_refs=tuple((f"admission:{i}",) if ok else () for i, ok in enumerate(mask)),
+        admission_refs=tuple((f"numerical|p-{i}|v-{i}|b-{i}",) if ok else () for i, ok in enumerate(mask)),
         rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
     )
 
@@ -122,7 +122,7 @@ def test_parameter_support_mismatch_fails_closed() -> None:
         points=np.asarray([[0.0], [2.0]], dtype=np.float64),
         values=np.asarray([[10.0], [14.0]], dtype=np.float64),
         admissible_mask=np.asarray([True, True]),
-        admission_refs=(("a",), ("b",)),
+        admission_refs=(("numerical|p-a|v-a|b-a",), ("numerical|p-b|v-b|b-b",)),
         rejection_reasons=("", ""),
     )
 

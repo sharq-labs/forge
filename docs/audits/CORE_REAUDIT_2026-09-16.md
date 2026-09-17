@@ -2787,3 +2787,52 @@ digest of a pass-through that conditioned nothing. `BATCH44_PINNED_MUTATIONS.log
 which is the mutation amendment 1 is about.
 
 **Open decisions.** None.
+
+### Batch 45 — I-28 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-28 | **PARTIAL** (parts A–B of three) | `9788100d`, `d6b73c9c` (A, R-59), `468262ab` (B preregistration + 9 strict xfails), this commit | **R-71 stays PARTIAL**: finding 98 — admission not bound to the source result at all — is part C. The refs are still strings and a forger can write a well-formed one: the *form* is checkable, the content is not, and binding a record to the source it came from is exactly part C |
+
+**R-71's finding 102 is FIXED.** `AdmittedForwardRow`'s constructor *is* its admission gate;
+`AdmittedForwardTable`'s own constructor takes finished arrays and checked only that each admitted row
+carried one **non-empty string** per observation — and nothing anywhere parsed those strings.
+
+| Claim | Status | How |
+|---|---|---|
+| a forged table | **FIXED** | Refs `('forged', 'x')` produced a posterior. An admission record must now be what the gate writes — `route\|prediction_id\|verification_ref\|binding_ref`, four non-empty parts, the route one of the two the admission boundary declares. The form is not invented here: it is read off `AdmittedForwardRow.__init__`. The table's own docstring already said what it can check — *"a row marked admitted with no admission record behind each of its values"* — and a free string is that absence with extra characters. |
+| an unreadable route | **FIXED** | `admission_route` survived only as a prefix of a string nothing parsed, and the two routes are **not equally strong evidence** — sequence-level convergence on one, the declared applicability of a closed form on the other. New `admitted_routes` gives a consumer the distinct routes to gate on. |
+| a table reused in other units | **FIXED for every table the gate builds** | A row converts each value with `magnitude_in(observation.value.units)`, so a table's numbers were always in *somebody's* units and the table recorded none: **1500 milliohm against a table in ohm gave a MAP of 1.5**. New trailing `observation_units`, filled by `from_rows`, enforced by `select_observations` — and so by `gaussian_grid_posterior`, which selects through it. |
+| the admission path | **FIXED** | A table that declares no units is refused by `require_bound_forward_table` and by the predictive-admission route, because that is where a table decides which posterior nodes are predictively supported. On the ordinary posterior path such a table still works: refusing there would delete every legitimate cached table without telling anyone what to do about it. |
+
+**Twenty-eight fixtures across fourteen test files carried free strings as admission records** — `'a'`,
+`'r'`, `'prediction'`, `'analytic'`, `f"admission:{i}"` — which is precisely what let the audit's forged table
+produce a posterior. All now carry the form the gate writes. `tests/test_trust_boundary_admitted_row.py` had
+a line asserting that `('a',)` is **accepted**; it now asserts the refusal beside the blank and wrong-count
+cases it already had, commented in place. Three fixtures also declare their observation units, because they
+run the admission path.
+
+**Amendment 1.** The two new helpers were first added to `engcore.inference`'s package exports, which moved
+the V1 **frozen symbol count from 194 to 196** and failed
+`tests/test_core_api_contracts.py::test_no_experimental_symbol_is_in_the_frozen_contract` — a test that pins
+the count and is *not* one of the by-design failures. They live in `engcore.inference.grid`, public in their
+module, and the frozen export list is untouched: growing it now would pre-empt the V4 round.
+
+**Committed evidence.** Nothing moved; no committed JSON carries a forward-table payload.
+
+**Verification.** FAST tier 7022 passed, 5 skipped, 0 xfailed, 20 failed: the by-design 19 plus
+`tests/test_core_performance_guards.py::test_consensus_completeness_grows_linearly_with_required_outputs`,
+which is a wall-clock growth assertion on consensus completeness — code this batch does not touch — and which
+**passes on its own** (12 passed in isolation). Recorded rather than explained away: it is load-sensitive
+under `-n 4` and the earlier runs of this batch did not fail it. Expensive tier 528 passed, 18 failed, 14
+errors — the recorded baseline. `tests/test_mutation_harness.py` 6 passed; `tests/mutation_guards.py`
+untouched. Guard reach ledger clean over 25 guards, R-71 LATENT/PARTIAL.
+
+**Guard mutations.** `BATCH45_MUTATIONS.log`: **8 of 8 KILLED**. B45d was repointed — the audited `'forged'`
+ref is refused by the route check as well, so the part-count rule is only visible on a record whose route
+*is* declared and whose remaining parts are missing or multiplied. `BATCH45_PINNED_MUTATIONS.log`: **3 of 3
+KILLED** (the G32 posterior-binding guards); one of those runs first showed a **red control**, because the
+pinned test's own forward table declared no observation units and the new admission-path rule refused it —
+the fixture now declares them, which is the same fixture change the batch made everywhere else.
+
+**Open decisions.** None.

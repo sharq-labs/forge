@@ -73,7 +73,7 @@ class Problem:
         ok = np.all(np.isfinite(values), axis=1)
         table = AdmittedForwardTable(parameter_names=self.parameters.names, observation_keys=keys, points=mesh,
                                      values=np.where(ok[:, None], values, 0.0), admissible_mask=ok,
-                                     admission_refs=tuple((("analytic",) * len(keys)) if o else () for o in ok),
+                                     admission_refs=tuple((("analytic|fixture|ver|bind",) * len(keys)) if o else () for o in ok),
                                      rejection_reasons=tuple("" if o else "non-finite" for o in ok))
         return gaussian_grid_posterior(table, self.observations)
 
@@ -86,7 +86,7 @@ class Problem:
             ok = np.all(np.isfinite(values), axis=1)
             return AdmittedForwardTable(parameter_names=self.parameters.names, observation_keys=keys, points=mesh,
                                         values=np.where(ok[:, None], values, 0.0), admissible_mask=ok,
-                                        admission_refs=tuple((("analytic",) * len(keys)) if o else () for o in ok),
+                                        admission_refs=tuple((("analytic|fixture|ver|bind",) * len(keys)) if o else () for o in ok),
                                         rejection_reasons=tuple("" if o else "non-finite" for o in ok))
         return build
 

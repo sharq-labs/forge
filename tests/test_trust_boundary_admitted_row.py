@@ -308,8 +308,19 @@ def test_a_table_row_marked_admitted_must_carry_its_admission_records():
             admission_refs=(("only-one",), ()),
             rejection_reasons=("", "not admitted"),
         )
+    # R-71 (re-audit 2026-09-16, I-28 part B): an admission record also has to BE one. A free string such
+    # as the 'a' this line used to pass is the same absence of evidence with extra characters -- the audit's
+    # table of fabricated values carried 'forged' and 'x' and produced a posterior -- so the form the
+    # admission gate writes is now required, and a free string is refused beside the blank and the
+    # wrong-count cases above.
+    with pytest.raises(InferenceProblemError, match="admission record"):
+        AdmittedForwardTable(
+            **base, admissible_mask=np.asarray([True, False]), admission_refs=(("a",), ())
+        )
     accepted = AdmittedForwardTable(
-        **base, admissible_mask=np.asarray([True, False]), admission_refs=(("a",), ())
+        **base,
+        admissible_mask=np.asarray([True, False]),
+        admission_refs=(("numerical|pred-1|ver-1|bind-1",), ()),
     )
     assert accepted.admissible_mask.tolist() == [True, False]
 

@@ -40,7 +40,7 @@ def _table(mask=(True, True, True)) -> AdmittedForwardTable:
         points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         values=np.asarray([[10.0], [14.0], [14.0]], dtype=np.float64),
         admissible_mask=np.asarray(mask, dtype=bool),
-        admission_refs=tuple((f"r{i}",) if ok else () for i, ok in enumerate(mask)),
+        admission_refs=tuple((f"numerical|p-{i}|v-{i}|b-{i}",) if ok else () for i, ok in enumerate(mask)),
         rejection_reasons=tuple("" if ok else "rejected" for ok in mask),
     )
 

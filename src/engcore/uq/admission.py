@@ -184,6 +184,14 @@ def _validate_binding(posterior: PosteriorGrid, table: AdmittedForwardTable) -> 
         raise UQProblemError(
             "posterior and predictive table are not on identical parameter support"
         )
+    # R-71 (I-28 part B): a table that declares no observation units says nothing about what its numbers
+    # are, and this is the path where a table decides which posterior nodes are predictively supported.
+    if not table.observation_units:
+        raise UQProblemError(
+            "the predictive table declares no observation units, so nothing says what its numbers are in "
+            "or which observation set it was built against. A predictive-admission decision is not made "
+            "from a table bound to nothing: rebuild it with `AdmittedForwardTable.from_rows`"
+        )
 
 
 def condition_posterior_on_predictive_admission(

@@ -317,7 +317,7 @@ def test_r43_the_v1_predictive_intervals_declare_what_they_are_of():
     key = "pred:y"
     table = AdmittedForwardTable(
         parameter_names=("k",), observation_keys=(key,), points=points, values=points.copy(),
-        admissible_mask=admissible, admission_refs=tuple(("prediction",) for _ in points),
+        admissible_mask=admissible, admission_refs=tuple(("analytic|fixture|ver|bind",) for _ in points),
         rejection_reasons=tuple("" for _ in points))
     quantified = posterior_predictive_uq(
         grid, table, PredictiveObservableSpec(key, "dimensionless", Quantity(0.02, "dimensionless")),

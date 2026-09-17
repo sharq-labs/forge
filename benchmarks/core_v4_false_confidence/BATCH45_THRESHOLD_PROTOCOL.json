@@ -43,7 +43,11 @@
   }
  },
  "thresholds": {
-  "none": {"value": null, "class": "A", "why": "no number is chosen. One record form read off the writer, one declaration of units, one refusal on the admission path."}
+  "none": {
+   "value": null,
+   "class": "A",
+   "why": "no number is chosen. One record form read off the writer, one declaration of units, one refusal on the admission path."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -75,5 +79,13 @@
   "the batch's guard mutations, isolated, with an unmutated control",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what": "`require_bound_forward_table` and `parse_admission_ref` were first added to `engcore.inference`'s package exports, as 'new public function' in the preregistration implies. That moved the V1 FROZEN symbol count from 194 to 196 and failed tests/test_core_api_contracts.py::test_no_experimental_symbol_is_in_the_frozen_contract, which pins the count and is NOT one of the tests that fail by design.",
+   "change": "Both live in `engcore.inference.grid`, which is where the table and every rule about it lives, and are not added to the package's export list. They are public in their module; the frozen surface is unchanged.",
+   "why": "The compatibility rules allow a new public symbol, but the frozen surface and its counts are regenerated in the Core Freeze V4 round (I-30) and not before -- growing the frozen export list now would pre-empt that round and break a test the owner did not list as failing by design. Nothing about the rules changes: the same functions, reachable from the same module, called from the same places."
+  }
+ ]
 }

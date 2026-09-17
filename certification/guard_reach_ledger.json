@@ -802,6 +802,37 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "The weights digest is integrity-only, as every digest here is: it closes accidental recombination and a silent hand-off, not a determined edit. The derived dataset identity is a string, so a consumer that only logs it gains nothing automatic -- what it guarantees is that anything comparing a posterior's identity with the dataset it was fitted to will not match. The admissible mask is deliberately NOT narrowed (amendment 1): narrowing it took the rejected node out of HUQ-04's reach and stopped the certified mutation G32d from being killed, so predictive support is reported separately instead. And an unsupported mass of exactly zero still returns the original object, unmarked, because nothing was conditioned."
+  },
+  {
+   "problem": "R-71",
+   "title": "Forward-model admission is not bound to the source result, and tables bind observations by key label only",
+   "rule": "src/engcore/inference/grid.py",
+   "rule_symbol": "ADMISSION_ROUTES, parse_admission_ref and the admission-record form checked in AdmittedForwardTable.__post_init__; AdmittedForwardTable.observation_units, filled by from_rows and enforced by select_observations (and so by gaussian_grid_posterior); AdmittedForwardTable.admitted_routes; require_bound_forward_table, and the same requirement on the predictive-admission path in src/engcore/uq/admission.py",
+   "status": "LATENT",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-28 part B (batch 45); part C is finding 98",
+   "why": "LATENT, and PARTIAL. `engcore.inference` is public API and no MCP entry point builds a forward table; the table's consumers inside the repository are the uq, adequacy, split and hybrid_uq routes and the kinetics experiments. The shapes these rules guard did occur in the TREE -- twenty-eight fixtures across fourteen test files carried free strings such as 'a', 'r', 'prediction' and 'analytic' as admission records, which is what let the audit's ('forged', 'x') table produce a posterior -- and after this batch they all carry the form the gate writes. PARTIAL because finding 98, the binding of admission to the source result, is part C.",
+   "what_would_create_it": "A caller building an AdmittedForwardTable from finished arrays -- a cache loader, a recomputed table, or a hand-assembled one -- or reusing a table with an observation set whose keys match in other units: the audit's reproduction compared 1500 milliohm with a table in ohm and got a MAP of 1.5.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_table_whose_admission_records_are_free_strings_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_record_naming_no_declared_route_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_record_with_an_empty_part_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_record_with_the_wrong_number_of_parts_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_the_records_the_gate_writes_are_accepted",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_table_says_which_routes_its_admitted_rows_crossed",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_reusing_a_table_with_another_units_set_is_refused",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_the_set_it_was_built_against_still_works",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_a_table_that_declares_no_units_still_computes_a_posterior",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_the_admission_path_refuses_an_unbound_table",
+    "tests/test_core_scientific_audit_batch45.py::test_r71_predictive_admission_refuses_an_unbound_table"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The refs are still strings and a forger can write a well-formed one: the FORM is checkable, the content is not, and binding a record to the source result it came from is part C (finding 98). A table that declares no observation units still computes a posterior on the ordinary path -- refusing there would delete every legitimate cached table -- so the audited unit reuse is refused for tables built through `from_rows`, which is every table the gate produces. `admitted_routes` is a property for consumers to gate on; which routes a given consumer should accept is part C's business."
   }
  ]
 }

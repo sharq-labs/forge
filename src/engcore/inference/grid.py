@@ -278,6 +278,36 @@ class AdmittedForwardRow:
         return row
 
 
+#: R-71 (re-audit 2026-09-16): the two routes an admitted prediction can have crossed, as
+#: `AdmissibleNumericalPrediction.admission_route` and `AdmissibleAnalyticPrediction.admission_route` return
+#: them. They are not equally strong evidence -- sequence-level convergence on one, the declared
+#: applicability of a closed form on the other -- which is why the row records which one and why a table that
+#: cannot say is a table nobody can gate on.
+ADMISSION_ROUTES = ("numerical", "analytic")
+
+#: The parts `AdmittedForwardRow.__init__` writes into every admission record, in order.
+_ADMISSION_REF_PARTS = ("route", "prediction_id", "verification_ref", "binding_ref")
+
+
+def parse_admission_ref(ref: str) -> tuple[str, str, str, str] | None:
+    """The four parts of an admission record, or None when it is not one (R-71).
+
+    The strings are written in exactly one place -- the row's constructor, from a prediction that crossed one
+    of the two admission boundaries -- and the table checked only that each admitted row carried one
+    NON-EMPTY string per observation. 'forged' and 'x' cleared that, and nothing anywhere parsed them, so a
+    table of fabricated values produced a posterior and the route was unreadable.
+    """
+    parts = str(ref).split("|")
+    if len(parts) != len(_ADMISSION_REF_PARTS):
+        return None
+    if any(not part.strip() for part in parts):
+        return None
+    if parts[0].strip() not in ADMISSION_ROUTES:
+        return None
+    route, prediction_id, verification_ref, binding_ref = (part.strip() for part in parts)
+    return route, prediction_id, verification_ref, binding_ref
+
+
 @dataclass(frozen=True)
 class AdmittedForwardTable:
     """Immutable numeric table whose rows have already crossed domain admission."""
@@ -289,6 +319,12 @@ class AdmittedForwardTable:
     admissible_mask: np.ndarray
     admission_refs: tuple[tuple[str, ...], ...]
     rejection_reasons: tuple[str, ...]
+    #: R-71: the units the numbers in `values` are in -- one per observation key, as the set that built the
+    #: table declared them. A row converts with `magnitude_in(observation.value.units)`, so the numbers were
+    #: always in somebody's units and the table recorded none of them: reusing it with a set whose keys match
+    #: in other units compared 1500 milliohm with a table in ohm. Trailing, with an empty default, because a
+    #: table is also rebuilt from audited caches that never recorded them.
+    observation_units: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         names = tuple(str(v).strip() for v in self.parameter_names)
@@ -326,6 +362,19 @@ class AdmittedForwardTable:
                     f"observation(s); an admitted value needs the admission "
                     f"record it came from"
                 )
+            # R-71: and the record has to BE one. A free string is the same absence of evidence with extra
+            # characters -- the audited table's refs were 'forged' and 'x' -- and the form is not invented
+            # here: it is what the row's constructor writes, from a prediction that crossed one of the two
+            # declared admission boundaries.
+            for ref in row_refs:
+                if parse_admission_ref(ref) is None:
+                    raise InferenceProblemError(
+                        f"forward-table row {int(index)} carries {str(ref)!r} as an admission record. An "
+                        f"admission record is "
+                        f"'{'|'.join(_ADMISSION_REF_PARTS)}' with a route in {list(ADMISSION_ROUTES)}, "
+                        f"which is what the admission gate writes; a free string records nothing and "
+                        f"nothing can gate on it"
+                    )
 
         points.setflags(write=False)
         values.setflags(write=False)
@@ -337,6 +386,29 @@ class AdmittedForwardTable:
         object.__setattr__(self, "admissible_mask", mask)
         object.__setattr__(self, "admission_refs", tuple(tuple(v) for v in self.admission_refs))
         object.__setattr__(self, "rejection_reasons", tuple(str(v) for v in self.rejection_reasons))
+        units = tuple(str(v).strip() for v in self.observation_units)
+        if units and len(units) != len(keys):
+            raise InferenceProblemError(
+                f"a forward table declares one observation unit per key: {len(units)} for {len(keys)}"
+            )
+        if any(not unit for unit in units):
+            raise InferenceProblemError("a declared observation unit cannot be blank")
+        object.__setattr__(self, "observation_units", units)
+
+    @property
+    def admitted_routes(self) -> tuple[str, ...]:
+        """The distinct admission routes this table's admitted rows crossed (R-71).
+
+        A consumer that cares which boundary backs a number can read this instead of the prefix of a string
+        nothing parsed. The order is the declared one, so the value is stable.
+        """
+        found = set()
+        for index in np.flatnonzero(np.asarray(self.admissible_mask, dtype=bool)):
+            for ref in self.admission_refs[index]:
+                parsed = parse_admission_ref(ref)
+                if parsed is not None:
+                    found.add(parsed[0])
+        return tuple(route for route in ADMISSION_ROUTES if route in found)
 
     @classmethod
     def from_rows(
@@ -365,6 +437,11 @@ class AdmittedForwardTable:
             admissible_mask=np.asarray([row.admissible for row in rows], dtype=bool),
             admission_refs=tuple(row.admission_refs for row in rows),
             rejection_reasons=tuple(row.rejection_reason for row in rows),
+            # R-71: a row converted every value with `magnitude_in(observation.value.units)`, so the numbers
+            # in this table are in these units. Recording them states what they already are.
+            observation_units=tuple(
+                observation.value.units for observation in observations.observations
+            ),
         )
 
     def select_observations(self, observations: ObservationSet) -> tuple[np.ndarray, tuple[int, ...]]:
@@ -375,6 +452,23 @@ class AdmittedForwardTable:
             raise InferenceProblemError(
                 f"forward table does not contain observation {exc.args[0]!r}"
             ) from exc
+        # R-71: the keys are LABELS. Two sets with the same keys in ohm and in milliohm are different
+        # measurements of the same quantity, and this table's numbers are in the units the set that built it
+        # declared -- so comparing another set's data with them was a factor of 1000 nobody declared: 1500
+        # milliohm against a table in ohm gave a MAP of 1.5. Checked only when the table declares its units,
+        # because a table rebuilt from an audited cache never recorded them; the admission path refuses such
+        # a table outright, through `require_bound_forward_table`.
+        if self.observation_units:
+            declared = tuple(self.observation_units[column] for column in columns)
+            supplied = tuple(
+                observation.value.units for observation in observations.observations
+            )
+            if declared != supplied:
+                raise InferenceProblemError(
+                    f"forward table holds its values in {list(declared)} and these observations are in "
+                    f"{list(supplied)}: the keys match and the units do not, so the numbers are not "
+                    f"comparable. Rebuild the table against this observation set"
+                )
         return self.values[:, columns], columns
 
 
@@ -518,6 +612,31 @@ class PosteriorGrid:
             "correlation": correlation.tolist(),
             "admissible_fraction": float(np.mean(self.admissible_mask)),
         }
+
+
+def require_bound_forward_table(
+    table: AdmittedForwardTable,
+    observations: ObservationSet,
+) -> AdmittedForwardTable:
+    """Refuse a forward table that is not bound to the observations it is being used against (R-71).
+
+    A table with no declared units is either hand-built or rebuilt from a cache that never recorded them,
+    and the one thing that cannot be recovered from it is what its numbers MEAN. On the ordinary posterior
+    path such a table keeps working -- refusing there would delete every legitimate cached table without
+    telling anyone what to do about it -- but on the ADMISSION path, where the table decides which posterior
+    nodes are predictively supported, an unbound table is refused.
+    """
+    if not isinstance(table, AdmittedForwardTable):
+        raise InferenceProblemError("a bound forward table is an AdmittedForwardTable")
+    _require_observation_set(observations)
+    if not table.observation_units:
+        raise InferenceProblemError(
+            "this forward table declares no observation units, so nothing says what its numbers are in. "
+            "An admission decision cannot be made from a table that is bound to no observation set: "
+            "rebuild it with `from_rows` against the set it is being used with"
+        )
+    table.select_observations(observations)
+    return table
 
 
 def gaussian_grid_posterior(

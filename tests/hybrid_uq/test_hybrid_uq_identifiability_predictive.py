@@ -219,7 +219,7 @@ def _table(problem, grid, xs):
     values = np.asarray([[row[0] + row[1] * x for x in xs] for row in grid.points])
     keys = tuple(f"y@{x}" for x in xs)
     return AdmittedForwardTable(parameter_names=grid.parameter_names, observation_keys=keys, points=grid.points, values=values,
-                                admissible_mask=np.ones(len(grid.points), bool), admission_refs=tuple(("analytic",) * len(keys) for _ in grid.points),
+                                admissible_mask=np.ones(len(grid.points), bool), admission_refs=tuple(("analytic|fixture|ver|bind",) * len(keys) for _ in grid.points),
                                 rejection_reasons=tuple("" for _ in grid.points)), keys
 
 

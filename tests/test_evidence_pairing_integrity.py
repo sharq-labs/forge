@@ -67,7 +67,7 @@ def _table() -> AdmittedForwardTable:
         points=np.asarray([[0.0], [1.0], [2.0]], dtype=np.float64),
         values=np.asarray([[10.0, 20.0], [14.0, 22.0], [14.0, 22.0]], dtype=np.float64),
         admissible_mask=np.asarray([True, True, True]),
-        admission_refs=(("a:H1", "a:H2"), ("b:H1", "b:H2"), ("c:H1", "c:H2")),
+        admission_refs=(("numerical|a-H1|v|b", "numerical|a-H2|v|b"), ("numerical|b-H1|v|b", "numerical|b-H2|v|b"), ("numerical|c-H1|v|b", "numerical|c-H2|v|b")),
         rejection_reasons=("", "", ""),
     )
 
