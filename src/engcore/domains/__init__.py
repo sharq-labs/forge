@@ -16,8 +16,26 @@ from ..scientific.consensus import (
 from ..scientific.results.thresholds import (
     THRESHOLD_DECLARATIONS_ATTRIBUTE as _THRESHOLD_ATTRIBUTE,
 )
+from ..scientific.results.requirements import register_validation_check_kinds
 from ..scientific.results.validation import (
     ANALYTIC_REFERENCE_DECLARATIONS_ATTRIBUTE as _ANALYTIC_REFERENCE_ATTRIBUTE,
+)
+
+# I-19 (R-72): the check kinds the FROZEN conduction1d tree emits, declared here for the same reason
+# the table below states a position on behalf of `thermal.conduction1d.solver`:
+# `src/engcore/domains/thermal/**` is SHA-256 pinned by the frozen thermal_t1/t2/t3 experiments, so
+# it cannot call the registrar beside its own checks without breaking the pin that makes "T1 was not
+# edited afterwards" a checkable claim. They are registered one package above the freeze, in the
+# domain layer's own words, and this package is imported before any domain module can be.
+#
+# `conduction1d/problem.py` declares all five of these as validation requirements, so without this
+# the requirement rule would report the frozen slab problem's own declaration as unsatisfiable.
+register_validation_check_kinds(
+    "dimensional_consistency",
+    "linear_system_residual",
+    "boundary_conditions_held",
+    "field_finite",
+    "amplitude_decay",
 )
 
 #: Positions this package states on behalf of modules that cannot state their

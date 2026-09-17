@@ -95,6 +95,7 @@ from ....scientific.consensus import (
     SharedComponent,
     SolveRoute,
 )
+from ....scientific.results.requirements import register_validation_check_kinds
 from ....scientific.results.thresholds import VerificationThresholds
 from ....scientific.results.validation import (
     ValidationCheck,
@@ -122,6 +123,20 @@ from .reference import (
     invariant_is_exact,
     invariant_value,
     steady_states,
+)
+
+# I-19 (R-72): the check kinds this module EMITS, declared beside the emitters, so a requirement
+# naming no kind this tree produces is reported as one no result can satisfy rather than accepted
+# and never read.
+register_validation_check_kinds(
+    "dimensional_consistency",
+    "integration_reported_success",
+    "state_physically_admissible",
+    "trajectory_finite",
+    "tolerance_independence",
+    "analytic_invariant_agreement",
+    "independent_steady_state_agreement",
+    "cross_method_agreement",
 )
 
 if TYPE_CHECKING:  # pragma: no cover - typing only

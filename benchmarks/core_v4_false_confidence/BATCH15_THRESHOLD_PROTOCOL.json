@@ -101,5 +101,21 @@
   ],
   "decisions_needed": [],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "the_production_assemblers_pass_what_they_hold",
+      "what_changed": "HOW the battery assembler reads its problems, not WHETHER it does. The rule said the requirement checks would be appended to the checks `engcore/mcp/battery.py` already carries. That report answers TWO sub-problems -- the battery cell problem and the lumped thermal body problem -- and `CredibilityEvidenceReport` refuses two checks of one name, rightly: one name, one finding. Two separate calls to `requirement_checks` would therefore have made the report unconstructible the moment either problem declared a requirement. A new sibling, `merged_requirement_checks(problems, ...)`, produces one check per kind whose detail names each problem's unmet items in problem order, and the battery assembler calls that.",
+      "why_it_is_recorded": "the preregistered rule named a call the implementation does not make. Nothing about what is enforced, where, or under which threshold moved -- both problems' declarations are read, which is what the rule demanded -- but the preregistration must not be quietly corrected to match the code.",
+      "measured": "neither battery sub-problem declares a validation requirement or an uncertainty above NONE today, so the call appends nothing and the production battery report keeps its bytes. Verified by the FAST tier, in which every mcp/battery suite passes unchanged.",
+      "verified_by": "tests/test_core_scientific_audit_batch15.py::test_r72_a_report_over_several_problems_carries_one_check_naming_each, and guard mutation B15p, which makes the merge name only the first problem's unmet requirement."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "(the runner, not a rule) benchmarks/core_v4_false_confidence/audit/isolated_mutations.py",
+      "what_changed": "`_COPY_TREES` gained `experiments`. The pinned mutations on the files this batch changed include `tests/domains/kinetics/test_audit_consensus_cstr_levels.py`, whose module fixture imports `experiments.kinetics_k1.k1_config`; the isolated copy carried only `src` and `tests`, so that file ERRORED in every copy and the first pinned run's CONTROL came back RED -- 116 passed, 3 errors.",
+      "why_it_matters": "this runner's own doctrine is that a run whose control is red says nothing at all, and the 22 KILLED verdicts of that first run are therefore discarded rather than reported. The tree is 6.7 MB beside the 34 MB already copied.",
+      "after": "control GREEN at 119 passed, and the whole batch-15 mutation set was re-run from scratch."
+    }
+  ]
 }

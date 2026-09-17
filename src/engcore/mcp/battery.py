@@ -51,6 +51,7 @@ from ..domains.battery import solver as bsol
 from ..domains.thermal_models import lumped as lump
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.results.provenance import ProvenanceRecord
+from ..scientific.results.requirements import merged_requirement_checks
 from ..scientific.units.quantity import Quantity, dimensionality
 from .errors import MalformedPayloadError, MissingFieldError
 from .evidence import (
@@ -486,8 +487,9 @@ def run_battery_case(
         # ran.
         step_duration=load.duration,
     )
+    thermal_problem = lump.build_lumped_thermal_problem(body)
     thermal_assessment = lump.assess_lumped_validity(
-        lump.build_lumped_thermal_problem(body),
+        thermal_problem,
         initial_temperature=load.cell_temperature,
         ambient_temperature=thermal["ambient_temperature"],
         heat_input=final.heat_generation,
@@ -535,7 +537,17 @@ def run_battery_case(
         # future collision is an error here rather than a silently dropped
         # check.
         validation=tuple(final.cell_validation.checks)
-        + tuple(final.thermal_validation.checks),
+        + tuple(final.thermal_validation.checks)
+        # I-19 (R-72): both sub-problems' own declared validation and uncertainty requirements,
+        # read here rather than nowhere. MERGED over the two problems because this report answers
+        # both and a report may not carry two checks of one name -- which is the rule that keeps a
+        # collision an error instead of a silently dropped check. Neither problem declares a
+        # requirement today, so this appends nothing and the report keeps its bytes; it fires the
+        # day either declares one, or a substituted solver stops producing the checks it names.
+        + merged_requirement_checks(
+            (bat.build_battery_problem(cell, load), thermal_problem),
+            validation=final.cell_validation,
+        ),
         # No CouplingEvidence: the march is one-way and never iterates to a
         # fixed point, so every number that record carries -- iterations run,
         # iterate change, tolerance -- would have to be invented. The march's

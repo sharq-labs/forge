@@ -42,9 +42,15 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tests"))
 import mutation_guards as M  # noqa: E402
 
-#: What a copy needs to run the hybrid-UQ and audit suites: the package, the tests, the pytest configuration
-#: and the committed JSON evidence the static guards read. Nothing else, and no ``__pycache__``.
-_COPY_TREES = ("src", "tests")
+#: What a copy needs to run the hybrid-UQ and audit suites: the package, the tests, the experiment
+#: configurations some audit suites import, the pytest configuration and the committed JSON evidence
+#: the static guards read. Nothing else, and no ``__pycache__``.
+#: ``experiments`` joined in batch 15 (I-19): the pinned mutations on the files that batch changed
+#: include ``tests/domains/kinetics/test_audit_consensus_cstr_levels.py``, whose module fixture
+#: imports ``experiments.kinetics_k1.k1_config``. Without it that file ERRORS in every copy, which
+#: turns the run's control RED -- and a runner whose control is red says nothing at all. It is 6.7 MB
+#: beside the 34 MB already copied.
+_COPY_TREES = ("src", "tests", "experiments")
 _COPY_FILES = ("pyproject.toml",)
 _COPY_GLOBS = ("benchmarks/core_v4_false_confidence/*.json", "benchmarks/core_v2_hybrid_uq/*.json")
 

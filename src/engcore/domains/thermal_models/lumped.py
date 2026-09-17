@@ -91,6 +91,7 @@ from ...scientific.realizations.definition import (
     ModelRealizationDefinition,
 )
 from ...scientific.realizations.registry import RealizationRegistry
+from ...scientific.results.requirements import register_validation_check_kinds
 from ...scientific.results.thresholds import VerificationThresholds
 from ...scientific.results.validation import (
     ValidationCheck,
@@ -1422,6 +1423,9 @@ BACKEND = "python.math.exp"
 #: either finds the constant rather than a string literal in three places.
 BALANCE_RESIDUAL_CHECK = "lumped_balance_residual"
 ANALYTIC_REFERENCE_CHECK = "analytic_reference_agreement"
+
+# I-19 (R-72): the check kinds this module EMITS, declared beside the names themselves.
+register_validation_check_kinds(BALANCE_RESIDUAL_CHECK, ANALYTIC_REFERENCE_CHECK)
 
 #: The comparison tolerance against the independent reference, expressed in
 #: units in the last place of the largest intermediate the closed form forms.

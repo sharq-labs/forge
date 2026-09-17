@@ -832,3 +832,83 @@ under `src/engcore/domains/thermal/` was edited.
   audited reproduction without moving a scored verdict; (c) is a real piece of work (a declared
   input-to-derived-quantity map for 16 models) and is the honest way to reach (b). (b) alone would trade a
   silent pass for a blanket INSUFFICIENT_EVIDENCE, which tells a reader less, not more.
+
+### Batch 15 — I-19
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-19 | **DONE** | `350e08e3` (preregistration + 16 strict xfails), this commit | the unknown-key refusal is scoped to `ScientificProblem` and `UncertaintySpecification`; the audit's own verification says the silent drop is a general pattern across every `from_dict` in `engcore.scientific`, and making all of them strict has a much larger blast radius on stored records; `src/engcore/domains/thermal/**` is SHA-256 pinned, so the conduction1d result builder does not append the requirement checks and its declaration is enforced only where a boundary holds both the problem and the result; the uncertainty half has no production reach today, because nothing in src constructs an `UncertaintySpecification` above NONE; a requirement is satisfied by a PASS check of the right NAME and nothing here verifies that the check checked what the name says; the registry records which names are check kinds somewhere in this tree, not which names a particular solver can produce; and `ScientificResult.is_usable` is unchanged, because a NOT_RUN check does not move it and that is the existing rule for every NOT_RUN check in the tree |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-72 | **FIXED** | Three holes, one idea: a declaration is read where it can be read. (1) **Strict parsing.** `ScientificProblem.from_dict` and `UncertaintySpecification.from_dict` refuse a key they do not read, naming the unknown keys and the keys they accept; and a PRESENT `uncertainty` key goes through its own reader rather than a truth test, so a present-but-empty value is refused by that reader's schema requirement instead of silently becoming the default specification. `to_dict` emits exactly the read set on both records, so no payload this tree has ever written is refused. (2) **The rule.** A new additive module `engcore/scientific/results/requirements.py` says what is unmet: a requirement is satisfied only by a check of that exact name whose outcome is PASS (a NOT_RUN check of the right name says the opposite of what the declaration promises); `REPORTED` is met by an Uncertainty record, `QUANTIFIED` is not met by one whose kind is UNKNOWN — the record's own word for *not evaluated* — and a declared confidence level must be the one the record declares. What is unmet becomes at most two NOT_RUN checks, and **nothing at all** when the declaration is met, so a compliant result keeps its bytes. NOT_RUN and not FAIL for the reason the boundary's own `solver_convergence` check is NOT_RUN: nothing found the values false, and the work to recommend is to run the check. (3) **The registry.** `numerically_convergd` was accepted because nothing validated a requirement name and nothing read the field. Every module that emits a check kind now registers it beside the emitter — the DC and CSTR validation modules, the `thermal_models` schemes, 2D and lumped modules, the MCP boundary's own two — and a requirement naming no registered kind is reported as one **no result can ever satisfy**, with the registered kinds named. **Enforced where the enforcement happens, and the three reach points are wired:** `TrustedExecutionRecord.trusted` re-derives the verdict from the prepared problem and the validation report it already carries (the audited case exactly: `validation checks ['dimensional_consistency'] status pass trusted True` against a problem requiring `kirchhoff_current_law` and `power_balance`); `CredibilityEvidenceReport.from_result` gained an optional `problem=` and appends the checks, which lowers a real production SUPPORTED verdict to INSUFFICIENT_EVIDENCE through the existing NOT_RUN rule — measured on the production electrothermal report rather than asserted; and the two editable domain result builders (DC and CSTR) route their validation report through the rule, so the verdict travels with the result rather than only with a report somebody remembered to assemble. |
+
+**Why the registry is read at enforcement time and not at construction.** A refusal in
+`ScientificProblem.__post_init__` or `from_dict` would make a problem record's acceptability depend on which
+domain modules a process happens to have loaded — the scientific core may not reach down into a domain
+package, so the registry is populated only when a domain is itself imported. A guard that switches itself off
+with the import graph is worse than no guard. At enforcement time the domain is necessarily loaded: its result
+is the thing being judged. The cost is stated rather than hidden: a typo is not refused at the moment it is
+written down, and is instead reported as a requirement nothing can ever satisfy the first time a result is
+judged against it.
+
+**The pinned tree.** `src/engcore/domains/thermal/**` is SHA-256 pinned by the frozen thermal_t1/t2/t3
+experiments, so conduction1d cannot call the registrar beside its own checks. Its five kinds are registered in
+`src/engcore/domains/__init__.py` — the domains package root, imported before any domain module can be — for
+exactly the reason that file already states a position on behalf of `thermal.conduction1d.solver`. Without it
+the frozen slab problem's own declaration would read as naming nothing.
+
+**Compatibility.** Additive in shape on every V1-frozen symbol. `CredibilityEvidenceReport.from_result` gained
+a keyword-only `problem=None`; `TrustedExecutionRecord` gained two derived properties and no field;
+`ScientificProblem` and `UncertaintySpecification` gained a `READ_KEYS` class attribute, which is not a
+dataclass field (it carries no annotation) and so moves no field order. A new module is added. No field or
+member is removed, renamed or reordered and no existing default changes. Two behaviours change on purpose:
+the two readers refuse a payload carrying a key they do not read — a reader becoming stricter exactly where
+its old acceptance was dishonest, and the refused payload is precisely the one whose declaration was silently
+dropped — and a trusted execution record whose problem's declared checks did not pass is not trusted, which
+is the audited defect. No schema string is bumped and no record gains a key; the only new bytes are the
+NOT_RUN checks, and only where a declaration is actually unmet.
+
+**Existing tests edited (no assertion weakened).** None. One production module was RESTRUCTURED rather than
+edited in behaviour: `TrustedExecutionRecord.trusted` grew a condition, which would have moved the line
+`tests/mutation_guards.py` pins as G30ai. Per the round's rule the code was restructured so the anchor still
+matches exactly once — RES-07's own decision moved into
+`_attested_run_reached_a_usable_end`, carrying the pinned line unchanged, and `trusted` now reads that
+property and the new one. `tests/mutation_guards.py` was not touched, and the G30ai mutation still kills its
+named test.
+
+**Committed evidence.** Nothing moved. No committed record in the repository carries a problem payload with
+an unread key, and no committed result or report carries an unmet declaration: the DC domain's validation
+emits exactly the six names its problem declares and the CSTR's exactly its four, which
+`test_r72_the_dc_solve_meets_its_own_declaration` measures live rather than asserting. The `KINETICS_K2` and
+`BATTERY_T41` SUPERSEDED markers gain no entry: every claim in both is a hybrid-UQ route record and neither
+carries a problem declaration for these rules to reach.
+
+**Two preregistered details corrected, both recorded in the protocol's `amendment_log` rather than edited in
+place.** (1) The rule said the battery assembler would append the requirement checks to the checks it already
+carries. That report answers TWO sub-problems and `CredibilityEvidenceReport` refuses two checks of one name
+— rightly: one name, one finding — so two separate calls would have made the report unconstructible the
+moment either problem declared a requirement. A sibling `merged_requirement_checks(problems, ...)` produces
+one check per kind naming each problem's unmet items, and the assembler calls that. Nothing about what is
+enforced or where moved. (2) The mutation runner's `_COPY_TREES` gained `experiments`: the pinned mutations on
+the files this batch changed include a CSTR audit suite whose module fixture imports
+`experiments.kinetics_k1.k1_config`, so that file errored in every isolated copy and the first pinned run's
+control came back RED at 116 passed, 3 errors. This runner's own doctrine is that a red control says nothing,
+so that run's verdicts were discarded and the whole set re-run against a green control.
+
+**Guard mutations.** `BATCH15_MUTATIONS.log`: **21 of 21 KILLED**, control green. One survived a first run
+and the purchase is recorded: B15m (removing the rule that a metric the problem does not carry can never be
+satisfied) survived because `test_r72_a_metric_the_problem_does_not_carry_can_never_be_satisfied` passed an
+EMPTY uncertainty mapping, which the "no record at all" branch catches whatever the problem declares — so the
+rule under test was never the one deciding. The test now also supplies a record for that name, which only
+this rule can refuse, and asserts that the same record satisfies the same demand over a name the problem does
+carry. The 22 pinned mutations on the nine files this batch changed were re-run isolated and all 22 are
+KILLED (`BATCH15_PINNED_MUTATIONS.log`), control green at 119 passed.
+
+**Verification.** FAST tier 6635 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6 passed, every
+anchor intact; `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None in this batch.

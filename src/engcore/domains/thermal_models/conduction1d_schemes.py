@@ -73,6 +73,7 @@ from ...scientific.realizations.definition import (
 from ...scientific.realizations.registry import RealizationRegistry
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from ...scientific.results.result import ScientificResult
+from ...scientific.results.requirements import register_validation_check_kinds
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.results.validation import (
     ValidationCheck,
@@ -105,6 +106,16 @@ from ..thermal.conduction1d.problem import (
     ConductionSlab,
     build_conduction_problem,
     verify_problem_matches_slab,
+)
+
+# I-19 (R-72): the check kinds this module EMITS, declared beside the emitters.
+register_validation_check_kinds(
+    "dimensional_consistency",
+    "boundary_conditions_held",
+    "field_finite",
+    "amplitude_decay",
+    "discretization_convergence",
+    "time_march_finite",
 )
 
 __all__ = [

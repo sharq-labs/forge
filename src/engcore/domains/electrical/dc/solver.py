@@ -38,6 +38,7 @@ from scipy.linalg import LinAlgError, LinAlgWarning, solve as scipy_solve
 from ....scientific.errors import ScientificCoreError
 from ....scientific.ir.problem import ScientificProblem
 from ....scientific.results.provenance import ProvenanceRecord
+from ....scientific.results.requirements import report_with_requirement_checks
 from ....scientific.results.result import ScientificResult
 from ....scientific.results.uncertainty import Uncertainty
 from ....scientific.results.validation import ValidationReport
@@ -367,6 +368,17 @@ def solve_circuit(
     for source in circuit.current_sources:
         inputs[f"Is:{source.component_id}"] = source.current
 
+    # Hoisted out of the constructor so the requirement rule below can read what this result will
+    # actually carry. No uncertainty quantification is performed: element values are taken as exact
+    # and no tolerance propagation is done. Reporting anything other than UNKNOWN would be
+    # fabrication.
+    uncertainty = {
+        name: Uncertainty.unknown(
+            "no uncertainty quantification performed in Electrical DC V0"
+        )
+        for name in metrics
+    }
+
     # One active model set, used identically in the problem, the result and
     # the provenance — these three must never disagree about what a result
     # depends on.
@@ -427,16 +439,16 @@ def solve_circuit(
         },
         solver=solver.identity,
         convergence=raw.convergence,
-        validation=report,
-        # No uncertainty quantification is performed: element values are
-        # taken as exact and no tolerance propagation is done. Reporting
-        # anything other than UNKNOWN here would be fabrication.
-        uncertainty={
-            name: Uncertainty.unknown(
-                "no uncertainty quantification performed in Electrical DC V0"
-            )
-            for name in metrics
-        },
+        # I-19 (R-72): the problem this solve answers declares six checks it requires, and until
+        # this nothing anywhere read that declaration. `report_with_requirement_checks` returns the
+        # report UNCHANGED when the declaration is met -- which it is for every circuit this
+        # domain's own validation runs on, measured rather than assumed -- and appends a NOT_RUN
+        # check naming what is missing when it is not. So the verdict travels with the result
+        # rather than only with a report somebody remembered to assemble around it.
+        validation=report_with_requirement_checks(
+            problem, report, uncertainty=uncertainty
+        ),
+        uncertainty=uncertainty,
         assumptions=assumptions,
         warnings=raw.warnings,
         provenance=provenance,

@@ -60,6 +60,28 @@ class ModelReference:
         return cls(model_id=payload["model_id"], version=payload["version"])
 
 
+def _require_only_known_keys(
+    payload: Mapping[str, Any], known: "frozenset[str]", *, record: str
+) -> None:
+    """Refuse a payload key this reader does not read (I-19, R-72).
+
+    A declaration that does not ARRIVE is worse than one that is refused: the record still reads as
+    though the requirement had been stated, and the reader believes it. The audited case is exactly
+    this -- ``validation_requirementss`` in a payload produced a problem with no requirements and no
+    complaint. Both writers here emit every key their reader reads, so nothing this tree has written
+    is refused, and a reader that has genuinely grown a key keeps accepting the older payload that
+    lacks it: this rule is about keys that are PRESENT and unread, never about absent ones.
+    """
+    unknown = sorted(set(payload) - known)
+    if unknown:
+        raise InvalidScientificProblem(
+            f"{record} record carries key(s) {unknown} that this reader does not read. A key it "
+            f"does not read is a declaration that does not arrive -- a misspelled "
+            f"'validation_requirements' silently became a problem with no requirements at all -- so "
+            f"it is refused rather than dropped. The keys read are {sorted(known)}"
+        )
+
+
 class UncertaintyRequirement(str, Enum):
     """How much uncertainty treatment the study demands of a result."""
 
@@ -98,9 +120,15 @@ class UncertaintySpecification:
             "notes": self.notes,
         }
 
+    #: Every key this reader reads, so an unknown one can be named rather than dropped (I-19, R-72).
+    READ_KEYS = frozenset(
+        {"schema", "requirement", "metrics", "confidence_level", "notes"}
+    )
+
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "UncertaintySpecification":
         require_schema(payload, UNCERTAINTY_SPEC_SCHEMA)
+        _require_only_known_keys(payload, cls.READ_KEYS, record="uncertainty specification")
         return cls(
             requirement=UncertaintyRequirement(payload.get("requirement", "none")),
             metrics=tuple(payload.get("metrics", ())),
@@ -445,9 +473,23 @@ class ScientificProblem:
             "metadata": dict(sorted(self.metadata.items())),
         }
 
+    #: Every key this reader reads. A payload key outside it is REFUSED rather than dropped
+    #: (I-19, R-72): the audited defect is a record whose ``validation_requirements`` key is
+    #: misspelled, which round-tripped to a problem with no requirements at all and still read, to
+    #: anyone holding the record, as though the requirements had been stated. ``to_dict`` emits
+    #: exactly this set, so no payload this tree has ever written is refused.
+    READ_KEYS = frozenset(
+        {
+            "schema", "problem_id", "name", "description", "variables", "parameters",
+            "objectives", "constraints", "initial_conditions", "boundary_conditions", "models",
+            "required_capabilities", "uncertainty", "validation_requirements", "metadata",
+        }
+    )
+
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificProblem":
         require_schema(payload, PROBLEM_SCHEMA)
+        _require_only_known_keys(payload, cls.READ_KEYS, record="scientific problem")
         return cls(
             problem_id=payload["problem_id"],
             name=payload.get("name", ""),
@@ -480,11 +522,14 @@ class ScientificProblem:
                 ModelReference.from_dict(m) for m in payload.get("models", ())
             ),
             required_capabilities=frozenset(payload.get("required_capabilities", ())),
-            uncertainty=UncertaintySpecification.from_dict(
-                payload["uncertainty"]
-            )
-            if payload.get("uncertainty")
-            else UncertaintySpecification(),
+            # Read through the reader when the key is PRESENT, not when it is truthy. A present
+            # `uncertainty` whose value is empty was silently read as "no uncertainty demanded",
+            # which is a declaration this reader invented; now its own schema requirement refuses it.
+            uncertainty=(
+                UncertaintySpecification.from_dict(payload["uncertainty"])
+                if "uncertainty" in payload
+                else UncertaintySpecification()
+            ),
             validation_requirements=frozenset(
                 payload.get("validation_requirements", ())
             ),

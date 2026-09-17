@@ -138,8 +138,13 @@ from ..scientific.models.definition import (
     ValidityStatus,
     classify_conditions,
 )
+from ..scientific.ir.problem import ScientificProblem
 from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
+from ..scientific.results.requirements import (
+    register_validation_check_kinds,
+    requirement_checks,
+)
 from ..scientific.results.result import (
     ScientificResult,
     _same_operating_point,
@@ -1161,6 +1166,10 @@ def _merged_validity(
 #: :func:`_attribution_gap_checks`.
 STORED_ATTRIBUTION_CHECK = "stored_result_attribution"
 
+# I-19 (R-72): the two check kinds this boundary emits itself, declared beside their names so a
+# problem may require one of them and be answered rather than told its requirement names nothing.
+register_validation_check_kinds(SOLVER_CONVERGENCE_CHECK, STORED_ATTRIBUTION_CHECK)
+
 
 def _declared_model_keys(result: ScientificResult, model_ids: Mapping[str, str]) -> tuple[tuple[str, str], ...]:
     """``(model_id, version)`` for each id, versioned from the result's own ``models`` (R-40).
@@ -1927,6 +1936,7 @@ class CredibilityEvidenceReport:
         validation: Iterable[ValidationCheck] = (),
         notes: str = "",
         run_id: str | None = None,
+        problem: "ScientificProblem | None" = None,
     ) -> "CredibilityEvidenceReport":
         """Assemble a report around one executed :class:`ScientificResult`.
 
@@ -1990,6 +2000,20 @@ class CredibilityEvidenceReport:
         ``derive_verdict`` by the same rules as any other, so a FAIL is
         NOT_SUPPORTED and a passing check that establishes nothing establishes
         nothing.
+
+        ``problem`` (I-19, R-72) is the problem record these values answer, when the assembler holds
+        it. A ``ScientificProblem`` declares which validation checks a result must carry and what
+        uncertainty it demands, and **nothing in this tree read either** -- so a result carrying one
+        unrelated check and UNKNOWN uncertainty reported SUPPORTED for a problem that required three
+        checks and a quantified uncertainty. Given the problem, the requirement verdict is appended
+        here as NOT_RUN checks, which lower the verdict to INSUFFICIENT_EVIDENCE through the rule
+        every other NOT_RUN check goes through.
+
+        It is optional because a report may legitimately be assembled where the problem record is
+        not in hand -- a stored result read back on its own -- and a required argument would break
+        every existing caller for no gain. Where the problem IS in hand the assembler passes it, and
+        the production assemblers in :mod:`engcore.mcp.problem` and :mod:`engcore.mcp.battery` do.
+        Nothing is appended when the declaration is met, so a compliant report keeps its bytes.
         """
         if not isinstance(result, ScientificResult):
             raise CredibilityEvidenceError(
@@ -2004,6 +2028,14 @@ class CredibilityEvidenceReport:
             validation=tuple(result.validation.checks)
             + _attribution_gap_checks(result)
             + _convergence_checks(result)
+            # I-19: RE-DERIVED here from the problem and the result, never taken from the producer.
+            # A report that trusted the producer to have recorded its own unmet requirement would be
+            # trusting exactly the party the requirement is about.
+            + requirement_checks(
+                problem,
+                validation=result.validation,
+                uncertainty=dict(result.uncertainty),
+            )
             + tuple(validation),
             declarations=tuple(declarations),
             required_levels=tuple(required_levels),

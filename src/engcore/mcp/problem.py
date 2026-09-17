@@ -2097,6 +2097,12 @@ def _refused_case_run(
     report = CredibilityEvidenceReport.from_result(
         refused,
         provenance=run.provenance,
+        # I-19 (R-72): the problem these values answer, so its own declared validation and
+        # uncertainty requirements are read rather than believed. The refused stage's problem, which
+        # is the one this report is about.
+        problem=next(
+            (p for p in problems if p.problem_id == refused.problem_id), None
+        ),
         coupling=_coupling_evidence(run),
         # Only the models of the problem that was refused. The closure of a
         # value this report carries stops there, because the run stopped
@@ -2279,6 +2285,9 @@ def run_electrothermal_case(
         reports.append(
             CredibilityEvidenceReport.from_result(
                 thermal_result,
+                # I-19 (R-72): the problem this sub-solve answers, so its declared requirements are
+                # read at the boundary that forms the verdict rather than nowhere at all.
+                problem=thermal_problem,
                 # The **run's** provenance, not the sub-solve's: these values
                 # were produced by the coupled run, and the sub-solve's own
                 # record names one of the six models they rest on. The

@@ -63,6 +63,7 @@ from ...scientific.ir.conditions import BoundaryKind
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from ...scientific.results.result import ScientificResult
 from ...scientific.results.thresholds import VerificationThresholds
+from ...scientific.results.requirements import register_validation_check_kinds
 from ...scientific.results.validation import (
     ValidationCheck,
     ValidationOutcome,
@@ -70,6 +71,13 @@ from ...scientific.results.validation import (
 )
 from ...scientific.solvers.protocol import ConvergenceState, SolverIdentity
 from ...scientific.units.quantity import Quantity
+
+# I-19 (R-72): the check kinds this module EMITS, declared beside the emitters.
+register_validation_check_kinds(
+    "boundary_conditions_held",
+    "field_finite",
+    "field_linear_system_residual",
+)
 
 SOLVER_ID = "thermal_models.conduction2d.finite_difference"
 SOLVER_VERSION = "0.1.0"
