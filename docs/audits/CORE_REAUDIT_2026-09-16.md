@@ -1506,3 +1506,65 @@ per-spec array can be computed and then overwritten by its own maximum, and a ro
 turned into a threshold without removing a line.
 
 **Open decisions.** None.
+
+### Batch 24 — I-12 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-12 | **PARTIAL** (part A of two) | `23609299` (preregistration + 6 strict xfails), this commit | after the reclassification **VALIDATED is unreachable in production** — `oracles._TRUSTED_ORACLE_DECLARATIONS` is empty, so BENCHMARK_VALIDATED and EXPERIMENTALLY_VALIDATED cannot be awarded, and cross-solver agreement no longer counts. That is the honest state of the tree: nothing in production compares a result with anything outside the model that produced it, and it is recorded rather than papered over by keeping the label reachable; `evidence_basis` still covers the WHOLE report rather than each value (CORE-009/VAL-01's residual, I-20's to close); part B still owns R-21 — the level earned from hand-written independence, the gate with no caller, and a non-independent disagreement that warns instead of blocking |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-39 | **FIXED** | `ValidationLevel.CROSS_SOLVER_VALIDATED` leaves `VALIDATION_LEVELS`, so `evidence_basis` and `mcp.evidence.evidence_basis_of` return VERIFICATION_ONLY for a report whose validating evidence is agreement between two solvers. The enum member is unchanged — same name, same value, same position — and the level is still ATTAINED and still says what it said; what changed is the KIND of evidence it is counted as. **This removes a contradiction rather than adding a judgement**, and the contradiction is with three statements the tree already makes about itself: `evidence_basis`'s own docstring defines these levels as the ones that "compare it with something outside itself"; `scientific/consensus.py` says two routes may "realize the same mathematical formulation" and still count as independent, because only shared ARITHMETIC is excluded — `SOLVER_INDEPENDENCE_DIMENSIONS` leaves the problem declaration out and that module's docstring says a declaration error "is invisible to every route that reads it"; and each pinned pair of routes shares its declaration (both DC routes declare `DCCircuit`, both CSTR routes declare `ReactorRun`, and the consensus record lists that declaration as a SHARED dependency) while solving the same declared relations, which `domains/electrical/dc/models.py` states are SELF_CONSISTENT — "not BENCHMARK_VALIDATED … certainly not EXPERIMENTALLY_VALIDATED". So a result whose only other levels were dimensional validity and convergence moved from VERIFICATION_ONLY to VALIDATED the moment a cross-solver check was attached, and a circuit declared with a wrong resistor value read VALIDATED because both solvers agree about the wrong model. |
+
+**The other kind is now named too.** A new `VERIFICATION_LEVELS` holds DIMENSIONALLY_VALID,
+NUMERICALLY_CONVERGED, ANALYTICALLY_VERIFIED and CROSS_SOLVER_VALIDATED, and `validation.py` refuses to
+import while the two sets overlap, while `UNVERIFIED` is in either, or while any other member is in neither.
+**That is the structural half of R-39**: one kind was a set and the other was "the rest", so a member added
+later was silently verification and nobody had to decide — which is how this level ended up in the wrong
+group, and the adjudication records that the classification "was a choice, not an accident". It is the same
+discipline `mcp/server.py::_audit_tables` already applies to the verdict tables.
+
+**Compatibility.** No symbol removed, renamed or reordered; no dataclass field, default or signature
+changed. `VALIDATION_LEVELS` keeps its name and type and loses one element, which is what the audit's own
+`fix_direction` for R-39 asks for. `VERIFICATION_LEVELS` is additive. The deliberate behaviour changes are
+stated in the protocol: `required_evidence_basis="VALIDATED"` is no longer satisfied by cross-solver
+agreement (so a caller who demanded validation and was being given code-to-code verification now reads
+`required_evidence_basis_not_attained`), and a stored report whose `verdict_qualifiers` say VALIDATED on
+cross-solver evidence alone stops reading back — the qualifier is re-derived and enforced, which is the
+existing rule doing its job on a corrected classification.
+
+**Committed evidence.** Nothing moved. A search over `benchmarks/` and `certification/` found no artifact
+carrying `evidence_basis: VALIDATED`; the only hits are this round's own protocol and audit JSON, which are
+text about the problem. The audit's own reach note says the one production serialized path withholds the
+level.
+
+**One existing expectation moved, and it is a comment.** `tests/test_core_guards.py` and two vertical tests
+refuse a domain noun anywhere in the scientific core, including in prose — the first draft of the
+`VALIDATION_LEVELS` comment named the resistor and the CSTR routes, and `'resistor' leaked into
+validation.py`. The comment now states the same argument abstractly (each pinned pair shares its
+declaration; the declaring layer states the relations are SELF_CONSISTENT) and points at this document,
+which is where the core is allowed to know the instances. **No test was weakened**: the guard was right and
+the comment was wrong.
+
+**Verification.** FAST tier 6761 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations, and what they taught about the check itself.** `BATCH24_MUTATIONS.log`: **5 of 5 KILLED**,
+both controls green. The first run had two COLLECTION_BROKEN and two SURVIVED, and the reason is worth
+recording: `_require_every_level_is_classified` runs at IMPORT, so a mutation that leaves the level in both
+sets or in neither does not produce a wrong verdict — it produces a tree that will not import, which
+`isolated_mutations` rightly refuses to count as a kill (R-67). And a mutation that removes only the check
+leaves the classification correct, so nothing observes it. Each classification mutation is therefore a PAIR
+of edits that restores a consistent-but-wrong state, which is what the audited defect actually was. That is
+not a way of making them easier to kill; it is the only way to make them observable, and the script says so
+where a reader will find it. `_BASIS_MEANS['VERIFICATION_ONLY']` is a string literal and reports MUTATION
+CHANGED NO CODE, so it is NOT mutated and the script records that rather than dropping it silently — its
+wording is guarded by a test, and `_audit_tables` already refuses to import while any basis word has no
+description.
+
+**Open decisions.** None.

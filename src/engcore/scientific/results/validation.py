@@ -524,13 +524,71 @@ class ValidationLevel(str, Enum):
     EXPERIMENTALLY_VALIDATED = "experimentally_validated"
 
 
-#: CORE-008: the levels that compare a result with something outside the model that produced it. Every other level
-#: a check may establish is verification: evidence that the declared model was solved correctly.
+#: CORE-008: the levels that compare a result with something outside the model that produced it.
+#:
+#: R-39 (re-audit 2026-09-16, I-12 part A): CROSS_SOLVER_VALIDATED is NOT one of them, and used to be.
+#: Agreement between two solvers of ONE declared model compares two implementations, not the model with
+#: anything outside itself -- and the classification contradicted three statements this tree already makes
+#: about itself. `evidence_basis` below defines these levels as the ones that "compare it with something
+#: outside itself". `scientific/consensus.py` says two routes may "realize the same mathematical
+#: formulation" and still count as independent, because only shared ARITHMETIC is excluded:
+#: `SOLVER_INDEPENDENCE_DIMENSIONS` leaves the PROBLEM DECLARATION out, and that module's own docstring says
+#: a declaration error "is invisible to every route that reads it". Each pinned pair of routes shares its
+#: declaration, and the consensus record itself lists that declaration as a SHARED dependency; each pair
+#: solves the same declared relations, which the declaring layer states are SELF_CONSISTENT and neither
+#: benchmark- nor experimentally validated. So a result whose only other levels were dimensional validity
+#: and numerical convergence moved from VERIFICATION_ONLY to VALIDATED the moment a cross-solver check was
+#: attached -- and a model declared with a wrong parameter value read VALIDATED, because both solvers agree
+#: about the wrong model. The level itself is unchanged and still says exactly what it said; what changed is
+#: the KIND of evidence it is counted as. The instances are named in
+#: `docs/audits/CORE_REAUDIT_2026-09-16.md`, which is where this core is allowed to know about them.
 VALIDATION_LEVELS = frozenset({
     ValidationLevel.BENCHMARK_VALIDATED,
-    ValidationLevel.CROSS_SOLVER_VALIDATED,
     ValidationLevel.EXPERIMENTALLY_VALIDATED,
 })
+
+#: The other kind: levels that say the DECLARED MODEL was solved correctly. Named rather than left as
+#: "everything else" (R-39) because that is how a level ended up in the wrong group -- one kind was a set and
+#: the other was the remainder, so a member added later was silently verification and nobody had to decide.
+VERIFICATION_LEVELS = frozenset({
+    ValidationLevel.DIMENSIONALLY_VALID,
+    ValidationLevel.NUMERICALLY_CONVERGED,
+    ValidationLevel.ANALYTICALLY_VERIFIED,
+    ValidationLevel.CROSS_SOLVER_VALIDATED,
+})
+
+
+def _require_every_level_is_classified() -> None:
+    """Refuse to import while any level is in both kinds, in neither, or both at once (R-39).
+
+    The same discipline ``mcp/server.py::_audit_tables`` applies to the verdict tables, for the same reason:
+    a member nobody classified reaches a reader as one kind by default, and the default was wrong once
+    already. UNVERIFIED is the sentinel and is in neither set -- ``ValidationCheck`` refuses it, so no check
+    can establish it and no attained-level computation can see it.
+    """
+    overlap = VALIDATION_LEVELS & VERIFICATION_LEVELS
+    if overlap:
+        raise ScientificValidationError(
+            f"levels {sorted(level.value for level in overlap)} are both validation and verification"
+        )
+    classified = VALIDATION_LEVELS | VERIFICATION_LEVELS
+    if ValidationLevel.UNVERIFIED in classified:
+        raise ScientificValidationError(
+            "UNVERIFIED is the absence of verification and is neither kind of evidence"
+        )
+    unclassified = {
+        level for level in ValidationLevel if level is not ValidationLevel.UNVERIFIED
+    } - classified
+    if unclassified:
+        raise ScientificValidationError(
+            f"levels {sorted(level.value for level in unclassified)} are neither validation nor "
+            f"verification: a level nobody classified reaches a reader as one of them by default, and "
+            f"`evidence_basis` would say which kind of evidence a report holds without anybody having "
+            f"decided"
+        )
+
+
+_require_every_level_is_classified()
 
 
 @dataclass(frozen=True)
@@ -939,10 +997,14 @@ class ValidationReport:
     def evidence_basis(self) -> str:
         """``VALIDATED``, ``VERIFICATION_ONLY`` or ``NONE``: what kind of evidence the attained levels are (CORE-008).
 
-        Dimensional validity, numerical convergence and analytic verification say the declared model was solved
-        correctly. Benchmark, cross-solver and experimental validation compare it with something outside itself. A
-        verdict resting on the first kind alone is a statement about the solution, not about the world, and this says
-        which kind a report holds so no reader has to infer it from level names.
+        Dimensional validity, numerical convergence, analytic verification and agreement between two solvers of
+        the same declared model say the declared model was solved correctly. Benchmark and experimental
+        validation compare it with something outside itself. A verdict resting on the first kind alone is a
+        statement about the solution, not about the world, and this says which kind a report holds so no reader
+        has to infer it from level names.
+
+        R-39 (re-audit 2026-09-16): cross-solver agreement moved from the second group to the first. See
+        :data:`VALIDATION_LEVELS` for why, in this tree's own words.
         """
         attained = self.attained_levels
         if attained & VALIDATION_LEVELS:

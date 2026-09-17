@@ -199,8 +199,13 @@ for _verdict in (CredibilityVerdict.INSUFFICIENT_EVIDENCE, CredibilityVerdict.NO
 #: What each evidence basis IS, in one sentence, for the block and for describe_capabilities.
 _BASIS_MEANS: Mapping[str, str] = {
     "VALIDATED": "At least one attained level compares the model with something outside itself.",
-    "VERIFICATION_ONLY": "Every attained level says the declared model was solved correctly. "
-                         "Nothing here compares it with the world.",
+    # R-39 (I-12 part A): agreement between two solvers is named here explicitly, because it is the level
+    # most likely to be read as validation -- it used to be counted as one -- and because it is the only
+    # level in this group that involves a second program rather than a second look at the same one.
+    "VERIFICATION_ONLY": "Every attained level says the declared model was solved correctly. That includes "
+                         "agreement between two solvers of the same declared model, which compares two "
+                         "implementations and not the model with the world. Nothing here compares it with "
+                         "the world.",
     "NONE": "No check both passed and established an evidentiary level.",
 }
 

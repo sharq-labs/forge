@@ -18,6 +18,10 @@ adding a judgement.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH24_THRESHOLD_PROTOCOL.json`. No threshold: a
 classification, and an import-time completeness check over it.
+
+The six reproductions that reproduced were committed as strict xfails in `23609299`, before any of part A
+was written, and each was confirmed there to fail on its own assertion. The markers came off in the
+implementing commit. The seventh held already and was unmarked at preregistration.
 """
 
 from __future__ import annotations
@@ -66,13 +70,11 @@ def _symbol(name):
 # =====================================================================
 # R-39: the classification
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-12 part A not implemented yet (batch 24 preregistration)")
 def test_r39_cross_solver_agreement_is_not_a_validation_level():
     assert ValidationLevel.CROSS_SOLVER_VALIDATED not in VALIDATION_LEVELS
     assert ValidationLevel.CROSS_SOLVER_VALIDATED in _symbol("VERIFICATION_LEVELS")
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part A not implemented yet (batch 24 preregistration)")
 def test_r39_both_kinds_are_named_and_every_level_is_in_exactly_one():
     """One kind was a set and the other was "the rest", so a level added later was silently verification."""
     verification = _symbol("VERIFICATION_LEVELS")
@@ -84,7 +86,6 @@ def test_r39_both_kinds_are_named_and_every_level_is_in_exactly_one():
     assert ValidationLevel.UNVERIFIED not in classified
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part A not implemented yet (batch 24 preregistration)")
 def test_r39_a_report_whose_validating_evidence_is_agreement_between_solvers_is_verification_only():
     """The audited reproduction, at the core: the same report with and without the consensus check."""
     without = ValidationReport(checks=(CONVERGED,))
@@ -95,7 +96,6 @@ def test_r39_a_report_whose_validating_evidence_is_agreement_between_solvers_is_
     assert ValidationLevel.CROSS_SOLVER_VALIDATED in with_consensus.attained_levels
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part A not implemented yet (batch 24 preregistration)")
 def test_r39_the_mcp_side_derives_the_same_word_from_the_same_rule():
     from engcore.mcp.evidence import evidence_basis_of
 
@@ -104,7 +104,6 @@ def test_r39_the_mcp_side_derives_the_same_word_from_the_same_rule():
                               ValidationLevel.NUMERICALLY_CONVERGED}) == "VERIFICATION_ONLY"
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part A not implemented yet (batch 24 preregistration)")
 def test_r39_demanding_validation_is_no_longer_met_by_agreement_between_two_solvers():
     """`required_evidence_basis='VALIDATED'` meant something and was being met by something else."""
     from engcore.mcp.evidence import EVIDENCE_BASIS_ORDER, evidence_basis_of
@@ -113,7 +112,6 @@ def test_r39_demanding_validation_is_no_longer_met_by_agreement_between_two_solv
     assert EVIDENCE_BASIS_ORDER[evidence_basis_of(attained)] < EVIDENCE_BASIS_ORDER["VALIDATED"]
 
 
-@pytest.mark.xfail(strict=True, reason="I-12 part A not implemented yet (batch 24 preregistration)")
 def test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers():
     from engcore.mcp.server import _BASIS_MEANS
 
