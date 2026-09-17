@@ -3017,3 +3017,54 @@ record either way. `BATCH48_PINNED_MUTATIONS.log`: **NONE** — no pinned mutati
 is itself a fact about a rule family that had no caller.
 
 **Open decisions.** None.
+
+### Batch 49 — I-27 part C (the last part)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-27 | **DONE** (parts A–C) | `16c0e75e` + `70c68653` (A; R-60, R-61, R-64), `888cdcfb` + `8ff34a5c` (B; R-58's record half), `5cbbc997` (C preregistration + 9 strict xfails), this commit | Production writes `Uncertainty.unknown` with a stated reason on everything it reports, so what crosses is an UNKNOWN carrying that reason — the producing side's silence is now **visible at the crossing**, and nothing here quantifies it. The battery coupling builds no `QuantityTransfer` records at all, so it has nothing to attach a crossing to; `mcp/evidence.py` does not render them |
+
+**R-58 is FIXED, and its guard family stopped being a library.** The ledger has called R-58 LIBRARY_ONLY
+since batch 19 while the audit called the problem reached — because the production coupling passed bare point
+values and `engcore.uq.cross_domain` had **no caller in `src/` at all**.
+
+| Claim | Status | How |
+|---|---|---|
+| a crossing with no uncertainty | **FIXED** | New `CrossedQuantity`, built by `from_result`, carries the producing result's own `Uncertainty` entry for the quantity — propagated through part B's bound `UncertaintyTransfer`, so the interval, attribution and completeness rules all apply to it. |
+| a crossing with no applicability verdict | **FIXED** | It carries one verdict per model the producing result declares: the `ValidityStatus` where it was assessed, and `not_assessed` where the record says, with a reason, that nobody asked. A verdict set that names no model at all is refused. |
+| a crossing with no validation state | **FIXED** | It carries the producing report's own status and the result's convergence state, so a number out of an unvalidated solve is no longer indistinguishable from a validated one. |
+| everything read from a caller | **FIXED** | Nothing is taken as an argument: `from_result` reads all of it off the result, and refuses a result the transfer does not name by asking **part A's own** `check_against_result`. A second place to state a verdict is a second place for it to disagree with the record. |
+| an absent entry read as no uncertainty | **FIXED** | A result carrying no entry for the quantity is refused, because `Uncertainty.unknown` exists precisely so that "nobody evaluated it" is a value. A `configured_input` crossing is the mirror case: the record must **not** produce the quantity, and the crossing carries an UNKNOWN whose notes name the configuration as where an uncertainty for it would come from. |
+| no caller in production | **FIXED** | `CoupledRun` gained a trailing `crossings` field and `run_fixed_point_coupling` fills it with one record per transfer. A run that records crossings must record **exactly one per transfer**, keyed by the transfer's own key — a partial set reads as the whole of what crossed. |
+
+**Amendment 1.** The first implementation bound the two transfer builders' sum to a name, which left the
+certification-pinned anchor **G20a** matching nothing (`tests/test_mutation_harness` reported "matched 0
+times"). Per the protocol the **code was restructured, not the anchor file**: the pinned keyword expression
+stays byte-identical in the provenance and the crossings read the same pair through a private
+`_recorded_transfers`. Harness 6/6.
+
+**Amendment 2.** Two in-tree assertions measure exactly what this part changes, and both are amended in place
+with the reason: the published-contracts guard now names five unpublished core utilities (`require_schema_any`
+is the fifth, because the run reads either schema version), and the guard-reach ledger test's LIBRARY_ONLY
+list drops R-58 — the same amendment R-21 needed in batch 25, and why that test names rows instead of
+counting them.
+
+**Compatibility.** Additive only: `CrossedQuantity` is module-public in `engcore.uq.cross_domain` and in **no**
+package export list, so the frozen V1 symbol count stays 194; `CoupledRun.crossings` is a trailing field with
+a default of `()`; `electrothermal_coupled_run/2` is written **only** when a run records crossings, and a `/1`
+payload carrying them is refused on read. The loop's arithmetic, outcome and final values are untouched: this
+part records what crossed, it does not change what crossed.
+
+**Committed evidence.** Nothing to regenerate — no committed JSON carries an `electrothermal_coupled_run`
+payload, which the protocol's verification plan listed and the tree answers with an empty set.
+
+**Verification.** The batch's own file 9 passed. FAST tier **7095 passed, 5 skipped, 19 failed** — exactly the
+by-design set. Expensive tier **528 passed, 18 failed, 14 errors** — the recorded baseline.
+`tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py` untouched. Guard
+reach ledger clean over 29 guards, with **R-58 REACHED/FIXED** — leaving R-43 as the only LIBRARY_ONLY row,
+which is I-25's, the next improvement in the order.
+
+**Guard mutations.** `BATCH49_MUTATIONS.log`: **6 of 6 KILLED**, control green, none repointed.
+`BATCH49_PINNED_MUTATIONS.log`: **1 of 1 KILLED** (G34n), control green.
+
+**Open decisions.** None.

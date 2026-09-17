@@ -7,6 +7,8 @@ The coupled run's provenance carries `QuantityTransfer` records -- what crossed,
 instant -- and nothing beside them. No uncertainty, no validity verdict, no validation state, and
 `engcore.uq.cross_domain` has no caller in `src/` at all, which is why the guard reach ledger has been
 calling R-58 LIBRARY_ONLY while the audit calls the problem reached.
+
+Recorded as strict xfails in commit 5cbbc997, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -86,20 +88,17 @@ def _crossed(transfer=None, result=None):
 # ---------------------------------------------------------------------------
 # a_crossing_carries_what_the_producing_side_said_about_its_value
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58 finding 71 as audited: the record that would carry a crossing's uncertainty, validity and validation state does not exist, and nothing in src builds one")
 def test_r58_a_crossing_carries_the_uncertainty_the_producer_declared():
     crossed = _crossed()
     assert crossed.uncertainty_transfer.uncertainty.kind is UncertaintyKind.UNKNOWN
     assert "no quantification is performed here" in crossed.uncertainty_transfer.uncertainty.notes
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: nor the producing side's applicability verdict, which the receiving domain has no way to read off a bare number")
 def test_r58_a_crossing_carries_the_sources_validity_verdict():
     crossed = _crossed()
     assert dict(crossed.source_validity) == {MODEL[0]: "not_assessed"}
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: nor the producing side's validation state, so a number from an unvalidated solve is indistinguishable from a validated one")
 def test_r58_a_crossing_carries_the_sources_validation_and_convergence_state():
     crossed = _crossed()
     assert crossed.source_validation_status == "pass"
@@ -109,14 +108,12 @@ def test_r58_a_crossing_carries_the_sources_validation_and_convergence_state():
 # ---------------------------------------------------------------------------
 # a_crossing_is_bound_to_the_record_it_came_from
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58: with no record there is no binding either, so a crossing could carry any result's validity beside this crossing's value")
 def test_r58_a_crossing_cannot_be_built_against_another_record():
     other = _result(result_id="some-other-result")
     with pytest.raises(InvalidScientificProblem, match="not the record|names"):
         _crossed(result=other)
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: and a verdict set that omits a model the crossing read would look like a complete answer")
 def test_r58_a_crossing_names_every_model_the_source_declares():
     crossing = _symbol("CrossedQuantity")
     if crossing is None:
@@ -134,18 +131,22 @@ def test_r58_a_crossing_names_every_model_the_source_declares():
 # ---------------------------------------------------------------------------
 # an_absent_uncertainty_entry_is_not_no_uncertainty
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58: an absent uncertainty entry read as no uncertainty is the shape of this whole problem, and nothing refused it")
 def test_r58_a_result_that_says_nothing_about_its_uncertainty_is_refused():
     silent = _result(uncertainty={})
     with pytest.raises(InvalidScientificProblem, match="uncertainty"):
         _crossed(result=silent)
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: the production ambient crossing takes its value from the system configuration, and nothing said so or said what its uncertainty was")
 def test_r58_a_configured_input_crossing_carries_an_undeclared_uncertainty():
+    # The record does not PRODUCE the quantity -- that is what a configured input of the problem it
+    # answers means, and part A's own check_against_result requires it.
+    imposed_on = _result(
+        values={"heat_flow": Quantity(1.5, "watt")},
+        uncertainty={"heat_flow": Uncertainty.unknown("no quantification is performed here")},
+    )
     crossed = _crossed(transfer=_transfer(
         value_origin=QuantityTransfer.VALUE_ORIGIN_CONFIGURED_INPUT,
-    ), result=_result(uncertainty={}))
+    ), result=imposed_on)
     assert crossed.uncertainty_transfer.uncertainty.kind is UncertaintyKind.UNKNOWN
     assert "configur" in crossed.uncertainty_transfer.uncertainty.notes
 
@@ -153,7 +154,6 @@ def test_r58_a_configured_input_crossing_carries_an_undeclared_uncertainty():
 # ---------------------------------------------------------------------------
 # the_production_coupling_records_its_crossings
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-58 finding 71's production half as audited: 'no src module calls it, so every production crossing still carries a bare value'")
 def test_r58_the_production_coupling_records_a_crossing_per_transfer():
     et = importlib.import_module("engcore.systems.electrothermal.coupled")
     vertical = importlib.import_module("tests.test_electrothermal_vertical")
@@ -169,7 +169,6 @@ def test_r58_the_production_coupling_records_a_crossing_per_transfer():
     assert et is not None
 
 
-@pytest.mark.xfail(strict=True, reason="R-58: a run carrying a partial set of crossings would look complete, and there was no set to be partial")
 def test_r58_a_run_cannot_carry_a_partial_set_of_crossings():
     vertical = importlib.import_module("tests.test_electrothermal_vertical")
     run, _problems, _plan = vertical.execute(vertical.NOMINAL, run_id="r58-part-c-partial")

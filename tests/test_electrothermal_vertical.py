@@ -1361,11 +1361,17 @@ def test_i2_the_new_module_uses_published_contracts_only():
     ]
     assert scientific, "the module does import core contracts"
     unpublished = sorted(set(n for n in scientific if n not in published))
-    # Exactly four, and each is a serialization or units utility the sibling
+    # Exactly five, and each is a serialization or units utility the sibling
     # domain packs already use. Everything else the pack imports from core is
     # in `engcore.scientific.__all__` — the published surface.
+    #
+    # `require_schema_any` is the fifth (R-58, I-27 part C): the coupled run
+    # gained `electrothermal_coupled_run/2`, written only when the run records
+    # crossings, and reading either version is what an any-of reader is for. It
+    # is the same utility the core's own records read their own versions with.
     assert unpublished == [
-        "registry", "require_schema", "require_unit", "schema_string"
+        "registry", "require_schema", "require_schema_any", "require_unit",
+        "schema_string",
     ], unpublished
 
 

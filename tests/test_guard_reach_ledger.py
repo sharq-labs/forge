@@ -12,7 +12,7 @@ central finding: the guards were not wrong, they were written where production d
 * `UncertaintySource` has no producer, so `source_kind` is UNSPECIFIED on everything production makes
   (R-43, open -- I-25).
 * The production electrothermal coupling passes bare point values and `UncertaintyTransfer` has no caller
-  (R-58, open -- I-27).
+  (R-58 -- CLOSED by I-27 part C in batch 49: the loop records one `CrossedQuantity` per crossing).
 
 `certification/guard_reach_ledger.json` declares, per guard family, whether a production entry point reaches
 it; `tools/certification/guard_reach.py` refuses a ledger that is not self-consistent and implements the four
@@ -82,10 +82,15 @@ def test_i16_the_three_it_did_not_fix_say_so_and_name_their_improvement():
     # TrustedConsensusGate, so the gate stopped being a rule with no caller and the row moved to REACHED.
     # That is the ledger working -- a fix that reaches production and leaves the row saying LIBRARY_ONLY is
     # a fix nobody can check -- and it is why this test names the rows rather than counting them.
-    for problem in ("R-43", "R-58"):
+    # R-58 left this list in batch 49, the same way and for the same reason: I-27 part C made the
+    # production electrothermal loop record one CrossedQuantity per crossing, carrying the producing
+    # result's own uncertainty, applicability verdicts and validation state, so the rule family stopped
+    # being a library and the row moved to REACHED.
+    for problem in ("R-43",):
         assert rows[problem]["status"] == "LIBRARY_ONLY", rows[problem]
         assert rows[problem]["closed_by"].startswith("I-"), rows[problem]
-    assert rows["R-21"]["status"] == "REACHED", rows["R-21"]
+    for problem in ("R-21", "R-58"):
+        assert rows[problem]["status"] == "REACHED", rows[problem]
 
 
 def test_i16_a_fixed_row_that_is_only_a_library_guard_is_refused():

@@ -50,7 +50,11 @@
   }
  },
  "thresholds": {
-  "none_introduced": {"value": null, "class": "A", "why": "this part introduces no threshold: every rule is a structural requirement about what a record carries and where it was read from. The only numeric comparison is the one part A already declared (BUDGET_TOLERANCE), reused through `check_against_result`."}
+  "none_introduced": {
+   "value": null,
+   "class": "A",
+   "why": "this part introduces no threshold: every rule is a structural requirement about what a record carries and where it was read from. The only numeric comparison is the one part A already declared (BUDGET_TOLERANCE), reused through `check_against_result`."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -84,5 +88,18 @@
   "regeneration of every committed electrothermal record whose bytes move, named in the audit document",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": "The implementation reads the two transfer builders through a private helper instead of binding their sum to a name, to keep a certification-pinned mutation anchor matching.",
+   "numbers_that_forced_it": "tests/test_mutation_harness reported 'G20a: matched 0 times' after the first implementation, which bound `transfers = ambient_transfers(...) + converted_transfers(...)` and passed the name into the provenance. G20a pins that keyword expression byte-for-byte, because it is the line that once dropped every converting crossing. Per the per-batch protocol the code is restructured and the anchor file is never edited before the I-30 round: the expression stays exactly as it was and the crossings read the same pair through `_recorded_transfers`. The anchor matches once again and the harness is 6/6.",
+   "threshold_moved": "none: this batch introduces no threshold."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": "tests/test_electrothermal_vertical.py's published-contracts guard now names five unpublished core utilities instead of four, and tests/test_guard_reach_ledger.py's LIBRARY_ONLY list drops R-58.",
+   "numbers_that_forced_it": "Two in-tree assertions measure the state this part changes. The first lists the engcore.scientific names the pack imports that are not in the published surface; `require_schema_any` is the fifth, and it is there because the coupled run gained electrothermal_coupled_run/2 and has to read either version. The second asserts which rows are still LIBRARY_ONLY, and R-58 is not one of them any more -- which is the same amendment R-21 needed in batch 25, and the test names rows rather than counting them for exactly this reason. Both amended in place with the reason.",
+   "threshold_moved": "none."
+  }
+ ]
 }
