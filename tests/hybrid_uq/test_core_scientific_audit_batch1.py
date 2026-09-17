@@ -184,7 +184,11 @@ def test_a_record_that_understates_its_chi_square_is_refused_on_read():
 
     _local, payload = _diagnostics_payload(_misfit(sigma=0.165), multistart=MultistartPolicy())
     payload["chi_square_minimum"] = 1.0  # the misfit gone, the reason still listed
-    with pytest.raises(HybridUQError, match="downgrades"):
+    # I-04 (batch 11) added a second goodness-of-fit statistic, so this edit is now caught one check earlier
+    # and more specifically: every leverage weight is a hat-matrix diagonal in [0, 1], so the recorded
+    # leverage-weighted chi-square cannot exceed the chi-square minimum it weighs a subset of. The assertion
+    # is unchanged -- the record is refused -- and `match` names the check that refuses it.
+    with pytest.raises(HybridUQError, match="exceeds the chi-square minimum"):
         RouteDiagnostics.from_dict(payload)
 
 

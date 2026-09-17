@@ -111,19 +111,130 @@ def _thresholds() -> dict[str, float]:
     }
 
 
-def _goodness_of_fit(chi_square_minimum: float, observations: int, parameters: int) -> tuple[set, set]:
-    """``(refusals, downgrades)`` the declared noise implies for a chi-square minimum (CORE-001). One rule, two callers.
+#: R-20 (re-audit 2026-09-16). With the variance-ratio refusal unconditional, a true variance ratio of
+#: MISFIT_REFUSE_VARIANCE_RATIO is missed with probability P(chi2_dof <= min(dof, chi2.ppf(1 - alpha/2, dof) / 4)):
+#: 0.683 at dof 1, 0.632 at dof 2, 0.608 at dof 3, 0.554 at dof 4, 0.477 at dof 5, 0.210 at dof 10. At or below this
+#: many residual degrees of freedom the gate is more likely to miss a factor-4 misfit than to catch it, and the record
+#: says so with GOODNESS_OF_FIT_UNDERPOWERED instead of reading "tested and adequate".
+UNDERPOWERED_RESIDUAL_DOF = 2
+
+
+def _leverage_weights(weighted_jacobian: "np.ndarray") -> tuple["np.ndarray", "np.ndarray"]:
+    """``(hat_diagonal, orthonormal_basis)`` of a whitened Jacobian's column space (R-03).
+
+    ``H = A (A^T A)^-1 A^T = U U^T`` for any orthonormal basis U of the column space of A, so observation i's
+    leverage -- its share of the Fisher information that builds the reported covariance -- is
+    ``H_ii = sum_j U[i, j]^2``. The weights lie in [0, 1] and sum to the rank. The basis is returned with them
+    because the statistic's null cumulants are computed from it without forming the n x n matrix.
+    """
+    A = np.asarray(weighted_jacobian, dtype=np.float64)
+    u, singular, _ = np.linalg.svd(A, full_matrices=False)
+    if singular.size == 0 or not (singular[0] > 0.0):
+        return np.zeros(A.shape[0]), np.zeros((A.shape[0], 0))
+    keep = singular > singular[0] * max(A.shape) * np.finfo(float).eps
+    basis = u[:, keep]
+    return np.clip(np.einsum("ij,ij->i", basis, basis), 0.0, 1.0), basis
+
+
+def _leverage_null_cumulants(weights: "np.ndarray", basis: "np.ndarray") -> tuple[float, float, float]:
+    """``(c1, c2, c3)`` with ``c_k = trace(((I - H) D)^k)``, ``D = diag(weights)`` and ``H = basis basis^T``.
+
+    Under the route's own premise -- the declared sigma is right, so the standardized errors are N(0, I) --
+    the fitted residuals satisfy ``r = (I - H) e``, so ``T = sum_i weights_i r_i^2`` is the quadratic form
+    ``e^T (I - H) D (I - H) e``. Its mean is exactly c1, its variance 2 c2 and its third central moment 8 c3.
+
+    Written out in closed form, so nothing of size n x n is built: with ``h = diag(H)``, ``G = U^T D U`` and
+    ``G2 = U^T D^2 U`` (both rank x rank),
+
+        c1 = sum d     -     sum h d
+        c2 = sum d^2   - 2   sum h d^2   +   tr(G^2)
+        c3 = sum d^3   - 3   sum h d^3   + 3 tr(G G2) - tr(G^3)
+
+    At ``d = 1`` for every observation all three are ``n - rank``, and the three-moment match below then
+    reduces to the pooled chi-square test exactly. That identity is what makes this null checkable.
+    """
+    d = np.asarray(weights, dtype=np.float64)
+    U = np.asarray(basis, dtype=np.float64)
+    h = np.einsum("ij,ij->i", U, U) if U.size else np.zeros(d.shape)
+    G = U.T @ (d[:, None] * U) if U.size else np.zeros((0, 0))
+    G2 = U.T @ ((d ** 2)[:, None] * U) if U.size else np.zeros((0, 0))
+    c1 = float(np.sum(d) - np.sum(h * d))
+    c2 = float(np.sum(d ** 2) - 2.0 * np.sum(h * d ** 2) + np.trace(G @ G))
+    c3 = float(np.sum(d ** 3) - 3.0 * np.sum(h * d ** 3) + 3.0 * np.trace(G @ G2) - np.trace(G @ G @ G))
+    return c1, c2, c3
+
+
+def _three_moment_p_value(statistic: float, c1: float, c2: float, c3: float) -> float:
+    """Pearson's three-moment match of a quadratic form to a shifted, scaled chi-square; NaN when undefined.
+
+    ``b = c3 / c2``, ``dof = c2^3 / c3^2`` and ``a = c1 - b dof`` reproduce the form's mean, variance and third
+    central moment exactly, and the p-value is ``chi2.sf((T - a) / b, dof)``. At equal weights b = 1,
+    dof = n - rank and a = 0, so this IS the pooled test.
+    """
+    if not (float(c2) > 0.0 and float(c3) > 0.0):
+        return math.nan
+    b = float(c3) / float(c2)
+    dof = float(c2) ** 3 / float(c3) ** 2
+    a = float(c1) - b * dof
+    return float(chi2.sf((float(statistic) - a) / b, dof))
+
+
+def _one_fit_test(statistic: float, null_mean: float, p_value: float) -> int:
+    """How badly one CORE-001 test fails: 0 no reason, 1 a downgrade, 2 a refusal.
+
+    The variance ratio refuses whatever the p-value says (R-20). Batch 1 declared the ratio of 4 because above
+    it "the residual scatter exceeds twice the declared sigma, so no rescaling of the covariance makes its sds
+    right to a factor 2" -- a statement about the SIZE of the error in the reported uncertainty, which does not
+    become false when the sample is too small for the p-value to notice it.
+    """
+    if not (float(null_mean) > 0.0) or not (float(statistic) >= 0.0):
+        return 0
+    if float(statistic) / float(null_mean) > MISFIT_REFUSE_VARIANCE_RATIO:
+        return 2
+    if math.isnan(float(p_value)) or float(p_value) >= GOODNESS_OF_FIT_ALPHA / 2.0:
+        return 0
+    return 1
+
+
+def _goodness_of_fit(chi_square_minimum: float, observations: int, parameters: int,
+                     leverage_statistic: float = math.nan,
+                     leverage_cumulants: Sequence[float] = ()) -> tuple[set, set]:
+    """``(refusals, downgrades)`` the declared noise implies for a fit (CORE-001). One rule, four callers.
+
+    Two tests, each run at half the declared alpha so the family-wise false-refusal rate stays the level batch
+    1 declared, and the WORSE result stands:
+
+    * the POOLED test, on chi2_min against chi-square on n - p degrees of freedom;
+    * the LEVERAGE test (R-03), on ``T = sum_i H_ii r_i^2`` against the three-moment null of its cumulants.
+      It weighs each residual by how much the reported covariance depends on it. An observation with a large
+      declared sigma adds almost nothing to ``A^T A``, so it does not move the covariance, but it does add a
+      degree of freedom to the pooled test: padding a dataset with such readings diluted the pooled gate and
+      left the covariance where it was. A REFUSED misfit at chi2/dof 9 read SUPPORTED with 60 of them.
+
+    A route that carries no leverage statistic -- a record written before this rule, or a caller with no
+    Jacobian -- is held to the pooled test alone, at the same alpha / 2.
+
+    At one or two residual degrees of freedom the gate is more likely to miss a factor-4 misfit than to catch
+    it, so the claim is capped with GOODNESS_OF_FIT_UNDERPOWERED (R-20): the declared noise model was not
+    tested and found adequate, it was essentially untestable.
 
     Under-dispersion is not gated: a declared sigma larger than the residuals makes the reported uncertainty
     conservative, and conservatism is not false confidence.
     """
     dof = int(observations) - int(parameters)
     chi = float(chi_square_minimum)
-    if dof < 1 or not (chi >= 0.0) or float(chi2.sf(chi, dof)) >= GOODNESS_OF_FIT_ALPHA:
-        return set(), set()
-    if chi / dof > MISFIT_REFUSE_VARIANCE_RATIO:
-        return {RouteReason.MODEL_MISFIT_BEYOND_DECLARED_NOISE}, set()
-    return set(), {RouteReason.RESIDUALS_EXCEED_DECLARED_NOISE}
+    verdict = 0
+    if dof >= 1 and chi >= 0.0:
+        verdict = _one_fit_test(chi, float(dof), float(chi2.sf(chi, dof)))
+    cumulants = tuple(float(c) for c in leverage_cumulants)
+    if len(cumulants) == 3:
+        verdict = max(verdict, _one_fit_test(float(leverage_statistic), cumulants[0],
+                                             _three_moment_p_value(leverage_statistic, *cumulants)))
+    refusals = {RouteReason.MODEL_MISFIT_BEYOND_DECLARED_NOISE} if verdict == 2 else set()
+    downgrades = {RouteReason.RESIDUALS_EXCEED_DECLARED_NOISE} if verdict == 1 else set()
+    if 1 <= dof <= UNDERPOWERED_RESIDUAL_DOF:
+        downgrades.add(RouteReason.GOODNESS_OF_FIT_UNDERPOWERED)
+    return refusals, downgrades
 
 
 def _tail_verdict(minimum_rise_ratio: float) -> tuple[set, set]:
@@ -362,6 +473,12 @@ class RouteDiagnostics:
     minimum_tail_rise_ratio: float = math.nan
     #: CORE-003: tail probes inside the declared bounds that the forward evaluator refused.
     tail_probes_skipped: int = 0
+    #: CORE-001 / R-03: the leverage-weighted residual statistic sum_i H_ii r_i^2 the goodness of fit was also
+    #: judged on. NaN when no leverage test ran (an early refusal, or a record written before the rule).
+    leverage_weighted_chi_square: float = math.nan
+    #: CORE-001 / R-03: (c1, c2, c3) of that statistic's exact null, which the p-value is derived from on read.
+    #: Empty when no leverage test ran.
+    leverage_null_cumulants: tuple[float, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "claim", RouteClaim(self.claim))
@@ -380,6 +497,9 @@ class RouteDiagnostics:
         object.__setattr__(self, "near_bound", tuple(self.near_bound))
         # Frozen at construction (audit HUQ-13): a validated record's nested mappings cannot be edited in place.
         object.__setattr__(self, "multistart", tuple(freeze(dict(m)) for m in self.multistart))
+        object.__setattr__(self, "leverage_null_cumulants", tuple(float(c) for c in self.leverage_null_cumulants))
+        if self.leverage_null_cumulants and len(self.leverage_null_cumulants) != 3:
+            raise HybridUQError("a leverage null is (c1, c2, c3) or absent")
         object.__setattr__(self, "thresholds", freeze({str(k): float(v) for k, v in dict(self.thresholds).items()}))
         _require_reasons_follow_measurements(self)
 
@@ -388,7 +508,7 @@ class RouteDiagnostics:
         return self.refusals + self.downgrades
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "schema": ROUTE_DIAGNOSTICS_SCHEMA, "parameters": int(self.parameters), "observations": int(self.observations),
             "jacobian_rank": int(self.jacobian_rank), "jacobian_condition": encode_float(self.jacobian_condition),
             "raw_jacobian_condition": encode_float(self.raw_jacobian_condition),
@@ -405,6 +525,12 @@ class RouteDiagnostics:
             "minimum_tail_rise_ratio": encode_float(self.minimum_tail_rise_ratio),
             "tail_probes_skipped": int(self.tail_probes_skipped),
         }
+        if math.isfinite(self.leverage_weighted_chi_square) or self.leverage_null_cumulants:
+            # written only when a leverage test ran: a record that carries the key and not the measurement
+            # would say the rule was applied where it was not
+            payload["leverage_weighted_chi_square"] = encode_float(self.leverage_weighted_chi_square)
+            payload["leverage_null_cumulants"] = encode_vector(self.leverage_null_cumulants)
+        return payload
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "RouteDiagnostics":
@@ -416,6 +542,11 @@ class RouteDiagnostics:
             "minimum_tail_rise_ratio": decode_float(payload["minimum_tail_rise_ratio"]),
             "tail_probes_skipped": int(payload["tail_probes_skipped"]),
         }
+        # absent for any record written before the leverage test existed: such a record is held to the pooled
+        # test alone, which is what its own numbers support
+        if "leverage_weighted_chi_square" in payload:
+            added["leverage_weighted_chi_square"] = decode_float(payload["leverage_weighted_chi_square"])
+            added["leverage_null_cumulants"] = decode_vector(payload.get("leverage_null_cumulants", []))
         return cls(**added,
             parameters=int(payload["parameters"]), observations=int(payload["observations"]),
             jacobian_rank=int(payload["jacobian_rank"]), jacobian_condition=decode_float(payload["jacobian_condition"]),
@@ -486,7 +617,9 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
                 or int(d.nonlinearity_probes_skipped) != 0 or policy_keys:
             problems.append(f"{reason.value} is recorded before any step, probe or multistart, yet the record carries them")
         if not all(math.isnan(float(v)) for v in (d.minimum_bound_distance_sd, d.nonlinearity_index, d.minimum_chi_square_rise,
-                                                 d.chi_square_minimum, d.minimum_tail_rise_ratio)) or int(d.tail_probes_skipped) != 0:
+                                                 d.chi_square_minimum, d.minimum_tail_rise_ratio,
+                                                 d.leverage_weighted_chi_square)) \
+                or int(d.tail_probes_skipped) != 0 or tuple(d.leverage_null_cumulants):
             problems.append(f"{reason.value} measures no bound distance, nonlinearity, chi-square rise, goodness of fit or tail")
         rank, condition = int(d.jacobian_rank), float(d.jacobian_condition)
         if reason is RouteReason.NO_RESIDUAL_DEGREES_OF_FREEDOM and not p >= n:
@@ -552,7 +685,26 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
             problems.append("a measured route records the chi-square minimum its goodness of fit is judged on; this record "
                             f"carries {chi_minimum!r} (a {ROUTE_DIAGNOSTICS_SCHEMA_V1} record never assessed it)")
         else:
-            found_refusals, found_downgrades = _goodness_of_fit(chi_minimum, n, p)
+            statistic, cumulants = float(d.leverage_weighted_chi_square), tuple(d.leverage_null_cumulants)
+            if bool(cumulants) != math.isfinite(statistic):
+                problems.append("a leverage-weighted chi-square is recorded with the null it was judged against, or "
+                                "neither is")
+            elif cumulants and not (statistic >= 0.0 and all(math.isfinite(c) and c >= 0.0 for c in cumulants)):
+                # a null whose cumulants are ZERO is legitimate and is recorded: it happens when one observation
+                # holds all the leverage, so its fitted residual has variance 1 - h = 0 and there is no test to
+                # run. `_goodness_of_fit` then uses the pooled test alone, which is what the numbers support.
+                problems.append(f"a leverage test needs a non-negative statistic and a non-negative null; this "
+                                f"record carries {statistic!r} against {cumulants!r}")
+            elif cumulants and statistic > chi_minimum * (1.0 + 1.0e-9) + 1.0e-9:
+                # every leverage weight is a hat-matrix diagonal, so 0 <= h_i <= 1 and T = sum h_i r_i^2 can never
+                # exceed sum r_i^2. A record whose two statistics break that inequality is not one fit's numbers.
+                problems.append(f"a leverage-weighted chi-square of {statistic:.6g} exceeds the chi-square minimum "
+                                f"{chi_minimum:.6g} it weighs a subset of")
+            elif cumulants and cumulants[0] > p * (1.0 + 1.0e-9) + 1.0e-9:
+                # c1 = sum h - sum h^2 <= sum h = rank(A) <= p
+                problems.append(f"a leverage null mean of {cumulants[0]:.6g} exceeds the {p} parameter(s) the "
+                                f"leverage weights sum to")
+            found_refusals, found_downgrades = _goodness_of_fit(chi_minimum, n, p, statistic, cumulants)
             refusals |= found_refusals
             downgrades |= found_downgrades
         tail_skipped, tail_ratio = int(d.tail_probes_skipped), float(d.minimum_tail_rise_ratio)
@@ -1127,7 +1279,12 @@ def local_gaussian_posterior(
 
     # residuals the declared noise can explain (CORE-001): the covariance above is the parameter uncertainty only if
     # the declared sigma describes the scatter about the fit
-    fit_refusals, fit_downgrades = _goodness_of_fit(chi_min, n, p)
+    # R-03: also where the information is. The hat diagonal costs nothing here -- it is the row norms of the
+    # orthonormal basis of the same column space the rank and conditioning above came from.
+    leverage, basis = _leverage_weights(A)
+    leverage_cumulants = _leverage_null_cumulants(leverage, basis)
+    leverage_statistic = float(np.sum(leverage * np.asarray(sensitivity.standardized_residuals) ** 2))
+    fit_refusals, fit_downgrades = _goodness_of_fit(chi_min, n, p, leverage_statistic, leverage_cumulants)
     refusals.extend(sorted(fit_refusals, key=lambda r: r.value))
     downgrades.extend(sorted(fit_downgrades, key=lambda r: r.value))
 
@@ -1309,6 +1466,7 @@ def local_gaussian_posterior(
         claim=claim, refusals=tuple(r for r in refusals if r.severity is RouteClaim.REFUSED),
         downgrades=tuple(d for d in downgrades if d.severity is RouteClaim.DOWNGRADED),
         chi_square_minimum=float(chi_min), minimum_tail_rise_ratio=tail_ratio, tail_probes_skipped=tail_skipped,
+        leverage_weighted_chi_square=leverage_statistic, leverage_null_cumulants=leverage_cumulants,
     )
     posterior = LocalGaussianPosterior(
         approximation_class=ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION, parameter_names=names,

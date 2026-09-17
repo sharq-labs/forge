@@ -700,7 +700,8 @@ def route_uncertainty(
             else:
                 # CORE-010, CORE-001 and CORE-002: equal node mass is the declared prior, the declared noise explains the
                 # residuals, and the box holds the posterior
-                problem = (grid_prior_uniformity(grid, calibration) or grid_goodness_of_fit(grid, observations)
+                problem = (grid_prior_uniformity(grid, calibration)
+                           or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
                            or grid_containment(grid, calibration))
             if problem is None:
                 # R-06: last, because it is the only check that may cost a uniqueness search, and a grid that

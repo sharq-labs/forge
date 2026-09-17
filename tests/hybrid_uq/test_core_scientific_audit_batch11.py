@@ -13,10 +13,10 @@ n - p degrees of freedom. It never asks which residuals determine the covariance
   residual degrees of freedom the gate is more likely to miss a factor-4 misfit than to catch it.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH11_THRESHOLD_PROTOCOL.json`. The fifteen
-reproductions here were committed as `xfail(strict=True)` first and run with `--runxfail` to watch each fail
-on its own assertion. One test carries no marker and never did, because it passes at the preregistration
-commit and must keep passing: a record written before this batch carries no leverage statistic and is read
-back under the pooled test alone.
+reproductions here were committed as `xfail(strict=True)` at e33e1be3 and run with `--runxfail` to watch
+each fail on its own assertion; the markers came off when I-04 was implemented. One test carries no marker
+and never did, because it passed at e33e1be3 and must keep passing: a record written before this batch
+carries no leverage statistic and is read back under the pooled test alone.
 """
 
 from __future__ import annotations
@@ -70,7 +70,6 @@ def _leverage(post):
 # =====================================================================
 @pytest.mark.parametrize("count,factor", [(60, 1.0e6), (1000, 1.0e3)],
                          ids=["60_over_declared", "1000_honest_low_precision"])
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_r03_padding_that_carries_no_information_does_not_raise_the_claim(count, factor):
     """The audited record: REFUSED alone, SUPPORTED with the padding, and the same covariance to 4 digits."""
     problem = F.gross_misfit_with_ten_precise_points()
@@ -82,7 +81,6 @@ def test_r03_padding_that_carries_no_information_does_not_raise_the_claim(count,
         f"with reasons {[r.value for r in after.reasons]}")
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_r03_the_leverage_statistic_is_the_one_that_sees_the_diluted_misfit():
     """The pooled test is blind here by construction: the padding adds dof and no chi-square.
 
@@ -102,7 +100,6 @@ def test_r03_the_leverage_statistic_is_the_one_that_sees_the_diluted_misfit():
         f"and their residuals are 3x their declared sigma")
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_the_leverage_test_is_the_pooled_test_when_every_weight_is_equal():
     """The identity that makes the three-moment null checkable: at d = 1 it reduces to chi-square on n - p.
 
@@ -117,8 +114,17 @@ def test_the_leverage_test_is_the_pooled_test_when_every_weight_is_equal():
     for statistic in (1.0, 6.0, 20.0):
         assert abs(p_value_of(statistic, c1, c2, c3) - float(chi2.sf(statistic, 6))) < 1e-12, statistic
 
+    # at UNEQUAL weights the match is a SHIFTED, scaled chi-square, and the shift is what makes its mean the
+    # statistic's mean. Evaluated at the mean c1, the matched variable must sit at its own dof.
+    uneven = np.array([1.0, 0.2, 0.05, 3.0, 0.5, 0.01, 2.0, 0.1, 0.4])
+    u1, u2, u3 = cumulants_of(uneven, basis)
+    assert abs(u1 * u3 - u2 ** 2) > 1e-6 * u2 ** 2, (
+        f"the weights must not be effectively equal, or the shift is zero by construction: {(u1, u2, u3)}")
+    dof_effective = u2 ** 3 / u3 ** 2
+    assert abs(p_value_of(u1, u1, u2, u3) - float(chi2.sf(dof_effective, dof_effective))) < 1e-12, (
+        "the three-moment match reproduces the statistic's mean")
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
+
 def test_the_leverage_weights_are_the_hat_diagonal():
     """Each weight is in [0, 1] and they sum to p: every weight is a share of the information."""
     from engcore.hybrid_uq.sensitivity import reconstruct_local_sensitivity
@@ -132,9 +138,14 @@ def test_the_leverage_weights_are_the_hat_diagonal():
     assert np.all(weights >= -1e-12) and np.all(weights <= 1.0 + 1e-12)
     assert float(np.sum(weights[:10])) > 0.999 * 2.0, (
         "the ten precise points hold essentially all of the information, which is the whole point")
+    # and the weights sum to the RANK, not to the column count: a direction the design does not resolve
+    # carries no information and must not be given a share of it
+    collinear = np.column_stack([np.ones(6), np.ones(6) * 2.0])
+    deficient, basis = weights_of(collinear)
+    assert abs(float(np.sum(deficient)) - 1.0) < 1e-9, float(np.sum(deficient))
+    assert basis.shape == (6, 1), basis.shape
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_the_record_carries_the_statistic_and_the_cumulants_it_was_judged_on():
     post = _local(S.affine())
     statistic, cumulants = _leverage(post)
@@ -146,17 +157,23 @@ def test_the_record_carries_the_statistic_and_the_cumulants_it_was_judged_on():
     assert "leverage_null_cumulants" in payload["diagnostics"], sorted(payload["diagnostics"])
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_the_read_back_re_derives_the_leverage_verdict():
     """A record cannot state a goodness-of-fit verdict its own leverage numbers do not imply."""
     from engcore.hybrid_uq.local_gaussian import LocalGaussianPosterior
 
-    post = _local(S.affine())
-    assert post.claim is RouteClaim.SUPPORTED, [r.value for r in post.reasons]
-    payload = json.loads(json.dumps(post.to_dict()))
+    # a record whose refusal follows from the LEVERAGE half alone: the pooled p-value says nothing here
+    diluted = _local(F.dilute(F.gross_misfit_with_ten_precise_points(), count=1000, sigma_factor=1.0e3))
+    assert RouteReason.MODEL_MISFIT_BEYOND_DECLARED_NOISE in diluted.reasons, [r.value for r in diluted.reasons]
+    payload = json.loads(json.dumps(diluted.to_dict()))
+    n, p = payload["diagnostics"]["observations"], payload["diagnostics"]["parameters"]
+    assert float(chi2.sf(payload["diagnostics"]["chi_square_minimum"], n - p)) > HALF_ALPHA
+    LocalGaussianPosterior.from_dict(json.loads(json.dumps(payload)))  # it reads back as written
+
+    # and lowering the statistic to something the leverage test cannot name refuses it: the record then
+    # states a refusal neither of its two numbers implies
     cumulants = payload["diagnostics"].get("leverage_null_cumulants")
     assert cumulants, "the record carries the cumulants the verdict is re-derived against"
-    payload["diagnostics"]["leverage_weighted_chi_square"] = 1.0e4 * float(cumulants[0])
+    payload["diagnostics"]["leverage_weighted_chi_square"] = 0.5 * float(cumulants[0])
     with pytest.raises(HybridUQError):
         LocalGaussianPosterior.from_dict(payload)
 
@@ -173,7 +190,6 @@ def test_the_read_back_accepts_a_record_with_no_leverage_statistic():
     assert back.claim is post.claim
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_r03_a_supplied_grid_runs_the_same_rule():
     """`grid_goodness_of_fit` is the same function's other caller, so the dilution reaches it too."""
     import inspect
@@ -196,7 +212,6 @@ def test_r03_a_supplied_grid_runs_the_same_rule():
 # =====================================================================
 # R-20: the ratio is unconditional, and a tiny sample says so
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 @pytest.mark.parametrize("chi_square,points", [(6.6, 3), (9.15, 4)], ids=["dof_1", "dof_2"])
 def test_r20_a_variance_ratio_above_four_refuses_whatever_the_p_value(chi_square, points):
     """The audited record: p = 0.0102 at dof 1 and 0.0103 at dof 2, so the gate returned before the ratio."""
@@ -210,7 +225,6 @@ def test_r20_a_variance_ratio_above_four_refuses_whatever_the_p_value(chi_square
         f"{[r.value for r in post.reasons]}")
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 @pytest.mark.parametrize("points", [3, 4], ids=["dof_1", "dof_2"])
 def test_r20_one_or_two_residual_degrees_of_freedom_is_underpowered(points):
     """A fit that agrees with its declared noise is still at most DOWNGRADED at one or two residual dof."""
@@ -223,7 +237,6 @@ def test_r20_one_or_two_residual_degrees_of_freedom_is_underpowered(points):
     assert post.claim is RouteClaim.DOWNGRADED, post.claim
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_three_residual_degrees_of_freedom_is_not_flagged_underpowered():
     """The declared limit is 2, and this is the guard that it is not silently something else.
 
@@ -239,7 +252,6 @@ def test_three_residual_degrees_of_freedom_is_not_flagged_underpowered():
     assert post.claim is RouteClaim.SUPPORTED, [r.value for r in post.reasons]
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
 def test_each_test_runs_at_half_the_declared_alpha():
     """Two tests on the same residuals at alpha each would double the declared false-refusal rate."""
     from engcore.hybrid_uq.local_gaussian import _goodness_of_fit
@@ -253,7 +265,40 @@ def test_each_test_runs_at_half_the_declared_alpha():
     assert _goodness_of_fit(beyond, *n_p) == (set(), {RouteReason.RESIDUALS_EXCEED_DECLARED_NOISE})
 
 
-@pytest.mark.xfail(strict=True, reason="I-04 not implemented yet (batch 11 preregistration)")
+def test_a_well_fitting_supplied_grid_is_still_used():
+    """The two tests run at the node the chi-square MINIMUM comes from, not at the first admissible one.
+
+    A grid's first node is a corner of its box, where the fit is as bad as the box is wide. Reading the
+    statistics there would refuse every grid that contains its posterior, which is every grid the route wants.
+    """
+    from engcore.hybrid_uq._grid_evidence import grid_goodness_of_fit
+
+    problem = S.affine()
+    calibration = problem.calibrate()
+    grid = problem.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)])
+    assert grid_goodness_of_fit(grid, problem.observations, calibration=calibration,
+                                forward=problem.forward) is None
+
+
+def test_a_supplied_grid_over_one_residual_degree_of_freedom_is_still_used():
+    """GOODNESS_OF_FIT_UNDERPOWERED says the noise model was untestable, not that the residuals contradict it.
+
+    A grid claim is SUPPORTED or absent, so it has no way to carry that downgrade -- and passing every small
+    grid over instead would refuse on a statement about the test's power rather than about the fit.
+    """
+    from engcore.hybrid_uq._grid_evidence import grid_goodness_of_fit
+
+    problem = F.small_dof_variance_ratio(0.5, 3)
+    calibration = problem.calibrate()
+    estimate = np.asarray(calibration.estimate_vector, dtype=float)
+    local = _local(problem)
+    assert _reason("GOODNESS_OF_FIT_UNDERPOWERED") in local.diagnostics.downgrades, "the local route DOES carry it"
+    sd = np.sqrt(np.diag(np.asarray(local.covariance)))
+    grid = problem.grid([np.linspace(estimate[i] - 8.0 * sd[i], estimate[i] + 8.0 * sd[i], 41) for i in range(2)])
+    assert grid_goodness_of_fit(grid, problem.observations, calibration=calibration,
+                                forward=problem.forward) is None
+
+
 def test_a_grid_whose_best_node_has_no_curvature_is_passed_over():
     """A grid whose fit cannot be tested where the information is cannot be the one the route stands behind."""
     import inspect

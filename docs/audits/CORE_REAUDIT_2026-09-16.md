@@ -502,3 +502,101 @@ stayed inline in the loop instead of moving to a helper). Nothing under `src/eng
 edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 11 — I-04
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-04 | **DONE** | `e33e1be3` (preregistration + 15 strict xfails), this commit | the three-moment match is an approximation to a quadratic form's distribution, exact at equal weights and used only against α/2 = 0.005 and an exact null mean; dof 3 and dof 4 are underpowered by the same even-odds criterion (they miss a true factor-4 misfit with probability 0.608 and 0.554) and are not flagged, because the owner's declared limit is 2; a systematic error confined to the observations with NO leverage is seen by the pooled test only, which is why both run and the worse stands; the hat diagonal is computed at ONE point, inheriting the route's own local-linearity assumption; a supplied grid with n − p ≤ 2 is still SUPPORTED with nothing recording that its noise model was untestable, because a grid claim is SUPPORTED or absent; over-declared σ on the INFORMATIVE points is under-dispersion and stays deliberately ungated |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-03 | **FIXED** | Beside the pooled χ² on n − p degrees of freedom, the route computes the leverage-weighted statistic `T = Σᵢ Hᵢᵢ rᵢ²`, where `Hᵢᵢ` is the hat-matrix diagonal of the whitened Jacobian — observation i's share of the Fisher information that builds the reported covariance. Under the route's own premise the fitted residuals satisfy `r = (I − H)e`, so `T` is a quadratic form whose cumulants `c_k = tr(((I − H) diag(H))ᵏ)` are computed in closed form (`Σd^k`, `Σh d^k` and traces of two rank×rank matrices — nothing of size n×n is built) and matched to a shifted, scaled χ² on three moments. Both tests run at α/2 and the worse stands. The audited record — ten precise points at χ²/dof 9 REFUSED alone, SUPPORTED with 60 over-declared or 1000 honestly low-precision points appended and a covariance identical to 4 digits — now refuses in both dilutions: the pooled ratio is diluted to 0.071 with a p-value of 1.0, and the leverage ratio is 4.5. For the local route the whole statistic is **free**: the hat diagonal is the row norms of the orthonormal basis of the same column space the rank and conditioning already came from. The grid route runs the same two tests at its best admissible node, with a convergence-checked Jacobian there. |
+| R-20 | **FIXED** | The variance-ratio refusal fires whatever the p-value says: `_one_fit_test` tests the ratio first, so χ²/dof 6.6 at one degree of freedom and 4.57 at two — scatter 2.6× and 2.1× the declared σ, which had read SUPPORTED with no reason at all — refuse `MODEL_MISFIT_BEYOND_DECLARED_NOISE`. And `n − p ≤ 2` adds the downgrade `GOODNESS_OF_FIT_UNDERPOWERED`: with the ratio rule now unconditional, a true variance ratio of 4 is still missed with probability 0.683 at dof 1 and 0.632 at dof 2, so the record says the declared noise model was essentially untestable instead of reading "tested and adequate". |
+
+**The identity that makes the null checkable.** At `d = 1` for every observation, `c₁ = c₂ = c₃ = n − p`, so the
+three-moment match has `b = 1`, `dof = n − p` and shift `0`: the leverage test IS the pooled χ² test. The
+reduction is asserted to 1e-12 over three statistics, and a second assertion at unequal weights checks that
+the match reproduces the statistic's mean — which is what the shift carries, and what a mutation showed no
+test was measuring.
+
+**Two problems that stopped reproducing and are NOT closed.** The strict-xfail ratchet took the markers off
+two conformance cases for other problems, and both stay OPEN:
+
+* **R-14** (a posterior flat along its diagonals, I-08's): its case has 4 observations and 2 parameters, so
+  `GOODNESS_OF_FIT_UNDERPOWERED` caps it at DOWNGRADED and the mass floor is satisfied without any tail probe
+  looking off-axis. I-08 must add a case with more than 2 residual degrees of freedom, so that what carries
+  it is the probe and not the cap.
+* **R-22** (editing one carried field, I-14's): the record now carries a SECOND goodness-of-fit number that
+  the edit does not touch, so the edited record is refused because its two statistics disagree — not because
+  the observation count is bound to anything. I-14 must fuzz every carried field rather than this one.
+
+Both are recorded in the conformance file beside the cases, and in the protocol's `amendment_log`.
+
+**Compatibility.** Additive. No V1 symbol is touched. On V2: two `RouteReason` members appended after the last
+existing one (`GOODNESS_OF_FIT_UNDERPOWERED`, a downgrade; `GOODNESS_OF_FIT_NOT_MEASURABLE`, a refusal);
+two trailing `RouteDiagnostics` fields with defaults (`leverage_weighted_chi_square` = NaN,
+`leverage_null_cumulants` = ()); two keyword arguments with defaults on the private
+`_grid_evidence.grid_goodness_of_fit`. `route_diagnostics/2` is NOT bumped: the two keys are written only when
+a leverage test ran, and a record without them is accepted and held to the pooled test alone.
+
+**The claims that move**, in both directions, as the protocol stated in advance: a variance ratio above 4 with
+a p-value at or above α/2 now refuses (was: nothing); `n − p ≤ 2` is at most DOWNGRADED (was: SUPPORTED); a
+mixed-precision dataset whose informative subset misfits refuses or downgrades (was: SUPPORTED); and in the
+other direction a fit whose POOLED p-value lies in [0.005, 0.01) loses `RESIDUALS_EXCEED_DECLARED_NOISE`
+unless the leverage test flags it too, because each test now runs at α/2 to hold the family-wise
+false-refusal rate at the level batch 1 declared. No committed record sits in that band.
+
+**Blast radius, measured.** The underpowered cap was the widest change in the batch and it moved exactly one
+existing expectation: nothing in the FAST tier broke except the five items below. The cap reaches every
+reproduction built on 3 or 4 observations, but those cases assert mass floors and refusals, which a DOWNGRADED
+claim satisfies.
+
+**Existing tests edited (no assertion weakened).**
+
+* `tests/hybrid_uq/test_core_scientific_audit_batch1.py::test_a_record_that_understates_its_chi_square_is_refused_on_read`
+  keeps its assertion — the record is refused — and its `match` now names the check that refuses it. With two
+  goodness-of-fit numbers in the record, editing the χ² minimum alone leaves the other one still implying the
+  recorded reason, so the record is consistent as a set of REASONS while being impossible as a set of
+  NUMBERS: every leverage weight is a hat-matrix diagonal in [0, 1], so `T ≤ Σrᵢ²`. That inequality (and
+  `c₁ ≤ p`) is now a read-back check, and it is what refuses the edit. The reason is commented in place;
+* the four conformance markers above (R-03, R-20 closed by this batch; R-14, R-22 not closed);
+* `R-03`'s padding builder moved from the conformance module into `false_confidence_cases.py` beside the case
+  it dilutes, in the preregistration commit.
+
+**Committed evidence.** `PERFORMANCE.json` is the one cheap record whose V2 claims turn on this rule, and its
+pooled half can be re-derived from the bytes while its leverage half cannot — the record carries no residuals
+and no Jacobian. So `benchmarks/core_v4_false_confidence/audit/batch11_performance_probe.py` re-runs the same
+five routes and prints verdicts only, never writing the record (regenerating it would replace its measured
+wall times with this container's, which is drift and not evidence). **All five claims are identical, reasons
+included**: the measured leverage ratios are 22.28 at p = 2, 20.59 at p = 5, 8.449 at p = 10, 0.8564 at
+p = 20 and 0.0056 at p = 41, so the three refusals the pooled test already made are made by the leverage test
+too and the two downgrades stay downgrades. The two SUPERSEDED markers gained an `R-03 / R-20 / I-04` entry
+each, in the JSON and the companion Markdown: K2's MULTI is 6 observations at p = 2 (4 residual dof, not
+underpowered) with χ² 5.4446 — ratio 1.36, pooled p-value 0.2447, and since every weight is at most 1 a
+leverage ratio above 4 would need `T > 8` against a total χ² of 5.44 and a null mean of at most 2, which is
+impossible, so no refusal can arise there; T41's models have 26 to 65 residual dof and the p = 41 leverage
+ratio was measured by the probe above at 0.0056. Neither multistart was re-run.
+
+**Guard mutations.** `BATCH11_MUTATIONS.log`: **17 of 17 KILLED**, control green. Five survived a first run,
+and each purchase is recorded in the protocol's `amendment_log`: the rank cut in `_leverage_weights` (the test
+used a full-rank Jacobian, so the cut was a no-op — it now also checks that a collinear design's weights sum
+to its RANK); the three-moment SHIFT (zero by construction in the equal-weight reduction — the test now also
+checks at unequal weights that the match reproduces the statistic's mean); re-deriving only the pooled half on
+read (the tamper was caught one check earlier by the new `T ≤ χ²` inequality — the test now first asserts that
+the DILUTED record, whose refusal follows from the leverage half alone, reads back as written); reading the
+grid's statistics at its FIRST admissible node (every grid in the suite refused either way — added
+`test_a_well_fitting_supplied_grid_is_still_used`, since a grid's first node is a corner of its box); and
+passing a grid over on ANY goodness-of-fit reason rather than only the misfit ones (added
+`test_a_supplied_grid_over_one_residual_degree_of_freedom_is_still_used`). The 31 pinned mutations on the
+files this batch changed were re-run isolated and all 31 are still KILLED (`BATCH11_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6548 passed, 7 xfailed, 18 failed (the by-design 18, unchanged; four more xfails
+became passes, two of them this batch's closures and two the not-closed cases above). Expensive tier 528
+passed, 18 failed, 14 errors — the recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6
+passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/`
+was edited.
+
+**Open decisions.** None in this batch.

@@ -121,7 +121,8 @@ def _grid_evidence_judgement(posterior: PosteriorGrid, claim: RouteClaim, observ
     if observations is None:
         return RouteClaim.DOWNGRADED, (RouteReason.GRID_NOT_BOUND_TO_EVIDENCE,)
     require_grid_is_this_evidence(posterior, calibration, observations, forward)
-    problem = (grid_prior_uniformity(posterior, calibration) or grid_goodness_of_fit(posterior, observations)
+    problem = (grid_prior_uniformity(posterior, calibration)
+               or grid_goodness_of_fit(posterior, observations, calibration=calibration, forward=forward)
                or grid_containment(posterior, calibration))
     if problem is not None:
         raise HybridUQError(f"{problem[0].value}: {problem[1]}; the router would not route this grid, so it is not predicted from")

@@ -101,5 +101,49 @@
     "Over-declared sigma on the padding points is the version of R-03 that hides a misfit of any size. The leverage test catches it because such points have almost no leverage. What neither test catches is over-declared sigma on the INFORMATIVE points, which is under-dispersion and deliberately ungated: a declared sigma larger than the residuals makes the reported uncertainty conservative."
   ],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "stage": "during implementation",
+      "change": "A leverage null whose cumulants are ZERO is legitimate and is recorded as such; the read-back requires the recorded cumulants to be non-negative, not strictly positive.",
+      "why": "it happens whenever one observation holds all the leverage: h = (1, 0, ..., 0) gives c1 = sum h - sum h^2 = 0, because that observation's FITTED residual has variance 1 - h = 0 and is identically zero. There is then no leverage test to run, which `_one_fit_test` already handles by returning 0 on a non-positive null mean, and the pooled test stands alone. Seven existing suites reach this case (every p = 1 reproduction whose Jacobian is dominated by one observation), and requiring a positive null refused all of them on read.",
+      "why_this_is_not_a_threshold_change": "no threshold moves; the rule for a degenerate null was already 'the test does not run' in the preregistered text ('when c_2 or c_3 is not strictly positive the match is undefined and the leverage test is recorded as not run')."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "during implementation",
+      "change": "The read-back gained two integrity inequalities on the recorded pair: T <= chi-square minimum, and c1 <= p.",
+      "why": "both follow from the definition: every leverage weight is a hat-matrix diagonal in [0, 1], so T = sum h_i r_i^2 can never exceed sum r_i^2; and c1 = sum h - sum h^2 <= sum h = rank(A) <= p. They were added because a batch-1 guard (test_a_record_that_understates_its_chi_square_is_refused_on_read) stopped refusing: with two statistics in the record, editing the chi-square minimum alone leaves the other one still implying the recorded reason, so the record was internally consistent as a set of REASONS while being impossible as a set of NUMBERS. The inequality is what makes it impossible. That guard's assertion is unchanged; only the `match` naming which check refuses it moved, and the reason is commented in place.",
+      "why_this_is_not_a_threshold_change": "no threshold; two exact inequalities with a 1e-9 relative roundoff allowance."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "after the first guard-mutation run, before the batch was committed",
+      "change": "Five of seventeen mutations SURVIVED the first run; three tests were strengthened and two added.",
+      "detail": [
+        "the rank cut in `_leverage_weights` survived: the test used a full-rank Jacobian, where the cut is a no-op. It now also asserts that a collinear design's weights sum to its RANK and that the basis has one column.",
+        "zeroing the three-moment SHIFT survived: the equal-weight reduction has a shift of zero by construction. The test now also checks, at unequal weights, that the match reproduces the statistic's MEAN -- the p-value at T = c1 equals chi2.sf(dof_eff, dof_eff) -- which is exactly what the shift carries.",
+        "re-deriving the pooled half only on read survived: the tamper the test used is caught one check earlier by the T <= chi-square inequality. The test now first asserts that the DILUTED record (whose refusal follows from the leverage half alone, the pooled p-value being silent) reads back as written, which fails the moment the read-back stops consulting the leverage numbers.",
+        "reading the grid's statistics at its FIRST admissible node instead of its best survived: every test used a grid that refuses either way. Added `test_a_well_fitting_supplied_grid_is_still_used`: a grid's first node is a corner of its box, so reading the fit there refuses every grid that contains its posterior.",
+        "passing a grid over on ANY goodness-of-fit reason instead of only the MISFIT ones survived: no test covered a small supplied grid. Added `test_a_supplied_grid_over_one_residual_degree_of_freedom_is_still_used`: the underpowered downgrade says the noise model was untestable, not that the residuals contradict it, and a grid has no DOWNGRADED claim to carry it with."
+      ],
+      "why_this_is_not_a_threshold_change": "no threshold, class or value in `rules` is touched; the added assertions measure rules already preregistered."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "verification",
+      "change": "Two conformance cases for OTHER problems stopped reproducing as a side effect, so their strict xfail markers came off. Neither problem is closed.",
+      "detail": [
+        "R-14 (a posterior flat along its diagonals, I-08's) -- its case has 4 observations and 2 parameters, so GOODNESS_OF_FIT_UNDERPOWERED caps it at DOWNGRADED and the mass floor is satisfied without any tail probe looking off-axis. I-08 must add a case with more than 2 residual degrees of freedom.",
+        "R-22 (editing one carried field, I-14's) -- the record now carries a SECOND goodness-of-fit number that the edit does not touch, so the edited record is refused because its two statistics disagree, not because the observation count is bound to anything. I-14 must fuzz every carried field."
+      ],
+      "why_this_is_not_a_threshold_change": "no threshold moves. The strict-xfail ratchet requires the markers off; the comments in the conformance file and the audit document record that both problems remain OPEN and what their improvements must do."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "verification",
+      "change": "PERFORMANCE.json was NOT regenerated, because no claim in it moved.",
+      "why": "the record's five V2 claims were re-derived by re-running the same five routes with `benchmarks/core_v4_false_confidence/audit/batch11_performance_probe.py`, which prints verdicts only. All five are identical, reasons included. The measured leverage ratios are 22.28 at p = 2, 20.59 at p = 5, 8.449 at p = 10, 0.8564 at p = 20 and 0.0056 at p = 41 -- the three refusals the pooled test already made are made by the leverage test too, and the two downgrades stay downgrades. Regenerating the record would have replaced its measured wall times with this container's, which is environment drift and not evidence."
+    }
+  ]
 }

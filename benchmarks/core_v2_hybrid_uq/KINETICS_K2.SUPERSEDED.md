@@ -29,6 +29,13 @@ established under the weaker rules and are not current**; its covariance-derived
 - **R-07 / I-02.** A separated converged refit is classified by its Laplace mass ratio against a floor of 1e-3.
   MULTI's one separated refit sits at chi-square 2699.72 against the estimate's 5.4446: its height ratio alone is
   exp(-1347.1), so no covariance could lift it above the floor and `WORSE_LOCAL_OPTIMUM` is projected unchanged.
+- **R-03 / R-20 / I-04 (core re-audit batch 11).** CORE-001 now runs the pooled test and a leverage-weighted
+  one at alpha/2 each, refuses on a variance ratio above 4 whatever the p-value, and downgrades at one or two
+  residual degrees of freedom. MULTI is 6 observations at p = 2, so 4 residual dof (not underpowered), with a
+  chi-square of 5.4446: ratio 1.36, pooled p-value 0.2447 — the pooled half stays silent. The leverage half
+  needs residuals and a Jacobian, which these bytes do not carry; but every weight is at most 1, so
+  T ≤ chi-square = 5.44 and a ratio above 4 would need T > 8 against a null mean of at most 2 — no refusal can
+  arise. A downgrade cannot be ruled out without the residuals, and MULTI already stands DOWNGRADED above.
 
 **Unchanged:** the MULTI estimate and sds (identical when re-derived without multistart), its covariance, identifiability statuses, C2 predictive sds,
 the V1 reference grids, every `CORRECTED` errata quantity (so `benchmarks/core_v1_thin_ridge_repair/ERRATA.md`'s addendum

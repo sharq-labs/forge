@@ -15,9 +15,17 @@ import numpy as np
 
 from ..inference.calibration import CalibrationResult
 from ..inference.grid import ObservationSet, PosteriorGrid
-from .local_gaussian import _goodness_of_fit
-from .sensitivity import evaluate
-from .vocabulary import HybridUQError, RouteReason
+from .local_gaussian import MISFIT_REASONS, _goodness_of_fit, _leverage_null_cumulants, _leverage_weights
+from .sensitivity import (
+    DEFAULT_RELATIVE_STEP,
+    central_difference,
+    evaluate,
+    inference_bounds,
+    to_inference,
+    to_natural,
+    transforms_of,
+)
+from .vocabulary import HybridUQError, RouteRefusedError, RouteReason
 
 #: A grid must contain its posterior: on every face, the largest log-likelihood must sit at least this far below the
 #: grid's maximum (density below 1e-6 of the peak).
@@ -89,16 +97,74 @@ def require_grid_is_this_evidence(grid: PosteriorGrid, calibration, observations
                 f"request's evidence, whatever its dataset id says")
 
 
-def grid_goodness_of_fit(grid: PosteriorGrid, observations: ObservationSet) -> tuple[RouteReason, str] | None:
-    """The CORE-001 rule on a grid: its smallest chi-square over admissible nodes, an upper bound on the minimum."""
+def _grid_leverage(grid: PosteriorGrid, row: int, observations: ObservationSet, calibration, forward):
+    """``(statistic, cumulants)`` of the leverage test at one grid node, or None when the curvature is not there.
+
+    R-03's dilution is a property of the RULE, not of its caller: a supplied grid over a padded dataset passes
+    the pooled test for the same reason and with the same covariance error. So the grid is held to the same two
+    tests, at the node its chi-square minimum comes from -- the residuals from one forward evaluation there,
+    the weights from the hat diagonal of a convergence-checked Jacobian there. The Jacobian is the cost this
+    check did not have before: at least 4p + 1 forward evaluations, on a route whose grid is exponential in p
+    and therefore small.
+    """
+    if not isinstance(calibration, CalibrationResult) or forward is None:
+        return None
+    parameters = calibration.spec.parameters
+    if tuple(parameters.names) != tuple(grid.parameter_names):
+        return None
+    transforms = transforms_of(parameters)
+    lower, upper = inference_bounds(parameters)
+    observed, sigma = observations.numeric_vectors()
+    keys = observations.keys
+    units = tuple(o.value.units for o in observations.observations)
+    references = tuple(o.value for o in observations.observations)
+    node = np.asarray(grid.points, dtype=np.float64)[int(row)]
+
+    def fun(z):
+        return evaluate(forward, to_natural(z, transforms), keys, units, references)
+
+    try:
+        base, jacobian, _steps, _one_sided, _evaluations = central_difference(
+            fun, to_inference(node, transforms), lower, upper, DEFAULT_RELATIVE_STEP, weights=sigma)
+    except RouteRefusedError:
+        return None
+    weighted = np.asarray(jacobian, dtype=np.float64) / np.asarray(sigma, dtype=np.float64)[:, None]
+    residual = (np.asarray(base, dtype=np.float64) - observed) / sigma
+    weights, basis = _leverage_weights(weighted)
+    return float(np.sum(weights * residual ** 2)), _leverage_null_cumulants(weights, basis)
+
+
+def grid_goodness_of_fit(grid: PosteriorGrid, observations: ObservationSet, *, calibration=None,
+                         forward=None) -> tuple[RouteReason, str] | None:
+    """The CORE-001 rule on a grid: its smallest chi-square over admissible nodes, an upper bound on the minimum.
+
+    Given the calibration and forward evaluator that bind the grid to its evidence, the leverage test runs too
+    (R-03). A grid whose fit cannot be tested where the information is -- no curvature at its best node -- is
+    passed over: a grid claim is SUPPORTED or absent, so the check that decides it has to be as strong as the
+    local route's. Only the reasons in ``MISFIT_REASONS`` pass a grid over, which is exactly the behaviour
+    before the rule grew a second test: GOODNESS_OF_FIT_UNDERPOWERED says the noise model was untestable, not
+    that the residuals contradict it, and a grid has no DOWNGRADED claim to carry it with.
+    """
     ll = np.asarray(grid.log_likelihood, dtype=np.float64)
     usable = np.asarray(grid.admissible_mask, dtype=bool) & np.isfinite(ll)
-    chi_minimum = max(float(np.min(-2.0 * (ll[usable] - _log_normalizer(observations)))), 0.0)
+    chi_square = -2.0 * (ll - _log_normalizer(observations))
+    row = int(np.arange(len(ll))[usable][int(np.argmin(chi_square[usable]))])
+    chi_minimum = max(float(chi_square[row]), 0.0)
     n, p = len(observations.observations), len(grid.parameter_names)
-    refusals, downgrades = _goodness_of_fit(chi_minimum, n, p)
-    for reason in sorted(refusals | downgrades, key=lambda r: r.value):
-        return reason, (f"chi-square {chi_minimum:.6g} on {n - p} degrees of freedom at the grid's best node: the declared "
-                        f"noise does not explain the residuals, and a grid claim cannot be downgraded")
+    statistic, cumulants = math.nan, ()
+    if calibration is not None and forward is not None:
+        measured = _grid_leverage(grid, row, observations, calibration, forward)
+        if measured is None:
+            return (RouteReason.GOODNESS_OF_FIT_NOT_MEASURABLE,
+                    "no curvature could be built at the grid's best node, so the goodness of fit cannot be tested "
+                    "where the information is; a grid claim is SUPPORTED or absent")
+        statistic, cumulants = measured
+    refusals, downgrades = _goodness_of_fit(chi_minimum, n, p, statistic, cumulants)
+    for reason in sorted((refusals | downgrades) & MISFIT_REASONS, key=lambda r: r.value):
+        return reason, (f"chi-square {chi_minimum:.6g} on {n - p} degrees of freedom at the grid's best node, and a "
+                        f"leverage-weighted {statistic:.6g} against a null mean of "
+                        f"{cumulants[0] if cumulants else float('nan'):.6g}: the declared noise does not explain the "
+                        f"residuals where the information is, and a grid claim cannot be downgraded")
     return None
 
 
@@ -170,5 +236,6 @@ def grid_prior_uniformity(grid: PosteriorGrid, calibration) -> tuple[RouteReason
 def supplied_grid_problem(grid: PosteriorGrid, calibration, observations: ObservationSet, forward) -> tuple[RouteReason, str] | None:
     """Binding (raises), then goodness of fit, then containment: why a resolved supplied grid may not stand, or None."""
     require_grid_is_this_evidence(grid, calibration, observations, forward)
-    return (grid_prior_uniformity(grid, calibration) or grid_goodness_of_fit(grid, observations)
+    return (grid_prior_uniformity(grid, calibration)
+            or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
             or grid_containment(grid, calibration))

@@ -407,6 +407,8 @@ def routed_predictive_uncertainty(
 | `NONLINEAR_BEYOND_LOCAL_GAUSSIAN` | nonlinearity index > 0.50, or fewer than p probes evaluated (index NaN) |
 | `SECOND_MODE_FOUND` | a multistart optimum with Mahalanobis² > χ²_p(0.999) and χ² ≤ χ²_min + χ²_p(0.99) |
 | `BETTER_OPTIMUM_FOUND` | a multistart optimum with Mahalanobis² > χ²_p(0.999) and χ² lower than the estimate's by more than χ²_p(0.99) |
+| `MODEL_MISFIT_BEYOND_DECLARED_NOISE` | the pooled χ²/(n − p), **or** the leverage-weighted statistic over its null mean, exceeds 4 — whatever the p-value (core re-audit R-20) |
+| `GOODNESS_OF_FIT_NOT_MEASURABLE` | grid only: no curvature could be built at the grid's best node, so the fit cannot be tested where the information is (core re-audit R-03) |
 
 **Downgrades** (claim DOWNGRADED):
 
@@ -417,8 +419,10 @@ def routed_predictive_uncertainty(
 | `NONLINEARITY_PROBE_INCOMPLETE` | a ±2 sd probe was not evaluated: it fell outside the bounds, was inadmissible, or (predictive only) was never run because `check_nonlinearity=False` |
 | `POORLY_SCALED_PARAMETERIZATION` | raw cond(J_w) > 1/√ε while the equilibrated condition is representable |
 | `GLOBAL_UNIQUENESS_NOT_ASSESSED` | `multistart=None` |
-| `MULTISTART_INCOMPLETE` | fewer than half the starts converged, or the policy is below the minimum search (`max(6, 2p + 2)` starts, canonical span and quantiles) |
+| `MULTISTART_INCOMPLETE` | fewer than `max(6, 2p + 2)` starts CONVERGED, or the policy is below the minimum search (`max(6, 2p + 2)` starts, canonical span, quantiles, refit budget and replacement allowance) |
 | `PREDICTIVE_NONLINEAR` | predictive only: a probe deviates from the linear extrapolation by more than 0.10 parameter sd |
+| `RESIDUALS_EXCEED_DECLARED_NOISE` | the pooled test **or** the leverage test has p < α/2 = 0.005 with a ratio at most 4 |
+| `GOODNESS_OF_FIT_UNDERPOWERED` | n − p ≤ 2, where the gate misses a true variance ratio of 4 more often than it catches it (core re-audit R-20) |
 
 **Router-only reasons:** `GRID_NOT_SUPPLIED`, `GRID_BEYOND_VALIDATED_DIMENSION`, `GRID_UNRESOLVED`, `LOCAL_INPUTS_NOT_SUPPLIED`, `GRID_REBUILD_OVER_BUDGET`, `GRID_REBUILD_UNRESOLVED`.
 
@@ -432,6 +436,12 @@ The thresholds are module constants, recorded inside every `RouteDiagnostics.thr
 - failure cases F1–F6.
 
 The stationarity threshold is new and must be validated on the same set before freeze.
+
+*Amendment (core re-audit 2026-09-16, I-04: R-03, R-20).* **The goodness of fit is tested twice, and where the information is.** Beside the pooled χ² on n − p degrees of freedom, the route computes the leverage-weighted statistic `T = Σᵢ Hᵢᵢ rᵢ²`, where `Hᵢᵢ` is the hat-matrix diagonal of the whitened Jacobian — observation i's share of the Fisher information that builds the reported covariance. Under the route's premise the fitted residuals satisfy `r = (I − H)e`, so `T` is a quadratic form whose cumulants `c_k = tr(((I − H) diag(H))ᵏ)` are computed in closed form and matched to a shifted, scaled χ² on three moments. At equal weights `c₁ = c₂ = c₃ = n − p` and the leverage test IS the pooled test.
+
+Each test runs at **α/2 = 0.005**, so the family-wise false-refusal rate stays the declared α, and the worse result stands. Why it was needed: an observation with a large declared σ adds almost nothing to `Jᵀ_w J_w`, so it does not move the covariance, but it adds a degree of freedom to the pooled test. Ten precise points at χ²/dof 9 were REFUSED alone and SUPPORTED with 60 over-declared or 1000 honestly low-precision points appended, with a covariance identical to 4 digits. Two further rules: the variance-ratio refusal fires whatever the p-value (at 1 residual dof a χ² of 6.6 — a scatter 2.6× the declared σ — had read SUPPORTED because the p-value branch returned first), and `n − p ≤ 2` adds `GOODNESS_OF_FIT_UNDERPOWERED`, because there the gate misses a true factor-4 misfit with probability 0.68 and 0.63.
+
+`RouteDiagnostics` carries `leverage_weighted_chi_square` and `leverage_null_cumulants` so a reader re-derives both verdicts; a record written before the rule carries neither and is held to the pooled test alone. The grid route runs the same two tests at its best admissible node, with a convergence-checked Jacobian there, and is passed over with `GOODNESS_OF_FIT_NOT_MEASURABLE` when that curvature cannot be built.
 
 *Amendment (audit, stream hybrid).* The committed Core V2 evidence under `benchmarks/core_v2_hybrid_uq` was produced before the audited rules above. `TCR.json`, `FAILURE_CASES.json`, `PERFORMANCE.json` and `WHEEL_V2.json` were regenerated under them; `BATTERY_T41.json` and `KINETICS_K2.json` were not, and each carries a `*.SUPERSEDED.md` / `*.SUPERSEDED.json` marker beside it stating what changed and what is known about what it would now say.
 

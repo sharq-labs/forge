@@ -123,6 +123,15 @@ class RouteReason(str, Enum):
     #: R-06 (re-audit 2026-09-16): nothing establishes that a supplied grid narrower than the declared bounds holds the
     #: whole posterior -- no adequate uniqueness search ran -- and a grid route has no DOWNGRADED claim to say so with.
     GRID_UNIQUENESS_NOT_ASSESSED = "GRID_UNIQUENESS_NOT_ASSESSED"
+    #: R-20 (re-audit 2026-09-16): at one or two residual degrees of freedom the CORE-001 gate is more likely to miss a
+    #: variance ratio of 4 than to catch it, so the declared noise model was not tested and found adequate -- it was
+    #: essentially untestable. A downgrade: with a correct declared sigma the covariance is valid at any dof, and what
+    #: is missing is the falsifier, not the premise. Appended, not inserted: the member order is frozen.
+    GOODNESS_OF_FIT_UNDERPOWERED = "GOODNESS_OF_FIT_UNDERPOWERED"
+    #: R-03 (re-audit 2026-09-16): the goodness of fit could not be tested WHERE THE INFORMATION IS, because the
+    #: curvature at the point its chi-square minimum comes from could not be built. A grid claim is SUPPORTED or
+    #: absent, so a grid whose fit cannot be tested that way is passed over rather than downgraded.
+    GOODNESS_OF_FIT_NOT_MEASURABLE = "GOODNESS_OF_FIT_NOT_MEASURABLE"
 
     @property
     def severity(self) -> RouteClaim:
@@ -134,6 +143,7 @@ _DOWNGRADES = frozenset({
     "GLOBAL_UNIQUENESS_NOT_ASSESSED", "MULTISTART_INCOMPLETE", "PREDICTIVE_NONLINEAR",
     "RESIDUALS_EXCEED_DECLARED_NOISE", "TAIL_HEAVIER_WITHIN_6_SD", "GRID_NOT_BOUND_TO_EVIDENCE",
     "PREDICTION_DOMAIN_NOT_DECLARED", "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS",
+    "GOODNESS_OF_FIT_UNDERPOWERED",
 })
 
 

@@ -272,7 +272,8 @@ def test_r17_a_posterior_cut_by_inadmissibility_is_not_contained_by_accident():
 # ---------------------------------------------------------------------------
 # R-03, R-20: where the information is (I-04)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-03 open until I-04: the goodness-of-fit test pools every residual")
+# Closed by I-04 (batch 11): the fit is also tested where the information is, by a leverage-weighted
+# statistic against its exact three-moment null. xfail at e33e1be3.
 def test_r03_observations_that_carry_no_information_never_raise_the_claim():
     """R-03: ten precise points at chi2/dof 9 are REFUSED alone and SUPPORTED with 60 uninformative points added.
 
@@ -289,7 +290,8 @@ def test_r03_observations_that_carry_no_information_never_raise_the_claim():
         f"{after.claim.value}")
 
 
-@pytest.mark.xfail(strict=True, reason="R-20 open until I-04: the variance-ratio refusal is gated behind the p-value")
+# Closed by I-04 (batch 11): the variance-ratio refusal is unconditional, and one or two residual degrees
+# of freedom cap the claim with GOODNESS_OF_FIT_UNDERPOWERED. xfail at e33e1be3.
 @pytest.mark.parametrize("chi_square,points", [(6.6, 3), (9.15, 4)], ids=["dof_1", "dof_2"])
 def test_r20_a_variance_ratio_above_four_is_never_supported(chi_square, points):
     """R-20: chi2/dof of 6.6 on 1 dof and 4.57 on 2 dof read SUPPORTED, because p >= 0.01 returns first."""
@@ -341,7 +343,10 @@ def test_r13_a_curvature_error_spread_over_every_pair_is_not_supported():
         f"the Gaussian's, which TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN names as a refusal on the principal axes")
 
 
-@pytest.mark.xfail(strict=True, reason="R-14 open until I-08: tail probes run along principal axes only")
+# NOT closed, and no longer reproducing. I-04 (batch 11) caps this case at DOWNGRADED for an unrelated
+# reason: it has 4 observations and 2 parameters, so GOODNESS_OF_FIT_UNDERPOWERED fires and the mass floor
+# is satisfied without any tail probe looking off-axis. R-14 stays OPEN for I-08, which must add a case
+# with more than 2 residual degrees of freedom so that what carries it is the probe and not the cap.
 def test_r14_a_posterior_flat_along_its_diagonals_is_not_supported():
     """R-14: exactly Gaussian on both axes out to 6 sd, saturating along the diagonals beyond about 3 sd."""
     problem = F.off_axis_flat_tail()
@@ -394,7 +399,10 @@ def test_r26_a_smaller_unit_does_not_downgrade_an_exactly_gaussian_result():
 # ---------------------------------------------------------------------------
 # R-22: one edited field (I-14)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-22 open until I-14: the observation count is a free carried field")
+# NOT closed, and no longer reproducing. I-04 (batch 11) put a SECOND goodness-of-fit number in the record
+# (the leverage-weighted chi-square and its null), which this edit does not touch, so the edited record is
+# refused because its two statistics disagree -- not because the observation count is bound to anything.
+# R-22 stays OPEN for I-14, which must fuzz every carried field rather than this one.
 def test_r22_editing_one_carried_field_never_raises_a_records_claim():
     """R-22: raising the recorded observation count turns DOWNGRADED RESIDUALS_EXCEED_DECLARED_NOISE into SUPPORTED."""
     problem = F.small_dof_variance_ratio(30.0, 12)
