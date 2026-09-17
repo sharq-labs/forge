@@ -95,7 +95,16 @@ def test_every_adversarial_case_met_its_declared_expectation():
     assert cases["all_met"] is True
     assert {"strong_nonlinearity", "parameter_at_bound", "nearly_singular_jacobian", "mirror_mode", "multimodal_two_parameter",
             "log_parameterization_of_a_linear_model", "weak_identification", "thin_correlated_ridge_with_aliased_bounds_grid",
-            "mapped_non_tensor_point_set"} <= set(cases["cases"])
+            "mapped_non_tensor_point_set",
+            # R-26 (I-08 part A, batch 20): `poorly_scaled_parameterization` was only ever adversarial about
+            # its units -- raw condition 3.19e9, equilibrated 3.474 -- and its declared expectation is
+            # restated to SUPPORTED. `ill_conditioned_after_equilibration` is the case the corrected
+            # downgrade is for: a quartic over a 10% range of x, equilibrated condition 4.36e7, inside the
+            # band between POORLY_SCALED_CONDITION_LIMIT and the refusal. Both are pinned here so neither
+            # half of the correction can be dropped without a test saying so.
+            "poorly_scaled_parameterization", "ill_conditioned_after_equilibration"} <= set(cases["cases"])
+    assert cases["cases"]["poorly_scaled_parameterization"]["local"]["claim"] == "SUPPORTED"
+    assert "POORLY_SCALED_PARAMETERIZATION" in cases["cases"]["ill_conditioned_after_equilibration"]["local"]["downgrades"]
     # regenerated under HUQ-06: a grid over other parameters is refused outright when routed with a calibration
     mapped = cases["cases"]["mapped_non_tensor_point_set"]
     assert mapped["router_with_local_other_parameter_names"].startswith("HybridUQError")

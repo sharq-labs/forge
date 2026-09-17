@@ -10,8 +10,8 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    2.5844859305708714,
-    1.3591509622206093
+    2.584485944013648,
+    1.359150965310431
    ],
    "local": {
     "claim": "REFUSED",
@@ -23,9 +23,9 @@
      "BOUND_WITHIN_3_SD"
     ],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 1.7722638029864237,
-    "jacobian_condition": 1.9383703608179716,
-    "raw_jacobian_condition": 4.231040760815263,
+    "nonlinearity_index": 2.401834273361815,
+    "jacobian_condition": 1.9383703580561522,
+    "raw_jacobian_condition": 4.23104076827956,
     "emits_covariance": false
    },
    "identifiability": "NONE (route refused)",
@@ -35,8 +35,8 @@
      1.3935810394659547
     ],
     "sd": [
-     1.751501376129549,
-     0.305146219021418
+     1.7515013761295455,
+     0.30514621902141703
     ],
     "nodes": [
      481,
@@ -82,7 +82,7 @@
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
     0.96416658787548,
-    3.396371814784188e-12
+    3.396371814890067e-12
    ],
    "local": {
     "claim": "REFUSED",
@@ -94,9 +94,9 @@
      "NONLINEARITY_PROBE_INCOMPLETE"
     ],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 1.5859673528193428,
+    "nonlinearity_index": 1.5365121055627684,
     "jacobian_condition": 3.425339658175581,
-    "raw_jacobian_condition": 3.9849451450628472,
+    "raw_jacobian_condition": 3.984945145062845,
     "emits_covariance": false
    },
    "identifiability": "NONE (route refused)",
@@ -106,8 +106,8 @@
      0.008085586081485662
     ],
     "sd": [
-     0.007350032690030742,
-     0.007489454064087864
+     0.007350032690030741,
+     0.007489454064087861
     ],
     "nodes": [
      401,
@@ -132,7 +132,7 @@
       "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
       "outcome": "USED",
       "reason": "",
-      "detail": "2926 points, nodes [14, 209], 0 box expansion(s), 4 truncation halving(s) on axes [1], 0 refinement(s)"
+      "detail": "2926 points, nodes [14, 209], 0 box expansion(s), 4 truncation halving(s) on axes [1] (admissibility cuts []), 0 refinement(s)"
      }
     ],
     "mean": [
@@ -140,12 +140,12 @@
      0.00816526849680187
     ],
     "sd": [
-     0.007351056267956367,
-     0.007479662924052737
+     0.007351056267956365,
+     0.007479662924052734
     ],
     "mean_shift_reference_sd": [
-     0.007917815710634702,
-     0.010639282200592855
+     0.007917815710634704,
+     0.010639282200592858
     ],
     "sd_ratio_reference": [
      1.0001392616834226,
@@ -166,8 +166,8 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    0.9984703942807431,
-    0.9984706683537176
+    0.8200723277061135,
+    1.1768687346458993
    ],
    "local": {
     "claim": "REFUSED",
@@ -177,8 +177,8 @@
     "downgrades": [],
     "uniqueness": "NOT_ASSESSED",
     "nonlinearity_index": "nan",
-    "jacobian_condition": 6720656258.853912,
-    "raw_jacobian_condition": 6720655257.654972,
+    "jacobian_condition": 6730285494.159002,
+    "raw_jacobian_condition": 6730287885.08813,
     "emits_covariance": false
    },
    "identifiability": "NONE (route refused)",
@@ -263,7 +263,7 @@
       "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
       "outcome": "USED",
       "reason": "",
-      "detail": "313 points, nodes [313], 0 box expansion(s), 0 truncation halving(s) on axes [], 0 refinement(s)"
+      "detail": "313 points, nodes [313], 0 box expansion(s), 0 truncation halving(s) on axes [] (admissibility cuts []), 0 refinement(s)"
      }
     ],
     "mean": [
@@ -305,9 +305,9 @@
      "NONLINEAR_WITHIN_2_SD"
     ],
     "uniqueness": "SECOND_MODE_FOUND",
-    "nonlinearity_index": 0.11862546508209637,
+    "nonlinearity_index": 0.11161166931627631,
     "jacobian_condition": 9.505396814951084,
-    "raw_jacobian_condition": 16.54321235752065,
+    "raw_jacobian_condition": 16.543212357520684,
     "emits_covariance": false
    },
    "identifiability": "NONE (route refused)",
@@ -317,8 +317,8 @@
      0.40613544182921846
     ],
     "sd": [
-     1.0220179476127047,
-     0.07601966371930763
+     1.0220179476127045,
+     0.07601966371930764
     ],
     "nodes": [
      1201,
@@ -343,24 +343,24 @@
       "route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE",
       "outcome": "USED",
       "reason": "",
-      "detail": "9801 points, nodes [99, 99], 0 box expansion(s), 0 truncation halving(s) on axes [], 0 refinement(s)"
+      "detail": "9801 points, nodes [99, 99], 0 box expansion(s), 0 truncation halving(s) on axes [] (admissibility cuts []), 0 refinement(s)"
      }
     ],
     "mean": [
-     -3.970668500154878e-15,
-     0.4061354441880872
+     7.021275438862816e-16,
+     0.4061354441880869
     ],
     "sd": [
-     1.0220179468409059,
-     0.0760196630487315
+     1.0220179468409054,
+     0.07601966304873148
     ],
     "mean_shift_reference_sd": [
-     3.7764955172342834e-15,
-     3.1029718517207407e-08
+     7.95631669921458e-16,
+     3.102971413588169e-08
     ],
     "sd_ratio_reference": [
-     0.9999999992448285,
-     0.9999999911789123
+     0.9999999992448283,
+     0.9999999911789117
     ]
    },
    "router_without_rebuild": {
@@ -376,7 +376,7 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    0.1577717270128525
+    0.1577717269965195
    ],
    "local": {
     "claim": "REFUSED",
@@ -386,7 +386,7 @@
     ],
     "downgrades": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 1.1407194286840792,
+    "nonlinearity_index": 1.1407194284425675,
     "jacobian_condition": 1.0,
     "raw_jacobian_condition": 1.0,
     "emits_covariance": false
@@ -396,29 +396,55 @@
   },
   "poorly_scaled_parameterization": {
    "expect": {
+    "local": "SUPPORTED"
+   },
+   "calibration": "CALIBRATION_CONVERGED",
+   "estimate": [
+    1953608267.3330247,
+    0.00010418095870714409
+   ],
+   "local": {
+    "claim": "SUPPORTED",
+    "refusals": [],
+    "downgrades": [],
+    "uniqueness": "MULTISTART_NO_SECOND_MODE",
+    "nonlinearity_index": 1.4623857680362562e-12,
+    "jacobian_condition": 3.474334899883306,
+    "raw_jacobian_condition": 11104504640462.387,
+    "emits_covariance": true
+   },
+   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "met": true
+  },
+  "ill_conditioned_after_equilibration": {
+   "expect": {
     "local": "DOWNGRADED",
     "reason": "POORLY_SCALED_PARAMETERIZATION",
     "multistart": null
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    1953608267.2600763,
-    0.00010418095871760168
+    1.0,
+    0.5,
+    -0.25,
+    0.125,
+    -0.0625
    ],
    "local": {
     "claim": "DOWNGRADED",
     "refusals": [],
     "downgrades": [
      "GLOBAL_UNIQUENESS_NOT_ASSESSED",
+     "NONLINEAR_WITHIN_2_SD",
      "POORLY_SCALED_PARAMETERIZATION"
     ],
     "uniqueness": "NOT_ASSESSED",
-    "nonlinearity_index": 2.6902124972139063e-09,
-    "jacobian_condition": 3.474334899883916,
-    "raw_jacobian_condition": 11104504640448.625,
+    "nonlinearity_index": 0.23112665608544858,
+    "jacobian_condition": 43636358.495212354,
+    "raw_jacobian_condition": 43977070.00374909,
     "emits_covariance": true
    },
-   "identifiability": "PARAMETERS_IDENTIFIABLE",
+   "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
    "met": true
   },
   "weak_identification": {
@@ -428,17 +454,17 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    -1.09836989415343,
-    0.5086021810410664
+    -1.0983729080258158,
+    0.5086024816770334
    ],
    "local": {
     "claim": "SUPPORTED",
     "refusals": [],
     "downgrades": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 7.30251192848641e-10,
-    "jacobian_condition": 1174.0086394350649,
-    "raw_jacobian_condition": 5943.284949975456,
+    "nonlinearity_index": 1.2572494900719988e-06,
+    "jacobian_condition": 1174.0086394498992,
+    "raw_jacobian_condition": 5943.284950049521,
     "emits_covariance": true
    },
    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
@@ -452,17 +478,17 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    -1.09836989415343,
-    0.5086021810410664
+    -1.0983729080258158,
+    0.5086024816770334
    ],
    "local": {
     "claim": "SUPPORTED",
     "refusals": [],
     "downgrades": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 7.30251192848641e-10,
-    "jacobian_condition": 1174.0086394350649,
-    "raw_jacobian_condition": 5943.284949975456,
+    "nonlinearity_index": 1.2572494900719988e-06,
+    "jacobian_condition": 1174.0086394498992,
+    "raw_jacobian_condition": 5943.284950049521,
     "emits_covariance": true
    },
    "identifiability": "PARAMETERS_NOT_IDENTIFIABLE",
@@ -500,8 +526,8 @@
      0.17183626080798606
     ],
     "route_mean": [
-     -1.09836989415343,
-     0.5086021810410664
+     -1.0983729080258158,
+     0.5086024816770334
     ]
    },
    "met": true
@@ -515,8 +541,8 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    0.5454545454710565,
-    4.9999999999672164
+    0.5454545454710582,
+    4.999999999967214
    ],
    "local": {
     "claim": "REFUSED",
@@ -525,9 +551,9 @@
     ],
     "downgrades": [],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 3.5397533793002367e-09,
-    "jacobian_condition": 3.4743348998827694,
-    "raw_jacobian_condition": 4.050049956698993,
+    "nonlinearity_index": 3.438344720052555e-09,
+    "jacobian_condition": 3.4743348998831602,
+    "raw_jacobian_condition": 4.0500499566995005,
     "emits_covariance": false
    },
    "identifiability": "NONE (route refused)",
@@ -568,8 +594,8 @@
    },
    "calibration": "CALIBRATION_CONVERGED",
    "estimate": [
-    0.5454545457743123,
-    4.999999999507186
+    0.5454545454898075,
+    4.999999999957658
    ],
    "local": {
     "claim": "DOWNGRADED",
@@ -578,9 +604,9 @@
      "RESIDUALS_EXCEED_DECLARED_NOISE"
     ],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
-    "nonlinearity_index": 3.4226959044758587e-09,
-    "jacobian_condition": 3.4743348998842105,
-    "raw_jacobian_condition": 4.050049956700673,
+    "nonlinearity_index": 3.942179915839006e-10,
+    "jacobian_condition": 3.474334899883736,
+    "raw_jacobian_condition": 4.0500499567001835,
     "emits_covariance": true
    },
    "identifiability": "PARAMETERS_IDENTIFIABLE",
@@ -600,7 +626,9 @@
     "refusals": [
      "TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN"
     ],
-    "downgrades": [],
+    "downgrades": [
+     "GOODNESS_OF_FIT_UNDERPOWERED"
+    ],
     "uniqueness": "MULTISTART_NO_SECOND_MODE",
     "nonlinearity_index": 8.483880264975596e-12,
     "jacobian_condition": 1.0,

@@ -132,7 +132,11 @@ DIAGNOSTIC_EDITS = {
     "uniqueness_word": _diag(lambda d: d.update(uniqueness="SECOND_MODE_FOUND")),
     "rank": _diag(lambda d: d.update(jacobian_rank=1)),
     "condition": _diag(lambda d: d.update(jacobian_condition="inf")),
-    "raw_condition": _diag(lambda d: d.update(raw_jacobian_condition=1.0e300)),
+    # I-08 part A (batch 20), R-26: a huge RAW condition number no longer contradicts anything -- any caller
+    # produces one by restating a parameter in a smaller unit, and the route judges scaling on the
+    # equilibrated condition. What a record may still not do is fail to carry the number it records, so this
+    # edit removes the raw condition instead of inflating it. Same claim, on the rule that replaced it.
+    "raw_condition": _diag(lambda d: d.update(raw_jacobian_condition="nan")),
     "threshold_edited": _diag(lambda d: d["thresholds"].update(nonlinearity_refuse=1e9)),
     "negative_rise": _diag(lambda d: d.update(minimum_chi_square_rise=-3.0)),
     "near_bound": _diag(lambda d: d.update(near_bound=["theta1"])),

@@ -63,6 +63,19 @@ STATIONARITY_SD = 0.05
 AT_BOUND_RELATIVE = 1.0e-6
 NUMERICAL_CONDITION_LIMIT = 1.0 / math.sqrt(float(np.finfo(float).eps))
 PROBE_SD = 2.0
+#: R-26 (re-audit 2026-09-16, I-08 part A): the COLUMN-EQUILIBRATED condition number at which double-precision
+#: arithmetic alone moves the reported covariance by the nonlinearity tolerance this module already accepts.
+#: The relative error of a linear solve at condition kappa is of order eps * kappa^2;
+#: ``NUMERICAL_CONDITION_LIMIT`` is exactly where that reaches 1 -- where the covariance has no correct digits
+#: -- and is already the REFUSAL. The DOWNGRADE is where the same quantity reaches ``NONLINEARITY_DOWNGRADE``,
+#: so the limit is sqrt(0.10) / sqrt(eps): the two declared constants combined the only way the units allow,
+#: and no number chosen. It replaces the RAW condition number, which any caller moves by any factor by
+#: restating a parameter in a smaller unit -- a claim that moves under a unit change is not a claim about the
+#: evidence. The raw number is still RECORDED in ``raw_jacobian_condition``; it just no longer lowers a claim.
+#: Deliberately NOT in ``_thresholds()``: that map is serialized into every RouteDiagnostics and re-derived
+#: exactly on read-back, so a new key would refuse every record ever written under
+#: hybrid_uq.route_diagnostics/2. Stated as a residual in BATCH20_THRESHOLD_PROTOCOL.json.
+POORLY_SCALED_CONDITION_LIMIT = math.sqrt(NONLINEARITY_DOWNGRADE) * NUMERICAL_CONDITION_LIMIT
 
 #: CORE-001, preregistered in benchmarks/core_v4_false_confidence/BATCH1_THRESHOLD_PROTOCOL.json. The alpha is the
 #: one HELD_OUT_CHI_SQUARE_ALPHA already declares (class B); the variance ratio is class C: above 4 the residual
@@ -638,8 +651,14 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
             problems.append(f"a Jacobian of rank {rank} for {p} parameter(s) would have refused")
         if not condition <= NUMERICAL_CONDITION_LIMIT:
             problems.append(f"a Jacobian condition of {condition:.3g} would have refused")
-        if raw > NUMERICAL_CONDITION_LIMIT or math.isnan(raw):
+        # R-26: was `raw > NUMERICAL_CONDITION_LIMIT or isnan(raw)`, which made a unit choice a claim and a
+        # missing diagnostic a downgrade. The scaling downgrade now follows from the equilibrated condition, and
+        # a non-refused record without its raw condition is refused as a record that does not carry a number it
+        # claims to record -- the route computes it on every non-refused path.
+        if condition > POORLY_SCALED_CONDITION_LIMIT:
             downgrades.add(RouteReason.POORLY_SCALED_PARAMETERIZATION)
+        if math.isnan(raw):
+            problems.append("the raw Jacobian condition is not recorded")
         step = np.asarray(d.newton_step_in_sd, dtype=np.float64)
         if step.shape != (p,) or not np.all(np.isfinite(step)):
             problems.append(f"a Newton step of {len(step)} finite entries is required for {p} parameter(s)")
@@ -1104,6 +1123,41 @@ def _posterior_record_problems(post: LocalGaussianPosterior) -> list[str]:
 # ---------------------------------------------------------------------------
 # the route
 # ---------------------------------------------------------------------------
+def _invariant_basis(cov: "np.ndarray") -> tuple["np.ndarray", "np.ndarray"]:
+    """The ``(lam, vec)`` pair whose scaled columns are the UNIT-INVARIANT unit-Mahalanobis probe axes (R-16).
+
+    The route probed along ``sqrt(lam_k) * v_k`` from ``eigh(cov)`` in DECLARED units. Those directions have
+    Mahalanobis length 1, but a covariance's eigenvectors ROTATE under a per-parameter unit change, so the
+    tested directions moved with the units: the same model and data were SUPPORTED with a parameter in volts
+    and REFUSED (TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN) in millivolts.
+
+    The invariant basis is the CORRELATION eigenbasis scaled by the marginal standard deviations. With
+    ``D = diag(sd)`` and ``R = D^-1 cov D^-1``, take ``mu_k, w_k = eigh(R)`` and return the pair whose scaled
+    column is ``delta_k = sqrt(mu_k) * (sd * w_k)``. Two facts make it the right basis:
+
+    * **It is the same points.** Under ``z -> S z`` for diagonal ``S`` -- a per-parameter unit change --
+      ``cov -> S cov S`` and ``D -> S D``, so ``R`` is INVARIANT and ``w_k`` with it. Then
+      ``delta_k -> S delta_k``: the direction set transforms covariantly, naming the same points in parameter
+      space whatever unit each parameter is declared in.
+    * **Its Mahalanobis length is exactly 1.** ``delta^T cov^-1 delta = mu_k * w_k^T (D cov^-1 D) w_k
+      = mu_k * w_k^T R^-1 w_k = mu_k * (1 / mu_k) = 1``, so a Gaussian still predicts the same chi-square
+      rise along every probe and ``PROBE_SD ** 2`` is still what it is compared with.
+
+    For an UNCORRELATED posterior the two bases are identical -- ``R = I`` gives ``mu_k = 1`` and
+    ``w_k = e_k``, so ``delta_k = sd_k e_k``, which is what ``sqrt(cov_kk) e_k`` already was. Only a
+    correlated posterior's probes move, and they move to the invariant ones.
+
+    Returned as a ``(lam, vec)`` pair rather than the directions themselves so ``_probe_directions`` keeps
+    its signature and its meaning: it is handed the invariant basis instead of ``eigh(cov)``'s.
+    """
+    sd = np.sqrt(np.clip(np.diag(cov), 0.0, None))
+    safe = np.where(sd > 0.0, sd, 1.0)
+    correlation = cov / np.outer(safe, safe)
+    correlation = 0.5 * (correlation + correlation.T)
+    mu, w = np.linalg.eigh(correlation)
+    return mu, sd[:, None] * w
+
+
 def _probe_directions(lam: np.ndarray, vec: np.ndarray) -> list[np.ndarray]:
     """Unit-Mahalanobis probe directions: every principal axis, then every diagonal between two of them.
 
@@ -1269,7 +1323,9 @@ def local_gaussian_posterior(
     if structural is not None:
         return _refused(calibration, observations, structural, sensitivity_digest=sensitivity.digest, evaluations=evaluations,
                         rank=rank, condition=condition, raw_condition=raw_condition)
-    if raw_condition > NUMERICAL_CONDITION_LIMIT:
+    # R-26: judged on the EQUILIBRATED condition, which is scale-free. The raw condition stays recorded below
+    # and no longer lowers a claim: any caller moves it by any factor by restating a parameter in a smaller unit.
+    if condition > POORLY_SCALED_CONDITION_LIMIT:
         downgrades.append(RouteReason.POORLY_SCALED_PARAMETERIZATION)
     scaled_cov = (Vt.T / S ** 2) @ Vt
     cov = scaled_cov / np.outer(norms, norms)
@@ -1318,7 +1374,9 @@ def local_gaussian_posterior(
         values = evaluate(forward, to_natural(z, transforms), keys, units, references)
         return None if values is None else float(np.sum(((values - observed) / sigma) ** 2))
 
-    lam, vec = np.linalg.eigh(cov)
+    # R-16: the probe basis is the CORRELATION eigenbasis scaled by the marginal sds, not eigh(cov) in
+    # declared units. Identical for an uncorrelated posterior; invariant under a unit change for any other.
+    lam, vec = _invariant_basis(cov)
     worst, skipped, min_rise, not_minimum, evaluated = 0.0, 0, math.inf, False, 0
     expected = PROBE_SD ** 2
     for delta in _probe_directions(lam, vec):

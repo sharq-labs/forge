@@ -15,6 +15,11 @@ The audited reproductions are I-15's conformance cases
 as strict xfails in batch 6's `5a08eef` and confirmed at this batch's baseline to fail on their own
 assertions. What is here is the rule each fix stands on, stated where it can be read alone. Preregistered in
 `benchmarks/core_v4_false_confidence/BATCH20_THRESHOLD_PROTOCOL.json`.
+
+The eight reproductions that reproduced were committed as strict xfails in `c2976119`, before any of part A
+was written, and each was confirmed there to fail on its own assertion. The markers came off in the
+implementing commit. The other three held already and were unmarked at preregistration, each with a comment
+above it saying why it is kept.
 """
 
 from __future__ import annotations
@@ -22,6 +27,8 @@ from __future__ import annotations
 import dataclasses
 import math
 
+import false_confidence_cases as F
+import hybrid_synthetic as S
 import numpy as np
 import pytest
 
@@ -35,23 +42,16 @@ def _module():
     return module
 
 
-def _cases():
-    import pathlib
-    import sys
-
-    root = pathlib.Path(__file__).resolve().parents[1] / "tests" / "hybrid_uq"
-    if str(root) not in sys.path:
-        sys.path.insert(0, str(root))
-    import false_confidence_cases as F
-
-    return F
-
-
 def _local(problem, multistart=None):
+    """``multistart=False`` runs the route with no uniqueness search, the way the audit's own cases do."""
     from engcore.hybrid_uq import local_gaussian_posterior
 
+    if multistart is False:
+        policy = None
+    else:
+        policy = multistart if multistart is not None else MultistartPolicy()
     return local_gaussian_posterior(problem.calibrate(), problem.observations, problem.forward,
-                                    multistart=multistart if multistart is not None else MultistartPolicy())
+                                    multistart=policy)
 
 
 def _basis(module, cov):
@@ -68,7 +68,6 @@ CORRELATED = np.array([[4.0, 1.8], [1.8, 1.0]])
 # =====================================================================
 # R-16: the probe basis
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r16_every_probe_axis_has_mahalanobis_length_one():
     """The property the old basis had and the new one must keep: a Gaussian predicts the same rise on each."""
     module = _module()
@@ -77,7 +76,6 @@ def test_r16_every_probe_axis_has_mahalanobis_length_one():
         assert float(delta @ inverse @ delta) == pytest.approx(1.0, rel=1e-12)
 
 
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r16_the_basis_is_the_same_points_under_a_diagonal_reparameterization():
     """R-16's rule. Under z -> S z the basis must transform to S @ delta: the SAME points in parameter space.
 
@@ -95,7 +93,6 @@ def test_r16_the_basis_is_the_same_points_under_a_diagonal_reparameterization():
                    for other in restated), (want, restated)
 
 
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r16_an_uncorrelated_posterior_keeps_exactly_the_probes_it_had():
     """The fix moves a correlated posterior's probes and nothing else: at R = I the two bases are identical."""
     module = _module()
@@ -108,10 +105,8 @@ def test_r16_an_uncorrelated_posterior_keeps_exactly_the_probes_it_had():
         assert any(np.allclose(want, other, atol=1e-12) or np.allclose(want, -other, atol=1e-12) for other in got), k
 
 
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r16_restating_a_unit_moves_no_dimensionless_diagnostic():
     """The audited case, with every dimensionless diagnostic checked rather than two of them."""
-    F = _cases()
     declared = _local(F.coupled_off_axis_flat_tail(1.0, "B20_declared"))
     restated = _local(F.coupled_off_axis_flat_tail(2.0, "B20_restated"))
     assert restated.claim is declared.claim, (declared.claim.value, restated.claim.value)
@@ -127,7 +122,6 @@ def test_r16_restating_a_unit_moves_no_dimensionless_diagnostic():
 # quietly stops being computed.
 def test_r16_the_raw_condition_number_is_the_one_diagnostic_that_must_move():
     """It is unit-dependent by definition, and recording it is the whole of what it is for."""
-    F = _cases()
     declared = _local(F.rescaled_slope(1.0, "B20_volt"))
     restated = _local(F.rescaled_slope(1.0e9, "B20_nanovolt"))
     assert float(restated.diagnostics.raw_jacobian_condition) > 1.0e3 * float(
@@ -138,7 +132,6 @@ def test_r16_the_raw_condition_number_is_the_one_diagnostic_that_must_move():
 # =====================================================================
 # R-26: the scaling downgrade
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r26_the_limit_is_the_two_constants_this_module_already_declares():
     """eps*kappa^2 = 1 is the refusal; eps*kappa^2 = NONLINEARITY_DOWNGRADE is the downgrade. No new number."""
     module = _module()
@@ -150,10 +143,8 @@ def test_r26_the_limit_is_the_two_constants_this_module_already_declares():
     assert float(limit) < module.NUMERICAL_CONDITION_LIMIT, "the downgrade sits below the refusal"
 
 
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r26_a_smaller_unit_no_longer_downgrades_an_exactly_gaussian_result():
     """The audited case: raw condition 3.19e9, equilibrated 3.47, exactly Gaussian."""
-    F = _cases()
     restated = _local(F.rescaled_slope(1.0e9, "B20_nanovolt_claim"))
     assert float(restated.diagnostics.jacobian_condition) < 1.0e3
     assert RouteReason.POORLY_SCALED_PARAMETERIZATION not in restated.diagnostics.downgrades, (
@@ -161,10 +152,43 @@ def test_r26_a_smaller_unit_no_longer_downgrades_an_exactly_gaussian_result():
     assert restated.claim is RouteClaim.SUPPORTED, [r.value for r in restated.reasons]
 
 
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
+def _ill_conditioned_quartic():
+    """A quartic fitted over a 10% range of x: equilibrated condition 4.36e7, which no unit change repairs.
+
+    Above `POORLY_SCALED_CONDITION_LIMIT` (2.12e7) and below `NUMERICAL_CONDITION_LIMIT` (6.71e7), so it
+    lands in the band the corrected downgrade is for. The monomial basis is nearly collinear on that
+    interval whatever each coefficient is measured in -- a real defect of the parameterization, which is
+    what distinguishes it from R-26's case. The same problem is the `ill_conditioned_after_equilibration`
+    row of `benchmarks/core_v2_hybrid_uq/FAILURE_CASES.json`.
+    """
+    def quartic(t, x):
+        x = np.asarray(x, dtype=float)
+        return sum(float(t[k]) * x ** k for k in range(5))
+
+    x = np.linspace(1.0, 1.1, 40)
+    truth = (1.0, 0.5, -0.25, 0.125, -0.0625)
+    return S.Problem("B20_ill_conditioned_quartic", quartic, x, truth, 0.01,
+                     tuple(-1.0e6 for _ in range(5)), tuple(1.0e6 for _ in range(5)), truth,
+                     observed=quartic(truth, x))
+
+
+# ADDED while running batch 20's guard mutations, not preregistered. B20h -- the emission rule deleted
+# outright -- SURVIVED: every other R-26 test either asserts the downgrade is ABSENT on a well-conditioned
+# fit or works on a hand-edited record, so nothing ran a genuinely ill-conditioned problem through the route
+# and read what it said. A surviving mutation is a finding and this is the guard it asked for.
+def test_r26_an_ill_conditioned_parameterization_is_downgraded_end_to_end():
+    module = _module()
+    post = _local(_ill_conditioned_quartic(), multistart=False)
+    condition = float(post.diagnostics.jacobian_condition)
+    assert module.POORLY_SCALED_CONDITION_LIMIT < condition < module.NUMERICAL_CONDITION_LIMIT, condition
+    assert RouteReason.POORLY_SCALED_PARAMETERIZATION in post.diagnostics.downgrades, (
+        [r.value for r in post.reasons])
+    # and it is the equilibrated number that carries it: the raw one is within a factor of two here
+    assert float(post.diagnostics.raw_jacobian_condition) < 2.0 * condition
+
+
 def test_r26_an_equilibrated_condition_above_the_limit_must_carry_the_downgrade():
     """Read-back, both ways: the rule the route emits by is the rule a record is read by."""
-    F = _cases()
     module = _module()
     good = _local(F.rescaled_slope(1.0, "B20_readback")).diagnostics
     assert RouteReason.POORLY_SCALED_PARAMETERIZATION not in good.downgrades
@@ -178,10 +202,8 @@ def test_r26_an_equilibrated_condition_above_the_limit_must_carry_the_downgrade(
     assert RouteReason.POORLY_SCALED_PARAMETERIZATION in carried.downgrades
 
 
-@pytest.mark.xfail(strict=True, reason="I-08 part A not implemented yet (batch 20 preregistration)")
 def test_r26_a_large_raw_condition_alone_may_not_be_read_back_as_a_downgrade():
     """The other direction of the same rule: the record may not carry a reason its numbers do not imply."""
-    F = _cases()
     good = _local(F.rescaled_slope(1.0e9, "B20_readback_raw")).diagnostics
     assert float(good.raw_jacobian_condition) > 1.0e8
     with pytest.raises(HybridUQError):
@@ -195,7 +217,6 @@ def test_r26_a_large_raw_condition_alone_may_not_be_read_back_as_a_downgrade():
 # it claims to record. The test pins the refusal; the audit document states which rule refuses it.
 def test_r26_a_record_that_does_not_carry_its_raw_condition_is_refused():
     """It was a forced downgrade, which is a statement about the evidence for a fact about the record."""
-    F = _cases()
     good = _local(F.rescaled_slope(1.0, "B20_readback_nan")).diagnostics
     with pytest.raises(HybridUQError):
         dataclasses.replace(good, raw_jacobian_condition=math.nan)

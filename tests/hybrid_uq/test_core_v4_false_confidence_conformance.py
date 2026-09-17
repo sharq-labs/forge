@@ -370,7 +370,8 @@ def test_r15_moving_a_declared_bound_across_a_probe_radius_does_not_raise_the_cl
 # ---------------------------------------------------------------------------
 # R-16, R-26: the same request in another unit (I-08)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-16 open until I-08: probe directions come from eigh(cov) in declared units")
+# Closed by I-08 part A (batch 20): the probe basis is the CORRELATION eigenbasis scaled by the marginal
+# sds, which is invariant under a per-parameter unit change. xfail at 5a08eef.
 def test_r16_restating_a_parameter_in_another_unit_changes_no_claim_and_no_diagnostic():
     """R-16: the same model and data, SUPPORTED in one unit and REFUSED (TAIL_HEAVIER) in another."""
     declared = _local(F.coupled_off_axis_flat_tail(1.0, "R16_declared"))
@@ -385,7 +386,9 @@ def test_r16_restating_a_parameter_in_another_unit_changes_no_claim_and_no_diagn
             f"{label} is dimensionless and moved from {a:.6g} to {b:.6g} under a pure unit restatement")
 
 
-@pytest.mark.xfail(strict=True, reason="R-26 open until I-08: POORLY_SCALED is judged on the raw condition number")
+# Closed by I-08 part A (batch 20): the scaling downgrade follows from the equilibrated condition number
+# against sqrt(NONLINEARITY_DOWNGRADE) * NUMERICAL_CONDITION_LIMIT, and the raw condition is recorded only.
+# xfail at 5a08eef.
 def test_r26_a_smaller_unit_does_not_downgrade_an_exactly_gaussian_result():
     """R-26: a slope in nanovolts (raw condition 3.19e9, equilibrated 3.47) downgrades an exact Gaussian."""
     declared = _local(F.rescaled_slope(1.0, "R26_volt"))

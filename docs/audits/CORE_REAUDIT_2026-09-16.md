@@ -1192,3 +1192,85 @@ answer for a checker whose weakening would let a guard whose reach nobody states
 runs. These were not by-design failures and were not treated as such.
 
 **Open decisions.** None.
+
+### Batch 20 — I-08 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-08 | **PARTIAL** (part A of two) | `c2976119` (preregistration + 8 strict xfails), this commit | this part does nothing about R-13, R-14 or R-15: each probed direction is still bounded ALONE rather than as a matrix, the tails still run along the p axes only, and a tail probe beyond a declared bound is still dropped uncounted — part B owns all three, and the invariant basis is what its extreme-eigenvector probes will be built from; `POORLY_SCALED_CONDITION_LIMIT` is deliberately NOT in the serialized thresholds map, so a record cannot be checked against the limit that was in force when it was written (every other threshold this route uses is recorded; a schema bump is I-30's if the map is ever reopened); `hybrid_uq/predictive.py` builds its own probe directions and is not part of this part, so whether the PREDICTIVE probes have the same unit dependence is not measured here and is not claimed fixed; and `eps * kappa^2` is an order-of-magnitude bound on a solve's relative error, so the limit is where that bound reaches the module's own accepted tolerance, not a claim that the covariance's error IS 0.10 there |
+
+**One claim, two problems.** The route's verdict must not depend on the units a parameter is declared in.
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-16 | **FIXED** | The probe basis is the CORRELATION eigenbasis scaled by the marginal standard deviations: with `D = diag(sd)` and `R = D⁻¹ cov D⁻¹`, the p unit-Mahalanobis axes are `δ_k = √μ_k · (sd · w_k)` for `μ_k, w_k = eigh(R)`. **It is the same points.** Under `z → S z` for diagonal `S` — a per-parameter unit change — `cov → S cov S` and `D → S D`, so `R` is INVARIANT and `w_k` with it; then `δ_k → S δ_k`, which names the same points in parameter space whatever unit each parameter is declared in. The old `√λ_k · v_k` from `eigh(cov)` also had Mahalanobis length 1, but a covariance's eigenvectors ROTATE under a diagonal rescaling, which is how the same model and data were SUPPORTED with a parameter in volts and REFUSED (`TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN`) in millivolts. **The new basis keeps the length exactly:** `δᵀcov⁻¹δ = μ_k · w_kᵀ R⁻¹ w_k = μ_k · (1/μ_k) = 1`, so `PROBE_SD²` is still what a rise is compared with. **And it changes nothing for an uncorrelated posterior:** `R = I` gives `μ_k = 1`, `w_k = e_k`, `δ_k = sd_k e_k` — exactly what `√cov_kk · e_k` already was. Only a correlated posterior's probes move, and they move to the invariant ones. Both the nonlinearity probes and the tail probes use it. |
+| R-26 | **FIXED** | `POORLY_SCALED_PARAMETERIZATION` is emitted from the COLUMN-EQUILIBRATED condition number and never from the raw one, and the raw number stays RECORDED in `raw_jacobian_condition` without lowering a claim. **The limit is derived from two constants this module already declares.** The relative error of a linear solve at condition κ is of order `eps·κ²`; `NUMERICAL_CONDITION_LIMIT = 1/√eps` is exactly where that reaches 1 — where the covariance has no correct digits — and is already the refusal. The downgrade is where the same quantity reaches the tolerance this module already accepts for a wrong chi-square rise, `NONLINEARITY_DOWNGRADE = 0.10`: `κ = √0.10/√eps = √(NONLINEARITY_DOWNGRADE)·NUMERICAL_CONDITION_LIMIT = 21 221 686.1426478`. No number is chosen; it is the two declared constants combined the only way the units allow. **Why the raw number may not lower a claim:** any caller moves it by any factor by restating a parameter in a smaller unit, and nothing about the evidence moves with it — a claim that moves under a unit change is not a claim about the evidence. It is still worth recording, because it tells a reader their parameterization is badly scaled for a solver that does not equilibrate, and this one does. That is the strictness rule applied in the direction it points: what is recorded and not claimed is recorded. **The read-back rule moved with the emission rule**, and a non-refused record whose `raw_jacobian_condition` is NaN is now refused as a record that does not carry a number it claims to record — where before a missing diagnostic FORCED a downgrade, which is a statement about the evidence for a fact about the record. |
+
+**Compatibility.** No V1-frozen symbol touched, no public signature changed, no serialized field added, removed,
+renamed or reordered, and `_thresholds()` is unchanged — so every record written under
+`hybrid_uq.route_diagnostics/2` still reads back, unless its `POORLY_SCALED_PARAMETERIZATION` came from a raw
+condition number, which is the claim this rule corrects. `_probe_directions(lam, vec)` keeps its signature and
+its meaning (it is handed the invariant basis instead of `eigh(cov)`'s), which also keeps
+`hybrid_uq/predictive.py`'s pinned call site — mutation anchor G33o — byte-identical.
+`POORLY_SCALED_CONDITION_LIMIT` is a new module-level name, which is additive.
+
+**Existing expectations moved, four of them, none weakened.**
+
+* `tests/hybrid_uq/test_hybrid_uq_local_route.py::test_a_poorly_scaled_parameterization_is_downgraded_not_silently_trusted`
+  asserted the downgrade on R-26's own case, and that assertion WAS the finding: the case is a pure unit
+  choice (raw 3.19e9, equilibrated 3.474, exactly Gaussian). It is now
+  `test_a_unit_choice_is_recorded_and_never_downgrades_a_well_conditioned_fit`, and it still asserts that the
+  raw condition is computed and recorded — a number nobody reads is a number that stops being computed.
+* `tests/hybrid_uq/test_audit_hybrid_local_route.py::_tight_nonlinear` put its bounds at ±1.5 posterior sd so
+  that every 2 sd probe left the box. With the invariant basis this correlated posterior (r = 0.552) is
+  probed CLOSER IN along its per-parameter axes — the smallest per-axis excursion is 0.9468 sd — so the
+  fixture's factor moves to 0.9 and every probe still leaves the box. The claim is unchanged: a route whose
+  probes all left the bounds emits no covariance. It is the FIXTURE that followed the basis, not the
+  assertion. The same fixture carries
+  `test_audit_hybrid_records.py::test_huq09_a_legacy_route_with_every_probe_skipped_and_nonlinearity_zero_is_refused`.
+* `test_audit_hybrid_records.py`'s `DIAGNOSTIC_EDITS["raw_condition"]` inflated the raw condition to 1e300 and
+  expected a refusal. A huge raw condition no longer contradicts anything. The edit now REMOVES the raw
+  condition instead, which is still refused — same claim, on the rule that replaced it.
+* I-15's two conformance cases for R-16 and R-26 were strict xfails and now pass, so their markers came off
+  with a line naming the fix, which is the ratchet I-15 is for.
+
+**Committed evidence regenerated.** `benchmarks/core_v2_hybrid_uq/FAILURE_CASES.json`, all cases met.
+`poorly_scaled_parameterization`'s declared expectation is restated from DOWNGRADED /
+POORLY_SCALED_PARAMETERIZATION to SUPPORTED: that adversarial case was only ever adversarial about its units,
+which is R-26 stated as an artifact rather than as a sentence. So the downgrade would have been left with no
+end-to-end case, and one was added — `ill_conditioned_after_equilibration`, a quartic fitted over a 10% range
+of x (equilibrated condition 4.36e7, inside the band between the new limit and the refusal), which no unit
+change repairs because the monomial basis is nearly collinear on that interval whatever each coefficient is
+measured in. Both rows are pinned in `test_hybrid_uq_committed_evidence.py` so neither half of the correction
+can be dropped silently. `KINETICS_K2.json` carries `POORLY_SCALED_PARAMETERIZATION` and is NOT regenerated
+(its MULTI multistart alone is ~76 min of CSTR solves); its SUPERSEDED marker stands and this rule is one
+more reason it is superseded.
+
+**Guard mutations, and the three findings they produced.** `BATCH20_MUTATIONS.log`: **11 of 11 KILLED**,
+control green. Three survived on the first run and each survival was informative rather than a mis-aimed test.
+
+* **B20d** (the marginal sds dropped from the scaling) survived the uncorrelated-posterior guard — and
+  rightly: for a DIAGONAL covariance the two formulas COINCIDE, which is the property that guard exists to
+  pin and exactly the reason it cannot see this mutation. Repointed at the invariance guard, where the
+  mutation is the defect.
+* **B20e** first sent the tail probes to the declared COORDINATE axes and survived. That is a correct result
+  and it corrected the mutation: `sd_k · e_k` is ITSELF invariant under a per-parameter rescaling, so the
+  defect is `eigh(cov)`, not being off the eigenbasis. Rewritten to restore `eigh(cov)` for the tails alone.
+* **B20h** (the emission rule deleted outright) survived because every other R-26 guard either asserts the
+  downgrade is ABSENT on a well-conditioned fit or works on a hand-edited record — nothing ran a genuinely
+  ill-conditioned problem through the route and read what it said.
+  `test_r26_an_ill_conditioned_parameterization_is_downgraded_end_to_end` is the guard that finding asked for,
+  on the same quartic the new FAILURE_CASES row uses. It is not preregistered and says so in its own comment.
+
+The 10 pinned mutations on `local_gaussian.py` were re-run isolated and all 10 are still KILLED
+(`BATCH20_PINNED_MUTATIONS.log`), control green.
+
+**Verification.** FAST tier 6711 passed, 5 skipped, 3 xfailed, 18 failed (the by-design 18, unchanged — the
+two xfails that became passes are I-15's R-16 and R-26 cases, which is why the xfail count fell from 5 to 3).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None.

@@ -20,6 +20,7 @@ from engcore.hybrid_uq import (
     local_gaussian_posterior,
     reconstruct_local_sensitivity,
 )
+from engcore.hybrid_uq.local_gaussian import POORLY_SCALED_CONDITION_LIMIT
 from engcore.inference import CalibrationStatus, IdentifiabilityStatus
 
 
@@ -166,12 +167,29 @@ def test_a_thin_correlated_ridge_is_exact_where_a_coarse_bounds_grid_aliases():
     assert np.all(np.abs(np.asarray(post.inference_point) - mu) / sd < 1e-4)
 
 
-def test_a_poorly_scaled_parameterization_is_downgraded_not_silently_trusted():
+def test_a_unit_choice_is_recorded_and_never_downgrades_a_well_conditioned_fit():
+    """This asserted POORLY_SCALED_PARAMETERIZATION on this case, and that was R-26.
+
+    The case is a pure UNIT choice: the same straight line with its intercept in units of 1e-9 and its slope
+    in units of 1e4. Its raw condition number is 3.19e9 and its column-equilibrated condition number is
+    3.474 -- the fit is exactly Gaussian and perfectly well conditioned for a solver that equilibrates, which
+    this one does. Any caller produces a raw condition number of any size by restating a parameter in a
+    smaller unit, so a claim that follows from it is not a claim about the evidence. I-08 part A (batch 20)
+    moved the downgrade onto the equilibrated condition number against
+    `sqrt(NONLINEARITY_DOWNGRADE) * NUMERICAL_CONDITION_LIMIT`, and left the raw number RECORDED.
+
+    So the claim here is the corrected one, and it is not weaker: the raw condition is still computed and
+    still recorded (a number nobody reads is a number that stops being computed), the scaling downgrade is
+    NOT emitted for a well-conditioned fit, and the downgrade that replaced it is exercised where it can be
+    stated exactly -- on a record whose equilibrated condition is above the limit, in
+    `tests/test_core_scientific_audit_batch20.py`.
+    """
     P = S.Problem("poorly_scaled", lambda t, x: t[0] * 1e-9 + t[1] * 1e4 * x, np.linspace(0.0, 1.0, 12), (2e9, 1e-4), 0.05,
                   (0.0, -1.0), (1e10, 1.0), (1e9, 0.0))
     _, post = _route(P, multistart=None)
     assert post.diagnostics.raw_jacobian_condition > post.diagnostics.jacobian_condition * 1e6
-    assert RouteReason.POORLY_SCALED_PARAMETERIZATION in post.diagnostics.downgrades
+    assert post.diagnostics.jacobian_condition < POORLY_SCALED_CONDITION_LIMIT
+    assert RouteReason.POORLY_SCALED_PARAMETERIZATION not in post.diagnostics.downgrades
 
 
 def test_no_residual_degrees_of_freedom_is_refused():

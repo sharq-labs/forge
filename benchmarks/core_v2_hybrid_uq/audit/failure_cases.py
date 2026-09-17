@@ -40,8 +40,36 @@ from engcore.inference import GridResolutionError, PosteriorGrid  # noqa: E402
 
 
 def poorly_scaled():
+    """A pure UNIT choice: the same straight line with its intercept in 1e-9 and its slope in 1e4.
+
+    R-26 (re-audit 2026-09-16): its raw condition number is 3.19e9 and its column-equilibrated condition
+    number is 3.474. The fit is exactly Gaussian and perfectly well conditioned for a solver that
+    equilibrates, which this one does -- so this case was never adversarial about anything but its units,
+    and its declared expectation below is restated from DOWNGRADED to SUPPORTED.
+    """
     return S.Problem("poorly_scaled", lambda t, x: t[0] * 1e-9 + t[1] * 1e4 * x, np.linspace(0.0, 1.0, 12), (2e9, 1e-4), 0.05,
                      (0.0, -1.0), (1e10, 1.0), (1e9, 0.0))
+
+
+def ill_conditioned_after_equilibration():
+    """R-26's replacement: a quartic fitted over a 10% range of x, which NO unit change can repair.
+
+    Five parameters over x in [1.0, 1.1]. The column-equilibrated condition number of the weighted Jacobian
+    is 4.36e7 -- above POORLY_SCALED_CONDITION_LIMIT (2.12e7, where eps*kappa^2 reaches the route's own
+    nonlinearity tolerance) and below NUMERICAL_CONDITION_LIMIT (6.71e7, the refusal), so it lands in the
+    band the corrected downgrade is for. This is a real defect of the parameterization and not a statement
+    about anybody's units: the monomial basis is nearly collinear on that interval whatever each coefficient
+    is measured in.
+    """
+    def quartic(t, x):
+        x = np.asarray(x, dtype=float)
+        return sum(float(t[k]) * x ** k for k in range(5))
+
+    x = np.linspace(1.0, 1.1, 40)
+    truth = (1.0, 0.5, -0.25, 0.125, -0.0625)
+    return S.Problem("ill_conditioned_after_equilibration", quartic, x, truth, 0.01,
+                     tuple(-1.0e6 for _ in range(5)), tuple(1.0e6 for _ in range(5)), truth,
+                     observed=quartic(truth, x))
 
 
 CASES = [
@@ -58,7 +86,13 @@ CASES = [
      {"local": "REFUSED", "reason": "SECOND_MODE_FOUND", "rebuild": "GRID_REBUILT_FROM_LOCAL_COVARIANCE"}),
     ("log_parameterization_of_a_linear_model", lambda: S.log_parameterization("log"), None,
      {"local": "REFUSED", "reason": "NONLINEAR_BEYOND_LOCAL_GAUSSIAN"}),
+    # R-26 (I-08 part A, batch 20): restated. This case's only defect was its units, and a claim that moves
+    # under a unit change is not a claim about the evidence. The scaling downgrade now follows from the
+    # column-equilibrated condition number, which here is 3.474.
     ("poorly_scaled_parameterization", poorly_scaled, None,
+     {"local": "SUPPORTED"}),
+    # and the case the corrected downgrade is actually for, so the band keeps a live end-to-end case
+    ("ill_conditioned_after_equilibration", ill_conditioned_after_equilibration, None,
      {"local": "DOWNGRADED", "reason": "POORLY_SCALED_PARAMETERIZATION", "multistart": None}),
     ("weak_identification", S.weak_identification, None,
      {"local": "SUPPORTED", "identifiability": "PARAMETERS_NOT_IDENTIFIABLE"}),
