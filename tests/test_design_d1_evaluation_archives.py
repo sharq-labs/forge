@@ -29,7 +29,14 @@ from engcore.scientific.errors import (
 )
 from engcore.scientific.ir.objectives import ObjectiveDefinition, ObjectiveDirection
 from engcore.scientific.results.provenance import ProvenanceRecord
+from engcore.scientific.models.definition import RangeCondition, ValidityDomain
 from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.validation import (
+    ValidationCheck,
+    ValidationLevel,
+    ValidationOutcome,
+    ValidationReport,
+)
 from engcore.scientific.twins.definition import TwinReference
 from engcore.scientific.units.quantity import Quantity
 
@@ -69,11 +76,30 @@ def _result(
         twin=twin,
         design_space=design_space,
     )
+    # R-44 (re-audit 2026-09-16, I-21 part B): these results now stand behind their own numbers -- a named
+    # model, assessed IN_DOMAIN, and a validation report that established a level with nothing left unrun.
+    # They used to name no model and carry no validation at all, while every evaluation built from them was
+    # declared ELIGIBLE: exactly the shape the audit found production's Pareto front ranking. ELIGIBLE is now
+    # a claim about evidence, so a fixture that declares it has to carry some.
+    domain = ValidityDomain(conditions=(RangeCondition("range", maximum=Quantity(1.0e6, "m")),))
     return ScientificResult(
         result_id=result_id,
         values={"range": Quantity(range_m, "m"), "mass": Quantity(mass_kg, "kg")},
+        models=(("design.reference_response", "1"),),
+        validity={"design.reference_response": domain.assess({"range": Quantity(range_m, "m")})},
+        validation=ValidationReport(
+            checks=(
+                ValidationCheck(
+                    name="dimensional_consistency",
+                    outcome=ValidationOutcome.PASS,
+                    establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                    evidence=("fixture: range in metres, mass in kilograms",),
+                ),
+            )
+        ),
         provenance=ProvenanceRecord(
             run_id=f"run-{result_id}",
+            models=(("design.reference_response", "1"),),
             metadata={RESULT_BINDING_METADATA_KEY: binding.to_dict()},
         ),
     )

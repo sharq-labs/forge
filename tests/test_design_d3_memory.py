@@ -37,8 +37,15 @@ from engcore.scientific.ir.objectives import ObjectiveDefinition, ObjectiveDirec
 from engcore.scientific.ir.problem import ModelReference
 from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue
 from engcore.scientific.ir.variables import ScientificVariable, VariableKind, VariableRole
+from engcore.scientific.models.definition import RangeCondition, ValidityDomain
 from engcore.scientific.results.provenance import ProvenanceRecord
 from engcore.scientific.results.result import ScientificResult
+from engcore.scientific.results.validation import (
+    ValidationCheck,
+    ValidationLevel,
+    ValidationOutcome,
+    ValidationReport,
+)
 from engcore.scientific.twins.definition import ScientificTwin, TwinDatum, TwinKind
 from engcore.scientific.units.quantity import Quantity
 
@@ -136,14 +143,32 @@ def _make_evaluation(
         twin=candidate.twin,
         design_space=candidate.design_space,
     )
+    # R-44 (re-audit 2026-09-16, I-21 part B): the result stands behind its own numbers -- a named model,
+    # assessed IN_DOMAIN, and a validation report that established a level. It used to name no model and
+    # carry no validation while the evaluation built from it was declared ELIGIBLE, which is the shape the
+    # audit found production's selection ranking. ELIGIBLE is now a claim about evidence.
+    domain = ValidityDomain(conditions=(RangeCondition("gain", maximum=Quantity(1.0e6, "dimensionless")),))
     result = ScientificResult(
         result_id=f"result:{suffix}:{candidate.candidate_id}",
         values={
             "gain": Quantity(gain, "dimensionless"),
             "loss": Quantity(loss, "dimensionless"),
         },
+        models=(("design.reference_response", "1"),),
+        validity={"design.reference_response": domain.assess({"gain": Quantity(gain, "dimensionless")})},
+        validation=ValidationReport(
+            checks=(
+                ValidationCheck(
+                    name="dimensional_consistency",
+                    outcome=ValidationOutcome.PASS,
+                    establishes=ValidationLevel.DIMENSIONALLY_VALID,
+                    evidence=("fixture: gain and loss are dimensionless",),
+                ),
+            )
+        ),
         provenance=ProvenanceRecord(
             run_id=f"run:{suffix}:{candidate.candidate_id}",
+            models=(("design.reference_response", "1"),),
             metadata={RESULT_BINDING_METADATA_KEY: binding.to_dict()},
         ),
     )

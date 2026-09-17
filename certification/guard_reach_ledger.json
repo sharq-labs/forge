@@ -735,6 +735,43 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A result that does not carry the objective's metric at all is still ranked on the objective value, deliberately: the rule reaches as far as the record does, and refusing there would be a rule nobody can satisfy. The evaluation's own name-keyed guard is left in place -- it is correct when the name IS the metric -- so the two rules overlap rather than replace each other."
+  },
+  {
+   "problem": "R-44",
+   "title": "Unassessed candidates are ranked: best() admits NOT_RUN validation and design archives lack the CORE-015 rule",
+   "rule": "src/engcore/scientific/results/requirements.py",
+   "rule_symbol": "result_establishment_problems, called by ScientificExperiment._established and by DesignEvaluation.__post_init__; SelectionEligibility.RANKED_WITHOUT_ASSESSMENT and the ELIGIBLE rule in src/engcore/design/evaluation.py; _RANKABLE, _unassessed_refs and the `unassessed` field on both archives in src/engcore/design/archives.py, recomputed by each validate_against",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-21 part B (batch 43)",
+   "why": "REACHED, and this is the row where the reach of SELECTION is settled. The audit's 'library-only' describes `ScientificExperiment.best`, which still has no caller; what it also found is that the mechanism production DOES run -- the design Pareto and elite archives, through the MVR0 and MVR1 studies -- had no established-candidate rule at all and ranked every candidate on a caller's ELIGIBLE. Both paths now call one rule in the results layer, `DesignEvaluation` refuses ELIGIBLE over a result that does not stand behind its own numbers, and the two studies declare RANKED_WITHOUT_ASSESSMENT, which their archives record against the members it applies to. The studies are exercised end to end by their own suites and by this batch's reference-study test.",
+   "entry_points": [
+    "engcore.systems.aerospace.multirotor.reference.run_reference_study (MVR0) and study.run_study (MVR1), through design.ParetoArchive.build and ScopedEliteArchive.build",
+    "engcore.design.evaluation.DesignEvaluation, on every candidate either study evaluates",
+    "engcore.design.memory.DesignMemoryEntry.from_evaluation"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch43.py::test_r44_the_reference_study_declares_what_it_did_not_assess",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_eligible_cannot_be_declared_over_an_unassessed_result",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_archive_records_the_members_it_ranked_without_assessment",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_elite_archive_records_it_too",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_edited_unassessed_list_is_refused_on_read",
+    "tests/systems/aerospace/test_multirotor_mvr0.py::test_small_reference_study_preserves_identity_and_scientific_boundaries",
+    "tests/systems/aerospace/test_multirotor_mvr1.py::test_target_failures_remain_eligible_and_pareto_uses_full_universe"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch43.py::test_r44_the_established_candidate_rule_lives_in_the_results_layer",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_a_candidate_with_no_verification_at_all_is_not_ranked",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_a_candidate_that_attained_a_level_and_left_a_check_unrun_is_not_ranked",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_a_candidate_with_an_empty_validation_report_is_not_ranked",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_inapplicable_check_does_not_make_a_candidate_unestablished",
+    "tests/test_core_scientific_audit_batch43.py::test_r44_an_archive_of_assessed_candidates_keeps_its_bytes"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "RANKED_WITHOUT_ASSESSMENT is still a caller's declaration, and nothing assesses a model that declares no validity domain -- declaring domains for the studies' models is their own work. The archives RECORD which members were ranked unassessed rather than refusing to build; refusing would delete those studies rather than correct them, which is the audit's own alternative. A D3 memory entry records the evaluation by reference, so the distinction lives on the evaluation and in the archive that ranked it, not on the entry; carrying it there too is deferred with the V4 inventory. And the rule requires at least one attained level, not a particular one: choosing which is a study's decision, for which `ValidationReport.require_level` exists."
   }
  ]
 }

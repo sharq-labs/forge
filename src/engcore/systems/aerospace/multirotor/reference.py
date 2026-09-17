@@ -468,7 +468,12 @@ def evaluate_reference_candidate(
         twin=twin.reference,
         design_space=design_space.reference,
         result=result,
-        eligibility=SelectionEligibility.ELIGIBLE,
+        # R-44 (re-audit 2026-09-16): this result records `validity_not_assessed` for every model
+        # it names -- MVR0's models are reference identities with no ValidityDomain, so there is no
+        # envelope to assess against -- and ELIGIBLE was a claim about evidence nobody gathered.
+        # The candidate is still compared; the label now says what was and was not assessed, and
+        # the Pareto and elite archives record which of their members it applies to.
+        eligibility=SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
         eligibility_reasons=(
             "reference analytic evaluation is available for D1 comparison; eligibility does not imply target satisfaction or physical feasibility",
         ),

@@ -78,7 +78,11 @@ def test_small_reference_study_preserves_identity_and_scientific_boundaries() ->
         assert candidate.twin.key in twin_keys
         assert evaluation.candidate.candidate_id == candidate.candidate_id
         assert evaluation.twin.key == candidate.twin.key
-        assert evaluation.eligibility is SelectionEligibility.ELIGIBLE
+        # R-44 (re-audit 2026-09-16, I-21 part B): RANKED_WITHOUT_ASSESSMENT, not ELIGIBLE. These
+        # results record `validity_not_assessed` for every model they name -- the study's models are
+        # reference identities with no validity domain -- and ELIGIBLE is now a claim about evidence.
+        # The candidates are still ranked; the archives record which members were never assessed.
+        assert evaluation.eligibility is SelectionEligibility.RANKED_WITHOUT_ASSESSMENT
         assert evaluation.result.convergence is ConvergenceState.NOT_APPLICABLE
         assert not evaluation.result.attained_levels
         assert evaluation.result.value("total_mass").magnitude_in("kg") > 0.0

@@ -65,15 +65,15 @@ class ExperimentBudget:
 
 
 def _established(evaluation: ScientificEvaluation) -> bool:
-    """CORE-015: the evaluation's result names a model and every model it names was assessed IN_DOMAIN."""
-    from ..models.definition import ValidityStatus
+    """CORE-015, and R-44: the one rule, which now lives in the results layer.
 
-    result = evaluation.result
-    models = tuple(getattr(result, "models", ()) or ())
-    validity = getattr(result, "validity", None) or {}
-    return bool(models) and all(
-        model_id in validity and validity[model_id].status is ValidityStatus.IN_DOMAIN for model_id, _version in models
-    )
+    It was two conditions here and none at all on the selection path production uses. Both now call
+    `result_establishment_problems`, which adds what finding 52 named: no NOT_RUN check, and at least one
+    attained level -- a result whose validation is `unverified_report()` used to be eligible and win.
+    """
+    from ..results.requirements import result_establishment_problems
+
+    return not result_establishment_problems(evaluation.result)
 
 
 def _declared_or_refuse(payload: Mapping[str, Any], key: str):

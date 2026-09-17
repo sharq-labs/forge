@@ -296,6 +296,54 @@ def _produced_names(problem: ScientificProblem) -> frozenset[str]:
     return frozenset(name for name in names if name)
 
 
+def result_establishment_problems(result) -> tuple[str, ...]:
+    """Why this result does not stand behind a number a selection would rank, or () when it does (R-44).
+
+    ONE RULE, TWO SELECTION PATHS. `ScientificExperiment.best` had its own version of this -- CORE-015's
+    `_established` -- and the design Pareto and elite archives, which are the selection production actually
+    runs, had none at all: their gate is a caller-set ELIGIBLE that never looked at the result. So a
+    production Pareto front ranked candidates that the library's own rule calls unestablished. The rule lives
+    here, in the results layer, because it is a statement about a RESULT and both paths need the same one.
+
+    Four conditions, and the last two are what finding 52 named:
+
+    * the result names at least one model -- a number no model claims is not a candidate for best;
+    * every named model was assessed IN_DOMAIN (CORE-015, unchanged);
+    * no validation check is NOT_RUN. That is evidence which was not gathered, which is exactly why
+      CORE-013 ranks NOT_RUN above PASS in a report's status. A NOT_APPLICABLE check is not this: there was
+      nothing there to gather, and it does not count against a candidate (R-45, batch 40);
+    * at least one validation level was attained. A result whose validation established nothing has nothing
+      standing behind the number being ranked -- `unverified_report()` is the audited case, and it won.
+
+    Which level is deliberately not specified: a caller who needs a particular one has
+    `ValidationReport.require_level`, and choosing it is a study's decision, not the core's.
+    """
+    from .validation import ValidationOutcome
+
+    problems: list[str] = []
+    models = tuple(getattr(result, "models", ()) or ())
+    validity = getattr(result, "validity", None) or {}
+    if not models:
+        problems.append("the result names no model, so nothing states what produced the number")
+    unassessed = sorted(
+        model_id for model_id, _version in models
+        if model_id not in validity or str(getattr(validity[model_id], "status", "")).rsplit(".", 1)[-1]
+        != "IN_DOMAIN"
+    )
+    if unassessed:
+        problems.append(f"model(s) {unassessed} were not assessed IN_DOMAIN for this result")
+    report = getattr(result, "validation", None)
+    unrun = sorted(
+        check.name for check in getattr(report, "checks", ()) or ()
+        if ValidationOutcome(check.outcome) is ValidationOutcome.NOT_RUN
+    )
+    if unrun:
+        problems.append(f"validation check(s) {unrun} did not run, so that evidence was not gathered")
+    if not (getattr(report, "attained_levels", None) or ()):
+        problems.append("the validation established no level at all, so nothing stands behind the number")
+    return tuple(problems)
+
+
 def _same_confidence_level(demanded: float, declared: float | None) -> bool:
     if declared is None:
         return False
@@ -312,6 +360,7 @@ __all__ = [
     "registered_validation_check_kinds",
     "report_with_requirement_checks",
     "requirement_checks",
+    "result_establishment_problems",
     "unmet_uncertainty_requirements",
     "unmet_validation_requirements",
     "unsatisfiable_validation_requirements",

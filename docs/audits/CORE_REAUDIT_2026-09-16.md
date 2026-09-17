@@ -2691,3 +2691,53 @@ record, which would refuse a result that does not carry the metric at all.
 `BATCH42_PINNED_MUTATIONS.log`: no pinned mutation targets these files.
 
 **Open decisions.** None.
+
+### Batch 43 — I-21 part B (the last part)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-21 | **DONE** (parts A–B) | `919f3981`, `12f53117` (A, R-41 and R-42), `286fcaae` (B preregistration + 12 strict xfails), this commit | `RANKED_WITHOUT_ASSESSMENT` is still a caller's declaration, and nothing assesses a model that declares no validity domain — declaring domains for the studies' models is their own work. A D3 memory entry records the evaluation by reference, so the distinction lives on the evaluation and in the archive that ranked it, not on the entry |
+
+**R-44 is FIXED and REACHED, and this is where the reach of *selection* is settled.** Two selection paths
+applied two different rules, and **the one with no production caller had the stricter one**: CORE-015 lived on
+`ScientificExperiment.best`, which nothing in src calls, while the mechanism production runs — the design
+Pareto and elite archives, through the MVR0/MVR1 studies — had no established-candidate rule at all.
+
+| Claim | Status | How |
+|---|---|---|
+| finding 52: a candidate with no verification at all | **FIXED** | `_established` looked only at validity, and OK requires only `is_usable`, which excludes nothing but FAIL — so a result whose validation is `unverified_report()` (status NOT_RUN, nothing attained) was eligible and **won on its objective** against a verified candidate. The shared rule adds both halves: no NOT_RUN check (evidence that was not gathered, which is why CORE-013 ranks it above PASS) and at least one attained level (something standing behind the number). A **NOT_APPLICABLE** check is not NOT_RUN and does not count against a candidate — that is the distinction batch 40 introduced, used here for the first time. |
+| one rule, two paths | **FIXED** | `result_establishment_problems` lives in the results layer because it is a statement about a *result*; `ScientificExperiment._established` and `DesignEvaluation` both call it, and it returns the reasons rather than a bare bool so a refusal can say what is missing. |
+| finding 84: ELIGIBLE never consulted the result | **FIXED** | `DesignEvaluation` refuses ELIGIBLE over a result that does not stand behind its own numbers, naming the problems and the alternative. |
+| the studies | **FIXED, by saying what they are** | MVR0's two models are reference identities with **no validity domain** — the results say so, on every evaluation — so refusing to rank them would delete the studies rather than correct them. The audit offers exactly two ways out and this batch takes both: where a domain exists, ELIGIBLE means it was assessed; where none exists, the new appended `SelectionEligibility.RANKED_WITHOUT_ASSESSMENT` is the label, deliberately not a synonym for eligible, and MVR0/MVR1 now declare it. |
+| the archives | **say which members they ranked unassessed** | A persisted archive does not carry its evaluations' labels, so the statement would have been lost at the moment the ranking became a record. Both archives gained a trailing `unassessed` field, filled by `build`, **recomputed by `validate_against`** (a stored list of references is not a verified claim — this module's own docstring), and serialized only when non-empty. |
+
+**Three mutations were repointed, and all three say the same thing about my own reproductions:** each audited
+case is caught by *two* of the new rules at once, so removing either left the other to catch it.
+`unverified_report()` fails the unrun-check rule *and* the attained-level rule; an archive round trip passes
+whether or not the unassessed list is recomputed, because `build` computes what the payload carries. The
+cases that pin the rules one at a time are a report that attained a level and left a comparison unrun, an
+empty report, and an **edited** payload.
+
+**Compatibility.** Additive: one new public function, one appended enum member, one trailing field with an
+empty default on each archive, written only when non-empty — so no schema version moves and an archive of
+fully assessed candidates keeps its bytes. No committed JSON carries a design or archive payload. Four in-tree
+fixtures moved and each is commented in place: the D1 and D3 result fixtures now name a model, assess it
+IN_DOMAIN and carry a validation report that establishes a level (they named **no** model and carried **no**
+validation while every evaluation built from them was declared ELIGIBLE — the audited shape again, in the test
+suite), and the MVR0/MVR1 expectations assert the new label. `design.memory` and MVR1's own gate accept both
+rankable labels.
+
+**Committed evidence.** Nothing moved.
+
+**Verification.** FAST tier 6996 passed, 5 skipped, 0 xfailed, 19 failed (the by-design set, unchanged — the
+new enum member is in `engcore.design`, which the V1/V2 snapshots do not cover). Expensive tier 528 passed,
+18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py` 6 passed;
+`tests/mutation_guards.py` untouched. Guard reach ledger clean over 23 guards, R-44 REACHED/FIXED.
+`tests/systems/aerospace` 43 passed; the D1 and D3 suites 25 passed.
+
+**Guard mutations.** `BATCH43_MUTATIONS.log`: **9 of 9 KILLED**, including the two controls — collapsing
+NOT_APPLICABLE into NOT_RUN (which would make a candidate unestablished for a check that had nothing to
+gather) and narrowing `_RANKABLE` back to ELIGIBLE alone (which would delete the studies rather than correct
+them). `BATCH43_PINNED_MUTATIONS.log`: no pinned mutation targets these files.
+
+**Open decisions.** None.

@@ -8,6 +8,8 @@ Two selection paths applied two different rules, and the one with no production 
 NOT_RUN, nothing attained -- wins on its objective against a verified candidate. And the mechanism production
 uses is the design Pareto and elite archives, whose gate is a caller-set ELIGIBLE that never consults
 `result.validity`, while every multirotor result records `validity_not_assessed` for both its models.
+
+Recorded as strict xfails in commit 286fcaae, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -93,25 +95,21 @@ def _experiment(*evaluations):
 # ---------------------------------------------------------------------------
 # one_established_candidate_rule_in_the_results_layer
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-44: the rule lives on ScientificExperiment, which nothing in src calls, and the results layer has none")
 def test_r44_the_established_candidate_rule_lives_in_the_results_layer():
     problems = _symbol("result_establishment_problems")
     established = _evaluation(1, 2.0).result
     assert problems(established) == (), problems(established)
     unverified = _evaluation(2, 2.0, validation=unverified_report()).result
     assert problems(unverified), "a result nobody verified is reported as established"
-    assert any("not_run" in reason.lower() or "NOT_RUN" in reason for reason in problems(unverified)), \
-        problems(unverified)
+    assert any("did not run" in reason for reason in problems(unverified)), problems(unverified)
 
 
-@pytest.mark.xfail(strict=True, reason="R-44: the shared rule does not exist yet")
 def test_r44_a_result_whose_models_were_not_assessed_is_not_established():
     problems = _symbol("result_establishment_problems")
     unassessed = _evaluation(3, 2.0, assessed=False).result
     assert problems(unassessed), "a result whose models nobody assessed is reported as established"
 
 
-@pytest.mark.xfail(strict=True, reason="R-44 finding 52 as audited: unverified_report() -- status NOT_RUN, nothing attained -- wins on its objective")
 def test_r44_a_candidate_with_no_verification_at_all_is_not_ranked():
     """Finding 52 as audited: unverified_report() -- status NOT_RUN, nothing attained -- won the ranking."""
     verified = _evaluation(4, 5.0)
@@ -121,7 +119,6 @@ def test_r44_a_candidate_with_no_verification_at_all_is_not_ranked():
         "the candidate with the better value and no verification behind it was ranked best")
 
 
-@pytest.mark.xfail(strict=True, reason="R-44: the shared rule does not exist yet")
 def test_r44_an_inapplicable_check_does_not_make_a_candidate_unestablished():
     """The control, and the reason batch 40's distinction exists: NOT_APPLICABLE is not NOT_RUN."""
     from engcore.scientific.results.validation import (
@@ -145,7 +142,6 @@ def test_r44_an_inapplicable_check_does_not_make_a_candidate_unestablished():
 # ---------------------------------------------------------------------------
 # eligible_means_the_models_were_assessed
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-44 finding 84: there is no label between ELIGIBLE and INELIGIBLE, so an unassessed candidate is marked eligible")
 def test_r44_there_is_a_label_for_a_candidate_ranked_without_assessment():
     assert hasattr(SelectionEligibility, "RANKED_WITHOUT_ASSESSMENT"), (
         "SelectionEligibility has no RANKED_WITHOUT_ASSESSMENT; it is preregistered")
@@ -155,13 +151,22 @@ def test_r44_there_is_a_label_for_a_candidate_ranked_without_assessment():
         "the new member must be appended: the member order is frozen")
 
 
-@pytest.mark.xfail(strict=True, reason="R-44 finding 84 as audited: the eligibility gate never consults result.validity")
 def test_r44_eligible_cannot_be_declared_over_an_unassessed_result():
+    """The audited production shape: a caller declares ELIGIBLE over a result nobody assessed."""
+    import dataclasses
+
+    candidate = DesignCandidateReference("cand-b43u")
+    assessed = D._result("result-b43u", 1000.0, 1.0, candidate=candidate, twin=D.TWIN_A)
+    unassessed = dataclasses.replace(
+        assessed, validity={},
+        validity_not_assessed={"design.reference_response": "nobody asked whether the model applied"})
     with pytest.raises(InvalidScientificProblem, match="RANKED_WITHOUT_ASSESSMENT|assess"):
-        D._evaluation("b43u", D.TWIN_A, 1000.0, 1.0, eligibility=SelectionEligibility.ELIGIBLE)
+        DesignEvaluation(
+            evaluation_id="eval-b43u", candidate=candidate, twin=D.TWIN_A, design_space=D.SPACE,
+            result=unassessed, eligibility=SelectionEligibility.ELIGIBLE,
+            eligibility_reasons=("declared gate",))
 
 
-@pytest.mark.xfail(strict=True, reason="R-44: the label does not exist yet")
 def test_r44_the_honest_label_is_accepted_for_the_same_record():
     evaluation = D._evaluation("b43r", D.TWIN_A, 1000.0, 1.0,
                                eligibility=_ranked_without_assessment())
@@ -169,7 +174,6 @@ def test_r44_the_honest_label_is_accepted_for_the_same_record():
     assert evaluation.eligibility_reasons
 
 
-@pytest.mark.xfail(strict=True, reason="R-44: the label does not exist yet")
 def test_r44_the_new_label_still_needs_a_reason():
     candidate = DesignCandidateReference("cand-b43n")
     with pytest.raises(InvalidScientificProblem, match="reason"):
@@ -189,7 +193,6 @@ def _unassessed_pair():
     )
 
 
-@pytest.mark.xfail(strict=True, reason="R-44 finding 84: a persisted archive carries no statement about what it ranked without assessment")
 def test_r44_an_archive_records_the_members_it_ranked_without_assessment():
     evaluations = _unassessed_pair()
     archive = ParetoArchive.build(archive_id="arch-b43", design_space=D.SPACE,
@@ -203,7 +206,6 @@ def test_r44_an_archive_records_the_members_it_ranked_without_assessment():
     assert ParetoArchive.from_dict(payload, evaluations=evaluations) == archive
 
 
-@pytest.mark.xfail(strict=True, reason="R-44 finding 84: the same for the per-objective elite archive")
 def test_r44_an_elite_archive_records_it_too():
     evaluations = _unassessed_pair()
     archive = ScopedEliteArchive.build(archive_id="elite-b43", scope_ref="scope-b43",
@@ -212,7 +214,6 @@ def test_r44_an_elite_archive_records_it_too():
     assert _unassessed_field(archive), "the elite archive does not say what it ranked"
 
 
-@pytest.mark.xfail(strict=True, reason="R-44: the field does not exist yet")
 def test_r44_an_archive_of_assessed_candidates_keeps_its_bytes():
     """The control: the field is written only when it carries information."""
     evaluations = (D._evaluation("b43c", D.TWIN_C, 1000.0, 1.0),
@@ -226,7 +227,6 @@ def test_r44_an_archive_of_assessed_candidates_keeps_its_bytes():
 # ---------------------------------------------------------------------------
 # the_studies_say_what_they_are_doing
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-44 finding 84 as audited: the multirotor studies mark every evaluation ELIGIBLE although every result records validity_not_assessed for both models")
 def test_r44_the_reference_study_declares_what_it_did_not_assess():
     """MVR0's two models are reference identities with no ValidityDomain, and its results say so."""
     from engcore.systems.aerospace.multirotor.reference import run_reference_study
@@ -238,3 +238,53 @@ def test_r44_the_reference_study_declares_what_it_did_not_assess():
         assert evaluation.eligibility is _ranked_without_assessment(), (
             f"the study claims {evaluation.eligibility.value!r} over a result that records "
             f"validity_not_assessed for every model it names")
+
+
+# ---------------------------------------------------------------------------
+# ADDED while running batch 43's guard mutations, not preregistered. Each of
+# the three reproductions above is caught by two rules at once, so removing
+# either one left the other to catch it. One case per rule.
+# ---------------------------------------------------------------------------
+def test_r44_a_candidate_that_attained_a_level_and_left_a_check_unrun_is_not_ranked():
+    """B43a: `unverified_report()` is caught by the no-level rule too. This is the unrun rule alone."""
+    from engcore.scientific.results.validation import (
+        ValidationCheck,
+        ValidationLevel,
+        ValidationOutcome,
+        ValidationReport,
+    )
+
+    report = ValidationReport(checks=(
+        ValidationCheck(name="dimensional_consistency", outcome=ValidationOutcome.PASS,
+                        establishes=ValidationLevel.DIMENSIONALLY_VALID, evidence=("fixture",)),
+        ValidationCheck(name="analytic_invariant_agreement", outcome=ValidationOutcome.NOT_RUN,
+                        detail="the comparison was never made"),
+    ))
+    problems = _symbol("result_establishment_problems")
+    partial = _evaluation(7, 0.5, validation=report)
+    assert problems(partial.result), "a report that attained a level and left a comparison unrun"
+    verified = _evaluation(8, 5.0)
+    best = _experiment(verified, partial).best("minimize_load")
+    assert best is not None and best.evaluation_id == verified.evaluation_id
+
+
+def test_r44_a_candidate_with_an_empty_validation_report_is_not_ranked():
+    """B43b: an empty report has no NOT_RUN check either, so only the attained-level rule sees it."""
+    from engcore.scientific.results.validation import ValidationReport
+
+    problems = _symbol("result_establishment_problems")
+    empty = _evaluation(9, 0.5, validation=ValidationReport())
+    assert problems(empty.result), "a result whose validation report is empty established nothing"
+    verified = _evaluation(10, 5.0)
+    assert _experiment(verified, empty).best("minimize_load").evaluation_id == verified.evaluation_id
+
+
+def test_r44_an_edited_unassessed_list_is_refused_on_read():
+    """B43g: the statement is recomputed from the evaluations, like every other membership fact here."""
+    evaluations = _unassessed_pair()
+    archive = ParetoArchive.build(archive_id="arch-b43-edit", design_space=D.SPACE,
+                                  objectives=(D.RANGE, D.MASS), evaluations=evaluations)
+    payload = archive.to_dict()
+    payload["unassessed"] = []
+    with pytest.raises(InvalidScientificProblem, match="unassessed"):
+        ParetoArchive.from_dict(payload, evaluations=evaluations)

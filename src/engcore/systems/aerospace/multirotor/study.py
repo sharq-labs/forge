@@ -739,7 +739,12 @@ def evaluate_study_candidate(
         design_space=base_evaluation.design_space,
         result=result,
         fidelity=base_evaluation.fidelity,
-        eligibility=SelectionEligibility.ELIGIBLE,
+        # R-44 (re-audit 2026-09-16): this result records `validity_not_assessed` for every model
+        # it names -- MVR1's models are reference identities with no ValidityDomain, so there is no
+        # envelope to assess against -- and ELIGIBLE was a claim about evidence nobody gathered.
+        # The candidate is still compared; the label now says what was and was not assessed, and
+        # the Pareto and elite archives record which of their members it applies to.
+        eligibility=SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
         eligibility_reasons=base_evaluation.eligibility_reasons,
         metadata=metadata,
     ).validate_candidate(candidate)
@@ -814,7 +819,13 @@ class MultirotorStudyRun:
                 twin=twin,
                 design_space=self.design_space,
             )
-            if evaluation.eligibility is not SelectionEligibility.ELIGIBLE:
+            # R-44: the two labels a D1 archive ranks under. MVR1's own evaluations are
+            # RANKED_WITHOUT_ASSESSMENT, because their models have no validity domain to assess against;
+            # ELIGIBLE stays admissible here so a future MVR that DOES declare domains needs no change.
+            if evaluation.eligibility not in (
+                SelectionEligibility.ELIGIBLE,
+                SelectionEligibility.RANKED_WITHOUT_ASSESSMENT,
+            ):
                 raise InvalidScientificProblem(
                     "MVR1 successful evaluations must remain D1 eligible"
                 )

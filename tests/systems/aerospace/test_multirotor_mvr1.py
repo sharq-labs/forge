@@ -541,8 +541,10 @@ def test_payload_changes_physics_but_threshold_only_change_does_not() -> None:
     assert base_eval.result.value("endurance_margin").magnitude_in("s") != pytest.approx(
         threshold_eval.result.value("endurance_margin").magnitude_in("s")
     )
-    assert base_eval.eligibility is SelectionEligibility.ELIGIBLE
-    assert threshold_eval.eligibility is SelectionEligibility.ELIGIBLE
+    # R-44 (I-21 part B): RANKED_WITHOUT_ASSESSMENT, not ELIGIBLE -- these results record
+    # validity_not_assessed for every model they name, and ELIGIBLE is now a claim about evidence.
+    assert base_eval.eligibility is SelectionEligibility.RANKED_WITHOUT_ASSESSMENT
+    assert threshold_eval.eligibility is SelectionEligibility.RANKED_WITHOUT_ASSESSMENT
 
 
 def test_full_studies_a_and_b_use_same_universe_and_a_reproduces_mvr0() -> None:
@@ -597,7 +599,10 @@ def test_target_failures_remain_eligible_and_pareto_uses_full_universe() -> None
     run = run_multirotor_study(spec, count=32, attempt_budget=120)
 
     assert run.summary()["reference_target_pass_count"] == 0
-    assert all(item.eligibility is SelectionEligibility.ELIGIBLE for item in run.evaluations)
+    # R-44 (I-21 part B): still ranked, under the label that says what was not assessed.
+    assert all(item.eligibility is SelectionEligibility.RANKED_WITHOUT_ASSESSMENT
+               for item in run.evaluations)
+    assert run.pareto.unassessed == run.pareto.members
     assert len(run.pareto.source_evaluations) == len(run.evaluations)
     assert all(
         len(archive.source_evaluations) == len(run.evaluations)

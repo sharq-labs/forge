@@ -20,6 +20,7 @@ from typing import Any, Iterable, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.ir.objectives import ObjectiveDefinition
+from ..scientific.results.requirements import result_establishment_problems
 from ..scientific.results.result import ScientificResult
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.twins.definition import TwinReference
@@ -40,6 +41,14 @@ class SelectionEligibility(str, Enum):
     UNKNOWN = "unknown"
     ELIGIBLE = "eligible"
     INELIGIBLE = "ineligible"
+    #: R-44 (re-audit 2026-09-16): the honest label for a candidate a caller wants COMPARED although the
+    #: applicability of the models behind its numbers was never assessed. ELIGIBLE used to be claimed over
+    #: exactly those records -- results that state, in the record, that their models are reference
+    #: identities with no validity domain to assess against -- and the archives ranked them without
+    #: anything saying so. Refusing to rank them would delete such a study rather than correct it, so the
+    #: ranking stays and the label says what it is. Deliberately not a synonym for eligible. Appended: the
+    #: member order is frozen.
+    RANKED_WITHOUT_ASSESSMENT = "ranked_without_assessment"
 
 
 @dataclass(frozen=True)
@@ -238,6 +247,19 @@ class DesignEvaluation:
         )
 
         eligibility = SelectionEligibility(self.eligibility)
+        # R-44: ELIGIBLE is a claim about evidence, so it cannot be declared over a result that does not
+        # stand behind its own numbers. The gate used to be a caller's word with a free-text reason and never
+        # consulted the result at all. A candidate whose models nobody assessed can still be compared -- that
+        # is what RANKED_WITHOUT_ASSESSMENT is for -- but it may not be called eligible.
+        if eligibility is SelectionEligibility.ELIGIBLE:
+            problems = result_establishment_problems(self.result)
+            if problems:
+                raise InvalidScientificProblem(
+                    f"design evaluation {evaluation_id!r} is declared ELIGIBLE and its result does not "
+                    f"stand behind the numbers a selection would rank: {list(problems)}. Declare "
+                    f"RANKED_WITHOUT_ASSESSMENT to compare it anyway, which says so in the record, or "
+                    f"INELIGIBLE"
+                )
         reasons = tuple(str(reason).strip() for reason in self.eligibility_reasons)
         if any(not reason for reason in reasons):
             raise InvalidScientificProblem("eligibility reasons must be non-empty")
