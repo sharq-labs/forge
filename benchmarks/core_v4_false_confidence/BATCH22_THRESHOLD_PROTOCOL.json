@@ -1,0 +1,77 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 22,
+  "improvements": [
+    "I-13 part A of two"
+  ],
+  "problems_addressed": [
+    "R-12",
+    "R-31"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "d5b70d12",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "what_this_part_is": "I-13 is four problems about a routed prediction. This part takes the two that are one claim: A PREDICTION'S DOMAIN STATEMENT MUST BE BOUND TO THE CALIBRATION IT CAME FROM. R-12: `calibration_observations` are bound to nothing, so another dataset's observations, rescaled conditions, or a predictor evaluated elsewhere silence PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS -- a far extrapolation to x = 1e4 reads SUPPORTED although the posterior carries its own dataset_id. R-31: the gate compares only the conditions the PREDICTION chooses to declare, so a prediction at T = 900 K against a calibration at T = 300 K is DOWNGRADED while the same prediction with T omitted is SUPPORTED; and the comparison is per condition, so a point inside every marginal range but 0.71 off the calibrated line passes. Part B (the next batch) takes R-37 and R-23 -- the per-spec nonlinearity and the grid table's values.",
+  "reach": "The gate itself IS reached in production: `grid_predictive_uncertainty` calls `_prediction_domain_reasons`, and batches 17 and 18 routed `engcore.studies.calibration_study` through it, so rules 3 and 4 below reach the production study. The digest binding (rules 1 and 2) is on the LOCAL route, which production does not run -- for the grid route the observations are already bound to the grid by CORE-005 in `_grid_evidence_judgement`, which is why the binding is not needed twice there. The guard reach ledger's R-02 row carries this.",
+  "what_was_already_seen": {
+    "R-12": "the audit's findings 21, 27 and 85. Passing another dataset's ObservationSet, or the same observations with their conditions rescaled, or a predictor evaluated at other conditions, all read SUPPORTED at a prediction of x = 1e4 against a calibration over x in [0, 1].",
+    "R-31": "the audit's finding 28. Calibration at T = 300 K: a prediction at T = 900 K is DOWNGRADED PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS and the same prediction with `conditions` narrowed to omit T is SUPPORTED. And with two conditions covering a LINE -- (T, x) = (300, 1), (310, 2), (320, 3) -- a prediction at (300, 3) lies inside [300, 320] and inside [1, 3] and is 0.707 of the scaled condition spread away from the segment the calibration actually covered, and passes."
+  },
+  "rules": {
+    "the_calibration_content_is_digested_once_and_the_posterior_carries_it": {
+      "improvement": "I-13",
+      "problem": "R-12",
+      "rule": "`_observation_content_digest(observations) = digest_of(observations.to_dict())` -- ONE canonical digest, over the existing canonical serialization of the observation set: its dataset_id and, per observation, the condition id, the observable name, the value and sigma with their units, the source ref, and the declared conditions with their units. `LocalGaussianPosterior` carries it as a trailing field `calibration_content_digest`, filled by `local_gaussian_posterior` from the observations it was given. `linearized_predictive_uq` RAISES `HybridUQError` when the `calibration_observations` it is handed do not digest to the value the posterior carries.",
+      "why_a_raise_and_not_a_downgrade": "a caller who supplies `calibration_observations` is ASSERTING that these are the observations the posterior was calibrated on. That assertion is either true or false; it is not evidence to be weighed. A downgrade would let the false assertion through with a caveat, and the caveat would read as a statement about the science rather than about the request. This is the same shape as CORE-005's refusal for a grid that is not this request's evidence.",
+      "why_the_content_and_not_the_dataset_id": "two of the three audited reproductions keep the dataset_id and change the content -- the conditions rescaled, or the values replaced by a predictor evaluated elsewhere. A dataset_id is a label the caller writes; the content is what the posterior was actually fitted to.",
+      "class": "A (an identity check on a canonical serialization; no threshold)"
+    },
+    "the_posterior_carries_the_conditions_it_was_calibrated_at": {
+      "improvement": "I-13",
+      "problem": "R-12, R-31",
+      "rule": "`LocalGaussianPosterior` carries two more trailing fields: `calibrated_conditions`, the (name, unit) pairs in sorted order over every condition name EVERY calibration observation declares, and `calibrated_condition_points`, one row of magnitudes per observation aligned with them. The domain gate uses the caller's `calibration_observations` when they are supplied and verified, and the posterior's own stored design when they are not -- so omitting them no longer silences the check, it applies it.",
+      "why_only_the_names_every_observation_declares": "a condition one observation declares and another does not is not a range the calibration covered; the existing rule already answers PREDICTION_DOMAIN_NOT_DECLARED for exactly that case, and the stored design keeps the same meaning by holding only the intersection.",
+      "class": "A"
+    },
+    "a_prediction_that_omits_a_condition_the_calibration_declares_is_not_declared": {
+      "improvement": "I-13",
+      "problem": "R-31",
+      "rule": "If any condition name in the calibration's design is absent from `spec.conditions`, the reason is DOWNGRADED PREDICTION_DOMAIN_NOT_DECLARED. Before this, the gate looped over the PREDICTION's conditions, so a prediction that simply left one out was compared on the rest and read SUPPORTED.",
+      "why_not_take_the_value_from_the_calibration": "because that would be inventing the prediction's operating point. A prediction that does not say what temperature it is at has not said where it sits relative to a calibration at 300 K, and the honest answer is that nothing shows it -- which is what PREDICTION_DOMAIN_NOT_DECLARED means. The empty-conditions case already answered that way; this makes the partial case answer the same.",
+      "class": "A"
+    },
+    "the_domain_is_the_joint_support_not_the_marginal_ranges": {
+      "improvement": "I-13",
+      "problem": "R-31",
+      "rule": "A prediction is inside the calibrated domain when its condition vector is a CONVEX COMBINATION of the calibration's condition rows. Each condition is scaled by its own observed spread (max - min, or 1 where the calibration held it fixed), the membership is decided by a small linear program that minimizes the largest scaled residual subject to non-negative weights summing to 1, and the prediction is inside when that residual is at most `PREDICTION_RANGE_RELATIVE_TOLERANCE`. Otherwise the reason is DOWNGRADED PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS.",
+      "why_this_is_the_same_rule_and_not_a_new_one": "for ONE condition the convex hull of the observed values IS the interval [min, max], so at k = 1 this rule and the rule it replaces agree exactly, on the same tolerance, for every calibration. Nothing about a single-condition study moves. What changes is that at k >= 2 the rule now describes the region the calibration covered instead of the bounding box around it -- and the bounding box is the object R-31 is about: with three observations on a line, it is a square of which the calibration covered a diagonal.",
+      "why_the_convex_hull_and_not_a_distance": "a distance needs a metric and a threshold, and neither would be derivable. Convex-hull membership is the exact statement 'this operating point is between operating points the calibration observed', it needs only the tolerance the rule already had, and it degenerates correctly: a calibration at one point admits only that point, a calibration on a line admits that segment, and a calibration that varied k conditions independently admits its box.",
+      "the_scaling_is_for_the_tolerance_only": "convex-hull membership is affine-invariant, so scaling each condition by its observed spread cannot change the answer -- it only makes the single tolerance comparable across conditions in different units, which is what the per-condition `max(|low|, |high|, |x|)` scaling did before.",
+      "class": "A (an exact geometric statement, on the tolerance the rule already declared)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "none touched. `LocalGaussianPosterior` gains three TRAILING fields with defaults (`calibration_content_digest: str = \"\"`, `calibrated_conditions: tuple = ()`, `calibrated_condition_points: tuple = ()`), each serialized only when non-empty, which is the allowed additive shape. `ObservationSet` is NOT touched: the digest is computed by a private helper in `hybrid_uq` over the existing `to_dict`, so no V1-frozen symbol gains a member. `linearized_predictive_uq` and `_prediction_domain_reasons` gain no required argument.",
+    "behaviour_that_deliberately_changes": [
+      "`linearized_predictive_uq` raises when the supplied `calibration_observations` are not the ones the posterior carries a digest of.",
+      "a prediction that omits a condition the calibration declares is DOWNGRADED PREDICTION_DOMAIN_NOT_DECLARED where it was SUPPORTED.",
+      "at two or more conditions, a prediction inside every marginal range but outside the region the calibration covered is DOWNGRADED PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS where it was SUPPORTED. At ONE condition nothing changes.",
+      "a local-route prediction with no `calibration_observations` is now judged against the posterior's own stored design instead of being DOWNGRADED PREDICTION_DOMAIN_NOT_DECLARED -- which can RAISE a claim, and is the one place in this batch where that happens. It is sound because the design is the posterior's own record of what it was fitted to, not a caller's assertion."
+    ],
+    "serialized_records": "three new trailing fields on the local Gaussian posterior, written only when they carry information, so every record written under hybrid_uq.local_gaussian_posterior/1 still reads back. No predictive record gains a field.",
+    "claims_that_move": [
+      "the production TCR study declares one condition (temperature), so rule 4 changes nothing for it; rule 3 can only bite where a spec declares a strict subset of the calibration's condition names, which the study does not do. Any committed claim the regeneration moves is recorded in the audit document with its before and after.",
+      "`KINETICS_K2.json` and `BATTERY_T41.json` are NOT regenerated. Their SUPERSEDED markers stand and gain these rules."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The convex hull is the region BETWEEN observed operating points, which is an interpolation claim and not a validity claim: a model can be wrong strictly inside the hull, and nothing here says otherwise. What the gate answers is whether the prediction is an interpolation or an extrapolation of the conditions, which is what CORE-006 is for.",
+    "With many observations and many conditions the hull is the convex hull of n points in k dimensions, and membership is decided numerically by a linear program. A point within the tolerance of a face reads inside; the tolerance is relative to the observed spread and is the one the rule already declared.",
+    "The digest binds the observations to the posterior. It does not bind the `predict` evaluator to anything: a caller can still hand a predictive model that is not the one the calibration used, and R-23 (part B) is where the grid route's half of that closes. The local route's `predict` is checked only for admissibility and derivative convergence.",
+    "A condition declared by some observations and not others is still dropped from the design, which means a calibration whose conditions are declared unevenly covers less than it did. That is the existing rule's meaning and this part does not widen it.",
+    "The stored design is filled only on a non-refused local route. A refused posterior carries the defaults, which is consistent with it emitting no predictions at all."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
