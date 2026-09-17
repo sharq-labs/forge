@@ -600,3 +600,71 @@ passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
 was edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 12 — I-05
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-05 | **DONE** | `556ad8e0` (preregistration + 14 strict xfails), this commit | mode finding is a property of the NODES, so a mode that falls entirely between nodes is not a local maximum of the node function and is not checked — the rule is a necessary and not a sufficient condition for resolution; a mode on a FACE is not interior and is the containment check's business; the per-mode fit inherits the quadratic assumption, so a genuinely resolved but badly non-quadratic mode can fail its residual test (the measured margin on real grids is a factor of 9); the scan is O(N·3^p) plus one small fit per mode, bounded on the fitting half by `MODE_FIT_LIMIT`; a cut that is not axis-aligned is seen wherever it separates axis neighbours but only those axes are refined (the verifier measured that a diagonal cut mostly averages the moment error out, < 0.02 sd); the rebuild halves across a cut rather than moving the box to it, so the O(step) error there is bounded by `TRUNCATION_CONVERGENCE_SD` rather than removed |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-05 | **FIXED** | A new additive V2 check, `grid_mode_resolution`. V1's `_fitted_lattice_covariance` fits ONE quadratic about the global argmax over a window of 50 nats or more, so a second mode in the box pollutes it (the fitted lattice variance came out at 285 to 7e3, which switched the aliasing check off). Now every INTERIOR lattice node within ln 1e6 of the peak that is at least as high as all `3^p − 1` of its lattice neighbours gets its own quadratic, in V1's lattice units, on the smallest box holding V1's own node count, with V1's own flat-direction floors; the fit must describe its own nodes to `MODE_FIT_RESIDUAL_NATS` = `_ALIASING_NUMBER_MINIMUM / 2` = ln 100, and its curvature must pass V1's own aliasing bound. On the audited case at a step of 0.008 the narrow mode's own fit gives a lattice sd of 0.109 steps, an aliasing number of 0.470 and a residual of 17.7 nats — against the pooled fit's 285 to 7e3 — and the grid is passed over. The same grid at a step of 0.0005 passes. `src/engcore/inference/calibration.py` is unchanged: the check imports its constants and its exact enumeration. |
+| R-17 | **FIXED** | A new additive V2 check, `grid_admissibility_truncation`. `grid_containment` takes each face's peak over ADMISSIBLE nodes only, so a face with no admissible node scores −inf and passes, and a posterior cut off inside the box never reaches a face at all. Now an admissible node the posterior reaches within ln 1e6 of the peak that has an inadmissible lattice neighbour is a truncation face: a supplied grid is passed over with `GRID_CUT_BY_INADMISSIBILITY`, and in a rebuild that axis joins the truncation halving so steps across the cut are halved until the moments move less than `TRUNCATION_CONVERGENCE_SD`. The audited rebuild read "0 truncation halving(s)" with a mean error of −0.144 sd, about 3× the router's own tolerance. |
+
+**The two halves are independent, and each is measured by a case the other does not cover.** That is what two
+surviving mutations bought:
+
+* only the RESIDUAL test sees a broad shoulder with a narrow spike at its centre — the least-squares quadratic
+  follows the six shoulder nodes, so its curvature is wide and V1's aliasing bound PASSES, while the centre
+  node sits 6.67 nats below the fit;
+* only the ALIASING bound sees a thin tilted ridge — the log-likelihood is exactly quadratic, so the fit's
+  residual is 1e-10 nats, and the ridge is narrower perpendicular to itself than the lattice can sample.
+
+**Why mode finding does not have to be exact.** Over the `2p` AXIS neighbours alone, an exactly Gaussian
+TILTED ridge staircases into spurious maxima (3 and 4 on `hybrid_synthetic.affine` at 41 and 61 nodes per
+axis). Over the full `3^p − 1` stencil those grids have exactly one. A thin tilted ridge can still staircase
+when its crest passes between nodes — `bimodal_two_parameter` at 41 nodes per axis has 11 maxima on a grid
+whose moments are stable to 6 digits from 41 to 321 nodes per axis — and each of those 11 yields the RIDGE's
+own curvature, so each passes both tests with a factor-9 margin on the residual. So the scan only has to MISS
+nothing, which is why maximality is non-strict and the band is the one the containment check already uses.
+Both facts were measured before the rules were written and are recorded in the protocol.
+
+**Compatibility.** Additive. V1 untouched: `src/engcore/inference/calibration.py` is not edited, and the new
+checks import `_tensor_lattice_steps`, `_minimum_aliasing_number`, `_ALIASING_NUMBER_MINIMUM` and the two
+flat-direction floors from it. On V2: two `RouteReason` members appended after the last existing one
+(`GRID_MODE_UNRESOLVED`, `GRID_CUT_BY_INADMISSIBILITY`, both refusals); two module-level functions in the
+private `_grid_evidence`; no record field and no schema is touched, because both checks are router-side
+verdicts on a grid object like the containment and uniformity checks beside them.
+
+**Blast radius, measured: none.** The FAST tier gained no failure. That is the design choices paying off — the
+full stencil rather than the axes, and tolerating spurious maxima rather than trying to eliminate them.
+
+**Existing tests edited (no assertion weakened).** Only the two conformance markers (R-05 and R-17, closed by
+this batch). Nothing else in the suite moved.
+
+**Committed evidence.** Nothing was regenerated, because nothing moved. `TCR.json`'s two supplied grids are
+the cheap records these rules could move, and they are re-derived LIVE by
+`tests/hybrid_uq/test_hybrid_uq_tcr.py::test_the_local_route_agrees_with_the_resolved_grid`, which asserts
+`GRID_AS_SUPPLIED` and still passes — so both resolve every mode in their band and neither is cut by
+admissibility. `PERFORMANCE.json`'s grid half is V1-only. The two SUPERSEDED markers gained an
+`R-05 / R-17 / I-05` entry each: K2's grids are V1 REFERENCES with nested refinement and no route decision in
+that record rests on a V2 grid check, and every T41 model is routed LOCAL_GAUSSIAN with no grid, so neither
+rule reaches a claim in either. Neither was re-run.
+
+**Guard mutations.** `BATCH12_MUTATIONS.log`: **16 of 17 KILLED**, the seventeenth an expected survivor,
+control green. The survivor is instructive: appending the admissibility-cut axes to the list the
+bound-domination rule counts changes nothing, because the guard against reporting the model's own domain as
+the declared range dominating a width is the ORDER of two statements — the domination check reads the
+truncation list above the line where the cuts are merged in. The mutation that moves the domination check's
+own expression to read them is KILLED. The 21 pinned mutations on the files this batch changed were re-run
+isolated and all 21 are still KILLED (`BATCH12_PINNED_MUTATIONS.log`).
+
+**Verification.** FAST tier 6565 passed, 5 xfailed, 18 failed (the by-design 18, unchanged; the two xfails
+that became passes are I-15's R-05 and R-17 cases). Expensive tier 528 passed, 18 failed, 14 errors — the
+recorded baseline's lists exactly. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None in this batch.

@@ -246,7 +246,8 @@ def test_r18_starts_retracted_into_the_estimates_basin_never_claim_a_single_mode
 # ---------------------------------------------------------------------------
 # R-05, R-17: what one quadratic fit at the argmax cannot see (I-05)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-05 open until I-05: resolution is fitted at the argmax only")
+# Closed by I-05 (batch 12): every local maximum in the ln 1e6 band gets its own curvature fit on its own
+# nodes, held to a residual test and to V1's aliasing bound. xfail at 556ad8e0.
 def test_r05_a_narrow_second_mode_inside_the_box_is_not_resolved_away():
     """R-05: a mode of local sd 0.00065 aliased by the grid step, SUPPORTED with an sd tens of times too small."""
     problem = F.narrow_second_mode_inside_the_box()
@@ -258,7 +259,8 @@ def test_r05_a_narrow_second_mode_inside_the_box_is_not_resolved_away():
     assert_moments(result, "narrow_second_mode_inside_the_box")
 
 
-@pytest.mark.xfail(strict=True, reason="R-17 open until I-05: an inadmissibility cut is not a truncation face")
+# Closed by I-05 (batch 12): an admissible node the posterior reaches with an inadmissible lattice neighbour
+# is a truncation face -- refused on a supplied grid, refined across in a rebuild. xfail at 556ad8e0.
 def test_r17_a_posterior_cut_by_inadmissibility_is_not_contained_by_accident():
     """R-17: every node past the cut is inadmissible, so no face carries density and containment passes."""
     problem = F.admissibility_cut()

@@ -9,11 +9,19 @@ grids in the router and for grids a caller hands to ``grid_predictive_uncertaint
 from __future__ import annotations
 
 import hashlib
+import itertools
 import math
 
 import numpy as np
 
-from ..inference.calibration import CalibrationResult
+from ..inference.calibration import (
+    _ALIASING_NUMBER_MINIMUM,
+    _FLAT_DIRECTION_PRECISION,
+    _FLAT_DIRECTION_RELATIVE_PRECISION,
+    _minimum_aliasing_number,
+    _tensor_lattice_steps,
+    CalibrationResult,
+)
 from ..inference.grid import ObservationSet, PosteriorGrid
 from .local_gaussian import MISFIT_REASONS, _goodness_of_fit, _leverage_null_cumulants, _leverage_weights
 from .sensitivity import (
@@ -168,6 +176,223 @@ def grid_goodness_of_fit(grid: PosteriorGrid, observations: ObservationSet, *, c
     return None
 
 
+#: R-05: a quadratic fitted about a mode may not deviate from the node log-likelihoods it was fitted to by more than
+#: this, or its covariance certifies nothing. The V1 aliasing bound is declared as an AMPLITUDE:
+#: ``_ALIASING_NUMBER_MINIMUM = 2 ln 100`` is the value at which the aliased component's amplitude ``exp(-A / 2)`` is
+#: 1 %. Expressed in the log-density the fit is measured in, that same tolerance is ``ln 100`` nats -- the existing
+#: constant halved. Measured margins: 0.0 nats on an exactly Gaussian grid, 0.50 on an 11-maximum ridge staircase whose
+#: moments are stable to 6 digits, against 8.7 and 17.7 for the audited aliased modes.
+MODE_FIT_RESIDUAL_NATS = _ALIASING_NUMBER_MINIMUM / 2.0
+
+#: R-05: the most local maxima this check will fit. A node log-likelihood with more than a thousand local maxima within
+#: a factor 1e6 of its peak is not a resolved sampling of a smooth posterior, which is what the reason says; the
+#: measured counts on real grids are 1, 2 and 11. It bounds the work at 1024 small least-squares fits.
+MODE_FIT_LIMIT = 1024
+
+
+def _grid_lattice(grid: PosteriorGrid):
+    """``(log_likelihood_on_the_lattice, shape, axes)``, or None when the points are not a tensor lattice.
+
+    Inadmissible and non-finite nodes are ``-inf``, as they are everywhere else in this module. The lattice is
+    filled by looking each point up on its axes rather than by reshaping, so the row order does not matter.
+    """
+    points = np.asarray(grid.points, dtype=np.float64)
+    values = np.asarray(grid.log_likelihood, dtype=np.float64)
+    usable = np.asarray(grid.admissible_mask, dtype=bool) & np.isfinite(values)
+    p = points.shape[1]
+    axes = [np.unique(points[:, i]) for i in range(p)]
+    shape = tuple(int(axis.size) for axis in axes)
+    if int(np.prod([float(n) for n in shape])) != values.size or np.unique(points, axis=0).shape[0] != values.size:
+        return None
+    index = tuple(np.searchsorted(axes[i], points[:, i]) for i in range(p))
+    lattice = np.full(shape, -np.inf)
+    lattice[index] = np.where(usable, values, -np.inf)
+    return lattice, shape, axes
+
+
+def _grid_modes(grid: PosteriorGrid):
+    """``(lattice, shape, modes, axes)``, or None when the points are not a tensor lattice (R-05).
+
+    A mode is an INTERIOR lattice node, admissible and finite, within ``EDGE_LOG_LIKELIHOOD_DROP`` of the peak,
+    whose log-likelihood is at least that of every one of its ``3^p - 1`` lattice neighbours. The full stencil
+    matters: over the ``2p`` AXIS neighbours alone an exactly Gaussian TILTED ridge staircases into several
+    spurious maxima (3 and 4 on ``hybrid_synthetic.affine`` at 41 and 61 nodes per axis), while over the full
+    stencil those grids have exactly one.
+
+    Spurious maxima are tolerated by construction: a thin tilted ridge can still staircase when its crest passes
+    between nodes, and each staircase node then yields the RIDGE's own curvature, which passes the checks with a
+    wide margin. What the scan must not do is MISS a maximum, which is why maximality is non-strict.
+    """
+    got = _grid_lattice(grid)
+    if got is None:
+        return None
+    lattice, shape, _axes = got
+    p = len(shape)
+    peak = float(np.max(lattice))
+    candidate = np.isfinite(lattice) & (peak - lattice < EDGE_LOG_LIKELIHOOD_DROP)
+    for i in range(p):
+        if shape[i] < 3:
+            return lattice, shape, [], _axes
+        face = [slice(None)] * p
+        face[i] = 0
+        candidate[tuple(face)] = False
+        face[i] = shape[i] - 1
+        candidate[tuple(face)] = False
+    padded = np.pad(lattice, 1, constant_values=-np.inf)
+    for offset in itertools.product((-1, 0, 1), repeat=p):
+        if not any(offset):
+            continue
+        window = tuple(slice(1 + offset[i], 1 + offset[i] + shape[i]) for i in range(p))
+        candidate &= lattice >= padded[window]
+    return lattice, shape, [tuple(int(v) for v in index) for index in zip(*np.nonzero(candidate))], _axes
+
+
+def _mode_lattice_covariance(lattice, shape, index, axes, steps):
+    """``(covariance_in_lattice_units, largest_absolute_residual, radius)`` about one mode; ``(None, inf, None)``.
+
+    A least-squares quadratic in LATTICE units -- node coordinates minus the mode's, divided by the axis steps,
+    which is V1's own convention -- over the smallest lattice box whose usable nodes number at least twice the
+    quadratic's coefficients, which is V1's own node requirement. Flat and convex directions are floored exactly
+    as V1 floors them. The locality is the whole point: V1 fits once about the global argmax over a window of 50
+    nats or more, so a second mode in the box pollutes that fit (audit R-05).
+    """
+    p = len(shape)
+    coefficients = (p + 1) * (p + 2) // 2
+    needed = 2 * coefficients
+    for radius in range(1, int(max(shape))):
+        cut = tuple(slice(max(0, index[i] - radius), min(shape[i], index[i] + radius + 1)) for i in range(p))
+        values = lattice[cut].reshape(-1)
+        keep = np.isfinite(values)
+        if int(np.count_nonzero(keep)) < needed:
+            continue
+        spans = [(np.asarray(axes[i][cut[i]], dtype=np.float64) - float(axes[i][index[i]])) / float(steps[i])
+                 for i in range(p)]
+        offsets = np.stack(np.meshgrid(*spans, indexing="ij"), axis=-1).reshape(-1, p).astype(np.float64)
+        x, y = offsets[keep], values[keep]
+        columns = [np.ones(y.size)] + [x[:, i] for i in range(p)]
+        columns += [x[:, i] * x[:, j] for i in range(p) for j in range(i, p)]
+        design = np.column_stack(columns)
+        norms = np.linalg.norm(design, axis=0)
+        if not np.all(np.isfinite(design)) or np.any(norms == 0.0):
+            continue
+        try:
+            singular = np.linalg.svd(design / norms, compute_uv=False)
+        except np.linalg.LinAlgError:
+            continue
+        if singular[-1] < 1.0e-8 * singular[0]:
+            continue
+        solution, *_ = np.linalg.lstsq(design, y, rcond=None)
+        residual = float(np.max(np.abs(design @ solution - y)))
+        hessian = np.zeros((p, p))
+        k = 1 + p
+        for i in range(p):
+            for j in range(i, p):
+                if i == j:
+                    hessian[i, i] = 2.0 * solution[k]
+                else:
+                    hessian[i, j] = hessian[j, i] = solution[k]
+                k += 1
+        if not np.all(np.isfinite(hessian)):
+            continue
+        precision, vectors = np.linalg.eigh(-0.5 * (hessian + hessian.T))
+        floor = max(_FLAT_DIRECTION_RELATIVE_PRECISION * float(np.max(precision)), _FLAT_DIRECTION_PRECISION)
+        precision = np.maximum(precision, floor)
+        return (vectors / precision) @ vectors.T, residual, radius
+    return None, math.inf, None
+
+
+def grid_mode_resolution(grid: PosteriorGrid) -> tuple[RouteReason, str] | None:
+    """Every mode in the ln 1e6 band resolved on its OWN nodes, or why not (R-05).
+
+    V1 checks the effective sample size, the node count, the lattice and then ONE quadratic about the global
+    argmax. Nothing tests how well that quadratic fits, and nothing looks at another local maximum, so a
+    posterior with a second mode inside the box passes: the fit pools both modes, its lattice variance comes out
+    at 285 to 7e3, and the aliasing check switches itself off. This is the additive V2 check; V1 is unchanged.
+    """
+    got = _grid_modes(grid)
+    if got is None:
+        return None
+    lattice, shape, modes, axes = got
+    if not modes:
+        return None
+    if len(modes) > MODE_FIT_LIMIT:
+        return (RouteReason.GRID_MODE_UNRESOLVED,
+                f"the node log-likelihood has {len(modes)} local maxima within ln 1e6 of its peak, more than the "
+                f"{MODE_FIT_LIMIT} this check will fit: that is not a resolved sampling of a smooth posterior")
+    steps = _tensor_lattice_steps(np.asarray(grid.points, dtype=np.float64))
+    if steps is None:
+        return None
+    peak = float(np.max(lattice))
+    for index in modes:
+        covariance, residual, _radius = _mode_lattice_covariance(lattice, shape, index, axes, steps)
+        drop = peak - float(lattice[index])
+        where = f"the local maximum {drop:.3g} nats below the peak at lattice node {list(index)}"
+        if covariance is None:
+            return (RouteReason.GRID_MODE_UNRESOLVED,
+                    f"no curvature could be fitted about {where}: too few usable nodes around it, or a design the "
+                    f"lattice cannot fix")
+        if residual > MODE_FIT_RESIDUAL_NATS:
+            return (RouteReason.GRID_MODE_UNRESOLVED,
+                    f"the quadratic fitted about {where} misses its own nodes by {residual:.3g} nats, above the "
+                    f"{MODE_FIT_RESIDUAL_NATS:.3g} the aliasing bound's own 1 % amplitude allows, so its curvature "
+                    f"certifies nothing")
+        aliasing = _minimum_aliasing_number(covariance, _ALIASING_NUMBER_MINIMUM)
+        if aliasing is not None:
+            return (RouteReason.GRID_MODE_UNRESOLVED,
+                    f"{where} has lattice aliasing number {aliasing:.3g}, below {_ALIASING_NUMBER_MINIMUM:.3g}: along "
+                    f"an off-axis lattice direction that mode is narrower than the grid can sample, so its mass is "
+                    f"aliased however small the axis steps look against the posterior's marginal sd")
+    return None
+
+
+def admissibility_cut_axes(lattice, shape) -> list[int]:
+    """The axes on which an admissible node the posterior REACHES has an inadmissible lattice neighbour (R-17).
+
+    ``lattice`` is ``-inf`` off the admissible, finite nodes, so "inadmissible neighbour" is "non-finite
+    neighbour". A cut the posterior does not reach truncates nothing its moments depend on, which is why the band
+    is the one the containment check already uses.
+    """
+    peak = float(np.max(lattice))
+    if not math.isfinite(peak):
+        return []
+    reached = np.isfinite(lattice) & (peak - lattice < EDGE_LOG_LIKELIHOOD_DROP)
+    gone = ~np.isfinite(lattice)
+    found = []
+    for i in range(len(shape)):
+        if shape[i] < 2:
+            continue
+        low = [slice(None)] * len(shape)
+        high = [slice(None)] * len(shape)
+        low[i] = slice(0, shape[i] - 1)
+        high[i] = slice(1, shape[i])
+        below, above = tuple(low), tuple(high)
+        if bool(np.any(reached[below] & gone[above])) or bool(np.any(reached[above] & gone[below])):
+            found.append(i)
+    return found
+
+
+def grid_admissibility_truncation(grid: PosteriorGrid) -> tuple[RouteReason, str] | None:
+    """A posterior cut off INSIDE the box by the forward model's admissible region, or None (R-17).
+
+    ``grid_containment`` takes each face's peak over ADMISSIBLE nodes only, so a face with no admissible node
+    scores -inf and passes: a posterior cut off inside the box never reaches a face at all. The router already
+    holds that truncated moments cannot be shown to have converged without refinement, and acts on it at declared
+    bounds; this is the same hard edge, and the V1 aliasing argument assumes a smooth density and does not bound
+    the O(step) error at a cut.
+    """
+    got = _grid_lattice(grid)
+    if got is None:
+        return None
+    lattice, shape, _axes = got
+    found = admissibility_cut_axes(lattice, shape)
+    if not found:
+        return None
+    return (RouteReason.GRID_CUT_BY_INADMISSIBILITY,
+            f"the forward model's admissible region ends inside this grid's box on axis/axes {found}: a node the "
+            f"posterior reaches within ln 1e6 of its peak has an inadmissible lattice neighbour there. Growing the box "
+            f"cannot fix that, and the moments across the cut have not been shown to converge")
+
+
 def grid_containment(grid: PosteriorGrid, calibration) -> tuple[RouteReason, str] | None:
     """The rebuilt grid's containment rule on a supplied tensor grid (CORE-002).
 
@@ -238,4 +463,6 @@ def supplied_grid_problem(grid: PosteriorGrid, calibration, observations: Observ
     require_grid_is_this_evidence(grid, calibration, observations, forward)
     return (grid_prior_uniformity(grid, calibration)
             or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
-            or grid_containment(grid, calibration))
+            or grid_containment(grid, calibration)
+            or grid_admissibility_truncation(grid)
+            or grid_mode_resolution(grid))

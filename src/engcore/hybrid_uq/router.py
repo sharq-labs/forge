@@ -33,7 +33,8 @@ from ._records import (
 )
 from ..scientific.results.immutable import freeze
 from ._grid_evidence import (
-    EDGE_LOG_LIKELIHOOD_DROP, grid_containment, grid_goodness_of_fit, grid_prior_uniformity, require_grid_is_this_evidence,
+    EDGE_LOG_LIKELIHOOD_DROP, admissibility_cut_axes, grid_admissibility_truncation, grid_containment,
+    grid_goodness_of_fit, grid_mode_resolution, grid_prior_uniformity, require_grid_is_this_evidence,
 )
 from .identifiability import (
     RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
@@ -489,6 +490,9 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
         peak = float(np.max(ll))
         grew = False
         truncated = []
+        # R-17: the forward model's admissible region ending inside the box is the same hard edge as a declared
+        # bound. Kept in its own list so the bound-domination rule below never fires on the model's own domain.
+        cut = admissibility_cut_axes(ll, ll.shape)
         for i in range(p):
             width = hi[i] - lo[i]
             for side, index, bound in (("low", 0, lower[i]), ("high", -1, upper[i])):
@@ -520,7 +524,7 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
                       f"reported there would be the declared range's, not the data's")
 
     halvings = 0
-    truncated = sorted(set(truncated))
+    truncated = sorted(set(truncated) | set(cut))
     while truncated:
         finer = nodes.copy()
         for i in truncated:
@@ -542,7 +546,8 @@ def _rebuild_grid(local, policy, observations, forward, refinement=0):
                           f"a declared bound truncates the posterior and its moments still moved {moved:.3g} sd "
                           f"after {halvings} halving(s)")
     return rebuilt, (f"{int(np.prod(nodes.astype(float)))} points, nodes {[int(n) for n in nodes]}, {attempt} box expansion(s), "
-                     f"{halvings} truncation halving(s) on axes {truncated}, {int(refinement)} refinement(s)")
+                     f"{halvings} truncation halving(s) on axes {truncated} (admissibility cuts {cut}), "
+                     f"{int(refinement)} refinement(s)")
 
 
 def _declared_bounds(calibration) -> list[tuple[float, float]] | None:
@@ -702,7 +707,10 @@ def route_uncertainty(
                 # residuals, and the box holds the posterior
                 problem = (grid_prior_uniformity(grid, calibration)
                            or grid_goodness_of_fit(grid, observations, calibration=calibration, forward=forward)
-                           or grid_containment(grid, calibration))
+                           or grid_containment(grid, calibration)
+                           # R-17 then R-05: a cut inside the box, then every mode in the band on its own nodes
+                           or grid_admissibility_truncation(grid)
+                           or grid_mode_resolution(grid))
             if problem is None:
                 # R-06: last, because it is the only check that may cost a uniqueness search, and a grid that
                 # spans its declared bounds needs none. Nothing before this point has run the search the
@@ -780,6 +788,14 @@ def route_uncertainty(
                     considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "REFUSED_BY_V1",
                                        "reason": RouteReason.GRID_REBUILD_UNRESOLVED.value,
                                        "detail": f"refinement {refinement}: {str(exc)[:360]}"})
+                    continue
+                # R-05: V1 checks one quadratic about the global argmax, so a second mode in the box is aliased
+                # away. The next refinement quadruples the aliasing target, which is the lever that fixes it.
+                unresolved = grid_mode_resolution(rebuilt)
+                if unresolved is not None:
+                    considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "PASSED_OVER",
+                                       "reason": unresolved[0].value,
+                                       "detail": f"refinement {refinement}: {unresolved[1][:360]}"})
                     continue
                 considered.append({"route": "GRID_REBUILT_FROM_LOCAL_COVARIANCE", "outcome": "USED", "reason": "",
                                    "detail": detail})

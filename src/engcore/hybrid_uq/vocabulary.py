@@ -132,6 +132,16 @@ class RouteReason(str, Enum):
     #: curvature at the point its chi-square minimum comes from could not be built. A grid claim is SUPPORTED or
     #: absent, so a grid whose fit cannot be tested that way is passed over rather than downgraded.
     GOODNESS_OF_FIT_NOT_MEASURABLE = "GOODNESS_OF_FIT_NOT_MEASURABLE"
+    #: R-05 (re-audit 2026-09-16): a local maximum of the grid's node log-likelihood within ln 1e6 of the peak whose own
+    #: curvature fails V1's aliasing bound, or about which no curvature can be fitted at all. The V1 resolution check
+    #: fits ONE quadratic about the global argmax over a window of 50 nats or more, so a second mode in the box pollutes
+    #: that fit and switches the aliasing check off. Appended, not inserted: the member order is frozen.
+    GRID_MODE_UNRESOLVED = "GRID_MODE_UNRESOLVED"
+    #: R-17 (re-audit 2026-09-16): the posterior is cut off INSIDE the grid's box by the forward model's admissible
+    #: region -- an admissible node the posterior reaches has an inadmissible lattice neighbour. A declared-bound face
+    #: is already refused on a supplied grid and refined across in a rebuild; this is the same hard edge, and growing
+    #: the box cannot fix it, which is why it is not GRID_DOES_NOT_CONTAIN_POSTERIOR.
+    GRID_CUT_BY_INADMISSIBILITY = "GRID_CUT_BY_INADMISSIBILITY"
 
     @property
     def severity(self) -> RouteClaim:

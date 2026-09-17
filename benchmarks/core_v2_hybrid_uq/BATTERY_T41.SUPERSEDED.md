@@ -36,6 +36,8 @@ current.** Machine-readable marker: `BATTERY_T41.SUPERSEDED.json`.
   MEASURED for the same family, data and p by `benchmarks/core_v4_false_confidence/audit/batch11_performance_probe.py`:
   at p = 41 the statistic is 0.0807 against a null mean of 14.31, a ratio of 0.0056, so it is silent too. The
   probe covers p = 2, 5, 10, 20 and 41; the other models were not measured and already stand DOWNGRADED.
+- **R-05 / R-17 / I-05 (core re-audit batch 12).** The same two V2 grid checks. Every model here is routed
+  LOCAL_GAUSSIAN with no grid, so neither rule reaches any claim in this record.
 
 **Unchanged:** posterior means and sds (max relative sd change 0.0), identifiability statuses, the tolerance verdicts
 against B3's exact route and committed grids (P9 still the one miss), held-out χ² and coverage.

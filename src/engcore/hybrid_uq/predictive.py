@@ -114,7 +114,14 @@ def _grid_evidence_judgement(posterior: PosteriorGrid, claim: RouteClaim, observ
     downgraded past either. Without them nothing shows the grid is this evidence, and the claim is DOWNGRADED with
     GRID_NOT_BOUND_TO_EVIDENCE.
     """
-    from ._grid_evidence import grid_containment, grid_goodness_of_fit, grid_prior_uniformity, require_grid_is_this_evidence
+    from ._grid_evidence import (
+        grid_admissibility_truncation,
+        grid_containment,
+        grid_goodness_of_fit,
+        grid_mode_resolution,
+        grid_prior_uniformity,
+        require_grid_is_this_evidence,
+    )
 
     if (observations is None) != (forward is None):
         raise HybridUQError("a grid is held to its evidence with both the observations and the forward model, or neither")
@@ -123,7 +130,9 @@ def _grid_evidence_judgement(posterior: PosteriorGrid, claim: RouteClaim, observ
     require_grid_is_this_evidence(posterior, calibration, observations, forward)
     problem = (grid_prior_uniformity(posterior, calibration)
                or grid_goodness_of_fit(posterior, observations, calibration=calibration, forward=forward)
-               or grid_containment(posterior, calibration))
+               or grid_containment(posterior, calibration)
+               or grid_admissibility_truncation(posterior)
+               or grid_mode_resolution(posterior))
     if problem is not None:
         raise HybridUQError(f"{problem[0].value}: {problem[1]}; the router would not route this grid, so it is not predicted from")
     return claim, ()

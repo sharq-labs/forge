@@ -99,5 +99,43 @@
     "The rebuild halves steps across a cut until the moments converge; it does not move the box to the cut. A posterior whose mass sits right against an admissibility boundary therefore still costs refinement rather than being reparameterized, and the O(step) error at the cut is bounded by TRUNCATION_CONVERGENCE_SD rather than removed."
   ],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "stage": "during implementation",
+      "change": "`_grid_modes` returns the lattice AXES with the lattice and the modes, and `_mode_lattice_covariance` takes them.",
+      "why": "the preregistered rule says the fit is in lattice units -- 'node coordinates minus the mode's, divided by _tensor_lattice_steps', which is V1's convention. For a UNIFORM axis that equals the index offset; for a non-uniform axis it does not, because _tensor_lattice_steps returns the axis's LARGEST step. Index offsets would have silently been a different quantity on a non-uniform axis, so the axes are carried and the coordinates are used.",
+      "why_this_is_not_a_threshold_change": "no threshold; it is the rule as preregistered rather than an approximation to it."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "during implementation",
+      "change": "The global argmax is a mode exactly when it is INTERIOR, not unconditionally.",
+      "why": "the preregistered rule says both 'A mode is an INTERIOR node' and 'The global argmax is always one'. The argmax always satisfies the maximality half (maximality is non-strict), so the two only differ when the argmax sits on a FACE of the lattice -- and that case is already the containment check's, which passes a supplied grid over when density reaches a face. The stated residual says so: 'A mode on a FACE of the lattice is not interior and is not checked as a mode.' Interiority governs, and no special case for the argmax exists.",
+      "why_this_is_not_a_threshold_change": "no threshold; it resolves which of two sentences in the rule is load-bearing, in the direction the residual already stated."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "after the first guard-mutation run, before the batch was committed",
+      "change": "Two of sixteen mutations SURVIVED the first run, and two tests were added.",
+      "detail": [
+        "removing the RESIDUAL test survived, because the audited case is caught by the aliasing bound too. Added test_r05_a_mode_the_aliasing_bound_passes_can_still_fail_its_own_fit: a broad shoulder with a narrow spike at its centre, where the least-squares quadratic follows the six shoulder nodes so its curvature is wide and V1's bound PASSES, while the centre node sits 6.67 nats below the fit (the bound is 4.61).",
+        "removing the ALIASING bound survived, because the audited case is caught by the residual test too. Added test_r05_a_mode_its_own_fit_describes_perfectly_can_still_fail_the_aliasing_bound: hybrid_synthetic's thin tilted ridge, whose log-likelihood is exactly quadratic (residual 1e-10 nats) and whose perpendicular width is below the lattice step.",
+        "so the two halves of the per-mode check are now each measured by a case the other half does not cover, which is what a surviving mutation is supposed to buy."
+      ],
+      "why_this_is_not_a_threshold_change": "no threshold, class or value in `rules` is touched."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "verification",
+      "change": "One mutation is recorded as an EXPECTED survivor: adding the admissibility cut axes to the list the bound-domination rule counts.",
+      "why": "the guard against reporting the model's own domain as the declared range dominating a width is the ORDER of two statements -- the domination check reads the truncation list above the line where the cuts are merged into it. A mutation that appends the cuts after that line changes nothing, and the mutation that moves the domination check's own expression to read them (B12o) is KILLED. The ordering is the guard, and it is the ordering that is mutated."
+    },
+    {
+      "date": "2026-09-17",
+      "stage": "verification",
+      "change": "No committed evidence was regenerated: nothing moved.",
+      "why": "TCR.json's two supplied grids are the cheap records these rules could move, and they are re-derived live by tests/hybrid_uq/test_hybrid_uq_tcr.py::test_the_local_route_agrees_with_the_resolved_grid, which asserts GRID_AS_SUPPLIED and still passes -- so both grids resolve every mode in their band and neither is cut by admissibility. PERFORMANCE.json's V1 grid measurements are V1-only and unaffected. KINETICS_K2.json and BATTERY_T41.json are SUPERSEDED and were not re-run; their markers gain an entry."
+    }
+  ]
 }

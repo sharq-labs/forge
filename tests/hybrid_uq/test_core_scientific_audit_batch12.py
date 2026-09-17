@@ -13,9 +13,10 @@ A grid is admitted on two checks that each look in one place only.
   bound is refused.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH12_THRESHOLD_PROTOCOL.json`. The fourteen
-reproductions here were committed as `xfail(strict=True)` first and run with `--runxfail` to watch each fail
-on its own assertion. One test carries no marker and never did, because it passes at the preregistration
-commit and must keep passing: an admissibility cut must never be reported as GRID_POSTERIOR_BOUND_DOMINATED.
+reproductions here were committed as `xfail(strict=True)` at 556ad8e0 and run with `--runxfail` to watch
+each fail on its own assertion; the markers came off when I-05 was implemented. One test carries no marker
+and never did, because it passed at 556ad8e0 and must keep passing: an admissibility cut must never be
+reported as GRID_POSTERIOR_BOUND_DOMINATED.
 """
 
 from __future__ import annotations
@@ -58,7 +59,6 @@ def _routed(problem, axes, **kw):
 # =====================================================================
 # R-05: every mode in the band is checked, on its own nodes
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r05_a_supplied_grid_that_aliases_a_second_mode_is_passed_over():
     """The audited record: step 0.005 (and 0.008) gives GRID_AS_SUPPLIED SUPPORTED, sd ratio 0.070."""
     unresolved = _reason("GRID_MODE_UNRESOLVED")
@@ -71,7 +71,6 @@ def test_r05_a_supplied_grid_that_aliases_a_second_mode_is_passed_over():
     assert unresolved.value in {c.get("reason") for c in result.considered}, result.considered
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r05_the_same_grid_refined_is_still_used():
     """The check is a resolution test and not a refusal of two modes: a fine grid over both passes it."""
     resolution = _check("grid_mode_resolution")
@@ -83,7 +82,6 @@ def test_r05_the_same_grid_refined_is_still_used():
     assert resolution(coarse) is not None
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r05_the_narrow_modes_own_fit_is_what_finds_it():
     """The audited fit pooled both modes and read a lattice variance of 285 to 7e3; the local one reads 0.109.
 
@@ -100,17 +98,80 @@ def test_r05_the_narrow_modes_own_fit_is_what_finds_it():
     pooled, _why = _fitted_lattice_covariance(grid, steps)
     assert _minimum_aliasing_number(pooled, _ALIASING_NUMBER_MINIMUM) is None, (
         "the pooled fit passes the aliasing bound, which is the audited defect")
-    lattice, shape = modes_of(grid)[:2]
+    lattice, shape, found, axes = modes_of(grid)
     worst = []
-    for index in modes_of(grid)[2]:
-        covariance, residual, _radius = fit_of(lattice, shape, index, steps)
+    for index in found:
+        covariance, residual, _radius = fit_of(lattice, shape, index, axes, steps)
         worst.append((None if covariance is None else _minimum_aliasing_number(covariance, _ALIASING_NUMBER_MINIMUM),
                       residual))
     assert any(aliasing is not None for aliasing, _residual in worst), worst
     assert any(residual > _ALIASING_NUMBER_MINIMUM / 2.0 for _aliasing, residual in worst), worst
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
+def test_r05_a_mode_the_aliasing_bound_passes_can_still_fail_its_own_fit():
+    """The two halves of the per-mode check are independent, and this is the case only the RESIDUAL test sees.
+
+    A broad shoulder with a narrow spike at its centre: over the fit box the least-squares quadratic follows
+    the six shoulder nodes, so its curvature is wide and V1's aliasing bound passes -- while the centre node
+    sits 6.7 nats below the fit. The spike's mass is aliased and the fitted covariance says nothing about it.
+    Not a reproduction: it is here so the residual test is a measured part of the rule.
+    """
+    resolution = _check("grid_mode_resolution")
+    fit_of, modes_of = _check("_mode_lattice_covariance"), _check("_grid_modes")
+    assert resolution is not None and fit_of is not None, "the batch adds the per-mode check"
+    from engcore.hybrid_uq._grid_evidence import MODE_FIT_RESIDUAL_NATS
+    from engcore.inference.calibration import _minimum_aliasing_number, _tensor_lattice_steps
+
+    def model(t, _x):
+        th = float(t[0])
+        dip = 20.0 * (1.0 - np.exp(-((th / 1.0e-3) ** 2)))
+        return np.asarray([th / 0.1, math.sqrt(max(dip, 0.0)), 0.0])
+
+    problem = S.Problem("spike_on_a_shoulder", model, np.arange(3.0), (0.0,), 1.0, (-1.0,), (1.0,), (0.0,),
+                        observed=(0.0, 0.0, 0.0))
+    grid = problem.grid([np.linspace(-1.0, 1.0, 41)])
+    lattice, shape, found, axes = modes_of(grid)
+    steps = _tensor_lattice_steps(np.asarray(grid.points, dtype=float))
+    assert len(found) == 1, found
+    covariance, residual, _radius = fit_of(lattice, shape, found[0], axes, steps)
+    assert _minimum_aliasing_number(covariance, _ALIASING_NUMBER_MINIMUM) is None, (
+        "the aliasing bound must PASS here, or the case does not separate the two halves")
+    assert residual > MODE_FIT_RESIDUAL_NATS, residual
+    found_problem = resolution(grid)
+    assert found_problem is not None and "misses its own nodes" in found_problem[1], found_problem
+
+
+def test_r05_a_mode_its_own_fit_describes_perfectly_can_still_fail_the_aliasing_bound():
+    """And this is the case only the ALIASING bound sees: a thin tilted ridge.
+
+    The log-likelihood is exactly quadratic, so the fit's residual is 1e-10 nats, and the ridge is narrower
+    perpendicular to itself than the lattice can sample. Not a reproduction: it is here so the aliasing half
+    is a measured part of the rule and not carried by the residual test.
+    """
+    resolution = _check("grid_mode_resolution")
+    fit_of, modes_of = _check("_mode_lattice_covariance"), _check("_grid_modes")
+    assert resolution is not None and fit_of is not None, "the batch adds the per-mode check"
+    from engcore.hybrid_uq._grid_evidence import MODE_FIT_RESIDUAL_NATS
+    from engcore.inference.calibration import _minimum_aliasing_number, _tensor_lattice_steps
+    from engcore.hybrid_uq import local_gaussian_posterior
+
+    problem = S.thin_ridge()
+    calibration = problem.calibrate()
+    posterior = local_gaussian_posterior(calibration, problem.observations, problem.forward, multistart=None)
+    estimate = np.asarray(calibration.estimate_vector, dtype=float)
+    sd = np.sqrt(np.diag(np.asarray(posterior.covariance, dtype=float)))
+    grid = problem.grid([np.linspace(estimate[i] - 4.0 * sd[i], estimate[i] + 4.0 * sd[i], 41) for i in range(2)])
+    lattice, shape, found, axes = modes_of(grid)
+    steps = _tensor_lattice_steps(np.asarray(grid.points, dtype=float))
+    assert found, found
+    covariance, residual, _radius = fit_of(lattice, shape, found[0], axes, steps)
+    assert residual < MODE_FIT_RESIDUAL_NATS, (
+        f"the fit must be ADEQUATE here, or the case does not separate the two halves: {residual}")
+    assert _minimum_aliasing_number(covariance, _ALIASING_NUMBER_MINIMUM) is not None
+    found_problem = resolution(grid)
+    assert found_problem is not None and "aliasing number" in found_problem[1], found_problem
+
+
 def test_r05_a_well_resolved_ridge_with_many_local_maxima_is_still_used():
     """A thin tilted ridge staircases over the lattice, and every staircase node yields the RIDGE's curvature.
 
@@ -125,7 +186,6 @@ def test_r05_a_well_resolved_ridge_with_many_local_maxima_is_still_used():
     assert resolution(grid) is None, resolution(grid)
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r05_a_mode_is_a_maximum_over_the_whole_lattice_stencil_not_the_axes():
     """Over the 2p axis neighbours alone an exactly Gaussian tilted ridge has 3 spurious maxima; over the
     full 3^p - 1 stencil it has one."""
@@ -134,11 +194,10 @@ def test_r05_a_mode_is_a_maximum_over_the_whole_lattice_stencil_not_the_axes():
     problem = S.affine()
     estimate = np.asarray(problem.calibrate().estimate_vector, dtype=float)
     grid = problem.grid([np.linspace(estimate[i] - 0.4, estimate[i] + 0.4, 41) for i in range(2)])
-    _lattice, _shape, found = modes_of(grid)
+    _lattice, _shape, found, _axes = modes_of(grid)
     assert len(found) == 1, found
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r05_a_rebuilt_grid_that_aliases_a_mode_is_refined_or_passed_over():
     """The audited rebuild: K = 9 gives SUPPORTED with narrow-mode mass 0.209 against a true 0.100."""
     from engcore.hybrid_uq import GridRebuildPolicy
@@ -163,7 +222,6 @@ def test_r05_a_rebuilt_grid_that_aliases_a_mode_is_refined_or_passed_over():
 # =====================================================================
 # R-17: an admissibility cut is a truncation face
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r17_a_supplied_grid_cut_by_inadmissibility_is_passed_over():
     """The audited record: cut offsets of 0.02, 0.50 and 0.98 steps give SUPPORTED with mean errors of
     -0.40, +0.05 and +0.57 true sd, where the same cut at a declared bound is REFUSED."""
@@ -177,7 +235,6 @@ def test_r17_a_supplied_grid_cut_by_inadmissibility_is_passed_over():
     assert cut.value in {c.get("reason") for c in result.considered}, result.considered
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r17_the_cut_is_named_as_itself_and_not_as_a_box_too_small():
     """`GRID_DOES_NOT_CONTAIN_POSTERIOR` says to grow the box, which cannot fix a cut inside it."""
     cut = _reason("GRID_CUT_BY_INADMISSIBILITY")
@@ -188,7 +245,6 @@ def test_r17_the_cut_is_named_as_itself_and_not_as_a_box_too_small():
     assert named and named[0] == cut.value, named
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r17_a_grid_whose_admissible_region_is_not_cut_is_still_used():
     """The route that must keep working: an admissible box with no inadmissible neighbour anywhere."""
     check = _check("grid_admissibility_truncation")
@@ -198,27 +254,25 @@ def test_r17_a_grid_whose_admissible_region_is_not_cut_is_still_used():
     assert check(grid) is None, check(grid)
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r17_an_inadmissible_node_far_below_the_peak_is_not_a_cut():
     """Only a cut the posterior REACHES matters: an inadmissible neighbour of a node a factor 1e6 below the
     peak truncates nothing the moments depend on."""
     check = _check("grid_admissibility_truncation")
     assert check is not None, "the batch adds the admissibility-cut check"
-    problem = F.admissibility_cut(offset_sd=0.5)
-    wide = F.admissibility_cut_grid_axis(problem, steps_below=2.0, span_sd=400.0)
-    grid = problem.grid([wide])
-    lattice = np.asarray(grid.log_likelihood)
+    # the optimum 20 local sd above the cut, so every admissible node beside the cut is about 200 nats below
+    # the peak -- far outside the ln 1e6 band the containment check already uses
+    far = F.admissibility_cut(offset_sd=20.0)
+    grid = far.grid([F.admissibility_cut_grid_axis(far, steps_below=2.0, span_sd=8.0)])
+    lattice = np.asarray(grid.log_likelihood, dtype=float)
     usable = np.asarray(grid.admissible_mask, dtype=bool) & np.isfinite(lattice)
     peak = float(np.max(np.where(usable, lattice, -np.inf)))
-    below = float(np.max(np.where(usable, lattice, -np.inf))) - peak
-    assert below == 0.0
-    # the same problem on a box whose admissible nodes near the cut are all far below the peak
-    far = F.admissibility_cut(offset_sd=400.0)
-    axis = F.admissibility_cut_grid_axis(far, steps_below=2.0, span_sd=8.0)
-    assert check(far.grid([axis])) is None, check(far.grid([axis]))
+    beside = float(np.max(np.where(usable, lattice, -np.inf)[:2]))
+    assert peak - beside > math.log(1.0e6), (peak, beside)
+    assert check(grid) is None, check(grid)
+    # and the audited case, whose optimum sits half a local sd above the cut, IS one
+    assert check(F.admissibility_cut().grid([F.admissibility_cut_grid_axis(F.admissibility_cut())])) is not None
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_r17_a_rebuild_halves_the_step_across_the_cut_until_the_moments_converge():
     """The audited rebuild ends SUPPORTED with '0 truncation halving(s)' and a mean error of -0.144 sd,
     about 3x the router's own TRUNCATION_CONVERGENCE_SD of 0.05."""
@@ -258,7 +312,6 @@ def test_r17_the_bound_domination_rule_is_not_fired_by_an_admissibility_cut():
 # =====================================================================
 # both checks run wherever a grid is held to its evidence
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_both_checks_run_in_routed_prediction():
     """A grid the router would not route is not predicted from either: the same chain runs there."""
     from engcore.hybrid_uq.predictive import _grid_evidence_judgement
@@ -273,7 +326,6 @@ def test_both_checks_run_in_routed_prediction():
                                      problem.calibrate())
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_both_checks_run_in_the_supplied_grid_problem_chain():
     from engcore.hybrid_uq._grid_evidence import supplied_grid_problem
 
@@ -285,7 +337,6 @@ def test_both_checks_run_in_the_supplied_grid_problem_chain():
     assert found is not None and found[0] is cut, found
 
 
-@pytest.mark.xfail(strict=True, reason="I-05 not implemented yet (batch 12 preregistration)")
 def test_a_grid_with_more_maxima_than_the_limit_is_passed_over():
     from engcore.hybrid_uq import _grid_evidence
 

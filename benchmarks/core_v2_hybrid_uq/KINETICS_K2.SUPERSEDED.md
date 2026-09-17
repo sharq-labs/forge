@@ -36,6 +36,12 @@ established under the weaker rules and are not current**; its covariance-derived
   needs residuals and a Jacobian, which these bytes do not carry; but every weight is at most 1, so
   T ≤ chi-square = 5.44 and a ratio above 4 would need T > 8 against a null mean of at most 2 — no refusal can
   arise. A downgrade cannot be ruled out without the residuals, and MULTI already stands DOWNGRADED above.
+- **R-05 / R-17 / I-05 (core re-audit batch 12).** A V2 layer now checks every local maximum in the ln 1e6
+  band on its own nodes, and treats an admissibility cut as a truncation face. No route decision in this
+  record rests on a V2 grid check — the MULTI and WEAK_C2 grids here are V1 REFERENCES with nested
+  refinement — so neither rule reaches a claim in it, and the CSTR model refuses no point inside those
+  boxes. Whether the reference grids would themselves pass the per-mode check cannot be told from bytes
+  that carry their moments and not their node log-likelihoods.
 
 **Unchanged:** the MULTI estimate and sds (identical when re-derived without multistart), its covariance, identifiability statuses, C2 predictive sds,
 the V1 reference grids, every `CORRECTED` errata quantity (so `benchmarks/core_v1_thin_ridge_repair/ERRATA.md`'s addendum
