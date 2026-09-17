@@ -2362,3 +2362,60 @@ also asks for. Part E is those three. The error is recorded here rather than edi
 table nobody can trust is worse than one with a correction in it.
 
 **Open decisions.** None.
+
+### Batch 37 — I-14 part E
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-14 | **PARTIAL** (parts A–E of six) | `28e4c116`, `18db6895` (A), `0cad9502`, `32f02f20` (B, R-28), `3aff191b`, `7755c80b` (C, R-22 b/c/d), `228d47b9`, `96b4538e` (D, R-22 a), `3dd5fd08` (E preregistration + 6 strict xfails), this commit | **a record read without its calibration still cannot have its bounds verified**, and the bounds-moved forgery survives that reading — see below; **R-27 stays PARTIAL**: the covariance shrink, the width flip, ESS and `spacing_to_std`, the rebuilt record carrying a misfit, and `considered` being unchecked are part F, with the fuzzer; the predictive re-run inherits batch 33's detection probability rather than certainty |
+
+**R-25 is FIXED and REACHED. R-27's finding 24 is FIXED.**
+
+| Claim | Status | How |
+|---|---|---|
+| renaming the parameterization | **FIXED** | Dividing the covariance by 1e4 alone is refused — the bound distances give it away. Renaming to `linear_map:forged` and making the same edit read back SUPPORTED with sd [0.00027151, 0.00045993]: `_posterior_record_problems` returns after one check for any label but `declared`, because **a mapped posterior's diagnostics describe its parent by design**. So this was not an edge case — it was **the whole defence switched off by a string**. A routed LOCAL_GAUSSIAN record must now carry a declared posterior, which is all the router ever builds; `reparameterized()` stays a caller's tool and a mapped posterior stays usable on its own. |
+| moving the bounds with the covariance | **FIXED** where the calibration is in hand | Both move together, so every bound distance in sd units survives and the re-derivation sees nothing. **Declared bounds are a property of the request**, and the only thing that can contradict edited bounds is the calibration they came from — so the new binding takes it, and the local route calls it on the record it has just built. |
+| a grid result predicts without its evidence | **FIXED** | `routed_predictive_uncertainty` re-applied only the V1 resolution check — and **said so in its own comment** ("the evidence checks cannot be [re-applied], since the result does not carry the evidence") — and predicted anyway, so a grid computed from other data gave mean 2.4745 against an honest 1.9745. There are exactly two honest answers and the rule is both: given the evidence the grid checks re-run; without it every prediction is DOWNGRADED `GRID_NOT_BOUND_TO_EVIDENCE`, the reason the supplied-grid route already uses for this. |
+
+**What cannot be closed, and why it is stated rather than fixed.** A record read **without** its calibration
+cannot have its bounds verified. This is not a gap a better rule closes: the bounds are the *request's*, every
+field in the record is the forger's to edit, and a digest the forger can recompute binds nothing. What the
+batch does is make every record the **route** writes verified, and hand a reader who holds the calibration the
+one function that checks it.
+
+**Amendment 1: one argument the preregistration did not name.** `supplied_grid_problem`'s goodness-of-fit test
+needs a `CalibrationResult` to build curvature at the grid's best node, and a result does not carry one — the
+first implementation passed `calibration_observations` into that slot, and **every re-run returned
+GOODNESS_OF_FIT_NOT_MEASURABLE, so the rule refused every grid result whose evidence *was* handed over.** A
+third keyword, `calibration`, is passed through; without it the goodness of fit falls back to the pooled test.
+Mutation B37e is the guard that **a rule which never clears is a rule nobody can satisfy.**
+
+**And one control was narrowed to what this batch can speak about.** It first asserted the prediction was
+SUPPORTED; it is DOWNGRADED by `PREDICTION_DOMAIN_NOT_DECLARED`, because the affine fixture's observations
+declare no conditions — a pre-existing rule. The control now asserts that `GRID_NOT_BOUND_TO_EVIDENCE` is
+*absent*.
+
+**One mutation is a declared survivor, and it is about batch 36.** B37d removes the route's call to *batch 36's*
+observation binding and every test still passes: that batch's reproductions call the function directly, and its
+production half was asserted by reading the source for the call rather than by observing a failure. Both calls
+were added in one place here, so the mutation is recorded here — **a guard on one of two adjacent calls leaves
+the other unwatched.**
+
+**Compatibility.** Additive. One new public function, three new keyword-only arguments with defaults. No
+signature change to an existing parameter, no field, default or enum member change, no serialized record
+changes. The deliberate narrowings: a LOCAL_GAUSSIAN record with a mapped posterior stops reading back — it was
+never a record the router wrote; a grid result predicted from without its evidence is DOWNGRADED rather than
+SUPPORTED, which is the behaviour change and the point.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED markers.
+
+**No existing expectation moved.**
+
+**Verification.** FAST tier 6902 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH37_MUTATIONS.log`: **6 of 6 KILLED plus one declared survivor**, both controls green.
+
+**Open decisions.** None.

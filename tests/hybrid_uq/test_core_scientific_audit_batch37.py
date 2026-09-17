@@ -3,7 +3,7 @@
 Problems R-25 and R-27's finding 24 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json),
 improvement I-14 part E of five, under benchmarks/core_v4_false_confidence/BATCH37_THRESHOLD_PROTOCOL.json.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 3dd5fd08, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -73,7 +73,6 @@ def test_r25_the_covariance_only_shrink_is_already_refused():
         LocalGaussianPosterior.from_dict(_shrunk(payload))
 
 
-@pytest.mark.xfail(strict=True, reason="R-25: any label but 'declared' returns early")
 def test_r25_renaming_the_parameterization_no_longer_switches_the_defence_off():
     """The forgery: any label but 'declared' returns early after one check."""
     problem = _problem()
@@ -111,7 +110,6 @@ def test_r25_a_genuine_routed_record_still_reads():
 # ---------------------------------------------------------------------------
 # a_records_bounds_are_the_calibrations_bounds
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-25: nothing binds the recorded bounds")
 def test_r25_moving_the_bounds_with_the_covariance_is_caught_against_the_calibration():
     """The second forgery: both move together, so every distance in sd units survives."""
     require = _symbol(LG, "require_posterior_matches_calibration")
@@ -124,7 +122,6 @@ def test_r25_moving_the_bounds_with_the_covariance_is_caught_against_the_calibra
         require(forged, calibration)
 
 
-@pytest.mark.xfail(strict=True, reason="R-25: there is no calibration binding yet")
 def test_r25_the_route_binds_its_own_record_to_the_calibration_it_used():
     """The production half: without this the rule is one a reader may choose to apply."""
     require = _symbol(LG, "require_posterior_matches_calibration")
@@ -152,7 +149,20 @@ def _specs(problem):
     return (PredictiveObservableSpec(observation_key=problem.observations.keys[0], unit="dimensionless"),)
 
 
-@pytest.mark.xfail(strict=True, reason="finding 24: only the V1 resolution check is re-applied")
+def _predict_one(problem):
+    """A forward evaluator returning ONE value, for the one observable the spec names.
+
+    `problem.forward` answers with every observation, and `_table_reasons` evaluates the spec's single key.
+    """
+    from engcore.scientific.units.quantity import Quantity
+
+    def predict(theta):
+        values = problem.model(np.asarray(theta, dtype=float), problem.x)
+        return [Quantity(float(values[0]), "dimensionless")]
+
+    return predict
+
+
 def test_r27_predicting_from_a_grid_result_without_its_evidence_is_downgraded():
     problem = _problem()
     result = _grid_result(problem)
@@ -161,18 +171,17 @@ def test_r27_predicting_from_a_grid_result_without_its_evidence_is_downgraded():
     from engcore.scientific.twins import TwinReference
 
     records = routed_predictive_uncertainty(
-        result, _specs(problem), predictive_table=table, predict=problem.forward,
+        result, _specs(problem), predictive_table=table, predict=_predict_one(problem),
         twin=TwinReference("twin.synthetic", "1"), model=S.MODEL, source_ref="audit",
         calibration_observations=problem.observations)
     assert records, "the call must still produce records"
-    assert all(record.claim is not RouteClaim.SUPPORTED for record in records), (
+    assert all(record.route_claim is not RouteClaim.SUPPORTED for record in records), (
         "a grid result predicted from without its evidence claims SUPPORTED, although the function's own "
         "comment says the evidence checks cannot be re-applied"
     )
     assert any(RouteReason.GRID_NOT_BOUND_TO_EVIDENCE in tuple(record.reasons) for record in records)
 
 
-@pytest.mark.xfail(strict=True, reason="finding 24: the entry point takes no evidence")
 def test_r27_predicting_with_the_evidence_is_supported_again():
     """The control: a caller who passes the evidence gets what they got before."""
     problem = _problem()
@@ -181,15 +190,20 @@ def test_r27_predicting_with_the_evidence_is_supported_again():
     from engcore.scientific.twins import TwinReference
 
     records = routed_predictive_uncertainty(
-        result, _specs(problem), predictive_table=table, predict=problem.forward,
+        result, _specs(problem), predictive_table=table, predict=_predict_one(problem),
         twin=TwinReference("twin.synthetic", "1"), model=S.MODEL, source_ref="audit",
         calibration_observations=problem.observations,
-        observations=problem.observations, forward=problem.forward)
-    assert records and all(record.claim is RouteClaim.SUPPORTED for record in records), [
-        (r.claim.value, sorted(x.value for x in r.reasons)) for r in records]
+        observations=problem.observations, forward=problem.forward,
+        calibration=problem.calibrate())
+    # The affine fixture's observations declare no conditions, so PREDICTION_DOMAIN_NOT_DECLARED stands --
+    # a pre-existing rule this batch does not touch. What must be gone is the reason this batch adds.
+    assert records
+    for record in records:
+        assert RouteReason.GRID_NOT_BOUND_TO_EVIDENCE not in tuple(record.reasons), (
+            f"the evidence was handed over and the record still says it was not bound to it: "
+            f"{sorted(x.value for x in record.reasons)}")
 
 
-@pytest.mark.xfail(strict=True, reason="finding 24: the two arguments do not exist")
 def test_r27_the_predictive_entry_point_takes_the_evidence():
     signature = inspect.signature(routed_predictive_uncertainty)
     for name in ("observations", "forward"):

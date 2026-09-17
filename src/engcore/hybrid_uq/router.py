@@ -38,6 +38,7 @@ from ._grid_evidence import (
     EDGE_LOG_LIKELIHOOD_DROP, admissibility_cut_axes, grid_admissibility_truncation, grid_containment,
     SPOT_CHECK_INADMISSIBLE_ROWS, SPOT_CHECK_WEIGHTED_ROWS,
     grid_goodness_of_fit, grid_is_this_evidence, grid_mode_resolution, grid_prior_uniformity,
+    supplied_grid_problem,
 )
 from .identifiability import (
     RoutedIdentifiability, _grid_axes_digest, _grid_report_problems, _report_differences, assess_routed_identifiability,
@@ -184,6 +185,21 @@ class HybridUQResult:
         if local is not None:
             problems.extend(_posterior_record_problems(local))
         if decision is RouteDecision.LOCAL_GAUSSIAN:
+            # R-25 (I-14 part E): THE LABEL IS WHAT TURNS THE RE-DERIVATIONS OFF.
+            #
+            # `_posterior_record_problems` re-derives the bound distances only for the DECLARED
+            # parameterization; for any other label it returns after checking that the estimate equals the
+            # point, because a mapped posterior's diagnostics describe its PARENT and are deliberately not
+            # tied to its own covariance. So renaming a record to 'linear_map:forged' and dividing its
+            # covariance by 1e4 read back SUPPORTED with sd [0.00027151, 0.00045993] -- the whole defence
+            # switched off by a string. The router builds declared posteriors and nothing else, so a routed
+            # record carrying another label was not produced by it. `reparameterized` stays a caller's tool
+            # and a mapped posterior stays usable on its own.
+            if local is not None and local.parameterization != "declared":
+                problems.append(
+                    f"a LOCAL_GAUSSIAN routed result carries a posterior in the declared parameterization; "
+                    f"this one is {local.parameterization!r}, for which the bound distances, the near-bound "
+                    f"set and every other re-derivation are not performed")
             if self.coordinates != "inference":
                 problems.append("coordinates are not 'inference'")
             if names != local.parameter_names:
@@ -920,11 +936,25 @@ def routed_predictive_uncertainty(
     source_ref: str | None = None,
     confidence_level: float = 0.95,
     calibration_observations: ObservationSet | None = None,
+    observations: ObservationSet | None = None,
+    forward: ForwardEvaluator | None = None,
+    calibration: CalibrationResult | None = None,
 ) -> tuple[RoutedPredictiveUncertainty, ...]:
     """Predictive uncertainty through whichever route the result used. A refused result has none.
 
     ``calibration_observations`` (CORE-006) are the observations the result was calibrated on; their declared conditions
     bound the range a prediction may claim. Without them every prediction is DOWNGRADED ``PREDICTION_DOMAIN_NOT_DECLARED``.
+
+    ``observations`` and ``forward`` (I-14, R-27 / the audit's finding 24) are the EVIDENCE a grid result's
+    grid is held to. This function used to re-apply only the V1 resolution check and say so in a comment --
+    "the evidence checks cannot be [re-applied], since the result does not carry the evidence" -- and then
+    predict anyway, so a grid computed from other data, which ``grid_predictive_uncertainty`` refuses on the
+    same evidence, predicted SUPPORTED once wrapped in a hand-built result: mean 2.4745 against an honest
+    1.9745. There are two honest answers and this is both of them. Given the evidence the grid checks are
+    re-run; without it every prediction is DOWNGRADED ``GRID_NOT_BOUND_TO_EVIDENCE``, which is the reason
+    the supplied-grid route already uses for exactly this. ``calibration`` is passed through to the same
+    checks: without it the goodness of fit falls back to the pooled test, which is what the numbers then
+    support.
     """
     if not isinstance(result, HybridUQResult):
         raise HybridUQError("routed_predictive_uncertainty takes a HybridUQResult")
@@ -943,12 +973,24 @@ def routed_predictive_uncertainty(
     # (CORE-001/-002/-005), and _require_one_truth binds result.grid to the grid_summary digest the result carries. The
     # resolution judgement is re-applied; the evidence checks cannot be, since the result does not carry the evidence.
     _grid_route_claim(result.grid)
+    # I-14 (R-27, finding 24). The checks are the ones `supplied_grid_problem` applies, run here on the
+    # result's own grid: a claim about a posterior is a claim about the evidence it came from, and a record
+    # cannot carry that evidence. A finding RAISES, because a caller who handed over the evidence asked for
+    # it to be checked; its absence DOWNGRADES, because a claim not bound to evidence is still a number.
+    unbound: set[RouteReason] = set()
+    if isinstance(observations, ObservationSet) and forward is not None:
+        finding = supplied_grid_problem(result.grid, calibration, observations, forward)
+        if finding is not None:
+            raise RouteRefusedError(
+                f"this grid result is not bound to the evidence handed over: {finding[0].value} -- {finding[1]}")
+    else:
+        unbound.add(RouteReason.GRID_NOT_BOUND_TO_EVIDENCE)
     out = []
     for spec in specs:
         # R-23 (I-13 part B): `predict` was accepted here and used only on the LOCAL path, so a grid result
         # read its numbers out of the table and never compared them with the model passed beside it.
         found = _prediction_domain_reasons(spec, calibration_observations) | _table_reasons(
-            result.grid, predictive_table, spec, predict)
+            result.grid, predictive_table, spec, predict) | unbound
         reasons = tuple(sorted(found, key=lambda r: r.value))
         out.append(_grid_record(result.grid, predictive_table, spec, claim_for(reasons), reasons, twin=twin, model=model,
                                 source_ref=source_ref, confidence_level=confidence_level))

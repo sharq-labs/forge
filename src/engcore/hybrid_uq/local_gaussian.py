@@ -1530,6 +1530,41 @@ def _clipped_radius(z0: "np.ndarray", direction: "np.ndarray", radius: float,
     return max(limit, 0.0)
 
 
+def require_posterior_matches_calibration(posterior: "LocalGaussianPosterior", calibration) -> None:
+    """Refuse a posterior whose declared parameterization is not the calibration's (I-14, R-25).
+
+    Names, units, inference transforms, inference bounds and the declared parameterization digest.
+
+    DECLARED BOUNDS ARE A PROPERTY OF THE REQUEST, and nothing inside a record is outside a forger's reach --
+    which is why the audited forgery works: it moves the recorded bounds IN by sqrt(f) while dividing the
+    covariance by f, so every bound distance in sd units survives and the re-derivation that catches a
+    covariance-only shrink sees nothing. The only thing that can contradict edited bounds is the calibration
+    they came from, so this function takes it, and the local route calls it on the record it has just built.
+    Nothing here is checkable from the record ALONE, and that is not a gap this function can close.
+    """
+    if not isinstance(calibration, CalibrationResult):
+        raise HybridUQError("a posterior is bound to a CalibrationResult")
+    if posterior.parameterization != "declared":
+        raise HybridUQError(
+            f"only a declared posterior is bound to a calibration; this one is {posterior.parameterization!r}")
+    parameters = calibration.spec.parameters
+    lower, upper = inference_bounds(parameters)
+    for label, found, expected in (
+        ("parameter names", tuple(posterior.parameter_names), tuple(parameters.names)),
+        ("parameter units", tuple(posterior.parameter_units), tuple(parameters.units)),
+        ("inference transforms", tuple(posterior.inference_transforms), tuple(transforms_of(parameters))),
+        ("lower bounds", tuple(float(v) for v in posterior.lower_bounds), tuple(float(v) for v in lower)),
+        ("upper bounds", tuple(float(v) for v in posterior.upper_bounds), tuple(float(v) for v in upper)),
+        ("parameterization digest", posterior.parameterization_digest,
+         _declared_parameterization_digest(parameters)),
+    ):
+        if found != expected:
+            raise HybridUQError(
+                f"this posterior's {label} are {found!r} and the calibration declares {expected!r}; a "
+                f"declared parameterization is the request's, and a record that moves it is not a record of "
+                f"that request")
+
+
 def require_posterior_matches_observations(posterior: "LocalGaussianPosterior", observations) -> None:
     """Refuse a posterior whose recorded observations are not the ones handed in (I-14, R-22(a)).
 
@@ -2014,4 +2049,10 @@ def local_gaussian_posterior(
     object.__setattr__(posterior, "_modes", tuple(
         to_inference(m["estimate"], transforms) for m in starts_record
         if m.get("classification") in ("SECOND_MODE", "BETTER_OPTIMUM")))
+    # The record is verified against the two things it was built from, while both are in hand: the
+    # observations (I-14, R-22(a)) and the calibration (I-14, R-25). Without these calls both bindings would
+    # be rules a reader may choose to apply, and R-25's forgery is one no reader can catch from the record
+    # alone -- the bounds are the REQUEST's and every field is the forger's.
+    require_posterior_matches_observations(posterior, observations)
+    require_posterior_matches_calibration(posterior, calibration)
     return posterior
