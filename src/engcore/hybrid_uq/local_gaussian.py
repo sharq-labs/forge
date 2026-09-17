@@ -836,12 +836,37 @@ def _require_reasons_follow_measurements(d: "RouteDiagnostics") -> None:
                     f"extremes {bounds} imply")
         if math.isinf(tail_ratio):
             problems.append("a tail rise ratio is finite, or NaN when no tail probe was evaluated")
+        # AND NaN NEEDS THE REASON NO PROBE WAS EVALUATED (I-14, R-22(d)).
+        #
+        # The sentence above was already the rule; nothing enforced its second half. The route writes NaN in
+        # exactly one situation -- no probe evaluated -- which it records by a non-zero skip count, and the
+        # reasons a probe is not evaluated are a bound reached or approached. So NaN with zero skips and no
+        # bound is a combination the route cannot produce, and it read back SUPPORTED with no reasons at all.
+        if math.isnan(tail_ratio) and not (tail_skipped or d.near_bound or d.at_bound):
+            problems.append(
+                "a tail rise ratio of NaN says no tail probe was evaluated, and this record skipped none "
+                "and reports no parameter at or near a bound; the route cannot produce that combination")
         found_refusals, found_downgrades = _tail_verdict(tail_ratio)
         refusals |= found_refusals
         downgrades |= found_downgrades
         entries = tuple(d.multistart)
         if not entries and policy_keys:
             problems.append("a multistart policy is recorded with no starts")
+        # AND ITS CONVERSE (I-14, R-22(c)).
+        #
+        # With NO policy key at all the record counted as pre-policy, and two checks below stopped running:
+        # the canonical-span check, and the separation-radius check on every classification. So removing the
+        # seven `multistart_*` keys from a genuinely DOWNGRADED narrow search -- and editing the four fields
+        # that are re-derived from them -- read back ACCEPTED, claim SUPPORTED, reasons []. A pre-policy
+        # `route_diagnostics/2` record CANNOT EXIST: the schema and the policy record were introduced
+        # together, so such a payload is not an old record but an edited one. A `/1` record is unaffected,
+        # being already refused for carrying any multistart at all.
+        if entries and policy_keys != set(_MULTISTART_POLICY_KEYS):
+            problems.append(
+                f"{len(entries)} multistart start(s) are recorded under an incomplete policy "
+                f"({sorted(policy_keys)}); this schema postdates the policy record, so a record that lists "
+                f"starts carries the policy they were drawn under -- without it the canonical-span and "
+                f"separation-radius checks cannot run")
         if policy_keys == set(_MULTISTART_POLICY_KEYS):
             if int(thresholds["multistart_starts"]) != len(entries):
                 problems.append(f"the policy asked for {int(thresholds['multistart_starts'])} start(s) and {len(entries)} are recorded")

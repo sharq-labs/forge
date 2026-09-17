@@ -53,5 +53,16 @@
   "The stripped-policy forgery needed FOUR coordinated edits (the seven policy keys, `uniqueness`, the diagnostics claim and the outer claim), and this rule closes it at the first. The other three fields remain free in the sense that they are re-derived rather than bound -- which is the design, and is why the re-derivation's INPUTS are what R-22 is about.",
   "The tail rule is a NECESSARY condition, not a sufficient one: a record with a finite ratio that no probe actually produced is not caught, because nothing in the record ties the ratio to the probes. That binding would need the probe outcomes themselves in the record, which is a schema question and not this batch's."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. One control was repointed, and this batch's own claim about WHY R-22(b) is already closed was CORRECTED by its mutation run.",
+   "the_correction": "The preregistration says (b) is closed by the earlier batch's mass-ratio rule. Mutation B35e removes exactly that rule and the audited relabelling is STILL refused -- by the UNIQUENESS re-derivation, which derives a different verdict from the edited classifications than the record carries. So (b) is closed by TWO independent rules, and the mass rule merely fires first, which is why the probe's message named it. That is a better answer than the one preregistered, it was found by removing the rule rather than by reading the code, and B35e is declared `expect=\"SURVIVED\"` so the second rule's role is recorded rather than credited to the first.",
+   "the_numbers_that_forced_the_repoint": "Mutation B35d refuses EVERY NaN tail ratio, including the route's own, and the control survived it: the control used `tail_beyond_a_bound(2.0)`, whose genuine ratio is 0.99895 -- FINITE -- so it said nothing about the disjunction it was written to protect. At a bound of 1.0 the route evaluates no tail probe at all and writes NaN with `near_bound` naming the parameter, which is the shape the rule must not refuse. Measured across bounds: 0.5 and 1.0 give NaN with near_bound ['theta1'], 2.0 gives 0.99895 with near_bound ['theta1'], 3.0 gives 0.90504 with no bound at all.",
+   "guards_repointed": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_a_genuine_record_with_no_tail_probe_still_reads now uses a bound of 1.0 and asserts the genuine record's ratio IS NaN before it asserts anything else."
+   ]
+  }
+ ]
 }

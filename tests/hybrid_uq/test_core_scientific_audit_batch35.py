@@ -4,7 +4,7 @@ Problem R-22 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json), impr
 four, under benchmarks/core_v4_false_confidence/BATCH35_THRESHOLD_PROTOCOL.json. Three of R-22's four
 claims; the observation count is part D, with the schema bump.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 3aff191b, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -53,7 +53,6 @@ def test_r22c_a_narrow_search_is_genuinely_downgraded():
     assert posterior.diagnostics.uniqueness == "MULTISTART_BELOW_MINIMUM_SEARCH"
 
 
-@pytest.mark.xfail(strict=True, reason="R-22(c): with no policy keys the record counts as pre-policy")
 def test_r22c_stripping_the_policy_no_longer_buys_a_supported_reading():
     """The audited forgery: four coordinated edits turned DOWNGRADED into SUPPORTED with no reasons at all."""
     _posterior, payload = _payload(S.affine("R22c"), interior_fraction=0.02)
@@ -93,7 +92,6 @@ def test_r22c_a_record_with_no_starts_and_no_policy_still_reads():
 # ---------------------------------------------------------------------------
 # a_tail_ratio_is_nan_only_when_no_tail_probe_was_evaluated
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-22(d): a NaN tail ratio yields no verdict and no problem")
 @pytest.mark.parametrize("encoding", ["nan", float("nan")], ids=["string", "float"])
 def test_r22d_a_tail_ratio_that_no_probe_produced_is_refused(encoding):
     """The route writes NaN only when no probe was evaluated, and then the skip count is not zero."""
@@ -109,10 +107,17 @@ def test_r22d_a_tail_ratio_that_no_probe_produced_is_refused(encoding):
 
 def test_r22d_a_genuine_record_with_no_tail_probe_still_reads():
     """The control, and the reason the rule is a disjunction: a bound reached is why a probe is skipped."""
-    posterior, payload = _payload(F.tail_beyond_a_bound(2.0))
+    # A bound at 1 sd: the route evaluates NO tail probe and writes NaN, with `near_bound` naming the
+    # parameter. Bound 2.0 was the first choice and is the WRONG fixture -- its ratio is finite, so
+    # refusing every NaN would not have touched it and mutation B35d survived.
+    posterior, payload = _payload(F.tail_beyond_a_bound(1.0))
     diagnostics = payload["diagnostics"]
+    assert diagnostics["minimum_tail_rise_ratio"] == "nan", (
+        f"the fixture must be one whose GENUINE record carries a NaN ratio, or it says nothing about the "
+        f"disjunction: {diagnostics['minimum_tail_rise_ratio']!r}"
+    )
     assert diagnostics["tail_probes_skipped"] or diagnostics["near_bound"] or diagnostics["at_bound"], (
-        "the fixture must be one the route legitimately skipped a probe on, or it says nothing"
+        "and the route must record why no probe was evaluated"
     )
     assert LocalGaussianPosterior.from_dict(copy.deepcopy(payload)).claim is posterior.claim
 

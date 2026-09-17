@@ -487,6 +487,36 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "`confidence_level`, which is not one of the declared thresholds: it selects WHICH interval is measured rather than how wide one may be, so a caller who asks for a 50% interval gets narrower relative widths and can reach a better verdict that way. The report carries the level and the grid branch refuses anything but 0.95 outright; the local branch's freedom is deliberate, because closing it is a different rule than the one R-28 names. And the guard is on the THRESHOLDS -- a caller who hands in a posterior whose covariance is wrong still gets a verdict consistent with that covariance, which is R-25's and R-27's territory."
+  },
+  {
+   "problem": "R-22",
+   "title": "Local RouteDiagnostics read-back trusts carried fields",
+   "rule": "src/engcore/hybrid_uq/local_gaussian.py",
+   "rule_symbol": "_require_reasons_follow_measurements: the policy-with-starts rule and the NaN-tail-ratio rule; claim (b)'s closure is the pre-existing mass-ratio rule together with the uniqueness re-derivation",
+   "status": "LATENT",
+   "audit_status": "PARTIAL",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 part C (batch 35) for claims (b), (c) and (d); claim (a), the observation count, is part D",
+   "why": "PARTIAL, and the row says which claim is open: raising `observations` from 10 to 40 is still accepted, measured at batch 35's HEAD, because binding it needs a field the record does not carry -- the schema bump part D makes. LATENT for what is closed: nothing in production reads a LocalGaussianPosterior back from a payload it did not just write. `from_dict` exists for the records this core serializes so that a READER can check them, which is exactly what R-22 is about -- the check is the product, and a check that trusts its own inputs is not one.",
+   "what_would_create_it": "Any reader that takes a serialized posterior from somewhere else: the record is designed to travel, and its reasons are re-derived on read precisely so a reader need not trust the sender. The audited forgeries need only consistent numbers -- the stripped-policy one takes four coordinated edits, all of free fields.",
+   "entry_points": [
+    "engcore.hybrid_uq.local_gaussian.LocalGaussianPosterior.from_dict",
+    "engcore.hybrid_uq.router.HybridUQResult.from_dict"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_a_narrow_search_is_genuinely_downgraded",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_stripping_the_policy_no_longer_buys_a_supported_reading",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_a_partial_policy_is_still_refused_and_a_full_one_still_reads",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22c_a_record_with_no_starts_and_no_policy_still_reads",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_a_tail_ratio_that_no_probe_produced_is_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_a_genuine_record_with_no_tail_probe_still_reads",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22d_an_infinite_tail_ratio_is_still_refused",
+    "tests/hybrid_uq/test_core_scientific_audit_batch35.py::test_r22b_relabelling_a_genuine_second_mode_is_already_refused"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "The tail rule is a NECESSARY condition only: a record with a FINITE ratio that no probe actually produced is not caught, because nothing ties the ratio to the probes. Binding that needs the probe outcomes in the record, which is a schema question. And BETTER_OPTIMUM vs SECOND_MODE is still not re-derived from the objective although all three numbers are there -- deliberately not added, because LOWER_OBJECTIVE_SAME_BASIN vs SAME_OPTIMUM cannot be re-derived at all (its tolerance is 2 * gradient @ cov @ gradient, which the record does not carry), and half a rule is worse than a stated gap."
   }
  ]
 }

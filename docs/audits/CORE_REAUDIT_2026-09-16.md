@@ -2235,3 +2235,65 @@ only to satisfy the guard's signature and there is nothing for a test to observe
 green, so a reader knows it is inert and why.
 
 **Open decisions.** None.
+
+### Batch 35 — I-14 part C
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-14 | **PARTIAL** (parts A–C of four) | `28e4c116`, `18db6895` (A), `0cad9502`, `32f02f20` (B), `3aff191b` (C preregistration + 3 strict xfails), this commit | **R-22 stays PARTIAL**: claim (a), the observation count, is part D with the schema bump — raising `observations` from 10 to 40 is still accepted, measured at this HEAD; the tail rule is a **necessary** condition only, so a record with a *finite* ratio no probe produced is not caught (binding that needs the probe outcomes in the record, a schema question); BETTER_OPTIMUM vs SECOND_MODE is still not re-derived from the objective, deliberately — see below |
+
+**Reproducing each claim first changed what this batch is.** R-22 is four independent gaps, and one of them
+turned out to be already closed.
+
+| Claim | Status | How |
+|---|---|---|
+| (c) stripping the multistart policy | **FIXED** | A narrow search (`interior_fraction=0.02`) is genuinely DOWNGRADED with `MULTISTART_INCOMPLETE`. Remove the seven `multistart_*` keys, edit the three re-derived fields that follow, and the record reads back **ACCEPTED, SUPPORTED, reasons []**. With no policy the record counts as *pre-policy*, so the canonical-span and separation-radius checks stop running — and **a pre-policy `route_diagnostics/2` record cannot exist**, because the schema and the policy record were introduced together. A record that lists starts now carries the policy they were drawn under. |
+| (d) a NaN tail ratio | **FIXED** | The affine record is SUPPORTED with ratio 0.9999999921, zero skipped probes and no bound. Replacing the ratio with NaN — as the string or as a float, both of which `decode_float` accepts — read back SUPPORTED. The existing message already said the rule ("finite, or NaN when no tail probe was evaluated"); **nothing enforced its second half.** |
+| (b) relabelling a refit | **ALREADY CLOSED**, now pinned | The three audited relabellings of a genuine SECOND_MODE entry (mass ratios 1361.5, 1722.6, 1133.6 against a floor of 0.05) are all refused. |
+
+**The audit's own fix direction for (b) would have been wrong, and the code says so.** It asks for the class
+to be re-derived from the **objective** — `chi_square`, `chi_square_minimum`, the comparable quantile. But
+production does not choose WORSE_LOCAL_OPTIMUM because the fit is worse: it chooses it when a separated mode's
+**Laplace mass is negligible**, so a narrow equally-deep mode is legitimately WORSE_LOCAL_OPTIMUM. An
+objective-based rule would contradict the route. What the record needed was the *mass* re-derived against the
+class, which an earlier batch already does.
+
+**And this batch's own explanation of (b) was corrected by its mutation run.** Mutation B35e removes that
+mass-ratio rule — and the relabelling is *still* refused, by the **uniqueness re-derivation**, which derives a
+different verdict from the edited classifications than the record carries. So (b) is closed by **two
+independent rules** and the mass one merely fires first, which is why the probe's message named it. B35e is
+declared `expect="SURVIVED"` so the second rule gets the credit it is owed. It is also recorded as this
+batch's mutation although the code is an earlier batch's: **an earlier round's fix with no guard of its own is
+a fix nobody is watching.**
+
+**Where a rule was deliberately not written.** BETTER_OPTIMUM vs SECOND_MODE *could* be re-derived: production
+picks BETTER_OPTIMUM when `chi < chi_min - comparable` and all three numbers are in the record. It is not
+added, because LOWER_OBJECTIVE_SAME_BASIN vs SAME_OPTIMUM **cannot** be re-derived at all — its tolerance is
+`2 · gradient @ cov @ gradient`, which the record does not carry — and because it is a rule this
+preregistration would be inventing after reading the code rather than one the audit measured a forgery
+against. **Half a rule is worse than a stated gap.**
+
+**Amendment 1 also repointed a control that said nothing.** Mutation B35d refuses *every* NaN ratio, the
+route's own included, and the control survived it — it used `tail_beyond_a_bound(2.0)`, whose genuine ratio is
+finite. Measured across bounds: 0.5 and 1.0 give NaN with `near_bound ['theta1']`, 2.0 gives 0.99895, 3.0
+gives 0.90504 with no bound. The control now uses 1.0 and asserts the genuine ratio *is* NaN before it asserts
+anything else.
+
+**Compatibility.** No new symbol, no signature, field, default or enum member change; no serialized record
+gains or loses a key. Two new refusals inside a function that already refuses fourteen other inconsistencies.
+Neither shape is one this core writes.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**No existing expectation moved.**
+
+**Verification.** FAST tier 6882 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH35_MUTATIONS.log`: **4 of 4 KILLED plus one declared survivor**, both controls
+green.
+
+**Open decisions.** None.
