@@ -1,0 +1,78 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 44,
+ "improvements": [
+  "I-28 part A of three"
+ ],
+ "problems_addressed": [
+  "R-59 (the audit's finding 72)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "6083d4fa",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "`condition_posterior_on_predictive_admission` is meant to fail closed above a declared budget, and it accepts ANY finite non-negative budget: at 1.0 it conditions away 99.9997% of the posterior, renormalizing by 3.4e5, and returns an ordinary `PosteriorGrid` with the same dataset id, the original admissible mask (so the summary reports admissible_fraction 1.0) and no field recording that anything happened. The audit is a separate object bound to it by no digest, and every PosteriorGrid-accepting UQ function takes `.posterior`. R-71's two findings -- the forward-table constructor and the source-result binding -- are parts B and C.",
+ "reach": "LIBRARY_ONLY. `engcore.uq` is public API and the only in-repo callers are experiments/kinetics_k31 and k4, both of which declare a budget of 1e-12. No MCP entry point conditions a posterior.",
+ "what_was_already_seen": {
+  "R-59, from the audit": "'budget=0.05: REFUSED' / 'budget=1.0: ACCEPTED unsupported_mass=0.999997 supported=2.973e-06 factor=3.363e+05' / 'budget=5.0: ACCEPTED' / 'type: PosteriorGrid dataset_id: fit-data-v1 (same as original: True)' / 'fields carrying the conditioning: []' / and the summary still reporting full admissibility. In the reproduction the conditioned posterior's standard deviation jumps from 0.1 to 0.5 and its 95% interval becomes the two tail nodes, while nothing in the record it hands on says so."
+ },
+ "rules": {
+  "a_budget_is_a_bound_and_the_core_has_a_maximum": {
+   "improvement": "I-28",
+   "problem": "R-59",
+   "rule": "New module constant `MAXIMUM_CONDITIONED_UNSUPPORTED_MASS = 0.05`. `PredictiveAdmissionAudit` and `condition_posterior_on_predictive_admission` refuse a declared budget above it, naming the constant.",
+   "class": "B",
+   "why": "The budget says how much posterior mass a caller is willing to condition away and still call the result a posterior for the same question. 0.05 is not a new number: it is the complement of the 95% coverage every credible interval in this repository is declared at, so the rule is 'a conditioning may not discard more mass than the entire tail a 95% claim already excludes'. Above that the conditioned record is a statement about a minority of the original mass -- at the audited 1.0 it was a statement about 3e-6 of it -- and calling that the posterior is the false-confidence shape this round is about. A caller who genuinely wants to condition on a rare event is refused rather than served silently: what they want is a different question, asked with the observations that support it. Both in-repo callers declare 1e-12, so nothing in the tree moves.",
+   "closes": "the budget half of R-59: 1.0 and 5.0 stop being admissible declarations."
+  },
+  "a_conditioned_posterior_says_it_is_conditioned": {
+   "improvement": "I-28",
+   "problem": "R-59",
+   "rule": "When conditioning actually happens (unsupported mass > 0), the returned `PosteriorGrid` carries a DERIVED dataset identity -- `f\"{dataset_id}|predictive-admitted:{digest}\"`, where the digest is over the admitted mask, the supported mass and the rejected point indices -- and its `admissible_mask` is the original mask AND the predictive-admitted mask, so a summary can no longer report full admissibility over nodes the conditioning removed.",
+   "class": "A",
+   "why": "A conditioned posterior is a different posterior: it answers 'given predictive admission', and it was indistinguishable from the unconditioned fit to the same dataset. The dataset identity is the field every downstream route reads to decide what a posterior is about, which is exactly why the marking belongs there and why re-using the original identity is what let a truncated record travel unnoticed. The mask is not cosmetic either: `admissible_fraction` is what a reader consults to find out how much of the support carried mass. Nothing numeric is chosen; the digest is over the record's own arrays.",
+   "closes": "the unmarked-record half: a consumer that takes `.posterior` can tell, and so can anything comparing dataset identities."
+  },
+  "the_audit_is_bound_to_the_weights_it_describes": {
+   "improvement": "I-28",
+   "problem": "R-59",
+   "rule": "`PredictiveAdmissionAudit` gains a trailing `conditioned_weights_digest: str = \"\"`, written when conditioning happened, and `ConditionedPosterior.__post_init__` refuses a pair whose audit digest is not the digest of the posterior's own weights (and refuses a non-empty digest beside an unconditioned posterior).",
+   "class": "A",
+   "why": "The audit is the record that says how much mass was discarded and by what factor, and it was bound to the posterior by nothing at all: the two could be recombined freely, and an audit describing a 1e-12 conditioning could travel beside a posterior conditioned by 3.4e5. A digest over the weights is the one thing that makes the pair inseparable, and it is integrity-only in the usual way -- which is why the mask and the identity above are re-derived rather than asserted.",
+   "closes": "the 'bound by no digest' half."
+  }
+ },
+ "thresholds": {
+  "MAXIMUM_CONDITIONED_UNSUPPORTED_MASS": {"value": 0.05, "class": "B", "why": "the complement of the 95% coverage this repository's credible intervals are declared at: a conditioning may not discard more mass than a 95% claim's whole excluded tail. Both in-repo callers declare 1e-12, twelve orders below it."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "`MAXIMUM_CONDITIONED_UNSUPPORTED_MASS` (new public constant)",
+   "a trailing `conditioned_weights_digest` field with an empty default on `PredictiveAdmissionAudit`, written only when conditioning happened",
+   "a `__post_init__` on `ConditionedPosterior` (new behaviour, no new field)"
+  ],
+  "what_is_not_changed": [
+   "no existing field, default or enum member; no signature change",
+   "an unconditioned pass-through (unsupported mass exactly zero) returns the original posterior object, unmarked, exactly as now -- nothing was conditioned",
+   "the mass accounting, the 1e-12 sum contract and the refusal messages above the budget"
+  ],
+  "records_that_already_exist": "No committed JSON carries a predictive admission audit or a conditioned posterior; the only files naming the record are the API snapshots, whose tests fail by design until the V4 round. Both in-repo callers (experiments/kinetics_k31, kinetics_k4) declare a budget of 1e-12 and their committed evidence records no conditioning.",
+  "deliberate_narrowing": "A budget above 0.05 stops being declarable, and a conditioned posterior stops being byte-identical to the unconditioned one -- which is the point. An audit and a posterior that were not produced together stop being combinable."
+ },
+ "residuals_stated_in_advance": [
+  "The digest is integrity-only, as every digest in this tree is: a forger who edits the weights can recompute it. What it closes is the accidental recombination and the silent hand-off, not a determined edit -- and the mask and the derived identity are re-derived from the arrays rather than trusted.",
+  "The derived dataset identity is a string, so a consumer that only logs it gains nothing automatic. What it does guarantee is that any consumer comparing a posterior's identity with the dataset it was fitted to will not match -- which is what the audit asked for.",
+  "Conditioning still returns the ORIGINAL posterior object when the unsupported mass is exactly zero. That is not a silent case: nothing was discarded, the audit says so, and marking it would change records for a no-op.",
+  "R-71 is untouched here: the forward table's own constructor (finding 102) is part B and the source-result binding (finding 98) is part C."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_k31_predictive_admission.py, the uq suites, tests/test_scientific_core.py",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19, or 19 plus the frozen-snapshot entries this batch's trailing field adds inside those same files)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
