@@ -3,7 +3,7 @@
 Problem R-75 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json), improvement I-22 part A of
 three, under benchmarks/core_v4_false_confidence/BATCH26_THRESHOLD_PROTOCOL.json.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit afb4694b, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -50,15 +50,26 @@ def _refused(text: str) -> bool:
 # ---------------------------------------------------------------------------
 # whitespace_means_a_declaration_not_an_expression
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-75: the split refusal is swallowed and the string is evaluated")
 def test_r75_text_after_the_unit_is_not_folded_into_the_magnitude():
     assert _refused("5 volt 2"), (
         f"'5 volt 2' parsed as {Quantity.parse('5 volt 2')}: the trailing 2 multiplied a magnitude "
         f"the caller wrote once"
     )
+    # ADDED while running batch 26's guard mutations, not preregistered. Mutation B26c restores the
+    # audited mechanism exactly -- the split's refusal swallowed, the whole string handed to the
+    # expression parser -- and the identity rule catches '5 volt 2' anyway, because 5 * volt * 2 is
+    # 10 and the caller wrote 5. It does NOT catch a trailing factor of ONE: 5 * volt * 1 is 5, the
+    # identity holds, and the junk is silently dropped. That is the case only the raise-rather-than-
+    # swallow rule can see, so it is asserted here.
+    assert _refused("5 volt 1"), (
+        f"'5 volt 1' parsed as {Quantity.parse('5 volt 1')}: a trailing factor of one leaves the "
+        f"magnitude alone, so nothing downstream can notice that the text was not a declaration"
+    )
+    assert _refused("5 volt * 2 / 2")
+    assert _refused("5volt*1"), "the no-separator path is the same expression parser and needs the same rule"
+    assert _refused("5 volt 1 1")
 
 
-@pytest.mark.xfail(strict=True, reason="R-75: the fallback evaluates the whole string as arithmetic")
 def test_r75_an_arithmetic_expression_is_not_a_declaration():
     assert _refused("2 volt + 3 volt"), f"parsed as {Quantity.parse('2 volt + 3 volt')}"
     assert _refused("2volt+3volt"), f"parsed as {Quantity.parse('2volt+3volt')}"
@@ -67,9 +78,15 @@ def test_r75_an_arithmetic_expression_is_not_a_declaration():
 # ---------------------------------------------------------------------------
 # the_magnitude_written_is_the_magnitude_parsed
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-75: a bare unit becomes one of it, the mirror of the bare number already refused")
 def test_r75_a_unit_with_no_magnitude_is_refused():
     assert _refused("volt"), f"'volt' parsed as {Quantity.parse('volt')}"
+
+
+def test_r75_a_magnitude_is_a_decimal_literal_and_not_an_expression():
+    """The magnitude half is one decimal number, narrower than `float()` deliberately."""
+    for text in ("1/2 volt", "2**3 volt", "inf volt", "nan volt", "1_0 volt", "0x10 volt"):
+        with pytest.raises(UnitCompatibilityError, match="is not a magnitude"):
+            Quantity.parse(text)
 
 
 def test_r75_the_spellings_that_were_always_meant_still_parse():
@@ -90,13 +107,11 @@ def test_r75_the_spellings_that_were_always_meant_still_parse():
 # ---------------------------------------------------------------------------
 # a_magnitude_is_a_number
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-75: bool is an int, so a flag is one volt")
 def test_r75_a_bool_is_not_a_magnitude():
     with pytest.raises(UnitCompatibilityError):
         Quantity(True, "volt")
 
 
-@pytest.mark.xfail(strict=True, reason="R-75: float() of a numeric string is silently accepted")
 def test_r75_a_string_is_not_a_magnitude():
     with pytest.raises(UnitCompatibilityError):
         Quantity("5", "volt")
@@ -117,7 +132,6 @@ def test_r75_the_magnitudes_that_were_always_meant_are_still_accepted():
 # ---------------------------------------------------------------------------
 # a_difference_unit_is_not_an_absolute_value
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-75: there is no name for the delta scales yet")
 def test_r75_the_difference_scales_have_a_name():
     is_delta_unit = _symbol("is_delta_unit")
     assert is_delta_unit("delta_degC") is True
@@ -129,14 +143,12 @@ def test_r75_the_difference_scales_have_a_name():
     assert is_delta_unit("ohm") is False
 
 
-@pytest.mark.xfail(strict=True, reason="R-75: the check is dimension-only, and a delta shares the dimension")
 def test_r75_a_delta_temperature_is_refused_where_an_absolute_one_is_required():
     payload = _payload_with(BODY, "ambient_temperature", "27 delta_degC")
     with pytest.raises(WrongDimensionError, match="ambient_temperature"):
         build_electrothermal_problems(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-75: reaches production -- the boundary reads the expression as 10 V")
 def test_r75_an_expression_at_the_mcp_boundary_is_refused():
     payload = example_electrothermal_payload()
     payload["source_voltage"] = "5 volt 2"

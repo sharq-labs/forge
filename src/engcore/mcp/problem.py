@@ -85,7 +85,12 @@ from ..scientific.results.validation import (
     ValidationLevel,
     ValidationOutcome,
 )
-from ..scientific.units.quantity import Quantity, dimension_of, dimensionality
+from ..scientific.units.quantity import (
+    Quantity,
+    dimension_of,
+    dimensionality,
+    is_delta_unit,
+)
 from ..systems.electrothermal import coupled as cp
 from ..systems.electrothermal.resistor_body import RESISTOR_POWER_METRIC
 from .errors import (
@@ -918,6 +923,34 @@ def _read_quantity(
             f"[{quantity.dimensionality}], but this field must be "
             f"[{dimensionality(exemplar)}] (any unit of that dimension, for "
             f"example '1 {exemplar}')"
+        )
+    # A SPAN IS NOT A POINT, AND THE DIMENSION CHECK ABOVE CANNOT SEE THE
+    # DIFFERENCE.
+    #
+    # `delta_degC` and `kelvin` have the same dimension and the same size, so
+    # every check this function performed passed an ambient temperature of
+    # "27 delta_degC" straight through as 27 K -- not the 300.15 K the caller
+    # meant, and not a number any later stage could question. The two scales
+    # are separated only by the name the backend gives them, which is what
+    # `is_delta_unit` reads.
+    #
+    # Symmetric, because the error is: an absolute temperature supplied where a
+    # span is required is 273.15 wrong in the other direction. No
+    # `unit_exemplar` in this repository is a delta unit today, so that half
+    # refuses nothing that exists and guards the exemplar that does not exist
+    # yet. (I-22, R-75.)
+    if is_delta_unit(quantity.units) != is_delta_unit(exemplar):
+        span, point = (
+            ("a difference", "an absolute value")
+            if is_delta_unit(quantity.units)
+            else ("an absolute value", "a difference")
+        )
+        raise WrongDimensionError(
+            f"{where} is on the wrong scale: {raw!r} states {span} on an "
+            f"offset temperature scale, but this field must be {point}. The "
+            f"two have the same dimension and the same size, so nothing later "
+            f"can tell them apart -- state it as {point}, for example "
+            f"'1 {exemplar}'"
         )
     return quantity
 

@@ -1634,3 +1634,85 @@ JSON edit reports MUTATION BROKE THE PARSE — what the ledger says is verified 
 `tools/certification/guard_reach.py` and by batch 19's own twelve refusal cases instead.
 
 **Open decisions.** None.
+
+### Batch 26 — I-22 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-22 | **PARTIAL** (part A of three) | `afb4694b` (preregistration + 8 strict xfails), this commit | the grammar is about TEXT, so `Quantity(5.0, "volt")` in process bypasses it and only the constructor's bool/str rule reaches there — as it must, that being the two-argument path the class is built on; `coerce_quantity(value, unit)` still accepts a bare number, by design and by its own docstring, because `unit` supplies the context explicitly; a delta unit declared through any boundary other than `_read_quantity` is not yet refused, and the LIBRARY comparisons that mishandle offset scales (R-48, R-52, R-57) are parts B and C |
+
+**R-xx closed.** R-75 is four separate claims and each is answered separately.
+
+| Claim | Status | How |
+|---|---|---|
+| `'5 volt 2'` is 10 V | **FIXED** | The audited defect was never a missing check — it was a check whose refusal was **caught and discarded**. The split path refuses `'volt 2'` ("Unit expression cannot have a scaling factor"), `parse` swallowed that in `except (ValueError, UnitCompatibilityError): pass`, and the fallback then evaluated the whole string as arithmetic: 5 × volt × 2. Whitespace now means a declaration and the split is the only path for separated text; a refusal from either half is raised. |
+| `'2 volt + 3 volt'` is 5 V | **FIXED** | Same mechanism, plus the rule that covers the no-separator path — which has to stay open for `'5volt'` and is therefore still the expression parser. **The magnitude the caller wrote must equal the magnitude the core holds, exactly.** `'2volt+3volt'` writes 2 and read as 5. The same identity makes a bare unit (`'volt'`, silently one volt) the mirror of the bare number this method already refused. |
+| a bool or a str is accepted as a magnitude | **FIXED** | `bool` is an `int`, so `float(True)` is 1.0 and `Quantity(True, "volt")` was one volt: a flag read as a measurement, indistinguishable afterwards from a measured one. Refused **by type**, before the `float` call, so which *numbers* are allowed is exactly what it was — `int`, `float` and the numpy scalars the solver arrays produce all still pass, and there is a control test asserting that. |
+| `'27 delta_degC'` passes the dimension-only check | **FIXED** | `delta_degC` and `kelvin` have the same dimension and the same size — slope 1, offset 0 — so **no numerical check can separate them** and `is_ratio_scale` says True of each. The distinction lives in the name: the backend's `delta_` prefix is the one place a caller's "this is a span, not a point" is recorded. `is_delta_unit` reads it, through the registry's own prefix parser rather than by slicing (`millidelta_degC` is a difference), and `_read_quantity` refuses a mismatch in **either** direction. An MCP run was solving at 27 K where the caller meant 300.15 K. |
+
+**The batch's own mutations found a fifth rule, and it is recorded as amendment 1.** Mutation B26c restores
+the audited swallow, and the reproduction still passed — the magnitude identity catches `'5 volt 2'` because
+5 × volt × 2 is ten and the caller wrote five. Probing why, the **unit half turned out to be an expression the
+backend evaluates**: `normalize_unit('volt 1')` is `'volt'` and `normalize_unit('volt * 2 / 2')` is `'volt'`
+too. A net scaling factor of **one** leaves the magnitude untouched, so `Quantity.parse('5 volt 1')` returned
+5.0 volt and `Quantity.parse('5volt*1')` returned 5.0 volt: trailing text silently dropped, invisible to the
+identity and to everything downstream of it. Neither spelling is in the audit's finding 106; both are the
+same defect one factor over. So: **after the exponents and the leading `1` of a reciprocal are accounted for,
+a unit expression carries no digits.** That is unit algebra — a product of named units with rational
+exponents — not a threshold, and every unit this repository writes passes it (`1/kelvin`,
+`meter**2/second`, `watt/meter/kelvin`, `kg m / s**2`).
+
+**Three rules where two would do, and all three are kept.** With amendment 1 in place the single-edit
+mutations of the swallow rule (B26c) and of the magnitude identity (B26f) both SURVIVED, and both are re-run
+PAIRED with amendment 1's call sites, which kills them. Keeping all three is deliberate and the reason is
+worth writing down: **the digit rule is a syntactic proxy, the identity is the thing actually meant, and
+raising rather than swallowing is what keeps a refusal a refusal.** A repository that deleted the identity
+and kept the proxy would be enforcing an arithmetic fact with a spelling rule.
+
+**Compatibility.** Additive. One new module-level function (`is_delta_unit`) beside `is_ratio_scale`, three
+new private helpers, and one `cache_clear()` line in `clear_unit_caches` — required, because
+`test_core_runtime_caches.py` enumerates the module's memos and fails if one survives a clear. No signature,
+field, default or enum member changed; no serialized record gains a field; the verdict word is untouched.
+`WrongDimensionError` is reused as the refusal channel and its docstring widened from "dimension" to
+"dimension **or scale**", so the MCP error taxonomy and its mapping are unchanged and a caller who already
+handles a wrong unit handles this. The deliberate narrowings: `Quantity.parse` refuses an expression after
+the unit, an arithmetic magnitude (`'1/2 volt'`), a bare unit, and arithmetic inside the unit; the
+constructor refuses a bool or str magnitude; and the boundary refuses a delta unit where an absolute one is
+required — **that last call previously succeeded and returned a wrong answer, so it is a refusal replacing a
+false result, not a refusal replacing a right one.**
+
+**No `unit_exemplar` in this repository is a delta unit**, checked rather than assumed, so the symmetric half
+of the boundary rule refuses nothing that exists today and guards the exemplar that does not exist yet.
+Mutation B26k removes exactly that half and is killed, which is how the live half stays distinguishable from
+the dead one.
+
+**The ledger moved with the fix.** `certification/guard_reach_ledger.json` gains an R-75 row: REACHED and
+FIXED, naming `build_electrothermal_problems` and `run_electrothermal_case` as the entry points and the three
+tests that exercise it *there* — the reproductions run through the **shipped example payload**, not through
+the parser alone, which is what makes the row REACHED rather than LIBRARY_ONLY. `what_the_check_cannot_see`
+states the real limit: the delta rule is applied at one call site rather than enforced structurally, which is
+why parts B and C put it into the library comparisons.
+
+**Committed evidence.** Nothing moved. No serialized artifact in `benchmarks/` or `certification/` carries a
+quantity string of a shape the new grammar refuses — the payloads all write `magnitude unit` — and none
+declares a `delta_` unit. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED markers; the new
+rules are a parse grammar and a boundary refusal, so neither's numbers are affected.
+
+**Two existing expectations moved, both strengthened, both commented in place.**
+`test_core_runtime_caches.py::test_the_module_exposes_the_memos_this_audit_expects` gains `is_delta_unit` —
+that assertion exists to force exactly this revisit. And
+`test_clear_unit_caches_clears_every_memo_in_the_module` now requires **every** memo to be populated by its
+own block rather than merely one: mutation B26l dropped `is_delta_unit.cache_clear()` and the test passed,
+because an empty cache survives a clear invisibly. "Nothing was populated" was too weak a floor.
+
+**Verification.** FAST tier 6786 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier at the recorded baseline. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched — G24a pins the split-path condition line, and the rewritten `parse`
+keeps that line byte-identical rather than the guard being edited. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH26_MUTATIONS.log`: **14 of 14 KILLED**, both controls green, plus 2 pinned re-runs
+on the two changed files, both KILLED. Three survived first and each produced work rather than a note: B26c
+and B26f are now paired (above), and B26l forced the populate block to be complete.
+
+**Open decisions.** None.

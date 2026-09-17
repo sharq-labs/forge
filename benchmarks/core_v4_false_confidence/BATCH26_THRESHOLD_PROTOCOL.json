@@ -50,6 +50,15 @@
    "closes": "'27 delta_degC' against a `kelvin` exemplar.",
    "not_closed_here": "`is_delta_unit` is only CONSULTED at the MCP boundary in this batch. The library comparisons -- corner agreement, consensus relative difference, tolerances and sigmas -- are R-57, R-52 and R-48, parts B and C.",
    "which_refusal_channel": "`WrongDimensionError`, the boundary's existing 'this unit is not the one this field needs' channel, whose docstring is widened from 'dimension' to 'dimension or scale'. No new error class: the MCP error taxonomy and its mapping are unchanged, and a caller who already handles a wrong unit handles this."
+  },
+  "the_unit_half_is_a_unit_and_not_arithmetic": {
+   "improvement": "I-22",
+   "problem": "R-75",
+   "added_by_amendment": 1,
+   "rule": "The unit half of a declaration, with `(\\*\\*|\\^)\\s*[+-]?\\d+(\\.\\d+)?` and a leading `1` immediately before `/` removed, must contain no digit.",
+   "class": "A",
+   "why": "See amendment 1. A unit is a product of named units with rational exponents; a number inside one is arithmetic, and arithmetic that scales by one leaves no trace in the magnitude for any later check to find.",
+   "closes": "'5 volt 1', '5 volt * 2 / 2', '5volt*1', '5 volt 1 1'."
   }
  },
  "compatibility": {
@@ -62,5 +71,19 @@
   "The grammar is about the TEXT. A caller who constructs `Quantity(5.0, 'volt')` directly still bypasses it entirely -- as it must, that being the two-argument path the whole class is built on.",
   "A delta unit declared through any boundary other than `_read_quantity` is not yet refused; the library rules are parts B and C."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "A fifth rule, `the_unit_half_is_a_unit_and_not_arithmetic`: after the exponents (`**2`, `^-1`) and the single leading `1` of a reciprocal are accounted for, the unit half of a declaration may contain no digit. Enforced on BOTH paths -- `_require_the_unit_is_a_unit_and_not_arithmetic` is called on the separated unit half and, on the no-separator path, on whatever follows the leading decimal literal.",
+   "class": "A",
+   "the_numbers_that_forced_it": "Found by this batch's own guard mutations, not by a threshold moving. Mutation B26c restores the audited swallow, and the reproduction still passed: '5 volt 2' is refused by the magnitude identity because 5 * volt * 2 is 10 and the caller wrote 5. Probing why, the unit half turned out to be an EXPRESSION the backend evaluates: `normalize_unit('volt 1')` is 'volt' and `normalize_unit('volt * 2 / 2')` is 'volt'. A net scaling factor of ONE leaves the magnitude untouched, so `Quantity.parse('5 volt 1')` returned 5.0 volt and `Quantity.parse('5volt*1')` returned 5.0 volt -- trailing text silently dropped, invisible to the magnitude identity and to every check downstream of it. Neither spelling was in the audit's finding 106; both are the same defect one factor over.",
+   "why_it_is_not_a_post_hoc_threshold": "Nothing numeric is chosen and no bound moves. The rule is a statement of what a unit IS -- a product of named units with rational exponents -- so the accepted set is fixed by unit algebra and not by a measurement. Every unit spelling in this repository passes it: '1/kelvin', 'meter**2/second', 'watt/meter/kelvin', 'kg m / s**2', 'meter**2', 'dimensionless'.",
+   "consequence_for_the_preregistered_rules": "The digit rule now refuses, on the TEXT, every magnitude-changing spelling reachable through `parse`, so the single-edit mutations of the swallow rule (B26c) and of the magnitude identity (B26f) both SURVIVED: three rules where two would do. Both of the earlier rules are KEPT and both mutations are re-run PAIRED with amendment 1's call sites, which kills them. The digit rule is a syntactic proxy; the identity is the thing actually meant; and raising rather than swallowing is what keeps a refusal a refusal. A repository that deleted the identity and kept the proxy would be relying on a spelling rule to enforce an arithmetic fact.",
+   "guards_added_while_running_the_mutations": [
+    "tests/mcp/test_core_scientific_audit_batch26.py::test_r75_text_after_the_unit_is_not_folded_into_the_magnitude gained '5 volt 1', '5 volt * 2 / 2', '5volt*1' and '5 volt 1 1'.",
+    "tests/test_core_runtime_caches.py::test_clear_unit_caches_clears_every_memo_in_the_module now requires that EVERY memo be populated by its own block, not merely one: mutation B26l dropped `is_delta_unit.cache_clear()` and the test passed, because an empty cache survives a clear invisibly."
+   ]
+  }
+ ]
 }
