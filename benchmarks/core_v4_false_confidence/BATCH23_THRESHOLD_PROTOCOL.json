@@ -1,0 +1,78 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 23,
+  "improvements": [
+    "I-13 part B of two"
+  ],
+  "problems_addressed": [
+    "R-37",
+    "R-23"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "2fff3b4f",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "what_this_part_is": "Part A bound a prediction's DOMAIN statement to its calibration. Part B is the two problems about the prediction's NUMBERS. R-37: the linearized nonlinearity is one number pooled across every spec in a call and is never refused -- a prediction with nonlinearity = inf and parameter sd 0 is still emitted, only DOWNGRADED, and one quadratic output downgrades an exactly affine prediction in the same call and records inf as ITS nonlinearity too. R-23: a grid-route prediction reads its numbers out of a predictive TABLE and never checks the table against the `predict` the caller passed in the same call -- a table of twice the model gives a SUPPORTED mean of 3.949 against the honest 1.975.",
+  "reach": "R-23's rule IS reached in production: `engcore.studies.calibration_study` predicts through `grid_predictive_uncertainty`, and it builds its own predictive table from its own forward model, so it can pass `predict` and the spot-check runs on every production prediction. R-37 is on the linearized route, which production does not run; the guard reach ledger's R-02 row carries that.",
+  "what_was_already_seen": {
+    "R-37": "the audit's findings 37 and 39. A prediction whose parameter standard uncertainty is 0 and whose probes move it at all records `predictive_nonlinearity = inf` and is emitted DOWNGRADED. And because the number is a single maximum over the whole call, an exactly affine prediction in the same call as a quadratic one records the quadratic one's inf as its own nonlinearity.",
+    "R-23": "the audit's finding 20. `routed_predictive_uncertainty` takes BOTH `predict` and `predictive_table` for a grid result and uses only the table: a table holding twice the model, passed together with the correct `predict`, reported a SUPPORTED mean of 3.949 where the honest answer is 1.975."
+  },
+  "rules": {
+    "the_nonlinearity_is_per_spec": {
+      "improvement": "I-13",
+      "problem": "R-37",
+      "rule": "The probe deviations are already computed per spec -- `deviation / parameter_sd` is a vector over the specs -- so the maximum is taken PER SPEC and each record carries its own. The pooled maximum over the call is gone.",
+      "why_it_was_wrong": "the nonlinearity is a property of one predicted quantity's own response to the parameters. Pooling it means a record states a number that was measured on a different quantity, and the record's own read-back rule then derives PREDICTIVE_NONLINEAR for it from someone else's curvature. A record has to be about the thing it names.",
+      "class": "A (a per-row maximum instead of a global one; no threshold)"
+    },
+    "a_nonfinite_nonlinearity_is_refused": {
+      "improvement": "I-13",
+      "problem": "R-37",
+      "rule": "A spec whose measured nonlinearity is not finite -- +/-inf, which is what a non-zero probe deviation at a parameter standard uncertainty of exactly 0 produces -- is REFUSED: `linearized_predictive_uq` raises `RouteRefusedError` naming that spec, and `RoutedPredictiveUncertainty` refuses a record carrying a non-finite nonlinearity on read. NaN keeps exactly the meaning it has: nothing was measured, which is NONLINEARITY_PROBE_INCOMPLETE.",
+      "why_a_refusal_and_not_a_downgrade": "inf is not a large nonlinearity, it is the absence of a scale to measure one against. The deviation is expressed in units of the parameter standard uncertainty because that is what the reported interval is built from; where that uncertainty is exactly 0 the interval is a point, and a probe that moves the prediction at all says the point is wrong by an amount the interval cannot express. There is no number to downgrade -- the linearization has no interval to stand behind, which is what `a refused route emits no predictive uncertainty` already says everywhere else in this module.",
+      "why_not_also_a_finite_refusal_threshold": "the audit's brief for this improvement says `keep nonlinearity per spec, and refuse non-finite values`, and that is what this does. A finite refusal threshold -- the local route's NONLINEARITY_REFUSE, say -- would be a second rule with its own consequences for committed evidence, and it is not what this problem is about. It is recorded as a residual, not adopted.",
+      "class": "A (a finiteness requirement, not a threshold)"
+    },
+    "a_grid_predictive_table_is_spot_checked_against_predict": {
+      "improvement": "I-13",
+      "problem": "R-23",
+      "rule": "`grid_predictive_uncertainty` and `routed_predictive_uncertainty` take `predict` on the grid path. When it is given, the table is checked against it AT THE NODES THE REPORTED NUMBERS STAND ON, and a disagreement beyond floating-point roundoff RAISES `HybridUQError`. Three nodes, chosen deterministically among those that are admissible in both the posterior and the table and carry non-zero posterior weight: the node of maximum posterior weight, and the nodes attaining the table's smallest and largest value for this prediction.",
+      "why_those_nodes_and_not_a_count": "a count would be a threshold with nothing behind it. These three are the nodes the ANSWER is made of: the reported mean is dominated by the highest-weight node, and the reported interval's ends cannot lie outside the table's extreme values over the support. A table that is systematically wrong -- the audited case is a factor of two -- disagrees at the first of them. A table wrong at one low-weight interior node is NOT caught, and the bound on that is explicit: such a node moves the reported mean by at most its own weight times its own deviation.",
+      "the_tolerance_is_roundoff_and_not_a_threshold": "`predict` is a deterministic function and the table is supposed to BE its values, so the only admissible disagreement is floating point. The tolerance is `64 * eps * max(|table|, |predict|)`, the same form this module already uses for its probe deviations and its variance-roundoff bound.",
+      "why_a_raise_and_not_a_downgrade": "a caller who passes `predict` beside a table is asserting that the table is that model's values on these nodes. Same shape as part A's digest: the assertion is true or false.",
+      "class": "A (an identity check at named nodes, to roundoff; no threshold)"
+    },
+    "an_unchecked_table_says_so": {
+      "improvement": "I-13",
+      "problem": "R-23",
+      "rule": "A grid-route prediction made with no `predict` to check the table against carries a new appended DOWNGRADE reason, `PREDICTIVE_TABLE_NOT_CHECKED`. The numbers are unchanged; the claim is capped at DOWNGRADED.",
+      "why_this_is_necessary_and_not_scope_creep": "without it, the spot-check is silenced by omitting an optional argument, which is exactly the shape of R-12 one layer down -- and R-12 is the problem part A of this same improvement exists to close. A rule a caller turns off by passing nothing is not a rule.",
+      "class": "A"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "none touched. `RouteReason` gains one APPENDED member. `grid_predictive_uncertainty` and `routed_predictive_uncertainty` gain one keyword argument with a default of None. No record gains a field; `predictive_nonlinearity` already exists and only its VALUE becomes per-spec.",
+    "behaviour_that_deliberately_changes": [
+      "each linearized record's `predictive_nonlinearity` is now its own, so an affine prediction in the same call as a curved one is SUPPORTED where it was DOWNGRADED with the other one's number.",
+      "a spec whose nonlinearity is non-finite is refused instead of emitted.",
+      "a grid-route prediction whose table disagrees with a supplied `predict` at one of the three checked nodes raises.",
+      "EVERY grid-route prediction made without `predict` is DOWNGRADED PREDICTIVE_TABLE_NOT_CHECKED. That is the wide one, and it is the point: an unchecked table is a number nobody verified."
+    ],
+    "serialized_records": "no field added, removed, renamed or reordered. A record written before this batch keeps reading back: `PREDICTIVE_TABLE_NOT_CHECKED` is only ever derived from the absence of an argument at BUILD time, not re-derived on read, so an old grid record without it is not refused. The non-finite refusal is a new read-back rule, and no committed record carries a non-finite nonlinearity -- the audit found the shape in a constructed case, not in evidence.",
+    "claims_that_move": [
+      "`benchmarks/core_v2_hybrid_uq/TCR.json`, `FAILURE_CASES.json`, `PERFORMANCE.json` and `WHEEL_V2.json` are regenerated, and every grid-route prediction in them that was made without `predict` gains PREDICTIVE_TABLE_NOT_CHECKED unless its generator is given `predict`. Each generator that HAS the forward model passes it, so the downgrade appears only where a table genuinely cannot be checked.",
+      "the production `engcore.studies.calibration_study` builds its own predictive table from its own forward evaluator, so it passes `predict` and its records are checked rather than downgraded.",
+      "`KINETICS_K2.json` and `BATTERY_T41.json` are NOT regenerated. Their SUPERSEDED markers stand and gain these rules."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The spot-check is three nodes. A table wrong only at low-weight interior nodes is not caught; the bound is each such node's weight times its deviation on the mean, and nothing tighter is claimed.",
+    "A finite nonlinearity is still only a downgrade, however large. This part refuses the non-finite case, which is what the improvement's brief asks for; a finite refusal threshold would be a separate rule with its own consequences for committed evidence.",
+    "`PREDICTIVE_TABLE_NOT_CHECKED` is not re-derived on read, because a record does not carry whether a `predict` was available when it was built. So a record can be hand-written without it; that is what the record digest and the surrounding provenance are for, and it is the same limit every build-time-only reason in this module has.",
+    "The check compares the table with `predict` in the SPEC's unit. A table built in another unit of the same dimension would disagree at roundoff and raise, which is correct but reads as a disagreement rather than as a unit mismatch.",
+    "Nothing here binds `predict` to the calibration's own forward model. A caller can pass a predictive model the calibration never used, consistently with a table built from the same wrong model, and both will agree. That is the limit part A already stated for the local route, and it stands."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
