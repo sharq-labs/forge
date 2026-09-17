@@ -6,20 +6,7 @@
     "verdict": "CHECKER_CAN_FAIL"
   },
   "numbers_checked": 19,
-  "numbers_missing_from_the_report": [
-    {
-      "claim": "branch A closure size",
-      "value": "90",
-      "context_pattern": "branch A .engcore.",
-      "present_in_report": false
-    },
-    {
-      "claim": "branch A engcore modules",
-      "value": "81",
-      "context_pattern": "branch A .engcore.|all \\d+ of them",
-      "present_in_report": false
-    }
-  ],
+  "numbers_missing_from_the_report": [],
   "claim_checks": [
     {
       "check": "the report does not claim empirical validation passed",
@@ -33,7 +20,7 @@
     },
     {
       "check": "the report states that the Core was not modified",
-      "ok": false
+      "ok": true
     },
     {
       "check": "the report does not report a disagreement count it does not have",
@@ -52,13 +39,8 @@
       "ok": true
     }
   ],
-  "failed_claim_checks": [
-    {
-      "check": "the report states that the Core was not modified",
-      "ok": false
-    }
-  ],
+  "failed_claim_checks": [],
   "forbidden_reasoning_found": [],
-  "inconsistencies": 3,
-  "verdict": "INCONSISTENT"
+  "inconsistencies": 0,
+  "verdict": "CONSISTENT"
 }

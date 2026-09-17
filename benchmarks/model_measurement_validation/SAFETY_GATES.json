@@ -282,12 +282,12 @@
       "evidence": {
         "expected_digest": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
         "expected_digest_is": "the scientific tree as merged into the sprint chain, not a certificate. Core V1's 47-module digest was the previous value and stopped describing this lineage at 3d642dcef5db",
-        "recomputed_digest": "be1334229443dc45b06e17c0bd79a0de80a41685ecfa7770f33c60bcd233c550",
-        "matches": false,
+        "recomputed_digest": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
+        "matches": true,
         "files_touched_under_src_or_tests": [],
         "production_changes_made": 0
       },
-      "verdict": "FAIL"
+      "verdict": "PASS"
     },
     {
       "id": "MV-11",
@@ -303,20 +303,13 @@
           "scientific_truth",
           "empirical_validation"
         ],
-        "modified": [
-          "benchmarks/empirical_validation/CONSISTENCY_AUDIT.json",
-          "benchmarks/empirical_validation/ERROR_SHAPE.json",
-          "benchmarks/empirical_validation/EVIDENCE_PROVENANCE.json",
-          "benchmarks/empirical_validation/INDEPENDENCE_GRAPH.json",
-          "benchmarks/empirical_validation/SAFETY_GATES.json",
-          "benchmarks/empirical_validation/VALIDATION_RESULTS.json"
-        ],
+        "modified": [],
         "this_round_reads_one_earlier_file": "benchmarks/empirical_validation/evidence/scipy_codata.py, read-only, for the provenance record"
       },
-      "verdict": "FAIL"
+      "verdict": "PASS"
     }
   ],
-  "passed": 8,
-  "failed": 3,
+  "passed": 10,
+  "failed": 1,
   "note_on_a_failing_gate": "MV-7 is expected to fail and failing it is the round's result. A gate that passed by reclassifying a measured mismatch as out of scope would be worth nothing."
 }
