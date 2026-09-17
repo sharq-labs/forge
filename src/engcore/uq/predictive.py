@@ -93,6 +93,16 @@ class QuantifiedPredictiveResult:
     model: ModelReference
     source_ref: str
     posterior_support_size: int
+    #: I-03 (R-02, finding 81): the condition names the spec declared and this function did not check.
+    #:
+    #: ``posterior_predictive_uq`` receives a grid and a predictive table and no calibration
+    #: observations, so it cannot say where a declared condition sits relative to the range a
+    #: calibration covered -- and it used to IGNORE the declaration silently, answering a spec that
+    #: said ``T = 5000 K`` without comment. It is recorded rather than refused because the V2 record
+    #: (``hybrid_uq.grid_predictive_uncertainty``) calls this function after checking the conditions
+    #: itself, and a refusal here would break the one path that fixes this. Serialized only when
+    #: non-empty, so a record written before this field keeps its bytes.
+    conditions_not_checked: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not str(self.observation_key).strip():
@@ -128,6 +138,10 @@ class QuantifiedPredictiveResult:
             raise UQProblemError("quantified prediction requires source_ref")
         if int(self.posterior_support_size) < 1:
             raise UQProblemError("posterior_support_size must be positive")
+        object.__setattr__(
+            self, "conditions_not_checked",
+            tuple(sorted(str(name).strip() for name in self.conditions_not_checked)),
+        )
 
     @property
     def epistemic_variance(self) -> float:
@@ -153,6 +167,9 @@ class QuantifiedPredictiveResult:
             "model": self.model.to_dict(),
             "source_ref": self.source_ref,
             "posterior_support_size": int(self.posterior_support_size),
+            # I-03: written only when there is something to say.
+            **({"conditions_not_checked": list(self.conditions_not_checked)}
+               if self.conditions_not_checked else {}),
         }
 
 
@@ -365,4 +382,7 @@ def posterior_predictive_uq(
         model=model,
         source_ref=source_ref,
         posterior_support_size=int(np.count_nonzero(positive)),
+        # I-03 (R-02): this function checks none of the spec's conditions and has nothing to check
+        # them against. Saying so is what it can honestly do; the V2 record carries the downgrade.
+        conditions_not_checked=tuple(spec.conditions),
     )

@@ -958,3 +958,90 @@ Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists
 `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 17 — I-03 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-03 | **PARTIAL** (part A of two) | `e512de91` (preregistration + 8 strict xfails), this commit | the prediction-domain check is DECLARED but not yet informative — the TCR observations carry no `conditions`, so every routed record reads `PREDICTION_DOMAIN_NOT_DECLARED`; `assess_predictive_observation` applies containment and prior uniformity but not goodness of fit, which needs the calibration OBSERVATIONS and the forward evaluator where it receives a calibration TABLE; a held-out verdict is still PASS or FAIL, because there is no third word yet; and what a coverage verdict should do about a refused fraction is undecided. All four are part B's (batch 18) |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-02 | **FIXED** | `engcore.hybrid_uq` — every evidence gate the 2026-09-16 audit built — had no caller in `src` outside its own package, so `studies/calibration_study.py`, the only production orchestration that turns a calibration into predictive intervals and a held-out verdict, ran none of them. `predict_held_out` and `validate_held_out` now obtain their predictive quantities from `hybrid_uq.grid_predictive_uncertainty`, which computes the SAME frozen `posterior_predictive_uq` on the same inputs under the router's own judgement: the grid is held to the evidence it describes (CORE-005), the declared noise must explain the calibration residuals (CORE-001), the box must contain the posterior (CORE-002), equal node mass must be the declared prior (CORE-010), every mode must be resolved, and no admissibility cut may truncate it. A grid the router would not route now RAISES where the study answered it with an interval — the audited truncated box (parameter sd 0.34x) and the audited misfit (chi-square 232.824 on 4 dof) among them. `PredictiveDecomposition` and `HeldOutMetrics` carry the claim and the reasons the V2 record leaves. In `adequacy.assess_predictive_observation`'s content-binding branch, prior uniformity and containment are applied and a finding WITHHOLDS the binding rather than raising, with the reason recorded in a new trailing field — so the decisive 6.259-nat preference the narrow box manufactured is gone, because `compare` names no preferred model over an unbound assessment. And the frozen `posterior_predictive_uq` now RECORDS the condition names it cannot check (`conditions_not_checked`) instead of ignoring a spec that says `T = 5000 K` in silence. |
+
+**The numbers did not move; the judgement around them is new.** `grid_predictive_uncertainty` computes the
+same frozen call the study always called, so the predictive mean, the parameter sd, the total sd and both
+intervals are identical. That is measured rather than asserted:
+`test_r02_the_production_wide_design_still_predicts_the_same_numbers` and
+`test_r02_the_routed_record_honours_the_declared_credible_mass` read the shape and the declared level off the
+routed records, and the whole `tests/inference` and `tests/hybrid_uq` suites (539 tests) pass.
+
+**Four existing expectations moved, every one of them because a check found something real.**
+
+* `tests/inference/test_tcr_heldout_uq.py::test_a_misspecified_model_converges_and_is_rejected` — B4, the
+  central proof. The misspecified model is now REFUSED before any held-out statement, because its
+  CALIBRATION residuals already exceed the declared noise (chi-square 129.887 on 4 dof). The claim is
+  unchanged and made twice over: converged, identifiable, refused. The U-shaped residual pattern — the
+  signature of a truncated expansion, and the strongest evidence in that test — is read from the same
+  per-observation `assess_predictive_observation` call the study makes, through a new helper that says why.
+* the same file's side-by-side contrast, for the same reason.
+* `tests/hybrid_uq/test_core_scientific_audit_batch4.py` and `tests/test_core_scientific_audit_batch13.py` —
+  the two CORE-011 comparison fixtures. Their grids were `linspace(1.0, 3.0)`, and two of the fixture models
+  put their posteriors outside that box: the BIASED model peaks at theta = 1.269 with a posterior sd of 0.0548
+  (4.9 sd from the lower edge, 12.0 nats — INSIDE the ln 1e6 window containment watches) in batch 4, and at
+  count = 9 in batch 13 the BIASED model peaks at 0.962 and the MIRROR model at 3.264, both outside the box
+  entirely. The box, not the data, bounded those posteriors and the new check was right to say so. Both grids
+  were widened at the SAME node spacing, so the comparisons are now over boxes that contain what they
+  describe — which is what those tests were always about. No assertion was weakened.
+
+**One rule was added after seeing results, and the numbers that forced it are recorded.** Routing
+`validate_held_out` through the V2 judgement means the goodness-of-fit gate sees every coverage repetition's
+calibration half — and a gate with a declared false-refusal rate refuses that fraction of WELL-SPECIFIED
+repetitions by construction. Measured on the study's own reproducibility fixture (4 calibration temperatures,
+2 residual degrees of freedom, truth = the fitted law, noise = the declared sigma): seeds 11 and 12 route and
+PASS, seed 13 gives chi-square 13.6471 on 2 dof, p = 0.0011, and is refused. The sweep is FAIL_FAST, so one
+refusal killed the whole study. `CoverageRepetition` therefore gained a trailing `route_refused_because`: a
+refused repetition is RECORDED with its reason and zero intervals, and `CoverageStudy.why` states how many
+were refused, which seeds, and that the coverage fraction is conditional on the repetitions that were
+routable. What the VERDICT should do about that fraction is deliberately not decided here — a refused
+fraction consistent with the gate's declared rate is a different thing from one that says the pipeline is
+misspecified, and the threshold between them is a preregistration this batch does not have. It is part B's,
+with the cluster-aware interval (R-36). Both entries are in the protocol's `amendment_log`.
+
+**One observation recorded rather than fixed.** The refusal messages this batch newly surfaces read
+"chi-square 129.887 on 4 degrees of freedom at the grid's best node, and a leverage-weighted **nan** against a
+null mean of **nan**". The pooled half makes the refusal and it is correct; the leverage half (batch 11, I-04)
+reports NaN rather than a number on these 2-parameter TCR grids. It changes no verdict measured here, and it
+is a defect in another batch's rule — fixing it inside this batch would be an unpreregistered change to a
+threshold that batch declared. Recorded in the protocol's `amendment_log` to be carried into I-14.
+
+**Compatibility.** Additive only in shape: `QuantifiedPredictiveResult` gains one trailing field with a
+default, `PredictiveObservationAssessment` one, `PredictiveDecomposition` and `HeldOutMetrics` two each, and
+`CoverageRepetition` one. No field or member is removed, renamed or reordered and no existing default changes.
+Every new key is serialized only when non-empty, so a record written before this batch keeps its bytes and
+its digest, and no schema string is bumped. Two behaviours change on purpose and both are the improvement:
+the study refuses a grid the router would not route, and an assessment over a truncating grid is not
+content-bound.
+
+**Committed evidence.** Nothing moved. `benchmarks/core_v2_hybrid_uq/TCR.json` records the hybrid-UQ route on
+the TCR designs rather than the study's outputs, and no committed record in the repository carries a
+`PredictiveDecomposition`, a `HeldOutMetrics` or a `PredictiveObservationAssessment`; the committed-evidence
+suite passes unchanged. The `KINETICS_K2` and `BATTERY_T41` SUPERSEDED markers gain no entry: both are
+hybrid-UQ route records and neither passes through the study.
+
+**Guard mutations.** `BATCH17_MUTATIONS.log`: **12 of 12 KILLED**, control green. Two survived a first run and
+the purchase is recorded: B17b and B17c RENAMED `_routed` and its call site together, which changes two
+identifiers and no behaviour — the runner's "MUTATION CHANGED NO CODE" refusal does not catch a rename, and
+both survived correctly. What each call site actually owns is the EVIDENCE it hands the judgement, so both
+were repointed at `calibration=split.calibration, forward=forward`, and the two sites are told apart by
+indentation as well as by scope. The 5 pinned mutations on the three files this batch changed were re-run
+isolated and all 5 are still KILLED (`BATCH17_PINNED_MUTATIONS.log`), control green.
+
+**Verification.** FAST tier 6652 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier PENDING. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.** None new. What a coverage verdict should do about a refused fraction is carried to part B
+rather than decided here, and is written down in the protocol's `amendment_log` as such.

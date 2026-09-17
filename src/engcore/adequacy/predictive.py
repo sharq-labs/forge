@@ -230,8 +230,28 @@ class PredictiveObservationAssessment:
     #: calibration table, so the posterior was shown BY CONTENT to be the calibration half's likelihood and the observation
     #: to be the split's held-out one. A read-back record's value is integrity-only, like every serialized digest.
     content_bound: bool = False
+    #: I-03 (R-02, finding 33): why the content binding was WITHHELD, when it was.
+    #:
+    #: The binding branch now applies the V2 grid evidence checks it never had -- prior uniformity
+    #: (CORE-010) and containment (CORE-002). A grid over the posterior mean +/- 0.6 sd passes
+    #: content binding on its own terms, because its log-likelihood IS the calibration likelihood on
+    #: those nodes, while reporting a parameter sd of 0.34x the honest one; the comparison then
+    #: turned a non-decisive 2.872-nat difference into a decisive 6.259-nat preference. On such a
+    #: finding this assessment is not bound, not registered, and says so here. Recorded rather than
+    #: raised, because the round's strictness rule lowers a claim for unbound information instead of
+    #: destroying the record. Serialized only when non-empty.
+    content_binding_refused_because: str = ""
 
     def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "content_binding_refused_because",
+            str(self.content_binding_refused_because).strip(),
+        )
+        if self.content_bound and self.content_binding_refused_because:
+            raise ModelAdequacyError(
+                "an assessment cannot be content-bound AND carry a reason the binding was withheld; "
+                "those are two answers to one question"
+            )
         if not str(self.observation_key).strip():
             raise ModelAdequacyError("adequacy assessment requires observation_key")
         for value in (self.observed, self.predictive_mean, self.total_standard_uncertainty):
@@ -344,6 +364,8 @@ class PredictiveObservationAssessment:
             "source_ref": self.source_ref,
             "evidence": self.evidence.to_dict(),
             **({"content_bound": True} if self.content_bound else {}),
+            **({"content_binding_refused_because": self.content_binding_refused_because}
+               if self.content_binding_refused_because else {}),
         }
 
     @classmethod
@@ -378,6 +400,7 @@ class PredictiveObservationAssessment:
             source_ref=payload["source_ref"],
             evidence=PredictiveEvidenceIdentity.from_dict(payload["evidence"]),
             content_bound=bool(payload.get("content_bound", False)),
+            content_binding_refused_because=payload.get("content_binding_refused_because", ""),
         )
 
 
@@ -466,6 +489,7 @@ def assess_predictive_observation(
     """
     content_bound = False
     split_content_digest = ""
+    content_binding_refused_because = ""
     if (split is None) != (calibration_table is None):
         raise ModelAdequacyError("content binding needs both the split and the calibration table, or neither")
     if split is not None:
@@ -512,8 +536,26 @@ def assess_predictive_observation(
                 f"{spec.observation_key!r} is scored with likelihood sigma {spec.observation_sigma}, but the split's "
                 f"held-out observation declares {declared}; the declared noise is part of the evidence, and a log "
                 f"density computed with another sigma is not a score on it")
-        content_bound = True
-        split_content_digest = _split_content_digest(split)
+        # I-03 (R-02, finding 33): the V2 grid evidence checks this branch never had. Content
+        # binding shows the posterior is THIS split's calibration likelihood; it says nothing about
+        # whether the grid's own box holds that posterior, or whether equal node mass is the
+        # declared prior. A box over the mean +/- 0.6 sd satisfies the binding exactly -- its
+        # log-likelihood IS the calibration likelihood on those nodes -- while truncating the
+        # parameter sd to 0.34x, and the comparison then named a preferred model on a 6.259-nat
+        # difference that the honest box puts at 2.872 with a standard error of 0.940.
+        #
+        # Withheld rather than raised: the round's strictness rule lowers a claim for unbound
+        # information, and `content_binding_verified` is already the gate `compare` reads, so
+        # withholding IS the lowering. Goodness of fit is not applied here: it needs the calibration
+        # OBSERVATIONS and the forward evaluator, and this function receives a calibration table.
+        from ..hybrid_uq._grid_evidence import grid_containment, grid_prior_uniformity
+
+        finding = (grid_prior_uniformity(posterior, None) or grid_containment(posterior, None))
+        if finding is not None:
+            content_binding_refused_because = f"{finding[0].value}: {finding[1]}"
+        else:
+            content_bound = True
+            split_content_digest = _split_content_digest(split)
 
     if spec.observation_sigma is None:
         raise ModelAdequacyError(
@@ -625,6 +667,7 @@ def assess_predictive_observation(
             split_content_digest=split_content_digest,
         ),
         content_bound=content_bound,
+        content_binding_refused_because=content_binding_refused_because,
     )
     if content_bound:
         # R-34: the binding is recorded HERE, where it was established, keyed by what the record says. The

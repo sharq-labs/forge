@@ -77,7 +77,15 @@ def test_core012_every_routed_prediction_states_that_errors_are_assumed_independ
 # I-18 (batch 13) raised COMPARISON_MINIMUM_N from 2 to 10, so the two CORE-011 comparisons below need at
 # least ten held-out points to reach the gate they are about. The conditions grew; nothing else did.
 XS = {f"c{i}": 1.0 + 0.2 * i for i in range(14)} | {f"h{i}": 4.0 + 0.2 * i for i in range(12)}
-GRID = np.linspace(1.0, 3.0, 2001)
+# I-03 part A (batch 17) widened this grid downward, at the SAME node spacing of 0.001. The
+# content-binding branch of `assess_predictive_observation` now applies the V2 containment check
+# (CORE-002), and the BIASED model's posterior peaks at theta = 1.269 with a posterior sd of 0.0548
+# -- so the old lower edge of 1.0 sat 4.9 sd away, which is 12.0 nats below the peak and therefore
+# INSIDE the ln 1e6 window the containment rule watches. The box, not the data, bounded that
+# posterior, and the check was right to say so. At a lower edge of 0.5 the same face is 14 sd and
+# about 98 nats down, so both models' posteriors are contained and the comparison is over two
+# equally honest boxes -- which is what these two CORE-011 tests are about.
+GRID = np.linspace(0.5, 3.0, 2501)
 
 
 def _obs(cid, value):

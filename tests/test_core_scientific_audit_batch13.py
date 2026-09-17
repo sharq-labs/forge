@@ -57,7 +57,15 @@ KELVIN = "kelvin"
 TWIN = TwinReference("rig", "1")
 OTHER_TWIN = TwinReference("other-rig", "1")
 SIGMA = 0.5
-GRID = np.linspace(1.0, 3.0, 2001)
+# I-03 part A (batch 17) widened this grid, at the SAME node spacing of 0.001. The content-binding
+# branch of `assess_predictive_observation` now applies the V2 containment check (CORE-002), and two
+# of the three fixture models put their posterior outside the old box: at count = 9 the BIASED model
+# peaks at theta = 0.962 and the MIRROR model at 3.264, against edges of 1.0 and 3.0 and a posterior
+# sd of 0.122. The box, not the data, bounded those posteriors, and the check was right to say so --
+# so the comparisons here are now over boxes that all contain what they describe, which is what
+# these tests are about. At 0.0 and 4.5 the nearest face is 7.9 sd (31 nats) from any of the three
+# peaks, well outside the ln 1e6 window the containment rule watches.
+GRID = np.linspace(0.0, 4.5, 4501)
 A = ModelReference("A", "1")
 B = ModelReference("B", "1")
 

@@ -16,6 +16,12 @@ return can say a statement was downgraded.
 
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH17_THRESHOLD_PROTOCOL.json`, which also records why
 I-03 is split in two and what part B (batch 18) carries.
+
+Eight of these were audited reproductions, recorded as `xfail(strict=True)` in commit **e512de91** and
+confirmed there to fail against the pre-batch tree (8 failed, 2 passed under `--runxfail`): five on their own
+assertions and three on DID NOT RAISE, which is an assertion about a refusal that is absent. The markers came
+off with the implementation. The two unmarked tests are no-regression guards on the production WIDE design and
+on the comparison path.
 """
 
 from __future__ import annotations
@@ -82,7 +88,6 @@ def _fields(record) -> frozenset[str]:
 # =====================================================================
 # R-02: the study's records say what claim they earned
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_a_predictive_decomposition_carries_its_route_claim_and_reasons():
     from engcore.studies.calibration_study import PredictiveDecomposition
 
@@ -98,7 +103,6 @@ def test_r02_a_predictive_decomposition_carries_its_route_claim_and_reasons():
         assert payload["reasons"] == list(decomposition.reasons)
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_held_out_metrics_carry_the_route_claim_and_reasons():
     from engcore.studies.calibration_study import HeldOutMetrics
 
@@ -109,7 +113,6 @@ def test_r02_held_out_metrics_carry_the_route_claim_and_reasons():
     assert metrics.to_dict()["route_claim"] == metrics.route_claim
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_the_claim_names_the_prediction_domain_it_cannot_yet_show():
     """Honest rather than silent: nothing today shows where the prediction sits in the calibrated range.
 
@@ -125,7 +128,6 @@ def test_r02_the_claim_names_the_prediction_domain_it_cannot_yet_show():
 # =====================================================================
 # R-02: a grid the router would not route no longer yields a statement
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_a_box_that_truncates_the_posterior_yields_no_predictive_interval():
     """The audited case: mean +/- 0.6 sd gives a parameter sd of 0.34x and was answered anyway."""
     split, posterior, by = _study(span=0.6)
@@ -133,14 +135,12 @@ def test_r02_a_box_that_truncates_the_posterior_yields_no_predictive_interval():
         _predict(split, posterior, by)
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_a_box_that_truncates_the_posterior_yields_no_held_out_verdict():
     split, posterior, by = _study(span=0.6)
     with pytest.raises(Exception, match="GRID_DOES_NOT_CONTAIN_POSTERIOR"):
         _validate(split, posterior, by)
 
 
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_a_calibration_the_declared_noise_does_not_explain_yields_no_statement():
     """The routed path says MODEL_MISFIT_BEYOND_DECLARED_NOISE; the study issued intervals and a FAIL."""
     split, posterior, by = _study(curvature=2.0e-5)
@@ -153,7 +153,6 @@ def test_r02_a_calibration_the_declared_noise_does_not_explain_yields_no_stateme
 # =====================================================================
 # R-02 (finding 33): the decisive comparison the narrow box created
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_an_assessment_over_a_truncating_grid_is_not_content_bound():
     from engcore.adequacy.predictive import (
         PredictiveObservationAssessment,
@@ -187,7 +186,6 @@ def test_r02_an_assessment_over_a_truncating_grid_is_not_content_bound():
 # =====================================================================
 # R-02 (finding 81): the frozen predictive records what it cannot check
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-03 part A not implemented yet (batch 17 preregistration)")
 def test_r02_the_frozen_predictive_records_the_conditions_it_ignores():
     from engcore.uq.predictive import (
         PredictiveObservableSpec,
@@ -269,3 +267,52 @@ def test_r02_a_wide_grid_assessment_is_still_content_bound():
         source_ref="batch17", heldout_dataset_id=split.heldout_dataset_id,
         split=split, calibration_table=table)
     assert assessment.content_bound and assessment.content_binding_verified
+
+
+# =====================================================================
+# Guards added while implementing, including the one rule this batch added
+# AFTER seeing results (see the protocol's amendment_log).
+# =====================================================================
+def test_r02_the_routed_record_honours_the_declared_credible_mass():
+    """The control that routing did not quietly drop an argument on its way through."""
+    split, posterior, by = _study()
+    at_80 = predict_held_out(posterior, split, reference_temperature=T_REF, temperatures_by_condition=by,
+                             observation_sigma=SIG, twin=TWIN, credible_mass=0.80)
+    at_95 = _predict(split, posterior, by)
+    for narrow, wide in zip(at_80, at_95):
+        assert narrow.confidence_level == 0.80 and wide.confidence_level == 0.95
+        span_80 = narrow.total_upper.magnitude_in("ohm") - narrow.total_lower.magnitude_in("ohm")
+        span_95 = wide.total_upper.magnitude_in("ohm") - wide.total_lower.magnitude_in("ohm")
+        assert span_80 < span_95, (span_80, span_95)
+
+
+def test_r02_the_coverage_study_records_a_refused_repetition_and_says_the_number_is_conditional():
+    """The rule this batch added after seeing results, and the numbers that forced it.
+
+    Routing `validate_held_out` through the V2 judgement means the goodness-of-fit gate sees every
+    repetition's calibration half -- and a gate with a declared false-refusal rate refuses that
+    fraction of WELL-SPECIFIED repetitions by construction. On this fixture (4 calibration
+    temperatures, 2 residual degrees of freedom, truth = the fitted law, noise = the declared sigma)
+    seeds 11 and 12 route and PASS while seed 13 gives chi-square 13.6471 on 2 dof, p = 0.0011, and
+    is refused. The sweep runs FAIL_FAST, so that one refusal killed the whole study.
+    """
+    from engcore.studies.calibration_study import run_coverage_study
+
+    study, repetitions, _ = run_coverage_study(
+        truth=TRUTH,
+        calibration_temperatures=[280.0, 300.0, 320.0, 340.0],
+        heldout_temperatures=[360.0, 380.0],
+        reference_temperature=T_REF,
+        observation_sigma=SIG,
+        twin=TWIN,
+        seeds=[11, 12, 13],
+        grid_points_per_axis=15,
+    )
+    assert len(repetitions) == 3
+    refused = [r for r in repetitions if r.route_refused_because]
+    assert [r.seed for r in refused] == [13], [(r.seed, r.route_refused_because[:60]) for r in repetitions]
+    assert "MODEL_MISFIT_BEYOND_DECLARED_NOISE" in refused[0].route_refused_because
+    assert refused[0].intervals == 0 and refused[0].covered == 0
+    # and the study SAYS the number is conditional on the ones it routed
+    assert "conditional" in study.why and "13" in study.why
+    assert study.intervals_evaluated == sum(r.intervals for r in repetitions if not r.route_refused_because)

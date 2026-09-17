@@ -68,5 +68,21 @@
   ],
   "decisions_needed": [],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "(a rule ADDED after seeing results) run_coverage_study records a refused repetition instead of dying",
+      "what_forced_it": "the numbers. Routing `validate_held_out` through the V2 judgement means the goodness-of-fit gate (CORE-001) now sees every coverage repetition's calibration half -- and a gate with a declared false-refusal rate refuses that fraction of WELL-SPECIFIED repetitions by construction. Measured on the study's own reproducibility fixture (4 calibration temperatures, 2 residual degrees of freedom, truth = the fitted law, noise = the declared sigma): seed 11 and seed 12 route and PASS; seed 13 gives chi-square 13.6471 on 2 dof, p = 0.0011, and is refused as MODEL_MISFIT_BEYOND_DECLARED_NOISE. The sweep runs FAIL_FAST, so one refusal killed the whole study with 'coverage study lost 1 repetition(s)'.",
+      "the_rule_added": "`CoverageRepetition` gains a trailing `route_refused_because: str = \"\"`. A repetition whose grid the V2 judgement refuses is RECORDED with its reason and zero intervals rather than raising, and `CoverageStudy.why` states how many were refused, which seeds, and that the coverage fraction is therefore conditional on the repetitions that were routable.",
+      "why_this_and_not_the_alternatives": "counting a refused repetition as zero covered would be punitive and false -- nothing says its intervals would have missed. Dropping it silently is the selection effect the study's own 'lost repetition' guard was written against. Recording it, and saying the number is conditional, is the only one of the three that states what actually happened.",
+      "what_is_deliberately_NOT_decided_here": "what the coverage VERDICT should do about the refused fraction. A refused fraction consistent with the gate's declared rate is a different thing from one that says the pipeline is misspecified, and the threshold between them is a preregistration this batch does not have. That is I-03 part B's (R-36), together with the cluster-aware interval.",
+      "verified_by": "tests/inference/test_reproducibility_and_evidence.py::test_the_coverage_study_is_a_function_of_its_seed_schedule, which failed with the lost-repetition RuntimeError before this rule and passes after it."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "(an observation, not a rule change) the leverage-weighted statistic reads NaN on a 2-parameter TCR grid",
+      "what_was_seen": "the refusal messages this batch newly surfaces read 'chi-square 129.887 on 4 degrees of freedom at the grid's best node, and a leverage-weighted nan against a null mean of nan'. The POOLED half made the refusal and it is correct; the leverage half (batch 11, I-04) reports NaN rather than a number on these grids.",
+      "why_it_is_recorded_and_not_fixed_here": "it changes no verdict in this batch -- the pooled variance-ratio rule decides every case measured -- and it is a defect in a batch-11 rule rather than in anything batch 17 adds. Fixing it inside this batch would be an unpreregistered change to another batch's threshold. Recorded here so it is not lost, and to be carried into I-14 (read-back re-derivation) or its own follow-up."
+    }
+  ]
 }

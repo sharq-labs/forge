@@ -53,7 +53,11 @@ from ..inference.split import (
 from ..scientific.models.definition import ValidityStatus
 from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity
-from ..uq.predictive import PredictiveObservableSpec, posterior_predictive_uq
+# I-03 (R-02): `posterior_predictive_uq` is no longer imported here. The study reached the frozen
+# call directly, which is exactly why no V2 evidence gate ran on the one path that ships; it now
+# goes through `hybrid_uq.grid_predictive_uncertainty`, which computes the same frozen call under
+# the router's own judgement (see `_routed`).
+from ..uq.predictive import PredictiveObservableSpec
 from .tcr import (
     KELVIN,
     OHM,
@@ -121,6 +125,14 @@ class PredictiveDecomposition:
     total_upper: Quantity
     confidence_level: float
     sources: tuple[str, ...] = UNCERTAINTY_SOURCES
+    #: I-03 (R-02): the V2 route claim this statement earned, and why (`RouteClaim`/`RouteReason`
+    #: values). Empty on a record built before this batch. Every evidence gate the 2026-09-16 audit
+    #: built lives in `engcore.hybrid_uq`, which had no caller in `src` outside its own package --
+    #: so this study, the only production orchestration that turns a calibration into predictive
+    #: intervals, ran none of them. It routes through the V2 record now, and carries what that
+    #: record says about itself.
+    route_claim: str = ""
+    reasons: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -141,6 +153,10 @@ class PredictiveDecomposition:
             "confidence_level": self.confidence_level,
             "uncertainty_sources": list(self.sources),
             "model_discrepancy": MODEL_DISCREPANCY_NOT_MODELLED,
+            # I-03: written only when there is something to say, so a record produced before this
+            # batch keeps its bytes.
+            **({"route_claim": self.route_claim} if self.route_claim else {}),
+            **({"reasons": list(self.reasons)} if self.reasons else {}),
         }
 
 
@@ -162,6 +178,12 @@ class HeldOutMetrics:
     why: str
     heldout_dataset_id: str
     posterior_dataset_id: str
+    #: I-03 (R-02): the V2 route claim the predictive statements behind this verdict earned, and
+    #: why. See :class:`PredictiveDecomposition`. The verdict WORD is unchanged by it -- there is no
+    #: third word yet, and adding one is I-03's part B (R-35) -- so this is recorded beside the
+    #: verdict rather than folded into it.
+    route_claim: str = ""
+    reasons: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -180,6 +202,8 @@ class HeldOutMetrics:
             "heldout_dataset_id": self.heldout_dataset_id,
             "posterior_dataset_id": self.posterior_dataset_id,
             "model_discrepancy": MODEL_DISCREPANCY_NOT_MODELLED,
+            **({"route_claim": self.route_claim} if self.route_claim else {}),
+            **({"reasons": list(self.reasons)} if self.reasons else {}),
         }
 
 
@@ -280,6 +304,56 @@ def _require_bound_and_applicable(
     return calibration_table
 
 
+def _routed(
+    posterior: PosteriorGrid,
+    predictive_table,
+    spec: PredictiveObservableSpec,
+    *,
+    calibration: ObservationSet,
+    forward,
+    twin: TwinReference,
+    credible_mass: float,
+):
+    """One predictive quantity, through the V2 record rather than the frozen call (I-03, R-02).
+
+    ``hybrid_uq.grid_predictive_uncertainty`` computes the SAME frozen ``posterior_predictive_uq``
+    on the same inputs, and wraps it in the router's own judgement: the grid is held to the evidence
+    it describes (CORE-005), the declared noise must explain the calibration residuals (CORE-001),
+    the box must contain the posterior (CORE-002), equal node mass must be the declared prior
+    (CORE-010), every mode must be resolved, and no admissibility cut may truncate it. A grid the
+    router would not route RAISES here, where the study used to answer it with an interval.
+
+    So the numbers this returns are the numbers the study always computed; what is new is the
+    refusal where the judgement fails, and the claim and reasons where it does not.
+    """
+    from ..hybrid_uq import grid_predictive_uncertainty
+
+    return grid_predictive_uncertainty(
+        posterior, predictive_table, spec,
+        twin=twin, model=TCR_MODEL_REF, source_ref=spec.observation_key,
+        confidence_level=credible_mass,
+        observations=calibration, forward=forward,
+    )
+
+
+def _forward_for(
+    observations: ObservationSet,
+    *,
+    reference_temperature: Quantity,
+    temperatures_by_condition: Mapping[str, Quantity],
+    counter: dict[str, int] | None,
+):
+    """The production forward evaluator the V2 binding check re-evaluates the grid through."""
+    from .tcr import tcr_forward_evaluator
+
+    return tcr_forward_evaluator(
+        observations,
+        reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition,
+        counter=counter,
+    )
+
+
 def predict_held_out(
     posterior: PosteriorGrid,
     split: ObservationSplit,
@@ -316,6 +390,10 @@ def predict_held_out(
         temperatures_by_condition=temperatures_by_condition,
         counter=counter,
     )
+    forward = _forward_for(
+        split.calibration, reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition, counter=counter,
+    )
     out: list[PredictiveDecomposition] = []
     for observation in split.held_out.observations:
         spec = PredictiveObservableSpec(
@@ -323,28 +401,29 @@ def predict_held_out(
             unit=OHM,
             observation_sigma=observation.sigma,
         )
-        quantified = posterior_predictive_uq(
-            posterior,
-            predictive_table,
-            spec,
-            twin=twin,
-            model=TCR_MODEL_REF,
-            source_ref=f"study:{split.heldout_dataset_id}",
-            credible_mass=credible_mass,
+        # I-03 (R-02): through the V2 record. Every gate the audit built was in `hybrid_uq`, which
+        # nothing in `src` called, so this study -- the only production path to a predictive
+        # interval -- ran none of them.
+        routed = _routed(
+            posterior, predictive_table, spec,
+            calibration=split.calibration, forward=forward,
+            twin=twin, credible_mass=credible_mass,
         )
         out.append(
             PredictiveDecomposition(
                 condition_id=observation.condition_id,
                 observation_key=observation.key,
-                central=quantified.mean,
-                parameter_sigma=quantified.epistemic_standard_uncertainty,
-                parameter_lower=quantified.epistemic_interval.lower,
-                parameter_upper=quantified.epistemic_interval.upper,
+                central=Quantity(routed.mean, routed.unit),
+                parameter_sigma=Quantity(routed.parameter_standard_uncertainty, routed.unit),
+                parameter_lower=Quantity(routed.parameter_interval[0], routed.unit),
+                parameter_upper=Quantity(routed.parameter_interval[1], routed.unit),
                 observation_sigma=spec.observation_sigma,
-                total_sigma=quantified.total_standard_uncertainty,
-                total_lower=quantified.total_interval.lower,
-                total_upper=quantified.total_interval.upper,
-                confidence_level=quantified.confidence_level,
+                total_sigma=Quantity(routed.total_standard_uncertainty, routed.unit),
+                total_lower=Quantity(routed.total_interval[0], routed.unit),
+                total_upper=Quantity(routed.total_interval[1], routed.unit),
+                confidence_level=routed.confidence_level,
+                route_claim=routed.route_claim.value,
+                reasons=tuple(reason.value for reason in routed.reasons),
             )
         )
     return tuple(out)
@@ -385,6 +464,22 @@ def validate_held_out(
         reference_temperature=reference_temperature,
         temperatures_by_condition=temperatures_by_condition,
         counter=counter,
+    )
+
+    # I-03 (R-02): the V2 judgement, once, before any residual is scored. It raises for a grid the
+    # router would not route -- a truncated box, a calibration the declared noise does not explain,
+    # a non-uniform prior axis, an unresolved mode -- each of which the study used to answer with a
+    # verdict. The claim and reasons it leaves are recorded on the metrics below.
+    forward = _forward_for(
+        split.calibration, reference_temperature=reference_temperature,
+        temperatures_by_condition=temperatures_by_condition, counter=counter,
+    )
+    first = split.held_out.observations[0]
+    routed = _routed(
+        posterior, predictive_table,
+        PredictiveObservableSpec(observation_key=first.key, unit=OHM, observation_sigma=first.sigma),
+        calibration=split.calibration, forward=forward,
+        twin=twin, credible_mass=credible_mass,
     )
 
     residuals: list[float] = []
@@ -459,6 +554,10 @@ def validate_held_out(
         why=why,
         heldout_dataset_id=split.heldout_dataset_id,
         posterior_dataset_id=posterior.dataset_id,
+        # I-03: what the V2 judgement left. The verdict word above is unchanged by it; there is no
+        # third word yet and adding one is part B (R-35).
+        route_claim=routed.route_claim.value,
+        reasons=tuple(reason.value for reason in routed.reasons),
     )
 
 
@@ -528,6 +627,19 @@ class CoverageRepetition:
     #: rather than derived from the grid shape -- the two can disagree, and the
     #: measured one is the one the performance section may quote.
     forward_evaluations: int
+    #: I-03 part A (batch 17): why the V2 evidence judgement refused this repetition's grid, when it
+    #: did. Empty for a repetition that produced intervals.
+    #:
+    #: A repetition whose grid the router would not route is EVIDENCE ABOUT THE PIPELINE, not a lost
+    #: trial: it is recorded with zero intervals and its reason rather than killing the study, which
+    #: is what a FAIL_FAST sweep did the moment any repetition was refused. Measured on this
+    #: study's own fixture: seed 13 of [11, 12, 13] gives chi-square 13.6471 on 2 degrees of freedom
+    #: -- p = 0.0011 -- from a WELL-SPECIFIED model at the true noise, so a goodness-of-fit gate
+    #: with a declared false-refusal rate refuses that fraction of repetitions by construction.
+    #: What the coverage VERDICT should do about a refused fraction is I-03 part B's (R-36): the
+    #: fraction is reported here and in the study's `why`, and the coverage number it accompanies is
+    #: conditional on the repetitions that were routable, which the `why` now says.
+    route_refused_because: str = ""
 
 
 def run_coverage_study(
@@ -624,16 +736,33 @@ def run_coverage_study(
             counter=counter,
         )
         posterior = gaussian_grid_posterior(table, split.calibration)
-        metrics = validate_held_out(
-            posterior,
-            split,
-            reference_temperature=reference_temperature,
-            temperatures_by_condition=by_condition,
-            observation_sigma=observation_sigma,
-            twin=twin,
-            credible_mass=credible_mass,
-            counter=counter,
-        )
+        # I-03 part A: the V2 judgement can refuse this repetition's grid, and at the gate's own
+        # false-refusal rate it sometimes will on perfectly good data. Recorded, not fatal.
+        from ..hybrid_uq import HybridUQError
+
+        try:
+            metrics = validate_held_out(
+                posterior,
+                split,
+                reference_temperature=reference_temperature,
+                temperatures_by_condition=by_condition,
+                observation_sigma=observation_sigma,
+                twin=twin,
+                credible_mass=credible_mass,
+                counter=counter,
+            )
+        except HybridUQError as refused:
+            return CoverageRepetition(
+                seed=seed,
+                intervals=0,
+                covered=0,
+                calibration_status=CalibrationStatus.CONVERGED.value,
+                heldout_verdict="",
+                forward_evaluations=(
+                    grid_points_per_axis**2 * 2 * len(split.calibration.observations)
+                ) if counter.get("n", 0) else 0,
+                route_refused_because=str(refused),
+            )
         # `counter` counts grid ROWS; each row runs one production solve per
         # condition in the set it was built over. The calibration table is built
         # twice -- once to fit, once inside validate_held_out to bind the
@@ -679,6 +808,18 @@ def run_coverage_study(
         nominal=credible_mass,
         acceptance_half_width=acceptance_half_width,
     )
+    # I-03 part A: a coverage number over repetitions a gate selected is a CONDITIONAL coverage
+    # number, and the record says so rather than leaving the reader to assume otherwise. What the
+    # verdict should do about the refused fraction is part B's (R-36); reporting it is this batch's.
+    refused = tuple(r for r in repetitions if r.route_refused_because)
+    if refused:
+        why += (
+            f". {len(refused)} of {len(repetitions)} repetition(s) were refused by the V2 evidence "
+            f"judgement and contributed no intervals, so this coverage fraction is conditional on "
+            f"the {len(repetitions) - len(refused)} whose grids it routed. A goodness-of-fit gate "
+            f"refuses a fraction of well-specified repetitions equal to its own false-refusal rate; "
+            f"seed(s) {[r.seed for r in refused]} were refused here"
+        )
     low, high = wilson_interval(covered, total)
     study = CoverageStudy(
         repetitions=len(repetitions),
