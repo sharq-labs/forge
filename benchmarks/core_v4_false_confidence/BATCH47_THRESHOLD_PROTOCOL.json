@@ -1,0 +1,112 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 47,
+ "improvements": [
+  "I-27 part A of two"
+ ],
+ "problems_addressed": [
+  "R-60 (the audit's finding 73)",
+  "R-61 (the audit's findings 74 and 75)",
+  "R-64 (the audit's finding 78)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "5ffb98df",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "I-27 has two halves. This is the COMPOSITION half: the record of a crossing itself -- its conversion budget, its agreement rule, what it binds about the record and the instant it names, and which dimensions count as an energy crossing. Part B is the UQ half (R-58): uncertainty and validity crossing with the value, and UncertaintyTransfer binding the source uncertainty to the transfer.",
+ "reach": "R-60 and R-61 and R-64 are recorded by the audit as library-only, and the agreement rule is the exception: `ProvenanceRecord.__post_init__` calls `require_agreeing_transfers` on EVERY construction and on `from_dict`, and the production electrothermal loop records ambient and converted transfers through it. So the agreement rules are REACHED; the energy-derived dimension rule and the relative budget are LATENT, because no in-tree declaration carries a flux density and no in-tree crossing is small enough in its exemplar unit for the floor to bite.",
+ "what_was_already_seen": {
+  "finding 73 (R-60)": "`_check_against_the_declared_budget` uses `scale = max(|budgeted|, |arrived|, 1.0)` measured in the conversion's own `unit_exemplar`, so below one exemplar unit the criterion becomes an ABSOLUTE 1e-9 exemplar units: 1 mW against a gigawatt exemplar, or 1 microwatt against a kilowatt exemplar, carries the whole input while the declaration says half arrives, and `realized_losses` then renders a 50% loss next to a 100% arrival -- a non-conserving account presented as checked, in `mcp/evidence.energy_conversions`.",
+  "finding 74 (R-61)": "`require_agreeing_transfers` treats two transfers of one declaration at one instant as agreeing only when dataclass equality holds, which compares `Quantity(magnitude, units-string)` and `source_record_id`. The same ambient reported as 300.0 kelvin and as 26.85 degC is refused as 'two different values crossed', and the message prints '300.0 kelvin and 300.0 kelvin'. `ProvenanceRecord.__post_init__` calls this on every construction, so one justified record is refused outright: a false refusal, and the same unit-string defect CORE-018 fixed for consensus.",
+  "finding 75 (R-61)": "`QuantityTransfer` requires `source_record_id` and `instant` to be non-empty and checks neither against anything: a transfer naming 'any-string-at-all' and carrying 999 K constructs. In production, `ambient_transfers` names the thermal result_id while taking the value from the system configuration -- ambient is a CONTROL input of the thermal problem, not a value in that result. And `require_agreeing_transfers` keys on the instant, so a stale iteration 9 and a final iteration 10 of ONE dependency coexist in one record; it sorts lexicographically, which puts 'coupled_iteration:9' after 'coupled_iteration:10', and `mcp/problem._ambient_by_component` keeps the last transfer per component -- selecting the stale 400 K over the final 300 K.",
+  "finding 78 (R-64)": "`QuantityDependency` refuses an undeclared conversion only when its dimension is exactly [energy] or [power]. A heat flux (W/m^2), a line power (W/m), a volumetric source (W/m^3) or a specific energy (J/kg) crosses with no EnergyConversion and is recorded as lossless transport -- and those are exactly the forms a conjugate or field coupling exchanges. Plain watt is refused, so the guard is strictest where it is least needed."
+ },
+ "rules": {
+  "the_conversion_budget_is_purely_relative": {
+   "improvement": "I-27",
+   "problem": "R-60",
+   "rule": "`QuantityTransfer._check_against_the_declared_budget` compares `abs(arrived - budgeted) <= BUDGET_TOLERANCE * max(abs(budgeted), abs(arrived))`, with exact equality required when both are zero. The 1.0 absolute floor in the conversion's own exemplar unit is removed.",
+   "class": "A",
+   "why": "The floor made the criterion absolute below one exemplar unit, and the exemplar unit is the conversion author's choice of spelling rather than a scale of the physics. A relative criterion is the same criterion at every magnitude, which is what BUDGET_TOLERANCE's own comment already says it is: 'a representation allowance for the multiplication, not a modelling tolerance'. Exact equality at zero is not a special case but the limit of the relative rule, where any nonzero arrival is an infinite relative error.",
+   "closes": "finding 73 in full."
+  },
+  "transfer_agreement_compares_values_and_not_unit_strings": {
+   "improvement": "I-27",
+   "problem": "R-61",
+   "rule": "`require_agreeing_transfers` compares two transfers of one key by their values converted into the dependency's `unit_exemplar` (absolute conversion, so an affine scale is handled), within `BUDGET_TOLERANCE` relatively, and compares `source_value` the same way. Two transfers that agree on the value agree, whatever units they are spelled in. Its refusal message prints both magnitudes in the exemplar unit.",
+   "class": "A",
+   "why": "300.0 kelvin and 26.85 degC are one value, and a record refused for spelling it twice is a FALSE refusal that reached every ProvenanceRecord construction. The comparison unit is not a new convention: `unit_exemplar` is the dependency's own declared spelling of the dimension, the same unit `received_as` and the budget check already convert into. The relative allowance is the one the module already declares for the same reason -- a conversion into another unit and back is a multiplication.",
+   "closes": "finding 74's first claim, including the message that printed the same number twice."
+  },
+  "two_record_ids_carrying_one_value_agree": {
+   "improvement": "I-27",
+   "problem": "R-61",
+   "rule": "Two transfers of one key whose values agree but whose `source_record_id` differs are agreement, and the kept record is the one whose value both state; the differing source record is not silently dropped -- the refusal that remains is for differing VALUES, and its message names both record ids.",
+   "class": "A",
+   "why": "The audit's own fix direction: 'treat a differing source_record_id with an equal value as agreement, or refuse it with an accurate message'. Two results of one instant reporting one number is a redundancy, not a contradiction, and refusing it made a justified record unconstructible. What the rule must not do is hide a disagreement, so the value comparison is what decides and the ids are what the message says.",
+   "closes": "finding 74's second claim."
+  },
+  "one_run_records_one_instant_per_dependency": {
+   "improvement": "I-27",
+   "problem": "R-61",
+   "rule": "`require_agreeing_transfers` refuses two transfers of the same dependency (the four problem/quantity names) at DIFFERENT instants in one set, naming both instants.",
+   "class": "A",
+   "why": "A stale iteration and the final one coexisting in one record is what let a consumer select the stale value, and the canonical order made that the DEFAULT for a two-digit iteration, because 'coupled_iteration:9' sorts after 'coupled_iteration:10'. Refusing the coexistence is the audit's first fix option and it needs no ordering convention over an instant string that the module deliberately does not parse: with one instant per dependency in a record, no sort order can pick the stale one. This is the same position the function already takes about two values at one instant, one level out.",
+   "closes": "finding 75's coexistence and ordering claims. What it does not do is order instants -- see the residuals."
+  },
+  "a_transfer_says_where_its_value_came_from_and_can_be_checked_against_it": {
+   "improvement": "I-27",
+   "problem": "R-61",
+   "rule": "A new trailing field `value_origin: str = 'read_from_the_record'`, whose other declared value is 'configured_input', and a new method `QuantityTransfer.check_against_result(result)` returning `BindingIssue` records: for `read_from_the_record` it requires the result's id to be the one the transfer names and the result to carry `source_quantity` with a value agreeing with what crossed (or with `source_value` for a conversion); for `configured_input` it requires that the named result does NOT carry that quantity as an output, because a configured input is not a number the record produced. The production `ambient_transfers` declares `configured_input`, which is what it is.",
+   "class": "A",
+   "why": "The field and the method together are the audit's fix direction: 'give QuantityTransfer a check against a ScientificResult (id match plus value lookup, or an explicit configured input source kind)'. The check cannot be in `__post_init__` because the record does not hold the result; making it a method keeps the record constructible from a payload and gives a reader one sanctioned way to ask. The declared origin is what makes the production crossing honest rather than merely unchecked: ambient IS the thermal problem's control input, the thermal result_id IS the right record to name, and the value did NOT come out of it.",
+   "closes": "finding 75's 'checks neither against anything' claim to the extent a record can answer it -- what remains is stated as a residual."
+  },
+  "energy_derived_dimensions_are_energy_crossings": {
+   "improvement": "I-27",
+   "problem": "R-64",
+   "rule": "A new `ENERGY_DERIVED_DIMENSIONS` in `composition/conversion.py`: energy or power divided by length, area, volume, mass or amount of substance. `QuantityDependency` refuses such a crossing that declares neither an `EnergyConversion` of the same dimension nor a non-empty new trailing field `transport_declaration`, and `EnergyConversion` accepts an energy-derived exemplar so that a conversion CAN be declared for one.",
+   "class": "A",
+   "why": "The guard's own comment says why it exists -- 'writing nothing used to mean all of it arrives, which is the one reading that cannot be checked and is usually wrong' -- and that reading is exactly as unchecked for W/m^2 as for W. The derived set is not a list of unit names but the closure of the two energy dimensions under division by the four geometric measures and the two material ones, which is what a flux, a line density, a volumetric source and a specific energy are. Conservation arithmetic is unchanged in form for a density: fractions of a flux sum to one exactly as fractions of a power do, per unit area. The transport declaration is the audit's second option and is required to be STATED rather than defaulted, because the whole finding is that silence meant lossless.",
+   "closes": "finding 78 in full."
+  }
+ },
+ "thresholds": {
+  "budget_tolerance": {"value": 1e-9, "class": "A", "why": "UNCHANGED, and now applied relatively at every magnitude. It is a representation allowance for one multiplication, as the constant's own comment states; what changes is that it is no longer floored at one unit of an exemplar the conversion author chose."},
+  "agreement_tolerance": {"value": 1e-9, "class": "A", "why": "the same constant, reused rather than a second number: comparing two spellings of one value is a unit conversion, which is the same multiplication the budget allowance covers."},
+  "energy_derived_divisors": {"value": ["length", "area", "volume", "mass", "amount of substance"], "class": "A", "why": "the measures a density is taken with respect to. Not tuned: each one is a form a conjugate or field coupling exchanges (heat flux, line power, volumetric source, specific energy, molar energy), and the audit names the first four."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "QuantityTransfer.value_origin, a trailing field with a default, and the constants naming its two declared values",
+   "QuantityTransfer.check_against_result, a method (the frozen snapshot records fields and signatures of exported symbols, not methods)",
+   "QuantityDependency.transport_declaration, a trailing field with a default",
+   "ENERGY_DERIVED_DIMENSIONS in composition/conversion.py, module-public and NOT added to any package export list (batch 45's amendment 1: the frozen V1 symbol count stays 194 until I-30)",
+   "quantity_transfer/3 and quantity_dependency/3, each written only when the record carries the new field"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "the refusals already in place keep their messages, except the agreement refusal, whose message becomes accurate",
+   "EnergyConversion accepting an energy-derived exemplar WIDENS what constructs and refuses nothing that constructed before"
+  ],
+  "records_that_already_exist": "Committed JSON carrying transfers: the electrothermal evidence under benchmarks/. The new fields are written only when they carry information, so a record whose origin is the default and whose dependency declares no transport keeps its bytes and its /2 schema. Any committed record that DOES move is regenerated in this batch and named in the audit document.",
+  "deliberate_narrowing": "A dependency carrying an energy-derived dimension with neither a conversion nor a transport declaration stops being constructible; a provenance record holding two instants of one dependency stops being constructible. Neither is produced anywhere in the tree: the in-tree declarations carry temperature, power and resistance, and the production loop records one instant per run. In the other direction the batch REMOVES two false refusals, one of which reached every ProvenanceRecord construction."
+ },
+ "residuals_stated_in_advance": [
+  "`instant` is still an unparsed string and this batch does not give it an order. Refusing two instants per dependency in one record is what removes the audited selection defect; declaring a numeric instant index is a change to what every producer writes and is left to the coupling-runtime work NEEDS.md C4 names.",
+  "`check_against_result` is a method a reader may call and not a construction-time refusal, because the record does not hold the result it names. Where the tree builds transfers next to the result they came from, the call is wired in; a transfer read back from a payload can only be checked by whoever holds the record.",
+  "A `configured_input` origin is checked for the named record NOT producing the quantity; it is not checked against the configuration that did supply it, because no record in the core carries a problem's control inputs as a comparable set.",
+  "The energy-derived set is closed under the divisors named above and not under arbitrary products: an energy per unit area per unit time (W/m^2 is already power per area) is in the set, while a dimension mixing energy with a further unrelated quantity is not, and is treated as it is today.",
+  "R-58 -- production crossings carrying bare point values, and UncertaintyTransfer binding nothing about the source uncertainty -- is part B and is not touched here."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests for composition, provenance, the electrothermal system and the MCP evidence surface",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
