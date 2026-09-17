@@ -2639,3 +2639,55 @@ the mutation digest ignores string tokens, so an edited version literal reports 
 `BATCH41_PINNED_MUTATIONS.log`: **3 of 3 KILLED** on the files this batch changed. Both controls green.
 
 **Open decisions.** None.
+
+### Batch 42 — I-21 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-21 | **PARTIAL** (part A of two) | `919f3981` (preregistration + 11 strict xfails), this commit | **R-44 is part B**: candidates with no verification at all, and the design Pareto and elite archives — the selection path production *actually* uses, which ranks `validity_not_assessed` candidates as ELIGIBLE. A declared constraint whose metric the result does not carry is still judged by its stored check; a zero margin is accepted for either verdict, because a check does not carry its operator |
+
+**R-41 and R-42 are FIXED.** CORE-015 is recorded as FIXED with *"declared constraints checked and
+satisfied"*, and the rule was `all(check.satisfied)` over whatever checks an evaluation happened to carry —
+and **`all()` over an empty or unrelated set is True**.
+
+| Claim | Status | How |
+|---|---|---|
+| a forged check | **FIXED, everywhere** | `ConstraintCheck` had **no constructor rule at all**, and it is the one field a selection reads: `satisfied=True` beside a margin of **−2.5 A** was accepted, survived a round trip, and won. `ConstraintDefinition.check` computes the verdict and the margin together and for every operator the sign of the margin *is* the verdict, so a record where they disagree was not produced by it. Zero is accepted for either verdict, deliberately — at exactly the limit a non-strict operator is satisfied and a strict one is not, and a check does not carry its operator. This half is **REACHED**: every check the domain gates build passes through it. |
+| coverage | **FIXED** | A candidate that checked one of two declared constraints was feasible, a duplicate check looked like two, and a check naming a constraint the study does not declare counted. Now: exactly one check per declared name, no duplicates, no undeclared names, all satisfied. |
+| the stored verdict | **re-derived where it can be** | Where the declared constraint's metric is present in the result's own values, the check is recomputed from the definition and that value and the stored verdict is ignored — the audited candidate carrying `response = 3 A` against a declared `0.5 A` ceiling is no longer feasible on the strength of a stale check. |
+| a missing declaration | **FIXED** | `from_dict` read `payload.get("constraints", ())`, so a payload with the key missing became an explicit narrowing to **no** constraints: the feasibility requirement vanished and `best` returned a different candidate, while the problem the record carries still declared the constraint. `to_dict` always writes both keys, so a payload without one was not written by this class; an explicitly empty list still means what it says. |
+| ranking on a contradicted number | **FIXED** | The guard was keyed by the **objective's name** and an objective names its quantity through `metric`, so for the canonical shape (`minimize_load` / `load`) it never ran. `best()` now compares the ranked value with the result's metric at the tolerance that comparison already declares, and **refuses** rather than filtering: a record holding two answers for one quantity is a contradiction to report, not a candidate to drop quietly. |
+
+**The defect was in this repository's own canonical fixture.** `tests/test_scientific_core.py::_evaluation`
+reported objective values of 5.0, 2.0, 9.0 and 0.5 W while the result it built carried the fixture default of
+**2.5 W** — exactly the audited shape, ranked on a number its own result contradicted, for as long as the
+guard was keyed by the name that does not match. The fixture now carries the load it reports; the ranking
+tests are unchanged and still pass. That is the only in-tree expectation that moved, and it is commented in
+place.
+
+**One mutation was repointed.** B42f removes the undeclared-name rule, and the preregistered reproduction
+still excluded its candidate — because that candidate's forged check *replaced* the declared one, so the
+coverage rule caught it first. The case only that rule sees is a candidate that checked everything declared
+and carries **one more** verdict besides, on a name nothing in the study is judging candidates against.
+
+**Compatibility.** Additive. No schema, field, default or enum member changes; `is_feasible` keeps its
+meaning and its three answers, and the coverage rule lives in `best`, which is what CORE-015 claims. No
+committed JSON carries a `scientific_experiment/` or `constraint_check/1` payload. The deliberate narrowings:
+a check whose verdict contradicts its margin stops being constructible, an experiment payload missing a
+declaration key stops reading, and `best()` returns None where it used to return a candidate whose declared
+constraints were never checked.
+
+**Committed evidence.** Nothing moved.
+
+**Verification.** FAST tier 6983 passed, 5 skipped, 0 xfailed, 19 failed (the by-design set, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed; `tests/mutation_guards.py` untouched, including the four G31 anchors in `evaluation.py`. Guard reach
+ledger clean over 22 guards: R-41 REACHED/FIXED (its check-integrity half is on the production path), R-42
+LATENT/FIXED (the only shape in the tree was the fixture above).
+
+**Guard mutations.** `BATCH42_MUTATIONS.log`: **11 of 11 KILLED**, including the two controls — a strict `<`
+on the margin, which would refuse every constraint met exactly at its bound, and a rule that reaches past the
+record, which would refuse a result that does not carry the metric at all.
+`BATCH42_PINNED_MUTATIONS.log`: no pinned mutation targets these files.
+
+**Open decisions.** None.

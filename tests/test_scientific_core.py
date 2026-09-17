@@ -1229,7 +1229,17 @@ def _evaluation(index: int, load: float, status=EvaluationStatus.OK, *, assessed
         domain = ValidityDomain(conditions=(RangeCondition("drive_level", maximum=Quantity(10.0, "volt")),))
         established = {"validity_not_assessed": {},
                        "validity": {"synthetic.linear_response": domain.assess({"drive_level": Quantity(5.0, "volt")})}}
-    result = _result(result_id=f"res-{index}", **established) if status is EvaluationStatus.OK else None
+    # R-42 (re-audit 2026-09-16, I-21 part A): the result carries the load this evaluation reports.
+    # It used to carry the fixture's default 2.5 W while the evaluation reported 5.0, 2.0, 9.0 or 0.5 W --
+    # the audited defect itself, in this repository's own canonical fixture: `best()` ranked on a number its
+    # own result contradicted, because the agreement guard was keyed by the objective's NAME
+    # ('minimize_load') and an objective names its quantity through `metric` ('load').
+    values = {"load": Quantity(load, "watt"), "response": Quantity(0.1, "ampere")}
+    result = (
+        _result(result_id=f"res-{index}", values=values, **established)
+        if status is EvaluationStatus.OK
+        else None
+    )
     return ScientificEvaluation(
         evaluation_id=f"eval-{index}",
         candidate={

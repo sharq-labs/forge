@@ -64,6 +64,47 @@ class ConstraintCheck:
     margin: Quantity
     value: Quantity
 
+    def __post_init__(self) -> None:
+        """R-41: the verdict and the margin are one measurement, so they cannot disagree.
+
+        This record had no constructor rule at all, and it is the single field a selection reads:
+        `satisfied=True` beside a margin of -2.5 A was accepted, survived a round trip, and won the ranking.
+        `ConstraintDefinition.check` computes the two together and for every operator the sign of the margin
+        IS the verdict -- inside the bound is positive, outside is negative -- so a record where they
+        disagree was not produced by it.
+
+        Zero is accepted for either verdict, deliberately: at exactly the limit a non-strict operator is
+        satisfied and a strict one is not, and a check does not carry its operator, so zero is the one value
+        the two answers share.
+        """
+        name = str(self.constraint).strip()
+        if not name:
+            raise InvalidScientificProblem("a constraint check names the constraint it tested")
+        object.__setattr__(self, "constraint", name)
+        if not isinstance(self.satisfied, bool):
+            raise InvalidScientificProblem(
+                f"constraint check {name!r} reports satisfied={self.satisfied!r}, which is a "
+                f"{type(self.satisfied).__name__}, not a verdict. A truthy value is not a statement that a "
+                f"constraint held"
+            )
+        for label, quantity in (("margin", self.margin), ("value", self.value)):
+            if not isinstance(quantity, Quantity):
+                raise InvalidScientificProblem(
+                    f"constraint check {name!r} carries {label}={quantity!r}, which is not a Quantity"
+                )
+        margin = float(self.margin.magnitude)
+        if self.satisfied and margin < 0.0:
+            raise InvalidScientificProblem(
+                f"constraint check {name!r} reports the constraint satisfied and a margin of {self.margin}. "
+                f"A negative margin is the measurement of being outside the bound: the verdict and the "
+                f"number it comes from are one result and cannot disagree"
+            )
+        if not self.satisfied and margin > 0.0:
+            raise InvalidScientificProblem(
+                f"constraint check {name!r} reports the constraint violated and a margin of {self.margin}. "
+                f"A positive margin is the measurement of being inside the bound"
+            )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": CONSTRAINT_CHECK_SCHEMA,

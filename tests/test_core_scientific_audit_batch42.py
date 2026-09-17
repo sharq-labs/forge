@@ -7,6 +7,8 @@ CORE-015 is recorded as FIXED with "declared constraints checked and satisfied",
 `all(check.satisfied)` over whatever checks an evaluation happens to carry: `all()` over an empty or unrelated
 set is True. And the guard that stops a candidate being ranked on a number its own result contradicts looks
 the result up by the OBJECTIVE's name, while an objective names its quantity through `metric`.
+
+Recorded as strict xfails in commit 919f3981, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -97,7 +99,6 @@ def test_r41_an_honest_check_is_unchanged():
     assert ConstraintCheck.from_dict(check.to_dict()) == check
 
 
-@pytest.mark.xfail(strict=True, reason="R-41 as audited: ConstraintCheck has no constructor rule, so satisfied=True beside margin -2.5 A is accepted and wins")
 def test_r41_a_satisfied_verdict_beside_a_negative_margin_is_refused():
     """The audited forgery: satisfied=True with margin -2.5 A survived a round trip and won."""
     with pytest.raises((ScientificCoreError, InvalidScientificProblem), match="margin"):
@@ -105,14 +106,12 @@ def test_r41_a_satisfied_verdict_beside_a_negative_margin_is_refused():
                         margin=Quantity(-2.5, AMPERE), value=Quantity(3.0, AMPERE))
 
 
-@pytest.mark.xfail(strict=True, reason="R-41: the verdict and the margin are never reconciled, in either direction")
 def test_r41_a_violated_verdict_beside_a_positive_margin_is_refused():
     with pytest.raises((ScientificCoreError, InvalidScientificProblem), match="margin"):
         ConstraintCheck(constraint="response_ceiling", satisfied=False,
                         margin=Quantity(0.4, AMPERE), value=Quantity(0.1, AMPERE))
 
 
-@pytest.mark.xfail(strict=True, reason="R-41: a truthy non-bool is accepted as a verdict at construction")
 def test_r41_a_truthy_verdict_is_not_a_verdict():
     with pytest.raises((ScientificCoreError, InvalidScientificProblem)):
         ConstraintCheck(constraint="response_ceiling", satisfied=1,
@@ -126,7 +125,6 @@ def test_r41_a_zero_margin_is_accepted_either_way():
                         margin=Quantity(0.0, AMPERE), value=Quantity(0.5, AMPERE))
 
 
-@pytest.mark.xfail(strict=True, reason="R-41: the forged check survives a round trip")
 def test_r41_the_forged_check_cannot_be_read_back_either():
     payload = _honest_check().to_dict()
     payload["margin"] = Quantity(-2.5, AMPERE).to_dict()
@@ -137,7 +135,6 @@ def test_r41_the_forged_check_cannot_be_read_back_either():
 # ---------------------------------------------------------------------------
 # a_feasible_candidate_checked_every_declared_constraint
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-41 as audited: nothing compares the checked constraint names with the declared ones, so all() over one of two is True")
 def test_r41_a_candidate_that_checked_one_of_two_declared_constraints_is_not_best():
     problem, extra = _two_constraint_problem()
     # One study narrows to the constraint the candidate checked; the other declares both.
@@ -154,7 +151,6 @@ def test_r41_a_candidate_that_checked_one_of_two_declared_constraints_is_not_bes
         "is ranked as feasible")
 
 
-@pytest.mark.xfail(strict=True, reason="R-41 as audited: a check naming a constraint the study does not have counts as feasibility")
 def test_r41_a_check_naming_an_undeclared_constraint_does_not_make_a_candidate_feasible():
     forged = ConstraintCheck(constraint="some_other_ceiling", satisfied=True,
                              margin=Quantity(1.0, AMPERE), value=Quantity(0.1, AMPERE))
@@ -163,13 +159,11 @@ def test_r41_a_check_naming_an_undeclared_constraint_does_not_make_a_candidate_f
         "a check on a name the study does not declare counted as feasibility")
 
 
-@pytest.mark.xfail(strict=True, reason="R-41: coverage is not counted, so one constraint checked twice looks like two constraints checked")
 def test_r41_a_duplicate_check_of_one_constraint_does_not_cover_the_others():
     experiment = _experiment(_evaluation(3, 2.0, checks=(_honest_check(), _honest_check(0.2))))
     assert experiment.best("minimize_load") is None
 
 
-@pytest.mark.xfail(strict=True, reason="R-41 as audited: the stored verdict stands even when the result the study holds contradicts it")
 def test_r41_the_check_is_re_derived_from_the_result_where_the_metric_is_there():
     """A check whose verdict the result contradicts: response 3 A against a declared 0.5 A ceiling."""
     stale = ConstraintCheck(constraint="response_ceiling", satisfied=True,
@@ -197,7 +191,6 @@ def test_r41_a_satisfied_candidate_is_still_best():
 # ---------------------------------------------------------------------------
 # a_missing_declaration_is_not_a_narrowing_to_nothing
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-41 as audited: a missing constraints key becomes an explicit narrowing to none, which drops the feasibility requirement")
 def test_r41_a_payload_with_no_constraints_key_is_refused():
     payload = copy.deepcopy(_experiment(_evaluation(8, 2.0)).to_dict())
     assert "constraints" in payload
@@ -206,7 +199,6 @@ def test_r41_a_payload_with_no_constraints_key_is_refused():
         ScientificExperiment.from_dict(payload)
 
 
-@pytest.mark.xfail(strict=True, reason="R-41: the same for objectives")
 def test_r41_a_payload_with_no_objectives_key_is_refused():
     payload = copy.deepcopy(_experiment(_evaluation(9, 2.0)).to_dict())
     del payload["objectives"]
@@ -231,7 +223,6 @@ def test_r41_a_round_trip_is_unchanged():
 # ---------------------------------------------------------------------------
 # a_candidate_is_ranked_on_the_metric_its_objective_names
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-42 as audited: the agreement guard is keyed by the objective's NAME, and an objective names its quantity through metric, so it never runs")
 def test_r42_ranking_on_a_value_the_result_contradicts_is_refused():
     """The audited case: objective 0.001 W ranked best while the result carries load = 50 W."""
     experiment = _experiment(_evaluation(12, 0.001, result_load=50.0))
@@ -254,3 +245,17 @@ def test_r42_a_result_that_does_not_carry_the_metric_is_ranked_on_its_objective(
         objective_values={"minimize_load": Quantity(2.0, WATT)},
         constraint_checks=(_honest_check(),))
     assert _experiment(without).best("minimize_load") is without
+
+
+def test_r41_an_extra_check_on_an_undeclared_constraint_is_refused_on_its_own():
+    """ADDED while running batch 42's guard mutations, not preregistered.
+
+    B42f removes the undeclared-name rule and the preregistered reproduction still excluded its candidate,
+    because that candidate's forged check REPLACED the declared one and the coverage rule caught it. The case
+    only this rule sees is a candidate that checked everything declared and carries one more check besides:
+    a verdict on a name nothing in the study is judging candidates against, riding along inside the record.
+    """
+    extra = ConstraintCheck(constraint="some_other_ceiling", satisfied=True,
+                            margin=Quantity(1.0, AMPERE), value=Quantity(0.1, AMPERE))
+    experiment = _experiment(_evaluation(15, 2.0, checks=(_honest_check(), extra)))
+    assert experiment.best("minimize_load") is None

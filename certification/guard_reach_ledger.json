@@ -676,6 +676,65 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A `/1` payload whose stored status matches neither precedence is refused, and the reader still cannot tell a hand-edit from a third precedence nobody recorded -- version strings are the only signal, which is the point of the bump. `validation_check` is not versioned here, so a bare check payload carrying `not_applicable` is refused by an older reader on the enum rather than by a version check. And only the DC gate distinguishes the two outcomes: other domains' 'did not apply' checks still report NOT_RUN, and src/engcore/domains/thermal/** is SHA-256 pinned and cannot be edited. On the reverse direction: `local_gaussian_posterior/1` and `hybrid_uq_result/1` are still refused through their embedded route diagnostics rather than by an outer version check, and the V4 serialization inventory (I-30) is where these compatibility events become executable fixtures. A digest remains no authority: re-emitting a record through any writer gets that writer's version, and the protection is only that a newer field cannot ride under an older version."
+  },
+  {
+   "problem": "R-41",
+   "title": "Experiment.best judges feasibility from whatever checks a candidate carries",
+   "rule": "src/engcore/scientific/ir/constraints.py",
+   "rule_symbol": "ConstraintCheck.__post_init__ (a bool verdict that agrees with the sign of its margin); _feasibility_problems and _declared_or_refuse in src/engcore/scientific/experiments/experiment.py, called by ScientificExperiment.best and from_dict",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-21 part A (batch 42)",
+   "why": "SPLIT, and the row records both halves. `ConstraintCheck.__post_init__` is REACHED: every check the domain gates and the IR constraint definitions build passes through it, and run_electrothermal and run_battery build constraint checks on the way to a verdict -- a forged `satisfied` beside a negative margin is now unconstructible everywhere, not only where a selection reads it. The coverage, re-derivation and declaration rules live on `ScientificExperiment`, which has NO production caller (nothing in src calls `.best(` or builds one), so that half is library-only and the audit says so. It is recorded here rather than as a separate LIBRARY_ONLY row because the improvement that closes the selection path production DOES use -- the design Pareto and elite archives -- is R-44, part B, and that is where the reach of selection is settled.",
+   "entry_points": [
+    "engcore.mcp.server.run_electrothermal and run_battery, through the constraint checks the domain gates build",
+    "engcore.scientific.ir.constraints.ConstraintDefinition.check"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_satisfied_verdict_beside_a_negative_margin_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_violated_verdict_beside_a_positive_margin_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_truthy_verdict_is_not_a_verdict",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_zero_margin_is_accepted_either_way",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_the_forged_check_cannot_be_read_back_either"
+   ],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_candidate_that_checked_one_of_two_declared_constraints_is_not_best",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_an_extra_check_on_an_undeclared_constraint_is_refused_on_its_own",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_duplicate_check_of_one_constraint_does_not_cover_the_others",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_the_check_is_re_derived_from_the_result_where_the_metric_is_there",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_payload_with_no_constraints_key_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_a_payload_with_no_objectives_key_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r41_an_explicitly_empty_declaration_still_means_what_it_says"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A declared constraint whose metric the result does not carry is still judged by its stored check: the coverage rule catches a missing check, but nothing can re-derive a value that is not in the record. A zero margin is accepted for either verdict, because a check does not carry the operator that decides that case. And `best()` ranks one objective at a time -- the multi-objective selection production uses is the design archives', which is R-44."
+  },
+  {
+   "problem": "R-42",
+   "title": "The objective-versus-result check is keyed by objective name, not metric",
+   "rule": "src/engcore/scientific/experiments/experiment.py",
+   "rule_symbol": "_ranked_value_problem, called by ScientificExperiment.best for every eligible candidate",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-21 part A (batch 42)",
+   "why": "LATENT rather than LIBRARY_ONLY: `ScientificExperiment` has no production caller at all, and the shape the rule guards -- an evaluation whose objective value disagrees with its own result's metric -- did occur in the tree, in this repository's own canonical test fixture, which reported 5.0, 2.0, 9.0 and 0.5 W while its result carried 2.5 W. That fixture now carries the load it reports, so after this batch the shape occurs nowhere.",
+   "what_would_create_it": "Any caller that builds an evaluation's objective values separately from the result's own quantities -- an optimizer wrapper caching an objective, or a study that computes the objective from a different unit conversion than the result's. The audit's own reproduction is the canonical shape: name 'minimize_load', metric 'load', and the guard keyed by the name that does not match.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch42.py::test_r42_ranking_on_a_value_the_result_contradicts_is_refused",
+    "tests/test_core_scientific_audit_batch42.py::test_r42_agreement_within_roundoff_is_still_agreement",
+    "tests/test_core_scientific_audit_batch42.py::test_r42_a_result_that_does_not_carry_the_metric_is_ranked_on_its_objective",
+    "tests/test_scientific_core.py::test_experiment_best_respects_direction"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A result that does not carry the objective's metric at all is still ranked on the objective value, deliberately: the rule reaches as far as the record does, and refusing there would be a rule nobody can satisfy. The evaluation's own name-keyed guard is left in place -- it is correct when the name IS the metric -- so the two rules overlap rather than replace each other."
   }
  ]
 }

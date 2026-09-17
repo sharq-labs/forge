@@ -7,16 +7,20 @@ an execution layer can be added later without changing the record format.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from ..errors import ScientificCoreError
-from ..ir.constraints import ConstraintDefinition
+from ..ir.constraints import ConstraintCheck, ConstraintDefinition
 from ..ir.objectives import ObjectiveDefinition
 from ..ir.problem import ScientificProblem
 from ..serialization import require_schema, schema_string
 from ..units.quantity import Quantity
-from .evaluation import EvaluationStatus, ScientificEvaluation
+from ..units.validation import require_same_dimension
+# `_OBJECTIVE_AGREEMENT` is reused rather than re-chosen (R-42): it is the tolerance the same
+# comparison already declares one module over, between two records of a single computed number.
+from .evaluation import _OBJECTIVE_AGREEMENT, EvaluationStatus, ScientificEvaluation
 
 EXPERIMENT_SCHEMA = schema_string("scientific_experiment")
 
@@ -70,6 +74,87 @@ def _established(evaluation: ScientificEvaluation) -> bool:
     return bool(models) and all(
         model_id in validity and validity[model_id].status is ValidityStatus.IN_DOMAIN for model_id, _version in models
     )
+
+
+def _declared_or_refuse(payload: Mapping[str, Any], key: str):
+    """R-41: the payload's declaration under ``key``, refusing a record that does not state one."""
+    if key not in payload:
+        raise ScientificCoreError(
+            f"experiment payload has no {key!r} key. `to_dict` always writes one, so this record was not "
+            f"written by this class, and reading a missing declaration as an empty one is the worst "
+            f"available reading: it silently drops what the study said it was judging candidates against. "
+            f"An explicitly empty list is a narrowing to none and is read as written"
+        )
+    return payload[key] or ()
+
+
+def _feasibility_problems(evaluation: ScientificEvaluation,
+                          constraints: tuple[ConstraintDefinition, ...]) -> list[str]:
+    """R-41: why this candidate's declared constraints are not shown satisfied, or [] when they are.
+
+    CORE-015 claims "declared constraints checked and satisfied" and the rule was `all(check.satisfied)`
+    over whatever checks the evaluation happened to carry. `all()` over an empty or unrelated set is True, so
+    a candidate that checked one of two declared constraints was feasible, and a check naming a constraint
+    the study does not have counted the same way.
+
+    Three things are required here. COVERAGE: exactly one check per declared constraint, no duplicates and no
+    undeclared names. AGREEMENT: every check satisfied. RE-DERIVATION: where the declared constraint's metric
+    is present in the result's own values, the check is recomputed from the constraint definition and that
+    value and the stored verdict is ignored -- a stored verdict is integrity-only, and here the inputs are in
+    the record.
+    """
+    problems: list[str] = []
+    declared = {c.name: c for c in constraints}
+    checked: dict[str, ConstraintCheck] = {}
+    for check in evaluation.constraint_checks:
+        if check.constraint in checked:
+            problems.append(f"constraint {check.constraint!r} is checked more than once")
+            continue
+        checked[check.constraint] = check
+    undeclared = sorted(set(checked) - set(declared))
+    if undeclared:
+        problems.append(f"checks name constraint(s) this study does not declare: {undeclared}")
+    missing = sorted(set(declared) - set(checked))
+    if missing:
+        problems.append(f"declared constraint(s) were never checked: {missing}")
+    values = getattr(evaluation.result, "values", {}) or {}
+    for name, definition in declared.items():
+        check = checked.get(name)
+        if check is None:
+            continue
+        if definition.metric in values:
+            check = definition.check(values[definition.metric])
+        if not check.satisfied:
+            problems.append(f"constraint {name!r} is not satisfied (margin {check.margin})")
+    return problems
+
+
+def _ranked_value_problem(evaluation: ScientificEvaluation,
+                          objective: ObjectiveDefinition) -> str | None:
+    """R-42: whether the value this candidate would be ranked on contradicts its own result.
+
+    The guard in `ScientificEvaluation` looks the result up by the OBJECTIVE's name, and an objective names
+    its quantity through `metric` -- 'minimize_load' for metric 'load' -- so for the canonical shape the
+    comparison never ran, and an evaluation reporting 0.001 W was ranked best while its own result carried
+    50 W. A result that does not carry the metric at all is ranked on the objective value, as before: the
+    rule reaches as far as the record does.
+    """
+    values = getattr(evaluation.result, "values", {}) or {}
+    if objective.metric not in values:
+        return None
+    ranked = evaluation.objective_values[objective.name]
+    carried = values[objective.metric]
+    require_same_dimension(
+        ranked, carried,
+        context=(f"evaluation {evaluation.evaluation_id!r}: objective {objective.name!r} ranks on a "
+                 f"quantity that must have the dimension of its metric {objective.metric!r}"),
+    )
+    stated = ranked.magnitude_in(carried.units)
+    if math.isclose(stated, carried.magnitude, rel_tol=_OBJECTIVE_AGREEMENT, abs_tol=0.0):
+        return None
+    return (f"evaluation {evaluation.evaluation_id!r} would be ranked on objective {objective.name!r} = "
+            f"{ranked}, and the result it carries reports its metric {objective.metric!r} = {carried}. "
+            f"Ranking on a number the result contradicts is ranking on nothing")
 
 
 class ScientificExperiment:
@@ -203,11 +288,22 @@ class ScientificExperiment:
             for e in self._evaluations
             if e.status is EvaluationStatus.OK
             and objective.name in e.objective_values
-            and (e.is_feasible is True or (e.is_feasible is None and not self.constraints))
+            # R-41: coverage, agreement and re-derivation, in place of `all()` over whatever checks a
+            # candidate carried. With no declared constraints this is vacuously satisfied, which is the
+            # `is_feasible is None and not self.constraints` case it replaces.
+            and not _feasibility_problems(e, self.constraints)
             and _established(e)
         ]
         if not eligible:
             return None
+
+        # R-42: a candidate whose own result contradicts the number it would be ranked on is a record that
+        # holds two answers for one quantity. Refused rather than filtered out: excluding it quietly would
+        # leave the contradiction in the study and rank the rest over records nobody checked.
+        for evaluation in eligible:
+            problem = _ranked_value_problem(evaluation, objective)
+            if problem is not None:
+                raise ScientificCoreError(problem)
 
         def key(evaluation: ScientificEvaluation) -> float:
             value = evaluation.objective_values[objective.name]
@@ -241,13 +337,17 @@ class ScientificExperiment:
             experiment_id=payload["experiment_id"],
             problem=problem,
             budget=ExperimentBudget.from_dict(payload["budget"]),
+            # R-41: a MISSING key is not an empty declaration. `to_dict` always writes both, so a payload
+            # without one was not written by this class -- and reading it as "narrowed to nothing" removes
+            # the feasibility requirement and changes which candidate `best` returns, while the problem the
+            # record carries still declares the constraint. An explicitly empty list keeps its meaning.
             objectives=tuple(
                 ObjectiveDefinition.from_dict(o)
-                for o in payload.get("objectives", ())
+                for o in _declared_or_refuse(payload, "objectives")
             ),
             constraints=tuple(
                 ConstraintDefinition.from_dict(c)
-                for c in payload.get("constraints", ())
+                for c in _declared_or_refuse(payload, "constraints")
             ),
             metadata=dict(payload.get("metadata", {})),
         )
