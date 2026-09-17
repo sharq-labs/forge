@@ -3,7 +3,7 @@
 Problem R-28 (benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json), improvement I-14 part B of
 four, under benchmarks/core_v4_false_confidence/BATCH34_THRESHOLD_PROTOCOL.json.
 
-Recorded as strict xfails in commit <XFAIL-SHA>, each seen failing on its own assertion, before the fix.
+Recorded as strict xfails in commit 0cad9502, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -44,7 +44,6 @@ def test_r28_the_canonical_verdict_is_not_identifiable():
     assert report.max_abs_correlation == pytest.approx(0.9999985, rel=1e-5)
 
 
-@pytest.mark.xfail(strict=True, reason="R-28: the INF-10 guard runs only for grids")
 @pytest.mark.parametrize("thresholds", [LOOSENED, VERY_LOOSENED], ids=["weakly", "identifiable"])
 def test_r28_a_looser_rule_is_refused_on_the_local_route(thresholds):
     with pytest.raises(CalibrationError, match="looser than the declared"):
@@ -76,7 +75,6 @@ def test_r28_the_default_call_is_untouched():
 # ---------------------------------------------------------------------------
 # a_tightened_rule_is_named_in_the_explanation
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-28: the local path appends no tightened note")
 def test_r28_a_tightened_local_verdict_says_the_rule_was_moved():
     report = assess_routed_identifiability(_local(), width_threshold=0.5).report
     assert "caller-tightened thresholds" in report.why, (
@@ -94,7 +92,6 @@ def test_r28_an_untightened_verdict_does_not_claim_one():
 # ---------------------------------------------------------------------------
 # a_record_cannot_carry_a_rule_looser_than_the_routers
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-28: a self-consistent record with a moved rule reads back")
 def test_r28_a_record_carrying_a_looser_rule_is_refused_at_construction():
     """This is where a bought verdict SURVIVES: the record is self-consistent, which is the problem."""
     import dataclasses

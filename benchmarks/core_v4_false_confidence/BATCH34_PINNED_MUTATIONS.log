@@ -1,0 +1,4 @@
+G33m tests/hybrid_uq/test_audit_hybrid_identifiability.py -> KILLED | 1 failed, 1 passed in 1.12s | code 546abc057de32431->64bb6cdb3dce1c82 | pinned: HUQ-03 (HYB-HUQ03) -- tests/hybrid_uq/test_audit_hybrid_identifiability.py
+G33n tests/hybrid_uq/test_audit_hybrid_identifiability.py -> KILLED | 1 failed, 1 passed in 1.19s | code 546abc057de32431->566269ae70a707d2 | pinned: HUQ-14 (HYB-HUQ14) -- tests/hybrid_uq/test_audit_hybrid_identifiability.py
+G33u tests/hybrid_uq/test_audit_hybrid_records.py -> KILLED | 2 failed, 38 passed in 1.24s | code 546abc057de32431->a0bda683a92ed1f6 | pinned: HUQ-09 (HYB-HUQ09d) -- tests/hybrid_uq/test_audit_hybrid_records.py
+CONTROL (unmutated, 2 test(s)) GREEN | 42 passed in 1.53s

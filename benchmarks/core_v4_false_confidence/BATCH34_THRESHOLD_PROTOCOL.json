@@ -52,5 +52,17 @@
   "The guard is on the THRESHOLDS. A caller who hands in a posterior whose covariance is wrong still gets a verdict consistent with that covariance -- which is R-25's and R-27's territory, part D.",
   "R-28 stays LIBRARY_ONLY: the router calls this function with its defaults, so nothing production does changes."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed, and one rule needed a second half the preregistration did not name: `RoutedIdentifiability.__post_init__` RE-DERIVES the tightened note from the report's own thresholds when it checks `why`.",
+   "the_numbers_that_forced_it": "Adding the note to the local report broke the record's existing `why` re-derivation immediately: `__post_init__` accepts a local report's explanation only as the rule's own text followed by ` [LOCAL_GAUSSIAN_APPROXIMATION in parameterization ...]`, and the note sits between the two. The fix is not to exempt the note but to re-derive it, from the thresholds the report carries -- so a record that claims a moved rule must carry the rule it claims, and a record that claims none must carry none. That is a strictly stronger read-back than the preregistration asked for, and mutation B34e removes exactly it.",
+   "one_deliberate_survivor": {
+    "id": "B34f",
+    "rule": "passing `minimum_effective_points` at its declared value",
+    "why": "Replacing it with 1e-300 makes that one argument looser, and the guard still refuses every LOOSER value of the three thresholds that matter -- so no reproduction distinguishes the two. A local Gaussian has no effective-point count, so the argument exists only to satisfy the guard's signature, and there is nothing for a test to observe. Declared `expect=\"SURVIVED\"` rather than left green, because a reader should know the argument is inert and why."
+   }
+  }
+ ]
 }

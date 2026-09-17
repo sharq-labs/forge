@@ -456,6 +456,37 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "A tampered region holding LESS than a quarter of the posterior weight: 17 weighted draws catch a 10% region about 83% of the time, not 99%. The rule states a detection probability against a stated fraction and claims no more; certainty needs the audit's other alternative, re-evaluating every node within ln 1e6 of the peak, at a cost proportional to the grid. And the weighted draw uses the GRID's own weights, so a forger who lowers the weight of what they tampered with reduces their chance of being drawn -- but that lowering is itself the tampering and moves the moments the route reports, which is what the honest-versus-forged comparison measures. The circularity is real and bounded, not absent. Separately, the REBUILD path's weighted draw has no forgery reproduction here (mutation B33h is a declared survivor): the audit asserted that path's exposure in one sentence without measuring it."
+  },
+  {
+   "problem": "R-28",
+   "title": "assess_routed_identifiability accepts loosened thresholds on the local route",
+   "rule": "src/engcore/hybrid_uq/identifiability.py",
+   "rule_symbol": "assess_routed_identifiability's local branch calling _require_declared_or_tighter_thresholds, _tightened_note, and RoutedIdentifiability.__post_init__'s canonical-threshold refusal and re-derivation of that note",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-14 part B (batch 34)",
+   "why": "LATENT. The router calls `assess_routed_identifiability` with its defaults, so no production path passes a threshold at all and nothing production does changes. What R-28 is about is the PUBLIC function and the record it returns: a caller who calls it directly, or who serializes what it returns, could obtain a verdict the declared rule does not give -- and the record read back, because it was self-consistent.",
+   "what_would_create_it": "Any caller that passes an identifiability threshold. The thresholds are arguments on purpose, so that a study may be STRICTER, and that is exactly why the loosening direction had to be refused rather than documented: the same argument on the same problem's GRID has always raised `looser than the declared 1.0`.",
+   "entry_points": [
+    "engcore.hybrid_uq.identifiability.assess_routed_identifiability",
+    "engcore.hybrid_uq.router.route_uncertainty"
+   ],
+   "exercised_by_in_library": [
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_the_canonical_verdict_is_not_identifiable",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_looser_rule_is_refused_on_the_local_route",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_the_grid_branch_already_refused_the_same_argument",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_stricter_rule_is_still_allowed_on_the_local_route",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_the_default_call_is_untouched",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_tightened_local_verdict_says_the_rule_was_moved",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_an_untightened_verdict_does_not_claim_one",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_record_carrying_a_looser_rule_is_refused_at_construction",
+    "tests/hybrid_uq/test_core_scientific_audit_batch34.py::test_r28_a_record_round_trips_and_a_forged_payload_does_not"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`confidence_level`, which is not one of the declared thresholds: it selects WHICH interval is measured rather than how wide one may be, so a caller who asks for a 50% interval gets narrower relative widths and can reach a better verdict that way. The report carries the level and the grid branch refuses anything but 0.95 outright; the local branch's freedom is deliberate, because closing it is a different rule than the one R-28 names. And the guard is on the THRESHOLDS -- a caller who hands in a posterior whose covariance is wrong still gets a verdict consistent with that covariance, which is R-25's and R-27's territory."
   }
  ]
 }

@@ -19,7 +19,14 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 from scipy.stats import norm
 
-from ..inference.calibration import WIDTH_REFERENCE_NOTE, IdentifiabilityReport, IdentifiabilityStatus, assess_identifiability
+from ..inference.calibration import (
+    _DECLARED_IDENTIFIABILITY_THRESHOLDS,
+    WIDTH_REFERENCE_NOTE,
+    IdentifiabilityReport,
+    IdentifiabilityStatus,
+    _require_declared_or_tighter_thresholds,
+    assess_identifiability,
+)
 from ..inference.grid import PosteriorGrid
 from ._records import decode_float, decode_vector, digest_of, encode_float, encode_vector, require_schema
 from .local_gaussian import LocalGaussianPosterior
@@ -222,13 +229,37 @@ class RoutedIdentifiability:
         # the frozen rule does not give from them is not a verdict. A local report's explanation also names its
         # parameterization after the rule's text.
         r = self.report
+        # A RECORD CANNOT CARRY A RULE LOOSER THAN THE ROUTER'S (I-14, R-28).
+        #
+        # The re-derivation below makes a record SELF-CONSISTENT, which is
+        # precisely why the audited forgery read back: its numbers and its moved
+        # rule agreed with each other, and neither was compared with the
+        # declared rule. These constants are the ones `_report_differences`
+        # already checks against; what changes is that the check runs at
+        # construction and not only inside a `HybridUQResult`.
+        for key, canonical in CANONICAL_IDENTIFIABILITY_THRESHOLDS.items():
+            value = float(getattr(r, key))
+            if not math.isfinite(value) or value <= 0.0 or value > float(canonical):
+                raise HybridUQError(
+                    f"identifiability {key}={value!r} is looser than the router's {canonical!r}; a "
+                    f"classification may be made stricter by argument, never more lenient, and a record "
+                    f"carrying a moved rule is consistent with itself and with nothing else")
         status, why = _rule(r.condition_number, r.max_abs_correlation, r.relative_widths, r.parameter_names,
                             correlation_threshold=r.correlation_threshold, condition_threshold=r.condition_threshold,
                             width_threshold=r.width_threshold)
-        explained = r.why == why or (cls is ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION and r.why.startswith(why + " ["))
+        # The tightened note is RE-DERIVED from the report's own thresholds, which it carries, so a record
+        # that claims a moved rule must carry the rule it claims and a record that claims none must carry
+        # none. (I-14, R-28.)
+        expected = why + _tightened_note({
+            key: float(getattr(r, key))
+            for key, declared in _DECLARED_IDENTIFIABILITY_THRESHOLDS
+            if key in CANONICAL_IDENTIFIABILITY_THRESHOLDS and float(getattr(r, key)) != float(declared)
+        })
+        explained = r.why == expected or (cls is ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION
+                                          and r.why.startswith(expected + " ["))
         if status is not r.status or not explained:
             raise HybridUQError(f"the identifiability verdict {r.status.value} and its explanation do not follow from its own "
-                                f"numbers, which give {status.value} and {why!r} under its thresholds")
+                                f"numbers, which give {status.value} and {expected!r} under its thresholds")
 
     @property
     def status(self) -> IdentifiabilityStatus:
@@ -275,6 +306,14 @@ def _local_marginal_intervals(point: Sequence[float], sd: Sequence[float], trans
     return scales, lows, highs
 
 
+def _tightened_note(tightened: Mapping[str, float]) -> str:
+    """The grid path's own sentence for a caller-tightened rule, or nothing (I-14, R-28)."""
+    if not tightened:
+        return ""
+    return (f". Classified under caller-tightened thresholds {dict(tightened)}; the "
+            f"declared defaults are {dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)}")
+
+
 def assess_routed_identifiability(
     posterior: LocalGaussianPosterior | PosteriorGrid,
     *,
@@ -294,6 +333,23 @@ def assess_routed_identifiability(
                                      route_claim=RouteClaim.SUPPORTED, report=report)
     if not isinstance(posterior, LocalGaussianPosterior):
         raise HybridUQError("assess_routed_identifiability takes a LocalGaussianPosterior or a PosteriorGrid")
+    # THE DECLARED-OR-TIGHTER GUARD RUNS HERE TOO (I-14, R-28).
+    #
+    # It ran for a grid and not for the local route, so a verdict was BOUGHT by
+    # argument: the weak-identification case is canonically NOT_IDENTIFIABLE
+    # with widths [8.553, 1.842] and correlation 0.9999985, and under
+    # (0.99999, 1e300, 1e9) it reads WEAKLY_IDENTIFIABLE -- while the SAME
+    # thresholds on the same problem's grid raise `looser than the declared
+    # 1.0`. That is an inconsistency inside one function, thirty lines apart.
+    # `minimum_effective_points` is passed at its declared value: a local
+    # Gaussian has no effective-point count, so the check for it is a no-op.
+    declared = dict(_DECLARED_IDENTIFIABILITY_THRESHOLDS)
+    tightened = _require_declared_or_tighter_thresholds(
+        correlation_threshold=correlation_threshold,
+        condition_threshold=condition_threshold,
+        width_threshold=width_threshold,
+        minimum_effective_points=declared["minimum_effective_points"],
+    )
     cov = posterior._require_numbers()
     level = float(confidence_level)
     if not 0.0 < level < 1.0:
@@ -308,7 +364,14 @@ def assess_routed_identifiability(
         status=status, condition_number=condition, max_abs_correlation=max_corr, relative_widths=widths,
         parameter_names=posterior.parameter_names, correlation_threshold=correlation_threshold,
         condition_threshold=condition_threshold, width_threshold=width_threshold,
-        why=f"{why} [LOCAL_GAUSSIAN_APPROXIMATION in parameterization {posterior.parameterization!r}]",
+        # A STRICTER RULE IS STILL A RULE THAT MOVED (I-14, R-28). The grid path
+        # appends this note, in these words, and a reader comparing two reports
+        # has no other way to know which rule each was reached under. The
+        # parameterization suffix stays LAST, because `RoutedIdentifiability`
+        # re-derives `why` and accepts the local class's report only as the
+        # rule's text followed by that bracket.
+        why=(f"{why}{_tightened_note(tightened)} "
+             f"[LOCAL_GAUSSIAN_APPROXIMATION in parameterization {posterior.parameterization!r}]"),
     )
     return RoutedIdentifiability(approximation_class=ApproximationClass.LOCAL_GAUSSIAN_APPROXIMATION,
                                  parameterization_digest=posterior.parameterization_digest,

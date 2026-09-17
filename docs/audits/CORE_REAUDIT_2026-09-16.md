@@ -2186,3 +2186,52 @@ Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `test
 green, plus pinned re-runs on the changed files all KILLED.
 
 **Open decisions.** None.
+
+### Batch 34 — I-14 part B
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-14 | **PARTIAL** (parts A and B of four) | `28e4c116`, `18db6895` (A, the leverage-null clamp, landed in batch 31 because it blocked I-06), `0cad9502` (B preregistration + 4 strict xfails), this commit | `confidence_level` is **not** covered — it selects *which* interval is measured rather than how wide one may be, so a caller asking for a 50% interval gets narrower relative widths and can reach a better verdict that way; the report carries the level and the grid branch refuses anything but 0.95 outright, and closing the local branch's freedom is a different rule than the one R-28 names; the guard is on the **thresholds**, so a caller handing in a wrong covariance still gets a verdict consistent with it — that is R-25 and R-27, part D; R-22's four read-back gaps are part C |
+
+**R-28 is FIXED.** The guard existed, was thirty lines away, and was not called on this branch.
+
+| Claim | Status | How |
+|---|---|---|
+| a verdict is bought by argument on the local route | **FIXED** | The weak-identification case is canonically NOT_IDENTIFIABLE — widths [8.553, 1.842], correlation 0.9999985. Under (0.99999, 1e300, 1e9) it read **WEAKLY_IDENTIFIABLE**, and under a correlation threshold of 0.9999999999999, **PARAMETERS_IDENTIFIABLE**. The local branch now calls `_require_declared_or_tighter_thresholds`, which is what the grid branch has always called — **the same thresholds on the same problem's grid have always raised `looser than the declared 1.0`.** An inconsistency inside one function. |
+| the `why` text states the loosened rule's own words | **FIXED** | It said "every marginal interval is still narrower than its own parameter (widest 8.55)" — self-consistent, and silent about the rule having moved. A **tightened** rule now carries the note the grid path already appends, in those words. |
+| the record reads back | **FIXED** | This is where a bought verdict survives. `__post_init__` already re-derived the verdict from the report's own numbers under the report's own thresholds — **which is exactly why the forgery read back: the numbers and the moved rule agreed with each other, and neither was compared with the declared rule.** It now refuses a report looser than `CANONICAL_IDENTIFIABILITY_THRESHOLDS`, constants this module already defined and already checked in `_report_differences`. |
+
+**Amendment 1: one rule grew a second half the preregistration did not name.** Adding the note broke the
+record's existing `why` re-derivation at once — `__post_init__` accepts a local explanation only as the rule's
+text followed by the parameterization bracket, and the note sits between them. The fix is not to exempt the
+note but to **re-derive it from the thresholds the report carries**, so a record that claims a moved rule must
+carry the rule it claims and a record that claims none must carry none. That is strictly stronger than what
+was preregistered, and mutation B34e removes exactly it.
+
+**Compatibility.** No new public symbol, no signature, field, default or enum member change; no serialized
+record gains or loses a key. `hybrid_uq/identifiability.py` gains imports from `inference/calibration.py`,
+which the layer ladder allows. The narrowing: `assess_routed_identifiability(posterior, width_threshold=1e9)`
+raised nothing and now raises, and a `RoutedIdentifiability` built from such a report is refused at
+construction. Both were paths to a verdict the declared rule does not give. **A caller who passes a looser
+threshold on purpose now gets an exception** — that is INF-10 as already written and already applied to
+grids, whose own docstring says a relaxed rule "would report IDENTIFIABLE for a posterior the declared rule
+does not".
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**No existing expectation moved.** The whole tree passes unchanged, which is the finding again: nothing was
+asserting that a looser threshold was accepted.
+
+**Verification.** FAST tier 6871 passed, 5 skipped, 0 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline. `tests/test_mutation_harness.py`
+6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
+`src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH34_MUTATIONS.log`: **5 of 5 KILLED plus one declared survivor**, both controls
+green, plus 3 pinned re-runs all KILLED. The survivor is B34f, which loosens the inert
+`minimum_effective_points` argument: a local Gaussian has no effective-point count, so that argument exists
+only to satisfy the guard's signature and there is nothing for a test to observe. Declared rather than left
+green, so a reader knows it is inert and why.
+
+**Open decisions.** None.
