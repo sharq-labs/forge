@@ -65,6 +65,7 @@ from ...scientific.models.definition import (
 from ...scientific.ir.problem import ModelReference
 from ...scientific.realizations.definition import RealizationReference
 from ...scientific.results.provenance import ExecutionBinding
+from ...scientific.results.result import _same_operating_point
 from ...scientific.results.validation import ValidationReport
 from ...scientific.solvers.protocol import ConvergenceState
 from ...scientific.units.quantity import Quantity
@@ -151,6 +152,22 @@ def _over_the_step(
         satisfied = [
             n for n in satisfied if n not in violated and n not in unknown
         ]
+        # I-11 (R-09, R-50): the operating point this verdict holds over the WHOLE interval.
+        # Narrower than the instants' on purpose: only a value that was the same at every instant
+        # assessed is a value the interval holds AT. The temperature moves within a step by
+        # construction -- that is what the two instants are for -- so recording either end on the
+        # combined record would state an operating point the interval does not have, and a result
+        # whose provenance carried the other end would be refused for agreeing with itself. A name
+        # that moved is simply not recorded; the per-instant records in `validity_at` keep both
+        # values, which is where a reader looks for where it moved.
+        held = dict(assessments[0].evaluated)
+        for assessment in assessments[1:]:
+            other = dict(assessment.evaluated)
+            held = {
+                name: value
+                for name, value in held.items()
+                if name in other and _same_operating_point(value, other[name])
+            }
         # The core's own classification, not a fourth copy of it. This block
         # spelled the same four rules out again; the core now states them once
         # and refuses an assessment that disagrees, so a local copy could only
@@ -163,6 +180,12 @@ def _over_the_step(
             violated=tuple(violated),
             unknown=tuple(unknown),
             unknown_reasons=tuple(reasons[n] for n in unknown if n in reasons),
+            evaluated=held,
+            # The model key and the conditions the domain decided are the same at every instant,
+            # so the combination keeps them and stays checkable by the result that carries it.
+            model_id=assessments[0].model_id,
+            model_version=assessments[0].model_version,
+            declared_conditions=assessments[0].declared_conditions,
         )
     return combined
 

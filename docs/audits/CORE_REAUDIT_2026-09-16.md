@@ -740,3 +740,94 @@ passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing under
 `src/engcore/domains/thermal/` was edited.
 
 **Open decisions.** None in this batch.
+
+### Batch 14 — I-11
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-11 | **DONE** | `3f957a94` (preregistration + 10 strict xfails), this commit | `record_values` records Quantities only, so a CategoryCondition or FlagCondition verdict ("laminar, steady") still attaches to a result whose provenance says otherwise — `evaluated` is typed `Mapping[str, Quantity]` on a V1-frozen record and widening it is finding 62's remaining half; 59 of the 77 condition names across the 16 registered models are reserved DERIVED quantities and 18 are declared inputs, so most names cannot be bound at all and are REPORTED rather than counted as gaps (D-14-1 below); the production electrothermal report's provenance inputs are namespaced (`resistance-tcr-R1::temperature`), which binds nothing by name on either side; a hand-built assessment can still fabricate its model key and its condition list consistently, which is what the MCP boundary's registry check is for; and an interval verdict records only the values that did not move within the step, so a coupled step binds its state of charge and current and not its temperature |
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-09 | **FIXED** | The CORE-014 binding is now enabled on the production paths and applied where the verdict is formed. Three changes, none of them a new rule: `ScientificModelDefinition.assess_validity` gained `record_values` (default False — it is a V1-frozen symbol's method) so a domain *can* opt in, and `DomainValidityContext.assess` gained it with a default of **True**, so battery, electrical and repair record their operating point by construction rather than by memory; every remaining direct assessment site under `src/engcore/domains` passes it (the two conduction1d scheme paths and the four electrical dc paths — `src/engcore/domains/thermal/**` is SHA-256 pinned and untouched); and `ModelValidityRecord`'s rebuild **carries `evaluated`** instead of silently dropping it, which is finding 46 exactly — the credibility boundary erased the operating point immediately before both production MCP tools form their verdict. `CredibilityEvidenceReport` then applies the same comparison to every record it holds, supplied by an assembler or carried from the result, against its own provenance. The audited case — a result whose provenance says `alpha = -1e-5 m^2/s` carrying an IN_DOMAIN assessment made at `+1e-5` — is refused at the result, and its report-shaped twin at the report. |
+| R-50 | **FIXED** | `ValidityAssessment` gained three trailing fields with defaults: `model_id`, `model_version` and `declared_conditions`. `ValidityDomain.assess` fills the last with the names it decided, in declaration order; `assess_validity` fills the model key. `ScientificResult` then refuses an assessment whose model id is not the key it is filed under, whose version is not the one the result declares (its own one-version rule already says those are two claims), or whose condition lists are not exactly the names its domain decided, each once. `satisfied=('anything_at_all',)` no longer reaches `Experiment.best`, the inference admission gate or `validity_of`. No registry is involved, which is why the check can live in `engcore.scientific` at all: that package cannot import the domains, and a record needing a registry to be checkable is checkable only where the registry is. The MCP boundary's `_require_conditions_of_the_declared_model` stays and is the stronger of the two, because it reads the model's own domain. |
+
+**What "load-bearing" cost, measured rather than assumed.** Enabling the flag moved exactly one existing
+expectation in the tree, and it moved for a real reason. `tests/domains/battery/test_battery_coupling.py`'s
+`test_a_coupled_run_and_a_standalone_assessment_agree_at_the_same_point` compared a step's **interval**
+verdict with a standalone assessment at one instant. Those now differ, because `_over_the_step` combines two
+instants and a step's temperature moves between them by construction — that is what the two instants are for.
+The combination therefore carries the model key and the declared conditions (identical at every instant) and
+records a value only for a name every instant agreed on: the state of charge and the current, not the
+temperature. Recording either end would state an operating point the interval does not have, and a result
+carrying the other end would then be refused for agreeing with itself. The test now compares against
+`validity_at[STEP_START]`, which is the assessment the march made at exactly that operating point — a
+**stronger** equality than the one it replaces, because it now covers the recorded operating point as well as
+the condition lists — and asserts separately that the interval verdict agrees on status, conditions, model key
+and declared conditions, and holds exactly the names the two instants agreed on. The measured difference is
+three names across three of the five battery models (`discharge_temperature_position`,
+`internal_resistance_drift_ratio`, `capacity_temperature_drift_ratio`, `peukert_temperature_drift_ratio`) —
+every one of them temperature-derived.
+
+**One preregistered enumeration corrected, the rule unchanged.** The protocol's
+`the_production_paths_record_their_operating_point` rule is implemented exactly as stated — every site under
+`src/engcore/domains` that assesses DIRECTLY passes the flag — but its parenthetical list was written from the
+audit's fix direction before the call sites were read, and it named two families that do not assess directly:
+the lumped capacity path and the battery cell paths both go through `DomainValidityContext.assess` and are
+covered by that method's default of True. The actual direct set is the two conduction1d scheme paths and the
+four electrical dc paths. Recorded as the first entry of the protocol's `amendment_log` rather than edited in
+place, because a preregistration quietly corrected to match the code is not a preregistration.
+
+**Compatibility.** Additive on every V1-frozen symbol. `ValidityAssessment` gained three TRAILING fields with
+defaults; `ScientificModelDefinition.assess_validity` and `DomainValidityContext.assess` gained keyword-only
+arguments with defaults; `ValidityDomain.assess` is untouched and its `record_values` default stays False.
+`CredibilityEvidenceReport` gained no field and one derived property (`unbound_assessment_values`). No field
+or member is removed, renamed or reordered, and no existing default changed. Serialization: the three new
+assessment keys are written **only when non-empty**, as `evaluated` already is, so an assessment recorded
+before this batch keeps its bytes and its digest; `ModelValidityRecord`'s serialized form gains `evaluated`
+where the assessment has it, which is the information finding 46 says it was dropping. No schema string is
+bumped, and `from_dict` reads a missing key as the empty value on both records.
+
+**Existing tests edited (no assertion weakened).** One: the battery coupling equality described above, which
+became stronger. Nothing else in the FAST or expensive tier changed expectation.
+
+**Committed evidence.** Nothing moved. No committed record in the repository serializes a
+`ValidityAssessment` or a `ModelValidityRecord` (`validity_assessment/2` appears in
+`benchmarks/core_freeze_v1/REPRODUCTION_OUTPUT.json` and `certification/core_freeze_v1.json` only as the
+accepted-schema list of the reader test, not as a stored assessment), so no digest is re-derived here. The
+`KINETICS_K2` and `BATTERY_T41` SUPERSEDED markers gain no entry either: every claim in both is a hybrid-UQ
+route record, and neither carries a validity assessment for these rules to reach.
+
+**Guard mutations.** `BATCH14_MUTATIONS.log`: **15 of 15 KILLED**, control green. One survived a first run and
+the purchase is recorded: B14b (removing the model key `assess_validity` fills) survived because
+`test_r50_an_assessment_filed_under_another_model_is_refused` had the result declare BOTH models and was
+therefore passing on the unrelated "declares a model and says nothing about whether it applied" rule — it
+never read the key it was about. The test now declares only the other model and matches the mismatch message,
+so the model key is measured at its own boundary. The 17 pinned mutations on the six files this batch changed
+were re-run isolated and all 17 are still KILLED (`BATCH14_PINNED_MUTATIONS.log`), control green.
+
+**Verification.** FAST tier 6611 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Open decisions.**
+
+* **D-14-1 — what an assessment whose condition values cannot be bound to the provenance should count as.**
+  **DECISION-NEEDED.** The audit's fix direction says "treat an unbound assessment as a gap, not as a pass".
+  Doing that turns every production MCP verdict resting on a derived condition from SUPPORTED into
+  INSUFFICIENT_EVIDENCE: 59 of the 77 condition names across the 16 registered models are reserved derived
+  quantities, which are never provenance inputs, and the production electrothermal report's inputs are
+  namespaced besides. This round's hard constraints say the verdict word moves scored benchmarks and that an
+  existing call must not change what it returns by default, so the change is the owner's.
+  Options: **(a)** record only, as this batch does — `CredibilityEvidenceReport.unbound_assessment_values`
+  names every recorded value the provenance could not bind, the binding is load-bearing wherever a name CAN
+  be compared, and the verdict is unchanged; **(b)** treat unbound as a gap, accepting that production
+  verdicts move to INSUFFICIENT_EVIDENCE until every domain maps its derived quantities to provenance inputs;
+  **(c)** make the binding complete first — each domain's assembler declares, per derived quantity, which
+  declared inputs it is computed from, those inputs' values are recorded too, and THEY are compared — after
+  which (b) costs nothing. Recommendation: **(a) now, and (c) as its own improvement.** (a) closes every
+  audited reproduction without moving a scored verdict; (c) is a real piece of work (a declared
+  input-to-derived-quantity map for 16 models) and is the honest way to reach (b). (b) alone would trade a
+  silent pass for a blanket INSUFFICIENT_EVIDENCE, which tells a reader less, not more.

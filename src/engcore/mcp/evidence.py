@@ -140,7 +140,11 @@ from ..scientific.models.definition import (
 )
 from ..scientific.results.immutable import detach, freeze
 from ..scientific.results.provenance import PROVENANCE_SCHEMA, ProvenanceRecord
-from ..scientific.results.result import ScientificResult, stored_attribution_gap
+from ..scientific.results.result import (
+    ScientificResult,
+    _same_operating_point,
+    stored_attribution_gap,
+)
 from ..scientific.results.uncertainty import Uncertainty, UncertaintySource
 from ..scientific.results.validation import (
     CHECK_SCHEMA,
@@ -956,6 +960,14 @@ class ModelValidityRecord:
             violated=tuple(self.assessment.violated),
             unknown=tuple(self.assessment.unknown),
             unknown_reasons=tuple(self.assessment.unknown_reasons),
+            # I-11 (R-09): CARRIED, not dropped. This rebuild used to stop at the condition lists,
+            # so the operating point the assessment was made at -- the whole of CORE-014's binding
+            # -- was erased at the boundary where both production MCP tools form their verdict. A
+            # copy that quietly loses a field is not a copy.
+            evaluated=dict(getattr(self.assessment, "evaluated", {}) or {}),
+            model_id=getattr(self.assessment, "model_id", ""),
+            model_version=getattr(self.assessment, "model_version", ""),
+            declared_conditions=tuple(getattr(self.assessment, "declared_conditions", ()) or ()),
         )
         object.__setattr__(self, "assessment", assessment)
 
@@ -1527,6 +1539,7 @@ class CredibilityEvidenceReport:
                 f"{type(self.provenance).__name__}; evidence that cannot be "
                 f"attributed to what produced it is not evidence"
             )
+        self._require_assessments_at_this_operating_point()
 
         object.__setattr__(
             self,
@@ -1631,6 +1644,35 @@ class CredibilityEvidenceReport:
                 )
         object.__setattr__(self, "uncertainty", freeze(declared))
 
+    def _require_assessments_at_this_operating_point(self) -> None:
+        """I-11 (R-09): CORE-014's binding, applied where the verdict is actually formed.
+
+        The core applies it in ``ScientificResult``. Both production MCP tools assemble their report
+        through ``from_result(validity=...)``, which accepts assembler-supplied records and checked
+        none of them -- so the binding was a guard on a path the verdict is not formed on, which is
+        not a guard. It is applied here to EVERY record the report holds, carried and supplied alike,
+        against this report's own provenance, with the rule ``oracles`` states and the core reuses.
+
+        Only names the provenance actually carries are compared; what cannot be bound is REPORTED,
+        through :attr:`unbound_assessment_values`, and lowers nothing. That is deliberate and it is
+        recorded as D-14-1 in this batch's threshold protocol: 59 of the 77 condition names across
+        the 16 registered models are reserved DERIVED quantities, which are never provenance inputs,
+        so treating an unbound name as a gap would turn every production verdict resting on a
+        derived condition into INSUFFICIENT_EVIDENCE. Making the binding complete first -- each
+        assembler declaring which declared inputs its derived quantities are computed from -- is the
+        honest route to that, and is its own improvement.
+        """
+        inputs = dict(getattr(self.provenance, "inputs", {}) or {})
+        for record in self.validity:
+            for name, value in dict(getattr(record.assessment, "evaluated", {}) or {}).items():
+                if name in inputs and not _same_operating_point(value, inputs[name]):
+                    raise CredibilityEvidenceError(
+                        f"validity for {record.model_id!r}@{record.version!r} was assessed with "
+                        f"{name} = {value}, but this report's provenance records "
+                        f"{name} = {inputs[name]}. An assessment made at another operating point is "
+                        f"not evidence about these values"
+                    )
+
     # ---- derived state --------------------------------------------------
     @property
     def verdict(self) -> CredibilityVerdict:
@@ -1709,6 +1751,29 @@ class CredibilityEvidenceReport:
             for name, record in sorted(self.uncertainty.items())
             if UncertaintySource(record.source_kind) is not UncertaintySource.UNSPECIFIED
         }
+
+    @property
+    def unbound_assessment_values(self) -> tuple[tuple[str, str, str], ...]:
+        """I-11 (R-09): ``(model_id, version, condition)`` for every recorded value this report's
+        provenance cannot be compared against.
+
+        **Derived, never supplied**, and it decides no verdict. The binding above can only refuse a
+        DISAGREEMENT between two recorded numbers; where the provenance carries no input of that
+        name -- a reserved derived quantity, or a namespaced production input such as
+        ``resistance-tcr-R1::temperature`` -- there is no disagreement to find and the honest thing
+        is to say which ones those were rather than to leave the silence looking like agreement.
+        What such a name SHOULD count as is D-14-1 in this batch's threshold protocol.
+
+        Not serialized: it re-derives exactly from the payload's own assessments and provenance, so
+        a stored report keeps its bytes and a reader computes the same tuple.
+        """
+        inputs = set(dict(getattr(self.provenance, "inputs", {}) or {}))
+        return tuple(
+            (record.model_id, record.version, name)
+            for record in self.validity
+            for name in sorted(dict(getattr(record.assessment, "evaluated", {}) or {}))
+            if name not in inputs
+        )
 
     @property
     def unresolved_models(self) -> tuple[tuple[str, str], ...]:

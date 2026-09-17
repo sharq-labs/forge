@@ -19,10 +19,13 @@ Preregistered in `benchmarks/core_v4_false_confidence/BATCH14_THRESHOLD_PROTOCOL
 the one DECISION-NEEDED this improvement reaches (D-14-1: what an assessment whose condition values cannot be
 bound to the provenance should count as).
 
-Every test marked `xfail(strict=True)` here is an audited reproduction: it was confirmed to fail ON ITS OWN
-ASSERTION against the pre-batch tree before any code was written. The unmarked
-`test_r50_an_assessment_written_before_this_rule_is_still_accepted` is a no-regression guard on records that
-predate the rule and it passes both before and after.
+Ten of these were audited reproductions, recorded as `xfail(strict=True)` in commit **3f957a94** and
+confirmed there to fail ON THEIR OWN ASSERTIONS against the pre-batch tree (10 failed, 1 passed under
+`--runxfail`). The markers came off with the implementation.
+`test_r50_an_assessment_written_before_this_rule_is_still_accepted` was never marked: it is a
+no-regression guard on records that predate the rule and it passes on both sides of the batch. The tests
+after them are guards written against the new code, for the rules the reproductions do not reach by
+themselves -- the report-side comparison, what it could not bind, and the serialized form.
 """
 
 from __future__ import annotations
@@ -71,6 +74,12 @@ def _assessment_fields() -> frozenset[str]:
     return frozenset(f.name for f in dataclasses.fields(ValidityAssessment))
 
 
+def _unknown_condition(name: str):
+    from engcore.scientific.models.definition import UnknownCondition, UnknownReason
+
+    return UnknownCondition(name=name, reason=UnknownReason.NOT_SUPPLIED)
+
+
 def _result(assessment, temperature, *, models=(MODEL,), key=MODEL[0]):
     return ScientificResult(
         result_id="r", values={"y": Quantity(1.0, "meter")}, models=models, validity={key: assessment},
@@ -80,7 +89,6 @@ def _result(assessment, temperature, *, models=(MODEL,), key=MODEL[0]):
 # =====================================================================
 # R-09: the binding fires on the paths a verdict is formed on
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r09_the_model_api_can_opt_in():
     """Domains assess through `ScientificModelDefinition.assess_validity`, which had no way to opt in."""
     assert _takes_record_values(), "assess_validity takes record_values, so a domain can opt in"
@@ -90,7 +98,6 @@ def test_r09_the_model_api_can_opt_in():
     assert _definition().assess_validity({"T": Quantity(300.0, K)}).evaluated == {}, "the default is additive"
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r09_the_derived_context_records_its_operating_point_by_default():
     """The path battery, electrical and repair all assess through."""
     from engcore.domains.derived_context import DomainValidityContext
@@ -100,7 +107,6 @@ def test_r09_the_derived_context_records_its_operating_point_by_default():
     assert assessment.evaluated.get("T") == Quantity(300.0, K), assessment.evaluated
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r09_the_production_conduction_models_record_their_operating_point():
     """The audited case: a result at alpha = -1e-5 with an assessment made at +1e-5 reads SUPPORTED.
 
@@ -127,7 +133,6 @@ def test_r09_the_production_conduction_models_record_their_operating_point():
     assert not unflagged, unflagged
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r09_the_report_keeps_the_operating_point():
     from engcore.mcp.evidence import ModelValidityRecord
 
@@ -141,7 +146,6 @@ def test_r09_the_report_keeps_the_operating_point():
 # =====================================================================
 # R-50: an assessment names the model and the conditions it assessed
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r50_the_domain_records_the_conditions_it_decided():
     assessment = DOMAIN.assess({"T": Quantity(300.0, K)})
     assert tuple(getattr(assessment, "declared_conditions", ())) == ("T",), assessment
@@ -149,7 +153,6 @@ def test_r50_the_domain_records_the_conditions_it_decided():
     assert getattr(keyed, "model_id", "") == MODEL[0] and getattr(keyed, "model_version", "") == MODEL[1]
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r50_an_assessment_over_conditions_the_model_does_not_have_is_refused():
     """The audited case: `satisfied=('anything_at_all',)` is accepted, round-trips and reaches `validity_of`."""
     assert "declared_conditions" in _assessment_fields(), "an assessment records the conditions it decided"
@@ -159,7 +162,6 @@ def test_r50_an_assessment_over_conditions_the_model_does_not_have_is_refused():
         _result(stray, 300.0)
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r50_an_assessment_that_leaves_a_declared_condition_out_is_refused():
     assert "declared_conditions" in _assessment_fields(), "an assessment records the conditions it decided"
     partial = ValidityAssessment(status=ValidityStatus.IN_DOMAIN, satisfied=("T",),
@@ -168,16 +170,18 @@ def test_r50_an_assessment_that_leaves_a_declared_condition_out_is_refused():
         _result(partial, 300.0)
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r50_an_assessment_filed_under_another_model_is_refused():
     assert "model_id" in _assessment_fields(), "an assessment names the model it is about"
     assessment = _definition().assess_validity({"T": Quantity(300.0, K)})
+    # The result declares ONLY the other model, so the mismatch is the single thing wrong with it.
+    # A first draft declared both and passed on the "says nothing about whether they applied" rule
+    # instead -- which a mutation of `assess_validity`'s model key survived, because the test was
+    # never reading that key. (Guard mutation B14b, batch 14.)
     other = ("batch14.other", "1")
-    with pytest.raises(Exception, match="(?i)batch14"):
-        _result(assessment, 300.0, models=(MODEL, other), key=other[0])
+    with pytest.raises(Exception, match="carries an assessment of model 'batch14.model'"):
+        _result(assessment, 300.0, models=(other,), key=other[0])
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r50_an_assessment_whose_version_is_not_the_declared_one_is_refused():
     assert "model_version" in _assessment_fields(), "an assessment names the model it is about"
     assessment = _definition().assess_validity({"T": Quantity(300.0, K)})
@@ -193,7 +197,6 @@ def test_r50_an_assessment_written_before_this_rule_is_still_accepted():
     assert "model_id" not in old.to_dict()
 
 
-@pytest.mark.xfail(strict=True, reason="I-11 not implemented yet (batch 14 preregistration)")
 def test_r50_the_new_keys_round_trip_and_are_written_only_when_present():
     assert _takes_record_values(), "assess_validity takes record_values, so a domain can opt in"
     assessment = _definition().assess_validity({"T": Quantity(300.0, K)}, record_values=True)
@@ -202,3 +205,93 @@ def test_r50_the_new_keys_round_trip_and_are_written_only_when_present():
     back = ValidityAssessment.from_dict(payload)
     assert tuple(back.declared_conditions) == ("T",) and back.model_id == MODEL[0]
     assert back.evaluated == assessment.evaluated
+
+
+# =====================================================================
+# Guards added while implementing, on the rules the reproductions above do not
+# reach by themselves. Not reproductions: they were written against the new code
+# rather than against the pre-batch tree, and every one of them is verified by
+# its own mutation in `BATCH14_MUTATIONS.log`.
+# =====================================================================
+def _report(assessment, temperature, *, supplied=True):
+    from engcore.mcp.evidence import CredibilityEvidenceReport, ModelValidityRecord
+
+    provenance = ProvenanceRecord(run_id="r", models=(MODEL,), inputs={"T": Quantity(temperature, K)})
+    record = ModelValidityRecord(model_id=MODEL[0], version=MODEL[1], assessment=assessment)
+    return CredibilityEvidenceReport(
+        run_id="r", values={"y": Quantity(1.0, "meter")}, provenance=provenance,
+        validity=(record,) if supplied else (), contributing_models=(MODEL,))
+
+
+def test_r09_the_report_refuses_a_supplied_assessment_made_at_another_operating_point():
+    """The route both production MCP assemblers take: a record handed in, never checked."""
+    from engcore.mcp.evidence import CredibilityEvidenceError
+
+    assessment = DOMAIN.assess({"T": Quantity(300.0, K)}, record_values=True)
+    with pytest.raises(CredibilityEvidenceError, match="another operating point"):
+        _report(assessment, 380.0)
+
+
+def test_r09_a_report_whose_assessment_agrees_with_its_provenance_is_still_assembled():
+    """No-regression: the binding refuses a DISAGREEMENT, and agreement is the production case."""
+    assessment = DOMAIN.assess({"T": Quantity(300.0, K)}, record_values=True)
+    report = _report(assessment, 300.0)
+    assert report.validity[0].assessment.evaluated["T"] == Quantity(300.0, K)
+    assert report.unbound_assessment_values == ()
+
+
+def test_r09_the_report_records_the_names_its_provenance_cannot_bind():
+    """D-14-1's residual, stated in the record rather than left as silence."""
+    assessment = DOMAIN.assess({"T": Quantity(300.0, K)}, record_values=True)
+    provenance_without_it = _report(assessment, 300.0)
+    assert provenance_without_it.unbound_assessment_values == ()
+    from engcore.mcp.evidence import CredibilityEvidenceReport, ModelValidityRecord
+
+    report = CredibilityEvidenceReport(
+        run_id="r", values={"y": Quantity(1.0, "meter")},
+        provenance=ProvenanceRecord(run_id="r", models=(MODEL,), inputs={"other": Quantity(1.0, K)}),
+        validity=(ModelValidityRecord(model_id=MODEL[0], version=MODEL[1], assessment=assessment),),
+        contributing_models=(MODEL,))
+    assert report.unbound_assessment_values == ((MODEL[0], MODEL[1], "T"),)
+    # and it lowers nothing (D-14-1 option (a)): the same report whose assessment recorded no value
+    # at all reaches the identical verdict, so an unbound name is stated and not counted as a gap.
+    without = CredibilityEvidenceReport(
+        run_id="r", values={"y": Quantity(1.0, "meter")},
+        provenance=ProvenanceRecord(run_id="r", models=(MODEL,), inputs={"other": Quantity(1.0, K)}),
+        validity=(ModelValidityRecord(model_id=MODEL[0], version=MODEL[1],
+                                      assessment=DOMAIN.assess({"T": Quantity(300.0, K)})),),
+        contributing_models=(MODEL,))
+    assert without.unbound_assessment_values == ()
+    assert report.verdict is without.verdict
+
+
+def test_r09_the_serialized_report_keeps_the_operating_point():
+    from engcore.mcp.evidence import CredibilityEvidenceReport
+
+    report = _report(DOMAIN.assess({"T": Quantity(300.0, K)}, record_values=True), 300.0)
+    payload = json.loads(json.dumps(report.to_dict()))
+    assert payload["validity"][0]["assessment"]["evaluated"]["T"]["magnitude"] == 300.0
+    back = CredibilityEvidenceReport.from_dict(payload)
+    assert back.validity[0].assessment.evaluated["T"] == Quantity(300.0, K)
+
+
+def test_r50_an_assessment_that_reports_one_condition_twice_is_refused():
+    both = ValidityAssessment(status=ValidityStatus.UNKNOWN, satisfied=("T",), unknown=("T",),
+                              unknown_reasons=(_unknown_condition("T"),), declared_conditions=("T",))
+    with pytest.raises(Exception, match="more than once"):
+        _result(both, 300.0)
+
+
+def test_r50_a_version_without_a_model_id_is_refused_on_the_assessment_itself():
+    """A version alone names nothing and cannot be compared with the key it is filed under."""
+    with pytest.raises(Exception, match="(?i)version and no model id"):
+        ValidityAssessment(status=ValidityStatus.IN_DOMAIN, satisfied=("T",), model_version="1")
+
+
+def test_r09_the_production_electrical_assessments_record_their_operating_point():
+    """The other production family, read through its own entry points rather than by grep."""
+    from engcore.domains.electrical.dc.models import assess_kcl_validity
+
+    assessment = assess_kcl_validity()
+    assert assessment.evaluated, assessment
+    assert assessment.model_id and assessment.declared_conditions

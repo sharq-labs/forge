@@ -12,7 +12,7 @@ No physical laws are implemented here, and none are registered by the core.
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping, Sequence
 
@@ -1119,6 +1119,17 @@ class ValidityAssessment:
     #: with ``record_values=True``. A result refuses an assessment whose values differ from its own provenance inputs.
     #: Serialized only when recorded, so records written without it keep their bytes.
     evaluated: Mapping[str, Quantity] = field(default_factory=dict)
+    #: I-11 (R-50, core re-audit 2026-09-16): the model this assessment is about, as
+    #: :meth:`ScientificModelDefinition.assess_validity` filled it. Empty on an assessment made
+    #: straight off a :class:`ValidityDomain`, which does not know which model owns it.
+    model_id: str = ""
+    model_version: str = ""
+    #: I-11 (R-50): the conditions this assessment's domain actually decided, in declaration order.
+    #: This is what makes the record self-describing: ``satisfied=('anything_at_all',)`` was accepted
+    #: by every consumer that reads a status, because nothing carried the names to compare it against.
+    #: A registry could resolve them, but only where the registry is importable -- and
+    #: ``engcore.scientific`` cannot import the domains.
+    declared_conditions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         evaluated = dict(self.evaluated)
@@ -1132,6 +1143,14 @@ class ValidityAssessment:
         object.__setattr__(self, "violated", tuple(self.violated))
         object.__setattr__(self, "unknown", tuple(self.unknown))
         object.__setattr__(self, "unknown_reasons", tuple(self.unknown_reasons))
+        object.__setattr__(self, "model_id", str(self.model_id).strip())
+        object.__setattr__(self, "model_version", str(self.model_version).strip())
+        object.__setattr__(self, "declared_conditions", tuple(str(n).strip() for n in self.declared_conditions))
+        if self.model_version and not self.model_id:
+            raise ModelValidityError(
+                "validity assessment carries a model version and no model id; a version on its own "
+                "names nothing and cannot be compared with the model it is filed under"
+            )
 
         # The status is COERCED first and CROSS-CHECKED second, and both were
         # previously the credibility boundary's job -- which is one layer too
@@ -1272,6 +1291,11 @@ class ValidityAssessment:
             "unknown": list(self.unknown),
             "unknown_reasons": [e.to_dict() for e in self.unknown_reasons],
             **({"evaluated": {k: v.to_dict() for k, v in self.evaluated.items()}} if self.evaluated else {}),
+            # I-11: written only when they carry information, as `evaluated` already is, so an
+            # assessment recorded before this batch keeps its bytes and its digest.
+            **({"model_id": self.model_id} if self.model_id else {}),
+            **({"model_version": self.model_version} if self.model_version else {}),
+            **({"declared_conditions": list(self.declared_conditions)} if self.declared_conditions else {}),
         }
 
     @classmethod
@@ -1300,6 +1324,9 @@ class ValidityAssessment:
                 for e in payload.get("unknown_reasons", ())
             ),
             evaluated={k: Quantity.from_dict(v) for k, v in (payload.get("evaluated") or {}).items()},
+            model_id=payload.get("model_id", ""),
+            model_version=payload.get("model_version", ""),
+            declared_conditions=tuple(payload.get("declared_conditions", ())),
         )
 
 
@@ -1424,6 +1451,8 @@ class ValidityDomain:
         """
         merged = self._merge(context, declared=declared, assembled=assembled)
         if not self.conditions:
+            # No conditions, so nothing was decided: `declared_conditions` stays empty, which is
+            # the true statement and not a compatibility exemption.
             return ValidityAssessment(status=ValidityStatus.UNKNOWN)
 
         # EVALUATED in dependency order, REPORTED in declaration order. The
@@ -1505,6 +1534,9 @@ class ValidityDomain:
             unknown=tuple(unknown),
             unknown_reasons=tuple(reasons),
             evaluated=evaluated,
+            # I-11 (R-50): the names this domain decided, in declaration order. Reported once each
+            # and covering every condition, which is the property a consumer can then check.
+            declared_conditions=tuple(condition.name for condition in self.conditions),
         )
 
     def _merge(
@@ -2138,10 +2170,25 @@ class ScientificModelDefinition:
         *,
         declared: Mapping[str, Any] | None = None,
         assembled: Mapping[str, Any] | None = None,
+        record_values: bool = False,
     ) -> ValidityAssessment:
-        return self.validity.assess(
-            context, declared=declared, assembled=assembled
+        """This model's verdict over ``context``, naming this model.
+
+        ``record_values`` (CORE-014, I-11) records the Quantities the conditions read, so a result
+        can refuse an assessment made at another operating point than its own provenance states.
+        Default False, because this is a V1-frozen symbol's method and a new keyword must not change
+        what an existing call returns; the domains' own helper
+        (:meth:`engcore.domains.derived_context.DomainValidityContext.assess`) defaults it True, so a
+        production path gets the binding by construction rather than by memory.
+
+        The model key is filled unconditionally. It is not a threshold and not a cost: an assessment
+        that cannot say which model it is about was accepted by every consumer that reads a status,
+        and ``ScientificResult`` now compares it with the key it is filed under.
+        """
+        assessment = self.validity.assess(
+            context, declared=declared, assembled=assembled, record_values=record_values
         )
+        return replace(assessment, model_id=self.model_id, model_version=self.version)
 
     @property
     def provided_metrics(self) -> tuple[str, ...]:

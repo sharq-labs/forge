@@ -85,5 +85,18 @@
     }
   ],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "the_production_paths_record_their_operating_point",
+      "what_changed": "the ENUMERATION in the rule's text, not the rule. The rule as stated -- 'every assessment site under src/engcore/domains that calls validity.assess or assess_validity DIRECTLY passes record_values=True' -- is implemented exactly. Its parenthetical list was written from the audit's fix direction before the call sites were read, and it names two families that do NOT assess directly: the lumped capacity path (thermal_models/lumped.py assess_lumped_validity) and the battery cell paths (battery/cell.py) both go through DomainValidityContext.assess and are therefore covered by that method's default of True, not by a flag at the site.",
+      "the_actual_set_of_direct_sites": [
+        "src/engcore/domains/thermal_models/conduction1d_bulk.py (the CONDUCTION_MODELS sweep)",
+        "src/engcore/domains/thermal_models/conduction1d_schemes.py (DIFFUSION_MODEL)",
+        "src/engcore/domains/electrical/dc/models.py: assess_kcl_validity, assess_resistance_validity, assess_voltage_source_validity, assess_current_source_validity"
+      ],
+      "verified_by": "tests/test_core_scientific_audit_batch14.py::test_r09_the_production_conduction_models_record_their_operating_point regex-scans every .py under src/engcore/domains (excluding the SHA-pinned thermal/ tree) for a `.validity.assess(` with no record_values and asserts the list is empty; the electrical family is read through its own entry point by test_r09_the_production_electrical_assessments_record_their_operating_point.",
+      "why_it_is_recorded_rather_than_edited_in_place": "the enumeration is part of what was preregistered, and a preregistration that is quietly corrected to match the code is not a preregistration. Nothing about the rule's content, its class or its compatibility impact moved."
+    }
+  ]
 }

@@ -880,8 +880,10 @@ def solve_with_realization(
         # solve ran on carries the diffusivity it needs -- so the question can
         # be answered here and is.
         validity={
+            # I-11: `record_values=True` records the diffusivity this verdict was formed at, so a
+            # result whose provenance states another one cannot carry it.
             DIFFUSION_MODEL.model_id: DIFFUSION_MODEL.validity.assess(
-                {"alpha": slab.diffusivity}
+                {"alpha": slab.diffusivity}, record_values=True
             )
         },
         solver=solver.identity,

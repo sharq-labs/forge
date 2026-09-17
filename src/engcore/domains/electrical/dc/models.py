@@ -1020,8 +1020,9 @@ def kcl_validity_context() -> dict[str, Quantity]:
 
 def assess_kcl_validity() -> ValidityAssessment:
     """Is nodal charge balance applicable here? Yes, and for a stated reason."""
+    # I-11: every assessment on this path records the values its conditions read.
     return KCL_MODEL.assess_validity(
-        declared={}, assembled=kcl_validity_context()
+        declared={}, assembled=kcl_validity_context(), record_values=True
     )
 
 
@@ -1129,6 +1130,7 @@ def assess_resistor_validity(
             voltage_across=voltage_across,
             ambient_temperature=received,
         ),
+        record_values=True,  # I-11
     )
 
 
@@ -1146,6 +1148,7 @@ def assess_voltage_source_validity(
         assembled=voltage_source_rating_context(
             rating=rating, source_current=source_current
         ),
+        record_values=True,  # I-11
     )
 
 
@@ -1163,6 +1166,7 @@ def assess_current_source_validity(
         assembled=current_source_rating_context(
             rating=rating, terminal_voltage=terminal_voltage
         ),
+        record_values=True,  # I-11
     )
 
 
