@@ -1,0 +1,95 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 48,
+ "improvements": [
+  "I-27 part B of three"
+ ],
+ "problems_addressed": [
+  "R-58 (the audit's finding 71), the UncertaintyTransfer half"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "70c68653",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "R-58 has two halves and so does the rest of I-27. Part A (batch 47) fixed the crossing record itself. This part fixes `UncertaintyTransfer`, whose only check is that the propagated record is self-consistent with whatever source uncertainty was handed in -- so nothing ties that uncertainty to the transfer's value, its source record or its quantity. Part C is the production half: every electrothermal crossing still carries a bare point value, which is why this rule family has no caller at all.",
+ "reach": "LIBRARY_ONLY, exactly as the audit records it, and this part does not change that: `engcore.uq.cross_domain` has no caller in `src/`. Part C is the improvement that closes it, and the ledger row says so.",
+ "what_was_already_seen": {
+  "finding 71 (R-58)": "`UncertaintyTransfer.__post_init__` checks only that `uncertainty == propagate(transfer, source_uncertainty)`. So: (a) an INTERVAL of [10, 11] K propagates for a transfer whose value is 350 K and round-trips; (b) the propagated `source` is OVERWRITTEN with `transfer:<source_record_id>`, so an uncertainty taken from 'some-other-quantity' reads as coming from the transfer's source run; (c) a 1e-6 K NUMERICAL uncertainty from another run is accepted; (d) `propagate_uncertainty_chain` checks only name connectivity and equal instants, so consecutive transfers carrying 350 K and then 400 K propagate the same 2 K. With a conversion, the efficiency is treated as exact while the output keeps kind STANDARD, and the only sign that efficiency uncertainty is missing is a note. The module's stated purpose is to replace a parallel dictionary keyed by a coincidentally matching name, and in practice it is one."
+ },
+ "rules": {
+  "an_interval_is_about_the_value_that_crossed": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "An INTERVAL source uncertainty must contain the value it is an uncertainty OF: the entering value for a conversion (`source_value`), and the crossed value for a transport, compared in the source unit with the same relative allowance the composition package already declares for a unit conversion.",
+   "class": "A",
+   "why": "An interval that does not contain its own value is not a statement about that value; [10, 11] K beside 350 K is a different quantity's interval, which is exactly the parallel dictionary this module exists to replace. Containment is checked absolutely, so an interval scale and an absolute one cannot differ by the offset between them -- the same reason `received_as` converts rather than assuming.",
+   "closes": "finding 71 claim (a)."
+  },
+  "the_source_uncertainty_names_the_crossings_source": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "A source uncertainty must declare a non-empty `source` that names something the transfer names: its `source_record_id`, its source problem id, its source quantity, or the dependency's declared name.",
+   "class": "A",
+   "why": "Claims (b) and (c) are one defect: the handed-in uncertainty was never tied to the crossing, so an uncertainty about another quantity or from another run was accepted and then relabelled. The candidate set is the same shape batch 46 used for a binding reference at the inference boundary, for the same reason: what a record may be bound to is what it already names.",
+   "closes": "finding 71 claim (c), and half of (b)."
+  },
+  "the_propagated_record_keeps_the_original_attribution": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "The propagated `source` carries BOTH references: `transfer:<source_record_id>|from:<the original attribution>`, rather than replacing the original with the transfer id.",
+   "class": "A",
+   "why": "The audit's own fix direction: 'keep the original attribution next to the transfer id'. A propagated uncertainty has two true provenances -- what it was an uncertainty of, and the crossing it came through -- and writing only the second is what made another quantity's uncertainty read as this run's.",
+   "closes": "finding 71 claim (b)."
+  },
+  "a_chain_propagates_only_where_the_values_meet": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "In `propagate_uncertainty_chain`, consecutive transfers must meet by VALUE as well as by name and instant: `transfer[i].value` must agree, in the next dependency's unit exemplar, with `transfer[i+1].source_value` when the next crossing is a conversion and with `transfer[i+1].value` when it is a transport.",
+   "class": "A",
+   "why": "Name connectivity says the two crossings are about the same quantity; it does not say they are about the same number. 350 K leaving one crossing and 400 K entering the next is a chain that does not exist, and propagating one uncertainty along it produces a record that looks like evidence about a path nothing travelled.",
+   "closes": "finding 71 claim (d)."
+  },
+  "an_undeclared_efficiency_uncertainty_is_structural": {
+   "improvement": "I-27",
+   "problem": "R-58",
+   "rule": "`UncertaintyTransfer` gains a trailing `completeness` field with two declared values: `complete`, and `lower_bound_efficiency_uncertainty_undeclared`. A conversion whose efficiency carries no declared uncertainty yields the second, computed by the propagation and refused if the record disagrees with it. `EnergyConversion` gains a trailing `efficiency_uncertainty` field (a dimensionless standard uncertainty, default None); when it IS declared, the standard uncertainty is propagated by relative quadrature and the record is `complete`.",
+   "class": "A for the structural qualifier and for quadrature; B for nothing -- no threshold is introduced.",
+   "why": "The audit asks for this structurally, 'not only in notes', and a note is what it was. Quadrature over relative uncertainties is the first-order propagation of a product and is the only combination a record carrying two standard uncertainties supports; it assumes the efficiency's uncertainty is independent of the input's, which is RECORDED in the method and the notes and not claimed -- the audit's own strictness rule for independence. Where nothing is declared the propagated width is a LOWER BOUND, which is what the qualifier says and what a consumer can act on.",
+   "closes": "finding 71's conversion claim."
+  }
+ },
+ "thresholds": {
+  "containment_and_meeting_allowance": {"value": 1e-9, "class": "A", "why": "the composition package's BUDGET_TOLERANCE, reused rather than a second number: both comparisons are a unit conversion, which is one multiplication. No new threshold is introduced by this batch."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "UncertaintyTransfer.completeness, a trailing field with a default, and the constants naming its two declared values (UncertaintyTransfer is not in the frozen V1 or V2 surface)",
+   "EnergyConversion.efficiency_uncertainty, a trailing field with a default of None",
+   "uncertainty_transfer/2 and quantity_conversion's own next version, each written only when the record carries the new field"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "UncertaintyKind keeps its three members: a lower bound is a property of the propagation, not a fourth kind of uncertainty",
+   "the propagated kind, width and confidence level are unchanged for every transport, and for a conversion with no declared efficiency uncertainty"
+  ],
+  "records_that_already_exist": "No committed JSON carries an uncertainty_transfer payload, and no src module builds one. The propagated `source` STRING changes shape for every propagation -- from `transfer:<id>` to `transfer:<id>|from:<original>` -- which is a value and not a schema; the one in-tree assertion on it is amended in place with the reason.",
+  "deliberate_narrowing": "An interval that does not contain its value, an uncertainty whose attribution names nothing the crossing names, and a chain whose values do not meet all stop being propagatable. None is produced anywhere in the tree, because nothing in src builds one at all."
+ },
+ "residuals_stated_in_advance": [
+  "LIBRARY_ONLY is unchanged and is the finding: nothing in `src/` calls this module, so every production crossing still carries a bare point value. That is part C, and the ledger row for R-58 keeps naming the improvement that will close it.",
+  "The attribution check is a containment test over what the transfer names: it refuses an uncertainty bound to nothing and does not verify that the named record's own uncertainty entry for that quantity IS this one. Doing that needs the result passed in, which is what part C does where it builds the transfers.",
+  "Quadrature assumes the efficiency's uncertainty is independent of the input's. That assumption is recorded in the propagated method and notes and is not established anywhere; the audit's strictness rule is that independence is recorded only.",
+  "A declared `efficiency_uncertainty` is propagated for a STANDARD source uncertainty. For an INTERVAL it is NOT: combining a bound with a standard uncertainty needs a distribution nobody declared, so the interval keeps absolute-bound semantics and the record stays a lower bound, with the qualifier saying so.",
+  "`confidence_level` is carried through unchanged, as before. A propagated interval's coverage under a conversion with an uncertain efficiency is not recomputed, for the reason above."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_cross_domain_uq.py, the composition suites and tests/test_guard_reach_ledger.py",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
