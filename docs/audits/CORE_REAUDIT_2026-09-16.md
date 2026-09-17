@@ -1840,3 +1840,76 @@ rather than leaving to inference — and which is itself a small finding: the co
 mutation before this batch.
 
 **Open decisions.** None.
+
+### Batch 29 — I-22 part D
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-22 | **PARTIAL** (part D of five) | `afb4694b`, `b9baf42e` (A), `94b74325`, `dbdbba14` (B), `6f4f27fd`, `23ca4409` (C), `d9dabf04` (D preregistration + 8 strict xfails), this commit | **R-48 stays PARTIAL**: `ConstraintDefinition.tolerance`, the margin it reports, and the `GaussianObservation` sigma read by `inference/grid.py` and `inference/split.py` are finding 99's sites and are part E; `magnitude_as_spread_in` is a new way to READ a quantity, not a new KIND — a `Quantity` still does not know whether it is a point or a span, and the caller states which by choosing the reader (giving spreads their own type would be a non-additive change to a V1-frozen symbol, so this is a design decision and not an oversight); `require_spread_unit` is applied at call sites one at a time, and nothing structurally requires a spread field to consult it |
+
+**R-xx closed, in part.** R-48 is one defect at four sites and every site needed a conversion the units module
+did not have. Finding 58 — the oracle tolerance, the designed route to EXPERIMENTALLY_VALIDATED — is closed
+here, in all four of its spellings.
+
+| Claim | Status | How |
+|---|---|---|
+| a 0.5 degC band reads as 273.65 kelvin | **FIXED** | A difference transforms by the **linear part** of an affine map, and `magnitude_in` applies the whole map. New `Quantity.magnitude_as_spread_in`, whose slope is taken as `Q(1,u)→base − Q(0,u)→base`: two points, offset removed. So a prediction 573.0 kelvin against an expected 300 kelvin no longer passes a half-degree band with residual 0.998 — and no longer earns a validation level for it. |
+| a 1 degC band passes a 16.67 kelvin error | **FIXED** | Same rule. The `degC` spelling itself is now refused at declaration, because **"0.5 degC" as a tolerance is ambiguous** — a half-degree span, or the temperature 0.5 degC — and a boundary that guesses which is what this round is about. `require_spread_unit` is the rule the domains already applied in these words to a coupling tolerance and an excursion span; what R-48 is about is that the *generic* core types never had it, although `is_ratio_scale` was in the same module. |
+| a valid 0.5 kelvin band on a degC expected value is refused as negative | **FIXED** | The sign was checked on the **converted** magnitude: 0.5 kelvin read absolutely into degC is −272.65, and the record refused it for a sign — a message about a sign, for a value that is positive. On a ratio scale a magnitude's sign does not depend on the unit, so once the unit must be a ratio scale the check belongs on the magnitude **as declared**. |
+| the physically correct spelling crashes untyped | **FIXED** | `require_compatible` passes for `delta_degC` against `degC` — they *are* the same dimension — and the backend then raised `pint.errors.DimensionalityError`, a `TypeError` caught by nothing in this package. `Quantity.to` now wraps it, naming both units and saying that the question is about the **scale** and not the dimension, and pointing at the spread reader. The wrapping covers `_conversion_rule` too, which probes the backend with 0.0 to decide whether a pair is affine and therefore raises *before* any magnitude is touched. |
+
+**So the core accepted the wrong declaration silently, refused the right one with the wrong reason, and
+crashed untyped on the right one written the right way.** All three are the same missing distinction.
+
+**Amendment 1 changes no rule and is recorded anyway.** Five of ten mutations survived the first run, and
+each survival was information. B29a and B29b named the delta-to-delta reproduction, where `Quantity.to` is
+**already correct** — delta units are multiplicative, so only a pair involving an absolute offset unit can
+tell the two readers apart; repointed. B29h reverts the comparison's spread reader and survived because, with
+the declaration guard in place, **only a ratio-scale unit can reach the comparison, and there the two readers
+agree exactly**; it is now paired with the guard and pointed at a new test asserting the invariant over every
+spelling of a half-degree band at once. B29i replaces the canonical comparison unit with the expected value's
+own and survived because **the ratio of a difference to a spread is invariant under any affine change of
+scale** — no number the check reports moves. What moves is the scale the refusal *names*, so the reproduction
+now asserts that the failure detail names the unit the residual was measured on, which is the mislabelling
+batch 28 fixed one layer over.
+
+**One mutation is a declared survivor, and a kill of it is now the failure.** B29c removes the identity
+short-circuit in `magnitude_as_spread_in`. The two slopes of one unit are the same float, so their quotient is
+exactly 1.0 in IEEE arithmetic and **no test can distinguish** the short-circuit from the division. It is kept
+for the reason `Quantity.to` states at length — a conversion to the unit already carried is not a conversion,
+and that is almost the only case, 549 of 552 calls in one measured run — which makes it a performance and
+exactness rule rather than a scientific guard. `expect="SURVIVED"` records that.
+
+**Compatibility.** Additive. One new public method (`magnitude_as_spread_in`) and one new module-level
+function (`require_spread_unit`), beside `is_ratio_scale` and `is_delta_unit`. No signature, field, default or
+enum member change, and no existing method's behaviour changes except `to`'s exception **type** on a failure
+that previously escaped untyped. An oracle observation's serialized `absolute_tolerance` is its declared
+quantity and is unchanged, so the content digest of evidence already written is unchanged. The narrowing: a
+`degC` or `degF` spread stops being accepted — it was accepted and read as an absolute temperature, so this is
+a refusal replacing a false result. No declaration in the tree states a spread on an offset scale, checked
+rather than assumed: every oracle observation uses volt, kelvin or meter, and
+`_TRUSTED_ORACLE_DECLARATIONS` is empty.
+
+**The ledger row says PARTIAL, which no earlier row has.** R-48 is not closed and the row does not pretend it
+is: `closed_by` names part D for finding 58 and part E for finding 99, and `what_the_check_cannot_see` states
+the real limit — `require_spread_unit` is applied at call sites, one at a time, and nothing structurally
+requires a spread field to consult it, which is exactly why three sites remain.
+
+**Committed evidence.** Nothing moved. `KINETICS_K2.json` and `BATTERY_T41.json` keep their SUPERSEDED
+markers.
+
+**One existing expectation moved, and it is the same ratchet as batch 26.** `test_core_runtime_caches.py`'s
+two memo enumerations gain `_slope_against_base` — the list and the populate block both — with a comment
+saying so. That assertion exists to force this revisit.
+
+**Verification.** FAST tier 6811 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18; the five
+additional failures on one run were the two validation-round directories the expensive tier rewrites, restored
+to their committed bytes and re-run green before the commit). Expensive tier 528 passed, 18 failed, 14 errors
+— the recorded baseline exactly. `tests/test_mutation_harness.py` 6 passed, every anchor intact;
+`tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Guard mutations.** `BATCH29_MUTATIONS.log`: **9 of 9 KILLED plus one declared survivor**, control green. No
+pinned mutation in `tests/mutation_guards.py` targets either changed file, which the pinned log records as
+NONE.
+
+**Open decisions.** None.

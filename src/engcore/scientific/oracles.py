@@ -32,11 +32,11 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Any, Mapping, Protocol, runtime_checkable
 
-from .errors import ScientificValidationError
+from .errors import ScientificValidationError, UnitCompatibilityError
 from .results.immutable import freeze
 from .results.validation import ValidationCheck, ValidationLevel, ValidationOutcome
 from .serialization import require_schema, schema_string
-from .units.quantity import Quantity, base_unit
+from .units.quantity import Quantity, base_unit, require_spread_unit
 from .units.validation import require_same_dimension
 
 
@@ -266,7 +266,35 @@ class OracleObservation:
             self.absolute_tolerance,
             context=f"oracle observation {metric!r}",
         )
-        if self.absolute_tolerance.magnitude_in(self.expected.units) < 0.0:
+        # A TOLERANCE IS A DIFFERENCE (I-22, R-48).
+        #
+        # It was converted with `magnitude_in(self.expected.units)`, the
+        # ABSOLUTE conversion, and the sign was then checked on the converted
+        # number. Both halves were wrong and each covered for the other:
+        # a 0.5 degC band against an expected 300 kelvin read as 273.65 kelvin,
+        # so a prediction 273 kelvin wrong PASSED -- and with the identity
+        # pinned it earned EXPERIMENTALLY_VALIDATED. Written the other way
+        # round, a perfectly good 0.5 kelvin band on an expected value in degC
+        # converted to -272.65 and was refused for being NEGATIVE, a message
+        # about a sign for a value that is positive. And the physically correct
+        # spelling, a delta_degC band on a degC value, raised the backend's own
+        # DimensionalityError.
+        #
+        # `require_spread_unit` is the rule the domains already apply to a
+        # coupling tolerance and an excursion span, and on a ratio scale a
+        # magnitude's sign does not depend on the unit, so the check belongs on
+        # the magnitude AS DECLARED.
+        # Re-raised as this record's own contract error: every other refusal
+        # in this method is a `ScientificValidationError`, and a caller
+        # building an evidence set handles one exception type.
+        try:
+            require_spread_unit(
+                self.absolute_tolerance.units,
+                context=f"oracle observation {metric!r} tolerance",
+            )
+        except UnitCompatibilityError as exc:
+            raise ScientificValidationError(str(exc)) from exc
+        if self.absolute_tolerance.magnitude < 0.0:
             raise ScientificValidationError(
                 f"oracle observation {metric!r} tolerance must be non-negative"
             )
@@ -439,11 +467,17 @@ class OracleEvidenceSet:
                     observation.expected,
                     context=f"oracle prediction {observation.metric!r}",
                 )
-                unit = observation.expected.units
+                # The canonical unit of the dimension, for the reason the
+                # consensus comparison gives (I-22, R-52): `residual_ratio`
+                # below is a RATIO, and a ratio means nothing on a scale whose
+                # zero is a convention. The tolerance is read as a DIFFERENCE
+                # (I-22, R-48); its unit is already required to be a ratio
+                # scale at declaration, so this conversion is the slope.
+                unit = base_unit(observation.expected.units)
                 delta = abs(
                     actual.magnitude_in(unit) - observation.expected.magnitude_in(unit)
                 )
-                tolerance = observation.absolute_tolerance.magnitude_in(unit)
+                tolerance = observation.absolute_tolerance.magnitude_as_spread_in(unit)
             except Exception as exc:
                 failures.append(f"{observation.metric}:incompatible({exc})")
                 continue

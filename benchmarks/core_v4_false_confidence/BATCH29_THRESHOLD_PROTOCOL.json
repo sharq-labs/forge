@@ -57,5 +57,22 @@
   "`magnitude_as_spread_in` is a new way to read a quantity, not a new TYPE of quantity. A `Quantity` still does not know whether it is a point or a span; the caller decides by which reader it uses. Giving spreads their own type would be a non-additive change to a V1-frozen symbol and is out of scope for this improvement -- recorded here so that the residual is the design decision and not an oversight.",
   "`require_spread_unit` refuses an offset-scale spread rather than converting it by slope. A caller who genuinely means a half-degree band must write `delta_degC`. That is the stricter answer and it is the repository's existing one, but it does mean a declaration that was accepted (wrongly) now fails loudly."
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": 1,
+   "what_changed": "No rule changed. Three guards were strengthened and two mutations repointed, all forced by this batch's own mutation run; recorded here because the protocol's discipline is that anything learned after the rules were written is dated and named.",
+   "the_numbers_that_forced_it": "Five of ten mutations survived on the first run. (a) B29a and B29b named the delta-to-delta reproduction, where `Quantity.to` is ALREADY correct -- delta units are multiplicative, so only a pair involving an absolute offset unit can tell the absolute reader from the spread reader; repointed at the offset-unit reproduction, where the absolute reader gives 275.15 instead of 2.0. (b) B29h reverts the comparison's spread reader, and with the declaration guard in place only a RATIO-scale unit can reach the comparison -- where the two readers agree exactly, the offset being zero. It is now PAIRED with the declaration guard and pointed at a new test asserting the invariant over every spelling of a half-degree band at once. (c) B29i replaces the canonical comparison unit with the expected value's own, and survived because the RATIO of a difference to a spread is invariant under any affine change of scale: no number this check reports moves. What does move is the scale the refusal NAMES, so the reproduction now asserts that the failure detail names the unit the residual was measured on -- the mislabelling batch 28 fixed one layer over.",
+   "deliberate_survivor": {
+    "id": "B29c",
+    "rule": "the identity short-circuit in `magnitude_as_spread_in`",
+    "why": "The two slopes of one unit are the same float, so their quotient is exactly 1.0 in IEEE arithmetic and NO test can distinguish the short-circuit from the division. It is kept for the reason `Quantity.to` states at length -- a conversion to the unit already carried is not a conversion, and that is almost the only case, 549 of 552 calls in one measured run -- which makes it a performance and exactness rule rather than a scientific guard. It is declared `expect=\"SURVIVED\"` so that a kill becomes the failure."
+   },
+   "guards_added_while_running_the_mutations": [
+    "tests/test_core_scientific_audit_batch29.py::test_r48_no_spelling_of_a_half_degree_band_admits_a_273_kelvin_error -- the invariant over delta_degC, kelvin and delta_degF bands plus the refusal of the ambiguous degC spelling, which is what the paired B29h has to break.",
+    "tests/test_core_scientific_audit_batch29.py::test_r48_the_physically_correct_declaration_does_not_crash_untyped now asserts the failure detail names the canonical scale.",
+    "tests/test_core_runtime_caches.py: `_slope_against_base` added to both memo enumerations, the same ratchet batch 26 hit."
+   ]
+  }
+ ]
 }

@@ -58,6 +58,10 @@ def test_the_module_exposes_the_memos_this_audit_expects():
         # do. Added here, and to `clear_unit_caches`, which is the revisit this
         # assertion exists to force.
         "is_delta_unit",
+        # `_slope_against_base` joined the module in core re-audit batch 29
+        # (I-22, R-48): the LINEAR part of a conversion, which is what a
+        # difference transforms by. Same ratchet, same two places.
+        "_slope_against_base",
     }, sorted(module_memos())
 
 
@@ -79,6 +83,7 @@ def test_clear_unit_caches_clears_every_memo_in_the_module():
     q.base_unit("kiloohm")
     q.is_ratio_scale("degC")
     q.is_delta_unit("delta_degC")
+    q.Quantity(1.0, "delta_degC").magnitude_as_spread_in("kelvin")
     q.dimensionality("ohm")
 
     # EVERY memo, not merely one. ADDED while running core re-audit batch 26's

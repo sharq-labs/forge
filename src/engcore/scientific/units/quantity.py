@@ -527,6 +527,9 @@ def clear_unit_caches() -> None:
     # `is_delta_unit` (I-22) memoizes a fact about a registry name, in front of
     # the registry, and belongs here for the reason the two above do.
     is_delta_unit.cache_clear()
+    # `_slope_against_base` (I-22, R-48) memoizes two conversions through the
+    # registry and belongs here for the reason the others do.
+    _slope_against_base.cache_clear()
     # This list is no longer the only thing keeping the clear complete:
     # `tests/test_core_runtime_caches.py::
     #  test_clear_unit_caches_clears_every_memo_in_the_module` walks the
@@ -670,6 +673,65 @@ def is_delta_unit(unit: str) -> bool:
             if stem.startswith("delta_"):
                 return True
     return False
+
+
+@lru_cache(maxsize=_UNIT_CACHE_SIZE)
+def _slope_against_base(unit: str) -> float:
+    """How much one unit of ``unit`` is, in the base unit of its dimension.
+
+    The LINEAR part of the conversion, with the offset removed by taking two
+    points: 1 degC and 0 degC are 274.15 K and 273.15 K, so the slope is 1;
+    1 delta_degF and 0 delta_degF are 5/9 K and 0 K, so the slope is 5/9. For
+    every ratio-scale unit this is just the conversion factor, because there
+    the offset is zero.
+
+    Against the BASE unit rather than between two arbitrary units, because a
+    direct conversion is not always available: the backend refuses
+    ``Quantity(1, "delta_degC").magnitude_in("degC")`` outright, while both
+    units' slopes against kelvin are perfectly well defined. Two slopes and a
+    division reach every pair. (I-22, R-48.)
+
+    Memoized for the reason every memo in this module is: the registry is a
+    constant for the life of the process.
+    """
+    canonical = normalize_unit(unit)
+    base = base_unit(canonical)
+    one = Quantity(1.0, canonical).magnitude_in(base)
+    zero = Quantity(0.0, canonical).magnitude_in(base)
+    return one - zero
+
+
+def require_spread_unit(unit: str, *, context: str = "") -> str:
+    """A SPREAD -- a tolerance, a sigma, a band, a margin -- needs a scale whose zero is zero.
+
+    Returns the canonical unit, so a caller can use it directly.
+
+    Not a new rule. This repository already refuses a coupling tolerance and a
+    temperature excursion span on an affine scale, in the same words and for
+    the same reason: "a difference cannot live on a scale with a conventional
+    zero". :func:`is_ratio_scale` says so in its own docstring. What R-48 is
+    about is that the GENERIC core types -- an oracle's ``absolute_tolerance``,
+    a ``ConstraintDefinition``'s tolerance, a ``GaussianObservation``'s sigma
+    -- never had that guard although the function was in this same module.
+
+    A refusal rather than a slope conversion, deliberately: ``"0.5 degC"`` as a
+    tolerance is AMBIGUOUS. It can be read as a half-degree band or as the
+    temperature 0.5 degC, and a boundary that guesses which is exactly what the
+    round this comes from is about. :meth:`Quantity.magnitude_as_spread_in` is
+    for the unit that says what it is -- ``delta_degC``.
+    """
+    canonical = normalize_unit(unit)
+    if not is_ratio_scale(canonical):
+        where = f" ({context})" if context else ""
+        raise UnitCompatibilityError(
+            f"{canonical!r} cannot state a spread{where}: zero of it is a "
+            f"convention, not zero of the quantity, so a difference expressed "
+            f"in it is not a difference. Use the difference unit of the same "
+            f"scale -- for degrees Celsius that is 'delta_degC', and for "
+            f"degrees Fahrenheit 'delta_degF' -- or a unit whose zero is "
+            f"physical, such as 'kelvin'"
+        )
+    return canonical
 
 
 @lru_cache(maxsize=_UNIT_CACHE_SIZE)
@@ -1082,18 +1144,90 @@ class Quantity:
         # `_conversion_rule` caches what does not depend on the magnitude. See
         # its docstring for why a multiplicative pair may be a multiply and an
         # affine one may not.
-        factor, source_units, target_units = _conversion_rule(self.units, target)
+        # The refusal can come from either step: `_conversion_rule` probes the
+        # backend with 0.0 to decide whether the pair is affine, so a pair the
+        # backend will not convert at all raises THERE, before any magnitude of
+        # this value is touched.
+        try:
+            factor, source_units, target_units = _conversion_rule(self.units, target)
+        except UnitCompatibilityError:
+            raise
+        except Exception as exc:
+            raise UnitCompatibilityError(
+                f"cannot convert {self.units!r} to {target!r}: {exc}. The two "
+                f"have the same dimension [{self.dimensionality}], so this is "
+                f"a question about the SCALE and not about the dimension -- a "
+                f"difference and an absolute value on an offset scale are not "
+                f"interchangeable. To read this value as a DIFFERENCE, use "
+                f"magnitude_as_spread_in"
+            ) from exc
         if factor is not None:
             return Quantity(self.magnitude * factor, target)
-        return Quantity(
-            float(registry().convert(self.magnitude, source_units, target_units)),
-            target,
-        )
+        # THE BACKEND'S REFUSAL IS THIS PACKAGE'S ERROR (I-22, R-48).
+        #
+        # `require_compatible` above passes for `delta_degC` against `degC`:
+        # they ARE the same dimension. The backend then raises
+        # `pint.errors.DimensionalityError`, which is a `TypeError` and is
+        # caught by nothing in this package -- so the physically correct
+        # declaration of a Celsius band on a Celsius value died with an
+        # exception type from a dependency the caller is not supposed to know
+        # about, while the WRONG declaration ('0.5 degC' as a band) was
+        # accepted silently. Every other refusal in this module is a
+        # `UnitCompatibilityError`, and an exception type is part of a
+        # contract: "pint owns the unit algebra; this module owns the
+        # contract".
+        try:
+            converted = float(
+                registry().convert(self.magnitude, source_units, target_units)
+            )
+        except Exception as exc:
+            raise UnitCompatibilityError(
+                f"cannot convert {self.magnitude!r} {self.units!r} to "
+                f"{target!r}: {exc}. The two have the same dimension "
+                f"[{self.dimensionality}], so this is a question about the "
+                f"SCALE and not about the dimension -- a difference and an "
+                f"absolute value on an offset scale are not interchangeable. "
+                f"To read this value as a DIFFERENCE, use "
+                f"magnitude_as_spread_in"
+            ) from exc
+        return Quantity(converted, target)
 
     def magnitude_in(self, unit: str) -> float:
         """Numeric magnitude expressed in ``unit`` — the single sanctioned way
-        to hand a scientific value to a numeric kernel."""
+        to hand a scientific value to a numeric kernel.
+
+        An ABSOLUTE value: the whole affine map, offset included. The reader
+        for a difference is :meth:`magnitude_as_spread_in`.
+        """
         return self.to(unit).magnitude
+
+    def magnitude_as_spread_in(self, unit: str) -> float:
+        """This magnitude read as a DIFFERENCE, expressed in ``unit``.
+
+        A difference transforms by the LINEAR part of an affine map and not by
+        the whole of it -- that is what an affine map is -- so a spread of
+        0.5 delta_degC is 0.5 kelvin, and one of 1 delta_degF is 5/9 kelvin.
+        Read with :meth:`magnitude_in` instead, a 0.5 degC band became
+        **273.65 kelvin**, and a prediction 273 kelvin wrong passed it.
+
+        Works between any two units of one dimension, delta and absolute
+        alike, because the two slopes are taken against the dimension's base
+        unit and divided: the backend has no direct conversion from
+        ``delta_degC`` to ``degC``, and both slopes against kelvin are 1.
+
+        This is a second way to READ a quantity, not a second KIND of
+        quantity. A :class:`Quantity` still does not know whether it is a point
+        or a span; the caller states which it means by choosing the reader, and
+        :func:`require_spread_unit` is how a declaration says it meant a span.
+        (I-22, R-48.)
+        """
+        target = normalize_unit(unit)
+        self.require_compatible(target, context="spread conversion")
+        if target == self.units:
+            return self.magnitude
+        return self.magnitude * (
+            _slope_against_base(self.units) / _slope_against_base(target)
+        )
 
     # ---- minimal arithmetic -------------------------------------------
     # Enough for constraint checks and adapters; full quantity algebra stays
