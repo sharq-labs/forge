@@ -867,6 +867,95 @@
    "bypass_allow_lists": {},
    "bypass_allow_list_reasons": {},
    "what_the_check_cannot_see": "`verification_ref` is still a free string: a verification reference names an artefact the source record does not carry, so there is nothing in the record to check it against, and binding it needs the verification record itself to be passed in -- a change to what the boundary takes. `sequence_validation` is held to being a different report from the source's and to naming at least two members; it is NOT held to naming this model, these observables, or the run ids of the members, because a ValidationReport carries checks and evidence strings rather than a typed sequence record. Nothing in the core declares which model identities are closed-form, so what the analytic route reads is the source's own convergence state and report rather than a property of the model. And the binding rule is a containment test over what the source names: it stops a reference that binds nothing, not a well-formed reference to the wrong one of the source's own names."
+  },
+  {
+   "problem": "R-60",
+   "title": "The QuantityTransfer conversion budget check has a 1.0 absolute floor",
+   "rule": "src/engcore/scientific/composition/transfer.py",
+   "rule_symbol": "the purely relative criterion in QuantityTransfer._check_against_the_declared_budget, and the shared _agree_relatively it is stated in",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-27 part A (batch 47)",
+   "why": "REACHED, against the audit's 'library-only', which is kept verbatim in the field above: the budget check runs in QuantityTransfer.__post_init__, and the production electrothermal loop constructs a converted transfer for every declared conversion edge of its final pass, which is how a conversion's arrived value is re-checked independently of the loop that computed it. What was library-only is the DEFECT: no in-tree crossing is small enough in its conversion's own exemplar unit for the floor to bite, so the audit had to build the case by hand (1 mW against a gigawatt exemplar). The rule now holds at every magnitude, production crossings included.",
+   "entry_points": [
+    "engcore.systems.electrothermal.coupled.converted_transfers (every declared conversion edge of the final pass)",
+    "engcore.systems.electrothermal.coupled (the fixed-point loop, through _transport)",
+    "engcore.mcp.tools.run_electrothermal (MCP), through that loop"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch47.py::test_r60_a_small_crossing_carrying_everything_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r60_a_small_crossing_carrying_nothing_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r60_a_crossing_of_exactly_nothing_still_agrees_with_a_budget_of_nothing",
+    "tests/test_core_scientific_audit_batch47.py::test_r60_an_honest_conversion_transfer_is_unchanged",
+    "tests/test_min_foundation_electrothermal.py",
+    "tests/test_electrothermal_vertical.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "BUDGET_TOLERANCE is one relative allowance for one multiplication and is not a modelling tolerance: a crossing that misses its declared efficiency by a part in a thousand is a different claim, and this rule says so, while a conversion whose declared efficiency is itself wrong is not something the arithmetic can see. A scale of zero is exact equality, which is the limit of the same rule and not a special case."
+  },
+  {
+   "problem": "R-61",
+   "title": "Transfer records compare unit strings and bind neither source record nor instant order",
+   "rule": "src/engcore/scientific/composition/transfer.py",
+   "rule_symbol": "_transfers_state_one_value and the one-instant-per-declaration refusal in require_agreeing_transfers; TRANSFER_VALUE_ORIGINS with the value_origin field and its validation; QuantityTransfer.check_against_result",
+   "status": "REACHED",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-27 part A (batch 47)",
+   "why": "REACHED, and here the audit's 'library-only' is contradicted most plainly: ProvenanceRecord.__post_init__ calls require_agreeing_transfers on EVERY construction and on every from_dict, so the agreement rule is on every production path that records a crossing, and the audited defect was a FALSE REFUSAL there -- one value spelled in two units, or read from two records, made a justified record unconstructible. The production ambient crossing now declares value_origin='configured_input', which is what it is: the ambient is a control input of the thermal problem whose result the transfer names, and the value comes from the system configuration.",
+   "entry_points": [
+    "engcore.scientific.results.provenance.ProvenanceRecord (construction and from_dict, on every recorded run)",
+    "engcore.systems.electrothermal.coupled.ambient_transfers (declares the configured-input origin)",
+    "engcore.systems.electrothermal.coupled.converted_transfers",
+    "engcore.mcp.tools.run_electrothermal (MCP), through that loop"
+   ],
+   "exercised_by": [
+    "tests/test_core_scientific_audit_batch47.py::test_r61_one_value_spelled_in_two_units_agrees",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_two_genuinely_different_values_are_still_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_one_value_from_two_records_agrees",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_the_refusal_names_the_records_that_disagree",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_stale_instant_cannot_sit_beside_the_final_one",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_transfer_can_be_checked_against_the_record_it_names",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_configured_input_crossing_declares_that_it_is_one",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_value_origin_nobody_declared_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_configured_input_that_the_record_does_produce_is_a_finding",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_a_value_that_is_not_in_the_record_it_names_is_a_finding",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_another_record_carrying_the_same_number_is_still_not_the_record_named",
+    "tests/test_core_scientific_audit_batch47.py::test_r61_the_record_it_names_carrying_the_value_is_no_finding",
+    "tests/test_min_foundation_electrothermal.py"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "`instant` is still an unparsed string and has no order: what closes the audited selection defect is refusing two instants of one declaration in one record, so no sort order can pick the stale one, and a numeric instant index would change what every producer writes. `check_against_result` is a method rather than a construction rule, because the record does not hold the result it names -- a transfer read back from a payload can only be checked by whoever holds the other half, and nothing forces a consumer to ask. A `configured_input` origin is checked for the named record NOT producing that quantity; it is not checked against the configuration that did supply it, because no core record carries a problem's control inputs as a comparable set."
+  },
+  {
+   "problem": "R-64",
+   "title": "The energy-crossing guard matches only exact energy or power dimensions",
+   "rule": "src/engcore/scientific/composition/dependency.py",
+   "rule_symbol": "ENERGY_DERIVED_DIMENSIONS and CONVERTIBLE_DIMENSIONS in composition/conversion.py; the energy-density refusal and the prose-on-an-exact-energy refusal in QuantityDependency.__post_init__, with the transport_declaration field",
+   "status": "LATENT",
+   "audit_status": "FIXED",
+   "audit_reached_in_production": "library-only",
+   "closed_by": "I-27 part A (batch 47)",
+   "why": "LATENT rather than reached: the rule is on the constructor of every QuantityDependency, which production does build, but the shape it guards does not occur in the tree. The in-tree declarations carry a power, a temperature and a resistance -- the first already had to declare its conversion, and the other two are not energy. Nothing in the repository declares a crossing in W/m^2, W/m, W/m^3 or J/kg, which is why the audit had to construct one.",
+   "what_would_create_it": "A conjugate or field coupling: a heat flux across an interface, a line power along an edge, a volumetric source, or a specific energy crossing with a mass flow. Those are the forms such a coupling exchanges, and before this batch each of them crossed with nothing declared, which reads as 'all of it arrives'.",
+   "entry_points": [],
+   "exercised_by": [],
+   "exercised_by_in_library": [
+    "tests/test_core_scientific_audit_batch47.py::test_r64_an_energy_derived_crossing_with_no_declaration_is_refused",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_plain_power_is_still_refused_without_a_conversion",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_an_energy_derived_crossing_can_declare_a_transport",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_an_energy_derived_crossing_can_declare_a_conversion",
+    "tests/test_core_scientific_audit_batch47.py::test_r64_prose_about_an_exact_energy_crossing_is_refused"
+   ],
+   "bypasses": [],
+   "bypass_allow_lists": {},
+   "bypass_allow_list_reasons": {},
+   "what_the_check_cannot_see": "A dimension is not a name, and three members of the derived set are also the dimensions of a force (energy per length), a pressure (energy per volume) and a surface tension (energy per area). Nothing in a dimension can tell a pressure from an energy density, so the rule refuses SILENCE rather than mechanics: a declared conversion or a stated transport both satisfy it, and a pressure crossing says which it is in one sentence. Division by time is deliberately not in the set -- energy per time is a power, which the exact pair already covers. And what the transport declaration states is prose: a reader can see that somebody took a position, not check the position."
   }
  ]
 }

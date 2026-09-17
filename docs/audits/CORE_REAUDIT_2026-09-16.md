@@ -2895,3 +2895,68 @@ added to the batch's test file as named tests rather than left implicit.
 part C, and the batch's seven guards join the pinned population in the I-30 round.
 
 **Open decisions.** None.
+
+### Batch 47 — I-27 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-27 | **PARTIAL** (part A of two) | `16c0e75e` (preregistration + 14 strict xfails), this commit | **R-58 is part B**: production crossings still carry bare point values, and `UncertaintyTransfer` still binds nothing about the source uncertainty. Here: `instant` has no order, `check_against_result` is a method nothing forces a consumer to call, and a transport declaration is prose |
+
+**R-60, R-61 and R-64 are FIXED.** Three defects in the record of a crossing itself — and two of them were
+**false refusals** rather than false confidence, one of which reached every `ProvenanceRecord` construction.
+
+| Claim | Status | How |
+|---|---|---|
+| a budget floored at one exemplar unit | **FIXED** | `scale = max(abs(budgeted), abs(arrived), 1.0)` made the criterion **absolute** below one unit of the conversion's own exemplar — and an exemplar is the author's choice of spelling, not a scale of the physics. 1 mW in and 1 mW out against a declared efficiency of 0.5 passed, and `realized_losses` then rendered a 50% loss beside a 100% arrival. The floor is gone: one relative criterion at every magnitude, with a scale of zero reached only when nothing was budgeted and nothing arrived, where the comparison is exact equality — the limit of the rule, not an exception to it. |
+| agreement by unit string | **FIXED** | `require_agreeing_transfers` compared `Quantity(magnitude, units-string)`, so 300.0 kelvin beside 26.85 degC was "two different values crossed" — a **false refusal on every ProvenanceRecord construction**, and the message printed *"300.0 kelvin and 300.0 kelvin"* when one value came from two records. Two transfers of one declaration at one instant now agree when their values agree in the dependency's own `unit_exemplar`, absolutely, within the same relative allowance the budget uses. |
+| two record ids as a contradiction | **FIXED** | One value read from two results at one instant is a redundancy, not a contradiction. What still refuses is a real disagreement, and its message now names **both record ids** and both magnitudes in the exemplar unit. |
+| a stale instant beside the final one | **FIXED** | Two instants of one declaration in one record is refused, naming both. That is what removes the audited selection defect: `'coupled_iteration:9'` sorts **after** `':10'`, so a consumer keeping the last transfer per component would have taken the stale 400 K over the final 300 K. No order over the instant string is invented — this file deliberately does not parse it. |
+| `source_record_id` checked against nothing | **FIXED** | New trailing `value_origin` (`read_from_the_record` or `configured_input`, reachable as `QuantityTransfer.VALUE_ORIGIN_*`) and new `check_against_result`, which asks the named record the question the declared origin implies: that it is the record named, carries the quantity, and states the value that crossed — or, for a configured input, that it does **not** produce that quantity. The production ambient crossing declares `configured_input`, which is what it is: the ambient is a control input of the thermal problem whose result the transfer names, and the value comes from the system configuration. |
+| energy crossing as a flux density | **FIXED** | The fail-closed edge matched exactly `[energy]` or `[power]`, so a heat flux, a line power, a volumetric source and a specific energy crossed with **nothing declared** — and silence there reads as "all of it arrives", which is what the guard exists to prevent. New `ENERGY_DERIVED_DIMENSIONS` (the closure of the two energy dimensions under division by length, area, volume, mass and amount) must declare either an `EnergyConversion` — now accepted for a density, since fractions of a flux sum to one exactly as fractions of a power do — or a non-empty `transport_declaration`. |
+
+**Amendment 1** (recorded in the protocol's `amendment_log`). Division by **time** was named in the
+preregistered divisor list and dropped while implementing: energy per time is a power, which the exact pair
+already covers, and power per time is a ramp rate rather than a form energy crosses a boundary in. Ten
+derived dimensions remain.
+
+**Amendment 2.** Three members of the derived set are also the dimensions of a **force**, a **pressure** and
+a **surface tension**, and nothing in a dimension can tell a pressure from an energy density. The rule is
+therefore satisfied by *either* a declared conversion *or* a stated transport — the audit's second option —
+so it refuses silence rather than mechanics. Stated here rather than buried: a pressure crossing now has to
+write one sentence saying so.
+
+**Amendment 3.** Two pinned anchors in `tests/mutation_guards.py` stopped matching after the first
+implementation (G12c's `if existing == transfer:` and G16a's `if abs(arrived - budgeted) > BUDGET_TOLERANCE
+* scale:`). Per the protocol the **code was restructured, not the anchor file**: dataclass equality is kept
+as the fast path with the value comparison as a second branch, and the budget check keeps `scale` as a name
+and drops only the `1.0` from it. Both anchors match byte-identically again and the harness is 6/6.
+
+**Compatibility.** Additive only: two trailing fields with defaults (`QuantityTransfer.value_origin`,
+`QuantityDependency.transport_declaration`), one method, two `ClassVar` constants on the published record
+(so the frozen snapshot's fields and signatures do not move), module-public constants added to **no** package
+export list, and `quantity_transfer/3` and `quantity_dependency/3` written **only** when the record carries
+the new field — so every existing record keeps its bytes and its `/2` schema. An older version carrying
+either new field is refused on read, because the finding is that silence used to mean something. Three
+in-tree tests moved with the records and are commented in place: the `QuantityDependency` field set, the
+"unknown schema" version (now `/4`), and nothing else. `EnergyConversion` accepting a density **widens**
+what constructs and refuses nothing that constructed before.
+
+**Committed evidence.** Nothing regenerated. The only committed JSON naming these schemas is the Core Freeze
+V1 evidence pair (`certification/core_freeze_v1.json` and `benchmarks/core_freeze_v1/REPRODUCTION_OUTPUT.json`),
+which lists the accepted versions of each record; those files are part of the frozen-state set the V4 round
+re-derives, exactly as the earlier schema bumps in this audit left them.
+
+**Verification.** The batch's own file 24 passed. FAST tier **7064 passed, 5 skipped, 19 failed** — exactly
+the by-design set. Expensive tier **528 passed, 18 failed, 14 errors** — the recorded baseline.
+`tests/test_mutation_harness.py` 6 passed with `tests/mutation_guards.py` untouched.
+Guard reach ledger clean over **29** guards: R-60 and R-61 REACHED/FIXED — both against the audit's
+`library-only`, which the rows keep verbatim and argue with — and R-64 LATENT/FIXED with what would create it.
+
+**Guard mutations.** `BATCH47_MUTATIONS.log`: **13 of 13 KILLED**, control green. Two were repointed while
+running them, each recorded in the log and both with the distinguishing case added as a named test: B47b
+(the shared relative comparison) at the two-genuinely-different-values control, because a floor only ever
+loosens that comparison, and B47h (the id match in `check_against_result`) at *another* record carrying the
+same number, because the preregistered reproduction is answered by the missing-value rule as well.
+`BATCH47_PINNED_MUTATIONS.log`: **1 of 1 KILLED** (G34n), control green.
+
+**Open decisions.** None.

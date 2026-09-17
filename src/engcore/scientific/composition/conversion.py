@@ -78,6 +78,8 @@ CONVERSION_OUTCOME_SCHEMA = schema_string("conversion_outcome")
 __all__ = [
     "ENERGY_CONVERSION_SCHEMA",
     "ENERGY_DIMENSIONS",
+    "ENERGY_DERIVED_DIMENSIONS",
+    "CONVERTIBLE_DIMENSIONS",
     "ConversionOutcome",
     "EnergyConversion",
     "LossPath",
@@ -102,6 +104,50 @@ _ENERGY_DIMENSION = dimensionality("kilogram * meter ** 2 / second ** 2")
 _POWER_DIMENSION = dimensionality("kilogram * meter ** 2 / second ** 3")
 #: The pair, for a declaration that has to ask whether it carries energy.
 ENERGY_DIMENSIONS = (_ENERGY_DIMENSION, _POWER_DIMENSION)
+
+#: The measures a density of energy or power is taken with respect to, spelled
+#: in base units for the same reason the two above are.
+#:
+#: R-64 (I-27 part A): the fail-closed edge below matched only an energy or a
+#: power exactly, so energy crossing a boundary as a flux (per area), a line
+#: density (per length), a volumetric source (per volume), a specific energy
+#: (per mass) or a molar energy (per amount) needed no declaration at all --
+#: and those are the forms a conjugate or a field coupling exchanges. Writing
+#: nothing meant "all of it arrives" for exactly the crossings where that is
+#: least checkable. The set is the closure of the two energy dimensions under
+#: division by these five measures, not a list of unit names. Division by TIME
+#: is deliberately not among them: energy per time is a power, which the pair
+#: above already covers, and power per time is a ramp rate rather than a form
+#: energy crosses a boundary in.
+#:
+#: A dimension is not a name, and three members of this set are also the
+#: dimensions of a force (energy per length), a pressure (energy per volume)
+#: and a surface tension (energy per area). Nothing in a dimension can tell a
+#: pressure from an energy density, which is exactly why the rule this set
+#: serves is satisfied by EITHER a declared conversion OR a stated transport:
+#: what it refuses is silence, not mechanics.
+_DENSITY_DIVISORS = (
+    "meter",
+    "meter ** 2",
+    "meter ** 3",
+    "kilogram",
+    "mole",
+)
+ENERGY_DERIVED_DIMENSIONS = tuple(
+    dict.fromkeys(
+        dimensionality(f"({base}) / ({divisor})")
+        for base in (
+            "kilogram * meter ** 2 / second ** 2",
+            "kilogram * meter ** 2 / second ** 3",
+        )
+        for divisor in _DENSITY_DIVISORS
+    )
+)
+
+#: What a conversion may convert: an energy, a power, or a density of either.
+#: Conservation arithmetic is unchanged in form for a density -- fractions of a
+#: flux sum to one exactly as fractions of a power do, per unit area.
+CONVERTIBLE_DIMENSIONS = ENERGY_DIMENSIONS + ENERGY_DERIVED_DIMENSIONS
 
 
 def _fraction(value: Any, *, what: str) -> float:
@@ -259,11 +305,11 @@ class EnergyConversion:
             ),
         )
         dimension = dimensionality(self.unit_exemplar)
-        if dimension not in ENERGY_DIMENSIONS:
+        if dimension not in CONVERTIBLE_DIMENSIONS:
             raise InvalidScientificProblem(
                 f"energy conversion {self.name!r} declares "
                 f"{self.unit_exemplar!r} [{dimension}], which is neither an "
-                f"energy nor a power. Conservation is a statement about energy "
+                f"energy nor a power nor a density of either. Conservation is a statement about energy "
                 f"and checking it over anything else would be arithmetic "
                 f"wearing the word"
             )

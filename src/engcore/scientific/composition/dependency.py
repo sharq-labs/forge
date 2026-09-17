@@ -115,7 +115,7 @@ from ..models.definition import BindingIssue, BindingIssueKind
 from ..serialization import require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..units.validation import require_unit
-from .conversion import ENERGY_DIMENSIONS, EnergyConversion
+from .conversion import ENERGY_DERIVED_DIMENSIONS, ENERGY_DIMENSIONS, EnergyConversion
 
 #: Bumped to /2 by the `conversion` field. Additive: a /1 record carries no
 #: conversion, and reads back as one that declares none -- which the
@@ -123,9 +123,13 @@ from .conversion import ENERGY_DIMENSIONS, EnergyConversion
 #: energy crossing fails loudly rather than reading back as lossless.
 QUANTITY_DEPENDENCY_SCHEMA = schema_string("quantity_dependency", 2)
 QUANTITY_DEPENDENCY_SCHEMA_V1 = schema_string("quantity_dependency")
+#: Bumped to /3 by `transport_declaration`, and written only when the record
+#: carries one: a dependency that declares no transport keeps its /2 bytes.
+QUANTITY_DEPENDENCY_SCHEMA_V3 = schema_string("quantity_dependency", 3)
 
 __all__ = [
     "QUANTITY_DEPENDENCY_SCHEMA",
+    "QUANTITY_DEPENDENCY_SCHEMA_V3",
     "QuantityDependency",
     "externally_imposed",
     "unresolved_inputs",
@@ -157,6 +161,19 @@ class QuantityDependency:
     #: transported quantity is an energy or a power, and refused otherwise --
     #: see the refusal in ``__post_init__``.
     conversion: "EnergyConversion | None" = None
+    #: Why a crossing that carries a DENSITY of energy changes no form.
+    #:
+    #: R-64 (I-27 part A): the guard below matched only an exact energy or
+    #: power, so a flux, a line density, a volumetric source or a specific
+    #: energy crossed with nothing declared -- and silence there meant "all of
+    #: it arrives", which is the one reading nobody can check. A density may
+    #: genuinely be transported whole, and it may equally be a pressure or a
+    #: force, which carries the same dimension and is not energy crossing at
+    #: all. No dimension can tell those apart, so the record asks the producer
+    #: to say, and refuses only silence. Refused on an exact energy or power:
+    #: there the conversion record is the declaration, and a sentence beside it
+    #: would be a second, weaker way to say the same thing.
+    transport_declaration: str = ""
 
     def __post_init__(self) -> None:
         for label in (
@@ -209,7 +226,31 @@ class QuantityDependency:
         # coordinate or a material property crossing a boundary is not an
         # energy conversion, and a record that let it claim an efficiency
         # would make the word mean nothing.
+        object.__setattr__(self, "transport_declaration", str(self.transport_declaration).strip())
         carries_energy = self.dimension in ENERGY_DIMENSIONS
+        carries_an_energy_density = self.dimension in ENERGY_DERIVED_DIMENSIONS
+        if carries_energy and self.transport_declaration:
+            raise InvalidScientificProblem(
+                f"quantity dependency {self.source_quantity!r} -> "
+                f"{self.target_quantity!r} carries {self.unit_exemplar!r} "
+                f"[{self.dimension}], an energy or a power, and declares a "
+                f"transport in prose. What happens to an energy crossing a "
+                f"boundary is an EnergyConversion, whose fractions a reader "
+                f"can check; a sentence is not a second way to say it"
+            )
+        if carries_an_energy_density and self.conversion is None and not self.transport_declaration:
+            raise InvalidScientificProblem(
+                f"quantity dependency {self.source_quantity!r} -> "
+                f"{self.target_quantity!r} carries {self.unit_exemplar!r} "
+                f"[{self.dimension}], a density of energy or power crossing a "
+                f"domain boundary, and says nothing about what happens to it. "
+                f"Declaring nothing reads as 'all of it arrives', which is the "
+                f"one reading nobody can check and is usually wrong for a flux. "
+                f"Declare an EnergyConversion, or -- if the quantity is "
+                f"transported whole, or is a pressure or a force carrying this "
+                f"same dimension and no energy crossing at all -- say so in "
+                f"transport_declaration"
+            )
         if carries_energy and self.conversion is None:
             raise InvalidScientificProblem(
                 f"quantity dependency {self.source_quantity!r} -> "
@@ -221,14 +262,14 @@ class QuantityDependency:
                 f"is deliberately not 1"
             )
         if self.conversion is not None:
-            if not carries_energy:
+            if not (carries_energy or carries_an_energy_density):
                 raise InvalidScientificProblem(
                     f"quantity dependency {self.source_quantity!r} -> "
                     f"{self.target_quantity!r} carries "
                     f"{self.unit_exemplar!r} [{self.dimension}] and declares "
-                    f"an energy conversion. Only an energy or a power is "
-                    f"converted; anything else crossing a boundary is "
-                    f"transported"
+                    f"an energy conversion. Only an energy, a power or a "
+                    f"density of either is converted; anything else crossing "
+                    f"a boundary is transported"
                 )
             if self.conversion.dimension != self.dimension:
                 raise InvalidScientificProblem(
@@ -375,7 +416,13 @@ class QuantityDependency:
     # ---- serialization -------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": QUANTITY_DEPENDENCY_SCHEMA,
+            # /3 only when the record carries a transport declaration: a
+            # dependency without one states nothing new and keeps its /2 bytes.
+            "schema": (
+                QUANTITY_DEPENDENCY_SCHEMA_V3
+                if self.transport_declaration
+                else QUANTITY_DEPENDENCY_SCHEMA
+            ),
             "source_problem_id": self.source_problem_id,
             "source_quantity": self.source_quantity,
             "target_problem_id": self.target_problem_id,
@@ -386,13 +433,34 @@ class QuantityDependency:
             "conversion": (
                 None if self.conversion is None else self.conversion.to_dict()
             ),
+            **(
+                {"transport_declaration": self.transport_declaration}
+                if self.transport_declaration
+                else {}
+            ),
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "QuantityDependency":
         require_schema_any(
-            payload, (QUANTITY_DEPENDENCY_SCHEMA_V1, QUANTITY_DEPENDENCY_SCHEMA)
+            payload,
+            (
+                QUANTITY_DEPENDENCY_SCHEMA_V1,
+                QUANTITY_DEPENDENCY_SCHEMA,
+                QUANTITY_DEPENDENCY_SCHEMA_V3,
+            ),
         )
+        declaration = str(payload.get("transport_declaration", "")).strip()
+        if declaration and payload["schema"] != QUANTITY_DEPENDENCY_SCHEMA_V3:
+            # A version that did not have the field cannot have meant it: the
+            # reason the field exists is that silence used to mean lossless,
+            # and reading a declaration off a record written before there was
+            # one to write would be believing exactly that silence.
+            raise InvalidScientificProblem(
+                f"quantity dependency payload declares schema "
+                f"{payload['schema']!r} and carries a transport_declaration, "
+                f"which {QUANTITY_DEPENDENCY_SCHEMA_V3!r} introduced"
+            )
         conversion = payload.get("conversion")
         return cls(
             source_problem_id=payload["source_problem_id"],
@@ -405,6 +473,7 @@ class QuantityDependency:
             conversion=(
                 None if conversion is None else EnergyConversion.from_dict(conversion)
             ),
+            transport_declaration=declaration,
         )
 
 

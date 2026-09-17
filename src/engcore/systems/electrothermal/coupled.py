@@ -1096,6 +1096,15 @@ def ambient_transfers(
                 value=stage.body.ambient_temperature,
                 source_record_id=source.result_id,
                 instant=f"coupled_iteration:{final.index}",
+                # R-61 (I-27 part A): the ambient is a CONTROL input of the
+                # thermal problem this result answers, and the value comes from
+                # the system configuration rather than out of the result. The
+                # record it names is still the right one -- it is the problem
+                # the ambient was imposed on -- and until the crossing said
+                # which of the two it was, a reader had no way to tell a value
+                # read out of a record from one imposed on it, and
+                # `check_against_result` had no question to ask.
+                value_origin=QuantityTransfer.VALUE_ORIGIN_CONFIGURED_INPUT,
             )
         )
     return tuple(transfers)

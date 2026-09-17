@@ -71,9 +71,27 @@
   }
  },
  "thresholds": {
-  "budget_tolerance": {"value": 1e-9, "class": "A", "why": "UNCHANGED, and now applied relatively at every magnitude. It is a representation allowance for one multiplication, as the constant's own comment states; what changes is that it is no longer floored at one unit of an exemplar the conversion author chose."},
-  "agreement_tolerance": {"value": 1e-9, "class": "A", "why": "the same constant, reused rather than a second number: comparing two spellings of one value is a unit conversion, which is the same multiplication the budget allowance covers."},
-  "energy_derived_divisors": {"value": ["length", "area", "volume", "mass", "amount of substance"], "class": "A", "why": "the measures a density is taken with respect to. Not tuned: each one is a form a conjugate or field coupling exchanges (heat flux, line power, volumetric source, specific energy, molar energy), and the audit names the first four."}
+  "budget_tolerance": {
+   "value": 1e-09,
+   "class": "A",
+   "why": "UNCHANGED, and now applied relatively at every magnitude. It is a representation allowance for one multiplication, as the constant's own comment states; what changes is that it is no longer floored at one unit of an exemplar the conversion author chose."
+  },
+  "agreement_tolerance": {
+   "value": 1e-09,
+   "class": "A",
+   "why": "the same constant, reused rather than a second number: comparing two spellings of one value is a unit conversion, which is the same multiplication the budget allowance covers."
+  },
+  "energy_derived_divisors": {
+   "value": [
+    "length",
+    "area",
+    "volume",
+    "mass",
+    "amount of substance"
+   ],
+   "class": "A",
+   "why": "the measures a density is taken with respect to. Not tuned: each one is a form a conjugate or field coupling exchanges (heat flux, line power, volumetric source, specific energy, molar energy), and the audit names the first four."
+  }
  },
  "compatibility": {
   "additive_only": true,
@@ -108,5 +126,24 @@
   "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
   "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
  ],
- "amendment_log": []
+ "amendment_log": [
+  {
+   "date": "2026-09-17",
+   "amendment": "Division by TIME is dropped from the energy_derived_divisors list.",
+   "numbers_that_forced_it": "Energy per time IS a power: dimensionality('kilogram * meter ** 2 / second ** 2 / second') equals the power dimension already in ENERGY_DIMENSIONS, so the entry adds nothing there, and the other half it would add -- power per time, [mass]/[time]**4 -- is a ramp rate rather than a form energy crosses a boundary in. Ten derived dimensions remain instead of twelve.",
+   "threshold_moved": "energy_derived_divisors: five measures (length, area, volume, mass, amount of substance) instead of six."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": "The energy-density rule is satisfied by EITHER a declared conversion OR a stated transport, and this is recorded as a limit of a dimension-based rule rather than a convenience.",
+   "numbers_that_forced_it": "Three members of the derived set are dimensionally identical to mechanical quantities that are not energy crossing a boundary: energy per length is a force, energy per area is a surface tension, energy per volume is a pressure. A rule that demanded a conversion for those dimensions would refuse every pressure crossing, which is a false refusal of the kind two of this batch's other rules exist to remove. The rule therefore refuses SILENCE: a pressure crossing states one sentence and passes.",
+   "threshold_moved": "none; this is the shape of the rule, stated before it was scored and recorded here because the preregistration named both options and the reason for choosing both was found while implementing."
+  },
+  {
+   "date": "2026-09-17",
+   "amendment": "The implementation was restructured to keep two certification-pinned mutation anchors matching.",
+   "numbers_that_forced_it": "tests/mutation_harness reported 'G12c: matched 0 times' and 'G16a: matched 0 times' after the first implementation. Per the per-batch protocol the code is restructured and the anchor file is never edited before the I-30 round: dataclass equality stays as the fast path in require_agreeing_transfers with the value comparison as a second branch, and the budget check keeps `scale` as a name and drops only the 1.0 from its definition. Both anchors match byte-identically and the harness is 6/6.",
+   "threshold_moved": "none."
+  }
+ ]
 }

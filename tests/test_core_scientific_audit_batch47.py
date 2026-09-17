@@ -8,6 +8,8 @@ carries the whole input against a declared half. Agreement compares unit STRINGS
 makes a whole ProvenanceRecord unconstructible -- and a stale instant and the final one coexist, with the
 canonical order putting iteration 9 after iteration 10. And energy crossing as a flux density needs no
 declared conversion at all, while plain watt is refused.
+
+Recorded as strict xfails in commit 16c0e75e, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -47,6 +49,20 @@ def _dependency(*, unit_exemplar: str = "kelvin", conversion=None, **overrides):
     return QuantityDependency(**fields)
 
 
+def _result(**overrides):
+    from engcore.scientific.results.provenance import ProvenanceRecord
+    from engcore.scientific.results.result import ScientificResult
+
+    fields = dict(
+        result_id="thermal-result", values={},
+        models=(("synthetic.thermal", "1"),),
+        validity_not_assessed={"synthetic.thermal": "a fixture: nothing asked"},
+        provenance=ProvenanceRecord(run_id="thermal-run", models=(("synthetic.thermal", "1"),)),
+    )
+    fields.update(overrides)
+    return ScientificResult(**fields)
+
+
 def _transfer(dependency=None, **overrides):
     fields = dict(
         dependency=dependency if dependency is not None else _dependency(),
@@ -69,7 +85,6 @@ def test_r60_an_honest_conversion_transfer_is_unchanged():
     assert transfer.value.magnitude_in("gigawatt") == pytest.approx(0.5)
 
 
-@pytest.mark.xfail(strict=True, reason="R-60 finding 73 as audited: the budget check floors its scale at 1.0 of the conversion's exemplar unit, so below one exemplar unit it is an absolute 1e-9 criterion")
 def test_r60_a_small_crossing_carrying_everything_is_refused():
     """As audited: 1 mW in, 1 mW out, against a declared efficiency of 0.5 and a gigawatt exemplar."""
     dependency = _dependency(unit_exemplar="gigawatt", conversion=HALF)
@@ -80,7 +95,6 @@ def test_r60_a_small_crossing_carrying_everything_is_refused():
         )
 
 
-@pytest.mark.xfail(strict=True, reason="R-60: below the floor, an arrival of zero against a declared half also passes")
 def test_r60_a_small_crossing_carrying_nothing_is_refused():
     dependency = _dependency(unit_exemplar="gigawatt", conversion=HALF)
     with pytest.raises(InvalidScientificProblem, match="budgets|disagree"):
@@ -103,7 +117,6 @@ def test_r60_a_crossing_of_exactly_nothing_still_agrees_with_a_budget_of_nothing
 # ---------------------------------------------------------------------------
 # transfer_agreement_compares_values_and_not_unit_strings
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-61 finding 74 as audited: agreement is dataclass equality over Quantity(magnitude, units-string), so 300.0 kelvin and 26.85 degC are 'two different values'")
 def test_r61_one_value_spelled_in_two_units_agrees():
     """As audited: the refusal even printed '300.0 kelvin and 300.0 kelvin'."""
     dependency = _dependency()
@@ -127,7 +140,6 @@ def test_r61_two_genuinely_different_values_are_still_refused():
 # ---------------------------------------------------------------------------
 # two_record_ids_carrying_one_value_agree
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-61 finding 74's second claim: one value read from two result ids at one instant is refused as a contradiction")
 def test_r61_one_value_from_two_records_agrees():
     dependency = _dependency()
     left = _transfer(dependency, source_record_id="thermal-result-a")
@@ -140,7 +152,6 @@ def test_r61_one_value_from_two_records_agrees():
     assert len(agreed) == 1
 
 
-@pytest.mark.xfail(strict=True, reason="R-61: the refusal message prints the two values and never the record ids they came from")
 def test_r61_the_refusal_names_the_records_that_disagree():
     dependency = _dependency()
     left = _transfer(dependency, source_record_id="thermal-result-a")
@@ -152,7 +163,6 @@ def test_r61_the_refusal_names_the_records_that_disagree():
 # ---------------------------------------------------------------------------
 # one_run_records_one_instant_per_dependency
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-61 finding 75 as audited: require_agreeing_transfers keys on the instant, so a stale iteration 9 and the final iteration 10 coexist in one record")
 def test_r61_a_stale_instant_cannot_sit_beside_the_final_one():
     """As audited: and the canonical sort puts 'coupled_iteration:9' AFTER 'coupled_iteration:10',
     so a consumer keeping the last transfer per component selects the stale 400 K over the final 300 K."""
@@ -166,7 +176,6 @@ def test_r61_a_stale_instant_cannot_sit_beside_the_final_one():
 # ---------------------------------------------------------------------------
 # a_transfer_says_where_its_value_came_from_and_can_be_checked_against_it
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="R-61 finding 75 as audited: source_record_id is checked for being non-empty and against nothing else, and there is no API to check a transfer against the record it names")
 def test_r61_a_transfer_can_be_checked_against_the_record_it_names():
     from engcore.scientific.results.provenance import ProvenanceRecord
     from engcore.scientific.results.result import ScientificResult
@@ -184,7 +193,6 @@ def test_r61_a_transfer_can_be_checked_against_the_record_it_names():
     assert issues, "a transfer naming 'thermal-result' is not about a result called 'some-other-result'"
 
 
-@pytest.mark.xfail(strict=True, reason="R-61 finding 75 in production: ambient_transfers names the thermal result_id while taking the value from the system configuration, and nothing in the record says so")
 def test_r61_a_configured_input_crossing_declares_that_it_is_one():
     origins = _symbol("engcore.scientific.composition.transfer", "TRANSFER_VALUE_ORIGINS")
     if origins is None:
@@ -199,7 +207,6 @@ def test_r61_a_configured_input_crossing_declares_that_it_is_one():
 @pytest.mark.parametrize("unit_exemplar", ["watt / meter ** 2", "watt / meter", "watt / meter ** 3",
                                            "joule / kilogram"],
                          ids=["heat_flux", "line_power", "volumetric_source", "specific_energy"])
-@pytest.mark.xfail(strict=True, reason="R-64 finding 78 as audited: the fail-closed guard matches only exactly [energy] or [power], so every flux density crosses as lossless transport while plain watt is refused")
 def test_r64_an_energy_derived_crossing_with_no_declaration_is_refused(unit_exemplar):
     with pytest.raises(InvalidScientificProblem, match="energy"):
         _dependency(unit_exemplar=unit_exemplar)
@@ -211,7 +218,6 @@ def test_r64_plain_power_is_still_refused_without_a_conversion():
         _dependency(unit_exemplar="watt")
 
 
-@pytest.mark.xfail(strict=True, reason="R-64: with no way to declare either a conversion or a transport for an energy-derived dimension, the guard above could only be a wall")
 def test_r64_an_energy_derived_crossing_can_declare_a_transport():
     import dataclasses
 
@@ -224,7 +230,6 @@ def test_r64_an_energy_derived_crossing_can_declare_a_transport():
     assert dependency.unit_exemplar == "watt / meter ** 2"
 
 
-@pytest.mark.xfail(strict=True, reason="R-64: EnergyConversion refuses any exemplar that is not exactly an energy or a power, so a flux density cannot declare a conversion either")
 def test_r64_an_energy_derived_crossing_can_declare_a_conversion():
     try:
         flux_half = EnergyConversion(
@@ -237,3 +242,47 @@ def test_r64_an_energy_derived_crossing_can_declare_a_conversion():
         assert flux_half is not None, f"a flux density cannot declare a conversion either: {refusal}"
     dependency = _dependency(unit_exemplar="watt / meter ** 2", conversion=flux_half)
     assert dependency.conversion is flux_half
+
+
+# ---------------------------------------------------------------------------
+# the remaining declared rules, each with the case only that rule sees: written
+# with this batch's guard mutations rather than preregistered as reproductions,
+# because the audit's own fixtures are refused by more than one rule at once
+# ---------------------------------------------------------------------------
+def test_r61_a_value_origin_nobody_declared_is_refused():
+    """The origins are two declared words. Free text would be the unchecked spelling the field replaces."""
+    with pytest.raises(InvalidScientificProblem, match="value_origin"):
+        _transfer(value_origin="wherever it came from")
+
+
+def test_r61_a_configured_input_that_the_record_does_produce_is_a_finding():
+    """The opposite question: a value imposed on a problem is not an output of the record that answers it."""
+    result = _result(values={"temperature": Quantity(300.0, "kelvin")})
+    issues = _transfer(value_origin="configured_input").check_against_result(result)
+    assert [issue.kind.value for issue in issues] == ["wrong_source_kind"]
+
+
+def test_r61_a_value_that_is_not_in_the_record_it_names_is_a_finding():
+    result = _result(values={"temperature": Quantity(400.0, "kelvin")})
+    issues = _transfer().check_against_result(result)
+    assert issues and "states 400.0 kelvin" in issues[0].detail
+
+
+def test_r61_the_record_it_names_carrying_the_value_is_no_finding():
+    """The control: the transfer says 300 K crossed out of this record, and the record says 300 K."""
+    result = _result(values={"temperature": Quantity(26.85, "degC")})
+    assert _transfer().check_against_result(result) == ()
+
+
+def test_r64_prose_about_an_exact_energy_crossing_is_refused():
+    """An energy or a power declares a conversion, whose fractions a reader can check -- not a sentence."""
+    with pytest.raises(InvalidScientificProblem, match="transport in prose"):
+        _dependency(unit_exemplar="watt", transport_declaration="transported whole, honestly")
+
+
+def test_r61_another_record_carrying_the_same_number_is_still_not_the_record_named():
+    """The case only the id rule sees, found while running this batch's mutations: a different result
+    that happens to carry this quantity at this value is not the record the transfer says it came from."""
+    other = _result(result_id="some-other-result", values={"temperature": Quantity(300.0, "kelvin")})
+    issues = _transfer().check_against_result(other)
+    assert issues and "not the record" in issues[0].detail
