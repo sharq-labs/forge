@@ -30,8 +30,8 @@
       "would_fail_if": "the reference branch imported engcore, imported adapter A, or shared a conversion helper -- or the tracer could not be shown to see a dependency when one exists",
       "evidence": {
         "tracer_self_check": {
-          "branch_A_closure_size": 71,
-          "branch_A_engcore_modules": 62,
+          "branch_A_closure_size": 90,
+          "branch_A_engcore_modules": 81,
           "branch_A_reaches_engcore_through_function_level_imports": true,
           "branch_B_closure_size": 2,
           "verdict": "TRACER_SEES_DEPENDENCIES"
@@ -399,8 +399,8 @@
   "core_unchanged": {
     "expected_digest": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
     "expected_digest_is": "the scientific tree as merged into the sprint chain, not a certificate. Core V1's 47-module digest was the previous value and stopped describing this lineage at 3d642dcef5db",
-    "recomputed_digest": "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092",
-    "matches": true,
+    "recomputed_digest": "be1334229443dc45b06e17c0bd79a0de80a41685ecfa7770f33c60bcd233c550",
+    "matches": false,
     "files_touched_under_src_or_tests": []
   },
   "primary_rows": 140,

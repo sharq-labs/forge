@@ -1178,4 +1178,17 @@ not preregistered and says so in its own comment. The pinned re-run reports **NO
 `tests/mutation_guards.py` targets `tools/` or `certification/`, which are new to the mutation population
 (`BATCH19_PINNED_MUTATIONS.log`).
 
+**Verification.** FAST tier 6697 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched.
+Nothing under `src/engcore/domains/thermal/` was edited.
+
+**Three real failures the new file caused, and the fix.** `tools/certification/*.py` is inside the
+`certification_control` scope area, and that area requires a reason for every file it certifies — "a file in
+the control plane without a reason is a file nobody decided to trust". `tools/certification/guard_reach.py`
+arrived without one, so `tests/test_certification_control_plane.py` failed three ways. The fix is the reason,
+declared in `CERTIFICATION_CONTROL_FILES`: the verifier's own bytes are now certified, which is the right
+answer for a checker whose weakening would let a guard whose reach nobody states pass as a guard production
+runs. These were not by-design failures and were not treated as such.
+
 **Open decisions.** None.
