@@ -31,6 +31,7 @@ from scipy.stats import chi2, norm
 from ..inference.calibration import CalibrationResult, CalibrationSpec, CalibrationStatus, ForwardEvaluator, calibrate
 from ..inference.grid import ObservationSet
 from ..inference.parameters import CalibrationParameterSet
+from ..scientific.errors import UnitCompatibilityError
 from ..scientific.results.immutable import freeze
 from ..scientific.units.quantity import Quantity, is_ratio_scale
 from ._records import (
@@ -956,6 +957,21 @@ class LocalGaussianPosterior:
     diagnostics: RouteDiagnostics
     sensitivity_digest: str
     dataset_id: str
+    #: R-12 (re-audit 2026-09-16, I-13 part A): the digest of the OBSERVATION CONTENT this posterior was
+    #: calibrated on -- `digest_of(observations.to_dict())`, over the dataset id and every observation's
+    #: condition id, observable, value, sigma, source ref and declared conditions with their units. A
+    #: prediction that supplies `calibration_observations` is ASSERTING they are these, and
+    #: `linearized_predictive_uq` refuses the assertion when it is false. Empty on a record written before the
+    #: rule, and on a refused route, which emits no predictions anyway.
+    calibration_content_digest: str = ""
+    #: R-12 / R-31: the (name, unit) pairs of every condition EVERY calibration observation declares, sorted.
+    #: The domain gate uses this design when the caller supplies no observations, so omitting them applies the
+    #: check instead of silencing it.
+    calibrated_conditions: tuple[tuple[str, str], ...] = ()
+    #: R-31: one row of condition magnitudes per calibration observation, aligned with `calibrated_conditions`.
+    #: The joint support the calibration covered, which is the convex hull of these rows -- not the box around
+    #: them.
+    calibrated_condition_points: tuple[tuple[float, ...], ...] = ()
 
     def __post_init__(self) -> None:
         cls = ApproximationClass(self.approximation_class)
@@ -983,6 +999,20 @@ class LocalGaussianPosterior:
             object.__setattr__(self, "covariance", tuple(tuple(float(v) for v in row) for row in cov))
         if not str(self.parameterization).strip() or not str(self.parameterization_digest).strip():
             raise HybridUQError("a local posterior records its parameterization and its identity")
+        # R-12 / R-31: the calibration design is frozen, and a design whose rows do not match its columns is
+        # not a design. A record either carries the whole of it or none of it.
+        object.__setattr__(self, "calibration_content_digest", str(self.calibration_content_digest))
+        object.__setattr__(self, "calibrated_conditions",
+                           tuple((str(name), str(unit)) for name, unit in self.calibrated_conditions))
+        object.__setattr__(self, "calibrated_condition_points",
+                           tuple(tuple(float(v) for v in row) for row in self.calibrated_condition_points))
+        width = len(self.calibrated_conditions)
+        if any(len(row) != width for row in self.calibrated_condition_points):
+            raise HybridUQError("every calibrated condition row has one magnitude per declared condition")
+        if bool(self.calibrated_condition_points) != bool(width):
+            raise HybridUQError("a calibrated condition design is its names and its rows, or neither")
+        if any(not math.isfinite(v) for row in self.calibrated_condition_points for v in row):
+            raise HybridUQError("a calibrated condition magnitude must be finite")
 
     # -- reading ----------------------------------------------------------------
     @property
@@ -1086,6 +1116,13 @@ class LocalGaussianPosterior:
             "upper_bounds": encode_vector(self.upper_bounds), "claim": self.claim.value,
             "diagnostics": self.diagnostics.to_dict(), "sensitivity_digest": self.sensitivity_digest,
             "dataset_id": self.dataset_id,
+            # R-12 / R-31: written only when they carry information, so a record written before the rule keeps
+            # its bytes and still reads back.
+            **({"calibration_content_digest": self.calibration_content_digest}
+               if self.calibration_content_digest else {}),
+            **({"calibrated_conditions": [list(pair) for pair in self.calibrated_conditions],
+                "calibrated_condition_points": [encode_vector(row) for row in self.calibrated_condition_points]}
+               if self.calibrated_conditions else {}),
         }
 
     @classmethod
@@ -1104,6 +1141,10 @@ class LocalGaussianPosterior:
             inference_point=decode_vector(payload["inference_point"]), covariance=decode_matrix(payload["covariance"]),
             lower_bounds=decode_vector(payload["lower_bounds"]), upper_bounds=decode_vector(payload["upper_bounds"]),
             diagnostics=diagnostics, sensitivity_digest=payload["sensitivity_digest"], dataset_id=payload["dataset_id"],
+            calibration_content_digest=payload.get("calibration_content_digest", ""),
+            calibrated_conditions=tuple(tuple(pair) for pair in payload.get("calibrated_conditions", ())),
+            calibrated_condition_points=tuple(
+                tuple(decode_vector(row)) for row in payload.get("calibrated_condition_points", ())),
         )
         problems = _posterior_record_problems(posterior)
         if problems:
@@ -1366,6 +1407,56 @@ def _clipped_radius(z0: "np.ndarray", direction: "np.ndarray", radius: float,
         elif step < 0.0:
             limit = min(limit, (float(lower[i]) - float(z0[i])) / step)
     return max(limit, 0.0)
+
+
+def _observation_content_digest(observations) -> str:
+    """ONE canonical digest of the observation CONTENT a posterior was calibrated on (R-12).
+
+    Over ``ObservationSet.to_dict()``, which is already the canonical serialization: the dataset id and, per
+    observation, the condition id, the observable name, the value and sigma with their units, the source ref
+    and the declared conditions with theirs. The CONTENT and not the dataset id, because two of R-12's three
+    audited reproductions keep the id and change the content -- the conditions rescaled, or the values
+    replaced by a predictor evaluated elsewhere. A dataset id is a label the caller writes.
+    """
+    return digest_of(observations.to_dict())
+
+
+def _calibrated_conditions(observations) -> tuple[tuple[str, str], ...]:
+    """The ``(name, unit)`` pairs of every condition EVERY calibration observation declares, sorted (R-31).
+
+    The intersection, not the union: a condition one observation declares and another does not is not a range
+    the calibration covered, and the domain gate already answered PREDICTION_DOMAIN_NOT_DECLARED for exactly
+    that case. The unit is the first observation's, which every row is then converted into.
+    """
+    rows = getattr(observations, "observations", ())
+    if not rows:
+        return ()
+    shared = set(rows[0].conditions)
+    for row in rows[1:]:
+        shared &= set(row.conditions)
+    out = []
+    for name in sorted(shared):
+        unit = rows[0].conditions[name].units
+        try:
+            for row in rows:
+                row.conditions[name].magnitude_in(unit)
+        except UnitCompatibilityError:
+            # A condition in another dimension is not ONE range, so it is not part of the design. Caught by
+            # its own type and not as `Exception`: a broad catch here also swallowed the KeyError a name
+            # missing from some observation raises, which made the INTERSECTION above unobservable -- a guard
+            # mutation turning it into a union survived twice.
+            continue
+        out.append((str(name), str(unit)))
+    return tuple(out)
+
+
+def _calibrated_condition_points(observations) -> tuple[tuple[float, ...], ...]:
+    """One row of condition magnitudes per calibration observation, aligned with ``_calibrated_conditions``."""
+    pairs = _calibrated_conditions(observations)
+    if not pairs:
+        return ()
+    return tuple(tuple(row.conditions[name].magnitude_in(unit) for name, unit in pairs)
+                 for row in observations.observations)
 
 
 def _declared_parameterization_digest(parameter_set: CalibrationParameterSet) -> str:
@@ -1757,6 +1848,11 @@ def local_gaussian_posterior(
         inference_point=tuple(z0), covariance=None if claim is RouteClaim.REFUSED else tuple(map(tuple, cov)),
         lower_bounds=tuple(lower), upper_bounds=tuple(upper), diagnostics=diagnostics,
         sensitivity_digest=sensitivity.digest, dataset_id=observations.dataset_id,
+        # R-12 / R-31: what this posterior was calibrated on, so a prediction's domain statement can be bound
+        # to it rather than to whatever a caller hands over later.
+        calibration_content_digest=_observation_content_digest(observations),
+        calibrated_conditions=_calibrated_conditions(observations),
+        calibrated_condition_points=_calibrated_condition_points(observations),
     )
     # Held for the router's grid rebuild only: a covariance the route refused to report is still the best
     # available DESIGN for a grid that the frozen V1 checks will then verify or refuse. Never serialized.

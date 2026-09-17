@@ -26,7 +26,14 @@ from ..scientific.twins import TwinReference
 from ..scientific.units.quantity import Quantity
 from ..uq.predictive import PredictiveObservableSpec, posterior_predictive_uq
 from ._records import decode_float, digest_of, encode_float, require_schema
-from .local_gaussian import LocalGaussianPosterior, PROBE_SD, _probe_directions
+from .local_gaussian import (
+    LocalGaussianPosterior,
+    PROBE_SD,
+    _calibrated_condition_points,
+    _calibrated_conditions,
+    _observation_content_digest,
+    _probe_directions,
+)
 from .sensitivity import DEFAULT_RELATIVE_STEP, RouteRefusedError, central_difference, evaluate, to_natural
 from .vocabulary import (
     GRID_ROUTE_MAXIMUM_PARAMETERS, MODEL_DISCREPANCY_NOT_MODELLED, UNCERTAINTY_SOURCES, ApproximationClass, HybridUQError, RouteClaim,
@@ -292,29 +299,121 @@ class RoutedPredictiveUncertainty:
 PREDICTION_RANGE_RELATIVE_TOLERANCE = 1.0e-9
 
 
-def _prediction_domain_reasons(spec: PredictiveObservableSpec, calibration_observations) -> set:
+def _condition_support_residual(rows: "np.ndarray", scales: "np.ndarray", point: "np.ndarray") -> float:
+    """How far ``point`` is from the convex hull of ``rows``, as the smallest achievable max scaled residual (R-31).
+
+    The prediction is INSIDE the calibrated domain when its condition vector is a convex combination of the
+    conditions the calibration observed. This solves
+
+        minimise t  subject to  -t <= (sum_i lambda_i c_i - c)_j / s_j <= t,  sum_i lambda_i = 1,  lambda >= 0
+
+    and returns ``t``. Zero (to the caller's tolerance) means inside the hull; the value is the distance in
+    units of each condition's own observed spread.
+
+    WHY THE HULL AND NOT A DISTANCE. A distance needs a metric and a threshold, and neither would be
+    derivable. Hull membership is the exact statement "this operating point lies between operating points the
+    calibration observed", and it degenerates correctly: a calibration at one point admits only that point, a
+    calibration along a line admits that segment, and a calibration that varied k conditions independently
+    admits its box. **At k = 1 it IS the [min, max] interval it replaces**, which is why this rule needs no
+    new number and changes nothing about a single-condition study.
+
+    The scaling is for the TOLERANCE only. Hull membership is affine-invariant, so dividing each condition by
+    its observed spread cannot change the answer; it only makes one tolerance comparable across conditions in
+    different units, which is what the per-condition ``max(|low|, |high|, |x|)`` scaling did before.
+    """
+    from scipy.optimize import linprog
+
+    scaled_rows = np.asarray(rows, dtype=float) / np.asarray(scales, dtype=float)
+    scaled_point = np.asarray(point, dtype=float) / np.asarray(scales, dtype=float)
+    n, k = scaled_rows.shape
+    # variables: (lambda_1..lambda_n, t); minimise t
+    cost = np.zeros(n + 1)
+    cost[-1] = 1.0
+    #  (A^T lambda - c)_j - t <= 0   and   -(A^T lambda - c)_j - t <= 0
+    upper = np.hstack([scaled_rows.T, -np.ones((k, 1))])
+    lower = np.hstack([-scaled_rows.T, -np.ones((k, 1))])
+    inequality = np.vstack([upper, lower])
+    bound = np.hstack([scaled_point, -scaled_point])
+    equality = np.zeros((1, n + 1))
+    equality[0, :n] = 1.0
+    # The solver has to be able to CERTIFY the tolerance the rule declares. HiGHS's default feasibility
+    # tolerance is 1e-7, a hundred times coarser than PREDICTION_RANGE_RELATIVE_TOLERANCE, so at the default
+    # a departure of 1e-8 of the observed spread returned exactly 0.0 and read inside -- the rule would have
+    # been silently a hundred times looser than it says. At 1e-10 the same departure returns 1.0e-8 and the
+    # one inside it, 1e-10 of the spread, returns 9.4e-11. Found while running batch 22's guard mutations.
+    done = linprog(cost, A_ub=inequality, b_ub=bound, A_eq=equality, b_eq=np.array([1.0]),
+                   bounds=[(0.0, None)] * n + [(0.0, None)], method="highs",
+                   options={"primal_feasibility_tolerance": 1.0e-10, "dual_feasibility_tolerance": 1.0e-10})
+    if not done.success:  # pragma: no cover - an infeasible program would mean the equality cannot be met
+        return math.inf
+    return float(done.x[-1])
+
+
+def _calibration_design(calibration_observations, posterior):
+    """``(names, rows)``: the condition design a prediction's domain is judged against, or ``None``.
+
+    The caller's ``calibration_observations`` when they are supplied -- already verified against the
+    posterior's content digest by the caller -- and the posterior's OWN stored design when they are not. That
+    second half is what stops R-12's simplest form: before it, supplying nothing left the gate with nothing to
+    compare and it answered PREDICTION_DOMAIN_NOT_DECLARED, so an extrapolation could be reported with a
+    caveat instead of being measured. The stored design is the posterior's own record of what it was fitted
+    to, not a caller's assertion, so using it can only make the statement more definite.
+    """
+    if getattr(calibration_observations, "observations", None):
+        pairs = _calibrated_conditions(calibration_observations)
+        rows = _calibrated_condition_points(calibration_observations)
+    else:
+        pairs = tuple(getattr(posterior, "calibrated_conditions", ()) or ())
+        rows = tuple(getattr(posterior, "calibrated_condition_points", ()) or ())
+    if not pairs or not rows:
+        return None
+    return pairs, np.asarray(rows, dtype=float)
+
+
+def _prediction_domain_reasons(spec: PredictiveObservableSpec, calibration_observations, posterior=None) -> set:
     """CORE-006: where a prediction sits relative to the conditions its calibration covered, as route reasons.
 
-    DOWNGRADED ``PREDICTION_DOMAIN_NOT_DECLARED`` when nothing can show it -- no calibration observations, no conditions
-    on the prediction, or a prediction condition some calibration observation does not declare -- and DOWNGRADED
-    ``PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`` when a condition lies outside the calibration's range of it. The range is
-    per condition: a joint region is not checked.
+    DOWNGRADED ``PREDICTION_DOMAIN_NOT_DECLARED`` when nothing can show it -- no calibration design at all, no
+    conditions on the prediction, or a prediction that does not declare every condition the calibration does --
+    and DOWNGRADED ``PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`` when the prediction's condition vector is not a
+    convex combination of the calibration's.
+
+    TWO THINGS CHANGED HERE, both R-31. The loop was over the PREDICTION's conditions, so a prediction that
+    simply left one out was compared on the rest and read SUPPORTED: a prediction at T = 900 K against a
+    calibration at T = 300 K was DOWNGRADED and the same prediction with T omitted was SUPPORTED. Every
+    condition the calibration declares must now be declared, or nothing shows where the prediction sits --
+    which is what PREDICTION_DOMAIN_NOT_DECLARED says, and is not the same as taking the value from the
+    calibration, which would be inventing the prediction's operating point.
+
+    And the comparison was per condition, so the region checked was the BOX around the calibration rather
+    than the calibration: with observations on a line in (T, load) a prediction inside both marginal ranges
+    and 0.707 of the scaled spread off that line passed. It is now the joint support -- see
+    ``_condition_support_residual``, which at one condition is the same interval on the same tolerance.
     """
-    observations = getattr(calibration_observations, "observations", None)
-    if not observations or not spec.conditions:
+    design = _calibration_design(calibration_observations, posterior)
+    if design is None or not spec.conditions:
         return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
-    for name, value in spec.conditions.items():
-        stated = [o.conditions.get(name) for o in observations]
-        if any(v is None for v in stated):
-            return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
-        try:
-            magnitudes = [v.magnitude_in(value.units) for v in stated]
-        except Exception:  # noqa: BLE001 - a condition in another dimension is not a range for this one
-            return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
-        low, high, x = min(magnitudes), max(magnitudes), value.magnitude
-        slack = PREDICTION_RANGE_RELATIVE_TOLERANCE * max(abs(low), abs(high), abs(x))
-        if x < low - slack or x > high + slack:
-            return {RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS}
+    pairs, rows = design
+    names = [name for name, _unit in pairs]
+    if any(name not in spec.conditions for name in names):
+        return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
+    if any(name not in names for name in spec.conditions):
+        return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
+    # The names are settled above, so the only thing left that can fail here is a unit conversion. The
+    # lookup is done first and separately: a single `try` around both would have caught a MISSING name as
+    # well, which made the explicit check above unobservable -- a guard mutation removing it survived.
+    values = [spec.conditions[name] for name, _unit in pairs]
+    try:
+        point = np.asarray([value.magnitude_in(unit) for value, (_name, unit) in zip(values, pairs)],
+                           dtype=float)
+    except Exception:  # noqa: BLE001 - a condition in another dimension is not a range for this one
+        return {RouteReason.PREDICTION_DOMAIN_NOT_DECLARED}
+    spread = rows.max(axis=0) - rows.min(axis=0)
+    reference = np.maximum(np.abs(rows).max(axis=0), np.abs(point))
+    scales = np.where(spread > 0.0, spread, np.where(reference > 0.0, reference, 1.0))
+    residual = _condition_support_residual(rows, scales, point)
+    if residual > PREDICTION_RANGE_RELATIVE_TOLERANCE:
+        return {RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS}
     return set()
 
 
@@ -334,6 +433,19 @@ def linearized_predictive_uq(
     """
     if not isinstance(posterior, LocalGaussianPosterior):
         raise HybridUQError("linearized_predictive_uq takes a LocalGaussianPosterior")
+    # R-12: a caller who supplies `calibration_observations` is ASSERTING that these are the observations the
+    # posterior was calibrated on. That assertion is either true or false; it is not evidence to be weighed,
+    # so a false one is refused rather than carried as a caveat -- the same shape as CORE-005's refusal for a
+    # grid that is not this request's evidence. Before this, another dataset's observations, the same
+    # observations with their conditions rescaled, or a predictor evaluated elsewhere all read SUPPORTED at a
+    # prediction of x = 1e4 against a calibration over x in [0, 1].
+    if getattr(calibration_observations, "observations", None) and posterior.calibration_content_digest:
+        supplied = _observation_content_digest(calibration_observations)
+        if supplied != posterior.calibration_content_digest:
+            raise HybridUQError(
+                f"the calibration_observations supplied are not the ones this posterior was calibrated on "
+                f"(content digest {supplied[:16]}... against {posterior.calibration_content_digest[:16]}...): "
+                f"a prediction's domain can only be stated against the calibration it came from")
     cov = posterior._require_numbers()
     if posterior.parameterization != "declared":
         raise HybridUQError("predict from the declared parameterization: a linearly mapped posterior has no forward model")
@@ -421,7 +533,7 @@ def linearized_predictive_uq(
     q = float(norm.ppf(0.5 + level / 2.0))
     out = []
     for i, spec in enumerate(specs):
-        spec_reasons = reasons | _prediction_domain_reasons(spec, calibration_observations)
+        spec_reasons = reasons | _prediction_domain_reasons(spec, calibration_observations, posterior)
         claim = claim_for(spec_reasons)
         out.append(RoutedPredictiveUncertainty(
             observation_key=spec.observation_key, unit=spec.unit, approximation_class=ApproximationClass.LINEARIZED_PREDICTIVE_UQ,

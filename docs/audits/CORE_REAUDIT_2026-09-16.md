@@ -1368,3 +1368,82 @@ every survival was informative:
   guard now reads a p = 1 route, which builds no matrix.
 
 **Open decisions.** None.
+
+### Batch 22 — I-13 part A
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-13 | **PARTIAL** (part A of two) | `dd96dfcc` (preregistration + 10 strict xfails), this commit | the convex hull is the region BETWEEN observed operating points, which is an interpolation claim and not a validity claim — a model can be wrong strictly inside it and nothing here says otherwise; the digest binds the OBSERVATIONS to the posterior and binds the `predict` evaluator to nothing, so a caller can still hand a predictive model the calibration never used (R-23, part B, is where the grid route's half of that closes); a condition declared by some observations and not others is still dropped from the design, which is the existing rule's meaning; the stored design is filled only on a non-refused local route; and part B still owns R-37 (the linearized nonlinearity is pooled across specs and never refused) and R-23 |
+
+**One claim, two problems.** A prediction's domain statement must be bound to the calibration it came from.
+
+**R-xx closed.**
+
+| ID | Status | How |
+|---|---|---|
+| R-12 | **FIXED** | ONE canonical digest of the observation CONTENT — `digest_of(observations.to_dict())`, over the existing canonical serialization: the dataset id and, per observation, the condition id, observable, value, sigma, source ref and declared conditions with their units. `LocalGaussianPosterior` carries it, and `linearized_predictive_uq` RAISES when the `calibration_observations` it is handed do not digest to it. **A raise and not a downgrade**, because a caller who supplies them is ASSERTING that these are the observations the posterior was calibrated on: that assertion is true or false, not evidence to be weighed, and a caveat on a false assertion reads as a statement about the science. It is the same shape as CORE-005's refusal for a grid that is not this request's evidence. **The content and not the dataset id**, because two of the three audited reproductions keep the id and change the content — the conditions rescaled, or the values replaced by a predictor evaluated elsewhere. And the posterior now carries the calibration's own condition design, so supplying NO observations applies the check instead of silencing it: an extrapolation to x = 1e4 is measured rather than reported with a caveat. |
+| R-31 | **FIXED** | Two things. **Every condition the calibration declares must be declared by the prediction**, or nothing shows where the prediction sits — which is what `PREDICTION_DOMAIN_NOT_DECLARED` says. The gate looped over the PREDICTION's conditions, so a prediction that simply left one out was compared on the rest: a prediction at T = 900 K against a calibration at T = 300 K was DOWNGRADED and the same prediction with T omitted was SUPPORTED. It is deliberately not answered by taking the value from the calibration, which would be inventing the prediction's operating point. **And the domain is the JOINT SUPPORT**: a prediction is inside when its condition vector is a convex combination of the calibration's condition rows, decided by a small linear program on the residual and compared with the tolerance the rule already declared. **At one condition the convex hull of the observed values IS the [min, max] interval it replaces**, so nothing about a single-condition study moves and no new number is introduced; at two or more it describes the region the calibration covered instead of the bounding box around it — with observations on a line in (T, load), a prediction inside both marginal ranges and 0.707 of the scaled spread off that line now reads `PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`. The hull also degenerates correctly: a calibration at one point admits only that point, and one that varied k conditions independently admits its box. |
+
+**Compatibility.** `LocalGaussianPosterior` gains three TRAILING fields with defaults
+(`calibration_content_digest`, `calibrated_conditions`, `calibrated_condition_points`), each serialized only
+when it carries information, so every record written under `hybrid_uq.local_gaussian_posterior/1` still reads
+back. `ObservationSet` is NOT touched — the digest is a private helper over its existing `to_dict`, so no
+V1-frozen symbol gains a member. No function gains a required argument and no predictive record gains a field.
+
+**Two amendments, both recorded with what forced them.** (1) The hull linear program is solved with HiGHS's
+feasibility tolerances set to 1e-10. Its DEFAULT is 1e-7, a hundred times coarser than
+`PREDICTION_RANGE_RELATIVE_TOLERANCE`: at the default, a departure of 1e-8 of the observed spread — ten times
+the declared tolerance — returned an objective of exactly 0.0 and read inside, so the rule would have been
+silently a hundred times looser than it says. A rule whose decision the solver cannot resolve is the solver's
+tolerance wearing the rule's number; the correction makes the solver meet the declared tolerance rather than
+moving the tolerance to suit the solver. (2) The condition lookup and the unit conversion are two statements
+rather than one `try`. A single broad catch around both swallowed the `KeyError` a missing name raises and
+returned `PREDICTION_DOMAIN_NOT_DECLARED` anyway, which made the explicit missing-name rule unobservable —
+a guard mutation removing it survived. The same broad-catch shape hid the condition design's INTERSECTION
+rule, and that catch is now by type (`UnitCompatibilityError`).
+
+**Existing expectations moved, three of them, none weakened.**
+
+* `test_core_scientific_audit_batch4.py::test_core006_a_prediction_with_no_declared_domain_is_downgraded`
+  asserted that supplying no `calibration_observations` ALSO reads `PREDICTION_DOMAIN_NOT_DECLARED`. That was
+  the simplest form of R-12: the gate had nothing to compare, so an extrapolation was reported with a caveat
+  instead of being measured. It now asserts the true statement — x = 0.5 is inside the calibrated range and
+  the record says nothing about the domain — and the same test now also asserts that x = 1e4 with no
+  observations supplied is `PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS`. The half the test is named for is
+  unchanged: a prediction that declares NO conditions still has no domain to state.
+* `test_hybrid_uq_identifiability_predictive.py` and `test_hybrid_uq_trust_boundary.py` built their
+  posteriors on the bare observations and then passed `S.conditioned(...)` — the same observations with the
+  conditions declared afterwards — as `calibration_observations`. Both fixtures now CALIBRATE on the
+  conditioned set. A rule that accepted the same observations with conditions ADDED could not tell that apart
+  from the same observations with their conditions RESCALED, which is one of R-12's three reproductions; the
+  conditions are part of the evidence and belong on the observations the fit used. The fit itself is
+  unchanged, because a declared condition enters no residual, and both fixtures still assert SUPPORTED with
+  no reasons.
+
+**Verification.** FAST tier 6744 passed, 5 skipped, 1 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
+`tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
+under `src/engcore/domains/thermal/` was edited.
+
+**Committed evidence.** Nothing moved. The production TCR study declares one condition, where the hull rule
+and the interval rule agree exactly, and no committed record carries a `calibration_observations` mismatch or
+a prediction that declares a strict subset of its calibration's conditions — so `FAILURE_CASES.json`,
+`TCR.json` and `PERFORMANCE.json` are unchanged and were not regenerated. `KINETICS_K2.json` and
+`BATTERY_T41.json` keep their SUPERSEDED markers.
+
+**Guard mutations, and the five findings they produced.** `BATCH22_MUTATIONS.log`: **12 of 12 KILLED**,
+control green, plus 18 pinned re-runs on the two changed files all KILLED. Five survived the first run:
+
+* **B22f** (the missing-name rule deleted) and **B22e** (the design's intersection turned into a union) both
+  survived because a broad `except Exception` caught the `KeyError` each mutation then raises and answered
+  with the same reason. Both catches are now by type, and the amendment above records it.
+* **B22i** (hull weights allowed to go negative, which makes the region the affine SPAN) survived the off-line
+  point, which is off the span as well. The case added for it is an extrapolation ALONG the calibrated line,
+  20 K past its last observation, where the span and the hull differ.
+* **B22k** (the per-condition scaling replaced by ones) survived every reproduction, which were all far
+  outside or exactly inside. The case added for it sits a tenth of the tolerance inside and ten times it
+  outside — and that case is what exposed the solver tolerance.
+* **B22l** (a condition the calibration never declared silently ignored) survived because every reproduction
+  declared exactly the design's names.
+
+**Open decisions.** None.

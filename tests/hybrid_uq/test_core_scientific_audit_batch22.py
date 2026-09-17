@@ -15,6 +15,11 @@ domain statement must be bound to the calibration it came from.**
 Preregistered in `benchmarks/core_v4_false_confidence/BATCH22_THRESHOLD_PROTOCOL.json`. No new threshold: the
 joint-support rule is convex-hull membership, which at ONE condition IS the [min, max] interval it replaces,
 on the same `PREDICTION_RANGE_RELATIVE_TOLERANCE`.
+
+The ten reproductions that reproduced were committed as strict xfails in `dd96dfcc`, before any of part A
+was written, and each was confirmed there to fail on its own assertion. The markers came off in the
+implementing commit. The other three held already and were unmarked at preregistration, each with a comment
+above it saying why it is kept.
 """
 
 from __future__ import annotations
@@ -106,7 +111,6 @@ def _reasons(post, observations, spec):
 # =====================================================================
 # R-12: the calibration content, digested once and bound
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r12_the_posterior_carries_one_digest_of_the_content_it_was_calibrated_on():
     module = _module()
     _problem, observations, post = _temperature_only()
@@ -115,7 +119,6 @@ def test_r12_the_posterior_carries_one_digest_of_the_content_it_was_calibrated_o
     assert digest == _symbol(module, "_observation_content_digest")(observations)
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r12_the_posterior_carries_the_conditions_it_was_calibrated_at():
     _problem, _observations, post = _line(AUDITED_LINE)
     assert tuple(_field(post, "calibrated_conditions")) == (("load", UNIT), ("temperature", KELVIN))
@@ -123,7 +126,6 @@ def test_r12_the_posterior_carries_the_conditions_it_was_calibrated_at():
     assert points == tuple((1.0 + 0.4 * i, 300.0 + 4.0 * i) for i in range(6)), points
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r12_another_datasets_observations_are_refused_rather_than_weighed():
     """A caller who supplies them is ASSERTING they are the calibration's. That is true or false, not evidence."""
     _problem, _observations, post = _temperature_only()
@@ -133,7 +135,6 @@ def test_r12_another_datasets_observations_are_refused_rather_than_weighed():
                                  calibration_observations=other)
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r12_the_same_observations_with_rescaled_conditions_are_refused():
     """Two of the three audited reproductions keep the dataset_id and change the content."""
     _problem, observations, post = _temperature_only()
@@ -156,7 +157,6 @@ def test_r12_the_observations_the_posterior_was_calibrated_on_are_accepted():
     assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS not in reasons
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r12_an_extrapolation_cannot_be_hidden_by_supplying_no_observations_at_all():
     """The posterior's own stored design is what it was fitted to, so omitting the observations applies the check."""
     _problem, _observations, post = _temperature_only()
@@ -168,7 +168,6 @@ def test_r12_an_extrapolation_cannot_be_hidden_by_supplying_no_observations_at_a
 # =====================================================================
 # R-31: every declared condition, and the joint support
 # =====================================================================
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r31_a_prediction_that_omits_a_condition_the_calibration_declares_is_not_declared():
     _problem, observations, post = _line(AUDITED_LINE)
     partial, _record = _reasons(post, observations, _spec({"temperature": Quantity(310.0, KELVIN)}))
@@ -187,13 +186,20 @@ def test_r31_a_prediction_outside_a_declared_condition_is_still_outside():
     assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS in outside, outside
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r31_the_joint_support_is_the_region_covered_and_not_the_box_around_it():
     """The audited geometry: three observations on a line, and a point in the box that is off the line."""
     _problem, observations, post = _line(AUDITED_LINE)
     off_line, _record = _reasons(post, observations, _spec(
         {"temperature": Quantity(300.0, KELVIN), "load": Quantity(3.0, UNIT)}))
     assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS in off_line, off_line
+    # ADDED while running batch 22's guard mutations, not preregistered. B22i let the hull weights go
+    # NEGATIVE, which makes the region the affine SPAN of the observed conditions -- for observations on a
+    # line, the infinite line. The off-line point above cannot see that, because it is off the span too. A
+    # point ON the calibrated line and beyond its end can: (340, 5) satisfies load = 1 + 0.1 (T - 300)
+    # exactly and is an extrapolation of 20 K past the last observation.
+    along_the_line, _record = _reasons(post, observations, _spec(
+        {"temperature": Quantity(340.0, KELVIN), "load": Quantity(5.0, UNIT)}))
+    assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS in along_the_line, along_the_line
     for temperature, load in ((310.0, 2.0), (306.0, 1.6), (300.0, 1.0), (320.0, 3.0)):
         on_line, _record = _reasons(post, observations, _spec(
             {"temperature": Quantity(temperature, KELVIN), "load": Quantity(load, UNIT)}))
@@ -201,7 +207,6 @@ def test_r31_the_joint_support_is_the_region_covered_and_not_the_box_around_it()
         assert RouteReason.PREDICTION_DOMAIN_NOT_DECLARED not in on_line, (temperature, load, on_line)
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r31_the_audited_off_line_point_is_0_707_of_the_scaled_spread_away():
     """The number the audit measured, from the rule that now decides: 1/sqrt(2) off a unit diagonal."""
     module = _module()
@@ -216,7 +221,57 @@ def test_r31_the_audited_off_line_point_is_0_707_of_the_scaled_spread_away():
     assert float(np.linalg.norm(scaled - 0.5 * np.array([1.0, 1.0]))) == pytest.approx(0.7071, abs=0.001)
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
+# ADDED while running batch 22's guard mutations, not preregistered. B22k replaced the per-condition scaling
+# with ones and survived, because every reproduction was far outside or exactly inside. The scaling is what
+# makes ONE tolerance mean the same thing on a condition of order 300 and on one of order 1, which is what
+# the per-condition `max(|low|, |high|, |x|)` scaling did before it.
+def test_r31_the_tolerance_is_relative_to_the_condition_the_calibration_spread_over():
+    module = _module()
+    residual = _symbol(module, "_condition_support_residual")
+    _problem, observations, post = _line(AUDITED_LINE)
+    spread = 20.0
+    inside = 300.0 - 0.1 * module.PREDICTION_RANGE_RELATIVE_TOLERANCE * spread
+    close, _record = _reasons(post, observations, _spec(
+        {"temperature": Quantity(inside, KELVIN), "load": Quantity(1.0 + 0.1 * (inside - 300.0), UNIT)}))
+    assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS not in close, (inside, close)
+    # and a departure ten times the tolerance is outside, so the slack is the tolerance and not a hole
+    outside = 300.0 - 10.0 * module.PREDICTION_RANGE_RELATIVE_TOLERANCE * spread
+    far, _record = _reasons(post, observations, _spec(
+        {"temperature": Quantity(outside, KELVIN), "load": Quantity(1.0 + 0.1 * (outside - 300.0), UNIT)}))
+    assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS in far, (outside, far)
+    # the same departure judged with no scaling reads 2e-9 rather than 1e-10, which is the whole of what the
+    # scaling is for: one tolerance, comparable across conditions in different units
+    rows = np.asarray(_field(post, "calibrated_condition_points"), dtype=float)
+    point = np.asarray([1.0 + 0.1 * (inside - 300.0), inside])
+    assert residual(rows, np.array([2.0, spread]), point) < module.PREDICTION_RANGE_RELATIVE_TOLERANCE
+    assert residual(rows, np.array([1.0, 1.0]), point) > module.PREDICTION_RANGE_RELATIVE_TOLERANCE
+
+
+# ADDED while running batch 22's guard mutations, not preregistered. B22l let a prediction declare a
+# condition the calibration never did and have it IGNORED, and every reproduction declared exactly the
+# design's names, so nothing could see it. A prediction at an operating point the calibration says nothing
+# about has no domain statement, whichever direction the extra name points in.
+def test_r31_a_prediction_that_declares_a_condition_the_calibration_never_did_is_not_declared():
+    _problem, observations, post = _temperature_only()
+    extra, _record = _reasons(post, observations, _spec(
+        {"temperature": Quantity(300.0, KELVIN), "pressure": Quantity(1.0, UNIT)}))
+    assert RouteReason.PREDICTION_DOMAIN_NOT_DECLARED in extra, extra
+
+
+# ADDED while running batch 22's guard mutations, not preregistered. B22e turned the design's INTERSECTION
+# into a union and survived, because `S.conditioned` and every case here declare the same conditions on every
+# observation. A condition only some observations declare is not a range the calibration covered -- the rule
+# the gate already had, now with a case.
+def test_r31_a_condition_only_some_observations_declare_is_not_a_range_the_calibration_covered():
+    rows = [{"temperature": Quantity(300.0 + 4.0 * i, KELVIN)} for i in range(6)]
+    rows[3] = {}
+    _problem, observations, post = _line(rows)
+    assert tuple(_field(post, "calibrated_conditions")) == ()
+    assert tuple(_field(post, "calibrated_condition_points")) == ()
+    reasons, _record = _reasons(post, observations, _spec({"temperature": Quantity(310.0, KELVIN)}))
+    assert RouteReason.PREDICTION_DOMAIN_NOT_DECLARED in reasons, reasons
+
+
 def test_r31_at_one_condition_the_rule_is_the_interval_it_always_was():
     module = _module()
     residual = _symbol(module, "_condition_support_residual")
@@ -238,7 +293,6 @@ def test_r31_a_calibration_that_held_a_condition_fixed_admits_only_that_value():
     assert RouteReason.PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS in beside, beside
 
 
-@pytest.mark.xfail(strict=True, reason="I-13 part A not implemented yet (batch 22 preregistration)")
 def test_r31_the_claim_follows_the_reason_on_the_record_itself():
     """The record is what a reader sees, so the word has to be on it and not only in the helper."""
     _problem, observations, post = _line(AUDITED_LINE)

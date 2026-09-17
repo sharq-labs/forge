@@ -46,8 +46,21 @@ def test_core006_a_prediction_with_no_declared_domain_is_downgraded():
     record = linearized_predictive_uq(post, _predict_at(0.5), [_spec()], calibration_observations=P.observations)[0]
     assert record.route_claim is RouteClaim.DOWNGRADED
     assert "PREDICTION_DOMAIN_NOT_DECLARED" in {r.value for r in record.reasons}
+    # This asserted that supplying no calibration_observations ALSO reads PREDICTION_DOMAIN_NOT_DECLARED, and
+    # that was the simplest form of R-12: the gate had nothing to compare, so an extrapolation was reported
+    # with a caveat instead of being measured. I-13 part A (batch 22) stores the calibration's own condition
+    # design on the posterior, so omitting the observations now APPLIES the check rather than silencing it --
+    # x = 0.5 is inside the calibrated range and the record says nothing about the domain, which is the true
+    # statement. The half above is unchanged and is what this test is named for: a prediction that declares NO
+    # conditions still has no domain to state, whatever the calibration carries, because nothing says where
+    # it sits. The extrapolation half is
+    # `test_core006_an_extrapolated_prediction_is_downgraded_and_an_interpolated_one_is_not` and
+    # `tests/hybrid_uq/test_core_scientific_audit_batch22.py::test_r12_an_extrapolation_cannot_be_hidden_by_supplying_no_observations_at_all`.
     unbound = linearized_predictive_uq(post, _predict_at(0.5), [_spec(0.5)])[0]
-    assert "PREDICTION_DOMAIN_NOT_DECLARED" in {r.value for r in unbound.reasons}
+    assert "PREDICTION_DOMAIN_NOT_DECLARED" not in {r.value for r in unbound.reasons}
+    assert "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS" not in {r.value for r in unbound.reasons}
+    far = linearized_predictive_uq(post, _predict_at(1.0e4), [_spec(1.0e4)])[0]
+    assert "PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS" in {r.value for r in far.reasons}
 
 
 def test_core006_an_extrapolated_prediction_is_downgraded_and_an_interpolated_one_is_not():

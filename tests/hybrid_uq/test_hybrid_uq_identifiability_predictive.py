@@ -26,7 +26,7 @@ from engcore.hybrid_uq import (
     local_gaussian_posterior,
 )
 from engcore.hybrid_uq.identifiability import classify
-from engcore.inference import AdmittedForwardTable, GridResolutionError, IdentifiabilityStatus, assess_identifiability
+from engcore.inference import AdmittedForwardTable, GridResolutionError, IdentifiabilityStatus, assess_identifiability, calibrate
 from engcore.scientific.ir.problem import ModelReference
 from engcore.scientific.twins import TwinReference
 from engcore.scientific.units.quantity import Quantity
@@ -264,7 +264,16 @@ def _linear(t):
 
 
 def _supported_affine_posterior():
-    post = _local(S.affine())
+    # R-12 (I-13 part A, batch 22): calibrated ON the conditioned observations, not on the bare ones with
+    # the conditions declared afterwards. A posterior now carries a digest of the observation CONTENT it was
+    # fitted to, and `linearized_predictive_uq` refuses `calibration_observations` that do not match -- a
+    # rule that accepted the same observations with conditions ADDED could not tell that apart from the same
+    # observations with their conditions RESCALED, which is one of R-12's three audited reproductions. The
+    # conditions are part of the evidence and belong on the observations the fit used. The fit itself is
+    # unchanged: a declared condition enters no residual.
+    problem = S.affine()
+    fit = calibrate(problem.spec, CALIBRATED, problem.forward, heldout_dataset_id="synthetic.affine.heldout")
+    post = local_gaussian_posterior(fit, CALIBRATED, problem.forward, multistart=MultistartPolicy())
     assert post.claim is RouteClaim.SUPPORTED and not post.reasons
     return post
 

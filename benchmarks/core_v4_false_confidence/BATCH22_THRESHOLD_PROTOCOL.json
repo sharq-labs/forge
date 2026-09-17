@@ -73,5 +73,20 @@
   ],
   "decisions_needed": [],
   "amendments": "recorded here as dated entries, never edited in place",
-  "amendment_log": []
+  "amendment_log": [
+    {
+      "date": "2026-09-17",
+      "rule": "the_domain_is_the_joint_support_not_the_marginal_ranges",
+      "what_changed": "The linear program that decides hull membership is now solved with HiGHS's primal and dual feasibility tolerances set to 1e-10, rather than at its defaults. No scientific threshold moved: PREDICTION_RANGE_RELATIVE_TOLERANCE is still 1e-9 and is still the rule.",
+      "the_numbers_that_forced_it": "HiGHS's default feasibility tolerance is 1e-7, a hundred times COARSER than the tolerance the rule declares. At the default, a prediction departing from the calibrated line by 1e-8 of the observed spread -- ten times the declared tolerance -- returned an objective of exactly 0.0 and read INSIDE. At 1e-10 the same departure returns 1.0e-8 and is outside, and a departure of 1e-10 of the spread returns 9.4e-11 and is inside. Measured on the audited six-point line with spreads of 2 and 20.",
+      "why_this_is_not_a_threshold_change": "a rule whose decision the solver cannot resolve is not the rule it says it is -- it is the solver's tolerance wearing the rule's number. The correction makes the solver meet the declared tolerance rather than moving the declared tolerance to suit the solver, which is the direction that keeps the rule's meaning.",
+      "found_by": "test_r31_the_tolerance_is_relative_to_the_condition_the_calibration_spread_over, added while running batch 22's guard mutations for B22k -- the scaling mutation survived every reproduction, and the case written to kill it is what exposed the solver tolerance."
+    },
+    {
+      "date": "2026-09-17",
+      "rule": "a_prediction_that_omits_a_condition_the_calibration_declares_is_not_declared",
+      "what_changed": "The condition lookup and the unit conversion are two statements, not one `try`. The explicit missing-name check decides a missing name; the `try` decides only a unit conversion.",
+      "the_numbers_that_forced_it": "none -- a structural finding, not a measurement. Guard mutation B22f removed the explicit check and SURVIVED: a single `try` around both the lookup and the conversion caught the resulting KeyError and returned PREDICTION_DOMAIN_NOT_DECLARED anyway, so the rule the preregistration is about was unobservable. It reads the same either way today; it would stop reading the same the moment the conversion branch changed."
+    }
+  ]
 }

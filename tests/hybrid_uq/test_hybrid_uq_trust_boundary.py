@@ -262,8 +262,19 @@ def test_m_a_valid_covariance_still_round_trips_byte_identically():
 def _supported_multistart_posterior():
     from engcore.hybrid_uq import MultistartPolicy
 
+    from engcore.inference import calibrate
+
+    # R-12 (I-13 part A, batch 22): calibrated ON the conditioned observations, not on the bare ones with
+    # the conditions declared afterwards. A posterior now carries a digest of the observation CONTENT it was
+    # fitted to, and `linearized_predictive_uq` refuses `calibration_observations` that do not match -- a
+    # rule that accepted the same observations with conditions ADDED could not tell that apart from the same
+    # observations with their conditions RESCALED, which is one of R-12's three audited reproductions. The
+    # conditions are part of the evidence and belong on the observations the fit used. The fit itself is
+    # unchanged: a declared condition enters no residual.
     P = S.affine()
-    post = local_gaussian_posterior(P.calibrate(), P.observations, P.forward, multistart=MultistartPolicy())
+    observations = S.conditioned(P)
+    fit = calibrate(P.spec, observations, P.forward, heldout_dataset_id="synthetic.affine.heldout")
+    post = local_gaussian_posterior(fit, observations, P.forward, multistart=MultistartPolicy())
     assert post.claim is RouteClaim.SUPPORTED and post.reasons == ()
     return post
 
