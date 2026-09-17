@@ -8,6 +8,8 @@ only a report object the caller hands over, and that report is never linked to t
 solve whose OWN report claims NUMERICALLY_CONVERGED is admitted as "analytic" if the caller attaches a report
 that reaches DIMENSIONALLY_VALID; the numerical route accepts the source's own single-solve report as the
 sequence's; a source with no models crosses either route; and `binding_ref` binds nothing.
+
+Recorded as strict xfails in commit 86cbdc26, each seen failing on its own assertion, before the fix.
 """
 
 from __future__ import annotations
@@ -73,7 +75,6 @@ def test_r71_an_honest_analytic_prediction_is_unchanged():
     assert _analytic().admission_route == "analytic"
 
 
-@pytest.mark.xfail(strict=True, reason="R-71 finding 98 as audited: the disjointness check reads the report the CALLER passed, so an iterative solve whose own report claims NUMERICALLY_CONVERGED is admitted as analytic")
 def test_r71_an_analytic_prediction_over_an_iterative_solve_is_refused():
     """The audited case: the source's OWN report claims NUMERICALLY_CONVERGED and the route admits it."""
     source = _source(validation=NUMERICAL_REPORT, convergence=ConvergenceState.CONVERGED)
@@ -82,7 +83,6 @@ def test_r71_an_analytic_prediction_over_an_iterative_solve_is_refused():
         _analytic(source)
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: nothing asks whether the model has something to converge -- not the solver, not the convergence state, not the model")
 def test_r71_an_analytic_prediction_over_a_converged_source_is_refused_even_without_the_level():
     """A converged solve is an iterative solve whether or not its report says so."""
     source = _source(convergence=ConvergenceState.CONVERGED)
@@ -90,7 +90,6 @@ def test_r71_an_analytic_prediction_over_a_converged_source_is_refused_even_with
         _analytic(source)
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: the analytic validation is a separate field never compared with the source result's own report")
 def test_r71_the_dimensional_level_has_to_be_in_the_sources_own_report():
     source = _source(validation=ValidationReport(checks=(ValidationCheck(
         name="dimensional_consistency", outcome=ValidationOutcome.NOT_RUN,
@@ -106,7 +105,6 @@ def test_r71_an_honest_numerical_prediction_is_unchanged():
     assert _numerical().admission_route == "numerical"
 
 
-@pytest.mark.xfail(strict=True, reason="R-71 as audited: the numerical route accepts the source's own single-solve report as sequence_validation")
 def test_r71_the_sources_own_report_is_not_its_sequence_report():
     """As audited: the numerical route accepts the source's own single-solve report."""
     source = _source(validation=NUMERICAL_REPORT, convergence=ConvergenceState.CONVERGED)
@@ -114,7 +112,6 @@ def test_r71_the_sources_own_report_is_not_its_sequence_report():
         _numerical(source, sequence_validation=source.validation)
 
 
-@pytest.mark.xfail(strict=True, reason="R-71: nothing checks that the report describes a sequence at all")
 def test_r71_a_sequence_report_names_at_least_two_members():
     one_member = ValidationReport(checks=(ValidationCheck(
         name="tolerance_ladder", outcome=ValidationOutcome.PASS,
@@ -128,7 +125,6 @@ def test_r71_a_sequence_report_names_at_least_two_members():
 # an_admitted_source_names_at_least_one_model
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("route", ["analytic", "numerical"])
-@pytest.mark.xfail(strict=True, reason="R-71 as audited: a source with no models crosses either route, because the applicability loop iterates over result.models")
 def test_r71_a_source_that_names_no_model_is_refused(route):
     """As audited: the applicability loop iterates over result.models, which is empty."""
     source = _source(models=(), validity_not_assessed={})
@@ -141,7 +137,6 @@ def test_r71_a_source_that_names_no_model_is_refused(route):
 # a_binding_reference_names_something_the_source_carries
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("route", ["analytic", "numerical"])
-@pytest.mark.xfail(strict=True, reason="R-71 as audited: binding_ref and verification_ref are free strings that are never checked against provenance")
 def test_r71_a_binding_reference_that_names_nothing_in_the_source_is_refused(route):
     builder = _analytic if route == "analytic" else _numerical
     with pytest.raises(InferenceAdmissibilityError, match="binding"):
@@ -154,3 +149,25 @@ def test_r71_a_binding_reference_that_names_nothing_in_the_source_is_refused(rou
 def test_r71_the_references_the_in_tree_producers_write_are_accepted(ref):
     """The control: the candidates are what the producers already write, not a new convention."""
     assert _analytic(binding_ref=ref) is not None
+
+
+# ---------------------------------------------------------------------------
+# cases added while running this batch's guard mutations, to separate two rules
+# that both fire on the reproductions above
+# ---------------------------------------------------------------------------
+def test_r71_a_source_whose_own_report_claims_convergence_is_refused_at_not_applicable_too():
+    """Only the report rule sees this record: the convergence state says NOT_APPLICABLE and the report
+    claims NUMERICALLY_CONVERGED, which is a record contradicting itself -- and either half of it is
+    enough to say the source has something to converge."""
+    source = _source(validation=NUMERICAL_REPORT)
+    assert source.convergence is ConvergenceState.NOT_APPLICABLE
+    with pytest.raises(InferenceAdmissibilityError, match="OWN validation claims NUMERICALLY_CONVERGED"):
+        _analytic(source)
+
+
+def test_r71_the_sources_own_report_is_refused_even_when_it_names_two_members():
+    """Only the identity rule sees this one: the report would satisfy the member count, and it is still
+    the single solve's own report rather than the sequence's."""
+    source = _source(validation=SEQUENCE, convergence=ConvergenceState.CONVERGED)
+    with pytest.raises(InferenceAdmissibilityError, match="own validation report"):
+        _numerical(source, sequence_validation=source.validation)

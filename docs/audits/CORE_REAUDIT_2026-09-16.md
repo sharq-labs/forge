@@ -2836,3 +2836,62 @@ pinned test's own forward table declared no observation units and the new admiss
 the fixture now declares them, which is the same fixture change the batch made everywhere else.
 
 **Open decisions.** None.
+
+### Batch 46 — I-28 part C (the last part)
+
+| ID | Status | Commits | Residuals |
+|---|---|---|---|
+| I-28 | **DONE** (parts A–C) | `9788100d`, `d6b73c9c` (A, R-59), `468262ab` + `304d458b` (B, finding 102), `86cbdc26` (C preregistration + 9 strict xfails), this commit | `verification_ref` is still a free string; `sequence_validation` is not bound by content to this model, these observables or the members' run ids; no registry says which model identities are closed-form |
+
+**R-71's finding 98 is FIXED, and R-71 is FIXED.** The boundary whose whole purpose is that *"a usable
+single solve cannot certify its own numerical adequacy"* read only a report object the caller handed over,
+and that report was never linked to the source result.
+
+| Claim | Status | How |
+|---|---|---|
+| an iterative solve admitted as analytic | **FIXED** | The disjointness refusal read the report the **caller** passed, so it fired exactly when it was not needed: a numerical result that never established convergence could be relabelled analytic and admitted on the weaker evidence. The route now reads the **source's own** record — its report must not claim `NUMERICALLY_CONVERGED`, and its convergence state must be `NOT_APPLICABLE`, which is what a closed-form evaluation records and both in-tree analytic producers already write. The easier case needed no false claim at all, only a silent report: a `CONVERGED` source whose report simply did not mention convergence crossed unchallenged, and is now refused by the state. |
+| dimensional evidence attached beside the record | **FIXED** | `DIMENSIONALLY_VALID` had to be attained by the caller's report only. It must now also be attained by the **source's** own report: the evidence for an analytic admission is a fact about the record the prediction is about, and a document handed over beside it does not put it there. |
+| the single solve's own report as the sequence's | **FIXED** | The numerical route accepted `sequence_validation` **identical to the source's own validation** — the single solve certifying itself, which is the one thing this boundary exists to refuse. That is now refused, and the establishing check must name at least **two distinct evidence entries**: a convergence *sequence* has members, and one member is a single solve. Two is definitional, not tuned (class A). |
+| a source naming no model | **FIXED** | `_require_applicability_not_refuted` iterates over `result.models`, so a source with **no** models satisfied it vacuously and crossed either route. Both routes now refuse it — the same rule batch 43 put in `result_establishment_problems` for selection, one boundary over, for the same reason: a number no model claims is not evidence about a model's parameters. |
+| `binding_ref` binding nothing | **FIXED** | The audited reference was `'binding:p'`, which names nothing in the source it claims to bind. A reference is now accepted only when the source's own record contains it — its id, its run id, a declared model or solver identity (`model_id` or `model_id@version`), or a value its metadata carries. The candidates are not a new convention: they are what the in-tree producers already write (`model_id@version` from the battery calibration and the TCR study; a physics fingerprint the CSTR source's provenance metadata carries). |
+
+**Reach.** REACHED, and this contradicts the audit's own `library-only` for R-71 — the ledger keeps the
+audit's word in the field and says so in the row. Both routes are built on production paths: the battery OCV
+calibration and the TCR study build analytic predictions, the two CSTR inference adapters build numerical
+ones, and all four already satisfy the new rules with the references and reports they were writing before
+this batch.
+
+**Compatibility.** Additive only, and nothing public was added: five private helpers and one private
+module-level constant in `engcore/inference/admissibility.py`. No field, default, enum member or signature
+moved, and the frozen surface and its symbol count are untouched (batch 45's amendment 1). Three in-tree
+fixtures needed realistic values, each commented in place: `tests/test_core_trust_closure.py`'s
+`binding_ref="binding:p"` (now the model identity its source declares) and its one-member `_SEQUENCE`, and
+the same two in `tests/test_trust_boundary_admitted_row.py`, whose expected admission ref string moves with
+the binding reference.
+
+**Committed evidence.** Nothing moved; no committed JSON carries an admissible-prediction payload.
+
+**Verification.** The batch's own file 18 passed; `tests/test_core_trust_closure.py` and
+`tests/test_trust_boundary_admitted_row.py` green. FAST tier **7039 passed, 5 skipped, 19 failed** — exactly
+the by-design set, with no load-sensitive extra this time. `tests/test_mutation_harness.py` 6 passed;
+`tests/mutation_guards.py` untouched. Guard reach ledger clean over **26** guards, with the new R-71 row
+REACHED/FIXED and the part-A/B row now FIXED and still LATENT. Expensive tier **528 passed, 18 failed,
+14 errors** — the recorded baseline. Noted while verifying rather than explained away, and not introduced
+here: `tests/domains/kinetics/test_cstr_domain.py::test_the_five_stages_are_separable_and_ordered` and
+`::test_benign_regime_converges_and_is_usable` are two of those 18: a single solve's report reads `NOT_RUN`
+where they assert `PASS`, and they fail identically at `304d458b` and at `86cbdc26`. They predate this batch
+and belong to the baseline, and the underlying state — a single-solve CSTR report whose status is `NOT_RUN`
+because three of its checks are deferred to the verification sequence — is recorded here as an open
+observation for the I-30 round.
+
+**Guard mutations.** `BATCH46_MUTATIONS.log`: **7 of 7 KILLED**, control green. Two were repointed while
+running them, each recorded in the log: B46a (the source-report rule) at a record whose convergence state
+says `NOT_APPLICABLE` while its report claims convergence — a record contradicting itself, and the only
+case the report rule alone sees — and B46d (the sequence-identity rule) at a source report that would
+satisfy the member count, because the audited fixture is refused by the member rule too. Both cases were
+added to the batch's test file as named tests rather than left implicit.
+`BATCH46_PINNED_MUTATIONS.log`: **NONE** — no pinned mutation in `tests/mutation_guards.py` targets
+`engcore/inference/admissibility.py`, which is itself a fact about coverage this file did not have before
+part C, and the batch's seven guards join the pinned population in the I-30 round.
+
+**Open decisions.** None.

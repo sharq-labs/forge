@@ -99,7 +99,9 @@ SEQUENCE = ValidationReport(
             establishes=ValidationLevel.NUMERICALLY_CONVERGED,
             residual=1e-10,
             tolerance=1e-8,
-            evidence=("fixture: a synthetic tolerance ladder",),
+            # R-71: a convergence SEQUENCE has members, and its establishing check now names at
+            # least two of them; one entry is a single solve, which admission refuses.
+            evidence=("fixture: ladder member 1", "fixture: ladder member 2"),
         ),
     )
 )
@@ -110,7 +112,9 @@ def _prediction(prediction_id: str = "tb2-pred", value: float = 1.25):
         prediction_id=prediction_id,
         domain="synthetic",
         adapter_id="tb2-adapter",
-        binding_ref=f"binding:{prediction_id}",
+        # R-71 (I-28 part C): a binding reference now has to name something the source's own record
+        # carries, so the fixture writes the model identity its source declares instead of a free string.
+        binding_ref=f"{MODEL[0]}@{MODEL[1]}",
         source_result=_source(f"{prediction_id}-source", value),
         observable_names=("y",),
         sequence_validation=SEQUENCE,
@@ -149,7 +153,7 @@ def test_the_official_admission_path_still_produces_an_admitted_row():
     # needs that before the ids, and a ref that omitted it would make the two
     # routes indistinguishable after the fact.
     assert row.admission_refs == (
-        "numerical|tb2-pred|verification:tb2-pred|binding:tb2-pred",
+        "numerical|tb2-pred|verification:tb2-pred|synthetic.tb2_response@1.0.0",
     )
     assert row.rejection_reason == ""
     # The constructor is the same gate under its own name.
