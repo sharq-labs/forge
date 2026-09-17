@@ -952,10 +952,8 @@ empty set used to fall through to a control run with an empty test list, which p
 everything", giving 15 errors and a RED control for a run that measured nothing. Recorded in the protocol's
 `amendment_log`; batch 16's own six ran against a green control before that fix and their verdicts stand.
 
-**Verification.** The targeted files pass (106 tests over `test_core_scientific_audit_batch16`,
-`test_conduction2d`, `test_field_records`, `test_field_profiled_conditions` and the mutation harness). The
-FAST and expensive tier runs were still in flight when this commit was written and are recorded in the
-commit that follows it -- stated that way rather than claimed here.
+**Verification.** FAST tier 6643 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors -- the recorded baseline's lists exactly.
 `tests/test_mutation_harness.py` 6 passed, every anchor intact;
 `tests/mutation_guards.py` untouched. Nothing under `src/engcore/domains/thermal/` was edited.
 
