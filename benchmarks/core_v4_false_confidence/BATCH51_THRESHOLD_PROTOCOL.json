@@ -1,0 +1,96 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 51,
+ "improvements": [
+  "I-26"
+ ],
+ "problems_addressed": [
+  "R-49 (the audit's finding 59)",
+  "R-53 (the audit's finding 65)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "cf034160",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "The oracle comparison is the designed route to EXPERIMENTALLY_VALIDATED and BENCHMARK_VALIDATED, and it takes the operating point on the caller's assertion: `compare(predicted, conditions=...)` compares a plain mapping of numbers against observations, and nothing ties either the numbers or the stated point to the record that computed them. In the other direction it loses justified comparisons: a metric the prediction does not carry scores FAIL, which reads as evidence AGAINST the model, and a set holding observations at more than one operating point -- the normal shape of an experimental dataset -- can never be compared at all.",
+ "reach": "LIBRARY_ONLY, exactly as the audit records both problems: `_TRUSTED_ORACLE_DECLARATIONS` is empty, nothing outside the core builds an `OracleEvidenceSet`, and no oracle is pinned, so no production path awards an oracle level. This batch does not change that -- pinning an oracle is a repository decision about external evidence, not a fix -- and the ledger rows say so.",
+ "what_was_already_seen": {
+  "finding 59 (R-49)": "The CORE-009 fix compares an observation only at its declared conditions, but those conditions are checked against the `conditions=` ARGUMENT of `compare`, not against the prediction. `predicted` is a plain `Mapping[str, Quantity]` with no provenance, so a caller whose prediction was computed at 400 K passes `conditions={'T': 300 K}` and gets PASS -- with the level too, once the oracle is pinned. Two further gaps: stated conditions the observation does not declare are ignored silently (an observation at T only is compared against a prediction at P = 50 bar), and an observation with NO conditions -- every record written before the field existed -- compares at any operating point.",
+  "finding 65 (R-53)": "A metric the observations contain and the prediction mapping lacks is recorded as a failure ('z:missing'), so the check is FAIL, which `derive_verdict` reads as NOT_SUPPORTED -- although no comparison was made. That is the evidence-against-by-absence reading CORE-009 and CORE-013 moved to NOT_RUN. In the other direction, observations inside one set must have unique metrics, and `compare` requires a single stated operating point matching EVERY observation's conditions, so a set holding observations at two points is always NOT_RUN and the same metric cannot appear at two points."
+ },
+ "rules": {
+  "an_unpredicted_metric_is_not_evidence_against_the_model": {
+   "improvement": "I-26",
+   "problem": "R-53",
+   "rule": "A metric the prediction does not carry is recorded as NOT COMPARED, not as a failure. The check is FAIL only when a comparison was made and missed its tolerance; when nothing failed and something was not compared, the outcome is NOT_RUN and no level is awarded.",
+   "class": "A",
+   "why": "'Absence of a prediction' and 'a prediction that disagrees' are different facts, and the second is the only one that is evidence against the model. This is the reading CORE-009 and CORE-013 already applied twice in this repository, reaching the record where it was left out -- and the consequence was the strongest possible: FAIL reads as NOT_SUPPORTED at the MCP boundary.",
+   "closes": "finding 65's first claim."
+  },
+  "multi_point_evidence_is_compared_point_by_point": {
+   "improvement": "I-26",
+   "problem": "R-53",
+   "rule": "`OracleEvidenceSet` requires (metric, conditions) to be unique rather than metric alone, and `compare` compares every observation whose declared conditions match the stated point, records the others as observed elsewhere, and is NOT_RUN only when NOTHING was comparable.",
+   "class": "A",
+   "why": "An experimental dataset is a set of readings at operating points; requiring one point per set means the record cannot hold the shape its own name describes, and every comparison against such a set was lost. Making the identity (metric, conditions) is what the observation record already says about itself -- a metric at two points is two observations, not a duplicate.",
+   "closes": "finding 65's second claim."
+  },
+  "a_stated_point_the_evidence_does_not_describe_is_not_a_comparison": {
+   "improvement": "I-26",
+   "problem": "R-49",
+   "rule": "A stated condition that an observation does not declare means that observation is not comparable at the stated point: it is recorded as observed elsewhere rather than silently ignored.",
+   "class": "A",
+   "why": "The audited case is an observation declared at T only, compared against a prediction stated at P = 50 bar: the evidence says nothing about 50 bar, and comparing there is a claim about a point the evidence does not describe. The owner's strictness rule is that undeclared information lowers the claim, and here silence RAISED it.",
+   "closes": "finding 59's second gap."
+  },
+  "evidence_that_does_not_say_where_it_was_observed_awards_no_level": {
+   "improvement": "I-26",
+   "problem": "R-49",
+   "rule": "An observation that declares no conditions is still compared, and a set containing one awards NO validation level: the comparison stands as a PASS or a FAIL, and the authority gap names the undeclared operating point.",
+   "class": "A",
+   "why": "Every record written before the conditions field existed compares at any operating point, and a level is a claim that the model was validated SOMEWHERE. Refusing the comparison would delete evidence; awarding a level on it would claim more than the record says. Withholding the level is the reading the same file already uses for an oracle whose authority is not pinned, and it is the strictness rule applied exactly.",
+   "closes": "finding 59's third gap."
+  },
+  "a_level_requires_the_prediction_to_say_where_it_was_computed": {
+   "improvement": "I-26",
+   "problem": "R-49",
+   "rule": "`compare` gains a keyword-only `predicted_from` argument, a `ScientificResult`. When it is given, the stated conditions must be the ones that result's own record carries, the compared values must be that result's values, and only then may a pinned oracle award its level. When it is absent the comparison still happens and the level is withheld, with the authority gap naming the missing binding.",
+   "class": "A",
+   "why": "This is the whole of finding 59's first claim: the operating point was the caller's assertion about a bare mapping of numbers, so a prediction computed at 400 K earned a level at a stated 300 K. A record cannot be forced through an existing signature without breaking every caller, so the binding is an added keyword and the LEVEL is what depends on it -- which is the same shape the file already uses for oracle authority, and the same shape batch 46 used at the inference boundary.",
+   "closes": "finding 59's first claim, to the extent the check can hold it: what remains is stated as a residual."
+  }
+ },
+ "thresholds": {
+  "operating_point_agreement": {"value": null, "class": "A", "why": "unchanged: `_same_operating_point` is the existing rule and this batch introduces no tolerance of its own. Its offset-scale defect is the audit's finding 104 and belongs to another problem, which this batch does not touch."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "one keyword-only argument with a default on OracleEvidenceSet.compare",
+   "no new public symbol, so the frozen surface and its symbol count do not move"
+  ],
+  "what_is_not_changed": [
+   "no field, default, enum member or signature is removed, renamed or reordered",
+   "the digest over an evidence set's content is unchanged, so every existing set keeps its identity",
+   "an observation's own record is unchanged; what changes is which comparisons are made and which award a level"
+  ],
+  "records_that_already_exist": "No committed JSON carries an oracle evidence set or an oracle check, because nothing outside the core builds one and no oracle is pinned. In-tree test fixtures that rely on a metric absent from the prediction scoring FAIL, or on a single-point set, are amended in place with the reason.",
+  "deliberate_narrowing": "A comparison at a point the evidence does not describe stops being a comparison, and a set whose observations declare no conditions stops awarding a level. In the other direction the batch WIDENS what can be compared: multi-point sets, repeated metrics at different points, and predictions that do not carry every observed metric."
+ },
+ "residuals_stated_in_advance": [
+  "`predicted_from` is optional, so a caller may still compare a bare mapping. What that caller cannot do is earn a validation level from it, which is the claim the audit's finding is about. Making the record mandatory is a signature change the compatibility rule forbids before the V4 round.",
+  "When `predicted_from` IS given, the binding is: the result carries these metric values, and the stated conditions are the ones its own record carries. A result whose metadata does not state its operating point therefore cannot support a level either -- an absence this batch reports rather than infers.",
+  "`_same_operating_point` compares magnitudes on the declared scale, and its offset-scale behaviour (the audit's finding 104: 0.02 degC against 0.020000001 degC read as different points) is a separate problem and is untouched here.",
+  "Oracle authority is unchanged: `_TRUSTED_ORACLE_DECLARATIONS` is empty and no oracle is pinned, so no level is reachable in production at all. That is a repository decision about external evidence and not something a rule can close.",
+  "A multi-point comparison reports one check with one residual ratio, the worst over the comparisons made. Per-point checks would be a different record shape and are not introduced here."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_external_oracles.py, tests/test_offset_unit_arithmetic.py, tests/test_audit_consensus_level_issuers.py and the earlier audit batches that touch oracles",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control, re-running the pinned mutations that target the changed files",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
