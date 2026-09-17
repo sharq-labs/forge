@@ -1,0 +1,117 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 13,
+  "improvements": [
+    "I-18"
+  ],
+  "problems_addressed": [
+    "R-24",
+    "R-32",
+    "R-33",
+    "R-34"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "0996d51c",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "reach": "All four problems are library-only for the COMPARISON: compare_log_predictive_scores has no production caller. The ASSESSMENT half is different -- studies/calibration_study.py calls assess_predictive_observation, and the sigma rule (finding 29) is the one the TCR study already carries by hand as _require_declared_sigma, so the generic core is about to say what one study was saying for itself. inference/split.py's duplicate detectors are reached by every study that partitions evidence.",
+  "what_was_already_seen": {
+    "R-24": "three findings, one hole: content binding binds less than 'content'. (29) The split branch never compares spec.observation_sigma with the declared sigma of the matched held-out observation, so the log density, the CDF, the interval and the evidence identity are computed with whatever sigma the caller put in the spec and content_bound=True is set anyway: on data whose held-out readings are 0.1 K above the line with a declared sigma of 0.5 K, a spec sigma of 0.05 K makes model B decisively preferred and a spec sigma of 5 K erases a genuinely decisive 11.5-nat preference. (40) It never compares `twin` with `split.twin`, although ObservationSplit's own docstring says scoring against another twin is refused. (30) PredictiveEvidenceIdentity covers the key, the held-out value, the unit, the sigma, two dataset-id STRINGS and the twin -- not the split digest and not the calibration content -- and nothing requires both sides of a comparison to be bound to the same split. Two splits with the same held-out readings and the same id strings but different calibration data (an older 4-point campaign with an offset against a newer 20-point one) pair as 'the same evidence', and the same forward function labelled A and B gets a decisive preference (delta -5.8, se 0.86) driven only by the training data. That is the original CORE-007 failure reached through a label again.",
+    "R-32": "(31) The content-digest and near-duplicate detectors run only ACROSS the halves, and ObservationSet rejects duplicate KEYS only, so a held-out half may hold the same reading under several condition_ids -- the pattern split.py itself calls 'a copy, not a coincidence'. compare treats each position as independent: with one reading the difference is 1.27 nats and no model is preferred; listed four times, model A is preferred with a standard error of exactly 0, because the pointwise differences are identical and np.var(ddof=1) is 0, so the 2-SE test is vacuous. (38) _near_duplicates requires the same observable name, the same base unit, a value within 1e-6 of the larger sigma AND a sigma within 1e-6 relative. So a bit-identical value whose sigma was re-declared (0.002 to 0.0025), a bit-identical value and sigma under a renamed observable ('y' to 'R'), and a copy rounded to 8 significant digits (5e-6 sd away) all cross into held-out.",
+    "R-33": "delta / SE is sqrt(n) * mean(d) / sd(d), a t statistic on n - 1 degrees of freedom, and the gate compares it with 2 -- the NORMAL quantile. At n = 2, which is COMPARISON_MINIMUM_N, that is a Cauchy tail with P(|t| > 2) about 0.295. The audit's Monte Carlo ran the full production path on two models that are exact mirror images, so their expected scores are equal, and a preferred model was named in 27.5 % of runs at n = 2, 19.3 % at n = 3 and 8.7 % at n = 10. The 4-nat floor removes only small deltas.",
+    "R-34": "content_bound is a public dataclass field with a default of False; to_dict writes it and from_dict reads payload.get('content_bound') without verifying anything, and dataclasses.replace(x, content_bound=True) works. compare gates the preferred model on that flag alone and writes 'content-bound paired observations' into `why`. Flipping the flag on unbound assessments names a model with an identical evidence_digest, and log_predictive_density is never re-derived either, so +50 nats per point is accepted. The audit document says a READ-BACK content_bound is integrity-only; the consequence it does not state is that the comparison consumes it as authoritative, and the constructor path is not a read-back."
+  },
+  "rules": {
+    "the_likelihood_sigma_is_the_declared_one": {
+      "improvement": "I-18",
+      "problem": "R-24 (finding 29)",
+      "rule": "In the split branch, spec.observation_sigma must equal the declared sigma of the matched held-out GaussianObservation, in the observed value's own unit, to the same relative tolerance the branch already holds the observed VALUE to. Otherwise the assessment is refused.",
+      "value": "rel_tol = 1e-12 (the tolerance already used for the value)",
+      "why": "a content-bound assessment says the score was computed on the split's held-out evidence. The declared sigma IS part of that evidence -- it is what makes the log density a likelihood rather than a distance -- and the branch already refuses a mismatched VALUE with the same tolerance. Refusing rather than clearing content_bound, because a caller who passes the split is asking for the split's evidence: silently scoring something else is the failure, not the flag.",
+      "class": "A (the tolerance and the rule are the branch's own, applied to the second of the two numbers the log density is computed from)"
+    },
+    "the_twin_is_the_splits_twin": {
+      "improvement": "I-18",
+      "problem": "R-24 (finding 40)",
+      "rule": "In the split branch, `twin` must equal `split.twin`. Otherwise the assessment is refused.",
+      "why": "ObservationSplit's own docstring says a split whose halves describe different twins is two studies and that scoring one against the other's posterior is refused. The branch simply never compared them, and the evidence identity then recorded the caller's twin.",
+      "class": "A (an existing rule, applied where the split is in hand)"
+    },
+    "the_evidence_identity_carries_the_splits_content": {
+      "improvement": "I-18",
+      "problem": "R-24 (finding 30)",
+      "rule": "PredictiveEvidenceIdentity gains a TRAILING field with a default, `split_content_digest: str = \"\"`. In the split branch it is a SHA-256 over the split's twin, both dataset ids and the CONTENT digests (inference.split.observation_content_digest, which is already canonical in base units) of every observation in BOTH halves, in key order. It joins EVIDENCE_IDENTITY_FIELDS, so the pairing check compares it and a refusal names it; it enters the identity's own digest only when non-empty, so a record written before this batch keeps the digest it had. compare_log_predictive_scores names a preferred model only when every assessment on both sides carries the SAME non-empty split content digest.",
+      "why": "content_bound says each assessment was bound to SOME split. Pairing on an identity that carries two dataset-id STRINGS lets two different calibration campaigns pair as the same evidence, and the difference in their training data is then reported as a model preference. The calibration content is what distinguishes them, and the split already has a canonical, unit-independent digest of an observation's content.",
+      "why_both_halves": "the held-out half is already in the identity value by value, but only for the ONE observation this assessment scores. Two splits that agree on the scored point and differ on the others are different evidence for a COMPARISON, which sums over the whole half.",
+      "class": "A (a digest of content that already has a canonical digest; no new constant)"
+    },
+    "content_binding_is_verified_in_process_and_not_read_from_a_flag": {
+      "improvement": "I-18",
+      "problem": "R-34",
+      "rule": "A private module-level registry holds the record digests of the assessments THIS PROCESS bound, populated only inside assess_predictive_observation after every binding check passed. PredictiveObservationAssessment gains a derived property `content_binding_verified`, true exactly when its own record digest is in that registry, and compare_log_predictive_scores gates the preferred model on that property instead of on the `content_bound` field. The field is NOT removed, renamed or defaulted differently -- it is V1-frozen -- and keeps its meaning: a recorded claim, integrity-only on read.",
+      "why": "the comparison is the one consumer that treats the flag as proof. A registry keyed by the RECORD digest cannot be forged by `replace` (any changed field changes the digest), by `from_dict` (a deserialized record was not bound in this process), or by fabricating a log density (a different density is a different digest). Reconstructing the identical record by hand does reproduce the digest -- and then the binding it claims is true of exactly those numbers, which is the honest answer.",
+      "the_cost_stated": "assess -> serialize -> deserialize -> compare no longer names a preferred model. That is a real restriction on a workflow the repository does not currently use (the comparison has no production caller), and it is the direction the audit's own fix asks for ('Force content_bound=False in from_dict', or 'have compare take the split and calibration tables and re-verify').",
+      "class": "A (an in-process fact recorded where it is established; no new constant)"
+    },
+    "duplicates_within_a_half_are_copies_too": {
+      "improvement": "I-18",
+      "problem": "R-32 (finding 31)",
+      "rule": "The content-digest collision test and the near-duplicate test run WITHIN the calibration half and WITHIN the held-out half as well as across them, unless the split declares exact_replicates_allowed. And compare_log_predictive_scores refuses two paired positions whose evidence digests are equal, because one piece of evidence would be counted twice in both scores -- the refusal the key-duplicate check already makes, on content rather than on a label.",
+      "why": "the detector's own words are 'same observable, same value, same sigma, different condition_id -- for a continuous quantity that is a copy, not a coincidence'. That argument does not depend on which side of the split the two rows are on. Within the held-out half the consequence is worse than leakage: n grows, the pointwise differences are identical, so the sample variance is exactly 0 and the SE test is vacuous.",
+      "class": "A (an existing detector, applied to the pairs it was not looking at)"
+    },
+    "the_comparison_records_the_independence_it_assumes": {
+      "improvement": "I-18",
+      "problem": "R-32 (finding 31)",
+      "rule": "ModelScoreComparison gains a TRAILING field with a default, `measurement_errors_assumed_independent: bool = True`, written to to_dict, recording that the paired standard error treats the held-out positions as independent. It is RECORDED and never lowers the verdict, which is this program's strictness rule for independence.",
+      "why": "CORE-012's flag exists only on routed predictive records; the comparison's standard error rests on the same assumption and said nothing about it.",
+      "class": "A (a recorded assumption, with no threshold)"
+    },
+    "a_copy_is_decided_on_the_value_at_a_resolution_tied_to_the_sigma": {
+      "improvement": "I-18",
+      "problem": "R-32 (finding 38)",
+      "rule": "Two readings are one reading when their values agree in the dimension's base unit to NEAR_DUPLICATE_RELATIVE_TO_SIGMA times the larger declared sigma, and either (a) they carry the same observable name, or (b) they carry the same non-empty source_ref. The requirement that their declared SIGMAS also agree is dropped.",
+      "value": 0.001,
+      "why_the_sigma_requirement_goes": "a re-declared sigma is a decision about the same number. 0.002 to 0.0025 on a bit-identical value was accepted as a new measurement, which is the reading the detector exists to refuse.",
+      "why_1e_3": "the audit's own fix direction names it ('e.g. |dv| <= 1e-3 sigma'). It is a thousandth of the measurement's own declared resolution: two independent measurements of a continuous quantity agreeing that closely is not a coincidence any instrument supports. It catches a copy rounded to 8 significant digits (5e-6 sd away in the audited case) and, stated as a residual, does NOT catch one rounded to 4, which is 0.025 sd away -- a distance genuine repeated measurements do reach.",
+      "why_source_ref_is_the_second_route": "the audit asks for the renamed-observable case and for source_ref lineage. Dropping the observable name from the numeric rule outright would make any two readings of the same dimension that agree to 1e-3 sigma a copy, which is a false refusal waiting to happen on a 41-knot voltage curve. Requiring the same source_ref instead makes the rename case a LINEAGE statement: the same row, imported twice, renamed. The source_ref alone is not enough either -- a whole campaign may share one -- so both the lineage and the number must agree.",
+      "class": "C (the audit's stated value, with what it does and does not catch measured)"
+    },
+    "the_decisive_gate_uses_a_t_critical_value_and_a_minimum_n": {
+      "improvement": "I-18",
+      "problem": "R-33",
+      "rule": "The SE multiple is the two-sided Student-t quantile on n - 1 degrees of freedom at COMPARISON_ALPHA, not the fixed normal 2. COMPARISON_MINIMUM_SE_MULTIPLE keeps its name and value and becomes the NORMAL multiple the alpha is declared from, so the level is unchanged and only the small-sample correction is new. COMPARISON_MINIMUM_N rises from 2 to 10.",
+      "value": {
+        "COMPARISON_ALPHA": "2 * (1 - Phi(2)) = 0.04550026",
+        "COMPARISON_MINIMUM_N": 10
+      },
+      "why_the_t": "delta / SE IS a t statistic on n - 1 degrees of freedom; comparing it with a normal quantile is a category error that costs 0.295 instead of 0.0455 at n = 2. The alpha is not re-chosen: it is the level the existing multiple of 2 already declares, so the gate keeps its preregistered false-refusal rate and gains the correction it was missing. The critical values become 13.968 at n = 2, 4.527 at n = 3, 2.320 at n = 10 and 2.026 at n = 100.",
+      "why_minimum_10": "the gate's arithmetic is only as good as the sd it divides by, and the relative standard error of a sample sd on n - 1 degrees of freedom is 1 / sqrt(2 (n - 1)): 0.707 at n = 2, 0.500 at n = 3, 0.236 at n = 10. 10 is the smallest n at which that is below a quarter, so the SE is a quantity with a quarter's precision rather than a coin flip. It also matches the audit's reading of the elpd literature ('tens of points'). Both halves are needed: the t fixes the LEVEL at every n, and the minimum n makes the SE a measurement.",
+      "class": "B for COMPARISON_ALPHA (the level the existing multiple already states); C for COMPARISON_MINIMUM_N = 10 (a declared precision floor of one quarter on the standard error)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "ADDITIVE ONLY. PredictiveEvidenceIdentity gains one TRAILING field with a default (split_content_digest=\"\"); ModelScoreComparison gains one TRAILING field with a default (measurement_errors_assumed_independent=True); PredictiveObservationAssessment gains NO field and one derived property (content_binding_verified). No field is removed, renamed or reordered, and no existing default changes. EVIDENCE_IDENTITY_FIELDS grows from 7 entries to 8, which the V1 snapshot records as a SIZE: that is the same additive category as a new enum member, and the snapshot is regenerated in the V4 round.",
+    "module_constants": "COMPARISON_MINIMUM_N 2 -> 10 and NEAR_DUPLICATE_RELATIVE_TO_SIGMA 1e-6 -> 1e-3. Neither value is in the frozen API snapshot (it records constants by kind and container size, not by value), and both are thresholds this batch re-preregisters, which is what R-33's and R-32's fix directions ask for. COMPARISON_MINIMUM_ABS_DELTA and COMPARISON_MINIMUM_SE_MULTIPLE keep their names and values.",
+    "serialized_records": "predictive_evidence_identity and predictive_observation_assessment are NOT bumped. The new identity key is written only when non-empty, and enters the identity digest only when non-empty, so every record written before this batch keeps its bytes and its digest. ModelScoreComparison's new key is always written, because the assumption it records is always made; that record has no schema string and no read-back.",
+    "claims_that_move": [
+      "an assessment whose spec sigma is not the split's declared sigma is REFUSED (was: content-bound);",
+      "an assessment whose twin is not the split's twin is REFUSED (was: content-bound, recording the caller's twin);",
+      "a comparison across two different splits names no preferred model (was: a decisive preference driven by the training data);",
+      "a comparison over deserialized or reconstructed assessments names no preferred model (was: whatever the flag said);",
+      "a split with a repeated reading inside either half is REFUSED unless replicates are declared (was: accepted, with n inflated and SE 0);",
+      "a comparison on fewer than 10 paired observations names no preferred model (was: 2), and above 10 the SE gate is a t quantile rather than 2;",
+      "a re-imported reading whose sigma was re-declared, or which was renamed but shares a source_ref, is caught as a copy (was: accepted as held-out)."
+    ],
+    "the_existing_suite": "tests/hybrid_uq/test_core_scientific_audit_batch4.py::test_core011_a_decisive_difference_on_content_bound_evidence_names_the_better_model asserts a preferred model on 3 paired observations. Its assertion is the POSITIVE case and is kept; its split grows to at least 10 held-out points, which is a fixture change and not a weakening. Every other affected expectation is measured and recorded in the audit document."
+  },
+  "residuals_stated_in_advance": [
+    "A copy rounded to 4 significant digits sits about 0.025 declared sigma from the original, which the 1e-3 sigma rule does not catch -- and must not, because genuine repeated measurements do reach that distance. The lineage half (a shared source_ref) is what catches a re-import when the importer preserves it; a re-import that rewrites both the number and the provenance is indistinguishable from a new measurement by any rule this layer can state.",
+    "The registry that makes content binding unforgeable is per PROCESS. An assessment read back from disk is never verified, so a comparison over stored records names no preferred model even when the records are genuine. Making that workflow work again needs the comparison to take the split and the tables and re-verify, which is a signature the V1 freeze does not have room for until V4.",
+    "The split content digest binds the CONTENT of both halves, not the forward model or the parameterization. Two assessments bound to the same split with different PARAMETERIZATIONS of one model still pair, which is correct for a model comparison and wrong for anything that reads the pair as the same computation.",
+    "The t correction fixes the level of ONE comparison. Nothing records how many pairwise comparisons were run on one held-out set, so across k candidate models the chance of at least one false decisive preference still grows with k. That residual is the audit's own and is unchanged: bounding it needs a comparison registry, which is I-21's subject.",
+    "The minimum n of 10 is a precision floor on the standard error, not a guarantee. The elpd literature's own advice is closer to a hundred points, and at n = 10 the t quantile is still 2.320 against 2.026 at n = 100. A study that wants a preference on 10 points gets one at a level of 0.0455 per comparison, which is the level this program declared, not a strong one.",
+    "Duplicate detection within a half now refuses splits that a study may legitimately want -- genuine replicates at one condition. The declaration allow_exact_replicates() already exists for exactly that, and it now also switches off the within-half test, so declaring replicates declares more than it did."
+  ],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
