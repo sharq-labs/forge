@@ -1,0 +1,57 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 35,
+ "improvements": [
+  "I-14 part C of four"
+ ],
+ "problems_addressed": [
+  "R-22 (three of its four claims; the fourth, the observation count, needs the schema bump and is part D)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "32f02f20",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "R-22 is four independent read-back gaps in `RouteDiagnostics`. Each was REPRODUCED at this batch's baseline before anything was written, and the result changed what this batch is: claim (b), the relabelled refit, is ALREADY CLOSED by an earlier batch's mass-ratio rule, and this document records that with the measurement rather than fixing it twice. Claims (c) and (d) reproduce and are fixed here. Claim (a) -- the observation count -- needs a field the record does not have, so it is part D together with the one `route_diagnostics` schema bump the improvement's brief asks for.",
+ "reach": "LIBRARY_ONLY. Nothing in production reads a `LocalGaussianPosterior` back from a payload it did not just write; `from_dict` exists for the records this core serializes so a reader can check them. That is exactly what R-22 is about: the check is the product.",
+ "what_was_already_seen": {
+  "R-22 (c), reproduced at 32f02f20": "A narrow search -- `MultistartPolicy(interior_fraction=0.02)` on the affine problem -- is genuinely DOWNGRADED with `MULTISTART_INCOMPLETE` and uniqueness MULTISTART_BELOW_MINIMUM_SEARCH. Remove the seven `multistart_*` policy keys from `thresholds`, set `uniqueness` to MULTISTART_NO_SECOND_MODE and the claim to SUPPORTED, and the record reads back **ACCEPTED, claim SUPPORTED, reasons []**. The forger has to edit four fields and every one of them is free. With no policy keys the record counts as pre-policy, so the canonical-span check and the separation-radius check on every class are skipped -- and a pre-policy `route_diagnostics/2` record CANNOT EXIST, because the schema postdates the policy record.",
+  "R-22 (d), reproduced at 32f02f20": "The affine problem's genuine record is SUPPORTED with `minimum_tail_rise_ratio` 0.9999999921, `tail_probes_skipped` 0 and `near_bound` []. Replacing the ratio with NaN -- as the literal `\"nan\"` or as a float NaN, both of which `decode_float` accepts -- reads back **ACCEPTED, claim SUPPORTED, reasons []**. `_tail_verdict(nan)` returns no verdict and nothing calls the combination a problem, although the route cannot produce it: a ratio is NaN only when no tail probe was evaluated, and then `tail_probes_skipped` is not zero.",
+  "R-22 (b), reproduced at 32f02f20 and found ALREADY CLOSED": "The audited forgery relabels a SECOND_MODE refit as WORSE_LOCAL_OPTIMUM. On `second_mode_behind_a_refit_budget` with 12 starts, three entries are genuinely SECOND_MODE at mahalanobis_sq 399.94, 399.95 and 399.93 with chi-squares 2.93e-13, 1.15e-13 and 6.07e-13 against a chi-square minimum of 4.25e-14 and laplace mass ratios of 1361.5, 1722.6 and 1133.6. Relabelling them WORSE_LOCAL_OPTIMUM is now REFUSED -- 'a separated start whose laplace_mass_ratio is 1.36e+03 against a floor of 0.05 is classified WORSE_LOCAL_OPTIMUM' -- and relabelling them SAME_OPTIMUM or LOWER_OBJECTIVE_SAME_BASIN is refused by the separation-radius check. So the class IS re-derived, from the mass ratio rather than from the objective, and the audited edit no longer survives."
+ },
+ "rules": {
+  "a_record_that_lists_starts_carries_the_policy_they_were_drawn_under": {
+   "improvement": "I-14",
+   "problem": "R-22 (c)",
+   "rule": "A `route_diagnostics/2` record whose `multistart` list is non-empty must carry ALL SEVEN `_MULTISTART_POLICY_KEYS` in `thresholds`. A partial set is already refused; an EMPTY set with starts recorded is now refused too. The existing 'a multistart policy is recorded with no starts' rule is unchanged, and this is its converse.",
+   "class": "A",
+   "why": "Not a threshold: a statement about which records can exist. The policy record and the `/2` schema were introduced together, so a `/2` record listing starts without a policy is not an old record -- it is an edited one. And the consequence of treating it as old is that two checks stop running: the canonical-span check and the separation-radius check on every classification. The audit states the impossibility ('Pre-policy /2 records cannot exist, because /2 postdates the policy record') and this rule is that sentence. `route_diagnostics/1` records are unaffected: they are already refused for carrying any multistart at all.",
+   "closes": "the narrow-span DOWNGRADED record reading back SUPPORTED with no reasons."
+  },
+  "a_tail_ratio_is_nan_only_when_no_tail_probe_was_evaluated": {
+   "improvement": "I-14",
+   "problem": "R-22 (d)",
+   "rule": "A NaN `minimum_tail_rise_ratio` is accepted only when `tail_probes_skipped` is greater than zero, or `near_bound` is non-empty, or `at_bound` is non-empty. Otherwise the record is refused. The existing refusal of an INFINITE ratio is unchanged.",
+   "class": "A",
+   "why": "The route produces a NaN ratio in exactly one situation: no probe was evaluated, which it records by a non-zero skip count, and the reasons a probe is not evaluated are a bound reached or approached. So the combination NaN-with-zero-skips-and-no-bound is one the route cannot write, and a record carrying it is not a route's record. The audit's fix direction states the same condition; `at_bound` is included because a parameter AT a bound is the stronger form of one NEAR it and the route records the two in separate fields. Nothing numeric is chosen.",
+   "closes": "a SUPPORTED record whose tail was never measured."
+  },
+  "the_relabelled_refit_is_recorded_as_already_closed": {
+   "improvement": "I-14",
+   "problem": "R-22 (b)",
+   "rule": "No code changes. A test pins the closure: the three audited relabellings of a genuine SECOND_MODE entry are each refused, and the message names the mass ratio the class follows from.",
+   "class": "A",
+   "why": "The audit's fix direction asks to re-derive the class from the objective (`chi_square`, `chi_square_minimum`, the comparable quantile). Read against the code, that is NOT the rule production uses: WORSE_LOCAL_OPTIMUM is chosen when a separated mode's LAPLACE MASS is negligible, not when its fit is worse -- a narrow equally-deep mode is legitimately WORSE_LOCAL_OPTIMUM. So an objective-based re-derivation would contradict the route. What the record actually needed was the MASS to be re-derived against the class, which an earlier batch's rule does, and which the measurement above confirms closes the audited edit. Writing the objective rule as well would be writing a rule the route does not follow.",
+   "residual_stated_plainly": "BETTER_OPTIMUM vs SECOND_MODE is still not re-derived from the objective, and it could be: production picks BETTER_OPTIMUM when `chi < chi_min - comparable`, and all three numbers are in the record. It is NOT added here because it is a rule this batch's preregistration would be inventing after reading the code rather than one the audit measured a forgery against -- and because LOWER_OBJECTIVE_SAME_BASIN vs SAME_OPTIMUM cannot be re-derived at all: its tolerance is `2 * gradient @ cov @ gradient`, which the record does not carry. Half a rule is worse than a stated gap. It belongs to a future round with its own reproduction."
+  }
+ },
+ "compatibility": {
+  "additive_only": "No new symbol, no signature, field, default or enum member change, and no serialized record gains or loses a key. Two new refusals inside `_require_reasons_follow_measurements`, which already refuses fourteen other inconsistencies.",
+  "behaviour_narrowed_deliberately": "Two payload shapes that read back now raise `HybridUQError`. Neither is a shape this core writes: one is a `/2` record listing starts with no policy, which the schema's own history makes impossible, and the other is a NaN tail ratio with zero skipped probes and no bound, which the route cannot produce.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "R-22 stays PARTIAL after this batch: claim (a), the observation count, is part D. Raising `observations` from 10 to 40 is still accepted at this batch's HEAD -- measured, not assumed.",
+  "The stripped-policy forgery needed FOUR coordinated edits (the seven policy keys, `uniqueness`, the diagnostics claim and the outer claim), and this rule closes it at the first. The other three fields remain free in the sense that they are re-derived rather than bound -- which is the design, and is why the re-derivation's INPUTS are what R-22 is about.",
+  "The tail rule is a NECESSARY condition, not a sufficient one: a record with a finite ratio that no probe actually produced is not caught, because nothing in the record ties the ratio to the probes. That binding would need the probe outcomes themselves in the record, which is a schema question and not this batch's."
+ ],
+ "amendment_log": []
+}
