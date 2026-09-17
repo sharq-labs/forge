@@ -1,0 +1,56 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 34,
+ "improvements": [
+  "I-14 part B of four (part A, the leverage-null clamp, landed in batch 31 because it blocked I-06)"
+ ],
+ "problems_addressed": [
+  "R-28"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "b5149ab5",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "I-14 is four problems and a fuzzer. This part is the smallest and most self-contained: R-28, the INF-10 declared-or-tighter threshold guard, which runs for a grid and not for the local route -- so a caller BUYS a better identifiability verdict by argument. Part C is R-22 (the four read-back gaps in RouteDiagnostics), part D is R-25 and R-27 (the record forgeries) together with the fuzzer and the one schema bump the improvement's brief asks for.",
+ "reach": "LIBRARY_ONLY. `assess_routed_identifiability` is called by the router with its defaults, so no production path passes a threshold at all. What R-28 is about is the public function: a caller who calls it directly, or who serializes what it returns, gets a verdict the declared rule does not give.",
+ "what_was_already_seen": {
+  "R-28": "the audit's finding 23, reproduced at 294c129. For the weak-identification case -- local route SUPPORTED, widths [8.553, 1.842], correlation 0.9999985 -- the canonical verdict is NOT_IDENTIFIABLE. Under thresholds (0.99999, 1e300, 1e9) it is WEAKLY_IDENTIFIABLE, and the record READS BACK as WEAKLY. Under (0.9999999999999, 1e300, 1e9) it is PARAMETERS_IDENTIFIABLE. The `why` text even states the loosened rule's own words -- 'every marginal interval is still narrower than its own parameter (widest 8.55)' -- so the record explains itself consistently and says nothing about the rule having been moved. **The same grid with width_threshold=1e9 raises `CalibrationError` 'looser than the declared 1.0'**, which is the point: the guard exists, is 30 lines away, and is not called on this branch. Only `HybridUQResult`'s own canonical re-derivation catches it, and only when the report is inside one."
+ },
+ "rules": {
+  "the_local_branch_is_held_to_the_declared_thresholds_too": {
+   "improvement": "I-14",
+   "problem": "R-28",
+   "rule": "`assess_routed_identifiability`'s LocalGaussianPosterior branch calls `_require_declared_or_tighter_thresholds` before it classifies anything, exactly as `assess_identifiability` does for a grid. `minimum_effective_points` is passed at its declared value, because a local Gaussian has no effective-point count and the check for it is then a no-op.",
+   "class": "A",
+   "why": "Not a threshold: calling an existing guard on a branch that skipped it. The numbers are `_DECLARED_IDENTIFIABILITY_THRESHOLDS`, unchanged, and the guard's own stated rule is the one being applied -- 'a verdict is the declared rule's verdict or a stricter one; it is never bought by argument'. The grid branch has always done this, so the local branch reaching a verdict the grid branch refuses is an inconsistency inside one function.",
+   "closes": "WEAKLY_IDENTIFIABLE and PARAMETERS_IDENTIFIABLE bought with (0.99999, 1e300, 1e9)."
+  },
+  "a_tightened_rule_is_named_in_the_explanation": {
+   "improvement": "I-14",
+   "problem": "R-28",
+   "rule": "When the caller's thresholds are STRICTER than declared, the local report's `why` carries the same note the grid path already appends: the tightened values and the declared defaults.",
+   "class": "A",
+   "why": "The grid path does this, in those words, at `calibration.py:1102`. A stricter verdict is still a verdict reached under a rule that is not the declared one, and a reader comparing two reports has no way to know unless it says so. Nothing numeric is chosen; the text is the existing one.",
+   "closes": "a silently tightened local verdict, which the audit does not name but which is the other half of the same gap."
+  },
+  "a_record_cannot_carry_a_rule_looser_than_the_routers": {
+   "improvement": "I-14",
+   "problem": "R-28",
+   "rule": "`RoutedIdentifiability.__post_init__` refuses a report whose thresholds are looser than `CANONICAL_IDENTIFIABILITY_THRESHOLDS`, for either approximation class. Its existing re-derivation of the verdict from the report's own numbers under the report's own thresholds is unchanged and still runs.",
+   "class": "A",
+   "why": "The record is where a bought verdict SURVIVES. `__post_init__` already re-derives the verdict, so the record is self-consistent -- which is exactly why the audit could serialize a WEAKLY reading and read it back: the numbers and the rule agreed with each other, and neither was compared with the declared rule. The constants are `CANONICAL_IDENTIFIABILITY_THRESHOLDS`, which this module already defines and already checks against in `_report_differences`; what changes is that the check runs at construction and not only inside a `HybridUQResult`.",
+   "closes": "the read-back."
+  }
+ },
+ "compatibility": {
+  "additive_only": "No new symbol, no signature, field, default or enum member change. `hybrid_uq/identifiability.py` gains an import of `_require_declared_or_tighter_thresholds` and `WIDTH_REFERENCE_NOTE`-adjacent text from `inference/calibration.py`, which the layer ladder allows (inference is layer 2, hybrid_uq layer 4). No serialized record gains or loses a key.",
+  "behaviour_narrowed_deliberately": "`assess_routed_identifiability(posterior, width_threshold=1e9)` raised nothing and now raises `CalibrationError`, and a `RoutedIdentifiability` built from such a report is refused at construction. Both were paths to a verdict the declared rule does not give; the grid branch has refused them throughout.",
+  "what_could_break_that_is_not_a_forgery": "A caller who passes a LOOSER threshold on purpose -- to explore, say -- now gets an exception. That is the INF-10 rule as already written and already applied to grids, and its own docstring says a relaxed rule 'would report IDENTIFIABLE for a posterior the declared rule does not'.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "`confidence_level` is NOT covered by the declared-or-tighter guard, because it is not one of the declared thresholds: it selects which interval is measured rather than how wide an interval may be. A caller who asks for a 50% interval gets narrower relative widths and can reach a better verdict that way. The report carries the level, and the grid branch refuses anything but 0.95 outright; the local branch's freedom here is deliberate and is stated rather than closed, because closing it would be a different rule than the one R-28 names.",
+  "The guard is on the THRESHOLDS. A caller who hands in a posterior whose covariance is wrong still gets a verdict consistent with that covariance -- which is R-25's and R-27's territory, part D.",
+  "R-28 stays LIBRARY_ONLY: the router calls this function with its defaults, so nothing production does changes."
+ ],
+ "amendment_log": []
+}
