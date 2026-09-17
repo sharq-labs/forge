@@ -1,0 +1,85 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 42,
+ "improvements": [
+  "I-21 part A of two"
+ ],
+ "problems_addressed": [
+  "R-41 (the audit's findings 48 and 100)",
+  "R-42 (the audit's finding 49)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "02398cfd",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "CORE-015 is recorded as FIXED with 'declared constraints checked and satisfied', and the code checks `all(check.satisfied)` over whatever checks an evaluation happens to carry. Nothing compares the checked names with the declared ones, nothing recomputes a check from the constraint and the result, and `ConstraintCheck` has no constructor rule at all -- so `satisfied=True` beside a margin of -2.5 A survives a round trip and wins. Separately, the guard that stops a candidate being ranked on a number its own result contradicts looks the result up by the OBJECTIVE's name while an objective names its quantity through `metric`, so for the canonical fixture (name 'minimize_load', metric 'load') the comparison never runs. This part is those two problems. R-44 -- candidates with no verification at all, and the design archives that production actually ranks with -- is part B.",
+ "reach": "LIBRARY_ONLY for `ScientificExperiment`: nothing in src calls `.best(` or builds one, which the audit says in as many words and which part B's finding (84) is about. `ConstraintCheck` and `ConstraintDefinition.check` are reached by the domain gates, so that half is REACHED.",
+ "what_was_already_seen": {
+  "R-41, from the audit": "A candidate checked only against `load_ceiling` is feasible and ranked best although the declared `response_ceiling` was never evaluated; a check naming a constraint the study does not have counts the same way. An evaluation whose result carries T_hot = 900 K against a declared 400 K ceiling and 3 A against a declared 0.5 A ceiling is ranked best, because its only check is a forged `satisfied` check on an undeclared name. And `ScientificExperiment.from_dict` reads `constraints=tuple(payload.get('constraints', ()))`, so a payload with the key missing becomes an explicit narrowing to NO constraints, and `best` falls through to `is_feasible is None and not self.constraints` -- ranking a candidate whose feasibility nobody checked, while the problem it holds still declares the constraint.",
+  "R-42, from the audit": "`best()` ranks on `objective_values[objective.name]` and the agreement guard looks up `result.values[name]` with that same objective name. The canonical fixture's objective is named 'minimize_load' and its metric is 'load', so the comparison is skipped and an evaluation reporting objective 0.001 W is ranked best while its own result carries load = 50 W."
+ },
+ "rules": {
+  "a_check_agrees_with_its_own_margin": {
+   "improvement": "I-21",
+   "problem": "R-41",
+   "rule": "`ConstraintCheck.__post_init__`: the constraint name is non-empty; `satisfied` is a real bool, not a truthy value; `margin` and `value` are Quantities; and `satisfied` agrees with the sign of the margin -- True is refused with a negative margin, False with a positive one. A zero margin is accepted either way.",
+   "class": "A",
+   "why": "`ConstraintDefinition.check` computes the two together: for every operator, `margin > 0` means inside the bound and `margin < 0` means outside it. A record where they disagree was not produced by that function, and it is the one field a selection reads. Zero is left open deliberately, and that is not a gap: at exactly the limit a non-strict operator is satisfied and a strict one is not, and the check does not carry its operator -- so zero is the one value the two answers share. Nothing numeric is chosen.",
+   "closes": "the forged check, at construction and on read, for every consumer rather than for `best()` alone."
+  },
+  "a_feasible_candidate_checked_every_declared_constraint": {
+   "improvement": "I-21",
+   "problem": "R-41",
+   "rule": "`ScientificExperiment.best` treats an evaluation as feasible only when its constraint checks name EXACTLY the experiment's declared constraints -- one check per declared name, no duplicates, no undeclared names -- and every one is satisfied. Where a declared constraint's metric is present in the result's values, the check is RE-DERIVED from the constraint definition and that value, and the stored verdict is ignored.",
+   "class": "A",
+   "why": "'Declared constraints checked and satisfied' is what CORE-015 claims and what the audit found missing: `all()` over an empty or unrelated set is True, so the rule as written could be satisfied by checking nothing relevant. Re-deriving where the metric is present is the same principle this round has applied everywhere else -- a stored verdict is integrity-only, and here the inputs ARE in the record, so the verdict is recomputed rather than trusted. Where the metric is absent the coverage rule still applies and the stored check stands, which is stated as a residual.",
+   "closes": "R-41's coverage and forgery claims."
+  },
+  "a_missing_declaration_is_not_a_narrowing_to_nothing": {
+   "improvement": "I-21",
+   "problem": "R-41",
+   "rule": "`ScientificExperiment.from_dict` refuses a payload with no `objectives` or no `constraints` key, naming the key. A payload that declares an empty list keeps its meaning (a deliberate narrowing to none).",
+   "class": "A",
+   "why": "`to_dict` always writes both keys, so a payload missing one was not written by this class. Reading it as 'narrowed to nothing' is the worst available interpretation: it silently removes the feasibility requirement and changes which candidate `best` returns, while the problem the record carries still declares the constraint. An empty list and an absent key are different statements and only one of them was ever written.",
+   "closes": "R-41's `from_dict` claim."
+  },
+  "a_candidate_is_ranked_on_the_metric_its_objective_names": {
+   "improvement": "I-21",
+   "problem": "R-42",
+   "rule": "`ScientificExperiment.best` refuses to rank when an eligible candidate's ranked objective value disagrees with the result value of that objective's METRIC, at the same relative tolerance the evaluation's own name-keyed guard uses (1e-9). A candidate whose result does not carry the metric at all is ranked on the objective value, as now.",
+   "class": "A",
+   "why": "An objective names its quantity through `metric`; `name` is a label ('minimize_load' for metric 'load'). The existing guard in `ScientificEvaluation` compares by name, which is the one key that usually does not match, so the rule never ran for the canonical fixture. Refusing rather than filtering, because the evaluation holds two numbers for one quantity and they disagree: excluding the candidate quietly would leave the contradiction in the record and the ranking would still be over records nobody checked. The tolerance is not a new choice -- it is `_OBJECTIVE_AGREEMENT`, already declared for this comparison.",
+   "closes": "R-42."
+  }
+ },
+ "thresholds": {
+  "objective_agreement_relative_tolerance": {"value": "_OBJECTIVE_AGREEMENT (1e-9)", "class": "A", "why": "reused, not chosen: it is the tolerance the same comparison already declares one module over, and the comparison is between two records of the same computed number, so only round-off is admissible."},
+  "margin_sign": {"value": 0.0, "class": "A", "why": "definitional: `check` computes margin and satisfied together, and the sign of the margin IS the verdict. Zero is the one value where a strict and a non-strict operator disagree, so it is accepted either way."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": ["a `__post_init__` on `ConstraintCheck` (new behaviour, no new field)", "private helpers in experiment.py"],
+  "what_is_not_changed": [
+   "no schema string, field, default or enum member; no V1-frozen signature",
+   "`is_feasible` keeps its meaning and its three answers; the coverage rule lives in `best`, which is what CORE-015 claims",
+   "the four G31 anchors pinned in tests/mutation_guards.py for evaluation.py are untouched"
+  ],
+  "records_that_already_exist": "No committed JSON carries a `scientific_experiment/` payload, and none carries a `constraint_check/1` record outside the test fixtures. To be re-confirmed by a scan before implementing, with the numbers recorded in the audit document.",
+  "deliberate_narrowing": "A `ConstraintCheck` whose verdict contradicts its margin stops being constructible; an experiment payload missing a declaration key stops reading; and `best()` now returns None where it used to return a candidate whose declared constraints were never checked, or raises where a candidate's own result contradicts the number it would be ranked on."
+ },
+ "residuals_stated_in_advance": [
+  "A declared constraint whose metric the result does not carry is still judged by the stored check. The coverage rule catches the missing check; nothing can re-derive a value that is not in the record. Naming the metric in the check would let a reader see which quantity was tested, and that is a record change deferred with the V4 inventory.",
+  "A zero margin is accepted for either verdict, because the check does not carry the operator that decides that case.",
+  "`ScientificExperiment` has no production caller, so this part lowers library risk only. The selection path production uses is the design Pareto and elite archives, and that is R-44 in part B.",
+  "`best()` still ranks on one objective at a time; nothing here makes it multi-objective, and the design archives' Pareto front stays the multi-objective answer."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "the experiments, IR and design suites, tests/test_scientific_core.py and tests/test_core_guards.py",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
