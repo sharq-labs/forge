@@ -1,0 +1,70 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 31,
+ "improvements": [
+  "I-06",
+  "I-15 (its last open case closes with this one)",
+  "I-14 (one part, early: it blocks I-06 outright)"
+ ],
+ "problems_addressed": [
+  "R-11"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "f678ce00",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "CORE-002 already refuses a grid whose posterior reaches BOTH declared bounds of an axis. R-11 is the one-sided case that rule lets through: the data rule out the small side and say nothing about the large one, so the posterior runs to whatever upper bound was declared and the width reported there is the declared range's. This batch diagnoses domination one SIDE at a time and names the side. R-11 is also the LAST open case of I-15's conformance suite -- `test_r11_a_supported_width_does_not_depend_on_where_a_declared_bound_is_put` is the only remaining `xfail(strict=True)` in it -- so I-15 moves from PARTIAL to DONE with this commit and nothing else is needed for it. A FIFTH rule lands here that belongs to I-14: the leverage null's cumulants are traces of powers of a positive-semidefinite matrix and are therefore non-negative, but the closed form that avoids building an n x n matrix computes them by cancellation, and `RouteDiagnostics`' own self-check refuses a record whose null carries -2.2e-16. R-11's fixture trips exactly that, on EVERY declared bound, so `route_uncertainty` raises before the rebuild path is reached and I-06 cannot be exercised or verified at all. It is preregistered and fixed here rather than deferred, and I-14's entry will say this part landed early and why.",
+ "reach": "LIBRARY_ONLY, and the audit says so. `route_uncertainty`'s rebuild path is reached only by a caller that supplies a `MultistartPolicy` and a table builder; the production calibration study routes a SUPPLIED grid and the MCP tools form no predictive interval at all. The rule is fixed in the router because that is where the width a claim reports is decided.",
+ "what_was_already_seen": {
+  "R-11": "the audit's finding 16, reproduced at 294c129 and again by I-15's own conformance case at f9bab88 and at f678ce00. For y = t1 exp(-t0 x) on x in [0, 1] with a true rate of 30, the curve has decayed to 2e-13 by x = 1: the data rule out every small rate and say nothing about a large one. Moving the declared upper bound from 20 to 40 to 80 gives GRID_REBUILT SUPPORTED with a rate sd of 1.743, 2.037 and 3.473, each with 'truncation halving(s) on axes [0]' -- so the bound sets the answer, which is the exact pathology CORE-002 was written to stop. I-15's case, on the same model with bounds at 40, 60 and 80, measures sds of 4.98, 10.33 and 16.14. With a declared zero far from the posterior (a kelvin-like offset), the verdict is also PARAMETERS_IDENTIFIABLE. The mechanism is router.py:521 -- `dominated = {i for i in truncated if truncated.count(i) >= 2}` -- so one reached declared bound goes to the halving loop instead.",
+  "the blocker": "At f678ce00, `route_uncertainty` on `false_confidence_cases.decay_with_upper_bound(b)` raises HybridUQError for every b in {9, 11, 13, 20, 31, 35, 40, 60, 80}: 'a leverage test needs a non-negative statistic and a non-negative null; this record carries 0.08936059297804337 against (2.8713019073478563e-07, 8.260059303211165e-14, -2.220446049250313e-16)'. The third cumulant is -2.220446049250313e-16, which is exactly -eps: a zero computed with rounding. This is the leverage-null observation recorded in batch 17 and owned by I-14."
+ },
+ "rules": {
+  "domination_is_diagnosed_one_side_at_a_time": {
+   "improvement": "I-06",
+   "problem": "R-11",
+   "rule": "For each axis and each of its two sides, when the posterior reaches that side's face within `EDGE_LOG_LIKELIHOOD_DROP` of the peak AND that face IS the declared bound, the distance from the peak's own coordinate on that axis out to the bound is compared with the fitted local sd on that axis. If the distance EXCEEDS `_GAUSSIAN_BAND_SD` local sd, that side is bound-dominated and the route passes over with `GRID_POSTERIOR_BOUND_DOMINATED`, naming the axis AND the side. The existing both-sides rule is unchanged and the two are a DISJUNCTION: either refuses.",
+   "class": "A",
+   "why": "The threshold is not chosen, it is derived. A Gaussian of standard deviation s has a log-density exactly `EDGE_LOG_LIKELIHOOD_DROP` below its peak at |z| = sqrt(2 ln 1e6) sd. So if the fitted local Gaussian were the truth, the profile would already have left the ln 1e6 band by that distance. A profile that is STILL inside the band further out than that is, by arithmetic, wider than the local fit claims in that direction -- and since it is still inside the band when it hits the declared bound, the width a moment calculation reports there is set by where the bound was put and not by the data. The constant is `sqrt(2 * EDGE_LOG_LIKELIHOOD_DROP)`, written as that expression and not as a literal, so it cannot drift from the band it is derived from.",
+   "value": "_GAUSSIAN_BAND_SD = sqrt(2 * EDGE_LOG_LIKELIHOOD_DROP) = 5.256521769756932",
+   "closes": "the one-sided case: a SUPPORTED width that moves with the declared bound."
+  },
+  "a_peak_at_the_bound_still_gets_truncation_refinement": {
+   "improvement": "I-06",
+   "problem": "R-11",
+   "rule": "A side whose reached face is a declared bound but whose distance from the peak does NOT exceed `_GAUSSIAN_BAND_SD` local sd is still added to the truncation list and still gets the halving loop, exactly as before.",
+   "class": "A",
+   "why": "This is the audit's own instruction -- 'keep truncation refinement for posteriors that actually decay toward the bound, such as a peak sitting at the bound' -- and it is what makes the new rule a diagnosis rather than a blanket refusal. A posterior whose peak sits AT a declared bound has a distance of about zero, which is nowhere near the band distance, so it takes the refinement path and the existing behaviour is untouched. Without this half the rule would refuse every truncated posterior, including the ones the halving loop was written for.",
+   "closes": "nothing; it is the half that must NOT change, and it is guarded by its own mutation."
+  },
+  "the_refusal_names_the_side": {
+   "improvement": "I-06",
+   "problem": "R-11",
+   "rule": "The `GRID_POSTERIOR_BOUND_DOMINATED` detail for a one-sided finding names the parameter, which side ('low' or 'high'), the distance in local sd and the band distance. The both-sides detail is unchanged, word for word.",
+   "class": "A",
+   "why": "I-06's brief asks for the side to be named, and for a good reason: the two findings call for different actions. Both sides dominated means the declared range is too narrow to say anything; one side dominated means the DATA constrain only one direction, and the caller's remedy is more informative observations rather than a wider box. A refusal that does not distinguish them sends the reader to widen the bound, which is what produced the 1.743 / 2.037 / 3.473 sequence in the first place. The both-sides wording is left alone so that no existing expectation moves for a reason this batch is not about."
+  },
+  "a_cumulant_that_cannot_be_negative_is_not_computed_negative": {
+   "improvement": "I-14 (landed early; it blocks I-06)",
+   "problem": "R-11 is blocked by it; the observation itself is batch 17's, owned by I-14",
+   "rule": "`_leverage_null_cumulants` clamps each of c1, c2, c3 at zero, and REFUSES a value more negative than the round-off floor of its own computation: `floor_k = n * eps * scale_k`, where `scale_k` is the sum of the absolute values of the terms that were added to form c_k and `eps` is the machine epsilon of float64. A value in `[-floor_k, 0)` is round-off and becomes 0.0; a value below `-floor_k` raises `HybridUQError`.",
+   "class": "A",
+   "why": "All three cumulants are non-negative as a matter of arithmetic, not of modelling: c_k = trace(M^k) with M = (I - H) D (I - H) positive semidefinite, since D = diag(h) has h in [0, 1] and I - H is an orthogonal projector. c2 is half the variance of the statistic and c3 an eighth of its third central moment, and neither can be negative for a quadratic form in N(0, I). So a negative value is not information about the fit; it is the cancellation the closed form trades for not building an n x n matrix -- the docstring says that trade is why the form is written out. The floor is DERIVED and not chosen: n * eps * (sum of the magnitudes of the summands) is the standard first-order bound on the round-off of a sum of n terms, so a value inside it is indistinguishable from zero in float64 and a value outside it is not round-off and must not be clamped. Clamping without the floor would mask a real coding error, which is the only other way a negative could arise.",
+   "closes": "the HybridUQError that makes R-11's fixture unroutable, and with it the same failure for any problem whose leverage null has a structurally zero cumulant.",
+   "compatibility": "A record's `leverage_null_cumulants` can change from -2.2e-16 to 0.0. No committed record in this repository carries a negative cumulant -- checked, not assumed -- and the self-check that reads them refuses a negative, so no readable record moves. The three-moment p-value is computed from c2 and c3 by division; a clamp to exact zero makes `b = c3 / c2` and `dof = c2^3 / c3^2` non-finite where they were nonsense before, and `_three_moment_p_value` already returns NaN when undefined, which `_goodness_of_fit` already treats as no leverage test. That path is unchanged and is stated here rather than discovered."
+  }
+ },
+ "compatibility": {
+  "additive_only": "One new module-level constant (`_GAUSSIAN_BAND_SD`, private). No new public symbol, no signature, field, default or enum member change; `GRID_POSTERIOR_BOUND_DOMINATED` already exists in the vocabulary and is already a downgrade. No serialized record gains or loses a key.",
+  "behaviour_narrowed_deliberately": "A grid whose posterior runs to one declared bound over more than 5.2565 local sd is passed over instead of being rebuilt and reported. That is a claim withdrawn, and it is the claim R-11 is about: its width was the bound's. Every other truncated posterior takes the same halving path it took before.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "The test is on the FITTED local sd, which is the same quantity the design box is built from (`policy.sigma_span * sd`). If that sd is itself wrong by orders of magnitude the distance in sd units is wrong with it. The rule is still an improvement on no test at all, and the local fit's own adequacy is what I-08's curvature and tail probes are for.",
+  "A non-finite or non-positive fitted sd on an axis skips the per-side test; the both-sides rule and the halving loop still apply. Such a covariance is refused earlier by the local route, so this is a defensive branch rather than a reachable one, and it is stated rather than left to be discovered.",
+  "The peak's coordinate is read off the grid lattice, so the distance is quantised to the node spacing on that axis. The band distance is 5.2565 sd and a design box is `sigma_span` sd wide with node counts set by the aliasing rule, so the quantisation is far smaller than the comparison it feeds; it is noted because the rule is stated as an exact inequality.",
+  "R-11 stays LIBRARY_ONLY: the rebuild path has no production caller. What this closes is the width a SUPPORTED claim would report if one arrived.",
+  "The clamp is at the SOURCE. `RouteDiagnostics`' self-check still refuses a negative cumulant, unchanged, so a record built some other way is still held to it. That is deliberate: the fix is that the computation cannot produce a negative, not that the check tolerates one.",
+  "I-14 is NOT closed by this. Its scope is read-back re-derivation and a record fuzzer; what lands here is the one numerical fact that blocked I-06, and I-14's entry will say so."
+ ],
+ "amendment_log": []
+}
