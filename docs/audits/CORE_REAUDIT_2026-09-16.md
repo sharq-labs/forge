@@ -150,7 +150,7 @@ Each batch below reports that count so a 19th failure would be visible.
 | ID | Status | Commits | Residuals |
 |---|---|---|---|
 | I-01 | **DONE** | `5a08eef` (preregistration + xfails), this commit | the canonical multistart's own resolution; a supplied grid whose local route raises has no basis; a grid routed without a calibration can no longer be SUPPORTED |
-| I-15 | **PARTIAL** | `5a08eef`, this commit | the suite exists with 17 cases over 15 problems; only the R-01 and R-06 cases are live, the other 15 are `xfail(strict=True)` until their own improvement lands, which is I-15's design |
+| I-15 | **PARTIAL** | `5a08eef`, this commit | the suite exists with 17 cases over 15 problems; only the R-01 and R-06 cases are live, the other 15 are `xfail(strict=True)` until their own improvement lands, which is I-15's design  **Superseded by batch 31**, where the last of those markers came off: I-15 is DONE. |
 
 **R-xx closed.**
 
