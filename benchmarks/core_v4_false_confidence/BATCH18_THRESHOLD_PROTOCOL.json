@@ -1,0 +1,105 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 18,
+  "improvements": [
+    "I-03 (part B of two)"
+  ],
+  "problems_addressed": [
+    "R-35",
+    "R-36",
+    "R-38"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "25b6dd91",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "part_a": "batch 17 (commit 8b6360a7) routed the study's predictive and held-out statements through the V2 evidence gates and closed R-02. This batch is the study's own verdict arithmetic, and I-03 becomes DONE when it lands.",
+  "reach": "All three are REACHED IN PRODUCTION: `studies/calibration_study.py` is the only production orchestration of a calibration into a held-out verdict and a coverage study, and the TCR flagship and the battery B1-B3 audits are its consumers.",
+  "what_was_already_seen": {
+    "R-35": "finding 35. `validate_held_out` sets FAIL when `chi2.sf(sum r^2, df=n) < 0.01` and PASS otherwise -- no n floor, no INCONCLUSIVE. With ONE held-out point a residual of 2.11 sd reads PASS, 'consistent with the model's own predictive distribution'. Measured over the production TCR pipeline: a linear model fitted to curved truth (curvature 1.5e-6/K^2, mean standardized residual about 2.3 on every point) PASSED in 24 of 40 seeds with one held-out point and 12 of 40 with three. The omnibus chi-square also has low power against a common-SIGN bias, which is exactly the shape a truncated expansion leaves. Absence of rejection was reported as validation.",
+    "R-36": "finding 36. `run_coverage_study` sums covered and total over every held-out interval in every repetition and hands them to `classify_coverage` and `wilson_interval` as independent Bernoulli trials. Within one repetition every interval shares one posterior, and at extrapolated conditions parameter uncertainty dominates (parameter sd / total sd about 0.94), so the indicators are strongly clustered. Measured on the production pipeline: 300 repetitions of 4 intervals gave an intraclass correlation of 0.365 and a design effect of 2.09, so the reported Wilson interval and standard error overstate precision by about sqrt(2.09) = 1.45. At the same pooled fractions, 1104/1200 reads UNCERTAINTY_CALIBRATED pooled and INCONCLUSIVE at the effective sample size, and 1056/1200 reads UNDERCOVERS pooled and INCONCLUSIVE effectively.",
+    "R-38": "finding 41. `_require_declared_sigma` compares ONE caller-supplied `observation_sigma` with EVERY held-out observation's declared sigma, so a held-out half declaring [0.002, 0.002, 0.003] ohm can never be predicted or validated whatever is passed -- `observation_sigma=0.002` is refused by the 0.003 reading and `0.003` by the 0.002 ones. The per-observation loop already builds its spec from `observation.sigma`, so the refusal loses a justified validation for nothing. Separately, every `CoverageRepetition` records `calibration_status=CALIBRATION_CONVERGED` although the repetition builds a grid posterior and no optimizer or convergence check runs."
+  },
+  "rules": {
+    "a_held_out_verdict_needs_the_power_to_have_found_something": {
+      "improvement": "I-03",
+      "problem": "R-35",
+      "rule": "`HeldOutValidation` gains a third member, `INCONCLUSIVE = \"HELD_OUT_VALIDATION_INCONCLUSIVE\"`. Below `HELD_OUT_MINIMUM_N` held-out points the verdict is INCONCLUSIVE rather than PASS: the test could not have found the misspecification a reader would care about, so absence of rejection is not validation. A FAIL is still a FAIL at any n -- a rejection is evidence whatever the sample size, and withholding it would be the opposite error.",
+      "threshold": "HELD_OUT_MINIMUM_N = 7",
+      "derivation": "from the alpha this module ALREADY declares, and no new number. The effect size of interest is a common bias of ONE declared sigma per held-out point: below its own declared measurement noise a model is not wrong in any way this evidence can speak to. The bias test below has |E z| = sqrt(n) at that effect, so it finds it at better than even odds exactly when sqrt(n) >= z_{1 - alpha/2}, i.e. n >= z^2. At the module's declared HELD_OUT_CHI_SQUARE_ALPHA = 0.01, z_{0.995} = 2.575829 and z^2 = 6.6349, so the smallest integer n is 7.",
+      "class": "B (a statistical convention -- power 0.5 at a one-sigma effect -- evaluated at an alpha already declared)",
+      "what_it_costs": "every in-tree study with fewer than 7 held-out points reports INCONCLUSIVE where it reported PASS. That is 5 assertion sites, each of which is the improvement becoming visible: a 1-, 2- or 3-point held-out set cannot validate a model, and the record now says so instead of saying the opposite."
+    },
+    "a_common_sign_bias_is_tested_for_directly": {
+      "improvement": "I-03",
+      "problem": "R-35",
+      "rule": "Beside the omnibus chi-square, the mean standardized residual is tested directly: under the null the n standardized residuals have mean 0 and sd 1/sqrt(n), so `z = sqrt(n) * mean(r)` is standard normal and a two-sided p-value follows. Either test rejecting gives FAIL, and the reason names which one found it.",
+      "why": "the omnibus chi-square is the sum of squares, which is blind to sign. A truncated expansion leaves a residual pattern with structure -- the audit measured a mean standardized residual of about 2.3 on EVERY point -- and a test that squares them throws exactly that away. This is the audit's own first fix direction.",
+      "the_level_is_preserved_not_widened": "each of the two tests runs at `HELD_OUT_CHI_SQUARE_ALPHA / 2`, so the family-wise false-rejection rate stays at or below the 0.01 this module already declared. The declared constant does not change value; the per-test level is derived from it. Bonferroni rather than anything sharper because the two statistics are not independent and a correction that assumed they were would claim a level it does not have.",
+      "class": "B (a standard multiplicity correction on a declared level)"
+    },
+    "the_coverage_interval_accounts_for_its_clustering": {
+      "improvement": "I-03",
+      "problem": "R-36",
+      "rule": "The coverage interval is computed at an EFFECTIVE sample size. The intraclass correlation of the per-repetition coverage indicators is estimated by the one-way random-effects ANOVA estimator, the design effect is `1 + (mean intervals per repetition - 1) * max(ICC, 0)`, and the effective sample size is `intervals / design_effect`. The Wilson interval and the standard error are computed at that effective n; the POINT estimate is the pooled fraction, unchanged. `CoverageStudy` records the intervals per repetition, the ICC, the design effect and the effective sample size, so a reader can see the correction rather than trust it.",
+      "why_measured_and_not_assumed": "the design effect is a property of THIS study's design and data, and the audit measured 2.09 on the production pipeline. A fixed inflation factor would be a number chosen once; the ANOVA estimator is the standard one and is recomputed per study.",
+      "the_negative_ICC_clamp": "the ANOVA estimator can come out negative when within-repetition agreement is lower than chance. A negative design effect is not a thing, and inflating an interval for negative clustering would be claiming less precision than the data has; `max(ICC, 0)` means the correction never makes the interval NARROWER than the independent one, which is the fail-closed direction.",
+      "class": "B (a standard survey-statistics adjustment; the estimator is conventional and the input is measured)"
+    },
+    "a_coverage_number_conditioned_on_a_gate_says_so_or_declines": {
+      "improvement": "I-03",
+      "problem": "R-36 (and the amendment part A recorded)",
+      "rule": "When the V2 judgement refused a fraction `f` of repetitions, the coverage verdict is INCONCLUSIVE if `f > acceptance_half_width`. Below that it stands, with the conditioning stated in `why` as part A already does.",
+      "derivation": "from the study's OWN declared tolerance, and no new number. A refused repetition's intervals are unobserved, so in the worst case they would all have been covered or all missed: the selection alone can move the measured coverage by at most `f`. When `f` is at or below the acceptance half-width the conditioning cannot carry the measurement across the band, and the verdict is about the model rather than about the gate. Above it, it is about the gate.",
+      "class": "A (derived from an already-declared threshold; no new value)"
+    },
+    "each_observation_is_scored_with_its_own_declared_sigma": {
+      "improvement": "I-03",
+      "problem": "R-38",
+      "rule": "`observation_sigma` becomes optional (`Quantity | None = None`) on `predict_held_out` and `validate_held_out`. Passed, it must still equal every held-out observation's declared sigma -- INF-02's rule, unchanged, because that is what stops a caller widening the noise until a failing model passes. Omitted, each observation's OWN declared sigma is used, which is what the per-observation loop already does. A held-out half with heterogeneous declared sigmas is therefore validated by omitting the argument, and cannot be validated at all with any single value -- which is the true statement.",
+      "why_not_simply_ignore_the_argument": "the argument is the only thing standing between a caller and a self-chosen noise level, and the audit that added it measured the difference: chi-square 49.3 (p 5e-10) at the declared 0.002 ohm against 1.81 at a caller's 0.02 ohm. Keeping the check when the argument is given, and reading the evidence when it is not, keeps that guard and removes the false refusal.",
+      "class": "A (an argument becomes optional with a default; no threshold)"
+    },
+    "a_repetition_that_ran_no_optimizer_does_not_claim_one_converged": {
+      "improvement": "I-03",
+      "problem": "R-38",
+      "rule": "`CoverageRepetition.calibration_status` records `COVERAGE_CALIBRATION_STATUS = \"CALIBRATION_NOT_RUN_GRID_POSTERIOR\"` instead of `CALIBRATION_CONVERGED`. A repetition builds a grid posterior; no optimizer runs and no convergence criterion is evaluated, so there is nothing for CONVERGED to be true of.",
+      "why_not_a_new_CalibrationStatus_member": "`CalibrationStatus`'s own docstring is 'Did the optimizer find a minimum'. A value meaning no optimizer ran is the ABSENCE of a calibration status, not one of its members, and adding it would make it a legal value for a `CalibrationResult` -- a record that must never claim it.",
+      "class": "A (a truthful string in a free-text field)"
+    },
+    "the_prediction_domain_check_becomes_informative": {
+      "improvement": "I-03",
+      "problem": "R-02's residual from part A",
+      "rule": "`synthesize_tcr_observations` records each observation's temperature as a declared condition (`GaussianObservation.conditions['temperature']`), and the study's predictive specs carry the held-out condition's temperature. `_prediction_domain_reasons` then compares the prediction's temperature with the range the calibration covered, so a routed record reads PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS where the study extrapolates and nothing where it does not, instead of PREDICTION_DOMAIN_NOT_DECLARED everywhere.",
+      "what_it_will_say": "the TCR flagship holds out temperatures ABOVE its calibration range by design (375-440 K against 250-350 K), so its routed records will read DOWNGRADED / PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS. That is the true statement about an extrapolation and is the point of the check.",
+      "not_the_battery": "the battery B1-B3 observations come from recorded data rather than a synthesizer, and putting `RestedOcvCondition` onto their `conditions` is a change to stored evidence with its own blast radius. It is stated as a residual and belongs with I-13.",
+      "class": "A (a declaration the records were missing; no threshold)"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "ADDITIVE ONLY in shape. `HeldOutValidation` gains one member -- new enum members are the round's first named additive category. `CoverageStudy` gains four trailing fields with defaults, `CoverageRepetition` none beyond part A's. `observation_sigma` gains a default of None on two study functions, which no existing call notices. `GaussianObservation.conditions` already exists and is already serialized only when declared. No field or member is removed, renamed or reordered and no existing default changes.",
+    "behaviour_that_deliberately_changes": [
+      "a held-out verdict below 7 points is INCONCLUSIVE where it was PASS. Five in-tree assertion sites move, and each is the finding becoming visible.",
+      "a held-out set with a common-sign bias FAILs where the omnibus test passed it; the per-test level halves so that the family-wise level stays the declared 0.01.",
+      "the coverage interval is wider by about sqrt(design effect), and verdicts near the band edges move from CALIBRATED or UNDERCOVERS to INCONCLUSIVE -- which the audit measured on the production pipeline as the correct answer.",
+      "a coverage study whose refused fraction exceeds its acceptance half-width is INCONCLUSIVE.",
+      "a heterogeneous held-out half can now be validated at all.",
+      "the routed records of an extrapolating study read PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS instead of PREDICTION_DOMAIN_NOT_DECLARED."
+    ],
+    "serialized_records": "the new `CoverageStudy` keys are written unconditionally beside the existing ones, because a coverage study record is produced fresh by a run and no stored one exists in the repository to keep byte-identical; `HeldOutMetrics` and `PredictiveDecomposition` gain nothing. The TCR observations gain a `conditions` key where the synthesizer writes one, which is a record that did not carry the operating point it was measured at.",
+    "claims_that_move": [
+      "the TCR flagship's held-out verdict: 3 held-out points, so INCONCLUSIVE rather than PASS, and DOWNGRADED / PREDICTION_OUTSIDE_CALIBRATED_CONDITIONS beside it. Both are the true statements about a 3-point extrapolation.",
+      "`benchmarks/calibration_uq/ROUND_REPORT.md` records a HELD_OUT_VALIDATION_PASS in a historical table. It is a report of a past round, pinned by no test, and is not rewritten; the audit document records that its held-out verdict would now read INCONCLUSIVE and why.",
+      "no committed evidence digest: no committed record in the repository carries a `HeldOutMetrics`, a `CoverageStudy` or a serialized TCR observation, which is re-derived by the committed-evidence suite rather than assumed."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "The bias test uses the standardized residuals' NOMINAL null distribution, which treats them as independent standard normals. They are not exactly independent: they share one posterior, which correlates them, so the true sd of their mean is slightly above 1/sqrt(n) and the test is slightly anti-conservative. The audit's own fix direction names the Mahalanobis statistic with the joint predictive covariance as the complete answer; that needs the predictive covariance across held-out points, which `posterior_predictive_uq` does not return, and it is stated here rather than approximated.",
+    "The power floor is stated for a COMMON bias of one sigma. A misspecification that is orthogonal to the mean -- a variance error, or a pattern that cancels -- is not what the floor is calibrated against, and n = 7 says nothing about the power to find one.",
+    "The design-effect correction assumes exchangeable clustering within a repetition. At strongly unequal intervals per repetition the one-way estimator is approximate, and the recorded intervals-per-repetition mean is what makes that visible.",
+    "The battery B1-B3 observations do not gain declared conditions; the TCR synthesizer's do. Their prediction-domain records therefore stay PREDICTION_DOMAIN_NOT_DECLARED, which is honest and is I-13's to close.",
+    "`classify_coverage` keeps its signature and gains the effective sample size as an optional argument; a caller that passes only the pooled counts gets the pooled interval, which is what it asked for. The study passes the effective n."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
