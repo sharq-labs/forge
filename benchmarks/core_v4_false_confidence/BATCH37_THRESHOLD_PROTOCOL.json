@@ -1,0 +1,57 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 37,
+ "improvements": [
+  "I-14 part E of five"
+ ],
+ "problems_addressed": [
+  "R-25",
+  "R-27 (its fourth claim, the predictive one -- the audit's finding 24)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "096ea833",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "R-25 is two forgeries of a LOCAL posterior record and R-27's finding 24 is one of a GRID result used for prediction. Both are about a record being trusted for something no field in it constrains. The other three claims of R-27 -- the covariance shrink, the width flip, and the rebuilt record carrying a misfit -- are part F, with the record-forgery fuzzer the improvement's brief asks for; they need a new committed quantity and should not ride with these.",
+ "reach": "MIXED. The `declared`-only rule and the predictive rule are on read and on the public predictive entry point, so LIBRARY_ONLY. The calibration binding is called by the LOCAL ROUTE on the record it has just built, so it is REACHED, like batch 36's observation binding and for the same reason.",
+ "what_was_already_seen": {
+  "R-25, reproduced at 096ea833": "The affine problem's genuine posterior is SUPPORTED with sd [0.02715, 0.04599] and parameterization 'declared'. Dividing the covariance by 1e4 alone is REFUSED -- 'the covariance and bounds put the nearest bound 17302.9 sd away; the diagnostics measured 173.029'. Renaming the parameterization to 'linear_map:forged' and making the same edit is ACCEPTED, SUPPORTED, sd [0.00027151, 0.00045993]: `_posterior_record_problems` returns early for any label but 'declared' after checking only that the estimate equals the point. Moving the recorded bounds in by 1e-2 with the covariance, keeping 'declared', is ALSO ACCEPTED with the same sd: the distances are computed from the record's own bounds, so both move together and every distance in sd units is preserved.",
+  "R-27 finding 24, from the audit": "`routed_predictive_uncertainty` re-applies only the V1 resolution check on a grid result. A grid computed from other data -- which `grid_predictive_uncertainty` refuses on the same evidence, chi-square 1064.66 at node 0 -- predicts SUPPORTED once wrapped in a hand-built `HybridUQResult`, mean 2.4745 against an honest 1.9745. The function's own comment says the evidence checks 'cannot be [re-applied], since the result does not carry the evidence', which is true and is why the answer is to take the evidence or to stop claiming."
+ },
+ "rules": {
+  "a_local_route_result_carries_a_declared_posterior": {
+   "improvement": "I-14",
+   "problem": "R-25",
+   "rule": "`HybridUQResult._require_one_truth` refuses a `LOCAL_GAUSSIAN` decision whose posterior's `parameterization` is not `'declared'`. `_posterior_record_problems` keeps its early return for a mapped posterior, and mapped posteriors remain constructible and usable on their own.",
+   "class": "A",
+   "why": "The router only ever produces declared posteriors -- `local_gaussian_posterior` builds one and `reparameterize` is a caller's tool -- so a routed record carrying any other label was not produced by the router. And the label is what turns every re-derivation off: a mapped posterior's diagnostics are not tied to its covariance at all, by design, because the mapping's parent is what those diagnostics describe. So 'renamed to linear_map:' is not an edge case, it is the whole defence being switched off by a string. Nothing numeric is chosen.",
+   "closes": "the rename forgery, completely and on read alone."
+  },
+  "a_records_bounds_are_the_calibrations_bounds": {
+   "improvement": "I-14",
+   "problem": "R-25",
+   "rule": "New `require_posterior_matches_calibration(posterior, calibration)`: refuses a posterior whose parameter names, units, inference transforms, inference bounds or `parameterization_digest` are not the calibration's. `local_gaussian_posterior` calls it on the record it has just built, before returning it.",
+   "class": "A",
+   "why": "Declared bounds are a property of the REQUEST, not of the fit, and nothing inside the record is outside a forger's reach -- which is why the bounds-moved forgery works: it moves the bounds and the covariance together and every distance in sd units survives. The only thing that can contradict edited bounds is the calibration they came from. Calling it where the calibration IS available makes the binding a production fact, exactly as batch 36 did for the observations; without that call it would be a rule a reader may choose to apply.",
+   "closes": "the bounds-moved forgery for any consumer that holds the calibration, and for every record the route writes."
+  },
+  "a_grid_result_predicts_on_evidence_or_says_it_did_not": {
+   "improvement": "I-14",
+   "problem": "R-27 (finding 24)",
+   "rule": "`routed_predictive_uncertainty` gains keyword-only `observations` and `forward`. For a grid result: when both are given, the `_grid_evidence` checks are re-run and a finding is raised as `RouteRefusedError`; when either is missing, every prediction is DOWNGRADED with `GRID_NOT_BOUND_TO_EVIDENCE`. The V1 resolution check still runs first, unchanged.",
+   "class": "A",
+   "why": "The function's own comment already states the problem -- the evidence checks 'cannot be [re-applied], since the result does not carry the evidence' -- and then predicts anyway. There are exactly two honest answers and this rule is both of them: take the evidence, or say the claim is not bound to it. `GRID_NOT_BOUND_TO_EVIDENCE` is an existing downgrade used for exactly this, on the supplied-grid route, so the reason is not new and neither is its severity. A refusal would break every current caller for a fact they could not previously state; a downgrade says what is true.",
+   "compatibility": "Two new keyword arguments with defaults, so every existing call keeps working -- and starts DOWNGRADING, which is the behaviour change and is the point. A caller who passes the evidence gets what they got before."
+  }
+ },
+ "compatibility": {
+  "additive_only": "One new public function, two new keyword-only arguments with defaults. No signature change to an existing parameter, no field, default or enum member change, and no serialized record gains or loses a key.",
+  "behaviour_narrowed_deliberately": "A `LOCAL_GAUSSIAN` record with a mapped posterior stops reading back -- it was never a record the router wrote. A grid result predicted from without its evidence is DOWNGRADED rather than SUPPORTED. A posterior whose bounds are not its calibration's is refused where the calibration is in hand.",
+  "verdict_word": "unchanged."
+ },
+ "stated_residuals": [
+  "A record read WITHOUT its calibration still cannot have its bounds verified, and the bounds-moved forgery survives that reading. This is stated rather than closed because it cannot be closed from inside the record: the bounds are a property of the request, every field in the record is the forger's to edit, and a digest the forger can recompute binds nothing. What the batch does is make every record the ROUTE writes verified, and give a reader holding the calibration the one function that checks it.",
+  "R-27 stays PARTIAL: the covariance shrink, the width flip, ESS and spacing_to_std, the rebuilt record carrying a misfit, and `considered` being unchecked are part F.",
+  "`routed_predictive_uncertainty`'s re-run uses `grid_is_this_evidence`, so it inherits batch 33's detection probability rather than certainty: a tampered region holding less than a quarter of the posterior weight is caught with probability below 0.99."
+ ],
+ "amendment_log": []
+}
