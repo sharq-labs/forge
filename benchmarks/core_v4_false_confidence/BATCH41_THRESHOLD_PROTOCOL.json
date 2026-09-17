@@ -1,0 +1,70 @@
+{
+ "schema": "core_v4_false_confidence_threshold_protocol/1",
+ "batch": 41,
+ "improvements": [
+  "I-20 part C of three, the last part"
+ ],
+ "problems_addressed": [
+  "R-45 (the audit's finding 90, items 2 and 3)"
+ ],
+ "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+ "baseline_commit": "ac0ab42a",
+ "written_before_any_rule_below_was_implemented_or_scored": true,
+ "what_this_part_is": "Part B fixed the direction where a new reader refuses an old record. This part fixes the OTHER direction, which is the dangerous one: a record carrying a NEW binding under an UNCHANGED version string is accepted by an older reader, which drops the binding silently. The audit reproduced it end to end -- an assessment bound to 300 K, re-emitted once through a V3-era reader, admitted a result at 5000 K as IN_DOMAIN, because `evaluated` was gone and the CORE-014 refusal had nothing to fire on. A dropped key is worse than a refused record: the refusal is loud, the drop is invisible and it strengthens a claim. And `routed_identifiability/1` is given the honest refusal it should have had.",
+ "reach": "MIXED. `Uncertainty` and `ValidityAssessment` are read and written on the MCP path (`CredibilityEvidenceReport` carries the uncertainty; the validity assessment is what CORE-014 binds to a result's operating point), so those two rules are REACHED. `RoutedIdentifiability` is hybrid_uq and library-only.",
+ "what_was_already_seen": {
+  "the_dropped_bindings, from the audit's finding 90": "The V3 tree was extracted and used as the older reader. `validity_assessment/2` records carrying CORE-014's `evaluated` and `uncertainty/1` records carrying CORE-016's `source_kind` are ACCEPTED by it, and both keys are gone from what it re-emits: 'evaluated survives the old reader: False', 'source_kind survives: False'. Then: 'new_assessment.json -> result at T=5000 K REFUSED ... reemit_assessment.json -> result at T=5000 K ACCEPTED with validity in_domain', and 'reemitted uncertainty source_kind now: UncertaintySource.UNSPECIFIED'. One load and re-emit converts a bound assessment into an unbound one, and a NUMERICAL uncertainty into an unspecified one, with no schema signal anywhere.",
+  "routed_identifiability, from the same finding": "CORE-004 appended `WIDTH_REFERENCE_NOTE` to every explanation and the reader re-derives the text, so a `/1` record written before that is refused with 'the identifiability verdict PARAMETERS_NOT_IDENTIFIABLE and its explanation do not follow from its own numbers, which give PARAMETERS_NOT_IDENTIFIABLE' -- a message that names a contradiction where the only difference is a sentence of prose. The audit's verifier added the part that decides the fix: the same `/1` record also stores a condition number computed under the definition CORE-004 retired, so the record genuinely cannot be read, and refusing it protects the reader. What is wrong is the REASON given, not the refusal."
+ },
+ "rules": {
+  "a_record_that_carries_a_new_binding_says_so_in_its_version": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "`Uncertainty.to_dict` writes `uncertainty/2` when it records a `source_kind` and `uncertainty/1` otherwise; `from_dict` reads both, and refuses a `/1` payload that carries a `source_kind` key. `ValidityAssessment.to_dict` writes `validity_assessment/3` when it carries any of `evaluated`, `model_id`, `model_version` or `declared_conditions`, and `/2` otherwise; `from_dict` reads `/1`, `/2` and `/3`, and refuses a `/1` or `/2` payload carrying any of those keys.",
+   "class": "A",
+   "why": "A version string is a promise about which fields a reader must understand, and these two records broke it in the only direction that raises a claim: the older reader accepted the record, dropped the field, and re-emitted something that reads as a DEFAULT rather than as a loss -- UNSPECIFIED for a source kind, and no operating point at all for an assessment. After that the newer reader's own CORE-014 refusal cannot fire, because nothing is recorded, and a result 4700 K outside its assessed condition reads IN_DOMAIN. Bumping only when the key is present keeps every record that carries none of them byte-identical, which is the rule this repository already applies to those very keys ('written only when they carry information ... so an assessment recorded before this batch keeps its bytes and its digest'). Refusing the older version WITH the newer key is the other half: it is the shape an older writer could not have produced, so it is either an edit or a re-emit that lost the version while keeping the field.",
+   "closes": "finding 90's item 3. An older reader now refuses these records instead of silently unbinding them."
+  },
+  "a_record_no_reader_can_interpret_is_refused_for_that_reason": {
+   "improvement": "I-20",
+   "problem": "R-45",
+   "rule": "`ROUTED_IDENTIFIABILITY_SCHEMA` becomes `hybrid_uq.routed_identifiability/2`; `from_dict` refuses a `/1` payload with a message that says CORE-004 changed both the conditioning definition and the explanation text, so a `/1` record's stored numbers cannot be interpreted under the current rule and must be re-derived. The re-derivation checks themselves are unchanged.",
+   "class": "A",
+   "why": "The refusal is correct and stays -- a `/1` record stores a condition number computed on the covariance under the definition CORE-004 retired, and no reader can tell which definition a stored number used. What was wrong is the message: it reported that a verdict did not follow from numbers that give the same verdict, which reads as a contradiction in the record and sends a reader looking for a defect that is not there. This is the same treatment `hybrid_uq.route_diagnostics/1` already got, and it is what makes the event visible to a freeze inventory instead of invisible.",
+   "closes": "finding 90's item 2, as a refusal with the right reason rather than as a legacy read."
+  }
+ },
+ "thresholds": {
+  "none": {"value": null, "class": "A", "why": "no number is chosen. Three version strings and the conditions under which each is written."}
+ },
+ "compatibility": {
+  "additive_only": true,
+  "what_is_added": [
+   "`uncertainty/2` and `validity_assessment/3`, each written only when the record carries the field that made it necessary; both older versions still read",
+   "`hybrid_uq.routed_identifiability/2`, with `/1` refused for a stated reason"
+  ],
+  "what_is_not_changed": [
+   "no field, default or enum member; no V1-frozen signature",
+   "a record carrying none of the new keys keeps its bytes, its digest and its old version string, so no committed digest moves for those",
+   "the CORE-014 operating-point refusal and the CORE-004 re-derivations are untouched"
+  ],
+  "records_that_already_exist": "To be scanned before implementing: every committed JSON carrying `uncertainty/1`, `validity_assessment/2` or `hybrid_uq.routed_identifiability/1`, and whether any is read back through `from_dict` by a test rather than compared as data. The scan's numbers are recorded in the audit document with the batch.",
+  "deliberate_narrowing": "A `/1` uncertainty payload carrying `source_kind`, and a `/1` or `/2` assessment payload carrying `evaluated`, stop reading. Both are shapes no writer in this repository has ever produced: the key and the version were introduced together."
+ },
+ "residuals_stated_in_advance": [
+  "`local_gaussian_posterior/1` and `hybrid_uq_result/1` are still refused through their embedded `route_diagnostics` rather than by an outer version check. Batch 36 bumped the diagnostics to `/3` with a reason, so the refusal is already explained where it happens; giving the outer records their own versions belongs with the V4 serialization inventory (I-30), which is where the compatibility events are listed and made executable.",
+  "The V4 inventory items finding 90 asks for -- literal fixtures for a mixed ValidationReport, a ValidityAssessment with `evaluated`, an Uncertainty with `source_kind`, observation records with conditions, and a 'legacy payload read' table -- are I-30's, and this batch's rules are what those fixtures will pin.",
+  "Nothing gates on `source_kind` yet: R-43's producers are I-25's. This batch stops the field being lost, which is the precondition for anything reading it.",
+  "A digest is still not an authority: a reader who re-emits a record through any writer gets that writer's version string, and the only protection against a deliberate downgrade is that the newer field cannot ride under the older version."
+ ],
+ "verification_plan": [
+  "the batch's own test file, with the xfail markers removed",
+  "tests/test_scientific_core.py, tests/test_core_guards.py, the model-definition and uncertainty suites, tests/hybrid_uq, and tests/test_data_boundary0.py",
+  "FAST tier: python -m pytest -m \"not expensive\" -q -n 4 --dist loadfile, at the by-design set (19 since batch 40's enum member)",
+  "expensive tier at the recorded baseline (528 passed, 18 failed, 14 errors)",
+  "python -m pytest tests/test_mutation_harness.py, with tests/mutation_guards.py untouched",
+  "the batch's guard mutations, isolated, with an unmutated control",
+  "python -m tools.certification.guard_reach --verify and python -m tools.certification.assert_clean_tree"
+ ],
+ "amendment_log": []
+}
