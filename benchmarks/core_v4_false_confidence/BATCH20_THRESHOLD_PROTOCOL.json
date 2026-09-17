@@ -1,0 +1,76 @@
+{
+  "schema": "core_v4_false_confidence_threshold_protocol/1",
+  "batch": 20,
+  "improvements": [
+    "I-08 part A of two"
+  ],
+  "problems_addressed": [
+    "R-16",
+    "R-26"
+  ],
+  "audit": "benchmarks/core_v4_false_confidence/REAUDIT_2026-09-16.json",
+  "baseline_commit": "62b2c5fe",
+  "written_before_any_rule_below_was_implemented_or_scored": true,
+  "what_this_part_is": "I-08 is five problems over the local route's probes. This part takes the two that are one claim: THE ROUTE'S VERDICT MUST NOT DEPEND ON THE UNITS A PARAMETER IS DECLARED IN. R-16: the probe directions come from `eigh(cov)` in declared units, so the same model and data are SUPPORTED with a parameter in volts and REFUSED (TAIL_HEAVIER_THAN_LOCAL_GAUSSIAN) in millivolts. R-26: POORLY_SCALED_PARAMETERIZATION is emitted from the RAW condition number, so declaring a slope in nanovolts (raw 3.19e9, equilibrated 3.47) downgrades an exactly Gaussian result. Part B (the next batch) takes R-13, R-14 and R-15 -- the curvature matrix and the tails -- which need the basis this part fixes.",
+  "reach": "LIBRARY_ONLY for both, and the ledger says so: `engcore.hybrid_uq` is reached from production only through `engcore.studies.calibration_study`, which predicts through `grid_predictive_uncertainty` and does not run the local route. These are library fixes to a rule a production path will reach when I-13 routes one. The guard reach ledger's R-02 row is where that is recorded.",
+  "what_was_already_seen": {
+    "R-16": "`tests/hybrid_uq/test_core_v4_false_confidence_conformance.py::test_r16_restating_a_parameter_in_another_unit_changes_no_claim_and_no_diagnostic` is the audited reproduction, committed as a strict xfail by I-15 in batch 6 and confirmed failing on its assertion at this batch's baseline: restating theta2's unit by a factor 2 moves the claim from REFUSED to DOWNGRADED.",
+    "R-26": "`...::test_r26_a_smaller_unit_does_not_downgrade_an_exactly_gaussian_result`, same provenance, confirmed failing on its assertion: the nanovolt restatement is DOWNGRADED with reasons ['POORLY_SCALED_PARAMETERIZATION'] on an equilibrated condition number of 3.474."
+  },
+  "rules": {
+    "the_probe_basis_is_the_correlation_eigenbasis_scaled_by_the_marginal_sds": {
+      "improvement": "I-08",
+      "problem": "R-16",
+      "rule": "The p unit-Mahalanobis probe axes are built as `delta_k = sqrt(mu_k) * (sd * w_k)`, where `mu_k, w_k` are the eigenvalues and eigenvectors of the CORRELATION matrix `R = D^-1 cov D^-1` and `D = diag(sd)`. The nonlinearity probes (axes and the diagonals between two axes) and the tail probes both use this basis.",
+      "why_this_is_the_invariant_basis": "Under a diagonal reparameterization z -> S z (a per-parameter unit change), cov -> S cov S and D -> S D, so R is INVARIANT and w_k is invariant. Then delta_k -> S delta_k: the direction set transforms covariantly, so it names the SAME points in parameter space whatever unit each parameter is declared in. Its Mahalanobis length is 1 exactly: delta^T cov^-1 delta = mu_k * w_k^T (D cov^-1 D) w_k = mu_k * w_k^T R^-1 w_k = mu_k * (1 / mu_k) = 1. The old basis `sqrt(lam_k) * v_k` from `eigh(cov)` also has Mahalanobis length 1, but `v_k` is NOT invariant -- eigenvectors of a covariance rotate under a diagonal rescaling -- so the tested directions move with the declared units.",
+      "what_does_not_change": "For an uncorrelated posterior the two bases are IDENTICAL: R = I gives mu_k = 1 and w_k = e_k, so delta_k = sd_k e_k, which is what `sqrt(cov_kk) e_k` already was. Only a correlated posterior's probe directions move, and they move to the invariant ones.",
+      "class": "A (a mathematical property -- invariance under a diagonal reparameterization; no threshold)"
+    },
+    "poorly_scaled_is_judged_on_the_equilibrated_condition_number": {
+      "improvement": "I-08",
+      "problem": "R-26",
+      "rule": "POORLY_SCALED_PARAMETERIZATION is emitted when the COLUMN-EQUILIBRATED condition number of the weighted Jacobian exceeds `POORLY_SCALED_CONDITION_LIMIT`, and never from the raw condition number. The raw condition number stays RECORDED in `raw_jacobian_condition`, unchanged, and no longer lowers a claim.",
+      "the_threshold_is_derived_from_two_numbers_this_module_already_declares": "The relative error of a linear solve at condition kappa is of order eps * kappa^2. `NUMERICAL_CONDITION_LIMIT = 1 / sqrt(eps)` is exactly where that reaches 1 -- where the covariance has no correct digits -- and it is already the refusal. The DOWNGRADE is where the same quantity reaches the tolerance this module already accepts for a wrong chi-square rise, `NONLINEARITY_DOWNGRADE = 0.10`: eps * kappa^2 = 0.10, i.e. kappa = sqrt(0.10) / sqrt(eps) = sqrt(NONLINEARITY_DOWNGRADE) * NUMERICAL_CONDITION_LIMIT = 0.3162277660168379 * 67108864.0 = 21221686.1426478. No number is chosen: it is the two declared constants combined the only way the units allow.",
+      "why_the_raw_condition_may_not_lower_a_claim": "The raw condition number of a weighted Jacobian changes by any factor a caller likes if they restate a parameter in a smaller unit, and nothing about the evidence changes with it. A claim that moves under a unit change is not a claim about the evidence. The raw number is still worth RECORDING -- it tells a reader their parameterization is badly scaled for a solver that does not equilibrate -- and this module does equilibrate, which is why it is information and not a finding. This is the strictness rule applied in the direction it points: what is recorded and not claimed is recorded.",
+      "class": "B (a convention: the downgrade sits where the accepted nonlinearity tolerance sits, derived, not chosen)"
+    },
+    "the_read_back_rule_moves_with_the_emission_rule": {
+      "improvement": "I-08",
+      "problem": "R-26",
+      "rule": "`_require_reasons_follow_measurements` re-derives POORLY_SCALED_PARAMETERIZATION from `jacobian_condition` against `POORLY_SCALED_CONDITION_LIMIT`, and a record whose `raw_jacobian_condition` is NaN is refused as a record that does not carry a number it claims to record -- where before a NaN raw condition FORCED the downgrade.",
+      "why_not_a_downgrade_for_a_missing_raw_number": "a downgrade is a statement about the evidence, and a missing diagnostic is a statement about the record. The route always computes the raw condition on every non-refused path, so a non-refused record without it was not written by this route.",
+      "the_new_constant_is_NOT_added_to_the_recorded_thresholds_map": "`_thresholds()` is serialized into every RouteDiagnostics and re-derived exactly on read-back, so adding a key would refuse every record ever written under schema hybrid_uq.route_diagnostics/2. The constant is a module constant the read-back rule reads directly, the way NONLINEARITY_DOWNGRADE's own derived uses are. A schema bump is I-30's to make if the thresholds map is ever reopened; it is recorded here as a stated residual, not as an oversight.",
+      "class": "A"
+    },
+    "the_diagnostics_that_are_dimensionless_are_invariant": {
+      "improvement": "I-08",
+      "problem": "R-16",
+      "rule": "`nonlinearity_index`, `minimum_chi_square_rise`, `minimum_tail_rise_ratio` and `jacobian_condition` are dimensionless, and after this part they are invariant under a diagonal reparameterization to within the relative tolerance the conformance suite already declares (EQUIVARIANCE_RELATIVE_TOLERANCE). `nonlinearity_probes_skipped` and `tail_probes_skipped` are COUNTS over the same directions and are invariant exactly, because the probe points themselves are the same points.",
+      "what_is_not_claimed_invariant": "`raw_jacobian_condition` is unit-dependent BY DEFINITION and is the one number that must move. `newton_step_in_sd` and `minimum_bound_distance_sd` are already in sd units and were already invariant.",
+      "class": "A"
+    }
+  },
+  "compatibility_impact": {
+    "v1_frozen_symbols": "none touched. No public signature changes: the new constant is a new module-level name (additive), and the probe basis is computed inside `local_gaussian_posterior`. `_probe_directions(lam, vec)` keeps its signature and its meaning -- it is handed the invariant basis instead of `eigh(cov)`'s -- which also keeps `hybrid_uq/predictive.py`'s pinned call site (mutation anchor G33o) byte-identical.",
+    "behaviour_that_deliberately_changes": [
+      "a CORRELATED posterior's nonlinearity and tail probes are evaluated in different directions, so `nonlinearity_index`, `minimum_chi_square_rise`, `minimum_tail_rise_ratio` and the two skip counts can move, and with them a claim. An UNCORRELATED posterior's probes are unchanged, exactly.",
+      "POORLY_SCALED_PARAMETERIZATION is no longer emitted for a large raw condition number at a small equilibrated one. It IS emitted for an equilibrated condition above 21221686.1426478, which nothing emitted before.",
+      "a non-refused record whose raw_jacobian_condition is NaN is now refused on read rather than forced to carry a downgrade."
+    ],
+    "serialized_records": "no field added, removed, renamed or reordered, and `_thresholds()` is unchanged, so every record written under hybrid_uq.route_diagnostics/2 still reads back -- unless its POORLY_SCALED_PARAMETERIZATION came from a raw condition, which is the claim this rule corrects.",
+    "claims_that_move": [
+      "`benchmarks/core_v2_hybrid_uq/FAILURE_CASES.json`'s `poorly_scaled_parameterization` case is a pure unit restatement (f = t0*1e-9 + t1*1e4*x). Its declared expectation of DOWNGRADED / POORLY_SCALED_PARAMETERIZATION is the finding, not the guard: under the corrected rule that case is not poorly scaled at all. The expectation is restated, the record regenerated, and the reason recorded in the audit document -- an adversarial case that was only ever adversarial about its units.",
+      "`KINETICS_K2.json` carries POORLY_SCALED_PARAMETERIZATION and is NOT regenerated (its MULTI multistart alone is ~76 min of CSTR solves). Its SUPERSEDED marker stands and gains this rule, per the audit protocol.",
+      "any other committed claim the regeneration moves is recorded in the audit document with its before and after."
+    ]
+  },
+  "residuals_stated_in_advance": [
+    "`POORLY_SCALED_CONDITION_LIMIT` is not in the recorded thresholds map, for the schema reason above, so a record cannot be checked against the limit that was in force when it was written. Every other threshold this route uses is recorded; this one is the exception until the map is reopened.",
+    "`hybrid_uq/predictive.py` builds its own probe directions and is not part of this part. Whether the predictive probes have the same unit dependence is not measured here; part B or a later improvement owns it, and this protocol does not claim it fixed.",
+    "This part does nothing about R-13, R-14 or R-15: each probed direction is still bounded alone rather than as a matrix, the tails still run along the p axes only, and a tail probe beyond a declared bound is still dropped uncounted. Part B is where those close, and the invariant basis is what part B's extreme-eigenvector probes will be built from.",
+    "eps * kappa^2 is an ORDER-of-magnitude bound on a solve's relative error, not a guarantee: the constant is O(1) and problem-dependent. The threshold is where that bound reaches the module's own accepted tolerance, which is the honest reading of it -- it is not a claim that the covariance's error IS 0.10 there."
+  ],
+  "decisions_needed": [],
+  "amendments": "recorded here as dated entries, never edited in place",
+  "amendment_log": []
+}
