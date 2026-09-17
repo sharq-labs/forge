@@ -809,6 +809,7 @@ so the model key is measured at its own boundary. The 17 pinned mutations on the
 were re-run isolated and all 17 are still KILLED (`BATCH14_PINNED_MUTATIONS.log`), control green.
 
 **Verification.** FAST tier 6611 passed, 5 skipped, 5 xfailed, 18 failed (the by-design 18, unchanged).
+Expensive tier 528 passed, 18 failed, 14 errors — the recorded baseline's lists exactly.
 `tests/test_mutation_harness.py` 6 passed, every anchor intact; `tests/mutation_guards.py` untouched. Nothing
 under `src/engcore/domains/thermal/` was edited.
 
